@@ -104,3 +104,5 @@ migrations/
 
 # GraphQL generated files
 **/__generated__/
+
+.turbo
