@@ -1,0 +1,47 @@
+{
+  "name": "@miglee/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GraphQL API server with Fastify and Prisma",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/**/*.ts",
+    "gql:gen": "graphql-codegen --config src/graphql/codegen.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "fastify": "5.5.0",
+    "mercurius": "16.2.0",
+    "graphql": "16.11.0",
+    "@graphql-tools/schema": "^10",
+    "@prisma/client": "^5",
+    "zod": "^3",
+    "dataloader": "^2",
+    "@fastify/cors": "^10",
+    "@fastify/helmet": "^12",
+    "@fastify/sensible": "^6",
+    "@fastify/cookie": "^10",
+    "@fastify/jwt": "^9"
+  },
+  "devDependencies": {
+    "@miglee/config": "workspace:*",
+    "typescript": "5.9.2",
+    "tsx": "^4.19.2",
+    "prisma": "^5",
+    "@graphql-codegen/cli": "^5",
+    "@graphql-codegen/typescript": "^4",
+    "@graphql-codegen/typescript-operations": "^4",
+    "@graphql-codegen/typescript-resolvers": "^4",
+    "@types/node": "^22"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

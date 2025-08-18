@@ -1,0 +1,11 @@
+scalar DateTime
+
+type Event {
+  id: ID!
+  title: String!
+  createdAt: DateTime!
+}
+
+type Query {
+  events(limit: Int = 10): [Event!]!
+}

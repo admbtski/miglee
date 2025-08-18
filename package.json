@@ -1,0 +1,32 @@
+{
+  "name": "miglee",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MVP monorepo with React, Next.js, Fastify, and GraphQL",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "gql:gen": "turbo run gql:gen",
+    "db:up": "docker-compose -f docker/docker-compose.dev.yml up -d",
+    "db:down": "docker-compose -f docker/docker-compose.dev.yml down"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "5.9.2",
+    "eslint": "^8.57.1",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@8.15.6"
+}
