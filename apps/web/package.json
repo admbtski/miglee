@@ -17,8 +17,7 @@
     "autoprefixer": "^10.4.21",
     "graphql": "16.11.0",
     "graphql-request": "7.2.0",
-    "next": "15.4.6",
-    "postcss": "^8.5.6",
+    "next": "15.4.7",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "tailwindcss": "4.1.12"
@@ -28,14 +27,16 @@
     "@graphql-codegen/client-preset": "^4.8.3",
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-operations": "^4.6.1",
-    "@graphql-codegen/typescript-react-query": "^6.1.1",
     "@miglee/config": "workspace:*",
     "@miglee/contracts": "workspace:*",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
+    "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "^9.33.0",
-    "eslint-config-next": "15.4.6",
-    "typescript": "5.9.2"
+    "eslint-config-next": "15.4.7",
+    "typescript": "5.9.2",
+    "@tailwindcss/postcss": "^4.1.12",
+    "postcss": "^8.5.6"
   }
 }

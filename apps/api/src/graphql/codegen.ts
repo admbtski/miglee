@@ -15,6 +15,15 @@ const config: CodegenConfig = {
           Event: '@prisma/client#Event',
         },
         useIndexSignature: true,
+        scalars: {
+          DateTime: {
+            input: 'Date | string | number',
+            output: 'Date',
+          },
+        },
+        scalarsOverride: {
+          DateTime: 'GraphQLScalarType',
+        },
       },
     },
   },

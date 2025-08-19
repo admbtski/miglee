@@ -17,157 +17,74 @@
 [?25l[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
   [2m◼[22m Generate to ./src/graphql/__generated__/
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[33m❯[39m Generate outputs
+  [93m⠋[39m Generate to ./src/graphql/__generated__/
 [?25l[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
-  [2m◼[22m Generate to ./src/graphql/__generated__/
-  [2m◼[22m Generate to ./src/graphql/__generated__/react-query.ts
-[?25l[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+  [33m❯[39m Generate to ./src/graphql/__generated__/
+[?25l[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
-  [93m⠋[39m Generate to ./src/graphql/__generated__/
-  [2m◼[22m Generate to ./src/graphql/__generated__/react-query.ts
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
-[33m❯[39m Generate outputs
-  [93m⠋[39m Generate to ./src/graphql/__generated__/
-  [93m⠋[39m Generate to ./src/graphql/__generated__/react-query.ts
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
-[33m❯[39m Generate outputs
-  [93m⠋[39m Generate to ./src/graphql/__generated__/
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
-[33m❯[39m Generate outputs
-  [93m⠋[39m Generate to ./src/graphql/__generated__/
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
+  [33m❯[39m Generate to ./src/graphql/__generated__/
     [2m◼[22m Load GraphQL schemas
+[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[33m❯[39m Generate outputs
+  [33m❯[39m Generate to ./src/graphql/__generated__/
+    [2m◼[22m Load GraphQL schemas
+    [2m◼[22m Load GraphQL documents
 [?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
-  [93m⠋[39m Generate to ./src/graphql/__generated__/
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
+  [33m❯[39m Generate to ./src/graphql/__generated__/
     [2m◼[22m Load GraphQL schemas
     [2m◼[22m Load GraphQL documents
+    [2m◼[22m Generate
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[33m❯[39m Generate outputs
+  [33m❯[39m Generate to ./src/graphql/__generated__/
+    [93m⠋[39m Load GraphQL schemas
+    [2m◼[22m Load GraphQL documents
+    [2m◼[22m Generate
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[33m❯[39m Generate outputs
+  [33m❯[39m Generate to ./src/graphql/__generated__/
+    [32m✔[39m Load GraphQL schemas
+    [2m◼[22m Load GraphQL documents
+    [2m◼[22m Generate
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[33m❯[39m Generate outputs
+  [33m❯[39m Generate to ./src/graphql/__generated__/
+    [32m✔[39m Load GraphQL schemas
+    [93m⠋[39m Load GraphQL documents
+    [2m◼[22m Generate
 [?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
-  [93m⠋[39m Generate to ./src/graphql/__generated__/
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [2m◼[22m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
+  [33m❯[39m Generate to ./src/graphql/__generated__/
+    [32m✔[39m Load GraphQL schemas
+    [93m⠙[39m Load GraphQL documents
     [2m◼[22m Generate
-[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
   [33m❯[39m Generate to ./src/graphql/__generated__/
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [2m◼[22m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
+    [32m✔[39m Load GraphQL schemas
+    [32m✔[39m Load GraphQL documents
     [2m◼[22m Generate
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
   [33m❯[39m Generate to ./src/graphql/__generated__/
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [93m⠋[39m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+    [32m✔[39m Load GraphQL schemas
+    [32m✔[39m Load GraphQL documents
+    [93m⠙[39m Generate
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
   [33m❯[39m Generate to ./src/graphql/__generated__/
-    [2m◼[22m Load GraphQL schemas
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [93m⠋[39m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+    [32m✔[39m Load GraphQL schemas
+    [32m✔[39m Load GraphQL documents
+    [32m✔[39m Generate
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
 [33m❯[39m Generate outputs
-  [33m❯[39m Generate to ./src/graphql/__generated__/
-    [2m◼[22m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [93m⠋[39m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
-[33m❯[39m Generate outputs
-  [33m❯[39m Generate to ./src/graphql/__generated__/
-    [2m◼[22m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [93m⠋[39m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
-[33m❯[39m Generate outputs
-  [33m❯[39m Generate to ./src/graphql/__generated__/
-    [93m⠋[39m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [93m⠋[39m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
-[33m❯[39m Generate outputs
-  [33m❯[39m Generate to ./src/graphql/__generated__/
-    [93m⠋[39m Load GraphQL schemas
-    [2m◼[22m Load GraphQL documents
-    [2m◼[22m Generate
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [31m✖[39m Load GraphQL schemas
-    [31m◼[39m Load GraphQL documents
-    [31m◼[39m Generate
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
-[33m❯[39m Generate outputs
-  [33m❯[39m Generate to ./src/graphql/__generated__/
-    [31m✖[39m Load GraphQL schemas
-    [31m◼[39m Load GraphQL documents
-    [31m◼[39m Generate
-  [33m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [31m✖[39m Load GraphQL schemas
-    [31m◼[39m Load GraphQL documents
-    [31m◼[39m Generate
-[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[Gconnect ECONNREFUSED 127.0.0.1:4000
-
-      GraphQL Code Generator supports:
-
-      - ES Modules and CommonJS exports (export as default or named export "schema")
-      - Introspection JSON File
-      - URL of GraphQL endpoint
-      - Multiple files with type definitions (glob expression)
-      - String in config file
-
-      Try to use one of above options and run codegen again.
-
-    [31m◼[39m Load GraphQL documents
-    [31m◼[39m Generate
-[?25l[?25l[?25l[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[?25h[32m✔[39m Parse Configuration
-[33m⚠[39m Generate outputs
-  [31m❯[39m Generate to ./src/graphql/__generated__/
-    [31m✖[39m Failed to load schema from http://localhost:4000/graphql:
-      connect ECONNREFUSED 127.0.0.1:4000
-
-      GraphQL Code Generator supports:
-
-      - ES Modules and CommonJS exports (export as default or named export "schema")
-      - Introspection JSON File
-      - URL of GraphQL endpoint
-      - Multiple files with type definitions (glob expression)
-      - String in config file
-
-      Try to use one of above options and run codegen again.
-
-    [31m◼[39m Load GraphQL documents
-    [31m◼[39m Generate
-  [31m❯[39m Generate to ./src/graphql/__generated__/react-query.ts
-    [31m✖[39m Failed to load schema from http://localhost:4000/graphql:
-      connect ECONNREFUSED 127.0.0.1:4000
-
-      GraphQL Code Generator supports:
-
-      - ES Modules and CommonJS exports (export as default or named export "schema")
-      - Introspection JSON File
-      - URL of GraphQL endpoint
-      - Multiple files with type definitions (glob expression)
-      - String in config file
-
-      Try to use one of above options and run codegen again.
-
-    [31m◼[39m Load GraphQL documents
-    [31m◼[39m Generate
-[?25h[41m[30m ELIFECYCLE [39m[49m [31mCommand failed with exit code 1.[39m
+  [32m✔[39m Generate to ./src/graphql/__generated__/
+[?25l[?25l[2K[1A[2K[1A[2K[1A[2K[G[32m✔[39m Parse Configuration
+[32m✔[39m Generate outputs
+[2K[1A[2K[1A[2K[G[?25h[32m✔[39m Parse Configuration
+[32m✔[39m Generate outputs
+[?25h

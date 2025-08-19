@@ -10,25 +10,25 @@ const config: CodegenConfig = {
   generates: {
     './src/graphql/__generated__/': {
       preset: 'client',
-      plugins: [],
+      plugins: ['typescript'],
     },
-    './src/graphql/__generated__/react-query.ts': {
-      plugins: [
-        'typescript',
-        'typescript-operations',
-        'typescript-react-query',
-      ],
-      config: {
-        fetcher: {
-          func: '../client#gqlClient.request',
-          isReactHook: false,
-        },
-        exposeFetcher: true,
-        exposeQueryKeys: true,
-        addSuspenseQuery: true,
-        reactQueryVersion: 5,
-      },
-    },
+    // './src/graphql/__generated__/react-query.ts': {
+    //   plugins: [
+    //     'typescript',
+    //     'typescript-operations',
+    //     'typescript-react-query',
+    //   ],
+    //   config: {
+    //     fetcher: {
+    //       func: '../client#gqlClient.request',
+    //       isReactHook: false,
+    //     },
+    //     exposeFetcher: true,
+    //     exposeQueryKeys: true,
+    //     addSuspenseQuery: true,
+    //     reactQueryVersion: 5,
+    //   },
+    // },
   },
 };
 
