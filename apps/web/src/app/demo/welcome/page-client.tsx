@@ -1,6 +1,6 @@
 'use client';
 
-import { useGetEventsQuery } from '../graphql/__generated__/react-query';
+import { useGetEventsQuery } from '@/hooks/useEvents';
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -11,8 +11,8 @@ function formatDate(dateString: string): string {
   });
 }
 
-export default function HomePage() {
-  const { data, isLoading, error } = useGetEventsQuery({ limit: 10 });
+export const WelcomePage = () => {
+  const { data, isLoading, error } = useGetEventsQuery();
 
   if (isLoading) {
     return (
@@ -70,4 +70,4 @@ export default function HomePage() {
       </div>
     </div>
   );
-}
+};

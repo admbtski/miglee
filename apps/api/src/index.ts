@@ -1,17 +1,21 @@
+import { config } from './env';
 import { createServer } from './server';
-import { env } from './env';
 
 async function start() {
   try {
     const server = await createServer();
 
     await server.listen({
-      port: env.PORT,
-      host: '0.0.0.0',
+      host: config.host,
+      port: config.port,
     });
 
-    console.log(`🚀 Server running at http://localhost:${env.PORT}`);
-    console.log(`📊 GraphQL endpoint: http://localhost:${env.PORT}/graphql`);
+    const infos = [
+      `🚀 Server running at http://${config.host}:${config.port}`,
+      `📊 GraphQL endpoint: http://${config.host}:${config.port}/graphql`,
+    ];
+
+    infos.forEach((info) => server.log.info(info));
   } catch (error) {
     console.error('Error starting server:', error);
     process.exit(1);

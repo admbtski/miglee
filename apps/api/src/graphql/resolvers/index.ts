@@ -1,42 +1,12 @@
-import { Resolvers } from '../__generated__/resolvers-types';
 import { prisma } from '../../lib/prisma';
-import { GraphQLError, GraphQLScalarType, Kind } from 'graphql';
+import { Event, Resolvers } from '../__generated__/resolvers-types';
 
-export const DateTimeScalar = new GraphQLScalarType<Date | null, string>({
-  name: 'DateTime',
-  description: 'ISO-8601 DateTime scalar (outputs Date -> ISO string)',
-  serialize(value): string {
-    const d = value instanceof Date ? value : new Date(value as any);
-    if (Number.isNaN(d.getTime())) {
-      throw new GraphQLError('DateTime.serialize: Invalid Date');
-    }
-    return d.toISOString();
-  },
-  parseValue(value): Date | null {
-    if (
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      value instanceof Date
-    ) {
-      const d = value instanceof Date ? value : new Date(value);
-      return Number.isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-  },
-  parseLiteral(ast): Date | null {
-    if (ast.kind === Kind.STRING || ast.kind === Kind.INT) {
-      const d = new Date(ast.value as any);
-      return Number.isNaN(d.getTime()) ? null : d;
-    }
-    return null;
-  },
-});
+// codegen generates type for each entity, so we need to extract query, mutation and subscription
+type ResolversType = Pick<Resolvers, 'Query'>;
 
-export const resolvers: Resolvers = {
-  DateTime: DateTimeScalar,
+export const resolvers: ResolversType = {
   Query: {
-    events: async (_parent, args) => {
-      // Clamp limit between 1 and 100
+    events: async (_parent, args, ctx): Promise<Event[]> => {
       const limit = Math.max(1, Math.min(args.limit || 10, 100));
 
       const events = await prisma.event.findMany({
@@ -46,7 +16,11 @@ export const resolvers: Resolvers = {
         },
       });
 
-      return events;
+      return events.map(({ createdAt, id, title }) => ({
+        id,
+        title,
+        createdAt,
+      }));
     },
   },
 };

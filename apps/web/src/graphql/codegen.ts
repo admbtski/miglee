@@ -8,27 +8,24 @@ const config: CodegenConfig = {
     '../../packages/contracts/graphql/operations/**/*.graphql'
   ),
   generates: {
-    './src/graphql/__generated__/': {
+    './src/graphql/__generated__/react-query.ts': {
+      plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
       preset: 'client',
-      plugins: ['typescript'],
+      config: {
+        useTypeImports: true,
+        useImplementingTypes: true,
+        dedupeFragments: true,
+        emitLegacyCommonJSImports: false,
+        extractAllFieldsToTypes: true,
+        flattenGeneratedTypes: true,
+        flattenGeneratedTypesIncludeFragments: true,
+        inlineFragmentTypes: 'combine',
+        namingConvention: {
+          typeNames: 'change-case-all#pascalCase',
+          transformUnderscore: true,
+        },
+      },
     },
-    // './src/graphql/__generated__/react-query.ts': {
-    //   plugins: [
-    //     'typescript',
-    //     'typescript-operations',
-    //     'typescript-react-query',
-    //   ],
-    //   config: {
-    //     fetcher: {
-    //       func: '../client#gqlClient.request',
-    //       isReactHook: false,
-    //     },
-    //     exposeFetcher: true,
-    //     exposeQueryKeys: true,
-    //     addSuspenseQuery: true,
-    //     reactQueryVersion: 5,
-    //   },
-    // },
   },
 };
 

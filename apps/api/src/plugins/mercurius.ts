@@ -1,12 +1,11 @@
-import { FastifyPluginAsync } from 'fastify';
-import mercurius from 'mercurius';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-
-import { resolvers } from '../graphql/resolvers/index';
+import { FastifyPluginAsync } from 'fastify';
+import { readFileSync } from 'fs';
+import mercurius from 'mercurius';
+import { join } from 'path';
+import { config } from '../env';
 import { createContext } from '../graphql/context';
-import { env } from '../env';
+import { resolvers } from '../graphql/resolvers/index';
 
 export const mercuriusPlugin: FastifyPluginAsync = async (fastify) => {
   // Read schema from contracts package
@@ -24,7 +23,7 @@ export const mercuriusPlugin: FastifyPluginAsync = async (fastify) => {
   await fastify.register(mercurius, {
     schema,
     context: createContext,
-    graphiql: env.NODE_ENV !== 'production',
+    graphiql: !config.isProduction,
     subscription: false,
   });
 };

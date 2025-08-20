@@ -8,22 +8,25 @@ const config: CodegenConfig = {
   ),
   generates: {
     './src/graphql/__generated__/resolvers-types.ts': {
-      plugins: ['typescript', 'typescript-resolvers'],
+      plugins: ['add', 'typescript', 'typescript-resolvers'],
       config: {
-        contextType: '../context#GQLContext',
-        mappers: {
-          Event: '@prisma/client#Event',
-        },
+        content: "import { MercuriusContext } from 'mercurius';",
         useIndexSignature: true,
+        avoidOptionals: true,
+        useTypeImports: true,
+        strictScalars: true,
+        skipTypename: true,
+        namingConvention: {
+          typeNames: 'change-case-all#pascalCase',
+          transformUnderscore: true,
+        },
         scalars: {
           DateTime: {
             input: 'Date | string | number',
             output: 'Date',
           },
         },
-        scalarsOverride: {
-          DateTime: 'GraphQLScalarType',
-        },
+        contextType: 'MercuriusContext',
       },
     },
   },
