@@ -2,7 +2,7 @@
   "extends": "@miglee/config/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDirs": ["src", "prisma"],
     "noEmit": false
   },
   "include": ["src/**/*", "prisma/**/*"],

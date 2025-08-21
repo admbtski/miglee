@@ -10,6 +10,7 @@ import { mercuriusPlugin } from './plugins/mercurius';
 import { sensiblePlugin } from './plugins/sensible';
 
 import { config } from './env';
+import { rateLimitPlugin } from './plugins/rate-limit';
 /**
  * Generate a stable request id.
  * - Reuse X-Request-Id from proxy if present.
@@ -34,6 +35,7 @@ export async function createServer() {
   });
 
   // plugins
+  await server.register(rateLimitPlugin);
   await server.register(corsPlugin);
   await server.register(helmetPlugin);
   await server.register(sensiblePlugin);

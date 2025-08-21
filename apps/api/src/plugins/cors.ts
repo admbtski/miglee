@@ -1,9 +1,9 @@
 import cors from '@fastify/cors';
-import { FastifyPluginAsync } from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
 import { buildCorsChecker } from '../lib/cors';
 
 // todo: improve comfig
-export const corsPlugin: FastifyPluginAsync = async (fastify) => {
+export const corsPlugin = fastifyPlugin(async (fastify) => {
   const isProd = process.env.NODE_ENV === 'production';
   const allowOrigin = buildCorsChecker(process.env.CORS_ORIGINS, !isProd);
 
@@ -21,4 +21,4 @@ export const corsPlugin: FastifyPluginAsync = async (fastify) => {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Content-Length'],
   });
-};
+});

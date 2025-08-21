@@ -90,11 +90,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/public/favicon.ico" key="favicon" />
-      </head>
-      <body className={nextFont.className}>{children}</body>
+    <html lang="en">
+      <body suppressHydrationWarning className={nextFont.className}>
+        {children}
+      </body>
     </html>
   );
 }

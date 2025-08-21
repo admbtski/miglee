@@ -1,7 +1,7 @@
 import sensible from '@fastify/sensible';
-import { FastifyPluginAsync } from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
 
 // todo: improve comfig
-export const sensiblePlugin: FastifyPluginAsync = async (fastify) => {
+export const sensiblePlugin = fastifyPlugin(async (fastify) => {
   await fastify.register(sensible);
-};
+});

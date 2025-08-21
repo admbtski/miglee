@@ -1,5 +1,5 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { FastifyPluginAsync } from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
 import { readFileSync } from 'fs';
 import mercurius from 'mercurius';
 import { join } from 'path';
@@ -7,7 +7,8 @@ import { config } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers/index';
 
-export const mercuriusPlugin: FastifyPluginAsync = async (fastify) => {
+// todo: improve comfig
+export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   // Read schema from contracts package
   const schemaPath = join(
     process.cwd(),
@@ -26,4 +27,4 @@ export const mercuriusPlugin: FastifyPluginAsync = async (fastify) => {
     graphiql: !config.isProduction,
     subscription: false,
   });
-};
+});

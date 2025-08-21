@@ -1,7 +1,8 @@
-import { FastifyPluginAsync } from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
 import { prisma } from '../lib/prisma';
 
-export const healthPlugin: FastifyPluginAsync = async (fastify) => {
+// todo: improve comfig
+export const healthPlugin = fastifyPlugin(async (fastify) => {
   fastify.get('/health', async () => {
     try {
       await prisma.$queryRaw`SELECT 1`;
@@ -10,4 +11,4 @@ export const healthPlugin: FastifyPluginAsync = async (fastify) => {
       return { ok: false, db: false };
     }
   });
-};
+});

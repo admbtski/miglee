@@ -1,10 +1,10 @@
-import { FastifyPluginAsync } from 'fastify';
 import helmet from '@fastify/helmet';
 
+import fastifyPlugin from 'fastify-plugin';
 import { config } from '../env';
 
 // todo: improve comfig
-export const helmetPlugin: FastifyPluginAsync = async (fastify) => {
+export const helmetPlugin = fastifyPlugin(async (fastify) => {
   await fastify.register(helmet, {
     contentSecurityPolicy: config.isProduction
       ? {
@@ -24,4 +24,4 @@ export const helmetPlugin: FastifyPluginAsync = async (fastify) => {
         }
       : false,
   });
-};
+});

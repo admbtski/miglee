@@ -44,15 +44,15 @@ importers:
       '@fastify/cors':
         specifier: ^11.1.0
         version: 11.1.0
-      '@fastify/env':
-        specifier: ^5.0.2
-        version: 5.0.2
       '@fastify/helmet':
         specifier: ^13.0.1
         version: 13.0.1
       '@fastify/jwt':
         specifier: ^10.0.0
         version: 10.0.0
+      '@fastify/rate-limit':
+        specifier: ^10.3.0
+        version: 10.3.0
       '@fastify/sensible':
         specifier: ^6.0.3
         version: 6.0.3
@@ -71,6 +71,9 @@ importers:
       fastify:
         specifier: ^5.5.0
         version: 5.5.0
+      fastify-plugin:
+        specifier: ^5.0.1
+        version: 5.0.1
       graphql:
         specifier: ^16.11.0
         version: 16.11.0
@@ -525,9 +528,6 @@ packages:
   '@fastify/cors@11.1.0':
     resolution: {integrity: sha512-sUw8ed8wP2SouWZTIbA7V2OQtMNpLj2W6qJOYhNdcmINTu6gsxVYXjQiM9mdi8UUDlcoDDJ/W2syPo1WB2QjYA==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/@fastify/cors/-/cors-11.1.0.tgz}
 
-  '@fastify/env@5.0.2':
-    resolution: {integrity: sha512-4m/jHS3s/G/DBJVODob9sxGUei/Ij8JFbA2PYqBfoihTm+Qqae2xD9xhez68UFZu1d4SNJPIb6uAOwbNvRYw+A==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/@fastify/env/-/env-5.0.2.tgz}
-
   '@fastify/error@4.2.0':
     resolution: {integrity: sha512-RSo3sVDXfHskiBZKBPRgnQTtIqpi/7zhJOEmAxCiBcM7d0uwdGdxLlsCaLzGs8v8NnxIRlfG0N51p5yFaOentQ==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/@fastify/error/-/error-4.2.0.tgz}
 
@@ -551,6 +551,9 @@ packages:
 
   '@fastify/proxy-addr@5.0.0':
     resolution: {integrity: sha512-37qVVA1qZ5sgH7KpHkkC4z9SK6StIsIcOmpjvMPXNb3vx2GQxhZocogVYbr2PbbeLCQxYIPDok307xEvRZOzGA==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/@fastify/proxy-addr/-/proxy-addr-5.0.0.tgz}
+
+  '@fastify/rate-limit@10.3.0':
+    resolution: {integrity: sha512-eIGkG9XKQs0nyynatApA3EVrojHOuq4l6fhB4eeCk4PIOeadvOJz9/4w3vGI44Go17uaXOWEcPkaD8kuKm7g6Q==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/@fastify/rate-limit/-/rate-limit-10.3.0.tgz}
 
   '@fastify/send@4.1.0':
     resolution: {integrity: sha512-TMYeQLCBSy2TOFmV95hQWkiTYgC/SEx7vMdV+wnZVX4tt8VBLKzmH8vV9OzJehV0+XBfg+WxPMt5wp+JBUKsVw==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/@fastify/send/-/send-4.1.0.tgz}
@@ -1867,10 +1870,6 @@ packages:
   dot-case@3.0.4:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/dot-case/-/dot-case-3.0.4.tgz}
 
-  dotenv-expand@10.0.0:
-    resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/dotenv-expand/-/dotenv-expand-10.0.0.tgz}
-    engines: {node: '>=12'}
-
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/dotenv/-/dotenv-16.6.1.tgz}
     engines: {node: '>=12'}
@@ -1918,9 +1917,6 @@ packages:
   enhanced-resolve@5.18.3:
     resolution: {integrity: sha512-d4lC8xfavMeBjzGr2vECC3fsGXziXZQyJxD868h2M/mBI3PwAuODxAkLkq5HYuvrPYcUtiLzsTo8U3PgX3Ocww==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/enhanced-resolve/-/enhanced-resolve-5.18.3.tgz}
     engines: {node: '>=10.13.0'}
-
-  env-schema@6.0.1:
-    resolution: {integrity: sha512-WRD40Q25pP4NUbI3g3CNU5PPzcaiX7YYcPwiCZlfR4qGsKmTlckRixgHww0/fOXiXSNKA87pwshzq0ULTK/48A==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/env-schema/-/env-schema-6.0.1.tgz}
 
   error-ex@1.3.2:
     resolution: {integrity: sha512-7dFHNmqeFSEt2ZBsCriorKnn3Z2pj+fd9kmI6QoWw4//DL+icEBfc0U7qJCisqrTsKTjw4fNFy2pW9OqStD84g==, tarball: https://artifacts.nvtvt.com:443/artifactory/api/npm/npm-online/error-ex/-/error-ex-1.3.2.tgz}
@@ -4203,11 +4199,6 @@ snapshots:
       fastify-plugin: 5.0.1
       toad-cache: 3.7.0
 
-  '@fastify/env@5.0.2':
-    dependencies:
-      env-schema: 6.0.1
-      fastify-plugin: 5.0.1
-
   '@fastify/error@4.2.0': {}
 
   '@fastify/fast-json-stringify-compiler@5.0.3':
@@ -4241,6 +4232,12 @@ snapshots:
     dependencies:
       '@fastify/forwarded': 3.0.0
       ipaddr.js: 2.2.0
+
+  '@fastify/rate-limit@10.3.0':
+    dependencies:
+      '@lukeed/ms': 2.0.2
+      fastify-plugin: 5.0.1
+      toad-cache: 3.7.0
 
   '@fastify/send@4.1.0':
     dependencies:
@@ -5760,8 +5757,6 @@ snapshots:
       no-case: 3.0.4
       tslib: 2.8.1
 
-  dotenv-expand@10.0.0: {}
-
   dotenv@16.6.1: {}
 
   dotenv@17.2.1: {}
@@ -5808,12 +5803,6 @@ snapshots:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.2.2
-
-  env-schema@6.0.1:
-    dependencies:
-      ajv: 8.17.1
-      dotenv: 16.6.1
-      dotenv-expand: 10.0.0
 
   error-ex@1.3.2:
     dependencies:

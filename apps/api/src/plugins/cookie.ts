@@ -1,9 +1,9 @@
 import cookie from '@fastify/cookie';
-import { FastifyPluginAsync } from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
 import { config } from '../env';
 
 // todo: improve comfig
-export const cookiePlugin: FastifyPluginAsync = async (fastify) => {
+export const cookiePlugin = fastifyPlugin(async (fastify) => {
   await fastify.register(cookie, {
     secret: config.jwtSecret,
     parseOptions: {
@@ -13,4 +13,4 @@ export const cookiePlugin: FastifyPluginAsync = async (fastify) => {
       path: '/',
     },
   });
-};
+});

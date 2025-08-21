@@ -1,9 +1,9 @@
 import jwt from '@fastify/jwt';
-import { FastifyPluginAsync } from 'fastify';
+import fastifyPlugin from 'fastify-plugin';
 import { config } from '../env';
 
 // todo: improve comfig
-export const jwtPlugin: FastifyPluginAsync = async (fastify) => {
+export const jwtPlugin = fastifyPlugin(async (fastify) => {
   await fastify.register(jwt, {
     secret: config.jwtSecret,
     cookie: {
@@ -24,4 +24,4 @@ export const jwtPlugin: FastifyPluginAsync = async (fastify) => {
       clockTolerance: 5, // sekundy tolerancji zegara
     },
   });
-};
+});
