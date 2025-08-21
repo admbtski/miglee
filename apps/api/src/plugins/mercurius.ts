@@ -1,8 +1,10 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
+import { FastifyRequest } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
 import { readFileSync } from 'fs';
 import mercurius from 'mercurius';
 import { join } from 'path';
+import { WebSocket } from 'ws';
 import { config } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers/index';
@@ -25,6 +27,19 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
     schema,
     context: createContext,
     graphiql: !config.isProduction,
-    subscription: false,
+    subscription: {
+      onConnect: async (data: {
+        payload: { headers: { Authorization: string } };
+      }) => {
+        return data;
+      },
+      context: async (socket: WebSocket, req: FastifyRequest) => {
+        await 1;
+        return {
+          req,
+          // prisma,
+        };
+      },
+    },
   });
 });

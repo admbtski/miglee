@@ -10,7 +10,7 @@ const config: CodegenConfig = {
   generates: {
     './src/graphql/__generated__/react-query.ts': {
       plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
-      preset: 'client',
+      // preset: 'client',
       config: {
         useTypeImports: true,
         useImplementingTypes: true,

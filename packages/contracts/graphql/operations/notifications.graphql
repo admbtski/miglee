@@ -1,0 +1,20 @@
+query GetNotifications {
+  notifications {
+    id
+    message
+  }
+}
+
+mutation AddNotification($message: String!) {
+  addNotification(message: $message) {
+    id
+    message
+  }
+}
+
+subscription NotificationAdded {
+  notificationAdded {
+    id
+    message
+  }
+}

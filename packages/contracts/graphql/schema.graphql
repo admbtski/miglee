@@ -6,6 +6,20 @@ type Event {
   createdAt: DateTime!
 }
 
+type Notification {
+  id: ID!
+  message: String
+}
+
 type Query {
   events(limit: Int = 10): [Event!]!
+  notifications: [Notification!]!
+}
+
+type Mutation {
+  addNotification(message: String): Notification
+}
+
+type Subscription {
+  notificationAdded: Notification
 }

@@ -5,56 +5,78 @@ import {
 } from '@/graphql/__generated__/react-query';
 import { gqlClient } from '@/graphql/client';
 import {
-  queryOptions,
-  useQuery,
+  QueryKey,
   UseQueryOptions,
-  useSuspenseQuery,
   UseSuspenseQueryOptions,
+  useQuery,
+  useSuspenseQuery,
 } from '@tanstack/react-query';
 
-// Shared builder for both normal and suspense queries
-// - Keeps queryKey and queryFn in one place
-// - Accepts either UseQueryOptions or UseSuspenseQueryOptions
-export const buildEventsOptions = <
-  TOpts extends
-    | Omit<UseQueryOptions<GetEventsQuery>, 'queryKey' | 'queryFn'>
-    | Omit<UseSuspenseQueryOptions<GetEventsQuery>, 'queryKey' | 'queryFn'>,
->(
-  variables?: GetEventsQueryVariables,
-  options?: TOpts
-) =>
-  queryOptions({
-    // Ensure stable key, include variables if provided
-    queryKey: variables ? ['GetEvents', variables] : ['GetEvents'],
+function eventsQueryKey(variables?: GetEventsQueryVariables): QueryKey {
+  return variables ? ['GetEvents', variables] : ['GetEvents'];
+}
 
-    // Query function executed by React Query
-    queryFn: async () =>
-      gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
-        GetEventsDocument,
-        variables as GetEventsQueryVariables
-      ),
-
-    // Spread additional options from caller
-    ...(options ?? {
-      refetchInterval: 2000,
-    }),
-  });
-
-// Standard query hook (with loading state handling)
-export const useGetEventsQuery = (
-  variables?: GetEventsQueryVariables,
-  options?: Omit<UseQueryOptions<GetEventsQuery>, 'queryKey' | 'queryFn'>
-) => {
-  return useQuery(buildEventsOptions(variables, options));
-};
-
-// Suspense query hook (throws promises, must be used inside <Suspense>)
-export const useSuspenseGetEventsQuery = (
+export function buildEventsOptions(
   variables?: GetEventsQueryVariables,
   options?: Omit<
-    UseSuspenseQueryOptions<GetEventsQuery>,
+    UseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey>,
     'queryKey' | 'queryFn'
   >
-) => {
-  return useSuspenseQuery(buildEventsOptions(variables, options));
-};
+): UseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey> {
+  return {
+    queryKey: eventsQueryKey(variables),
+    queryFn: async () => {
+      // ⬇️ kluczowa zmiana: wywołanie warunkowe
+      if (variables) {
+        return gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
+          GetEventsDocument,
+          variables
+        );
+      }
+      return gqlClient.request<GetEventsQuery>(GetEventsDocument);
+    },
+    ...(options ?? {}),
+  };
+}
+
+export function buildEventsSuspenseOptions(
+  variables?: GetEventsQueryVariables,
+  options?: Omit<
+    UseSuspenseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+): UseSuspenseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey> {
+  return {
+    queryKey: eventsQueryKey(variables),
+    queryFn: async () => {
+      if (variables) {
+        return gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
+          GetEventsDocument,
+          variables
+        );
+      }
+      return gqlClient.request<GetEventsQuery>(GetEventsDocument);
+    },
+    ...(options ?? {}),
+  };
+}
+
+export function useGetEventsQuery(
+  variables?: GetEventsQueryVariables,
+  options?: Omit<
+    UseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery(buildEventsOptions(variables, options));
+}
+
+export function useSuspenseGetEventsQuery(
+  variables?: GetEventsQueryVariables,
+  options?: Omit<
+    UseSuspenseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useSuspenseQuery(buildEventsSuspenseOptions(variables, options));
+}
