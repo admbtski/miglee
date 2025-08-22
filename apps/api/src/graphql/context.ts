@@ -5,11 +5,11 @@ export async function createContext(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  console.dir({ h: request.headers });
   return {
     request,
     reply,
     user: userMock.user,
+    pubsub: request.server.graphql.pubsub,
   };
 }
 

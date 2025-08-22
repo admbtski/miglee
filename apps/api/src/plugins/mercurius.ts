@@ -9,6 +9,7 @@ import { config } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers/index';
 import { userMock } from '../mock/user-mock';
+import { redisEmitter } from '../lib/redis';
 
 // todo: improve comfig
 export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
@@ -29,20 +30,24 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
     context: createContext,
     graphiql: !config.isProduction,
     subscription: {
+      emitter: redisEmitter,
+      fullWsTransport: true,
+      onDisconnect: () => fastify.log.info('WS disconnect'),
       onConnect: async (data: {
         payload: { headers: { Authorization: string } };
       }) => {
-        console.dir({ data }, { depth: null });
-        return data;
+        // todo: decore auth and replace test123 with user
+        return {
+          test123: 'test123',
+        };
       },
       context: async (socket: WebSocket, req: FastifyRequest) => {
         await 1;
 
-        console.dir({ test: req.headers });
-
         return {
           req,
           user: userMock.user,
+          pubsub: fastify.graphql.pubsub,
         };
       },
     },
