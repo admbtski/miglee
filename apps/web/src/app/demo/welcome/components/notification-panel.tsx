@@ -1,34 +1,42 @@
 'use client';
 
+import {
+  GetNotificationsQuery,
+  Notification,
+  Subscription,
+} from '@/graphql/__generated__/react-query';
 import { useAddNotificationMutation } from '@/hooks/useAddNotification';
 import { useNotificationAdded } from '@/hooks/useNotificationAdded';
 import { useGetNotificationsQuery } from '@/hooks/useNotifications';
 import { getQueryClient } from '@/libs/query-client/query-client';
+import { create } from 'mutative';
 import { FormEvent, useState } from 'react';
-
-type Notification = { id: string; message: string };
 
 export function NotificationsPanel() {
   const qc = getQueryClient();
   const [message, setMessage] = useState('');
 
-  // Lista notyfikacji
   const { data, isLoading, isFetching, isError } = useGetNotificationsQuery();
   const notifications = (data?.notifications ?? []) as Notification[];
 
-  // Mutacja (po sukcesie czyścimy input)
   const { mutate: addNotification, isPending } = useAddNotificationMutation({
     onSuccess: () => setMessage(''),
   });
 
-  // Subskrypcja realtime — dopina do cache + deduplikacja po id
-  const { connected } = useNotificationAdded((n) => {
-    qc.setQueryData(['GetNotifications'], (old: any) => {
-      const current: Notification[] = old?.notifications ?? [];
-      if (current.some((x) => x.id === n.id)) return old;
-      return { notifications: [n, ...current] };
-    });
-  });
+  const { connected } = useNotificationAdded(
+    (n: Subscription['notificationAdded']) => {
+      qc.setQueryData(['GetNotifications'], (old: GetNotificationsQuery) =>
+        create(old ?? { notifications: [] }, (draft: GetNotificationsQuery) => {
+          if (!draft.notifications.some((x) => x.id === n.id)) {
+            draft.notifications.unshift({
+              id: n.id,
+              message: n.message ?? '', // 🔥 fallback null
+            });
+          }
+        })
+      );
+    }
+  );
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

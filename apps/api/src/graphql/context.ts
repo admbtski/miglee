@@ -1,18 +1,15 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { MercuriusContext } from 'mercurius';
-
-// export interface GQLContext extends MercuriusContext {
-//   request: FastifyRequest;
-//   reply: FastifyReply;
-// }
+import { userMock } from '../mock/user-mock';
 
 export async function createContext(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
+  console.dir({ h: request.headers });
   return {
     request,
     reply,
+    user: userMock.user,
   };
 }
 

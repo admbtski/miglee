@@ -1,9 +1,4 @@
-import {
-  Client,
-  createClient,
-  EventClosedListener,
-  TerminatedCloseEvent,
-} from 'graphql-ws';
+import { Client, createClient } from 'graphql-ws';
 
 let wsClient: Client | null = null;
 
@@ -41,7 +36,9 @@ export function createWsClient(): Client {
 
       return {
         headers: {
-          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+          Authorization: accessToken
+            ? `Bearer ${accessToken}`
+            : 'Authorization test',
         },
       };
     },

@@ -26,7 +26,6 @@ export function buildEventsOptions(
   return {
     queryKey: eventsQueryKey(variables),
     queryFn: async () => {
-      // ⬇️ kluczowa zmiana: wywołanie warunkowe
       if (variables) {
         return gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
           GetEventsDocument,

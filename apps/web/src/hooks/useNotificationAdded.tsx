@@ -5,7 +5,6 @@ import type { Client, SubscribePayload } from 'graphql-ws';
 import { print } from 'graphql';
 import { getWsClient } from '@/graphql/wsClient';
 
-// typy z codegena
 import {
   NotificationAddedDocument,
   type NotificationAddedSubscription,
@@ -52,7 +51,6 @@ export function useNotificationAdded(onMessage?: OnMessage): {
         const client = (await getWsClient()) as Client;
         if (!isActive || mySession !== sessionRef.current) return;
 
-        // 👇 Zamiana TypedDocumentNode -> string (wymóg Twojego SubscribePayload)
         const payload: SubscribePayload = {
           query: print(NotificationAddedDocument),
           // variables: {} // jeśli kiedyś dodasz zmienne do subskrypcji

@@ -1,10 +1,10 @@
-import type { QueryKey } from '@tanstack/react-query';
 import {
   GetNotificationsDocument,
   GetNotificationsQuery,
   GetNotificationsQueryVariables,
 } from '@/graphql/__generated__/react-query';
 import { gqlClient } from '@/graphql/client';
+import type { QueryKey } from '@tanstack/react-query';
 import {
   UseQueryOptions,
   UseSuspenseQueryOptions,

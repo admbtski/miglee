@@ -1,9 +1,4 @@
 import {
-  useMutation,
-  UseMutationOptions,
-  QueryKey,
-} from '@tanstack/react-query';
-import {
   AddNotificationDocument,
   AddNotificationMutation,
   AddNotificationMutationVariables,
@@ -11,15 +6,16 @@ import {
 } from '@/graphql/__generated__/react-query';
 import { gqlClient } from '@/graphql/client';
 import { getQueryClient } from '@/libs/query-client/query-client';
+import {
+  QueryKey,
+  useMutation,
+  UseMutationOptions,
+} from '@tanstack/react-query';
 
 const GET_NOTIFICATIONS_KEY = ['GetNotifications'] as const;
 
 type Ctx = { previous?: GetNotificationsQuery | undefined };
 
-/**
- * Jawnie typowany builder: zwraca UseMutationOptions z @tanstack/react-query
- * (bez przecieków do @tanstack/query-core).
- */
 export function buildAddNotificationOptions<TContext = unknown>(
   options?: UseMutationOptions<
     AddNotificationMutation,

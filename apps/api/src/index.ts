@@ -12,7 +12,8 @@ async function start() {
 
     const infos = [
       `🚀 Server running at http://${config.host}:${config.port}`,
-      `📊 GraphQL endpoint: http://${config.host}:${config.port}/graphql`,
+      `🌍 GraphQL endpoint: http://${config.host}:${config.port}/graphql`,
+      `🦄 WS endpoint: ws://${config.host}:${config.port}/graphql`,
     ];
 
     infos.forEach((info) => server.log.info(info));

@@ -91,7 +91,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning className={nextFont.className}>
+      <body
+        suppressHydrationWarning
+        className={`${nextFont.className} w-full min-h-screen`}
+      >
         {children}
       </body>
     </html>
