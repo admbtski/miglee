@@ -12,6 +12,7 @@ import {
 } from 'next/font/google';
 
 import '../styles/globals.css';
+import { WebVitals } from '@/libs/web-vitals/web-vitals';
 
 // const nextFont = Inter({ subsets: ['latin'] });
 const nextFont = Poppins({
@@ -95,6 +96,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${nextFont.className} w-full min-h-screen`}
       >
+        <WebVitals />
         {children}
       </body>
     </html>

@@ -11,7 +11,8 @@
     "lint": "turbo run lint",
     "gql:gen": "turbo run gql:gen",
     "db:up": "docker-compose -f docker/docker-compose.dev.yml up -d",
-    "db:down": "docker-compose -f docker/docker-compose.dev.yml down"
+    "db:down": "docker-compose -f docker/docker-compose.dev.yml down",
+    "db:logs": "docker-compose -f docker/docker-compose.dev.yml logs -f"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.40.0",
