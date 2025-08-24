@@ -1,3 +1,5 @@
+import './lib/otel';
+
 import Fastify, { RawRequestDefaultExpression, RawServerBase } from 'fastify';
 
 import { buildLogger } from './lib/pino';
@@ -11,6 +13,7 @@ import { sensiblePlugin } from './plugins/sensible';
 
 import { config } from './env';
 import { rateLimitPlugin } from './plugins/rate-limit';
+import { context, trace } from '@opentelemetry/api';
 /**
  * Generate a stable request id.
  * - Reuse X-Request-Id from proxy if present.
@@ -46,6 +49,17 @@ export async function createServer() {
   server.addHook('onRequest', async (req) => {
     (req as any).startTime = process.hrtime.bigint();
     req.log.debug({ method: req.method, url: req.url }, 'incoming request');
+
+    // Korelacja logów Pino ↔ trace (trace_id w logach)
+    // Dorzuca trace_id / span_id do każdego loga requestu.
+    const span = trace.getSpan(context.active());
+    if (span) {
+      const ctx = span.spanContext();
+      req.log = req.log.child({
+        trace_id: ctx.traceId,
+        span_id: ctx.spanId,
+      });
+    }
   });
 
   server.addHook('preValidation', async (req) => {
