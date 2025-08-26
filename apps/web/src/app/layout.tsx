@@ -1,18 +1,11 @@
 import type { Metadata } from 'next';
 // import { Inter } from 'next/font/google';
-import {
-  Mulish,
-  Work_Sans,
-  Inter,
-  Nunito,
-  DM_Sans,
-  Nunito_Sans,
-  Poppins,
-  Plus_Jakarta_Sans,
-} from 'next/font/google';
+import { Poppins } from 'next/font/google';
 
-import '../styles/globals.css';
+import OtelInit from '@/libs/otel/otel-init';
 import { WebVitals } from '@/libs/web-vitals/web-vitals';
+import '../styles/globals.css';
+// import OtelInit from '@/libs/otel/otel-init';
 
 // const nextFont = Inter({ subsets: ['latin'] });
 const nextFont = Poppins({
@@ -97,6 +90,7 @@ export default function RootLayout({
         className={`${nextFont.className} w-full min-h-screen`}
       >
         <WebVitals />
+        <OtelInit />
         {children}
       </body>
     </html>

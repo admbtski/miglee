@@ -2,6 +2,7 @@
 
 import { useGetEventsQuery } from '@/hooks/useEvents';
 import { NotificationsPanel } from './components/notification-panel';
+import { trace } from '@opentelemetry/api';
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -12,9 +13,12 @@ function formatDate(dateString: string): string {
   });
 }
 
-export const WelcomePage = () => {
-  const { data, isLoading, isError, error, isFetching } = useGetEventsQuery();
+const tracer = trace.getTracer('react-components2');
 
+export const WelcomePage = () => {
+  const span = tracer.startSpan('useGetEventsQuery');
+  const { data, isLoading, isError, error, isFetching } = useGetEventsQuery();
+  span.end();
   if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 flex items-center justify-center">

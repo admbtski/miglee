@@ -2,6 +2,7 @@ import { FastifyLoggerOptions, RawServerBase } from 'fastify';
 import { PinoLoggerOptions } from 'fastify/types/logger';
 import pino, { LoggerOptions, TransportSingleOptions } from 'pino';
 import { config } from '../env';
+import { context, trace } from '@opentelemetry/api';
 
 type BuildLoggerOpts = {
   /** Log level: debug | info | warn | error ... */
@@ -30,6 +31,11 @@ export function buildLogger({
   PinoLoggerOptions {
   // Base options shared across all environments
   const baseOptions = {
+    mixin() {
+      const span = trace.getSpan(context.active());
+      const traceId = span?.spanContext().traceId;
+      return traceId ? { traceId } : {};
+    },
     name,
     level,
     // Hide sensitive data in logs

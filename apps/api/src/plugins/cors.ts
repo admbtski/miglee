@@ -7,7 +7,7 @@ export const corsPlugin = fastifyPlugin(async (fastify) => {
   const isProd = process.env.NODE_ENV === 'production';
   const allowOrigin = buildCorsChecker(process.env.CORS_ORIGINS, !isProd);
 
-  await fastify.register(cors, {
+  fastify.register(cors, {
     origin: (origin, cb) => {
       try {
         if (allowOrigin(origin)) return cb(null, true);
@@ -17,8 +17,8 @@ export const corsPlugin = fastifyPlugin(async (fastify) => {
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Length'],
+    // methods: ['GET', 'POST', 'OPTIONS'],
+    // allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    // exposedHeaders: ['Content-Length'],
   });
 });

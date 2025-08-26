@@ -11,6 +11,7 @@ type VitalsPayload = {
   delta?: number;
   navType?: string;
   ts?: number;
+  traceId?: string;
 };
 
 export async function POST(req: Request) {

@@ -27,6 +27,7 @@ function genReqId(req: RawRequestDefaultExpression<RawServerBase>) {
 
 export async function createServer() {
   const logger = buildLogger();
+  logger.
   const server = Fastify({
     logger,
     genReqId,
@@ -48,6 +49,7 @@ export async function createServer() {
   // lifecycle
   server.addHook('onRequest', async (req) => {
     (req as any).startTime = process.hrtime.bigint();
+
     req.log.debug({ method: req.method, url: req.url }, 'incoming request');
 
     // Korelacja logów Pino ↔ trace (trace_id w logach)
@@ -55,6 +57,13 @@ export async function createServer() {
     const span = trace.getSpan(context.active());
     if (span) {
       const ctx = span.spanContext();
+
+      span?.setAttributes({
+        'tenant.id': (req.headers['x-tenant-id'] as string) ?? 'public',
+        'user.id': req.user?.id ?? 'anon',
+        'user.plan': req.user?.plan ?? 'free',
+      });
+
       req.log = req.log.child({
         trace_id: ctx.traceId,
         span_id: ctx.spanId,

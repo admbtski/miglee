@@ -1,10 +1,14 @@
 // components/WebVitals.tsx
 'use client';
 
+import { trace } from '@opentelemetry/api';
 import { useEffect } from 'react';
 import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
 
 function send(metric: Metric) {
+  const span = trace.getActiveSpan();
+  const traceId = span?.spanContext().traceId;
+
   const payload = JSON.stringify({
     id: metric.id,
     name: metric.name,
@@ -13,6 +17,7 @@ function send(metric: Metric) {
     delta: metric.delta,
     navType: metric.navigationType,
     ts: Date.now(),
+    traceId,
   });
 
   const url = '/api/vitals';
@@ -34,7 +39,8 @@ function send(metric: Metric) {
       metric.name,
       metric.value,
       metric.rating,
-      metric
+      metric,
+      traceId
     );
   }
 }
