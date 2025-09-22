@@ -8,6 +8,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: app
+      TZ: Europe/Warsaw
     ports:
       - '5432:5432'
     volumes:
@@ -33,29 +34,52 @@ services:
     ports:
       - '6379:6379'
     command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redisdata:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10
 
-  otel-collector:
-    image: otel/opentelemetry-collector:0.110.0
-    command: ['--config=/etc/otel-collector-config.yaml']
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
-    ports:
-      - '4317:4317' # OTLP gRPC (opcjonalnie)
-      - '4318:4318' # OTLP HTTP (używane przez Node)
-    depends_on:
-      - jaeger
-
   jaeger:
     image: jaegertracing/all-in-one:1.57
+    restart: unless-stopped
     ports:
-      - '16686:16686' # UI
+      - '16686:16686' # Jaeger UI
     environment:
       COLLECTOR_ZIPKIN_HTTP_PORT: 9411
 
+  otel-collector:
+    image: otel/opentelemetry-collector:0.110.0
+    restart: unless-stopped
+    command: ['--config=/etc/otel-collector-config.yaml']
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      - jaeger
+    ports:
+      - '4317:4317' # OTLP gRPC
+      - '4318:4318' # OTLP HTTP (Twoje appki wysyłają tu traces/metrics)
+      - '9464:9464' # /metrics do scrapowania przez Prometheus
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheusdata:/prometheus
+    ports:
+      - '9090:9090'
+    depends_on:
+      - otel-collector
+
 volumes:
   dbdata:
+  redisdata:
+  prometheusdata:

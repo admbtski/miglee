@@ -1,12 +1,12 @@
 import { withFilter } from 'mercurius';
 import { prisma } from '../../lib/prisma';
-import {
+import { resolverWithMetrics } from '../../lib/resolver-metrics';
+import type {
   Event,
   Notification,
   Resolvers,
 } from '../__generated__/resolvers-types';
 
-// codegen daje typy, ograniczamy się do 3 sekcji
 type ResolversType = Pick<Resolvers, 'Query' | 'Mutation' | 'Subscription'>;
 
 let idCount = '1';
@@ -16,54 +16,57 @@ const notifications: Notification[] = [
 
 export const resolvers: ResolversType = {
   Query: {
-    events: async (_parent, args, _ctx): Promise<Event[]> => {
-      const limit = Math.max(1, Math.min(args.limit || 10, 100));
-      const events = await prisma.event.findMany({
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      });
+    events: resolverWithMetrics(
+      'Query',
+      'events',
+      async (_parent, args, _ctx): Promise<Event[]> => {
+        const limit = Math.max(1, Math.min(args.limit ?? 10, 100));
+        const events = await prisma.event.findMany({
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+        });
 
-      return events.map(({ createdAt, id, title }) => ({
-        id,
-        title,
-        createdAt,
-      }));
-    },
+        return events.map(({ id, title, createdAt }) => ({
+          id,
+          title,
+          createdAt,
+        }));
+      }
+    ),
 
-    notifications: async () => {
+    notifications: resolverWithMetrics('Query', 'notifications', async () => {
       return notifications;
-    },
+    }),
   },
 
   Mutation: {
-    addNotification: async (_parent, { message }, { pubsub }) => {
-      const id = String(Number(idCount) + 1);
-      idCount = id;
+    addNotification: resolverWithMetrics(
+      'Mutation',
+      'addNotification',
+      async (_parent, { message }, { pubsub }) => {
+        const id = String(Number(idCount) + 1);
+        idCount = id;
 
-      const notification = { id, message };
-      notifications.push(notification);
+        const notification: Notification = { id, message };
+        notifications.push(notification);
 
-      // Publikacja przez Redis-emitter:
-      await pubsub.publish({
-        topic: 'NOTIFICATION_ADDED',
-        payload: { notificationAdded: notification },
-      });
+        await pubsub.publish({
+          topic: 'NOTIFICATION_ADDED',
+          payload: { notificationAdded: notification },
+        });
 
-      return notification;
-    },
+        return notification;
+      }
+    ),
   },
 
   Subscription: {
     notificationAdded: {
-      // withFilter opcjonalny; jeśli nie filtrujesz, możesz zwrócić pubsub.subscribe(...) bez filtra
       subscribe: withFilter(
-        (source, args, ctx, info) => {
+        (_source, _args, ctx, _info) => {
           return ctx.pubsub.subscribe('NOTIFICATION_ADDED');
         },
-        // filtr w tym momencie przepuszcza wszystko:
-        (payload, args, ctx, info) => {
-          return true;
-        }
+        (_payload, _args, _ctx, _info) => true
       ),
     },
   },

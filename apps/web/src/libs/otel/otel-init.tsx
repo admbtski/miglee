@@ -6,7 +6,7 @@ import { trace } from '@opentelemetry/api';
 
 export default function OtelInit() {
   useEffect(() => {
-    initOtelWeb();
+    // initOtelWeb();
 
     // smoke span – jeden raz po starcie
     const tracer = trace.getTracer('web-smoke');

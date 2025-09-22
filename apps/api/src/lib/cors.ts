@@ -1,4 +1,3 @@
-// src/lib/cors.ts
 type Matcher = (origin: string) => boolean;
 
 function toMatcher(pattern: string): Matcher {
@@ -16,7 +15,6 @@ function toMatcher(pattern: string): Matcher {
     return (origin: string) => re.test(origin);
   }
 
-  // literal
   return (origin: string) => origin.toLowerCase() === p.toLowerCase();
 }
 

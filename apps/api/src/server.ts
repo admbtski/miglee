@@ -11,9 +11,10 @@ import { jwtPlugin } from './plugins/jwt';
 import { mercuriusPlugin } from './plugins/mercurius';
 import { sensiblePlugin } from './plugins/sensible';
 
-import { config } from './env';
-import { rateLimitPlugin } from './plugins/rate-limit';
 import { context, trace } from '@opentelemetry/api';
+import { config } from './env';
+import { fastifyMetrics } from './plugins/metrics/fastify-metrics';
+import { rateLimitPlugin } from './plugins/rate-limit';
 /**
  * Generate a stable request id.
  * - Reuse X-Request-Id from proxy if present.
@@ -27,7 +28,7 @@ function genReqId(req: RawRequestDefaultExpression<RawServerBase>) {
 
 export async function createServer() {
   const logger = buildLogger();
-  logger.
+
   const server = Fastify({
     logger,
     genReqId,
@@ -45,6 +46,7 @@ export async function createServer() {
   await server.register(sensiblePlugin);
   await server.register(cookiePlugin);
   await server.register(jwtPlugin);
+  await server.register(fastifyMetrics);
 
   // lifecycle
   server.addHook('onRequest', async (req) => {
@@ -60,8 +62,8 @@ export async function createServer() {
 
       span?.setAttributes({
         'tenant.id': (req.headers['x-tenant-id'] as string) ?? 'public',
-        'user.id': req.user?.id ?? 'anon',
-        'user.plan': req.user?.plan ?? 'free',
+        'user.id': (req as any).user?.id ?? 'anon',
+        'user.plan': (req as any).user?.plan ?? 'free',
       });
 
       req.log = req.log.child({

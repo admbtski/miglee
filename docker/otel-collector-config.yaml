@@ -3,10 +3,6 @@ receivers:
     protocols:
       http:
         endpoint: 0.0.0.0:4318
-        cors:
-          allowed_origins: ['http://localhost:3000', 'https://twoja-domena.app']
-          allowed_headers: ['*']
-          max_age: 7200
       grpc:
         endpoint: 0.0.0.0:4317
 
@@ -18,11 +14,21 @@ exporters:
     endpoint: jaeger:4317
     tls:
       insecure: true
-  debug: {} # zamiast deprecated "logging"
+  prometheus:
+    endpoint: 0.0.0.0:9464
+  debug: {}
 
 service:
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888 # <— wewnętrzne metryki Collectora (otelcol_*)
+
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp/jaeger, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, debug]

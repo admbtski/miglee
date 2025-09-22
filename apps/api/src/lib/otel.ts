@@ -1,11 +1,18 @@
 import FastifyOtelInstrumentation from '@fastify/otel';
-import { diag } from '@opentelemetry/api';
+import opentelemetry, { diag } from '@opentelemetry/api';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
-import { resourceFromAttributes } from '@opentelemetry/resources';
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import {
+  AggregationType,
+  InstrumentType,
+  MeterProvider,
+  PeriodicExportingMetricReader,
+} from '@opentelemetry/sdk-metrics';
+import { NodeSDK } from '@opentelemetry/sdk-node';
 import {
   BatchSpanProcessor,
   ParentBasedSampler,
@@ -19,6 +26,10 @@ import { ATTR_SERVICE_NAMESPACE } from '@opentelemetry/semantic-conventions/incu
 import { PrismaInstrumentation } from '@prisma/instrumentation';
 
 const serviceName = process.env.BACKEND_OTEL_SERVICE_NAME || 'api';
+
+// diag.setLogger(new DiagConsoleLogger(), {
+
+// })
 
 const traceExporter = new OTLPTraceExporter({
   url:
@@ -38,6 +49,80 @@ const resource = resourceFromAttributes({
   // [ATTR_PROCESS_RUNTIME_NAME]: 'nodejs',
   // [ATTR_PROCESS_RUNTIME_VERSION]: process.version,
 });
+
+const metricExporter = new OTLPMetricExporter();
+const meterProvider = new MeterProvider({
+  readers: [
+    new PeriodicExportingMetricReader({
+      exporter: metricExporter,
+      exportIntervalMillis: 1000,
+    }),
+  ],
+  views: [
+    {
+      instrumentName: 'http_server_request_duration_seconds',
+      instrumentType: InstrumentType.HISTOGRAM,
+      description: 'HTTP server request duration',
+      instrumentUnit: 's',
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+        options: {
+          boundaries: [
+            0.001, 0.002, 0.003, 0.005, 0.0075, 0.01, 0.015, 0.02, 0.03, 0.05,
+            0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1,
+          ],
+        },
+      },
+    },
+    {
+      instrumentName: 'graphql_resolver_duration_seconds',
+      instrumentType: InstrumentType.HISTOGRAM,
+      description: 'Resolver durations',
+      instrumentUnit: 's',
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+        options: {
+          boundaries: [
+            0.001, 0.002, 0.003, 0.005, 0.0075, 0.01, 0.015, 0.02, 0.03, 0.05,
+            0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1,
+          ],
+        },
+      },
+    },
+    {
+      instrumentName: 'db_query_duration_seconds',
+      instrumentType: InstrumentType.HISTOGRAM,
+      description: 'Resolver durations',
+      instrumentUnit: 's',
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+        options: {
+          boundaries: [
+            0.001, 0.002, 0.003, 0.005, 0.0075, 0.01, 0.015, 0.02, 0.03, 0.05,
+            0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1,
+          ],
+        },
+      },
+    },
+    {
+      instrumentName: 'graphql_operation_duration_seconds',
+      instrumentType: InstrumentType.HISTOGRAM,
+      description: 'GraphQL operation duration',
+      instrumentUnit: 's',
+      aggregation: {
+        type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+        options: {
+          boundaries: [
+            0.001, 0.002, 0.003, 0.005, 0.0075, 0.01, 0.015, 0.02, 0.03, 0.05,
+            0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 0.75, 1,
+          ],
+        },
+      },
+    },
+  ],
+});
+
+opentelemetry.metrics.setGlobalMeterProvider(meterProvider);
 
 const sdk = new NodeSDK({
   resource,

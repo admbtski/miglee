@@ -3,6 +3,7 @@
 import { useGetEventsQuery } from '@/hooks/useEvents';
 import { NotificationsPanel } from './components/notification-panel';
 import { trace } from '@opentelemetry/api';
+import { EventCardPanel } from './components/event-card-panel';
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -19,6 +20,7 @@ export const WelcomePage = () => {
   const span = tracer.startSpan('useGetEventsQuery');
   const { data, isLoading, isError, error, isFetching } = useGetEventsQuery();
   span.end();
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 flex items-center justify-center">
@@ -55,6 +57,8 @@ export const WelcomePage = () => {
         <div className="mb-10">
           <NotificationsPanel />
         </div>
+
+        <EventCardPanel />
 
         {isFetching && (
           <div className="mb-4 text-sm text-neutral-500 dark:text-neutral-400">

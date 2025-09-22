@@ -10,6 +10,19 @@ import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers/index';
 import { userMock } from '../mock/user-mock';
 import { redisEmitter } from '../lib/redis';
+import opentelemetry from '@opentelemetry/api';
+import { getOperationAST } from 'graphql';
+
+const meter = opentelemetry.metrics.getMeter('api');
+
+const gqlOpsTotal = meter.createCounter('graphql_operations_total', {
+  description: 'GraphQL operations by outcome',
+});
+const gqlOpDur = meter.createHistogram('graphql_operation_duration_seconds');
+
+const gqlErrors = meter.createCounter('graphql_errors_total', {
+  description: 'GraphQL errors',
+});
 
 // todo: improve comfig
 export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
@@ -36,6 +49,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
       onConnect: async (data: {
         payload: { headers: { Authorization: string } };
       }) => {
+        await 1;
         // todo: decore auth and replace test123 with user
         return {
           test123: 'test123',
@@ -51,5 +65,43 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
         };
       },
     },
+  });
+
+  fastify.graphql.addHook('preExecution', async (schema, document, context) => {
+    const ast = getOperationAST(document, undefined);
+    const operation = ast?.operation ?? 'query'; // 'query' | 'mutation' | 'subscription'
+    const operationName = ast?.name?.value ?? 'anonymous'; // nazwa operacji jeśli podana
+
+    context.request.__gql = {
+      start: process.hrtime.bigint(),
+      operation,
+      operationName,
+    };
+  });
+
+  fastify.graphql.addHook('onResolution', async (execution, context) => {
+    const meta = context.request.__gql;
+    if (!meta) return;
+
+    const durS = Number(process.hrtime.bigint() - meta.start) / 1e9;
+    const outcome = execution.errors?.length ? 'error' : 'ok';
+
+    gqlOpsTotal.add(1, {
+      operation: meta.operation,
+      operation_name: meta.operationName,
+      outcome,
+    });
+
+    gqlOpDur.record(durS, {
+      operation: meta.operation,
+      operation_name: meta.operationName,
+    });
+
+    if (execution.errors?.length) {
+      for (const e of execution.errors) {
+        const code = (e as any)?.extensions?.code || 'UNKNOWN';
+        gqlErrors.add(1, { operation: meta.operation, code });
+      }
+    }
   });
 });

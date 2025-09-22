@@ -1,9 +1,9 @@
 import { buildEventsOptions } from '@/hooks/useEvents';
+import { buildNotificationsOptions } from '@/hooks/useNotifications';
 import { getQueryClient } from '@/libs/query-client/query-client';
+import { trace } from '@opentelemetry/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { WelcomePage } from './page-client';
-import { buildNotificationsOptions } from '@/hooks/useNotifications';
-import { trace } from '@opentelemetry/api';
 
 const tracer = trace.getTracer('react-components');
 
