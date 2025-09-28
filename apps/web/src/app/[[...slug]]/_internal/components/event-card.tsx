@@ -2,19 +2,6 @@ import { useMemo, useId } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Users, Lock, MapPin } from 'lucide-react';
 
-// =============================================================
-// EventCard – pojedynczy plik, perfekcyjny porządek i DRY
-// - Brak zbędnych hooków i zagnieżdżeń
-// - Ekstrakcja powtarzalnych kawałków do czystych funkcji
-// - Stabilne formaty dat, polskie pluralizacje
-// - Spójny state-machine joinowania
-// - A11y: role/aria dla badge, progress i CTA
-// - Warianty: tile (default) + inline (zachowanie z Twojego kodu)
-// =============================================================
-
-// =============================
-// Typy
-// =============================
 export interface EventCardProps {
   startISO: string;
   endISO: string;
@@ -362,10 +349,15 @@ export function EventCard({
   // ============ Tile wariant ============
   return (
     <motion.div
+      layout="size"
       whileHover={{ y: canJoin ? -2 : 0, scale: canJoin ? 1.01 : 1 }}
-      transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+      transition={{
+        type: 'spring',
+        stiffness: 600,
+        damping: 20,
+      }}
       className={cx(
-        'w-full max-w-sm rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1 ring-neutral-200/70 dark:ring-neutral-800',
+        'w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1 ring-neutral-200/70 dark:ring-neutral-800',
         canJoin
           ? 'bg-white dark:bg-neutral-900'
           : 'bg-neutral-50 dark:bg-neutral-950',
@@ -375,50 +367,66 @@ export function EventCard({
       aria-label={`Wydarzenie: ${organizerName}`}
     >
       {/* Range + duration */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-          <Calendar className="w-4 h-4" />
-          <span className="font-medium text-neutral-800 dark:text-neutral-200">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 overflow-hidden">
+          <Calendar className="w-4 h-4 shrink-0" />
+          <span
+            className="font-medium text-neutral-800 dark:text-neutral-200 truncate whitespace-nowrap"
+            title={formatDateRange(start, end)}
+          >
             {formatDateRange(start, end)}
           </span>
         </div>
-        <div className="flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400">
+        <div className="shrink-0 flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
           <Clock className="w-4 h-4" />
           <span>{humanDuration(start, end)}</span>
         </div>
       </div>
 
       {/* Organizer & description + location */}
-      <div className="flex items-start gap-3 mt-1">
+      <div className="flex items-start gap-3 mt-1 min-w-0">
         <img
           src={avatarUrl}
           alt="Organizer"
-          className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+          className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 shrink-0"
         />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
+          <p
+            className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate"
+            title={organizerName}
+          >
             {organizerName}
           </p>
-          <p className="text-sm text-neutral-800 dark:text-neutral-200 line-clamp-2 leading-5">
+
+          <p
+            className="text-sm text-neutral-800 dark:text-neutral-200 leading-5 line-clamp-2"
+            title={description}
+          >
             {description}
           </p>
-          <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1">
-            <MapPin className="w-3.5 h-3.5" /> {location}
+
+          <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
+            <MapPin className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate whitespace-nowrap" title={location}>
+              {location}
+            </span>
           </p>
         </div>
       </div>
 
       {/* Capacity + status */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+      <div className="flex items-center justify-between gap-3">
+        <div className="shrink-0 flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
           <Users className="w-4 h-4" aria-hidden />
           <span>{capacityLabel(joined, min, max)}</span>
         </div>
-        <StatusBadge
-          tone={status.tone}
-          reason={status.reason}
-          label={status.label}
-        />
+        <div className="shrink-0">
+          <StatusBadge
+            tone={status.tone}
+            reason={status.reason}
+            label={status.label}
+          />
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -451,13 +459,14 @@ export function EventCard({
             : 'Zapisy zamknięte'}
       </button>
 
-      {/* Tags */}
+      {/* tagi – mogą się łamać (to jedyny blok, który może wrapować) */}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-1" aria-label="Tagi">
           {tags.slice(0, 5).map((tag) => (
             <span
               key={tag}
               className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-lg"
+              title={`#${tag}`}
             >
               #{tag}
             </span>

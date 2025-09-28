@@ -5,6 +5,8 @@ import { Poppins } from 'next/font/google';
 import OtelInit from '@/libs/otel/otel-init';
 import { WebVitals } from '@/libs/web-vitals/web-vitals';
 import '../styles/globals.css';
+import { ThemeProvider } from './components/theme/theme-provider';
+import { InlineThemeScript } from './scripts/inline/inline-theme-script';
 // import OtelInit from '@/libs/otel/otel-init';
 
 // const nextFont = Inter({ subsets: ['latin'] });
@@ -85,13 +87,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <InlineThemeScript />
+      </head>
       <body
         suppressHydrationWarning
         className={`${nextFont.className} w-full min-h-screen`}
       >
         <WebVitals />
         <OtelInit />
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
