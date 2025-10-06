@@ -22,3 +22,99 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- noUiSlider x Tailwind skin (look jak na screenach) --- */
+/* target – bez własnych ramek/cieni (panel robią klasy Tailwinda wyżej) */
+.noUi-tailwind.noUi-target {
+  position: relative;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* tor */
+.noUi-tailwind .noUi-base {
+  height: 8px;
+  border-radius: 9999px;
+  background: theme('colors.zinc.300'); /* light */
+}
+.dark .noUi-tailwind .noUi-base {
+  background: theme('colors.zinc.700'); /* dark */
+}
+
+/* wypełnienie (niebieska linia) */
+.noUi-tailwind .noUi-connects {
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.noUi-tailwind .noUi-connect {
+  background: theme('colors.blue.500');
+}
+.dark .noUi-tailwind .noUi-connect {
+  background: theme('colors.blue.500');
+}
+
+/* uchwyt: białe kółko + niebieski ring (jak na mocku) */
+.noUi-tailwind .noUi-handle {
+  top: -8px !important; /* centrowanie do 8px toru */
+  width: 1.5rem !important; /* 20px */
+  height: 1.5rem !important;
+  border-radius: 9999px;
+  border: 4px solid theme('colors.blue.500'); /* ring */
+  background: white;
+  outline: none;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); /* bez dodatkowego ringa */
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+.dark .noUi-tailwind .noUi-handle {
+  background: theme('colors.zinc.100');
+}
+.noUi-tailwind .noUi-handle:hover {
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+}
+.noUi-tailwind .noUi-handle:focus-visible {
+  box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.28);
+}
+.noUi-tailwind .noUi-handle.noUi-active {
+  transform: scale(0.98);
+  box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.32);
+}
+.noUi-tailwind .noUi-handle:before,
+.noUi-tailwind .noUi-handle:after {
+  display: none;
+} /* usuń „||” */
+
+/* tooltipy – pigułki z obramowaniem */
+.noUi-tailwind .noUi-tooltip {
+  border: 1px solid theme('colors.zinc.300');
+  background: white;
+  color: theme('colors.zinc.900');
+  border-radius: 14px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  transform: translate(-50%, -8px) !important ;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+  white-space: nowrap;
+}
+.dark .noUi-tailwind .noUi-tooltip {
+  border-color: theme('colors.zinc.600');
+  background: theme('colors.zinc.900');
+  color: white;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+}
+
+/* disabled */
+.noUi-tailwind[data-disabled='true'] {
+  opacity: 0.6;
+}
+.noUi-tailwind[data-disabled='true'] .noUi-handle {
+  cursor: not-allowed;
+}
+.noUi-horizontal {
+  height: unset !important;
+}

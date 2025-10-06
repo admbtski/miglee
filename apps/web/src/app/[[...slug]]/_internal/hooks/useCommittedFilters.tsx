@@ -1,93 +1,174 @@
 import { useMemo, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-type CommittedFilters = { q: string; city: string | null; distanceKm: number };
+export type StatusFilter =
+  | 'any'
+  | 'ongoing'
+  | 'started'
+  | 'full'
+  | 'locked'
+  | 'available';
+export type TypeFilter = 'remote' | 'hybrid' | 'public';
+export type Level = 'beginner' | 'intermediate' | 'advanced';
+
+export type CommittedFilters = {
+  q: string;
+  city: string | null;
+  distanceKm: number;
+  startISO: string | null;
+  endISO: string | null;
+  status: StatusFilter;
+  types: TypeFilter[];
+  levels: Level[];
+  verifiedOnly: boolean;
+  tags: string[];
+  keywords: string[];
+  categories: string[];
+};
 
 const DEFAULT_DISTANCE = 30;
 
-/**
- * URL is the single source of truth for filters.
- * - Reads derive from search params.
- * - Writes update only relevant params and preserve everything else.
- * - No local React state / effects.
- */
+const parseCsv = (sp: URLSearchParams, key: string) =>
+  (sp
+    .get(key)
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean) ?? []) as string[];
+const setCsv = (sp: URLSearchParams, key: string, v: string[]) =>
+  v.length ? sp.set(key, v.join(',')) : sp.delete(key);
+
+const parseBool = (sp: URLSearchParams, key: string) => {
+  const v = sp.get(key);
+  return v === '1' || v === 'true';
+};
+const setBool = (sp: URLSearchParams, key: string, val: boolean) =>
+  val ? sp.set(key, '1') : sp.delete(key);
+
 export function useCommittedFilters() {
   const search = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Stable primitive for memo deps
-  const searchKey = search.toString();
-
-  // Read current filters from the URL (with sane fallbacks)
-  const { q, city, distanceKm } = useMemo<CommittedFilters>(() => {
+  const state = useMemo<CommittedFilters>(() => {
     const q = search.get('q') ?? '';
-    const cityParam = search.get('city');
-    const distRaw = Number(search.get('distance'));
+    const city = search.get('city');
+    const dist = Number(search.get('distance'));
     const distanceKm =
-      Number.isFinite(distRaw) && distRaw > 0 ? distRaw : DEFAULT_DISTANCE;
+      Number.isFinite(dist) && dist > 0 ? dist : DEFAULT_DISTANCE;
 
-    return { q, city: cityParam || null, distanceKm };
-  }, [searchKey, search]);
+    return {
+      q,
+      city: city || null,
+      distanceKm,
+      startISO: search.get('start') ?? null,
+      endISO: search.get('end') ?? null,
+      status: ((search.get('status') as StatusFilter) ?? 'any') as StatusFilter,
+      types: parseCsv(search, 'types') as TypeFilter[],
+      levels: parseCsv(search, 'levels') as Level[],
+      verifiedOnly: parseBool(search, 'verified'),
+      tags: parseCsv(search, 'tags'),
+      keywords: parseCsv(search, 'keywords'),
+      categories: parseCsv(search, 'categories'),
+    };
+  }, [search]);
 
-  /**
-   * Build the next URL:
-   * - If a field is `undefined`, keep the current value.
-   * - If `city` becomes null/empty, drop both `city` and `distance`.
-   * - Only include `q` when non-empty.
-   * - Include `distance` only when `city` is present and distance ≠ default.
-   */
   const buildUrl = useCallback(
     (next: Partial<CommittedFilters>) => {
-      const current: CommittedFilters = { q, city, distanceKm };
+      const curr = state;
 
       const merged: CommittedFilters = {
-        q: next.q !== undefined ? next.q : current.q,
-        city: next.city !== undefined ? next.city : current.city,
-        distanceKm:
-          next.distanceKm !== undefined ? next.distanceKm : current.distanceKm,
+        q: next.q ?? curr.q,
+        city: next.city ?? curr.city,
+        distanceKm: next.distanceKm ?? curr.distanceKm,
+        startISO: next.startISO ?? curr.startISO,
+        endISO: next.endISO ?? curr.endISO,
+        status: (next.status ?? curr.status) as StatusFilter,
+        types: (next.types ?? curr.types) as TypeFilter[],
+        levels: (next.levels ?? curr.levels) as Level[],
+        verifiedOnly: next.verifiedOnly ?? curr.verifiedOnly,
+        tags: next.tags ?? curr.tags,
+        keywords: next.keywords ?? curr.keywords,
+        categories: next.categories ?? curr.categories,
       };
 
       const params = new URLSearchParams(search);
 
-      // Clean previous filter params first (avoid duplicates)
-      params.delete('q');
-      params.delete('city');
-      params.delete('distance');
+      // Clear all handled keys
+      for (const k of [
+        'q',
+        'city',
+        'distance',
+        'start',
+        'end',
+        'status',
+        'types',
+        'levels',
+        'verified',
+        'tags',
+        'keywords',
+        'categories',
+      ])
+        params.delete(k);
 
-      // Apply new values
-      if (merged.q) params.set('q', merged.q);
-
+      if (merged.q) {
+        params.set('q', merged.q);
+      }
       if (merged.city) {
         params.set('city', merged.city);
-        if (merged.distanceKm !== DEFAULT_DISTANCE) {
-          params.set('distance', String(merged.distanceKm));
-        }
       }
-      // If no city: we intentionally keep both 'city' and 'distance' absent
+      if (merged.distanceKm !== DEFAULT_DISTANCE) {
+        params.set('distance', String(merged.distanceKm));
+      }
+      if (merged.startISO) {
+        params.set('start', merged.startISO);
+      }
+      if (merged.endISO) {
+        params.set('end', merged.endISO);
+      }
+      if (merged.status !== 'any') {
+        params.set('status', merged.status);
+      }
+
+      setCsv(params, 'types', merged.types);
+      setCsv(params, 'levels', merged.levels);
+      setBool(params, 'verified', merged.verifiedOnly);
+      setCsv(params, 'tags', merged.tags);
+      setCsv(params, 'keywords', merged.keywords);
+      setCsv(params, 'categories', merged.categories);
 
       const qs = params.toString();
       return `${pathname}${qs ? `?${qs}` : ''}`;
     },
-    [pathname, search, q, city, distanceKm]
+    [pathname, search, state]
   );
 
-  // Public API: apply & reset simply replace the URL (no scroll jump)
   const apply = useCallback(
-    (next: CommittedFilters) => {
-      router.replace(buildUrl(next), { scroll: false });
-    },
+    (next: CommittedFilters) =>
+      router.replace(buildUrl(next), { scroll: false }),
     [buildUrl, router]
   );
 
   const reset = useCallback(
     () =>
       router.replace(
-        buildUrl({ q: '', city: null, distanceKm: DEFAULT_DISTANCE }),
+        buildUrl({
+          q: '',
+          city: null,
+          distanceKm: DEFAULT_DISTANCE,
+          startISO: null,
+          endISO: null,
+          status: 'any',
+          types: [],
+          levels: [],
+          verifiedOnly: false,
+          tags: [],
+          keywords: [],
+          categories: [],
+        }),
         { scroll: false }
       ),
     [buildUrl, router]
   );
 
-  return { q, city, distanceKm, apply, reset } as const;
+  return { ...state, apply, reset } as const;
 }

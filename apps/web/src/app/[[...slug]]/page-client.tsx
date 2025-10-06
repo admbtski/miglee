@@ -4,7 +4,7 @@ import { useGetEventsQuery } from '@/hooks/useEvents';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import { EventCard } from './_internal/components/event-card';
-import { FilterModal } from './_internal/components/filter-modal';
+import { FilterModal } from '../components/filter/filter-modal';
 import { Footer } from './_internal/components/footer';
 import { MapImagePanel } from './_internal/components/map-image-panel';
 import { Navbar } from './_internal/components/navbar';
@@ -13,7 +13,7 @@ import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
 import { useCommittedFilters } from './_internal/hooks/useCommittedFilters';
 import { useCommittedSort } from './_internal/hooks/useCommittedSort';
 
-/* ===== DEMO DATA (jak wcześniej) ===== */
+/* DEMO DATA */
 const CITIES = [
   { name: 'Kraków', lat: 50.0647, lon: 19.945 },
   { name: 'Warszawa', lat: 52.2297, lon: 21.0122 },
@@ -51,6 +51,10 @@ const MOCK_ITEMS = Array.from({ length: 20 }).map((_, i) => {
   const sd = new Date(now.getTime() + (-22 + i * 3600000));
   const ed = new Date(sd.getTime() + 60 * 60 * 1000);
 
+  // NEW: demo fields for filters
+  const typePool = ['remote', 'hybrid', 'public'] as const;
+  const levelPool = ['beginner', 'intermediate', 'advanced'] as const;
+
   return {
     ...base,
     id: i + 1,
@@ -70,10 +74,14 @@ const MOCK_ITEMS = Array.from({ length: 20 }).map((_, i) => {
     tags: ['outdoor', 'sport', i % 2 ? 'free' : 'paid'].slice(0, (i % 3) + 1),
     private: i % 5 === 0,
     salaryPLN: [8000, 12000, 16000, 20000][i % 4],
+
+    organizerVerified: i % 3 === 0, // NEW
+    type: typePool[i % typePool.length], // NEW
+    level: levelPool[i % levelPool.length], // NEW
   };
 });
 
-/* ===== Utils / hooks ===== */
+/* Utils */
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -87,22 +95,106 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   return R * c;
 }
 
-type FilterDraft = { q: string; city: string | null; distanceKm: number };
-function matchesFilters(item: any, draft: FilterDraft): boolean {
-  const { q, city, distanceKm } = draft;
-  if (q) {
+type FilterDraft = {
+  q: string;
+  city: string | null;
+  distanceKm: number;
+  startISO: string | null;
+  endISO: string | null;
+  status: 'any' | 'ongoing' | 'started' | 'full' | 'locked' | 'available';
+  types: Array<'remote' | 'hybrid' | 'public'>;
+  levels: Array<'beginner' | 'intermediate' | 'advanced'>;
+  verifiedOnly: boolean;
+  tags: string[];
+  keywords: string[];
+  categories: string[];
+};
+
+function calcStatus(
+  it: any
+): 'ongoing' | 'started' | 'full' | 'locked' | 'available' {
+  const now = Date.now();
+  const s = +new Date(it.startISO);
+  const e = +new Date(it.endISO);
+  const full = (it.taken ?? 0) >= (it.capacity ?? Infinity);
+
+  if (full) return 'full';
+  if (now >= s && now <= e) return 'ongoing';
+  if (s - now <= 6 * 60 * 60 * 1000 && s - now > 0) return 'locked'; // starts within 6h
+  if (now > s) return 'started';
+  return 'available';
+}
+
+function matchesFilters(item: any, d: FilterDraft): boolean {
+  const {
+    q,
+    city,
+    distanceKm,
+    startISO,
+    endISO,
+    status,
+    types,
+    levels,
+    verifiedOnly,
+    tags,
+    keywords,
+    categories,
+  } = d;
+
+  // text & keywords
+  if (q || (keywords && keywords.length)) {
     const hay =
       `${item.title} ${item.city} ${item.category} ${(item.tags || []).join(' ')}`.toLowerCase();
-    if (!hay.includes(q.toLowerCase())) return false;
+    if (q && !hay.includes(q.toLowerCase())) return false;
+    if (
+      keywords?.length &&
+      !keywords.every((kw) => hay.includes(kw.toLowerCase()))
+    )
+      return false;
   }
+
+  // category (OR)
+  if (categories?.length) {
+    if (
+      !categories.some((c) =>
+        String(item.category).toLowerCase().includes(c.toLowerCase())
+      )
+    )
+      return false;
+  }
+
+  // tags (AND)
+  if (tags?.length) {
+    const itTags = (item.tags || []).map((t: string) => t.toLowerCase());
+    if (!tags.every((t) => itTags.includes(t.toLowerCase()))) return false;
+  }
+
+  // date range
+  if (startISO && +new Date(item.endISO) < +new Date(startISO)) return false;
+  if (endISO && +new Date(item.startISO) > +new Date(endISO)) return false;
+
+  // status
+  if (status && status !== 'any') {
+    if (calcStatus(item) !== status) return false;
+  }
+
+  // types / levels
+  if (types?.length && !types.includes(item.type)) return false;
+  if (levels?.length && !levels.includes(item.level)) return false;
+
+  // verified
+  if (verifiedOnly && !item.organizerVerified) return false;
+
+  // city + radius
   if (city && item.city !== city) return false;
   if (city) {
     const base = CITY_BY_NAME[city];
     if (base) {
-      const d = haversineKm(base.lat, base.lon, item.lat, item.lon);
-      if (d > distanceKm) return false;
+      const dKm = haversineKm(base.lat, base.lon, item.lat, item.lon);
+      if (dKm > distanceKm) return false;
     }
   }
+
   return true;
 }
 
@@ -124,29 +216,101 @@ function sortItems(items: any[], sort: SortKey): any[] {
   return items;
 }
 
-/* ===== Page ===== */
+/* Page */
 export function WelcomePage() {
   const { data: _unused } = useGetEventsQuery();
   const items = MOCK_ITEMS;
 
-  const { q, city, distanceKm, apply, reset } = useCommittedFilters();
+  const {
+    q,
+    city,
+    distanceKm,
+    startISO,
+    endISO,
+    status,
+    types,
+    levels,
+    verifiedOnly,
+    tags,
+    keywords,
+    categories,
+    apply,
+    reset,
+  } = useCommittedFilters();
+
   const { sort, setSort } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const activeFilters = useMemo(
-    () => (q ? 1 : 0) + (city ? 1 : 0) + (city && distanceKm !== 30 ? 1 : 0),
-    [q, city, distanceKm]
-  );
+
+  const activeFilters = useMemo(() => {
+    let n = 0;
+    if (q) n++;
+    if (city) n++;
+    if (distanceKm !== 30) n++;
+    if (startISO) n++;
+    if (endISO) n++;
+    if (status && status !== 'any') n++;
+    if (types.length) n++;
+    if (levels.length) n++;
+    if (verifiedOnly) n++;
+    if (tags.length) n++;
+    if (keywords.length) n++;
+    if (categories.length) n++;
+    return n;
+  }, [
+    q,
+    city,
+    distanceKm,
+    startISO,
+    endISO,
+    status,
+    types,
+    levels,
+    verifiedOnly,
+    tags,
+    keywords,
+    categories,
+  ]);
 
   const filtered = useMemo(
-    () => items.filter((it) => matchesFilters(it, { q, city, distanceKm })),
-    [items, q, city, distanceKm]
+    () =>
+      items.filter((it) =>
+        matchesFilters(it, {
+          q,
+          city,
+          distanceKm,
+          startISO,
+          endISO,
+          status,
+          types,
+          levels,
+          verifiedOnly,
+          tags,
+          keywords,
+          categories,
+        })
+      ),
+    [
+      items,
+      q,
+      city,
+      distanceKm,
+      startISO,
+      endISO,
+      status,
+      types,
+      levels,
+      verifiedOnly,
+      tags,
+      keywords,
+      categories,
+    ]
   );
+
   const sorted = useMemo(() => sortItems(filtered, sort), [filtered, sort]);
 
-  // realny offset sticky (wysokość navbaru)
-  const NAV_H = 86; // dopasuj do swojego navbaru
+  const NAV_H = 86;
 
   return (
     <div
@@ -161,7 +325,7 @@ export function WelcomePage() {
         activeFilters={activeFilters}
       />
 
-      {/* FULL-WIDTH GRID */}
+      {/* GRID */}
       <main
         className={`mx-auto grid w-full none gap-6 px-4 py-4 ${
           mapVisible
@@ -169,9 +333,8 @@ export function WelcomePage() {
             : 'grid-cols-1'
         }`}
       >
-        {/* LEWA: sticky sort + lista */}
+        {/* LEFT */}
         <motion.section layout="position" className="min-w-0">
-          {/* sticky sort (przyklejony pod navbar) */}
           <div className="sticky z-30 border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
             <div className="flex items-center justify-between py-2 text-sm">
               <div className="opacity-70">
@@ -188,7 +351,6 @@ export function WelcomePage() {
             </div>
           </div>
 
-          {/* siatka kart: 1 (mobile) / 2 (>=sm) / 3 (>=xl) */}
           <motion.div
             layout="position"
             className="mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
@@ -199,8 +361,8 @@ export function WelcomePage() {
           </motion.div>
         </motion.section>
 
+        {/* RIGHT MAP */}
         <AnimatePresence>
-          {/* PRAWA: mapa (sticky, pełna wys. viewportu minus navbar) */}
           {mapVisible && (
             <motion.aside
               className="hidden lg:block"
@@ -215,20 +377,42 @@ export function WelcomePage() {
             </motion.aside>
           )}
         </AnimatePresence>
-        {/* STOPKA */}
+
         <div className="col-span-full">
           <Footer />
         </div>
       </main>
 
-      {/* MODAL FILTRÓW */}
       {filtersOpen && (
         <FilterModal
           initialQ={q}
           initialCity={city}
           initialDistanceKm={distanceKm}
+          initialStartISO={startISO}
+          initialEndISO={endISO}
+          initialStatus={status}
+          initialTypes={types}
+          initialLevels={levels}
+          initialVerifiedOnly={verifiedOnly}
+          initialTags={tags}
+          initialKeywords={keywords}
+          initialCategories={categories}
           onApply={(next) => {
-            apply(next);
+            apply({
+              q: next.q,
+              city: next.city,
+              distanceKm: next.distanceKm,
+              startISO: next.startISO ?? null,
+              endISO: next.endISO ?? null,
+              status: next.status ?? 'any',
+              types: next.types ?? [],
+              levels: next.levels ?? [],
+              verifiedOnly: !!next.verifiedOnly,
+              tags: next.tags ?? [],
+              keywords: next.keywords ?? [],
+              categories: next.categories ?? [],
+            });
+            console.dir({ next });
             setFiltersOpen(false);
           }}
           onClose={() => setFiltersOpen(false)}

@@ -1,32 +1,37 @@
 'use client';
 
-import { Mail, Lock } from 'lucide-react';
-import { useMemo, useState, useCallback } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { useId, useMemo, useRef, useState } from 'react';
 
-export function SignInPanel({
-  email,
-  setEmail,
-  password,
-  setPassword,
-  remember,
-  setRemember,
-  onSubmit,
-  onGotoSignup,
-  onSocial,
-}: {
+export function SignInPanel(props: {
   email: string;
   setEmail: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
   remember: boolean;
   setRemember: (v: boolean) => void;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<void>;
   onGotoSignup: () => void;
   onSocial?: (
     p: 'google' | 'github' | 'linkedin' | 'facebook' | 'apple' | 'twitter'
   ) => void;
 }) {
-  // --- Walidacja ---
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    remember,
+    setRemember,
+    onSubmit,
+    onGotoSignup,
+    onSocial,
+  } = props;
+
+  const prefersReducedMotion = useReducedMotion();
+
+  /** Basic validation helpers */
   const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const validate = (e: string, p: string) => {
     const errors: { email?: string; password?: string } = {};
@@ -37,106 +42,222 @@ export function SignInPanel({
     return errors;
   };
 
+  /** Local UI/validation state */
   const [touched, setTouched] = useState<{
     email?: boolean;
     password?: boolean;
   }>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [shake, setShake] = useState(false);
 
+  /** IDs + refs for a11y/focus */
+  const emailId = useId();
+  const pwdId = useId();
+  const emailErrId = useId();
+  const pwdErrId = useId();
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const pwdRef = useRef<HTMLInputElement | null>(null);
+
+  /** Derived validation state */
   const errors = useMemo(() => validate(email, password), [email, password]);
   const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
 
-  const markAllTouched = useCallback(
-    () => setTouched({ email: true, password: true }),
-    []
-  );
-
-  const trySubmit = () => {
-    setSubmitAttempted(true);
-    if (!isValid) return markAllTouched();
-    onSubmit();
+  /** Focus first invalid field on failed submit */
+  const focusFirstInvalid = () => {
+    if (errors.email) return emailRef.current?.focus();
+    if (errors.password) return pwdRef.current?.focus();
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      trySubmit();
+  /** Clear validation when switching panel */
+  const clearValidationState = () => {
+    setTouched({});
+    setSubmitAttempted(false);
+  };
+
+  /** Attempt form submit with subtle shake on invalid */
+  const trySubmit = async () => {
+    setSubmitAttempted(true);
+    if (!isValid) {
+      setShake(true);
+      window.setTimeout(() => setShake(false), 350);
+      focusFirstInvalid();
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await Promise.resolve(onSubmit());
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  /** Animated error paragraph variants */
+  const errorVariants = {
+    initial: { opacity: 0, height: 0, y: -4 },
+    animate: {
+      opacity: 1,
+      height: 'auto',
+      y: 0,
+      transition: { duration: prefersReducedMotion ? 0 : 0.18 },
+    },
+    exit: {
+      opacity: 0,
+      height: 0,
+      y: -4,
+      transition: { duration: prefersReducedMotion ? 0 : 0.15 },
+    },
+  };
+
   return (
-    <div className="pt-5">
+    <motion.form
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        void trySubmit();
+      }}
+      /** Gentle entrance + shake on validation failure */
+      animate={shake ? { x: [0, -8, 8, -4, 4, 0] } : { x: 0 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.35 }}
+      className="pt-5"
+    >
       {/* Email */}
-      <label className="group relative block">
-        <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
-          <Mail className="h-5 w-5 text-zinc-500 group-focus-within:text-zinc-300" />
+      <div className="group">
+        <label htmlFor={emailId} className="sr-only">
+          Adres e-mail
+        </label>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+            <Mail
+              aria-hidden
+              className="h-5 w-5 text-zinc-400 group-focus-within:text-zinc-600 dark:text-zinc-500 dark:group-focus-within:text-zinc-300"
+            />
+          </div>
+          <input
+            ref={emailRef}
+            id={emailId}
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            autoFocus
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+            placeholder="Adres e-mail"
+            className={[
+              'w-full rounded-2xl border px-12 py-3.5 text-base shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
+              'bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-300 focus:border-zinc-400',
+              'dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:border-zinc-800 dark:focus:border-zinc-700',
+              errors.email && (touched.email || submitAttempted)
+                ? 'border-red-500 focus:ring-red-500/30'
+                : '',
+            ].join(' ')}
+          />
         </div>
-        <input
-          type="email"
-          autoFocus
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          onBlur={() => setTouched((t) => ({ ...t, email: true }))}
-          onKeyDown={onKeyDown}
-          aria-invalid={!!errors.email && (touched.email || submitAttempted)}
-          aria-describedby={
-            errors.email && (touched.email || submitAttempted)
-              ? 'signin-email-error'
-              : undefined
-          }
-          placeholder="Adres e-mail"
-          className={[
-            'w-full rounded-2xl border bg-zinc-900/60 px-12 py-3.5 text-base placeholder:text-zinc-500 shadow-inner focus:outline-none',
-            'border-zinc-800 focus:border-zinc-700 focus:ring-2 focus:ring-indigo-500/40',
-            errors.email && (touched.email || submitAttempted)
-              ? 'border-red-500 focus:ring-red-500/30'
-              : '',
-          ].join(' ')}
-        />
-        {errors.email && (touched.email || submitAttempted) && (
-          <p id="signin-email-error" className="mt-1 text-sm text-red-500">
-            {errors.email}
-          </p>
-        )}
-      </label>
+
+        <AnimatePresence initial={false} mode="wait">
+          {errors.email && (touched.email || submitAttempted) && (
+            <motion.p
+              id={emailErrId}
+              role="alert"
+              aria-live="polite"
+              className="mt-1 text-sm text-red-500"
+              variants={errorVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {errors.email}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Password */}
-      <label className="group relative mt-3 block">
-        <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
-          <Lock className="h-5 w-5 text-zinc-500 group-focus-within:text-zinc-300" />
-        </div>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onBlur={() => setTouched((t) => ({ ...t, password: true }))}
-          onKeyDown={onKeyDown}
-          aria-invalid={
-            !!errors.password && (touched.password || submitAttempted)
-          }
-          aria-describedby={
-            errors.password && (touched.password || submitAttempted)
-              ? 'signin-password-error'
-              : undefined
-          }
-          placeholder="Hasło"
-          className={[
-            'w-full rounded-2xl border bg-zinc-900/60 px-12 py-3.5 text-base placeholder:text-zinc-500 shadow-inner focus:outline-none',
-            'border-zinc-800 focus:border-zinc-700 focus:ring-2 focus:ring-indigo-500/40',
-            errors.password && (touched.password || submitAttempted)
-              ? 'border-red-500 focus:ring-red-500/30'
-              : '',
-          ].join(' ')}
-        />
-        {errors.password && (touched.password || submitAttempted) && (
-          <p id="signin-password-error" className="mt-1 text-sm text-red-500">
-            {errors.password}
-          </p>
-        )}
-      </label>
+      <div className="group mt-3">
+        <label htmlFor={pwdId} className="sr-only">
+          Hasło
+        </label>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+            <Lock
+              aria-hidden
+              className="h-5 w-5 text-zinc-400 group-focus-within:text-zinc-600 dark:text-zinc-500 dark:group-focus-within:text-zinc-300"
+            />
+          </div>
 
-      {/* Remember me */}
-      <label className="mt-4 inline-flex cursor-pointer select-none items-center gap-3 text-sm text-zinc-300">
+          <input
+            ref={pwdRef}
+            id={pwdId}
+            name="password"
+            type={showPwd ? 'text' : 'password'}
+            autoComplete="current-password"
+            enterKeyHint="go"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+            aria-invalid={
+              !!errors.password && (touched.password || submitAttempted)
+            }
+            aria-describedby={
+              errors.password && (touched.password || submitAttempted)
+                ? pwdErrId
+                : undefined
+            }
+            placeholder="Hasło"
+            className={[
+              'w-full rounded-2xl border pl-12 pr-12 py-3.5 text-base shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
+              'bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-300 focus:border-zinc-400',
+              'dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:border-zinc-800 dark:focus:border-zinc-700',
+              errors.password && (touched.password || submitAttempted)
+                ? 'border-red-500 focus:ring-red-500/30'
+                : '',
+            ].join(' ')}
+          />
+
+          {/* Password visibility toggle with springy tap */}
+          <motion.button
+            type="button"
+            onClick={() => setShowPwd((v) => !v)}
+            whileTap={{ scale: prefersReducedMotion ? 1 : 0.92 }}
+            className="absolute inset-y-0 right-2 my-auto grid h-9 w-9 place-items-center rounded-xl
+                       text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/60
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            aria-label={showPwd ? 'Ukryj hasło' : 'Pokaż hasło'}
+            title={showPwd ? 'Ukryj hasło' : 'Pokaż hasło'}
+          >
+            {showPwd ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </motion.button>
+        </div>
+
+        <AnimatePresence initial={false} mode="wait">
+          {errors.password && (touched.password || submitAttempted) && (
+            <motion.p
+              id={pwdErrId}
+              role="alert"
+              aria-live="polite"
+              className="mt-1 text-sm text-red-500"
+              variants={errorVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {errors.password}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Remember me – springy knob */}
+      <label className="mt-4 inline-flex cursor-pointer select-none items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300">
         <input
           type="checkbox"
           className="peer sr-only"
@@ -145,113 +266,103 @@ export function SignInPanel({
         />
         <span
           className={`inline-flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${
-            remember ? 'bg-indigo-600' : 'bg-zinc-800'
+            remember ? 'bg-indigo-600' : 'bg-zinc-200 dark:bg-zinc-800'
           }`}
+          role="switch"
+          aria-checked={remember}
+          aria-label="Zapamiętaj mnie"
+          title="Zapamiętaj mnie"
         >
-          <span
-            className={`h-4 w-4 rounded-full bg-white transition-transform ${
-              remember ? 'translate-x-4' : 'translate-x-0'
-            }`}
+          <motion.span
+            layout
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            animate={{ x: remember ? 16 : 0 }}
+            className="h-4 w-4 rounded-full bg-white"
           />
         </span>
         Zapamiętaj mnie
       </label>
 
-      {/* CTA primary */}
-      <button
-        onClick={trySubmit}
-        disabled={!isValid}
+      {/* Primary CTA */}
+      <motion.button
+        type="submit"
+        whileHover={!submitting && !prefersReducedMotion ? { scale: 1.01 } : {}}
+        whileTap={!submitting && !prefersReducedMotion ? { scale: 0.99 } : {}}
+        disabled={!isValid || submitting}
+        aria-busy={submitting}
         className="mt-5 w-full cursor-pointer rounded-2xl bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        Zaloguj się
-      </button>
+        {submitting ? 'Logowanie…' : 'Zaloguj się'}
+      </motion.button>
 
-      {/* CTA secondary -> przejście do rejestracji */}
-      <button
-        onClick={onGotoSignup}
-        className="mt-2 w-full cursor-pointer rounded-2xl border border-zinc-800 bg-zinc-900/40 px-5 py-3 text-base font-semibold text-zinc-100 hover:bg-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+      {/* Secondary CTA (switch to SignUp) */}
+      <motion.button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          clearValidationState();
+          onGotoSignup();
+        }}
+        whileHover={!prefersReducedMotion ? { scale: 1.01 } : {}}
+        whileTap={!prefersReducedMotion ? { scale: 0.99 } : {}}
+        className="mt-2 w-full cursor-pointer rounded-2xl border px-5 py-3 text-base font-semibold
+                   border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50
+                   dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-100 dark:hover:bg-zinc-900
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
         Zarejestruj się
-      </button>
+      </motion.button>
 
       {/* Separator */}
-      <div className="my-5 flex items-center gap-3 text-xs text-zinc-500">
-        <div className="h-px flex-1 bg-zinc-800" />
+      <div className="my-5 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
         albo
-        <div className="h-px flex-1 bg-zinc-800" />
+        <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
       </div>
 
-      {/* Social logins (bez zmian) */}
+      {/* Social logins (two logos for light/dark contrast) */}
       <div className="mb-1 flex items-center justify-between">
-        <div className="text-sm text-zinc-400">Zaloguj się przez</div>
+        <div className="text-sm text-zinc-500 dark:text-zinc-400">
+          Zaloguj się przez
+        </div>
         <div className="flex items-center gap-2">
-          <SocialBtn label="Google" onClick={() => onSocial?.('google')}>
-            <img
-              alt=""
-              src="https://cdn.simpleicons.org/google/EA4335"
-              className="h-4 w-4"
-            />
-          </SocialBtn>
-          <SocialBtn label="GitHub" onClick={() => onSocial?.('github')}>
-            <img
-              alt=""
-              src="https://cdn.simpleicons.org/github/ffffff"
-              className="h-4 w-4"
-            />
-          </SocialBtn>
-          <SocialBtn label="LinkedIn" onClick={() => onSocial?.('linkedin')}>
-            <img
-              alt=""
-              src="https://cdn.simpleicons.org/linkedin/0A66C2"
-              className="h-4 w-4"
-            />
-          </SocialBtn>
-          <SocialBtn label="Facebook" onClick={() => onSocial?.('facebook')}>
-            <img
-              alt=""
-              src="https://cdn.simpleicons.org/facebook/1877F2"
-              className="h-4 w-4"
-            />
-          </SocialBtn>
-          <SocialBtn label="Apple" onClick={() => onSocial?.('apple')}>
-            <img
-              alt=""
-              src="https://cdn.simpleicons.org/apple/ffffff"
-              className="h-4 w-4"
-            />
-          </SocialBtn>
-          <SocialBtn label="Twitter/X" onClick={() => onSocial?.('twitter')}>
-            <img
-              alt=""
-              src="https://cdn.simpleicons.org/x/cccccc"
-              className="h-4 w-4"
-            />
-          </SocialBtn>
+          {[
+            ['google', 'EA4335'],
+            ['github', 'ffffff'],
+            ['scalar', '0A66C2'],
+            ['facebook', '1877F2'],
+            ['apple', 'ffffff'],
+            ['x', 'cccccc'],
+          ].map(([k, hex]) => (
+            <motion.button
+              key={k}
+              type="button"
+              aria-label={k}
+              title={k}
+              onClick={() => onSocial?.(k as any)}
+              whileHover={!prefersReducedMotion ? { scale: 1.06 } : {}}
+              whileTap={!prefersReducedMotion ? { scale: 0.96 } : {}}
+              className="inline-grid h-9 w-9 place-items-center rounded-full border shadow-sm
+                         border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50
+                         dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-900
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              {/* light */}
+              <img
+                alt=""
+                src={`https://cdn.simpleicons.org/${k}/000000`}
+                className="h-4 w-4 block dark:hidden"
+              />
+              {/* dark */}
+              <img
+                alt=""
+                src={`https://cdn.simpleicons.org/${k}/${hex}`}
+                className="h-4 w-4 hidden dark:block"
+              />
+            </motion.button>
+          ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* helpers – bez zmian */
-function SocialBtn({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick?: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="inline-grid h-9 w-9 place-items-center rounded-full border border-zinc-800 bg-zinc-900/60 text-zinc-200 shadow-sm hover:bg-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-    >
-      {children}
-    </button>
+    </motion.form>
   );
 }

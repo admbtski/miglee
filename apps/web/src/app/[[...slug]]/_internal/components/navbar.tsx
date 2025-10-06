@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Bell,
   Filter,
@@ -11,26 +12,31 @@ import {
   Search,
   SearchIcon,
 } from 'lucide-react';
-import { useState } from 'react';
-import { NavDrawer } from './nav-drawer';
+import { twMerge } from 'tailwind-merge';
+
 import { AuthModal } from '@/app/components/auth/auth-modal';
+import { CreateIntentModal } from '@/app/components/intent/CreateIntentModal';
+import { NavDrawer } from './nav-drawer';
 import { UserMenu } from './user-menu';
+
+type NavbarProps = {
+  q: string;
+  city: string | null;
+  distanceKm: number;
+  activeFilters: number;
+  onOpenFilters: () => void;
+};
 
 export function Navbar({
   q,
   city,
   distanceKm,
-  onOpenFilters,
   activeFilters,
-}: {
-  q: string;
-  city: string | null;
-  distanceKm: number;
-  onOpenFilters: () => void;
-  activeFilters: number;
-}) {
+  onOpenFilters,
+}: NavbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<'login' | 'register'>(
     'login'
   );
@@ -38,179 +44,217 @@ export function Navbar({
   return (
     <>
       <nav className="sticky top-0 z-40 border-b border-zinc-200 bg-white/70 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/60">
-        <div className="flex items-center gap-3 px-4 py-3 mx-auto max-w-8xl">
+        <div className="mx-auto flex max-w-8xl items-center gap-3 px-4 py-3">
           {/* Logo */}
-          <a className="flex items-center gap-2 shrink-0" href="/">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-indigo-500 to-cyan-500" />
+          <a href="/" className="flex shrink-0 items-center gap-2">
+            <div className="h-6 w-6 rounded-md bg-gradient-to-tr from-indigo-500 to-cyan-500" />
             <span className="text-lg font-semibold tracking-tight">
               miglee.pl
             </span>
           </a>
 
-          {/* Big glowing segmented search bar (desktop) */}
-          <div className="flex-1 hidden mx-3 md:block">
+          {/* --- Desktop Search Bar --- */}
+          <div className="mx-3 hidden flex-1 md:block">
             <div className="relative">
-              <div
-                className="pointer-events-none absolute inset-0 -z-10 rounded-full opacity-80 blur-xl
-                [background:conic-gradient(from_200deg,theme(colors.orange.200),theme(colors.pink.300),theme(colors.indigo.300),theme(colors.cyan.300))] "
-              />
-              <div className="rounded-full p-[2px] bg-[linear-gradient(90deg,theme(colors.orange.200),theme(colors.pink.300),theme(colors.indigo.300),theme(colors.cyan.300))] shadow-[0_8px_30px_rgba(99,102,241,0.25)]">
-                <div className="flex items-center py-2 pl-4 pr-1 text-sm rounded-full bg-white/90 text-zinc-800 dark:bg-zinc-950/90 dark:text-zinc-100">
-                  {/* search segment */}
+              <div className="pointer-events-none absolute inset-0 -z-10 rounded-full opacity-80 blur-xl [background:conic-gradient(from_200deg,theme(colors.orange.200),theme(colors.pink.300),theme(colors.indigo.300),theme(colors.cyan.300))]" />
+              <div className="rounded-full bg-[linear-gradient(90deg,theme(colors.orange.200),theme(colors.pink.300),theme(colors.indigo.300),theme(colors.cyan.300))] p-[2px] shadow-[0_8px_30px_rgba(99,102,241,0.25)]">
+                <div className="flex items-center rounded-full bg-white/90 py-2 pl-4 pr-1 text-sm text-zinc-800 dark:bg-zinc-950/90 dark:text-zinc-100">
+                  {/* Search */}
+                  <SearchSegment
+                    icon={<Search className="h-5 w-5 opacity-60" />}
+                    value={q}
+                    placeholder="Search: Job title, company, keyword"
+                    className="flex-1"
+                    onClick={onOpenFilters}
+                  />
+                  <Divider />
+                  {/* City */}
+                  <SearchSegment
+                    icon={<MapPinIcon className="h-5 w-5 opacity-60" />}
+                    value={city}
+                    placeholder="Any"
+                    className="flex-1"
+                    onClick={onOpenFilters}
+                  />
+                  <Divider />
+                  {/* Distance */}
+                  <SearchSegment
+                    icon={<RulerIcon className="h-5 w-5 opacity-60" />}
+                    value={distanceKm !== 30 ? `${distanceKm} km` : ''}
+                    placeholder="30 km"
+                    onClick={onOpenFilters}
+                  />
+
+                  <Divider />
+                  {/* Filters */}
                   <button
                     onClick={onOpenFilters}
-                    className="flex items-center flex-1 min-w-0 gap-2 text-left cursor-pointer hover:opacity-90"
+                    className="flex shrink-0 items-center gap-2 pr-2 hover:opacity-90"
                   >
-                    <Search className="w-5 h-5 opacity-60" />
-                    <span className={`truncate ${q ? '' : 'opacity-60'}`}>
-                      {q || 'Search: Job title, company, keyword'}
+                    <Filter className="h-5 w-5 opacity-60" />
+                    <span className={activeFilters ? '' : 'opacity-60'}>
+                      Filters
                     </span>
-                  </button>
-
-                  <div className="w-px h-5 mx-3 bg-zinc-300/70 dark:bg-zinc-700/70" />
-
-                  {/* city segment */}
-                  <button
-                    onClick={onOpenFilters}
-                    className="flex items-center gap-2 cursor-pointer shrink-0 hover:opacity-90"
-                  >
-                    <MapPinIcon className="w-5 h-5 opacity-60" />
-                    <span className={`${city ? '' : 'opacity-60'}`}>
-                      {city || 'Dowolne'}
-                    </span>
-                  </button>
-
-                  <div className="w-px h-5 mx-3 bg-zinc-300/70 dark:bg-zinc-700/70" />
-
-                  {/* distance segment */}
-                  <button
-                    onClick={onOpenFilters}
-                    className="flex items-center gap-2 pr-2 cursor-pointer shrink-0 hover:opacity-90"
-                  >
-                    <RulerIcon className="w-5 h-5 opacity-60" />
-                    <span
-                      className={`${distanceKm !== 30 ? '' : 'opacity-60'}`}
-                    >
-                      {distanceKm} km
-                    </span>
-                  </button>
-
-                  <div className="w-px h-5 mx-3 bg-zinc-300/70 dark:bg-zinc-700/70" />
-
-                  {/* 4. Filtry + badge z liczbą */}
-                  <button
-                    onClick={onOpenFilters}
-                    className="flex items-center gap-2 pr-2 cursor-pointer shrink-0 hover:opacity-90"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Filter className="w-5 h-5 opacity-60" />
-                      <span className={activeFilters > 0 ? '' : 'opacity-60'}>
-                        Filtry
+                    {activeFilters > 0 && (
+                      <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[12px] text-white shadow-sm ring-1 ring-black/5">
+                        {activeFilters}
                       </span>
-                      {activeFilters > 0 && (
-                        <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[12px] text-white shadow-sm ring-1 ring-black/5">
-                          {activeFilters}
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </button>
 
-                  {/* CTA circle */}
+                  {/* CTA Circle */}
                   <button
                     onClick={() => {}}
-                    className="grid w-8 h-8 text-white rounded-full shadow-lg cursor-pointer place-items-center bg-gradient-to-tr from-pink-500 to-violet-600 hover:brightness-110"
+                    className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-tr from-pink-500 to-violet-600 text-white shadow-lg hover:brightness-110"
                     aria-label="Search"
                   >
-                    <SearchIcon className="w-4 h-4" />
+                    <SearchIcon className="h-4 w-4" />
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right actions */}
-          <div className="items-center hidden gap-2 ml-auto md:flex">
-            <button className="px-4 py-2 text-sm border rounded-full cursor-pointer border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+          {/* --- Right Actions --- */}
+          <div className="ml-auto hidden items-center gap-2 md:flex">
+            <button
+              onClick={() => setNewOpen(true)}
+              className="rounded-full border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            >
               Post an event
             </button>
+
             <button
-              className="px-4 py-2 text-sm font-medium rounded-full cursor-pointer bg-zinc-200 text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
               onClick={() => {
                 setAuthDefaultTab('login');
                 setAuthOpen(true);
               }}
+              className="rounded-full bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
             >
               Sign in
             </button>
+
             <UserMenu
               user={{
                 name: 'Jan Kowalski',
                 email: 'jan@kowalski.pl',
                 avatarUrl: 'https://picsum.photos/id/99/200/300',
               }}
-              onNavigate={(key) => {
-                console.log('go to ->', key);
-              }}
+              onNavigate={(key) => console.log('navigate:', key)}
               onSignOut={() => console.log('sign out')}
             />
-            <button
-              className="p-2 rounded-full cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="Favourites"
-            >
-              <Heart className="w-5 h-5" />
-            </button>
-            <button
-              className="p-2 rounded-full cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="Notifications"
-            >
-              <Bell className="w-5 h-5" />
-            </button>
-            <button
-              className="p-2 rounded-full cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="Language"
-            >
-              <Globe className="w-5 h-5" />
-            </button>
 
-            {/* Hamburger */}
-            <button
+            {[
+              { icon: Heart, label: 'Favourites' },
+              { icon: Bell, label: 'Notifications' },
+              { icon: Globe, label: 'Language' },
+            ].map(({ icon: Icon, label }) => (
+              <IconButton key={label} icon={Icon} label={label} />
+            ))}
+
+            <IconButton
+              icon={MenuIcon}
+              label="Menu"
               onClick={() => setDrawerOpen(true)}
-              className="p-2 rounded-full cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              title="Menu"
-            >
-              <MenuIcon className="w-6 h-6" />
-            </button>
+            />
           </div>
 
-          {/* Compact (mobile) search & hamburger */}
-          <div className="flex items-center justify-end flex-1 gap-2 md:hidden">
+          {/* --- Mobile --- */}
+          <div className="flex flex-1 items-center justify-end gap-2 md:hidden">
             <button
-              onClick={onOpenFilters}
-              className="p-2 rounded-full cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              aria-label="Search"
+              onClick={() => {
+                setAuthDefaultTab('login');
+                setAuthOpen(true);
+              }}
+              className="rounded-full bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
             >
-              <Search className="w-5 h-5" />
+              Sign in
             </button>
-            <button
+
+            <IconButton icon={Search} label="Search" onClick={onOpenFilters} />
+            <IconButton
+              icon={MenuIcon}
+              label="Menu"
               onClick={() => setDrawerOpen(true)}
-              className="p-2 rounded-full cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              aria-label="Menu"
-            >
-              <MenuIcon className="w-6 h-6" />
-            </button>
+            />
           </div>
         </div>
       </nav>
 
-      {/* Drawer from separate file */}
+      {/* Drawer */}
       <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* 🔐 Auth modal */}
+      {/* Modals */}
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         defaultTab={authDefaultTab}
       />
+
+      <CreateIntentModal
+        open={newOpen}
+        onClose={() => setNewOpen(false)}
+        interests={[
+          { id: 'run', name: 'Running' },
+          { id: 'gym', name: 'Gym' },
+          { id: 'painting', name: 'Painting' },
+        ]}
+        fetchSuggestions={async () => []}
+        onCreate={async () => {}}
+      />
     </>
+  );
+}
+
+/* --- Small helpers --- */
+
+function SearchSegment({
+  icon,
+  value,
+  placeholder,
+  className,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  value?: string | null;
+  placeholder: string;
+  className?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={twMerge('flex items-center gap-2 hover:opacity-90', className)}
+    >
+      {icon}
+      <span className={`truncate ${value ? '' : 'opacity-60'}`}>
+        {value || placeholder}
+      </span>
+    </button>
+  );
+}
+
+function Divider() {
+  return <div className="mx-3 h-5 w-px bg-zinc-300/70 dark:bg-zinc-700/70" />;
+}
+
+function IconButton({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: any;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="cursor-pointer rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+    >
+      <Icon className="h-5 w-5" />
+    </button>
   );
 }

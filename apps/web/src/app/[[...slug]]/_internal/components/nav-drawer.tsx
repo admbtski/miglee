@@ -1,6 +1,5 @@
 'use client';
 
-import { ThemeSwitchConnected } from '@/app/components/theme/theme-switch-connect';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Briefcase,
@@ -21,6 +20,7 @@ import {
   X,
   Youtube,
 } from 'lucide-react';
+import { ThemeSwitchConnected } from '@/app/components/theme/theme-switch-connect';
 
 export function NavDrawer({
   open,
@@ -33,15 +33,14 @@ export function NavDrawer({
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-50 bg-black/40 cursor-pointer"
+            className="fixed inset-0 z-50 cursor-pointer bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
-          {/* Panel */}
+
           <motion.aside
             className="fixed right-0 top-0 z-50 h-full w-[88vw] max-w-md overflow-y-auto rounded-l-2xl border-l border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
             initial={{ x: '100%' }}
@@ -50,11 +49,11 @@ export function NavDrawer({
             transition={{ type: 'spring', stiffness: 260, damping: 30 }}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/70">
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
                 aria-label="Close menu"
+                className="cursor-pointer rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -62,28 +61,32 @@ export function NavDrawer({
               <ThemeSwitchConnected />
             </div>
 
-            {/* Items */}
+            {/* Links */}
             <nav className="px-2 py-2">
-              <MenuItem icon={Briefcase} label="Job offers" />
-              <MenuItem icon={Calculator} label="Salary calculator" />
-              <MenuItem icon={Building2} label="Company Profiles" />
-              <MenuItem icon={Rocket} label="RocketSpace.pl" />
-              <MenuItem icon={Info} label="About us" />
-              <MenuItem icon={CircleDollarSign} label="Pricing" />
-              <MenuItem icon={Scale} label="Career" />
-              <MenuItem icon={HelpCircle} label="Help" />
-              <MenuItem icon={Scale} label="Terms" />
-              <MenuItem icon={Shield} label="Privacy policy" />
-              <MenuItem icon={Cookie} label="Cookie settings" />
+              {[
+                [Briefcase, 'Job offers'],
+                [Calculator, 'Salary calculator'],
+                [Building2, 'Company Profiles'],
+                [Rocket, 'RocketSpace.pl'],
+                [Info, 'About us'],
+                [CircleDollarSign, 'Pricing'],
+                [Scale, 'Career'],
+                [HelpCircle, 'Help'],
+                [Scale, 'Terms'],
+                [Shield, 'Privacy policy'],
+                [Cookie, 'Cookie settings'],
+              ].map(([Icon, label]) => (
+                <MenuItem key={label} icon={Icon} label={label} />
+              ))}
             </nav>
 
             {/* CTAs */}
             <div className="space-y-3 px-4 py-3">
               <CardButton
                 icon={UserRound}
-                title="Sign in to Candidate's profile"
+                title="Sign in to Candidate profile"
               />
-              <CardButton icon={Monitor} title="Sign in to Employer's panel" />
+              <CardButton icon={Monitor} title="Sign in to Employer panel" />
             </div>
 
             {/* Socials */}
@@ -91,11 +94,10 @@ export function NavDrawer({
               <div className="mb-2 text-center text-sm text-zinc-600 dark:text-zinc-400">
                 Follow us on social media
               </div>
-              <div className="flex items-center justify-center gap-4">
-                <IconButton icon={Facebook} label="Facebook" />
-                <IconButton icon={Instagram} label="Instagram" />
-                <IconButton icon={Linkedin} label="LinkedIn" />
-                <IconButton icon={Youtube} label="YouTube" />
+              <div className="flex justify-center gap-4">
+                {[Facebook, Instagram, Linkedin, Youtube].map((Icon, i) => (
+                  <IconButton key={i} icon={Icon} />
+                ))}
               </div>
             </div>
           </motion.aside>
@@ -105,11 +107,10 @@ export function NavDrawer({
   );
 }
 
-/* --- tiny UI pieces --- */
-
+/* Small building blocks */
 function MenuItem({ icon: Icon, label }: { icon: any; label: string }) {
   return (
-    <button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer">
+    <button className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] hover:bg-zinc-50 dark:hover:bg-zinc-800">
       <Icon className="h-5 w-5 opacity-70" />
       <span>{label}</span>
     </button>
@@ -118,7 +119,7 @@ function MenuItem({ icon: Icon, label }: { icon: any; label: string }) {
 
 function CardButton({ icon: Icon, title }: { icon: any; title: string }) {
   return (
-    <button className="flex w-full items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 cursor-pointer">
+    <button className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
       <div className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
         <Icon className="h-5 w-5" />
       </div>
@@ -127,13 +128,9 @@ function CardButton({ icon: Icon, title }: { icon: any; title: string }) {
   );
 }
 
-function IconButton({ icon: Icon, label }: { icon: any; label: string }) {
+function IconButton({ icon: Icon }: { icon: any }) {
   return (
-    <button
-      className="rounded-xl border border-zinc-200 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 cursor-pointer"
-      aria-label={label}
-      title={label}
-    >
+    <button className="cursor-pointer rounded-xl border border-zinc-200 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
       <Icon className="h-5 w-5" />
     </button>
   );
