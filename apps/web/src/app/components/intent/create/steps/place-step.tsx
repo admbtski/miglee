@@ -8,6 +8,7 @@ import {
 } from '../components/location-combobox';
 import { reverseGeocodeLatLng } from '@/libs/map/places';
 import { MapPreview } from '@/app/components/location/MapPreview';
+import { reverseGeocode } from '@/libs/map/geocode';
 
 export function PlaceStep({
   form,
@@ -107,12 +108,11 @@ export function PlaceStep({
         <div className="mt-1 flex gap-2">
           <div className="w-full">
             <LocationCombo
-              value={addr}
+              value={location?.address ?? ''}
               onChangeText={(txt) =>
                 setValue('location.address', txt, { shouldDirty: true })
               }
               onPickPlace={(p) => {
-                // uzupełnij formularz
                 if (p.address)
                   setValue('location.address', p.address, {
                     shouldDirty: true,
@@ -127,10 +127,9 @@ export function PlaceStep({
                     shouldValidate: true,
                     shouldDirty: true,
                   });
-                setValue('location.address', p.address, { shouldDirty: true });
               }}
               bias={{
-                location: { lat: 52.2297, lng: 21.0122 }, // Warszawa (przykład)
+                location: { lat: 52.2297, lng: 21.0122 },
                 radius: 50_000,
               }}
             />
@@ -153,14 +152,35 @@ export function PlaceStep({
       <div className="mt-2">
         <MapPreview
           center={center}
-          zoom={center ? 15 : 6} // jeżeli brak center, pokaż szerzej kraj
+          zoom={center ? 15 : 6}
           radiusMeters={
             typeof location?.radiusKm === 'number' && location.radiusKm > 0
               ? location.radiusKm * 1000
               : undefined
           }
+          draggableMarker
+          clickToPlace
+          onUserSetPosition={async (pos) => {
+            // 1) ustaw współrzędne w formularzu
+            setValue('location.lat', pos.lat, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+            setValue('location.lng', pos.lng, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+
+            // 2) reverse geocode → uzupełnij adres (LocationCombo)
+            const rg = await reverseGeocode(pos);
+            if (rg.formattedAddress) {
+              setValue('location.address', rg.formattedAddress, {
+                shouldDirty: true,
+              });
+            }
+          }}
           className="w-full border border-zinc-200 dark:border-zinc-800"
-          // mapId="YOUR_MAP_ID" // jeśli masz własny styl z Cloud Console
+          // mapId="YOUR_VECTOR_MAP_ID" // (zalecane dla AdvancedMarker)
         />
       </div>
 

@@ -12,7 +12,10 @@ export function MapPreview({
   radiusMeters,
   className,
   style,
-  mapId, // opcjonalnie: własny styl z Google Cloud (vector basemap)
+  mapId,
+  draggableMarker = true,
+  clickToPlace = true,
+  onUserSetPosition, // <- nowość
 }: {
   center: LatLng | null;
   zoom?: number;
@@ -20,6 +23,9 @@ export function MapPreview({
   className?: string;
   style?: React.CSSProperties;
   mapId?: string;
+  draggableMarker?: boolean;
+  clickToPlace?: boolean;
+  onUserSetPosition?: (pos: LatLng) => void; // wywoływane po dragend/kliknięciu
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -28,82 +34,88 @@ export function MapPreview({
   );
   const circleRef = useRef<google.maps.Circle | null>(null);
 
-  // init map once
+  // init once
   useEffect(() => {
-    let destroyed = false;
+    let unsubMarker: google.maps.MapsEventListener | null = null;
+    let unsubMapClick: google.maps.MapsEventListener | null = null;
 
     (async () => {
-      // inicjalizacja tylko jeśli mamy gdzie renderować
       if (!containerRef.current || mapRef.current) return;
 
       const g = await loadGoogleMaps();
-
-      // dociągnij advanced markers (ładniejsze markery)
       const { AdvancedMarkerElement } = (await g.maps.importLibrary(
         'marker'
       )) as google.maps.MarkerLibrary;
 
       mapRef.current = new g.maps.Map(containerRef.current, {
-        // jeśli nie ma center jeszcze — ustaw PL jako domyślne
-        center: center ?? { lat: 52.2319, lng: 21.0067 }, // Warszawa
-        zoom,
-        mapId: mapId ?? '392ec30859537d29c98ed7b1', // jeżeli masz skonfigurowany własny styl
-        // UI clean
+        center: center ?? { lat: 52.2319, lng: 21.0067 },
+        zoom: center ? zoom : 6,
         streetViewControl: false,
         mapTypeControl: false,
         fullscreenControl: false,
-        clickableIcons: true,
+        mapId: mapId ?? '392ec30859537d29c98ed7b1', // jeżeli masz
       });
 
-      // utwórz marker
       markerRef.current = new AdvancedMarkerElement({
         map: mapRef.current,
         position: center ?? { lat: 52.2319, lng: 21.0067 },
       });
 
-      // opcjonalny okrąg (radius)
+      // drag
+      markerRef.current.gmpDraggable = !!draggableMarker;
+      if (draggableMarker) {
+        unsubMarker = markerRef.current.addListener('dragend', (e: any) => {
+          const pos =
+            e?.latLng?.toJSON?.() ??
+            (markerRef.current?.position as unknown as LatLng);
+          if (pos && onUserSetPosition) onUserSetPosition(pos);
+        });
+      }
+
+      // click on map to move marker
+      if (clickToPlace) {
+        unsubMapClick = mapRef.current.addListener('click', (e: any) => {
+          const pos: LatLng | null = e?.latLng?.toJSON?.() ?? null;
+          if (!pos) return;
+          if (markerRef.current) markerRef.current.position = pos;
+          circleRef.current?.setCenter(pos);
+          if (onUserSetPosition) onUserSetPosition(pos);
+        });
+      }
+
       if (typeof radiusMeters === 'number' && center) {
         circleRef.current = new g.maps.Circle({
-          map: mapRef.current!,
-          center: center,
+          map: mapRef.current,
+          center,
           radius: radiusMeters,
           strokeOpacity: 0.5,
           strokeWeight: 1,
           fillOpacity: 0.1,
         });
       }
-
-      if (center) {
-        mapRef.current.setCenter(center);
-        mapRef.current.setZoom(zoom);
-      }
     })();
 
     return () => {
-      destroyed = true;
-      // Google Maps sprząta sam, ale odpinamy referencje
+      unsubMarker?.remove();
+      unsubMapClick?.remove();
       circleRef.current?.setMap(null);
       markerRef.current = null;
       circleRef.current = null;
       mapRef.current = null;
     };
-  }, []); // init only once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // update center / marker / circle when props change
+  // updates
   useEffect(() => {
     (async () => {
-      if (!mapRef.current) return; // jeszcze nie gotowe
-
+      if (!mapRef.current) return;
       const g = (await loadGoogleMaps()).maps;
 
       if (center) {
         mapRef.current.setCenter(center);
+        if (markerRef.current) markerRef.current.position = center;
 
-        if (markerRef.current) {
-          markerRef.current.position = center;
-        }
-
-        // circle create/update
         if (typeof radiusMeters === 'number') {
           if (!circleRef.current) {
             circleRef.current = new g.Circle({
@@ -120,19 +132,16 @@ export function MapPreview({
             circleRef.current.setMap(mapRef.current!);
           }
         } else {
-          // no radius -> remove if exists
           circleRef.current?.setMap(null);
           circleRef.current = null;
         }
       } else {
-        // brak center -> ukryj marker i kółko
         if (markerRef.current) markerRef.current.map = null as any;
         circleRef.current?.setMap(null);
       }
     })();
   }, [center?.lat, center?.lng, radiusMeters]);
 
-  // update zoom when prop changes
   useEffect(() => {
     if (mapRef.current && typeof zoom === 'number') {
       mapRef.current.setZoom(zoom);
@@ -143,12 +152,7 @@ export function MapPreview({
     <div
       ref={containerRef}
       className={className}
-      style={{
-        height: 260,
-        borderRadius: 16,
-        overflow: 'hidden',
-        ...style,
-      }}
+      style={{ height: 260, borderRadius: 16, overflow: 'hidden', ...style }}
       aria-label="Location map preview"
     />
   );
