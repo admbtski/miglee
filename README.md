@@ -33,6 +33,7 @@ miglee/
 ### Setup
 
 1. **Clone and install dependencies**
+
    ```bash
    git clone <repository-url>
    cd miglee
@@ -40,17 +41,20 @@ miglee/
    ```
 
 2. **Start the database**
+
    ```bash
    pnpm db:up
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example apps/api/.env
    cp .env.example apps/web/.env.local
    ```
 
 4. **Initialize the database**
+
    ```bash
    pnpm -C apps/api prisma:migrate
    pnpm -C apps/api prisma:generate
@@ -58,6 +62,7 @@ miglee/
    ```
 
 5. **Generate GraphQL types**
+
    ```bash
    pnpm -C apps/api gql:gen
    pnpm -C apps/web gql:gen
@@ -79,6 +84,7 @@ miglee/
 ## 📋 Available Scripts
 
 ### Root Commands
+
 - `pnpm dev` - Start all development servers
 - `pnpm build` - Build all applications
 - `pnpm typecheck` - Type check all packages
@@ -88,6 +94,7 @@ miglee/
 - `pnpm db:down` - Stop database containers
 
 ### API Commands
+
 ```bash
 cd apps/api
 pnpm dev              # Start API server
@@ -97,6 +104,7 @@ pnpm prisma:seed      # Seed database with test data
 ```
 
 ### Web Commands
+
 ```bash
 cd apps/web
 pnpm dev              # Start Next.js dev server
@@ -118,6 +126,7 @@ model Event {
 ### Seed Data
 
 The database is seeded with 10 sports events with deterministic dates:
+
 - Anchor date: January 15, 2025, 00:00:00 UTC
 - Each event is created 1 day earlier than the previous
 - Events are displayed sorted by `createdAt` in descending order
@@ -125,6 +134,7 @@ The database is seeded with 10 sports events with deterministic dates:
 ## 🔧 GraphQL API
 
 ### Schema
+
 ```graphql
 scalar DateTime
 
@@ -140,6 +150,7 @@ type Query {
 ```
 
 ### Example Query
+
 ```graphql
 query GetEvents($limit: Int = 10) {
   events(limit: $limit) {
@@ -203,6 +214,7 @@ pnpm -C apps/api prisma:generate
 ## 📦 Tech Stack Details
 
 ### Frontend Dependencies
+
 - `react@19.1.1` + `react-dom@19.1.1`
 - `next@15.4.6`
 - `tailwindcss@4.1.12`
@@ -210,6 +222,7 @@ pnpm -C apps/api prisma:generate
 - `graphql-request@7.2.0`
 
 ### Backend Dependencies
+
 - `fastify@5.5.0`
 - `mercurius@16.2.0`
 - `@prisma/client@^5`
@@ -217,6 +230,7 @@ pnpm -C apps/api prisma:generate
 - `zod@^3`
 
 ### Development Tools
+
 - `typescript@5.9.2` (pinned across all packages)
 - `turbo@^2.3.3`
 - `@graphql-codegen/cli@^5`
@@ -232,6 +246,7 @@ pnpm -C apps/api prisma:generate
 4. **Prisma sync**: Run `pnpm -C apps/api prisma:generate` after schema updates
 
 ### Reset Everything
+
 ```bash
 pnpm db:down
 pnpm db:up
@@ -240,3 +255,5 @@ pnpm -C apps/api prisma:seed
 pnpm gql:gen
 pnpm dev
 ```
+
+# AIzaSyDcpZpIdRTzPiM8-Q64WuB2AsUNtWJSHVo - place api

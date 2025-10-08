@@ -1,8 +1,7 @@
 'use client';
 
-import { IntentFormValues } from './useIntentForm';
-import { IntentSuggestion } from './types';
-import { SuggestionCard } from './SuggestionCard';
+import { IntentFormValues, IntentSuggestion } from '../../types';
+import { SuggestionCard } from '../components/suggestion-card';
 
 export function ReviewStep({
   values,

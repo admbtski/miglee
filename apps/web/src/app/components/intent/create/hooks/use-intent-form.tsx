@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { IntentFormValues } from '../../types';
 
 // --- Zod schema mirroring your requirements ---
 const nowPlus5Min = () => new Date(Date.now() + 5 * 60 * 1000);
@@ -63,8 +64,6 @@ export const IntentSchema = z
     },
     { path: ['capacity'], message: 'Invalid capacity for selected mode' }
   );
-
-export type IntentFormValues = z.infer<typeof IntentSchema>;
 
 // --- Default values ---
 export const defaultIntentValues: IntentFormValues = {

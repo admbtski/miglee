@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { IntentSuggestion } from './types';
+import { IntentSuggestion } from '../../types';
 
 export function SuggestionCard({
   s,
@@ -12,7 +12,7 @@ export function SuggestionCard({
   selected?: boolean;
   onSelect?: () => void;
 }) {
-  const fullness = `${s.taken}/${s.capacity}`;
+  const fullness = `${s.taken}/${s.max}`;
   const time = `${new Date(s.startAt).toLocaleString()} – ${new Date(s.endAt).toLocaleTimeString()}`;
 
   return (

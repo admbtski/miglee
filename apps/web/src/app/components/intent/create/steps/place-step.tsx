@@ -1,7 +1,13 @@
 'use client';
 
-import { UseFormReturn, Controller } from 'react-hook-form';
-import { IntentFormValues } from './useIntentForm';
+import { UseFormReturn } from 'react-hook-form';
+import { IntentFormValues } from '../../types';
+import {
+  LocationCombo,
+  LocationComboValue,
+} from '../components/location-combobox';
+import { reverseGeocodeLatLng } from '@/libs/map/places';
+import { MapPreview } from '@/app/components/location/MapPreview';
 
 export function PlaceStep({
   form,
@@ -15,40 +21,120 @@ export function PlaceStep({
   } | null>;
 }) {
   const {
-    control,
     register,
     setValue,
     watch,
     formState: { errors },
   } = form;
-  const { location } = watch();
+
+  const location = watch('location'); // { address?: string, lat?: number, lng?: number, radiusKm?: number }
+  const addr = watch('location.address') ?? '';
+  const currentValue: LocationComboValue | null =
+    location?.lat != null && location?.lng != null
+      ? {
+          lat: location.lat!,
+          lng: location.lng!,
+          address: location.address ?? '',
+        }
+      : null;
+
+  const center =
+    location?.lat != null && location?.lng != null
+      ? { lat: Number(location.lat), lng: Number(location.lng) }
+      : null;
+
+  const handleComboChange = (v: LocationComboValue | null) => {
+    if (v == null) {
+      setValue('location.address', '', { shouldDirty: true });
+      setValue('location.lat', undefined as any, { shouldValidate: true });
+      setValue('location.lng', undefined as any, { shouldValidate: true });
+      return;
+    }
+    setValue('location.address', v.address ?? '', { shouldDirty: true });
+    setValue('location.lat', v.lat, { shouldValidate: true });
+    setValue('location.lng', v.lng, { shouldValidate: true });
+  };
 
   const handleUseMyLocation = async () => {
-    if (!onUseMyLocation) return;
-    const res = await onUseMyLocation();
-    if (res) {
-      setValue('location.lat', res.lat, { shouldValidate: true });
-      setValue('location.lng', res.lng, { shouldValidate: true });
-      setValue('location.address', res.address ?? '', { shouldDirty: true });
+    try {
+      if (onUseMyLocation) {
+        const res = await onUseMyLocation();
+        if (res) {
+          setValue('location.lat', res.lat, { shouldValidate: true });
+          setValue('location.lng', res.lng, { shouldValidate: true });
+          setValue('location.address', res.address ?? '', {
+            shouldDirty: true,
+          });
+          return;
+        }
+      }
+
+      // domyślna implementacja: geolocation + reverse geocoding
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation)
+          return reject(new Error('Geolocation not supported'));
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000,
+        });
+      });
+
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      let addr = '';
+      try {
+        addr = await reverseGeocodeLatLng(lat, lng);
+      } catch {
+        // ignore reverse geocode errors
+      }
+
+      setValue('location.lat', lat, { shouldValidate: true });
+      setValue('location.lng', lng, { shouldValidate: true });
+      setValue('location.address', addr, { shouldDirty: true });
+    } catch (e) {
+      console.error('Use my location failed:', e);
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Address input + use my location */}
+      {/* Address / Place Autocomplete */}
       <div>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Location (address or POI)
         </label>
         <div className="mt-1 flex gap-2">
-          <input
-            {...register('location.address')}
-            placeholder="Type an address or place…"
-            className="w-full rounded-2xl border px-4 py-3
-                       border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
-                       dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-          />
+          <div className="w-full">
+            <LocationCombo
+              value={addr}
+              onChangeText={(txt) =>
+                setValue('location.address', txt, { shouldDirty: true })
+              }
+              onPickPlace={(p) => {
+                // uzupełnij formularz
+                if (p.address)
+                  setValue('location.address', p.address, {
+                    shouldDirty: true,
+                  });
+                if (typeof p.lat === 'number')
+                  setValue('location.lat', p.lat, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                if (typeof p.lng === 'number')
+                  setValue('location.lng', p.lng, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                setValue('location.address', p.address, { shouldDirty: true });
+              }}
+              bias={{
+                location: { lat: 52.2297, lng: 21.0122 }, // Warszawa (przykład)
+                radius: 50_000,
+              }}
+            />
+          </div>
           <button
             type="button"
             onClick={handleUseMyLocation}
@@ -64,7 +150,21 @@ export function PlaceStep({
         </div>
       </div>
 
-      {/* Lat/Lng */}
+      <div className="mt-2">
+        <MapPreview
+          center={center}
+          zoom={center ? 15 : 6} // jeżeli brak center, pokaż szerzej kraj
+          radiusMeters={
+            typeof location?.radiusKm === 'number' && location.radiusKm > 0
+              ? location.radiusKm * 1000
+              : undefined
+          }
+          className="w-full border border-zinc-200 dark:border-zinc-800"
+          // mapId="YOUR_MAP_ID" // jeśli masz własny styl z Cloud Console
+        />
+      </div>
+
+      {/* Lat/Lng manual (fallback / inspection) */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -119,8 +219,7 @@ export function PlaceStep({
                      dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
         />
         <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          0 = exact pin; `{'>'}`0 shows a shaded circle on map
-          (privacy-friendly).
+          0 = exact pin; &gt;0 shows a shaded circle on map (privacy-friendly).
         </div>
       </div>
 

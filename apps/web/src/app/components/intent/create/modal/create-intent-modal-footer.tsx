@@ -2,13 +2,9 @@
 
 export function StepHeader({
   title,
-  step,
-  total,
   onClose,
 }: {
   title: string;
-  step: number;
-  total: number;
   onClose: () => void;
 }) {
   return (

@@ -186,6 +186,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@googlemaps/js-api-loader':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@graphql-typed-document-node/core':
         specifier: ^3.2.0
         version: 3.2.0(graphql@16.11.0)
@@ -726,6 +729,9 @@ packages:
 
   '@fastify/websocket@11.2.0':
     resolution: {integrity: sha512-3HrDPbAG1CzUCqnslgJxppvzaAZffieOVbLp1DAy1huCSynUWPifSvfdEDUR8HlJLp3sp1A36uOM2tJogADS8w==, tarball: https://registry.npmjs.org/@fastify/websocket/-/websocket-11.2.0.tgz}
+
+  '@googlemaps/js-api-loader@2.0.1':
+    resolution: {integrity: sha512-YUtKJSWH6FiE/6Ii+NP+WfkvoZ55DLwyqthKmVYxZZwn/ny310dvz9Zw3cO1besEhGxA9lW7Ctjmzae1putjXQ==, tarball: https://registry.npmjs.org/@googlemaps/js-api-loader/-/js-api-loader-2.0.1.tgz}
 
   '@graphql-codegen/add@6.0.0':
     resolution: {integrity: sha512-biFdaURX0KTwEJPQ1wkT6BRgNasqgQ5KbCI1a3zwtLtO7XTo7/vKITPylmiU27K5DSOWYnY/1jfSqUAEBuhZrQ==, tarball: https://registry.npmjs.org/@graphql-codegen/add/-/add-6.0.0.tgz}
@@ -1425,6 +1431,7 @@ packages:
   '@opentelemetry/exporter-jaeger@2.1.0':
     resolution: {integrity: sha512-qtUMsp8061pQn6ZN9dngH6okiiF0NlHYBLWprzLeeCmNN7i5UHM+V8GmxvUH4L/zXlNBsySq7p3fZHIIbmK9xg==, tarball: https://registry.npmjs.org/@opentelemetry/exporter-jaeger/-/exporter-jaeger-2.1.0.tgz}
     engines: {node: ^18.19.0 || >=20.6.0}
+    deprecated: Jaeger now has native support for OTLP. Please use @opentelemetry/exporter-trace-otlp-proto instead.
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
 
@@ -2095,6 +2102,9 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==, tarball: https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz}
+
+  '@types/google.maps@3.58.1':
+    resolution: {integrity: sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ==, tarball: https://registry.npmjs.org/@types/google.maps/-/google.maps-3.58.1.tgz}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==, tarball: https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz}
@@ -5362,6 +5372,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@googlemaps/js-api-loader@2.0.1':
+    dependencies:
+      '@types/google.maps': 3.58.1
+
   '@graphql-codegen/add@6.0.0(graphql@16.11.0)':
     dependencies:
       '@graphql-codegen/plugin-helpers': 6.0.0(graphql@16.11.0)
@@ -7073,6 +7087,8 @@ snapshots:
       '@types/node': 24.5.2
 
   '@types/estree@1.0.8': {}
+
+  '@types/google.maps@3.58.1': {}
 
   '@types/json-schema@7.0.15': {}
 

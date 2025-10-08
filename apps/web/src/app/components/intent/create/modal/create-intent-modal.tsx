@@ -2,15 +2,19 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useMemo, useState } from 'react';
-import { BasicsStep } from './BasicsStep';
-import { PlaceStep } from './PlaceStep';
-import { ReviewStep } from './ReviewStep';
-import { StepFooter } from './StepFooter';
-import { StepHeader } from './StepHeader';
-import { Stepper } from './Stepper';
-import { TimeStep } from './TimeStep';
-import { CreateIntentInput, IntentSuggestion } from './types';
-import { IntentFormValues, useIntentForm } from './useIntentForm';
+import { PlaceStep } from '../steps/place-step';
+import { ReviewStep } from '../steps/review-step';
+import { StepFooter } from './create-intent-modal-header';
+import { StepHeader } from './create-intent-modal-footer';
+import { Stepper } from '../components/stepper';
+import {
+  CreateIntentInput,
+  IntentFormValues,
+  IntentSuggestion,
+} from '../../types';
+import { useIntentForm } from '../hooks/use-intent-form';
+import { TimeStep } from '../steps/time-step';
+import { BasicsStep } from '../steps/basics-step';
 
 const overlayVariants = {
   hidden: { opacity: 0 },
@@ -56,7 +60,7 @@ export function CreateIntentModal({
 }) {
   const prefersReducedMotion = useReducedMotion();
   const [mounted, setMounted] = useState(open);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(2);
   const titleId = useId();
   const descId = useId();
 
@@ -252,12 +256,7 @@ export function CreateIntentModal({
             className="w-[96vw] max-w-3xl rounded-3xl border border-zinc-200 bg-white shadow-2xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10"
           >
             <div className="px-6 py-5">
-              <StepHeader
-                title={stepTitle}
-                step={step + 1}
-                total={STEPS.length}
-                onClose={onClose}
-              />
+              <StepHeader title={stepTitle} onClose={onClose} />
             </div>
 
             {/* Divider */}

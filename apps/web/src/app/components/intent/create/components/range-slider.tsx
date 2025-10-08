@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import noUiSlider, { API } from 'nouislider';
 import 'nouislider/dist/nouislider.css';
+import { useEffect, useRef } from 'react';
 
 type Props = {
   value: [number, number];

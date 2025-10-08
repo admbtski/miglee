@@ -1,3 +1,6 @@
+import z from 'zod';
+import { IntentSchema } from './create/hooks/use-intent-form';
+
 export type CreateIntentInput = {
   title: string;
   interestId: string;
@@ -25,3 +28,7 @@ export type IntentSuggestion = {
   max: number;
   taken: number;
 };
+
+export type CategoryOption = { id: string; name: string };
+
+export type IntentFormValues = z.infer<typeof IntentSchema>;

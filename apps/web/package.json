@@ -12,6 +12,7 @@
     "gql:gen": "graphql-codegen --config src/graphql/codegen.ts"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^2.0.1",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@hookform/resolvers": "^5.2.2",
     "@miglee/contracts": "workspace:*",

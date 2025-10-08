@@ -2,9 +2,10 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { useEffect, useId } from 'react';
-import { IntentFormValues } from './useIntentForm';
-import { RangeSlider } from './RangeSlider';
 import { User, Users } from 'lucide-react';
+import { IntentFormValues } from '../../types';
+import { CategoryCombo } from '../components/category-combobox';
+import { RangeSlider } from '../components/range-slider';
 
 export function BasicsStep({
   form,
@@ -116,44 +117,48 @@ export function BasicsStep({
       </div>
 
       {/* Category */}
-      <div className="group">
-        <label
-          htmlFor={catId}
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-        >
-          Category
-        </label>
-        <select
-          {...register('interestId')}
-          id={catId}
-          aria-invalid={!!errors.interestId}
-          aria-describedby={errors.interestId ? catErrId : undefined}
-          className="w-full rounded-2xl border px-4 py-3.5 border-zinc-300 bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
-        >
-          <option value="">Select…</option>
-          {interests.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.name}
-            </option>
-          ))}
-        </select>
-        <AnimatePresence initial={false} mode="wait">
-          {errors.interestId && (
-            <motion.div
-              id={catErrId}
-              role="alert"
-              aria-live="polite"
-              className="mt-1 text-xs text-red-500"
-              variants={errorVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              {errors.interestId.message as string}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <Controller
+        name="interestId"
+        control={form.control}
+        render={({ field }) => {
+          const selectedId = field.value ?? null;
+          const selectedLabel =
+            interests.find((i) => i.id === selectedId)?.name ?? null;
+
+          return (
+            <div className="group">
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Category
+              </label>
+
+              <CategoryCombo
+                value={selectedId}
+                onChange={(id) => field.onChange(id)}
+                initialOptions={interests}
+                selectedLabelOverride={selectedLabel}
+                placeholder="Search category…"
+              />
+
+              <AnimatePresence initial={false} mode="wait">
+                {errors.interestId && (
+                  <motion.div
+                    id={catErrId}
+                    role="alert"
+                    aria-live="polite"
+                    className="mt-1 text-xs text-red-500"
+                    initial={{ opacity: 0, height: 0, y: -4 }}
+                    animate={{ opacity: 1, height: 'auto', y: 0 }}
+                    exit={{ opacity: 0, height: 0, y: -4 }}
+                    transition={{ duration: prefersReducedMotion ? 0 : 0.18 }}
+                  >
+                    {errors.interestId.message as string}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        }}
+      />
 
       {/* Description */}
       <div className="group">
@@ -340,7 +345,7 @@ export function BasicsStep({
 
       {/* Capacity (hidden for 1:1) */}
       <AnimatePresence initial={false} mode="wait">
-        {mode === 'GROUP' ? (
+        {mode === 'GROUP' && (
           <motion.div
             key="cap-range"
             className="group"
@@ -393,18 +398,6 @@ export function BasicsStep({
               )}
             </AnimatePresence>
           </motion.div>
-        ) : (
-          // Hint shown when 1:1 is active
-          <motion.p
-            key="cap-hint"
-            className="text-xs text-zinc-500 dark:text-zinc-400"
-            initial={{ opacity: 0, height: 0, y: -4 }}
-            animate={{ opacity: 1, height: 'auto', y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -4 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.18 }}
-          >
-            1:1 intents set capacity to 2 (owner + 1).
-          </motion.p>
         )}
       </AnimatePresence>
     </motion.div>

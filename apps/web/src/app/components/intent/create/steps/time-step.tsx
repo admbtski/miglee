@@ -1,7 +1,7 @@
 'use client';
 
-import { UseFormReturn, Controller } from 'react-hook-form';
-import { IntentFormValues } from './useIntentForm';
+import { UseFormReturn } from 'react-hook-form';
+import { IntentFormValues } from '../../types';
 
 export function TimeStep({
   form,

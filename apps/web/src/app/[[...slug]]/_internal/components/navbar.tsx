@@ -15,9 +15,9 @@ import {
 import { twMerge } from 'tailwind-merge';
 
 import { AuthModal } from '@/app/components/auth/auth-modal';
-import { CreateIntentModal } from '@/app/components/intent/CreateIntentModal';
 import { NavDrawer } from './nav-drawer';
 import { UserMenu } from './user-menu';
+import { CreateIntentModal } from '@/app/components/intent/create/modal/create-intent-modal';
 
 type NavbarProps = {
   q: string;
