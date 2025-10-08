@@ -1,14 +1,12 @@
+// app/(wherever)/PlaceStep.tsx
 'use client';
 
+import { useMemo, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { IntentFormValues } from '../../types';
-import {
-  LocationCombo,
-  LocationComboValue,
-} from '../components/location-combobox';
-import { reverseGeocodeLatLng } from '@/libs/map/places';
 import { MapPreview } from '@/app/components/location/MapPreview';
-import { reverseGeocode } from '@/libs/map/geocode';
+import { reverseGeocode, reverseGeocodeLatLng } from '@/libs/map/geocode';
+import { LocationCombo } from '../components/location-combobox';
 
 export function PlaceStep({
   form,
@@ -28,32 +26,45 @@ export function PlaceStep({
     formState: { errors },
   } = form;
 
-  const location = watch('location'); // { address?: string, lat?: number, lng?: number, radiusKm?: number }
-  const addr = watch('location.address') ?? '';
-  const currentValue: LocationComboValue | null =
-    location?.lat != null && location?.lng != null
-      ? {
-          lat: location.lat!,
-          lng: location.lng!,
-          address: location.address ?? '',
-        }
-      : null;
+  const loc = watch('location');
+  const [geoBusy, setGeoBusy] = useState(false);
 
-  const center =
-    location?.lat != null && location?.lng != null
-      ? { lat: Number(location.lat), lng: Number(location.lng) }
-      : null;
+  const center = useMemo(
+    () =>
+      typeof loc?.lat === 'number' && typeof loc?.lng === 'number'
+        ? ({ lat: +loc.lat, lng: +loc.lng } as const)
+        : null,
+    [loc?.lat, loc?.lng]
+  );
 
-  const handleComboChange = (v: LocationComboValue | null) => {
-    if (v == null) {
-      setValue('location.address', '', { shouldDirty: true });
-      setValue('location.lat', undefined as any, { shouldValidate: true });
-      setValue('location.lng', undefined as any, { shouldValidate: true });
-      return;
+  // IMPORTANT: MapPreview expects number | null (not undefined) with exactOptionalPropertyTypes
+  const radiusMeters: number | null = useMemo(() => {
+    return typeof loc?.radiusKm === 'number' && loc.radiusKm > 0
+      ? loc.radiusKm * 1000
+      : null;
+  }, [loc?.radiusKm]);
+
+  const commitPlace = (payload: {
+    address?: string;
+    lat?: number;
+    lng?: number;
+    displayName?: string;
+    id?: string;
+  }) => {
+    if (typeof payload.lat === 'number') {
+      setValue('location.lat', payload.lat, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
     }
-    setValue('location.address', v.address ?? '', { shouldDirty: true });
-    setValue('location.lat', v.lat, { shouldValidate: true });
-    setValue('location.lng', v.lng, { shouldValidate: true });
+    if (typeof payload.lng === 'number') {
+      setValue('location.lng', payload.lng, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+    const addr = payload.address ?? payload.displayName ?? '';
+    setValue('location.address', addr, { shouldDirty: true });
   };
 
   const handleUseMyLocation = async () => {
@@ -61,38 +72,42 @@ export function PlaceStep({
       if (onUseMyLocation) {
         const res = await onUseMyLocation();
         if (res) {
+          const address =
+            res.address ?? `${res.lat.toFixed(5)}, ${res.lng.toFixed(5)}`;
+          setValue('location.address', address, { shouldDirty: true });
           setValue('location.lat', res.lat, { shouldValidate: true });
           setValue('location.lng', res.lng, { shouldValidate: true });
-          setValue('location.address', res.address ?? '', {
-            shouldDirty: true,
-          });
-          return;
+          return; // LocationCombo zaktualizuje się z props.value
         }
       }
 
-      // domyślna implementacja: geolocation + reverse geocoding
+      // Własna geolokalizacja + reverse geocode
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
         if (!navigator.geolocation)
-          return reject(new Error('Geolocation not supported'));
+          return reject(new Error('Geolocation is not supported'));
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 30000,
+          timeout: 12_000,
+          maximumAge: 30_000,
         });
       });
 
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      let addr = '';
+
+      let address: string | undefined = '';
       try {
-        addr = await reverseGeocodeLatLng(lat, lng);
+        address = await reverseGeocodeLatLng(lat, lng);
       } catch {
-        // ignore reverse geocode errors
+        // ignore
+      }
+      if (!address) {
+        address = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       }
 
+      setValue('location.address', address, { shouldDirty: true });
       setValue('location.lat', lat, { shouldValidate: true });
       setValue('location.lng', lng, { shouldValidate: true });
-      setValue('location.address', addr, { shouldDirty: true });
     } catch (e) {
       console.error('Use my location failed:', e);
     }
@@ -108,60 +123,62 @@ export function PlaceStep({
         <div className="mt-1 flex gap-2">
           <div className="w-full">
             <LocationCombo
-              value={location?.address ?? ''}
+              value={loc?.address ?? ''}
               onChangeText={(txt) =>
                 setValue('location.address', txt, { shouldDirty: true })
               }
-              onPickPlace={(p) => {
-                if (p.address)
-                  setValue('location.address', p.address, {
-                    shouldDirty: true,
-                  });
-                if (typeof p.lat === 'number')
-                  setValue('location.lat', p.lat, {
+              onPickPlace={({ address, lat, lng, displayName }) => {
+                const addr = address ?? displayName ?? '';
+                setValue('location.address', addr, { shouldDirty: true });
+                if (typeof lat === 'number') {
+                  setValue('location.lat', lat, {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
-                if (typeof p.lng === 'number')
-                  setValue('location.lng', p.lng, {
+                }
+                if (typeof lng === 'number') {
+                  setValue('location.lng', lng, {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
+                }
               }}
               bias={{
                 location: { lat: 52.2297, lng: 21.0122 },
                 radius: 50_000,
               }}
+              placeholder="Type an address or place…"
             />
           </div>
           <button
             type="button"
             onClick={handleUseMyLocation}
+            disabled={geoBusy}
             className="shrink-0 rounded-2xl border px-4 py-3
                        border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50
+                       disabled:opacity-60 disabled:cursor-not-allowed
                        dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
           >
-            Use my location
+            {geoBusy ? 'Locating…' : 'Use my location'}
           </button>
         </div>
         <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Lat/Lng required — address is optional.
+          Latitude/Longitude required — address is optional.
         </div>
       </div>
 
+      {/* Map (two-way binding) */}
       <div className="mt-2">
         <MapPreview
           center={center}
           zoom={center ? 15 : 6}
-          radiusMeters={
-            typeof location?.radiusKm === 'number' && location.radiusKm > 0
-              ? location.radiusKm * 1000
-              : undefined
-          }
+          radiusMeters={radiusMeters}
           draggableMarker
           clickToPlace
-          onUserSetPosition={async (pos) => {
-            // 1) ustaw współrzędne w formularzu
+          className="w-full border border-zinc-200 dark:border-zinc-800"
+          // mapId="YOUR_VECTOR_MAP_ID"
+          onUserSetPosition={(pos) => {
+            // 1) commit coordinates to the form
             setValue('location.lat', pos.lat, {
               shouldValidate: true,
               shouldDirty: true,
@@ -171,20 +188,20 @@ export function PlaceStep({
               shouldDirty: true,
             });
 
-            // 2) reverse geocode → uzupełnij adres (LocationCombo)
-            const rg = await reverseGeocode(pos);
-            if (rg.formattedAddress) {
-              setValue('location.address', rg.formattedAddress, {
-                shouldDirty: true,
+            // 2) reverse geocode → update address (do not return a Promise from handler)
+            void reverseGeocode(pos)
+              .then((rg) => {
+                const addr = rg.formattedAddress ?? '';
+                setValue('location.address', addr, { shouldDirty: true });
+              })
+              .catch(() => {
+                // ignore reverse geocode errors
               });
-            }
           }}
-          className="w-full border border-zinc-200 dark:border-zinc-800"
-          // mapId="YOUR_VECTOR_MAP_ID" // (zalecane dla AdvancedMarker)
         />
       </div>
 
-      {/* Lat/Lng manual (fallback / inspection) */}
+      {/* Manual latitude/longitude */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -239,11 +256,12 @@ export function PlaceStep({
                      dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
         />
         <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          0 = exact pin; &gt;0 shows a shaded circle on map (privacy-friendly).
+          0 = exact pin; &gt; 0 shows a shaded circle on the map
+          (privacy-friendly).
         </div>
       </div>
 
-      {/* Notes */}
+      {/* Logistics note */}
       <div>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Logistics note (optional)

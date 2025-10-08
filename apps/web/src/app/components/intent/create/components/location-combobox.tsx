@@ -1,4 +1,4 @@
-// components/location/LocationCombo.tsx
+// app/components/location/LocationCombo.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -25,10 +25,7 @@ export function LocationCombo({
     lng?: number;
     displayName?: string;
   }) => void;
-  bias?: {
-    location?: google.maps.LatLngLiteral;
-    radius?: number;
-  };
+  bias?: { location?: google.maps.LatLngLiteral; radius?: number };
   placeholder?: string;
   className?: string;
 }) {
@@ -45,7 +42,13 @@ export function LocationCombo({
     region: 'PL',
   });
 
-  // zamknij na klik poza
+  // ⬇️ NEW: when parent updates `value` (e.g., after "Use my location"), close dropdown and reset highlight
+  useEffect(() => {
+    setOpen(false);
+    setHighlight(-1);
+  }, [value]);
+
+  // Close on outside click
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node;
@@ -59,21 +62,30 @@ export function LocationCombo({
 
   const pick = async (idx: number) => {
     const s = suggestions[idx];
-    if (!s) return;
-    // pobierz szczegóły z nowego API
-    const place = await fetchPlaceDetailsFromSuggestion(s.raw, [
+    if (!s || !s.raw?.placePrediction) {
+      setOpen(false);
+      setHighlight(-1);
+      return;
+    }
+
+    const details = await fetchPlaceDetailsFromSuggestion(s.raw, [
       'id',
       'displayName',
       'formattedAddress',
       'location',
     ]);
+
     onPickPlace({
-      id: (place as any).id,
-      displayName: (place as any).displayName,
-      address: (place as any).formattedAddress,
-      lat: (place as any).location?.lat(),
-      lng: (place as any).location?.lng(),
+      id: details.id,
+      displayName:
+        typeof details.displayName === 'string'
+          ? details.displayName
+          : ((details.displayName as any)?.text ?? undefined),
+      address: details.formattedAddress ?? undefined,
+      lat: details.lat,
+      lng: details.lng,
     });
+
     setOpen(false);
     setHighlight(-1);
   };
@@ -102,13 +114,15 @@ export function LocationCombo({
             if (!open) return;
             if (e.key === 'ArrowDown') {
               e.preventDefault();
-              setHighlight((h) => Math.min(h + 1, suggestions.length - 1));
+              setHighlight((h) =>
+                Math.min(h + 1, Math.max(0, suggestions.length - 1))
+              );
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
               setHighlight((h) => Math.max(h - 1, 0));
             } else if (e.key === 'Enter') {
               e.preventDefault();
-              if (highlight >= 0) pick(highlight);
+              if (highlight >= 0) void pick(highlight);
             } else if (e.key === 'Escape') {
               setOpen(false);
             }
@@ -133,7 +147,7 @@ export function LocationCombo({
                 role="option"
                 aria-selected={active}
                 onMouseEnter={() => setHighlight(idx)}
-                onClick={() => pick(idx)}
+                onClick={() => void pick(idx)}
                 className={[
                   'block w-full cursor-pointer px-3 py-2 text-left text-sm',
                   active

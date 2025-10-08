@@ -1,55 +1,43 @@
 // lib/places.ts
-import { loadGoogleMaps } from './googleMaps';
+'use client';
 
+import { importPlaces } from './googleMaps';
+
+/**
+ * Retrieves place details using the new Places API (New).
+ * Modern replacement for deprecated `PlacesService.getDetails`.
+ */
 export async function getPlaceDetailsById(
   placeId: string,
-  sessionToken?: google.maps.places.AutocompleteSessionToken
+  opts?: { language?: string; region?: string }
 ): Promise<{
   lat: number;
   lng: number;
   formattedAddress: string;
+  displayName?: string;
+  id?: string;
 }> {
-  const g = await loadGoogleMaps();
+  const places = await importPlaces();
 
-  return new Promise((resolve, reject) => {
-    const dummyMap = document.createElement('div'); // nie renderujemy, tylko chcemy service
-    const service = new g.maps.places.PlacesService(dummyMap);
-
-    service.getDetails(
-      {
-        placeId,
-        sessionToken, // ważne: ta sama sesja co w autocomplete
-        fields: ['geometry.location', 'formatted_address'],
-      },
-      (place, status) => {
-        if (status !== g.maps.places.PlacesServiceStatus.OK || !place) {
-          return reject(status);
-        }
-        const loc = place.geometry?.location;
-        if (!loc) return reject(new Error('No geometry for place'));
-        resolve({
-          lat: loc.lat(),
-          lng: loc.lng(),
-          formattedAddress: place.formatted_address ?? '',
-        });
-      }
-    );
+  // Create a Place instance and fetch only necessary fields
+  const place = new places.Place({
+    id: placeId,
+    requestedLanguage: opts?.language ?? null,
+    requestedRegion: opts?.region ?? null,
   });
-}
 
-export async function reverseGeocodeLatLng(
-  lat: number,
-  lng: number
-): Promise<string> {
-  const g = await loadGoogleMaps();
-
-  return new Promise((resolve, reject) => {
-    const geocoder = new g.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status !== 'OK' || !results || !results[0]) {
-        return reject(status);
-      }
-      resolve(results[0].formatted_address ?? '');
-    });
+  await place.fetchFields({
+    fields: ['location', 'formattedAddress', 'id', 'displayName'],
   });
+
+  const loc = place.location;
+  if (!loc) throw new Error('Place has no location.');
+
+  return {
+    lat: loc.lat(),
+    lng: loc.lng(),
+    formattedAddress: place.formattedAddress ?? '',
+    displayName: (place as any).displayName,
+    id: (place as any).id,
+  };
 }

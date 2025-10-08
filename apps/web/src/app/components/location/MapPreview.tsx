@@ -1,11 +1,18 @@
 // components/location/MapPreview.tsx
 'use client';
 
-import { loadGoogleMaps } from '@/libs/map/googleMaps';
+import { importMarker, loadGoogleMaps } from '@/libs/map/googleMaps';
 import { useEffect, useRef } from 'react';
 
 type LatLng = google.maps.LatLngLiteral;
 
+/**
+ * Minimal, interactive map preview:
+ * - Drag the marker to set a new position (if draggableMarker)
+ * - Click on the map to move the marker (if clickToPlace)
+ * - Optional radius circle
+ * - Uses AdvancedMarkerElement (marker library)
+ */
 export function MapPreview({
   center,
   zoom = 14,
@@ -15,17 +22,17 @@ export function MapPreview({
   mapId,
   draggableMarker = true,
   clickToPlace = true,
-  onUserSetPosition, // <- nowość
+  onUserSetPosition,
 }: {
   center: LatLng | null;
   zoom?: number;
   radiusMeters?: number | null;
   className?: string;
   style?: React.CSSProperties;
-  mapId?: string;
+  mapId?: string; // Recommended when using AdvancedMarker
   draggableMarker?: boolean;
   clickToPlace?: boolean;
-  onUserSetPosition?: (pos: LatLng) => void; // wywoływane po dragend/kliknięciu
+  onUserSetPosition?: (pos: LatLng) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -34,7 +41,7 @@ export function MapPreview({
   );
   const circleRef = useRef<google.maps.Circle | null>(null);
 
-  // init once
+  // Initialize once
   useEffect(() => {
     let unsubMarker: google.maps.MapsEventListener | null = null;
     let unsubMapClick: google.maps.MapsEventListener | null = null;
@@ -43,9 +50,7 @@ export function MapPreview({
       if (!containerRef.current || mapRef.current) return;
 
       const g = await loadGoogleMaps();
-      const { AdvancedMarkerElement } = (await g.maps.importLibrary(
-        'marker'
-      )) as google.maps.MarkerLibrary;
+      const { AdvancedMarkerElement } = await importMarker();
 
       mapRef.current = new g.maps.Map(containerRef.current, {
         center: center ?? { lat: 52.2319, lng: 21.0067 },
@@ -53,7 +58,7 @@ export function MapPreview({
         streetViewControl: false,
         mapTypeControl: false,
         fullscreenControl: false,
-        mapId: mapId ?? '392ec30859537d29c98ed7b1', // jeżeli masz
+        mapId: mapId ?? '392ec30859537d29c98ed7b1',
       });
 
       markerRef.current = new AdvancedMarkerElement({
@@ -61,7 +66,7 @@ export function MapPreview({
         position: center ?? { lat: 52.2319, lng: 21.0067 },
       });
 
-      // drag
+      // Marker drag -> notify
       markerRef.current.gmpDraggable = !!draggableMarker;
       if (draggableMarker) {
         unsubMarker = markerRef.current.addListener('dragend', (e: any) => {
@@ -72,7 +77,7 @@ export function MapPreview({
         });
       }
 
-      // click on map to move marker
+      // Map click -> move marker + notify
       if (clickToPlace) {
         unsubMapClick = mapRef.current.addListener('click', (e: any) => {
           const pos: LatLng | null = e?.latLng?.toJSON?.() ?? null;
@@ -83,6 +88,7 @@ export function MapPreview({
         });
       }
 
+      // Optional radius circle
       if (typeof radiusMeters === 'number' && center) {
         circleRef.current = new g.maps.Circle({
           map: mapRef.current,
@@ -106,7 +112,7 @@ export function MapPreview({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // updates
+  // React to center / radius changes
   useEffect(() => {
     (async () => {
       if (!mapRef.current) return;
@@ -136,12 +142,14 @@ export function MapPreview({
           circleRef.current = null;
         }
       } else {
+        // Hide marker/circle if no center is provided
         if (markerRef.current) markerRef.current.map = null as any;
         circleRef.current?.setMap(null);
       }
     })();
   }, [center?.lat, center?.lng, radiusMeters]);
 
+  // React to zoom changes
   useEffect(() => {
     if (mapRef.current && typeof zoom === 'number') {
       mapRef.current.setZoom(zoom);
