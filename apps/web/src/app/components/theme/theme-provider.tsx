@@ -12,10 +12,10 @@ export type ThemeChoice = 'light' | 'dark' | 'system';
 type Resolved = 'light' | 'dark';
 
 type Ctx = {
-  theme: ThemeChoice; // wybrany przez usera
-  resolvedTheme: Resolved; // faktycznie aktywny
+  theme: ThemeChoice;
+  resolvedTheme: Resolved;
   setTheme: (t: ThemeChoice) => void;
-  toggle: () => void; // light <-> dark (pomija 'system')
+  toggle: () => void;
 };
 
 const ThemeCtx = createContext<Ctx | null>(null);
@@ -32,14 +32,13 @@ function applyToDOM(choice: ThemeChoice) {
   const resolved: Resolved = choice === 'system' ? system : choice;
   const el = document.documentElement;
   el.classList.toggle('dark', resolved === 'dark');
-  el.dataset.theme = resolved; // pomocniczo, jakbyś chciał stylować po data-theme
+  el.dataset.theme = resolved;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeChoice>('system');
   const [mounted, setMounted] = useState(false);
 
-  // init from localStorage
   useEffect(() => {
     try {
       const ls =
@@ -49,7 +48,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // apply + persist + listen system changes when 'system'
   useEffect(() => {
     if (!mounted) return;
 

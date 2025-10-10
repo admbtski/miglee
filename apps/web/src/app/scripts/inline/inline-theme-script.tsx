@@ -5,18 +5,18 @@ export function InlineThemeScript() {
         var ls = localStorage.getItem('theme'); // 'light' | 'dark' | 'system' | null
         var mql = window.matchMedia('(prefers-color-scheme: dark)');
         var sysDark = mql.matches;
-        // dark, jeśli explicit 'dark' lub brak explicit 'light' i system=dark
+
         var isDark = ls === 'dark' || (ls !== 'light' && sysDark);
         var el = document.documentElement;
         if (isDark) el.classList.add('dark'); else el.classList.remove('dark');
-        // pomocniczo – pozwala Tailwindowi/UA dobrać kolory kontrolek
+
         el.style.colorScheme = isDark ? 'dark' : 'light';
-        // na potrzeby hydracji/providerów możesz podejrzeć:
+
         el.dataset.theme = isDark ? 'dark' : 'light';
-        // aktualizacja przy zmianie motywu systemowego, jeśli brak explicit 'light'/'dark'
+
         mql.addEventListener && mql.addEventListener('change', function (e) {
           var lsNow = localStorage.getItem('theme');
-          if (lsNow === 'light' || lsNow === 'dark') return; // explicit – nie ruszamy
+          if (lsNow === 'light' || lsNow === 'dark') return;
           var darkNow = e.matches;
           el.classList.toggle('dark', darkNow);
           el.style.colorScheme = darkNow ? 'dark' : 'light';

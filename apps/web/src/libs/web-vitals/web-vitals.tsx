@@ -1,4 +1,3 @@
-// components/WebVitals.tsx
 'use client';
 
 import { trace } from '@opentelemetry/api';

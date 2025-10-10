@@ -1,7 +1,7 @@
 'use client';
 
+import { importPlaces, loadGoogleMaps } from '@/libs/map/googleMaps';
 import { useEffect, useRef, useState } from 'react';
-import { importPlaces, loadGoogleMaps } from './googleMaps';
 
 /** A single UI-ready suggestion row. */
 export type Suggestion = {

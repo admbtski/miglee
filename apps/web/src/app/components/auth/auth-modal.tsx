@@ -33,10 +33,6 @@ type Props = {
   ) => void;
 };
 
-/** Map Navbar tab to internal mode (used on fresh opens) */
-const tabToMode = (t?: 'signin' | 'signup'): AuthMode =>
-  t === 'signup' ? 'signup' : 'signin';
-
 /** Backdrop fade */
 const overlayVariants = {
   hidden: { opacity: 0 },

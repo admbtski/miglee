@@ -1,4 +1,3 @@
-// lib/geocode.ts
 'use client';
 
 import { loadGoogleMaps } from './googleMaps';

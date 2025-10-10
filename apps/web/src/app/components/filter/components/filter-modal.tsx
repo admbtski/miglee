@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   X,
 } from 'lucide-react';
-import { useSearchMeta } from './useSearchMeta';
+import { useSearchMeta } from '../hooks/use-search-meta';
 import SearchCombo from './search-combo';
 
 const CITIES = [

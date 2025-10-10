@@ -328,6 +328,7 @@ export function CreateIntentModal({
                       suggestions={suggestions}
                       selectedId={selectedSuggestionId}
                       onSelect={setSelectedSuggestionId}
+                      showMapPreview
                     />
                   )}
                 </motion.div>

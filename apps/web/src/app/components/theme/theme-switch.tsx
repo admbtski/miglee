@@ -1,8 +1,7 @@
-// components/theme/theme-switch.tsx
 'use client';
 
-import { Moon, Sun } from 'lucide-react';
 import clsx from 'clsx';
+import { Moon, Sun } from 'lucide-react';
 
 export function ThemeSwitch({
   checked,

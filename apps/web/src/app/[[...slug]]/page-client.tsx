@@ -4,7 +4,7 @@ import { useGetEventsQuery } from '@/hooks/useEvents';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import { EventCard } from './_internal/components/event-card';
-import { FilterModal } from '../components/filter/filter-modal';
+import { FilterModal } from '../components/filter/components/filter-modal';
 import { Footer } from './_internal/components/footer';
 import { MapImagePanel } from './_internal/components/map-image-panel';
 import { Navbar } from './_internal/components/navbar';

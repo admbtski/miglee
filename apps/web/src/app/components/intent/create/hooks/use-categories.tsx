@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { fetchCategories } from '../../mockCategories';
+import { fetchCategories } from '../../mock-categories';
 import { CategoryOption } from '../../types';
 
 export function useCategories(query: string, initial?: CategoryOption[]) {

@@ -1,4 +1,3 @@
-// lib/places.ts
 'use client';
 
 import { importPlaces } from './googleMaps';

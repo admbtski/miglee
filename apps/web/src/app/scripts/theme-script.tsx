@@ -3,7 +3,6 @@
 import Script from 'next/script';
 
 export function ThemeScript() {
-  // Wstrzykujemy minimalny JS zanim UI się zhydratuje
   const code = `
   try {
     var ls = localStorage.getItem('theme'); // 'light' | 'dark' | 'system' | null

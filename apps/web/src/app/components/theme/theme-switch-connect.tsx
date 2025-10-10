@@ -3,12 +3,6 @@
 import { useTheme } from './theme-provider';
 import { ThemeSwitch } from './theme-switch';
 
-/**
- * Integracja:
- * - checked = resolvedTheme === 'dark' (działa także w trybie system)
- * - click: jeśli był 'system' -> ustaw explicit przeciwny; jeśli explicit -> przełącz explicit
- * - right click: powrót do trybu 'system'
- */
 export function ThemeSwitchConnected() {
   const { theme, resolvedTheme, setTheme, toggle } = useTheme();
 
@@ -26,7 +20,7 @@ export function ThemeSwitchConnected() {
 
   const handleContextMenu: React.MouseEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
-    setTheme('system'); // respektuj OS
+    setTheme('system');
   };
 
   return (

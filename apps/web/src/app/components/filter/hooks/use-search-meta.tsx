@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { fetchSearchMeta } from './mockSearchMeta';
+import { fetchSearchMeta } from '../mock-search-meta';
 
 export type SearchMeta = {
   tags: string[];

@@ -1,4 +1,4 @@
-// app/components/location/LocationCombo.tsx
+// components/location/LocationCombo.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -6,7 +6,7 @@ import { MapPin, Loader2 } from 'lucide-react';
 import {
   fetchPlaceDetailsFromSuggestion,
   usePlacesAutocomplete,
-} from '@/libs/map/usePlacesAutocomplete';
+} from '../hooks/use-places-autocomplete';
 
 export function LocationCombo({
   value,
@@ -15,6 +15,7 @@ export function LocationCombo({
   bias,
   placeholder = 'Type an address or place…',
   className,
+  loadingOverride,
 }: {
   value: string;
   onChangeText: (v: string) => void;
@@ -25,16 +26,21 @@ export function LocationCombo({
     lng?: number;
     displayName?: string;
   }) => void;
-  bias?: { location?: google.maps.LatLngLiteral; radius?: number };
+  bias?: {
+    location?: google.maps.LatLngLiteral;
+    radius?: number;
+  };
   placeholder?: string;
   className?: string;
+  loadingOverride?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  const { suggestions, loading } = usePlacesAutocomplete(value, {
+  const trimmed = value.trim();
+  const { suggestions, loading } = usePlacesAutocomplete(trimmed, {
     location: bias?.location,
     radius: bias?.radius,
     includedPrimaryTypes: ['street_address', 'premise', 'route', 'locality'],
@@ -42,48 +48,55 @@ export function LocationCombo({
     region: 'PL',
   });
 
-  // ⬇️ NEW: when parent updates `value` (e.g., after "Use my location"), close dropdown and reset highlight
-  useEffect(() => {
-    setOpen(false);
-    setHighlight(-1);
-  }, [value]);
+  const isLoading = loadingOverride ?? loading;
 
-  // Close on outside click
+  // Keep dropdown open on first keystrokes — close only on explicit outside click / Escape
+  const openPanel = () => setOpen(true);
+
+  // Close on outside click (robust: use pointerdown + composedPath)
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (!inputRef.current?.contains(t) && !listRef.current?.contains(t)) {
-        setOpen(false);
-      }
+    const onDoc = (e: Event) => {
+      const path = (e as any).composedPath?.() as Node[] | undefined;
+      const t = (e.target as Node) || null;
+      const insideInput =
+        (path && inputRef.current
+          ? path.includes(inputRef.current)
+          : inputRef.current?.contains(t)) || false;
+      const insideList =
+        (path && listRef.current
+          ? path.includes(listRef.current)
+          : listRef.current?.contains(t)) || false;
+      if (!insideInput && !insideList) setOpen(false);
     };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    document.addEventListener('pointerdown', onDoc);
+    return () => document.removeEventListener('pointerdown', onDoc);
   }, []);
+
+  // Optional UX: when fresh results arrive and nothing highlighted, preselect the first item
+  useEffect(() => {
+    if (open && highlight < 0 && suggestions.length > 0) {
+      setHighlight(0);
+    }
+  }, [open, suggestions, highlight]);
 
   const pick = async (idx: number) => {
     const s = suggestions[idx];
-    if (!s || !s.raw?.placePrediction) {
-      setOpen(false);
-      setHighlight(-1);
-      return;
-    }
+    if (!s) return;
 
-    const details = await fetchPlaceDetailsFromSuggestion(s.raw, [
+    const place = await fetchPlaceDetailsFromSuggestion(s.raw, [
       'id',
       'displayName',
       'formattedAddress',
       'location',
     ]);
+    if (!place) return;
 
     onPickPlace({
-      id: details.id,
-      displayName:
-        typeof details.displayName === 'string'
-          ? details.displayName
-          : ((details.displayName as any)?.text ?? undefined),
-      address: details.formattedAddress ?? undefined,
-      lat: details.lat,
-      lng: details.lng,
+      id: place.id,
+      displayName: place.displayName,
+      address: place.formattedAddress,
+      lat: place.lat,
+      lng: place.lng,
     });
 
     setOpen(false);
@@ -104,12 +117,12 @@ export function LocationCombo({
         <input
           ref={inputRef}
           value={value}
+          onFocus={openPanel}
           onChange={(e) => {
             onChangeText(e.target.value);
-            setOpen(true);
+            openPanel(); // <- ensure panel stays open while typing
             setHighlight(-1);
           }}
-          onFocus={() => setOpen(true)}
           onKeyDown={(e) => {
             if (!open) return;
             if (e.key === 'ArrowDown') {
@@ -122,7 +135,7 @@ export function LocationCombo({
               setHighlight((h) => Math.max(h - 1, 0));
             } else if (e.key === 'Enter') {
               e.preventDefault();
-              if (highlight >= 0) void pick(highlight);
+              if (highlight >= 0) pick(highlight);
             } else if (e.key === 'Escape') {
               setOpen(false);
             }
@@ -130,35 +143,54 @@ export function LocationCombo({
           placeholder={placeholder}
           className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
         />
-        {loading && <Loader2 className="h-4 w-4 animate-spin opacity-60" />}
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin opacity-60" />}
       </label>
 
-      {open && suggestions.length > 0 && (
+      {/* Always render the panel when open — even if suggestions are not yet loaded.
+          This removes the “type once, then refocus” glitch. */}
+      {open && (
         <div
           ref={listRef}
           className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
           role="listbox"
         >
-          {suggestions.map((s, idx) => {
-            const active = idx === highlight;
-            return (
-              <button
-                key={idx}
-                role="option"
-                aria-selected={active}
-                onMouseEnter={() => setHighlight(idx)}
-                onClick={() => void pick(idx)}
-                className={[
-                  'block w-full cursor-pointer px-3 py-2 text-left text-sm',
-                  active
-                    ? 'bg-zinc-100 dark:bg-zinc-800'
-                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
-                ].join(' ')}
-              >
-                {s.text}
-              </button>
-            );
-          })}
+          {isLoading ? (
+            <div className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-500">
+              <Loader2 className="h-4 w-4 animate-spin opacity-60" />
+              Searching…
+            </div>
+          ) : suggestions.length === 0 ? (
+            trimmed ? (
+              <div className="px-3 py-2 text-sm text-zinc-500">
+                No matches. Keep typing…
+              </div>
+            ) : (
+              <div className="px-3 py-2 text-sm text-zinc-500">
+                Start typing to search places
+              </div>
+            )
+          ) : (
+            suggestions.map((s, idx) => {
+              const active = idx === highlight;
+              return (
+                <button
+                  key={`${s.text}-${idx}`}
+                  role="option"
+                  aria-selected={active}
+                  onMouseEnter={() => setHighlight(idx)}
+                  onClick={() => pick(idx)}
+                  className={[
+                    'block w-full cursor-pointer px-3 py-2 text-left text-sm',
+                    active
+                      ? 'bg-zinc-100 dark:bg-zinc-800'
+                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
+                  ].join(' ')}
+                >
+                  {s.text}
+                </button>
+              );
+            })
+          )}
         </div>
       )}
     </div>

@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { IntentFormValues } from '../../types';
-import { MapPreview } from '@/app/components/location/MapPreview';
+import { MapPreview } from '@/app/components/location/map-preview';
 import { reverseGeocode, reverseGeocodeLatLng } from '@/libs/map/geocode';
 import { LocationCombo } from '../components/location-combobox';
 
@@ -25,7 +25,7 @@ export function PlaceStep({
     watch,
     formState: { errors },
   } = form;
-
+  const [locating, setLocating] = useState(false);
   const loc = watch('location');
   const [geoBusy, setGeoBusy] = useState(false);
 
@@ -69,47 +69,59 @@ export function PlaceStep({
 
   const handleUseMyLocation = async () => {
     try {
+      setLocating(true);
+
+      // 1) Jeśli masz własny provider, użyj go
       if (onUseMyLocation) {
         const res = await onUseMyLocation();
         if (res) {
-          const address =
-            res.address ?? `${res.lat.toFixed(5)}, ${res.lng.toFixed(5)}`;
-          setValue('location.address', address, { shouldDirty: true });
           setValue('location.lat', res.lat, { shouldValidate: true });
           setValue('location.lng', res.lng, { shouldValidate: true });
-          return; // LocationCombo zaktualizuje się z props.value
+
+          // reverse geocode -> ustaw nazwę TYLKO jeśli ją mamy
+          const nice =
+            res.address ?? (await reverseGeocodeLatLng(res.lat, res.lng));
+          if (nice) {
+            setValue('location.address', nice, { shouldDirty: true });
+          }
+          return;
         }
       }
 
-      // Własna geolokalizacja + reverse geocode
+      // 2) Standardowa geolokalizacja
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
         if (!navigator.geolocation)
-          return reject(new Error('Geolocation is not supported'));
+          return reject(new Error('Geolocation not supported'));
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          timeout: 12_000,
-          maximumAge: 30_000,
+          timeout: 12000,
+          maximumAge: 30000,
         });
       });
 
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
-      let address: string | undefined = '';
-      try {
-        address = await reverseGeocodeLatLng(lat, lng);
-      } catch {
-        // ignore
-      }
-      if (!address) {
-        address = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-      }
+      // Najpierw ustaw współrzędne (mapa/marker zareaguje od razu)
+      setValue('location.lat', lat, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      setValue('location.lng', lng, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
 
-      setValue('location.address', address, { shouldDirty: true });
-      setValue('location.lat', lat, { shouldValidate: true });
-      setValue('location.lng', lng, { shouldValidate: true });
+      // Potem spróbuj uzyskać nazwę; NIE wpisuj koordynatów jako tekstu
+      const addr = await reverseGeocodeLatLng(lat, lng);
+      if (addr) {
+        setValue('location.address', addr, { shouldDirty: true });
+      }
     } catch (e) {
       console.error('Use my location failed:', e);
+      // nic nie wpisujemy do address — zostawiamy poprzednią wartość
+    } finally {
+      setLocating(false);
     }
   };
 
@@ -123,6 +135,7 @@ export function PlaceStep({
         <div className="mt-1 flex gap-2">
           <div className="w-full">
             <LocationCombo
+              loadingOverride={locating}
               value={loc?.address ?? ''}
               onChangeText={(txt) =>
                 setValue('location.address', txt, { shouldDirty: true })
@@ -161,9 +174,6 @@ export function PlaceStep({
           >
             {geoBusy ? 'Locating…' : 'Use my location'}
           </button>
-        </div>
-        <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Latitude/Longitude required — address is optional.
         </div>
       </div>
 
