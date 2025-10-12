@@ -1,4 +1,4 @@
-import { CodegenConfig } from '@graphql-codegen/cli';
+import type { CodegenConfig } from '@graphql-codegen/cli';
 import { join } from 'path';
 
 const config: CodegenConfig = {
@@ -10,7 +10,6 @@ const config: CodegenConfig = {
   generates: {
     './src/graphql/__generated__/react-query.ts': {
       plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
-      // preset: 'client',
       config: {
         useTypeImports: true,
         useImplementingTypes: true,
@@ -24,9 +23,17 @@ const config: CodegenConfig = {
           typeNames: 'change-case-all#pascalCase',
           transformUnderscore: true,
         },
+        // mapowanie skalarów używanych w schema.graphql
+        scalars: {
+          DateTime: 'string',
+          JSON: 'Record<string, any>',
+          JSONObject: 'Record<string, any>',
+        },
       },
     },
   },
+  // gdybyś chwilowo nie miał żadnych *.graphql w operations
+  ignoreNoDocuments: true,
 };
 
 export default config;

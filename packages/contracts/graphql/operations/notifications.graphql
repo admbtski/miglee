@@ -1,20 +1,20 @@
-query GetNotifications {
-  notifications {
-    id
-    message
+# Query (optionally pass recipientId; server may fall back to ctx)
+query GetNotifications($recipientId: ID) {
+  notifications(recipientId: $recipientId) {
+    ...NotificationCore
   }
 }
 
-mutation AddNotification($message: String!) {
+# Demo mutation kept from earlier API
+mutation AddNotification($message: String) {
   addNotification(message: $message) {
-    id
-    message
+    ...NotificationCore
   }
 }
 
-subscription NotificationAdded {
-  notificationAdded {
-    id
-    message
+# Subscription scoped by recipient
+subscription NotificationAdded($recipientId: ID!) {
+  notificationAdded(recipientId: $recipientId) {
+    ...NotificationCore
   }
 }

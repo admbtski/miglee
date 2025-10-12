@@ -1,67 +1,57 @@
-// components/category-combo/CategoryCombo.tsx
 'use client';
 
 import { Folder, Loader2, Search, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useId } from 'react';
 import { useCategories } from '../hooks/use-categories';
-import { CategoryOption } from '../../types';
+import type { CategoryOption } from '../../types';
 
-export type CategoryComboProps = {
-  /** aktualna wartość (id kategorii) */
-  value: string | null;
-  /** callback po wyborze opcji (id) */
-  onChange: (id: string | null) => void;
+export type CategoryMultiComboProps = {
+  /** currently selected options (full objects) */
+  values: CategoryOption[];
+  /** called with full array on any change */
+  onChange: (values: CategoryOption[]) => void;
 
-  /** opcjonalnie: początkowe opcje do wyświetlenia (np. z SSR) */
   initialOptions?: CategoryOption[];
-
-  /** placeholder inputa */
   placeholder?: string;
-
-  /** disabled */
   disabled?: boolean;
-
-  /** klasa wrappera */
   className?: string;
-
-  /** widoczna etykieta zaznaczonej kategorii (jeśli nie chcesz szukać po options) */
-  selectedLabelOverride?: string | null;
+  maxCount?: number; // use 3
+  size?: 'sm' | 'md' | 'lg';
 };
 
-/**
- * Pojedynczy, prosty combo (typeahead) tylko do kategorii,
- * z async pobieraniem opcji przez hook useCategories (debounce + cache).
- */
-export function CategoryCombo({
-  value,
+export function CategoryMultiCombo({
+  values,
   onChange,
   initialOptions,
   placeholder = 'Search category…',
   disabled,
   className,
-  selectedLabelOverride,
-}: CategoryComboProps) {
+  maxCount = 3,
+  size = 'md',
+}: CategoryMultiComboProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(-1);
 
+  const listboxId = useId();
+
   const { options, loading } = useCategories(query, initialOptions);
 
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  // znajdź label aktualnie wybranej wartości
-  const selectedLabel = useMemo(() => {
-    if (selectedLabelOverride != null) return selectedLabelOverride || '';
-    const found = options.find((o) => o.id === value);
-    return found?.name ?? '';
-  }, [options, value, selectedLabelOverride]);
+  const selectedIds = useMemo(() => new Set(values.map((v) => v.id)), [values]);
 
-  // zamknij dropdown przy kliknięciu poza
+  const visibleOptions = useMemo(
+    () => options.filter((o) => !selectedIds.has(o.id)),
+    [options, selectedIds]
+  );
+
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (!inputRef.current?.contains(t) && !listRef.current?.contains(t)) {
+      if (!wrapperRef.current?.contains(t) && !listRef.current?.contains(t)) {
         setOpen(false);
       }
     };
@@ -69,101 +59,159 @@ export function CategoryCombo({
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const visibleOptions = options;
+  const canAddMore = values.length < maxCount;
 
   const pick = (opt: CategoryOption) => {
-    onChange(opt.id);
+    if (!canAddMore) return;
+    onChange([...values, opt]);
     setQuery('');
-    setOpen(false);
     setHi(-1);
+    setOpen(true);
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
+  const remove = (id: string) => {
+    onChange(values.filter((v) => v.id !== id));
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const activeOptionId =
+    hi >= 0 && visibleOptions[hi]
+      ? `cat-opt-${visibleOptions[hi].id}`
+      : undefined;
+
+  const sizeCls =
+    size === 'sm'
+      ? {
+          chip: 'h-7 text-[13px] px-2',
+          inputPadY: 'py-1.5',
+          icon: 'h-4 w-4',
+          wrapPad: 'p-1.5',
+        }
+      : size === 'lg'
+        ? {
+            chip: 'h-9 text-sm px-3',
+            inputPadY: 'py-2.5',
+            icon: 'h-5 w-5',
+            wrapPad: 'p-2.5',
+          }
+        : {
+            chip: 'h-8 text-sm px-3',
+            inputPadY: 'py-2',
+            icon: 'h-4 w-4',
+            wrapPad: 'p-2',
+          };
+
+  const showPlaceholder = values.length === 0 && query.length === 0;
+
   return (
     <div
+      ref={wrapperRef}
       className={[
-        'relative rounded-2xl border border-zinc-300 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900/60',
+        'relative rounded-2xl border border-zinc-300 bg-white dark:border-zinc-800 dark:bg-zinc-900/60',
+        sizeCls.wrapPad,
         className,
       ]
         .filter(Boolean)
         .join(' ')}
+      onClick={() => inputRef.current?.focus()}
     >
-      <label className="flex items-center gap-2 px-1">
-        <Folder className="h-4 w-4 opacity-70" />
-        <input
-          ref={inputRef}
-          disabled={disabled}
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setOpen(true);
-            setHi(-1);
-          }}
-          onFocus={() => setOpen(true)}
-          onKeyDown={(e) => {
-            if (!open) return;
-            if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              setHi((h) => Math.min(h + 1, visibleOptions.length - 1));
-            } else if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              setHi((h) => Math.max(h - 1, 0));
-            } else if (e.key === 'Enter') {
-              e.preventDefault();
-              if (hi >= 0 && visibleOptions[hi]) pick(visibleOptions[hi]);
-              else setOpen(false);
-            } else if (e.key === 'Escape') {
-              setOpen(false);
-            }
-          }}
-          placeholder={placeholder}
-          className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
-          aria-expanded={open}
-          role="combobox"
-        />
-        {query ? (
-          <button
-            type="button"
-            className="rounded-full p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            onClick={() => {
-              setQuery('');
+      <div
+        className={[
+          'flex flex-wrap items-center gap-2 px-1',
+          disabled ? 'opacity-60 pointer-events-none' : '',
+        ].join(' ')}
+      >
+        <Folder className={`${sizeCls.icon} opacity-70`} aria-hidden />
+
+        {values.map((v) => (
+          <span
+            key={v.id}
+            className={[
+              'inline-flex items-center gap-2 rounded-full',
+              'bg-zinc-100 text-zinc-800 ring-1 ring-inset ring-zinc-200',
+              'dark:bg-zinc-800/70 dark:text-zinc-100 dark:ring-zinc-700',
+              sizeCls.chip,
+            ].join(' ')}
+          >
+            {v.name}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                remove(v.id);
+              }}
+              className="inline-flex items-center justify-center rounded-full bg-zinc-200/60 p-1 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700/60 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              aria-label={`Remove ${v.name}`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        ))}
+
+        {/* input */}
+        <div className="relative flex-1 min-w-[8ch]">
+          <input
+            ref={inputRef}
+            disabled={disabled || !canAddMore}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
               setOpen(true);
               setHi(-1);
-              inputRef.current?.focus();
             }}
-            aria-label="Clear"
-          >
-            <X className="h-4 w-4 opacity-60" />
-          </button>
-        ) : loading ? (
-          <Loader2 className="h-4 w-4 animate-spin opacity-60" />
-        ) : (
-          <Search className="h-4 w-4 opacity-60" />
-        )}
-      </label>
+            onFocus={() => setOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace' && query === '' && values.length) {
+                e.preventDefault();
+                remove(values[values.length - 1].id);
+                return;
+              }
+              if (!open) return;
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setHi((h) => Math.min(h + 1, visibleOptions.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setHi((h) => Math.max(h - 1, 0));
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (hi >= 0 && visibleOptions[hi]) pick(visibleOptions[hi]);
+                else setOpen(false);
+              } else if (e.key === 'Escape') {
+                setOpen(false);
+              }
+            }}
+            placeholder={showPlaceholder ? placeholder : ''}
+            className={[
+              'w-full bg-transparent outline-none placeholder:text-zinc-400',
+              sizeCls.inputPadY,
+              'text-sm',
+            ].join(' ')}
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={listboxId}
+            aria-activedescendant={activeOptionId}
+            aria-autocomplete="list"
+          />
 
-      {/* Selected preview (poza inputem) */}
-      {value && selectedLabel && (
-        <div className="mt-1 flex items-center gap-2 px-1 text-xs text-zinc-500 dark:text-zinc-400">
-          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800/70">
-            <Folder className="h-3.5 w-3.5 opacity-70" />
-            {selectedLabel}
-          </span>
-          <button
-            type="button"
-            onClick={() => onChange(null)}
-            className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            aria-label="Clear selected category"
-            title="Clear"
-          >
-            <X className="h-3.5 w-3.5 opacity-70" />
-          </button>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1.5">
+            {query ? null : loading ? (
+              <Loader2
+                className={`${sizeCls.icon} animate-spin opacity-60`}
+                aria-label="Loading"
+              />
+            ) : (
+              <Search className={`${sizeCls.icon} opacity-60`} aria-hidden />
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {open && (query.length > 0 || visibleOptions.length > 0) && (
         <div
           ref={listRef}
+          id={listboxId}
           className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
           role="listbox"
         >
@@ -175,8 +223,11 @@ export function CategoryCombo({
               return (
                 <button
                   key={opt.id}
+                  id={`cat-opt-${opt.id}`}
+                  type="button"
                   role="option"
                   aria-selected={active}
+                  onMouseDown={(e) => e.preventDefault()}
                   onMouseEnter={() => setHi(idx)}
                   onClick={() => pick(opt)}
                   className={[
@@ -197,6 +248,14 @@ export function CategoryCombo({
             })
           )}
         </div>
+      )}
+
+      {!canAddMore && (
+        <div
+          className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-amber-400/50"
+          aria-hidden
+          title="You reached the max number of categories"
+        />
       )}
     </div>
   );

@@ -1,7 +1,5 @@
 query GetEvents($limit: Int = 10) {
   events(limit: $limit) {
-    id
-    title
-    createdAt
+    ...EventCore
   }
 }

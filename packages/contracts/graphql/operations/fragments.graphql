@@ -1,0 +1,71 @@
+fragment UserCore on User {
+  id
+  email
+  name
+  imageUrl
+  createdAt
+  updatedAt
+}
+
+fragment CategoryCore on Category {
+  id
+  slug
+  names
+  icon
+  color
+  createdAt
+  updatedAt
+}
+
+fragment IntentCore on Intent {
+  id
+  title
+  description
+  notes
+  visibility
+  mode
+  min
+  max
+  startAt
+  endAt
+  allowJoinLate
+  meetingKind
+  onlineUrl
+  lat
+  lng
+  address
+  radiusKm
+  createdAt
+  updatedAt
+  authorId
+  categories {
+    ...CategoryCore
+  }
+  author {
+    ...UserCore
+  }
+}
+
+fragment NotificationCore on Notification {
+  id
+  kind
+  message
+  payload
+  readAt
+  createdAt
+  recipientId
+  recipient {
+    ...UserCore
+  }
+  intentId
+  intent {
+    id
+    title
+  }
+}
+
+fragment EventCore on Event {
+  id
+  title
+  createdAt
+}

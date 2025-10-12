@@ -2,31 +2,63 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
-import { IntentFormValues } from '../../types';
+import type { IntentFormValues } from '../../types';
 
-// --- Zod schema mirroring your requirements ---
-const nowPlus5Min = () => new Date(Date.now() + 5 * 60 * 1000);
+/**
+ * --- Constants ---
+ */
+const NOW_BUFFER_MS = 5 * 60 * 1000; // 5 minutes buffer
+const MAX_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const URL_REGEX = /^https?:\/\/\S+/i;
 
+/**
+ * Meeting type enum
+ */
+export const MeetingKind = z.enum(['ONSITE', 'ONLINE', 'HYBRID']);
+
+/**
+ * Returns "now + 5min" timestamp for validation
+ */
+const nowPlus5Min = () => new Date(Date.now() + NOW_BUFFER_MS);
+
+/**
+ * Location schema
+ */
+const LocationSchema = z.object({
+  lat: z.number().finite().min(-90).max(90).optional(),
+  lng: z.number().finite().min(-180).max(180).optional(),
+  address: z.string().trim().max(240).optional(),
+  radiusKm: z.number().finite().min(0).max(20).optional(),
+});
+
+/**
+ * Core validation schema
+ */
 export const IntentSchema = z
   .object({
-    title: z.string().min(3, 'Min 3 characters').max(60, 'Max 60 characters'),
-    interestId: z.string().min(1, 'Select a category'),
+    title: z
+      .string()
+      .trim()
+      .min(3, 'Min 3 characters')
+      .max(60, 'Max 60 characters'),
+
+    /** multiple interests: 1–3 required */
+    interestIds: z
+      .array(z.string().min(1))
+      .min(1, 'Select at least 1 category')
+      .max(3, 'You can select up to 3 categories'),
+
     description: z
       .string()
+      .trim()
       .max(500, 'Max 500 characters')
       .optional()
       .or(z.literal('')),
     mode: z.enum(['ONE_TO_ONE', 'GROUP']),
-    min: z
-      .number()
-      .int()
-      .refine((v) => v >= 2, 'Min capacity is set to 2'),
-    max: z
-      .number()
-      .int()
-      .refine((v) => v <= 50, 'Max capacity is set to 50'),
+    min: z.number().int().min(2, 'Min capacity is 2'),
+    max: z.number().int().max(50, 'Max capacity is 50'),
     startAt: z
       .date()
       .refine(
@@ -35,64 +67,141 @@ export const IntentSchema = z
       ),
     endAt: z.date(),
     allowJoinLate: z.boolean(),
-    location: z.object({
-      lat: z.number(),
-      lng: z.number(),
-      address: z.string().optional(),
-      radiusKm: z.number().min(0).max(20).optional(),
-    }),
+
+    meetingKind: MeetingKind,
+    onlineUrl: z
+      .string()
+      .trim()
+      .optional()
+      .or(z.literal(''))
+      .refine(
+        (s) => !s || URL_REGEX.test(s),
+        'Provide a valid URL (http/https)'
+      ),
+
+    location: LocationSchema,
+
     visibility: z.enum(['PUBLIC', 'HIDDEN']),
-    notes: z.string().max(300).optional().or(z.literal('')),
+    notes: z.string().trim().max(300).optional().or(z.literal('')),
   })
   .refine((data) => data.endAt.getTime() > data.startAt.getTime(), {
     path: ['endAt'],
     message: 'End must be after start',
   })
   .refine(
-    (data) => {
-      const MAX_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-      return data.endAt.getTime() - data.startAt.getTime() <= MAX_MS;
-    },
-    { path: ['endAt'], message: 'Max window is 30 days' }
+    (data) => data.endAt.getTime() - data.startAt.getTime() <= MAX_DURATION_MS,
+    { path: ['endAt'], message: 'Max duration is 30 days' }
   )
-  .refine(
-    (data) => {
-      // ONE_TO_ONE → force capacity 2; GROUP → 2..50
-      return data.mode === 'ONE_TO_ONE'
-        ? data.min === 2
-        : data.min >= 2 && data.max <= 50;
-    },
-    { path: ['capacity'], message: 'Invalid capacity for selected mode' }
-  );
+  .refine((data) => data.min <= data.max, {
+    path: ['min'],
+    message: 'Min must be less or equal to Max',
+  })
+  // Mode-specific
+  .superRefine((data, ctx) => {
+    if (data.mode === 'ONE_TO_ONE') {
+      if (data.min !== 2) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['min'],
+          message: 'For 1:1 mode, min must be 2',
+        });
+      }
+      if (data.max !== 2) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['max'],
+          message: 'For 1:1 mode, max must be 2',
+        });
+      }
+    } else {
+      if (data.min < 2) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['min'],
+          message: 'Minimum capacity is 2',
+        });
+      }
+      if (data.max > 50) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['max'],
+          message: 'Maximum capacity is 50',
+        });
+      }
+    }
+  })
+  // MeetingKind-specific
+  .superRefine((data, ctx) => {
+    const hasCoords =
+      Number.isFinite(data.location.lat) && Number.isFinite(data.location.lng);
+    const hasUrl = !!data.onlineUrl && URL_REGEX.test(data.onlineUrl);
 
-// --- Default values ---
+    switch (data.meetingKind) {
+      case 'ONSITE':
+        if (!hasCoords) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Location coordinates are required for on-site meetings',
+            path: ['location'],
+          });
+        }
+        break;
+
+      case 'ONLINE':
+        if (!hasUrl) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Online link is required for online meetings',
+            path: ['onlineUrl'],
+          });
+        }
+        break;
+
+      case 'HYBRID':
+        if (!hasCoords && !hasUrl) {
+          ctx.addIssue({
+            code: 'custom',
+            message:
+              'Provide either a valid location or an online link (or both)',
+            path: ['meetingKind'],
+          });
+        }
+        break;
+    }
+  });
+
+/** Default values */
 export const defaultIntentValues: IntentFormValues = {
   title: '',
-  interestId: '',
+  interestIds: [], // <<— multiple
   description: '',
   mode: 'GROUP',
   min: 2,
   max: 50,
-  startAt: nowPlus5Min(),
-  endAt: new Date(Date.now() + 65 * 60 * 1000), // +65 min
+  startAt: new Date(Date.now() + NOW_BUFFER_MS),
+  endAt: new Date(Date.now() + NOW_BUFFER_MS + 60 * 60 * 1000),
   allowJoinLate: true,
-  location: { lat: 0, lng: 0, address: '', radiusKm: 1 },
+
+  meetingKind: 'ONSITE',
+  onlineUrl: '',
+
+  location: { lat: undefined, lng: undefined, address: '', radiusKm: 1 },
   visibility: 'PUBLIC',
   notes: '',
 };
 
-// Hook that encapsulates RHF + Zod for reuse in steps
-export function useIntentForm(initial?: Partial<IntentFormValues>) {
+export function useIntentForm(
+  initial?: Partial<IntentFormValues>
+): UseFormReturn<IntentFormValues> {
   const values = useMemo(
     () => ({ ...defaultIntentValues, ...initial }),
     [initial]
   );
 
-  const form = useForm<IntentFormValues>({
+  return useForm<IntentFormValues>({
     mode: 'onChange',
     resolver: zodResolver(IntentSchema),
     defaultValues: values,
+    shouldUnregister: false,
   });
-
-  return form;
 }

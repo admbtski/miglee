@@ -1,6 +1,6 @@
 'use client';
 
-import { useGetEventsQuery } from '@/hooks/useEvents';
+import { useGetEventsQuery } from '@/hooks/events';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import { EventCard } from './_internal/components/event-card';
@@ -12,6 +12,10 @@ import { SortControl, SortKey } from './_internal/components/sort-control';
 import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
 import { useCommittedFilters } from './_internal/hooks/useCommittedFilters';
 import { useCommittedSort } from './_internal/hooks/useCommittedSort';
+import { useIntentsQuery } from '@/hooks/intents';
+import { useGetNotificationsQuery } from '@/hooks/notifications';
+import { useCategories } from '../components/intent/create/hooks/use-categories';
+import { useGetCategoriesQuery } from '@/hooks/categories';
 
 /* DEMO DATA */
 const CITIES = [
@@ -217,8 +221,14 @@ function sortItems(items: any[], sort: SortKey): any[] {
 }
 
 /* Page */
-export function WelcomePage() {
+export function IntentsPage() {
   const { data: _unused } = useGetEventsQuery();
+  const { data: _intentsData } = useIntentsQuery();
+  const { data: _notificationsData } = useGetNotificationsQuery();
+  const { data: _categoriesData } = useGetCategoriesQuery();
+
+  console.dir({ _unused, _intentsData, _notificationsData, _categoriesData });
+
   const items = MOCK_ITEMS;
 
   const {

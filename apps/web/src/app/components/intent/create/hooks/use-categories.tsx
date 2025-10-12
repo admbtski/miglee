@@ -1,10 +1,16 @@
-// hooks/useCategories.ts
+// hooks/use-categories.ts
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { fetchCategories } from '../../mock-categories';
 import { CategoryOption } from '../../types';
 
+/**
+ * Debounced, cached categories fetcher for the combo.
+ * - Caches by normalized query
+ * - Debounces requests (300ms)
+ * - Ignores stale responses
+ */
 export function useCategories(query: string, initial?: CategoryOption[]) {
   const [options, setOptions] = useState<CategoryOption[]>(initial ?? []);
   const [loading, setLoading] = useState(false);
@@ -22,6 +28,7 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
       try {
         if (cache.current.has(q)) {
           setOptions(cache.current.get(q)!);
+          setError(null);
           return;
         }
         setLoading(true);
@@ -29,12 +36,12 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
         if (!alive || id !== reqId.current) return;
         cache.current.set(q, res);
         setOptions(res);
-        setLoading(false);
         setError(null);
       } catch (e) {
         if (!alive || id !== reqId.current) return;
         setError(e);
-        setLoading(false);
+      } finally {
+        if (alive && id === reqId.current) setLoading(false);
       }
     };
 

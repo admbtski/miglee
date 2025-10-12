@@ -1,9 +1,9 @@
-import { buildEventsOptions } from '@/hooks/useEvents';
-import { buildNotificationsOptions } from '@/hooks/useNotifications';
+import { buildGetCategoriesOptions } from '@/hooks/categories';
+import { buildEventsOptions } from '@/hooks/events';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import { trace } from '@opentelemetry/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { WelcomePage } from './page-client';
+import { IntentsPage } from './page-client';
 
 const tracer = trace.getTracer('react-components');
 
@@ -13,12 +13,13 @@ export default async function Page() {
   // fetch ssr
   await Promise.all([
     await client.prefetchQuery(buildEventsOptions()),
-    await client.prefetchQuery(buildNotificationsOptions()),
+    await client.prefetchQuery(buildGetCategoriesOptions()),
   ]);
   span.end();
+
   return (
     <HydrationBoundary state={dehydrate(client)}>
-      <WelcomePage />
+      <IntentsPage />
     </HydrationBoundary>
   );
 }

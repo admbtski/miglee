@@ -1,15 +1,130 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
-    previewFeatures = ["clientExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+/* ---------- Enums ---------- */
+
+enum Visibility {
+  PUBLIC
+  HIDDEN
+}
+
+enum Mode {
+  ONE_TO_ONE
+  GROUP
+}
+
+enum MeetingKind {
+  ONSITE
+  ONLINE
+  HYBRID
+}
+
+enum NotificationKind {
+  INTENT_CREATED
+  // w przyszłości: INTENT_UPDATED, INTENT_CANCELED, USER_MENTIONED, SYSTEM, ...
+}
+
+/* ---------- Models ---------- */
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  name          String?
+  imageUrl      String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  intents       Intent[]        // authored intents
+  notifications Notification[]  // otrzymane notyfikacje
+
+  @@map("users")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  /// Tłumaczenia w JSON, np. { "pl": "Bieganie", "de": "Laufen", "en": "Running" }
+  names     Json
+  icon      String?
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intents   Intent[]
+
+  @@map("categories")
+}
+
+model Intent {
+  id            String           @id @default(cuid())
+  title         String
+  description   String?
+  notes         String?
+
+  categories    Category[]
+
+  visibility    Visibility       @default(PUBLIC)
+  mode          Mode             @default(GROUP)
+  min           Int              @default(2)
+  max           Int              @default(50)
+
+  startAt       DateTime
+  endAt         DateTime
+  allowJoinLate Boolean          @default(true)
+
+  meetingKind   MeetingKind      @default(ONSITE)
+  onlineUrl     String?
+
+  lat           Float?
+  lng           Float?
+  address       String?
+  radiusKm      Float?
+
+  authorId      String?
+  author        User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  // ⬇⬇⬇ DODANO: pole odwrotne relacji do Notification
+  notifications Notification[]   @relation("IntentNotifications")
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([startAt], map: "idx_intents_start_at")
+  @@index([visibility], map: "idx_intents_visibility")
+  @@index([authorId], map: "idx_intents_author")
+  @@index([lat, lng], map: "idx_intents_lat_lng")
+  @@map("intents")
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  kind         NotificationKind
+  message      String?
+  payload      Json?
+  readAt       DateTime?
+
+  // odbiorca
+  recipientId  String
+  recipient    User             @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  // powiązana intencja (opcjonalnie)
+  intentId     String?
+  intent       Intent?          @relation("IntentNotifications", fields: [intentId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime         @default(now())
+
+  @@index([recipientId, createdAt], map: "idx_notifications_recipient_created")
+  @@index([recipientId, readAt], map: "idx_notifications_unread")
+  @@index([intentId], map: "idx_notifications_intent")
+  @@map("notifications")
+}
+
 
 model Event {
   id        String   @id @default(cuid())

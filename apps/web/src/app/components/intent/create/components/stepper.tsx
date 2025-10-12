@@ -1,87 +1,158 @@
 'use client';
 
+import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
 
-type Step = { key: string; label: string };
+export type Step = {
+  key: string;
+  label: string;
+  /** opcjonalna ikona dla „kropki” (zamiast numeru) */
+  Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+};
+
+type Props = {
+  steps: Step[];
+  currentIndex: number; // 0-based
+  size?: 'sm' | 'md';
+  dense?: boolean;
+  /** inline = label obok; stacked = label pod ikoną */
+  layout?: 'inline' | 'stacked';
+  className?: string;
+  /**
+   * number — wymuś numerację
+   * icon   — używaj tylko ikon (jeśli brak, pokaże numer)
+   * auto   — jeśli Step.Icon jest, użyj jej; inaczej numer (domyślnie)
+   */
+  dotMode?: 'number' | 'icon' | 'auto';
+};
 
 export function Stepper({
   steps,
-  currentIndex, // 0-based
-}: {
-  steps: Step[];
-  currentIndex: number;
-}) {
+  currentIndex,
+  size = 'sm',
+  dense = true,
+  layout = 'stacked',
+  className,
+  dotMode = 'auto',
+}: Props) {
   const r = useReducedMotion();
+  const isStacked = layout === 'stacked';
+
+  // rozmiary
+  const dotPx = size === 'sm' ? 24 : 28;
+  const dotCls = size === 'sm' ? 'size-6' : 'size-7';
+  const textCls = size === 'sm' ? 'text-[13px]' : 'text-sm';
+  const iconCls = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
+  const gapItems = dense ? 'gap-2' : 'gap-3';
+  const connectorH = dense ? 'h-px' : 'h-[2px]';
 
   return (
-    <nav aria-label="Progress">
-      <ol className="flex items-center gap-3">
+    <nav
+      aria-label="Progress"
+      className={className}
+      style={{ ['--dot' as any]: `${dotPx}px` }}
+    >
+      <ol className={`flex items-stretch ${gapItems} overflow-x-auto`}>
         {steps.map((s, idx) => {
           const isActive = idx === currentIndex;
           const isDone = idx < currentIndex;
           const isLast = idx === steps.length - 1;
 
+          const shouldUseIcon =
+            dotMode === 'icon' || (dotMode === 'auto' && !!s.Icon);
+
           return (
-            <li key={s.key} className="flex items-center gap-3 min-w-0 flex-1">
-              {/* Dot */}
-              <span
+            <React.Fragment key={s.key}>
+              {/* KROK */}
+              <li
                 className={[
-                  'grid size-7 shrink-0 place-items-center rounded-full border text-[13px] font-semibold',
-                  isDone
-                    ? // done → solid indigo + white check
-                      'border-transparent bg-indigo-600 text-white dark:bg-indigo-500'
-                    : isActive
-                      ? // active → solid indigo + white number
-                        'border-transparent bg-indigo-600 text-white dark:bg-indigo-500'
-                      : // upcoming → neutral circle
-                        'border-zinc-300 bg-zinc-200 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+                  'min-w-0 flex-1',
+                  isStacked
+                    ? 'flex flex-col items-center'
+                    : 'flex items-center gap-2',
                 ].join(' ')}
-                aria-current={isActive ? 'step' : undefined}
-                aria-label={`${s.label}${isActive ? ', current step' : isDone ? ', completed' : ''}`}
               >
-                {isDone ? <Check className="h-4 w-4" aria-hidden /> : idx + 1}
-              </span>
-
-              {/* Label */}
-              <span
-                className={[
-                  'truncate text-sm',
-                  isActive
-                    ? 'text-zinc-900 dark:text-zinc-100'
-                    : isDone
-                      ? 'text-zinc-700 dark:text-zinc-300'
-                      : 'text-zinc-500 dark:text-zinc-400',
-                ].join(' ')}
-                title={s.label}
-              >
-                {s.label}
-              </span>
-
-              {/* Connector (between steps) */}
-              {!isLast && (
-                <div className="relative mx-2 hidden h-[2px] flex-1 overflow-hidden rounded-full md:block">
-                  {/* base track */}
-                  <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-800" />
-                  {/* progress fill */}
+                {/* Dot */}
+                <span
+                  className={[
+                    `grid shrink-0 place-items-center rounded-full border font-semibold ${dotCls}`,
+                    isDone || isActive
+                      ? 'border-transparent bg-indigo-600 text-white dark:bg-indigo-500'
+                      : 'border-zinc-300 bg-zinc-200 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+                  ].join(' ')}
+                  aria-current={isActive ? 'step' : undefined}
+                  aria-label={`${s.label}${isActive ? ', current step' : isDone ? ', completed' : ''}`}
+                >
                   {isDone ? (
-                    <motion.div
-                      className="absolute inset-y-0 left-0 bg-indigo-600 dark:bg-indigo-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: r ? 0 : 0.35 }}
-                    />
-                  ) : isActive ? (
-                    <motion.div
-                      className="absolute inset-y-0 left-0 bg-indigo-600 dark:bg-indigo-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: '60%' }} // lekki akcent do następnego kroku
-                      transition={{ duration: r ? 0 : 0.35 }}
-                    />
-                  ) : null}
-                </div>
+                    <Check className={iconCls} aria-hidden />
+                  ) : shouldUseIcon && s.Icon ? (
+                    <s.Icon className={iconCls} aria-hidden />
+                  ) : (
+                    idx + 1
+                  )}
+                </span>
+
+                {/* Label */}
+                <span
+                  className={[
+                    'truncate',
+                    textCls,
+                    isStacked ? 'mt-1 text-center' : '',
+                    isActive
+                      ? 'text-zinc-900 dark:text-zinc-100'
+                      : isDone
+                        ? 'text-zinc-700 dark:text-zinc-300'
+                        : 'text-zinc-500 dark:text-zinc-400',
+                  ].join(' ')}
+                  title={s.label}
+                >
+                  {s.label}
+                </span>
+              </li>
+
+              {/* ŁĄCZNIK */}
+              {!isLast && (
+                <li
+                  aria-hidden
+                  className={[
+                    'relative hidden flex-1 md:block',
+                    !isStacked ? 'self-center' : '',
+                  ].join(' ')}
+                >
+                  {/* baza */}
+                  <div
+                    className={[
+                      'absolute left-0 right-0 rounded-full bg-zinc-200 dark:bg-zinc-800',
+                      connectorH,
+                      isStacked
+                        ? 'top-[calc(var(--dot)/2)] -translate-y-1/2'
+                        : 'top-1/2 -translate-y-1/2',
+                    ].join(' ')}
+                  />
+                  {/* progres */}
+                  <motion.div
+                    className={[
+                      'absolute left-0 right-0 rounded-full bg-indigo-600 dark:bg-indigo-500',
+                      connectorH,
+                      isStacked
+                        ? 'top-[calc(var(--dot)/2)] -translate-y-1/2'
+                        : 'top-1/2 -translate-y-1/2',
+                    ].join(' ')}
+                    initial={{ width: 0 }}
+                    animate={{
+                      width:
+                        idx < currentIndex
+                          ? '100%'
+                          : idx === currentIndex
+                            ? '55%'
+                            : 0,
+                    }}
+                    transition={{ duration: r ? 0 : 0.3 }}
+                  />
+                </li>
               )}
-            </li>
+            </React.Fragment>
           );
         })}
       </ol>

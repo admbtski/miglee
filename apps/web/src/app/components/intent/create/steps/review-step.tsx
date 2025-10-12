@@ -143,20 +143,32 @@ export function ReviewStep({
   onSelect,
   showMapPreview = false,
   mapId,
+  /** opcjonalnie lista kategorii do zmapowania id -> name */
+  interests,
 }: {
   values: IntentFormValues;
   suggestions: IntentSuggestion[];
   selectedId?: string | null;
   onSelect?: (id: string | null) => void;
-  /** Show small map under "Where" */
   showMapPreview?: boolean;
-  /** Optional vector map id for AdvancedMarker styling */
   mapId?: string;
+  interests?: Array<{ id: string; name: string }>;
 }) {
   const { dDate, startT, endT } = useFormattedTime(
     values.startAt,
     values.endAt
   );
+
+  // --- resolve interest names (multi) ---
+  const interestNames = useMemo(() => {
+    const map =
+      interests?.reduce<Record<string, string>>((acc, it) => {
+        acc[it.id] = it.name;
+        return acc;
+      }, {}) ?? {};
+    const ids = Array.isArray(values.interestIds) ? values.interestIds : [];
+    return ids.map((id) => map[id] ?? id);
+  }, [interests, values.interestIds]);
 
   const modeChip =
     values.mode === 'ONE_TO_ONE' ? (
@@ -219,14 +231,22 @@ export function ReviewStep({
               <h3 className="truncate text-lg font-semibold tracking-tight">
                 {values.title || 'Untitled'}
               </h3>
+
+              {/* chips: mode, visibility, interests[], allowJoinLate */}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {modeChip}
                 {visChip}
-                {values.interestId && (
-                  <Chip tone="zinc" icon={<Tag className="h-3.5 w-3.5" />}>
-                    {values.interestId}
+
+                {interestNames.map((name) => (
+                  <Chip
+                    key={name}
+                    tone="zinc"
+                    icon={<Tag className="h-3.5 w-3.5" />}
+                  >
+                    {name}
                   </Chip>
-                )}
+                ))}
+
                 {values.allowJoinLate && (
                   <Chip tone="rose">Allow late join</Chip>
                 )}
@@ -257,6 +277,19 @@ export function ReviewStep({
             value={where}
           />
 
+          {values.mode === 'GROUP' && (
+            <Kvp
+              icon={<Users className="h-4 w-4" />}
+              label="Capacity"
+              value={
+                <span className="tabular-nums">
+                  {values.min} – {values.max}
+                </span>
+              }
+              mono
+            />
+          )}
+
           {/* Mini map (optional) */}
           {showMapPreview && (
             <div className="mt-1">
@@ -271,19 +304,6 @@ export function ReviewStep({
               />
             </div>
           )}
-
-          {values.mode === 'GROUP' && (
-            <Kvp
-              icon={<Users className="h-4 w-4" />}
-              label="Capacity"
-              value={
-                <span className="tabular-nums">
-                  {values.min} – {values.max}
-                </span>
-              }
-              mono
-            />
-          )}
           {!!values.location.radiusKm && values.location.radiusKm > 0 && (
             <Kvp
               icon={<Ruler className="h-4 w-4" />}
@@ -297,6 +317,13 @@ export function ReviewStep({
             />
           )}
 
+          {values.notes && values.notes.trim().length > 0 && (
+            <div className="rounded-xl border border-dashed border-zinc-300 p-3 text-sm text-zinc-700 dark:border-zinc-700 dark:text-zinc-200">
+              <span className="mr-2 font-medium">Logistics:</span>
+              <span className="whitespace-pre-wrap">{values.notes}</span>
+            </div>
+          )}
+
           {values.description && values.description.trim().length > 0 && (
             <div className="mt-1 rounded-xl border border-zinc-200/70 bg-white/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
               <div className="mb-1 flex items-center gap-2 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -306,13 +333,6 @@ export function ReviewStep({
               <div className="whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200">
                 {values.description}
               </div>
-            </div>
-          )}
-
-          {values.notes && values.notes.trim().length > 0 && (
-            <div className="rounded-xl border border-dashed border-zinc-300 p-3 text-sm text-zinc-700 dark:border-zinc-700 dark:text-zinc-200">
-              <span className="mr-2 font-medium">Logistics:</span>
-              <span className="whitespace-pre-wrap">{values.notes}</span>
             </div>
           )}
         </div>

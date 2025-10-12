@@ -1,22 +1,35 @@
-import z from 'zod';
-import { IntentSchema } from './create/hooks/use-intent-form';
+'use client';
+
+import { z } from 'zod';
+import {
+  IntentSchema,
+  MeetingKind as MeetingKindEnum,
+} from './create/hooks/use-intent-form';
+
+export type MeetingKindType = z.infer<typeof MeetingKindEnum>;
 
 export type CreateIntentInput = {
   title: string;
-  interestId: string;
-  description?: string;
+  interestIds: string[]; // min 1, max 3
+  description?: string; // ⬅️ opcjonalne
   startAt: string; // ISO
   endAt: string; // ISO
   allowJoinLate: boolean;
   min: number;
   max: number;
   mode: 'ONE_TO_ONE' | 'GROUP';
-  location: { lat: number; lng: number; address?: string; radiusKm?: number };
+  meetingKind: MeetingKindType;
+  onlineUrl?: string; // ⬅️ opcjonalne
+  location: {
+    lat?: number;
+    lng?: number;
+    address?: string;
+    radiusKm?: number;
+  };
   visibility: 'PUBLIC' | 'HIDDEN';
-  notes?: string;
+  notes?: string; // ⬅️ opcjonalne
 };
 
-// Simple shape for suggestion cards (anti-duplication)
 export type IntentSuggestion = {
   id: string;
   title: string;

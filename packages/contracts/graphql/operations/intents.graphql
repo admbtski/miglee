@@ -1,0 +1,43 @@
+# Queries
+query GetIntents(
+  $limit: Int = 20
+  $offset: Int = 0
+  $visibility: Visibility
+  $authorId: ID
+  $upcomingAfter: DateTime
+  $categoryIds: [ID!]
+) {
+  intents(
+    limit: $limit
+    offset: $offset
+    visibility: $visibility
+    authorId: $authorId
+    upcomingAfter: $upcomingAfter
+    categoryIds: $categoryIds
+  ) {
+    ...IntentCore
+  }
+}
+
+query GetIntent($id: ID!) {
+  intent(id: $id) {
+    ...IntentCore
+  }
+}
+
+# Mutations
+mutation CreateIntent($input: CreateIntentInput!) {
+  createIntent(input: $input) {
+    ...IntentCore
+  }
+}
+
+mutation UpdateIntent($id: ID!, $input: UpdateIntentInput!) {
+  updateIntent(id: $id, input: $input) {
+    ...IntentCore
+  }
+}
+
+mutation DeleteIntent($id: ID!) {
+  deleteIntent(id: $id)
+}

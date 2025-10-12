@@ -1,0 +1,29 @@
+# Queries
+query GetCategories($query: String, $limit: Int = 50) {
+  categories(query: $query, limit: $limit) {
+    ...CategoryCore
+  }
+}
+
+query GetCategory($id: ID, $slug: String) {
+  category(id: $id, slug: $slug) {
+    ...CategoryCore
+  }
+}
+
+# Mutations
+mutation CreateCategory($input: CreateCategoryInput!) {
+  createCategory(input: $input) {
+    ...CategoryCore
+  }
+}
+
+mutation UpdateCategory($id: ID!, $input: UpdateCategoryInput!) {
+  updateCategory(id: $id, input: $input) {
+    ...CategoryCore
+  }
+}
+
+mutation DeleteCategory($id: ID!) {
+  deleteCategory(id: $id)
+}

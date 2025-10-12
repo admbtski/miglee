@@ -1,0 +1,11 @@
+query GetUsers($limit: Int = 50, $offset: Int = 0) {
+  users(limit: $limit, offset: $offset) {
+    ...UserCore
+  }
+}
+
+query GetUser($id: ID!) {
+  user(id: $id) {
+    ...UserCore
+  }
+}

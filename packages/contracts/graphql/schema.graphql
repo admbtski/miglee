@@ -1,25 +1,247 @@
+"""
+Custom scalars
+"""
 scalar DateTime
+scalar JSON
+scalar JSONObject
 
+"""
+Visibility of an intent
+"""
+enum Visibility {
+  PUBLIC
+  HIDDEN
+}
+
+"""
+Meeting mode / capacity grouping
+"""
+enum Mode {
+  ONE_TO_ONE
+  GROUP
+}
+
+"""
+How the meeting happens
+"""
+enum MeetingKind {
+  ONSITE
+  ONLINE
+  HYBRID
+}
+
+"""
+Notification kind – extensible
+"""
+enum NotificationKind {
+  INTENT_CREATED
+  # add more kinds over time, e.g. INTENT_UPDATED, INVITE, REMINDER, ...
+}
+
+"""
+Basic demo entity kept from your initial setup
+"""
 type Event {
   id: ID!
   title: String!
   createdAt: DateTime!
 }
 
+"""
+User
+"""
+type User {
+  id: ID!
+  email: String!
+  name: String
+  imageUrl: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Category with translated names in JSON, e.g. { "pl": "...", "de": "...", "en": "..." }
+"""
+type Category {
+  id: ID!
+  slug: String!
+  names: JSON!
+  icon: String
+  color: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Intent
+"""
+type Intent {
+  id: ID!
+  title: String!
+  description: String
+  notes: String
+
+  categories: [Category!]!
+
+  visibility: Visibility!
+  mode: Mode!
+  min: Int!
+  max: Int!
+
+  startAt: DateTime!
+  endAt: DateTime!
+  allowJoinLate: Boolean!
+
+  meetingKind: MeetingKind!
+  onlineUrl: String
+
+  lat: Float
+  lng: Float
+  address: String
+  radiusKm: Float
+
+  authorId: ID
+  author: User
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+Notification stored in DB, assigned to a recipient and optionally linked to an intent
+"""
 type Notification {
   id: ID!
+  kind: NotificationKind!
   message: String
+  payload: JSON
+  readAt: DateTime
+  createdAt: DateTime!
+
+  recipientId: ID!
+  recipient: User!
+
+  intentId: ID
+  intent: Intent
 }
 
+"""
+Inputs
+"""
+input CreateCategoryInput {
+  slug: String!
+  names: JSON!
+  icon: String
+  color: String
+}
+
+input UpdateCategoryInput {
+  slug: String
+  names: JSON
+  icon: String
+  color: String
+}
+
+input LocationInput {
+  lat: Float
+  lng: Float
+  address: String
+  radiusKm: Float
+}
+
+input CreateIntentInput {
+  title: String!
+  interestIds: [ID!]! # 1..3 validated on server
+  description: String
+  notes: String
+
+  visibility: Visibility!
+  mode: Mode!
+  min: Int!
+  max: Int!
+
+  startAt: DateTime!
+  endAt: DateTime!
+  allowJoinLate: Boolean!
+
+  meetingKind: MeetingKind!
+  onlineUrl: String
+
+  authorId: ID
+  location: LocationInput
+}
+
+input UpdateIntentInput {
+  title: String
+  interestIds: [ID!]
+  description: String
+  notes: String
+
+  visibility: Visibility
+  mode: Mode
+  min: Int
+  max: Int
+
+  startAt: DateTime
+  endAt: DateTime
+  allowJoinLate: Boolean
+
+  meetingKind: MeetingKind
+  onlineUrl: String
+
+  location: LocationInput
+}
+
+"""
+Queries
+"""
 type Query {
+  # kept from initial setup
   events(limit: Int = 10): [Event!]!
-  notifications: [Notification!]!
+
+  # notifications: by recipient id (if omitted, server may use ctx.auth.userId)
+  notifications(recipientId: ID): [Notification!]!
+
+  # intents and helpers
+  intents(
+    limit: Int = 20
+    offset: Int = 0
+    visibility: Visibility
+    authorId: ID
+    upcomingAfter: DateTime
+    categoryIds: [ID!]
+  ): [Intent!]!
+
+  intent(id: ID!): Intent
+
+  categories(query: String, limit: Int = 50): [Category!]!
+  category(id: ID, slug: String): Category
+
+  users(limit: Int = 50, offset: Int = 0): [User!]!
+  user(id: ID!): User
 }
 
+"""
+Mutations
+"""
 type Mutation {
+  # simple ad-hoc notification (kept for demo)
   addNotification(message: String): Notification
+
+  # categories
+  createCategory(input: CreateCategoryInput!): Category!
+  updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
+  deleteCategory(id: ID!): Boolean!
+
+  # intents
+  createIntent(input: CreateIntentInput!): Intent!
+  updateIntent(id: ID!, input: UpdateIntentInput!): Intent!
+  deleteIntent(id: ID!): Boolean!
 }
 
+"""
+Subscriptions (scoped per recipient)
+"""
 type Subscription {
-  notificationAdded: Notification!
+  notificationAdded(recipientId: ID!): Notification!
 }

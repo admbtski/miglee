@@ -98,7 +98,7 @@ body {
   padding: 6px 10px;
   font-size: 14px;
   font-weight: 600;
-  transform: translate(-50%, -8px) !important ;
+  transform: translate(-50%, -4px) !important ;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
   white-space: nowrap;
 }
