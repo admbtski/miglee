@@ -25,14 +25,14 @@ import {
   UseQueryOptions,
 } from '@tanstack/react-query';
 
-// -------- Keys --------
+/* --------------------------------- KEYS ---------------------------------- */
 export const GET_INTENTS_LIST_KEY = (variables?: GetIntentsQueryVariables) =>
-  variables ? ['GetIntents', variables] : ['GetIntents'];
+  variables ? (['GetIntents', variables] as const) : (['GetIntents'] as const);
 
 export const GET_INTENT_ONE_KEY = (variables: GetIntentQueryVariables) =>
   ['GetIntent', variables] as const;
 
-// -------- Query builders --------
+/* ----------------------------- QUERY BUILDERS ---------------------------- */
 export function buildGetIntentsOptions(
   variables?: GetIntentsQueryVariables,
   options?: Omit<
@@ -41,7 +41,7 @@ export function buildGetIntentsOptions(
   >
 ): UseQueryOptions<GetIntentsQuery, unknown, GetIntentsQuery, QueryKey> {
   return {
-    queryKey: GET_INTENTS_LIST_KEY(variables),
+    queryKey: GET_INTENTS_LIST_KEY(variables) as unknown as QueryKey,
     queryFn: async () =>
       variables
         ? gqlClient.request<GetIntentsQuery, GetIntentsQueryVariables>(
@@ -61,7 +61,7 @@ export function buildGetIntentOptions(
   >
 ): UseQueryOptions<GetIntentQuery, unknown, GetIntentQuery, QueryKey> {
   return {
-    queryKey: GET_INTENT_ONE_KEY(variables),
+    queryKey: GET_INTENT_ONE_KEY(variables) as unknown as QueryKey,
     queryFn: async () =>
       gqlClient.request<GetIntentQuery, GetIntentQueryVariables>(
         GetIntentDocument,
@@ -71,7 +71,7 @@ export function buildGetIntentOptions(
   };
 }
 
-// -------- Queries (hooks) --------
+/* --------------------------------- QUERIES -------------------------------- */
 export function useIntentsQuery(
   variables?: GetIntentsQueryVariables,
   options?: Omit<
@@ -91,13 +91,13 @@ export function useIntentQuery(
 ) {
   return useQuery(
     buildGetIntentOptions(variables, {
-      enabled: !!variables.id,
+      enabled: !!variables.id, // schema wymaga id; jeśli dodasz lookup po slug, dostosuj
       ...(options ?? {}),
     })
   );
 }
 
-// -------- Mutation builders --------
+/* --------------------------- MUTATION BUILDERS --------------------------- */
 export function buildCreateIntentOptions<TContext = unknown>(
   options?: UseMutationOptions<
     CreateIntentMutation,
@@ -170,7 +170,7 @@ export function buildDeleteIntentOptions<TContext = unknown>(
   };
 }
 
-// -------- Mutations (hooks) --------
+/* -------------------------------- MUTATIONS ------------------------------- */
 export function useCreateIntentMutation(
   options?: UseMutationOptions<
     CreateIntentMutation,
@@ -186,8 +186,10 @@ export function useCreateIntentMutation(
   >(
     buildCreateIntentOptions({
       onSuccess: (_data, _vars) => {
-        // szeroka invalidacja list
-        qc.invalidateQueries({ queryKey: ['GetIntents'] });
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+        });
       },
       ...(options ?? {}),
     })
@@ -209,10 +211,15 @@ export function useUpdateIntentMutation(
   >(
     buildUpdateIntentOptions({
       onSuccess: (_data, vars) => {
-        qc.invalidateQueries({ queryKey: ['GetIntents'] });
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+        });
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_INTENT_ONE_KEY({ id: vars.id }),
+            queryKey: GET_INTENT_ONE_KEY({
+              id: vars.id,
+            }) as unknown as QueryKey,
           });
         }
       },
@@ -235,8 +242,18 @@ export function useDeleteIntentMutation(
     DeleteIntentMutationVariables
   >(
     buildDeleteIntentOptions({
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ['GetIntents'] });
+      onSuccess: (_data, vars) => {
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+        });
+        if (vars.id) {
+          qc.invalidateQueries({
+            queryKey: GET_INTENT_ONE_KEY({
+              id: vars.id,
+            }) as unknown as QueryKey,
+          });
+        }
       },
       ...(options ?? {}),
     })

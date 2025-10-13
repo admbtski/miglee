@@ -1,23 +1,22 @@
 'use client';
 
-import { useGetEventsQuery } from '@/hooks/events';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
-import { EventCard } from './_internal/components/event-card';
-import { FilterModal } from '../components/filter/components/filter-modal';
-import { Footer } from './_internal/components/footer';
-import { MapImagePanel } from './_internal/components/map-image-panel';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Navbar } from './_internal/components/navbar';
 import { SortControl, SortKey } from './_internal/components/sort-control';
-import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
+import { MapImagePanel } from './_internal/components/map-image-panel';
+import { Footer } from './_internal/components/footer';
+import { FilterModal } from '../components/filter/components/filter-modal';
+import { EventCard } from './_internal/components/event-card';
+
 import { useCommittedFilters } from './_internal/hooks/useCommittedFilters';
 import { useCommittedSort } from './_internal/hooks/useCommittedSort';
+import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
+
 import { useIntentsQuery } from '@/hooks/intents';
-import { useGetNotificationsQuery } from '@/hooks/notifications';
-import { useCategories } from '../components/intent/create/hooks/use-categories';
 import { useGetCategoriesQuery } from '@/hooks/categories';
 
-/* DEMO DATA */
+type CityName = 'Kraków' | 'Warszawa' | 'Gdańsk' | 'Wrocław' | 'Poznań';
 const CITIES = [
   { name: 'Kraków', lat: 50.0647, lon: 19.945 },
   { name: 'Warszawa', lat: 52.2297, lon: 21.0122 },
@@ -25,67 +24,13 @@ const CITIES = [
   { name: 'Wrocław', lat: 51.1079, lon: 17.0385 },
   { name: 'Poznań', lat: 52.4064, lon: 16.9252 },
 ] as const;
-
-type CityName = (typeof CITIES)[number]['name'];
 const CITY_BY_NAME: Record<
   string,
   { name: CityName; lat: number; lon: number }
 > = Object.fromEntries(CITIES.map((c) => [c.name, c])) as any;
 
-const base = {
-  avatarUrl: 'https://i.pravatar.cc/150?img=12',
-  organizerName: 'Jan Kowalski',
-  description: 'Spotkanie biegowe – tempo rekreacyjne, 5–7 km.',
-  location: 'Park Skaryszewski, Warszawa',
-  min: 5,
-  max: 12,
-  tags: ['bieganie', 'outdoor', 'sport'],
-};
+/* ---------------- utils ---------------- */
 
-const now = new Date();
-const MOCK_ITEMS = Array.from({ length: 20 }).map((_, i) => {
-  const cats = ['Sport', 'Nauka', 'Networking', 'Kultura', 'Inne'] as const;
-  const cat = cats[i % cats.length];
-  const city = CITIES[i % CITIES.length]!;
-  const start = new Date();
-  start.setDate(start.getDate() + (i % 7));
-  start.setHours(10 + (i % 6), (i * 7) % 60, 0, 0);
-  const end = new Date(start.getTime() + (60 + (i % 4) * 30) * 60 * 1000);
-
-  const sd = new Date(now.getTime() + (-22 + i * 3600000));
-  const ed = new Date(sd.getTime() + 60 * 60 * 1000);
-
-  // NEW: demo fields for filters
-  const typePool = ['remote', 'hybrid', 'public'] as const;
-  const levelPool = ['beginner', 'intermediate', 'advanced'] as const;
-
-  return {
-    ...base,
-    id: i + 1,
-    title: `${cat} – wydarzenie #${i + 1}`,
-    city: city.name,
-    lat: city.lat + (Math.random() - 0.5) * 0.2,
-    lon: city.lon + (Math.random() - 0.5) * 0.2,
-    category: cat,
-    capacity: [8, 10, 12, 16][i % 4],
-    taken: Math.floor(4 + Math.random() * 8),
-    rating: Number((3 + Math.random() * 2).toFixed(1)),
-    start,
-    end,
-    startISO: sd.toISOString(),
-    endISO: ed.toISOString(),
-    joined: 10,
-    tags: ['outdoor', 'sport', i % 2 ? 'free' : 'paid'].slice(0, (i % 3) + 1),
-    private: i % 5 === 0,
-    salaryPLN: [8000, 12000, 16000, 20000][i % 4],
-
-    organizerVerified: i % 3 === 0, // NEW
-    type: typePool[i % typePool.length], // NEW
-    level: levelPool[i % levelPool.length], // NEW
-  };
-});
-
-/* Utils */
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -95,8 +40,7 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
     Math.cos((lat1 * Math.PI) / 180) *
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
 type FilterDraft = {
@@ -114,21 +58,22 @@ type FilterDraft = {
   categories: string[];
 };
 
+// status na podstawie czasów + pojemności (dla API nie mamy “joined” – trzymamy 0)
 function calcStatus(
   it: any
 ): 'ongoing' | 'started' | 'full' | 'locked' | 'available' {
   const now = Date.now();
   const s = +new Date(it.startISO);
   const e = +new Date(it.endISO);
-  const full = (it.taken ?? 0) >= (it.capacity ?? Infinity);
-
+  const full = (it.joined ?? 0) >= (it.max ?? Infinity);
   if (full) return 'full';
   if (now >= s && now <= e) return 'ongoing';
-  if (s - now <= 6 * 60 * 60 * 1000 && s - now > 0) return 'locked'; // starts within 6h
+  if (s - now <= 6 * 60 * 60 * 1000 && s - now > 0) return 'locked';
   if (now > s) return 'started';
   return 'available';
 }
 
+// dopasowanie filtrów, z opcjonalnością (jeśli obiekty nie mają danego pola, filtr jest “łagodny”)
 function matchesFilters(item: any, d: FilterDraft): boolean {
   const {
     q,
@@ -148,7 +93,7 @@ function matchesFilters(item: any, d: FilterDraft): boolean {
   // text & keywords
   if (q || (keywords && keywords.length)) {
     const hay =
-      `${item.title} ${item.city} ${item.category} ${(item.tags || []).join(' ')}`.toLowerCase();
+      `${item.title ?? ''} ${item.city ?? ''} ${item.category ?? ''} ${(item.tags || []).join(' ')}`.toLowerCase();
     if (q && !hay.includes(q.toLowerCase())) return false;
     if (
       keywords?.length &&
@@ -161,7 +106,9 @@ function matchesFilters(item: any, d: FilterDraft): boolean {
   if (categories?.length) {
     if (
       !categories.some((c) =>
-        String(item.category).toLowerCase().includes(c.toLowerCase())
+        String(item.category ?? '')
+          .toLowerCase()
+          .includes(c.toLowerCase())
       )
     )
       return false;
@@ -182,20 +129,26 @@ function matchesFilters(item: any, d: FilterDraft): boolean {
     if (calcStatus(item) !== status) return false;
   }
 
-  // types / levels
-  if (types?.length && !types.includes(item.type)) return false;
-  if (levels?.length && !levels.includes(item.level)) return false;
+  // types / levels – w danych z API nie mamy, więc jeśli filtr wymaga, odrzucamy
+  if (types?.length) return false;
+  if (levels?.length) return false;
 
-  // verified
-  if (verifiedOnly && !item.organizerVerified) return false;
+  // verified – brak pojęcia w naszych danych; jeśli wymagany, odrzucamy
+  if (verifiedOnly) return false;
 
-  // city + radius
-  if (city && item.city !== city) return false;
+  // city + radius (działa tylko jeśli znamy i bazową lokalizację i item.lat/lon)
   if (city) {
     const base = CITY_BY_NAME[city];
-    if (base) {
+    if (!base) return false;
+
+    // jeżeli item nie ma miasta – spróbuj wywnioskować z address
+    if (item.city && item.city !== city) return false;
+
+    if (typeof item.lat === 'number' && typeof item.lon === 'number') {
       const dKm = haversineKm(base.lat, base.lon, item.lat, item.lon);
       if (dKm > distanceKm) return false;
+    } else {
+      // brak współrzędnych – łagodnie: jeśli filtr wymaga dystansu, przepuszczamy (nie blokujemy)
     }
   }
 
@@ -208,29 +161,88 @@ function sortItems(items: any[], sort: SortKey): any[] {
       (a, b) => +new Date(b.startISO) - +new Date(a.startISO)
     );
   if (sort === 'salary_desc')
-    return [...items].sort(
-      (a, b) => (b.salaryPLN ?? b.salary ?? 0) - (a.salaryPLN ?? a.salary ?? 0)
-    );
+    return [...items].sort((a, b) => (b.salaryPLN ?? 0) - (a.salaryPLN ?? 0));
   if (sort === 'salary_asc')
     return [...items].sort(
-      (a, b) =>
-        (a.salaryPLN ?? a.salary ?? Infinity) -
-        (b.salaryPLN ?? b.salary ?? Infinity)
+      (a, b) => (a.salaryPLN ?? Infinity) - (b.salaryPLN ?? Infinity)
     );
   return items;
 }
 
-/* Page */
+/* ------------- MAPOWANIE API -> EventCard + pola filtrów ------------- */
+
+type GqlIntent = NonNullable<
+  NonNullable<ReturnType<typeof useIntentsQuery>['data']>['intents']
+>[number];
+
+function firstCategorySlug(i: GqlIntent): string | undefined {
+  return i.categories?.[0]?.slug;
+}
+
+function extractCityFromAddress(address?: string | null): CityName | undefined {
+  if (!address) return;
+  const part = address.split(',')[1]?.trim() || address.split(',')[0]?.trim();
+  const match = CITIES.find((c) =>
+    part?.toLowerCase().includes(c.name.toLowerCase())
+  );
+  return match?.name;
+}
+
+function mapIntentToItem(i: GqlIntent) {
+  const startISO = String(i.startAt);
+  const endISO = String(i.endAt);
+
+  return {
+    // dla EventCard
+    id: i.id,
+    title: i.title,
+    startISO,
+    endISO,
+    avatarUrl: i.author?.imageUrl ?? 'https://i.pravatar.cc/150?img=12',
+    organizerName: i.author?.name ?? i.author?.email ?? 'Unknown',
+    description: i.description ?? '—',
+    location:
+      i.meetingKind === 'ONLINE'
+        ? (i.onlineUrl ?? 'Online')
+        : (i.address ?? 'TBA'),
+    joined: 0, // brak w API – można podmienić gdy będzie liczba zapisanych
+    min: i.min,
+    max: i.max,
+    tags: i.categories?.map((c) => c.slug) ?? [],
+
+    // dla filtrów/sorta
+    city: extractCityFromAddress(i.address),
+    lat: typeof i.lat === 'number' ? i.lat : undefined,
+    lon: typeof i.lng === 'number' ? i.lng : undefined,
+    category: firstCategorySlug(i),
+    salaryPLN: undefined, // brak w API
+  };
+}
+
+/* ------------------- PAGE ------------------- */
+
 export function IntentsPage() {
-  const { data: _unused } = useGetEventsQuery();
-  const { data: _intentsData } = useIntentsQuery();
-  const { data: _notificationsData } = useGetNotificationsQuery();
-  const { data: _categoriesData } = useGetCategoriesQuery();
+  const upcomingAfter = useMemo(() => new Date().toISOString(), []);
+  const intentsVars = useMemo(
+    () => ({
+      limit: 60,
+      upcomingAfter,
+    }),
+    [upcomingAfter]
+  );
 
-  console.dir({ _unused, _intentsData, _notificationsData, _categoriesData });
+  // i użycie:
+  const { data: intentsData, isLoading } = useIntentsQuery(intentsVars);
 
-  const items = MOCK_ITEMS;
+  // opcjonalnie – żeby mieć dane pod filtry/sugestie
+  useGetCategoriesQuery();
 
+  const mapped = useMemo(
+    () => (intentsData?.intents ?? []).map(mapIntentToItem),
+    [intentsData]
+  );
+
+  // Filtry / sort / mapa
   const {
     q,
     city,
@@ -245,12 +257,10 @@ export function IntentsPage() {
     keywords,
     categories,
     apply,
-    reset,
   } = useCommittedFilters();
 
   const { sort, setSort } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
-
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const activeFilters = useMemo(() => {
@@ -285,7 +295,7 @@ export function IntentsPage() {
 
   const filtered = useMemo(
     () =>
-      items.filter((it) =>
+      mapped.filter((it) =>
         matchesFilters(it, {
           q,
           city,
@@ -302,7 +312,7 @@ export function IntentsPage() {
         })
       ),
     [
-      items,
+      mapped,
       q,
       city,
       distanceKm,
@@ -335,9 +345,8 @@ export function IntentsPage() {
         activeFilters={activeFilters}
       />
 
-      {/* GRID */}
       <main
-        className={`mx-auto grid w-full none gap-6 px-4 py-4 ${
+        className={`mx-auto grid w-full gap-6 px-4 py-4 ${
           mapVisible
             ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_clamp(360px,36vw,640px)]'
             : 'grid-cols-1'
@@ -348,8 +357,14 @@ export function IntentsPage() {
           <div className="sticky z-30 border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
             <div className="flex items-center justify-between py-2 text-sm">
               <div className="opacity-70">
-                All events in {city || 'Global'} — <b>{sorted.length}</b> event
-                {sorted.length === 1 ? '' : 's'}
+                {isLoading
+                  ? 'Loading…'
+                  : `All events in ${city || 'Global'} — `}
+                {!isLoading && (
+                  <>
+                    <b>{sorted.length}</b> event{sorted.length === 1 ? '' : 's'}
+                  </>
+                )}
               </div>
               <SortControl
                 value={sort}
@@ -366,7 +381,23 @@ export function IntentsPage() {
             className="mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
           >
             {sorted.map((item) => (
-              <EventCard key={item.id} {...item} />
+              <EventCard
+                key={item.id}
+                startISO={item.startISO}
+                endISO={item.endISO}
+                avatarUrl={item.avatarUrl}
+                organizerName={item.organizerName}
+                description={item.title}
+                location={item.location}
+                joined={item.joined}
+                min={item.min}
+                max={item.max}
+                tags={item.tags}
+                onJoin={() => {
+                  // TODO: akcja join – np. mutate / open modal
+                  console.log('join intent', item.id);
+                }}
+              />
             ))}
           </motion.div>
         </motion.section>
@@ -376,9 +407,9 @@ export function IntentsPage() {
           {mapVisible && (
             <motion.aside
               className="hidden lg:block"
-              initial={{ opacity: 0, y: 0 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ type: 'spring', duration: 0.5, bounce: 0 }}
             >
               <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] -mt-4">
@@ -422,7 +453,6 @@ export function IntentsPage() {
               keywords: next.keywords ?? [],
               categories: next.categories ?? [],
             });
-            console.dir({ next });
             setFiltersOpen(false);
           }}
           onClose={() => setFiltersOpen(false)}

@@ -7,7 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* ---------- Enums ---------- */
+/**
+ * ---------- Enums ----------
+ */
 
 enum Visibility {
   PUBLIC
@@ -27,21 +29,38 @@ enum MeetingKind {
 
 enum NotificationKind {
   INTENT_CREATED
-  // w przyszłości: INTENT_UPDATED, INTENT_CANCELED, USER_MENTIONED, SYSTEM, ...
+  // future: INTENT_UPDATED, INTENT_CANCELED, USER_MENTIONED, SYSTEM, ...
 }
 
-/* ---------- Models ---------- */
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+/**
+ * ---------- Models ----------
+ */
 
 model User {
-  id            String          @id @default(cuid())
-  email         String          @unique
-  name          String?
-  imageUrl      String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  intents       Intent[]        // authored intents
-  notifications Notification[]  // otrzymane notyfikacje
+  // authored intents
+  intents       Intent[]
+  // received notifications
+  notifications Notification[]
 
   @@map("users")
 }
@@ -49,51 +68,82 @@ model User {
 model Category {
   id        String   @id @default(cuid())
   slug      String   @unique
-  /// Tłumaczenia w JSON, np. { "pl": "Bieganie", "de": "Laufen", "en": "Running" }
+  /// Localized names in JSON, e.g. { "pl": "Bieganie", "de": "Laufen", "en": "Running" }
   names     Json
   icon      String?
   color     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intents   Intent[]
+  // M:N with intents
+  intents Intent[]
 
   @@map("categories")
 }
 
+model Tag {
+  id        String   @id @default(cuid())
+  label     String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // M:N with intents
+  intents Intent[]
+
+  @@index([label], map: "idx_tags_label")
+  @@map("tags")
+}
+
 model Intent {
-  id            String           @id @default(cuid())
-  title         String
-  description   String?
-  notes         String?
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  notes       String?
 
-  categories    Category[]
+  // Categories (M:N)
+  categories Category[]
 
-  visibility    Visibility       @default(PUBLIC)
-  mode          Mode             @default(GROUP)
-  min           Int              @default(2)
-  max           Int              @default(50)
+  // Tags (M:N) for search/filtering
+  tags Tag[]
 
+  // Visibility
+  visibility Visibility @default(PUBLIC)
+
+  // Mode & capacity
+  mode Mode @default(GROUP)
+  min  Int  @default(2)
+  max  Int  @default(50)
+
+  // Time window
   startAt       DateTime
   endAt         DateTime
-  allowJoinLate Boolean          @default(true)
+  allowJoinLate Boolean  @default(true)
 
-  meetingKind   MeetingKind      @default(ONSITE)
-  onlineUrl     String?
+  // Meeting type
+  meetingKind MeetingKind @default(ONSITE)
 
-  lat           Float?
-  lng           Float?
-  address       String?
-  radiusKm      Float?
+  // ONLINE
+  onlineUrl String?
 
-  authorId      String?
-  author        User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  // ONSITE/HYBRID – geo + address + radius (km)
+  lat      Float?
+  lng      Float?
+  address  String?
+  radiusKm Float? // 0 = precise pin; >0 = privacy radius
 
-  // ⬇⬇⬇ DODANO: pole odwrotne relacji do Notification
-  notifications Notification[]   @relation("IntentNotifications")
+  // Difficulty levels for search (PostgreSQL enum array)
+  levels Level[] @default([])
 
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  // Author (nullable; keep SetNull to avoid the SetNull-on-required-field issue)
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  // Back-relation to notifications
+  notifications Notification[] @relation("IntentNotifications")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([startAt], map: "idx_intents_start_at")
   @@index([visibility], map: "idx_intents_visibility")
@@ -103,28 +153,27 @@ model Intent {
 }
 
 model Notification {
-  id           String           @id @default(cuid())
-  kind         NotificationKind
-  message      String?
-  payload      Json?
-  readAt       DateTime?
+  id      String           @id @default(cuid())
+  kind    NotificationKind
+  message String?
+  payload Json?
+  readAt  DateTime?
 
-  // odbiorca
-  recipientId  String
-  recipient    User             @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  // Recipient
+  recipientId String
+  recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
-  // powiązana intencja (opcjonalnie)
-  intentId     String?
-  intent       Intent?          @relation("IntentNotifications", fields: [intentId], references: [id], onDelete: SetNull)
+  // Related intent (optional)
+  intentId String?
+  intent   Intent? @relation("IntentNotifications", fields: [intentId], references: [id], onDelete: SetNull)
 
-  createdAt    DateTime         @default(now())
+  createdAt DateTime @default(now())
 
   @@index([recipientId, createdAt], map: "idx_notifications_recipient_created")
   @@index([recipientId, readAt], map: "idx_notifications_unread")
   @@index([intentId], map: "idx_notifications_intent")
   @@map("notifications")
 }
-
 
 model Event {
   id        String   @id @default(cuid())

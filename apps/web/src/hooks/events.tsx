@@ -12,9 +12,8 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 
-function eventsQueryKey(variables?: GetEventsQueryVariables): QueryKey {
-  return variables ? ['GetEvents', variables] : ['GetEvents'];
-}
+export const GET_EVENTS_LIST_KEY = (variables?: GetEventsQueryVariables) =>
+  variables ? (['GetEvents', variables] as const) : (['GetEvents'] as const);
 
 export function buildEventsOptions(
   variables?: GetEventsQueryVariables,
@@ -24,16 +23,14 @@ export function buildEventsOptions(
   >
 ): UseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey> {
   return {
-    queryKey: eventsQueryKey(variables),
-    queryFn: async () => {
-      if (variables) {
-        return gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
-          GetEventsDocument,
-          variables
-        );
-      }
-      return gqlClient.request<GetEventsQuery>(GetEventsDocument);
-    },
+    queryKey: GET_EVENTS_LIST_KEY(variables) as unknown as QueryKey,
+    queryFn: async () =>
+      variables
+        ? gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
+            GetEventsDocument,
+            variables
+          )
+        : gqlClient.request<GetEventsQuery>(GetEventsDocument),
     ...(options ?? {}),
   };
 }
@@ -46,16 +43,14 @@ export function buildEventsSuspenseOptions(
   >
 ): UseSuspenseQueryOptions<GetEventsQuery, unknown, GetEventsQuery, QueryKey> {
   return {
-    queryKey: eventsQueryKey(variables),
-    queryFn: async () => {
-      if (variables) {
-        return gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
-          GetEventsDocument,
-          variables
-        );
-      }
-      return gqlClient.request<GetEventsQuery>(GetEventsDocument);
-    },
+    queryKey: GET_EVENTS_LIST_KEY(variables) as unknown as QueryKey,
+    queryFn: async () =>
+      variables
+        ? gqlClient.request<GetEventsQuery, GetEventsQueryVariables>(
+            GetEventsDocument,
+            variables
+          )
+        : gqlClient.request<GetEventsQuery>(GetEventsDocument),
     ...(options ?? {}),
   };
 }

@@ -25,15 +25,22 @@ import {
   UseQueryOptions,
 } from '@tanstack/react-query';
 
-// -------- Keys --------
+/* --------------------------------- KEYS ---------------------------------- */
+
 export const GET_CATEGORIES_LIST_KEY = (
   variables?: GetCategoriesQueryVariables
-) => (variables ? ['GetCategories', variables] : ['GetCategories']);
+) =>
+  variables
+    ? (['GetCategories', variables] as const)
+    : (['GetCategories'] as const);
 
 export const GET_CATEGORY_ONE_KEY = (variables?: GetCategoryQueryVariables) =>
-  variables ? ['GetCategory', variables] : ['GetCategory'];
+  variables
+    ? (['GetCategory', variables] as const)
+    : (['GetCategory'] as const);
 
-// -------- Queries --------
+/* -------------------------------- QUERIES -------------------------------- */
+
 export function buildGetCategoriesOptions(
   variables?: GetCategoriesQueryVariables,
   options?: Omit<
@@ -42,7 +49,7 @@ export function buildGetCategoriesOptions(
   >
 ): UseQueryOptions<GetCategoriesQuery, unknown, GetCategoriesQuery, QueryKey> {
   return {
-    queryKey: GET_CATEGORIES_LIST_KEY(variables),
+    queryKey: GET_CATEGORIES_LIST_KEY(variables) as unknown as QueryKey,
     queryFn: async () => {
       if (variables) {
         return gqlClient.request<
@@ -52,6 +59,8 @@ export function buildGetCategoriesOptions(
       }
       return gqlClient.request<GetCategoriesQuery>(GetCategoriesDocument);
     },
+    // staleTime: 30_000, // opcjonalnie
+    // gcTime: 5 * 60_000, // opcjonalnie
     ...(options ?? {}),
   };
 }
@@ -74,7 +83,7 @@ export function buildGetCategoryOptions(
   >
 ): UseQueryOptions<GetCategoryQuery, unknown, GetCategoryQuery, QueryKey> {
   return {
-    queryKey: GET_CATEGORY_ONE_KEY(variables),
+    queryKey: GET_CATEGORY_ONE_KEY(variables) as unknown as QueryKey,
     queryFn: async () => {
       if (variables) {
         return gqlClient.request<GetCategoryQuery, GetCategoryQueryVariables>(
@@ -96,18 +105,19 @@ export function useGetCategoryQuery(
   >
 ) {
   return useQuery({
-    queryKey: GET_CATEGORY_ONE_KEY(variables),
+    queryKey: GET_CATEGORY_ONE_KEY(variables) as unknown as QueryKey,
     queryFn: async () =>
       gqlClient.request<GetCategoryQuery, GetCategoryQueryVariables>(
         GetCategoryDocument,
         variables
       ),
-    enabled: !!(variables.id || variables.slug),
+    enabled: !!(variables?.id || variables?.slug),
     ...(options ?? {}),
   });
 }
 
-// -------- Mutations --------
+/* ------------------------------- MUTATIONS ------------------------------- */
+
 export function buildCreateCategoryOptions<TContext = unknown>(
   options?: UseMutationOptions<
     CreateCategoryMutation,
@@ -146,8 +156,11 @@ export function useCreateCategoryMutation(
     CreateCategoryMutationVariables
   >(
     buildCreateCategoryOptions({
-      onSuccess: (_data, _vars) => {
-        qc.invalidateQueries({ queryKey: ['Categories'] });
+      onSuccess: (_data, _vars, _ctx) => {
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
+        });
       },
       ...(options ?? {}),
     })
@@ -168,7 +181,7 @@ export function buildUpdateCategoryOptions<TContext = unknown>(
   TContext
 > {
   return {
-    mutationKey: ['CreateCategory'] as QueryKey,
+    mutationKey: ['UpdateCategory'] as QueryKey, // <— naprawione
     mutationFn: async (variables: UpdateCategoryMutationVariables) =>
       gqlClient.request<
         UpdateCategoryMutation,
@@ -193,11 +206,24 @@ export function useUpdateCategoryMutation(
   >(
     buildUpdateCategoryOptions({
       onSuccess: (_data, vars) => {
-        qc.invalidateQueries({ queryKey: ['Categories'] });
-        if (vars.id)
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
+        });
+        if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_CATEGORY_ONE_KEY({ id: vars.id }),
+            queryKey: GET_CATEGORY_ONE_KEY({
+              id: vars.id,
+            }) as unknown as QueryKey,
           });
+        }
+        if (vars.input?.slug) {
+          qc.invalidateQueries({
+            queryKey: GET_CATEGORY_ONE_KEY({
+              slug: vars.input.slug,
+            }) as unknown as QueryKey,
+          });
+        }
       },
       ...(options ?? {}),
     })
@@ -242,8 +268,18 @@ export function useDeleteCategoryMutation(
     DeleteCategoryMutationVariables
   >(
     buildDeleteCategoryOptions({
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ['Categories'] });
+      onSuccess: (_data, vars) => {
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
+        });
+        if (vars.id) {
+          qc.invalidateQueries({
+            queryKey: GET_CATEGORY_ONE_KEY({
+              id: vars.id,
+            }) as unknown as QueryKey,
+          });
+        }
       },
       ...(options ?? {}),
     })

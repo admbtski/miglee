@@ -1,0 +1,29 @@
+# Queries
+query GetTags($query: String, $limit: Int = 50) {
+  tags(query: $query, limit: $limit) {
+    ...TagCore
+  }
+}
+
+query GetTag($id: ID, $slug: String) {
+  tag(id: $id, slug: $slug) {
+    ...TagCore
+  }
+}
+
+# Mutations
+mutation CreateTag($input: CreateTagInput!) {
+  createTag(input: $input) {
+    ...TagCore
+  }
+}
+
+mutation UpdateTag($id: ID!, $input: UpdateTagInput!) {
+  updateTag(id: $id, input: $input) {
+    ...TagCore
+  }
+}
+
+mutation DeleteTag($id: ID!) {
+  deleteTag(id: $id)
+}

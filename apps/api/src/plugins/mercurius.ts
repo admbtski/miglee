@@ -7,7 +7,7 @@ import { join } from 'path';
 import { WebSocket } from 'ws';
 import { config } from '../env';
 import { createContext } from '../graphql/context';
-import { resolvers } from '../graphql/resolvers/index';
+import { resolvers } from '../graphql/resolvers';
 import { userMock } from '../mock/user-mock';
 import { redisEmitter } from '../lib/redis';
 import opentelemetry from '@opentelemetry/api';

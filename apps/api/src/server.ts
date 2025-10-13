@@ -13,7 +13,7 @@ import { sensiblePlugin } from './plugins/sensible';
 
 import { context, trace } from '@opentelemetry/api';
 import { config } from './env';
-import { fastifyMetrics } from './plugins/metrics/fastify-metrics';
+// import { fastifyMetrics } from './plugins/metrics/fastify-metrics';
 import { rateLimitPlugin } from './plugins/rate-limit';
 /**
  * Generate a stable request id.
@@ -46,7 +46,7 @@ export async function createServer() {
   await server.register(sensiblePlugin);
   await server.register(cookiePlugin);
   await server.register(jwtPlugin);
-  await server.register(fastifyMetrics);
+  // await server.register(fastifyMetrics);
 
   // lifecycle
   server.addHook('onRequest', async (req) => {

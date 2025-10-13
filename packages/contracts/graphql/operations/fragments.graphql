@@ -2,6 +2,7 @@ fragment UserCore on User {
   id
   email
   name
+  role
   imageUrl
   createdAt
   updatedAt
@@ -13,6 +14,14 @@ fragment CategoryCore on Category {
   names
   icon
   color
+  createdAt
+  updatedAt
+}
+
+fragment TagCore on Tag {
+  id
+  label
+  slug
   createdAt
   updatedAt
 }
@@ -35,11 +44,15 @@ fragment IntentCore on Intent {
   lng
   address
   radiusKm
+  levels
   createdAt
   updatedAt
   authorId
   categories {
     ...CategoryCore
+  }
+  tags {
+    ...TagCore
   }
   author {
     ...UserCore

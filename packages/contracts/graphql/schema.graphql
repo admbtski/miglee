@@ -39,6 +39,24 @@ enum NotificationKind {
 }
 
 """
+User role
+"""
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+}
+
+"""
+Skill / difficulty level (enum array in DB)
+"""
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+"""
 Basic demo entity kept from your initial setup
 """
 type Event {
@@ -55,6 +73,7 @@ type User {
   email: String!
   name: String
   imageUrl: String
+  role: Role! # <-- added
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -73,6 +92,17 @@ type Category {
 }
 
 """
+Tag used for search/filtering
+"""
+type Tag {
+  id: ID!
+  label: String!
+  slug: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
 Intent
 """
 type Intent {
@@ -82,6 +112,7 @@ type Intent {
   notes: String
 
   categories: [Category!]!
+  tags: [Tag!]!
 
   visibility: Visibility!
   mode: Mode!
@@ -99,6 +130,9 @@ type Intent {
   lng: Float
   address: String
   radiusKm: Float
+
+  # PostgreSQL enum[]
+  levels: [Level!]!
 
   authorId: ID
   author: User
@@ -142,6 +176,16 @@ input UpdateCategoryInput {
   color: String
 }
 
+input CreateTagInput {
+  label: String!
+  slug: String!
+}
+
+input UpdateTagInput {
+  label: String
+  slug: String
+}
+
 input LocationInput {
   lat: Float
   lng: Float
@@ -151,7 +195,8 @@ input LocationInput {
 
 input CreateIntentInput {
   title: String!
-  interestIds: [ID!]! # 1..3 validated on server
+  categoryIds: [ID!]! # was: interestIds
+  tagIds: [ID!]
   description: String
   notes: String
 
@@ -169,11 +214,13 @@ input CreateIntentInput {
 
   authorId: ID
   location: LocationInput
+  levels: [Level!]
 }
 
 input UpdateIntentInput {
   title: String
-  interestIds: [ID!]
+  categoryIds: [ID!]
+  tagIds: [ID!]
   description: String
   notes: String
 
@@ -190,19 +237,17 @@ input UpdateIntentInput {
   onlineUrl: String
 
   location: LocationInput
+  levels: [Level!]
 }
 
 """
 Queries
 """
 type Query {
-  # kept from initial setup
   events(limit: Int = 10): [Event!]!
 
-  # notifications: by recipient id (if omitted, server may use ctx.auth.userId)
   notifications(recipientId: ID): [Notification!]!
 
-  # intents and helpers
   intents(
     limit: Int = 20
     offset: Int = 0
@@ -210,12 +255,17 @@ type Query {
     authorId: ID
     upcomingAfter: DateTime
     categoryIds: [ID!]
+    tagIds: [ID!]
+    levels: [Level!]
   ): [Intent!]!
 
   intent(id: ID!): Intent
 
   categories(query: String, limit: Int = 50): [Category!]!
   category(id: ID, slug: String): Category
+
+  tags(query: String, limit: Int = 50): [Tag!]!
+  tag(id: ID, slug: String): Tag
 
   users(limit: Int = 50, offset: Int = 0): [User!]!
   user(id: ID!): User
@@ -225,15 +275,16 @@ type Query {
 Mutations
 """
 type Mutation {
-  # simple ad-hoc notification (kept for demo)
   addNotification(message: String): Notification
 
-  # categories
   createCategory(input: CreateCategoryInput!): Category!
   updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
   deleteCategory(id: ID!): Boolean!
 
-  # intents
+  createTag(input: CreateTagInput!): Tag!
+  updateTag(id: ID!, input: UpdateTagInput!): Tag!
+  deleteTag(id: ID!): Boolean!
+
   createIntent(input: CreateIntentInput!): Intent!
   updateIntent(id: ID!, input: UpdateIntentInput!): Intent!
   deleteIntent(id: ID!): Boolean!

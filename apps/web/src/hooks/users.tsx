@@ -12,12 +12,10 @@ import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
 /* ======================== Keys ======================== */
 
 export const GET_USERS_LIST_KEY = (variables?: GetUsersQueryVariables) =>
-  variables ? ['GetUsers', variables] : ['GetUsers'];
+  variables ? (['GetUsers', variables] as const) : (['GetUsers'] as const);
 
-export const GET_USER_ONE_KEY = (variables: GetUserQueryVariables) => [
-  'GetUser',
-  variables,
-];
+export const GET_USER_ONE_KEY = (variables: GetUserQueryVariables) =>
+  ['GetUser', variables] as const;
 
 /* ===================== Query builders ===================== */
 
@@ -29,7 +27,7 @@ export function buildGetUsersOptions(
   >
 ): UseQueryOptions<GetUsersQuery, unknown, GetUsersQuery, QueryKey> {
   return {
-    queryKey: GET_USERS_LIST_KEY(variables),
+    queryKey: GET_USERS_LIST_KEY(variables) as unknown as QueryKey,
     queryFn: () =>
       variables
         ? gqlClient.request<GetUsersQuery, GetUsersQueryVariables>(
@@ -49,7 +47,7 @@ export function buildGetUserOptions(
   >
 ): UseQueryOptions<GetUserQuery, unknown, GetUserQuery, QueryKey> {
   return {
-    queryKey: GET_USER_ONE_KEY(variables),
+    queryKey: GET_USER_ONE_KEY(variables) as unknown as QueryKey,
     queryFn: () =>
       gqlClient.request<GetUserQuery, GetUserQueryVariables>(
         GetUserDocument,

@@ -1,4 +1,4 @@
-// src/graphql/hooks/notifications.ts
+// apps/web/src/hooks/notifications.ts
 import { useEffect, useRef, useState } from 'react';
 import type { Client, SubscribePayload } from 'graphql-ws';
 import { print } from 'graphql';
@@ -8,10 +8,12 @@ import {
   AddNotificationMutationVariables,
   GetNotificationsDocument,
   GetNotificationsQuery,
+  GetNotificationsQueryVariables,
   NotificationAddedDocument,
   type NotificationAddedSubscription,
 } from '@/graphql/__generated__/react-query';
 import { gqlClient } from '@/graphql/client';
+// zakładam, że masz to jak wcześniej
 import { getWsClient } from '@/graphql/wsClient';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import {
@@ -24,11 +26,18 @@ import {
 
 /* ========================== Keys ========================== */
 
-export const GET_NOTIFICATIONS_KEY = ['GetNotifications'] as const;
+// klucz z opcjonalnymi zmiennymi (np. recipientId)
+export const GET_NOTIFICATIONS_KEY = (
+  variables?: GetNotificationsQueryVariables
+) =>
+  variables
+    ? (['GetNotifications', variables] as const)
+    : (['GetNotifications'] as const);
 
 /* ==================== Query: builder/hook ==================== */
 
 export function buildGetNotificationsOptions(
+  variables?: GetNotificationsQueryVariables,
   options?: Omit<
     UseQueryOptions<
       GetNotificationsQuery,
@@ -45,14 +54,20 @@ export function buildGetNotificationsOptions(
   QueryKey
 > {
   return {
-    queryKey: GET_NOTIFICATIONS_KEY,
+    queryKey: GET_NOTIFICATIONS_KEY(variables) as unknown as QueryKey,
     queryFn: () =>
-      gqlClient.request<GetNotificationsQuery>(GetNotificationsDocument),
+      variables
+        ? gqlClient.request<
+            GetNotificationsQuery,
+            GetNotificationsQueryVariables
+          >(GetNotificationsDocument, variables)
+        : gqlClient.request<GetNotificationsQuery>(GetNotificationsDocument),
     ...(options ?? {}),
   };
 }
 
 export function useGetNotificationsQuery(
+  variables?: GetNotificationsQueryVariables,
   options?: Omit<
     UseQueryOptions<
       GetNotificationsQuery,
@@ -63,7 +78,7 @@ export function useGetNotificationsQuery(
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery(buildGetNotificationsOptions(options));
+  return useQuery(buildGetNotificationsOptions(variables, options));
 }
 
 /* ================== Mutation: builder/hook ================== */
@@ -92,6 +107,8 @@ export function buildAddNotificationOptions<TContext = unknown>(
 }
 
 export function useAddNotificationMutation<TContext extends Ctx = Ctx>(
+  // możesz też przekazać zmienne do invalidacji, np. { recipientId }
+  listVariables?: GetNotificationsQueryVariables,
   options?: UseMutationOptions<
     AddNotificationMutation,
     unknown,
@@ -109,25 +126,43 @@ export function useAddNotificationMutation<TContext extends Ctx = Ctx>(
   >(
     buildAddNotificationOptions<TContext>({
       onMutate: async (variables) => {
-        await qc.cancelQueries({ queryKey: GET_NOTIFICATIONS_KEY });
+        await qc.cancelQueries({
+          queryKey: GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey,
+        });
 
         const previous = qc.getQueryData<GetNotificationsQuery>(
-          GET_NOTIFICATIONS_KEY
+          GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey
         );
 
+        // „bogatszy” optimistic item – dopasuj do UI
         const optimisticItem = {
-          id: `optimistic-${Date.now()}`,
-          message: variables.message,
           __typename: 'Notification' as const,
+          id: `optimistic-${Date.now()}`,
+          kind: 'INTENT_CREATED',
+          message: variables.message ?? null,
+          payload: null,
+          readAt: null,
+          createdAt: new Date().toISOString(),
+          recipientId: '', // nie znamy tutaj – UI zwykle nie używa
+          recipient: null,
+          intentId: null,
+          intent: null,
         };
 
-        qc.setQueryData<GetNotificationsQuery>(GET_NOTIFICATIONS_KEY, (old) =>
-          old
-            ? {
-                ...old,
-                notifications: [optimisticItem, ...(old.notifications ?? [])],
-              }
-            : ({ notifications: [optimisticItem] } as GetNotificationsQuery)
+        qc.setQueryData<GetNotificationsQuery>(
+          GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey,
+          (old) =>
+            old
+              ? {
+                  ...old,
+                  notifications: [
+                    optimisticItem as any,
+                    ...(old.notifications ?? []),
+                  ],
+                }
+              : ({
+                  notifications: [optimisticItem as any],
+                } as GetNotificationsQuery)
         );
 
         return { previous } as TContext;
@@ -136,12 +171,18 @@ export function useAddNotificationMutation<TContext extends Ctx = Ctx>(
       onError: (_err, _vars, ctx) => {
         const prev = (ctx as Partial<Ctx> | undefined)?.previous;
         if (prev) {
-          qc.setQueryData<GetNotificationsQuery>(GET_NOTIFICATIONS_KEY, prev);
+          qc.setQueryData<GetNotificationsQuery>(
+            GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey,
+            prev
+          );
         }
       },
 
       onSuccess: () => {
-        qc.invalidateQueries({ queryKey: GET_NOTIFICATIONS_KEY });
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetNotifications',
+        });
       },
 
       ...(options ?? {}),
@@ -151,31 +192,36 @@ export function useAddNotificationMutation<TContext extends Ctx = Ctx>(
 
 /* ================= Subscription: hook + helper ================= */
 
-// node „Notification” z subskrypcji
+// węzeł z subskrypcji
 type NotificationNode = NonNullable<
   NotificationAddedSubscription['notificationAdded']
 >;
-
 export type OnNotification = (notification: NotificationNode) => void;
 
-/** Helper: dopisz notyfikację do cache React Query */
-export function appendNotificationToCache(n: NotificationNode) {
+/** Dopisanie notyfikacji do cache React Query */
+export function appendNotificationToCache(
+  n: NotificationNode,
+  variables?: GetNotificationsQueryVariables
+) {
   const qc = getQueryClient();
-  qc.setQueryData<GetNotificationsQuery>(GET_NOTIFICATIONS_KEY, (old) =>
-    old
-      ? { ...old, notifications: [n, ...(old.notifications ?? [])] }
-      : ({ notifications: [n] } as GetNotificationsQuery)
+  qc.setQueryData<GetNotificationsQuery>(
+    GET_NOTIFICATIONS_KEY(variables) as unknown as QueryKey,
+    (old) =>
+      old
+        ? { ...old, notifications: [n as any, ...(old.notifications ?? [])] }
+        : ({ notifications: [n as any] } as GetNotificationsQuery)
   );
 }
 
 /**
- * Hook do subskrypcji `notificationAdded` (graphql-ws) z prostym retry/backoff.
- * Przekaż własny `onMessage`, lub zostaw puste i użyj `appendNotificationToCache`
- * w środku (przykład w komentarzu).
+ * Subskrypcja notificationAdded (graphql-ws) z retry/backoff.
+ * Wymaga recipientId (schema: ID!).
  */
-export function useNotificationAdded(onMessage?: OnNotification): {
-  connected: boolean;
-} {
+export function useNotificationAdded(params: {
+  recipientId: string;
+  onMessage?: OnNotification;
+}) {
+  const { recipientId, onMessage } = params;
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionRef = useRef(0);
@@ -209,7 +255,7 @@ export function useNotificationAdded(onMessage?: OnNotification): {
 
         const payload: SubscribePayload = {
           query: print(NotificationAddedDocument),
-          // variables: {} // gdy dodasz filtry subskrypcji
+          variables: { recipientId }, // schema wymaga ID!
         };
 
         // zamknij poprzednią subskrypcję
@@ -234,10 +280,8 @@ export function useNotificationAdded(onMessage?: OnNotification): {
                 if (onMessageRef.current) {
                   onMessageRef.current(node);
                 } else {
-                  // domyślne zachowanie (opcjonalnie odkomentuj)
-                  // appendNotificationToCache(node);
-                  // albo fallback do loga:
-                  console.log('📨 notificationAdded:', node);
+                  // domyślnie możesz dopisywać do cache
+                  appendNotificationToCache(node, { recipientId });
                 }
               }
             },
@@ -279,7 +323,7 @@ export function useNotificationAdded(onMessage?: OnNotification): {
         unsubscribeRef.current = null;
       }
     };
-  }, []);
+  }, [recipientId]);
 
   return { connected };
 }
