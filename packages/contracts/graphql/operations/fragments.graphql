@@ -4,6 +4,7 @@ fragment UserCore on User {
   name
   role
   imageUrl
+  verifiedAt
   createdAt
   updatedAt
 }

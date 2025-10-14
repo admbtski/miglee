@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { fetchSearchMeta } from '../mock-search-meta';
+import { useEffect, useMemo, useState } from 'react';
+import { useGetCategoriesQuery } from '@/hooks/categories';
+import { useGetTagsQuery } from '@/hooks/tags';
 
 export type SearchMeta = {
   tags: string[];
@@ -10,51 +11,46 @@ export type SearchMeta = {
 };
 
 export function useSearchMeta(query: string) {
-  const [data, setData] = useState<SearchMeta>({
-    tags: [],
-    keywords: [],
-    categories: [],
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<unknown>(null);
-
-  const cache = useRef(new Map<string, SearchMeta>());
-  const reqId = useRef(0);
+  const [debounced, setDebounced] = useState(query);
 
   useEffect(() => {
-    let alive = true;
-    const q = query.trim().toLowerCase();
-
-    const run = async (myId: number) => {
-      try {
-        // serve cached immediately if exists
-        if (cache.current.has(q)) {
-          setData(cache.current.get(q)!);
-        } else {
-          setLoading(true);
-        }
-
-        const res = await fetchSearchMeta(q);
-        if (!alive || myId !== reqId.current) return; // only latest wins
-
-        cache.current.set(q, res);
-        setData(res);
-        setLoading(false);
-        setError(null);
-      } catch (e) {
-        if (!alive || myId !== reqId.current) return;
-        setError(e);
-        setLoading(false);
-      }
-    };
-
-    const id = ++reqId.current;
-    const t = setTimeout(() => run(id), 300); // debounce 300ms
-    return () => {
-      alive = false;
-      clearTimeout(t);
-    };
+    const t = setTimeout(() => setDebounced(query), 250);
+    return () => clearTimeout(t);
   }, [query]);
+
+  const {
+    data: categoriesData,
+    isLoading: isCategoriesLoading,
+    error: categoriesError,
+  } = useGetCategoriesQuery(
+    debounced ? { query: debounced, limit: 50 } : ({ limit: 50 } as any)
+  );
+
+  const {
+    data: tagsData,
+    isLoading: isTagsLoading,
+    error: tagsError,
+  } = useGetTagsQuery(
+    debounced ? { query: debounced, limit: 50 } : ({ limit: 50 } as any)
+  );
+
+  const categories = useMemo<string[]>(
+    () => (categoriesData?.categories ?? []).map((c) => c.slug).filter(Boolean),
+    [categoriesData]
+  );
+
+  const tags = useMemo<string[]>(
+    () => (tagsData?.tags ?? []).map((t) => t.slug).filter(Boolean),
+    [tagsData]
+  );
+
+  const data: SearchMeta = useMemo(
+    () => ({ tags, categories, keywords: [] }),
+    [tags, categories]
+  );
+
+  const loading = isCategoriesLoading || isTagsLoading;
+  const error = (categoriesError as unknown) ?? (tagsError as unknown) ?? null;
 
   return { data, loading, error };
 }

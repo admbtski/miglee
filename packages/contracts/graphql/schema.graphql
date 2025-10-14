@@ -5,6 +5,15 @@ scalar DateTime
 scalar JSON
 scalar JSONObject
 
+enum IntentStatus {
+  ANY
+  ONGOING
+  STARTED
+  FULL
+  LOCKED
+  AVAILABLE
+}
+
 """
 Visibility of an intent
 """
@@ -73,7 +82,8 @@ type User {
   email: String!
   name: String
   imageUrl: String
-  role: Role! # <-- added
+  role: Role!
+  verifiedAt: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -254,9 +264,15 @@ type Query {
     visibility: Visibility
     authorId: ID
     upcomingAfter: DateTime
+    endingBefore: DateTime
     categoryIds: [ID!]
     tagIds: [ID!]
     levels: [Level!]
+    kinds: [MeetingKind!]
+    keywords: [String!]
+    status: IntentStatus
+    verifiedOnly: Boolean
+    distanceKm: Int
   ): [Intent!]!
 
   intent(id: ID!): Intent

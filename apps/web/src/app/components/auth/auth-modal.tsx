@@ -68,32 +68,28 @@ export function AuthModal({
   mode,
   onModeChange,
   defaultTab,
-  onClose,
-  onSubmit,
-  onSocial,
+  onClose = () => {},
+  onSubmit = () => {},
+  onSocial = () => {},
 }: Props) {
   const prefersReducedMotion = useReducedMotion();
 
-  /**
-   * `mounted` keeps the modal in the DOM until the exit animation ends.
-   * This prevents layout/scroll glitches and allows re-opening cleanly.
-   */
+  // Keep mounted until exit animation completes (prevents scroll/layout glitches)
   const [mounted, setMounted] = useState(open);
 
-  /** Controlled/uncontrolled mode handling */
+  // Controlled/uncontrolled mode
   const [internalMode, setInternalMode] = useState<AuthMode>(mode ?? 'signin');
 
-  // Follow externally controlled mode
   useEffect(() => {
     if (mode) setInternalMode(mode);
   }, [mode]);
 
-  // Mount when `open` turns true
+  // Mount when opened
   useEffect(() => {
     if (open) setMounted(true);
   }, [open]);
 
-  // On open, if uncontrolled + defaultTab provided -> set initial mode
+  // Set initial tab for uncontrolled usage
   useEffect(() => {
     if (open && !mode && defaultTab) setInternalMode(defaultTab);
   }, [open, defaultTab, mode]);
@@ -106,7 +102,7 @@ export function AuthModal({
     [mode, onModeChange]
   );
 
-  /** Shared fields across panels so values persist when switching tabs */
+  /** Shared fields across panels so values persist when switching */
   const [email, setEmail] = useState('');
   const [pwd, setPwd] = useState('');
   const [username, setUsername] = useState('');
@@ -137,23 +133,21 @@ export function AuthModal({
   }, [open, onClose, handleSubmit]);
 
   /**
-   * Scroll lock with scrollbar compensation:
-   * - lock when `mounted` is true
-   * - release on cleanup (after exit animation completes via onExitComplete -> mounted=false)
-   * We store/restore the original `paddingRight` safely and only add padding when scrollbar exists.
+   * Scroll lock + scrollbar compensation.
+   * Store/restore previous inline styles safely.
    */
   useEffect(() => {
-    const { overflow, paddingRight } = document.body.style;
+    if (!mounted) return;
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
 
-    if (mounted) {
-      const sbw = window.innerWidth - document.documentElement.clientWidth;
-      if (sbw > 0) document.body.style.paddingRight = `${sbw}px`;
-      document.body.style.overflow = 'hidden';
-    }
+    const sbw = window.innerWidth - document.documentElement.clientWidth;
+    if (sbw > 0) document.body.style.paddingRight = `${sbw}px`;
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = overflow;
-      document.body.style.paddingRight = paddingRight;
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
     };
   }, [mounted]);
 
@@ -174,7 +168,6 @@ export function AuthModal({
     <AnimatePresence
       initial={false}
       mode="wait"
-      /** When exit animation finishes, unmount the whole modal tree */
       onExitComplete={() => setMounted(false)}
     >
       {open && (
@@ -209,6 +202,7 @@ export function AuthModal({
                 {title}
               </h2>
               <button
+                type="button"
                 onClick={onClose}
                 className="cursor-pointer rounded-lg p-2
                            text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900

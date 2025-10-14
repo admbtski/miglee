@@ -1,4 +1,4 @@
-import { useMemo, useId } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Users, Lock, MapPin } from 'lucide-react';
 
@@ -19,9 +19,8 @@ export interface EventCardProps {
   className?: string;
 }
 
-// =============================
-// Utils (czyste, bez side‑effectów)
-// =============================
+/* ───────────────────────────── Utils ───────────────────────────── */
+
 const MONTHS_PL_SHORT = [
   'sty',
   'lut',
@@ -87,15 +86,11 @@ function humanDuration(start: Date, end: Date) {
 
 const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
 
-const clamp = (n: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, n));
-
 const cx = (...classes: Array<string | undefined | false>) =>
   classes.filter(Boolean).join(' ');
 
-// =============================
-// State-machine joinowania (deterministyczna)
-// =============================
+/* ─────────────── Deterministyczna maszyna stanów Join ─────────────── */
+
 function computeJoinState(
   now: Date,
   start: Date,
@@ -174,9 +169,8 @@ function computeJoinState(
   };
 }
 
-// =============================
-// Prezentacyjne helpers
-// =============================
+/* ─────────────────────────── Prezentacja ─────────────────────────── */
+
 const badgeToneClass = (tone: 'ok' | 'warn' | 'error' | 'info') =>
   tone === 'error'
     ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
@@ -194,7 +188,6 @@ const progressColorClass = (active: boolean) =>
 const capacityLabel = (joined: number, min: number, max: number) =>
   `${joined} / ${min}-${max} osób`;
 
-// Małe komponenty w tym samym pliku (brak głębokiego zagnieżdżania)
 function StatusBadge({
   tone,
   reason,
@@ -223,11 +216,11 @@ function StatusBadge({
 function ProgressBar({
   value,
   active,
-  labelledBy,
+  label = 'Postęp zapełnienia',
 }: {
   value: number;
   active: boolean;
-  labelledBy: string;
+  label?: string;
 }) {
   return (
     <div
@@ -236,13 +229,11 @@ function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={value}
-      aria-labelledby={labelledBy}
+      aria-label={label}
     >
       <div
-        id={labelledBy}
         className={cx('h-full', progressColorClass(active))}
         style={{ width: `${value}%` }}
-        aria-hidden
       />
     </div>
   );
@@ -260,9 +251,8 @@ function Avatar({ url, alt }: { url: string; alt: string }) {
   );
 }
 
-// =============================
-// Komponent główny
-// =============================
+/* ─────────────────────────── Komponent ─────────────────────────── */
+
 export function EventCard({
   startISO,
   endISO,
@@ -285,20 +275,13 @@ export function EventCard({
 
   const { canJoin, status } = useMemo(
     () => computeJoinState(now, start, end, joined, max, lockHoursBeforeStart),
-    [
-      now.getTime(),
-      start.getTime(),
-      end.getTime(),
-      joined,
-      max,
-      lockHoursBeforeStart,
-    ]
+    // wszystkie zależności determinują wynik; `now` celowo nie w deps, bo i tak odświeżamy na render
+    [start.getTime(), end.getTime(), joined, max, lockHoursBeforeStart]
   );
 
   const fill = Math.min(100, Math.round((joined / Math.max(1, max)) * 100));
-  const progressId = useId();
 
-  // ============ Inline wariant ============
+  /* Inline */
   if (inline) {
     return (
       <div
@@ -346,16 +329,12 @@ export function EventCard({
     );
   }
 
-  // ============ Tile wariant ============
+  /* Tile */
   return (
     <motion.div
       layout="size"
       whileHover={{ y: canJoin ? -2 : 0, scale: canJoin ? 1.01 : 1 }}
-      transition={{
-        type: 'spring',
-        stiffness: 600,
-        damping: 20,
-      }}
+      transition={{ type: 'spring', stiffness: 600, damping: 20 }}
       className={cx(
         'w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1 ring-neutral-200/70 dark:ring-neutral-800',
         canJoin
@@ -367,8 +346,8 @@ export function EventCard({
       aria-label={`Wydarzenie: ${organizerName}`}
     >
       {/* Range + duration */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0 flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 overflow-hidden">
+      <div className="flex items-center justify-between gap-1">
+        <div className="min-w-0 flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 overflow-hidden">
           <Calendar className="w-4 h-4 shrink-0" />
           <span
             className="font-medium text-neutral-800 dark:text-neutral-200 truncate whitespace-nowrap"
@@ -377,8 +356,8 @@ export function EventCard({
             {formatDateRange(start, end)}
           </span>
         </div>
-        <div className="shrink-0 flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-          <Clock className="w-4 h-4" />
+        <div className="flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          <Clock className="w-4 h-4 shrink-0" />
           <span>{humanDuration(start, end)}</span>
         </div>
       </div>
@@ -430,7 +409,7 @@ export function EventCard({
       </div>
 
       {/* Progress bar */}
-      <ProgressBar value={fill} active={canJoin} labelledBy={progressId} />
+      <ProgressBar value={fill} active={canJoin} />
 
       {/* CTA */}
       <button
@@ -459,7 +438,7 @@ export function EventCard({
             : 'Zapisy zamknięte'}
       </button>
 
-      {/* tagi – mogą się łamać (to jedyny blok, który może wrapować) */}
+      {/* Tagi */}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-1" aria-label="Tagi">
           {tags.slice(0, 5).map((tag) => (
@@ -477,14 +456,11 @@ export function EventCard({
   );
 }
 
-// =============================
-// Eksport utils (łatwe testowanie)
-// =============================
+/* ─────────────────────────── Eksport utils ─────────────────────────── */
 export const _utils = {
   formatDateRange,
   humanDuration,
   hoursUntil,
-  clamp,
   parseISO,
   plural,
   badgeToneClass,

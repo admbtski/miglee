@@ -5,7 +5,15 @@ query GetIntents(
   $visibility: Visibility
   $authorId: ID
   $upcomingAfter: DateTime
+  $endingBefore: DateTime
   $categoryIds: [ID!]
+  $tagIds: [ID!]
+  $levels: [Level!]
+  $kinds: [MeetingKind!]
+  $keywords: [String!]
+  $status: IntentStatus
+  $verifiedOnly: Boolean
+  $distanceKm: Int
 ) {
   intents(
     limit: $limit
@@ -13,7 +21,15 @@ query GetIntents(
     visibility: $visibility
     authorId: $authorId
     upcomingAfter: $upcomingAfter
+    endingBefore: $endingBefore
     categoryIds: $categoryIds
+    tagIds: $tagIds
+    levels: $levels
+    kinds: $kinds
+    keywords: $keywords
+    status: $status
+    verifiedOnly: $verifiedOnly
+    distanceKm: $distanceKm
   ) {
     ...IntentCore
   }

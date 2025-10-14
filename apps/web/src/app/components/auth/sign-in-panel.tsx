@@ -4,6 +4,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useId, useMemo, useRef, useState } from 'react';
 
+type Social =
+  | 'google'
+  | 'github'
+  | 'linkedin'
+  | 'facebook'
+  | 'apple'
+  | 'twitter';
+
 export function SignInPanel(props: {
   email: string;
   setEmail: (v: string) => void;
@@ -13,9 +21,7 @@ export function SignInPanel(props: {
   setRemember: (v: boolean) => void;
   onSubmit: () => void | Promise<void>;
   onGotoSignup: () => void;
-  onSocial?: (
-    p: 'google' | 'github' | 'linkedin' | 'facebook' | 'apple' | 'twitter'
-  ) => void;
+  onSocial?: (p: Social) => void;
 }) {
   const {
     email,
@@ -110,6 +116,16 @@ export function SignInPanel(props: {
     },
   };
 
+  const SOCIAL: Array<{ key: Social; iconSlug: string; hex: string }> = [
+    { key: 'google', iconSlug: 'google', hex: 'EA4335' },
+    { key: 'github', iconSlug: 'github', hex: 'ffffff' },
+    { key: 'linkedin', iconSlug: 'linkedin', hex: '0A66C2' },
+    { key: 'facebook', iconSlug: 'facebook', hex: '1877F2' },
+    { key: 'apple', iconSlug: 'apple', hex: 'ffffff' },
+    // Twitter is now X in SimpleIcons: icon slug 'x', callback key 'twitter'
+    { key: 'twitter', iconSlug: 'x', hex: 'cccccc' },
+  ];
+
   return (
     <motion.form
       noValidate
@@ -117,7 +133,6 @@ export function SignInPanel(props: {
         e.preventDefault();
         void trySubmit();
       }}
-      /** Gentle entrance + shake on validation failure */
       animate={shake ? { x: [0, -8, 8, -4, 4, 0] } : { x: 0 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.35 }}
       className="pt-5"
@@ -219,7 +234,7 @@ export function SignInPanel(props: {
             ].join(' ')}
           />
 
-          {/* Password visibility toggle with springy tap */}
+          {/* Password visibility toggle */}
           <motion.button
             type="button"
             onClick={() => setShowPwd((v) => !v)}
@@ -256,7 +271,7 @@ export function SignInPanel(props: {
         </AnimatePresence>
       </div>
 
-      {/* Remember me – springy knob */}
+      {/* Remember me */}
       <label className="mt-4 inline-flex cursor-pointer select-none items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300">
         <input
           type="checkbox"
@@ -320,26 +335,19 @@ export function SignInPanel(props: {
         <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
       </div>
 
-      {/* Social logins (two logos for light/dark contrast) */}
+      {/* Social logins */}
       <div className="mb-1 flex items-center justify-between">
         <div className="text-sm text-zinc-500 dark:text-zinc-400">
           Zaloguj się przez
         </div>
         <div className="flex items-center gap-2">
-          {[
-            ['google', 'EA4335'],
-            ['github', 'ffffff'],
-            ['scalar', '0A66C2'],
-            ['facebook', '1877F2'],
-            ['apple', 'ffffff'],
-            ['x', 'cccccc'],
-          ].map(([k, hex]) => (
+          {SOCIAL.map(({ key, iconSlug, hex }) => (
             <motion.button
-              key={k}
+              key={key}
               type="button"
-              aria-label={k}
-              title={k}
-              onClick={() => onSocial?.(k as any)}
+              aria-label={key}
+              title={key}
+              onClick={() => onSocial?.(key)}
               whileHover={!prefersReducedMotion ? { scale: 1.06 } : {}}
               whileTap={!prefersReducedMotion ? { scale: 0.96 } : {}}
               className="inline-grid h-9 w-9 place-items-center rounded-full border shadow-sm
@@ -350,14 +358,14 @@ export function SignInPanel(props: {
               {/* light */}
               <img
                 alt=""
-                src={`https://cdn.simpleicons.org/${k}/000000`}
-                className="h-4 w-4 block dark:hidden"
+                src={`https://cdn.simpleicons.org/${iconSlug}/000000`}
+                className="block h-4 w-4 dark:hidden"
               />
               {/* dark */}
               <img
                 alt=""
-                src={`https://cdn.simpleicons.org/${k}/${hex}`}
-                className="h-4 w-4 hidden dark:block"
+                src={`https://cdn.simpleicons.org/${iconSlug}/${hex}`}
+                className="hidden h-4 w-4 dark:block"
               />
             </motion.button>
           ))}

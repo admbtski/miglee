@@ -2,21 +2,29 @@
 
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+
 import { Navbar } from './_internal/components/navbar';
 import { SortControl, SortKey } from './_internal/components/sort-control';
 import { MapImagePanel } from './_internal/components/map-image-panel';
 import { Footer } from './_internal/components/footer';
-import { FilterModal } from '../components/filter/components/filter-modal';
 import { EventCard } from './_internal/components/event-card';
 
+import { FilterModal } from '../components/filter/components/filter-modal';
 import { useCommittedFilters } from './_internal/hooks/useCommittedFilters';
 import { useCommittedSort } from './_internal/hooks/useCommittedSort';
 import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
 
 import { useIntentsQuery } from '@/hooks/intents';
 import { useGetCategoriesQuery } from '@/hooks/categories';
+import {
+  IntentStatus,
+  GetIntentsQueryVariables,
+} from '@/graphql/__generated__/react-query';
+
+/* ───────────────────────────────── cities + utils ────────────────────────── */
 
 type CityName = 'Kraków' | 'Warszawa' | 'Gdańsk' | 'Wrocław' | 'Poznań';
+
 const CITIES = [
   { name: 'Kraków', lat: 50.0647, lon: 19.945 },
   { name: 'Warszawa', lat: 52.2297, lon: 21.0122 },
@@ -24,152 +32,29 @@ const CITIES = [
   { name: 'Wrocław', lat: 51.1079, lon: 17.0385 },
   { name: 'Poznań', lat: 52.4064, lon: 16.9252 },
 ] as const;
-const CITY_BY_NAME: Record<
-  string,
-  { name: CityName; lat: number; lon: number }
-> = Object.fromEntries(CITIES.map((c) => [c.name, c])) as any;
 
-/* ---------------- utils ---------------- */
-
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
-
-type FilterDraft = {
-  q: string;
-  city: string | null;
-  distanceKm: number;
-  startISO: string | null;
-  endISO: string | null;
-  status: 'any' | 'ongoing' | 'started' | 'full' | 'locked' | 'available';
-  types: Array<'remote' | 'hybrid' | 'public'>;
-  levels: Array<'beginner' | 'intermediate' | 'advanced'>;
-  verifiedOnly: boolean;
+type UIItem = {
+  id: string;
+  title: string;
+  startISO: string;
+  endISO: string;
+  avatarUrl: string;
+  organizerName: string;
+  description: string;
+  location: string;
+  joined: number;
+  min: number;
+  max: number;
   tags: string[];
-  keywords: string[];
-  categories: string[];
+
+  city?: CityName;
+  lat?: number;
+  lon?: number;
+  category?: string;
+  salaryPLN?: number;
 };
 
-// status na podstawie czasów + pojemności (dla API nie mamy “joined” – trzymamy 0)
-function calcStatus(
-  it: any
-): 'ongoing' | 'started' | 'full' | 'locked' | 'available' {
-  const now = Date.now();
-  const s = +new Date(it.startISO);
-  const e = +new Date(it.endISO);
-  const full = (it.joined ?? 0) >= (it.max ?? Infinity);
-  if (full) return 'full';
-  if (now >= s && now <= e) return 'ongoing';
-  if (s - now <= 6 * 60 * 60 * 1000 && s - now > 0) return 'locked';
-  if (now > s) return 'started';
-  return 'available';
-}
-
-// dopasowanie filtrów, z opcjonalnością (jeśli obiekty nie mają danego pola, filtr jest “łagodny”)
-function matchesFilters(item: any, d: FilterDraft): boolean {
-  const {
-    q,
-    city,
-    distanceKm,
-    startISO,
-    endISO,
-    status,
-    types,
-    levels,
-    verifiedOnly,
-    tags,
-    keywords,
-    categories,
-  } = d;
-
-  // text & keywords
-  if (q || (keywords && keywords.length)) {
-    const hay =
-      `${item.title ?? ''} ${item.city ?? ''} ${item.category ?? ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-    if (q && !hay.includes(q.toLowerCase())) return false;
-    if (
-      keywords?.length &&
-      !keywords.every((kw) => hay.includes(kw.toLowerCase()))
-    )
-      return false;
-  }
-
-  // category (OR)
-  if (categories?.length) {
-    if (
-      !categories.some((c) =>
-        String(item.category ?? '')
-          .toLowerCase()
-          .includes(c.toLowerCase())
-      )
-    )
-      return false;
-  }
-
-  // tags (AND)
-  if (tags?.length) {
-    const itTags = (item.tags || []).map((t: string) => t.toLowerCase());
-    if (!tags.every((t) => itTags.includes(t.toLowerCase()))) return false;
-  }
-
-  // date range
-  if (startISO && +new Date(item.endISO) < +new Date(startISO)) return false;
-  if (endISO && +new Date(item.startISO) > +new Date(endISO)) return false;
-
-  // status
-  if (status && status !== 'any') {
-    if (calcStatus(item) !== status) return false;
-  }
-
-  // types / levels – w danych z API nie mamy, więc jeśli filtr wymaga, odrzucamy
-  if (types?.length) return false;
-  if (levels?.length) return false;
-
-  // verified – brak pojęcia w naszych danych; jeśli wymagany, odrzucamy
-  if (verifiedOnly) return false;
-
-  // city + radius (działa tylko jeśli znamy i bazową lokalizację i item.lat/lon)
-  if (city) {
-    const base = CITY_BY_NAME[city];
-    if (!base) return false;
-
-    // jeżeli item nie ma miasta – spróbuj wywnioskować z address
-    if (item.city && item.city !== city) return false;
-
-    if (typeof item.lat === 'number' && typeof item.lon === 'number') {
-      const dKm = haversineKm(base.lat, base.lon, item.lat, item.lon);
-      if (dKm > distanceKm) return false;
-    } else {
-      // brak współrzędnych – łagodnie: jeśli filtr wymaga dystansu, przepuszczamy (nie blokujemy)
-    }
-  }
-
-  return true;
-}
-
-function sortItems(items: any[], sort: SortKey): any[] {
-  if (sort === 'latest')
-    return [...items].sort(
-      (a, b) => +new Date(b.startISO) - +new Date(a.startISO)
-    );
-  if (sort === 'salary_desc')
-    return [...items].sort((a, b) => (b.salaryPLN ?? 0) - (a.salaryPLN ?? 0));
-  if (sort === 'salary_asc')
-    return [...items].sort(
-      (a, b) => (a.salaryPLN ?? Infinity) - (b.salaryPLN ?? Infinity)
-    );
-  return items;
-}
-
-/* ------------- MAPOWANIE API -> EventCard + pola filtrów ------------- */
+/* ───────────── MAPOWANIE API -> EventCard + pola filtrów ───────────── */
 
 type GqlIntent = NonNullable<
   NonNullable<ReturnType<typeof useIntentsQuery>['data']>['intents']
@@ -188,12 +73,16 @@ function extractCityFromAddress(address?: string | null): CityName | undefined {
   return match?.name;
 }
 
-function mapIntentToItem(i: GqlIntent) {
+function mapIntentToItem(i: GqlIntent): UIItem {
   const startISO = String(i.startAt);
   const endISO = String(i.endAt);
 
+  const tagStrings = [
+    ...(i.categories?.map((c) => c.slug) ?? []),
+    ...(i.tags?.map((t) => t.slug) ?? []),
+  ];
+
   return {
-    // dla EventCard
     id: i.id,
     title: i.title,
     startISO,
@@ -205,44 +94,25 @@ function mapIntentToItem(i: GqlIntent) {
       i.meetingKind === 'ONLINE'
         ? (i.onlineUrl ?? 'Online')
         : (i.address ?? 'TBA'),
-    joined: 0, // brak w API – można podmienić gdy będzie liczba zapisanych
+    joined: 0,
     min: i.min,
     max: i.max,
-    tags: i.categories?.map((c) => c.slug) ?? [],
-
+    tags: tagStrings,
     // dla filtrów/sorta
-    city: extractCityFromAddress(i.address),
+    city: extractCityFromAddress(i.address ?? undefined),
     lat: typeof i.lat === 'number' ? i.lat : undefined,
     lon: typeof i.lng === 'number' ? i.lng : undefined,
     category: firstCategorySlug(i),
-    salaryPLN: undefined, // brak w API
+    salaryPLN: undefined,
   };
 }
 
-/* ------------------- PAGE ------------------- */
+/* ─────────────────────────────── PAGE ───────────────────────────────── */
 
 export function IntentsPage() {
-  const upcomingAfter = useMemo(() => new Date().toISOString(), []);
-  const intentsVars = useMemo(
-    () => ({
-      limit: 60,
-      upcomingAfter,
-    }),
-    [upcomingAfter]
-  );
+  const upcomingAfterDefault = useMemo(() => new Date().toISOString(), []);
 
-  // i użycie:
-  const { data: intentsData, isLoading } = useIntentsQuery(intentsVars);
-
-  // opcjonalnie – żeby mieć dane pod filtry/sugestie
-  useGetCategoriesQuery();
-
-  const mapped = useMemo(
-    () => (intentsData?.intents ?? []).map(mapIntentToItem),
-    [intentsData]
-  );
-
-  // Filtry / sort / mapa
+  // filtry ze stanu URL
   const {
     q,
     city,
@@ -250,14 +120,89 @@ export function IntentsPage() {
     startISO,
     endISO,
     status,
-    types,
+    kinds,
     levels,
     verifiedOnly,
     tags,
     keywords,
-    categories,
+    categories: categorySlugs,
     apply,
   } = useCommittedFilters();
+
+  const { data: categoriesData } = useGetCategoriesQuery();
+  const slugToId = useMemo(() => {
+    const map = new Map<string, string>();
+    (categoriesData?.categories ?? []).forEach((c) => {
+      if (c.slug && c.id) map.set(c.slug, c.id);
+    });
+    return map;
+  }, [categoriesData]);
+
+  const categoryIds = useMemo(() => {
+    if (!categorySlugs?.length) return undefined;
+    const ids = categorySlugs
+      .map((s) => slugToId.get(s))
+      .filter((v): v is string => !!v);
+    return ids.length ? ids : undefined;
+  }, [categorySlugs, slugToId]);
+
+  // scal słowa kluczowe: q + keywords + tags -> keywords (dopóki nie mamy tagIds)
+  const mergedKeywords = useMemo(() => {
+    const s = new Set<string>();
+    if (q?.trim()) s.add(q.trim());
+    for (const k of keywords ?? []) if (k?.trim()) s.add(k.trim());
+    for (const t of tags ?? []) if (t?.trim()) s.add(t.trim());
+    const arr = Array.from(s);
+    return arr.length ? arr : undefined;
+  }, [q, keywords, tags]);
+
+  // FINALNE ZMIENNE DO ZAPYTANIA (zgodne ze schematem)
+  const queryVars = useMemo<GetIntentsQueryVariables>(() => {
+    return {
+      limit: 60,
+      offset: 0,
+      visibility: 'PUBLIC',
+      upcomingAfter: startISO ?? upcomingAfterDefault,
+      endingBefore: endISO ?? undefined,
+
+      categoryIds,
+      // tagIds: undefined, // dodasz gdy zintegrujesz slugi tagów -> id
+      kinds: kinds.length ? (kinds as any) : undefined,
+      levels: levels.length ? (levels as any) : undefined,
+      keywords: mergedKeywords,
+      status: status !== IntentStatus.Any ? status : undefined,
+      verifiedOnly: verifiedOnly || undefined,
+      distanceKm: city ? distanceKm : undefined,
+    };
+  }, [
+    startISO,
+    upcomingAfterDefault,
+    endISO,
+    categoryIds,
+    kinds,
+    levels,
+    mergedKeywords,
+    status,
+    verifiedOnly,
+    city,
+    distanceKm,
+  ]);
+
+  const {
+    data: intentsData,
+    isLoading,
+    isFetching,
+    error,
+  } = useIntentsQuery(queryVars, {
+    enabled: true,
+    // przy zmianach filtrów nie miga lista
+    placeholderData: (prev) => prev,
+  });
+
+  const mapped = useMemo<UIItem[]>(
+    () => (intentsData?.intents ?? []).map(mapIntentToItem),
+    [intentsData]
+  );
 
   const { sort, setSort } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
@@ -270,13 +215,13 @@ export function IntentsPage() {
     if (distanceKm !== 30) n++;
     if (startISO) n++;
     if (endISO) n++;
-    if (status && status !== 'any') n++;
-    if (types.length) n++;
+    if (status && status !== IntentStatus.Any) n++;
+    if (kinds.length) n++;
     if (levels.length) n++;
     if (verifiedOnly) n++;
     if (tags.length) n++;
     if (keywords.length) n++;
-    if (categories.length) n++;
+    if (categorySlugs.length) n++;
     return n;
   }, [
     q,
@@ -285,50 +230,13 @@ export function IntentsPage() {
     startISO,
     endISO,
     status,
-    types,
+    kinds,
     levels,
     verifiedOnly,
     tags,
     keywords,
-    categories,
+    categorySlugs,
   ]);
-
-  const filtered = useMemo(
-    () =>
-      mapped.filter((it) =>
-        matchesFilters(it, {
-          q,
-          city,
-          distanceKm,
-          startISO,
-          endISO,
-          status,
-          types,
-          levels,
-          verifiedOnly,
-          tags,
-          keywords,
-          categories,
-        })
-      ),
-    [
-      mapped,
-      q,
-      city,
-      distanceKm,
-      startISO,
-      endISO,
-      status,
-      types,
-      levels,
-      verifiedOnly,
-      tags,
-      keywords,
-      categories,
-    ]
-  );
-
-  const sorted = useMemo(() => sortItems(filtered, sort), [filtered, sort]);
 
   const NAV_H = 86;
 
@@ -359,10 +267,15 @@ export function IntentsPage() {
               <div className="opacity-70">
                 {isLoading
                   ? 'Loading…'
-                  : `All events in ${city || 'Global'} — `}
-                {!isLoading && (
+                  : error
+                    ? 'Failed to load'
+                    : `All events in ${city || 'Global'} — `}
+                {!isLoading && !error && (
                   <>
-                    <b>{sorted.length}</b> event{sorted.length === 1 ? '' : 's'}
+                    <b>{mapped.length}</b> event{mapped.length === 1 ? '' : 's'}
+                    {isFetching && (
+                      <span className="ml-2 opacity-60">updating…</span>
+                    )}
                   </>
                 )}
               </div>
@@ -376,29 +289,47 @@ export function IntentsPage() {
             </div>
           </div>
 
+          {/* Empty / error states */}
+          {!isLoading && !error && mapped?.length === 0 && (
+            <div className="mt-6 text-sm opacity-70">
+              Brak wyników dla wybranych filtrów.
+            </div>
+          )}
+          {error && (
+            <div className="mt-6 text-sm text-red-600 dark:text-red-400">
+              {(error as any)?.message ?? 'Unknown error'}
+            </div>
+          )}
+
           <motion.div
             layout="position"
             className="mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
           >
-            {sorted.map((item) => (
-              <EventCard
-                key={item.id}
-                startISO={item.startISO}
-                endISO={item.endISO}
-                avatarUrl={item.avatarUrl}
-                organizerName={item.organizerName}
-                description={item.title}
-                location={item.location}
-                joined={item.joined}
-                min={item.min}
-                max={item.max}
-                tags={item.tags}
-                onJoin={() => {
-                  // TODO: akcja join – np. mutate / open modal
-                  console.log('join intent', item.id);
-                }}
-              />
-            ))}
+            {isLoading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={`sk-${i}`}
+                    className="w-full h-48 rounded-2xl bg-zinc-100 dark:bg-zinc-900 animate-pulse"
+                  />
+                ))
+              : mapped.map((item) => (
+                  <EventCard
+                    key={item.id}
+                    startISO={item.startISO}
+                    endISO={item.endISO}
+                    avatarUrl={item.avatarUrl}
+                    organizerName={item.organizerName}
+                    description={item.title}
+                    location={item.location}
+                    joined={item.joined}
+                    min={item.min}
+                    max={item.max}
+                    tags={item.tags}
+                    onJoin={() => {
+                      console.log('join intent', item.id);
+                    }}
+                  />
+                ))}
           </motion.div>
         </motion.section>
 
@@ -432,12 +363,12 @@ export function IntentsPage() {
           initialStartISO={startISO}
           initialEndISO={endISO}
           initialStatus={status}
-          initialTypes={types}
+          initialKinds={kinds}
           initialLevels={levels}
           initialVerifiedOnly={verifiedOnly}
           initialTags={tags}
           initialKeywords={keywords}
-          initialCategories={categories}
+          initialCategories={categorySlugs}
           onApply={(next) => {
             apply({
               q: next.q,
@@ -445,8 +376,8 @@ export function IntentsPage() {
               distanceKm: next.distanceKm,
               startISO: next.startISO ?? null,
               endISO: next.endISO ?? null,
-              status: next.status ?? 'any',
-              types: next.types ?? [],
+              status: next.status ?? IntentStatus.Any,
+              kinds: next.kinds ?? [],
               levels: next.levels ?? [],
               verifiedOnly: !!next.verifiedOnly,
               tags: next.tags ?? [],

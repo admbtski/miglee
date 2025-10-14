@@ -3,19 +3,31 @@
 import React, {
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
+  memo,
 } from 'react';
+import {
+  IntentStatus,
+  Level,
+  MeetingKind,
+} from '@/graphql/__generated__/react-query';
 import {
   Calendar as CalendarIcon,
   Check,
   MapPin,
   SlidersHorizontal,
   X,
+  AlertCircle,
 } from 'lucide-react';
 import { useSearchMeta } from '../hooks/use-search-meta';
 import SearchCombo from './search-combo';
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* constants & helpers */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 const CITIES = [
   { name: 'Kraków', lat: 50.0647, lon: 19.945 },
@@ -25,15 +37,7 @@ const CITIES = [
   { name: 'Poznań', lat: 52.4064, lon: 16.9252 },
 ] as const;
 
-export type StatusFilter =
-  | 'any'
-  | 'ongoing'
-  | 'started'
-  | 'full'
-  | 'locked'
-  | 'available';
-type TypeFilter = 'remote' | 'hybrid' | 'public';
-type Level = 'beginner' | 'intermediate' | 'advanced';
+const DEFAULT_DISTANCE = 30;
 
 export type NextFilters = {
   q: string;
@@ -41,8 +45,8 @@ export type NextFilters = {
   distanceKm: number;
   startISO?: string | null;
   endISO?: string | null;
-  status?: StatusFilter;
-  types?: TypeFilter[];
+  status?: IntentStatus;
+  kinds?: MeetingKind[];
   levels?: Level[];
   verifiedOnly?: boolean;
   tags?: string[];
@@ -50,30 +54,14 @@ export type NextFilters = {
   categories?: string[];
 };
 
-export function FilterModal({
-  initialQ,
-  initialCity,
-  initialDistanceKm,
-  initialStartISO = null,
-  initialEndISO = null,
-  initialStatus = 'any',
-  initialTypes = [],
-  initialLevels = [],
-  initialVerifiedOnly = false,
-  initialTags = [],
-  initialKeywords = [],
-  initialCategories = [],
-  resultsCount,
-  onApply,
-  onClose,
-}: {
+type Props = {
   initialQ: string;
   initialCity: string | null;
   initialDistanceKm: number;
   initialStartISO?: string | null;
   initialEndISO?: string | null;
-  initialStatus?: StatusFilter;
-  initialTypes?: TypeFilter[];
+  initialStatus?: IntentStatus;
+  initialKinds?: MeetingKind[];
   initialLevels?: Level[];
   initialVerifiedOnly?: boolean;
   initialTags?: string[];
@@ -82,71 +70,249 @@ export function FilterModal({
   resultsCount?: number;
   onApply: (next: NextFilters) => void;
   onClose: () => void;
+};
+
+const arraysEq = <T,>(a?: readonly T[], b?: readonly T[]) => {
+  if (a === b) return true;
+  const aa = a ?? [];
+  const bb = b ?? [];
+  if (aa.length !== bb.length) return false;
+  for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
+  return true;
+};
+
+const normalizeISO = (v?: string | null) => {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+};
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* UI atoms */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+const Pill = memo(function Pill({
+  active,
+  onClick,
+  children,
+  title,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  title?: string;
 }) {
-  const [q, setQ] = useState(initialQ ?? '');
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={[
+        'cursor-pointer rounded-full px-3 py-1.5 text-sm ring-1 transition',
+        active
+          ? 'bg-zinc-900 text-white ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:ring-white'
+          : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
+      ].join(' ')}
+    >
+      <span className="inline-flex items-center gap-1">
+        {active && <Check className="h-3.5 w-3.5" />}
+        {children}
+      </span>
+    </button>
+  );
+});
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* component */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+export function FilterModal({
+  initialQ,
+  initialCity,
+  initialDistanceKm,
+  initialStartISO = null,
+  initialEndISO = null,
+  initialStatus = IntentStatus.Any,
+  initialKinds = [],
+  initialLevels = [],
+  initialVerifiedOnly = false,
+  initialTags = [],
+  initialKeywords = [],
+  initialCategories = [],
+  resultsCount,
+  onApply,
+  onClose,
+}: Props) {
+  /* state */
+  const [q, setQ] = useState<string>(initialQ ?? '');
   const [city, setCity] = useState<string | null>(initialCity ?? null);
-  const [distanceKm, setDistanceKm] = useState<number>(initialDistanceKm ?? 30);
+  const [distanceKm, setDistanceKm] = useState<number>(
+    initialDistanceKm ?? DEFAULT_DISTANCE
+  );
   const [startISO, setStartISO] = useState<string | null>(initialStartISO);
   const [endISO, setEndISO] = useState<string | null>(initialEndISO);
-  const [status, setStatus] = useState<StatusFilter>(initialStatus ?? 'any');
-  const [types, setTypes] = useState<TypeFilter[]>(initialTypes ?? []);
+  const [status, setStatus] = useState<IntentStatus>(
+    initialStatus ?? IntentStatus.Any
+  );
+  const [kinds, setKinds] = useState<MeetingKind[]>(initialKinds ?? []);
   const [levels, setLevels] = useState<Level[]>(initialLevels ?? []);
   const [verifiedOnly, setVerifiedOnly] = useState<boolean>(
     initialVerifiedOnly ?? false
   );
-
   const [tags, setTags] = useState<string[]>(initialTags ?? []);
   const [keywords, setKeywords] = useState<string[]>(initialKeywords ?? []);
   const [categories, setCategories] = useState<string[]>(
     initialCategories ?? []
   );
 
-  // City autocomplete (simple local)
+  /* meta */
+  const { data, loading } = useSearchMeta(q);
+
+  /* combobox: city */
+  const comboboxId = useId();
+  const listboxId = `${comboboxId}-listbox`;
   const [cityQuery, setCityQuery] = useState<string>(initialCity ?? '');
   const [openList, setOpenList] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-
-  const { data, loading } = useSearchMeta(q);
+  const activeOptionRef = useRef<HTMLButtonElement | null>(null);
 
   const cityOptions = useMemo(() => {
     const s = cityQuery.trim().toLowerCase();
-    if (!s) return CITIES.map((c) => c.name);
-    return CITIES.map((c) => c.name).filter((n) => n.toLowerCase().includes(s));
+    const base = CITIES.map((c) => c.name);
+    if (!s) return base;
+    return base.filter((n) => n.toLowerCase().includes(s));
   }, [cityQuery]);
 
   const selectCity = useCallback((name: string | null) => {
     setCity(name);
     setCityQuery(name ?? '');
     setOpenList(false);
+    requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
+  /* outside click → close list */
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (!inputRef.current?.contains(t) && !listRef.current?.contains(t))
+      if (!inputRef.current?.contains(t) && !listRef.current?.contains(t)) {
         setOpenList(false);
+      }
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  /* keep highlighted visible */
+  useEffect(() => {
+    if (!openList) return;
+    activeOptionRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [openList, highlight, cityOptions.length]);
+
+  /* validation: date range */
+  const dateError = useMemo(() => {
+    if (!startISO || !endISO) return null;
+    const s = new Date(startISO).getTime();
+    const e = new Date(endISO).getTime();
+    if (Number.isNaN(s) || Number.isNaN(e)) return 'Nieprawidłowy format daty.';
+    if (e < s)
+      return 'Data zakończenia nie może być wcześniejsza niż rozpoczęcia.';
+    return null;
+  }, [startISO, endISO]);
+
+  /* apply */
+  const handleApply = useCallback(() => {
+    const startIsoNorm = normalizeISO(startISO);
+    const endIsoNorm = normalizeISO(endISO);
+    onApply({
+      q,
+      city,
+      distanceKm,
+      startISO: startIsoNorm,
+      endISO: endIsoNorm,
+      status,
+      kinds,
+      levels,
+      verifiedOnly,
+      tags,
+      keywords,
+      categories,
+    });
+  }, [
+    categories,
+    city,
+    distanceKm,
+    endISO,
+    kinds,
+    keywords,
+    levels,
+    onApply,
+    q,
+    startISO,
+    status,
+    tags,
+    verifiedOnly,
+  ]);
+
+  /* global shortcuts */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'enter') {
+        e.preventDefault();
+        handleApply();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleApply, onClose]);
+
+  /* clear */
+  const handleClear = useCallback(() => {
+    setQ('');
+    selectCity(null);
+    setDistanceKm(DEFAULT_DISTANCE);
+    setStartISO(null);
+    setEndISO(null);
+    setStatus(IntentStatus.Any);
+    setKinds([]);
+    setLevels([]);
+    setVerifiedOnly(false);
+    setTags([]);
+    setKeywords([]);
+    setCategories([]);
+  }, [selectCity]);
+
+  /* dirty check */
   const isDirty = useMemo(() => {
-    const same =
-      q === (initialQ ?? '') &&
-      city === (initialCity ?? null) &&
-      distanceKm === (initialDistanceKm ?? 30) &&
-      (startISO ?? null) === (initialStartISO ?? null) &&
-      (endISO ?? null) === (initialEndISO ?? null) &&
-      (status ?? 'any') === (initialStatus ?? 'any') &&
-      JSON.stringify(types) === JSON.stringify(initialTypes ?? []) &&
-      JSON.stringify(levels) === JSON.stringify(initialLevels ?? []) &&
-      verifiedOnly === (initialVerifiedOnly ?? false) &&
-      JSON.stringify(tags) === JSON.stringify(initialTags ?? []) &&
-      JSON.stringify(keywords) === JSON.stringify(initialKeywords ?? []) &&
-      JSON.stringify(categories) === JSON.stringify(initialCategories ?? []);
-    return !same;
+    const sameQ = q === (initialQ ?? '');
+    const sameCity = city === (initialCity ?? null);
+    const sameDist = distanceKm === (initialDistanceKm ?? DEFAULT_DISTANCE);
+    const sameStart = (startISO ?? null) === (initialStartISO ?? null);
+    const sameEnd = (endISO ?? null) === (initialEndISO ?? null);
+    const sameStatus =
+      (status ?? IntentStatus.Any) === (initialStatus ?? IntentStatus.Any);
+    const sameKinds = arraysEq(kinds, initialKinds ?? []);
+    const sameLevels = arraysEq(levels, initialLevels ?? []);
+    const sameVerified = verifiedOnly === (initialVerifiedOnly ?? false);
+    const sameTags = arraysEq(tags, initialTags ?? []);
+    const sameKeywords = arraysEq(keywords, initialKeywords ?? []);
+    const sameCategories = arraysEq(categories, initialCategories ?? []);
+    return !(
+      sameQ &&
+      sameCity &&
+      sameDist &&
+      sameStart &&
+      sameEnd &&
+      sameStatus &&
+      sameKinds &&
+      sameLevels &&
+      sameVerified &&
+      sameTags &&
+      sameKeywords &&
+      sameCategories
+    );
   }, [
     q,
     city,
@@ -154,7 +320,7 @@ export function FilterModal({
     startISO,
     endISO,
     status,
-    types,
+    kinds,
     levels,
     verifiedOnly,
     tags,
@@ -166,7 +332,7 @@ export function FilterModal({
     initialStartISO,
     initialEndISO,
     initialStatus,
-    initialTypes,
+    initialKinds,
     initialLevels,
     initialVerifiedOnly,
     initialTags,
@@ -174,78 +340,7 @@ export function FilterModal({
     initialCategories,
   ]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'enter')
-        handleApply();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    q,
-    city,
-    distanceKm,
-    startISO,
-    endISO,
-    status,
-    types,
-    levels,
-    verifiedOnly,
-    tags,
-    keywords,
-    categories,
-  ]);
-
-  const handleClear = useCallback(() => {
-    setQ('');
-    selectCity(null);
-    setDistanceKm(30);
-    setStartISO(null);
-    setEndISO(null);
-    setStatus('any');
-    setTypes([]);
-    setLevels([]);
-    setVerifiedOnly(false);
-    setTags([]);
-    setKeywords([]);
-    setCategories([]);
-  }, [selectCity]);
-
-  const handleApply = useCallback(
-    () =>
-      onApply({
-        q,
-        city,
-        distanceKm,
-        startISO,
-        endISO,
-        status,
-        types,
-        levels,
-        verifiedOnly,
-        tags,
-        keywords,
-        categories,
-      }),
-    [
-      q,
-      city,
-      distanceKm,
-      startISO,
-      endISO,
-      status,
-      types,
-      levels,
-      verifiedOnly,
-      tags,
-      keywords,
-      categories,
-      onApply,
-    ]
-  );
-
+  /* chips */
   const chips = useMemo(() => {
     const arr: Array<{ key: string; label: string; onClear: () => void }> = [];
     const push = (key: string, label: string, onClear: () => void) =>
@@ -253,28 +348,20 @@ export function FilterModal({
 
     if (q) push('q', `Query: ${q}`, () => setQ(''));
     if (city) push('city', city, () => selectCity(null));
-    if (city && distanceKm !== 30)
-      push('distance', `${distanceKm} km`, () => setDistanceKm(30));
+    if (city && distanceKm !== DEFAULT_DISTANCE)
+      push('distance', `${distanceKm} km`, () =>
+        setDistanceKm(DEFAULT_DISTANCE)
+      );
     if (startISO)
       push('start', new Date(startISO).toLocaleString(), () =>
         setStartISO(null)
       );
     if (endISO)
       push('end', new Date(endISO).toLocaleString(), () => setEndISO(null));
-
-    const statusMap: Record<StatusFilter, string> = {
-      any: 'Any',
-      ongoing: 'Ongoing',
-      started: 'Started',
-      full: 'Full',
-      locked: 'Locked',
-      available: 'Available',
-    };
-    if (status !== 'any')
-      push('status', statusMap[status], () => setStatus('any'));
-
-    if (types.length)
-      push('types', `Type: ${types.join(', ')}`, () => setTypes([]));
+    if (status !== IntentStatus.Any)
+      push('status', status, () => setStatus(IntentStatus.Any));
+    if (kinds.length)
+      push('kinds', `Kinds: ${kinds.join(', ')}`, () => setKinds([]));
     if (levels.length)
       push('levels', `Level: ${levels.join(', ')}`, () => setLevels([]));
     if (verifiedOnly)
@@ -298,7 +385,7 @@ export function FilterModal({
     startISO,
     endISO,
     status,
-    types,
+    kinds,
     levels,
     verifiedOnly,
     tags,
@@ -307,31 +394,16 @@ export function FilterModal({
     selectCity,
   ]);
 
-  const Pill = ({
-    active,
-    onClick,
-    children,
-  }: {
-    active: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'cursor-pointer rounded-full px-3 py-1.5 text-sm ring-1 transition',
-        active
-          ? 'bg-zinc-900 text-white ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:ring-white'
-          : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
-      ].join(' ')}
-    >
-      <span className="inline-flex items-center gap-1">
-        {active && <Check className="h-3.5 w-3.5" />}
-        {children}
-      </span>
-    </button>
-  );
+  /* inputs helpers */
+  const startForInput = startISO ?? '';
+  const endForInput = endISO ?? '';
+  const endMin = startISO ?? undefined;
+
+  /* ──────────────────────────────────────────────────────────────────────── */
+  /* render */
+  /* ──────────────────────────────────────────────────────────────────────── */
+
+  const applyDisabled = !isDirty || !!dateError;
 
   return (
     <div
@@ -391,18 +463,18 @@ export function FilterModal({
 
             {/* body */}
             <div className="space-y-6 p-4">
-              {/* GROUPED SEARCH (async mock) */}
+              {/* GROUPED SEARCH */}
               <SearchCombo
                 value={q}
                 onChangeValue={setQ}
-                onSubmitFreeText={(text) => setQ(text)}
+                onSubmitFreeText={setQ}
                 groups={[
                   {
                     id: 'TAG',
                     label: 'Tags',
                     items: data.tags,
                     selected: tags,
-                    onSelect: (t) =>
+                    onSelect: (t: string) =>
                       setTags((xs) => (xs.includes(t) ? xs : [...xs, t])),
                   },
                   {
@@ -410,7 +482,7 @@ export function FilterModal({
                     label: 'Keywords',
                     items: data.keywords,
                     selected: keywords,
-                    onSelect: (k) =>
+                    onSelect: (k: string) =>
                       setKeywords((xs) => (xs.includes(k) ? xs : [...xs, k])),
                   },
                   {
@@ -418,7 +490,7 @@ export function FilterModal({
                     label: 'Categories',
                     items: data.categories,
                     selected: categories,
-                    onSelect: (c) =>
+                    onSelect: (c: string) =>
                       setCategories((xs) => (xs.includes(c) ? xs : [...xs, c])),
                   },
                 ]}
@@ -429,15 +501,26 @@ export function FilterModal({
                 }
               />
 
-              {/* Location */}
+              {/* Location combobox */}
               <div className="relative rounded-2xl border border-zinc-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="flex items-center gap-2 px-1">
                   <MapPin className="h-4 w-4 opacity-60" />
                   <input
                     ref={inputRef}
+                    role="combobox"
+                    aria-controls={listboxId}
+                    aria-expanded={openList}
+                    aria-autocomplete="list"
+                    aria-activedescendant={
+                      openList && cityOptions[highlight]
+                        ? `${listboxId}-opt-${highlight}`
+                        : undefined
+                    }
+                    id={comboboxId}
                     value={cityQuery}
                     onChange={(e) => {
-                      setCityQuery(e.target.value);
+                      const v = e.target.value;
+                      setCityQuery(v);
                       setOpenList(true);
                       setHighlight(0);
                     }}
@@ -468,7 +551,6 @@ export function FilterModal({
                       onClick={() => {
                         setCityQuery('');
                         selectCity(null);
-                        inputRef.current?.focus();
                         setOpenList(true);
                       }}
                       className="rounded-full p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -479,32 +561,41 @@ export function FilterModal({
                   )}
                 </div>
 
-                {openList && cityOptions.length > 0 && (
+                {openList && (
                   <div
                     ref={listRef}
+                    id={listboxId}
                     role="listbox"
                     className="absolute left-0 right-0 z-20 mt-2 max-h-60 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
                   >
-                    {cityOptions.map((name, idx) => {
-                      const active = idx === highlight;
-                      return (
-                        <button
-                          key={name}
-                          role="option"
-                          aria-selected={active}
-                          onMouseEnter={() => setHighlight(idx)}
-                          onClick={() => selectCity(name)}
-                          className={[
-                            'block w-full cursor-pointer px-3 py-2 text-left text-sm',
-                            active
-                              ? 'bg-zinc-100 dark:bg-zinc-800'
-                              : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
-                          ].join(' ')}
-                        >
-                          {name}
-                        </button>
-                      );
-                    })}
+                    {cityOptions.length === 0 ? (
+                      <div className="px-3 py-2 text-sm opacity-60">
+                        Brak dopasowań
+                      </div>
+                    ) : (
+                      cityOptions.map((name, idx) => {
+                        const active = idx === highlight;
+                        return (
+                          <button
+                            key={name}
+                            id={`${listboxId}-opt-${idx}`}
+                            ref={active ? activeOptionRef : null}
+                            role="option"
+                            aria-selected={active}
+                            onMouseEnter={() => setHighlight(idx)}
+                            onClick={() => selectCity(name)}
+                            className={[
+                              'block w-full cursor-pointer px-3 py-2 text-left text-sm',
+                              active
+                                ? 'bg-zinc-100 dark:bg-zinc-800'
+                                : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
+                            ].join(' ')}
+                          >
+                            {name}
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 )}
               </div>
@@ -525,6 +616,7 @@ export function FilterModal({
                   value={distanceKm}
                   onChange={(e) => setDistanceKm(Number(e.target.value))}
                   className="mt-2 w-full accent-indigo-600"
+                  aria-label="Distance in kilometers"
                 />
               </div>
 
@@ -539,7 +631,7 @@ export function FilterModal({
                     <span className="w-20 shrink-0 text-zinc-500">Start</span>
                     <input
                       type="datetime-local"
-                      value={startISO ?? ''}
+                      value={startForInput}
                       onChange={(e) => setStartISO(e.target.value || null)}
                       className="w-full bg-transparent outline-none"
                     />
@@ -548,54 +640,66 @@ export function FilterModal({
                     <span className="w-20 shrink-0 text-zinc-500">End</span>
                     <input
                       type="datetime-local"
-                      value={endISO ?? ''}
+                      value={endForInput}
+                      min={endMin ?? undefined}
                       onChange={(e) => setEndISO(e.target.value || null)}
                       className="w-full bg-transparent outline-none"
                     />
                   </label>
                 </div>
+
+                {dateError && (
+                  <p className="mt-2 inline-flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    {dateError}
+                  </p>
+                )}
               </div>
 
               {/* Status */}
               <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="mb-2 text-sm font-medium">Status</div>
                 <div className="flex flex-wrap gap-2">
-                  {(
-                    [
-                      'any',
-                      'ongoing',
-                      'started',
-                      'full',
-                      'locked',
-                      'available',
-                    ] as const
-                  ).map((val) => (
+                  {[
+                    IntentStatus.Any,
+                    IntentStatus.Ongoing,
+                    IntentStatus.Started,
+                    IntentStatus.Full,
+                    IntentStatus.Locked,
+                    IntentStatus.Available,
+                  ].map((val) => (
                     <Pill
                       key={val}
                       active={status === val}
                       onClick={() => setStatus(val)}
+                      title={`Filter by ${val}`}
                     >
-                      {val[0].toUpperCase() + val.slice(1)}
+                      {val}
                     </Pill>
                   ))}
                 </div>
               </div>
 
-              {/* Type */}
+              {/* Kinds */}
               <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="mb-2 text-sm font-medium">Type</div>
+                <div className="mb-2 text-sm font-medium">Kinds</div>
                 <div className="flex flex-wrap gap-2">
-                  {(['remote', 'hybrid', 'public'] as const).map((t) => {
-                    const active = types.includes(t);
+                  {[
+                    MeetingKind.Onsite,
+                    MeetingKind.Online,
+                    MeetingKind.Hybrid,
+                  ].map((t) => {
+                    const active = kinds.includes(t);
                     return (
                       <Pill
                         key={t}
                         active={active}
                         onClick={() =>
-                          setTypes((curr) =>
+                          setKinds((curr) =>
                             active ? curr.filter((x) => x !== t) : [...curr, t]
                           )
                         }
+                        title={`Toggle ${t}`}
                       >
                         {t}
                       </Pill>
@@ -608,7 +712,7 @@ export function FilterModal({
               <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="mb-2 text-sm font-medium">Level</div>
                 <div className="flex flex-wrap gap-2">
-                  {(['beginner', 'intermediate', 'advanced'] as const).map(
+                  {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
                     (lv) => {
                       const active = levels.includes(lv);
                       return (
@@ -622,8 +726,9 @@ export function FilterModal({
                                 : [...curr, lv]
                             )
                           }
+                          title={`Toggle ${lv}`}
                         >
-                          {lv[0].toUpperCase() + lv.slice(1)}
+                          {lv}
                         </Pill>
                       );
                     }
@@ -640,6 +745,7 @@ export function FilterModal({
                     className="peer sr-only"
                     checked={verifiedOnly}
                     onChange={(e) => setVerifiedOnly(e.target.checked)}
+                    aria-label="Verified organizers only"
                   />
                   <span
                     className={`inline-flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${verifiedOnly ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
@@ -655,23 +761,36 @@ export function FilterModal({
 
             {/* footer */}
             <div className="sticky bottom-0 rounded-b-3xl border-t border-zinc-200 bg-gradient-to-t from-white via-white/95 p-4 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  onClick={onClose}
-                  className="rounded-xl border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleApply}
-                  disabled={!isDirty}
-                  className="rounded-xl bg-zinc-900 px-5 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600"
-                  title={isDirty ? 'Apply' : 'No changes'}
-                >
-                  {resultsCount != null
-                    ? `Show results (${resultsCount})`
-                    : 'Show results'}
-                </button>
+              <div className="flex items-center justify-between gap-3">
+                {resultsCount != null && (
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                    {resultsCount} wynik{resultsCount === 1 ? '' : 'ów'}
+                  </div>
+                )}
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    onClick={onClose}
+                    className="rounded-xl border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleApply}
+                    disabled={applyDisabled}
+                    className="rounded-xl bg-zinc-900 px-5 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600"
+                    title={
+                      applyDisabled
+                        ? dateError
+                          ? dateError
+                          : 'No changes'
+                        : 'Apply'
+                    }
+                  >
+                    {resultsCount != null
+                      ? `Show results (${resultsCount})`
+                      : 'Show results'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

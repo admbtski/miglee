@@ -1,15 +1,12 @@
+'use client';
+
 import { useMemo, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-
-export type StatusFilter =
-  | 'any'
-  | 'ongoing'
-  | 'started'
-  | 'full'
-  | 'locked'
-  | 'available';
-export type TypeFilter = 'remote' | 'hybrid' | 'public';
-export type Level = 'beginner' | 'intermediate' | 'advanced';
+import {
+  IntentStatus,
+  Level,
+  MeetingKind,
+} from '@/graphql/__generated__/react-query';
 
 export type CommittedFilters = {
   q: string;
@@ -17,8 +14,8 @@ export type CommittedFilters = {
   distanceKm: number;
   startISO: string | null;
   endISO: string | null;
-  status: StatusFilter;
-  types: TypeFilter[];
+  status: IntentStatus;
+  kinds: MeetingKind[];
   levels: Level[];
   verifiedOnly: boolean;
   tags: string[];
@@ -62,8 +59,9 @@ export function useCommittedFilters() {
       distanceKm,
       startISO: search.get('start') ?? null,
       endISO: search.get('end') ?? null,
-      status: ((search.get('status') as StatusFilter) ?? 'any') as StatusFilter,
-      types: parseCsv(search, 'types') as TypeFilter[],
+      status: ((search.get('status') as IntentStatus) ??
+        IntentStatus.Any) as IntentStatus,
+      kinds: parseCsv(search, 'kinds') as MeetingKind[],
       levels: parseCsv(search, 'levels') as Level[],
       verifiedOnly: parseBool(search, 'verified'),
       tags: parseCsv(search, 'tags'),
@@ -82,8 +80,8 @@ export function useCommittedFilters() {
         distanceKm: next.distanceKm ?? curr.distanceKm,
         startISO: next.startISO ?? curr.startISO,
         endISO: next.endISO ?? curr.endISO,
-        status: (next.status ?? curr.status) as StatusFilter,
-        types: (next.types ?? curr.types) as TypeFilter[],
+        status: (next.status ?? curr.status) as IntentStatus,
+        kinds: (next.kinds ?? curr.kinds) as MeetingKind[],
         levels: (next.levels ?? curr.levels) as Level[],
         verifiedOnly: next.verifiedOnly ?? curr.verifiedOnly,
         tags: next.tags ?? curr.tags,
@@ -93,7 +91,7 @@ export function useCommittedFilters() {
 
       const params = new URLSearchParams(search);
 
-      // Clear all handled keys
+      // Wyczyść tylko te klucze, które obsługujemy (poprawka: 'kinds' zamiast 'types')
       for (const k of [
         'q',
         'city',
@@ -101,35 +99,26 @@ export function useCommittedFilters() {
         'start',
         'end',
         'status',
-        'types',
+        'kinds',
         'levels',
         'verified',
         'tags',
         'keywords',
         'categories',
-      ])
+      ]) {
         params.delete(k);
+      }
 
-      if (merged.q) {
-        params.set('q', merged.q);
-      }
-      if (merged.city) {
-        params.set('city', merged.city);
-      }
-      if (merged.distanceKm !== DEFAULT_DISTANCE) {
+      if (merged.q) params.set('q', merged.q);
+      if (merged.city) params.set('city', merged.city);
+      if (merged.distanceKm !== DEFAULT_DISTANCE)
         params.set('distance', String(merged.distanceKm));
-      }
-      if (merged.startISO) {
-        params.set('start', merged.startISO);
-      }
-      if (merged.endISO) {
-        params.set('end', merged.endISO);
-      }
-      if (merged.status !== 'any') {
+      if (merged.startISO) params.set('start', merged.startISO);
+      if (merged.endISO) params.set('end', merged.endISO);
+      if (merged.status !== IntentStatus.Any)
         params.set('status', merged.status);
-      }
 
-      setCsv(params, 'types', merged.types);
+      setCsv(params, 'kinds', merged.kinds);
       setCsv(params, 'levels', merged.levels);
       setBool(params, 'verified', merged.verifiedOnly);
       setCsv(params, 'tags', merged.tags);
@@ -157,8 +146,8 @@ export function useCommittedFilters() {
           distanceKm: DEFAULT_DISTANCE,
           startISO: null,
           endISO: null,
-          status: 'any',
-          types: [],
+          status: IntentStatus.Any,
+          kinds: [],
           levels: [],
           verifiedOnly: false,
           tags: [],

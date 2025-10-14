@@ -8,13 +8,26 @@ type Props = {
   header?: ReactNode;
   content?: ReactNode;
   footer?: ReactNode;
+  /** Optional: id for aria-labelledby if header provides a title element */
+  labelledById?: string;
+  /** Optional: id for aria-describedby */
+  describedById?: string;
 };
 
-export function Modal({ content, footer, header, onClose, open }: Props) {
+export function Modal({
+  content,
+  footer,
+  header,
+  onClose,
+  open,
+  labelledById,
+  describedById,
+}: Props) {
   const handleOnClose = useCallback(() => {
     onClose?.();
-  }, []);
+  }, [onClose]);
 
+  // Scroll lock + compensation
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
@@ -28,47 +41,55 @@ export function Modal({ content, footer, header, onClose, open }: Props) {
     };
   }, [open]);
 
+  // ESC to close
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleOnClose();
     };
-
-    window.addEventListener('keydown', onKey, { passive: false });
+    window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, handleOnClose]);
 
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   return (
     <div
       className="fixed inset-0 z-[100]"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="create-intent-title"
+      aria-labelledby={labelledById}
+      aria-describedby={describedById}
     >
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleOnClose}
       />
 
+      {/* Scrollable container */}
       <div className="absolute inset-0 overflow-y-auto">
         <div className="mx-auto my-6 w-[min(760px,92vw)]">
-          <div className="rounded-3xl border border-zinc-200 bg-white shadow-2xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10">
+          <div
+            className="rounded-3xl border border-zinc-200 bg-white shadow-2xl ring-1 ring-black/5
+                       dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
             {header && (
               <div className="sticky top-0 z-10 rounded-t-3xl border-b border-zinc-200 bg-white/85 px-4 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
                 {header}
               </div>
             )}
-            {/* body */}
+
+            {/* Body */}
             {content && <div className="p-4">{content}</div>}
 
-            {/* footer */}
-            <div className="sticky z-10 bottom-0 rounded-b-3xl border-t border-zinc-200 bg-gradient-to-t from-white via-white/95 p-4 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
-              {footer}
-            </div>
+            {/* Footer */}
+            {footer && (
+              <div className="sticky bottom-0 z-10 rounded-b-3xl border-t border-zinc-200 bg-gradient-to-t from-white via-white/95 p-4 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
+                {footer}
+              </div>
+            )}
           </div>
         </div>
       </div>

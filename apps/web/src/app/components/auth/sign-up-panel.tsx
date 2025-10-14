@@ -4,6 +4,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useId, useMemo, useRef, useState } from 'react';
 
+type Social =
+  | 'google'
+  | 'github'
+  | 'linkedin'
+  | 'facebook'
+  | 'apple'
+  | 'twitter';
+
 export function SignUpPanel({
   username,
   setUsername,
@@ -23,9 +31,7 @@ export function SignUpPanel({
   setPassword: (v: string) => void;
   onSubmit: () => void | Promise<void>;
   onGotoSignin: () => void;
-  onSocial?: (
-    p: 'google' | 'github' | 'linkedin' | 'facebook' | 'apple' | 'twitter'
-  ) => void;
+  onSocial?: (p: Social) => void;
 }) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -142,6 +148,21 @@ export function SignUpPanel({
       transition: { duration: prefersReducedMotion ? 0 : 0.15 },
     },
   };
+
+  const SOCIAL: Array<{
+    key: Social;
+    iconSlug: string;
+    hex: string;
+    label: string;
+  }> = [
+    { key: 'google', iconSlug: 'google', hex: 'EA4335', label: 'Google' },
+    { key: 'github', iconSlug: 'github', hex: 'ffffff', label: 'GitHub' },
+    { key: 'linkedin', iconSlug: 'linkedin', hex: '0A66C2', label: 'LinkedIn' },
+    { key: 'facebook', iconSlug: 'facebook', hex: '1877F2', label: 'Facebook' },
+    { key: 'apple', iconSlug: 'apple', hex: 'ffffff', label: 'Apple' },
+    // icon 'x', but callback key 'twitter'
+    { key: 'twitter', iconSlug: 'x', hex: 'cccccc', label: 'X (Twitter)' },
+  ];
 
   return (
     <motion.form
@@ -365,12 +386,12 @@ export function SignUpPanel({
                 style={{
                   background:
                     passwordScore < 1
-                      ? '#ef4444' // red-500
+                      ? '#ef4444'
                       : passwordScore === 1
-                        ? '#f59e0b' // amber-500
+                        ? '#f59e0b'
                         : passwordScore === 2
-                          ? '#10b981' // emerald-500
-                          : '#22c55e', // green-500
+                          ? '#10b981'
+                          : '#22c55e',
                 }}
               />
             </div>
@@ -404,7 +425,7 @@ export function SignUpPanel({
           type="button"
           onMouseDown={(e) => e.preventDefault()}
           onClick={onGotoSignin}
-          className="cursor-pointer font-medium text-indigo-600 dark:text-indigo-400 underline underline-offset-4 hover:text-indigo-500 dark:hover:text-indigo-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-sm"
+          className="cursor-pointer rounded-sm font-medium text-indigo-600 underline underline-offset-4 hover:text-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
         >
           Zaloguj się
         </button>
@@ -417,34 +438,19 @@ export function SignUpPanel({
         <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
       </div>
 
-      {/* Social sign-up (two icons per brand for contrast) */}
+      {/* Social sign-up */}
       <div className="mb-1 flex items-center justify-between">
         <div className="text-sm text-zinc-500 dark:text-zinc-400">
           Kontynuuj z
         </div>
         <div className="flex items-center gap-2">
-          {(
-            [
-              ['Google', 'EA4335'],
-              ['GitHub', 'ffffff'],
-              ['scalar', '0A66C2'],
-              ['Facebook', '1877F2'],
-              ['Apple', 'ffffff'],
-              ['x', 'cccccc'],
-            ] as [string, string][]
-          ).map(([label, hex]) => (
+          {SOCIAL.map(({ key, iconSlug, hex, label }) => (
             <motion.button
-              key={label}
+              key={key}
               type="button"
               aria-label={label}
               title={label}
-              onClick={() =>
-                onSocial?.(
-                  label.toLowerCase().includes('twitter')
-                    ? 'twitter'
-                    : (label.toLowerCase() as any)
-                )
-              }
+              onClick={() => onSocial?.(key)}
               whileHover={!prefersReducedMotion ? { scale: 1.06 } : {}}
               whileTap={!prefersReducedMotion ? { scale: 0.96 } : {}}
               className="inline-grid h-9 w-9 place-items-center rounded-full border shadow-sm
@@ -455,14 +461,14 @@ export function SignUpPanel({
               {/* light */}
               <img
                 alt=""
-                src={`https://cdn.simpleicons.org/${label.toLowerCase().replace('/x', 'x')}/000000`}
-                className="h-4 w-4 block dark:hidden"
+                src={`https://cdn.simpleicons.org/${iconSlug}/000000`}
+                className="block h-4 w-4 dark:hidden"
               />
               {/* dark */}
               <img
                 alt=""
-                src={`https://cdn.simpleicons.org/${label.toLowerCase().replace('/x', 'x')}/${hex}`}
-                className="h-4 w-4 hidden dark:block"
+                src={`https://cdn.simpleicons.org/${iconSlug}/${hex}`}
+                className="hidden h-4 w-4 dark:block"
               />
             </motion.button>
           ))}
