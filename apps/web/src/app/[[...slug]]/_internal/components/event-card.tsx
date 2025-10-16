@@ -1,6 +1,20 @@
-import { useMemo } from 'react';
+'use client';
+
+import { useMemo, useState, useCallback, KeyboardEvent } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Users, Lock, MapPin } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Users,
+  Lock,
+  MapPin,
+  WifiIcon,
+  MapPinHouseIcon,
+  BadgeCheck,
+} from 'lucide-react';
+import { CategoryPills, TagPills } from './category-tag-pill';
+import { EventDetailsModal } from './event-details-modal'; // ⬅️ NEW
+import { IntentMember } from '@/graphql/__generated__/react-query';
 
 export interface EventCardProps {
   startISO: string;
@@ -8,15 +22,19 @@ export interface EventCardProps {
   avatarUrl: string;
   organizerName: string;
   description: string;
-  location: string;
-  joined: number;
+  address?: string;
+  onlineUrl?: string;
+  joinedCount: number;
   min: number;
   max: number;
   tags?: string[];
+  categories: string[];
   lockHoursBeforeStart?: number;
   inline?: boolean;
-  onJoin?: () => void;
+  onJoin?: () => void | Promise<void>;
   className?: string;
+  verifiedAt?: string;
+  members?: IntentMember[];
 }
 
 /* ───────────────────────────── Utils ───────────────────────────── */
@@ -37,10 +55,8 @@ const MONTHS_PL_SHORT = [
 ] as const;
 
 const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
-
 const isValidDate = (d: Date) =>
   d instanceof Date && !Number.isNaN(d.getTime());
-
 const parseISO = (iso: string, fallback: Date = new Date()) => {
   const d = new Date(iso);
   return isValidDate(d) ? d : fallback;
@@ -85,9 +101,19 @@ function humanDuration(start: Date, end: Date) {
 }
 
 const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
-
 const cx = (...classes: Array<string | undefined | false>) =>
   classes.filter(Boolean).join(' ');
+
+/** Formatka do tytułu/tooltips dla verifiedAt */
+function formatVerifiedTitle(verifiedAt?: string) {
+  if (!verifiedAt) return null;
+  const d = parseISO(verifiedAt);
+  if (!isValidDate(d)) return 'Zweryfikowany organizator';
+  const day = pad2(d.getDate());
+  const mon = MONTHS_PL_SHORT[d.getMonth()];
+  const year = d.getFullYear();
+  return `Zweryfikowany organizator (od ${day} ${mon} ${year})`;
+}
 
 /* ─────────────── Deterministyczna maszyna stanów Join ─────────────── */
 
@@ -95,13 +121,13 @@ function computeJoinState(
   now: Date,
   start: Date,
   end: Date,
-  joined: number,
+  joinedCount: number,
   max: number,
   lockHrs = 0
 ) {
   const hasStarted = now >= start;
   const isOngoing = now >= start && now <= end;
-  const isFull = max > 0 && joined >= max;
+  const isFull = max > 0 && joinedCount >= max;
   const withinLock = !hasStarted && hoursUntil(start) <= lockHrs;
   const canJoin = !isFull && !hasStarted && !withinLock;
 
@@ -185,8 +211,8 @@ const progressColorClass = (active: boolean) =>
     ? 'bg-neutral-900 dark:bg-white'
     : 'bg-neutral-400 dark:bg-neutral-600';
 
-const capacityLabel = (joined: number, min: number, max: number) =>
-  `${joined} / ${min}-${max} osób`;
+const capacityLabel = (joinedCount: number, min: number, max: number) =>
+  `${joinedCount} / ${min}-${max} osób`;
 
 function StatusBadge({
   tone,
@@ -239,6 +265,7 @@ function ProgressBar({
   );
 }
 
+/** Prosty Avatar bez overlay */
 function Avatar({ url, alt }: { url: string; alt: string }) {
   return (
     <img
@@ -251,6 +278,18 @@ function Avatar({ url, alt }: { url: string; alt: string }) {
   );
 }
 
+/** Ikonka verified z tytułem/aria generowanym z verifiedAt */
+function VerifiedBadge({ verifiedAt }: { verifiedAt?: string }) {
+  if (!verifiedAt) return null;
+  const title = formatVerifiedTitle(verifiedAt) ?? 'Zweryfikowany organizator';
+  return (
+    <BadgeCheck
+      className="w-3.5 h-3.5 shrink-0 text-sky-500 dark:text-sky-400"
+      aria-label={title}
+    />
+  );
+}
+
 /* ─────────────────────────── Komponent ─────────────────────────── */
 
 export function EventCard({
@@ -259,200 +298,257 @@ export function EventCard({
   avatarUrl,
   organizerName,
   description,
-  location,
-  joined,
+  address,
+  onlineUrl,
+  joinedCount,
   min,
   max,
   tags = [],
+  categories = [],
   lockHoursBeforeStart = 0,
   inline = false,
   onJoin,
   className,
+  verifiedAt,
+  members = [],
 }: EventCardProps) {
+  const [open, setOpen] = useState(false);
+
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO, start), [endISO, start]);
   const now = new Date();
 
   const { canJoin, status } = useMemo(
-    () => computeJoinState(now, start, end, joined, max, lockHoursBeforeStart),
-    // wszystkie zależności determinują wynik; `now` celowo nie w deps, bo i tak odświeżamy na render
-    [start.getTime(), end.getTime(), joined, max, lockHoursBeforeStart]
+    () =>
+      computeJoinState(now, start, end, joinedCount, max, lockHoursBeforeStart),
+    [start.getTime(), end.getTime(), joinedCount, max, lockHoursBeforeStart]
   );
 
-  const fill = Math.min(100, Math.round((joined / Math.max(1, max)) * 100));
+  const fill = Math.min(
+    100,
+    Math.round((joinedCount / Math.max(1, max)) * 100)
+  );
+
+  const openModal = useCallback(() => setOpen(true), []);
+  const closeModal = useCallback(() => setOpen(false), []);
+  const onKeyPress = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setOpen(true);
+    }
+  }, []);
 
   /* Inline */
   if (inline) {
     return (
-      <div
-        className={cx(
-          'flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm',
-          className
-        )}
-      >
-        <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
-            {description}
-          </p>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
-            {organizerName} • {formatDateRange(start, end)} •{' '}
-            {humanDuration(start, end)} • {location}
-          </p>
+      <>
+        <div
+          className={cx(
+            'flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm cursor-pointer select-none',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 rounded-lg',
+            className
+          )}
+          role="button"
+          tabIndex={0}
+          onClick={openModal}
+          onKeyDown={onKeyPress}
+          aria-label={`Szczegóły wydarzenia: ${organizerName}`}
+        >
+          <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
+          <div className="flex-1 min-w-0">
+            <p
+              className="font-medium text-neutral-900 dark:text-neutral-100 truncate"
+              title={organizerName}
+            >
+              <span className="inline-flex items-center gap-1.5 max-w-full">
+                <span className="truncate">{organizerName}</span>
+                <VerifiedBadge verifiedAt={verifiedAt!} />
+              </span>
+            </p>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
+              {description}
+            </p>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
+              {formatDateRange(start, end)} • {humanDuration(start, end)}
+              {address ? ` • ${address}` : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <StatusBadge
+              tone={status.tone}
+              reason={status.reason}
+              label={status.label}
+            />
+            <span className="text-xs text-neutral-600 dark:text-neutral-400">
+              {capacityLabel(joinedCount, min, max)}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <StatusBadge
-            tone={status.tone}
-            reason={status.reason}
-            label={status.label}
-          />
-          <span className="text-xs text-neutral-600 dark:text-neutral-400">
-            {capacityLabel(joined, min, max)}
-          </span>
-          <button
-            type="button"
-            disabled={!canJoin}
-            onClick={canJoin ? onJoin : undefined}
-            className={cx(
-              'cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
-              canJoin
-                ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:opacity-90 active:opacity-80'
-                : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 cursor-not-allowed'
-            )}
-            aria-disabled={!canJoin}
-            aria-label={canJoin ? 'Dołącz' : 'Zamknięte'}
-          >
-            {canJoin ? 'Dołącz' : 'Zamknięte'}
-          </button>
-        </div>
-      </div>
+
+        {/* Modal */}
+        <EventDetailsModal
+          open={open}
+          onClose={closeModal}
+          onJoin={onJoin}
+          data={{
+            startISO,
+            endISO,
+            description,
+            address,
+            onlineUrl,
+            categories,
+            tags,
+            min,
+            max,
+            joinedCount,
+            organizerName,
+            avatarUrl,
+            verifiedAt,
+            status,
+            canJoin,
+            members,
+          }}
+        />
+      </>
     );
   }
 
   /* Tile */
   return (
-    <motion.div
-      layout="size"
-      whileHover={{ y: canJoin ? -2 : 0, scale: canJoin ? 1.01 : 1 }}
-      transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-      className={cx(
-        'w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1 ring-neutral-200/70 dark:ring-neutral-800',
-        canJoin
-          ? 'bg-white dark:bg-neutral-900'
-          : 'bg-neutral-50 dark:bg-neutral-950',
-        className
-      )}
-      role="group"
-      aria-label={`Wydarzenie: ${organizerName}`}
-    >
-      {/* Range + duration */}
-      <div className="flex items-center justify-between gap-1">
-        <div className="min-w-0 flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 overflow-hidden">
-          <Calendar className="w-4 h-4 shrink-0" />
-          <span
-            className="font-medium text-neutral-800 dark:text-neutral-200 truncate whitespace-nowrap"
-            title={formatDateRange(start, end)}
-          >
-            {formatDateRange(start, end)}
-          </span>
-        </div>
-        <div className="flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-          <Clock className="w-4 h-4 shrink-0" />
-          <span>{humanDuration(start, end)}</span>
-        </div>
-      </div>
-
-      {/* Organizer & description + location */}
-      <div className="flex items-start gap-3 mt-1 min-w-0">
-        <img
-          src={avatarUrl}
-          alt="Organizer"
-          className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700 shrink-0"
-        />
-        <div className="flex-1 min-w-0">
-          <p
-            className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate"
-            title={organizerName}
-          >
-            {organizerName}
-          </p>
-
-          <p
-            className="text-sm text-neutral-800 dark:text-neutral-200 leading-5 line-clamp-2"
-            title={description}
-          >
-            {description}
-          </p>
-
-          <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate whitespace-nowrap" title={location}>
-              {location}
-            </span>
-          </p>
-        </div>
-      </div>
-
-      {/* Capacity + status */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="shrink-0 flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
-          <Users className="w-4 h-4" aria-hidden />
-          <span>{capacityLabel(joined, min, max)}</span>
-        </div>
-        <div className="shrink-0">
-          <StatusBadge
-            tone={status.tone}
-            reason={status.reason}
-            label={status.label}
-          />
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      <ProgressBar value={fill} active={canJoin} />
-
-      {/* CTA */}
-      <button
-        type="button"
-        disabled={!canJoin}
-        onClick={canJoin ? onJoin : undefined}
+    <>
+      <motion.div
+        layout="size"
+        whileHover={{ y: canJoin ? -2 : 0, scale: canJoin ? 1.01 : 1 }}
+        transition={{ type: 'spring', stiffness: 600, damping: 20 }}
         className={cx(
-          'cursor-pointer w-full mt-1 text-sm font-medium px-3 py-2 rounded-xl ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60',
+          'w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1 ring-neutral-200/70 dark:ring-neutral-800',
           canJoin
-            ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 ring-neutral-900/10 dark:ring-white/10 hover:opacity-90 active:opacity-80'
-            : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 ring-transparent cursor-not-allowed'
+            ? 'bg-white dark:bg-neutral-900'
+            : 'bg-neutral-50 dark:bg-neutral-950',
+          'cursor-pointer select-none',
+          className
         )}
-        aria-disabled={!canJoin}
-        aria-label={
-          status.reason === 'ONGOING'
-            ? 'Dołącz – tylko obserwacja'
-            : canJoin
-              ? 'Dołącz'
-              : 'Zapisy zamknięte'
-        }
+        role="button"
+        tabIndex={0}
+        onClick={openModal}
+        onKeyDown={onKeyPress}
+        aria-label={`Szczegóły wydarzenia: ${organizerName}`}
       >
-        {status.reason === 'ONGOING'
-          ? 'Dołącz (tylko obserwacja)'
-          : canJoin
-            ? 'Dołącz'
-            : 'Zapisy zamknięte'}
-      </button>
-
-      {/* Tagi */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-1" aria-label="Tagi">
-          {tags.slice(0, 5).map((tag) => (
+        {/* Range + duration */}
+        <div className="flex items-center justify-between gap-1">
+          <div className="min-w-0 flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 overflow-hidden">
+            <Calendar className="w-4 h-4 shrink-0" />
             <span
-              key={tag}
-              className="px-2 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-lg"
-              title={`#${tag}`}
+              className="font-medium text-neutral-800 dark:text-neutral-200 truncate whitespace-nowrap"
+              title={formatDateRange(start, end)}
             >
-              #{tag}
+              {formatDateRange(start, end)}
             </span>
-          ))}
+          </div>
+          <div className="flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+            <Clock className="w-4 h-4 shrink-0" />
+            <span>{humanDuration(start, end)}</span>
+          </div>
         </div>
-      )}
-    </motion.div>
+
+        {/* Organizer & description + location */}
+        <div className="flex items-start gap-3 mt-1 min-w-0">
+          <Avatar url={avatarUrl} alt="Organizer" />
+          <div className="flex-1 min-w-0">
+            <p
+              className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate"
+              title={organizerName}
+            >
+              <span className="inline-flex items-center gap-1 max-w-full">
+                <VerifiedBadge verifiedAt={verifiedAt!} />
+                <span className="truncate">{organizerName}</span>
+              </span>
+            </p>
+
+            <p
+              className="text-xs text-neutral-800 dark:text-neutral-200 leading-5 line-clamp-2"
+              title={description}
+            >
+              {description}
+            </p>
+
+            {address && !onlineUrl && (
+              <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
+                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate whitespace-nowrap" title={address}>
+                  {address}
+                </span>
+              </p>
+            )}
+
+            {!address && onlineUrl && (
+              <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
+                <WifiIcon className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate whitespace-nowrap" title="Online">
+                  Online
+                </span>
+              </p>
+            )}
+
+            {address && onlineUrl && (
+              <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
+                <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate whitespace-nowrap" title="Hybrid">
+                  {address}, Hybrid
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Capacity + status */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="shrink-0 flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
+            <Users className="w-4 h-4" aria-hidden />
+            <span>{capacityLabel(joinedCount, min, max)}</span>
+          </div>
+          <div className="shrink-0">
+            <StatusBadge
+              tone={status.tone}
+              reason={status.reason}
+              label={status.label}
+            />
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <ProgressBar value={fill} active={canJoin} />
+        <div className="flex items-center gap-3 mt-2">
+          <CategoryPills categories={categories ?? []} />
+          <TagPills tags={tags ?? []} />
+        </div>
+      </motion.div>
+
+      {/* Modal */}
+      <EventDetailsModal
+        open={open}
+        onClose={closeModal}
+        onJoin={onJoin}
+        data={{
+          startISO,
+          endISO,
+          description,
+          address,
+          onlineUrl,
+          categories,
+          tags,
+          min,
+          max,
+          joinedCount,
+          organizerName,
+          avatarUrl,
+          verifiedAt,
+          status,
+          canJoin,
+          members,
+        }}
+      />
+    </>
   );
 }
 

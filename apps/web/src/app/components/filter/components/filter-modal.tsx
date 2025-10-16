@@ -468,6 +468,7 @@ export function FilterModal({
                 value={q}
                 onChangeValue={setQ}
                 onSubmitFreeText={setQ}
+                loading={loading}
                 groups={[
                   {
                     id: 'TAG',

@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useId,
 } from 'react';
 import { Search, Tag as TagIcon, Hash, Folder, X } from 'lucide-react';
 
@@ -14,13 +15,13 @@ type GroupId = 'TAG' | 'KEYWORD' | 'CATEGORY' | (string & {});
 type ItemKind = 'tag' | 'keyword' | 'category' | (string & {});
 
 export type SearchGroup = {
-  id: GroupId; // group key
-  label: string; // section header
-  items: string[]; // available suggestions
-  selected?: string[]; // already chosen -> hidden from list
-  onSelect?: (value: string) => void; // pick handler
-  kind?: ItemKind; // for default icon
-  icon?: React.ComponentType<{ className?: string }>; // optional custom icon
+  id: GroupId;
+  label: string;
+  items: string[];
+  selected?: string[];
+  onSelect?: (value: string) => void;
+  kind?: ItemKind;
+  icon?: React.ComponentType<{ className?: string }>;
 };
 
 type FlatRow =
@@ -35,7 +36,13 @@ export type SearchComboProps = {
   placeholder?: string;
   clearButton?: boolean;
   className?: string;
+  loading?: boolean;
 };
+
+const MIN_CHARS = 3;
+
+const cx = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(' ');
 
 const defaultIconFor = (idOrKind?: GroupId | ItemKind) => {
   switch (idOrKind) {
@@ -53,6 +60,19 @@ const defaultIconFor = (idOrKind?: GroupId | ItemKind) => {
   }
 };
 
+/** Tiny inline spinner (currentColor) */
+function Spinner({ className }: { className?: string }) {
+  return (
+    <span
+      className={cx('relative inline-block', className)}
+      role="status"
+      aria-label="Loading"
+    >
+      <span className="block h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-transparent dark:border-zinc-600 dark:border-t-transparent" />
+    </span>
+  );
+}
+
 function _SearchCombo({
   groups,
   value,
@@ -61,42 +81,50 @@ function _SearchCombo({
   placeholder = 'Search…',
   clearButton = true,
   className,
+  loading = false,
 }: SearchComboProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const listboxId = useId();
 
-  const [inner, setInner] = useState('');
-  const inputVal = value ?? inner;
+  // local input state so we can gate requests by MIN_CHARS
+  const [inner, setInner] = useState(value ?? '');
+  useEffect(() => {
+    if (value !== undefined && value !== inner) setInner(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   const setInputVal = useCallback(
-    (v: string) => (onChangeValue ? onChangeValue(v) : setInner(v)),
+    (val: string) => {
+      setInner(val);
+      if (val.trim().length >= MIN_CHARS) onChangeValue?.(val);
+    },
     [onChangeValue]
   );
 
   const [open, setOpen] = useState(false);
-  const [hi, setHi] = useState<number>(-1); // highlighted row in flatRows
+  const [hi, setHi] = useState<number>(-1);
 
+  const canSearch = inner.trim().length >= MIN_CHARS;
+
+  // render what comes from parent (no local filtering)
   const { rows, itemRowIdx } = useMemo(() => {
-    const q = inputVal.trim().toLowerCase();
     const out: FlatRow[] = [];
-
     groups.forEach((g, gi) => {
       const exclude = new Set((g.selected ?? []).map((s) => s.toLowerCase()));
-      const pool = (
-        q ? g.items.filter((x) => x.toLowerCase().includes(q)) : g.items
-      ).filter((x) => !exclude.has(x.toLowerCase()));
+      const pool = g.items.filter((x) => !exclude.has(x.toLowerCase()));
       if (!pool.length) return;
       out.push({ type: 'header', gi });
       pool
-        .slice() // defensive copy
+        .slice()
         .sort((a, b) => a.localeCompare(b, 'en'))
         .forEach((label) => out.push({ type: 'item', gi, label }));
     });
-
     const idx = out
       .map((r, i) => (r.type === 'item' ? i : -1))
       .filter((i) => i >= 0);
     return { rows: out, itemRowIdx: idx };
-  }, [groups, inputVal]);
+  }, [groups]);
 
   const move = useCallback(
     (delta: number) => {
@@ -117,7 +145,6 @@ function _SearchCombo({
       if (!row || row.type !== 'item') return;
       const g = groups[row.gi];
       g.onSelect?.(row.label);
-      setInputVal('');
       setOpen(false);
       setHi(-1);
       requestAnimationFrame(() => inputRef.current?.focus());
@@ -153,9 +180,10 @@ function _SearchCombo({
         if (itemRowIdx.length) setHi(itemRowIdx[itemRowIdx.length - 1]);
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (hi >= 0) pickAt(hi);
-        else if (inputVal.trim() && onSubmitFreeText) {
-          onSubmitFreeText(inputVal.trim());
+        if (hi >= 0) {
+          pickAt(hi);
+        } else if (canSearch && inner.trim() && onSubmitFreeText) {
+          onSubmitFreeText(inner.trim());
           setOpen(false);
         } else {
           setOpen(false);
@@ -164,23 +192,23 @@ function _SearchCombo({
         setOpen(false);
       }
     },
-    [open, move, itemRowIdx, hi, pickAt, inputVal, onSubmitFreeText]
+    [open, move, itemRowIdx, hi, pickAt, inner, onSubmitFreeText, canSearch]
   );
+
+  // dropdown shows always when open; content depends on state
 
   return (
     <div
-      className={[
+      className={cx(
         'relative rounded-2xl border border-zinc-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-900',
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
+        className
+      )}
     >
       <label className="flex items-center gap-2 px-1">
         <Search className="h-4 w-4 opacity-60" />
         <input
           ref={inputRef}
-          value={inputVal}
+          value={inner}
           onChange={(e) => {
             setInputVal(e.target.value);
             setOpen(true);
@@ -190,18 +218,21 @@ function _SearchCombo({
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
+          role="combobox"
           aria-autocomplete="list"
           aria-expanded={open}
-          aria-controls="searchcombo-listbox"
-          role="combobox"
+          aria-controls={listboxId}
+          aria-busy={loading || undefined}
         />
-        {clearButton && inputVal && (
+        {loading && <Spinner className="ml-1" />}
+        {clearButton && inner && (
           <button
             type="button"
             onClick={() => {
-              setInputVal('');
+              setInner('');
               setOpen(true);
               setHi(-1);
+              onChangeValue?.(''); // allow parent to clear results
               inputRef.current?.focus();
             }}
             className="rounded-full p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -212,16 +243,20 @@ function _SearchCombo({
         )}
       </label>
 
-      {open && (inputVal.length > 0 || rows.length > 0) && (
+      {open && (
         <div
           ref={listRef}
-          id="searchcombo-listbox"
+          id={listboxId}
           className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
           role="listbox"
         >
-          {rows.length === 0 && inputVal.trim() ? (
+          {!canSearch ? (
             <div className="px-3 py-3 text-sm text-zinc-500">
-              Press Enter to search “{inputVal.trim()}”
+              Type at least {MIN_CHARS} characters
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="px-3 py-3 text-sm text-zinc-500">
+              No suggestions
             </div>
           ) : (
             rows.map((row, idx) =>
@@ -239,12 +274,12 @@ function _SearchCombo({
                   aria-selected={hi === idx}
                   onMouseEnter={() => setHi(idx)}
                   onClick={() => pickAt(idx)}
-                  className={[
+                  className={cx(
                     'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
                     hi === idx
                       ? 'bg-zinc-100 dark:bg-zinc-800'
-                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
-                  ].join(' ')}
+                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                  )}
                 >
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
                     {(() => {

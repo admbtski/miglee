@@ -6,6 +6,14 @@ import type {
   QueryResolvers,
 } from '../../__generated__/resolvers-types';
 
+const tagSelect = {
+  id: true,
+  label: true,
+  slug: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.TagSelect;
+
 export const tagsQuery: QueryResolvers['tags'] = resolverWithMetrics(
   'Query',
   'tags',
@@ -26,15 +34,11 @@ export const tagsQuery: QueryResolvers['tags'] = resolverWithMetrics(
       where,
       take,
       orderBy: { label: 'asc' },
+      select: tagSelect,
     });
 
-    return list.map((t) => ({
-      id: t.id,
-      label: t.label,
-      slug: t.slug,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-    }));
+    // Select już zwraca shape zgodny z GQLTag.
+    return list;
   }
 );
 
@@ -43,29 +47,20 @@ export const tagQuery: QueryResolvers['tag'] = resolverWithMetrics(
   'tag',
   async (_p, { id, slug }): Promise<GQLTag | null> => {
     if (id) {
-      const t = await prisma.tag.findUnique({ where: { id } });
-      return t
-        ? {
-            id: t.id,
-            label: t.label,
-            slug: t.slug,
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-          }
-        : null;
+      const t = await prisma.tag.findUnique({
+        where: { id },
+        select: tagSelect,
+      });
+      return t ?? null;
     }
 
     if (slug) {
-      const t = await prisma.tag.findFirst({ where: { slug } });
-      return t
-        ? {
-            id: t.id,
-            label: t.label,
-            slug: t.slug,
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-          }
-        : null;
+      // slug jest unikalny – użyj findUnique
+      const t = await prisma.tag.findUnique({
+        where: { slug },
+        select: tagSelect,
+      });
+      return t ?? null;
     }
 
     return null;

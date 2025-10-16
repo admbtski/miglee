@@ -1,18 +1,180 @@
+// apps/api/src/graphql/helpers.ts
 import { Prisma } from '@prisma/client';
 import type {
-  CreateIntentInput,
-  Intent as GQLIntent,
-  Notification as GQLNotification,
   Level,
   MeetingKind,
   Mode,
+  NotificationEntity,
   NotificationKind,
-  Role,
-  UpdateIntentInput,
   Visibility,
+  // GraphQL result types:
+  Intent as GQLIntent,
+  Notification as GQLNotification,
+  User as GQLUser,
+  Category as GQLCategory,
+  Tag as GQLTag,
+  IntentMember as GQLIntentMember,
 } from '../__generated__/resolvers-types';
 
-export function mapIntent(i: any): GQLIntent {
+/* =============================================================================
+ * Prisma payload types (strict includes) — kopiuj te include do zapytań!
+ * ========================================================================== */
+
+export type IntentMemberWithUsers = Prisma.IntentMemberGetPayload<{
+  include: { user: true; addedBy: true };
+}>;
+
+export type IntentWithGraph = Prisma.IntentGetPayload<{
+  include: {
+    categories: true;
+    tags: true;
+    members: { include: { user: true; addedBy: true } };
+  };
+}>;
+
+export type NotificationWithGraph = Prisma.NotificationGetPayload<{
+  include: {
+    recipient: true;
+    actor: true;
+    intent: {
+      include: {
+        categories: true;
+        tags: true;
+        members: { include: { user: true; addedBy: true } };
+      };
+    };
+  };
+}>;
+
+/* =============================================================================
+ * Small utils
+ * ========================================================================== */
+
+type JSONObject = Record<string, unknown>;
+
+export function toJSONObject(v: Prisma.JsonValue): JSONObject {
+  return v && typeof v === 'object' && !Array.isArray(v)
+    ? (v as JSONObject)
+    : {};
+}
+
+/** Safe JSON input to Prisma (GraphQL null vs SQL NULL semantics). */
+export function toInputJson(
+  v: unknown
+):
+  | Prisma.InputJsonValue
+  | typeof Prisma.JsonNull
+  | typeof Prisma.DbNull
+  | undefined {
+  if (v === undefined) return undefined;
+  if (v === null) return Prisma.JsonNull;
+  return v as Prisma.InputJsonValue;
+}
+
+/* =============================================================================
+ * Location
+ * ========================================================================== */
+
+export type LocationInputShape = {
+  lat?: number | null;
+  lng?: number | null;
+  address?: string | null;
+  placeId?: string | null;
+  radiusKm?: number | null;
+};
+
+/** Normalize LocationInput into prisma fields; preserves explicit nulls. */
+export function pickLocation(
+  input?: LocationInputShape | null
+): Partial<LocationInputShape> {
+  if (!input) return {};
+  const out: Partial<LocationInputShape> = {};
+  if ('lat' in input) out.lat = input.lat ?? null;
+  if ('lng' in input) out.lng = input.lng ?? null;
+  if ('address' in input) out.address = input.address ?? null;
+  if ('placeId' in input) out.placeId = input.placeId ?? null;
+  if ('radiusKm' in input) out.radiusKm = input.radiusKm ?? null;
+  return out;
+}
+/* =============================================================================
+ * Mappers (strictly typed, no any)
+ *  - WYMAGAJĄ: IntentWithGraph / IntentMemberWithUsers / NotificationWithGraph
+ *  - Jeśli chcesz wersje "shallow", zrób osobne funkcje i typy.
+ * ========================================================================== */
+
+export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name ?? null,
+    imageUrl: u.imageUrl ?? null,
+    role: (u.role ?? 'USER') as any,
+    verifiedAt: u.verifiedAt ?? null,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt,
+  };
+}
+
+export function mapCategory(
+  c: IntentWithGraph['categories'][number]
+): GQLCategory {
+  return {
+    id: c.id,
+    slug: c.slug,
+    names: toJSONObject(c.names),
+    icon: c.icon ?? null,
+    color: c.color ?? null,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+  };
+}
+
+export function mapTag(t: IntentWithGraph['tags'][number]): GQLTag {
+  return {
+    id: t.id,
+    label: t.label,
+    slug: t.slug,
+    createdAt: t.createdAt,
+    updatedAt: t.updatedAt,
+  };
+}
+
+export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
+  return {
+    id: m.id,
+    intentId: m.intentId,
+    userId: m.userId,
+    role: (m.role as any) ?? 'PARTICIPANT',
+    status: (m.status as any) ?? 'PENDING',
+    addedBy: m.addedBy ? mapUser(m.addedBy) : null,
+    joinedAt: m.joinedAt ?? null,
+    leftAt: m.leftAt ?? null,
+    note: m.note ?? null,
+    user: mapUser(m.user),
+  };
+}
+
+/* ---- Intent computed helpers ---- */
+
+function computeIntentDerived(i: IntentWithGraph) {
+  const now = new Date();
+  const joinedCount = i.members.filter((m) => m.status === 'JOINED').length;
+  const isFull = joinedCount >= i.max;
+  const hasStarted = now >= new Date(i.startAt);
+  const hasEnded = now > new Date(i.endAt);
+  return { joinedCount, isFull, hasStarted, hasEnded };
+}
+
+function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
+  const owner = i.members.find(
+    (m) => m.role === 'OWNER' && m.status === 'JOINED' && m.user
+  );
+  return owner ? mapUser(owner.user) : null;
+}
+
+export function mapIntent(i: IntentWithGraph): GQLIntent {
+  const { joinedCount, isFull, hasStarted, hasEnded } = computeIntentDerived(i);
+
   return {
     id: i.id,
     title: i.title,
@@ -34,105 +196,47 @@ export function mapIntent(i: any): GQLIntent {
     lat: i.lat ?? null,
     lng: i.lng ?? null,
     address: i.address ?? null,
+    placeId: i.placeId ?? null,
     radiusKm: i.radiusKm ?? null,
 
-    // levels + tags
     levels: (i.levels ?? []) as Level[],
+
+    // ✅ REQUIRED by SDL
+    categories: i.categories.map(mapCategory),
+    tags: i.tags.map(mapTag),
+
+    // convenience + computed
+    owner: resolveOwnerFromMembers(i),
+    members: i.members.map(mapIntentMember),
+
+    joinedCount,
+    isFull,
+    hasStarted,
+    hasEnded,
 
     createdAt: i.createdAt,
     updatedAt: i.updatedAt,
-
-    authorId: i.authorId ?? null,
-    author: i.author
-      ? {
-          id: i.author.id,
-          email: i.author.email,
-          name: i.author.name ?? null,
-          imageUrl: i.author.imageUrl ?? null,
-          role: (i.author.role ?? 'USER') as Role,
-          createdAt: i.author.createdAt,
-          updatedAt: i.author.updatedAt,
-        }
-      : null,
-
-    categories:
-      i.categories?.map((c: any) => ({
-        id: c.id,
-        slug: c.slug,
-        names: toJSONObject(c.names), // <-- ważne: JSON → Record<string, any>
-        icon: c.icon ?? null,
-        color: c.color ?? null,
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-      })) ?? [],
-
-    tags:
-      i.tags?.map((t: any) => ({
-        id: t.id,
-        label: t.label,
-        slug: t.slug,
-        createdAt: t.createdAt,
-        updatedAt: t.updatedAt,
-      })) ?? [],
   };
 }
 
-export function mapNotification(n: any): GQLNotification {
-  // recipient jest wymagany w schemacie (User!), a w zapytaniach/mutacjach zawsze dajemy include: { recipient: true }
-  const r = n.recipient!;
+/* ---- Notification ---- */
+export function mapNotification(n: NotificationWithGraph): GQLNotification {
   return {
     id: n.id,
-    kind: n.kind as NotificationKind,
-    message: n.message ?? null,
-    payload: (n.payload ?? null) as any,
+    kind: (n.kind as NotificationKind) ?? 'SYSTEM',
+    title: n.title ?? null,
+    body: n.body ?? null,
+    data: (n.data ?? null) as any,
+    dedupeKey: n.dedupeKey ?? null,
     readAt: n.readAt ?? null,
     createdAt: n.createdAt,
 
-    recipientId: n.recipientId,
-    recipient: {
-      id: r.id,
-      email: r.email,
-      name: r.name ?? null,
-      imageUrl: r.imageUrl ?? null,
-      role: (r.role ?? 'USER') as Role,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-    },
+    recipient: mapUser(n.recipient),
+    actor: n.actor ? mapUser(n.actor) : null,
 
-    intentId: n.intentId ?? null,
+    entityType: (n.entityType as NotificationEntity) ?? 'OTHER',
+    entityId: n.entityId ?? null,
+
     intent: n.intent ? mapIntent(n.intent) : null,
   };
-}
-
-/** Normalizuje input LocationInput -> shape zapisu w Intent (tylko wartości typu number/string) */
-export function pickLocation(
-  input?: CreateIntentInput['location'] | UpdateIntentInput['location']
-) {
-  if (!input) return {};
-  const out: Record<string, any> = {};
-  if (typeof input.lat === 'number') out.lat = input.lat;
-  if (typeof input.lng === 'number') out.lng = input.lng;
-  if (typeof input.address === 'string') out.address = input.address;
-  if (typeof input.radiusKm === 'number') out.radiusKm = input.radiusKm;
-  return out;
-}
-
-/** DB JSON → GraphQL JSON scalar (Record<string, any>) */
-export function toJSONObject(v: Prisma.JsonValue): Record<string, any> {
-  return v && typeof v === 'object' && !Array.isArray(v)
-    ? (v as Record<string, any>)
-    : {};
-}
-
-/** Bezpieczny JSON input do Prisma (obsługa JSON null, SQL null, pominięcia) */
-export function toInputJson(
-  v: unknown
-):
-  | Prisma.InputJsonValue
-  | typeof Prisma.JsonNull
-  | typeof Prisma.DbNull
-  | undefined {
-  if (v === undefined) return undefined; // pomiń klucz
-  if (v === null) return Prisma.JsonNull; // JSON-owe null
-  return v as Prisma.InputJsonValue; // obiekt/liczba/string/bool/array
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useId, useMemo, useRef, useState } from 'react';
 
 type Social =
@@ -13,8 +13,8 @@ type Social =
   | 'twitter';
 
 export function SignInPanel(props: {
-  email: string;
-  setEmail: (v: string) => void;
+  username: string;
+  setUsername: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
   remember: boolean;
@@ -22,10 +22,12 @@ export function SignInPanel(props: {
   onSubmit: () => void | Promise<void>;
   onGotoSignup: () => void;
   onSocial?: (p: Social) => void;
+  /** NEW: allow disabling password validation (for dev login) */
+  requirePassword?: boolean;
 }) {
   const {
-    email,
-    setEmail,
+    username,
+    setUsername,
     password,
     setPassword,
     remember,
@@ -33,24 +35,27 @@ export function SignInPanel(props: {
     onSubmit,
     onGotoSignup,
     onSocial,
+    requirePassword = true,
   } = props;
 
   const prefersReducedMotion = useReducedMotion();
 
-  /** Basic validation helpers */
-  const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-  const validate = (e: string, p: string) => {
-    const errors: { email?: string; password?: string } = {};
-    if (!e) errors.email = 'Wpisz adres e-mail';
-    else if (!isEmail(e)) errors.email = 'Nieprawidłowy adres e-mail';
-    if (!p) errors.password = 'Wpisz hasło';
-    else if (p.length < 6) errors.password = 'Hasło musi mieć min. 6 znaków';
+  const isValidUsername = (v: string) => /^[a-zA-Z0-9._-]{3,20}$/.test(v);
+  const validate = (u: string, p: string) => {
+    const errors: { username?: string; password?: string } = {};
+    if (!u) errors.username = 'Wpisz nazwę użytkownika';
+    else if (!isValidUsername(u))
+      errors.username = '3–20 znaków: litery, cyfry, „.” „_” „-”';
+
+    if (requirePassword) {
+      if (!p) errors.password = 'Wpisz hasło';
+      else if (p.length < 6) errors.password = 'Hasło musi mieć min. 6 znaków';
+    }
     return errors;
   };
 
-  /** Local UI/validation state */
   const [touched, setTouched] = useState<{
-    email?: boolean;
+    username?: boolean;
     password?: boolean;
   }>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -58,31 +63,24 @@ export function SignInPanel(props: {
   const [submitting, setSubmitting] = useState(false);
   const [shake, setShake] = useState(false);
 
-  /** IDs + refs for a11y/focus */
-  const emailId = useId();
+  const usernameId = useId();
   const pwdId = useId();
-  const emailErrId = useId();
+  const usernameErrId = useId();
   const pwdErrId = useId();
-  const emailRef = useRef<HTMLInputElement | null>(null);
+  const usernameRef = useRef<HTMLInputElement | null>(null);
   const pwdRef = useRef<HTMLInputElement | null>(null);
 
-  /** Derived validation state */
-  const errors = useMemo(() => validate(email, password), [email, password]);
+  const errors = useMemo(
+    () => validate(username, password),
+    [username, password, requirePassword]
+  );
   const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
 
-  /** Focus first invalid field on failed submit */
   const focusFirstInvalid = () => {
-    if (errors.email) return emailRef.current?.focus();
+    if (errors.username) return usernameRef.current?.focus();
     if (errors.password) return pwdRef.current?.focus();
   };
 
-  /** Clear validation when switching panel */
-  const clearValidationState = () => {
-    setTouched({});
-    setSubmitAttempted(false);
-  };
-
-  /** Attempt form submit with subtle shake on invalid */
   const trySubmit = async () => {
     setSubmitAttempted(true);
     if (!isValid) {
@@ -99,7 +97,6 @@ export function SignInPanel(props: {
     }
   };
 
-  /** Animated error paragraph variants */
   const errorVariants = {
     initial: { opacity: 0, height: 0, y: -4 },
     animate: {
@@ -122,7 +119,6 @@ export function SignInPanel(props: {
     { key: 'linkedin', iconSlug: 'linkedin', hex: '0A66C2' },
     { key: 'facebook', iconSlug: 'facebook', hex: '1877F2' },
     { key: 'apple', iconSlug: 'apple', hex: 'ffffff' },
-    // Twitter is now X in SimpleIcons: icon slug 'x', callback key 'twitter'
     { key: 'twitter', iconSlug: 'x', hex: 'cccccc' },
   ];
 
@@ -137,37 +133,44 @@ export function SignInPanel(props: {
       transition={{ duration: prefersReducedMotion ? 0 : 0.35 }}
       className="pt-5"
     >
-      {/* Email */}
+      {/* Username */}
       <div className="group">
-        <label htmlFor={emailId} className="sr-only">
-          Adres e-mail
+        <label htmlFor={usernameId} className="sr-only">
+          Username
         </label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
-            <Mail
+            <User
               aria-hidden
               className="h-5 w-5 text-zinc-400 group-focus-within:text-zinc-600 dark:text-zinc-500 dark:group-focus-within:text-zinc-300"
             />
           </div>
           <input
-            ref={emailRef}
-            id={emailId}
-            name="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
+            ref={usernameRef}
+            id={usernameId}
+            name="username"
+            type="text"
+            autoComplete="username"
             autoCapitalize="none"
             autoCorrect="off"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, username: true }))}
             autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => setTouched((t) => ({ ...t, email: true }))}
-            placeholder="Adres e-mail"
+            aria-invalid={
+              !!errors.username && (touched.username || submitAttempted)
+            }
+            aria-describedby={
+              errors.username && (touched.username || submitAttempted)
+                ? usernameErrId
+                : undefined
+            }
+            placeholder="Nazwa użytkownika"
             className={[
               'w-full rounded-2xl border px-12 py-3.5 text-base shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
               'bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-300 focus:border-zinc-400',
               'dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:border-zinc-800 dark:focus:border-zinc-700',
-              errors.email && (touched.email || submitAttempted)
+              errors.username && (touched.username || submitAttempted)
                 ? 'border-red-500 focus:ring-red-500/30'
                 : '',
             ].join(' ')}
@@ -175,9 +178,9 @@ export function SignInPanel(props: {
         </div>
 
         <AnimatePresence initial={false} mode="wait">
-          {errors.email && (touched.email || submitAttempted) && (
+          {errors.username && (touched.username || submitAttempted) && (
             <motion.p
-              id={emailErrId}
+              id={usernameErrId}
               role="alert"
               aria-live="polite"
               className="mt-1 text-sm text-red-500"
@@ -186,13 +189,13 @@ export function SignInPanel(props: {
               animate="animate"
               exit="exit"
             >
-              {errors.email}
+              {errors.username}
             </motion.p>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Password */}
+      {/* Password (może być nie-wymagane) */}
       <div className="group mt-3">
         <label htmlFor={pwdId} className="sr-only">
           Hasło
@@ -223,7 +226,7 @@ export function SignInPanel(props: {
                 ? pwdErrId
                 : undefined
             }
-            placeholder="Hasło"
+            placeholder={requirePassword ? 'Hasło' : 'Hasło (niewymagane)'}
             className={[
               'w-full rounded-2xl border pl-12 pr-12 py-3.5 text-base shadow-inner focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
               'bg-white text-zinc-900 placeholder:text-zinc-400 border-zinc-300 focus:border-zinc-400',
@@ -234,7 +237,6 @@ export function SignInPanel(props: {
             ].join(' ')}
           />
 
-          {/* Password visibility toggle */}
           <motion.button
             type="button"
             onClick={() => setShowPwd((v) => !v)}
@@ -310,14 +312,11 @@ export function SignInPanel(props: {
         {submitting ? 'Logowanie…' : 'Zaloguj się'}
       </motion.button>
 
-      {/* Secondary CTA (switch to SignUp) */}
+      {/* Secondary CTA */}
       <motion.button
         type="button"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => {
-          clearValidationState();
-          onGotoSignup();
-        }}
+        onClick={onGotoSignup}
         whileHover={!prefersReducedMotion ? { scale: 1.01 } : {}}
         whileTap={!prefersReducedMotion ? { scale: 0.99 } : {}}
         className="mt-2 w-full cursor-pointer rounded-2xl border px-5 py-3 text-base font-semibold
@@ -335,7 +334,7 @@ export function SignInPanel(props: {
         <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
       </div>
 
-      {/* Social logins */}
+      {/* Social */}
       <div className="mb-1 flex items-center justify-between">
         <div className="text-sm text-zinc-500 dark:text-zinc-400">
           Zaloguj się przez
@@ -355,13 +354,11 @@ export function SignInPanel(props: {
                          dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-900
                          focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
-              {/* light */}
               <img
                 alt=""
                 src={`https://cdn.simpleicons.org/${iconSlug}/000000`}
                 className="block h-4 w-4 dark:hidden"
               />
-              {/* dark */}
               <img
                 alt=""
                 src={`https://cdn.simpleicons.org/${iconSlug}/${hex}`}

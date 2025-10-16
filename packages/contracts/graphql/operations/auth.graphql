@@ -1,0 +1,16 @@
+# Queries
+query GetMe {
+  me {
+    ...SessionUserCore
+  }
+}
+
+mutation DevLogin($name: String!) {
+  devLogin(name: $name) {
+    ...SessionUserCore
+  }
+}
+
+mutation DevLogout {
+  devLogout
+}

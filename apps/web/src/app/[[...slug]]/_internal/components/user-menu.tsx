@@ -6,15 +6,20 @@ import {
   ChevronDown,
   CreditCard,
   LogOut,
-  PlusCircle,
   Settings,
-  SunMoon,
   User as UserIcon,
   Users,
   Wand2,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { SignOutConfirmModal } from './signout-confirm-modal';
+
+export type NavigateKey =
+  | 'billing'
+  | 'settings'
+  | 'account'
+  | 'customization'
+  | 'team';
 
 type UserMenuProps = {
   user: {
@@ -23,27 +28,19 @@ type UserMenuProps = {
     avatarUrl?: string;
   };
 
-  onNavigate?: (
-    key: 'billing' | 'settings' | 'account' | 'customization' | 'team'
-  ) => void;
+  onNavigate?: (key: NavigateKey) => void;
   onSignOut?: () => void;
-  className?: string;
 };
 
-export function UserMenu({
-  user,
-  onNavigate,
-  onSignOut,
-  className = '',
-}: UserMenuProps) {
+const AVATAR_FALLBACK =
+  'https://api.dicebear.com/7.x/thumbs/svg?seed=user&radius=50';
+
+export function UserMenu({ user, onNavigate, onSignOut }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Fallback dla dark/light jeśli nie podasz propsów
-
-  // Zamykaj po kliknięciu poza i po Esc
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (!open) return;
@@ -63,29 +60,27 @@ export function UserMenu({
     };
   }, [open]);
 
+  const avatarBtnLabel = `Open user menu for ${user.name}`;
+
   return (
     <>
-      <div className={`relative ${className}`}>
-        {/* AVATAR BUTTON */}
+      <div className="relative shrink-0">
         <button
           ref={btnRef}
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="menu"
           aria-expanded={open}
+          aria-label={avatarBtnLabel}
           className="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white p-1 pr-2 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           <img
-            src={
-              user.avatarUrl ||
-              'https://api.dicebear.com/7.x/thumbs/svg?seed=user&radius=50'
-            }
-            alt=""
+            src={user.avatarUrl || AVATAR_FALLBACK}
+            alt={user.name}
             className="h-6 w-6 rounded-full object-cover"
           />
           <ChevronDown className="h-4 w-4 opacity-60" />
         </button>
 
-        {/* MENU */}
         <AnimatePresence>
           {open && (
             <motion.div
@@ -97,10 +92,9 @@ export function UserMenu({
               transition={{ duration: 0.12 }}
               className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-0.5 shadow-2xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900"
             >
-              {/* Header */}
               <div className="flex items-center gap-3 rounded-xl px-3 py-3">
                 <img
-                  src={user.avatarUrl}
+                  src={user.avatarUrl || AVATAR_FALLBACK}
                   alt=""
                   className="h-10 w-10 rounded-full object-cover"
                 />
@@ -118,7 +112,6 @@ export function UserMenu({
 
               <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" />
 
-              {/* Items */}
               <MenuBtn
                 icon={<CreditCard className="h-4 w-4" />}
                 label="Billing"
@@ -137,10 +130,8 @@ export function UserMenu({
 
               <div className="my-1 h-px w-full bg-zinc-200 dark:bg-zinc-800" />
 
-              {/* Dark mode row */}
               <div className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
                 <span>Dark mode</span>
-
                 <ThemeSwitchConnected />
               </div>
 
@@ -179,7 +170,6 @@ export function UserMenu({
         </AnimatePresence>
       </div>
 
-      {/* MODAL POTWIERDZENIA */}
       <SignOutConfirmModal
         open={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
@@ -192,7 +182,6 @@ export function UserMenu({
   );
 }
 
-/* Pojedynczy wiersz menu */
 function MenuBtn({
   icon,
   label,

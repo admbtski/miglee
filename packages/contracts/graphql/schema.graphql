@@ -5,6 +5,85 @@ scalar DateTime
 scalar JSON
 scalar JSONObject
 
+# ------------------------------------------------------------------------------
+# Enums
+# ------------------------------------------------------------------------------
+
+"Visibility of an intent"
+enum Visibility {
+  PUBLIC
+  HIDDEN
+}
+
+"Meeting mode / capacity grouping"
+enum Mode {
+  ONE_TO_ONE
+  GROUP
+}
+
+"How the meeting happens"
+enum MeetingKind {
+  ONSITE
+  ONLINE
+  HYBRID
+}
+
+"User role (global)"
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
+}
+
+"Skill / difficulty level (enum array in DB)"
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+"Per-intent role"
+enum IntentMemberRole {
+  OWNER
+  MODERATOR
+  PARTICIPANT
+}
+
+"Membership lifecycle status"
+enum IntentMemberStatus {
+  JOINED
+  PENDING
+  INVITED
+  REJECTED
+  BANNED
+  LEFT
+  KICKED
+}
+
+"High-level notification category/kind"
+enum NotificationKind {
+  INTENT_CREATED
+  INTENT_UPDATED
+  INTENT_CANCELED
+  INTENT_INVITE
+  INTENT_MEMBERSHIP_APPROVED
+  INTENT_MEMBERSHIP_REJECTED
+  INTENT_REMINDER
+  SYSTEM
+}
+
+"Polymorphic target for notifications (deep-link)"
+enum NotificationEntity {
+  INTENT
+  MESSAGE
+  PAYMENT
+  INVOICE
+  USER
+  SYSTEM
+  OTHER
+}
+
+"Intent dynamic status (computed on read)"
 enum IntentStatus {
   ANY
   ONGOING
@@ -14,96 +93,45 @@ enum IntentStatus {
   AVAILABLE
 }
 
-"""
-Visibility of an intent
-"""
-enum Visibility {
-  PUBLIC
-  HIDDEN
+# ------------------------------------------------------------------------------
+# Types
+# ------------------------------------------------------------------------------
+
+"Session"
+type SessionUser {
+  id: String!
+  name: String!
+  email: String!
+  role: Role!
+  imageUrl: String!
+  verifiedAt: DateTime
 }
 
-"""
-Meeting mode / capacity grouping
-"""
-enum Mode {
-  ONE_TO_ONE
-  GROUP
-}
-
-"""
-How the meeting happens
-"""
-enum MeetingKind {
-  ONSITE
-  ONLINE
-  HYBRID
-}
-
-"""
-Notification kind – extensible
-"""
-enum NotificationKind {
-  INTENT_CREATED
-  # add more kinds over time, e.g. INTENT_UPDATED, INVITE, REMINDER, ...
-}
-
-"""
-User role
-"""
-enum Role {
-  ADMIN
-  MODERATOR
-  USER
-}
-
-"""
-Skill / difficulty level (enum array in DB)
-"""
-enum Level {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-}
-
-"""
-Basic demo entity kept from your initial setup
-"""
-type Event {
-  id: ID!
-  title: String!
-  createdAt: DateTime!
-}
-
-"""
-User
-"""
+"User"
 type User {
   id: ID!
   email: String!
-  name: String
-  imageUrl: String
+  name: String!
+  imageUrl: String!
   role: Role!
   verifiedAt: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
 }
 
-"""
-Category with translated names in JSON, e.g. { "pl": "...", "de": "...", "en": "..." }
-"""
+"Category with translated names in JSON, e.g. { pl,de,en }"
 type Category {
   id: ID!
   slug: String!
-  names: JSON!
+  # Prefer JSONObject to guarantee an object (key->value). Switch to JSON if you truly allow any JSON value.
+  names: JSONObject!
   icon: String
   color: String
   createdAt: DateTime!
   updatedAt: DateTime!
 }
 
-"""
-Tag used for search/filtering
-"""
+"Tag used for search/filtering"
 type Tag {
   id: ID!
   label: String!
@@ -112,9 +140,23 @@ type Tag {
   updatedAt: DateTime!
 }
 
-"""
-Intent
-"""
+"Intent membership (user-in-intent)"
+type IntentMember {
+  id: ID!
+  intentId: ID!
+  userId: ID!
+  role: IntentMemberRole!
+  status: IntentMemberStatus!
+
+  addedBy: User
+  joinedAt: DateTime
+  leftAt: DateTime
+  note: String
+
+  user: User!
+}
+
+"Intent"
 type Intent {
   id: ID!
   title: String!
@@ -139,49 +181,74 @@ type Intent {
   lat: Float
   lng: Float
   address: String
+  placeId: String
   radiusKm: Float
 
   # PostgreSQL enum[]
   levels: [Level!]!
 
-  authorId: ID
-  author: User
+  # Derived convenience (computed by resolver):
+  # - owner: the member with role=OWNER
+  owner: User
+  # Access policy (recommended): OWNER/MODERATOR can see all statuses; others see JOINED only (enforced in resolvers).
+  members: [IntentMember!]!
+
+  # Computed helpers (resolver-level, not stored):
+  joinedCount: Int!
+  isFull: Boolean!
+  hasStarted: Boolean!
+  hasEnded: Boolean!
 
   createdAt: DateTime!
   updatedAt: DateTime!
 }
 
-"""
-Notification stored in DB, assigned to a recipient and optionally linked to an intent
-"""
+"Notification stored in DB; polymorphic target"
 type Notification {
   id: ID!
   kind: NotificationKind!
-  message: String
-  payload: JSON
+  title: String
+  body: String
+  data: JSON
+  dedupeKey: String
   readAt: DateTime
   createdAt: DateTime!
 
-  recipientId: ID!
   recipient: User!
+  actor: User
 
-  intentId: ID
+  entityType: NotificationEntity!
+  entityId: ID
+
+  # Convenience: resolved when entityType=INTENT (join on intentId or entityId)
   intent: Intent
 }
 
-"""
-Inputs
-"""
+# Simple aggregated counters per intent; useful for badges
+type IntentMemberStats {
+  joined: Int!
+  pending: Int!
+  invited: Int!
+  rejected: Int!
+  banned: Int!
+  left: Int!
+  kicked: Int!
+}
+
+# ------------------------------------------------------------------------------
+# Inputs
+# ------------------------------------------------------------------------------
+
 input CreateCategoryInput {
   slug: String!
-  names: JSON!
+  names: JSONObject! # keep aligned with Category.names
   icon: String
   color: String
 }
 
 input UpdateCategoryInput {
   slug: String
-  names: JSON
+  names: JSONObject
   icon: String
   color: String
 }
@@ -200,29 +267,30 @@ input LocationInput {
   lat: Float
   lng: Float
   address: String
+  placeId: String
   radiusKm: Float
 }
 
 input CreateIntentInput {
   title: String!
-  categoryIds: [ID!]! # was: interestIds
+  categoryIds: [ID!]!
   tagIds: [ID!]
   description: String
   notes: String
 
-  visibility: Visibility!
-  mode: Mode!
-  min: Int!
-  max: Int!
+  visibility: Visibility! = PUBLIC
+  mode: Mode! = GROUP
+  min: Int! = 2
+  max: Int! = 50
 
   startAt: DateTime!
   endAt: DateTime!
-  allowJoinLate: Boolean!
+  allowJoinLate: Boolean! = true
 
-  meetingKind: MeetingKind!
+  meetingKind: MeetingKind! = ONSITE
   onlineUrl: String
 
-  authorId: ID
+  ownerId: ID! # server will create OWNER membership (JOINED) for this user
   location: LocationInput
   levels: [Level!]
 }
@@ -250,19 +318,54 @@ input UpdateIntentInput {
   levels: [Level!]
 }
 
-"""
-Queries
-"""
+input InviteMemberInput {
+  intentId: ID!
+  userId: ID!
+}
+
+input ApproveMembershipInput {
+  intentId: ID!
+  userId: ID!
+}
+
+input RejectMembershipInput {
+  intentId: ID!
+  userId: ID!
+  note: String
+}
+
+input KickMemberInput {
+  intentId: ID!
+  userId: ID!
+  note: String
+}
+
+input UpdateMemberRoleInput {
+  intentId: ID!
+  userId: ID!
+  role: IntentMemberRole!
+}
+
+# ------------------------------------------------------------------------------
+# Queries
+# ------------------------------------------------------------------------------
+
 type Query {
-  events(limit: Int = 10): [Event!]!
+  # Notifications feed; server should enforce recipientId === current user (unless admin policy applies).
+  notifications(
+    recipientId: ID!
+    unreadOnly: Boolean = false
+    entityType: NotificationEntity
+    limit: Int = 50
+    offset: Int = 0
+  ): [Notification!]!
 
-  notifications(recipientId: ID): [Notification!]!
-
+  # Intents listing with rich filters. `status=FULL` requires counting JOINED vs `max` (handle in resolver).
   intents(
     limit: Int = 20
     offset: Int = 0
     visibility: Visibility
-    authorId: ID
+    ownerId: ID
     upcomingAfter: DateTime
     endingBefore: DateTime
     categoryIds: [ID!]
@@ -273,9 +376,32 @@ type Query {
     status: IntentStatus
     verifiedOnly: Boolean
     distanceKm: Int
+    near: LocationInput
   ): [Intent!]!
 
   intent(id: ID!): Intent
+
+  # Intent members queries; resolvers should restrict visibility for non-mods to JOINED only.
+  intentMembers(
+    intentId: ID!
+    status: IntentMemberStatus
+    role: IntentMemberRole
+    limit: Int = 50
+    offset: Int = 0
+  ): [IntentMember!]!
+
+  intentMember(intentId: ID!, userId: ID!): IntentMember
+
+  # Current user's memberships across intents
+  myMemberships(
+    status: IntentMemberStatus
+    role: IntentMemberRole
+    limit: Int = 50
+    offset: Int = 0
+  ): [IntentMember!]!
+
+  # Aggregated counters (owner/mod get full distribution; others get joined-only)
+  intentMemberStats(intentId: ID!): IntentMemberStats!
 
   categories(query: String, limit: Int = 50): [Category!]!
   category(id: ID, slug: String): Category
@@ -285,14 +411,16 @@ type Query {
 
   users(limit: Int = 50, offset: Int = 0): [User!]!
   user(id: ID!): User
+
+  me: SessionUser
 }
 
-"""
-Mutations
-"""
-type Mutation {
-  addNotification(message: String): Notification
+# ------------------------------------------------------------------------------
+# Mutations
+# ------------------------------------------------------------------------------
 
+type Mutation {
+  # categories & tags
   createCategory(input: CreateCategoryInput!): Category!
   updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
   deleteCategory(id: ID!): Boolean!
@@ -301,14 +429,46 @@ type Mutation {
   updateTag(id: ID!, input: UpdateTagInput!): Tag!
   deleteTag(id: ID!): Boolean!
 
+  # intents
   createIntent(input: CreateIntentInput!): Intent!
   updateIntent(id: ID!, input: UpdateIntentInput!): Intent!
   deleteIntent(id: ID!): Boolean!
+
+  # memberships (user endpoints)
+  requestJoinIntent(intentId: ID!): IntentMember! # current user -> PENDING or JOINED (depending on policy)
+  cancelJoinRequest(intentId: ID!): Boolean! # idempotent; for JOINED use leaveIntent
+  leaveIntent(intentId: ID!): Boolean!
+
+  # membership (owner/mod endpoints)
+  inviteIntent(input: InviteMemberInput!): IntentMember! # owner/mod invites user
+  approveMembership(input: ApproveMembershipInput!): IntentMember!
+  rejectMembership(input: RejectMembershipInput!): IntentMember!
+  kickMember(input: KickMemberInput!): IntentMember!
+  updateMemberRole(input: UpdateMemberRoleInput!): IntentMember!
+
+  # notifications
+  addNotification(
+    recipientId: ID!
+    kind: NotificationKind! = SYSTEM
+    title: String
+    body: String
+    data: JSON
+    entityType: NotificationEntity! = OTHER
+    entityId: ID
+  ): Notification!
+
+  markNotificationRead(id: ID!): Boolean!
+  deleteNotification(id: ID!): Boolean!
+  markAllNotificationsRead(recipientId: ID!): Int! # returns count
+  # dev only
+  devLogin(name: String!): SessionUser
+  devLogout: Boolean!
 }
 
-"""
-Subscriptions (scoped per recipient)
-"""
+# ------------------------------------------------------------------------------
+# Subscriptions (scoped per recipient)
+# ------------------------------------------------------------------------------
+
 type Subscription {
   notificationAdded(recipientId: ID!): Notification!
 }

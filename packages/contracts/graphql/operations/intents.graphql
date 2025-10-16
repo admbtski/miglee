@@ -3,7 +3,7 @@ query GetIntents(
   $limit: Int = 20
   $offset: Int = 0
   $visibility: Visibility
-  $authorId: ID
+  $ownerId: ID
   $upcomingAfter: DateTime
   $endingBefore: DateTime
   $categoryIds: [ID!]
@@ -14,12 +14,13 @@ query GetIntents(
   $status: IntentStatus
   $verifiedOnly: Boolean
   $distanceKm: Int
+  $near: LocationInput
 ) {
   intents(
     limit: $limit
     offset: $offset
     visibility: $visibility
-    authorId: $authorId
+    ownerId: $ownerId
     upcomingAfter: $upcomingAfter
     endingBefore: $endingBefore
     categoryIds: $categoryIds
@@ -30,6 +31,7 @@ query GetIntents(
     status: $status
     verifiedOnly: $verifiedOnly
     distanceKm: $distanceKm
+    near: $near
   ) {
     ...IntentCore
   }
@@ -41,7 +43,7 @@ query GetIntent($id: ID!) {
   }
 }
 
-# Mutations
+# Mutations (CRUD)
 mutation CreateIntent($input: CreateIntentInput!) {
   createIntent(input: $input) {
     ...IntentCore

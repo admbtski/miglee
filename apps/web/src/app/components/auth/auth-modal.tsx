@@ -4,13 +4,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { SignInPanel } from './sign-in-panel';
-import { SignUpPanel } from './sign-up-panel';
+import { SignUpPanel } from './sign-up-panel'; // zakładam, że już masz
 
 export type AuthMode = 'signin' | 'signup';
 
 type SubmitPayload = {
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
   mode: AuthMode;
   username?: string;
   remember?: boolean;
@@ -18,29 +18,21 @@ type SubmitPayload = {
 
 type Props = {
   open?: boolean;
-  /** Optional: controlled mode from outside */
   mode?: AuthMode;
   onModeChange?: (m: AuthMode) => void;
-
-  /** Uncontrolled alias coming from Navbar */
   defaultTab?: 'signin' | 'signup';
-
   onClose: () => void;
-
   onSubmit?: (payload: SubmitPayload) => void;
   onSocial?: (
     p: 'google' | 'github' | 'linkedin' | 'facebook' | 'apple' | 'twitter'
   ) => void;
 };
 
-/** Backdrop fade */
 const overlayVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
   exit: { opacity: 0 },
 } as const;
-
-/** Card pop-in/out */
 const cardVariants = {
   hidden: { opacity: 0, y: 24, scale: 0.98 },
   visible: {
@@ -51,8 +43,6 @@ const cardVariants = {
   },
   exit: { opacity: 0, y: 16, scale: 0.98, transition: { duration: 0.2 } },
 } as const;
-
-/** Panel slide when switching between tabs */
 const panelVariants = {
   hidden: { opacity: 0, x: 12 },
   visible: {
@@ -73,23 +63,15 @@ export function AuthModal({
   onSocial = () => {},
 }: Props) {
   const prefersReducedMotion = useReducedMotion();
-
-  // Keep mounted until exit animation completes (prevents scroll/layout glitches)
   const [mounted, setMounted] = useState(open);
-
-  // Controlled/uncontrolled mode
   const [internalMode, setInternalMode] = useState<AuthMode>(mode ?? 'signin');
 
   useEffect(() => {
     if (mode) setInternalMode(mode);
   }, [mode]);
-
-  // Mount when opened
   useEffect(() => {
     if (open) setMounted(true);
   }, [open]);
-
-  // Set initial tab for uncontrolled usage
   useEffect(() => {
     if (open && !mode && defaultTab) setInternalMode(defaultTab);
   }, [open, defaultTab, mode]);
@@ -102,7 +84,6 @@ export function AuthModal({
     [mode, onModeChange]
   );
 
-  /** Shared fields across panels so values persist when switching */
   const [email, setEmail] = useState('');
   const [pwd, setPwd] = useState('');
   const [username, setUsername] = useState('');
@@ -110,15 +91,14 @@ export function AuthModal({
 
   const handleSubmit = useCallback(() => {
     onSubmit?.({
-      email,
+      email: internalMode === 'signup' && email ? email : undefined,
+      username,
       password: pwd,
       mode: internalMode,
-      username: internalMode === 'signup' && username ? username : undefined,
       remember: internalMode === 'signin' ? remember : undefined,
     });
   }, [email, pwd, internalMode, username, remember, onSubmit]);
 
-  /** Keyboard shortcuts: Esc to close, ⌘/Ctrl + Enter to submit (only when open) */
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -132,19 +112,13 @@ export function AuthModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose, handleSubmit]);
 
-  /**
-   * Scroll lock + scrollbar compensation.
-   * Store/restore previous inline styles safely.
-   */
   useEffect(() => {
     if (!mounted) return;
     const prevOverflow = document.body.style.overflow;
     const prevPaddingRight = document.body.style.paddingRight;
-
     const sbw = window.innerWidth - document.documentElement.clientWidth;
     if (sbw > 0) document.body.style.paddingRight = `${sbw}px`;
     document.body.style.overflow = 'hidden';
-
     return () => {
       document.body.style.overflow = prevOverflow;
       document.body.style.paddingRight = prevPaddingRight;
@@ -153,15 +127,11 @@ export function AuthModal({
 
   const titleId = useId();
   const descId = useId();
-
-  /** Close only when clicking the backdrop, not any child */
   const onBackdropMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.currentTarget === e.target) onClose();
   };
 
   const title = internalMode === 'signin' ? 'Zaloguj się' : 'Utwórz konto';
-
-  // Don't render once exit animation has completed
   if (!mounted && !open) return null;
 
   return (
@@ -196,7 +166,6 @@ export function AuthModal({
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0 } : {}}
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-5">
               <h2 id={titleId} className="text-2xl font-semibold">
                 {title}
@@ -214,12 +183,10 @@ export function AuthModal({
               </button>
             </div>
 
-            {/* Divider */}
             <div className="px-6">
               <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" />
             </div>
 
-            {/* Content */}
             <div className="px-6 pb-6">
               <p id={descId} className="sr-only">
                 {internalMode === 'signin'
@@ -239,8 +206,8 @@ export function AuthModal({
                     transition={prefersReducedMotion ? { duration: 0 } : {}}
                   >
                     <SignInPanel
-                      email={email}
-                      setEmail={setEmail}
+                      username={username}
+                      setUsername={setUsername}
                       password={pwd}
                       setPassword={setPwd}
                       remember={remember}
@@ -248,6 +215,7 @@ export function AuthModal({
                       onSubmit={handleSubmit}
                       onGotoSignup={() => setMode('signup')}
                       onSocial={onSocial}
+                      requirePassword={false}
                     />
                   </motion.div>
                 ) : (

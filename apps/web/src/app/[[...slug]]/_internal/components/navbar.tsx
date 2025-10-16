@@ -18,6 +18,9 @@ import { AuthModal } from '@/app/components/auth/auth-modal';
 import { NavDrawer } from './nav-drawer';
 import { UserMenu } from './user-menu';
 import { CreateIntentModal } from '@/app/components/intent/create/components/create-intent-modal';
+import { AuthModalDev } from '@/app/components/auth/auth-modal-dev';
+import { UserMenuControlled } from './user-menu-controlled';
+import { useMeQuery } from '@/hooks/auth';
 
 type NavbarProps = {
   q: string;
@@ -37,9 +40,11 @@ export function Navbar({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
-  const [authDefaultTab, setAuthDefaultTab] = useState<'login' | 'register'>(
-    'login'
+  const [authDefaultTab, setAuthDefaultTab] = useState<'signin' | 'signup'>(
+    'signin'
   );
+
+  const { data } = useMeQuery();
 
   return (
     <>
@@ -63,7 +68,7 @@ export function Navbar({
                   <SearchSegment
                     icon={<Search className="h-5 w-5 opacity-60" />}
                     value={q}
-                    placeholder="Search: Job title, company, keyword"
+                    placeholder="Search.."
                     className="flex-1"
                     onClick={onOpenFilters}
                   />
@@ -124,25 +129,23 @@ export function Navbar({
               Post an event
             </button>
 
-            <button
-              onClick={() => {
-                setAuthDefaultTab('login');
-                setAuthOpen(true);
-              }}
-              className="rounded-full bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
-            >
-              Sign in
-            </button>
+            {!data?.me && (
+              <button
+                onClick={() => {
+                  setAuthDefaultTab('signin');
+                  setAuthOpen(true);
+                }}
+                className="rounded-full bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+              >
+                Sign in
+              </button>
+            )}
 
-            <UserMenu
-              user={{
-                name: 'Jan Kowalski',
-                email: 'jan@kowalski.pl',
-                avatarUrl: 'https://picsum.photos/id/99/200/300',
-              }}
-              onNavigate={(key) => console.log('navigate:', key)}
-              onSignOut={() => console.log('sign out')}
-            />
+            {data?.me && (
+              <UserMenuControlled
+                onNavigate={(key) => console.log('navigate:', key)}
+              />
+            )}
 
             {[
               { icon: Heart, label: 'Favourites' },
@@ -163,7 +166,7 @@ export function Navbar({
           <div className="flex flex-1 items-center justify-end gap-2 md:hidden">
             <button
               onClick={() => {
-                setAuthDefaultTab('login');
+                setAuthDefaultTab('signin');
                 setAuthOpen(true);
               }}
               className="rounded-full bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
@@ -185,7 +188,13 @@ export function Navbar({
       <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Modals */}
-      <AuthModal
+      {/* <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        defaultTab={authDefaultTab}
+      /> */}
+
+      <AuthModalDev
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         defaultTab={authDefaultTab}

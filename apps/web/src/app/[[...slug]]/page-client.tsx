@@ -1,118 +1,33 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
 
-import { Navbar } from './_internal/components/navbar';
-import { SortControl, SortKey } from './_internal/components/sort-control';
-import { MapImagePanel } from './_internal/components/map-image-panel';
-import { Footer } from './_internal/components/footer';
 import { EventCard } from './_internal/components/event-card';
+import { Footer } from './_internal/components/footer';
+import { MapImagePanel } from './_internal/components/map-image-panel';
+import { Navbar } from './_internal/components/navbar';
+import { SortControl } from './_internal/components/sort-control';
 
 import { FilterModal } from '../components/filter/components/filter-modal';
+import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
 import { useCommittedFilters } from './_internal/hooks/useCommittedFilters';
 import { useCommittedSort } from './_internal/hooks/useCommittedSort';
-import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
 
-import { useIntentsQuery } from '@/hooks/intents';
-import { useGetCategoriesQuery } from '@/hooks/categories';
 import {
-  IntentStatus,
   GetIntentsQueryVariables,
+  IntentMember,
+  IntentStatus,
+  Visibility,
 } from '@/graphql/__generated__/react-query';
+import { useGetCategoriesQuery } from '@/hooks/categories';
+import { useIntentsQuery } from '@/hooks/intents';
 
-/* ───────────────────────────────── cities + utils ────────────────────────── */
-
-type CityName = 'Kraków' | 'Warszawa' | 'Gdańsk' | 'Wrocław' | 'Poznań';
-
-const CITIES = [
-  { name: 'Kraków', lat: 50.0647, lon: 19.945 },
-  { name: 'Warszawa', lat: 52.2297, lon: 21.0122 },
-  { name: 'Gdańsk', lat: 54.352, lon: 18.6466 },
-  { name: 'Wrocław', lat: 51.1079, lon: 17.0385 },
-  { name: 'Poznań', lat: 52.4064, lon: 16.9252 },
-] as const;
-
-type UIItem = {
-  id: string;
-  title: string;
-  startISO: string;
-  endISO: string;
-  avatarUrl: string;
-  organizerName: string;
-  description: string;
-  location: string;
-  joined: number;
-  min: number;
-  max: number;
-  tags: string[];
-
-  city?: CityName;
-  lat?: number;
-  lon?: number;
-  category?: string;
-  salaryPLN?: number;
-};
-
-/* ───────────── MAPOWANIE API -> EventCard + pola filtrów ───────────── */
-
-type GqlIntent = NonNullable<
-  NonNullable<ReturnType<typeof useIntentsQuery>['data']>['intents']
->[number];
-
-function firstCategorySlug(i: GqlIntent): string | undefined {
-  return i.categories?.[0]?.slug;
-}
-
-function extractCityFromAddress(address?: string | null): CityName | undefined {
-  if (!address) return;
-  const part = address.split(',')[1]?.trim() || address.split(',')[0]?.trim();
-  const match = CITIES.find((c) =>
-    part?.toLowerCase().includes(c.name.toLowerCase())
-  );
-  return match?.name;
-}
-
-function mapIntentToItem(i: GqlIntent): UIItem {
-  const startISO = String(i.startAt);
-  const endISO = String(i.endAt);
-
-  const tagStrings = [
-    ...(i.categories?.map((c) => c.slug) ?? []),
-    ...(i.tags?.map((t) => t.slug) ?? []),
-  ];
-
-  return {
-    id: i.id,
-    title: i.title,
-    startISO,
-    endISO,
-    avatarUrl: i.author?.imageUrl ?? 'https://i.pravatar.cc/150?img=12',
-    organizerName: i.author?.name ?? i.author?.email ?? 'Unknown',
-    description: i.description ?? '—',
-    location:
-      i.meetingKind === 'ONLINE'
-        ? (i.onlineUrl ?? 'Online')
-        : (i.address ?? 'TBA'),
-    joined: 0,
-    min: i.min,
-    max: i.max,
-    tags: tagStrings,
-    // dla filtrów/sorta
-    city: extractCityFromAddress(i.address ?? undefined),
-    lat: typeof i.lat === 'number' ? i.lat : undefined,
-    lon: typeof i.lng === 'number' ? i.lng : undefined,
-    category: firstCategorySlug(i),
-    salaryPLN: undefined,
-  };
-}
+const upcomingAfterDefault = new Date().toISOString();
 
 /* ─────────────────────────────── PAGE ───────────────────────────────── */
 
 export function IntentsPage() {
-  const upcomingAfterDefault = useMemo(() => new Date().toISOString(), []);
-
-  // filtry ze stanu URL
   const {
     q,
     city,
@@ -130,6 +45,7 @@ export function IntentsPage() {
   } = useCommittedFilters();
 
   const { data: categoriesData } = useGetCategoriesQuery();
+
   const slugToId = useMemo(() => {
     const map = new Map<string, string>();
     (categoriesData?.categories ?? []).forEach((c) => {
@@ -146,33 +62,22 @@ export function IntentsPage() {
     return ids.length ? ids : undefined;
   }, [categorySlugs, slugToId]);
 
-  // scal słowa kluczowe: q + keywords + tags -> keywords (dopóki nie mamy tagIds)
-  const mergedKeywords = useMemo(() => {
-    const s = new Set<string>();
-    if (q?.trim()) s.add(q.trim());
-    for (const k of keywords ?? []) if (k?.trim()) s.add(k.trim());
-    for (const t of tags ?? []) if (t?.trim()) s.add(t.trim());
-    const arr = Array.from(s);
-    return arr.length ? arr : undefined;
-  }, [q, keywords, tags]);
-
   // FINALNE ZMIENNE DO ZAPYTANIA (zgodne ze schematem)
   const queryVars = useMemo<GetIntentsQueryVariables>(() => {
     return {
       limit: 60,
       offset: 0,
-      visibility: 'PUBLIC',
+      visibility: Visibility.Public,
       upcomingAfter: startISO ?? upcomingAfterDefault,
-      endingBefore: endISO ?? undefined,
-
-      categoryIds,
-      // tagIds: undefined, // dodasz gdy zintegrujesz slugi tagów -> id
-      kinds: kinds.length ? (kinds as any) : undefined,
-      levels: levels.length ? (levels as any) : undefined,
-      keywords: mergedKeywords,
-      status: status !== IntentStatus.Any ? status : undefined,
-      verifiedOnly: verifiedOnly || undefined,
-      distanceKm: city ? distanceKm : undefined,
+      endingBefore: endISO,
+      categoryIds: categoryIds ?? [],
+      tagIds: tags,
+      kinds: kinds.length ? kinds : [],
+      levels: levels.length ? levels : [],
+      keywords: [],
+      status: status !== IntentStatus.Any ? status : IntentStatus.Any,
+      verifiedOnly: verifiedOnly || false,
+      distanceKm: city ? distanceKm : null,
     };
   }, [
     startISO,
@@ -181,7 +86,6 @@ export function IntentsPage() {
     categoryIds,
     kinds,
     levels,
-    mergedKeywords,
     status,
     verifiedOnly,
     city,
@@ -195,14 +99,8 @@ export function IntentsPage() {
     error,
   } = useIntentsQuery(queryVars, {
     enabled: true,
-    // przy zmianach filtrów nie miga lista
     placeholderData: (prev) => prev,
   });
-
-  const mapped = useMemo<UIItem[]>(
-    () => (intentsData?.intents ?? []).map(mapIntentToItem),
-    [intentsData]
-  );
 
   const { sort, setSort } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
@@ -260,7 +158,6 @@ export function IntentsPage() {
             : 'grid-cols-1'
         }`}
       >
-        {/* LEFT */}
         <motion.section layout="position" className="min-w-0">
           <div className="sticky z-30 border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
             <div className="flex items-center justify-between py-2 text-sm">
@@ -272,7 +169,8 @@ export function IntentsPage() {
                     : `All events in ${city || 'Global'} — `}
                 {!isLoading && !error && (
                   <>
-                    <b>{mapped.length}</b> event{mapped.length === 1 ? '' : 's'}
+                    <b>{intentsData?.intents.length}</b> event
+                    {intentsData?.intents.length === 1 ? '' : 's'}
                     {isFetching && (
                       <span className="ml-2 opacity-60">updating…</span>
                     )}
@@ -289,12 +187,13 @@ export function IntentsPage() {
             </div>
           </div>
 
-          {/* Empty / error states */}
-          {!isLoading && !error && mapped?.length === 0 && (
-            <div className="mt-6 text-sm opacity-70">
-              Brak wyników dla wybranych filtrów.
-            </div>
-          )}
+          {!isLoading &&
+            (!error as any) &&
+            intentsData?.intents?.length === 0 && (
+              <div className="mt-6 text-sm opacity-70">
+                Brak wyników dla wybranych filtrów.
+              </div>
+            )}
           {error && (
             <div className="mt-6 text-sm text-red-600 dark:text-red-400">
               {(error as any)?.message ?? 'Unknown error'}
@@ -312,19 +211,27 @@ export function IntentsPage() {
                     className="w-full h-48 rounded-2xl bg-zinc-100 dark:bg-zinc-900 animate-pulse"
                   />
                 ))
-              : mapped.map((item) => (
+              : intentsData?.intents.map((item) => (
                   <EventCard
                     key={item.id}
-                    startISO={item.startISO}
-                    endISO={item.endISO}
-                    avatarUrl={item.avatarUrl}
-                    organizerName={item.organizerName}
-                    description={item.title}
-                    location={item.location}
-                    joined={item.joined}
+                    startISO={item.startAt}
+                    endISO={item.endAt}
+                    avatarUrl={
+                      item.owner?.imageUrl ?? 'https://i.pravatar.cc/150?img=12'
+                    }
+                    organizerName={
+                      item.owner?.name ?? item.owner?.email ?? 'Unknown'
+                    }
+                    description={item.description ?? '-'}
+                    address={item.address!}
+                    onlineUrl={item.onlineUrl!}
+                    joinedCount={item.joinedCount}
                     min={item.min}
                     max={item.max}
-                    tags={item.tags}
+                    tags={item.tags.map((t) => t.label)}
+                    categories={item.categories.map((c) => c.slug)}
+                    verifiedAt={item.owner?.verifiedAt as string}
+                    members={item.members as IntentMember[]}
                     onJoin={() => {
                       console.log('join intent', item.id);
                     }}
@@ -333,7 +240,6 @@ export function IntentsPage() {
           </motion.div>
         </motion.section>
 
-        {/* RIGHT MAP */}
         <AnimatePresence>
           {mapVisible && (
             <motion.aside

@@ -8,7 +8,6 @@ import { WebSocket } from 'ws';
 import { config } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers';
-import { userMock } from '../mock/user-mock';
 import { redisEmitter } from '../lib/redis';
 import opentelemetry from '@opentelemetry/api';
 import { getOperationAST } from 'graphql';
@@ -60,7 +59,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
 
         return {
           req,
-          user: userMock.user,
+          // user: userMock.user,
           pubsub: fastify.graphql.pubsub,
         };
       },

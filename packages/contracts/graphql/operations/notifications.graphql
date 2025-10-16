@@ -1,18 +1,54 @@
-# Query (optionally pass recipientId; server may fall back to ctx)
-query GetNotifications($recipientId: ID) {
-  notifications(recipientId: $recipientId) {
+# Queries
+query GetNotifications(
+  $recipientId: ID!
+  $unreadOnly: Boolean = false
+  $entityType: NotificationEntity
+  $limit: Int = 50
+  $offset: Int = 0
+) {
+  notifications(
+    recipientId: $recipientId
+    unreadOnly: $unreadOnly
+    entityType: $entityType
+    limit: $limit
+    offset: $offset
+  ) {
     ...NotificationCore
   }
 }
 
-# Demo mutation kept from earlier API
-mutation AddNotification($message: String) {
-  addNotification(message: $message) {
+# Mutations
+mutation AddNotification(
+  $recipientId: ID!
+  $kind: NotificationKind = SYSTEM
+  $title: String
+  $body: String
+  $data: JSON
+  $entityType: NotificationEntity = OTHER
+  $entityId: ID
+) {
+  addNotification(
+    recipientId: $recipientId
+    kind: $kind
+    title: $title
+    body: $body
+    data: $data
+    entityType: $entityType
+    entityId: $entityId
+  ) {
     ...NotificationCore
   }
 }
 
-# Subscription scoped by recipient
+mutation MarkNotificationRead($id: ID!) {
+  markNotificationRead(id: $id)
+}
+
+mutation MarkAllNotificationsRead($recipientId: ID!) {
+  markAllNotificationsRead(recipientId: $recipientId)
+}
+
+# Subscription
 subscription NotificationAdded($recipientId: ID!) {
   notificationAdded(recipientId: $recipientId) {
     ...NotificationCore

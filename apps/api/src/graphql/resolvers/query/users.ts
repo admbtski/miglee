@@ -32,6 +32,7 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
       role: mapRole(u.role),
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,
+      verifiedAt: u.verifiedAt,
     }));
   }
 );
@@ -50,6 +51,7 @@ export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
           role: mapRole(u.role),
           createdAt: u.createdAt,
           updatedAt: u.updatedAt,
+          verifiedAt: u.verifiedAt,
         }
       : null;
   }

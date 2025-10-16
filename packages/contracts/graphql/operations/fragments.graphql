@@ -1,3 +1,12 @@
+fragment SessionUserCore on SessionUser {
+  id
+  name
+  email
+  role
+  imageUrl
+  verifiedAt
+}
+
 fragment UserCore on User {
   id
   email
@@ -12,7 +21,7 @@ fragment UserCore on User {
 fragment CategoryCore on Category {
   id
   slug
-  names
+  names # JSONObject with translated labels by locale
   icon
   color
   createdAt
@@ -27,59 +36,97 @@ fragment TagCore on Tag {
   updatedAt
 }
 
+fragment IntentMemberCore on IntentMember {
+  id
+  role
+  status
+  joinedAt
+  leftAt
+  note
+  user {
+    ...UserCore
+  }
+  addedBy {
+    id
+    name
+    imageUrl
+  }
+}
+
 fragment IntentCore on Intent {
   id
   title
   description
   notes
+
   visibility
   mode
   min
   max
+
   startAt
   endAt
   allowJoinLate
+
   meetingKind
   onlineUrl
+
   lat
   lng
   address
+  placeId
   radiusKm
+
   levels
+
+  # computed helpers (resolver-calculated)
+  joinedCount
+  isFull
+  hasStarted
+  hasEnded
+
   createdAt
   updatedAt
-  authorId
+
   categories {
     ...CategoryCore
   }
   tags {
     ...TagCore
   }
-  author {
+
+  # convenience relations (resolver-calculated / access-controlled)
+  owner {
     ...UserCore
+  }
+  members {
+    ...IntentMemberCore
   }
 }
 
 fragment NotificationCore on Notification {
   id
   kind
-  message
-  payload
+  title
+  body
+  data
+  dedupeKey
+  entityType
+  entityId
   readAt
   createdAt
-  recipientId
+
   recipient {
     ...UserCore
   }
-  intentId
+  actor {
+    ...UserCore
+  }
+
+  # convenience relation when entityType=INTENT
   intent {
     id
     title
+    startAt
   }
-}
-
-fragment EventCore on Event {
-  id
-  title
-  createdAt
 }

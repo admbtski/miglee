@@ -1,5 +1,0 @@
-query GetEvents($limit: Int = 10) {
-  events(limit: $limit) {
-    ...EventCore
-  }
-}

@@ -8,57 +8,66 @@ import {
 } from '../../__generated__/resolvers-types';
 import { mapIntent } from '../helpers';
 
-const LOCK_WINDOW_MS = 6 * 60 * 60 * 1000; // 6h – jak w kliencie
+const LOCK_WINDOW_MS = 6 * 60 * 60 * 1000; // 6h
+
+const INTENT_INCLUDE = {
+  categories: true,
+  tags: true,
+  members: { include: { user: true, addedBy: true } },
+} satisfies Prisma.IntentInclude;
 
 export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
   'intents',
   async (_p, args) => {
+    console.dir({ args });
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
 
     const where: Prisma.IntentWhereInput = {};
     const AND: Prisma.IntentWhereInput[] = [];
 
-    // ── proste pola
-    if (args.visibility) where.visibility = args.visibility;
-    if (args.authorId) where.authorId = args.authorId;
+    if (args.visibility) {
+      where.visibility = args.visibility;
+    }
 
-    if (args.upcomingAfter) {
+    if (args.ownerId)
+      AND.push({
+        members: {
+          some: { role: 'OWNER', userId: args.ownerId },
+        },
+      });
+
+    if (args.upcomingAfter)
       AND.push({ startAt: { gte: args.upcomingAfter as Date } });
-    }
-    if (args.endingBefore) {
+    if (args.endingBefore)
       AND.push({ endAt: { lte: args.endingBefore as Date } });
-    }
 
-    // Kategorie / tagi / poziomy
     if (args.categoryIds?.length) {
-      AND.push({ categories: { some: { id: { in: args.categoryIds } } } });
+      AND.push({ categories: { some: { slug: { in: args.categoryIds } } } });
     }
     if (args.tagIds?.length) {
-      AND.push({ tags: { some: { id: { in: args.tagIds } } } });
+      AND.push({ tags: { some: { slug: { in: args.tagIds } } } });
     }
     if (args.levels?.length) {
-      // Postgres enum[] contains-any
       AND.push({ levels: { hasSome: args.levels } });
     }
-    // Kinds (MeetingKind[])
     if (args.kinds?.length) {
       AND.push({ meetingKind: { in: args.kinds as MeetingKind[] } });
     }
 
-    // ONLY verified authors
     if (args.verifiedOnly) {
       AND.push({
-        author: {
-          // Prisma relacja: user może być null, więc filtrujemy tylko tych z verifiedAt != null
-          is: { verifiedAt: { not: null } },
+        members: {
+          some: {
+            role: 'OWNER',
+            user: { is: { verifiedAt: {} } },
+          },
         },
       });
     }
 
-    // Keywords (AND-logic jak w kliencie: każdy keyword musi wystąpić gdzieś)
-    // Szukamy case-insensitive w: title, description, address, tags.slug/label, categories.slug
+    // Keywords – AND-logic
     if (args.keywords?.length) {
       for (const kw of args.keywords) {
         const containsCI = { contains: kw, mode: 'insensitive' as const };
@@ -78,67 +87,57 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       }
     }
 
-    // Status (bez "FULL" – backend nie zna zajętości; LOCK okno 6h jak w kliencie)
+    // Status (FULL wymaga agregacji – patrz uwagi niżej)
     if (args.status && args.status !== IntentStatus.Any) {
       const now = new Date();
-      const lockFrom = new Date(now.getTime());
       const lockTo = new Date(now.getTime() + LOCK_WINDOW_MS);
 
       switch (args.status) {
         case IntentStatus.Ongoing:
-          AND.push({
-            startAt: { lte: now },
-            endAt: { gte: now },
-          });
+          AND.push({ startAt: { lte: now }, endAt: { gte: now } });
           break;
-
         case IntentStatus.Started:
-          // "Started" w UI = rozpoczęte (ale już NIE trwa), dlatego wykluczamy Ongoing
-          AND.push({
-            startAt: { lt: now },
-            endAt: { lt: now },
-          });
+          AND.push({ startAt: { lt: now }, endAt: { lt: now } });
           break;
-
         case IntentStatus.Locked:
-          // Start w ciągu najbliższych 6h (i jeszcze się nie zaczął)
-          AND.push({
-            startAt: { gt: now, lte: lockTo },
-          });
+          AND.push({ startAt: { gt: now, lte: lockTo } });
           break;
-
         case IntentStatus.Available:
-          // Start później niż okno lock (czyli > now + 6h)
-          AND.push({
-            startAt: { gt: lockTo },
-          });
+          AND.push({ startAt: { gt: lockTo } });
           break;
-
         case IntentStatus.Full:
-          // Brak danych o zapisach/obłożeniu w schemacie -> nie da się odfiltrować.
-          // Zostawiamy bez filtra (alternatywnie można dodać AND.push({ id: '__no_match__' }) by zwrócić pusty zbiór).
+          // Bez kolumny licznikowej/SQL agregacji nie przefiltrujemy tu wiarygodnie.
+          // Rozważ materiał widok / kolumnę denormalizowaną lub osobne zapytanie agregujące.
           break;
-
         default:
           break;
       }
     }
 
-    // Ewentualny filtr na "distanceKm":
-    // W schemacie nie przekazujesz punktu odniesienia (lat/lng użytkownika lub miasta),
-    // więc serwer nie jest w stanie policzyć dystansu haversine.
-    // Jeżeli chcesz, można tu ograniczyć po samym "radiusKm <= distanceKm".
+    // Prosta heurystyka distanceKm (bez punktu odniesienia `near` nie policzymy dystansu)
     if (
       typeof args.distanceKm === 'number' &&
-      Number.isFinite(args.distanceKm)
+      Number.isFinite(args.distanceKm) &&
+      args.near?.lat != null &&
+      args.near?.lng != null
     ) {
+      const lat = args.near.lat!;
+      const lng = args.near.lng!;
+      const km = args.distanceKm;
+
+      // bbox ~1 deg lat ~ 111km; lon zależy od szerokości geograficznej
+      const latDelta = km / 111;
+      const lonDelta =
+        km / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.0001));
+
       AND.push({
-        OR: [
-          // brak radiusu traktujemy jako pasujące (serwer nie wie, czy jest daleko/ blisko)
-          { radiusKm: null },
-          { radiusKm: { lte: args.distanceKm } },
-        ],
+        lat: { gte: lat - latDelta, lte: lat + latDelta },
       });
+      AND.push({
+        lng: { gte: lng - lonDelta, lte: lng + lonDelta },
+      });
+      // Uwaga: to tylko filtr wstępny (bbox). Dokładny dystans (haversine) można zweryfikować w kodzie
+      // po pobraniu wyników lub przez widok SQL/extension.
     }
 
     if (AND.length) where.AND = AND;
@@ -148,9 +147,11 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       take,
       skip,
       orderBy: [{ startAt: 'asc' }, { createdAt: 'desc' }],
-      include: { author: true, categories: true, tags: true },
+      include: INTENT_INCLUDE,
     });
 
+    // Jeżeli potrzebujesz realnego filtra "FULL", zrób dodatkowy krok tu (po fetchu) i odfiltruj
+    // wg joinedCount vs max, lub zastosuj materiał widok/denormalizację.
     return items.map(mapIntent);
   }
 );
@@ -161,7 +162,7 @@ export const intentQuery: QueryResolvers['intent'] = resolverWithMetrics(
   async (_p, { id }) => {
     const row = await prisma.intent.findUnique({
       where: { id },
-      include: { author: true, categories: true, tags: true },
+      include: INTENT_INCLUDE,
     });
     return row ? mapIntent(row) : null;
   }

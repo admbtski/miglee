@@ -14,7 +14,7 @@ export function useSearchMeta(query: string) {
   const [debounced, setDebounced] = useState(query);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(query), 250);
+    const t = setTimeout(() => setDebounced(query), 500);
     return () => clearTimeout(t);
   }, [query]);
 
@@ -23,7 +23,7 @@ export function useSearchMeta(query: string) {
     isLoading: isCategoriesLoading,
     error: categoriesError,
   } = useGetCategoriesQuery(
-    debounced ? { query: debounced, limit: 50 } : ({ limit: 50 } as any)
+    debounced ? { query: debounced, limit: 10 } : { limit: 10 }
   );
 
   const {
@@ -31,7 +31,7 @@ export function useSearchMeta(query: string) {
     isLoading: isTagsLoading,
     error: tagsError,
   } = useGetTagsQuery(
-    debounced ? { query: debounced, limit: 50 } : ({ limit: 50 } as any)
+    debounced ? { query: debounced, limit: 10 } : { limit: 10 }
   );
 
   const categories = useMemo<string[]>(

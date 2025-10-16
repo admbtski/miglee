@@ -1,0 +1,95 @@
+# Memberships — zgodne ze schematem
+mutation RequestJoinIntent($intentId: ID!) {
+  requestJoinIntent(intentId: $intentId) {
+    ...IntentMemberCore
+  }
+}
+
+mutation CancelJoinRequest($intentId: ID!) {
+  cancelJoinRequest(intentId: $intentId)
+}
+
+mutation LeaveIntent($intentId: ID!) {
+  leaveIntent(intentId: $intentId)
+}
+
+mutation InviteIntent($input: InviteMemberInput!) {
+  inviteIntent(input: $input) {
+    ...IntentMemberCore
+  }
+}
+
+mutation ApproveMembership($input: ApproveMembershipInput!) {
+  approveMembership(input: $input) {
+    ...IntentMemberCore
+  }
+}
+
+mutation RejectMembership($input: RejectMembershipInput!) {
+  rejectMembership(input: $input) {
+    ...IntentMemberCore
+  }
+}
+
+mutation KickMember($input: KickMemberInput!) {
+  kickMember(input: $input) {
+    ...IntentMemberCore
+  }
+}
+
+mutation UpdateMemberRole($input: UpdateMemberRoleInput!) {
+  updateMemberRole(input: $input) {
+    ...IntentMemberCore
+  }
+}
+
+# List members of an intent
+query GetIntentMembers(
+  $intentId: ID!
+  $status: IntentMemberStatus
+  $role: IntentMemberRole
+  $limit: Int = 50
+  $offset: Int = 0
+) {
+  intentMembers(
+    intentId: $intentId
+    status: $status
+    role: $role
+    limit: $limit
+    offset: $offset
+  ) {
+    ...IntentMemberCore
+  }
+}
+
+# Single membership
+query GetIntentMember($intentId: ID!, $userId: ID!) {
+  intentMember(intentId: $intentId, userId: $userId) {
+    ...IntentMemberCore
+  }
+}
+
+# My memberships
+query GetMyMemberships(
+  $status: IntentMemberStatus
+  $role: IntentMemberRole
+  $limit: Int = 50
+  $offset: Int = 0
+) {
+  myMemberships(status: $status, role: $role, limit: $limit, offset: $offset) {
+    ...IntentMemberCore
+  }
+}
+
+# Stats
+query GetIntentMemberStats($intentId: ID!) {
+  intentMemberStats(intentId: $intentId) {
+    joined
+    pending
+    invited
+    rejected
+    banned
+    left
+    kicked
+  }
+}
