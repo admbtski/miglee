@@ -1,31 +1,40 @@
+// components/auth/AuthModal.tsx
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { SignInPanel } from './sign-in-panel';
-import { SignUpPanel } from './sign-up-panel'; // zakładam, że już masz
+import { SignUpPanel } from './sign-up-panel';
 
 export type AuthMode = 'signin' | 'signup';
 
-type SubmitPayload = {
-  email?: string;
-  password?: string;
+export type SubmitPayload = {
   mode: AuthMode;
   username?: string;
+  email?: string;
+  password?: string;
   remember?: boolean;
 };
 
 type Props = {
   open?: boolean;
+  /** Controlled mode (omit to make it uncontrolled) */
   mode?: AuthMode;
   onModeChange?: (m: AuthMode) => void;
-  defaultTab?: 'signin' | 'signup';
+  /** Initial tab when used uncontrolled */
+  defaultTab?: AuthMode;
+
   onClose: () => void;
-  onSubmit?: (payload: SubmitPayload) => void;
+
+  /** Dev-friendly submit: password can be omitted if you want */
+  onSubmit?: (payload: SubmitPayload) => void | Promise<void>;
   onSocial?: (
     p: 'google' | 'github' | 'linkedin' | 'facebook' | 'apple' | 'twitter'
   ) => void;
+
+  /** Toggle password requirement for sign-in panel (dev-login) */
+  requirePasswordOnSignin?: boolean;
 };
 
 const overlayVariants = {
@@ -33,6 +42,7 @@ const overlayVariants = {
   visible: { opacity: 1 },
   exit: { opacity: 0 },
 } as const;
+
 const cardVariants = {
   hidden: { opacity: 0, y: 24, scale: 0.98 },
   visible: {
@@ -43,6 +53,7 @@ const cardVariants = {
   },
   exit: { opacity: 0, y: 16, scale: 0.98, transition: { duration: 0.2 } },
 } as const;
+
 const panelVariants = {
   hidden: { opacity: 0, x: 12 },
   visible: {
@@ -58,20 +69,27 @@ export function AuthModal({
   mode,
   onModeChange,
   defaultTab,
-  onClose = () => {},
-  onSubmit = () => {},
-  onSocial = () => {},
+  onClose,
+  onSubmit,
+  onSocial,
+  requirePasswordOnSignin = false, // default is dev-friendly: password not required
 }: Props) {
   const prefersReducedMotion = useReducedMotion();
+
+  // Keep mounted until exit animation finishes (prevents scroll/layout jumps)
   const [mounted, setMounted] = useState(open);
+
+  // Controlled/uncontrolled mode
   const [internalMode, setInternalMode] = useState<AuthMode>(mode ?? 'signin');
 
   useEffect(() => {
     if (mode) setInternalMode(mode);
   }, [mode]);
+
   useEffect(() => {
     if (open) setMounted(true);
   }, [open]);
+
   useEffect(() => {
     if (open && !mode && defaultTab) setInternalMode(defaultTab);
   }, [open, defaultTab, mode]);
@@ -84,54 +102,61 @@ export function AuthModal({
     [mode, onModeChange]
   );
 
+  /** Shared fields so values persist when switching tabs */
   const [email, setEmail] = useState('');
   const [pwd, setPwd] = useState('');
   const [username, setUsername] = useState('');
   const [remember, setRemember] = useState(true);
 
-  const handleSubmit = useCallback(() => {
-    onSubmit?.({
-      email: internalMode === 'signup' && email ? email : undefined,
-      username,
-      password: pwd,
+  const handleSubmit = useCallback(async () => {
+    await onSubmit?.({
       mode: internalMode,
+      username,
+      email: internalMode === 'signup' && email ? email : undefined,
+      password: pwd || undefined,
       remember: internalMode === 'signin' ? remember : undefined,
     });
-  }, [email, pwd, internalMode, username, remember, onSubmit]);
+  }, [onSubmit, internalMode, username, email, pwd, remember]);
 
+  // Esc to close, Cmd/Ctrl+Enter to submit
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'enter') {
         e.preventDefault();
-        handleSubmit();
+        void handleSubmit();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose, handleSubmit]);
 
+  // Scroll lock + scrollbar compensation
   useEffect(() => {
     if (!mounted) return;
     const prevOverflow = document.body.style.overflow;
-    const prevPaddingRight = document.body.style.paddingRight;
+    const prevPad = document.body.style.paddingRight;
     const sbw = window.innerWidth - document.documentElement.clientWidth;
     if (sbw > 0) document.body.style.paddingRight = `${sbw}px`;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prevOverflow;
-      document.body.style.paddingRight = prevPaddingRight;
+      document.body.style.paddingRight = prevPad;
     };
   }, [mounted]);
 
   const titleId = useId();
   const descId = useId();
+
+  // Close only when clicking the backdrop, not children
   const onBackdropMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.currentTarget === e.target) onClose();
   };
 
   const title = internalMode === 'signin' ? 'Zaloguj się' : 'Utwórz konto';
+
+  // Do not render after exit animation completes
   if (!mounted && !open) return null;
 
   return (
@@ -166,6 +191,7 @@ export function AuthModal({
             exit="exit"
             transition={prefersReducedMotion ? { duration: 0 } : {}}
           >
+            {/* Header */}
             <div className="flex items-center justify-between px-6 py-5">
               <h2 id={titleId} className="text-2xl font-semibold">
                 {title}
@@ -183,10 +209,12 @@ export function AuthModal({
               </button>
             </div>
 
+            {/* Divider */}
             <div className="px-6">
               <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" />
             </div>
 
+            {/* Content */}
             <div className="px-6 pb-6">
               <p id={descId} className="sr-only">
                 {internalMode === 'signin'
@@ -215,7 +243,7 @@ export function AuthModal({
                       onSubmit={handleSubmit}
                       onGotoSignup={() => setMode('signup')}
                       onSocial={onSocial}
-                      requirePassword={false}
+                      requirePassword={requirePasswordOnSignin}
                     />
                   </motion.div>
                 ) : (

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { AuthModal, type AuthMode } from './auth-modal';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import { GET_ME_KEY, useDevLoginMutation } from '@/hooks/auth';
+import { env } from 'process';
 
 export function AuthModalDev({
   open,
@@ -14,6 +15,12 @@ export function AuthModalDev({
   onClose: () => void;
   defaultTab?: AuthMode;
 }) {
+  useEffect(() => {
+    if (env.NODE_ENV === 'production') {
+      throw new Error('Component should not be used in production env.');
+    }
+  }, []);
+
   const qc = getQueryClient();
   const { mutateAsync: devLogin } = useDevLoginMutation();
   const [mode, setMode] = useState<AuthMode>(defaultTab);

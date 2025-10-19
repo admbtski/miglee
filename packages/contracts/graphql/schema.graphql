@@ -9,6 +9,36 @@ scalar JSONObject
 # Enums
 # ------------------------------------------------------------------------------
 
+enum UsersSortBy {
+  NAME
+  CREATED_AT
+  ROLE
+  VERIFIED_AT
+}
+
+enum SortDir {
+  ASC
+  DESC
+}
+
+type UsersPageInfo {
+  total: Int!
+  limit: Int!
+  offset: Int!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+}
+
+type UsersResult {
+  items: [User!]!
+  pageInfo: UsersPageInfo!
+}
+
+input UsersSort {
+  by: UsersSortBy! = CREATED_AT
+  dir: SortDir! = DESC
+}
+
 "Visibility of an intent"
 enum Visibility {
   PUBLIC
@@ -117,6 +147,7 @@ type User {
   verifiedAt: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
+  lastSeenAt: DateTime
 }
 
 "Category with translated names in JSON, e.g. { pl,de,en }"
@@ -409,7 +440,19 @@ type Query {
   tags(query: String, limit: Int = 50): [Tag!]!
   tag(id: ID, slug: String): Tag
 
-  users(limit: Int = 50, offset: Int = 0): [User!]!
+  users(
+    # pagination
+    limit: Int = 50
+    offset: Int = 0
+    # filtering
+    q: String
+    role: Role
+    verifiedOnly: Boolean
+    # sorting
+    sortBy: UsersSortBy = CREATED_AT
+    sortDir: SortDir = DESC
+  ): UsersResult!
+
   user(id: ID!): User
 
   me: SessionUser

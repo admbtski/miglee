@@ -20,7 +20,7 @@ import {
   X,
   Youtube,
 } from 'lucide-react';
-import { ThemeSwitchConnected } from '@/app/components/theme/theme-switch-connect';
+import { ThemeSwitchConnected } from '@/components/theme-switch/theme-switch-connect';
 
 export function NavDrawer({
   open,

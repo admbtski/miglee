@@ -9,7 +9,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
-    "gql:gen": "graphql-codegen --config src/graphql/codegen.ts"
+    "gql:gen": "graphql-codegen --config src/libs/graphql/codegen.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.1",

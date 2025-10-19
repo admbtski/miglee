@@ -15,7 +15,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import { SegmentedControl } from '../../../../../../components/segment-control/segment-control';
+import { SegmentedControl } from '../../../../../components/segment-control/segment-control';
 import { RadiusSlider } from '../components/slider';
 
 type MK = 'ONSITE' | 'ONLINE' | 'HYBRID';

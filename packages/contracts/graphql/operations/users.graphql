@@ -1,6 +1,22 @@
-query GetUsers($limit: Int = 50, $offset: Int = 0) {
-  users(limit: $limit, offset: $offset) {
-    ...UserCore
+query GetUsers(
+  $limit: Int = 50
+  $offset: Int = 0
+  $q: String
+  $role: Role
+  $verifiedOnly: Boolean
+  $sortBy: UsersSortBy = CREATED_AT
+  $sortDir: SortDir = DESC
+) {
+  users(
+    limit: $limit
+    offset: $offset
+    q: $q
+    role: $role
+    verifiedOnly: $verifiedOnly
+    sortBy: $sortBy
+    sortDir: $sortDir
+  ) {
+    ...UsersResultCore
   }
 }
 

@@ -7,9 +7,8 @@ import {
   DevLogoutMutation,
   GetMeDocument,
   GetMeQuery,
-  GetMeQueryVariables,
-} from '@/graphql/__generated__/react-query';
-import { gqlClient } from '@/graphql/client';
+} from '@/libs/graphql/__generated__/react-query';
+import { gqlClient } from '@/libs/graphql/client';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import {
   QueryKey,

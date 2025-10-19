@@ -16,6 +16,7 @@ fragment UserCore on User {
   verifiedAt
   createdAt
   updatedAt
+  lastSeenAt
 }
 
 fragment CategoryCore on Category {
@@ -129,4 +130,21 @@ fragment NotificationCore on Notification {
     title
     startAt
   }
+}
+
+fragment UsersResultCore on UsersResult {
+  items {
+    ...UserCore
+  }
+  pageInfo {
+    ...UsersPageInfoCore
+  }
+}
+
+fragment UsersPageInfoCore on UsersPageInfo {
+  total
+  limit
+  offset
+  hasNext
+  hasPrev
 }

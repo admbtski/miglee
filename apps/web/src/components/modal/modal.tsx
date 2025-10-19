@@ -8,9 +8,7 @@ type Props = {
   header?: ReactNode;
   content?: ReactNode;
   footer?: ReactNode;
-  /** Optional: id for aria-labelledby if header provides a title element */
   labelledById?: string;
-  /** Optional: id for aria-describedby */
   describedById?: string;
 };
 
@@ -71,12 +69,11 @@ export function Modal({
       <div className="absolute inset-0 overflow-y-auto">
         <div className="mx-auto my-6 w-[min(760px,92vw)]">
           <div
-            className="rounded-3xl border border-zinc-200 bg-white shadow-2xl ring-1 ring-black/5
-                       dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10"
+            className="bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10"
             onClick={(e) => e.stopPropagation()}
           >
             {header && (
-              <div className="sticky top-0 z-10 rounded-t-3xl border-b border-zinc-200 bg-white/85 px-4 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
+              <div className="sticky top-0 z-10 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/85 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
                 {header}
               </div>
             )}
@@ -86,7 +83,7 @@ export function Modal({
 
             {/* Footer */}
             {footer && (
-              <div className="sticky bottom-0 z-10 rounded-b-3xl border-t border-zinc-200 bg-gradient-to-t from-white via-white/95 p-4 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
+              <div className="sticky bottom-0 z-10 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
                 {footer}
               </div>
             )}

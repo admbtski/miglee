@@ -1,11 +1,12 @@
 'use client';
 
-import { ThemeSwitchConnected } from '@/app/components/theme/theme-switch-connect';
+import { ThemeSwitchConnected } from '@/components/theme-switch/theme-switch-connect';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Calendar1Icon,
   ChevronDown,
-  CreditCard,
   LogOut,
+  MessagesSquareIcon,
   Settings,
   User as UserIcon,
   Users,
@@ -71,14 +72,14 @@ export function UserMenu({ user, onNavigate, onSignOut }: UserMenuProps) {
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={avatarBtnLabel}
-          className="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white p-1 pr-2 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="flex items-center gap-2 p-1 pr-2 bg-white border rounded-full shadow-sm cursor-pointer border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           <img
             src={user.avatarUrl || AVATAR_FALLBACK}
             alt={user.name}
-            className="h-6 w-6 rounded-full object-cover"
+            className="object-cover w-6 h-6 rounded-full"
           />
-          <ChevronDown className="h-4 w-4 opacity-60" />
+          <ChevronDown className="w-4 h-4 opacity-60" />
         </button>
 
         <AnimatePresence>
@@ -92,73 +93,61 @@ export function UserMenu({ user, onNavigate, onSignOut }: UserMenuProps) {
               transition={{ duration: 0.12 }}
               className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-0.5 shadow-2xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900"
             >
-              <div className="flex items-center gap-3 rounded-xl px-3 py-3">
+              <div className="flex items-center gap-3 px-3 py-3 rounded-xl">
                 <img
                   src={user.avatarUrl || AVATAR_FALLBACK}
                   alt=""
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="object-cover w-10 h-10 rounded-full"
                 />
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  <div className="text-sm font-semibold truncate text-zinc-900 dark:text-zinc-50">
                     {user.name}
                   </div>
                   {user.email && (
-                    <div className="truncate text-xs text-zinc-500">
+                    <div className="text-xs truncate text-zinc-500">
                       {user.email}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" />
+              <div className="w-full h-px bg-zinc-200 dark:bg-zinc-800" />
 
               <MenuBtn
-                icon={<CreditCard className="h-4 w-4" />}
-                label="Billing"
+                icon={<UserIcon className="w-4 h-4" />}
+                label="Profile"
                 onClick={() => onNavigate?.('billing')}
               />
+
               <MenuBtn
-                icon={<Settings className="h-4 w-4" />}
-                label="Settings"
-                onClick={() => onNavigate?.('settings')}
-              />
-              <MenuBtn
-                icon={<UserIcon className="h-4 w-4" />}
-                label="My account"
+                icon={<MessagesSquareIcon className="w-4 h-4" />}
+                label="Chats"
                 onClick={() => onNavigate?.('account')}
               />
 
-              <div className="my-1 h-px w-full bg-zinc-200 dark:bg-zinc-800" />
+              <MenuBtn
+                icon={<Calendar1Icon className="w-4 h-4" />}
+                label="Intents"
+                onClick={() => onNavigate?.('settings')}
+              />
+
+              <MenuBtn
+                icon={<Settings className="w-4 h-4" />}
+                label="Settings"
+                onClick={() => onNavigate?.('settings')}
+              />
+
+              <div className="w-full h-px my-1 bg-zinc-200 dark:bg-zinc-800" />
 
               <div className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
                 <span>Dark mode</span>
                 <ThemeSwitchConnected />
               </div>
 
-              <div className="my-1 h-px w-full bg-zinc-200 dark:bg-zinc-800" />
+              <div className="w-full h-px my-1 bg-zinc-200 dark:bg-zinc-800" />
 
               <MenuBtn
-                icon={<Wand2 className="h-4 w-4" />}
-                label={
-                  <span className="inline-flex items-center gap-2">
-                    Customization
-                    <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-100">
-                      New
-                    </span>
-                  </span>
-                }
-                onClick={() => onNavigate?.('customization')}
-              />
-              <MenuBtn
-                icon={<Users className="h-4 w-4" />}
-                label="Manage team"
-                onClick={() => onNavigate?.('team')}
-              />
-
-              <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" />
-
-              <MenuBtn
-                icon={<LogOut className="h-4 w-4" />}
+                icon={<LogOut className="w-4 h-4" />}
                 label="Sign out"
                 onClick={() => {
                   setOpen(false);
@@ -195,9 +184,9 @@ function MenuBtn({
     <button
       role="menuitem"
       onClick={onClick}
-      className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-sm hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800"
+      className="flex items-center w-full gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800"
     >
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+      <span className="grid w-8 h-8 rounded-lg place-items-center bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
         {icon}
       </span>
       <span className="flex-1">{label}</span>

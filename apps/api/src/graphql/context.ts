@@ -18,8 +18,8 @@ export async function createContext(
     user: user
       ? {
           id: user.id,
-          name: user.name!,
-          email: user.email!,
+          name: user.name,
+          email: user.email,
           role: user.role as Role,
           imageUrl: user.imageUrl,
           verifiedAt: user.verifiedAt,

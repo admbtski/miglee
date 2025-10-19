@@ -6,7 +6,7 @@ import {
   IntentStatus,
   Level,
   MeetingKind,
-} from '@/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query';
 
 export type CommittedFilters = {
   q: string;

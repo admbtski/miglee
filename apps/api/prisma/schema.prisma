@@ -95,14 +95,15 @@ enum NotificationEntity {
  */
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  name       String?
-  imageUrl   String?
-  role       Role     @default(USER)
-  verifiedAt DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String    @id @default(cuid())
+  email      String    @unique
+  name       String    @unique
+  imageUrl   String
+  role       Role      @default(USER)
+  verifiedAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  lastSeenAt DateTime?
 
   /// Notifications this user has received.
   notifications Notification[]

@@ -68,7 +68,7 @@ function Spinner({ className }: { className?: string }) {
       role="status"
       aria-label="Loading"
     >
-      <span className="block h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-transparent dark:border-zinc-600 dark:border-t-transparent" />
+      <span className="block w-4 h-4 border-2 rounded-full animate-spin border-zinc-300 border-t-transparent dark:border-zinc-600 dark:border-t-transparent" />
     </span>
   );
 }
@@ -205,7 +205,7 @@ function _SearchCombo({
       )}
     >
       <label className="flex items-center gap-2 px-1">
-        <Search className="h-4 w-4 opacity-60" />
+        <Search className="w-4 h-4 opacity-60" />
         <input
           ref={inputRef}
           value={inner}
@@ -217,7 +217,7 @@ function _SearchCombo({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
-          className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
+          className="w-full py-2 text-sm bg-transparent outline-none placeholder:text-zinc-400"
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={open}
@@ -235,10 +235,10 @@ function _SearchCombo({
               onChangeValue?.(''); // allow parent to clear results
               inputRef.current?.focus();
             }}
-            className="rounded-full p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
             aria-label="Clear"
           >
-            <X className="h-4 w-4 opacity-60" />
+            <X className="w-4 h-4 opacity-60" />
           </button>
         )}
       </label>
@@ -247,7 +247,7 @@ function _SearchCombo({
         <div
           ref={listRef}
           id={listboxId}
-          className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+          className="absolute left-0 right-0 z-20 mt-2 overflow-auto bg-white border shadow-lg max-h-72 rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900"
           role="listbox"
         >
           {!canSearch ? (
@@ -263,7 +263,7 @@ function _SearchCombo({
               row.type === 'header' ? (
                 <div
                   key={`hdr-${idx}`}
-                  className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                  className="px-3 py-2 text-xs font-semibold tracking-wider uppercase text-zinc-400"
                 >
                   {groups[row.gi].label}
                 </div>
@@ -281,7 +281,7 @@ function _SearchCombo({
                       : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
                   )}
                 >
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
                     {(() => {
                       const G = groups[row.gi];
                       const Icon = G.icon ?? defaultIconFor(G.kind ?? G.id);

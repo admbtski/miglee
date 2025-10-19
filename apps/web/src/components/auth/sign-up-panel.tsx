@@ -1,3 +1,4 @@
+// components/auth/sign-up-panel.tsx
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -24,10 +25,10 @@ export function SignUpPanel({
   onSocial,
 }: {
   username: string;
-  setUsername: (v: string) => void;
   email: string;
-  setEmail: (v: string) => void;
   password: string;
+  setUsername: (v: string) => void;
+  setEmail: (v: string) => void;
   setPassword: (v: string) => void;
   onSubmit: () => void | Promise<void>;
   onGotoSignin: () => void;
@@ -35,7 +36,8 @@ export function SignUpPanel({
 }) {
   const prefersReducedMotion = useReducedMotion();
 
-  /** Validation rules */
+  /* ── Validation ─────────────────────────────────────────────────────── */
+
   const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const hasLetter = (v: string) => /[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(v);
   const hasDigit = (v: string) => /\d/.test(v);
@@ -43,23 +45,28 @@ export function SignUpPanel({
     /[A-Z!@#$%^&*()[\]{}.,;:_+\-/?\\|~]/.test(v);
   const isValidUsername = (v: string) => /^[a-zA-Z0-9._-]{3,20}$/.test(v);
 
-  const validate = (u: string, e: string, p: string) => {
-    const errors: { username?: string; email?: string; password?: string } = {};
-    if (!u) errors.username = 'Wpisz nazwę użytkownika';
-    else if (!isValidUsername(u))
-      errors.username = '3–20 znaków: litery, cyfry, „.” „_” „-”';
+  const errors = useMemo(() => {
+    const e: { username?: string; email?: string; password?: string } = {};
 
-    if (!e) errors.email = 'Wpisz adres e-mail';
-    else if (!isEmail(e)) errors.email = 'Nieprawidłowy adres e-mail';
+    if (!username) e.username = 'Wpisz nazwę użytkownika';
+    else if (!isValidUsername(username))
+      e.username = '3–20 znaków: litery, cyfry, „.” „_” „-”';
 
-    if (!p) errors.password = 'Wpisz hasło';
-    else if (p.length < 8) errors.password = 'Hasło musi mieć min. 8 znaków';
-    else if (!(hasLetter(p) && hasDigit(p)))
-      errors.password = 'Hasło musi zawierać literę i cyfrę';
-    return errors;
-  };
+    if (!email) e.email = 'Wpisz adres e-mail';
+    else if (!isEmail(email)) e.email = 'Nieprawidłowy adres e-mail';
 
-  /** Password strength (0–3) */
+    if (!password) e.password = 'Wpisz hasło';
+    else if (password.length < 8) e.password = 'Hasło musi mieć min. 8 znaków';
+    else if (!(hasLetter(password) && hasDigit(password)))
+      e.password = 'Hasło musi zawierać literę i cyfrę';
+
+    return e;
+  }, [username, email, password]);
+
+  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
+
+  /* ── Password strength (0–3) ───────────────────────────────────────── */
+
   const passwordScore = useMemo(() => {
     if (!password) return 0;
     let s = 0;
@@ -68,9 +75,11 @@ export function SignUpPanel({
     if (hasUpperOrSpecial(password)) s++;
     return s;
   }, [password]);
+
   const passwordLabel = ['Słabe', 'OK', 'Dobre', 'Mocne'][passwordScore];
 
-  /** Local UI/validation state */
+  /* ── UI state ───────────────────────────────────────────────────────── */
+
   const [touched, setTouched] = useState<{
     username?: boolean;
     email?: boolean;
@@ -81,7 +90,8 @@ export function SignUpPanel({
   const [submitting, setSubmitting] = useState(false);
   const [shake, setShake] = useState(false);
 
-  /** IDs + refs */
+  /* ── a11y & refs ───────────────────────────────────────────────────── */
+
   const usernameId = useId();
   const emailId = useId();
   const pwdId = useId();
@@ -93,21 +103,14 @@ export function SignUpPanel({
   const eRef = useRef<HTMLInputElement | null>(null);
   const pRef = useRef<HTMLInputElement | null>(null);
 
-  /** Derived validation state */
-  const errors = useMemo(
-    () => validate(username, email, password),
-    [username, email, password]
-  );
-  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
-
-  /** Focus first invalid field on failed submit */
   const focusFirstInvalid = () => {
     if (errors.username) return uRef.current?.focus();
     if (errors.email) return eRef.current?.focus();
     if (errors.password) return pRef.current?.focus();
   };
 
-  /** Try submit with shake on invalid */
+  /* ── Submit ─────────────────────────────────────────────────────────── */
+
   const trySubmit = async () => {
     setSubmitAttempted(true);
     if (!isValid) {
@@ -124,7 +127,6 @@ export function SignUpPanel({
     }
   };
 
-  /** Submit on Enter while focusing inputs */
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -132,7 +134,6 @@ export function SignUpPanel({
     }
   };
 
-  /** Animated error paragraph variants */
   const errorVariants = {
     initial: { opacity: 0, height: 0, y: -4 },
     animate: {
@@ -160,7 +161,6 @@ export function SignUpPanel({
     { key: 'linkedin', iconSlug: 'linkedin', hex: '0A66C2', label: 'LinkedIn' },
     { key: 'facebook', iconSlug: 'facebook', hex: '1877F2', label: 'Facebook' },
     { key: 'apple', iconSlug: 'apple', hex: 'ffffff', label: 'Apple' },
-    // icon 'x', but callback key 'twitter'
     { key: 'twitter', iconSlug: 'x', hex: 'cccccc', label: 'X (Twitter)' },
   ];
 

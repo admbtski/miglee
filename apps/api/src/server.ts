@@ -15,6 +15,7 @@ import { context, trace } from '@opentelemetry/api';
 import { config } from './env';
 // import { fastifyMetrics } from './plugins/metrics/fastify-metrics';
 import { rateLimitPlugin } from './plugins/rate-limit';
+import lastSeen from './plugins/last-seen';
 /**
  * Generate a stable request id.
  * - Reuse X-Request-Id from proxy if present.
@@ -46,6 +47,7 @@ export async function createServer() {
   await server.register(sensiblePlugin);
   await server.register(cookiePlugin);
   await server.register(jwtPlugin);
+  await server.register(lastSeen);
   // await server.register(fastifyMetrics);
 
   // lifecycle

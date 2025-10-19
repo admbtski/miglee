@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { CategoryPills, TagPills } from './category-tag-pill';
 import { EventDetailsModal } from './event-details-modal'; // ⬅️ NEW
-import { IntentMember } from '@/graphql/__generated__/react-query';
+import { IntentMember } from '@/libs/graphql/__generated__/react-query';
 
 export interface EventCardProps {
   startISO: string;

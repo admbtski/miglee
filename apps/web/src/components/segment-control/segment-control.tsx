@@ -1,17 +1,15 @@
 'use client';
 
-import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import * as React from 'react';
 import { twMerge } from 'tailwind-merge';
 
 export type SegmentedOption<T extends string | number> = {
   value: T;
-  label: React.ReactNode; // tekst lub node
+  label: React.ReactNode;
   Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   disabled?: boolean;
-  /** (opcjonalnie) czyści label wizualnie – wtedy użyj ariaLabel dla a11y */
   visuallyHiddenLabel?: boolean;
-  /** (opcjonalnie) alternatywny tekst a11y dla ikon-only */
   ariaLabel?: string;
 };
 
@@ -20,28 +18,23 @@ export type SegmentedControlProps<T extends string | number> = {
   onChange: (next: T) => void;
   options: SegmentedOption<T>[];
 
-  // A11y
-  name?: string; // rola radiogroup (semantyczna nazwa)
-  id?: string; // id wrappera
+  name?: string;
+  id?: string;
   'aria-label'?: string;
   'aria-labelledby'?: string;
 
-  // Styling
-  className?: string; // wrapper
-  buttonClassName?: string; // bazowe klasy dla przycisku
-  activeClassName?: string; // klasy doklejane, gdy aktywny
+  className?: string;
+  buttonClassName?: string;
+  activeClassName?: string;
   inactiveClassName?: string;
-  pillClassName?: string; // klasy tła-pigułki
+  pillClassName?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   fullWidth?: boolean;
 
-  // Behaviour
   withPill?: boolean;
   animated?: boolean;
   transition?: { type?: 'spring' | 'tween'; [k: string]: any };
 
-  // Keyboard
-  /** „rtl” jeżeli chcesz odwrotną nawigację lewo/prawo */
   direction?: 'ltr' | 'rtl';
 };
 
@@ -103,7 +96,7 @@ export function SegmentedControl<T extends string | number>({
   const cfg = sizeCfg(size);
   const prefersReducedMotion = useReducedMotion();
   const cols = Math.max(2, options.length);
-  const layoutId = React.useId(); // unikalny dla instancji
+  const layoutId = React.useId();
 
   const spring =
     transition ??
@@ -116,8 +109,8 @@ export function SegmentedControl<T extends string | number>({
     options.findIndex((o) => o.value === value)
   );
 
-  // Keyboard navigation (roving tabindex)
   const btnRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+
   const focusAt = (i: number) => {
     const el = btnRefs.current[i];
     if (el) el.focus();
@@ -125,7 +118,6 @@ export function SegmentedControl<T extends string | number>({
 
   const onKeyDownGroup = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const key = e.key;
-    // znajdź aktualny focus index
     const focused = btnRefs.current.findIndex(
       (el) => el === document.activeElement
     );
@@ -146,12 +138,11 @@ export function SegmentedControl<T extends string | number>({
       e.preventDefault();
       focusAt(max);
     } else if (key === ' ' || key === 'Enter') {
-      // aktywuj fokusowany
       const el = btnRefs.current[cur];
       if (el) {
         e.preventDefault();
         const opt = options[cur];
-        if (!opt?.disabled) onChange(opt.value);
+        if (!opt?.disabled && opt?.value) onChange(opt.value);
       }
     }
   };
@@ -181,7 +172,7 @@ export function SegmentedControl<T extends string | number>({
         return (
           <motion.button
             key={String(opt.value)}
-            ref={(el) => (btnRefs.current[i] = el)}
+            ref={(el) => (btnRefs.current[i] = el as any)}
             type="button"
             role="radio"
             aria-checked={active}
@@ -204,7 +195,6 @@ export function SegmentedControl<T extends string | number>({
                 (active
                   ? 'text-white'
                   : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800'),
-              // focus ring na samym przycisku też, dla lepszej widoczności
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40',
               buttonClassName,
               active && activeClassName,
@@ -226,7 +216,6 @@ export function SegmentedControl<T extends string | number>({
 
             {Icon ? <Icon className={cfg.icon} aria-hidden /> : null}
 
-            {/* Możliwość ukrycia labelki wizualnie (np. dla ikon-only), ale z a11y */}
             <span
               className={cn(
                 'whitespace-nowrap',

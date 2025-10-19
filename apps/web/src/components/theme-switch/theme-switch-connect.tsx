@@ -1,6 +1,6 @@
 'use client';
 
-import { useTheme } from './theme-provider';
+import { useTheme } from '../../../providers/theme/theme-provider';
 import { ThemeSwitch } from './theme-switch';
 
 export function ThemeSwitchConnected() {
@@ -10,10 +10,8 @@ export function ThemeSwitchConnected() {
 
   const handleToggle = () => {
     if (theme === 'system') {
-      // użytkownik kliknął w switch – wychodzimy z 'system'
       setTheme(checked ? 'light' : 'dark');
     } else {
-      // normalne przełączanie explicit light <-> dark
       toggle();
     }
   };

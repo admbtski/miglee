@@ -5,8 +5,8 @@ import {
   GetUsersDocument,
   GetUsersQuery,
   GetUsersQueryVariables,
-} from '@/graphql/__generated__/react-query';
-import { gqlClient } from '@/graphql/client';
+} from '@/libs/graphql/__generated__/react-query';
+import { gqlClient } from '@/libs/graphql/client';
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 /* ======================== Keys ======================== */

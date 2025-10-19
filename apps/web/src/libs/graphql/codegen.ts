@@ -8,7 +8,7 @@ const config: CodegenConfig = {
     '../../packages/contracts/graphql/operations/**/*.graphql'
   ),
   generates: {
-    './src/graphql/__generated__/react-query.ts': {
+    './src/libs/graphql/__generated__/react-query.ts': {
       plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
       config: {
         useTypeImports: true,
@@ -23,7 +23,6 @@ const config: CodegenConfig = {
           typeNames: 'change-case-all#pascalCase',
           transformUnderscore: true,
         },
-        // mapowanie skalarów używanych w schema.graphql
         scalars: {
           DateTime: 'string',
           JSON: 'Record<string, any>',

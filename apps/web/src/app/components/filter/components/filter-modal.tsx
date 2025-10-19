@@ -13,7 +13,7 @@ import {
   IntentStatus,
   Level,
   MeetingKind,
-} from '@/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query';
 import {
   Calendar as CalendarIcon,
   Check,
@@ -419,26 +419,26 @@ export function FilterModal({
 
       <div className="absolute inset-0 overflow-y-auto">
         <div className="mx-auto my-6 w-[min(760px,92vw)]">
-          <div className="rounded-3xl border border-zinc-200 bg-white shadow-2xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10">
+          <div className="bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10">
             {/* header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-t-3xl border-b border-zinc-200 bg-white/85 px-4 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/85 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
               <button
                 onClick={onClose}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 aria-label="Close"
               >
-                <X className="h-4 w-4" />
+                <X className="w-4 h-4" />
               </button>
               <div
                 id="filters-title"
                 className="flex items-center gap-2 text-base font-medium"
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal className="w-4 h-4" />
                 Filters
               </div>
               <button
                 onClick={handleClear}
-                className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
+                className="px-3 py-1 text-sm font-medium text-red-600 rounded-full bg-red-500/10 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
               >
                 Clear
               </button>
@@ -451,7 +451,7 @@ export function FilterModal({
                   <button
                     key={c.key}
                     onClick={c.onClear}
-                    className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-200"
+                    className="inline-flex items-center gap-2 px-3 py-1 text-sm border rounded-full border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-200"
                     title="Remove filter"
                   >
                     <span className="max-w-[12rem] truncate">{c.label}</span>
@@ -462,7 +462,7 @@ export function FilterModal({
             )}
 
             {/* body */}
-            <div className="space-y-6 p-4">
+            <div className="p-4 space-y-6">
               {/* GROUPED SEARCH */}
               <SearchCombo
                 value={q}
@@ -503,9 +503,9 @@ export function FilterModal({
               />
 
               {/* Location combobox */}
-              <div className="relative rounded-2xl border border-zinc-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="relative p-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="flex items-center gap-2 px-1">
-                  <MapPin className="h-4 w-4 opacity-60" />
+                  <MapPin className="w-4 h-4 opacity-60" />
                   <input
                     ref={inputRef}
                     role="combobox"
@@ -545,7 +545,7 @@ export function FilterModal({
                       }
                     }}
                     placeholder="Location (autocomplete)"
-                    className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
+                    className="w-full py-2 text-sm bg-transparent outline-none placeholder:text-zinc-400"
                   />
                   {cityQuery && (
                     <button
@@ -554,10 +554,10 @@ export function FilterModal({
                         selectCity(null);
                         setOpenList(true);
                       }}
-                      className="rounded-full p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       aria-label="Clear location"
                     >
-                      <X className="h-4 w-4 opacity-60" />
+                      <X className="w-4 h-4 opacity-60" />
                     </button>
                   )}
                 </div>
@@ -567,7 +567,7 @@ export function FilterModal({
                     ref={listRef}
                     id={listboxId}
                     role="listbox"
-                    className="absolute left-0 right-0 z-20 mt-2 max-h-60 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+                    className="absolute left-0 right-0 z-20 mt-2 overflow-auto bg-white border shadow-lg max-h-60 rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900"
                   >
                     {cityOptions.length === 0 ? (
                       <div className="px-3 py-2 text-sm opacity-60">
@@ -602,10 +602,10 @@ export function FilterModal({
               </div>
 
               {/* Distance */}
-              <div className="rounded-2xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="px-3 py-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-zinc-500">Distance</span>
-                  <span className="tabular-nums text-sm text-zinc-700 dark:text-zinc-200">
+                  <span className="text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
                     {distanceKm} km
                   </span>
                 </div>
@@ -616,19 +616,19 @@ export function FilterModal({
                   step={5}
                   value={distanceKm}
                   onChange={(e) => setDistanceKm(Number(e.target.value))}
-                  className="mt-2 w-full accent-indigo-600"
+                  className="w-full mt-2 accent-indigo-600"
                   aria-label="Distance in kilometers"
                 />
               </div>
 
               {/* Date range */}
-              <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-                  <CalendarIcon className="h-4 w-4" />
+              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+                  <CalendarIcon className="w-4 h-4" />
                   Date range
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900">
+                  <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                     <span className="w-20 shrink-0 text-zinc-500">Start</span>
                     <input
                       type="datetime-local"
@@ -637,7 +637,7 @@ export function FilterModal({
                       className="w-full bg-transparent outline-none"
                     />
                   </label>
-                  <label className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900">
+                  <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                     <span className="w-20 shrink-0 text-zinc-500">End</span>
                     <input
                       type="datetime-local"
@@ -650,15 +650,15 @@ export function FilterModal({
                 </div>
 
                 {dateError && (
-                  <p className="mt-2 inline-flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
-                    <AlertCircle className="h-4 w-4" />
+                  <p className="inline-flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
+                    <AlertCircle className="w-4 h-4" />
                     {dateError}
                   </p>
                 )}
               </div>
 
               {/* Status */}
-              <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="mb-2 text-sm font-medium">Status</div>
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -682,7 +682,7 @@ export function FilterModal({
               </div>
 
               {/* Kinds */}
-              <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="mb-2 text-sm font-medium">Kinds</div>
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -710,7 +710,7 @@ export function FilterModal({
               </div>
 
               {/* Level */}
-              <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="mb-2 text-sm font-medium">Level</div>
                 <div className="flex flex-wrap gap-2">
                   {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
@@ -738,12 +738,12 @@ export function FilterModal({
               </div>
 
               {/* Verified */}
-              <div className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                 <div className="mb-2 text-sm font-medium">Organizer</div>
-                <label className="inline-flex cursor-pointer select-none items-center gap-3 text-sm text-zinc-800 dark:text-zinc-200">
+                <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none text-zinc-800 dark:text-zinc-200">
                   <input
                     type="checkbox"
-                    className="peer sr-only"
+                    className="sr-only peer"
                     checked={verifiedOnly}
                     onChange={(e) => setVerifiedOnly(e.target.checked)}
                     aria-label="Verified organizers only"
@@ -761,24 +761,24 @@ export function FilterModal({
             </div>
 
             {/* footer */}
-            <div className="sticky bottom-0 rounded-b-3xl border-t border-zinc-200 bg-gradient-to-t from-white via-white/95 p-4 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
+            <div className="sticky bottom-0 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
               <div className="flex items-center justify-between gap-3">
                 {resultsCount != null && (
                   <div className="text-sm text-zinc-600 dark:text-zinc-400">
                     {resultsCount} wynik{resultsCount === 1 ? '' : 'ów'}
                   </div>
                 )}
-                <div className="ml-auto flex items-center gap-2">
+                <div className="flex items-center gap-2 ml-auto">
                   <button
                     onClick={onClose}
-                    className="rounded-xl border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                    className="px-4 py-2 text-sm border rounded-xl border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleApply}
                     disabled={applyDisabled}
-                    className="rounded-xl bg-zinc-900 px-5 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600"
+                    className="px-5 py-2 text-sm font-medium text-white shadow-sm rounded-xl bg-zinc-900 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600"
                     title={
                       applyDisabled
                         ? dateError

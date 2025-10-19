@@ -1,3 +1,4 @@
+// components/auth/sign-in-panel.tsx
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -22,7 +23,7 @@ export function SignInPanel(props: {
   onSubmit: () => void | Promise<void>;
   onGotoSignup: () => void;
   onSocial?: (p: Social) => void;
-  /** NEW: allow disabling password validation (for dev login) */
+  /** When false, password is not required (dev-login) */
   requirePassword?: boolean;
 }) {
   const {
@@ -40,19 +41,27 @@ export function SignInPanel(props: {
 
   const prefersReducedMotion = useReducedMotion();
 
+  /* ── Validation ─────────────────────────────────────────────────────── */
+
   const isValidUsername = (v: string) => /^[a-zA-Z0-9._-]{3,20}$/.test(v);
-  const validate = (u: string, p: string) => {
-    const errors: { username?: string; password?: string } = {};
-    if (!u) errors.username = 'Wpisz nazwę użytkownika';
-    else if (!isValidUsername(u))
-      errors.username = '3–20 znaków: litery, cyfry, „.” „_” „-”';
+
+  const errors = useMemo(() => {
+    const e: { username?: string; password?: string } = {};
+    if (!username) e.username = 'Wpisz nazwę użytkownika';
+    else if (!isValidUsername(username))
+      e.username = '3–20 znaków: litery, cyfry, „.” „_” „-”';
 
     if (requirePassword) {
-      if (!p) errors.password = 'Wpisz hasło';
-      else if (p.length < 6) errors.password = 'Hasło musi mieć min. 6 znaków';
+      if (!password) e.password = 'Wpisz hasło';
+      else if (password.length < 6)
+        e.password = 'Hasło musi mieć min. 6 znaków';
     }
-    return errors;
-  };
+    return e;
+  }, [username, password, requirePassword]);
+
+  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
+
+  /* ── UI state ───────────────────────────────────────────────────────── */
 
   const [touched, setTouched] = useState<{
     username?: boolean;
@@ -63,23 +72,22 @@ export function SignInPanel(props: {
   const [submitting, setSubmitting] = useState(false);
   const [shake, setShake] = useState(false);
 
+  /* ── refs & a11y ────────────────────────────────────────────────────── */
+
   const usernameId = useId();
   const pwdId = useId();
   const usernameErrId = useId();
   const pwdErrId = useId();
-  const usernameRef = useRef<HTMLInputElement | null>(null);
-  const pwdRef = useRef<HTMLInputElement | null>(null);
 
-  const errors = useMemo(
-    () => validate(username, password),
-    [username, password, requirePassword]
-  );
-  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
+  const uRef = useRef<HTMLInputElement | null>(null);
+  const pRef = useRef<HTMLInputElement | null>(null);
 
   const focusFirstInvalid = () => {
-    if (errors.username) return usernameRef.current?.focus();
-    if (errors.password) return pwdRef.current?.focus();
+    if (errors.username) return uRef.current?.focus();
+    if (errors.password) return pRef.current?.focus();
   };
+
+  /* ── Submit ─────────────────────────────────────────────────────────── */
 
   const trySubmit = async () => {
     setSubmitAttempted(true);
@@ -136,7 +144,7 @@ export function SignInPanel(props: {
       {/* Username */}
       <div className="group">
         <label htmlFor={usernameId} className="sr-only">
-          Username
+          Nazwa użytkownika
         </label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
@@ -146,7 +154,7 @@ export function SignInPanel(props: {
             />
           </div>
           <input
-            ref={usernameRef}
+            ref={uRef}
             id={usernameId}
             name="username"
             type="text"
@@ -195,7 +203,7 @@ export function SignInPanel(props: {
         </AnimatePresence>
       </div>
 
-      {/* Password (może być nie-wymagane) */}
+      {/* Password (optionally required) */}
       <div className="group mt-3">
         <label htmlFor={pwdId} className="sr-only">
           Hasło
@@ -209,7 +217,7 @@ export function SignInPanel(props: {
           </div>
 
           <input
-            ref={pwdRef}
+            ref={pRef}
             id={pwdId}
             name="password"
             type={showPwd ? 'text' : 'password'}
@@ -354,11 +362,13 @@ export function SignInPanel(props: {
                          dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-900
                          focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
+              {/* light */}
               <img
                 alt=""
                 src={`https://cdn.simpleicons.org/${iconSlug}/000000`}
                 className="block h-4 w-4 dark:hidden"
               />
+              {/* dark */}
               <img
                 alt=""
                 src={`https://cdn.simpleicons.org/${iconSlug}/${hex}`}

@@ -11,10 +11,10 @@ import {
   GetNotificationsQueryVariables,
   NotificationAddedDocument,
   type NotificationAddedSubscription,
-} from '@/graphql/__generated__/react-query';
-import { gqlClient } from '@/graphql/client';
+} from '@/libs/graphql/__generated__/react-query';
+import { gqlClient } from '@/libs/graphql/client';
 // zakładam, że masz to jak wcześniej
-import { getWsClient } from '@/graphql/wsClient';
+import { getWsClient } from '@/libs/graphql/wsClient';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import {
   QueryKey,
@@ -139,7 +139,7 @@ export function useAddNotificationMutation<TContext extends Ctx = Ctx>(
           __typename: 'Notification' as const,
           id: `optimistic-${Date.now()}`,
           kind: 'INTENT_CREATED',
-          message: variables.message ?? null,
+          message: variables.body ?? null,
           payload: null,
           readAt: null,
           createdAt: new Date().toISOString(),

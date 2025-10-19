@@ -4,7 +4,7 @@ import {
   GetNotificationsQuery,
   Notification,
   Subscription,
-} from '@/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query';
 import { useAddNotificationMutation } from '@/hooks/useAddNotification';
 import { useNotificationAdded } from '@/hooks/useNotificationAdded';
 import { useGetNotificationsQuery } from '@/hooks/useNotifications';

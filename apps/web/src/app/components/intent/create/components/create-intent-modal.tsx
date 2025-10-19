@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useId, useState } from 'react';
-import { Modal } from '../../../../../../components/modal/modal';
+import { Modal } from '../../../../../components/modal/modal';
 import {
   CreateIntentInput,
   IntentFormValues,

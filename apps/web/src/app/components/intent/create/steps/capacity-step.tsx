@@ -3,7 +3,7 @@
 import { Info, User, Users } from 'lucide-react';
 import { useEffect, useId, useMemo } from 'react';
 import { UseFormReturn, useController } from 'react-hook-form';
-import { SegmentedControl } from '../../../../../../components/segment-control/segment-control';
+import { SegmentedControl } from '../../../../../components/segment-control/segment-control';
 import { IntentFormValues } from '../../types';
 import { RangeSlider } from '../components/range-slider';
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { EventCard } from './_internal/components/event-card';
@@ -19,9 +20,13 @@ import {
   IntentMember,
   IntentStatus,
   Visibility,
-} from '@/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query';
 import { useGetCategoriesQuery } from '@/hooks/categories';
 import { useIntentsQuery } from '@/hooks/intents';
+
+// 👇 import the extracted pieces to inject via Navbar props
+import { DesktopSearchBar } from './_internal/components/desktop-search-bar';
+import { IconButton } from './_internal/components/icon-button';
 
 const upcomingAfterDefault = new Date().toISOString();
 
@@ -62,7 +67,7 @@ export function IntentsPage() {
     return ids.length ? ids : undefined;
   }, [categorySlugs, slugToId]);
 
-  // FINALNE ZMIENNE DO ZAPYTANIA (zgodne ze schematem)
+  // Final query variables
   const queryVars = useMemo<GetIntentsQueryVariables>(() => {
     return {
       limit: 60,
@@ -144,11 +149,23 @@ export function IntentsPage() {
       style={{ ['--nav-h' as any]: `${NAV_H}px` }}
     >
       <Navbar
-        q={q}
-        city={city}
-        distanceKm={distanceKm}
-        onOpenFilters={() => setFiltersOpen(true)}
-        activeFilters={activeFilters}
+        searchBar={
+          <DesktopSearchBar
+            activeFilters={activeFilters}
+            q={q}
+            city={city}
+            distanceKm={distanceKm}
+            onOpenFilters={() => setFiltersOpen(true)}
+          />
+        }
+        // Inject a custom mobile search button
+        mobileSearchButton={
+          <IconButton
+            icon={Search}
+            label="Search"
+            onClick={() => setFiltersOpen(true)}
+          />
+        }
       />
 
       <main
@@ -202,13 +219,13 @@ export function IntentsPage() {
 
           <motion.div
             layout="position"
-            className="mt-3 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
+            className="grid grid-cols-1 gap-6 mt-3 sm:grid-cols-2 xl:grid-cols-3"
           >
             {isLoading
               ? Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={`sk-${i}`}
-                    className="w-full h-48 rounded-2xl bg-zinc-100 dark:bg-zinc-900 animate-pulse"
+                    className="w-full h-48 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900"
                   />
                 ))
               : intentsData?.intents.map((item) => (
@@ -249,7 +266,7 @@ export function IntentsPage() {
               exit={{ opacity: 0 }}
               transition={{ type: 'spring', duration: 0.5, bounce: 0 }}
             >
-              <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] -mt-4">
+              <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))]">
                 <MapImagePanel label={city || 'Polska'} fullHeight />
               </div>
             </motion.aside>

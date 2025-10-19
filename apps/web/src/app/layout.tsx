@@ -5,8 +5,8 @@ import { Poppins } from 'next/font/google';
 import OtelInit from '@/libs/otel/otel-init';
 import { WebVitals } from '@/libs/web-vitals/web-vitals';
 import '../styles/globals.css';
-import { ThemeProvider } from './components/theme/theme-provider';
 import { InlineThemeScript } from './scripts/inline/inline-theme-script';
+import { ThemeProvider } from '../../providers/theme/theme-provider';
 // import OtelInit from '@/libs/otel/otel-init';
 
 // const nextFont = Inter({ subsets: ['latin'] });
