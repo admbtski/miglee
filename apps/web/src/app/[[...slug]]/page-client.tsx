@@ -82,6 +82,7 @@ export function IntentsPage() {
       keywords: [],
       status: status !== IntentStatus.Any ? status : IntentStatus.Any,
       verifiedOnly: verifiedOnly || false,
+      ownerId: undefined,
       distanceKm: city ? distanceKm : null,
     };
   }, [

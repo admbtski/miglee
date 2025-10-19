@@ -16,38 +16,61 @@ const INTENT_INCLUDE = {
   members: { include: { user: true, addedBy: true } },
 } satisfies Prisma.IntentInclude;
 
+/**
+ * Query: intents (paginated IntentsResult)
+ * - respektuje nowy SDL z pageInfo
+ * - wspiera memberId (intenty, w których user jest członkiem)
+ * - pozostawia 'FULL' jako TODO (wymaga agregacji)
+ */
 export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
   'intents',
   async (_p, args) => {
-    console.dir({ args });
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
 
     const where: Prisma.IntentWhereInput = {};
     const AND: Prisma.IntentWhereInput[] = [];
+    const OR: Prisma.IntentWhereInput[] = []; // zarezerwowane gdybyśmy chcieli poszerzyć widoczność
 
+    // Visibility – tylko jeśli caller jawnie podał
     if (args.visibility) {
       where.visibility = args.visibility;
     }
 
-    if (args.ownerId)
+    // Owner filter
+    if (args.ownerId) {
+      AND.push({
+        members: { some: { role: 'OWNER', userId: args.ownerId } },
+      });
+    }
+
+    // NEW: Member filter (użytkownik jest członkiem)
+    if (args.memberId) {
       AND.push({
         members: {
-          some: { role: 'OWNER', userId: args.ownerId },
+          some: {
+            userId: args.memberId,
+            // Jeżeli chcesz zawężać do konkretnych statusów/ról — rozbudujemy tu warunek
+          },
         },
       });
+      // Intencjonalnie NIE wymuszamy visibility — członek może widzieć HIDDEN,
+      // o ile spełnia warunek członkostwa.
+    }
 
+    // Okno czasowe
     if (args.upcomingAfter)
       AND.push({ startAt: { gte: args.upcomingAfter as Date } });
     if (args.endingBefore)
       AND.push({ endAt: { lte: args.endingBefore as Date } });
 
+    // Taksonomie / atrybuty
     if (args.categoryIds?.length) {
-      AND.push({ categories: { some: { slug: { in: args.categoryIds } } } });
+      AND.push({ categories: { some: { id: { in: args.categoryIds } } } });
     }
     if (args.tagIds?.length) {
-      AND.push({ tags: { some: { slug: { in: args.tagIds } } } });
+      AND.push({ tags: { some: { id: { in: args.tagIds } } } });
     }
     if (args.levels?.length) {
       AND.push({ levels: { hasSome: args.levels } });
@@ -56,18 +79,16 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       AND.push({ meetingKind: { in: args.kinds as MeetingKind[] } });
     }
 
+    // Verified owner
     if (args.verifiedOnly) {
       AND.push({
         members: {
-          some: {
-            role: 'OWNER',
-            user: { is: { verifiedAt: {} } },
-          },
+          some: { role: 'OWNER', user: { is: { verifiedAt: {} } } },
         },
       });
     }
 
-    // Keywords – AND-logic
+    // Keywords – AND logic
     if (args.keywords?.length) {
       for (const kw of args.keywords) {
         const containsCI = { contains: kw, mode: 'insensitive' as const };
@@ -87,11 +108,10 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       }
     }
 
-    // Status (FULL wymaga agregacji – patrz uwagi niżej)
+    // Status logic (po dacie / lock window). Uwaga: FULL wymaga agregacji JOINED vs max.
     if (args.status && args.status !== IntentStatus.Any) {
       const now = new Date();
       const lockTo = new Date(now.getTime() + LOCK_WINDOW_MS);
-
       switch (args.status) {
         case IntentStatus.Ongoing:
           AND.push({ startAt: { lte: now }, endAt: { gte: now } });
@@ -106,15 +126,16 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
           AND.push({ startAt: { gt: lockTo } });
           break;
         case IntentStatus.Full:
-          // Bez kolumny licznikowej/SQL agregacji nie przefiltrujemy tu wiarygodnie.
-          // Rozważ materiał widok / kolumnę denormalizowaną lub osobne zapytanie agregujące.
-          break;
-        default:
+          // TODO: dokładny filtr wymaga agregacji po IntentMember.status=JOINED i porównania do 'max'.
+          // Opcje:
+          // 1) denormalizacja kolumny joinedCount + WHERE joinedCount >= max,
+          // 2) groupBy / having w SQL,
+          // 3) post-filter + overfetch (kompromis z liczeniem total).
           break;
       }
     }
 
-    // Prosta heurystyka distanceKm (bez punktu odniesienia `near` nie policzymy dystansu)
+    // Prosta heurystyka geograficzna (bbox) — distanceKm w SDL to Int
     if (
       typeof args.distanceKm === 'number' &&
       Number.isFinite(args.distanceKm) &&
@@ -125,24 +146,24 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       const lng = args.near.lng!;
       const km = args.distanceKm;
 
-      // bbox ~1 deg lat ~ 111km; lon zależy od szerokości geograficznej
       const latDelta = km / 111;
       const lonDelta =
         km / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.0001));
 
-      AND.push({
-        lat: { gte: lat - latDelta, lte: lat + latDelta },
-      });
-      AND.push({
-        lng: { gte: lng - lonDelta, lte: lng + lonDelta },
-      });
-      // Uwaga: to tylko filtr wstępny (bbox). Dokładny dystans (haversine) można zweryfikować w kodzie
-      // po pobraniu wyników lub przez widok SQL/extension.
+      AND.push({ lat: { gte: lat - latDelta, lte: lat + latDelta } });
+      AND.push({ lng: { gte: lng - lonDelta, lte: lng + lonDelta } });
+      // Dokładny dystans (haversine) sugeruję obsłużyć na widoku SQL lub po fetchu.
     }
 
     if (AND.length) where.AND = AND;
+    if (OR.length) where.OR = OR;
 
-    const items = await prisma.intent.findMany({
+    // total – liczba wszystkich rekordów spełniających 'where'
+    // Uwaga: jeśli kiedyś wdrożymy TRUE filtr FULL (agregacja), total trzeba będzie liczyć spójnie z tym filtrem.
+    const total = await prisma.intent.count({ where });
+
+    // właściwe pobranie strony
+    const rows = await prisma.intent.findMany({
       where,
       take,
       skip,
@@ -150,9 +171,17 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       include: INTENT_INCLUDE,
     });
 
-    // Jeżeli potrzebujesz realnego filtra "FULL", zrób dodatkowy krok tu (po fetchu) i odfiltruj
-    // wg joinedCount vs max, lub zastosuj materiał widok/denormalizację.
-    return items.map(mapIntent);
+    const items = rows.map(mapIntent);
+
+    const pageInfo = {
+      total,
+      limit: take,
+      offset: skip,
+      hasPrev: skip > 0,
+      hasNext: skip + take < total,
+    };
+
+    return { items, pageInfo };
   }
 );
 

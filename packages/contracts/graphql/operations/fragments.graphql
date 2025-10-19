@@ -132,19 +132,28 @@ fragment NotificationCore on Notification {
   }
 }
 
-fragment UsersResultCore on UsersResult {
-  items {
-    ...UserCore
-  }
-  pageInfo {
-    ...UsersPageInfoCore
-  }
-}
-
-fragment UsersPageInfoCore on UsersPageInfo {
+fragment PageInfoCore on PageInfo {
   total
   limit
   offset
   hasNext
   hasPrev
+}
+
+fragment UsersResultCore on UsersResult {
+  items {
+    ...UserCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+fragment IntentsResultCore on IntentsResult {
+  items {
+    ...IntentCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
 }

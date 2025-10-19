@@ -1,34 +1,42 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Send, Search } from 'lucide-react';
+import {
+  ArrowLeft,
+  Send,
+  Search,
+  MoreHorizontal,
+  Bell,
+  Pin,
+  ChevronDown,
+  Image as ImageIcon,
+  Palette,
+  ThumbsUp,
+  Users,
+  Shield,
+  Link as LinkIcon,
+  Pencil,
+} from 'lucide-react';
 
-// ===============================
-// Domain types
-// ===============================
 export type Conversation = {
   id: string;
   title: string;
   membersCount: number;
   preview: string;
-  lastMessageAt: string; // e.g. "1m", "14m", "2h"
+  lastMessageAt: string;
   unread: number;
-  avatar?: string; // letter or url
+  avatar?: string;
 };
 
 export type Message = {
   id: string;
   text: string;
-  at: string; // display time e.g. "18:39" (for demo)
-  side: 'left' | 'right'; // from viewer perspective
+  at: string;
+  side: 'left' | 'right';
   author: { id: string; name: string; avatar?: string };
-  /** larger block message */
   block?: boolean;
 };
 
-// ========================================
-// Mock data (replace with your data source)
-// ========================================
 const DEMO_CONVERSATIONS: Conversation[] = [
   {
     id: 't1',
@@ -73,21 +81,21 @@ const DEMO_MESSAGES: Record<string, Message[]> = {
     {
       id: 'm1',
       text: 'Hello everyone',
-      at: '10:49',
+      at: '09:12',
       side: 'left',
       author: { id: 'u2', name: 'Louise' },
     },
     {
       id: 'm2',
       text: 'Hi Louise',
-      at: '18:39',
+      at: '09:13',
       side: 'right',
       author: { id: 'me', name: 'You' },
     },
     {
       id: 'm3',
       text: 'How are you?',
-      at: '18:40',
+      at: '09:13',
       side: 'right',
       author: { id: 'me', name: 'You' },
     },
@@ -102,32 +110,143 @@ const DEMO_MESSAGES: Record<string, Message[]> = {
     {
       id: 'm5',
       text: 'ohh I didn’t notice that typo 😳',
-      at: '09:30',
+      at: '10:26',
       side: 'left',
       author: { id: 'u4', name: 'Sam' },
     },
     {
       id: 'm6',
       text: 'Great! 👍',
-      at: '18:39',
+      at: '10:27',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+    {
+      id: 'm7',
+      text: 'We also need to add pagination to messages API.',
+      at: '13:01',
+      side: 'left',
+      author: { id: 'u3', name: 'Alex' },
+    },
+    {
+      id: 'm8',
+      text: 'Yep, cursor-based please (createdAt, id).',
+      at: '13:05',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+    {
+      id: 'm9',
+      text: 'And unread separator based on lastReadAt.',
+      at: '13:06',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+    {
+      id: 'm10',
+      text: 'Roger. I’ll wire React Query + websocket live updates.',
+      at: '13:08',
+      side: 'left',
+      author: { id: 'u2', name: 'Louise' },
+    },
+    {
+      id: 'm11',
+      text: 'Don’t forget optimistic UI + retry queue.',
+      at: '13:09',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+    {
+      id: 'm12',
+      text: 'Copy that. Also draft typing indicators.',
+      at: '13:11',
+      side: 'left',
+      author: { id: 'u4', name: 'Sam' },
+    },
+    {
+      id: 'm13',
+      text: 'We can fake them with timers for now.',
+      at: '13:12',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+    {
+      id: 'm14',
+      text: 'Ok. I’ll add skeleton loader when fetching older items.',
+      at: '13:13',
+      side: 'left',
+      author: { id: 'u2', name: 'Louise' },
+    },
+    {
+      id: 'm15',
+      text: 'Nice. Let’s ship MVP today.',
+      at: '13:15',
       side: 'right',
       author: { id: 'me', name: 'You' },
     },
   ],
-  t2: [],
-  t3: [],
-  t4: [],
+  t2: [
+    {
+      id: 'c1',
+      text: 'Hey Costa, did you check the docs?',
+      at: '08:01',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+    {
+      id: 'c2',
+      text: 'Yes, you can!',
+      at: '08:02',
+      side: 'left',
+      author: { id: 'u5', name: 'Costa' },
+    },
+  ],
+  t3: [
+    {
+      id: 'r1',
+      text: 'Using the static method might be fine, but prefer DI.',
+      at: '11:44',
+      side: 'left',
+      author: { id: 'u6', name: 'Rachel' },
+    },
+    {
+      id: 'r2',
+      text: 'Agree, let’s keep it pure.',
+      at: '11:45',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+  ],
+  t4: [
+    {
+      id: 'b1',
+      text: 'I found a bug…',
+      at: '16:20',
+      side: 'left',
+      author: { id: 'u7', name: 'QA' },
+    },
+    {
+      id: 'b2',
+      text: 'Steps?',
+      at: '16:21',
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    },
+    {
+      id: 'b3',
+      text: 'Open profile, click edit, save → 500.',
+      at: '16:22',
+      side: 'left',
+      author: { id: 'u7', name: 'QA' },
+    },
+  ],
 };
 
-// ===============================
-// Page (export default)
-// ===============================
 export default function ChatsPage() {
-  // No selected conversation on start
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
-  const [mobileView, setMobileView] = useState<'list' | 'thread'>('list'); // < md
+  const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
 
-  const conversations = DEMO_CONVERSATIONS; // replace with your query
+  const conversations = DEMO_CONVERSATIONS;
   const active = useMemo(
     () => conversations.find((c) => c.id === activeId),
     [conversations, activeId]
@@ -175,9 +294,6 @@ export default function ChatsPage() {
   );
 }
 
-// ===============================
-// Shell (responsive, a11y-conscious)
-// ===============================
 export function ChatShell({
   children,
   listVisible,
@@ -187,13 +303,11 @@ export function ChatShell({
 }) {
   const [list, thread] = React.Children.toArray(children);
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full">
-      {/* Desktop: list scales more */}
-      <div className="hidden md:grid md:grid-cols-[clamp(280px,22vw,360px)_minmax(0,1fr)] md:gap-6">
+    <div className="w-full h-full">
+      <div className="hidden md:grid md:h-full md:grid-cols-[clamp(280px,22vw,360px)_minmax(0,1fr)] md:gap-6">
         {list}
         {thread}
       </div>
-      {/* Mobile */}
       <div className="md:hidden">{listVisible ? list : thread}</div>
     </div>
   );
@@ -227,7 +341,7 @@ ChatShell.ListPane = function ListPane({
   children: React.ReactNode;
 }) {
   return (
-    <PaneBase as="aside" className="p-2 bg-white/90 dark:bg-zinc-900/70">
+    <PaneBase as="aside" className="h-full p-2 bg-white/90 dark:bg-zinc-900/70">
       {children}
     </PaneBase>
   );
@@ -238,15 +352,12 @@ ChatShell.ThreadPane = function ThreadPane({
   children: React.ReactNode;
 }) {
   return (
-    <PaneBase as="section" className="bg-white/95 dark:bg-[#141518]/80">
+    <PaneBase as="section" className="bg-white/95 dark:bg-[#141518]/80 h-full">
       {children}
     </PaneBase>
   );
 };
 
-// ===============================
-// ChatList – shows Conversation[]
-// ===============================
 export function ChatList({
   items,
   activeId,
@@ -257,8 +368,7 @@ export function ChatList({
   onPick: (id: string) => void;
 }) {
   return (
-    <div className="grid gap-3">
-      {/* header */}
+    <div className="grid h-full grid-rows-[auto_1fr_auto] gap-3">
       <div className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-900/10 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div className="font-semibold">Inbox</div>
         <div className="flex items-center gap-2 text-zinc-400">
@@ -267,8 +377,7 @@ export function ChatList({
         </div>
       </div>
 
-      {/* rows */}
-      <div className="space-y-2">
+      <div className="min-h-0 space-y-2 overflow-auto">
         {items.map((c) => {
           const active = c.id === activeId;
           return (
@@ -294,7 +403,7 @@ export function ChatList({
                 <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
                   <div className="text-xs text-zinc-500">{c.lastMessageAt}</div>
                   {c.unread > 0 && (
-                    <span className="inline-flex h-5 min-w-[1.25rem] shrink-0 justify-center items-center rounded-full bg-indigo-600 px-2 text-[11px] font-semibold leading-none text-white">
+                    <span className="inline-flex h-5 min-w-[1.25rem] shrink-0 justify-center rounded-full bg-indigo-600 px-2 text-[11px] font-semibold leading-none text-white">
                       {c.unread}
                     </span>
                   )}
@@ -303,19 +412,6 @@ export function ChatList({
             </button>
           );
         })}
-      </div>
-
-      {/* promo */}
-      <div className="p-3 text-xs border rounded-2xl border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
-        Need more power?
-        <br />
-        Supercharge your workspace with Pro features.{' '}
-        <a
-          className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
-          href="#"
-        >
-          Learn more
-        </a>
       </div>
     </div>
   );
@@ -339,9 +435,6 @@ function Avatar({ token }: { token?: string }) {
   );
 }
 
-// ===============================
-// ChatThread – messages + composer
-// ===============================
 export function ChatThread({
   title,
   members,
@@ -359,8 +452,8 @@ export function ChatThread({
 }) {
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
@@ -376,7 +469,6 @@ export function ChatThread({
 
   return (
     <div className="grid h-full min-h-[540px] min-w-0 grid-rows-[auto_1fr_auto]">
-      {/* header */}
       <div className="flex items-center justify-between gap-3 p-4 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center min-w-0 gap-2">
           <button
@@ -395,76 +487,84 @@ export function ChatThread({
             </div>
           </div>
         </div>
-        <div className="text-zinc-400" aria-hidden>
-          …
-        </div>
-      </div>
-
-      {/* messages */}
-      <div
-        ref={listRef}
-        className="min-h-0 p-4 overflow-auto md:p-5"
-        aria-live="polite"
-      >
-        {/* Optional: Day separators can be computed; here static examples */}
-        <DateSeparator>01 May</DateSeparator>
-        {messages.slice(0, 3).map((m) =>
-          m.side === 'right' ? (
-            <MsgOut key={m.id} time={m.at}>
-              {m.text}
-            </MsgOut>
-          ) : (
-            <MsgIn key={m.id} time={m.at} block={m.block}>
-              {m.text}
-            </MsgIn>
-          )
-        )}
-        <DateSeparator>02 May</DateSeparator>
-        {messages.slice(3).map((m) =>
-          m.side === 'right' ? (
-            <MsgOut key={m.id} time={m.at}>
-              {m.text}
-            </MsgOut>
-          ) : (
-            <MsgIn key={m.id} time={m.at} block={m.block}>
-              {m.text}
-            </MsgIn>
-          )
-        )}
-      </div>
-
-      {/* composer – no attach/link, icon-only send */}
-      <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-          className="mx-auto grid max-w-3xl grid-cols-[1fr_auto] items-center gap-2 rounded-2xl border border-zinc-200 bg-white/90 px-3 py-2 shadow-sm ring-1 ring-black/5 dark:border-zinc-700 dark:bg-zinc-900"
+        <button
+          className="inline-flex items-center justify-center h-9 w-9 rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          title="More options"
+          aria-label="More options"
+          onClick={() => setShowDetails(true)}
         >
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Message Group"
-            className="min-w-0 py-2 text-sm bg-transparent outline-none resize-none max-h-40 placeholder:text-zinc-400"
-            rows={1}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+          <MoreHorizontal className="w-5 h-5" />
+        </button>
+      </div>
+
+      {showDetails ? (
+        <ChatDetails onClose={() => setShowDetails(false)} />
+      ) : (
+        <>
+          <div
+            ref={listRef}
+            className="min-h-0 p-4 overflow-auto md:p-5"
+            aria-live="polite"
+          >
+            <DateSeparator>01 May</DateSeparator>
+            {messages.slice(0, 3).map((m) =>
+              m.side === 'right' ? (
+                <MsgOut key={m.id} time={m.at}>
+                  {m.text}
+                </MsgOut>
+              ) : (
+                <MsgIn key={m.id} time={m.at} block={m.block}>
+                  {m.text}
+                </MsgIn>
+              )
+            )}
+            <DateSeparator>02 May</DateSeparator>
+            {messages.slice(3).map((m) =>
+              m.side === 'right' ? (
+                <MsgOut key={m.id} time={m.at}>
+                  {m.text}
+                </MsgOut>
+              ) : (
+                <MsgIn key={m.id} time={m.at} block={m.block}>
+                  {m.text}
+                </MsgIn>
+              )
+            )}
+          </div>
+
+          <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
+            <form
+              onSubmit={(e) => {
                 e.preventDefault();
                 submit();
-              }
-            }}
-          />
-          <button
-            type="submit"
-            className="inline-flex items-center justify-center text-white bg-indigo-600 h-9 w-9 rounded-xl hover:bg-indigo-500"
-            aria-label="Send"
-            title="Send"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
-      </div>
+              }}
+              className="mx-auto grid max-w-3xl grid-cols-[1fr_auto] items-center gap-2 rounded-2xl border border-zinc-200 bg-white/90 px-3 py-2 shadow-sm ring-1 ring-black/5 dark:border-zinc-700 dark:bg-zinc-900"
+            >
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Message Group"
+                className="min-w-0 py-2 text-sm bg-transparent outline-none resize-none max-h-40 placeholder:text-zinc-400"
+                rows={1}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    submit();
+                  }
+                }}
+              />
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center text-white bg-indigo-600 h-9 w-9 rounded-xl hover:bg-indigo-500"
+                aria-label="Send"
+                title="Send"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -532,9 +632,6 @@ const MsgOut = ({
   </Bubble>
 );
 
-// ===============================
-// Empty thread placeholder
-// ===============================
 function EmptyThread({ onBackMobile }: { onBackMobile: () => void }) {
   return (
     <div className="grid h-full min-h-[540px] grid-rows-[auto_1fr]">
@@ -558,14 +655,129 @@ function EmptyThread({ onBackMobile }: { onBackMobile: () => void }) {
   );
 }
 
-// ===============================
-// Notes for production wiring
-// ===============================
-// 1) Replace DEMO_CONVERSATIONS/DEMO_MESSAGES with data from your API (React Query/GraphQL).
-// 2) Consider message virtualization for long threads (react-virtuoso).
-// 3) Use ISO timestamps in Message and derive human labels in a formatter util.
-// 4) Apply optimistic UI for sends + retry queue; disable send while offline.
-// 5) Add read markers/unread separator based on lastReadAt per conversation.
-// 6) Security: sanitize message text if you allow rich content.
-// 7) A11y: announce new messages via aria-live.
-// 8) Tests: unit test Bubble variants; integration test sending flow; visual test for dark/light.
+// Chat details panel (replaces thread content when "..." is clicked)
+function ChatDetails({ onClose }: { onClose: () => void }) {
+  const [openCustomize, setOpenCustomize] = useState(true);
+  return (
+    <div className="grid h-full grid-rows-[auto_1fr]">
+      {/* Details header */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onClose}
+            className="inline-flex items-center justify-center h-9 w-9 rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            aria-label="Back to chat"
+            title="Back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="text-sm font-semibold">Chat info</div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="min-h-0 p-4 overflow-auto md:p-5">
+        {/* Quick actions */}
+        <div className="flex gap-3 mb-4">
+          <button className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+            <Bell className="w-4 h-4" /> Mute
+          </button>
+          <button className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+            <Search className="w-4 h-4" /> Search
+          </button>
+        </div>
+
+        {/* Section: Customize chat */}
+        <div className="mb-6 overflow-hidden border rounded-2xl border-zinc-200 dark:border-zinc-700">
+          <button
+            className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+            onClick={() => setOpenCustomize((v) => !v)}
+            aria-expanded={openCustomize}
+            aria-controls="customize-panel"
+          >
+            <span>Customize chat</span>
+            <ChevronDown
+              className={[
+                'h-4 w-4 transition-transform',
+                openCustomize ? 'rotate-180' : 'rotate-0',
+              ].join(' ')}
+            />
+          </button>
+          {openCustomize && (
+            <div
+              id="customize-panel"
+              className="divide-y divide-zinc-200 dark:divide-zinc-800"
+            >
+              <Row
+                icon={<Pencil className="w-4 h-4" />}
+                label="Change chat name"
+              />
+              <Row
+                icon={<ImageIcon className="w-4 h-4" />}
+                label="Change photo"
+              />
+              <Row
+                icon={<Palette className="w-4 h-4" />}
+                label="Change theme"
+              />
+              <Row
+                icon={<ThumbsUp className="w-4 h-4" />}
+                label="Change emoji"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Section: Members */}
+        <Section title="Chat members">
+          <Row icon={<Users className="w-4 h-4" />} label="Manage members" />
+        </Section>
+
+        {/* Section: Media, files and links */}
+        <Section title="Media, files and links">
+          <Row icon={<ImageIcon className="w-4 h-4" />} label="Media" />
+          <Row icon={<LinkIcon className="w-4 h-4" />} label="Links" />
+        </Section>
+
+        {/* Section: Privacy & support */}
+        <Section title="Privacy & support">
+          <Row icon={<Shield className="w-4 h-4" />} label="Privacy settings" />
+          <Row
+            icon={<Pin className="w-4 h-4" />}
+            label="View pinned messages"
+          />
+        </Section>
+      </div>
+    </div>
+  );
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-6">
+      <div className="px-1 pb-2 text-xs font-semibold tracking-wide uppercase text-zinc-500">
+        {title}
+      </div>
+      <div className="overflow-hidden border rounded-2xl border-zinc-200 dark:border-zinc-700">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Row({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <button className="flex items-center w-full gap-3 px-4 py-3 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
+      <span className="grid w-8 h-8 border place-items-center rounded-xl border-zinc-200 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300">
+        {icon}
+      </span>
+      <span className="flex-1">{label}</span>
+    </button>
+  );
+}

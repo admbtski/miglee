@@ -4,6 +4,7 @@ query GetIntents(
   $offset: Int = 0
   $visibility: Visibility
   $ownerId: ID
+  $memberId: ID
   $upcomingAfter: DateTime
   $endingBefore: DateTime
   $categoryIds: [ID!]
@@ -21,6 +22,7 @@ query GetIntents(
     offset: $offset
     visibility: $visibility
     ownerId: $ownerId
+    memberId: $memberId
     upcomingAfter: $upcomingAfter
     endingBefore: $endingBefore
     categoryIds: $categoryIds
@@ -33,7 +35,7 @@ query GetIntents(
     distanceKm: $distanceKm
     near: $near
   ) {
-    ...IntentCore
+    ...IntentsResultCore
   }
 }
 

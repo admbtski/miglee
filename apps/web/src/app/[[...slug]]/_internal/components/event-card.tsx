@@ -12,7 +12,10 @@ import {
   MapPinHouseIcon,
   BadgeCheck,
 } from 'lucide-react';
-import { CategoryPills, TagPills } from './category-tag-pill';
+import {
+  CategoryPills,
+  TagPills,
+} from '../../../../components/pill/category-tag-pill';
 import { EventDetailsModal } from './event-details-modal'; // ⬅️ NEW
 import { IntentMember } from '@/libs/graphql/__generated__/react-query';
 
@@ -271,7 +274,7 @@ function Avatar({ url, alt }: { url: string; alt: string }) {
     <img
       src={url}
       alt={alt}
-      className="w-12 h-12 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+      className="object-cover w-12 h-12 border rounded-full border-neutral-200 dark:border-neutral-700"
       loading="lazy"
       decoding="async"
     />
@@ -357,7 +360,7 @@ export function EventCard({
           <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
           <div className="flex-1 min-w-0">
             <p
-              className="font-medium text-neutral-900 dark:text-neutral-100 truncate"
+              className="font-medium truncate text-neutral-900 dark:text-neutral-100"
               title={organizerName}
             >
               <span className="inline-flex items-center gap-1.5 max-w-full">
@@ -365,10 +368,10 @@ export function EventCard({
                 <VerifiedBadge verifiedAt={verifiedAt!} />
               </span>
             </p>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
+            <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
               {description}
             </p>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
+            <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
               {formatDateRange(start, end)} • {humanDuration(start, end)}
               {address ? ` • ${address}` : ''}
             </p>
@@ -436,44 +439,44 @@ export function EventCard({
       >
         {/* Range + duration */}
         <div className="flex items-center justify-between gap-1">
-          <div className="min-w-0 flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 overflow-hidden">
+          <div className="flex items-center justify-center min-w-0 gap-1 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
             <Calendar className="w-4 h-4 shrink-0" />
             <span
-              className="font-medium text-neutral-800 dark:text-neutral-200 truncate whitespace-nowrap"
+              className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap"
               title={formatDateRange(start, end)}
             >
               {formatDateRange(start, end)}
             </span>
           </div>
-          <div className="flex justify-center items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          <div className="flex items-center justify-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
             <Clock className="w-4 h-4 shrink-0" />
             <span>{humanDuration(start, end)}</span>
           </div>
         </div>
 
         {/* Organizer & description + location */}
-        <div className="flex items-start gap-3 mt-1 min-w-0">
+        <div className="flex items-start min-w-0 gap-3 mt-1">
           <Avatar url={avatarUrl} alt="Organizer" />
           <div className="flex-1 min-w-0">
             <p
-              className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate"
+              className="text-sm font-medium truncate text-neutral-900 dark:text-neutral-100"
               title={organizerName}
             >
-              <span className="inline-flex items-center gap-1 max-w-full">
+              <span className="inline-flex items-center max-w-full gap-1">
                 <VerifiedBadge verifiedAt={verifiedAt!} />
                 <span className="truncate">{organizerName}</span>
               </span>
             </p>
 
             <p
-              className="text-xs text-neutral-800 dark:text-neutral-200 leading-5 line-clamp-2"
+              className="text-xs leading-5 text-neutral-800 dark:text-neutral-200 line-clamp-2"
               title={description}
             >
               {description}
             </p>
 
             {address && !onlineUrl && (
-              <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
+              <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <MapPin className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate whitespace-nowrap" title={address}>
                   {address}
@@ -482,7 +485,7 @@ export function EventCard({
             )}
 
             {!address && onlineUrl && (
-              <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
+              <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <WifiIcon className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate whitespace-nowrap" title="Online">
                   Online
@@ -491,7 +494,7 @@ export function EventCard({
             )}
 
             {address && onlineUrl && (
-              <p className="flex items-center gap-1 text-xs text-neutral-600 dark:text-neutral-400 mt-1 min-w-0">
+              <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate whitespace-nowrap" title="Hybrid">
                   {address}, Hybrid
@@ -503,7 +506,7 @@ export function EventCard({
 
         {/* Capacity + status */}
         <div className="flex items-center justify-between gap-3">
-          <div className="shrink-0 flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
+          <div className="flex items-center gap-2 text-sm shrink-0 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
             <Users className="w-4 h-4" aria-hidden />
             <span>{capacityLabel(joinedCount, min, max)}</span>
           </div>

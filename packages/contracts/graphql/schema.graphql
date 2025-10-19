@@ -21,7 +21,7 @@ enum SortDir {
   DESC
 }
 
-type UsersPageInfo {
+type PageInfo {
   total: Int!
   limit: Int!
   offset: Int!
@@ -31,7 +31,12 @@ type UsersPageInfo {
 
 type UsersResult {
   items: [User!]!
-  pageInfo: UsersPageInfo!
+  pageInfo: PageInfo!
+}
+
+type IntentsResult {
+  items: [Intent!]!
+  pageInfo: PageInfo!
 }
 
 input UsersSort {
@@ -397,6 +402,7 @@ type Query {
     offset: Int = 0
     visibility: Visibility
     ownerId: ID
+    memberId: ID
     upcomingAfter: DateTime
     endingBefore: DateTime
     categoryIds: [ID!]
@@ -408,7 +414,7 @@ type Query {
     verifiedOnly: Boolean
     distanceKm: Int
     near: LocationInput
-  ): [Intent!]!
+  ): IntentsResult!
 
   intent(id: ID!): Intent
 

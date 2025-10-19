@@ -156,7 +156,7 @@ export function OverflowPills({
             'border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900'
           )}
         >
-          <ul className="max-h-64 overflow-auto space-y-1">
+          <ul className="space-y-1 overflow-auto max-h-64">
             {overflow.map((it) => (
               <li key={it} role="presentation" className="flex">
                 <Pill as="div" variant="ghost" className="w-full">
