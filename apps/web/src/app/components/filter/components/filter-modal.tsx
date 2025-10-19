@@ -13,7 +13,7 @@ import {
   IntentStatus,
   Level,
   MeetingKind,
-} from '@/libs/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query-update';
 import {
   Calendar as CalendarIcon,
   Check,

@@ -2,7 +2,7 @@
 'use client';
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { Role } from '@/libs/graphql/__generated__/react-query';
+import { Role } from '@/libs/graphql/__generated__/react-query-update';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   AtSign,

@@ -10,20 +10,117 @@ import {
   GetIntentQueryVariables,
   GetIntentsDocument,
   GetIntentsQuery,
+  GetIntentsQuery_Query,
   GetIntentsQueryVariables,
+  IntentsResultCoreFragment_IntentsResult_items_Intent,
   UpdateIntentDocument,
   UpdateIntentMutation,
   UpdateIntentMutationVariables,
-} from '@/libs/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query-update';
 import { gqlClient } from '@/libs/graphql/client';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import {
+  InfiniteData,
   QueryKey,
   useMutation,
   UseMutationOptions,
   useQuery,
   UseQueryOptions,
 } from '@tanstack/react-query';
+
+// hooks/intents.ts (dopisz obok istniejących)
+import {
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
+} from '@tanstack/react-query';
+/** Klucz cache dla infinite */
+export const GET_INTENTS_INFINITE_KEY = (
+  variables?: Omit<GetIntentsQueryVariables, 'offset'>
+) =>
+  variables
+    ? (['GetIntentsInfinite', variables] as const)
+    : (['GetIntentsInfinite'] as const);
+
+/** Builder dla useInfiniteQuery */
+export function buildGetIntentsInfiniteOptions(
+  variables?: Omit<GetIntentsQueryVariables, 'offset'>,
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      GetIntentsQuery, // TQueryFnData
+      unknown, // TError
+      InfiniteData<GetIntentsQuery>,
+      QueryKey, // TQueryKey
+      number // TPageParam (offset)
+    >,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+): UseInfiniteQueryOptions<
+  GetIntentsQuery,
+  unknown,
+  InfiniteData<GetIntentsQuery>,
+  QueryKey,
+  number
+> {
+  return {
+    queryKey: GET_INTENTS_INFINITE_KEY(variables) as unknown as QueryKey,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const vars: GetIntentsQueryVariables = {
+        ...(variables ?? {}),
+        offset: pageParam,
+      };
+      return variables
+        ? gqlClient.request<GetIntentsQuery, GetIntentsQueryVariables>(
+            GetIntentsDocument,
+            vars
+          )
+        : gqlClient.request<GetIntentsQuery>(GetIntentsDocument);
+    },
+    getNextPageParam: (lastPage, _allPages, lastOffset) => {
+      const res = lastPage.intents;
+
+      if (res?.pageInfo) {
+        const { hasNext, limit } = res.pageInfo as {
+          hasNext: boolean;
+          limit: number;
+        };
+        if (!hasNext) return undefined;
+        const prev = (lastOffset ?? 0) as number;
+        return prev + limit;
+      }
+      // Fallback — brak paginacji
+      return undefined;
+    },
+    ...(options ?? {}),
+  };
+}
+
+/** Publiczny hook (raw) — zwraca InfiniteData<GetIntentsQuery> */
+export function useIntentsInfiniteQuery(
+  variables?: Omit<GetIntentsQueryVariables, 'offset'>,
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      GetIntentsQuery,
+      unknown,
+      InfiniteData<GetIntentsQuery>,
+      QueryKey,
+      number
+    >,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+) {
+  return useInfiniteQuery<
+    GetIntentsQuery,
+    unknown,
+    InfiniteData<GetIntentsQuery>,
+    QueryKey,
+    number
+  >(buildGetIntentsInfiniteOptions(variables, options));
+}
+
+export const flatIntentsPages = (pages?: GetIntentsQuery_Query[]) => {
+  return pages?.flatMap((p) => p.intents) ?? [];
+};
 
 /* --------------------------------- KEYS ---------------------------------- */
 export const GET_INTENTS_LIST_KEY = (variables?: GetIntentsQueryVariables) =>

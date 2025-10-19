@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Modal } from '../../../../components/modal/modal';
-import { IntentMember } from '@/libs/graphql/__generated__/react-query';
+import { IntentMember } from '@/libs/graphql/__generated__/react-query-update';
 
 /* ───────────────────────────── Typy ───────────────────────────── */
 

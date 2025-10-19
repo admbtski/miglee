@@ -23,7 +23,7 @@ import {
   IntentStatus,
   Visibility,
   type GetIntentsQueryVariables,
-} from '@/libs/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query-update';
 import { CategoryPills, TagPills } from '@/components/pill/category-tag-pill';
 
 /** ─────────────────── Utils ─────────────────── */

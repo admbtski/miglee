@@ -20,17 +20,15 @@ import {
   IntentMember,
   IntentStatus,
   Visibility,
-} from '@/libs/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query-update';
 import { useGetCategoriesQuery } from '@/hooks/categories';
-import { useIntentsQuery } from '@/hooks/intents';
+import { flatIntentsPages, useIntentsInfiniteQuery } from '@/hooks/intents'; // ⬅️ ważne
 
-// 👇 import the extracted pieces to inject via Navbar props
 import { DesktopSearchBar } from './_internal/components/desktop-search-bar';
 import { IconButton } from './_internal/components/icon-button';
 
 const upcomingAfterDefault = new Date().toISOString();
-
-/* ─────────────────────────────── PAGE ───────────────────────────────── */
+const DEFAULT_LIMIT = 5;
 
 export function IntentsPage() {
   const {
@@ -67,11 +65,9 @@ export function IntentsPage() {
     return ids.length ? ids : undefined;
   }, [categorySlugs, slugToId]);
 
-  // Final query variables
-  const queryVars = useMemo<GetIntentsQueryVariables>(() => {
-    return {
-      limit: 60,
-      offset: 0,
+  const variables = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
+    () => ({
+      limit: DEFAULT_LIMIT,
       visibility: Visibility.Public,
       upcomingAfter: startISO ?? upcomingAfterDefault,
       endingBefore: endISO,
@@ -79,34 +75,43 @@ export function IntentsPage() {
       tagIds: tags,
       kinds: kinds.length ? kinds : [],
       levels: levels.length ? levels : [],
-      keywords: [],
+      keywords: [], // jeśli chcesz używać q/keywords – dodaj tutaj
       status: status !== IntentStatus.Any ? status : IntentStatus.Any,
-      verifiedOnly: verifiedOnly || false,
+      verifiedOnly: !!verifiedOnly,
       ownerId: undefined,
+      memberId: undefined,
       distanceKm: city ? distanceKm : null,
-    };
-  }, [
-    startISO,
-    upcomingAfterDefault,
-    endISO,
-    categoryIds,
-    kinds,
-    levels,
-    status,
-    verifiedOnly,
-    city,
-    distanceKm,
-  ]);
+      near: undefined,
+    }),
+    [
+      startISO,
+      endISO,
+      categoryIds,
+      tags,
+      kinds,
+      levels,
+      status,
+      verifiedOnly,
+      city,
+      distanceKm,
+    ]
+  );
 
   const {
-    data: intentsData,
+    data,
+    error,
     isLoading,
     isFetching,
-    error,
-  } = useIntentsQuery(queryVars, {
-    enabled: true,
-    placeholderData: (prev) => prev,
-  });
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useIntentsInfiniteQuery(variables, { enabled: true });
+
+  const pages = data?.pages ?? [];
+  const flatItems = pages?.flatMap((p) => p.intents.items) ?? [];
+  const total = pages[0]?.intents.pageInfo.total || flatItems.length;
+
+  const loadedCount = flatItems.length;
 
   const { sort, setSort } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
@@ -159,7 +164,6 @@ export function IntentsPage() {
             onOpenFilters={() => setFiltersOpen(true)}
           />
         }
-        // Inject a custom mobile search button
         mobileSearchButton={
           <IconButton
             icon={Search}
@@ -187,8 +191,8 @@ export function IntentsPage() {
                     : `All events in ${city || 'Global'} — `}
                 {!isLoading && !error && (
                   <>
-                    <b>{intentsData?.intents.length}</b> event
-                    {intentsData?.intents.length === 1 ? '' : 's'}
+                    <b>{loadedCount}</b> / <b>{total}</b> event
+                    {total === 1 ? '' : 's'}
                     {isFetching && (
                       <span className="ml-2 opacity-60">updating…</span>
                     )}
@@ -205,13 +209,11 @@ export function IntentsPage() {
             </div>
           </div>
 
-          {!isLoading &&
-            (!error as any) &&
-            intentsData?.intents?.length === 0 && (
-              <div className="mt-6 text-sm opacity-70">
-                Brak wyników dla wybranych filtrów.
-              </div>
-            )}
+          {!isLoading && !error && loadedCount === 0 && (
+            <div className="mt-6 text-sm opacity-70">
+              Brak wyników dla wybranych filtrów.
+            </div>
+          )}
           {error && (
             <div className="mt-6 text-sm text-red-600 dark:text-red-400">
               {(error as any)?.message ?? 'Unknown error'}
@@ -222,14 +224,14 @@ export function IntentsPage() {
             layout="position"
             className="grid grid-cols-1 gap-6 mt-3 sm:grid-cols-2 xl:grid-cols-3"
           >
-            {isLoading
+            {isLoading && loadedCount === 0
               ? Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={`sk-${i}`}
                     className="w-full h-48 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900"
                   />
                 ))
-              : intentsData?.intents.map((item) => (
+              : flatItems.map((item: any) => (
                   <EventCard
                     key={item.id}
                     startISO={item.startAt}
@@ -247,7 +249,7 @@ export function IntentsPage() {
                     min={item.min}
                     max={item.max}
                     tags={item.tags.map((t) => t.label)}
-                    categories={item.categories.map((c) => c.slug)}
+                    categories={item.categories.map((c: any) => c.slug)}
                     verifiedAt={item.owner?.verifiedAt as string}
                     members={item.members as IntentMember[]}
                     onJoin={() => {
@@ -256,6 +258,26 @@ export function IntentsPage() {
                   />
                 ))}
           </motion.div>
+
+          {/* Load more */}
+          {!error && loadedCount > 0 && (
+            <div className="mt-6 flex justify-center">
+              {hasNextPage ? (
+                <button
+                  type="button"
+                  className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                </button>
+              ) : (
+                <span className="text-xs opacity-60">
+                  Wszystko załadowane ({loadedCount})
+                </span>
+              )}
+            </div>
+          )}
         </motion.section>
 
         <AnimatePresence>

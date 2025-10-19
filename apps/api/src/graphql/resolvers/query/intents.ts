@@ -31,64 +31,38 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
 
     const where: Prisma.IntentWhereInput = {};
     const AND: Prisma.IntentWhereInput[] = [];
-    const OR: Prisma.IntentWhereInput[] = []; // zarezerwowane gdybyśmy chcieli poszerzyć widoczność
 
-    // Visibility – tylko jeśli caller jawnie podał
-    if (args.visibility) {
-      where.visibility = args.visibility;
-    }
+    if (args.visibility) where.visibility = args.visibility;
 
-    // Owner filter
     if (args.ownerId) {
-      AND.push({
-        members: { some: { role: 'OWNER', userId: args.ownerId } },
-      });
+      AND.push({ members: { some: { role: 'OWNER', userId: args.ownerId } } });
     }
 
-    // NEW: Member filter (użytkownik jest członkiem)
     if (args.memberId) {
-      AND.push({
-        members: {
-          some: {
-            userId: args.memberId,
-            // Jeżeli chcesz zawężać do konkretnych statusów/ról — rozbudujemy tu warunek
-          },
-        },
-      });
-      // Intencjonalnie NIE wymuszamy visibility — członek może widzieć HIDDEN,
-      // o ile spełnia warunek członkostwa.
+      AND.push({ members: { some: { userId: args.memberId } } });
+      // brak wymuszenia visibility => członek widzi też HIDDEN, jeśli jest członkiem
     }
 
-    // Okno czasowe
     if (args.upcomingAfter)
       AND.push({ startAt: { gte: args.upcomingAfter as Date } });
     if (args.endingBefore)
       AND.push({ endAt: { lte: args.endingBefore as Date } });
 
-    // Taksonomie / atrybuty
-    if (args.categoryIds?.length) {
+    if (args.categoryIds?.length)
       AND.push({ categories: { some: { id: { in: args.categoryIds } } } });
-    }
-    if (args.tagIds?.length) {
+    if (args.tagIds?.length)
       AND.push({ tags: { some: { id: { in: args.tagIds } } } });
-    }
-    if (args.levels?.length) {
-      AND.push({ levels: { hasSome: args.levels } });
-    }
-    if (args.kinds?.length) {
-      AND.push({ meetingKind: { in: args.kinds as MeetingKind[] } });
-    }
 
-    // Verified owner
+    if (args.levels?.length) AND.push({ levels: { hasSome: args.levels } });
+    if (args.kinds?.length)
+      AND.push({ meetingKind: { in: args.kinds as MeetingKind[] } });
+
     if (args.verifiedOnly) {
       AND.push({
-        members: {
-          some: { role: 'OWNER', user: { is: { verifiedAt: {} } } },
-        },
+        members: { some: { role: 'OWNER', user: { is: { verifiedAt: {} } } } },
       });
     }
 
-    // Keywords – AND logic
     if (args.keywords?.length) {
       for (const kw of args.keywords) {
         const containsCI = { contains: kw, mode: 'insensitive' as const };
@@ -108,7 +82,6 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       }
     }
 
-    // Status logic (po dacie / lock window). Uwaga: FULL wymaga agregacji JOINED vs max.
     if (args.status && args.status !== IntentStatus.Any) {
       const now = new Date();
       const lockTo = new Date(now.getTime() + LOCK_WINDOW_MS);
@@ -117,6 +90,7 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
           AND.push({ startAt: { lte: now }, endAt: { gte: now } });
           break;
         case IntentStatus.Started:
+          // to jest "ENDED" – rozważ zmianę enuma w SDL
           AND.push({ startAt: { lt: now }, endAt: { lt: now } });
           break;
         case IntentStatus.Locked:
@@ -126,16 +100,11 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
           AND.push({ startAt: { gt: lockTo } });
           break;
         case IntentStatus.Full:
-          // TODO: dokładny filtr wymaga agregacji po IntentMember.status=JOINED i porównania do 'max'.
-          // Opcje:
-          // 1) denormalizacja kolumny joinedCount + WHERE joinedCount >= max,
-          // 2) groupBy / having w SQL,
-          // 3) post-filter + overfetch (kompromis z liczeniem total).
+          // TODO: agregacja/denormalizacja
           break;
       }
     }
 
-    // Prosta heurystyka geograficzna (bbox) — distanceKm w SDL to Int
     if (
       typeof args.distanceKm === 'number' &&
       Number.isFinite(args.distanceKm) &&
@@ -152,17 +121,12 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
 
       AND.push({ lat: { gte: lat - latDelta, lte: lat + latDelta } });
       AND.push({ lng: { gte: lng - lonDelta, lte: lng + lonDelta } });
-      // Dokładny dystans (haversine) sugeruję obsłużyć na widoku SQL lub po fetchu.
     }
 
     if (AND.length) where.AND = AND;
-    if (OR.length) where.OR = OR;
 
-    // total – liczba wszystkich rekordów spełniających 'where'
-    // Uwaga: jeśli kiedyś wdrożymy TRUE filtr FULL (agregacja), total trzeba będzie liczyć spójnie z tym filtrem.
     const total = await prisma.intent.count({ where });
 
-    // właściwe pobranie strony
     const rows = await prisma.intent.findMany({
       where,
       take,
@@ -171,17 +135,16 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       include: INTENT_INCLUDE,
     });
 
-    const items = rows.map(mapIntent);
-
-    const pageInfo = {
-      total,
-      limit: take,
-      offset: skip,
-      hasPrev: skip > 0,
-      hasNext: skip + take < total,
+    return {
+      items: rows.map(mapIntent),
+      pageInfo: {
+        total,
+        limit: take,
+        offset: skip,
+        hasPrev: skip > 0,
+        hasNext: skip + take < total,
+      },
     };
-
-    return { items, pageInfo };
   }
 );
 

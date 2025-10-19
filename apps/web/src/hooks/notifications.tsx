@@ -11,7 +11,7 @@ import {
   GetNotificationsQueryVariables,
   NotificationAddedDocument,
   type NotificationAddedSubscription,
-} from '@/libs/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query-update';
 import { gqlClient } from '@/libs/graphql/client';
 // zakładam, że masz to jak wcześniej
 import { getWsClient } from '@/libs/graphql/wsClient';

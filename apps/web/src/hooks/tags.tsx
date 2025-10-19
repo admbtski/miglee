@@ -15,7 +15,7 @@ import {
   UpdateTagDocument,
   UpdateTagMutation,
   UpdateTagMutationVariables,
-} from '@/libs/graphql/__generated__/react-query';
+} from '@/libs/graphql/__generated__/react-query-update';
 import { gqlClient } from '@/libs/graphql/client';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import {
