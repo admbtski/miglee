@@ -15,7 +15,8 @@ export type MeetingKindType = z.infer<typeof MeetingKindEnum>;
 
 export type CreateIntentInput = {
   title: string;
-  categorySlugs: string[]; // <-- slugs (nie id)
+  categorySlugs: string[];
+  tagsSlugs: string[];
   description?: string;
   startAt: string;
   endAt: string;
@@ -34,18 +35,6 @@ export type CreateIntentInput = {
   };
   visibility: Visibility;
   notes?: string;
-};
-
-export type IntentSuggestion = {
-  id: string;
-  title: string;
-  author: string;
-  distanceKm: number;
-  startAt: string;
-  endAt: string;
-  min: number;
-  max: number;
-  taken: number;
 };
 
 export type CategoryOption = { id: string; slug: string; name: string };

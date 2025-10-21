@@ -1,16 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo } from 'react';
+import { useCategoriesLimit } from '@/hooks/use-categories';
+import { useEffect, useId } from 'react';
 import {
   Controller,
   UseFormReturn,
   useController,
   useWatch,
 } from 'react-hook-form';
-import { IntentFormValues, CategoryOption } from './types';
 import { useCategorySelection } from './category-selection-provider';
-import { CategoryMultiCombo } from '../combobox/category-combobox';
-import { useCategoriesLimit } from '@/hooks/use-categories';
+import { CategoryOption, IntentFormValues } from './types';
+import { CategoryMultiCombo } from '@/app/[[...slug]]/_components/search-combo';
 
 export function BasicsStep({
   form,
@@ -33,7 +33,7 @@ export function BasicsStep({
 
   const { field: modeField } = useController({ name: 'mode', control });
 
-  const { add, clear, remove, selected, setSelected, set } =
+  const { selected: selectedCategories, set: setCategories } =
     useCategorySelection();
 
   const title = useWatch({ control, name: 'title' }) ?? '';
@@ -116,9 +116,9 @@ export function BasicsStep({
         control={control}
         render={({ field }) => {
           const handleChange = (vals: CategoryOption[]) => {
-            const ids = vals.map((v) => v.id);
-            field.onChange(ids);
-            set(vals, useCategoriesLimit);
+            const slugs = vals.map((v) => v.slug);
+            field.onChange(slugs);
+            setCategories(vals, useCategoriesLimit);
             void trigger('categorySlugs');
           };
           return (
@@ -136,7 +136,7 @@ export function BasicsStep({
                 maxCount={3}
                 size="md"
                 onChange={handleChange}
-                values={selected}
+                values={selectedCategories}
               />
 
               <div

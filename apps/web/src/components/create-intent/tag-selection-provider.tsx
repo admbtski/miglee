@@ -22,7 +22,7 @@ const TagSelectionContext = createContext<TagSelectionContextValue | null>(
   null
 );
 
-export function CategorySelectionProvider({
+export function TagSelectionProvider({
   children,
   initial = [],
 }: {

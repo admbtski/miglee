@@ -1,22 +1,21 @@
 'use client';
 
 import { MapPreview } from '@/components/map/map-preview';
-import { IntentFormValues, IntentSuggestion } from './types';
-import { SuggestionCard } from './suggestion-card';
 import {
   CalendarDays,
   Clock,
-  MapPin,
-  Users,
-  User,
   Eye,
   EyeOff,
-  Ruler,
+  MapPin,
   NotebookText,
+  Ruler,
   Tag,
+  User,
+  Users,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCategorySelection } from './category-selection-provider';
+import { IntentFormValues } from './types';
 
 /* ---------- tiny UI primitives ---------- */
 
@@ -139,19 +138,12 @@ function Coordinates({ lat, lng }: { lat: number; lng: number }) {
 
 export function ReviewStep({
   values,
-  suggestions,
-  selectedId,
-  onSelect,
   showMapPreview = false,
   mapId,
 }: {
   values: IntentFormValues;
-  suggestions: IntentSuggestion[];
-  selectedId?: string | null;
-  onSelect?: (id: string | null) => void;
   showMapPreview?: boolean;
   mapId?: string;
-  interests?: Array<{ id: string; name: string }>;
 }) {
   const { dDate, startT, endT } = useFormattedTime(
     values.startAt,
@@ -332,7 +324,7 @@ export function ReviewStep({
       <div className="space-y-3">
         <SectionTitle>Instead of creating new, you could join…</SectionTitle>
 
-        {suggestions.length === 0 ? (
+        {/* {suggestions.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
             No similar initiatives found — go ahead and create a new one!
           </div>
@@ -353,7 +345,7 @@ export function ReviewStep({
           <div className="text-xs text-indigo-600 dark:text-indigo-400">
             Tip: click the same card again to unselect.
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

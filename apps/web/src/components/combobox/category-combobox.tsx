@@ -1,279 +1,423 @@
-// CategoryMultiCombo.tsx
 'use client';
 
-import { Folder, Loader2, Search, X } from 'lucide-react';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useCategories, useCategoriesLimit } from '../../hooks/use-categories';
-import type { CategoryOption } from '../create-intent/types';
+import {
+  BadgePlusIcon,
+  CalendarClockIcon,
+  HatGlassesIcon,
+  MapPinnedIcon,
+  SquarePenIcon,
+  UsersIcon,
+  X,
+} from 'lucide-react';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { Modal } from '../modal/modal';
+import { BasicsStep } from './basics-step';
+import { CapacityStep } from './capacity-step';
+import {
+  CategorySelectionProvider,
+  useCategorySelection,
+} from './category-selection-provider';
+import { PlaceStep } from './place-step';
+import { ReviewStep } from './review-step';
+import { Stepper } from './stepper';
+import { TimeStep } from './time-step';
+import { CreateIntentInput } from './types';
+import { useIntentForm } from './use-intent-form';
+import { intentCreatedConfetti } from './utils';
+import { useTagSelection } from './tag-selection-provider';
 
-export type CategoryMultiComboProps = {
-  /** currently selected options (full objects) */
-  values: CategoryOption[];
-  /** called with full array on any change */
-  onChange: (values: CategoryOption[]) => void;
+const STEP_META = [
+  { key: 'basics', label: 'Basics', Icon: SquarePenIcon },
+  { key: 'capacity', label: 'Capacity', Icon: UsersIcon },
+  { key: 'time', label: 'Time', Icon: CalendarClockIcon },
+  { key: 'place', label: 'Place', Icon: MapPinnedIcon },
+  { key: 'review', label: 'Review', Icon: HatGlassesIcon },
+];
 
-  initialOptions?: CategoryOption[];
-  placeholder?: string;
-  disabled?: boolean;
-  className?: string;
-  maxCount?: number; // default 3
-  size?: 'sm' | 'md' | 'lg';
-};
+const STEPS = STEP_META.map(({ label }) => label);
 
-export function CategoryMultiCombo({
-  values,
-  onChange,
-  initialOptions,
-  placeholder = 'Search category…',
-  disabled,
-  className,
-  maxCount = 3,
-  size = 'md',
-}: CategoryMultiComboProps) {
-  const [query, setQuery] = useState('');
-  const [open, setOpen] = useState(false);
-  const [hi, setHi] = useState(-1);
+export function CreateIntentModal({
+  open,
+  onClose,
+  onCreate,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (input: CreateIntentInput) => Promise<void> | void;
+}) {
+  const form = useIntentForm();
+  const { clear: clearCategories } = useCategorySelection();
+  const { clear: clearTags } = useTagSelection();
 
-  const listboxId = useId();
+  const [step, setStep] = useState(0);
+  const titleId = useId();
 
-  const { options, isLoading, error } = useCategories(query, initialOptions);
+  const {
+    handleSubmit,
+    trigger,
+    reset,
+    getValues,
+    formState: { isValid, isSubmitting },
+  } = form;
 
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
-
-  const selectedIds = useMemo(() => new Set(values.map((v) => v.id)), [values]);
-
-  const visibleOptions = useMemo(
-    () => options.filter((o) => !selectedIds.has(o.id)),
-    [options, selectedIds]
-  );
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      clearTags();
+      clearCategories();
+      reset();
+      setStep(0);
+    }
+  }, [open, reset, clearTags, clearCategories]);
 
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (!wrapperRef.current?.contains(t) && !listRef.current?.contains(t)) {
-        setOpen(false);
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        if (step < STEPS.length - 1) {
+          void next();
+        }
+        // else handleSubmit();
+      }
+      if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        if (step > 0) back();
       }
     };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
+    window.addEventListener('keydown', onKey, { passive: false });
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, step]);
 
-  const canAddMore = values.length < maxCount;
+  const validateStep = useCallback(
+    async (index: number) => {
+      switch (index) {
+        case 0:
+          return await trigger(['title', 'categorySlugs']);
+        case 1:
+          return await trigger(['mode', 'min', 'max']);
+        case 2:
+          return await trigger(['startAt', 'endAt', 'allowJoinLate']);
+        case 3:
+          return await trigger([
+            'location.lat',
+            'location.lng',
+            'location.address',
+            'location.placeId',
+            'location.radiusKm',
+            'visibility',
+            'notes',
+            'meetingKind',
+            'onlineUrl',
+          ]);
+        default:
+          return true;
+      }
+    },
+    [trigger]
+  );
 
-  const pick = (opt: CategoryOption) => {
-    if (!canAddMore) return;
-    onChange([...values, opt]);
-    setQuery('');
-    setHi(-1);
-    setOpen(true);
-    requestAnimationFrame(() => inputRef.current?.focus());
-  };
+  const next = useCallback(async () => {
+    const ok = await validateStep(step);
+    if (!ok) return;
 
-  const remove = (id: string) => {
-    onChange(values.filter((v) => v.id !== id));
-    requestAnimationFrame(() => inputRef.current?.focus());
-  };
+    const nextStep = Math.min(step + 1, STEPS.length - 1);
+    setStep(nextStep);
+  }, [step, validateStep, getValues]);
 
-  const activeOptionId =
-    hi >= 0 && visibleOptions[hi]
-      ? `cat-opt-${visibleOptions[hi].id}`
-      : undefined;
+  const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
-  const sizeCls =
-    size === 'sm'
-      ? {
-          chip: 'h-7 text-[13px] px-2',
-          inputPadY: 'py-1.5',
-          icon: 'h-4 w-4',
-          wrapPad: 'p-1.5',
-        }
-      : size === 'lg'
-        ? {
-            chip: 'h-9 text-sm px-3',
-            inputPadY: 'py-2.5',
-            icon: 'h-5 w-5',
-            wrapPad: 'p-2.5',
-          }
-        : {
-            chip: 'h-8 text-sm px-3',
-            inputPadY: 'py-2',
-            icon: 'h-4 w-4',
-            wrapPad: 'p-2',
-          };
-
-  const showPlaceholder = values.length === 0 && query.length === 0;
+  if (!open) return null;
 
   return (
-    <div
-      ref={wrapperRef}
-      className={[
-        'relative rounded-2xl border border-zinc-300 bg-white dark:border-zinc-800 dark:bg-zinc-900/60',
-        sizeCls.wrapPad,
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      onClick={() => inputRef.current?.focus()}
-    >
-      <div
-        className={[
-          'flex flex-wrap items-center gap-2 px-1',
-          disabled ? 'opacity-60 pointer-events-none' : '',
-        ].join(' ')}
-      >
-        <Folder className={`${sizeCls.icon} opacity-70`} aria-hidden />
-
-        {values.map((v) => (
-          <span
-            key={v.id}
-            className={[
-              'inline-flex items-center gap-2 rounded-full',
-              'bg-zinc-100 text-zinc-800 ring-1 ring-inset ring-zinc-200',
-              'dark:bg-zinc-800/70 dark:text-zinc-100 dark:ring-zinc-700',
-              sizeCls.chip,
-            ].join(' ')}
-          >
-            {v.name}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                remove(v.id);
-              }}
-              className="inline-flex items-center justify-center rounded-full bg-zinc-200/60 p-1 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700/60 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              aria-label={`Remove ${v.name}`}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </span>
-        ))}
-
-        {/* input */}
-        <div className="relative flex-1 min-w-[8ch]">
-          <input
-            ref={inputRef}
-            disabled={disabled || !canAddMore}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOpen(true);
-              setHi(-1);
-            }}
-            onFocus={() => setOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === 'Backspace' && query === '' && values.length) {
-                e.preventDefault();
-                const id = values?.[values?.length - 1]?.id;
-                if (id) {
-                  remove(id);
-                }
-                return;
-              }
-              if (!open) return;
-              if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setHi((h) => Math.min(h + 1, visibleOptions.length - 1));
-              } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setHi((h) => Math.max(h - 1, 0));
-              } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (hi >= 0 && visibleOptions[hi]) pick(visibleOptions[hi]);
-                else setOpen(false);
-              } else if (e.key === 'Escape') {
-                setOpen(false);
-              }
-            }}
-            placeholder={showPlaceholder ? placeholder : ''}
-            className={[
-              'w-full bg-transparent outline-none placeholder:text-zinc-400',
-              sizeCls.inputPadY,
-              'text-sm',
-            ].join(' ')}
-            role="combobox"
-            aria-expanded={open}
-            aria-controls={listboxId}
-            aria-activedescendant={activeOptionId}
-            aria-autocomplete="list"
-          />
-
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1.5">
-            {query ? null : isLoading ? (
-              <Loader2
-                className={`${sizeCls.icon} animate-spin opacity-60`}
-                aria-label="Loading"
-              />
-            ) : (
-              <Search className={`${sizeCls.icon} opacity-60`} aria-hidden />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {open && (query.length > 0 || visibleOptions.length > 0) && (
-        <div
-          ref={listRef}
-          id={listboxId}
-          className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
-          role="listbox"
-        >
-          {error && (
-            <div className="px-3 py-3 text-sm text-red-500">
-              Wyswtąpił błąd. Spróbuj ponownie później.
-            </div>
-          )}
-          {visibleOptions.length === 0 && (
-            <div className="px-3 py-3 text-sm text-zinc-500">No results</div>
-          )}
-          {visibleOptions.length !== 0 && (
-            <>
-              {visibleOptions.map((opt, idx) => {
-                const active = idx === hi;
-                return (
-                  <button
-                    key={opt.id}
-                    id={`cat-opt-${opt.id}`}
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onMouseEnter={() => setHi(idx)}
-                    onClick={() => pick(opt)}
-                    className={[
-                      'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
-                      active
-                        ? 'bg-zinc-100 dark:bg-zinc-800'
-                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
-                    ].join(' ')}
-                  >
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
-                      <Folder className="h-3.5 w-3.5 opacity-80" />
-                    </span>
-                    <span className="text-zinc-800 dark:text-zinc-100">
-                      {opt.name}
-                    </span>
-                  </button>
-                );
-              })}
-              {/* Footer hint (zamiast test123) */}
-              <div className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700">
-                Pokazujemy maksymalnie <b>{useCategoriesLimit}</b> wyników.
-                Zmień kryteria wyszukiwania, aby zobaczyć pozostałe.
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {!canAddMore && (
-        <div
-          className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-amber-400/50"
-          aria-hidden
-          title="You reached the max number of categories"
-        />
-      )}
-    </div>
+    <CategorySelectionProvider initial={[]}>
+      <CreateIntentModalInner
+        titleId={titleId}
+        step={step}
+        setStep={setStep}
+        form={form}
+        isValid={isValid}
+        isSubmitting={isSubmitting}
+        onClose={onClose}
+        onCreate={onCreate}
+      />
+    </CategorySelectionProvider>
   );
 }
+
+function CreateIntentModalInner(props: {
+  titleId: string;
+  step: number;
+  setStep: (n: number) => void;
+  form: ReturnType<typeof useIntentForm>;
+  isValid: boolean;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onCreate: (input: CreateIntentInput) => Promise<void> | void;
+}) {
+  const {
+    titleId,
+    step,
+    setStep,
+    form,
+    isValid,
+    isSubmitting,
+    onClose,
+    onCreate,
+  } = props;
+
+  const { selected: selectedCategories, clear: clearCategories } =
+    useCategorySelection();
+
+  const { handleSubmit, trigger, reset } = form;
+
+  const validateStep = useCallback(
+    async (index: number) => {
+      switch (index) {
+        case 0:
+          return await trigger(['title', 'categorySlugs']);
+        case 1:
+          return await trigger(['mode', 'min', 'max']);
+        case 2:
+          return await trigger(['startAt', 'endAt', 'allowJoinLate']);
+        case 3:
+          return await trigger([
+            'location.lat',
+            'location.lng',
+            'location.address',
+            'location.placeId',
+            'location.radiusKm',
+            'visibility',
+            'notes',
+            'meetingKind',
+            'onlineUrl',
+          ]);
+        default:
+          return true;
+      }
+    },
+    [trigger]
+  );
+
+  const next = useCallback(async () => {
+    const ok = await validateStep(step);
+    if (!ok) return;
+
+    const nextStep = Math.min(step + 1, STEPS.length - 1);
+    setStep(nextStep);
+  }, [step, validateStep, setStep]);
+
+  const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), [setStep]);
+
+  const submit = handleSubmit(
+    useCallback(
+      async (values) => {
+        const input: CreateIntentInput = {
+          title: values.title,
+          categorySlugs: selectedCategories.map((c) => c.slug),
+          startAt: values.startAt.toISOString(),
+          endAt: values.endAt.toISOString(),
+          allowJoinLate: values.allowJoinLate,
+          min: values.min,
+          max: values.max,
+          mode: values.mode,
+          meetingKind: values.meetingKind,
+          location: {},
+          visibility: values.visibility,
+          description: values.description,
+          notes: values.notes,
+          onlineUrl: values.onlineUrl,
+        };
+
+        if (values.description?.trim())
+          input.description = values.description.trim();
+        if (values.onlineUrl?.trim()) input.onlineUrl = values.onlineUrl.trim();
+        if (values.notes?.trim()) input.notes = values.notes.trim();
+
+        if (values.location.lat != null)
+          input.location.lat = values.location.lat;
+        if (values.location.lng != null)
+          input.location.lng = values.location.lng;
+        if (values.location.address?.trim())
+          input.location.address = values.location.address.trim();
+        if (values.location.radiusKm != null)
+          input.location.radiusKm = values.location.radiusKm;
+        if (values.location.placeId?.trim())
+          input.location.placeId = values.location.placeId.trim();
+
+        await onCreate(input);
+        await intentCreatedConfetti();
+        onClose();
+      },
+      [onClose, onCreate, selectedCategories]
+    )
+  );
+
+  const { label: stepLabel, Icon: StepIcon } = STEP_META[step] ?? {
+    title: 'Create intent',
+    Icon: BadgePlusIcon,
+  };
+
+  return (
+    <Modal
+      open={true}
+      onClose={onClose}
+      header={
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <button
+              onClick={() => {
+                setStep(0);
+                reset();
+                clearCategories();
+                setSelectedSuggestionId(null);
+              }}
+              className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
+            >
+              Clear
+            </button>
+
+            <div
+              id={titleId}
+              className="flex items-center gap-3 text-xl font-medium"
+            >
+              <StepIcon className="h-5 w-5" />
+              {stepLabel}
+            </div>
+
+            <button
+              onClick={onClose}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-3">
+            <Stepper
+              steps={STEP_META as any}
+              currentIndex={step}
+              layout="stacked"
+              size="md"
+              dotMode="icon"
+            />
+          </div>
+        </div>
+      }
+      content={
+        <div className="space-y-6">
+          {step === 0 && <BasicsStep form={form} />}
+
+          {step === 1 && <CapacityStep form={form} />}
+
+          {step === 2 && (
+            <TimeStep
+              form={form}
+              userTzLabel={Intl.DateTimeFormat().resolvedOptions().timeZone}
+            />
+          )}
+
+          {step === 3 && (
+            <PlaceStep
+              form={form}
+              onUseMyLocation={async () => {
+                return new Promise<{ lat: number; lng: number } | null>(
+                  (resolve) => {
+                    if (!navigator.geolocation) return resolve(null);
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) =>
+                        resolve({
+                          lat: pos.coords.latitude,
+                          lng: pos.coords.longitude,
+                        }),
+                      () => resolve(null),
+                      { enableHighAccuracy: true, timeout: 8000 }
+                    );
+                  }
+                );
+              }}
+            />
+          )}
+
+          {step === 4 && (
+            <ReviewStep
+              values={form.getValues()}
+              suggestions={suggestions}
+              selectedId={selectedSuggestionId}
+              onSelect={setSelectedSuggestionId}
+              showMapPreview
+            />
+          )}
+        </div>
+      }
+      footer={
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={back}
+            disabled={!(step > 0 && !isSubmitting)}
+            className="rounded-2xl border px-4 py-2 text-sm disabled:opacity-50
+                       border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50
+                       dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={step < STEPS.length - 1 ? next : submit}
+            disabled={isSubmitting || (step === STEPS.length - 1 && !isValid)}
+            className="rounded-2xl px-4 py-2 text-sm font-medium disabled:opacity-50
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+                       bg-indigo-600 text-white hover:bg-indigo-500"
+          >
+            {step < STEPS.length - 1
+              ? 'Next'
+              : selectedSuggestionId
+                ? 'Join selected'
+                : 'Create'}
+          </button>
+        </div>
+      }
+    />
+  );
+}
+
+// const submit = handleSubmit(
+//   useCallback(
+//     async (values) => {
+//       const input: CreateIntentInput = {
+//         title: values.title,
+//         categorySlugs: values.categorySlugs,
+//         startAt: values.startAt.toISOString(),
+//         endAt: values.endAt.toISOString(),
+//         allowJoinLate: values.allowJoinLate,
+//         min: values.min,
+//         max: values.max,
+//         mode: values.mode,
+//         meetingKind: values.meetingKind,
+//         location: {},
+//         visibility: values.visibility,
+//       };
+
+//       if (values.description?.trim())
+//         input.description = values.description.trim();
+//       if (values.onlineUrl?.trim()) input.onlineUrl = values.onlineUrl.trim();
+//       if (values.notes?.trim()) input.notes = values.notes.trim();
+
+//       if (values.location.lat != null)
+//         input.location.lat = values.location.lat;
+//       if (values.location.lng != null)
+//         input.location.lng = values.location.lng;
+//       if (values.location.address?.trim())
+//         input.location.address = values.location.address.trim();
+//       if (values.location.radiusKm != null)
+//         input.location.radiusKm = values.location.radiusKm;
+
+//       await onCreate(input);
+//       await intentCreatedConfetti();
+//       onClose();
+//     },
+//     [onCreate, onClose]
+//   )
+// );

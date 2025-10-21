@@ -141,7 +141,6 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
       assertCreateInput(input);
 
       const ownerId = user?.id;
-      w;
       if (!ownerId) {
         throw new GraphQLError(
           'ownerId is required or an authenticated user must be present.',

@@ -11,21 +11,22 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { Modal } from '../modal/modal';
-import { CreateIntentInput, IntentFormValues } from './types';
-import { useIntentForm } from './use-intent-form';
 import { BasicsStep } from './basics-step';
+import { CapacityStep } from './capacity-step';
+import { useCategorySelection } from './category-selection-provider';
 import { PlaceStep } from './place-step';
 import { ReviewStep } from './review-step';
-import { TimeStep } from './time-step';
-import { intentCreatedConfetti } from './utils';
 import { Stepper } from './stepper';
-import { CapacityStep } from './capacity-step';
+import { useTagSelection } from './tag-selection-provider';
+import { TimeStep } from './time-step';
+import { CreateIntentInput } from './types';
+import { useIntentForm } from './use-intent-form';
+import { intentCreatedConfetti } from './utils';
 import {
-  CategorySelectionProvider,
-  useCategorySelection,
-} from './category-selection-provider';
-
-const STEPS = ['Basics', 'Capacity', 'Time', 'Place', 'Review'] as const;
+  MeetingKind,
+  Mode,
+  Visibility,
+} from '@/libs/graphql/__generated__/react-query-update';
 
 const STEP_META = [
   { key: 'basics', label: 'Basics', Icon: SquarePenIcon },
@@ -33,23 +34,27 @@ const STEP_META = [
   { key: 'time', label: 'Time', Icon: CalendarClockIcon },
   { key: 'place', label: 'Place', Icon: MapPinnedIcon },
   { key: 'review', label: 'Review', Icon: HatGlassesIcon },
-] as const;
+];
+
+const STEPS = STEP_META.map(({ label }) => label);
 
 export function CreateIntentModal({
   open,
   onClose,
   onCreate,
-  fetchSuggestions,
 }: {
   open: boolean;
   onClose: () => void;
   onCreate: (input: CreateIntentInput) => Promise<void> | void;
-  fetchSuggestions?: (v: IntentFormValues) => Promise<any[]>;
 }) {
+  const form = useIntentForm();
+  const { selected: selectedCategories, clear: clearCategories } =
+    useCategorySelection();
+  const { selected: selectedTags, clear: clearTags } = useTagSelection();
+
   const [step, setStep] = useState(0);
   const titleId = useId();
 
-  const form = useIntentForm();
   const {
     handleSubmit,
     trigger,
@@ -58,22 +63,16 @@ export function CreateIntentModal({
     formState: { isValid, isSubmitting },
   } = form;
 
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [selectedSuggestionId, setSelectedSuggestionId] = useState<
-    string | null
-  >(null);
-
   // Reset form when modal closes
   useEffect(() => {
     if (!open) {
-      setStep(0);
+      clearTags();
+      clearCategories();
       reset();
-      setSelectedSuggestionId(null);
-      setSuggestions([]);
+      setStep(0);
     }
-  }, [open, reset]);
+  }, [open, reset, clearTags, clearCategories]);
 
-  // Keyboard shortcuts: Enter -> next/submit, Shift+Enter -> back
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -89,11 +88,8 @@ export function CreateIntentModal({
     };
     window.addEventListener('keydown', onKey, { passive: false });
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, step]); // do not capture callbacks
+  }, [open, step]);
 
-  /**
-   * Per-step validation groups – keep fast and specific to fields on the step.
-   */
   const validateStep = useCallback(
     async (index: number) => {
       switch (index) {
@@ -128,138 +124,11 @@ export function CreateIntentModal({
 
     const nextStep = Math.min(step + 1, STEPS.length - 1);
     setStep(nextStep);
-
-    if (nextStep === 3 && fetchSuggestions) {
-      try {
-        const values = getValues();
-        const list = await fetchSuggestions(values);
-        setSuggestions(list ?? []);
-      } finally {
-      }
-    }
-  }, [step, validateStep, fetchSuggestions, getValues]);
+  }, [step, validateStep, getValues]);
 
   const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
-  const submit = handleSubmit(
-    useCallback(async (values) => {
-      const { selected } = useCategorySelection();
-    }, [])
-  );
-
-  // Render: opakowujemy UI w CategorySelectionProvider i przekazujemy startowe interests
   if (!open) return null;
-
-  return (
-    <CategorySelectionProvider initial={[]}>
-      <CreateIntentModalInner
-        titleId={titleId}
-        step={step}
-        setStep={setStep}
-        form={form}
-        isValid={isValid}
-        isSubmitting={isSubmitting}
-        onClose={onClose}
-        onCreate={onCreate}
-        fetchSuggestions={fetchSuggestions}
-        suggestions={suggestions}
-        setSuggestions={setSuggestions}
-        selectedSuggestionId={selectedSuggestionId}
-        setSelectedSuggestionId={setSelectedSuggestionId}
-      />
-    </CategorySelectionProvider>
-  );
-}
-
-function CreateIntentModalInner(props: {
-  titleId: string;
-  step: number;
-  setStep: (n: number) => void;
-  form: ReturnType<typeof useIntentForm>;
-  isValid: boolean;
-  isSubmitting: boolean;
-  onClose: () => void;
-  onCreate: (input: CreateIntentInput) => Promise<void> | void;
-  fetchSuggestions?: (v: IntentFormValues) => Promise<any[]>;
-  suggestions: any[];
-  setSuggestions: (s: any[]) => void;
-  selectedSuggestionId: string | null;
-  setSelectedSuggestionId: (id: string | null) => void;
-}) {
-  const {
-    titleId,
-    step,
-    setStep,
-    form,
-    isValid,
-    isSubmitting,
-    onClose,
-    onCreate,
-    fetchSuggestions,
-    suggestions,
-    setSuggestions,
-    selectedSuggestionId,
-    setSelectedSuggestionId,
-  } = props;
-
-  const { selected: selectedCategories, clear: clearCategories } =
-    useCategorySelection();
-
-  const { handleSubmit, trigger, reset, getValues } = form;
-
-  const validateStep = useCallback(
-    async (index: number) => {
-      switch (index) {
-        case 0:
-          return await trigger(['title', 'categorySlugs']);
-        case 1:
-          return await trigger(['mode', 'min', 'max']);
-        case 2:
-          return await trigger(['startAt', 'endAt', 'allowJoinLate']);
-        case 3:
-          return await trigger([
-            'location.lat',
-            'location.lng',
-            'location.address',
-            'location.placeId',
-            'location.radiusKm',
-            'visibility',
-            'notes',
-            'meetingKind',
-            'onlineUrl',
-          ]);
-        default:
-          return true;
-      }
-    },
-    [trigger]
-  );
-
-  const next = useCallback(async () => {
-    const ok = await validateStep(step);
-    if (!ok) return;
-
-    const nextStep = Math.min(step + 1, STEPS.length - 1);
-    setStep(nextStep);
-
-    if (nextStep === 3 && fetchSuggestions) {
-      try {
-        const values = getValues();
-        const list = await fetchSuggestions(values);
-        setSuggestions(list ?? []);
-      } finally {
-      }
-    }
-  }, [
-    step,
-    validateStep,
-    fetchSuggestions,
-    getValues,
-    setStep,
-    setSuggestions,
-  ]);
-
-  const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), [setStep]);
 
   const submit = handleSubmit(
     useCallback(
@@ -267,15 +136,19 @@ function CreateIntentModalInner(props: {
         const input: CreateIntentInput = {
           title: values.title,
           categorySlugs: selectedCategories.map((c) => c.slug),
+          tagsSlugs: selectedTags.map((t) => t.slug),
           startAt: values.startAt.toISOString(),
           endAt: values.endAt.toISOString(),
           allowJoinLate: values.allowJoinLate,
           min: values.min,
           max: values.max,
-          mode: values.mode,
-          meetingKind: values.meetingKind,
+          mode: values.mode as Mode,
+          meetingKind: values.meetingKind as MeetingKind,
           location: {},
-          visibility: values.visibility,
+          visibility: values.visibility as Visibility,
+          description: values.description,
+          notes: values.notes,
+          onlineUrl: values.onlineUrl,
         };
 
         if (values.description?.trim())
@@ -319,7 +192,7 @@ function CreateIntentModalInner(props: {
                 setStep(0);
                 reset();
                 clearCategories();
-                setSelectedSuggestionId(null);
+                clearTags();
               }}
               className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
             >
@@ -390,13 +263,7 @@ function CreateIntentModalInner(props: {
           )}
 
           {step === 4 && (
-            <ReviewStep
-              values={form.getValues()}
-              suggestions={suggestions}
-              selectedId={selectedSuggestionId}
-              onSelect={setSelectedSuggestionId}
-              showMapPreview
-            />
+            <ReviewStep values={form.getValues()} showMapPreview />
           )}
         </div>
       }
@@ -422,7 +289,8 @@ function CreateIntentModalInner(props: {
           >
             {step < STEPS.length - 1
               ? 'Next'
-              : selectedSuggestionId
+              : // : selectedSuggestionId
+                false
                 ? 'Join selected'
                 : 'Create'}
           </button>
