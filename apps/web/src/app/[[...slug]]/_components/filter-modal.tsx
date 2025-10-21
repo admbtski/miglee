@@ -26,6 +26,7 @@ import React, {
 } from 'react';
 import { SearchMeta, useSearchMeta } from '../_hooks/use-search-meta';
 import { useGetTagsBySlugsQuery } from '@/hooks/graphql/tags';
+import { FilterSearchCombo } from './search-combo';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* constants & helpers */
@@ -512,7 +513,7 @@ export function FilterModal({
             {/* body */}
             <div className="p-4 space-y-6">
               {/* GROUPED SEARCH */}
-              <SearchCombo
+              <FilterSearchCombo
                 value={q}
                 onChangeValue={setQ}
                 onSubmitFreeText={setQ}

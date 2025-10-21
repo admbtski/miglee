@@ -10,7 +10,7 @@ import {
 } from 'react-hook-form';
 import { useCategorySelection } from './category-selection-provider';
 import { CategoryOption, IntentFormValues } from './types';
-import { CategoryMultiCombo } from '@/app/[[...slug]]/_components/search-combo';
+import { CategoryMultiCombo } from '../combobox/category-combobox';
 
 export function BasicsStep({
   form,
