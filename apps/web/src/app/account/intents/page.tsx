@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, KeyboardEvent } from 'react';
 
-import { useIntentsQuery } from '@/hooks/intents';
+import { useIntentsQuery } from '@/hooks/graphql/intents';
 import {
   IntentStatus,
   Visibility,
@@ -473,8 +473,8 @@ export default function IntentsPage() {
       visibility: undefined as unknown as Visibility | undefined,
       upcomingAfter: undefined,
       endingBefore: undefined,
-      categoryIds: [],
-      tagIds: [],
+      categorySlugs: [],
+      tagSlugs: [],
       kinds: [],
       levels: [],
       keywords: [],
@@ -493,8 +493,8 @@ export default function IntentsPage() {
       visibility: Visibility.Public, // rozsądny default, żeby nie wyświetlać cudzych HIDDEN
       upcomingAfter: undefined,
       endingBefore: undefined,
-      categoryIds: [],
-      tagIds: [],
+      categorySlugs: [],
+      tagSlugs: [],
       kinds: [],
       levels: [],
       keywords: [],

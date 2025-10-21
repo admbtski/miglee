@@ -14,6 +14,37 @@ const tagSelect = {
   updatedAt: true,
 } satisfies Prisma.TagSelect;
 
+export const tagsBySlugsQuery: QueryResolvers['tagsBySlugs'] =
+  resolverWithMetrics(
+    'Query',
+    'tagsBySlugs',
+    async (_p, { slugs, limit }): Promise<GQLTag[]> => {
+      const take = Math.max(1, Math.min(limit ?? 100, 200));
+
+      const uniqueSlugs = Array.isArray(slugs)
+        ? Array.from(new Set(slugs.map((s) => s.trim()).filter(Boolean)))
+        : [];
+
+      const where: Prisma.TagWhereInput =
+        uniqueSlugs.length > 0 ? { slug: { in: uniqueSlugs } } : {};
+
+      const list = await prisma.tag.findMany({
+        where,
+        take,
+        orderBy: { slug: 'asc' },
+        select: {
+          id: true,
+          slug: true,
+          label: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      return list;
+    }
+  );
+
 export const tagsQuery: QueryResolvers['tags'] = resolverWithMetrics(
   'Query',
   'tags',

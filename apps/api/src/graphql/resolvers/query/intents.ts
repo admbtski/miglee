@@ -48,10 +48,10 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
     if (args.endingBefore)
       AND.push({ endAt: { lte: args.endingBefore as Date } });
 
-    if (args.categoryIds?.length)
-      AND.push({ categories: { some: { id: { in: args.categoryIds } } } });
-    if (args.tagIds?.length)
-      AND.push({ tags: { some: { id: { in: args.tagIds } } } });
+    if (args.categorySlugs?.length)
+      AND.push({ categories: { some: { slug: { in: args.categorySlugs } } } });
+    if (args.tagSlugs?.length)
+      AND.push({ tags: { some: { slug: { in: args.tagSlugs } } } });
 
     if (args.levels?.length) AND.push({ levels: { hasSome: args.levels } });
     if (args.kinds?.length)

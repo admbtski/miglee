@@ -1,4 +1,10 @@
 # Queries
+query GetCategoriesBySlugs($slugs: [String!]!, $limit: Int = 50) {
+  categoriesBySlugs(slugs: $slugs, limit: $limit) {
+    ...CategoryCore
+  }
+}
+
 query GetCategories($query: String, $limit: Int = 50) {
   categories(query: $query, limit: $limit) {
     ...CategoryCore

@@ -309,10 +309,11 @@ input LocationInput {
 
 input CreateIntentInput {
   title: String!
-  categoryIds: [ID!]!
-  tagIds: [ID!]
   description: String
   notes: String
+
+  categorySlugs: [String!]!
+  tagSlugs: [String!]
 
   visibility: Visibility! = PUBLIC
   mode: Mode! = GROUP
@@ -326,15 +327,14 @@ input CreateIntentInput {
   meetingKind: MeetingKind! = ONSITE
   onlineUrl: String
 
-  ownerId: ID! # server will create OWNER membership (JOINED) for this user
   location: LocationInput
   levels: [Level!]
 }
 
 input UpdateIntentInput {
   title: String
-  categoryIds: [ID!]
-  tagIds: [ID!]
+  categorySlugs: [ID!]
+  tagSlugs: [String!]
   description: String
   notes: String
 
@@ -405,8 +405,8 @@ type Query {
     memberId: ID
     upcomingAfter: DateTime
     endingBefore: DateTime
-    categoryIds: [ID!]
-    tagIds: [ID!]
+    categorySlugs: [ID!]
+    tagSlugs: [String!]
     levels: [Level!]
     kinds: [MeetingKind!]
     keywords: [String!]
@@ -440,9 +440,11 @@ type Query {
   # Aggregated counters (owner/mod get full distribution; others get joined-only)
   intentMemberStats(intentId: ID!): IntentMemberStats!
 
+  categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
   categories(query: String, limit: Int = 50): [Category!]!
   category(id: ID, slug: String): Category
 
+  tagsBySlugs(slugs: [String!]!, limit: Int): [Tag!]!
   tags(query: String, limit: Int = 50): [Tag!]!
   tag(id: ID, slug: String): Tag
 

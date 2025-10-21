@@ -1,0 +1,433 @@
+'use client';
+
+import {
+  BadgePlusIcon,
+  CalendarClockIcon,
+  HatGlassesIcon,
+  MapPinnedIcon,
+  SquarePenIcon,
+  UsersIcon,
+  X,
+} from 'lucide-react';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { Modal } from '../modal/modal';
+import { CreateIntentInput, IntentFormValues } from './types';
+import { useIntentForm } from './use-intent-form';
+import { BasicsStep } from './basics-step';
+import { PlaceStep } from './place-step';
+import { ReviewStep } from './review-step';
+import { TimeStep } from './time-step';
+import { intentCreatedConfetti } from './utils';
+import { Stepper } from './stepper';
+import { CapacityStep } from './capacity-step';
+import {
+  CategorySelectionProvider,
+  useCategorySelection,
+} from './category-selection-provider';
+
+const STEPS = ['Basics', 'Capacity', 'Time', 'Place', 'Review'] as const;
+
+const STEP_META = [
+  { key: 'basics', label: 'Basics', Icon: SquarePenIcon },
+  { key: 'capacity', label: 'Capacity', Icon: UsersIcon },
+  { key: 'time', label: 'Time', Icon: CalendarClockIcon },
+  { key: 'place', label: 'Place', Icon: MapPinnedIcon },
+  { key: 'review', label: 'Review', Icon: HatGlassesIcon },
+] as const;
+
+export function CreateIntentModal({
+  open,
+  onClose,
+  onCreate,
+  fetchSuggestions,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (input: CreateIntentInput) => Promise<void> | void;
+  fetchSuggestions?: (v: IntentFormValues) => Promise<any[]>;
+}) {
+  const [step, setStep] = useState(0);
+  const titleId = useId();
+
+  const form = useIntentForm();
+  const {
+    handleSubmit,
+    trigger,
+    reset,
+    getValues,
+    formState: { isValid, isSubmitting },
+  } = form;
+
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [selectedSuggestionId, setSelectedSuggestionId] = useState<
+    string | null
+  >(null);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      setStep(0);
+      reset();
+      setSelectedSuggestionId(null);
+      setSuggestions([]);
+    }
+  }, [open, reset]);
+
+  // Keyboard shortcuts: Enter -> next/submit, Shift+Enter -> back
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        if (step < STEPS.length - 1) void next();
+        else submit();
+      }
+      if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        if (step > 0) back();
+      }
+    };
+    window.addEventListener('keydown', onKey, { passive: false });
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, step]); // do not capture callbacks
+
+  /**
+   * Per-step validation groups – keep fast and specific to fields on the step.
+   */
+  const validateStep = useCallback(
+    async (index: number) => {
+      switch (index) {
+        case 0:
+          return await trigger(['title', 'categorySlugs']);
+        case 1:
+          return await trigger(['mode', 'min', 'max']);
+        case 2:
+          return await trigger(['startAt', 'endAt', 'allowJoinLate']);
+        case 3:
+          return await trigger([
+            'location.lat',
+            'location.lng',
+            'location.address',
+            'location.placeId',
+            'location.radiusKm',
+            'visibility',
+            'notes',
+            'meetingKind',
+            'onlineUrl',
+          ]);
+        default:
+          return true;
+      }
+    },
+    [trigger]
+  );
+
+  const next = useCallback(async () => {
+    const ok = await validateStep(step);
+    if (!ok) return;
+
+    const nextStep = Math.min(step + 1, STEPS.length - 1);
+    setStep(nextStep);
+
+    if (nextStep === 3 && fetchSuggestions) {
+      try {
+        const values = getValues();
+        const list = await fetchSuggestions(values);
+        setSuggestions(list ?? []);
+      } finally {
+      }
+    }
+  }, [step, validateStep, fetchSuggestions, getValues]);
+
+  const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
+
+  const submit = handleSubmit(
+    useCallback(async (values) => {
+      const { selected } = useCategorySelection();
+    }, [])
+  );
+
+  // Render: opakowujemy UI w CategorySelectionProvider i przekazujemy startowe interests
+  if (!open) return null;
+
+  return (
+    <CategorySelectionProvider initial={[]}>
+      <CreateIntentModalInner
+        titleId={titleId}
+        step={step}
+        setStep={setStep}
+        form={form}
+        isValid={isValid}
+        isSubmitting={isSubmitting}
+        onClose={onClose}
+        onCreate={onCreate}
+        fetchSuggestions={fetchSuggestions}
+        suggestions={suggestions}
+        setSuggestions={setSuggestions}
+        selectedSuggestionId={selectedSuggestionId}
+        setSelectedSuggestionId={setSelectedSuggestionId}
+      />
+    </CategorySelectionProvider>
+  );
+}
+
+function CreateIntentModalInner(props: {
+  titleId: string;
+  step: number;
+  setStep: (n: number) => void;
+  form: ReturnType<typeof useIntentForm>;
+  isValid: boolean;
+  isSubmitting: boolean;
+  onClose: () => void;
+  onCreate: (input: CreateIntentInput) => Promise<void> | void;
+  fetchSuggestions?: (v: IntentFormValues) => Promise<any[]>;
+  suggestions: any[];
+  setSuggestions: (s: any[]) => void;
+  selectedSuggestionId: string | null;
+  setSelectedSuggestionId: (id: string | null) => void;
+}) {
+  const {
+    titleId,
+    step,
+    setStep,
+    form,
+    isValid,
+    isSubmitting,
+    onClose,
+    onCreate,
+    fetchSuggestions,
+    suggestions,
+    setSuggestions,
+    selectedSuggestionId,
+    setSelectedSuggestionId,
+  } = props;
+
+  const { selected: selectedCategories, clear: clearCategories } =
+    useCategorySelection();
+
+  const { handleSubmit, trigger, reset, getValues } = form;
+
+  const validateStep = useCallback(
+    async (index: number) => {
+      switch (index) {
+        case 0:
+          return await trigger(['title', 'categorySlugs']);
+        case 1:
+          return await trigger(['mode', 'min', 'max']);
+        case 2:
+          return await trigger(['startAt', 'endAt', 'allowJoinLate']);
+        case 3:
+          return await trigger([
+            'location.lat',
+            'location.lng',
+            'location.address',
+            'location.placeId',
+            'location.radiusKm',
+            'visibility',
+            'notes',
+            'meetingKind',
+            'onlineUrl',
+          ]);
+        default:
+          return true;
+      }
+    },
+    [trigger]
+  );
+
+  const next = useCallback(async () => {
+    const ok = await validateStep(step);
+    if (!ok) return;
+
+    const nextStep = Math.min(step + 1, STEPS.length - 1);
+    setStep(nextStep);
+
+    if (nextStep === 3 && fetchSuggestions) {
+      try {
+        const values = getValues();
+        const list = await fetchSuggestions(values);
+        setSuggestions(list ?? []);
+      } finally {
+      }
+    }
+  }, [
+    step,
+    validateStep,
+    fetchSuggestions,
+    getValues,
+    setStep,
+    setSuggestions,
+  ]);
+
+  const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), [setStep]);
+
+  const submit = handleSubmit(
+    useCallback(
+      async (values) => {
+        const input: CreateIntentInput = {
+          title: values.title,
+          categorySlugs: selectedCategories.map((c) => c.slug),
+          startAt: values.startAt.toISOString(),
+          endAt: values.endAt.toISOString(),
+          allowJoinLate: values.allowJoinLate,
+          min: values.min,
+          max: values.max,
+          mode: values.mode,
+          meetingKind: values.meetingKind,
+          location: {},
+          visibility: values.visibility,
+        };
+
+        if (values.description?.trim())
+          input.description = values.description.trim();
+        if (values.onlineUrl?.trim()) input.onlineUrl = values.onlineUrl.trim();
+        if (values.notes?.trim()) input.notes = values.notes.trim();
+
+        if (values.location.lat != null)
+          input.location.lat = values.location.lat;
+        if (values.location.lng != null)
+          input.location.lng = values.location.lng;
+        if (values.location.address?.trim())
+          input.location.address = values.location.address.trim();
+        if (values.location.radiusKm != null)
+          input.location.radiusKm = values.location.radiusKm;
+        if (values.location.placeId?.trim())
+          input.location.placeId = values.location.placeId.trim();
+
+        await onCreate(input);
+        await intentCreatedConfetti();
+        onClose();
+      },
+      [onClose, onCreate, selectedCategories]
+    )
+  );
+
+  const { label: stepLabel, Icon: StepIcon } = STEP_META[step] ?? {
+    title: 'Create intent',
+    Icon: BadgePlusIcon,
+  };
+
+  return (
+    <Modal
+      open={true}
+      onClose={onClose}
+      header={
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <button
+              onClick={() => {
+                setStep(0);
+                reset();
+                clearCategories();
+                setSelectedSuggestionId(null);
+              }}
+              className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
+            >
+              Clear
+            </button>
+
+            <div
+              id={titleId}
+              className="flex items-center gap-3 text-xl font-medium"
+            >
+              <StepIcon className="h-5 w-5" />
+              {stepLabel}
+            </div>
+
+            <button
+              onClick={onClose}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-3">
+            <Stepper
+              steps={STEP_META as any}
+              currentIndex={step}
+              layout="stacked"
+              size="md"
+              dotMode="icon"
+            />
+          </div>
+        </div>
+      }
+      content={
+        <div className="space-y-6">
+          {step === 0 && <BasicsStep form={form} />}
+
+          {step === 1 && <CapacityStep form={form} />}
+
+          {step === 2 && (
+            <TimeStep
+              form={form}
+              userTzLabel={Intl.DateTimeFormat().resolvedOptions().timeZone}
+            />
+          )}
+
+          {step === 3 && (
+            <PlaceStep
+              form={form}
+              onUseMyLocation={async () => {
+                return new Promise<{ lat: number; lng: number } | null>(
+                  (resolve) => {
+                    if (!navigator.geolocation) return resolve(null);
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) =>
+                        resolve({
+                          lat: pos.coords.latitude,
+                          lng: pos.coords.longitude,
+                        }),
+                      () => resolve(null),
+                      { enableHighAccuracy: true, timeout: 8000 }
+                    );
+                  }
+                );
+              }}
+            />
+          )}
+
+          {step === 4 && (
+            <ReviewStep
+              values={form.getValues()}
+              suggestions={suggestions}
+              selectedId={selectedSuggestionId}
+              onSelect={setSelectedSuggestionId}
+              showMapPreview
+            />
+          )}
+        </div>
+      }
+      footer={
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={back}
+            disabled={!(step > 0 && !isSubmitting)}
+            className="rounded-2xl border px-4 py-2 text-sm disabled:opacity-50
+                       border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50
+                       dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={step < STEPS.length - 1 ? next : submit}
+            disabled={isSubmitting || (step === STEPS.length - 1 && !isValid)}
+            className="rounded-2xl px-4 py-2 text-sm font-medium disabled:opacity-50
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+                       bg-indigo-600 text-white hover:bg-indigo-500"
+          >
+            {step < STEPS.length - 1
+              ? 'Next'
+              : selectedSuggestionId
+                ? 'Join selected'
+                : 'Create'}
+          </button>
+        </div>
+      }
+    />
+  );
+}

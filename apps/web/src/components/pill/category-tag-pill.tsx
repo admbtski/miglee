@@ -1,5 +1,5 @@
+import { ChevronDown, Folder, HashIcon } from 'lucide-react';
 import React, { JSX, useEffect, useRef, useState } from 'react';
-import { ChevronDown, HashIcon, Folder } from 'lucide-react';
 
 /* ───────────────────────────── Utils ───────────────────────────── */
 

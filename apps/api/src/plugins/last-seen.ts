@@ -10,7 +10,6 @@ export default fp(async function lastSeenHook(app: FastifyInstance) {
     )?.trim();
 
     const userId = (req as any).user?.id ?? userIdFromHeader;
-    console.dir({ userId });
     if (userId) {
       void touchLastSeen(userId);
     }

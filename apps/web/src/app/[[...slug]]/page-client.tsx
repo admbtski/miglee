@@ -4,28 +4,28 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { EventCard } from './_internal/components/event-card';
-import { Footer } from './_internal/components/footer';
-import { MapImagePanel } from './_internal/components/map-image-panel';
-import { Navbar } from './_internal/components/navbar';
-import { SortControl } from './_internal/components/sort-control';
+import { Footer } from '../../components/footer/footer';
+import { Navbar } from '../../components/navbar/navbar';
+import { EventCard } from './_components/event-card';
+import { MapImagePanel } from './_components/map-image-panel';
 
-import { FilterModal } from '../components/filter/components/filter-modal';
-import { useCommittedMapVisible } from './_internal/hooks/useComittedMapVision';
-import { useCommittedFilters } from './_internal/hooks/useCommittedFilters';
-import { useCommittedSort } from './_internal/hooks/useCommittedSort';
+import { FilterModal } from './_components/filter-modal';
+import { useCommittedMapVisible } from './_hooks/use-comitted-map-vision';
+import { useCommittedFilters } from './_hooks/use-committed-filters';
+import { useCommittedSort } from './_hooks/use-committed-sort';
 
+import { useIntentsInfiniteQuery } from '@/hooks/graphql/intents'; // ⬅️ ważne
 import {
   GetIntentsQueryVariables,
   IntentMember,
   IntentStatus,
   Visibility,
 } from '@/libs/graphql/__generated__/react-query-update';
-import { useGetCategoriesQuery } from '@/hooks/categories';
-import { flatIntentsPages, useIntentsInfiniteQuery } from '@/hooks/intents'; // ⬅️ ważne
 
-import { DesktopSearchBar } from './_internal/components/desktop-search-bar';
-import { IconButton } from './_internal/components/icon-button';
+import { DesktopSearchBar } from './_components/desktop-search-bar';
+import { SortByControl } from './_components/sort-by-control';
+import { ToggleMap } from './_components/toggle-map';
+import { appLanguage } from '@/const/language';
 
 const upcomingAfterDefault = new Date().toISOString();
 const DEFAULT_LIMIT = 5;
@@ -43,27 +43,9 @@ export function IntentsPage() {
     verifiedOnly,
     tags,
     keywords,
-    categories: categorySlugs,
+    categories,
     apply,
   } = useCommittedFilters();
-
-  const { data: categoriesData } = useGetCategoriesQuery();
-
-  const slugToId = useMemo(() => {
-    const map = new Map<string, string>();
-    (categoriesData?.categories ?? []).forEach((c) => {
-      if (c.slug && c.id) map.set(c.slug, c.id);
-    });
-    return map;
-  }, [categoriesData]);
-
-  const categoryIds = useMemo(() => {
-    if (!categorySlugs?.length) return undefined;
-    const ids = categorySlugs
-      .map((s) => slugToId.get(s))
-      .filter((v): v is string => !!v);
-    return ids.length ? ids : undefined;
-  }, [categorySlugs, slugToId]);
 
   const variables = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
     () => ({
@@ -71,11 +53,11 @@ export function IntentsPage() {
       visibility: Visibility.Public,
       upcomingAfter: startISO ?? upcomingAfterDefault,
       endingBefore: endISO,
-      categoryIds: categoryIds ?? [],
-      tagIds: tags,
+      categorySlugs: categories ?? [],
+      tagSlugs: tags,
       kinds: kinds.length ? kinds : [],
       levels: levels.length ? levels : [],
-      keywords: [], // jeśli chcesz używać q/keywords – dodaj tutaj
+      keywords: [],
       status: status !== IntentStatus.Any ? status : IntentStatus.Any,
       verifiedOnly: !!verifiedOnly,
       ownerId: undefined,
@@ -86,7 +68,7 @@ export function IntentsPage() {
     [
       startISO,
       endISO,
-      categoryIds,
+      categories,
       tags,
       kinds,
       levels,
@@ -130,7 +112,7 @@ export function IntentsPage() {
     if (verifiedOnly) n++;
     if (tags.length) n++;
     if (keywords.length) n++;
-    if (categorySlugs.length) n++;
+    if (categories.length) n++;
     return n;
   }, [
     q,
@@ -144,7 +126,7 @@ export function IntentsPage() {
     verifiedOnly,
     tags,
     keywords,
-    categorySlugs,
+    categories,
   ]);
 
   const NAV_H = 86;
@@ -165,11 +147,14 @@ export function IntentsPage() {
           />
         }
         mobileSearchButton={
-          <IconButton
-            icon={Search}
-            label="Search"
+          <button
             onClick={() => setFiltersOpen(true)}
-          />
+            title={'Search'}
+            aria-label={'Search'}
+            className="cursor-pointer rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            <Search className="w-5 h-5" />
+          </button>
         }
       />
 
@@ -199,13 +184,10 @@ export function IntentsPage() {
                   </>
                 )}
               </div>
-              <SortControl
-                value={sort}
-                onChange={setSort}
-                withMapToggle
-                mapEnabled={mapVisible}
-                onToggleMap={toggleMap}
-              />
+              <div className="relative inline-flex items-center gap-3">
+                <ToggleMap enable={mapVisible} onToggle={toggleMap} />
+                <SortByControl value={sort} onChange={setSort} />
+              </div>
             </div>
           </div>
 
@@ -216,7 +198,7 @@ export function IntentsPage() {
           )}
           {error && (
             <div className="mt-6 text-sm text-red-600 dark:text-red-400">
-              {(error as any)?.message ?? 'Unknown error'}
+              {error?.message ?? 'Unknown error'}
             </div>
           )}
 
@@ -231,7 +213,7 @@ export function IntentsPage() {
                     className="w-full h-48 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900"
                   />
                 ))
-              : flatItems.map((item: any) => (
+              : flatItems.map((item) => (
                   <EventCard
                     key={item.id}
                     startISO={item.startAt}
@@ -249,7 +231,9 @@ export function IntentsPage() {
                     min={item.min}
                     max={item.max}
                     tags={item.tags.map((t) => t.label)}
-                    categories={item.categories.map((c: any) => c.slug)}
+                    categories={item.categories.map(
+                      (c) => c.names[appLanguage]
+                    )}
                     verifiedAt={item.owner?.verifiedAt as string}
                     members={item.members as IntentMember[]}
                     onJoin={() => {
@@ -314,7 +298,7 @@ export function IntentsPage() {
           initialVerifiedOnly={verifiedOnly}
           initialTags={tags}
           initialKeywords={keywords}
-          initialCategories={categorySlugs}
+          initialCategories={categories}
           onApply={(next) => {
             apply({
               q: next.q,

@@ -112,6 +112,7 @@ export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
     verifiedAt: u.verifiedAt ?? null,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
+    lastSeenAt: u.lastSeenAt,
   };
 }
 

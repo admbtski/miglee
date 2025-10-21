@@ -1,8 +1,12 @@
 import type { Resolvers } from '../../__generated__/resolvers-types';
 import { notificationsQuery } from './notifications';
 import { intentsQuery, intentQuery } from './intents';
-import { categoriesQuery, categoryQuery } from './categories';
-import { tagsQuery, tagQuery } from './tags';
+import {
+  categoriesBySlugsQuery,
+  categoriesQuery,
+  categoryQuery,
+} from './categories';
+import { tagsQuery, tagQuery, tagsBySlugsQuery } from './tags';
 import { usersQuery, userQuery } from './users';
 import { meQuery } from './auth';
 import {
@@ -16,8 +20,10 @@ export const Query: Resolvers['Query'] = {
   notifications: notificationsQuery,
   intents: intentsQuery,
   intent: intentQuery,
+  categoriesBySlugs: categoriesBySlugsQuery,
   categories: categoriesQuery,
   category: categoryQuery,
+  tagsBySlugs: tagsBySlugsQuery,
   tags: tagsQuery,
   tag: tagQuery,
   users: usersQuery,

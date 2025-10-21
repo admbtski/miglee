@@ -2,10 +2,15 @@
 'use client';
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { Role } from '@/libs/graphql/__generated__/react-query-update';
+import {
+  IntentMemberCoreFragment_IntentMember_user_User,
+  Role,
+  SortDir,
+  UsersSortBy,
+} from '@/libs/graphql/__generated__/react-query-update';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
-  AtSign,
+  ArrowLeft,
   BadgeCheck,
   ChevronDown,
   ChevronLeft,
@@ -17,15 +22,11 @@ import {
   Search,
   ShieldCheck,
   ShieldQuestion,
-  UserCog,
   User2,
+  UserCog,
   X,
-  ArrowLeft,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-
-export type SortBy = 'NAME' | 'CREATED_AT' | 'ROLE' | 'VERIFIED_AT';
-export type SortDir = 'ASC' | 'DESC';
 
 export type UsersQueryVars = {
   limit: number;
@@ -33,19 +34,7 @@ export type UsersQueryVars = {
   q?: string | null;
   role?: Role | null;
   verifiedOnly?: boolean | null;
-  sort?: { by: SortBy; dir: SortDir } | null;
-};
-
-export type AdminUser = {
-  id: string;
-  name: string;
-  email: string | null;
-  avatarUrl?: string | null;
-  role?: string | null;
-  username?: string | null;
-  createdAt?: string | Date | null;
-  verifiedAt?: string | Date | null;
-  lastSeenAt?: string | Date | null;
+  sort?: { by: UsersSortBy; dir: SortDir } | null;
 };
 
 const cx = (...c: Array<string | false | null | undefined>) =>
@@ -76,7 +65,7 @@ export function AdminUsersModal({
 }: {
   open: boolean;
   onClose: () => void;
-  users: AdminUser[];
+  users: IntentMemberCoreFragment_IntentMember_user_User[];
   total: number;
   loading?: boolean;
   onRefresh?: () => void | Promise<void>;
@@ -111,7 +100,7 @@ export function AdminUsersModal({
   // Role dropdown options (includes synthetic "ALL")
   const roleOptions = useMemo(() => {
     const set = new Set<string>(['ALL', Role.Admin, Role.Moderator, Role.User]);
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return Array.from(set);
   }, []);
 
   // Pagination helpers
@@ -152,7 +141,7 @@ export function AdminUsersModal({
       offset: 0,
     });
   const setSort = (txt: string) => {
-    const [by, dir] = txt.split(' ') as [SortBy, SortDir];
+    const [by, dir] = txt.split(' ') as [UsersSortBy, SortDir];
     onChangeQuery({ sort: { by, dir }, offset: 0 });
   };
   const setLimit = (v: string) =>
@@ -307,14 +296,12 @@ export function AdminUsersModal({
                 {/* Polished TABLE */}
                 <div className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
                   <div className="mx-3 my-3 bg-white border shadow-sm rounded-2xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-950">
-                    <div className="overflow-hidden rounded-2xl">
+                    <div className=" rounded-2xl">
                       <table className="min-w-full table-fixed">
                         {/* Colgroup keeps columns aligned and prevents wobble */}
                         <colgroup>
                           <col className="w-auto" /> {/* Name */}
                           <col className="hidden w-64 lg:table-column" />{' '}
-                          {/* Username */}
-                          <col className="hidden sm:table-column w-80" />{' '}
                           {/* Email */}
                           <col className="w-36" /> {/* Role */}
                           <col className="hidden md:table-column w-44" />{' '}
@@ -330,9 +317,7 @@ export function AdminUsersModal({
                             >
                               Name
                             </th>
-                            <th className="hidden px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300 lg:table-cell">
-                              Username
-                            </th>
+
                             <th className="hidden px-3 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300 sm:table-cell">
                               Email
                             </th>
@@ -393,10 +378,7 @@ export function AdminUsersModal({
                                 <td className="w-full max-w-0 py-3.5 pr-3 pl-4 text-sm font-medium text-zinc-900 dark:text-zinc-50 sm:w-auto sm:max-w-none sm:pl-5">
                                   <div className="flex items-center min-w-0 gap-3">
                                     <img
-                                      src={
-                                        u.avatarUrl ||
-                                        'https://api.dicebear.com/7.x/thumbs/svg?seed=user&radius=50'
-                                      }
+                                      src={u.imageUrl}
                                       alt=""
                                       className="object-cover rounded-full h-9 w-9 shrink-0 ring-1 ring-zinc-200 dark:ring-zinc-700"
                                     />
@@ -407,36 +389,11 @@ export function AdminUsersModal({
 
                                   {/* Stacked details on small screens */}
                                   <dl className="font-normal lg:hidden">
-                                    <dt className="sr-only">Username</dt>
-                                    <dd className="mt-1 text-xs truncate text-zinc-500">
-                                      {u.username ? (
-                                        <span className="inline-flex items-center gap-1">
-                                          <AtSign className="h-3.5 w-3.5 opacity-70" />
-                                          {u.username}
-                                        </span>
-                                      ) : (
-                                        '—'
-                                      )}
-                                    </dd>
                                     <dt className="sr-only sm:hidden">Email</dt>
                                     <dd className="mt-1 text-xs truncate text-zinc-500 sm:hidden">
                                       {u.email ?? '—'}
                                     </dd>
                                   </dl>
-                                </td>
-
-                                {/* Username (lg+) */}
-                                <td className="hidden px-3 py-3.5 text-sm text-zinc-600 dark:text-zinc-300 lg:table-cell">
-                                  {u.username ? (
-                                    <span className="inline-flex items-center gap-1">
-                                      <AtSign className="w-4 h-4 opacity-60" />
-                                      <span className="truncate">
-                                        @{u.username}
-                                      </span>
-                                    </span>
-                                  ) : (
-                                    '—'
-                                  )}
                                 </td>
 
                                 {/* Email (sm+) */}
@@ -449,8 +406,7 @@ export function AdminUsersModal({
                                     {u.email && (
                                       <IconButton
                                         label="Copy email"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
+                                        onClick={() => {
                                           navigator.clipboard.writeText(
                                             u.email!
                                           );
@@ -739,7 +695,11 @@ function Dropdown({
 }
 
 /** Right-side details card */
-function UserDetailsCard({ u }: { u: AdminUser }) {
+function UserDetailsCard({
+  u,
+}: {
+  u: IntentMemberCoreFragment_IntentMember_user_User;
+}) {
   const row = (label: string, value: React.ReactNode) => (
     <div className="grid grid-cols-[140px_1fr] items-center gap-3 sm:grid-cols-[160px_1fr]">
       <div className="text-xs font-medium text-zinc-500">{label}</div>
@@ -753,10 +713,7 @@ function UserDetailsCard({ u }: { u: AdminUser }) {
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center gap-4 p-4 border rounded-2xl border-zinc-200 dark:border-zinc-800">
         <img
-          src={
-            u.avatarUrl ||
-            'https://api.dicebear.com/7.x/thumbs/svg?seed=user&radius=50'
-          }
+          src={u.imageUrl}
           alt=""
           className="object-cover w-16 h-16 rounded-2xl ring-1 ring-zinc-200 dark:ring-zinc-700"
         />
@@ -802,11 +759,11 @@ function UserDetailsCard({ u }: { u: AdminUser }) {
           )
         )}
         {row(
-          'Username',
-          u.username ? (
+          'Name',
+          u.name ? (
             <span className="inline-flex items-center gap-2">
               <User2 className="w-4 h-4 opacity-60" />
-              <span className="truncate">@{u.username}</span>
+              <span className="truncate">{u.name}</span>
             </span>
           ) : (
             '—'

@@ -1,60 +1,42 @@
 // components/admin/AdminPanelLauncher.tsx
 'use client';
 
-import { useMemo, useState } from 'react';
-import { AdminUser, AdminUsersModal, UsersQueryVars } from './admin-user-modal';
-import { useUsersQuery } from '@/hooks/users';
+import { useUsersQuery } from '@/hooks/graphql/users';
+import {
+  SortDir,
+  UsersSortBy,
+} from '@/libs/graphql/__generated__/react-query-update';
+import { useState } from 'react';
+import { AdminUsersModal, UsersQueryVars } from './admin-user-modal';
 import { FloatingAdminButton } from './floating-admin-button';
-
-/** Map a single GQL user into the AdminUser shape */
-function mapGqlUser(u: any): AdminUser {
-  return {
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    avatarUrl: u.imageUrl,
-    role: u.role,
-    username: u.name,
-    createdAt: u.createdAt,
-    verifiedAt: u.verifiedAt,
-    lastSeenAt: u.lastSeenAt,
-  };
-}
 
 export function AdminPanelLauncher({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
 
-  // Controlled query variables mirrored to backend
   const [vars, setVars] = useState<UsersQueryVars>({
     limit: 10,
     offset: 0,
     q: null,
     role: null,
     verifiedOnly: null,
-    sort: { by: 'CREATED_AT', dir: 'DESC' },
+    sort: { by: UsersSortBy.CreatedAt, dir: SortDir.Desc },
   });
-
-  console.dir({ vars });
 
   const { data, isLoading, isFetching, refetch } = useUsersQuery(
     {
       limit: vars.limit,
       offset: vars.offset,
-      q: vars.q ?? undefined,
+      q: vars.q,
       role: vars.role,
       verifiedOnly: vars.verifiedOnly,
       sortBy: vars.sort?.by,
       sortDir: vars.sort?.dir,
     },
-    { enabled: open, keepPreviousData: true }
-  );
-
-  const users: AdminUser[] = useMemo(
-    () => (data?.users.items ?? []).map(mapGqlUser),
-    [data]
+    { enabled: open }
   );
 
   const total = data?.users.pageInfo.total ?? 0;
+  const users = data?.users.items ?? [];
 
   return (
     <>

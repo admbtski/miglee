@@ -42,12 +42,12 @@ const INTENT_INCLUDE = {
 function assertCreateInput(input: any) {
   // 1) Kategorie 1..3
   if (
-    !input.categoryIds ||
-    input.categoryIds.length < 1 ||
-    input.categoryIds.length > 3
+    !input.categorySlugs ||
+    input.categorySlugs.length < 1 ||
+    input.categorySlugs.length > 3
   ) {
     throw new GraphQLError('You must select between 1 and 3 categories.', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'categoryIds' },
+      extensions: { code: 'BAD_USER_INPUT', field: 'categorySlugs' },
     });
   }
   // 2) Mode ↔ min/max
@@ -140,8 +140,8 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
     async (_p, { input }, { user, pubsub }): Promise<GQLIntent> => {
       assertCreateInput(input);
 
-      // Owner – z inputu lub zalogowany user
-      const ownerId = input.ownerId ?? user?.id;
+      const ownerId = user?.id;
+      w;
       if (!ownerId) {
         throw new GraphQLError(
           'ownerId is required or an authenticated user must be present.',
@@ -154,15 +154,14 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
       // Lokalizacja (opcjonalna, dopuszcza placeId)
       const loc = pickLocation(input.location) ?? {};
 
-      // Relacje
       const categoriesData: Prisma.CategoryCreateNestedManyWithoutIntentsInput =
         {
-          connect: input.categoryIds.map((id: string) => ({ id })),
+          connect: input.categorySlugs.map((slug: string) => ({ slug })),
         };
       const tagsData:
         | Prisma.TagCreateNestedManyWithoutIntentsInput
-        | undefined = input.tagIds?.length
-        ? { connect: input.tagIds.map((id: string) => ({ id })) }
+        | undefined = input.tagSlugs?.length
+        ? { connect: input.tagSlugs.map((slug: string) => ({ slug })) }
         : undefined;
 
       const full = await prisma.$transaction(async (tx) => {
@@ -278,15 +277,15 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
       const categoriesUpdate:
         | Prisma.CategoryUpdateManyWithoutIntentsNestedInput
         | undefined =
-        input.categoryIds != null
-          ? { set: input.categoryIds.map((cid) => ({ id: cid })) }
+        input.categorySlugs != null
+          ? { set: input.categorySlugs.map((cid) => ({ id: cid })) }
           : undefined;
 
       const tagsUpdate:
         | Prisma.TagUpdateManyWithoutIntentsNestedInput
         | undefined =
-        input.tagIds != null
-          ? { set: input.tagIds.map((tid) => ({ id: tid })) }
+        input.tagSlugs != null
+          ? { set: input.tagSlugs.map((slug) => ({ slug: slug })) }
           : undefined;
 
       const data: Prisma.IntentUpdateInput = {

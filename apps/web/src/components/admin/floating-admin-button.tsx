@@ -1,4 +1,3 @@
-// components/admin/floating-admin-button.tsx
 'use client';
 
 import { Shield } from 'lucide-react';
@@ -10,7 +9,6 @@ type Props = {
   className?: string;
 };
 
-/** Bottom-right floating action button that opens the admin panel */
 export function FloatingAdminButton({
   onClick,
   label = 'Admin',

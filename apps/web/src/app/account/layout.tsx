@@ -1,7 +1,7 @@
 // app/account/layout.tsx
 import type { ReactNode } from 'react';
 import { SidebarNav } from './_components/sidebar-nav';
-import { Navbar } from '../[[...slug]]/_internal/components/navbar';
+import { Navbar } from '../../components/navbar/navbar';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { getQueryClient } from '@/libs/query-client/query-client';
 import { QueryClientProvider } from '@/libs/query-client/query-client-provider';

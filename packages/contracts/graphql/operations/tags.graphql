@@ -1,4 +1,10 @@
 # Queries
+query GetTagsBySlugs($slugs: [String!]!, $limit: Int = 50) {
+  tagsBySlugs(slugs: $slugs, limit: $limit) {
+    ...TagCore
+  }
+}
+
 query GetTags($query: String, $limit: Int = 50) {
   tags(query: $query, limit: $limit) {
     ...TagCore
