@@ -136,7 +136,7 @@ export function Modal({
 
   const component = (
     <div
-      className="fixed inset-0 z-[100]"
+      className="fixed inset-0 z-[100] text-red"
       role="dialog"
       aria-modal="true"
       aria-labelledby={ariaLabel ? undefined : titleId}
@@ -230,5 +230,8 @@ export function Modal({
     </div>
   );
 
-  return createPortal(component, document.body);
+  return createPortal(
+    component,
+    document.getElementById('portal-root') ?? document.body
+  );
 }

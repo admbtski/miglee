@@ -97,6 +97,10 @@ export default function RootLayout({
         <WebVitals />
         <OtelInit />
         <ThemeProvider>{children}</ThemeProvider>
+        <div
+          id="portal-root"
+          className="text-zinc-900 dark:text-zinc-100"
+        ></div>
       </body>
     </html>
   );
