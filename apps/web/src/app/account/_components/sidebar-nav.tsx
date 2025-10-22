@@ -1,15 +1,15 @@
 'use client';
 
+import {
+  Calendar1Icon,
+  CreditCardIcon,
+  LogOut,
+  MessagesSquareIcon,
+  SettingsIcon,
+  UserIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  LogOut,
-  Settings,
-  MessageSquare,
-  User,
-  Bot,
-  CreditCardIcon,
-} from 'lucide-react';
 import { useCallback } from 'react';
 
 type Item = {
@@ -27,9 +27,24 @@ type Item = {
 };
 
 const NAV: Item[] = [
-  { key: 'profile', label: 'Profile', href: '/account/profile', icon: User },
-  { key: 'chats', label: 'Chats', href: '/account/chats', icon: MessageSquare },
-  { key: 'intents', label: 'Intents', href: '/account/intents', icon: Bot },
+  {
+    key: 'profile',
+    label: 'Profile',
+    href: '/account/profile',
+    icon: UserIcon,
+  },
+  {
+    key: 'chats',
+    label: 'Chats',
+    href: '/account/chats',
+    icon: MessagesSquareIcon,
+  },
+  {
+    key: 'intents',
+    label: 'Intents',
+    href: '/account/intents',
+    icon: Calendar1Icon,
+  },
   {
     key: 'plans-and-bills',
     label: 'Plans & Bills',
@@ -40,9 +55,9 @@ const NAV: Item[] = [
     key: 'settings',
     label: 'Settings',
     href: '/account/settings',
-    icon: Settings,
+    icon: SettingsIcon,
   },
-  { key: 'logout', label: 'Log out', icon: LogOut, tone: 'danger' },
+  { key: 'logout', label: 'Sign out', icon: LogOut, tone: 'danger' },
 ];
 
 export function SidebarNav() {

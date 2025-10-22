@@ -3,15 +3,16 @@
 import { ThemeSwitchConnected } from '@/components/theme-switch/theme-switch-connect';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Calendar1Icon,
+  CalendarIcon,
   ChevronDown,
+  CreditCardIcon,
   LogOut,
   MessagesSquareIcon,
-  Settings,
+  SettingsIcon,
   User as UserIcon,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { SignOutConfirmModal } from '../auth/signout-confirm-modal';
 
 export type NavigateKey =
   | 'billing'
@@ -27,6 +28,7 @@ type UserMenuProps = {
     avatarUrl?: string;
   };
 
+  /** opcjonalne callbacki – obecnie nie są używane do nawigacji ani logoutu */
   onNavigate?: (key: NavigateKey) => void;
   onSignOut?: () => void;
 };
@@ -34,9 +36,8 @@ type UserMenuProps = {
 const AVATAR_FALLBACK =
   'https://api.dicebear.com/7.x/thumbs/svg?seed=user&radius=50';
 
-export function UserMenu({ user, onNavigate, onSignOut }: UserMenuProps) {
+export function UserMenu({ user }: UserMenuProps) {
   const [open, setOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -61,23 +62,29 @@ export function UserMenu({ user, onNavigate, onSignOut }: UserMenuProps) {
 
   const avatarBtnLabel = `Open user menu for ${user.name}`;
 
+  const go = (href: string) => {
+    // prosty, czytelny redirect bez zależności od routera
+    window.location.assign(href);
+  };
+
   return (
     <>
       <div className="relative shrink-0">
         <button
           ref={btnRef}
+          type="button"
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={avatarBtnLabel}
-          className="flex items-center gap-2 p-1 pr-2 bg-white border rounded-full shadow-sm cursor-pointer border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white p-1 pr-2 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           <img
             src={user.avatarUrl || AVATAR_FALLBACK}
             alt={user.name}
-            className="object-cover w-6 h-6 rounded-full"
+            className="h-6 w-6 rounded-full object-cover"
           />
-          <ChevronDown className="w-4 h-4 opacity-60" />
+          <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
         </button>
 
         <AnimatePresence>
@@ -85,86 +92,83 @@ export function UserMenu({ user, onNavigate, onSignOut }: UserMenuProps) {
             <motion.div
               ref={menuRef}
               role="menu"
+              aria-label="User menu"
               initial={{ opacity: 0, y: -4, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -4, scale: 0.98 }}
               transition={{ duration: 0.12 }}
               className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-0.5 shadow-2xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900"
             >
-              <div className="flex items-center gap-3 px-3 py-3 rounded-xl">
+              <div className="flex items-center gap-3 rounded-xl px-3 py-3">
                 <img
                   src={user.avatarUrl || AVATAR_FALLBACK}
                   alt=""
-                  className="object-cover w-10 h-10 rounded-full"
+                  className="h-10 w-10 rounded-full object-cover"
                 />
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold truncate text-zinc-900 dark:text-zinc-50">
+                  <div className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
                     {user.name}
                   </div>
                   {user.email && (
-                    <div className="text-xs truncate text-zinc-500">
+                    <div className="truncate text-xs text-zinc-500">
                       {user.email}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="w-full h-px bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-px w-full bg-zinc-200 dark:bg-zinc-800" />
 
               <MenuBtn
-                icon={<UserIcon className="w-4 h-4" />}
+                icon={<UserIcon className="h-4 w-4" />}
                 label="Profile"
-                onClick={() => onNavigate?.('billing')}
+                href="/account/profile"
               />
 
               <MenuBtn
-                icon={<MessagesSquareIcon className="w-4 h-4" />}
+                icon={<MessagesSquareIcon className="h-4 w-4" />}
                 label="Chats"
-                onClick={() => onNavigate?.('account')}
+                href="/account/chats"
               />
 
               <MenuBtn
-                icon={<Calendar1Icon className="w-4 h-4" />}
+                icon={<CalendarIcon className="h-4 w-4" />}
                 label="Intents"
-                onClick={() => onNavigate?.('settings')}
+                href="/account/intents"
               />
 
               <MenuBtn
-                icon={<Settings className="w-4 h-4" />}
-                label="Settings"
-                onClick={() => onNavigate?.('settings')}
+                icon={<CreditCardIcon className="h-4 w-4" />}
+                label="Plans & Bills"
+                href="/account/plans-and-bills"
               />
 
-              <div className="w-full h-px my-1 bg-zinc-200 dark:bg-zinc-800" />
+              <MenuBtn
+                icon={<SettingsIcon className="h-4 w-4" />}
+                label="Settings"
+                href="/account/settings"
+              />
+
+              <div className="my-1 h-px w-full bg-zinc-200 dark:bg-zinc-800" />
 
               <div className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
                 <span>Dark mode</span>
                 <ThemeSwitchConnected />
               </div>
 
-              <div className="w-full h-px my-1 bg-zinc-200 dark:bg-zinc-800" />
+              <div className="my-1 h-px w-full bg-zinc-200 dark:bg-zinc-800" />
 
               <MenuBtn
-                icon={<LogOut className="w-4 h-4" />}
+                icon={<LogOut className="h-4 w-4" />}
                 label="Sign out"
                 onClick={() => {
-                  setOpen(false);
-                  setConfirmOpen(true);
+                  alert('sign out');
                 }}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-
-      <SignOutConfirmModal
-        open={confirmOpen}
-        onCancel={() => setConfirmOpen(false)}
-        onConfirm={() => {
-          setConfirmOpen(false);
-          onSignOut?.();
-        }}
-      />
     </>
   );
 }
@@ -172,22 +176,38 @@ export function UserMenu({ user, onNavigate, onSignOut }: UserMenuProps) {
 function MenuBtn({
   icon,
   label,
+  href,
   onClick,
 }: {
   icon: React.ReactNode;
   label: React.ReactNode;
+  href?: string;
   onClick?: () => void;
 }) {
-  return (
-    <button
-      role="menuitem"
-      onClick={onClick}
-      className="flex items-center w-full gap-3 px-3 py-2 text-sm text-left cursor-pointer rounded-xl hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800"
-    >
-      <span className="grid w-8 h-8 rounded-lg place-items-center bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+  const content = (
+    <>
+      <span className="grid h-8 w-8 place-items-center rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
         {icon}
       </span>
-      <span className="flex-1">{label}</span>
+      <span>{label}</span>
+    </>
+  );
+
+  return href ? (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex cursor-pointer w-full items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+    >
+      {content}
+    </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex cursor-pointer w-full items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+    >
+      {content}
     </button>
   );
 }

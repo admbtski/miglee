@@ -1,6 +1,11 @@
 'use client';
 
 import {
+  MeetingKind,
+  Mode,
+  Visibility,
+} from '@/libs/graphql/__generated__/react-query-update';
+import {
   BadgePlusIcon,
   CalendarClockIcon,
   HatGlassesIcon,
@@ -21,12 +26,6 @@ import { useTagSelection } from './tag-selection-provider';
 import { TimeStep } from './time-step';
 import { CreateIntentInput } from './types';
 import { useIntentForm } from './use-intent-form';
-import { intentCreatedConfetti } from './utils';
-import {
-  MeetingKind,
-  Mode,
-  Visibility,
-} from '@/libs/graphql/__generated__/react-query-update';
 
 const STEP_META = [
   { key: 'basics', label: 'Basics', Icon: SquarePenIcon },
@@ -34,7 +33,7 @@ const STEP_META = [
   { key: 'time', label: 'Time', Icon: CalendarClockIcon },
   { key: 'place', label: 'Place', Icon: MapPinnedIcon },
   { key: 'review', label: 'Review', Icon: HatGlassesIcon },
-];
+] as const;
 
 const STEPS = STEP_META.map(({ label }) => label);
 
@@ -59,11 +58,10 @@ export function CreateIntentModal({
     handleSubmit,
     trigger,
     reset,
-    getValues,
     formState: { isValid, isSubmitting },
   } = form;
 
-  // Reset form when modal closes
+  // Reset on close
   useEffect(() => {
     if (!open) {
       clearTags();
@@ -73,13 +71,17 @@ export function CreateIntentModal({
     }
   }, [open, reset, clearTags, clearCategories]);
 
+  // Keyboard shortcuts: Enter -> next/submit, Shift+Enter -> back
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        if (step < STEPS.length - 1) void next();
-        else submit();
+        if (step < STEPS.length - 1) {
+          void next();
+        } else {
+          submit();
+        }
       }
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
@@ -88,7 +90,7 @@ export function CreateIntentModal({
     };
     window.addEventListener('keydown', onKey, { passive: false });
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, step]);
+  }, [open, step]); // step intentionally included
 
   const validateStep = useCallback(
     async (index: number) => {
@@ -121,22 +123,21 @@ export function CreateIntentModal({
   const next = useCallback(async () => {
     const ok = await validateStep(step);
     if (!ok) return;
-
-    const nextStep = Math.min(step + 1, STEPS.length - 1);
-    setStep(nextStep);
-  }, [step, validateStep, getValues]);
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  }, [step, validateStep]);
 
   const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
   if (!open) return null;
 
+  // Submit handler with strong trimming + stable mapping
   const submit = handleSubmit(
     useCallback(
       async (values) => {
         const input: CreateIntentInput = {
           title: values.title,
           categorySlugs: selectedCategories.map((c) => c.slug),
-          tagsSlugs: selectedTags.map((t) => t.slug),
+          tagSlugs: selectedTags.map((t) => t.slug),
           startAt: values.startAt.toISOString(),
           endAt: values.endAt.toISOString(),
           allowJoinLate: values.allowJoinLate,
@@ -168,10 +169,10 @@ export function CreateIntentModal({
           input.location.placeId = values.location.placeId.trim();
 
         await onCreate(input);
-        await intentCreatedConfetti();
+        // SUCCESS UX moved to SuccessIntentModal; just close the form here
         onClose();
       },
-      [onClose, onCreate, selectedCategories]
+      [onClose, onCreate, selectedCategories, selectedTags]
     )
   );
 
@@ -182,7 +183,7 @@ export function CreateIntentModal({
 
   return (
     <Modal
-      open={true}
+      open={open}
       onClose={onClose}
       header={
         <div className="flex flex-col gap-2">
@@ -287,12 +288,7 @@ export function CreateIntentModal({
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
                        bg-indigo-600 text-white hover:bg-indigo-500"
           >
-            {step < STEPS.length - 1
-              ? 'Next'
-              : // : selectedSuggestionId
-                false
-                ? 'Join selected'
-                : 'Create'}
+            {step < STEPS.length - 1 ? 'Next' : 'Create'}
           </button>
         </div>
       }

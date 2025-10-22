@@ -21,6 +21,9 @@ import {
   Youtube,
 } from 'lucide-react';
 import { ThemeSwitchConnected } from '@/components/theme-switch/theme-switch-connect';
+import { ComponentType } from 'react';
+
+type IconT = ComponentType<{ className?: string }>;
 
 export function NavDrawer({
   open,
@@ -33,11 +36,13 @@ export function NavDrawer({
     <AnimatePresence>
       {open && (
         <>
-          <motion.div
+          <motion.button
+            type="button"
             className="fixed inset-0 z-50 cursor-pointer bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            aria-label="Close menu overlay"
             onClick={onClose}
           />
 
@@ -47,10 +52,13 @@ export function NavDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+            role="dialog"
+            aria-label="Main menu"
           >
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/70">
               <button
+                type="button"
                 onClick={onClose}
                 aria-label="Close menu"
                 className="cursor-pointer rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -62,21 +70,23 @@ export function NavDrawer({
             </div>
 
             {/* Links */}
-            <nav className="px-2 py-2">
-              {[
-                [Briefcase, 'Job offers'],
-                [Calculator, 'Salary calculator'],
-                [Building2, 'Company Profiles'],
-                [Rocket, 'RocketSpace.pl'],
-                [Info, 'About us'],
-                [CircleDollarSign, 'Pricing'],
-                [Scale, 'Career'],
-                [HelpCircle, 'Help'],
-                [Scale, 'Terms'],
-                [Shield, 'Privacy policy'],
-                [Cookie, 'Cookie settings'],
-              ].map(([Icon, label], index) => (
-                <MenuItem key={index} icon={Icon} label={label as string} />
+            <nav className="px-2 py-2" aria-label="Menu links">
+              {(
+                [
+                  [Briefcase, 'Job offers'],
+                  [Calculator, 'Salary calculator'],
+                  [Building2, 'Company Profiles'],
+                  [Rocket, 'RocketSpace.pl'],
+                  [Info, 'About us'],
+                  [CircleDollarSign, 'Pricing'],
+                  [Scale, 'Career'],
+                  [HelpCircle, 'Help'],
+                  [Scale, 'Terms'],
+                  [Shield, 'Privacy policy'],
+                  [Cookie, 'Cookie settings'],
+                ] as [IconT, string][]
+              ).map(([Icon, label], index) => (
+                <MenuItem key={index} icon={Icon} label={label} />
               ))}
             </nav>
 
@@ -108,30 +118,41 @@ export function NavDrawer({
 }
 
 /* Small building blocks */
-function MenuItem({ icon: Icon, label }: { icon: any; label: string }) {
+function MenuItem({ icon: Icon, label }: { icon: IconT; label: string }) {
   return (
-    <button className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] hover:bg-zinc-50 dark:hover:bg-zinc-800">
-      <Icon className="h-5 w-5 opacity-70" />
+    <button
+      type="button"
+      className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] hover:bg-zinc-50 dark:hover:bg-zinc-800"
+    >
+      <Icon className="h-5 w-5 opacity-70" aria-hidden />
       <span>{label}</span>
     </button>
   );
 }
 
-function CardButton({ icon: Icon, title }: { icon: any; title: string }) {
+function CardButton({ icon: Icon, title }: { icon: IconT; title: string }) {
   return (
-    <button className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
+    <button
+      type="button"
+      className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+    >
       <div className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-        <Icon className="h-5 w-5" />
+        <Icon className="h-5 w-5" aria-hidden />
       </div>
       <div className="text-sm font-medium">{title}</div>
     </button>
   );
 }
 
-function IconButton({ icon: Icon }: { icon: any }) {
+function IconButton({ icon: Icon }: { icon: IconT }) {
   return (
-    <button className="cursor-pointer rounded-xl border border-zinc-200 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
-      <Icon className="h-5 w-5" />
+    <button
+      type="button"
+      className="cursor-pointer rounded-xl border border-zinc-200 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+      aria-label="Open social link"
+      title="Open social link"
+    >
+      <Icon className="h-5 w-5" aria-hidden />
     </button>
   );
 }

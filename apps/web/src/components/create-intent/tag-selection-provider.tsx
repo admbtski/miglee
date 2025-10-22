@@ -1,5 +1,6 @@
 'use client';
 
+import { TagOption } from '@/types/types';
 import React, {
   createContext,
   useCallback,
@@ -7,13 +8,12 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import type { CategoryOption } from './types';
 
 type TagSelectionContextValue = {
-  selected: CategoryOption[];
-  setSelected: (next: CategoryOption[]) => void;
-  set: (opts: CategoryOption[]) => void;
-  add: (opt: CategoryOption, maxCount?: number) => void;
+  selected: TagOption[];
+  setSelected: (next: TagOption[]) => void;
+  set: (opts: TagOption[]) => void;
+  add: (opt: TagOption, maxCount?: number) => void;
   remove: (idOrSlug: string) => void;
   clear: () => void;
 };
@@ -27,11 +27,11 @@ export function TagSelectionProvider({
   initial = [],
 }: {
   children: React.ReactNode;
-  initial?: CategoryOption[];
+  initial?: TagOption[];
 }) {
-  const [selected, setSelected] = useState<CategoryOption[]>(initial);
+  const [selected, setSelected] = useState<TagOption[]>(initial);
 
-  const add = useCallback((opt: CategoryOption, maxCount = 3) => {
+  const add = useCallback((opt: TagOption, maxCount = 3) => {
     setSelected((prev) => {
       if (prev.some((p) => p.id === opt.id || p.slug === opt.slug)) return prev;
       if (prev.length >= maxCount) return prev;
@@ -45,13 +45,12 @@ export function TagSelectionProvider({
     );
   }, []);
 
-  const set = useCallback((opts: CategoryOption[]) => {
+  const set = useCallback((opts: TagOption[]) => {
     const seen = new Set<string>();
-    const unique = [];
+    const unique: TagOption[] = [];
     for (const o of opts) {
       const key = o.id || o.slug;
-      if (!key) continue;
-      if (seen.has(key)) continue;
+      if (!key || seen.has(key)) continue;
       seen.add(key);
       unique.push(o);
     }
@@ -75,9 +74,8 @@ export function TagSelectionProvider({
 export function useTagSelection(): TagSelectionContextValue {
   const ctx = useContext(TagSelectionContext);
   if (!ctx) {
-    throw new Error(
-      'useTagSelection must be used within CategorySelectionProvider'
-    );
+    // FIX: correct provider name in error
+    throw new Error('useTagSelection must be used within TagSelectionProvider');
   }
   return ctx;
 }

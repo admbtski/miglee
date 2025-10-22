@@ -7,7 +7,7 @@ import { Check } from 'lucide-react';
 export type Step = {
   key: string;
   label: string;
-  /** opcjonalna ikona dla „kropki” (zamiast numeru) */
+  /** optional icon for the dot */
   Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
@@ -16,13 +16,13 @@ type Props = {
   currentIndex: number; // 0-based
   size?: 'sm' | 'md';
   dense?: boolean;
-  /** inline = label obok; stacked = label pod ikoną */
+  /** inline = label aside; stacked = label under the dot */
   layout?: 'inline' | 'stacked';
   className?: string;
   /**
-   * number — wymuś numerację
-   * icon   — używaj tylko ikon (jeśli brak, pokaże numer)
-   * auto   — jeśli Step.Icon jest, użyj jej; inaczej numer (domyślnie)
+   * number — force numbers
+   * icon   — force icons
+   * auto   — if Step.Icon exists, use it; otherwise number (default)
    */
   dotMode?: 'number' | 'icon' | 'auto';
 };
@@ -39,7 +39,6 @@ export function Stepper({
   const r = useReducedMotion();
   const isStacked = layout === 'stacked';
 
-  // rozmiary
   const dotPx = size === 'sm' ? 24 : 28;
   const dotCls = size === 'sm' ? 'size-6' : 'size-7';
   const textCls = size === 'sm' ? 'text-[13px]' : 'text-sm';
@@ -58,13 +57,11 @@ export function Stepper({
           const isActive = idx === currentIndex;
           const isDone = idx < currentIndex;
           const isLast = idx === steps.length - 1;
-
           const shouldUseIcon =
             dotMode === 'icon' || (dotMode === 'auto' && !!s.Icon);
 
           return (
             <React.Fragment key={s.key}>
-              {/* KROK */}
               <li
                 className={[
                   'min-w-0 flex-1',
@@ -73,7 +70,6 @@ export function Stepper({
                     : 'flex items-center gap-2',
                 ].join(' ')}
               >
-                {/* Dot */}
                 <span
                   className={[
                     `grid shrink-0 place-items-center rounded-full border font-semibold ${dotCls}`,
@@ -93,7 +89,6 @@ export function Stepper({
                   )}
                 </span>
 
-                {/* Label */}
                 <span
                   className={[
                     'truncate',
@@ -111,7 +106,6 @@ export function Stepper({
                 </span>
               </li>
 
-              {/* ŁĄCZNIK */}
               {!isLast && (
                 <li
                   aria-hidden
@@ -120,7 +114,6 @@ export function Stepper({
                     !isStacked ? 'self-center' : '',
                   ].join(' ')}
                 >
-                  {/* baza */}
                   <div
                     className={[
                       'absolute left-0 right-0 rounded-full bg-zinc-200 dark:bg-zinc-800',
@@ -130,7 +123,6 @@ export function Stepper({
                         : 'top-1/2 -translate-y-1/2',
                     ].join(' ')}
                   />
-                  {/* progres */}
                   <motion.div
                     className={[
                       'absolute left-0 right-0 rounded-full bg-indigo-600 dark:bg-indigo-500',

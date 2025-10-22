@@ -16,7 +16,7 @@ export type MeetingKindType = z.infer<typeof MeetingKindEnum>;
 export type CreateIntentInput = {
   title: string;
   categorySlugs: string[];
-  tagsSlugs: string[];
+  tagSlugs: string[]; // FIX: aligned with CreateIntentModal & connector
   description?: string;
   startAt: string;
   endAt: string;
@@ -36,7 +36,5 @@ export type CreateIntentInput = {
   visibility: Visibility;
   notes?: string;
 };
-
-export type CategoryOption = { id: string; slug: string; name: string };
 
 export type IntentFormValues = z.infer<typeof IntentSchema>;

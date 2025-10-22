@@ -132,10 +132,10 @@ export const GET_INTENT_ONE_KEY = (variables: GetIntentQueryVariables) =>
 export function buildGetIntentsOptions(
   variables?: GetIntentsQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetIntentsQuery, unknown, GetIntentsQuery, QueryKey>,
+    UseQueryOptions<GetIntentsQuery, Error, GetIntentsQuery, QueryKey>,
     'queryKey' | 'queryFn'
   >
-): UseQueryOptions<GetIntentsQuery, unknown, GetIntentsQuery, QueryKey> {
+): UseQueryOptions<GetIntentsQuery, Error, GetIntentsQuery, QueryKey> {
   return {
     queryKey: GET_INTENTS_LIST_KEY(variables) as unknown as QueryKey,
     queryFn: async () =>
@@ -171,7 +171,7 @@ export function buildGetIntentOptions(
 export function useIntentsQuery(
   variables?: GetIntentsQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetIntentsQuery, unknown, GetIntentsQuery, QueryKey>,
+    UseQueryOptions<GetIntentsQuery, Error, GetIntentsQuery, QueryKey>,
     'queryKey' | 'queryFn'
   >
 ) {

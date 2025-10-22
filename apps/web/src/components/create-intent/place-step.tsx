@@ -40,7 +40,6 @@ export function PlaceStep({
     formState: { errors },
   } = form;
 
-  // reactive slices
   const meetingKind = useWatch({ control, name: 'meetingKind' }) as MK;
   const onlineUrl = useWatch({ control, name: 'onlineUrl' }) ?? '';
   const loc = watch('location');
@@ -79,16 +78,18 @@ export function PlaceStep({
             shouldDirty: true,
           });
           const nice =
-            res.address ?? (await reverseGeocodeLatLng(res.lat, res.lng));
+            res.address ??
+            (await reverseGeocodeLatLng(res.lat, res.lng).catch(
+              () => undefined
+            ));
           if (nice) setValue('location.address', nice, { shouldDirty: true });
           return;
         }
       }
 
-      // fallback: browser geolocation
+      if (!navigator.geolocation) throw new Error('Geolocation not supported');
+
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-        if (!navigator.geolocation)
-          return reject(new Error('Geolocation not supported'));
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 12000,
@@ -107,9 +108,10 @@ export function PlaceStep({
         shouldDirty: true,
       });
 
-      const nice = await reverseGeocodeLatLng(lat, lng);
+      const nice = await reverseGeocodeLatLng(lat, lng).catch(() => undefined);
       if (nice) setValue('location.address', nice, { shouldDirty: true });
     } catch (e) {
+      // soft-fail only
       console.error('Use my location failed:', e);
     } finally {
       setLocating(false);
@@ -124,9 +126,8 @@ export function PlaceStep({
           Meeting type
         </label>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Wybierz formę spotkania. Dla <b>Online</b> dodaj link; dla{' '}
-          <b>On-site</b> ustaw pinezkę.
-          <b> Hybrid</b> łączy obie opcje.
+          Choose the format. For <b>Online</b> add a link; for <b>On-site</b>{' '}
+          set a pin. <b>Hybrid</b> combines both.
         </p>
 
         <Controller
@@ -161,8 +162,7 @@ export function PlaceStep({
             Online meeting link
           </label>
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Akceptujemy <b>http/https</b>. Przykłady: Zoom, Google Meet, Teams,
-            Discord.
+            We accept <b>http/https</b> (Zoom, Meet, Teams, Discord).
           </p>
 
           <input
@@ -196,8 +196,7 @@ export function PlaceStep({
               Location (address or POI)
             </label>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Zacznij wpisywać adres lub nazwę miejsca — albo użyj „Use my
-              location”.
+              Start typing an address or place — or use “Use my location”.
             </p>
 
             <div className="flex gap-2">
@@ -224,7 +223,6 @@ export function PlaceStep({
                         shouldDirty: true,
                       });
                     }
-
                     if (typeof lat === 'number') {
                       setValue('location.lat', lat, {
                         shouldValidate: true,
@@ -261,8 +259,8 @@ export function PlaceStep({
 
             <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               {meetingKind === 'ONSITE'
-                ? 'W trybie on-site wymagamy współrzędnych (adres opcjonalny).'
-                : 'W trybie hybrid możesz dodać zarówno link, jak i lokalizację.'}
+                ? 'On-site requires coordinates (address optional).'
+                : 'Hybrid can include both link and location.'}
             </div>
             <div className="mt-1 text-xs text-red-500" aria-live="polite">
               {meetingKind === 'ONSITE' &&
@@ -273,7 +271,6 @@ export function PlaceStep({
             </div>
           </div>
 
-          {/* Map preview */}
           <div className="mt-2">
             <MapPreview
               center={center}
@@ -295,7 +292,7 @@ export function PlaceStep({
                   shouldValidate: true,
                   shouldDirty: true,
                 });
-                void reverseGeocode(pos)
+                reverseGeocode(pos)
                   .then((rg) => {
                     const addr = rg.formattedAddress ?? '';
                     setValue('location.address', addr, { shouldDirty: true });
@@ -310,11 +307,10 @@ export function PlaceStep({
               Radius (km, optional)
             </label>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Ustaw promień prywatności wokół pinezki. <b>0</b> = dokładny
-              punkt.
+              Set a privacy radius around the pin. <b>0</b> = exact point.
             </p>
 
-            {/* szybkie presety */}
+            {/* quick presets */}
             <div className="mb-2 flex flex-wrap gap-2">
               {([0, 0.5, 1, 2, 5, 10] as const).map((r) => (
                 <button
@@ -338,11 +334,10 @@ export function PlaceStep({
               min={0}
               max={20}
               onUpdate={(v) => {
-                // live UI / map refresh (opcjonalnie)
+                // live UI refresh
                 setValue('location.radiusKm', v, { shouldDirty: true });
               }}
               onChange={(v) => {
-                console.log('test2');
                 setValue('location.radiusKm', v, {
                   shouldDirty: true,
                   shouldValidate: true,
@@ -356,21 +351,21 @@ export function PlaceStep({
               id="radius-hint"
               className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
             >
-              Zwiększ wartość, aby wyświetlić zacienione koło wokół miejsca
-              (lepsza prywatność).
+              Increase to display a shaded circle around the location (better
+              privacy).
             </div>
           </div>
         </>
       )}
 
-      {/* Visibility -> SegmentedControl */}
+      {/* Visibility */}
       <div>
         <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Visibility
         </label>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          <b>Public</b> — każdy może znaleźć. <b>Hidden</b> — tylko z linku lub
-          zaproszenia.
+          <b>Public</b> — discoverable by anyone. <b>Hidden</b> — only via link
+          or invite.
         </p>
 
         <Controller
@@ -403,8 +398,7 @@ export function PlaceStep({
           Logistics note (optional)
         </label>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Krótka informacja ułatwiająca dotarcie lub dołączenie (np. punkt
-          zbiórki, zasady).
+          A short hint to help people arrive or join.
         </p>
 
         <input
@@ -437,8 +431,8 @@ export function PlaceStep({
           <Info className="h-3.5 w-3.5" />
         </span>
         <p className="text-sm leading-5">
-          Dla prywatnych miejsc rozważ ustawienie <b>Hidden</b> oraz{' '}
-          <b>Radius</b> &gt; 0, aby maskować dokładny adres na mapie.
+          For private places consider <b>Hidden</b> and a <b>Radius</b> &gt; 0
+          to mask the exact address on the map.
         </p>
       </div>
     </div>

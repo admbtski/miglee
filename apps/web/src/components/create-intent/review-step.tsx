@@ -225,7 +225,7 @@ export function ReviewStep({
                     tone="zinc"
                     icon={<Tag className="h-3.5 w-3.5" />}
                   >
-                    {category.name}
+                    {category.label}
                   </Chip>
                 ))}
 

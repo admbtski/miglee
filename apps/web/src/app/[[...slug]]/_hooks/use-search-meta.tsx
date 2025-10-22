@@ -5,6 +5,9 @@ import { useGetCategoriesQuery } from '@/hooks/graphql/categories';
 import { useGetTagsQuery } from '@/hooks/graphql/tags';
 import { useEffect, useMemo, useState } from 'react';
 
+const MIN_CHARS = 3;
+const MAX_RESULTS = 10;
+
 export type SearchMeta = {
   tags: {
     id: string;
@@ -36,9 +39,12 @@ export function useSearchMeta(query: string) {
     isLoading: isCategoriesLoading,
     error: categoriesError,
   } = useGetCategoriesQuery(
-    debounced ? { query: debounced, limit: 10 } : { limit: 10 },
+    debounced
+      ? { query: debounced, limit: MAX_RESULTS }
+      : { limit: MAX_RESULTS },
     {
       placeholderData: (p) => p,
+      enabled: debounced.length >= MIN_CHARS,
     }
   );
 
@@ -47,9 +53,12 @@ export function useSearchMeta(query: string) {
     isLoading: isTagsLoading,
     error: tagsError,
   } = useGetTagsQuery(
-    debounced ? { query: debounced, limit: 10 } : { limit: 10 },
+    debounced
+      ? { query: debounced, limit: MAX_RESULTS }
+      : { limit: MAX_RESULTS },
     {
       placeholderData: (p) => p,
+      enabled: debounced.length >= MIN_CHARS,
     }
   );
 

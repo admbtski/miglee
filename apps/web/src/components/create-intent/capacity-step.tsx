@@ -20,36 +20,34 @@ export function CapacityStep({
     formState: { errors },
   } = form;
 
-  // a11y ids
+  // a11y ids (FIX: avoid duplicating IDs with the bottom note)
   const modeHelpId = useId();
   const capErrId = useId();
   const capHelpId = useId();
+  const capNoteId = useId();
 
-  // RHF binding for "mode"
-  const { field: modeField } = useController({
-    name: 'mode',
-    control,
-  });
+  const { field: modeField } = useController({ name: 'mode', control });
 
-  // reactive values
   const minVal = watch('min');
   const maxVal = watch('max');
-
   const isGroup = modeField.value === 'GROUP';
 
-  // keep capacity in sync with mode
+  // Single source of truth for capacity sync
   useEffect(() => {
     if (modeField.value === 'ONE_TO_ONE') {
       setValue('min', 2, { shouldDirty: true, shouldValidate: true });
       setValue('max', 2, { shouldDirty: true, shouldValidate: true });
     } else if (modeField.value === 'GROUP') {
       setValue('min', 2, { shouldDirty: true, shouldValidate: true });
-      setValue('max', 50, { shouldDirty: true, shouldValidate: true });
+      setValue('max', 50, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
     void trigger(['min', 'max']);
-  }, [modeField.value, setValue, trigger]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modeField.value]);
 
-  // aria-describedby dla slidera
   const ariaDescribedBy = useMemo(() => {
     const ids: string[] = [capHelpId];
     if (errors.min || errors.max) ids.push(capErrId);
@@ -63,13 +61,17 @@ export function CapacityStep({
         <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Mode
         </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          W trybie <b>1:1</b> pojemność jest stała (2 osoby). W trybie{' '}
-          <b>Group</b> możesz ustawić zakres uczestników (2–50) poniżej.
+        <p
+          id={modeHelpId}
+          className="mb-2 text-xs text-zinc-500 dark:text-zinc-400"
+        >
+          In <b>1:1</b> mode capacity is fixed (2 people). In <b>Group</b> you
+          can set the range (2–50).
         </p>
 
         <SegmentedControl<'ONE_TO_ONE' | 'GROUP'>
           aria-label="Mode"
+          aria-describedby={modeHelpId}
           size="lg"
           withPill
           animated
@@ -84,68 +86,63 @@ export function CapacityStep({
       </div>
 
       {isGroup && (
-        <>
-          {/* Capacity (zawsze widoczne; disabled, gdy ONE_TO_ONE) */}
-          <div
-            className={[
-              'group rounded-2xl relative',
-              !isGroup ? 'opacity-60' : '',
-            ].join(' ')}
-            aria-disabled={!isGroup}
+        <div
+          className={[
+            'group rounded-2xl relative',
+            !isGroup ? 'opacity-60' : '',
+          ].join(' ')}
+          aria-disabled={!isGroup}
+        >
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Capacity
+          </label>
+
+          <p
+            id={capHelpId}
+            className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
           >
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Capacity
-            </label>
+            Set the minimum and maximum number of participants (drag the
+            handles).
+          </p>
 
-            {/* Helper pod labelką "Capacity" */}
-            <p
-              id={capHelpId}
-              className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
+          <RangeSlider
+            value={[minVal ?? 2, maxVal ?? 50]}
+            min={2}
+            max={50}
+            step={1}
+            disabled={!isGroup}
+            onChange={([a, b]) => {
+              if (!isGroup) return;
+              setValue('min', a, { shouldDirty: true, shouldValidate: true });
+              setValue('max', b, { shouldDirty: true, shouldValidate: true });
+            }}
+            aria-invalid={!!(errors.min || errors.max)}
+            aria-describedby={ariaDescribedBy}
+            className="mt-[36px]"
+          />
+
+          {(errors.min || errors.max) && (
+            <div
+              id={capErrId}
+              role="alert"
+              aria-live="polite"
+              className="mt-1 text-xs text-red-500"
             >
-              Ustaw minimalną i maksymalną liczbę uczestników (przeciągnij
-              uchwyty). Gdy liczba zgłoszeń osiągnie maksimum, wydarzenie
-              zamknie się automatycznie.
-            </p>
-
-            <RangeSlider
-              value={[minVal ?? 2, maxVal ?? 50]}
-              min={2}
-              max={50}
-              step={1}
-              disabled={!isGroup}
-              onChange={([a, b]) => {
-                if (!isGroup) return;
-                setValue('min', a, { shouldDirty: true, shouldValidate: true });
-                setValue('max', b, { shouldDirty: true, shouldValidate: true });
-              }}
-              aria-invalid={!!(errors.min || errors.max)}
-              aria-describedby={ariaDescribedBy}
-              className="mt-[36px]"
-            />
-
-            {(errors.min || errors.max) && (
-              <div
-                id={capErrId}
-                role="alert"
-                aria-live="polite"
-                className="mt-1 text-xs text-red-500"
-              >
-                {String(
-                  (errors.min?.message as string) ??
-                    (errors.max?.message as string) ??
-                    ''
-                )}
-              </div>
-            )}
-          </div>
-        </>
+              {String(
+                (errors.min?.message as string) ??
+                  (errors.max?.message as string) ??
+                  ''
+              )}
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Niebieski hint na dole (spójny z poprzednim stepem) */}
+      {/* Blue hint (use a distinct id) */}
       <div
-        id={capHelpId}
+        id={capNoteId}
         role="note"
-        className="flex items-start gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
+        className="flex items-center gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
                    text-blue-700 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
       >
         <span
@@ -161,15 +158,13 @@ export function CapacityStep({
           {isGroup ? (
             <>
               Choose the <b>minimum</b> and <b>maximum</b> number of
-              participants. A clear range helps others understand your
-              expectations and lets the system <b>auto-close</b> the group when
-              it reaches capacity.
+              participants. The system can <b>auto-close</b> when it reaches
+              capacity.
             </>
           ) : (
             <>
               In <b>1:1</b> mode the capacity is fixed to <b>2 people</b>. Use
-              it for pair activities like coffee chats, study sessions, or
-              one-on-one training. Switch to <b>Group</b> to open the range.
+              it for pair activities.
             </>
           )}
         </p>

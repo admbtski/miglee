@@ -26,7 +26,7 @@ import React, {
 } from 'react';
 import { SearchMeta, useSearchMeta } from '../_hooks/use-search-meta';
 import { useGetTagsBySlugsQuery } from '@/hooks/graphql/tags';
-import { FilterSearchCombo } from './search-combo';
+import SearchCombo from './search-combo';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* constants & helpers */
@@ -166,13 +166,21 @@ export function FilterModal({
   const [categories, setCategories] = useState<SearchMeta['categories']>([]);
   const [tags, setTags] = useState<SearchMeta['tags']>([]);
 
-  const { data: categoriesBySlugsData } = useGetCategoriesBySlugsQuery({
-    slugs: initialCategories,
-  });
+  const { data: categoriesBySlugsData } = useGetCategoriesBySlugsQuery(
+    {
+      slugs: initialCategories,
+    },
+    {
+      enabled: initialCategories.length > 0,
+    }
+  );
 
-  const { data: tagsBySlugsData } = useGetTagsBySlugsQuery({
-    slugs: initialTags,
-  });
+  const { data: tagsBySlugsData } = useGetTagsBySlugsQuery(
+    {
+      slugs: initialTags,
+    },
+    { enabled: initialTags.length > 0 }
+  );
 
   useEffect(() => {
     const c = categoriesBySlugsData?.categoriesBySlugs ?? [];
@@ -513,7 +521,7 @@ export function FilterModal({
             {/* body */}
             <div className="p-4 space-y-6">
               {/* GROUPED SEARCH */}
-              <FilterSearchCombo
+              <SearchCombo
                 value={q}
                 onChangeValue={setQ}
                 onSubmitFreeText={setQ}

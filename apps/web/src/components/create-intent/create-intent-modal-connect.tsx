@@ -1,11 +1,12 @@
 'use client';
 
 import { useCreateIntentMutation } from '@/hooks/graphql/intents';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { CreateIntentModal } from './create-intent-modal';
 import { CreateIntentInput } from './types';
 import { CategorySelectionProvider } from './category-selection-provider';
 import { TagSelectionProvider } from './tag-selection-provider';
+import { SuccessIntentModal } from './success-intent-modal';
 
 const map = (
   input: CreateIntentInput
@@ -48,30 +49,49 @@ export function CreateIntentModalConnect({
   onClose: () => void;
 }) {
   const { mutateAsync } = useCreateIntentMutation();
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
 
-  const handleCreate = useCallback(async (input: CreateIntentInput) => {
-    try {
-      await mutateAsync({ input: map(input) });
-    } catch (err) {
-      console.error(err); // todo
-    }
-  }, []);
+  const handleCreate = useCallback(
+    async (input: CreateIntentInput) => {
+      try {
+        await mutateAsync({ input: map(input) });
+        // Close the create modal...
+        onClose();
+        // ...then show success modal (it renders even when create modal is closed)
+        setSuccessOpen(true);
+      } catch (err) {
+        console.error(err); // todo: proper error handling/toast
+      }
+    },
+    [mutateAsync, onClose]
+  );
 
-  if (!open) return null;
+  // Render nothing only when both are closed
+  if (!open && !successOpen) return null;
 
   return (
-    <CategorySelectionProvider>
-      <TagSelectionProvider>
-        <CreateIntentModal
-          open={open}
-          onClose={handleClose}
-          onCreate={handleCreate}
-        />
-      </TagSelectionProvider>
-    </CategorySelectionProvider>
+    <>
+      {open && (
+        <CategorySelectionProvider>
+          <TagSelectionProvider>
+            <CreateIntentModal
+              open={open}
+              onClose={handleClose}
+              onCreate={handleCreate}
+            />
+          </TagSelectionProvider>
+        </CategorySelectionProvider>
+      )}
+
+      {/* Success modal lives outside of the form lifecycle */}
+      <SuccessIntentModal
+        open={successOpen}
+        onClose={() => setSuccessOpen(false)}
+      />
+    </>
   );
 }

@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useGetCategoriesQuery } from '@/hooks/graphql/categories';
 
-export type CategoryOption = { id: string; slug: string; name: string };
+export type CategoryOption = {
+  id: string;
+  slug: string;
+  label: string;
+};
 
 export const useCategoriesLimit = 25;
 
@@ -31,7 +35,7 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
     return categories.slice(0, useCategoriesLimit).map((c) => ({
       id: c.id,
       slug: c.slug,
-      name: pickCategoryName(c.names, c.slug),
+      label: pickCategoryName(c.names, c.slug),
     }));
   }, [data]);
 

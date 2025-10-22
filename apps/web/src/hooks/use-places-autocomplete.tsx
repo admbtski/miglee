@@ -1,13 +1,15 @@
+// hooks/use-places-autocomplete.ts
 'use client';
 
 import { importPlaces, loadGoogleMaps } from '@/libs/map/googleMaps';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDebouncedValue } from './use-debounced-value';
 
 /** A single UI-ready suggestion row. */
 export type Suggestion = {
   raw: google.maps.places.AutocompleteSuggestion;
   text: string;
-  placeId?: string; // NEW
+  placeId?: string;
 };
 
 /** Optional biasing config for the autocomplete request. */
@@ -23,41 +25,89 @@ export type Bias = {
   region?: string;
 };
 
+/** Tiny global LRU cache (per app session) to dedupe repeated lookups. */
+const LRU_MAX = 64;
+const globalCache = new Map<string, Suggestion[]>();
+function lruGet(key: string) {
+  if (!globalCache.has(key)) return undefined;
+  const v = globalCache.get(key)!;
+  // bump recency
+  globalCache.delete(key);
+  globalCache.set(key, v);
+  return v;
+}
+function lruSet(key: string, val: Suggestion[]) {
+  globalCache.set(key, val);
+  if (globalCache.size > LRU_MAX) {
+    const first = globalCache.keys().next().value;
+    if (first) globalCache.delete(first);
+  }
+}
+
+function cacheKeyFor(q: string, bias?: Bias) {
+  return JSON.stringify({
+    q,
+    loc: bias?.location ?? null,
+    r: bias?.radius ?? null,
+    t: (bias?.includedPrimaryTypes || []).slice(0, 5),
+    lang: bias?.language ?? null,
+    reg: bias?.region ?? null,
+  });
+}
+
 /**
  * Places (New) Autocomplete hook with:
- * - Debounce (300ms)
- * - Result caching per (query + bias)
+ * - Debounce (300ms) via useDebouncedValue
+ * - Global LRU cache per (query + bias)
  * - Session token reuse per typing session
  * - Race-condition guard (request id)
+ * - Explicit clearSession() for post-select flows
  */
 export function usePlacesAutocomplete(query: string, bias?: Bias) {
+  const debounced = useDebouncedValue(query.trim(), 300);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
-  // Session token reused across keystrokes; reset when input is cleared
   const sessionRef = useRef<google.maps.places.AutocompleteSessionToken | null>(
     null
   );
-
-  // Simple in-memory cache
-  const cache = useRef(new Map<string, Suggestion[]>());
-
-  // Request id for race-guarding late responses
   const reqId = useRef(0);
 
-  // Reset session token when user clears the input
+  // Reset session token when input empties (ends billing session)
   useEffect(() => {
-    if (!query.trim()) sessionRef.current = null;
-  }, [query]);
+    if (!debounced) sessionRef.current = null;
+  }, [debounced]);
+
+  const key = useMemo(
+    () => cacheKeyFor(debounced, bias),
+    [
+      debounced,
+      bias?.location?.lat,
+      bias?.location?.lng,
+      bias?.radius,
+      JSON.stringify(bias?.includedPrimaryTypes || []),
+      bias?.language,
+      bias?.region,
+    ]
+  );
 
   useEffect(() => {
-    const q = query.trim();
     let alive = true;
     const id = ++reqId.current;
 
+    const q = debounced;
     if (!q) {
       setSuggestions([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    const cached = lruGet(key);
+    if (cached) {
+      if (!alive || id !== reqId.current) return;
+      setSuggestions(cached);
       setLoading(false);
       setError(null);
       return;
@@ -66,37 +116,14 @@ export function usePlacesAutocomplete(query: string, bias?: Bias) {
     const run = async () => {
       try {
         setLoading(true);
-
         const g = await loadGoogleMaps();
         const { AutocompleteSuggestion, AutocompleteSessionToken } =
           (await g.maps.importLibrary('places')) as google.maps.PlacesLibrary;
 
-        // Create a token if this is the first keystroke in a new session
         if (!sessionRef.current) {
           sessionRef.current = new AutocompleteSessionToken();
         }
 
-        // Build cache key based on query + bias knobs
-        const cacheKey = JSON.stringify({
-          q,
-          loc: bias?.location ?? null,
-          r: bias?.radius ?? null,
-          t: (bias?.includedPrimaryTypes || []).slice(0, 5),
-          lang: bias?.language ?? null,
-          reg: bias?.region ?? null,
-        });
-
-        // Serve from cache when possible
-        const cached = cache.current.get(cacheKey);
-        if (cached) {
-          if (!alive || id !== reqId.current) return;
-          setSuggestions(cached);
-          setLoading(false);
-          setError(null);
-          return;
-        }
-
-        // Build request (Places Autocomplete Data API — New)
         const request: google.maps.places.AutocompleteRequest = {
           input: q,
           sessionToken: sessionRef.current!,
@@ -117,13 +144,13 @@ export function usePlacesAutocomplete(query: string, bias?: Bias) {
         const { suggestions: raw } =
           await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
 
-        const mapped: Suggestion[] = (raw ?? []).map((s) => ({
-          raw: s,
-          text: s.placePrediction?.text?.toString?.() ?? '',
-          placeId: s.placePrediction?.placeId,
-        }));
+        const mapped: Suggestion[] = (raw ?? []).map((s) => {
+          const pid = s.placePrediction?.placeId;
+          const toStr = s.placePrediction?.text?.toString?.() ?? '';
+          return { raw: s, text: toStr, placeId: pid };
+        });
 
-        cache.current.set(cacheKey, mapped);
+        lruSet(key, mapped);
         if (!alive || id !== reqId.current) return;
         setSuggestions(mapped);
         setLoading(false);
@@ -135,23 +162,25 @@ export function usePlacesAutocomplete(query: string, bias?: Bias) {
       }
     };
 
-    const t = window.setTimeout(run, 300); // debounce
+    run();
+
     return () => {
       alive = false;
-      window.clearTimeout(t);
     };
-  }, [
-    query,
-    bias?.location?.lat,
-    bias?.location?.lng,
-    bias?.radius,
-    // stringifying array keeps a stable dep while avoiding deep compare
-    JSON.stringify(bias?.includedPrimaryTypes || []),
-    bias?.language,
-    bias?.region,
-  ]);
+  }, [debounced, key]);
 
-  return { suggestions, loading, error, sessionToken: sessionRef.current };
+  /** Manually terminates the current Places billing session. Call after the user selects a place. */
+  const clearSession = () => {
+    sessionRef.current = null;
+  };
+
+  return {
+    suggestions,
+    loading,
+    error,
+    sessionToken: sessionRef.current,
+    clearSession,
+  };
 }
 
 /**
@@ -164,9 +193,8 @@ export async function fetchPlaceDetailsFromSuggestion(
     'id' | 'displayName' | 'formattedAddress' | 'location' | 'types'
   > = ['id', 'displayName', 'formattedAddress', 'location']
 ): Promise<{
-  /** Google Place ID (Places New) */
   placeId?: string;
-  id?: string; // alias: to samo co placeId (zachowane dla kompatybilności)
+  id?: string; // alias for compatibility
   displayName?: string;
   formattedAddress?: string;
   lat?: number;
@@ -190,7 +218,6 @@ export async function fetchPlaceDetailsFromSuggestion(
 
   const lat = place.location?.lat();
   const lng = place.location?.lng();
-
   const placeId = place.id || pred.placeId || undefined;
 
   return {

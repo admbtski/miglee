@@ -17,9 +17,7 @@ export function UserMenuControlled({
 }) {
   const qc = getQueryClient();
 
-  const { data } = useMeQuery({
-    retry: false,
-  });
+  const { data } = useMeQuery({ retry: false });
   const { mutateAsync: devLogout, isPending: loggingOut } =
     useDevLogoutMutation({
       onSuccess: async () => {
@@ -30,7 +28,6 @@ export function UserMenuControlled({
   const user = useMemo(() => {
     const me = data?.me;
     if (!me) return null;
-
     return {
       name: me.name ?? me.email ?? 'User',
       email: me.email,
@@ -46,9 +43,7 @@ export function UserMenuControlled({
 
   const handleNavigate = useCallback(
     async (key: NavigateKey) => {
-      if (!loggingOut) {
-        onNavigate?.(key);
-      }
+      if (!loggingOut) onNavigate?.(key);
     },
     [onNavigate, loggingOut]
   );

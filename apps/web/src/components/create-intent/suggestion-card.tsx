@@ -12,8 +12,21 @@ export function SuggestionCard({
   selected?: boolean;
   onSelect?: () => void;
 }) {
+  const dtStart = new Date(s.startAt);
+  const dtEnd = new Date(s.endAt);
+
+  const startLabel = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(dtStart);
+  const endLabel = new Intl.DateTimeFormat(undefined, {
+    timeStyle: 'short',
+  }).format(dtEnd);
+
   const fullness = `${s.taken}/${s.max}`;
-  const time = `${new Date(s.startAt).toLocaleString()} – ${new Date(s.endAt).toLocaleTimeString()}`;
+  const distance = Number.isFinite(s.distanceKm)
+    ? `${s.distanceKm.toFixed(1)} km`
+    : '';
 
   return (
     <motion.button
@@ -31,11 +44,11 @@ export function SuggestionCard({
       <div className="flex items-center justify-between">
         <div className="font-semibold">{s.title}</div>
         <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          {s.distanceKm.toFixed(1)} km
+          {distance}
         </div>
       </div>
       <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        by {s.author} · {time}
+        by {s.author} · {startLabel} – {endLabel}
       </div>
       <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         Slots: {fullness}

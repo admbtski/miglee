@@ -133,7 +133,8 @@ export function TimeStep({
   const onStartDate = useCallback(
     (v: string) => {
       if (!v) return;
-      const [y, m, d] = v.split('-').map(Number);
+      const [y, m, d] = v.split('-').map(Number) as [number, number, number];
+
       setStart(setYMD(start, y, m, d), preserveDurationOnStartChange);
     },
     [setStart, start, preserveDurationOnStartChange]
@@ -142,7 +143,8 @@ export function TimeStep({
   const onStartTime = useCallback(
     (v: string) => {
       if (!v) return;
-      const [hh, mm] = v.split(':').map(Number);
+      const [hh, mm] = v.split(':').map(Number) as [number, number];
+
       setStart(setHM(start, hh, mm), preserveDurationOnStartChange);
     },
     [setStart, start, preserveDurationOnStartChange]
@@ -151,7 +153,8 @@ export function TimeStep({
   const onEndDate = useCallback(
     (v: string) => {
       if (!v) return;
-      const [y, m, d] = v.split('-').map(Number);
+      const [y, m, d] = v.split('-').map(Number) as [number, number, number];
+
       setEnd(setYMD(end, y, m, d));
     },
     [setEnd, end]
@@ -160,7 +163,8 @@ export function TimeStep({
   const onEndTime = useCallback(
     (v: string) => {
       if (!v) return;
-      const [hh, mm] = v.split(':').map(Number);
+      const [hh, mm] = v.split(':').map(Number) as [number, number];
+
       setEnd(setHM(end, hh, mm));
     },
     [setEnd, end]

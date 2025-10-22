@@ -1,6 +1,5 @@
 'use client';
 
-import { useCategoriesLimit } from '@/hooks/use-categories';
 import { useEffect, useId } from 'react';
 import {
   Controller,
@@ -9,8 +8,10 @@ import {
   useWatch,
 } from 'react-hook-form';
 import { useCategorySelection } from './category-selection-provider';
-import { CategoryOption, IntentFormValues } from './types';
+import { IntentFormValues } from './types';
+import { useCategoriesLimit } from '@/hooks/use-categories';
 import { CategoryMultiCombo } from '../combobox/category-combobox';
+import { CategoryOption } from '@/types/types';
 
 export function BasicsStep({
   form,
@@ -19,7 +20,6 @@ export function BasicsStep({
 }) {
   const {
     register,
-    setValue,
     trigger,
     control,
     formState: { errors },
@@ -31,6 +31,7 @@ export function BasicsStep({
   const descId = useId();
   const descErrId = useId();
 
+  // NOTE: capacity sync now handled solely in CapacityStep to avoid double side-effects
   const { field: modeField } = useController({ name: 'mode', control });
 
   const { selected: selectedCategories, set: setCategories } =
@@ -41,16 +42,10 @@ export function BasicsStep({
   const titleMax = 60;
   const descMax = 500;
 
+  // Ensure RHF sees initial mode for validation (but do not mutate min/max here)
   useEffect(() => {
-    if (modeField.value === 'ONE_TO_ONE') {
-      setValue('min', 2, { shouldDirty: true, shouldValidate: true });
-      setValue('max', 2, { shouldDirty: true, shouldValidate: true });
-    } else if (modeField.value === 'GROUP') {
-      setValue('min', 2, { shouldDirty: true, shouldValidate: true });
-      setValue('max', 50, { shouldDirty: true, shouldValidate: true });
-    }
-    void trigger(['min', 'max']);
-  }, [modeField.value, setValue, trigger]);
+    void trigger(['mode']);
+  }, [modeField.value, trigger]);
 
   return (
     <div className="space-y-8">
@@ -118,6 +113,7 @@ export function BasicsStep({
           const handleChange = (vals: CategoryOption[]) => {
             const slugs = vals.map((v) => v.slug);
             field.onChange(slugs);
+            // FIX: pass numeric limit (not the hook itself)
             setCategories(vals, useCategoriesLimit);
             void trigger('categorySlugs');
           };

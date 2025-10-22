@@ -218,7 +218,6 @@ export const RadiusSlider = React.forwardRef<
         {
           range: { min, max },
           step,
-          direction: rtl ? 'rtl' : 'ltr',
           pips: pipsConfig,
         },
         // false → zachowaj pozycję uchwytu

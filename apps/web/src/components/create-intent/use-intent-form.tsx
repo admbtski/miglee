@@ -6,26 +6,18 @@ import { useForm, type UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import type { IntentFormValues } from './types';
 
-/**
- * --- Constants ---
- */
+/** --- Constants --- */
 const NOW_BUFFER_MS = 5 * 60 * 1000; // 5 minutes buffer
 const MAX_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const URL_REGEX = /^https?:\/\/\S+/i;
 
-/**
- * Meeting type enum
- */
+/** Meeting type enum */
 export const MeetingKind = z.enum(['ONSITE', 'ONLINE', 'HYBRID']);
 
-/**
- * Returns "now + 5min" timestamp for validation
- */
+/** Returns "now + 5min" timestamp for validation */
 const nowPlus5Min = () => new Date(Date.now() + NOW_BUFFER_MS);
 
-/**
- * Location schema
- */
+/** Location schema */
 const LocationSchema = z.object({
   lat: z.number().finite().min(-90).max(90).optional(),
   lng: z.number().finite().min(-180).max(180).optional(),
@@ -34,9 +26,7 @@ const LocationSchema = z.object({
   radiusKm: z.number().finite().min(0).max(20).optional(),
 });
 
-/**
- * Core validation schema
- */
+/** Core validation schema */
 export const IntentSchema = z
   .object({
     title: z
@@ -62,11 +52,12 @@ export const IntentSchema = z
     max: z.number().int().max(50, 'Max capacity is 50'),
     startAt: z
       .date()
+      .transform((d) => new Date(d)) // ensure instance copy (helps with weird inputs)
       .refine(
         (d) => d.getTime() >= nowPlus5Min().getTime(),
         'Start must be in the future (5 min buffer)'
       ),
-    endAt: z.date(),
+    endAt: z.date().transform((d) => new Date(d)),
     allowJoinLate: z.boolean(),
 
     meetingKind: MeetingKind,
@@ -83,7 +74,12 @@ export const IntentSchema = z
     location: LocationSchema,
 
     visibility: z.enum(['PUBLIC', 'HIDDEN']),
-    notes: z.string().trim().max(300).optional().or(z.literal('')),
+    notes: z
+      .string()
+      .trim()
+      .max(300, 'Max 300 characters')
+      .optional()
+      .or(z.literal('')),
   })
   .refine((data) => data.endAt.getTime() > data.startAt.getTime(), {
     path: ['endAt'],
@@ -95,7 +91,7 @@ export const IntentSchema = z
   )
   .refine((data) => data.min <= data.max, {
     path: ['min'],
-    message: 'Min must be less or equal to Max',
+    message: 'Min must be ≤ Max',
   })
   // Mode-specific
   .superRefine((data, ctx) => {
@@ -115,27 +111,25 @@ export const IntentSchema = z
         });
       }
     } else {
-      if (data.min < 2) {
+      if (data.min < 2)
         ctx.addIssue({
           code: 'custom',
           path: ['min'],
           message: 'Minimum capacity is 2',
         });
-      }
-      if (data.max > 50) {
+      if (data.max > 50)
         ctx.addIssue({
           code: 'custom',
           path: ['max'],
           message: 'Maximum capacity is 50',
         });
-      }
     }
   })
   // MeetingKind-specific
   .superRefine((data, ctx) => {
     const hasCoords =
       Number.isFinite(data.location.lat) && Number.isFinite(data.location.lng);
-    const hasUrl = !!data.onlineUrl && URL_REGEX.test(data.onlineUrl);
+    const hasUrl = !!data.onlineUrl && URL_REGEX.test(data.onlineUrl!);
 
     switch (data.meetingKind) {
       case 'ONSITE':
@@ -147,7 +141,6 @@ export const IntentSchema = z
           });
         }
         break;
-
       case 'ONLINE':
         if (!hasUrl) {
           ctx.addIssue({
@@ -157,7 +150,6 @@ export const IntentSchema = z
           });
         }
         break;
-
       case 'HYBRID':
         if (!hasCoords && !hasUrl) {
           ctx.addIssue({
@@ -174,7 +166,7 @@ export const IntentSchema = z
 /** Default values */
 export const defaultIntentValues: IntentFormValues = {
   title: '',
-  categorySlugs: [], // <<— multiple
+  categorySlugs: [],
   description: '',
   mode: 'GROUP',
   min: 2,
@@ -182,10 +174,8 @@ export const defaultIntentValues: IntentFormValues = {
   startAt: new Date(Date.now() + NOW_BUFFER_MS),
   endAt: new Date(Date.now() + NOW_BUFFER_MS + 60 * 60 * 1000),
   allowJoinLate: true,
-
   meetingKind: 'ONSITE',
   onlineUrl: '',
-
   location: {
     lat: undefined,
     lng: undefined,

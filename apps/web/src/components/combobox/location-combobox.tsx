@@ -1,4 +1,3 @@
-// components/location/LocationCombo.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -22,7 +21,7 @@ export function LocationCombo({
   onPickPlace: (place: {
     /** Google Place ID */
     placeId?: string;
-    /** Alias (dla zgodności z istniejącym kodem – równe placeId) */
+    /** Alias (for backward-compatibility – equal to placeId) */
     id?: string;
     address?: string;
     lat?: number;
@@ -53,10 +52,9 @@ export function LocationCombo({
 
   const isLoading = loadingOverride ?? loading;
 
-  // Keep dropdown open on first keystrokes — close only on explicit outside click / Escape
   const openPanel = () => setOpen(true);
 
-  // Close on outside click (robust: use pointerdown + composedPath)
+  // Close on outside click (pointerdown + composedPath)
   useEffect(() => {
     const onDoc = (e: Event) => {
       const path = (e as any).composedPath?.() as Node[] | undefined;
@@ -75,7 +73,7 @@ export function LocationCombo({
     return () => document.removeEventListener('pointerdown', onDoc);
   }, []);
 
-  // Optional UX: when fresh results arrive and nothing highlighted, preselect the first item
+  // Preselect first item when panel opens and results arrive
   useEffect(() => {
     if (open && highlight < 0 && suggestions.length > 0) {
       setHighlight(0);
@@ -94,15 +92,12 @@ export function LocationCombo({
     ]);
     if (!place) return;
 
-    // Stabilne pozyskanie Place ID:
-    // - preferuj to, co zwrócił Place (place.id)
-    // - fallback do prediction.placeId z sugestii
     const predictionPlaceId = s.raw.placePrediction?.placeId;
     const placeId = place.placeId || place.id || predictionPlaceId || undefined;
 
     onPickPlace({
       placeId,
-      id: placeId, // alias dla kompatybilności
+      id: placeId,
       displayName: place.displayName,
       address: place.formattedAddress,
       lat: place.lat,
@@ -130,7 +125,7 @@ export function LocationCombo({
           onFocus={openPanel}
           onChange={(e) => {
             onChangeText(e.target.value);
-            openPanel(); // <- ensure panel stays open while typing
+            openPanel();
             setHighlight(-1);
           }}
           onKeyDown={(e) => {
@@ -145,24 +140,33 @@ export function LocationCombo({
               setHighlight((h) => Math.max(h - 1, 0));
             } else if (e.key === 'Enter') {
               e.preventDefault();
-              if (highlight >= 0) pick(highlight);
+              if (highlight >= 0) void pick(highlight);
             } else if (e.key === 'Escape') {
               setOpen(false);
             }
           }}
           placeholder={placeholder}
           className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400"
+          aria-autocomplete="list"
+          aria-expanded={open}
+          aria-controls="place-suggestions"
+          role="combobox"
         />
-        {isLoading && <Loader2 className="h-4 w-4 animate-spin opacity-60" />}
+        {isLoading && (
+          <Loader2
+            className="h-4 w-4 animate-spin opacity-60"
+            aria-label="Loading"
+          />
+        )}
       </label>
 
-      {/* Always render the panel when open — even if suggestions are not yet loaded.
-          This removes the “type once, then refocus” glitch. */}
       {open && (
         <div
           ref={listRef}
+          id="place-suggestions"
           className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
           role="listbox"
+          aria-label="Places"
         >
           {isLoading ? (
             <div className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-500">
@@ -189,7 +193,8 @@ export function LocationCombo({
                   role="option"
                   aria-selected={active}
                   onMouseEnter={() => setHighlight(idx)}
-                  onClick={() => pick(idx)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => void pick(idx)}
                   className={[
                     'block w-full cursor-pointer px-3 py-2 text-left text-sm',
                     active

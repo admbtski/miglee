@@ -1,7 +1,12 @@
-export const intentCreatedConfetti = async () => {
+export const intentCreatedConfetti = async (opts?: {
+  intensity?: 'low' | 'normal' | 'high';
+}) => {
   const confetti = (await import('canvas-confetti' as any)).default;
+  const mult =
+    opts?.intensity === 'low' ? 0.5 : opts?.intensity === 'high' ? 1.3 : 1;
+
   confetti({
-    particleCount: 140,
+    particleCount: Math.round(140 * mult),
     spread: 70,
     startVelocity: 45,
     scalar: 0.9,
@@ -9,14 +14,14 @@ export const intentCreatedConfetti = async () => {
   });
   setTimeout(() => {
     confetti({
-      particleCount: 90,
+      particleCount: Math.round(90 * mult),
       spread: 60,
       startVelocity: 35,
       scalar: 0.8,
       origin: { x: 0.2, y: 0.7 },
     });
     confetti({
-      particleCount: 90,
+      particleCount: Math.round(90 * mult),
       spread: 60,
       startVelocity: 35,
       scalar: 0.8,

@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryOption } from '@/types/types';
 import React, {
   createContext,
   useCallback,
@@ -7,7 +8,6 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import type { CategoryOption } from './types';
 
 type CategorySelectionContextValue = {
   selected: CategoryOption[];

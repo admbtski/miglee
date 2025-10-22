@@ -14,48 +14,27 @@ export type RangeSliderProps = {
   min: number;
   max: number;
   step?: number;
-  /** Minimalny dystans między uchwytami (w jednostkach slidera). */
   minDistance?: number;
   disabled?: boolean;
-  /** Wywoływane na „commit” (mouseup/touchend/Enter) – tak jak miałeś. */
   onChange: (v: [number, number]) => void;
-  /** Opcjonalnie: live callback przy każdym ruchu (throttlowane przez rAF). */
   onUpdate?: (v: [number, number]) => void;
-
-  /** Tooltips (domyślnie: włączone z prostym formatem). Ustaw false by wyłączyć. */
   tooltips?: boolean;
-  /** Własny formatter tooltipów. */
   format?: Partial<Format>;
-
-  /** RTL wsparcie (odwraca kierunek) */
   rtl?: boolean;
-
-  /** A11y i style */
   id?: string;
   className?: string;
   'aria-invalid'?: boolean;
   'aria-describedby'?: string;
-
-  /** Pips (znaczniki): np. co 10 jednostek */
   pipsStep?: number;
   pipsDensity?: number; // 0-5
 };
 
 export type RangeSliderRef = {
-  /** focus na lewym/prawym uchwycie */
   focusStart: () => void;
   focusEnd: () => void;
-  /** dostęp do instancji noUiSlider jeśli potrzebny */
   api: API | null;
 };
 
-/**
- * Ulepszony wrapper na noUiSlider:
- * - controlled value (dwukierunkowy)
- * - a11y atrybuty na kontenerze + możliwość focusowania uchwytów
- * - onChange (commit) + onUpdate (live)
- * - minDistance, RTL, tooltips, pips
- */
 export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
   (
     {
@@ -82,7 +61,6 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
     const apiRef = React.useRef<API | null>(null);
     const rafRef = React.useRef<number | null>(null);
 
-    // Domyślny format tooltipów
     const fmt: Format = React.useMemo(
       () => ({
         to: (v: number) => `${Math.round(v)}`,
@@ -92,7 +70,15 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       [format]
     );
 
-    // Init – tylko raz
+    const pipsConfig = React.useMemo(() => {
+      if (!pipsStep || pipsStep <= 0) return undefined;
+      return {
+        mode: PipsMode.Steps as const,
+        density: pipsDensity,
+        stepped: true,
+      };
+    }, [pipsStep, pipsDensity]);
+
     React.useEffect(() => {
       if (!rootRef.current || apiRef.current) return;
 
@@ -101,7 +87,6 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         step,
         connect: true,
         range: { min, max },
-        // zachowanie
         keyboardSupport: true,
         behaviour: 'tap-drag',
         direction: rtl ? 'rtl' : 'ltr',
@@ -118,20 +103,29 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
               },
             ]
           : undefined,
-        pips:
-          pipsStep && pipsStep > 0
-            ? {
-                mode: PipsMode.Steps,
-                density: pipsDensity,
-                stepped: true,
-              }
-            : undefined,
+        pips: pipsConfig,
+        animate: false,
       });
 
       apiRef.current = api;
 
-      // live update (throttle przez rAF)
       const handleUpdate = (vals: (string | number)[]) => {
+        // Keep aria-valuenow/valuetext synced for SR users
+        const handles =
+          rootRef.current!.querySelectorAll<HTMLElement>('.noUi-handle');
+        if (handles.length >= 2) {
+          handles?.[0]?.setAttribute(
+            'aria-valuenow',
+            String(Math.round(Number(vals[0])))
+          );
+          handles?.[0]?.setAttribute('aria-valuetext', fmt.to(Number(vals[0])));
+          handles?.[1]?.setAttribute(
+            'aria-valuenow',
+            String(Math.round(Number(vals[1])))
+          );
+          handles?.[1]?.setAttribute('aria-valuetext', fmt.to(Number(vals[1])));
+        }
+
         if (!onUpdate) return;
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         rafRef.current = requestAnimationFrame(() => {
@@ -141,7 +135,6 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         });
       };
 
-      // commit
       const handleCommit = (vals: (string | number)[]) => {
         const a = Math.round(Number(vals[0]));
         const b = Math.round(Number(vals[1]));
@@ -152,9 +145,6 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       api.on('change', handleCommit);
       api.on('set', handleCommit);
 
-      // A11y: role/roledescription już w JSX; dodatkowe handle-labels:
-      // noUi tworzy handle jako <div class="noUi-handle noUi-handle-lower|upper">
-      // Możesz dodać aria-label na uchwytach:
       const handles =
         rootRef.current.querySelectorAll<HTMLElement>('.noUi-handle');
       handles.forEach((h, idx) => {
@@ -165,6 +155,14 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         h.setAttribute(
           'aria-label',
           idx === 0 ? 'Minimum value' : 'Maximum value'
+        );
+        h.setAttribute(
+          'aria-valuenow',
+          String(idx === 0 ? value[0] : value[1])
+        );
+        h.setAttribute(
+          'aria-valuetext',
+          fmt.to(idx === 0 ? value[0] : value[1])
         );
       });
 
@@ -179,7 +177,6 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Sync external -> internal
     React.useEffect(() => {
       const api = apiRef.current;
       if (!api) return;
@@ -193,7 +190,6 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       }
     }, [value]);
 
-    // Enable / disable
     React.useEffect(() => {
       const api = apiRef.current;
       if (!api || !rootRef.current) return;
@@ -206,7 +202,6 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       }
     }, [disabled]);
 
-    // Update min/max/step/minDistance/rtl w locie (jeśli zmienisz propsy)
     React.useEffect(() => {
       const api = apiRef.current;
       if (!api) return;
@@ -215,14 +210,19 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
           range: { min, max },
           step,
           margin: typeof minDistance === 'number' ? minDistance : undefined,
-          direction: rtl ? 'rtl' : 'ltr',
+          pips: pipsConfig,
         },
-        // nie resetuj pozycji
         false
       );
-    }, [min, max, step, minDistance, rtl]);
 
-    // a11y attributes and id
+      const handles =
+        rootRef.current?.querySelectorAll<HTMLElement>('.noUi-handle');
+      handles?.forEach((h) => {
+        h.setAttribute('aria-valuemin', String(min));
+        h.setAttribute('aria-valuemax', String(max));
+      });
+    }, [min, max, step, minDistance, rtl, pipsConfig]);
+
     React.useEffect(() => {
       if (!rootRef.current) return;
       if (id) rootRef.current.id = id;
@@ -232,20 +232,19 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       });
     }, [id, aria]);
 
-    // forwardRef API
     React.useImperativeHandle(
       ref,
       (): RangeSliderRef => ({
         api: apiRef.current,
         focusStart: () => {
-          const el =
-            rootRef.current?.querySelector<HTMLElement>('.noUi-handle-lower');
-          el?.focus();
+          rootRef.current
+            ?.querySelector<HTMLElement>('.noUi-handle-lower')
+            ?.focus();
         },
         focusEnd: () => {
-          const el =
-            rootRef.current?.querySelector<HTMLElement>('.noUi-handle-upper');
-          el?.focus();
+          rootRef.current
+            ?.querySelector<HTMLElement>('.noUi-handle-upper')
+            ?.focus();
         },
       }),
       []

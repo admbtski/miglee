@@ -1,15 +1,12 @@
-// CategoryMultiCombo.tsx
 'use client';
 
 import { Folder, Loader2, Search, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useCategories, useCategoriesLimit } from '../../hooks/use-categories';
-import type { CategoryOption } from '../create-intent/types';
+import { CategoryOption } from '@/types/types';
 
 export type CategoryMultiComboProps = {
-  /** currently selected options (full objects) */
   values: CategoryOption[];
-  /** called with full array on any change */
   onChange: (values: CategoryOption[]) => void;
 
   initialOptions?: CategoryOption[];
@@ -135,7 +132,7 @@ export function CategoryMultiCombo({
               sizeCls.chip,
             ].join(' ')}
           >
-            {v.name}
+            {v.label}
             <button
               type="button"
               onClick={(e) => {
@@ -143,7 +140,7 @@ export function CategoryMultiCombo({
                 remove(v.id);
               }}
               className="inline-flex items-center justify-center rounded-full bg-zinc-200/60 p-1 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700/60 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              aria-label={`Remove ${v.name}`}
+              aria-label={`Remove ${v.label}`}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -166,9 +163,7 @@ export function CategoryMultiCombo({
               if (e.key === 'Backspace' && query === '' && values.length) {
                 e.preventDefault();
                 const id = values?.[values?.length - 1]?.id;
-                if (id) {
-                  remove(id);
-                }
+                if (id) remove(id);
                 return;
               }
               if (!open) return;
@@ -218,10 +213,11 @@ export function CategoryMultiCombo({
           id={listboxId}
           className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
           role="listbox"
+          aria-label="Categories"
         >
           {error && (
             <div className="px-3 py-3 text-sm text-red-500">
-              Wyswtąpił błąd. Spróbuj ponownie później.
+              Wystąpił błąd. Spróbuj ponownie później.
             </div>
           )}
           {visibleOptions.length === 0 && (
@@ -252,15 +248,15 @@ export function CategoryMultiCombo({
                       <Folder className="h-3.5 w-3.5 opacity-80" />
                     </span>
                     <span className="text-zinc-800 dark:text-zinc-100">
-                      {opt.name}
+                      {opt.label}
                     </span>
                   </button>
                 );
               })}
-              {/* Footer hint (zamiast test123) */}
               <div className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700">
+                {/* If useCategoriesLimit is a numeric constant, this is correct. */}
                 Pokazujemy maksymalnie <b>{useCategoriesLimit}</b> wyników.
-                Zmień kryteria wyszukiwania, aby zobaczyć pozostałe.
+                Zmień kryteria, aby zobaczyć pozostałe.
               </div>
             </>
           )}
