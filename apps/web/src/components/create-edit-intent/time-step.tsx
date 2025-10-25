@@ -432,21 +432,25 @@ export function TimeStep({
             {...register('allowJoinLate')}
             className="sr-only peer"
           />
+
+          {/* tor + thumb jako ::after */}
           <div
             className="
-              relative h-6 w-11 rounded-full bg-zinc-300 dark:bg-zinc-700
-              transition-all duration-300
-              peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
-              shadow-inner
-            "
-          >
-            <span
-              className="
-                absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-md transition-all duration-300
-                peer-checked:translate-x-5
-              "
-            />
-          </div>
+      relative h-6 w-11 rounded-full
+      bg-zinc-300 dark:bg-zinc-700
+      transition-colors duration-300
+      shadow-inner
+      peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
+
+      after:content-[''] after:absolute after:left-1 after:top-1
+      after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-md
+      after:transition-all after:duration-300 after:ease-in-out
+      after:transform
+      peer-checked:after:translate-x-5
+      peer-checked:after:shadow-[0_0_6px_rgba(99,102,241,0.6)]
+    "
+          />
+
           <span className="transition-colors duration-300 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
             Allow joining after start
           </span>

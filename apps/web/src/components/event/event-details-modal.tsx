@@ -227,6 +227,10 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO, start), [endISO, start]);
 
+  if (!data) {
+    return null;
+  }
+
   const owners = members.filter((p) => p.role === 'OWNER');
   const mods = members.filter((p) => p.role === 'MODERATOR');
   const users = members.filter((p) => p.role === 'PARTICIPANT');

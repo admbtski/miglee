@@ -1,4 +1,4 @@
-export const intentCreatedConfetti = async (opts?: {
+export const intentCreatedEditedConfetti = async (opts?: {
   intensity?: 'low' | 'normal' | 'high';
 }) => {
   const confetti = (await import('canvas-confetti' as any)).default;

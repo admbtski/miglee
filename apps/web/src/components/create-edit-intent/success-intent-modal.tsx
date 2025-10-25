@@ -9,7 +9,7 @@ import {
 } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Modal } from '../modal/modal';
-import { intentCreatedConfetti } from './utils';
+import { intentCreatedEditedConfetti } from './utils';
 
 type Props = {
   open: boolean;
@@ -49,7 +49,7 @@ export function SuccessIntentModal({
   useEffect(() => {
     if (!open) return;
 
-    if (!reducedMotion) void intentCreatedConfetti();
+    if (!reducedMotion) void intentCreatedEditedConfetti();
 
     if (autoCloseMs && autoCloseMs > 0) {
       setSecondsLeft(Math.ceil(autoCloseMs / 1000));

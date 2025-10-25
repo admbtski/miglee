@@ -21,6 +21,13 @@ enum SortDir {
   DESC
 }
 
+enum IntentsSortBy {
+  START_AT
+  CREATED_AT
+  UPDATED_AT
+  MEMBERS_COUNT
+}
+
 type PageInfo {
   total: Int!
   limit: Int!
@@ -414,6 +421,8 @@ type Query {
     verifiedOnly: Boolean
     distanceKm: Int
     near: LocationInput
+    sortBy: IntentsSortBy = START_AT
+    sortDir: SortDir = ASC
   ): IntentsResult!
 
   intent(id: ID!): Intent

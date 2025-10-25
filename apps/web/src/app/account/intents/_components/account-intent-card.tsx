@@ -15,6 +15,7 @@ import { capacityLabel, formatDateRange, parseISO } from './formatters';
 export function AccountIntentCard(props: {
   id?: string;
   description?: string | null;
+  title?: string | null;
   startAt?: string | null;
   endAt?: string | null;
   address?: string | null;
@@ -36,6 +37,7 @@ export function AccountIntentCard(props: {
 }) {
   const {
     id = '',
+    title,
     description,
     startAt,
     endAt,
@@ -77,7 +79,7 @@ export function AccountIntentCard(props: {
     }, [startAt, endAt, joinedCount, max, lockHoursBeforeStart]);
 
   return (
-    <div className="relative flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="relative min-w-0 flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
       {/* HEADER */}
       <div className="mb-1 flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
         <div className="flex min-w-0 flex-1 items-center gap-1.5">
@@ -86,21 +88,19 @@ export function AccountIntentCard(props: {
             {when}
           </span>
         </div>
-        <div className="order-2 w-full md:order-none md:w-auto md:shrink-0">
-          <StatusBadge
-            tone={status.tone}
-            reason={status.reason}
-            label={status.label}
-          />
-        </div>
+        <StatusBadge
+          tone={status.tone}
+          reason={status.reason}
+          label={status.label}
+        />
       </div>
 
       {/* OPIS */}
       <p
         className="mt-1 line-clamp-3 text-sm text-zinc-900 dark:text-zinc-100"
-        title={description ?? ''}
+        title={title ?? ''}
       >
-        {description || '—'}
+        {title || '—'}
       </p>
 
       {/* FOOTER */}
@@ -129,7 +129,7 @@ export function AccountIntentCard(props: {
             >
               <MapPinHouseIcon className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{address}</span>
-              <span className="opacity-70">• Hybrid</span>
+              <span className="opacity-70 text-nowrap">• Hybrid</span>
             </span>
           )}
         </div>

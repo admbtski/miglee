@@ -1,7 +1,7 @@
 'use client';
 
 import { Info, User, Users } from 'lucide-react';
-import { useEffect, useId, useMemo } from 'react';
+import { useEffect, useId, useMemo, useRef } from 'react';
 import { UseFormReturn, useController } from 'react-hook-form';
 import { IntentFormValues } from './types';
 import { RangeSlider } from './range-slider';

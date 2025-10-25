@@ -1,11 +1,6 @@
 'use client';
 
 import {
-  MeetingKind,
-  Mode,
-  Visibility,
-} from '@/libs/graphql/__generated__/react-query-update';
-import {
   BadgePlusIcon,
   CalendarClockIcon,
   HatGlassesIcon,
@@ -24,8 +19,9 @@ import { ReviewStep } from './review-step';
 import { Stepper } from './stepper';
 import { useTagSelection } from './tag-selection-provider';
 import { TimeStep } from './time-step';
-import { CreateIntentInput } from './types';
-import { useIntentForm } from './use-intent-form';
+import { IntentFormValues } from './types';
+import { defaultIntentValues, useIntentForm } from './use-intent-form';
+import { CategoryOption, TagOption } from '@/types/types';
 
 const STEP_META = [
   { key: 'basics', label: 'Basics', Icon: SquarePenIcon },
@@ -33,35 +29,104 @@ const STEP_META = [
   { key: 'time', label: 'Time', Icon: CalendarClockIcon },
   { key: 'place', label: 'Place', Icon: MapPinnedIcon },
   { key: 'review', label: 'Review', Icon: HatGlassesIcon },
-] as const;
+];
 
-const STEPS = STEP_META.map(({ label }) => label);
+const EDIT_STEP_META = [
+  { key: 'basics', label: 'Edit basics', Icon: SquarePenIcon },
+  { key: 'capacity', label: 'Edit capacity', Icon: UsersIcon },
+  { key: 'time', label: 'Edit time', Icon: CalendarClockIcon },
+  { key: 'place', label: 'Edit place', Icon: MapPinnedIcon },
+  { key: 'review', label: 'Edit review', Icon: HatGlassesIcon },
+];
 
-export function CreateIntentModal({
-  open,
-  onClose,
-  onCreate,
-}: {
+type CreateEditIntentModalProps = {
   open: boolean;
+  /** 'create' | 'edit' */
+  mode: 'create' | 'edit';
+  /** Optional initial values to seed the form (used for "edit") */
+  initialValues?: Partial<IntentFormValues>;
+
+  initialCategories?: CategoryOption[];
+  initialTags?: TagOption[];
   onClose: () => void;
-  onCreate: (input: CreateIntentInput) => Promise<void> | void;
-}) {
-  const form = useIntentForm();
-  const { selected: selectedCategories, clear: clearCategories } =
-    useCategorySelection();
-  const { selected: selectedTags, clear: clearTags } = useTagSelection();
+  /** Unified submit handler. Will be called for both create and edit. */
+  onSubmit: (values: IntentFormValues) => Promise<void> | void;
+  /** Button label override */
+  submitLabel?: string;
+  /** Title override */
+  titleOverride?: string;
+  /** Optional user TZ label to show in TimeStep */
+  userTzLabel?: string; // e.g. "Europe/Warsaw (UTC+02:00)"
+};
+
+export function CreateEditIntentModal({
+  open,
+  initialValues,
+  initialCategories = [],
+  initialTags = [],
+  onClose,
+  onSubmit,
+  mode,
+  userTzLabel,
+}: CreateEditIntentModalProps) {
+  const isEdit = mode === 'edit';
+  const steps = isEdit ? EDIT_STEP_META : STEP_META;
+
+  const form = useIntentForm(initialValues);
+  const { clear: clearCategories, set: setCategories } = useCategorySelection();
+  const { clear: clearTags, set: setTags } = useTagSelection();
 
   const [step, setStep] = useState(0);
+  const [formKey, setFormKey] = useState(0); // ← remount klucz
   const titleId = useId();
 
   const {
     handleSubmit,
     trigger,
     reset,
-    formState: { isValid, isSubmitting },
+    formState: { isValid, isSubmitting, isDirty },
   } = form;
 
-  // Reset on close
+  // Świeże defaulty (żeby daty były „teraz + 5 min”, a nie z importu modułu)
+  const makeFreshDefaults = useCallback((): IntentFormValues => {
+    const now = Date.now();
+    const start = new Date(now + 5 * 60 * 1000);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    return {
+      ...defaultIntentValues,
+      // wszystko jak w defaultIntentValues, ale z nowymi datami
+      startAt: start,
+      endAt: end,
+    };
+  }, []);
+
+  // Po otwarciu/zmianie initialValues – zasil form wartościami startowymi
+  useEffect(() => {
+    if (!open) return;
+    reset(
+      { ...makeFreshDefaults(), ...(initialValues ?? {}) },
+      {
+        keepDirty: false,
+        keepErrors: false,
+        keepTouched: false,
+        keepIsSubmitted: false,
+        keepSubmitCount: false,
+      }
+    );
+    setCategories(initialCategories);
+    setTags(initialCategories);
+    setStep(0);
+    setFormKey((k) => k + 1); // wymuś remount drzewa pól
+  }, [
+    open,
+    initialValues,
+    reset,
+    makeFreshDefaults,
+    initialCategories,
+    initialTags,
+  ]);
+
+  // Na zamknięcie – wyczyść providery i stan
   useEffect(() => {
     if (!open) {
       clearTags();
@@ -71,26 +136,28 @@ export function CreateIntentModal({
     }
   }, [open, reset, clearTags, clearCategories]);
 
-  // Keyboard shortcuts: Enter -> next/submit, Shift+Enter -> back
+  // Enter -> next/submit, Shift+Enter -> back (z pominięciem textarea)
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'textarea') return;
+
       if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        if (step < STEPS.length - 1) {
+        if (step < steps.length - 1) {
           void next();
         } else {
           submit();
         }
-      }
-      if (e.key === 'Enter' && e.shiftKey) {
+      } else if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         if (step > 0) back();
       }
     };
     window.addEventListener('keydown', onKey, { passive: false });
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, step]); // step intentionally included
+  }, [open, step, steps.length]);
 
   const validateStep = useCallback(
     async (index: number) => {
@@ -123,60 +190,26 @@ export function CreateIntentModal({
   const next = useCallback(async () => {
     const ok = await validateStep(step);
     if (!ok) return;
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
-  }, [step, validateStep]);
+    // flush zmian z ostatniego inputa
+    await handleSubmit(() => Promise.resolve())();
+    setStep((s) => Math.min(s + 1, steps.length - 1));
+  }, [step, validateStep, handleSubmit, steps.length]);
 
   const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
-  if (!open) return null;
-
-  // Submit handler with strong trimming + stable mapping
   const submit = handleSubmit(
     useCallback(
       async (values) => {
-        const input: CreateIntentInput = {
-          title: values.title,
-          categorySlugs: selectedCategories.map((c) => c.slug),
-          tagSlugs: selectedTags.map((t) => t.slug),
-          startAt: values.startAt.toISOString(),
-          endAt: values.endAt.toISOString(),
-          allowJoinLate: values.allowJoinLate,
-          min: values.min,
-          max: values.max,
-          mode: values.mode as Mode,
-          meetingKind: values.meetingKind as MeetingKind,
-          location: {},
-          visibility: values.visibility as Visibility,
-          description: values.description,
-          notes: values.notes,
-          onlineUrl: values.onlineUrl,
-        };
-
-        if (values.description?.trim())
-          input.description = values.description.trim();
-        if (values.onlineUrl?.trim()) input.onlineUrl = values.onlineUrl.trim();
-        if (values.notes?.trim()) input.notes = values.notes.trim();
-
-        if (values.location.lat != null)
-          input.location.lat = values.location.lat;
-        if (values.location.lng != null)
-          input.location.lng = values.location.lng;
-        if (values.location.address?.trim())
-          input.location.address = values.location.address.trim();
-        if (values.location.radiusKm != null)
-          input.location.radiusKm = values.location.radiusKm;
-        if (values.location.placeId?.trim())
-          input.location.placeId = values.location.placeId.trim();
-
-        await onCreate(input);
-        // SUCCESS UX moved to SuccessIntentModal; just close the form here
+        await onSubmit(values as IntentFormValues);
         onClose();
       },
-      [onClose, onCreate, selectedCategories, selectedTags]
+      [onClose, onSubmit]
     )
   );
 
-  const { label: stepLabel, Icon: StepIcon } = STEP_META[step] ?? {
+  if (!open) return null;
+
+  const { label: stepLabel, Icon: StepIcon } = steps[step] ?? {
     title: 'Create intent',
     Icon: BadgePlusIcon,
   };
@@ -184,6 +217,7 @@ export function CreateIntentModal({
   return (
     <Modal
       open={open}
+      size="sm"
       onClose={onClose}
       header={
         <div className="flex flex-col gap-2">
@@ -191,9 +225,21 @@ export function CreateIntentModal({
             <button
               onClick={() => {
                 setStep(0);
-                reset();
                 clearCategories();
                 clearTags();
+                reset(
+                  { ...makeFreshDefaults(), ...(initialValues ?? {}) },
+                  {
+                    keepDirty: false,
+                    keepErrors: false,
+                    keepTouched: false,
+                    keepIsSubmitted: false,
+                    keepSubmitCount: false,
+                  }
+                );
+                setCategories(initialCategories);
+                setTags(initialCategories);
+                setFormKey((k) => k + 1); // ← hard reset UI
               }}
               className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
             >
@@ -219,7 +265,7 @@ export function CreateIntentModal({
 
           <div className="mt-3">
             <Stepper
-              steps={STEP_META as any}
+              steps={STEP_META}
               currentIndex={step}
               layout="stacked"
               size="md"
@@ -229,7 +275,8 @@ export function CreateIntentModal({
         </div>
       }
       content={
-        <div className="space-y-6">
+        // ← remount całej sekcji pól po „Clear” i przy otwarciu
+        <div key={formKey} className="space-y-6">
           {step === 0 && <BasicsStep form={form} />}
 
           {step === 1 && <CapacityStep form={form} />}
@@ -237,7 +284,9 @@ export function CreateIntentModal({
           {step === 2 && (
             <TimeStep
               form={form}
-              userTzLabel={Intl.DateTimeFormat().resolvedOptions().timeZone}
+              userTzLabel={
+                userTzLabel ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+              }
             />
           )}
 
@@ -264,7 +313,10 @@ export function CreateIntentModal({
           )}
 
           {step === 4 && (
-            <ReviewStep values={form.getValues()} showMapPreview />
+            <ReviewStep
+              values={form.getValues()} // po „next” już spłukane
+              showMapPreview
+            />
           )}
         </div>
       }
@@ -282,13 +334,18 @@ export function CreateIntentModal({
           </button>
           <button
             type="button"
-            onClick={step < STEPS.length - 1 ? next : submit}
-            disabled={isSubmitting || (step === STEPS.length - 1 && !isValid)}
+            onClick={step < steps.length - 1 ? next : submit}
+            disabled={
+              isSubmitting ||
+              (step === steps.length - 1 && (!isValid || (isEdit && !isDirty)))
+            }
             className="rounded-2xl px-4 py-2 text-sm font-medium disabled:opacity-50
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
                        bg-indigo-600 text-white hover:bg-indigo-500"
           >
-            {step < STEPS.length - 1 ? 'Next' : 'Create'}
+            {step < steps.length - 1 && 'Next'}
+            {!isEdit && step === steps.length - 1 && 'Create'}
+            {isEdit && step === steps.length - 1 && 'Save changes'}
           </button>
         </div>
       }

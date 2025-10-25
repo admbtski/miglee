@@ -12,7 +12,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type NavigateKey =
   | 'billing'
@@ -62,10 +62,9 @@ export function UserMenu({ user }: UserMenuProps) {
 
   const avatarBtnLabel = `Open user menu for ${user.name}`;
 
-  const go = (href: string) => {
-    // prosty, czytelny redirect bez zależności od routera
-    window.location.assign(href);
-  };
+  const handleClose = useCallback(() => {
+    setOpen(false);
+  }, []);
 
   return (
     <>
@@ -123,30 +122,35 @@ export function UserMenu({ user }: UserMenuProps) {
                 icon={<UserIcon className="h-4 w-4" />}
                 label="Profile"
                 href="/account/profile"
+                onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<MessagesSquareIcon className="h-4 w-4" />}
                 label="Chats"
                 href="/account/chats"
+                onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<CalendarIcon className="h-4 w-4" />}
                 label="Intents"
                 href="/account/intents"
+                onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<CreditCardIcon className="h-4 w-4" />}
                 label="Plans & Bills"
                 href="/account/plans-and-bills"
+                onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<SettingsIcon className="h-4 w-4" />}
                 label="Settings"
                 href="/account/settings"
+                onClick={handleClose}
               />
 
               <div className="my-1 h-px w-full bg-zinc-200 dark:bg-zinc-800" />
@@ -163,6 +167,7 @@ export function UserMenu({ user }: UserMenuProps) {
                 label="Sign out"
                 onClick={() => {
                   alert('sign out');
+                  handleClose();
                 }}
               />
             </motion.div>

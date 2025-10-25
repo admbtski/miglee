@@ -16,7 +16,7 @@ export type MeetingKindType = z.infer<typeof MeetingKindEnum>;
 export type CreateIntentInput = {
   title: string;
   categorySlugs: string[];
-  tagSlugs: string[]; // FIX: aligned with CreateIntentModal & connector
+  tagSlugs: string[];
   description?: string;
   startAt: string;
   endAt: string;

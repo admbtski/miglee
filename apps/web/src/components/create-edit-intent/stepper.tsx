@@ -42,7 +42,7 @@ export function Stepper({
   const dotPx = size === 'sm' ? 24 : 28;
   const dotCls = size === 'sm' ? 'size-6' : 'size-7';
   const textCls = size === 'sm' ? 'text-[13px]' : 'text-sm';
-  const iconCls = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
+  const iconCls = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4.5 w-4.5';
   const gapItems = dense ? 'gap-2' : 'gap-3';
   const connectorH = dense ? 'h-px' : 'h-[2px]';
 
@@ -52,7 +52,9 @@ export function Stepper({
       className={className}
       style={{ ['--dot' as any]: `${dotPx}px` }}
     >
-      <ol className={`flex items-stretch ${gapItems} overflow-x-auto`}>
+      <ol
+        className={`flex items-stretch ${gapItems} overflow-x-auto md:overflow-visible no-scrollbar`}
+      >
         {steps.map((s, idx) => {
           const isActive = idx === currentIndex;
           const isDone = idx < currentIndex;

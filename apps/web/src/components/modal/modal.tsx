@@ -1,39 +1,103 @@
 'use client';
 
-import { ReactNode, useCallback, useEffect, useId, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 import { createPortal } from 'react-dom';
+
+// ----- Types -----------------------------------------------------------------
 
 type Size = 'sm' | 'md' | 'lg' | 'xl';
 type Variant = 'default' | 'centered';
+type Density = 'comfortable' | 'compact' | 'none';
 
 type Props = {
   open?: boolean;
   onClose?: () => void;
 
-  /** Default layout props (backwards compatible) */
   header?: ReactNode;
   content?: ReactNode;
   footer?: ReactNode;
 
-  /** A11y */
   labelledById?: string;
   describedById?: string;
-  /** If you don’t have a visible header, provide an aria-label */
   ariaLabel?: string;
 
-  /** NEW: visual/behavior options */
-  variant?: Variant; // 'default' (old look) | 'centered' (wow look)
-  size?: Size; // panel width preset (centered variant)
-  closeOnEsc?: boolean; // default true
-  closeOnBackdrop?: boolean; // default true
-  initialFocusRef?: React.RefObject<HTMLElement>; // focus on open
-  className?: string; // extra class for panel
-  backdropClassName?: string; // extra class for overlay
+  variant?: Variant;
+  size?: Size;
+  density?: Density;
+
+  closeOnEsc?: boolean;
+  closeOnBackdrop?: boolean;
+  initialFocusRef?: React.RefObject<HTMLElement>;
+
+  /** Extra class for the panel */
+  className?: string;
+  /** Extra class for the backdrop */
+  backdropClassName?: string;
+
+  /** DOM node id to mount the portal into (falls back to body) */
+  portalId?: string;
 };
 
+// ----- Constants --------------------------------------------------------------
+
+/** Sizes are only used by the "centered" variant */
+const SIZE_CLASS: Record<Size, string> = {
+  sm: 'w-[min(480px,92vw)]',
+  md: 'w-[min(640px,92vw)]',
+  lg: 'w-[min(760px,92vw)]',
+  xl: 'w-[min(900px,92vw)]',
+};
+
+const DENSITY_CLASS: Record<Density, string> = {
+  comfortable: 'px-6 py-6 sm:px-8 sm:py-8',
+  compact: 'px-4 py-4 sm:px-6 sm:py-5',
+  none: 'p-0',
+};
+
+const BASE_PANEL_CLASS =
+  'bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 ' +
+  'dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10';
+
+const OVERLAY_MOTION = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.18 },
+} as const;
+
+const PANEL_MOTION = {
+  centered: {
+    initial: { opacity: 0, y: 12, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: 10, scale: 0.98 },
+    transition: { type: 'spring', stiffness: 280, damping: 22, mass: 0.7 },
+  },
+  default: {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 10 },
+    transition: { duration: 0.2 },
+  },
+} as const;
+
+// ----- Helpers ----------------------------------------------------------------
+
+function cx(...parts: Array<string | undefined | false>) {
+  return parts.filter(Boolean).join(' ');
+}
+
+// ----- Component --------------------------------------------------------------
+
 export function Modal({
-  open,
+  open = false,
   onClose,
 
   header,
@@ -46,99 +110,90 @@ export function Modal({
 
   variant = 'default',
   size = 'md',
+  density = 'comfortable',
+
   closeOnEsc = true,
   closeOnBackdrop = true,
   initialFocusRef,
+
   className,
   backdropClassName,
+  portalId = 'portal-root',
 }: Props) {
   const internalTitleId = useId();
   const titleId = labelledById ?? internalTitleId;
+
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  const handleOnClose = useCallback(() => onClose?.(), [onClose]);
+  const handleOnClose = useCallback(() => {
+    onClose?.();
+  }, [onClose]);
 
-  // Scroll lock + compensation
+  // Store the previously focused element and restore focus on unmount/close.
+  useLayoutEffect(() => {
+    if (!open) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    return () => {
+      // Restore focus to the element that had it before the modal opened.
+      previouslyFocusedRef.current?.focus?.();
+      previouslyFocusedRef.current = null;
+    };
+  }, [open]);
+
+  // Scroll lock + scrollbar compensation while modal is open.
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
     const prevPaddingRight = document.body.style.paddingRight;
-    const sbw = window.innerWidth - document.documentElement.clientWidth;
-    if (sbw > 0) document.body.style.paddingRight = `${sbw}px`;
+
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
     document.body.style.overflow = 'hidden';
+
     return () => {
       document.body.style.overflow = prevOverflow;
       document.body.style.paddingRight = prevPaddingRight;
     };
   }, [open]);
 
-  // ESC to close
+  // Close on Escape key if enabled.
   useEffect(() => {
     if (!open || !closeOnEsc) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleOnClose();
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        handleOnClose();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, closeOnEsc, handleOnClose]);
 
-  // Focus management: move focus inside on open
+  // Initial focus: prefer provided ref, otherwise first focusable inside panel.
   useEffect(() => {
     if (!open) return;
     const el =
       initialFocusRef?.current ??
       panelRef.current?.querySelector<HTMLElement>(
-        '[data-autofocus],button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'
-      ) ??
-      null;
+        '[data-autofocus],button,[href],input,select,textarea,summary,' +
+          '[tabindex]:not([tabindex="-1"])'
+      );
     el?.focus?.();
   }, [open, initialFocusRef]);
 
   if (!open) return null;
 
-  /** Sizes only for centered variant */
-  const sizeCls: Record<Size, string> = {
-    sm: 'w-[min(480px,92vw)]',
-    md: 'w-[min(640px,92vw)]',
-    lg: 'w-[min(760px,92vw)]',
-    xl: 'w-[min(900px,92vw)]',
-  };
-
-  const basePanelCls =
-    'bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10';
-
-  const overlayMotion = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 },
-    transition: { duration: 0.18 },
-  };
-
-  const panelMotion =
-    variant === 'centered'
-      ? {
-          initial: { opacity: 0, y: 12, scale: 0.98 },
-          animate: { opacity: 1, y: 0, scale: 1 },
-          exit: { opacity: 0, y: 10, scale: 0.98 },
-          transition: {
-            type: 'spring',
-            stiffness: 280,
-            damping: 22,
-            mass: 0.7,
-          },
-        }
-      : {
-          initial: { opacity: 0, y: 10 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: 10 },
-          transition: { duration: 0.2 },
-        };
-
-  const component = (
+  // Modal tree to be portaled.
+  const tree = (
     <div
-      className="fixed inset-0 z-[100] text-red"
+      className="fixed inset-0 z-[100]"
       role="dialog"
       aria-modal="true"
+      // If ariaLabel is provided, aria-labelledby MUST NOT be set.
       aria-labelledby={ariaLabel ? undefined : titleId}
       aria-label={ariaLabel}
       aria-describedby={describedById}
@@ -147,28 +202,27 @@ export function Modal({
         {/* Backdrop */}
         <motion.div
           key="overlay"
-          {...overlayMotion}
-          className={[
+          {...OVERLAY_MOTION}
+          className={cx(
             'absolute inset-0 bg-black/50 backdrop-blur-sm',
-            backdropClassName,
-          ]
-            .filter(Boolean)
-            .join(' ')}
+            backdropClassName
+          )}
           onClick={closeOnBackdrop ? handleOnClose : undefined}
         />
 
-        {/* DEFAULT VARIANT: your previous scrollable layout with sticky header/footer */}
+        {/* DEFAULT (sheet-like) VARIANT */}
         {variant === 'default' && (
           <motion.div
             key="sheet"
-            {...panelMotion}
+            {...PANEL_MOTION.default}
             className="absolute inset-0 overflow-y-auto"
             onClick={closeOnBackdrop ? handleOnClose : undefined}
           >
             <div className="mx-auto my-6 w-[min(760px,92vw)]">
               <div
                 ref={panelRef}
-                className={[basePanelCls, className].filter(Boolean).join(' ')}
+                className={cx(BASE_PANEL_CLASS, className)}
+                // Stop propagation so clicking inside the panel does not close it.
                 onClick={(e) => e.stopPropagation()}
               >
                 {header && (
@@ -180,7 +234,9 @@ export function Modal({
                   </div>
                 )}
 
-                {content && <div className="p-4">{content}</div>}
+                {content && (
+                  <div className={DENSITY_CLASS[density]}>{content}</div>
+                )}
 
                 {footer && (
                   <div className="sticky bottom-0 z-10 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
@@ -192,7 +248,7 @@ export function Modal({
           </motion.div>
         )}
 
-        {/* CENTERED VARIANT: premium, fully centered & compact */}
+        {/* CENTERED VARIANT */}
         {variant === 'centered' && (
           <div
             key="center-wrap"
@@ -201,21 +257,16 @@ export function Modal({
           >
             <motion.div
               key="center-panel"
-              {...panelMotion}
+              {...PANEL_MOTION.centered}
               ref={panelRef}
               onClick={(e) => e.stopPropagation()}
-              className={[
-                basePanelCls,
-                sizeCls[size],
-                'px-6 py-6 sm:px-8 sm:py-8',
-                className,
-              ]
-                .filter(Boolean)
-                .join(' ')}
+              className={cx(
+                BASE_PANEL_CLASS,
+                SIZE_CLASS[size],
+                DENSITY_CLASS[density],
+                className
+              )}
             >
-              {/* In centered variant we don’t apply sticky bars.
-                  Caller can pass header/content/footer as they like,
-                  but we render them stacked for a premium look. */}
               {header && (
                 <div id={titleId} className="mb-4">
                   {header}
@@ -230,8 +281,5 @@ export function Modal({
     </div>
   );
 
-  return createPortal(
-    component,
-    document.getElementById('portal-root') ?? document.body
-  );
+  return createPortal(tree, document.getElementById(portalId) ?? document.body);
 }

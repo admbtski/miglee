@@ -1,106 +1,117 @@
 import type { Metadata } from 'next';
-// import { Inter } from 'next/font/google';
 import { Poppins } from 'next/font/google';
 
 import OtelInit from '@/libs/otel/otel-init';
 import { WebVitals } from '@/libs/web-vitals/web-vitals';
-import '../styles/globals.css';
-import { InlineThemeScript } from './scripts/inline/inline-theme-script';
 import { ThemeProvider } from '../../providers/theme/theme-provider';
-// import OtelInit from '@/libs/otel/otel-init';
+import { InlineThemeScript } from './scripts/inline/inline-theme-script';
+import '../styles/globals.css';
 
-// const nextFont = Inter({ subsets: ['latin'] });
-const nextFont = Poppins({
+/**
+ * Primary font configuration
+ * Using Poppins for clean, modern aesthetics
+ */
+const poppinsFont = Poppins({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
   variable: '--font-poppins',
+  display: 'swap', // Optimize font loading
 });
-// const nextFont = Nunito({
-//   weight: ['400', '500', '600', '700'],
-//   subsets: ['latin'],
-//   variable: '--font-poppins',
-// });
-// const nextFont = Nunito_Sans({
-//   weight: ['400', '500', '600', '700'],
-//   subsets: ['latin'],
-//   variable: '--font-poppins',
-// });
-// const nextFont = Work_Sans({
-//   weight: ['400', '500', '600', '700'],
-//   subsets: ['latin'],
-//   variable: '--font-poppins',
-// });
-// const nextFont = DM_Sans({
-//   weight: ['400', '500', '600', '700'],
-//   subsets: ['latin'],
-//   variable: '--font-poppins',
-// });
-// const nextFont = Mulish({
-//   weight: ['400', '500', '600', '700'],
-//   subsets: ['latin'],
-//   variable: '--font-poppins',
-// });
-// const nextFont = Plus_Jakarta_Sans({
-//   weight: ['400', '500', '600', '700'],
-//   subsets: ['latin'],
-//   variable: '--font-poppins',
-// });
 
-const data = {
-  title: 'Miglee - Sports Events',
-  description: 'View the latest sports events',
-  url: '/',
+/**
+ * Application metadata for SEO and social sharing
+ */
+const siteConfig = {
+  title: 'Miglee - Connect Through Sports & Activities',
+  description:
+    'Discover and join sports events, activities, and meetups in your area. Connect with people who share your interests.',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://miglee.com',
+  siteName: 'Miglee',
+  creator: '@migleeio',
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.google.com'),
-  title: data.title,
-  description: data.description,
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.siteName}`,
+  },
+  description: siteConfig.description,
+  keywords: ['sports', 'events', 'activities', 'meetups', 'social', 'fitness'],
+  authors: [{ name: 'Miglee Team' }],
+  creator: siteConfig.creator,
+
   openGraph: {
-    title: data.title,
-    description: data.description,
-    url: data.url,
-    siteName: 'Miglee',
+    type: 'website',
+    locale: 'en_US',
+    url: siteConfig.url,
+    siteName: siteConfig.siteName,
+    title: siteConfig.title,
+    description: siteConfig.description,
     images: [
       {
         url: '/_static/meta-image.png',
-        width: 800,
-        height: 600,
+        width: 1200,
+        height: 630,
+        alt: siteConfig.siteName,
       },
     ],
-    locale: 'en_US',
-    type: 'website',
   },
+
   twitter: {
     card: 'summary_large_image',
-    title: data.title,
-    description: data.description,
-    creator: '@migleeio',
+    title: siteConfig.title,
+    description: siteConfig.description,
+    creator: siteConfig.creator,
     images: ['/_static/meta-image.png'],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
+/**
+ * Root layout component
+ * Wraps all pages with global providers and configuration
+ */
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <InlineThemeScript />
       </head>
       <body
         suppressHydrationWarning
-        className={`${nextFont.className} w-full min-h-screen`}
+        className={`${poppinsFont.className} w-full min-h-screen antialiased`}
       >
+        {/* Performance monitoring */}
         <WebVitals />
+
+        {/* OpenTelemetry instrumentation */}
         <OtelInit />
+
+        {/* Theme provider for dark/light mode */}
         <ThemeProvider>{children}</ThemeProvider>
+
+        {/* Portal root for modals, tooltips, etc. */}
         <div
           id="portal-root"
           className="text-zinc-900 dark:text-zinc-100"
-        ></div>
+          aria-live="polite"
+        />
       </body>
     </html>
   );

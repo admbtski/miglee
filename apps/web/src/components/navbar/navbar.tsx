@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 
 import { AuthModalDev } from '@/components/auth/auth-modal-dev';
 import { useMeQuery } from '@/hooks/graphql/auth';
-import { CreateIntentModalConnect } from '../create-intent/create-intent-modal-connect';
+import { CreateEditIntentModalConnect } from '../create-edit-intent/create-edit-intent-modal-connect';
 import { NavDrawer } from './nav-drawer';
 import { UserMenuControlled } from './user-menu-controlled';
 
@@ -154,7 +154,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
         onClose={() => setAuthOpen(false)}
         defaultTab={authDefaultTab}
       />
-      <CreateIntentModalConnect
+      <CreateEditIntentModalConnect
         open={newOpen}
         onClose={() => setNewOpen(false)}
       />

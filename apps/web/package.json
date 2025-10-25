@@ -12,6 +12,8 @@
     "gql:gen": "graphql-codegen --config src/libs/graphql/codegen.ts"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.16",
+    "@floating-ui/react-dom": "^2.1.6",
     "@googlemaps/js-api-loader": "^2.0.1",
     "@graphql-codegen/typed-document-node": "^6.0.2",
     "@graphql-typed-document-node/core": "^3.2.0",

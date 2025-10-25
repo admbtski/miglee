@@ -35,10 +35,16 @@ export const IntentSchema = z
       .min(3, 'Min 3 characters')
       .max(60, 'Max 60 characters'),
 
-    /** multiple interests: 1–3 required */
+    /** multiple categories: 1–3 required */
     categorySlugs: z
       .array(z.string().min(1))
       .min(1, 'Select at least 1 category')
+      .max(3, 'You can select up to 3 categories'),
+
+    /** multiple tags: 0–3 */
+    tagSlugs: z
+      .array(z.string().min(0))
+      .min(0, 'Select at least 1 category')
       .max(3, 'You can select up to 3 categories'),
 
     description: z
@@ -167,10 +173,11 @@ export const IntentSchema = z
 export const defaultIntentValues: IntentFormValues = {
   title: '',
   categorySlugs: [],
+  tagSlugs: [],
   description: '',
-  mode: 'GROUP',
+  mode: 'ONE_TO_ONE',
   min: 2,
-  max: 50,
+  max: 2,
   startAt: new Date(Date.now() + NOW_BUFFER_MS),
   endAt: new Date(Date.now() + NOW_BUFFER_MS + 60 * 60 * 1000),
   allowJoinLate: true,

@@ -140,10 +140,12 @@ export function ReviewStep({
   values,
   showMapPreview = false,
   mapId,
+  showSuggestion,
 }: {
   values: IntentFormValues;
   showMapPreview?: boolean;
   mapId?: string;
+  showSuggestion?: boolean;
 }) {
   const { dDate, startT, endT } = useFormattedTime(
     values.startAt,
@@ -183,11 +185,11 @@ export function ReviewStep({
       <>
         <span className="break-words">{values.location.address}</span>{' '}
         {hasCoords && (
-          <Coordinates lat={values.location.lat} lng={values.location.lng} />
+          <Coordinates lat={values.location.lat!} lng={values.location.lng!} />
         )}
       </>
     ) : hasCoords ? (
-      <Coordinates lat={values.location.lat} lng={values.location.lng} />
+      <Coordinates lat={values.location.lat!} lng={values.location.lng!} />
     ) : (
       '—'
     );
@@ -203,7 +205,7 @@ export function ReviewStep({
       : null;
 
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className={`grid gap-5 ${showSuggestion && 'md:grid-cols-2'}`}>
       {/* LEFT: Summary card */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
         {/* Header */}
@@ -273,10 +275,13 @@ export function ReviewStep({
           )}
 
           {/* Mini map (optional) */}
-          {showMapPreview && (
+          {showMapPreview && hasCoords && center && (
             <div className="mt-1">
               <MapPreview
-                center={center}
+                center={{
+                  lat: center.lat!,
+                  lng: center.lng!,
+                }}
                 zoom={center ? 15 : 6}
                 radiusMeters={radiusMeters}
                 draggableMarker={false}
@@ -320,11 +325,11 @@ export function ReviewStep({
         </div>
       </div>
 
-      {/* RIGHT: Anti-duplication */}
-      <div className="space-y-3">
-        <SectionTitle>Instead of creating new, you could join…</SectionTitle>
+      {showSuggestion && (
+        <div className="space-y-3">
+          <SectionTitle>Instead of creating new, you could join…</SectionTitle>
 
-        {/* {suggestions.length === 0 ? (
+          {/* {suggestions.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-300 p-4 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
             No similar initiatives found — go ahead and create a new one!
           </div>
@@ -346,7 +351,8 @@ export function ReviewStep({
             Tip: click the same card again to unselect.
           </div>
         )} */}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
