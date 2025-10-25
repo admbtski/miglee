@@ -17,7 +17,7 @@ import {
   TagPills,
 } from '../../../components/pill/category-tag-pill';
 import { EventDetailsModal } from '../../../components/event/event-details-modal'; // ⬅️ NEW
-import { IntentMember } from '@/libs/graphql/__generated__/react-query-update';
+import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
 
 export interface EventCardProps {
   startISO: string;

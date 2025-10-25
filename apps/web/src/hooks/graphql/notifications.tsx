@@ -11,11 +11,11 @@ import {
   GetNotificationsQueryVariables,
   NotificationAddedDocument,
   type NotificationAddedSubscription,
-} from '@/libs/graphql/__generated__/react-query-update';
-import { gqlClient } from '@/libs/graphql/client';
+} from '@/lib/graphql/__generated__/react-query-update';
+import { gqlClient } from '@/lib/graphql/client';
 // zakładam, że masz to jak wcześniej
-import { getWsClient } from '@/libs/graphql/wsClient';
-import { getQueryClient } from '@/libs/query-client/query-client';
+import { getWsClient } from '@/lib/graphql/wsClient';
+import { getQueryClient } from '@/lib/query-client/query-client';
 import {
   QueryKey,
   useMutation,

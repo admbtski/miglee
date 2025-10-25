@@ -6,8 +6,8 @@ import {
 } from './_components/sidebar-nav';
 import { Navbar } from '../../components/navbar/navbar';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { getQueryClient } from '@/libs/query-client/query-client';
-import { QueryClientProvider } from '@/libs/query-client/query-client-provider';
+import { getQueryClient } from '@/lib/query-client/query-client';
+import { QueryClientProvider } from '@/lib/query-client/query-client-provider';
 
 export default function AccountLayout({ children }: { children: ReactNode }) {
   const client = getQueryClient();

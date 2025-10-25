@@ -8,7 +8,7 @@ const config: CodegenConfig = {
     '../../packages/contracts/graphql/operations/**/*.graphql'
   ),
   generates: {
-    './src/libs/graphql/__generated__/react-query-update.ts': {
+    './src/lib/graphql/__generated__/react-query-update.ts': {
       plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
       config: {
         useTypeImports: true,

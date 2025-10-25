@@ -1,7 +1,7 @@
 // components/location/MapPreview.tsx
 'use client';
 
-import { importMarker, loadGoogleMaps } from '@/libs/map/googleMaps';
+import { importMarker, loadGoogleMaps } from '@/lib/map/googleMaps';
 import { useEffect, useRef } from 'react';
 
 type LatLng = google.maps.LatLngLiteral;

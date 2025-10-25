@@ -1,5 +1,5 @@
 import { buildGetCategoriesOptions } from '@/hooks/graphql/categories';
-import { getQueryClient } from '@/libs/query-client/query-client';
+import { getQueryClient } from '@/lib/query-client/query-client';
 import { trace } from '@opentelemetry/api';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { IntentsPage } from './page-client';

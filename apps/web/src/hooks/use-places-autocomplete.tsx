@@ -1,7 +1,7 @@
 // hooks/use-places-autocomplete.ts
 'use client';
 
-import { importPlaces, loadGoogleMaps } from '@/libs/map/googleMaps';
+import { importPlaces, loadGoogleMaps } from '@/lib/map/googleMaps';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebouncedValue } from './use-debounced-value';
 

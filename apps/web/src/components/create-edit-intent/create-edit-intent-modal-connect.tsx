@@ -1,6 +1,6 @@
 'use client';
 
-import { appLanguage, appLanguageFallback } from '@/const/language';
+import { appLanguage, appLanguageFallback } from '@/constants/language';
 import {
   useCreateIntentMutation,
   useIntentQuery,

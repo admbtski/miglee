@@ -13,7 +13,7 @@ import { StatusFilter } from './_components/status-filter';
 import { CreateEditIntentModalConnect } from '@/components/create-edit-intent/create-edit-intent-modal-connect';
 import { EventDetailsModal } from '@/components/event/event-details-modal';
 
-import { appLanguage } from '@/const/language';
+import { appLanguage } from '@/constants/language';
 import { computeJoinState } from './_components/status-badge';
 
 import { Modal } from '@/components/modal/modal';
@@ -29,7 +29,7 @@ import {
   SortDir,
   Visibility,
   type GetIntentsQueryVariables,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';

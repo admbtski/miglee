@@ -2,7 +2,7 @@
 'use client';
 
 import { MapPreview } from '@/components/map/map-preview';
-import { reverseGeocode, reverseGeocodeLatLng } from '@/libs/map/geocode';
+import { reverseGeocode, reverseGeocodeLatLng } from '@/lib/map/geocode';
 import {
   Eye,
   EyeOff,

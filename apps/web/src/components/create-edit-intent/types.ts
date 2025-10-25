@@ -4,7 +4,7 @@ import {
   MeetingKind,
   Mode,
   Visibility,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 import { z } from 'zod';
 import {
   IntentSchema,

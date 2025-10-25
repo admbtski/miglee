@@ -5,7 +5,7 @@ import { useUsersQuery } from '@/hooks/graphql/users';
 import {
   SortDir,
   UsersSortBy,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 import { useState } from 'react';
 import { AdminUsersModal, UsersQueryVars } from './admin-user-modal';
 import { FloatingAdminButton } from './floating-admin-button';

@@ -4,11 +4,13 @@ import {
   GetNotificationsQuery,
   Notification,
   Subscription,
-} from '@/libs/graphql/__generated__/react-query-update';
-import { useAddNotificationMutation } from '@/hooks/useAddNotification';
-import { useNotificationAdded } from '@/hooks/useNotificationAdded';
-import { useGetNotificationsQuery } from '@/hooks/useNotifications';
-import { getQueryClient } from '@/libs/query-client/query-client';
+} from '@/lib/graphql/__generated__/react-query-update';
+import {
+  useAddNotificationMutation,
+  useNotificationAdded,
+  useGetNotificationsQuery,
+} from '@/hooks/graphql/notifications';
+import { getQueryClient } from '@/lib/query-client/query-client';
 import { create } from 'mutative';
 import { FormEvent, useState } from 'react';
 
@@ -23,8 +25,8 @@ export function NotificationsPanel() {
     onSuccess: () => setMessage(''),
   });
 
-  const { connected } = useNotificationAdded(
-    (n: Subscription['notificationAdded']) => {
+  const { connected } = useNotificationAdded({
+    onData: (n: Subscription['notificationAdded']) => {
       qc.setQueryData(['GetNotifications'], (old: GetNotificationsQuery) =>
         create(old ?? { notifications: [] }, (draft: GetNotificationsQuery) => {
           if (!draft.notifications.some((x) => x.id === n.id)) {
@@ -35,8 +37,8 @@ export function NotificationsPanel() {
           }
         })
       );
-    }
-  );
+    },
+  });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

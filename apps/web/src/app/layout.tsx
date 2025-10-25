@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 
-import OtelInit from '@/libs/otel/otel-init';
-import { WebVitals } from '@/libs/web-vitals/web-vitals';
-import { ThemeProvider } from '../../providers/theme/theme-provider';
+import OtelInit from '@/lib/otel/otel-init';
+import { WebVitals } from '@/lib/web-vitals/web-vitals';
+import { ThemeProvider } from '@/providers/theme/theme-provider';
 import { InlineThemeScript } from './scripts/inline/inline-theme-script';
 import '../styles/globals.css';
 

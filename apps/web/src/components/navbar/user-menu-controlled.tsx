@@ -8,7 +8,7 @@ import {
   useDevLogoutMutation,
   useMeQuery,
 } from '@/hooks/graphql/auth';
-import { getQueryClient } from '@/libs/query-client/query-client';
+import { getQueryClient } from '@/lib/query-client/query-client';
 
 export function UserMenuControlled({
   onNavigate,

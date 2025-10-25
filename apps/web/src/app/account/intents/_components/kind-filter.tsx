@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MeetingKind } from '@/libs/graphql/__generated__/react-query-update';
+import { MeetingKind } from '@/lib/graphql/__generated__/react-query-update';
 
 const KIND_OPTIONS: { value: MeetingKind; label: string }[] = [
   { value: MeetingKind.Onsite, label: 'Onsite' },

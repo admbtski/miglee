@@ -4,7 +4,7 @@ import {
   IntentStatus,
   Level,
   MeetingKind,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 

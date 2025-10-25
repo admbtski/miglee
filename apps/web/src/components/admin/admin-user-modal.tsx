@@ -7,7 +7,7 @@ import {
   Role,
   SortDir,
   UsersSortBy,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowLeft,

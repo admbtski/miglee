@@ -8,7 +8,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
-import { IntentStatus } from '@/libs/graphql/__generated__/react-query-update';
+import { IntentStatus } from '@/lib/graphql/__generated__/react-query-update';
 
 const STATUS_OPTIONS: { value: IntentStatus; label: string }[] = [
   { value: IntentStatus.Any, label: 'Dowolny' },

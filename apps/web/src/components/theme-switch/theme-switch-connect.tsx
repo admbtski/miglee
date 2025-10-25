@@ -1,6 +1,6 @@
 'use client';
 
-import { useTheme } from '../../../providers/theme/theme-provider';
+import { useTheme } from '@/providers/theme/theme-provider';
 import { ThemeSwitch } from './theme-switch';
 
 export function ThemeSwitchConnected() {

@@ -7,7 +7,7 @@ import type {
   MeetingKind,
   Mode,
   Visibility,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 import type { CategoryOption } from '@/types/types';
 import type { TagOption } from '@/types/types';
 import { IntentFormValues } from './types';

@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import {
   IntentsSortBy,
   SortDir,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 
 export type SortChoice = { by: IntentsSortBy; dir: SortDir };
 

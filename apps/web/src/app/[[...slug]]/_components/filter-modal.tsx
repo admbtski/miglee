@@ -1,12 +1,12 @@
 'use client';
 
-import { appLanguage, appLanguageFallback } from '@/const/language';
+import { appLanguage, appLanguageFallback } from '@/constants/language';
 import { useGetCategoriesBySlugsQuery } from '@/hooks/graphql/categories';
 import {
   IntentStatus,
   Level,
   MeetingKind,
-} from '@/libs/graphql/__generated__/react-query-update';
+} from '@/lib/graphql/__generated__/react-query-update';
 import {
   AlertCircle,
   Calendar as CalendarIcon,

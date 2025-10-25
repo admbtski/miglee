@@ -1,6 +1,6 @@
 'use client';
 
-import { appLanguage, appLanguageFallback } from '@/const/language';
+import { appLanguage, appLanguageFallback } from '@/constants/language';
 import { useGetCategoriesQuery } from '@/hooks/graphql/categories';
 import { useGetTagsQuery } from '@/hooks/graphql/tags';
 import { useEffect, useMemo, useState } from 'react';

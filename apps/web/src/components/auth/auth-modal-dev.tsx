@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { AuthModal, type AuthMode } from './auth-modal';
-import { getQueryClient } from '@/libs/query-client/query-client';
+import { getQueryClient } from '@/lib/query-client/query-client';
 import { GET_ME_KEY, useDevLoginMutation } from '@/hooks/graphql/auth';
 import { env } from 'process';
 

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Modal } from '../modal/modal';
-import { IntentMember } from '@/libs/graphql/__generated__/react-query-update';
+import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
 
 export type ParticipantRole = 'OWNER' | 'MODERATOR' | 'PARTICIPANT';
 
