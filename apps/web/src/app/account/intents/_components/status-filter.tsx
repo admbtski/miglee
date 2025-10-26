@@ -1,14 +1,8 @@
 'use client';
+import { IntentStatus } from '@/lib/graphql/__generated__/react-query-update';
 import clsx from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from 'react';
-import { IntentStatus } from '@/lib/graphql/__generated__/react-query-update';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STATUS_OPTIONS: { value: IntentStatus; label: string }[] = [
   { value: IntentStatus.Any, label: 'Dowolny' },
@@ -17,6 +11,8 @@ const STATUS_OPTIONS: { value: IntentStatus; label: string }[] = [
   { value: IntentStatus.Locked, label: 'Zablokowane' },
   { value: IntentStatus.Ongoing, label: 'Trwa teraz' },
   { value: IntentStatus.Started, label: 'Rozpoczęte' },
+  { value: IntentStatus.Deleted, label: 'Usunięte' },
+  { value: IntentStatus.Canceled, label: 'Anulowane' },
 ];
 
 export function StatusFilter({

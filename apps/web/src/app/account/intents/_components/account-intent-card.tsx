@@ -1,4 +1,5 @@
 'use client';
+import { CategoryPills, TagPills } from '@/components/pill/category-tag-pill';
 import {
   Calendar,
   MapPin,
@@ -7,11 +8,9 @@ import {
   WifiIcon,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import { CategoryPills, TagPills } from '@/components/pill/category-tag-pill';
-import { computeJoinState, StatusBadge } from './status-badge';
 import { ActionMenu } from './action-menu';
 import { capacityLabel, formatDateRange, parseISO } from './formatters';
-import { User } from '@/lib/graphql/__generated__/react-query-update';
+import { computeJoinState, StatusBadge } from './status-badge';
 
 export function AccountIntentCard(props: {
   id?: string;
@@ -28,9 +27,7 @@ export function AccountIntentCard(props: {
   tags?: string[];
   lockHoursBeforeStart?: number;
   isCanceled?: boolean | null;
-  canceledBy?: User | null;
-  canceledAt?: string | null;
-  cancelReason?: string | null;
+  isDeleted?: boolean | null;
 
   owned?: boolean;
   onPreview?: (id: string) => void | Promise<void>;
@@ -43,7 +40,6 @@ export function AccountIntentCard(props: {
   const {
     id = '',
     title,
-    description,
     startAt,
     endAt,
     address,
@@ -55,9 +51,7 @@ export function AccountIntentCard(props: {
     tags,
     lockHoursBeforeStart = 0,
     isCanceled,
-    canceledBy,
-    canceledAt,
-    cancelReason,
+    isDeleted,
     owned,
     onPreview,
     onEdit,
@@ -72,21 +66,29 @@ export function AccountIntentCard(props: {
   const isOnline = !address && !!onlineUrl;
   const isHybrid = !!address && !!onlineUrl;
 
-  const { status, hasStarted, canJoin, isFull, isOngoing, withinLock } =
-    useMemo(() => {
-      const now = new Date();
-      const start = parseISO(startAt) ?? now;
-      const end = parseISO(endAt) ?? now;
-      return computeJoinState(
-        now,
-        start,
-        end,
-        joinedCount,
-        max,
-        lockHoursBeforeStart,
-        isCanceled
-      );
-    }, [startAt, endAt, joinedCount, max, lockHoursBeforeStart]);
+  const { status } = useMemo(() => {
+    const now = new Date();
+    const start = parseISO(startAt) ?? now;
+    const end = parseISO(endAt) ?? now;
+    return computeJoinState(
+      now,
+      start,
+      end,
+      joinedCount,
+      max,
+      lockHoursBeforeStart,
+      isCanceled,
+      isDeleted
+    );
+  }, [
+    startAt,
+    endAt,
+    joinedCount,
+    max,
+    lockHoursBeforeStart,
+    isCanceled,
+    isDeleted,
+  ]);
 
   return (
     <div className="relative min-w-0 flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">

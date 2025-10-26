@@ -353,9 +353,7 @@ export default function IntentsPage() {
                 min={it.min}
                 max={it.max}
                 isCanceled={it.isCanceled}
-                canceledBy={it.canceledBy}
-                canceledAt={it.canceledAt}
-                cancelReason={it.cancelReason}
+                isDeleted={it.isDeleted}
                 categories={it.categories?.map((c) => c.slug)}
                 tags={it.tags?.map((t) => t.label)}
                 lockHoursBeforeStart={Number(lockHoursFallback(it))}
@@ -401,7 +399,7 @@ export default function IntentsPage() {
         leaveId={leaveId}
         onClose={() => setLeaveId(null)}
         // Inject your actual leave mutation here:
-        leaveAction={async (id) => {
+        leaveAction={async () => {
           // TODO: replace with your real mutation, e.g.:
           // const { mutateAsync: leaveIntent } = useLeaveIntentMutation();
           // await leaveIntent({ id });
@@ -447,7 +445,8 @@ export default function IntentsPage() {
             preview?.max!,
             // @ts-expect-error – fallback
             preview?.lockHoursBeforeStart ?? 0,
-            preview?.isCanceled!
+            preview?.isCanceled!,
+            preview?.isDeleted!
           ).status,
           canJoin: computeJoinState(
             new Date(),
@@ -457,7 +456,8 @@ export default function IntentsPage() {
             preview?.max!,
             // @ts-expect-error – fallback
             preview?.lockHoursBeforeStart ?? 0,
-            preview?.isCanceled!
+            preview?.isCanceled!,
+            preview?.isDeleted!
           ).canJoin,
           members: preview?.members ?? [],
         }}

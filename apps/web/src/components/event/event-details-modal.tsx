@@ -1,31 +1,35 @@
 'use client';
 
 import {
-  Calendar,
-  Clock,
-  MapPin,
-  WifiIcon,
-  Users,
-  Crown,
-  Shield,
-  User as UserIcon,
+  JoinReason,
+  JoinTone,
+} from '@/app/account/intents/_components/status-badge';
+import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
+import {
   BadgeCheck,
-  X,
-  Link as LinkIcon,
-  Info,
-  Tag as TagIcon,
+  Calendar,
   TicketIcon as CategoryIcon,
+  Clock,
+  Crown,
+  Info,
+  Link as LinkIcon,
+  MapPin,
+  Shield,
+  Tag as TagIcon,
+  User as UserIcon,
+  Users,
+  WifiIcon,
+  X,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Modal } from '../modal/modal';
-import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
 
 export type ParticipantRole = 'OWNER' | 'MODERATOR' | 'PARTICIPANT';
 
 type JoinStatus = {
   label: string;
-  tone: 'ok' | 'warn' | 'error' | 'info';
-  reason: 'OK' | 'LOCK' | 'STARTED' | 'ONGOING' | 'FULL';
+  tone: JoinTone;
+  reason: JoinReason;
 };
 
 type Props = {

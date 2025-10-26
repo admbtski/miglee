@@ -124,7 +124,7 @@ model User {
 model Category {
   id        String   @id @default(cuid())
   slug      String   @unique
-  names     Json     // JSON object with language keys: { "en": "...", "pl": "...", "de": "..." }
+  names     Json // JSON object with language keys: { "en": "...", "pl": "...", "de": "..." }
   icon      String?
   color     String?
   createdAt DateTime @default(now())

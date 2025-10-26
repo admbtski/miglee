@@ -16,7 +16,8 @@ import type {
 } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification, pickLocation } from '../helpers';
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const THIRTY_DAYS_MS = 30;
+// const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const NOTIFICATION_INCLUDE = {
   recipient: true,

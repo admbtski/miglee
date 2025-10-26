@@ -11,6 +11,7 @@ export type JoinReason =
   | 'FULL'
   | 'STARTED'
   | 'ONGOING'
+  | 'DELETED'
   | 'CANCELED';
 
 export function computeJoinState(
@@ -20,21 +21,47 @@ export function computeJoinState(
   joinedCount: number,
   max: number,
   lockHrs = 0,
-  isCanceled: boolean
-) {
+  isCanceled?: boolean | null,
+  isDeleted?: boolean | null
+): {
+  canJoin: boolean;
+  status: {
+    label: string;
+    tone: JoinTone;
+    reason: JoinReason;
+  };
+  isOngoing: boolean;
+  hasStarted: boolean;
+  isFull: boolean;
+  withinLock: boolean;
+} {
   const hasStarted = now >= start;
   const isOngoing = now >= start && now <= end;
   const isFull = max > 0 && joinedCount >= max;
   const withinLock = !hasStarted && hoursUntil(start) <= lockHrs;
   const canJoin = !isFull && !hasStarted && !withinLock && !isCanceled;
 
+  if (isDeleted)
+    return {
+      canJoin,
+      status: {
+        label: 'Usunięte',
+        tone: 'error',
+        reason: 'DELETED',
+      },
+      isOngoing,
+      hasStarted,
+      isFull,
+      withinLock,
+    };
+
   if (isCanceled)
     return {
       canJoin,
       status: {
         label: 'Odwołane',
-        tone: 'warn' as const,
-        reason: 'CANCELED' as const,
+        tone: 'warn',
+        reason: 'CANCELED',
       },
       isOngoing,
       hasStarted,
@@ -47,22 +74,8 @@ export function computeJoinState(
       canJoin,
       status: {
         label: 'Trwa teraz',
-        tone: 'info' as const,
-        reason: 'ONGOING' as const,
-      },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
-    };
-
-  if (isOngoing)
-    return {
-      canJoin,
-      status: {
-        label: 'Trwa teraz',
-        tone: 'info' as const,
-        reason: 'ONGOING' as const,
+        tone: 'info',
+        reason: 'ONGOING',
       },
       isOngoing,
       hasStarted,
@@ -74,8 +87,8 @@ export function computeJoinState(
       canJoin,
       status: {
         label: 'Rozpoczęte',
-        tone: 'error' as const,
-        reason: 'STARTED' as const,
+        tone: 'error',
+        reason: 'STARTED',
       },
       isOngoing,
       hasStarted,
@@ -87,8 +100,8 @@ export function computeJoinState(
       canJoin,
       status: {
         label: 'Brak miejsc',
-        tone: 'error' as const,
-        reason: 'FULL' as const,
+        tone: 'error',
+        reason: 'FULL',
       },
       isOngoing,
       hasStarted,
@@ -101,8 +114,8 @@ export function computeJoinState(
       canJoin,
       status: {
         label: `Start za ${hrs} h.`,
-        tone: 'warn' as const,
-        reason: 'LOCK' as const,
+        tone: 'warn',
+        reason: 'LOCK',
       },
       isOngoing,
       hasStarted,
@@ -112,7 +125,7 @@ export function computeJoinState(
   }
   return {
     canJoin,
-    status: { label: 'Dostępne', tone: 'ok' as const, reason: 'OK' as const },
+    status: { label: 'Dostępne', tone: 'ok', reason: 'OK' },
     isOngoing,
     hasStarted,
     isFull,
@@ -120,14 +133,18 @@ export function computeJoinState(
   };
 }
 
-const toneClass = (tone: JoinTone) =>
-  tone === 'error'
-    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-    : tone === 'warn'
-      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-      : tone === 'info'
-        ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'
-        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
+function toneClasses(tone: JoinTone) {
+  switch (tone) {
+    case 'ok':
+      return 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:ring-emerald-800/50';
+    case 'warn':
+      return 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-800/50';
+    case 'error':
+      return 'bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:ring-rose-800/50';
+    default:
+      return 'bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:ring-sky-800/50';
+  }
+}
 
 export function StatusBadge({
   tone,
@@ -140,7 +157,7 @@ export function StatusBadge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] leading-tight md:px-2 md:py-1 md:text-xs ${toneClass(tone)}`}
+      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] leading-tight md:px-2 md:py-1 md:text-xs ${toneClasses(tone)}`}
       aria-live="polite"
     >
       {(reason === 'LOCK' || reason === 'STARTED') && (

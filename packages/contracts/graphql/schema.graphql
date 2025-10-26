@@ -133,6 +133,8 @@ enum IntentStatus {
   FULL
   LOCKED
   AVAILABLE
+  CANCELED
+  DELETED
 }
 
 # ------------------------------------------------------------------------------
