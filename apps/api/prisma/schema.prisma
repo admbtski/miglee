@@ -1,4 +1,6 @@
-// ------------- Prisma Client & Datasource -------------
+// =============================================================================
+// Prisma Client & Datasource
+// =============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -9,64 +11,63 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/**
- * ------------- Enums -------------
- */
+// =============================================================================
+// Enums
+// =============================================================================
 
-/// Visibility of an Intent in listings and search.
+/// Visibility level for intents
 enum Visibility {
   PUBLIC
   HIDDEN
 }
 
-/// Intent mode and capacity semantics.
+/// Meeting capacity mode
 enum Mode {
   ONE_TO_ONE
   GROUP
 }
 
-/// Meeting type — where/how the Intent happens.
+/// Type of meeting location/format
 enum MeetingKind {
   ONSITE
   ONLINE
   HYBRID
 }
 
-/// Global user role in the application (not per-intent).
+/// Global user role (system-wide permissions)
 enum Role {
   ADMIN
   MODERATOR
   USER
 }
 
-/// Difficulty/experience levels used for filtering Intents (PostgreSQL enum array).
+/// Skill/experience level
 enum Level {
   BEGINNER
   INTERMEDIATE
   ADVANCED
 }
 
-/// Role of a member within a given Intent (per-intent permissions).
+/// Role within a specific intent
 enum IntentMemberRole {
-  OWNER // the single owner/author of the Intent
-  MODERATOR // can approve/reject/kick/invite
-  PARTICIPANT // regular participant
+  OWNER
+  MODERATOR
+  PARTICIPANT
 }
 
-/// Lifecycle status of membership in a given Intent.
+/// Membership lifecycle status
 enum IntentMemberStatus {
-  JOINED // active participant
-  PENDING // requested to join; awaiting moderation/auto-approval
-  INVITED // invited; awaiting acceptance
-  REJECTED // request rejected
-  BANNED // banned from this Intent
-  LEFT // left voluntarily (historical)
-  KICKED // removed by moderator/owner (historical)
+  JOINED
+  PENDING
+  INVITED
+  REJECTED
+  BANNED
+  LEFT
+  KICKED
 }
 
-/// High-level notification category/kind (business events, not transports).
+/// Notification type/category
 enum NotificationKind {
-  // Intent domain
   INTENT_CREATED
   INTENT_UPDATED
   INTENT_CANCELED
@@ -74,12 +75,10 @@ enum NotificationKind {
   INTENT_MEMBERSHIP_APPROVED
   INTENT_MEMBERSHIP_REJECTED
   INTENT_REMINDER
-
-  // Generic/system
   SYSTEM
 }
 
-/// Polymorphic target type for notifications (where to deep-link).
+/// Entity type for polymorphic notification targets
 enum NotificationEntity {
   INTENT
   MESSAGE
@@ -90,10 +89,11 @@ enum NotificationEntity {
   OTHER
 }
 
-/**
- * ------------- Models -------------
- */
+// =============================================================================
+// Models
+// =============================================================================
 
+/// User account
 model User {
   id         String    @id @default(cuid())
   email      String    @unique
@@ -105,38 +105,39 @@ model User {
   updatedAt  DateTime  @updatedAt
   lastSeenAt DateTime?
 
-  /// Notifications this user has received.
-  notifications Notification[]
-
-  /// Memberships of this user across Intents (participants/moderators/owner).
-  intentMembers IntentMember[]
-
-  /// Back-reference for "addedBy" (audit who invited/promoted etc.)
-  addedMemberships IntentMember[] @relation("IntentMemberAddedBy")
-
-  /// Notifications where this user is the actor (triggered the event).
+  // Relations
+  notifications      Notification[]
+  intentMembers      IntentMember[]
+  addedMemberships   IntentMember[] @relation("IntentMemberAddedBy")
   actedNotifications Notification[] @relation("NotificationActor")
-  Intent             Intent[]
+  canceledIntents    Intent[]       @relation("IntentCanceledBy")
+  deletedIntents     Intent[]       @relation("IntentDeletedBy")
 
+  @@index([email])
+  @@index([name])
+  @@index([role])
+  @@index([lastSeenAt])
   @@map("users")
 }
 
+/// Category for intent classification (with i18n names)
 model Category {
   id        String   @id @default(cuid())
   slug      String   @unique
-  /// Localized names in JSON, e.g. { "pl": "Bieganie", "de": "Laufen", "en": "Running" }
-  names     Json
+  names     Json     // JSON object with language keys: { "en": "...", "pl": "...", "de": "..." }
   icon      String?
   color     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  /// M:N relation with Intents.
+  // Relations
   intents Intent[]
 
+  @@index([slug])
   @@map("categories")
 }
 
+/// Tag for intent filtering and search
 model Tag {
   id        String   @id @default(cuid())
   label     String
@@ -144,175 +145,161 @@ model Tag {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  /// M:N relation with Intents.
+  // Relations
   intents Intent[]
 
-  @@index([label], map: "idx_tags_label")
+  @@index([label])
+  @@index([slug])
   @@map("tags")
 }
 
+/// Intent (meeting/event)
 model Intent {
   id          String  @id @default(cuid())
   title       String
   description String?
   notes       String?
 
-  // --- Taxonomy ---
-
-  /// Categories (M:N).
+  // Many-to-many relations
   categories Category[]
+  tags       Tag[]
 
-  /// Tags (M:N) for search/filtering.
-  tags Tag[]
-
-  // --- Visibility & capacity ---
-
+  // Visibility & capacity
   visibility Visibility @default(PUBLIC)
+  mode       Mode       @default(GROUP)
+  min        Int        @default(2)
+  max        Int        @default(50)
 
-  /// GROUP or ONE_TO_ONE.
-  mode Mode @default(GROUP)
-
-  /// Minimum and maximum participants (JOINED count must respect these).
-  min Int @default(2)
-  max Int @default(50)
-
-  // --- Time window & late join policy ---
-
+  // Timing
   startAt       DateTime
   endAt         DateTime
-  /// If false, users cannot newly JOIN at/after startAt.
   allowJoinLate Boolean  @default(true)
 
-  // --- Meeting type & location ---
-
+  // Meeting format
   meetingKind MeetingKind @default(ONSITE)
+  onlineUrl   String?
 
-  /// Required when meetingKind is ONLINE/HYBRID; optional otherwise.
-  onlineUrl String?
-
-  /// Geospatial fields for ONSITE/HYBRID.
+  // Location (optional, for ONSITE/HYBRID)
   lat      Float?
   lng      Float?
   address  String?
   placeId  String?
-  /// 0 = precise pin; >0 = privacy radius (km).
   radiusKm Float?
 
-  /// When set, the intent is considered canceled and must not be joinable.
-  canceledAt   DateTime?
-  canceledById String?
-  canceledBy   User?     @relation(fields: [canceledById], references: [id], onDelete: SetNull)
-  cancelReason String?
-
-  // --- Difficulty levels (PostgreSQL enum array) ---
-
+  // Skill levels (array enum)
   levels Level[] @default([])
 
-  // --- Memberships & notifications ---
+  // Cancellation (read-only business state)
+  canceledAt   DateTime?
+  canceledById String?
+  canceledBy   User?     @relation("IntentCanceledBy", fields: [canceledById], references: [id], onDelete: SetNull)
+  cancelReason String?
 
-  /// All memberships (participants/moderators/owner) for this Intent.
-  members IntentMember[]
+  // Soft-delete (typically set 30+ days after cancellation)
+  deletedAt    DateTime?
+  deletedById  String?
+  deletedBy    User?     @relation("IntentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deleteReason String?
 
-  /// Back-reference to notifications related to this Intent (convenience FK).
+  // Relations
+  members       IntentMember[]
   notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // --- Indexes ---
-
-  @@index([startAt], map: "idx_intents_start_at")
-  @@index([visibility], map: "idx_intents_visibility")
-  @@index([lat, lng], map: "idx_intents_lat_lng")
-  @@index([placeId], map: "idx_intents_placeId")
-  @@index([canceledAt], map: "idx_intents_canceled_at")
+  // Indexes for common queries
+  @@index([startAt])
+  @@index([endAt])
+  @@index([visibility])
+  @@index([mode])
+  @@index([meetingKind])
+  @@index([lat, lng])
+  @@index([placeId])
+  @@index([canceledAt])
+  @@index([deletedAt])
+  @@index([createdAt])
+  // Composite indexes for common query patterns
+  @@index([visibility, startAt])
+  @@index([visibility, canceledAt, deletedAt])
   @@map("intents")
 }
 
+/// Intent membership (user participation in an intent)
 model IntentMember {
   id String @id @default(cuid())
-
-  // --- Foreign keys ---
 
   intentId String
   userId   String
 
+  // Relations
   intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // --- Membership semantics ---
-
+  // Membership details
   role   IntentMemberRole   @default(PARTICIPANT)
   status IntentMemberStatus @default(PENDING)
 
-  // --- Audit/moderation ---
-
-  /// Who added/invited/promoted this membership (optional).
+  // Audit: who added this member
   addedById String?
   addedBy   User?   @relation("IntentMemberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
 
-  /// When the member actually became JOINED.
+  // Lifecycle timestamps
   joinedAt DateTime?
-
-  /// When the member left or was removed (LEFT/KICKED).
-  leftAt DateTime?
-
-  /// Extra context (e.g., reason for rejection/ban/waitlist note).
-  note String?
+  leftAt   DateTime?
+  note     String? // Reason for rejection/kick
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // --- Constraints & Indexes ---
-
-  /// Each user can have at most one membership per Intent.
-  @@unique([intentId, userId], map: "uniq_intent_user")
-  /// Common listing/filtering patterns.
-  @@index([userId, status], map: "idx_member_user_status")
-  @@index([intentId, status, role], map: "idx_member_intent_status_role")
+  // Constraints & indexes
+  @@unique([intentId, userId])
+  @@index([userId, status])
+  @@index([intentId, status])
+  @@index([intentId, role])
+  @@index([intentId, status, role])
+  @@index([userId, createdAt])
   @@map("intent_members")
 }
 
+/// Notification for user activity feed
 model Notification {
   id String @id @default(cuid())
 
-  /// What happened (business-level kind).
   kind NotificationKind
 
-  /// Who should see this notification.
+  // Recipient (required)
   recipientId String
   recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
-  /// Who triggered it (optional, e.g., sender of a message).
+  // Actor (optional - who triggered this notification)
   actorId String?
   actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
 
-  /// Polymorphic target (deep-link destination).
+  // Polymorphic entity reference
   entityType NotificationEntity
-  /// Identifier of the domain entity (opaque string/UUID; NOT a foreign key).
   entityId   String?
 
-  /// Optional convenience FK for common joins (kept nullable & orthogonal to entityId).
+  // Convenience: direct intent reference (when entityType=INTENT)
   intentId String?
   intent   Intent? @relation(fields: [intentId], references: [id], onDelete: SetNull)
 
-  /// Pre-rendered title/body for quick UI; optional (can be rendered client-side from data).
-  title String?
-  body  String?
+  // Content
+  title     String?
+  body      String?
+  data      Json?
+  dedupeKey String? // Prevents duplicate notifications
 
-  /// Opaque metadata/payload (e.g., { amount, currency, preview, routeParams }).
-  data Json?
-
-  /// Optional deduplication key scoped to recipient (unique per recipient).
-  dedupeKey String?
-
+  // Status
   readAt    DateTime?
   createdAt DateTime  @default(now())
 
-  @@unique([recipientId, dedupeKey], map: "uniq_notifications_recipient_dedupe")
-  // ---- Indexes tuned for inbox queries ----
-  @@index([recipientId, readAt], map: "idx_notifications_unread_badge")
-  @@index([recipientId, createdAt], map: "idx_notifications_by_time")
-  @@index([recipientId, entityType, readAt], map: "idx_notifications_by_type_unread")
+  // Constraints & indexes
+  @@unique([recipientId, dedupeKey])
+  @@index([recipientId, readAt])
+  @@index([recipientId, createdAt])
+  @@index([recipientId, entityType, readAt])
+  @@index([recipientId, kind, readAt])
+  @@index([intentId])
   @@map("notifications")
 }
