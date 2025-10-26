@@ -5,7 +5,13 @@ export const hoursUntil = (date: Date) =>
   (date.getTime() - Date.now()) / 3_600_000;
 
 export type JoinTone = 'ok' | 'warn' | 'error' | 'info';
-export type JoinReason = 'OK' | 'LOCK' | 'FULL' | 'STARTED' | 'ONGOING';
+export type JoinReason =
+  | 'OK'
+  | 'LOCK'
+  | 'FULL'
+  | 'STARTED'
+  | 'ONGOING'
+  | 'CANCELED';
 
 export function computeJoinState(
   now: Date,
@@ -13,13 +19,42 @@ export function computeJoinState(
   end: Date,
   joinedCount: number,
   max: number,
-  lockHrs = 0
+  lockHrs = 0,
+  isCanceled: boolean
 ) {
   const hasStarted = now >= start;
   const isOngoing = now >= start && now <= end;
   const isFull = max > 0 && joinedCount >= max;
   const withinLock = !hasStarted && hoursUntil(start) <= lockHrs;
-  const canJoin = !isFull && !hasStarted && !withinLock;
+  const canJoin = !isFull && !hasStarted && !withinLock && !isCanceled;
+
+  if (isCanceled)
+    return {
+      canJoin,
+      status: {
+        label: 'Odwołane',
+        tone: 'warn' as const,
+        reason: 'CANCELED' as const,
+      },
+      isOngoing,
+      hasStarted,
+      isFull,
+      withinLock,
+    };
+
+  if (isOngoing)
+    return {
+      canJoin,
+      status: {
+        label: 'Trwa teraz',
+        tone: 'info' as const,
+        reason: 'ONGOING' as const,
+      },
+      isOngoing,
+      hasStarted,
+      isFull,
+      withinLock,
+    };
 
   if (isOngoing)
     return {

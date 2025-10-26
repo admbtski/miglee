@@ -661,6 +661,64 @@ async function seedIntents(opts: {
   return out;
 }
 
+/** ---------- NEW: Seed some cancellations + notifications ---------- */
+async function seedCanceledIntents(
+  intentsCreated: Array<{ intent: Intent; owner: User }>
+) {
+  // ~20–30% intentów oznacz jako anulowane
+  const toCancel = intentsCreated.filter(() => rand() > 0.7);
+  for (const { intent, owner } of toCancel) {
+    const reason = pick([
+      'Venue unavailable due to maintenance.',
+      'Organizer is ill. Sorry!',
+      'Weather alert – safety first.',
+      'Scheduling conflict, will reschedule soon.',
+    ]);
+
+    // Mark canceled (idempotent)
+    const updated = await prisma.intent.update({
+      where: { id: intent.id },
+      data: {
+        canceledAt: new Date(),
+        canceledById: owner.id,
+        cancelReason: reason,
+      },
+    });
+
+    // Notify JOINED/PENDING/INVITED members
+    const recipients = await prisma.intentMember.findMany({
+      where: {
+        intentId: updated.id,
+        status: {
+          in: [
+            IntentMemberStatus.JOINED,
+            IntentMemberStatus.PENDING,
+            IntentMemberStatus.INVITED,
+          ],
+        },
+      },
+      select: { userId: true },
+    });
+
+    if (recipients.length > 0) {
+      await prisma.notification.createMany({
+        data: recipients.map((m) => ({
+          kind: NotificationKind.INTENT_CANCELED,
+          recipientId: m.userId,
+          actorId: owner.id,
+          entityType: NotificationEntity.INTENT,
+          entityId: updated.id,
+          intentId: updated.id,
+          title: 'Meeting canceled',
+          body: `Organizer’s note: ${reason}`,
+          dedupeKey: `intent_canceled:${m.userId}:${updated.id}`,
+          createdAt: new Date(),
+        })),
+      });
+    }
+  }
+}
+
 /** ---------- Seed: Generic Notifications (aligned with current enum) ---------- */
 const CURRENCIES = ['PLN', 'EUR', 'USD'] as const;
 
@@ -806,6 +864,9 @@ async function main() {
 
   console.log('📝 Seeding intents (30) with realistic members…');
   const intentsCreated = await seedIntents({ users, categories, tags });
+
+  console.log('⛔ Seeding some canceled intents + notifications…');
+  await seedCanceledIntents(intentsCreated);
 
   console.log('🔔 Seeding generic notifications…');
   await seedNotificationsGeneric(intentsCreated, users);

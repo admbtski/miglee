@@ -61,3 +61,9 @@ mutation UpdateIntent($id: ID!, $input: UpdateIntentInput!) {
 mutation DeleteIntent($id: ID!) {
   deleteIntent(id: $id)
 }
+
+mutation CancelIntent($id: ID!, $reason: String) {
+  cancelIntent(id: $id, reason: $reason) {
+    ...IntentCore
+  }
+}

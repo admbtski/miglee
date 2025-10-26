@@ -29,6 +29,7 @@ export type IntentWithGraph = Prisma.IntentGetPayload<{
     categories: true;
     tags: true;
     members: { include: { user: true; addedBy: true } };
+    canceledBy: true; // NEW: kto anulował
   };
 }>;
 
@@ -41,6 +42,7 @@ export type NotificationWithGraph = Prisma.NotificationGetPayload<{
         categories: true;
         tags: true;
         members: { include: { user: true; addedBy: true } };
+        canceledBy: true; // NEW
       };
     };
   };
@@ -106,8 +108,8 @@ export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
   return {
     id: u.id,
     email: u.email,
-    name: u.name ?? null,
-    imageUrl: u.imageUrl ?? null,
+    name: (u as any).name ?? null,
+    imageUrl: (u as any).imageUrl ?? null,
     role: (u.role ?? 'USER') as any,
     verifiedAt: u.verifiedAt ?? null,
     createdAt: u.createdAt,
@@ -147,11 +149,11 @@ export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
     userId: m.userId,
     role: (m.role as any) ?? 'PARTICIPANT',
     status: (m.status as any) ?? 'PENDING',
-    addedBy: m.addedBy ? mapUser(m.addedBy) : null,
+    addedBy: m.addedBy ? mapUser(m.addedBy as any) : null,
     joinedAt: m.joinedAt ?? null,
     leftAt: m.leftAt ?? null,
     note: m.note ?? null,
-    user: mapUser(m.user),
+    user: mapUser(m.user as any),
   };
 }
 
@@ -163,18 +165,20 @@ function computeIntentDerived(i: IntentWithGraph) {
   const isFull = joinedCount >= i.max;
   const hasStarted = now >= new Date(i.startAt);
   const hasEnded = now > new Date(i.endAt);
-  return { joinedCount, isFull, hasStarted, hasEnded };
+  const isCanceled = Boolean((i as any).canceledAt);
+  return { joinedCount, isFull, hasStarted, hasEnded, isCanceled };
 }
 
 function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
   const owner = i.members.find(
-    (m) => m.role === 'OWNER' && m.status === 'JOINED' && m.user
-  );
+    (m) => m.role === 'OWNER' && m.status === 'JOINED' && (m as any).user
+  ) as any;
   return owner ? mapUser(owner.user) : null;
 }
 
 export function mapIntent(i: IntentWithGraph): GQLIntent {
-  const { joinedCount, isFull, hasStarted, hasEnded } = computeIntentDerived(i);
+  const { joinedCount, isFull, hasStarted, hasEnded, isCanceled } =
+    computeIntentDerived(i);
 
   return {
     id: i.id,
@@ -201,6 +205,12 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     radiusKm: i.radiusKm ?? null,
 
     levels: (i.levels ?? []) as Level[],
+
+    // NEW: cancelation fields
+    canceledAt: (i as any).canceledAt ?? null,
+    canceledBy: (i as any).canceledBy ? mapUser((i as any).canceledBy) : null,
+    cancelReason: (i as any).cancelReason ?? null,
+    isCanceled,
 
     // ✅ REQUIRED by SDL
     categories: i.categories.map(mapCategory),
@@ -232,12 +242,12 @@ export function mapNotification(n: NotificationWithGraph): GQLNotification {
     readAt: n.readAt ?? null,
     createdAt: n.createdAt,
 
-    recipient: mapUser(n.recipient),
-    actor: n.actor ? mapUser(n.actor) : null,
+    recipient: mapUser(n.recipient as any),
+    actor: n.actor ? mapUser(n.actor as any) : null,
 
     entityType: (n.entityType as NotificationEntity) ?? 'OTHER',
     entityId: n.entityId ?? null,
 
-    intent: n.intent ? mapIntent(n.intent) : null,
+    intent: n.intent ? mapIntent(n.intent as any) : null,
   };
 }

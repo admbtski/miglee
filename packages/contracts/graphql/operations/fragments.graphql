@@ -85,6 +85,12 @@ fragment IntentCore on Intent {
   isFull
   hasStarted
   hasEnded
+  canceledAt
+  canceledBy {
+    ...UserCore
+  }
+  cancelReason
+  isCanceled
 
   createdAt
   updatedAt

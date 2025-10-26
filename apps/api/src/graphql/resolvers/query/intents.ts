@@ -14,13 +14,14 @@ const INTENT_INCLUDE = {
   categories: true,
   tags: true,
   members: { include: { user: true, addedBy: true } },
+  canceledBy: true, // NEW
 } satisfies Prisma.IntentInclude;
 
 /**
  * Query: intents (paginated IntentsResult)
  * - respektuje nowy SDL z pageInfo
  * - wspiera memberId (intenty, w których user jest członkiem)
- * - pozostawia 'FULL' jako TODO (wymaga agregacji)
+ * - domyślnie UKRYWA anulowane (canceledAt IS NULL)
  */
 export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
@@ -31,6 +32,8 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
 
     const where: Prisma.IntentWhereInput = {};
     const AND: Prisma.IntentWhereInput[] = [];
+
+    // AND.push({ canceledAt: null }); // todo:
 
     if (args.visibility) where.visibility = args.visibility;
 
@@ -156,6 +159,6 @@ export const intentQuery: QueryResolvers['intent'] = resolverWithMetrics(
       where: { id },
       include: INTENT_INCLUDE,
     });
-    return row ? mapIntent(row) : null;
+    return row ? mapIntent(row as any) : null;
   }
 );

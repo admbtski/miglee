@@ -11,6 +11,7 @@ import { CategoryPills, TagPills } from '@/components/pill/category-tag-pill';
 import { computeJoinState, StatusBadge } from './status-badge';
 import { ActionMenu } from './action-menu';
 import { capacityLabel, formatDateRange, parseISO } from './formatters';
+import { User } from '@/lib/graphql/__generated__/react-query-update';
 
 export function AccountIntentCard(props: {
   id?: string;
@@ -26,6 +27,10 @@ export function AccountIntentCard(props: {
   categories?: string[];
   tags?: string[];
   lockHoursBeforeStart?: number;
+  isCanceled?: boolean | null;
+  canceledBy?: User | null;
+  canceledAt?: string | null;
+  cancelReason?: string | null;
 
   owned?: boolean;
   onPreview?: (id: string) => void | Promise<void>;
@@ -49,6 +54,10 @@ export function AccountIntentCard(props: {
     categories,
     tags,
     lockHoursBeforeStart = 0,
+    isCanceled,
+    canceledBy,
+    canceledAt,
+    cancelReason,
     owned,
     onPreview,
     onEdit,
@@ -74,7 +83,8 @@ export function AccountIntentCard(props: {
         end,
         joinedCount,
         max,
-        lockHoursBeforeStart
+        lockHoursBeforeStart,
+        isCanceled
       );
     }, [startAt, endAt, joinedCount, max, lockHoursBeforeStart]);
 

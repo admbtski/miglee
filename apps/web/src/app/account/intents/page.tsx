@@ -17,10 +17,7 @@ import { appLanguage } from '@/constants/language';
 import { computeJoinState } from './_components/status-badge';
 
 import { Modal } from '@/components/modal/modal';
-import {
-  useDeleteIntentMutation,
-  useIntentsInfiniteQuery,
-} from '@/hooks/graphql/intents';
+import { useIntentsInfiniteQuery } from '@/hooks/graphql/intents';
 import {
   IntentsResultCoreFragment_IntentsResult_items_Intent as IntentItem,
   IntentsSortBy,
@@ -355,6 +352,10 @@ export default function IntentsPage() {
                 joinedCount={it.joinedCount}
                 min={it.min}
                 max={it.max}
+                isCanceled={it.isCanceled}
+                canceledBy={it.canceledBy}
+                canceledAt={it.canceledAt}
+                cancelReason={it.cancelReason}
                 categories={it.categories?.map((c) => c.slug)}
                 tags={it.tags?.map((t) => t.label)}
                 lockHoursBeforeStart={Number(lockHoursFallback(it))}
@@ -445,7 +446,8 @@ export default function IntentsPage() {
             preview?.joinedCount!,
             preview?.max!,
             // @ts-expect-error – fallback
-            preview?.lockHoursBeforeStart ?? 0
+            preview?.lockHoursBeforeStart ?? 0,
+            preview?.isCanceled!
           ).status,
           canJoin: computeJoinState(
             new Date(),
@@ -454,7 +456,8 @@ export default function IntentsPage() {
             preview?.joinedCount!,
             preview?.max!,
             // @ts-expect-error – fallback
-            preview?.lockHoursBeforeStart ?? 0
+            preview?.lockHoursBeforeStart ?? 0,
+            preview?.isCanceled!
           ).canJoin,
           members: preview?.members ?? [],
         }}

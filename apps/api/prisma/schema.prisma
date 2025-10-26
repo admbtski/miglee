@@ -116,6 +116,7 @@ model User {
 
   /// Notifications where this user is the actor (triggered the event).
   actedNotifications Notification[] @relation("NotificationActor")
+  Intent             Intent[]
 
   @@map("users")
 }
@@ -197,6 +198,12 @@ model Intent {
   /// 0 = precise pin; >0 = privacy radius (km).
   radiusKm Float?
 
+  /// When set, the intent is considered canceled and must not be joinable.
+  canceledAt   DateTime?
+  canceledById String?
+  canceledBy   User?     @relation(fields: [canceledById], references: [id], onDelete: SetNull)
+  cancelReason String?
+
   // --- Difficulty levels (PostgreSQL enum array) ---
 
   levels Level[] @default([])
@@ -218,6 +225,7 @@ model Intent {
   @@index([visibility], map: "idx_intents_visibility")
   @@index([lat, lng], map: "idx_intents_lat_lng")
   @@index([placeId], map: "idx_intents_placeId")
+  @@index([canceledAt], map: "idx_intents_canceled_at")
   @@map("intents")
 }
 

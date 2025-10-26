@@ -24,6 +24,7 @@ export const NOTIFICATION_INCLUDE = {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
+      canceledBy: true, // NEW
     },
   },
 } satisfies Prisma.NotificationInclude;
@@ -37,6 +38,7 @@ const INTENT_INCLUDE = {
       addedBy: true,
     },
   },
+  canceledBy: true, // NEW
 } satisfies Prisma.IntentInclude;
 
 function assertCreateInput(input: any) {
@@ -225,7 +227,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         // PubSub
         await pubsub.publish({
           topic: `NOTIFICATION_ADDED:${notif.recipientId}`,
-          payload: { notificationAdded: mapNotification(notif) },
+          payload: { notificationAdded: mapNotification(notif as any) },
         });
 
         // Odczyt pełnego grafu
@@ -237,7 +239,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         return fullIntent;
       });
 
-      return mapIntent(full);
+      return mapIntent(full as any);
     }
   );
 
@@ -355,7 +357,111 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         });
       }
 
-      return mapIntent(updated);
+      return mapIntent(updated as any);
+    }
+  );
+
+/**
+ * Mutation: Cancel Intent (NEW)
+ * - Oznacza intent jako anulowany i wysyła powiadomienia do członków
+ * - Domyślnie idempotentne (ponowne wywołanie zwraca aktualny stan)
+ */
+export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
+  resolverWithMetrics(
+    'Mutation',
+    'cancelIntent',
+    async (_p, { id, reason }, { user, pubsub }) => {
+      const actorId = user?.id;
+      if (!actorId) {
+        throw new GraphQLError('Unauthorized', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const intent = await prisma.intent.findUnique({
+        where: { id },
+        include: {
+          members: { select: { userId: true, status: true } },
+        },
+      });
+      if (!intent) {
+        throw new GraphQLError('Intent not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const membership = await prisma.intentMember.findFirst({
+        where: {
+          intentId: id,
+          userId: actorId,
+          role: { in: ['OWNER', 'MODERATOR'] },
+        },
+        select: { id: true },
+      });
+      if (!membership) {
+        throw new GraphQLError('Forbidden', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      if (intent.canceledAt) {
+        const full = await prisma.intent.findUniqueOrThrow({
+          where: { id },
+          include: INTENT_INCLUDE,
+        });
+        return mapIntent(full);
+      }
+
+      const recipients = intent.members
+        .filter((m) => ['JOINED', 'PENDING', 'INVITED'].includes(m.status))
+        .map((m) => m.userId);
+
+      const full = await prisma.$transaction(async (tx) => {
+        const updated = await tx.intent.update({
+          where: { id },
+          data: {
+            canceledAt: new Date(),
+            canceledById: actorId,
+            cancelReason: reason ?? null,
+          },
+          include: INTENT_INCLUDE,
+        });
+
+        if (recipients.length > 0) {
+          const created = await tx.notification.createMany({
+            data: recipients.map((recipientId) => ({
+              kind: PrismaNotificationKind.INTENT_CANCELED,
+              recipientId,
+              actorId,
+              entityType: PrismaNotificationEntity.INTENT,
+              entityId: id,
+              intentId: id,
+              title: 'Meeting canceled',
+              body:
+                reason && reason.trim().length > 0
+                  ? `Organizer’s note: ${reason}`
+                  : null,
+              createdAt: new Date(),
+              dedupeKey: `intent_canceled:${recipientId}:${id}`,
+            })),
+          });
+
+          if (created.count > 0) {
+            await Promise.all(
+              recipients.map((recipientId) =>
+                pubsub?.publish({
+                  topic: `NOTIFICATION_BADGE:${recipientId}`,
+                  payload: { notificationBadgeChanged: { recipientId } },
+                })
+              )
+            );
+          }
+        }
+
+        return updated;
+      });
+
+      return mapIntent(full);
     }
   );
 
@@ -368,8 +474,6 @@ export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
       await prisma.intent.delete({ where: { id } });
       return true;
     } catch (e: any) {
-      // Jeżeli chcesz semantykę idempotentną:
-      // if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') return false;
       throw e;
     }
   });

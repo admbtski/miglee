@@ -241,6 +241,10 @@ type Intent {
   isFull: Boolean!
   hasStarted: Boolean!
   hasEnded: Boolean!
+  canceledAt: DateTime
+  canceledBy: User
+  cancelReason: String
+  isCanceled: Boolean!
 
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -493,6 +497,7 @@ type Mutation {
   createIntent(input: CreateIntentInput!): Intent!
   updateIntent(id: ID!, input: UpdateIntentInput!): Intent!
   deleteIntent(id: ID!): Boolean!
+  cancelIntent(id: ID!, reason: String): Intent!
 
   # memberships (user endpoints)
   requestJoinIntent(intentId: ID!): IntentMember! # current user -> PENDING or JOINED (depending on policy)

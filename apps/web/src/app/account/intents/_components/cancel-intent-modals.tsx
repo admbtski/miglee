@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
 import { NoticeModal } from '@/components/modal/notice-modal';
-import { useDeleteIntentMutation } from '@/hooks/graphql/intents';
+import { useCancelIntentMutation } from '@/hooks/graphql/intents';
+import { useCallback, useState } from 'react';
 
 type Props = {
   /** ID of intent to cancel; when null, the confirm dialog is closed */
@@ -39,7 +39,7 @@ export function CancelIntentModals({
   errorTitle = 'Intent not canceled',
   errorSubtitle = 'We could not cancel this intent. Please try again later.',
 }: Props) {
-  const { mutateAsync: deleteIntentMutateAsync } = useDeleteIntentMutation();
+  const { mutateAsync: cancelIntentMutateAsync } = useCancelIntentMutation();
 
   const [loading, setLoading] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
@@ -49,8 +49,7 @@ export function CancelIntentModals({
     if (!cancelId) return;
     try {
       setLoading(true);
-      // NOTE: As requested, we use deleteIntent for "cancel"
-      await deleteIntentMutateAsync({ id: cancelId });
+      await cancelIntentMutateAsync({ id: cancelId });
 
       // Close confirm dialog first
       onClose();
@@ -69,7 +68,7 @@ export function CancelIntentModals({
     } finally {
       setLoading(false);
     }
-  }, [cancelId, deleteIntentMutateAsync, onClose, onSuccess]);
+  }, [cancelId, cancelIntentMutateAsync, onClose, onSuccess]);
 
   return (
     <>

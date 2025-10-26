@@ -15,6 +15,9 @@ import {
   UpdateIntentDocument,
   UpdateIntentMutation,
   UpdateIntentMutationVariables,
+  CancelIntentDocument,
+  CancelIntentMutation,
+  CancelIntentMutationVariables,
 } from '@/lib/graphql/__generated__/react-query-update';
 import { gqlClient } from '@/lib/graphql/client';
 import { getQueryClient } from '@/lib/query-client/query-client';
@@ -32,6 +35,7 @@ import {
   useInfiniteQuery,
   UseInfiniteQueryOptions,
 } from '@tanstack/react-query';
+
 /** Klucz cache dla infinite */
 export const GET_INTENTS_INFINITE_KEY = (
   variables?: Omit<GetIntentsQueryVariables, 'offset'>
@@ -266,6 +270,31 @@ export function buildDeleteIntentOptions<TContext = unknown>(
   };
 }
 
+// NEW: cancelIntent builder
+export function buildCancelIntentOptions<TContext = unknown>(
+  options?: UseMutationOptions<
+    CancelIntentMutation,
+    unknown,
+    CancelIntentMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  CancelIntentMutation,
+  unknown,
+  CancelIntentMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['CancelIntent'] as QueryKey,
+    mutationFn: async (variables: CancelIntentMutationVariables) =>
+      gqlClient.request<CancelIntentMutation, CancelIntentMutationVariables>(
+        CancelIntentDocument,
+        variables
+      ),
+    ...(options ?? {}),
+  };
+}
+
 /* -------------------------------- MUTATIONS ------------------------------- */
 export function useCreateIntentMutation(
   options?: UseMutationOptions<
@@ -339,6 +368,40 @@ export function useDeleteIntentMutation(
   >(
     buildDeleteIntentOptions({
       onSuccess: (_data, vars) => {
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+        });
+        if (vars.id) {
+          qc.invalidateQueries({
+            queryKey: GET_INTENT_ONE_KEY({
+              id: vars.id,
+            }) as unknown as QueryKey,
+          });
+        }
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+// NEW: cancelIntent hook
+export function useCancelIntentMutation(
+  options?: UseMutationOptions<
+    CancelIntentMutation,
+    unknown,
+    CancelIntentMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    CancelIntentMutation,
+    unknown,
+    CancelIntentMutationVariables
+  >(
+    buildCancelIntentOptions({
+      onSuccess: (_data, vars) => {
+        // odśwież listy i szczegół
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
