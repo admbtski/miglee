@@ -1,3 +1,8 @@
+# =============================================================================
+# User Queries
+# =============================================================================
+
+# List/search users (with pagination and filtering)
 query GetUsers(
   $limit: Int = 50
   $offset: Int = 0
@@ -20,6 +25,7 @@ query GetUsers(
   }
 }
 
+# Get a single user by ID
 query GetUser($id: ID!) {
   user(id: $id) {
     ...UserCore

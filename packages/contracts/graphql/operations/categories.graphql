@@ -1,23 +1,32 @@
-# Queries
+# =============================================================================
+# Category Queries
+# =============================================================================
+
+# Get multiple categories by their slugs
 query GetCategoriesBySlugs($slugs: [String!]!, $limit: Int = 50) {
   categoriesBySlugs(slugs: $slugs, limit: $limit) {
     ...CategoryCore
   }
 }
 
+# Search/list categories
 query GetCategories($query: String, $limit: Int = 50) {
   categories(query: $query, limit: $limit) {
     ...CategoryCore
   }
 }
 
+# Get a single category by ID or slug
 query GetCategory($id: ID, $slug: String) {
   category(id: $id, slug: $slug) {
     ...CategoryCore
   }
 }
 
-# Mutations
+# =============================================================================
+# Category Mutations (Admin only)
+# =============================================================================
+
 mutation CreateCategory($input: CreateCategoryInput!) {
   createCategory(input: $input) {
     ...CategoryCore

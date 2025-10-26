@@ -1,49 +1,70 @@
-# Memberships — zgodne ze schematem
+# =============================================================================
+# Intent Membership Mutations (User Actions)
+# =============================================================================
+
+# User requests to join an intent
 mutation RequestJoinIntent($intentId: ID!) {
   requestJoinIntent(intentId: $intentId) {
-    ...IntentMemberCore
+    ...IntentCore
   }
 }
 
+# User cancels their join request
 mutation CancelJoinRequest($intentId: ID!) {
   cancelJoinRequest(intentId: $intentId)
 }
 
+# User leaves an intent they've joined
 mutation LeaveIntent($intentId: ID!) {
-  leaveIntent(intentId: $intentId)
-}
-
-mutation InviteIntent($input: InviteMemberInput!) {
-  inviteIntent(input: $input) {
-    ...IntentMemberCore
+  leaveIntent(intentId: $intentId) {
+    ...IntentCore
   }
 }
 
+# =============================================================================
+# Intent Membership Mutations (Owner/Moderator Actions)
+# =============================================================================
+
+# Owner/moderator invites a user to join
+mutation InviteMember($input: InviteMemberInput!) {
+  inviteMember(input: $input) {
+    ...IntentCore
+  }
+}
+
+# Owner/moderator approves a pending join request
 mutation ApproveMembership($input: ApproveMembershipInput!) {
   approveMembership(input: $input) {
-    ...IntentMemberCore
+    ...IntentCore
   }
 }
 
+# Owner/moderator rejects a join request
 mutation RejectMembership($input: RejectMembershipInput!) {
   rejectMembership(input: $input) {
-    ...IntentMemberCore
+    ...IntentCore
   }
 }
 
+# Owner/moderator kicks a member
 mutation KickMember($input: KickMemberInput!) {
   kickMember(input: $input) {
-    ...IntentMemberCore
+    ...IntentCore
   }
 }
 
+# Owner/moderator updates a member's role
 mutation UpdateMemberRole($input: UpdateMemberRoleInput!) {
   updateMemberRole(input: $input) {
-    ...IntentMemberCore
+    ...IntentCore
   }
 }
 
-# List members of an intent
+# =============================================================================
+# Intent Membership Queries
+# =============================================================================
+
+# List members of an intent (with filtering)
 query GetIntentMembers(
   $intentId: ID!
   $status: IntentMemberStatus
@@ -62,14 +83,14 @@ query GetIntentMembers(
   }
 }
 
-# Single membership
+# Get a single membership
 query GetIntentMember($intentId: ID!, $userId: ID!) {
   intentMember(intentId: $intentId, userId: $userId) {
     ...IntentMemberCore
   }
 }
 
-# My memberships
+# Get current user's memberships across all intents
 query GetMyMemberships(
   $status: IntentMemberStatus
   $role: IntentMemberRole
@@ -81,7 +102,7 @@ query GetMyMemberships(
   }
 }
 
-# Stats
+# Get membership statistics for an intent
 query GetIntentMemberStats($intentId: ID!) {
   intentMemberStats(intentId: $intentId) {
     joined

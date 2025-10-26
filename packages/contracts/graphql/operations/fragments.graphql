@@ -1,3 +1,7 @@
+# =============================================================================
+# Core Fragments - Base entities
+# =============================================================================
+
 fragment SessionUserCore on SessionUser {
   id
   name
@@ -37,8 +41,14 @@ fragment TagCore on Tag {
   updatedAt
 }
 
+# =============================================================================
+# Intent Member Fragments
+# =============================================================================
+
 fragment IntentMemberCore on IntentMember {
   id
+  intentId
+  userId
   role
   status
   joinedAt
@@ -54,6 +64,75 @@ fragment IntentMemberCore on IntentMember {
   }
 }
 
+# Lightweight member fragment (for lists)
+fragment IntentMemberLight on IntentMember {
+  id
+  role
+  status
+  joinedAt
+  user {
+    id
+    name
+    imageUrl
+  }
+}
+
+# =============================================================================
+# Intent Fragments
+# =============================================================================
+
+# Lightweight intent fragment (for lists/cards)
+fragment IntentLight on Intent {
+  id
+  title
+  description
+
+  visibility
+  mode
+  min
+  max
+
+  startAt
+  endAt
+  allowJoinLate
+
+  meetingKind
+  onlineUrl
+
+  lat
+  lng
+  address
+  placeId
+  radiusKm
+
+  levels
+
+  # Computed helpers
+  joinedCount
+  isFull
+  hasStarted
+  hasEnded
+  isCanceled
+  isDeleted
+
+  createdAt
+  updatedAt
+
+  categories {
+    ...CategoryCore
+  }
+  tags {
+    ...TagCore
+  }
+
+  owner {
+    id
+    name
+    imageUrl
+  }
+}
+
+# Full intent fragment (for detail views)
 fragment IntentCore on Intent {
   id
   title
@@ -80,13 +159,13 @@ fragment IntentCore on Intent {
 
   levels
 
-  # computed helpers (resolver-calculated)
+  # Computed helpers (resolver-calculated)
   joinedCount
   isFull
   hasStarted
   hasEnded
 
-  # cancellation (read-only)
+  # Cancellation (read-only)
   canceledAt
   canceledBy {
     ...UserCore
@@ -94,7 +173,7 @@ fragment IntentCore on Intent {
   cancelReason
   isCanceled
 
-  # soft-delete (po 30 dniach od canceled)
+  # Soft-delete (typically set 30+ days after cancellation)
   deletedAt
   deletedBy {
     ...UserCore
@@ -112,7 +191,7 @@ fragment IntentCore on Intent {
     ...TagCore
   }
 
-  # convenience relations (resolver-calculated / access-controlled)
+  # Convenience relations (resolver-calculated / access-controlled)
   owner {
     ...UserCore
   }
@@ -120,6 +199,10 @@ fragment IntentCore on Intent {
     ...IntentMemberCore
   }
 }
+
+# =============================================================================
+# Notification Fragments
+# =============================================================================
 
 fragment NotificationCore on Notification {
   id
@@ -137,16 +220,22 @@ fragment NotificationCore on Notification {
     ...UserCore
   }
   actor {
-    ...UserCore
+    id
+    name
+    imageUrl
   }
 
-  # convenience relation when entityType=INTENT
+  # Convenience relation when entityType=INTENT
   intent {
     id
     title
     startAt
   }
 }
+
+# =============================================================================
+# Pagination Fragments
+# =============================================================================
 
 fragment PageInfoCore on PageInfo {
   total
@@ -168,6 +257,16 @@ fragment UsersResultCore on UsersResult {
 fragment IntentsResultCore on IntentsResult {
   items {
     ...IntentCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+# Lightweight intents result (for lists)
+fragment IntentsResultLight on IntentsResult {
+  items {
+    ...IntentLight
   }
   pageInfo {
     ...PageInfoCore

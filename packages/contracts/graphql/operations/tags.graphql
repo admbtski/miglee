@@ -1,23 +1,32 @@
-# Queries
+# =============================================================================
+# Tag Queries
+# =============================================================================
+
+# Get multiple tags by their slugs
 query GetTagsBySlugs($slugs: [String!]!, $limit: Int = 50) {
   tagsBySlugs(slugs: $slugs, limit: $limit) {
     ...TagCore
   }
 }
 
+# Search/list tags
 query GetTags($query: String, $limit: Int = 50) {
   tags(query: $query, limit: $limit) {
     ...TagCore
   }
 }
 
+# Get a single tag by ID or slug
 query GetTag($id: ID, $slug: String) {
   tag(id: $id, slug: $slug) {
     ...TagCore
   }
 }
 
-# Mutations
+# =============================================================================
+# Tag Mutations (Admin/Moderator)
+# =============================================================================
+
 mutation CreateTag($input: CreateTagInput!) {
   createTag(input: $input) {
     ...TagCore

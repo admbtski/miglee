@@ -1,4 +1,8 @@
-# Queries
+# =============================================================================
+# Notification Queries
+# =============================================================================
+
+# Get notifications for a user
 query GetNotifications(
   $recipientId: ID!
   $unreadOnly: Boolean = false
@@ -17,7 +21,11 @@ query GetNotifications(
   }
 }
 
-# Mutations
+# =============================================================================
+# Notification Mutations
+# =============================================================================
+
+# Add a notification (system/admin use)
 mutation AddNotification(
   $recipientId: ID!
   $kind: NotificationKind = SYSTEM
@@ -40,15 +48,26 @@ mutation AddNotification(
   }
 }
 
+# Mark a single notification as read
 mutation MarkNotificationRead($id: ID!) {
   markNotificationRead(id: $id)
 }
 
+# Mark all notifications as read for a user
 mutation MarkAllNotificationsRead($recipientId: ID!) {
   markAllNotificationsRead(recipientId: $recipientId)
 }
 
-# Subscription
+# Delete a notification
+mutation DeleteNotification($id: ID!) {
+  deleteNotification(id: $id)
+}
+
+# =============================================================================
+# Notification Subscriptions
+# =============================================================================
+
+# Subscribe to new notifications for a user
 subscription NotificationAdded($recipientId: ID!) {
   notificationAdded(recipientId: $recipientId) {
     ...NotificationCore

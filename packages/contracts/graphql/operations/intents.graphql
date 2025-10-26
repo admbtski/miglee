@@ -1,4 +1,7 @@
-# Queries
+# =============================================================================
+# Intent Queries
+# =============================================================================
+
 query GetIntents(
   $limit: Int = 20
   $offset: Int = 0
@@ -16,6 +19,8 @@ query GetIntents(
   $verifiedOnly: Boolean
   $distanceKm: Int
   $near: LocationInput
+  $sortBy: IntentsSortBy = START_AT
+  $sortDir: SortDir = ASC
 ) {
   intents(
     limit: $limit
@@ -34,8 +39,33 @@ query GetIntents(
     verifiedOnly: $verifiedOnly
     distanceKm: $distanceKm
     near: $near
+    sortBy: $sortBy
+    sortDir: $sortDir
   ) {
     ...IntentsResultCore
+  }
+}
+
+# Lightweight query for lists (better performance)
+query GetIntentsLight(
+  $limit: Int = 20
+  $offset: Int = 0
+  $visibility: Visibility
+  $upcomingAfter: DateTime
+  $categorySlugs: [ID!]
+  $sortBy: IntentsSortBy = START_AT
+  $sortDir: SortDir = ASC
+) {
+  intents(
+    limit: $limit
+    offset: $offset
+    visibility: $visibility
+    upcomingAfter: $upcomingAfter
+    categorySlugs: $categorySlugs
+    sortBy: $sortBy
+    sortDir: $sortDir
+  ) {
+    ...IntentsResultLight
   }
 }
 
@@ -45,7 +75,10 @@ query GetIntent($id: ID!) {
   }
 }
 
-# Mutations (CRUD)
+# =============================================================================
+# Intent Mutations
+# =============================================================================
+
 mutation CreateIntent($input: CreateIntentInput!) {
   createIntent(input: $input) {
     ...IntentCore
