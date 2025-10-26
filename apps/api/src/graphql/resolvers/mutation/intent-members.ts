@@ -225,7 +225,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
     }
   );
 
-export const inviteIntentMutation: MutationResolvers['inviteMember'] =
+export const inviteMemberMutation: MutationResolvers['inviteMember'] =
   resolverWithMetrics(
     'Mutation',
     'inviteMember',

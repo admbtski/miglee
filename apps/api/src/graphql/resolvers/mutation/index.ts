@@ -34,7 +34,7 @@ import {
 import {
   approveMembershipMutation,
   cancelJoinRequestMutation,
-  inviteIntentMutation,
+  inviteMemberMutation,
   kickMemberMutation,
   leaveIntentMutation,
   rejectMembershipMutation,
@@ -68,7 +68,7 @@ export const Mutation: Resolvers['Mutation'] = {
   requestJoinIntent: requestJoinIntentMutation,
   cancelJoinRequest: cancelJoinRequestMutation,
   leaveIntent: leaveIntentMutation,
-  inviteIntent: inviteIntentMutation,
+  inviteMember: inviteMemberMutation,
   approveMembership: approveMembershipMutation,
   rejectMembership: rejectMembershipMutation,
   kickMember: kickMemberMutation,
@@ -80,6 +80,7 @@ export const Mutation: Resolvers['Mutation'] = {
   markNotificationRead: markNotificationReadMutation,
   markAllNotificationsRead: markAllNotificationsReadMutation,
 
+  // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,
   devLogout: devLogoutMutation,
 };

@@ -16,6 +16,8 @@ import type {
 } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification, pickLocation } from '../helpers';
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
@@ -24,7 +26,8 @@ export const NOTIFICATION_INCLUDE = {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
-      canceledBy: true, // NEW
+      canceledBy: true,
+      deletedBy: true,
     },
   },
 } satisfies Prisma.NotificationInclude;
@@ -43,7 +46,6 @@ const INTENT_INCLUDE = {
 } satisfies Prisma.IntentInclude;
 
 function assertCreateInput(input: any) {
-  // 1) Kategorie 1..3
   if (
     !input.categorySlugs ||
     input.categorySlugs.length < 1 ||
@@ -53,7 +55,6 @@ function assertCreateInput(input: any) {
       extensions: { code: 'BAD_USER_INPUT', field: 'categorySlugs' },
     });
   }
-  // 2) Mode ↔ min/max
   if (input.mode === PrismaMode.ONE_TO_ONE) {
     if (input.min !== 2 || input.max !== 2) {
       throw new GraphQLError('For ONE_TO_ONE, min and max must both equal 2.', {
@@ -69,7 +70,6 @@ function assertCreateInput(input: any) {
       extensions: { code: 'BAD_USER_INPUT', field: 'min/max' },
     });
   }
-  // 3) MeetingKind ↔ onlineUrl
   if (
     (input.meetingKind === PrismaMeetingKind.ONLINE ||
       input.meetingKind === PrismaMeetingKind.HYBRID) &&
@@ -100,7 +100,6 @@ function assertUpdateInput(input: any) {
       extensions: { code: 'BAD_USER_INPUT', field: 'max' },
     });
   }
-  // cross-field
   if (
     typeof input.min === 'number' &&
     typeof input.max === 'number' &&
@@ -111,7 +110,6 @@ function assertUpdateInput(input: any) {
     });
   }
   if (input.mode === PrismaMode.ONE_TO_ONE) {
-    // jeśli ktoś zmienia tryb na 1:1, wymuś min=max=2 (o ile podał inne)
     if (
       (typeof input.min === 'number' && input.min !== 2) ||
       (typeof input.max === 'number' && input.max !== 2)
@@ -121,7 +119,6 @@ function assertUpdateInput(input: any) {
       });
     }
   }
-  // MeetingKind ↔ onlineUrl
   if (
     (input.meetingKind === PrismaMeetingKind.ONLINE ||
       input.meetingKind === PrismaMeetingKind.HYBRID) &&
@@ -129,6 +126,22 @@ function assertUpdateInput(input: any) {
   ) {
     throw new GraphQLError('`onlineUrl` cannot be null for ONLINE/HYBRID.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'onlineUrl' },
+    });
+  }
+}
+
+function assertNotReadOnly(intent: {
+  canceledAt: Date | null;
+  deletedAt: Date | null;
+}) {
+  if (intent.deletedAt) {
+    throw new GraphQLError('Intent is deleted.', {
+      extensions: { code: 'FAILED_PRECONDITION' },
+    });
+  }
+  if (intent.canceledAt) {
+    throw new GraphQLError('Intent is canceled and read-only.', {
+      extensions: { code: 'FAILED_PRECONDITION' },
     });
   }
 }
@@ -147,19 +160,14 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
       if (!ownerId) {
         throw new GraphQLError(
           'ownerId is required or an authenticated user must be present.',
-          {
-            extensions: { code: 'UNAUTHENTICATED' },
-          }
+          { extensions: { code: 'UNAUTHENTICATED' } }
         );
       }
 
-      // Lokalizacja (opcjonalna, dopuszcza placeId)
       const loc = pickLocation(input.location) ?? {};
 
       const categoriesData: Prisma.CategoryCreateNestedManyWithoutIntentsInput =
-        {
-          connect: input.categorySlugs.map((slug: string) => ({ slug })),
-        };
+        { connect: input.categorySlugs.map((slug: string) => ({ slug })) };
       const tagsData:
         | Prisma.TagCreateNestedManyWithoutIntentsInput
         | undefined = input.tagSlugs?.length
@@ -193,7 +201,6 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           },
         });
 
-        // OWNER (JOINED)
         await tx.intentMember.create({
           data: {
             intentId: intent.id,
@@ -204,7 +211,6 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           },
         });
 
-        // Notyfikacja do ownera
         const notif = await tx.notification.create({
           data: {
             kind: PrismaNotificationKind.INTENT_CREATED,
@@ -225,13 +231,11 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           include: NOTIFICATION_INCLUDE,
         });
 
-        // PubSub
         await pubsub.publish({
           topic: `NOTIFICATION_ADDED:${notif.recipientId}`,
           payload: { notificationAdded: mapNotification(notif as any) },
         });
 
-        // Odczyt pełnego grafu
         const fullIntent = await tx.intent.findUniqueOrThrow({
           where: { id: intent.id },
           include: INTENT_INCLUDE,
@@ -240,12 +244,13 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         return fullIntent;
       });
 
-      return mapIntent(full as any);
+      return mapIntent(full);
     }
   );
 
 /**
  * Mutation: Update Intent
+ * - zablokowane, jeśli canceled/deleted
  */
 export const updateIntentMutation: MutationResolvers['updateIntent'] =
   resolverWithMetrics(
@@ -254,7 +259,17 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
     async (_p, { id, input }): Promise<GQLIntent> => {
       assertUpdateInput(input);
 
-      // Partial location update
+      const current = await prisma.intent.findUnique({
+        where: { id },
+        select: { canceledAt: true, deletedAt: true },
+      });
+      if (!current) {
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+      assertNotReadOnly(current);
+
       const loc = input.location
         ? {
             ...(Object.prototype.hasOwnProperty.call(input.location, 'lat')
@@ -275,7 +290,6 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           }
         : {};
 
-      // M:N replace semantics
       const categoriesUpdate:
         | Prisma.CategoryUpdateManyWithoutIntentsNestedInput
         | undefined =
@@ -287,7 +301,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         | Prisma.TagUpdateManyWithoutIntentsNestedInput
         | undefined =
         input.tagSlugs != null
-          ? { set: input.tagSlugs.map((slug) => ({ slug: slug })) }
+          ? { set: input.tagSlugs.map((slug) => ({ slug })) }
           : undefined;
 
       const data: Prisma.IntentUpdateInput = {
@@ -323,19 +337,19 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           : {}),
 
         ...(Object.prototype.hasOwnProperty.call(loc, 'lat')
-          ? { lat: (loc as any).lat }
+          ? { lat: loc.lat }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'lng')
-          ? { lng: (loc as any).lng }
+          ? { lng: loc.lng }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'address')
-          ? { address: (loc as any).address }
+          ? { address: loc.address }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'placeId')
-          ? { placeId: (loc as any).placeId }
+          ? { placeId: loc.placeId }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'radiusKm')
-          ? { radiusKm: (loc as any).radiusKm }
+          ? { radiusKm: loc.radiusKm }
           : {}),
 
         ...(categoriesUpdate ? { categories: categoriesUpdate } : {}),
@@ -348,7 +362,6 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         include: INTENT_INCLUDE,
       });
 
-      // Dodatkowa walidacja po zmianie: ONE_TO_ONE -> min/max = 2
       if (
         updated.mode === 'ONE_TO_ONE' &&
         !(updated.min === 2 && updated.max === 2)
@@ -363,9 +376,9 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
   );
 
 /**
- * Mutation: Cancel Intent (NEW)
- * - Oznacza intent jako anulowany i wysyła powiadomienia do członków
- * - Domyślnie idempotentne (ponowne wywołanie zwraca aktualny stan)
+ * Mutation: Cancel Intent
+ * - ustawia canceled*; read-only od tej pory
+ * - nie pozwala, jeśli już deleted
  */
 export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
   resolverWithMetrics(
@@ -390,18 +403,9 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
           extensions: { code: 'NOT_FOUND' },
         });
       }
-
-      const membership = await prisma.intentMember.findFirst({
-        where: {
-          intentId: id,
-          userId: actorId,
-          role: { in: ['OWNER', 'MODERATOR'] },
-        },
-        select: { id: true },
-      });
-      if (!membership) {
-        throw new GraphQLError('Forbidden', {
-          extensions: { code: 'FORBIDDEN' },
+      if (intent.deletedAt) {
+        throw new GraphQLError('Intent is deleted.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
         });
       }
 
@@ -467,14 +471,53 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
   );
 
 /**
- * Mutation: Delete Intent
+ * Mutation: Delete Intent (SOFT-DELETE)
+ * - dozwolone wyłącznie, jeśli:
+ *   1) intent został wcześniej canceled
+ *   2) minęło 30 dni od canceledAt
+ * - ustawia deletedAt/deletedById/deleteReason
+ * - (opcjonalnie) można dodać twarde delete w CRONie po X dniach
  */
 export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
-  resolverWithMetrics('Mutation', 'deleteIntent', async (_p, { id }) => {
-    try {
-      await prisma.intent.delete({ where: { id } });
-      return true;
-    } catch (e: any) {
-      throw e;
+  resolverWithMetrics('Mutation', 'deleteIntent', async (_p, { id }, ctx) => {
+    const actorId = ctx.user?.id ?? null;
+    const row = await prisma.intent.findUnique({
+      where: { id },
+      select: { canceledAt: true, deletedAt: true },
+    });
+    if (!row) {
+      throw new GraphQLError('Intent not found.', {
+        extensions: { code: 'NOT_FOUND' },
+      });
     }
+    if (row.deletedAt) {
+      // Idempotentnie zwracamy true
+      return true;
+    }
+    if (!row.canceledAt) {
+      throw new GraphQLError('Intent must be canceled before deletion.', {
+        extensions: { code: 'FAILED_PRECONDITION' },
+      });
+    }
+    const age = Date.now() - new Date(row.canceledAt).getTime();
+    if (age < THIRTY_DAYS_MS) {
+      throw new GraphQLError(
+        'Intent can be deleted 30 days after cancellation.',
+        { extensions: { code: 'FAILED_PRECONDITION' } }
+      );
+    }
+
+    await prisma.intent.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: actorId,
+        deleteReason: null,
+      },
+    });
+
+    // Opcjonalnie: powiadom właściciela/modów, że został usunięty (INTENT_UPDATED)
+    // (pomijam wysyłkę, można dopisać wg potrzeb)
+
+    return true;
   });
