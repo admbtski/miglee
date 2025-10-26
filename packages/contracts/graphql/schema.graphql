@@ -231,20 +231,27 @@ type Intent {
   levels: [Level!]!
 
   # Derived convenience (computed by resolver):
-  # - owner: the member with role=OWNER
   owner: User
-  # Access policy (recommended): OWNER/MODERATOR can see all statuses; others see JOINED only (enforced in resolvers).
+  # Access policy: OWNER/MODERATOR can see all statuses; others see JOINED only.
   members: [IntentMember!]!
 
-  # Computed helpers (resolver-level, not stored):
+  # Computed helpers
   joinedCount: Int!
   isFull: Boolean!
   hasStarted: Boolean!
   hasEnded: Boolean!
+
+  # Cancellation (read-only state)
   canceledAt: DateTime
   canceledBy: User
   cancelReason: String
   isCanceled: Boolean!
+
+  # Soft-delete (read-only state; typically set >= 30d after cancel)
+  deletedAt: DateTime
+  deletedBy: User
+  deleteReason: String
+  isDeleted: Boolean!
 
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -500,16 +507,15 @@ type Mutation {
   cancelIntent(id: ID!, reason: String): Intent!
 
   # memberships (user endpoints)
-  requestJoinIntent(intentId: ID!): IntentMember! # current user -> PENDING or JOINED (depending on policy)
-  cancelJoinRequest(intentId: ID!): Boolean! # idempotent; for JOINED use leaveIntent
-  leaveIntent(intentId: ID!): Boolean!
-
-  # membership (owner/mod endpoints)
-  inviteIntent(input: InviteMemberInput!): IntentMember! # owner/mod invites user
-  approveMembership(input: ApproveMembershipInput!): IntentMember!
-  rejectMembership(input: RejectMembershipInput!): IntentMember!
-  kickMember(input: KickMemberInput!): IntentMember!
-  updateMemberRole(input: UpdateMemberRoleInput!): IntentMember!
+  requestJoinIntent(intentId: ID!): Intent! # aliased to joinMember; returns full Intent
+  cancelJoinRequest(intentId: ID!): Boolean!
+  leaveIntent(intentId: ID!): Intent! # returns updated Intent
+  # membership (owner/mod endpoints) — all return updated Intent
+  inviteMember(input: InviteMemberInput!): Intent!
+  approveMembership(input: ApproveMembershipInput!): Intent!
+  rejectMembership(input: RejectMembershipInput!): Intent!
+  kickMember(input: KickMemberInput!): Intent!
+  updateMemberRole(input: UpdateMemberRoleInput!): Intent!
 
   # notifications
   addNotification(

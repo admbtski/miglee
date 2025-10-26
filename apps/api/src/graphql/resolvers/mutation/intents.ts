@@ -38,7 +38,8 @@ const INTENT_INCLUDE = {
       addedBy: true,
     },
   },
-  canceledBy: true, // NEW
+  canceledBy: true,
+  deletedBy: true,
 } satisfies Prisma.IntentInclude;
 
 function assertCreateInput(input: any) {
@@ -357,7 +358,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         });
       }
 
-      return mapIntent(updated as any);
+      return mapIntent(updated);
     }
   );
 

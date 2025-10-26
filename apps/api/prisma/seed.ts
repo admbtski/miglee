@@ -664,10 +664,11 @@ async function seedIntents(opts: {
 /** ---------- NEW: Seed some cancellations + notifications ---------- */
 async function seedCanceledIntents(
   intentsCreated: Array<{ intent: Intent; owner: User }>
-) {
-  // ~20–30% intentów oznacz jako anulowane
+): Promise<Array<{ intent: Intent; owner: User }>> {
+  // ~30% intentów oznacz jako anulowane
   const toCancel = intentsCreated.filter(() => rand() > 0.7);
-  for (const { intent, owner } of toCancel) {
+  for (const item of toCancel) {
+    const { intent, owner } = item;
     const reason = pick([
       'Venue unavailable due to maintenance.',
       'Organizer is ill. Sorry!',
@@ -716,6 +717,28 @@ async function seedCanceledIntents(
         })),
       });
     }
+  }
+  return toCancel;
+}
+
+/** ---------- NEW: Seed some soft-deleted (after 30 days) ---------- */
+async function seedDeletedIntentsAfterCancel(
+  canceled: Array<{ intent: Intent; owner: User }>
+) {
+  // weź niewielką próbkę anulowanych i ustaw im canceledAt sprzed 35 dni, a następnie deletedAt=teraz
+  const sample = canceled.filter(() => rand() > 0.6);
+  const THIRTY_FIVE_DAYS_MS = 35 * 24 * 60 * 60 * 1000;
+  for (const { intent, owner } of sample) {
+    const canceledAtPast = new Date(Date.now() - THIRTY_FIVE_DAYS_MS);
+    await prisma.intent.update({
+      where: { id: intent.id },
+      data: {
+        canceledAt: canceledAtPast, // symulacja, że minęło >30 dni
+        deletedAt: new Date(),
+        deletedById: owner.id,
+        deleteReason: 'Auto-cleanup after 30 days from cancellation (seed).',
+      },
+    });
   }
 }
 
@@ -866,7 +889,10 @@ async function main() {
   const intentsCreated = await seedIntents({ users, categories, tags });
 
   console.log('⛔ Seeding some canceled intents + notifications…');
-  await seedCanceledIntents(intentsCreated);
+  const canceled = await seedCanceledIntents(intentsCreated);
+
+  console.log('🗑️  Seeding some deleted intents (after 30 days)…');
+  await seedDeletedIntentsAfterCancel(canceled);
 
   console.log('🔔 Seeding generic notifications…');
   await seedNotificationsGeneric(intentsCreated, users);

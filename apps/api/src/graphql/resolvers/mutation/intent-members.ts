@@ -1,4 +1,3 @@
-// src/api/resolvers/mutations/intent-members.ts
 import type { Prisma } from '@prisma/client';
 import {
   IntentMemberRole,
@@ -21,22 +20,17 @@ export const NOTIFICATION_INCLUDE = {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
+      canceledBy: true,
+      deletedBy: true,
     },
   },
 } satisfies Prisma.NotificationInclude;
 
-/**
- * Transaction client type compatible with Prisma Client Extensions.
- * Matches the actual 'tx' type provided to prisma.$transaction callback.
- */
 type Tx = Omit<
   typeof prisma,
   '$extends' | '$transaction' | '$disconnect' | '$connect' | '$on'
 >;
 
-/* ----------------------------- Helpers ----------------------------- */
-
-/** Ensure authenticated user and return their id. */
 function assertAuth(ctx: MercuriusContext): string {
   if (!ctx.user?.id) {
     throw new GraphQLError('Authentication required.', {
@@ -46,21 +40,32 @@ function assertAuth(ctx: MercuriusContext): string {
   return ctx.user.id;
 }
 
-/** Load intent with members for moderation decisions. */
 async function loadIntentWithMembers(tx: Tx, intentId: string) {
   const intent = await tx.intent.findUnique({
     where: { id: intentId },
-    include: { members: true },
+    include: {
+      members: true,
+    },
   });
   if (!intent) {
     throw new GraphQLError('Intent not found.', {
       extensions: { code: 'NOT_FOUND', field: 'intentId' },
     });
   }
+  // READ-ONLY: zablokuj każdą mutację członkowską dla canceled/deleted
+  if ((intent as any).deletedAt) {
+    throw new GraphQLError('Intent is deleted.', {
+      extensions: { code: 'FAILED_PRECONDITION' },
+    });
+  }
+  if ((intent as any).canceledAt) {
+    throw new GraphQLError('Intent is canceled and read-only.', {
+      extensions: { code: 'FAILED_PRECONDITION' },
+    });
+  }
   return intent;
 }
 
-/** Check user has moderator or owner role in the intent. */
 function isModeratorOrOwner(
   intent: { members: { userId: string; role: IntentMemberRole }[] },
   userId: string
@@ -73,7 +78,6 @@ function isModeratorOrOwner(
   );
 }
 
-/** Check user is the owner. */
 function isOwner(
   intent: { members: { userId: string; role: IntentMemberRole }[] },
   userId: string
@@ -83,14 +87,12 @@ function isOwner(
   );
 }
 
-/** Count current JOINED members. */
 function countJoined(tx: Tx, intentId: string) {
   return tx.intentMember.count({
     where: { intentId, status: IntentMemberStatus.JOINED },
   });
 }
 
-/** Enforce late-join policy. */
 function assertCanJoinNow(intent: { allowJoinLate: boolean; startAt: Date }) {
   const now = new Date();
   if (!intent.allowJoinLate && now >= new Date(intent.startAt)) {
@@ -100,7 +102,6 @@ function assertCanJoinNow(intent: { allowJoinLate: boolean; startAt: Date }) {
   }
 }
 
-/** Reload full intent graph for response mapping. */
 function reloadFullIntent(tx: Tx, intentId: string) {
   return tx.intent.findUniqueOrThrow({
     where: { id: intentId },
@@ -108,11 +109,12 @@ function reloadFullIntent(tx: Tx, intentId: string) {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
+      canceledBy: true,
+      deletedBy: true,
     },
   });
 }
 
-/** Emit a generic notification related to an intent. */
 async function emitIntentNotification(
   tx: Tx,
   pubsub: MercuriusContext['pubsub'],
@@ -152,12 +154,6 @@ async function emitIntentNotification(
 
 /* ----------------------------- Mutations ----------------------------- */
 
-/**
- * joinMember: authenticated user attempts to join an intent.
- * - If capacity allows and policy permits: JOINED.
- * - Otherwise: PENDING (awaiting approval).
- * - Idempotent for existing memberships.
- */
 export const joinMemberMutation: MutationResolvers['joinMember'] =
   resolverWithMetrics(
     'Mutation',
@@ -168,7 +164,6 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
 
-        // Existing membership path (idempotent updates)
         const existing = await tx.intentMember.findUnique({
           where: { intentId_userId: { intentId, userId } },
         });
@@ -187,7 +182,6 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           return reloadFullIntent(tx, intentId);
         }
 
-        // Policy & capacity
         assertCanJoinNow(intent);
         const joined = await countJoined(tx, intentId);
         const canAutoJoin = joined < intent.max;
@@ -204,7 +198,6 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           },
         });
 
-        // Notify moderators/owner when request is pending
         if (!canAutoJoin) {
           const moderators = intent.members.filter(
             (m) =>
@@ -232,11 +225,6 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
     }
   );
 
-/**
- * inviteMember: moderator/owner invites a user to an intent.
- * - Upserts membership to INVITED (idempotent).
- * - Sends INTENT_INVITE notification to the invitee.
- */
 export const inviteIntentMutation: MutationResolvers['inviteMember'] =
   resolverWithMetrics(
     'Mutation',
@@ -250,9 +238,7 @@ export const inviteIntentMutation: MutationResolvers['inviteMember'] =
         if (!isModeratorOrOwner(intent, actorId)) {
           throw new GraphQLError(
             'Forbidden. Moderator or owner role required.',
-            {
-              extensions: { code: 'FORBIDDEN' },
-            }
+            { extensions: { code: 'FORBIDDEN' } }
           );
         }
         if (isOwner(intent, userId)) {
@@ -303,15 +289,11 @@ export const inviteIntentMutation: MutationResolvers['inviteMember'] =
     }
   );
 
-/**
- * requestJoinIntent: alias of joinMember (kept for semantic API).
- */
 export const requestJoinIntentMutation: MutationResolvers['requestJoinIntent'] =
   resolverWithMetrics(
     'Mutation',
     'requestJoinIntent',
     async (_p, { intentId }, ctx) => {
-      // Delegate to joinMember to keep logic in one place
       return (joinMemberMutation as any).resolve?.(
         undefined,
         { intentId },
@@ -321,9 +303,6 @@ export const requestJoinIntentMutation: MutationResolvers['requestJoinIntent'] =
     }
   );
 
-/**
- * cancelJoinRequest: user cancels their own PENDING/INVITED membership.
- */
 export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
   resolverWithMetrics(
     'Mutation',
@@ -331,6 +310,7 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
     async (_p, { intentId }, ctx) => {
       const userId = assertAuth(ctx);
 
+      // Jeśli intent jest read-only, nie musimy rzucać — usuwamy swoją prośbę.
       const res = await prisma.intentMember.deleteMany({
         where: {
           intentId,
@@ -345,9 +325,6 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
     }
   );
 
-/**
- * leaveIntent: user leaves when JOINED (owner cannot leave).
- */
 export const leaveIntentMutation: MutationResolvers['leaveIntent'] =
   resolverWithMetrics(
     'Mutation',
@@ -369,7 +346,6 @@ export const leaveIntentMutation: MutationResolvers['leaveIntent'] =
           where: { intentId_userId: { intentId, userId } },
         });
         if (!member || member.status !== IntentMemberStatus.JOINED) {
-          // idempotent
           return reloadFullIntent(tx, intentId);
         }
 
@@ -385,10 +361,6 @@ export const leaveIntentMutation: MutationResolvers['leaveIntent'] =
     }
   );
 
-/**
- * approveMembership: moderator/owner approves PENDING/INVITED → JOINED.
- * Respects capacity and late-join policy.
- */
 export const approveMembershipMutation: MutationResolvers['approveMembership'] =
   resolverWithMetrics(
     'Mutation',
@@ -401,9 +373,7 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
         if (!isModeratorOrOwner(intent, actorId)) {
           throw new GraphQLError(
             'Forbidden. Moderator or owner role required.',
-            {
-              extensions: { code: 'FORBIDDEN' },
-            }
+            { extensions: { code: 'FORBIDDEN' } }
           );
         }
 
@@ -412,9 +382,7 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
         if (joined >= intent.max) {
           throw new GraphQLError(
             'Capacity reached. Cannot approve more members.',
-            {
-              extensions: { code: 'FAILED_PRECONDITION' },
-            }
+            { extensions: { code: 'FAILED_PRECONDITION' } }
           );
         }
 
@@ -452,9 +420,6 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
     }
   );
 
-/**
- * rejectMembership: moderator/owner rejects membership → REJECTED.
- */
 export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
   resolverWithMetrics(
     'Mutation',
@@ -467,9 +432,7 @@ export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
         if (!isModeratorOrOwner(intent, actorId)) {
           throw new GraphQLError(
             'Forbidden. Moderator or owner role required.',
-            {
-              extensions: { code: 'FORBIDDEN' },
-            }
+            { extensions: { code: 'FORBIDDEN' } }
           );
         }
 
@@ -503,10 +466,6 @@ export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
     }
   );
 
-/**
- * kickMember: moderator/owner removes a JOINED member → KICKED.
- * Cannot kick the OWNER.
- */
 export const kickMemberMutation: MutationResolvers['kickMember'] =
   resolverWithMetrics(
     'Mutation',
@@ -519,9 +478,7 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
         if (!isModeratorOrOwner(intent, actorId)) {
           throw new GraphQLError(
             'Forbidden. Moderator or owner role required.',
-            {
-              extensions: { code: 'FORBIDDEN' },
-            }
+            { extensions: { code: 'FORBIDDEN' } }
           );
         }
         if (isOwner(intent, userId)) {
@@ -534,7 +491,6 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
           where: { intentId_userId: { intentId, userId } },
         });
         if (!member || member.status !== IntentMemberStatus.JOINED) {
-          // idempotent
           return reloadFullIntent(tx, intentId);
         }
 
@@ -554,10 +510,6 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
     }
   );
 
-/**
- * updateMemberRole: OWNER can change roles (PARTICIPANT <-> MODERATOR).
- * OWNER cannot be demoted via this mutation.
- */
 export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
   resolverWithMetrics(
     'Mutation',
@@ -575,9 +527,7 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
         if (isOwner(intent, userId)) {
           throw new GraphQLError(
             'Owner role cannot be changed via this mutation.',
-            {
-              extensions: { code: 'FAILED_PRECONDITION' },
-            }
+            { extensions: { code: 'FAILED_PRECONDITION' } }
           );
         }
 

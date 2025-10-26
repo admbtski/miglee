@@ -85,12 +85,22 @@ fragment IntentCore on Intent {
   isFull
   hasStarted
   hasEnded
+
+  # cancellation (read-only)
   canceledAt
   canceledBy {
     ...UserCore
   }
   cancelReason
   isCanceled
+
+  # soft-delete (po 30 dniach od canceled)
+  deletedAt
+  deletedBy {
+    ...UserCore
+  }
+  deleteReason
+  isDeleted
 
   createdAt
   updatedAt

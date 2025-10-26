@@ -29,7 +29,8 @@ export type IntentWithGraph = Prisma.IntentGetPayload<{
     categories: true;
     tags: true;
     members: { include: { user: true; addedBy: true } };
-    canceledBy: true; // NEW: kto anulował
+    canceledBy: true; // kto anulował
+    deletedBy: true; // kto usunął
   };
 }>;
 
@@ -42,7 +43,8 @@ export type NotificationWithGraph = Prisma.NotificationGetPayload<{
         categories: true;
         tags: true;
         members: { include: { user: true; addedBy: true } };
-        canceledBy: true; // NEW
+        canceledBy: true;
+        deletedBy: true;
       };
     };
   };
@@ -98,6 +100,7 @@ export function pickLocation(
   if ('radiusKm' in input) out.radiusKm = input.radiusKm ?? null;
   return out;
 }
+
 /* =============================================================================
  * Mappers (strictly typed, no any)
  *  - WYMAGAJĄ: IntentWithGraph / IntentMemberWithUsers / NotificationWithGraph
@@ -166,7 +169,8 @@ function computeIntentDerived(i: IntentWithGraph) {
   const hasStarted = now >= new Date(i.startAt);
   const hasEnded = now > new Date(i.endAt);
   const isCanceled = Boolean((i as any).canceledAt);
-  return { joinedCount, isFull, hasStarted, hasEnded, isCanceled };
+  const isDeleted = Boolean((i as any).deletedAt);
+  return { joinedCount, isFull, hasStarted, hasEnded, isCanceled, isDeleted };
 }
 
 function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
@@ -177,7 +181,7 @@ function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
 }
 
 export function mapIntent(i: IntentWithGraph): GQLIntent {
-  const { joinedCount, isFull, hasStarted, hasEnded, isCanceled } =
+  const { joinedCount, isFull, hasStarted, hasEnded, isCanceled, isDeleted } =
     computeIntentDerived(i);
 
   return {
@@ -206,11 +210,17 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
 
     levels: (i.levels ?? []) as Level[],
 
-    // NEW: cancelation fields
+    // --- cancellation
     canceledAt: (i as any).canceledAt ?? null,
     canceledBy: (i as any).canceledBy ? mapUser((i as any).canceledBy) : null,
     cancelReason: (i as any).cancelReason ?? null,
     isCanceled,
+
+    // --- soft-delete
+    deletedAt: (i as any).deletedAt ?? null,
+    deletedBy: (i as any).deletedBy ? mapUser((i as any).deletedBy) : null,
+    deleteReason: (i as any).deleteReason ?? null,
+    isDeleted,
 
     // ✅ REQUIRED by SDL
     categories: i.categories.map(mapCategory),
