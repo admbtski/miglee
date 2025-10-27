@@ -11,7 +11,10 @@ import { useCategorySelection } from './category-selection-provider';
 import { IntentFormValues } from './types';
 import { useCategoriesLimit } from '@/hooks/use-categories';
 import { CategoryMultiCombo } from '../combobox/category-combobox';
-import { CategoryOption } from '@/types/types';
+import { CategoryOption, TagOption } from '@/types/types';
+import { useTagsLimit } from '@/hooks/use-tags';
+import { useTagSelection } from './tag-selection-provider';
+import { TagMultiCombo } from '../combobox/tag-multicombo';
 
 export function BasicsStep({
   form,
@@ -36,6 +39,7 @@ export function BasicsStep({
 
   const { selected: selectedCategories, set: setCategories } =
     useCategorySelection();
+  const { selected: selectedTags, set: setTags } = useTagSelection();
 
   const title = useWatch({ control, name: 'title' }) ?? '';
   const description = useWatch({ control, name: 'description' }) ?? '';
@@ -203,6 +207,48 @@ export function BasicsStep({
           {errors.description?.message as string}
         </div>
       </div>
+
+      {/* Tags (multi 0–3) */}
+      <Controller
+        name="tagSlugs"
+        control={control}
+        render={({ field }) => {
+          const handleChange = (vals: TagOption[]) => {
+            const slugs = vals.map((v) => v.slug);
+            field.onChange(slugs);
+            setTags(vals, useTagsLimit);
+            void trigger('tagSlugs');
+          };
+          return (
+            <div className="group">
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Tags (optional)
+              </label>
+              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+                Choose 1–3 tags to help others find your intent.
+              </p>
+
+              {/* Uncontrolled via Provider */}
+              <TagMultiCombo
+                placeholder="Search tags.."
+                maxCount={3}
+                size="md"
+                onChange={handleChange}
+                values={selectedTags}
+              />
+
+              <div
+                id={catErrId}
+                role="alert"
+                aria-live="polite"
+                className="mt-1 text-xs text-red-500"
+              >
+                {errors.categorySlugs?.message as string}
+              </div>
+            </div>
+          );
+        }}
+      />
 
       {/* Info note */}
       <div

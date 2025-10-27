@@ -6,6 +6,10 @@ import {
   Clock,
   Eye,
   EyeOff,
+  FolderIcon,
+  Globe2,
+  HashIcon,
+  LinkIcon,
   MapPin,
   NotebookText,
   Ruler,
@@ -16,6 +20,7 @@ import {
 import { useMemo } from 'react';
 import { useCategorySelection } from './category-selection-provider';
 import { IntentFormValues } from './types';
+import { useTagSelection } from './tag-selection-provider';
 
 /* ---------- tiny UI primitives ---------- */
 
@@ -27,16 +32,31 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+type ChipTone =
+  | 'zinc'
+  | 'indigo'
+  | 'emerald'
+  | 'amber'
+  | 'rose'
+  | 'violet'
+  | 'blue'
+  | 'slate'
+  | 'cyan'
+  | 'teal'
+  | 'lime'
+  | 'orange'
+  | 'fuchsia';
+
 function Chip({
   children,
   tone = 'zinc',
   icon,
 }: {
   children: React.ReactNode;
-  tone?: 'zinc' | 'indigo' | 'emerald' | 'amber' | 'rose' | 'violet' | 'blue';
+  tone?: ChipTone;
   icon?: React.ReactNode;
 }) {
-  const toneMap: Record<string, string> = {
+  const toneMap: Record<ChipTone, string> = {
     zinc: 'bg-zinc-100 text-zinc-700 ring-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
     indigo:
       'bg-indigo-100 text-indigo-700 ring-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-500/25',
@@ -48,12 +68,21 @@ function Chip({
     violet:
       'bg-violet-100 text-violet-700 ring-violet-200 dark:bg-violet-500/15 dark:text-violet-200 dark:ring-violet-500/25',
     blue: 'bg-blue-100 text-blue-700 ring-blue-200 dark:bg-blue-500/15 dark:text-blue-200 dark:ring-blue-500/25',
+
+    cyan: 'bg-cyan-100 text-cyan-700 ring-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-200 dark:ring-cyan-500/25',
+    teal: 'bg-teal-100 text-teal-700 ring-teal-200 dark:bg-teal-500/15 dark:text-teal-200 dark:ring-teal-500/25',
+    lime: 'bg-lime-100 text-lime-800 ring-lime-200 dark:bg-lime-500/15 dark:text-lime-200 dark:ring-lime-500/25',
+    orange:
+      'bg-orange-100 text-orange-800 ring-orange-200 dark:bg-orange-500/15 dark:text-orange-200 dark:ring-orange-500/25',
+    fuchsia:
+      'bg-fuchsia-100 text-fuchsia-700 ring-fuchsia-200 dark:bg-fuchsia-500/15 dark:text-fuchsia-200 dark:ring-fuchsia-500/25',
   };
+
   return (
     <span
       className={[
         'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1',
-        toneMap[tone],
+        toneMap[tone] ?? toneMap.zinc,
       ].join(' ')}
     >
       {icon}
@@ -153,6 +182,7 @@ export function ReviewStep({
   );
 
   const { selected: selectedCategories } = useCategorySelection();
+  const { selected: selectedTags } = useTagSelection();
 
   const modeChip =
     values.mode === 'ONE_TO_ONE' ? (
@@ -193,7 +223,18 @@ export function ReviewStep({
     ) : (
       '—'
     );
-
+  const onlineUrl = values.onlineUrl ? (
+    <a
+      href={values.onlineUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline underline-offset-2 hover:opacity-80"
+    >
+      Otwórz link do spotkania
+    </a>
+  ) : (
+    '—'
+  );
   const center = hasCoords
     ? { lat: values.location.lat, lng: values.location.lng }
     : null;
@@ -221,13 +262,38 @@ export function ReviewStep({
                 {modeChip}
                 {visChip}
 
+                {values.meetingKind === 'HYBRID' && (
+                  <Chip tone="orange" icon={<Globe2 className="h-3.5 w-3.5" />}>
+                    HYBRID
+                  </Chip>
+                )}
+
+                {values.meetingKind === 'ONLINE' && (
+                  <Chip tone="cyan" icon={<LinkIcon className="h-3.5 w-3.5" />}>
+                    ONLINE
+                  </Chip>
+                )}
+                {values.meetingKind === 'ONSITE' && (
+                  <Chip tone="teal" icon={<MapPin className="h-3.5 w-3.5" />}>
+                    HYBRID
+                  </Chip>
+                )}
                 {selectedCategories.map((category) => (
                   <Chip
                     key={category.slug}
                     tone="zinc"
-                    icon={<Tag className="h-3.5 w-3.5" />}
+                    icon={<FolderIcon className="h-3.5 w-3.5" />}
                   >
                     {category.label}
+                  </Chip>
+                ))}
+                {selectedTags.map((tag) => (
+                  <Chip
+                    key={tag.slug}
+                    tone="lime"
+                    icon={<HashIcon className="h-3.5 w-3.5" />}
+                  >
+                    {tag.label}
                   </Chip>
                 ))}
 
@@ -259,6 +325,11 @@ export function ReviewStep({
             icon={<MapPin className="h-4 w-4" />}
             label="Where"
             value={where}
+          />
+          <Kvp
+            icon={<LinkIcon className="h-4 w-4" />}
+            label="Online url"
+            value={onlineUrl}
           />
 
           {values.mode === 'GROUP' && (

@@ -12,7 +12,7 @@ import React, {
 type TagSelectionContextValue = {
   selected: TagOption[];
   setSelected: (next: TagOption[]) => void;
-  set: (opts: TagOption[]) => void;
+  set: (opts: TagOption[], maxCount?: number) => void;
   add: (opt: TagOption, maxCount?: number) => void;
   remove: (idOrSlug: string) => void;
   clear: () => void;
@@ -45,16 +45,17 @@ export function TagSelectionProvider({
     );
   }, []);
 
-  const set = useCallback((opts: TagOption[]) => {
+  const set = useCallback((opts: TagOption[], maxCount = 3) => {
     const seen = new Set<string>();
-    const unique: TagOption[] = [];
+    const unique = [];
     for (const o of opts) {
       const key = o.id || o.slug;
-      if (!key || seen.has(key)) continue;
+      if (!key) continue;
+      if (seen.has(key)) continue;
       seen.add(key);
       unique.push(o);
     }
-    setSelected(unique);
+    setSelected(unique.slice(0, maxCount));
   }, []);
 
   const clear = useCallback(() => setSelected([]), []);
@@ -63,7 +64,6 @@ export function TagSelectionProvider({
     () => ({ selected, setSelected, add, remove, set, clear }),
     [selected, add, remove, set, clear]
   );
-
   return (
     <TagSelectionContext.Provider value={value}>
       {children}
@@ -74,7 +74,6 @@ export function TagSelectionProvider({
 export function useTagSelection(): TagSelectionContextValue {
   const ctx = useContext(TagSelectionContext);
   if (!ctx) {
-    // FIX: correct provider name in error
     throw new Error('useTagSelection must be used within TagSelectionProvider');
   }
   return ctx;
