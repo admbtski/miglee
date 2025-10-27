@@ -266,6 +266,15 @@ fragment IntentsResultCore on IntentsResult {
   }
 }
 
+fragment NotificationsResultCore on NotificationsResult {
+  items {
+    ...NotificationCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
 # Lightweight intents result (for lists)
 fragment IntentsResultLight on IntentsResult {
   items {

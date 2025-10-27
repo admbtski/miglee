@@ -97,7 +97,7 @@ export function useGetNotificationsQuery(
   return useQuery(buildGetNotificationsOptions(variables, options));
 }
 
-/* ================= Helpers do cache (mutacje, subskrypcje) ================= */
+/* ================= Helpers: praca na zagnieżdżonej liście ================= */
 
 type NotificationNode = NonNullable<
   NotificationAddedSubscription['notificationAdded']
@@ -115,17 +115,42 @@ function mutateCache(
   qc.setQueryData<GetNotificationsQuery>(key, (old) => updater(old));
 }
 
-/** Dopisanie notyfikacji do cache React Query (dedupe po id + limit) */
+/** Pobierz bezpiecznie listę items (może być pusta struktura). */
+function getItems(old?: GetNotificationsQuery) {
+  return old?.notifications?.items ?? [];
+}
+
+/** Zapisz nową listę items, zachowując pageInfo jeśli istnieje. */
+function setItems(
+  old: GetNotificationsQuery | undefined,
+  items: any[]
+): GetNotificationsQuery {
+  return {
+    notifications: {
+      __typename: old?.notifications?.__typename ?? 'NotificationsResult',
+      items,
+      pageInfo: old?.notifications?.pageInfo ?? {
+        __typename: 'PageInfo',
+        total: items.length,
+        limit: items.length,
+        offset: 0,
+        hasPrev: false,
+        hasNext: false,
+      },
+    },
+  } as GetNotificationsQuery;
+}
+
+/** Dopisanie notyfikacji do cache (dedupe po id + limit) */
 export function appendNotificationToCache(
   n: NotificationNode,
   variables?: GetNotificationsQueryVariables
 ) {
   mutateCache((old) => {
-    const items = old?.notifications ?? [];
-    if (items.some((x: any) => x.id === (n as any).id))
-      return old ?? { notifications: items };
+    const items = getItems(old);
+    if (items.some((x: any) => x.id === (n as any).id)) return old; // już jest
     const next = [n as any, ...items].slice(0, MAX_NOTIFS);
-    return { notifications: next } as GetNotificationsQuery;
+    return setItems(old, next);
   }, variables);
 }
 
@@ -135,11 +160,13 @@ export function markOneReadInCache(
   variables?: GetNotificationsQueryVariables
 ) {
   mutateCache((old) => {
-    if (!old?.notifications) return old;
-    const next = old.notifications.map((x: any) =>
-      x.id === id && !x.readAt ? { ...x, readAt: new Date().toISOString() } : x
+    const items = getItems(old);
+    if (items.length === 0) return old;
+    const now = new Date().toISOString();
+    const next = items.map((x: any) =>
+      x.id === id && !x.readAt ? { ...x, readAt: now } : x
     );
-    return { notifications: next } as GetNotificationsQuery;
+    return setItems(old, next);
   }, variables);
 }
 
@@ -149,21 +176,21 @@ export function removeOneFromCache(
   variables?: GetNotificationsQueryVariables
 ) {
   mutateCache((old) => {
-    if (!old?.notifications) return old;
-    const next = old.notifications.filter((x: any) => x.id !== id);
-    return { notifications: next } as GetNotificationsQuery;
+    const items = getItems(old);
+    if (items.length === 0) return old;
+    const next = items.filter((x: any) => x.id !== id);
+    return setItems(old, next);
   }, variables);
 }
 
 /** Oznacz wszystkie notyfikacje jako przeczytane (optimistic) */
 export function markAllReadInCache(variables?: GetNotificationsQueryVariables) {
   mutateCache((old) => {
-    if (!old?.notifications) return old;
+    const items = getItems(old);
+    if (items.length === 0) return old;
     const now = new Date().toISOString();
-    const next = old.notifications.map((x: any) =>
-      x.readAt ? x : { ...x, readAt: now }
-    );
-    return { notifications: next } as GetNotificationsQuery;
+    const next = items.map((x: any) => (x.readAt ? x : { ...x, readAt: now }));
+    return setItems(old, next);
   }, variables);
 }
 
@@ -220,7 +247,7 @@ export function useAddNotificationMutation<TContext extends CtxList = CtxList>(
           GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey
         );
 
-        // Optimistic: dopisz "tymczasową" notyfikację na górę
+        // optimistic: dopisz "tymczasową" pozycję
         const optimisticItem = {
           __typename: 'Notification' as const,
           id: `optimistic-${Date.now()}`,
@@ -239,21 +266,11 @@ export function useAddNotificationMutation<TContext extends CtxList = CtxList>(
           intent: null,
         };
 
-        mutateCache(
-          (old) =>
-            old
-              ? {
-                  ...old,
-                  notifications: [
-                    optimisticItem as any,
-                    ...(old.notifications ?? []),
-                  ].slice(0, MAX_NOTIFS),
-                }
-              : ({
-                  notifications: [optimisticItem as any],
-                } as GetNotificationsQuery),
-          listVariables
-        );
+        mutateCache((old) => {
+          const items = getItems(old);
+          const next = [optimisticItem as any, ...items].slice(0, MAX_NOTIFS);
+          return setItems(old, next);
+        }, listVariables);
 
         return { previous } as TContext;
       },
@@ -269,6 +286,7 @@ export function useAddNotificationMutation<TContext extends CtxList = CtxList>(
       },
 
       onSuccess: () => {
+        // odśwież listy (np. aby zniknęły optimistic id)
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) && q.queryKey[0] === 'GetNotifications',
@@ -334,7 +352,6 @@ export function useMarkNotificationReadMutation<
           GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey
         );
 
-        // optimistic: zaznacz jako przeczytane w cache
         if (variables.id) markOneReadInCache(variables.id, listVariables);
 
         return { previous } as TContext;
@@ -351,7 +368,6 @@ export function useMarkNotificationReadMutation<
       },
 
       onSuccess: () => {
-        // odśwież listy, jeśli coś jeszcze korzysta
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) && q.queryKey[0] === 'GetNotifications',
@@ -417,7 +433,6 @@ export function useDeleteNotificationMutation<
           GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey
         );
 
-        // optimistic: usuń z cache
         if (variables.id) removeOneFromCache(variables.id, listVariables);
 
         return { previous } as TContext;
@@ -490,7 +505,7 @@ export function useMarkAllNotificationsReadMutation<
     TContext
   >(
     buildMarkAllNotificationsReadOptions<TContext>({
-      onMutate: async (variables) => {
+      onMutate: async (_variables) => {
         await qc.cancelQueries({
           queryKey: GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey,
         });
@@ -499,7 +514,6 @@ export function useMarkAllNotificationsReadMutation<
           GET_NOTIFICATIONS_KEY(listVariables) as unknown as QueryKey
         );
 
-        // optimistic: zaznacz wszystkie jako przeczytane
         markAllReadInCache(listVariables);
 
         return { previous } as TContext;
@@ -529,10 +543,6 @@ export function useMarkAllNotificationsReadMutation<
 
 /* ================= Subscription: notificationAdded ================= */
 
-/**
- * Subskrypcja notificationAdded (graphql-ws) z retry/backoff.
- * Wymaga recipientId (schema: ID!).
- */
 export function useNotificationAdded(params: {
   recipientId: string;
   onMessage?: OnNotification;

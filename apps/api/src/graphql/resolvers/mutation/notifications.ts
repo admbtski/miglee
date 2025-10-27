@@ -123,12 +123,12 @@ export const deleteNotificationMutation: MutationResolvers['deleteNotification']
 
         await prisma.notification.delete({ where: { id } });
 
-        if (wasUnread) {
-          await pubsub?.publish({
-            topic: `NOTIFICATION_BADGE:${user.id}`,
-            payload: { notificationBadgeChanged: { recipientId: user.id } },
-          });
-        }
+        // if (wasUnread) {
+        //   await pubsub?.publish({
+        //     topic: `NOTIFICATION_BADGE:${user.id}`,
+        //     payload: { notificationBadgeChanged: { recipientId: user.id } },
+        //   });
+        // }
 
         return true;
       } catch (e: any) {
@@ -177,10 +177,10 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
         });
 
         // Realtime: badge
-        await pubsub?.publish({
-          topic: `NOTIFICATION_BADGE:${user.id}`,
-          payload: { notificationBadgeChanged: { recipientId: user.id } },
-        });
+        // await pubsub?.publish({
+        //   topic: `NOTIFICATION_BADGE:${user.id}`,
+        //   payload: { notificationBadgeChanged: { recipientId: user.id } },
+        // });
 
         return true;
       } catch (e: any) {
@@ -226,10 +226,10 @@ export const markAllNotificationsReadMutation: MutationResolvers['markAllNotific
         data: { readAt: new Date() },
       });
 
-      await pubsub?.publish({
-        topic: `NOTIFICATION_BADGE:${user.id}`,
-        payload: { notificationBadgeChanged: { recipientId: user.id } },
-      });
+      // await pubsub?.publish({
+      //   topic: `NOTIFICATION_BADGE:${user.id}`,
+      //   payload: { notificationBadgeChanged: { recipientId: user.id } },
+      // });
 
       return res.count;
     }

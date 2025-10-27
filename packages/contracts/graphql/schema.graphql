@@ -46,6 +46,11 @@ type IntentsResult {
   pageInfo: PageInfo!
 }
 
+type NotificationsResult {
+  items: [Notification!]!
+  pageInfo: PageInfo!
+}
+
 input UsersSort {
   by: UsersSortBy! = CREATED_AT
   dir: SortDir! = DESC
@@ -419,7 +424,7 @@ type Query {
     entityType: NotificationEntity
     limit: Int = 50
     offset: Int = 0
-  ): [Notification!]!
+  ): NotificationsResult!
 
   # Intents listing with rich filters. `status=FULL` requires counting JOINED vs `max` (handle in resolver).
   intents(
