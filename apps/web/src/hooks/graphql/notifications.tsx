@@ -30,7 +30,10 @@ import { gqlClient } from '@/lib/graphql/client';
 import { getWsClient } from '@/lib/graphql/wsClient';
 import { getQueryClient } from '@/lib/query-client/query-client';
 import {
+  InfiniteData,
   QueryKey,
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
   useMutation,
   UseMutationOptions,
   useQuery,
@@ -749,4 +752,102 @@ export function useNotificationBadge(params: {
   }, [recipientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { connected };
+}
+
+/* =============================================================================
+ * Typy pomocnicze — wymagamy recipientId, offset zarządzamy sami
+ * ========================================================================== */
+type NotificationsVarsBase = GetNotificationsQueryVariables;
+
+// Te zmienne przyjmujemy z zewnątrz (offset dokładamy sami)
+export type NotificationsVarsNoOffset = Omit<
+  NotificationsVarsBase,
+  'offset'
+> & {
+  recipientId: string; // <- WYMAGANY
+};
+
+// Dla zwykłego useQuery też chcemy mieć recipientId wymagany,
+// ale możemy przyjąć również offset jeśli chcesz używać bez infinite:
+export type NotificationsVarsList = NotificationsVarsNoOffset & {
+  offset?: number | null | undefined;
+};
+
+export const GET_NOTIFICATIONS_INFINITE_KEY = (
+  variables?: Omit<GetNotificationsQueryVariables, 'offset'>
+) =>
+  variables
+    ? (['GetNotificationsInfinite', variables] as const)
+    : (['GetNotificationsInfinite'] as const);
+
+/** Builder dla useInfiniteQuery (offset doklejany, recipientId wymagany) */
+export function buildGetNotificationsInfiniteOptions(
+  variables: NotificationsVarsNoOffset,
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      GetNotificationsQuery, // TQueryFnData
+      Error, // TError
+      InfiniteData<GetNotificationsQuery>,
+      QueryKey, // TQueryKey
+      number // TPageParam (offset)
+    >,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+): UseInfiniteQueryOptions<
+  GetNotificationsQuery,
+  Error,
+  InfiniteData<GetNotificationsQuery>,
+  QueryKey,
+  number
+> {
+  return {
+    queryKey: GET_NOTIFICATIONS_INFINITE_KEY(variables) as unknown as QueryKey,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const vars: GetNotificationsQueryVariables = {
+        ...variables, // <- zawiera wymagany recipientId
+        offset: pageParam, // <- dokładamy offset
+      };
+      return gqlClient.request<
+        GetNotificationsQuery,
+        GetNotificationsQueryVariables
+      >(GetNotificationsDocument, vars);
+    },
+    getNextPageParam: (lastPage, _all, lastOffset) => {
+      const res = lastPage.notifications;
+      if (res?.pageInfo) {
+        const { hasNext, limit } = res.pageInfo as {
+          hasNext: boolean;
+          limit: number;
+        };
+        if (!hasNext) return undefined;
+        const prev = (lastOffset ?? 0) as number;
+        return prev + limit;
+      }
+      return undefined;
+    },
+    ...(options ?? {}),
+  };
+}
+/** Publiczny hook (infinite) — zwraca InfiniteData<GetNotificationsQuery> */
+export function useNotificationsInfiniteQuery(
+  variables: NotificationsVarsNoOffset,
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      GetNotificationsQuery,
+      Error,
+      InfiniteData<GetNotificationsQuery>,
+      QueryKey,
+      number
+    >,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+) {
+  return useInfiniteQuery<
+    GetNotificationsQuery,
+    Error,
+    InfiniteData<GetNotificationsQuery>,
+    QueryKey,
+    number
+  >(buildGetNotificationsInfiniteOptions(variables, options));
 }

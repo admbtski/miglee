@@ -27,25 +27,26 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  appendNotificationToCache,
-  useAddNotificationMutation,
-  useDeleteNotificationMutation,
-  useGetNotificationsQuery,
-  useMarkAllNotificationsReadMutation,
-  useMarkNotificationReadMutation,
+  // Subskrypcje / badge
+  appendNotificationToCache, // zostawiamy: może aktualizować cache (jeśli Twoje hooki to wspierają)
   useNotificationAdded,
   useNotificationBadge,
+  // Mutacje
+  useAddNotificationMutation,
+  useDeleteNotificationMutation,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+  // NEW: infinite query
+  useNotificationsInfiniteQuery,
 } from '@/hooks/graphql/notifications';
-import {
-  GetNotificationsDocument,
-  type GetNotificationsQuery,
-  type GetNotificationsQueryVariables,
+
+import type {
+  GetNotificationsQuery,
+  GetNotificationsQueryVariables,
 } from '@/lib/graphql/__generated__/react-query-update';
-import { gqlClient } from '@/lib/graphql/client';
 
 type NotificationBellProps = {
   recipientId: string;
-
   limit?: number;
   resetBadgeOnOpen?: boolean;
   className?: string;
@@ -94,70 +95,48 @@ export function NotificationBell({
   const [open, setOpen] = useState(false);
   const [hasNew, setHasNew] = useState(false);
 
-  // ----------- Query (pierwsza strona) -----------
+  // ========= Infinite Query =========
   const baseVars: GetNotificationsQueryVariables = useMemo(
     () => ({ recipientId, limit, offset: 0 }),
     [recipientId, limit]
   );
-  const { data, isLoading, refetch } = useGetNotificationsQuery(baseVars, {
+
+  const {
+    data,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotificationsInfiniteQuery(baseVars, {
+    // Jeśli w hooku masz domyślne getNextPageParam, nie musisz tu nic podawać
     refetchOnWindowFocus: false,
     staleTime: 10_000,
   });
 
-  // ----------- Lokalny stan stron -----------
-  const [list, setList] = useState<NotificationNode[]>([]);
-  const [nextOffset, setNextOffset] = useState<number | null>(null);
-  const [hasNext, setHasNext] = useState<boolean>(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  // Płaskie, unikatowe „items” ze wszystkich stron
+  const pagesItems = useMemo(() => {
+    const items =
+      data?.pages.flatMap((p) => p.notifications?.items ?? []) ?? [];
+    return mergeUniqueById(items);
+  }, [data?.pages]);
 
-  const hydratedRef = useRef(false);
+  // ========= Optimistic UI (read/delete) bez grzebania w cache =========
+  const [optimistic, setOptimistic] = useState<
+    Record<string, Partial<NotificationNode>>
+  >({});
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const items = data?.notifications?.items ?? [];
-    const pi = data?.notifications?.pageInfo;
+  const list: NotificationNode[] = useMemo(() => {
+    const applied = pagesItems
+      .filter((x) => !deletedIds.has(x.id))
+      .map((x) => ({ ...x, ...(optimistic[x.id] ?? {}) }));
+    return applied;
+  }, [pagesItems, optimistic, deletedIds]);
 
-    if (!hydratedRef.current || list.length === 0) {
-      setList(items);
-      setHasNext(!!pi?.hasNext);
-      setNextOffset(
-        pi?.hasNext ? (pi!.offset ?? 0) + (pi!.limit ?? items.length) : null
-      );
-      hydratedRef.current = true;
-      return;
-    }
+  const headerCount = list.length;
 
-    if (items.length > 0) {
-      setList((prev) => patchById(prev, items));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.notifications?.items, data?.notifications?.pageInfo]);
-
-  // Dociąganie kolejnej strony
-  const loadMore = useCallback(async () => {
-    if (loadingMore || nextOffset == null) return;
-    try {
-      setLoadingMore(true);
-      const res = await gqlClient.request<
-        GetNotificationsQuery,
-        GetNotificationsQueryVariables
-      >(GetNotificationsDocument, { recipientId, limit, offset: nextOffset });
-      const more = res.notifications?.items ?? [];
-      const pi = res.notifications?.pageInfo;
-
-      setList((prev) => mergeUniqueById([...prev, ...more]));
-      if (pi?.hasNext) {
-        setHasNext(true);
-        setNextOffset((pi.offset ?? nextOffset) + (pi.limit ?? more.length));
-      } else {
-        setHasNext(false);
-        setNextOffset(null);
-      }
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [loadingMore, nextOffset, recipientId, limit]);
-
-  // ----------- Floating + rozmiar scrolla -----------
+  // ========= Floating + size =========
   const headerRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
@@ -206,13 +185,20 @@ export function NotificationBell({
     return () => document.removeEventListener('mousedown', onDown);
   }, [open, refs.reference, refs.floating]);
 
-  // ----------- Subskrypcje -----------
+  // ========= Subskrypcje =========
   useNotificationAdded({
     recipientId,
     onMessage: (n) => {
-      appendNotificationToCache(n, baseVars);
-      setList((prev) => mergeUniqueById([n as any, ...prev]));
+      // Jeśli masz wsparcie dla infinite-key w appendNotificationToCache — użyj go.
+      // W przeciwnym razie po prostu odśwież pierwszą stronę (refetch()) albo
+      // polegaj na local optimistic „wstrzyknięciu” – tu robimy refetch + badge:
+      try {
+        appendNotificationToCache(n, baseVars);
+      } catch {
+        // ignorujemy jeśli append nie wspiera infinite
+      }
       setHasNew(true);
+      void refetch();
     },
   });
   useNotificationBadge({
@@ -220,46 +206,65 @@ export function NotificationBell({
     onChange: () => setHasNew(true),
   });
 
-  // ----------- Mutacje -----------
+  // ========= Mutacje =========
   const { mutate: addNotif, isPending: adding } = useAddNotificationMutation(
     baseVars,
-    { onSuccess: () => {} }
+    { onSuccess: () => void refetch() }
   );
-  const { mutate: markRead, isPending: marking } =
-    useMarkNotificationReadMutation(baseVars, { onSuccess: () => {} });
-  const { mutate: delNotif, isPending: deleting } =
-    useDeleteNotificationMutation(baseVars, { onSuccess: () => {} });
-  const { mutate: markAll, isPending: markingAll } =
-    useMarkAllNotificationsReadMutation(baseVars, { onSuccess: () => {} });
 
-  // Handlery
+  const { mutate: markRead, isPending: marking } =
+    useMarkNotificationReadMutation(baseVars, {
+      onSuccess: () => void refetch(),
+    });
+
+  const { mutate: delNotif, isPending: deleting } =
+    useDeleteNotificationMutation(baseVars, {
+      onSuccess: () => void refetch(),
+    });
+
+  const { mutate: markAll, isPending: markingAll } =
+    useMarkAllNotificationsReadMutation(baseVars, {
+      onSuccess: () => void refetch(),
+    });
+
+  // ========= Handlery =========
   const toggle = useCallback(() => setOpen((v) => !v), []);
+
   const handleMarkOne = useCallback(
     (id: string) => {
+      // optimistic
+      setOptimistic((prev) => ({
+        ...prev,
+        [id]: { ...(prev[id] ?? {}), readAt: new Date().toISOString() },
+      }));
       markRead({ id });
-      setList((prev) =>
-        prev.map((x) =>
-          x.id === id && !x.readAt
-            ? { ...x, readAt: new Date().toISOString() }
-            : x
-        )
-      );
     },
     [markRead]
   );
+
   const handleDeleteOne = useCallback(
     (id: string) => {
+      // optimistic
+      setDeletedIds((prev) => new Set(prev).add(id));
       delNotif({ id });
-      setList((prev) => prev.filter((x) => x.id !== id));
     },
     [delNotif]
   );
+
   const handleMarkAll = useCallback(() => {
-    markAll({ recipientId });
-    setHasNew(false);
     const now = new Date().toISOString();
-    setList((prev) => prev.map((x) => (x.readAt ? x : { ...x, readAt: now })));
-  }, [markAll, recipientId]);
+    // optimistic
+    setOptimistic((prev) => {
+      const next = { ...prev };
+      for (const it of list) {
+        next[it.id] = { ...(next[it.id] ?? {}), readAt: now };
+      }
+      return next;
+    });
+    setHasNew(false);
+    markAll({ recipientId });
+  }, [markAll, recipientId, list]);
+
   const handleAddDev = useCallback(() => {
     addNotif({
       recipientId,
@@ -272,7 +277,11 @@ export function NotificationBell({
     } as any);
   }, [addNotif, recipientId]);
 
-  const headerCount = list.length;
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="relative inline-flex">
@@ -312,8 +321,11 @@ export function NotificationBell({
             aria-label="Notifications list"
             onClick={(e) => e.stopPropagation()}
             className={[
-              'z-50 mt-2 w-96 rounded-2xl border border-zinc-200 bg-white shadow-2xl',
+              // Responsywność: szerokość dopasowana do małych ekranów
+              'z-50 mt-2 w-[min(24rem,calc(100vw-1rem))] rounded-2xl border border-zinc-200 bg-white shadow-2xl',
               'dark:border-zinc-800 dark:bg-zinc-900',
+              // Na większych ekranach trzymaj ~w-96
+              'sm:w-96',
             ].join(' ')}
           >
             {/* Header */}
@@ -369,7 +381,7 @@ export function NotificationBell({
               className="overflow-y-auto [scrollbar-width:thin] [scrollbar-color:theme(colors.zinc.400)_transparent]"
               style={{ padding: '0.25rem 0.25rem 0.75rem 0.25rem' }}
             >
-              {isLoading && !hydratedRef.current && (
+              {isLoading && (
                 <div className="px-4 py-10 text-sm text-zinc-500">Loading…</div>
               )}
 
@@ -460,19 +472,19 @@ export function NotificationBell({
                   </ul>
 
                   {/* Load more */}
-                  {hasNext && nextOffset != null && (
+                  {hasNextPage && (
                     <div className="mt-2 flex justify-center px-2 pb-2">
                       <button
                         type="button"
-                        disabled={loadingMore}
+                        disabled={isFetchingNextPage}
                         onClick={(e) => {
                           e.stopPropagation();
-                          void loadMore();
+                          loadMore();
                         }}
                         className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
                         title="Load more notifications"
                       >
-                        {loadingMore ? 'Loading…' : 'Load more'}
+                        {isFetchingNextPage ? 'Loading…' : 'Load more'}
                       </button>
                     </div>
                   )}
@@ -550,29 +562,4 @@ function mergeUniqueById<T extends { id: string }>(arr: T[]): T[] {
     out.push(it);
   }
   return out;
-}
-
-function patchById<T extends { id: string }>(prev: T[], firstPage: T[]): T[] {
-  const map = new Map<string, T>();
-  for (const p of prev) map.set(p.id, p);
-
-  const head: T[] = [];
-  for (const f of firstPage) {
-    const existing = map.get(f.id);
-    if (existing) {
-      const merged = { ...existing, ...f };
-      head.push(merged);
-      map.set(f.id, merged);
-    } else {
-      head.push(f);
-      map.set(f.id, f);
-    }
-  }
-
-  const tail: T[] = [];
-  for (const p of prev) {
-    if (!head.find((h) => h.id === p.id)) tail.push(map.get(p.id) ?? p);
-  }
-
-  return [...head, ...tail];
 }
