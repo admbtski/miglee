@@ -252,12 +252,12 @@ export function mapNotification(n: NotificationWithGraph): GQLNotification {
     readAt: n.readAt ?? null,
     createdAt: n.createdAt,
 
-    recipient: mapUser(n.recipient as any),
-    actor: n.actor ? mapUser(n.actor as any) : null,
+    recipient: mapUser(n.recipient),
+    actor: n.actor ? mapUser(n.actor) : null,
 
     entityType: (n.entityType as NotificationEntity) ?? 'OTHER',
     entityId: n.entityId ?? null,
 
-    intent: n.intent ? mapIntent(n.intent as any) : null,
+    intent: n.intent ? mapIntent(n.intent) : null,
   };
 }

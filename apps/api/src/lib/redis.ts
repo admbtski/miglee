@@ -7,7 +7,7 @@ export const redisEmitter = MQEmitterRedis({
   //  password: process.env.REDIS_PASSWORD,
 
   retryStrategy: (times: number) => Math.min(500 + times * 250, 5000),
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: null,
   enableReadyCheck: true,
   connectTimeout: 5_000,
   lazyConnect: false,
@@ -30,7 +30,7 @@ export const healthRedis = new IORedis({
   //  password: process.env.REDIS_PASSWORD,
 
   retryStrategy: (times: number) => Math.min(500 + times * 250, 5000),
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: null,
   enableReadyCheck: true,
   connectTimeout: 5_000,
   lazyConnect: false,

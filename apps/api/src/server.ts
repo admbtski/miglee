@@ -1,4 +1,4 @@
-import './lib/otel';
+// import './lib/otel';
 
 import Fastify, { RawRequestDefaultExpression, RawServerBase } from 'fastify';
 

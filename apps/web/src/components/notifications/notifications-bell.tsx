@@ -1,0 +1,410 @@
+'use client';
+
+import {
+  autoUpdate,
+  flip,
+  FloatingFocusManager,
+  offset,
+  shift,
+  size,
+  useFloating,
+  type Placement,
+} from '@floating-ui/react';
+import { Bell, Check, Trash2, Settings2, Plus, RefreshCcw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import {
+  appendNotificationToCache,
+  useAddNotificationMutation,
+  useDeleteNotificationMutation,
+  useGetNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+  useNotificationAdded,
+  useNotificationBadge,
+} from '@/hooks/graphql/notifications';
+import type { GetNotificationsQueryVariables } from '@/lib/graphql/__generated__/react-query-update';
+
+type NotificationBellProps = {
+  recipientId: string;
+  limit?: number;
+  resetBadgeOnOpen?: boolean;
+  className?: string;
+  placement?: Placement;
+  strategy?: 'absolute' | 'fixed';
+};
+
+export function NotificationBell({
+  recipientId,
+  limit = 10,
+  resetBadgeOnOpen = true,
+  className = '',
+  placement = 'bottom-end',
+  strategy = 'fixed',
+}: NotificationBellProps) {
+  const [open, setOpen] = useState(false);
+  const [hasNew, setHasNew] = useState(false);
+
+  const variables: GetNotificationsQueryVariables = useMemo(
+    () => ({ recipientId, limit }),
+    [recipientId, limit]
+  );
+
+  const { data, isLoading, refetch } = useGetNotificationsQuery(variables, {});
+  const items = data?.notifications ?? [];
+
+  // Refs do precyzyjnego wyliczenia wysokości scrolla
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
+
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: (next) => {
+      setOpen(next);
+      if (next && resetBadgeOnOpen) setHasNew(false);
+      if (next) void refetch();
+    },
+    placement,
+    strategy,
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(10),
+      flip({ padding: 8, fallbackPlacements: ['top-end', 'bottom-start'] }),
+      shift({ padding: 8 }),
+      size({
+        padding: 8,
+        apply({ availableHeight, elements }) {
+          const root = elements.floating as HTMLElement;
+          const headerH = headerRef.current?.offsetHeight ?? 0;
+          const footerH = footerRef.current?.offsetHeight ?? 0;
+
+          // Ile zostaje na listę
+          const innerMax = Math.max(0, availableHeight - headerH - footerH);
+
+          // max wysokość całego dropdownu (root)
+          root.style.maxHeight = `${availableHeight}px`;
+
+          // max wysokość listy – tu robimy faktyczny scroll
+          if (listRef.current) {
+            listRef.current.style.maxHeight = `${innerMax}px`;
+          }
+        },
+      }),
+    ],
+  });
+
+  // Zamknij na klik poza
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (ev: MouseEvent) => {
+      const refEl = refs.reference.current as HTMLElement | null;
+      const floatEl = refs.floating.current as HTMLElement | null;
+      const t = ev.target as Node;
+      if (floatEl?.contains(t) || refEl?.contains(t)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open, refs.reference, refs.floating]);
+
+  // Subskrypcje
+  useNotificationAdded({
+    recipientId,
+    onMessage: (n) => {
+      appendNotificationToCache(n, variables);
+      setHasNew(true);
+    },
+  });
+  useNotificationBadge({
+    recipientId,
+    onChange: () => setHasNew(true),
+  });
+
+  // Mutacje
+  const { mutate: addNotif, isPending: adding } = useAddNotificationMutation({
+    recipientId,
+  });
+  const { mutate: markRead, isPending: marking } =
+    useMarkNotificationReadMutation({ recipientId });
+  const { mutate: delNotif, isPending: deleting } =
+    useDeleteNotificationMutation({ recipientId });
+  const { mutate: markAll, isPending: markingAll } =
+    useMarkAllNotificationsReadMutation({ recipientId });
+
+  // Handlery
+  const toggle = useCallback(() => setOpen((v) => !v), []);
+  const handleMarkOne = useCallback(
+    (id: string) => markRead({ id }),
+    [markRead]
+  );
+  const handleDeleteOne = useCallback(
+    (id: string) => delNotif({ id }),
+    [delNotif]
+  );
+  const handleMarkAll = useCallback(() => {
+    markAll({ recipientId });
+    setHasNew(false);
+  }, [markAll, recipientId]);
+  const handleAddDev = useCallback(() => {
+    addNotif({
+      recipientId,
+      kind: 'SYSTEM',
+      title: 'Hello from dev',
+      body: `This is a test notification • ${new Date().toLocaleTimeString()}`,
+      data: null,
+      entityType: 'OTHER',
+      entityId: null,
+    } as any);
+  }, [addNotif, recipientId]);
+
+  return (
+    <div className="relative inline-flex">
+      {/* Trigger */}
+      <button
+        ref={refs.setReference}
+        type="button"
+        onClick={toggle}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        title="Notifications"
+        aria-label="Notifications"
+        className={[
+          'relative inline-flex items-center justify-center rounded-full p-2',
+          'transition-all duration-150 hover:bg-zinc-100 focus:outline-none',
+          'focus-visible:ring-2 focus-visible:ring-sky-500/60 dark:hover:bg-zinc-800',
+          className,
+        ].join(' ')}
+      >
+        <Bell
+          className="h-5 w-5 text-zinc-700 dark:text-zinc-200"
+          aria-hidden
+        />
+
+        {/* 🔴 Badge — perfekcyjnie w rogu */}
+        {hasNew && (
+          <span
+            className="pointer-events-none absolute top-0 right-0 -translate-x-2"
+            aria-hidden
+          >
+            <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-red-500 opacity-70" />
+            <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+          </span>
+        )}
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <FloatingFocusManager context={context} modal={false}>
+          <div
+            ref={refs.setFloating}
+            style={floatingStyles}
+            role="dialog"
+            aria-label="Notifications list"
+            onClick={(e) => e.stopPropagation()}
+            className={[
+              'z-50 mt-2 w-96 rounded-2xl border border-zinc-200 bg-white shadow-2xl',
+              'dark:border-zinc-800 dark:bg-zinc-900',
+              // UWAGA: brak overflow-hidden na root — scroll jest tylko w środku (listRef)
+            ].join(' ')}
+          >
+            {/* Header */}
+            <div
+              ref={headerRef}
+              className="flex items-center justify-between border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800"
+            >
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold">Notifications</h3>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  {items.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {process.env.NODE_ENV !== 'production' && (
+                  <button
+                    type="button"
+                    disabled={adding}
+                    onClick={handleAddDev}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    title="Add test notification"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHasNew(false);
+                    void refetch();
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  title="Refresh"
+                >
+                  <RefreshCcw className="h-3.5 w-3.5" />
+                  Refresh
+                </button>
+                <a
+                  href="/settings/notifications"
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  title="Notification settings"
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                  Settings
+                </a>
+              </div>
+            </div>
+
+            {/* Scroll area — obliczana dynamicznie w middleware `size.apply` */}
+            <div
+              ref={listRef}
+              className="overflow-y-auto"
+              // drobny komfort przescrollowania ostatniej linijki
+              style={{ padding: '0.25rem 0.25rem 0.5rem 0.25rem' }}
+            >
+              {isLoading && (
+                <div className="px-4 py-10 text-sm text-zinc-500">Loading…</div>
+              )}
+
+              {!isLoading && items.length === 0 && (
+                <div className="px-6 py-10 text-center text-sm text-zinc-500">
+                  No notifications yet.
+                </div>
+              )}
+
+              {!isLoading && items.length > 0 && (
+                <ul className="space-y-1 px-1">
+                  {items.slice(0, limit).map((n) => {
+                    const unread = !n.readAt;
+                    return (
+                      <li
+                        key={n.id}
+                        className={[
+                          'group relative overflow-hidden rounded-xl border',
+                          unread
+                            ? 'border-blue-200/60 bg-white shadow-sm dark:border-blue-900/40 dark:bg-zinc-900'
+                            : 'border-zinc-200/60 bg-white dark:border-zinc-800/60 dark:bg-zinc-900',
+                          'transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800',
+                        ].join(' ')}
+                      >
+                        <div className="flex items-start gap-3 px-4 py-3">
+                          {/* 🔵 Pulsująca niebieska kropka */}
+                          <span className="relative mt-2 inline-flex h-2.5 w-2.5">
+                            {unread ? (
+                              <>
+                                <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-sky-500 opacity-70" />
+                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-500" />
+                              </>
+                            ) : (
+                              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-transparent" />
+                            )}
+                          </span>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-0.5 flex items-center justify-between gap-2">
+                              <div className="line-clamp-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {n.title ?? formatKind(n.kind as string)}
+                              </div>
+                              <div className="shrink-0 text-[10px] text-zinc-500">
+                                {formatTime(n.createdAt)}
+                              </div>
+                            </div>
+                            {n.body ? (
+                              <div className="line-clamp-2 text-xs text-zinc-600 dark:text-zinc-300">
+                                {n.body}
+                              </div>
+                            ) : null}
+
+                            <div className="mt-2 flex items-center gap-2">
+                              {unread && (
+                                <button
+                                  type="button"
+                                  disabled={marking}
+                                  onClick={() => handleMarkOne(n.id)}
+                                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                >
+                                  <Check className="h-3.5 w-3.5" />
+                                  Mark read
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                disabled={deleting}
+                                onClick={() => handleDeleteOne(n.id)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {/* Extra "oddech", by ostatni item nie był przyklejony do dołu */}
+                  <li aria-hidden className="h-2" />
+                </ul>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div
+              ref={footerRef}
+              className="flex items-center justify-between border-t border-zinc-100 px-4 py-2.5 text-xs dark:border-zinc-800"
+            >
+              <a
+                href="/notifications"
+                className="rounded-md px-2 py-1 text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                onClick={(e) => e.stopPropagation()}
+              >
+                View all
+              </a>
+              <button
+                type="button"
+                disabled={markingAll}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAll();
+                }}
+                className="rounded-md px-2 py-1 text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                title="Mark all notifications as read"
+              >
+                Mark all as read
+              </button>
+            </div>
+          </div>
+        </FloatingFocusManager>
+      )}
+    </div>
+  );
+}
+
+/* ======= Helpers ======= */
+
+function formatTime(iso: string) {
+  try {
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(d);
+  } catch {
+    return iso;
+  }
+}
+
+function formatKind(kind: string) {
+  switch (kind) {
+    case 'INTENT_REMINDER':
+      return 'Upcoming meeting';
+    case 'INTENT_UPDATED':
+      return 'Meeting updated';
+    case 'INTENT_CANCELED':
+      return 'Meeting canceled';
+    case 'INTENT_CREATED':
+      return 'Intent created';
+    default:
+      return 'Notification';
+  }
+}

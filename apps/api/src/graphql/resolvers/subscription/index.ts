@@ -1,6 +1,10 @@
 import type { Resolvers } from '../../__generated__/resolvers-types';
-import { notificationAddedSubscription } from './notifications';
+import {
+  notificationAddedSubscription,
+  notificationBadgeChangedSubscription,
+} from './notifications';
 
 export const Subscription: Resolvers['Subscription'] = {
-  notificationAdded: notificationAddedSubscription as any,
+  notificationAdded: notificationAddedSubscription,
+  notificationBadgeChanged: notificationBadgeChangedSubscription,
 };

@@ -107,6 +107,7 @@ enum NotificationKind {
   INTENT_CREATED
   INTENT_UPDATED
   INTENT_CANCELED
+  INTENT_DELETED
   INTENT_INVITE
   INTENT_MEMBERSHIP_APPROVED
   INTENT_MEMBERSHIP_REJECTED
@@ -278,6 +279,10 @@ type Notification {
 
   # Convenience: resolved when entityType=INTENT (join on intentId or entityId)
   intent: Intent
+}
+
+type NotificationBadgeChanged {
+  recipientId: String!
 }
 
 # Simple aggregated counters per intent; useful for badges
@@ -544,4 +549,5 @@ type Mutation {
 
 type Subscription {
   notificationAdded(recipientId: ID!): Notification!
+  notificationBadgeChanged(recipientId: ID!): NotificationBadgeChanged!
 }

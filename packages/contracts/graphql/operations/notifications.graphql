@@ -73,3 +73,9 @@ subscription NotificationAdded($recipientId: ID!) {
     ...NotificationCore
   }
 }
+
+subscription NotificationBadgeChanged($recipientId: ID!) {
+  notificationBadgeChanged(recipientId: $recipientId) {
+    ...NotificationBadgeChangedCore
+  }
+}

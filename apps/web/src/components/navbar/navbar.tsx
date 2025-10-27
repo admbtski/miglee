@@ -8,6 +8,7 @@ import { useMeQuery } from '@/hooks/graphql/auth';
 import { CreateEditIntentModalConnect } from '../create-edit-intent/create-edit-intent-modal-connect';
 import { NavDrawer } from './nav-drawer';
 import { UserMenuControlled } from './user-menu-controlled';
+import { NotificationBell } from '../notifications/notifications-bell';
 
 export type NavbarProps = {
   searchBar?: React.ReactNode;
@@ -101,9 +102,27 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
               />
             )}
 
+            {isAuthed ? (
+              <NotificationBell
+                recipientId={'u_admin_00000000000000000001'}
+                limit={10}
+                className=""
+              />
+            ) : (
+              // jeśli nie zalogowany – zwykły przycisk (bez dropdownu)
+              <button
+                type="button"
+                onClick={openAuthSignin}
+                className="cursor-pointer rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                title="Notifications"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" aria-hidden />
+              </button>
+            )}
+
             {[
               { icon: Heart, label: 'Favourites' },
-              { icon: Bell, label: 'Notifications' },
               { icon: Globe, label: 'Language' },
             ].map(({ icon: Icon, label }) => (
               <IconButton key={label} icon={Icon} label={label} />
@@ -125,9 +144,15 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
                 Sign in
               </button>
             ) : (
-              <UserMenuControlled
-                onNavigate={(key) => console.log('navigate:', key)}
-              />
+              <>
+                <NotificationBell
+                  recipientId={'u_admin_00000000000000000001'}
+                  limit={8}
+                />
+                <UserMenuControlled
+                  onNavigate={(key) => console.log('navigate:', key)}
+                />
+              </>
             )}
 
             <button

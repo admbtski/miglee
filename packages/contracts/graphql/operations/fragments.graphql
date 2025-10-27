@@ -233,6 +233,9 @@ fragment NotificationCore on Notification {
   }
 }
 
+fragment NotificationBadgeChangedCore on NotificationBadgeChanged {
+  recipientId
+}
 # =============================================================================
 # Pagination Fragments
 # =============================================================================

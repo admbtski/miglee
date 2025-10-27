@@ -5,18 +5,25 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import { QueryResolvers } from '../../__generated__/resolvers-types';
 import { mapNotification } from '../helpers';
 
-const INTENT_INCLUDE = {
-  categories: true,
-  tags: true,
-  members: { include: { user: true, addedBy: true } }, // OWNER/participants
-} satisfies Prisma.IntentInclude;
+export const NOTIFICATION_INCLUDE = {
+  recipient: true,
+  actor: true,
+  intent: {
+    include: {
+      categories: true,
+      tags: true,
+      members: { include: { user: true, addedBy: true } },
+      canceledBy: true,
+      deletedBy: true,
+    },
+  },
+} satisfies Prisma.NotificationInclude;
 
 export const notificationsQuery: QueryResolvers['notifications'] =
   resolverWithMetrics('Query', 'notifications', async (_p, args, { user }) => {
     const take = Math.max(1, Math.min(args.limit ?? 50, 200));
     const skip = Math.max(0, args.offset ?? 0);
 
-    // Wymagamy zalogowanego usera oraz zgodności recipientId
     if (!user?.id) {
       throw new GraphQLError('Authentication required.', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -40,11 +47,7 @@ export const notificationsQuery: QueryResolvers['notifications'] =
       orderBy: { createdAt: 'desc' },
       take,
       skip,
-      include: {
-        recipient: true,
-        actor: true,
-        intent: { include: INTENT_INCLUDE },
-      },
+      include: NOTIFICATION_INCLUDE,
     });
 
     return list.map(mapNotification);

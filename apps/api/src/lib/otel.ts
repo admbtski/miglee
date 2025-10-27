@@ -25,6 +25,7 @@ import {
 import { ATTR_SERVICE_NAMESPACE } from '@opentelemetry/semantic-conventions/incubating';
 import { PrismaInstrumentation } from '@prisma/instrumentation';
 
+console.log('#####ADAM');
 const serviceName = process.env.BACKEND_OTEL_SERVICE_NAME || 'api';
 
 // diag.setLogger(new DiagConsoleLogger(), {

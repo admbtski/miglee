@@ -22,10 +22,10 @@ import {
   Visibility,
 } from '@/lib/graphql/__generated__/react-query-update';
 
+import { appLanguage } from '@/constants/language';
 import { DesktopSearchBar } from './_components/desktop-search-bar';
 import { SortByControl } from './_components/sort-by-control';
 import { ToggleMap } from './_components/toggle-map';
-import { appLanguage } from '@/constants/language';
 
 const upcomingAfterDefault = new Date().toISOString();
 const DEFAULT_LIMIT = 5;

@@ -17,7 +17,9 @@
     "prisma:format": "prisma format",
     "prisma:push": "prisma db push",
     "prisma:seed": "tsx prisma/seed.ts",
-    "prisma:reset": "prisma migrate reset"
+    "prisma:reset": "prisma migrate reset",
+    "worker:reminders:dev": "tsx watch src/workers/reminders/worker.ts",
+    "worker:reminders": "tsx src/workers/reminders/worker.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
@@ -43,6 +45,7 @@
     "@opentelemetry/semantic-conventions": "^1.37.0",
     "@prisma/client": "^6.16.2",
     "@prisma/instrumentation": "^6.16.2",
+    "bullmq": "^5.61.2",
     "dataloader": "^2.2.3",
     "dotenv": "^17.2.2",
     "fastify": "^5.6.1",

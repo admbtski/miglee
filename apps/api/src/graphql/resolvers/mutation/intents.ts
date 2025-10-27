@@ -11,13 +11,18 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
+  CreateIntentInput,
   Intent as GQLIntent,
   MutationResolvers,
 } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification, pickLocation } from '../helpers';
+import {
+  enqueueReminders,
+  rescheduleReminders,
+  clearReminders,
+} from '../../../workers/reminders/queue';
 
-const THIRTY_DAYS_MS = 30;
-// const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
@@ -36,17 +41,12 @@ export const NOTIFICATION_INCLUDE = {
 const INTENT_INCLUDE = {
   categories: true,
   tags: true,
-  members: {
-    include: {
-      user: true,
-      addedBy: true,
-    },
-  },
+  members: { include: { user: true, addedBy: true } },
   canceledBy: true,
   deletedBy: true,
 } satisfies Prisma.IntentInclude;
 
-function assertCreateInput(input: any) {
+function assertCreateInput(input: CreateIntentInput) {
   if (
     !input.categorySlugs ||
     input.categorySlugs.length < 1 ||
@@ -71,15 +71,35 @@ function assertCreateInput(input: any) {
       extensions: { code: 'BAD_USER_INPUT', field: 'min/max' },
     });
   }
+
+  const hasCoords = !!(
+    input?.location &&
+    (input.location.lat != null || input.location.lng != null)
+  );
+  const hasUrl =
+    typeof input?.onlineUrl === 'string' && input.onlineUrl.length > 0;
+
+  if (input.meetingKind === PrismaMeetingKind.ONLINE && !hasUrl) {
+    throw new GraphQLError('`onlineUrl` is required for ONLINE meetings.', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'onlineUrl' },
+    });
+  }
+  if (input.meetingKind === PrismaMeetingKind.ONSITE && !hasCoords) {
+    throw new GraphQLError(
+      'Location (lat/lng) is required for ONSITE meetings.',
+      {
+        extensions: { code: 'BAD_USER_INPUT', field: 'location' },
+      }
+    );
+  }
   if (
-    (input.meetingKind === PrismaMeetingKind.ONLINE ||
-      input.meetingKind === PrismaMeetingKind.HYBRID) &&
-    !input.onlineUrl
+    input.meetingKind === PrismaMeetingKind.HYBRID &&
+    !(hasUrl || hasCoords)
   ) {
     throw new GraphQLError(
-      '`onlineUrl` is required for ONLINE or HYBRID meetings.',
+      'HYBRID requires either location (lat/lng) or `onlineUrl`.',
       {
-        extensions: { code: 'BAD_USER_INPUT', field: 'onlineUrl' },
+        extensions: { code: 'BAD_USER_INPUT', field: 'meetingKind' },
       }
     );
   }
@@ -121,13 +141,36 @@ function assertUpdateInput(input: any) {
     }
   }
   if (
-    (input.meetingKind === PrismaMeetingKind.ONLINE ||
-      input.meetingKind === PrismaMeetingKind.HYBRID) &&
+    input.meetingKind === PrismaMeetingKind.ONLINE &&
     input.onlineUrl === null
   ) {
-    throw new GraphQLError('`onlineUrl` cannot be null for ONLINE/HYBRID.', {
+    throw new GraphQLError('`onlineUrl` cannot be null for ONLINE.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'onlineUrl' },
     });
+  }
+  if (input.meetingKind === PrismaMeetingKind.HYBRID) {
+    const hasCoords =
+      input?.location &&
+      ['lat', 'lng'].some((k) =>
+        Object.prototype.hasOwnProperty.call(input.location, k)
+      );
+    const onlineUrlProvided = Object.prototype.hasOwnProperty.call(
+      input,
+      'onlineUrl'
+    );
+    const hasAny =
+      (onlineUrlProvided &&
+        typeof input.onlineUrl === 'string' &&
+        input.onlineUrl.length > 0) ||
+      hasCoords;
+    if (!hasAny) {
+      throw new GraphQLError(
+        'HYBRID requires either location (lat/lng) or `onlineUrl`.',
+        {
+          extensions: { code: 'BAD_USER_INPUT', field: 'meetingKind' },
+        }
+      );
+    }
   }
 }
 
@@ -147,9 +190,7 @@ function assertNotReadOnly(intent: {
   }
 }
 
-/**
- * Mutation: Create Intent
- */
+/** Create Intent */
 export const createIntentMutation: MutationResolvers['createIntent'] =
   resolverWithMetrics(
     'Mutation',
@@ -161,14 +202,18 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
       if (!ownerId) {
         throw new GraphQLError(
           'ownerId is required or an authenticated user must be present.',
-          { extensions: { code: 'UNAUTHENTICATED' } }
+          {
+            extensions: { code: 'UNAUTHENTICATED' },
+          }
         );
       }
 
       const loc = pickLocation(input.location) ?? {};
 
       const categoriesData: Prisma.CategoryCreateNestedManyWithoutIntentsInput =
-        { connect: input.categorySlugs.map((slug: string) => ({ slug })) };
+        {
+          connect: input.categorySlugs.map((slug: string) => ({ slug })),
+        };
       const tagsData:
         | Prisma.TagCreateNestedManyWithoutIntentsInput
         | undefined = input.tagSlugs?.length
@@ -212,7 +257,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           },
         });
 
-        const notif = await tx.notification.create({
+        const notification = await tx.notification.create({
           data: {
             kind: PrismaNotificationKind.INTENT_CREATED,
             title: 'Intent created',
@@ -232,10 +277,13 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           include: NOTIFICATION_INCLUDE,
         });
 
-        await pubsub.publish({
-          topic: `NOTIFICATION_ADDED:${notif.recipientId}`,
-          payload: { notificationAdded: mapNotification(notif as any) },
+        await pubsub?.publish({
+          topic: `NOTIFICATION_ADDED:${notification.recipientId}`,
+          payload: { notificationAdded: mapNotification(notification) },
         });
+
+        // Zaplanuj przypomnienia (24h..15m)
+        await enqueueReminders(intent.id, intent.startAt);
 
         const fullIntent = await tx.intent.findUniqueOrThrow({
           where: { id: intent.id },
@@ -249,20 +297,17 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
     }
   );
 
-/**
- * Mutation: Update Intent
- * - zablokowane, jeśli canceled/deleted
- */
+/** Update Intent (publikacja INTENT_UPDATED) */
 export const updateIntentMutation: MutationResolvers['updateIntent'] =
   resolverWithMetrics(
     'Mutation',
     'updateIntent',
-    async (_p, { id, input }): Promise<GQLIntent> => {
+    async (_p, { id, input }, { user, pubsub }): Promise<GQLIntent> => {
       assertUpdateInput(input);
 
       const current = await prisma.intent.findUnique({
         where: { id },
-        select: { canceledAt: true, deletedAt: true },
+        select: { canceledAt: true, deletedAt: true, startAt: true },
       });
       if (!current) {
         throw new GraphQLError('Intent not found.', {
@@ -270,6 +315,16 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         });
       }
       assertNotReadOnly(current);
+
+      // Wyciągnij listę odbiorców (JOINED/PENDING/INVITED) przed update
+      const members = await prisma.intentMember.findMany({
+        where: {
+          intentId: id,
+          status: { in: ['JOINED', 'PENDING', 'INVITED'] },
+        },
+        select: { userId: true },
+      });
+      const recipients = members.map((m) => m.userId);
 
       const loc = input.location
         ? {
@@ -295,7 +350,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         | Prisma.CategoryUpdateManyWithoutIntentsNestedInput
         | undefined =
         input.categorySlugs != null
-          ? { set: input.categorySlugs.map((cid) => ({ id: cid })) }
+          ? { set: input.categorySlugs.map((slug: string) => ({ slug })) }
           : undefined;
 
       const tagsUpdate:
@@ -338,19 +393,19 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           : {}),
 
         ...(Object.prototype.hasOwnProperty.call(loc, 'lat')
-          ? { lat: loc.lat }
+          ? { lat: (loc as any).lat }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'lng')
-          ? { lng: loc.lng }
+          ? { lng: (loc as any).lng }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'address')
-          ? { address: loc.address }
+          ? { address: (loc as any).address }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'placeId')
-          ? { placeId: loc.placeId }
+          ? { placeId: (loc as any).placeId }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'radiusKm')
-          ? { radiusKm: loc.radiusKm }
+          ? { radiusKm: (loc as any).radiusKm }
           : {}),
 
         ...(categoriesUpdate ? { categories: categoriesUpdate } : {}),
@@ -372,15 +427,70 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         });
       }
 
+      // Reschedule reminders jeśli zmienił się startAt
+      if (
+        typeof input.startAt !== 'undefined' &&
+        current.startAt &&
+        new Date(input.startAt as Date).getTime() !==
+          new Date(current.startAt).getTime()
+      ) {
+        await rescheduleReminders(updated.id, updated.startAt);
+      }
+
+      // ===== NEW: publikacja INTENT_UPDATED =====
+      if (recipients.length > 0) {
+        // dedupe po dacie update – żeby przy wielokrotnych update’ach nie spamować
+        const dedupeStamp = updated.updatedAt.toISOString();
+
+        await prisma.notification.createMany({
+          data: recipients.map((recipientId) => ({
+            kind: PrismaNotificationKind.INTENT_UPDATED,
+            recipientId,
+            actorId: user?.id ?? null,
+            entityType: PrismaNotificationEntity.INTENT,
+            entityId: id,
+            intentId: id,
+            title: 'Meeting updated',
+            body: 'Organizer updated meeting details.',
+            createdAt: new Date(),
+            dedupeKey: `intent_updated:${recipientId}:${id}:${dedupeStamp}`,
+          })),
+          skipDuplicates: true,
+        });
+
+        // Push realtime: list + badge
+        await Promise.all(
+          recipients.map(async (recipientId) => {
+            const n = await prisma.notification.findFirst({
+              where: {
+                recipientId,
+                intentId: id,
+                kind: PrismaNotificationKind.INTENT_UPDATED,
+                dedupeKey: `intent_updated:${recipientId}:${id}:${dedupeStamp}`,
+              },
+              orderBy: { createdAt: 'desc' },
+              include: NOTIFICATION_INCLUDE,
+            });
+            if (n) {
+              await pubsub?.publish({
+                topic: `NOTIFICATION_ADDED:${recipientId}`,
+                payload: { notificationAdded: mapNotification(n) },
+              });
+            }
+            await pubsub?.publish({
+              topic: `NOTIFICATION_BADGE:${recipientId}`,
+              payload: { notificationBadgeChanged: { recipientId } },
+            });
+          })
+        );
+      }
+      // =========================================
+
       return mapIntent(updated);
     }
   );
 
-/**
- * Mutation: Cancel Intent
- * - ustawia canceled*; read-only od tej pory
- * - nie pozwala, jeśli już deleted
- */
+/** Cancel Intent – jak było (sprzątanie reminders + publikacje) */
 export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
   resolverWithMetrics(
     'Mutation',
@@ -395,9 +505,7 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
 
       const intent = await prisma.intent.findUnique({
         where: { id },
-        include: {
-          members: { select: { userId: true, status: true } },
-        },
+        include: { members: { select: { userId: true, status: true } } },
       });
       if (!intent) {
         throw new GraphQLError('Intent not found', {
@@ -433,8 +541,12 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
           include: INTENT_INCLUDE,
         });
 
+        try {
+          await clearReminders(id);
+        } catch {}
+
         if (recipients.length > 0) {
-          const created = await tx.notification.createMany({
+          await tx.notification.createMany({
             data: recipients.map((recipientId) => ({
               kind: PrismaNotificationKind.INTENT_CANCELED,
               recipientId,
@@ -450,18 +562,32 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
               createdAt: new Date(),
               dedupeKey: `intent_canceled:${recipientId}:${id}`,
             })),
+            skipDuplicates: true,
           });
 
-          if (created.count > 0) {
-            await Promise.all(
-              recipients.map((recipientId) =>
-                pubsub?.publish({
+          await Promise.all(
+            recipients.map(async (recipientId) => {
+              const notification = await prisma.notification.findFirst({
+                where: {
+                  recipientId,
+                  intentId: id,
+                  kind: PrismaNotificationKind.INTENT_CANCELED,
+                },
+                orderBy: { createdAt: 'desc' },
+                include: NOTIFICATION_INCLUDE,
+              });
+              if (notification) {
+                await pubsub?.publish({
+                  topic: `NOTIFICATION_ADDED:${recipientId}`,
+                  payload: { notificationAdded: mapNotification(notification) },
+                });
+                await pubsub?.publish({
                   topic: `NOTIFICATION_BADGE:${recipientId}`,
                   payload: { notificationBadgeChanged: { recipientId } },
-                })
-              )
-            );
-          }
+                });
+              }
+            })
+          );
         }
 
         return updated;
@@ -471,54 +597,102 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
     }
   );
 
-/**
- * Mutation: Delete Intent (SOFT-DELETE)
- * - dozwolone wyłącznie, jeśli:
- *   1) intent został wcześniej canceled
- *   2) minęło 30 dni od canceledAt
- * - ustawia deletedAt/deletedById/deleteReason
- * - (opcjonalnie) można dodać twarde delete w CRONie po X dniach
- */
+/** Delete Intent (SOFT) — teraz z publikacją INTENT_UPDATED: "Meeting deleted" */
 export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
-  resolverWithMetrics('Mutation', 'deleteIntent', async (_p, { id }, ctx) => {
-    const actorId = ctx.user?.id ?? null;
-    const row = await prisma.intent.findUnique({
-      where: { id },
-      select: { canceledAt: true, deletedAt: true },
-    });
-    if (!row) {
-      throw new GraphQLError('Intent not found.', {
-        extensions: { code: 'NOT_FOUND' },
+  resolverWithMetrics(
+    'Mutation',
+    'deleteIntent',
+    async (_p, { id }, { user, pubsub }) => {
+      const actorId = user?.id ?? null;
+
+      const row = await prisma.intent.findUnique({
+        where: { id },
+        select: { canceledAt: true, deletedAt: true },
       });
-    }
-    if (row.deletedAt) {
-      // Idempotentnie zwracamy true
+      if (!row)
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      if (row.deletedAt) return true;
+      if (!row.canceledAt) {
+        throw new GraphQLError('Intent must be canceled before deletion.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+      const age = Date.now() - new Date(row.canceledAt).getTime();
+      if (age < THIRTY_DAYS_MS) {
+        throw new GraphQLError(
+          'Intent can be deleted 30 days after cancellation.',
+          {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          }
+        );
+      }
+
+      // pobierz odbiorców
+      const members = await prisma.intentMember.findMany({
+        where: {
+          intentId: id,
+          status: { in: ['JOINED', 'PENDING', 'INVITED'] },
+        },
+        select: { userId: true },
+      });
+      const recipients = members.map((m) => m.userId);
+
+      await prisma.intent.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          deletedById: actorId,
+          deleteReason: null,
+        },
+      });
+
+      if (recipients.length > 0) {
+        const dedupe = `intent_deleted:${Date.now()}`; // wystarczy na jednorazowe zdarzenie
+
+        await prisma.notification.createMany({
+          data: recipients.map((recipientId) => ({
+            kind: PrismaNotificationKind.INTENT_DELETED,
+            recipientId,
+            actorId,
+            entityType: PrismaNotificationEntity.INTENT,
+            entityId: id,
+            intentId: id,
+            title: 'Meeting deleted',
+            body: null,
+            createdAt: new Date(),
+            dedupeKey: `${dedupe}:${recipientId}:${id}`,
+          })),
+          skipDuplicates: true,
+        });
+
+        await Promise.all(
+          recipients.map(async (recipientId) => {
+            const n = await prisma.notification.findFirst({
+              where: {
+                recipientId,
+                intentId: id,
+                kind: PrismaNotificationKind.INTENT_DELETED,
+                dedupeKey: `${dedupe}:${recipientId}:${id}`,
+              },
+              orderBy: { createdAt: 'desc' },
+              include: NOTIFICATION_INCLUDE,
+            });
+            if (n) {
+              await pubsub?.publish({
+                topic: `NOTIFICATION_ADDED:${recipientId}`,
+                payload: { notificationAdded: mapNotification(n) },
+              });
+            }
+            await pubsub?.publish({
+              topic: `NOTIFICATION_BADGE:${recipientId}`,
+              payload: { notificationBadgeChanged: { recipientId } },
+            });
+          })
+        );
+      }
+
       return true;
     }
-    if (!row.canceledAt) {
-      throw new GraphQLError('Intent must be canceled before deletion.', {
-        extensions: { code: 'FAILED_PRECONDITION' },
-      });
-    }
-    const age = Date.now() - new Date(row.canceledAt).getTime();
-    if (age < THIRTY_DAYS_MS) {
-      throw new GraphQLError(
-        'Intent can be deleted 30 days after cancellation.',
-        { extensions: { code: 'FAILED_PRECONDITION' } }
-      );
-    }
-
-    await prisma.intent.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        deletedById: actorId,
-        deleteReason: null,
-      },
-    });
-
-    // Opcjonalnie: powiadom właściciela/modów, że został usunięty (INTENT_UPDATED)
-    // (pomijam wysyłkę, można dopisać wg potrzeb)
-
-    return true;
-  });
+  );
