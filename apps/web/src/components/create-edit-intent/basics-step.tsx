@@ -9,12 +9,12 @@ import {
 } from 'react-hook-form';
 import { useCategorySelection } from './category-selection-provider';
 import { IntentFormValues } from './types';
-import { useCategoriesLimit } from '@/hooks/use-categories';
+import { getUseCategoriesLimitData } from '@/hooks/use-categories';
 import { CategoryMultiCombo } from '../combobox/category-combobox';
 import { CategoryOption, TagOption } from '@/types/types';
-import { useTagsLimit } from '@/hooks/use-tags';
 import { useTagSelection } from './tag-selection-provider';
 import { TagMultiCombo } from '../combobox/tag-multicombo';
+import { getUseTagsLimitData } from '@/hooks/use-tags';
 
 export function BasicsStep({
   form,
@@ -100,7 +100,7 @@ export function BasicsStep({
         </div>
 
         <div
-          className="mt-1 text-xs text-red-500"
+          className="mt-1 text-xs absolute text-red-500"
           id={titleErrId}
           role="alert"
           aria-live="polite"
@@ -118,7 +118,7 @@ export function BasicsStep({
             const slugs = vals.map((v) => v.slug);
             field.onChange(slugs);
             // FIX: pass numeric limit (not the hook itself)
-            setCategories(vals, useCategoriesLimit);
+            setCategories(vals, getUseCategoriesLimitData());
             void trigger('categorySlugs');
           };
           return (
@@ -143,7 +143,7 @@ export function BasicsStep({
                 id={catErrId}
                 role="alert"
                 aria-live="polite"
-                className="mt-1 text-xs text-red-500"
+                className="mt-1 text-xs absolute text-red-500"
               >
                 {errors.categorySlugs?.message as string}
               </div>
@@ -199,7 +199,7 @@ export function BasicsStep({
         </div>
 
         <div
-          className="mt-1 text-xs text-red-500"
+          className="mt-1 text-xs absolute text-red-500"
           id={descErrId}
           role="alert"
           aria-live="polite"
@@ -216,7 +216,7 @@ export function BasicsStep({
           const handleChange = (vals: TagOption[]) => {
             const slugs = vals.map((v) => v.slug);
             field.onChange(slugs);
-            setTags(vals, useTagsLimit);
+            setTags(vals, getUseTagsLimitData());
             void trigger('tagSlugs');
           };
           return (
@@ -237,14 +237,14 @@ export function BasicsStep({
                 values={selectedTags}
               />
 
-              <div
+              {/* <div
                 id={catErrId}
                 role="alert"
                 aria-live="polite"
-                className="mt-1 text-xs text-red-500"
+                className="mt-1 text-xs absolute text-red-500"
               >
                 {errors.categorySlugs?.message as string}
-              </div>
+              </div> */}
             </div>
           );
         }}

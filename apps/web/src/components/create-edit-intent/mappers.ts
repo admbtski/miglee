@@ -65,13 +65,14 @@ export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
   if (v.onlineUrl?.trim()) input.onlineUrl = v.onlineUrl.trim();
   if (v.notes?.trim()) input.notes = v.notes.trim();
 
-  if (v.location.lat != null) v.location.lat = v.location.lat;
-  if (v.location.lng != null) v.location.lng = v.location.lng;
+  if (v.location.lat != null) input.location!.lat = v.location.lat;
+  if (v.location.lng != null) input.location!.lng = v.location.lng;
   if (v.location.address?.trim())
-    v.location.address = v.location.address.trim();
-  if (v.location.radiusKm != null) v.location.radiusKm = v.location.radiusKm;
+    input.location!.address = v.location.address.trim();
+  if (v.location.radiusKm != null)
+    input.location!.radiusKm = v.location.radiusKm;
   if (v.location.placeId?.trim())
-    v.location.placeId = v.location.placeId.trim();
+    input.location!.placeId = v.location.placeId.trim();
 
   return input;
 }

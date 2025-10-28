@@ -9,7 +9,7 @@ export type CategoryOption = {
   label: string;
 };
 
-export const useCategoriesLimit = 25;
+export const getUseCategoriesLimitData = () => 25;
 
 export function useCategories(query: string, initial?: CategoryOption[]) {
   const [debounced, setDebounced] = useState(() => query.trim());
@@ -21,7 +21,7 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
 
   const { data, isLoading, isFetching, error } = useGetCategoriesQuery(
     {
-      limit: useCategoriesLimit,
+      limit: getUseCategoriesLimitData(),
       query: debounced || '',
     },
     {
@@ -32,7 +32,7 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
 
   const optionsFromApi: CategoryOption[] = useMemo(() => {
     const categories = data?.categories ?? [];
-    return categories.slice(0, useCategoriesLimit).map((c) => ({
+    return categories.map((c) => ({
       id: c.id,
       slug: c.slug,
       label: pickCategoryName(c.names, c.slug),
@@ -42,7 +42,7 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
   const options: CategoryOption[] = useMemo(() => {
     if (optionsFromApi.length > 0) return optionsFromApi;
     return initial && initial.length
-      ? initial.slice(0, useCategoriesLimit)
+      ? initial.slice(0, getUseCategoriesLimitData())
       : [];
   }, [optionsFromApi, initial]);
 

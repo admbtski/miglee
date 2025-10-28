@@ -24,6 +24,7 @@ export interface EventCardProps {
   endISO: string;
   avatarUrl: string;
   organizerName: string;
+  title: string;
   description: string;
   address?: string;
   onlineUrl?: string;
@@ -300,6 +301,7 @@ export function EventCard({
   endISO,
   avatarUrl,
   organizerName,
+  title,
   description,
   address,
   onlineUrl,
@@ -369,7 +371,7 @@ export function EventCard({
               </span>
             </p>
             <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
-              {description}
+              {title}
             </p>
             <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
               {formatDateRange(start, end)} • {humanDuration(start, end)}

@@ -1,8 +1,21 @@
 'use client';
 
+import {
+  autoUpdate,
+  flip,
+  FloatingFocusManager,
+  offset,
+  shift,
+  size as s,
+  useFloating,
+} from '@floating-ui/react';
 import { Folder, Loader2, Search, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useCategories, useCategoriesLimit } from '../../hooks/use-categories';
+
+import {
+  getUseCategoriesLimitData,
+  useCategories,
+} from '@/hooks/use-categories';
 import { CategoryOption } from '@/types/types';
 
 export type CategoryMultiComboProps = {
@@ -15,6 +28,14 @@ export type CategoryMultiComboProps = {
   className?: string;
   maxCount?: number; // default 3
   size?: 'sm' | 'md' | 'lg';
+  placement?:
+    | 'bottom-start'
+    | 'bottom-end'
+    | 'top-start'
+    | 'top-end'
+    | 'bottom'
+    | 'top';
+  strategy?: 'absolute' | 'fixed';
 };
 
 export function CategoryMultiCombo({
@@ -26,6 +47,8 @@ export function CategoryMultiCombo({
   className,
   maxCount = 3,
   size = 'md',
+  placement = 'bottom-start',
+  strategy = 'fixed',
 }: CategoryMultiComboProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -37,28 +60,57 @@ export function CategoryMultiCombo({
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
 
   const selectedIds = useMemo(() => new Set(values.map((v) => v.id)), [values]);
-
   const visibleOptions = useMemo(
     () => options.filter((o) => !selectedIds.has(o.id)),
     [options, selectedIds]
   );
 
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (!wrapperRef.current?.contains(t) && !listRef.current?.contains(t)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
-
   const canAddMore = values.length < maxCount;
 
+  // Floating UI
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: setOpen,
+    placement,
+    strategy,
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(2),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      s({
+        apply({ rects, availableHeight, elements }) {
+          const floating = elements.floating as HTMLElement;
+          floating.style.maxHeight = `${Math.min(Math.max(240, availableHeight), 320)}px`;
+          floating.style.width = `${rects.reference.width}px`;
+        },
+      }),
+    ],
+  });
+
+  // reference = wrapper
+  useEffect(() => {
+    refs.setReference(wrapperRef.current);
+  }, [refs]);
+
+  // zamykanie na klik poza
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      const refEl = wrapperRef.current;
+      const floatEl = listRef.current;
+      if (refEl?.contains(t) || floatEl?.contains(t)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  // akcje
   const pick = (opt: CategoryOption) => {
     if (!canAddMore) return;
     onChange([...values, opt]);
@@ -207,60 +259,71 @@ export function CategoryMultiCombo({
         </div>
       </div>
 
+      {/* Dropdown */}
       {open && (query.length > 0 || visibleOptions.length > 0) && (
-        <div
-          ref={listRef}
-          id={listboxId}
-          className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
-          role="listbox"
-          aria-label="Categories"
-        >
-          {error && (
-            <div className="px-3 py-3 text-sm text-red-500">
-              Wystąpił błąd. Spróbuj ponownie później.
-            </div>
-          )}
-          {visibleOptions.length === 0 && (
-            <div className="px-3 py-3 text-sm text-zinc-500">No results</div>
-          )}
-          {visibleOptions.length !== 0 && (
-            <>
-              {visibleOptions.map((opt, idx) => {
-                const active = idx === hi;
-                return (
-                  <button
-                    key={opt.id}
-                    id={`cat-opt-${opt.id}`}
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onMouseEnter={() => setHi(idx)}
-                    onClick={() => pick(opt)}
-                    className={[
-                      'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
-                      active
-                        ? 'bg-zinc-100 dark:bg-zinc-800'
-                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
-                    ].join(' ')}
-                  >
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
-                      <Folder className="h-3.5 w-3.5 opacity-80" />
-                    </span>
-                    <span className="text-zinc-800 dark:text-zinc-100">
-                      {opt.label}
-                    </span>
-                  </button>
-                );
-              })}
-              <div className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700">
-                {/* If useCategoriesLimit is a numeric constant, this is correct. */}
-                Pokazujemy maksymalnie <b>{useCategoriesLimit}</b> wyników.
-                Zmień kryteria, aby zobaczyć pozostałe.
+        <FloatingFocusManager context={context} modal={false}>
+          <div
+            ref={(node) => {
+              listRef.current = node;
+              refs.setFloating(node);
+            }}
+            id={listboxId}
+            style={floatingStyles}
+            className="z-20 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+            role="listbox"
+            aria-label="Categories"
+          >
+            {error && (
+              <div className="px-3 py-3 text-sm text-red-500">
+                Wystąpił błąd. Spróbuj ponownie później.
               </div>
-            </>
-          )}
-        </div>
+            )}
+
+            {visibleOptions.length === 0 && !isLoading && (
+              <div className="px-3 py-3 text-sm text-zinc-500">No results</div>
+            )}
+
+            {visibleOptions.length !== 0 && (
+              <>
+                {visibleOptions.map((opt, idx) => {
+                  const active = idx === hi;
+                  return (
+                    <button
+                      key={opt.id}
+                      id={`cat-opt-${opt.id}`}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseEnter={() => setHi(idx)}
+                      onClick={() => pick(opt)}
+                      className={[
+                        'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
+                        active
+                          ? 'bg-zinc-100 dark:bg-zinc-800'
+                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
+                      ].join(' ')}
+                    >
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
+                        <Folder className="h-3.5 w-3.5 opacity-80" />
+                      </span>
+                      <span className="text-zinc-800 dark:text-zinc-100">
+                        {opt.label}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                {typeof getUseCategoriesLimitData() === 'number' && (
+                  <div className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700">
+                    Pokazujemy maksymalnie <b>{getUseCategoriesLimitData()}</b>{' '}
+                    wyników. Zmień kryteria, aby zobaczyć pozostałe.
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </FloatingFocusManager>
       )}
 
       {!canAddMore && (

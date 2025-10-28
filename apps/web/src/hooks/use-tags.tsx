@@ -9,7 +9,7 @@ export type TagOption = {
   label: string;
 };
 
-export const useTagsLimit = 25;
+export const getUseTagsLimitData = () => 25;
 
 export function useTags(query: string, initial?: TagOption[]) {
   const [debounced, setDebounced] = useState(() => query.trim());
@@ -21,7 +21,7 @@ export function useTags(query: string, initial?: TagOption[]) {
 
   const { data, isLoading, isFetching, error } = useGetTagsQuery(
     {
-      limit: useTagsLimit,
+      limit: getUseTagsLimitData(),
       query: debounced || '',
     },
     {
@@ -32,7 +32,7 @@ export function useTags(query: string, initial?: TagOption[]) {
 
   const optionsFromApi: TagOption[] = useMemo(() => {
     const tags = data?.tags ?? [];
-    return tags.slice(0, useTagsLimit).map((t) => ({
+    return tags.map((t) => ({
       id: t.id,
       slug: t.slug,
       label: t.label,
@@ -41,7 +41,9 @@ export function useTags(query: string, initial?: TagOption[]) {
 
   const options: TagOption[] = useMemo(() => {
     if (optionsFromApi.length > 0) return optionsFromApi;
-    return initial && initial.length ? initial.slice(0, useTagsLimit) : [];
+    return initial && initial.length
+      ? initial.slice(0, getUseTagsLimitData())
+      : [];
   }, [optionsFromApi, initial]);
 
   return {

@@ -31,7 +31,7 @@ export function SuccessIntentModal({
   subtitle = 'Your intent is now live — share it or jump in to manage details.',
   okLabel = 'OK',
   viewLabel = 'View intent',
-  autoCloseMs = 3000,
+  autoCloseMs = 5000,
 }: Props) {
   const reducedMotion =
     typeof window !== 'undefined' &&

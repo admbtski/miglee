@@ -224,6 +224,7 @@ export function IntentsPage() {
                     organizerName={
                       item.owner?.name ?? item.owner?.email ?? 'Unknown'
                     }
+                    title={item.title ?? '-'}
                     description={item.description ?? '-'}
                     address={item.address!}
                     onlineUrl={item.onlineUrl!}
