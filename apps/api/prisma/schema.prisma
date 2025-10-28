@@ -101,7 +101,7 @@ model User {
   name       String    @unique
   imageUrl   String
   role       Role      @default(USER)
-  verifiedAt DateTime  @default(now())
+  verifiedAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   lastSeenAt DateTime?
@@ -166,10 +166,11 @@ model Intent {
   tags       Tag[]
 
   // Visibility & capacity
-  visibility Visibility @default(PUBLIC)
-  mode       Mode       @default(GROUP)
-  min        Int        @default(2)
-  max        Int        @default(50)
+  visibility       Visibility @default(PUBLIC)
+  requiresApproval Boolean    @default(false)
+  mode             Mode       @default(GROUP)
+  min              Int        @default(2)
+  max              Int        @default(50)
 
   // Timing
   startAt       DateTime

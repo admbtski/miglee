@@ -32,13 +32,17 @@ import {
 
 // Intent member / moderation mutations
 import {
+  acceptInviteMutation,
   approveMembershipMutation,
+  banIntentMemberMutation,
   cancelJoinRequestMutation,
+  cancelPendingOrInviteForUserMutation,
   inviteMemberMutation,
   kickMemberMutation,
   leaveIntentMutation,
   rejectMembershipMutation,
   requestJoinIntentMutation,
+  unbanIntentMemberMutation,
   updateMemberRoleMutation,
 } from './intent-members';
 import { devLoginMutation, devLogoutMutation } from './auth';
@@ -65,6 +69,7 @@ export const Mutation: Resolvers['Mutation'] = {
   deleteIntent: deleteIntentMutation,
 
   // ---- Intent Members / Moderation ----
+  acceptInvite: acceptInviteMutation,
   requestJoinIntent: requestJoinIntentMutation,
   cancelJoinRequest: cancelJoinRequestMutation,
   leaveIntent: leaveIntentMutation,
@@ -73,6 +78,9 @@ export const Mutation: Resolvers['Mutation'] = {
   rejectMembership: rejectMembershipMutation,
   kickMember: kickMemberMutation,
   updateMemberRole: updateMemberRoleMutation,
+  banMember: banIntentMemberMutation,
+  unbanMember: unbanIntentMemberMutation,
+  cancelPendingOrInviteForUser: cancelPendingOrInviteForUserMutation,
 
   // ---- Notifications ----
   addNotification: addNotificationMutation,

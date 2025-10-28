@@ -201,6 +201,7 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
 
     meetingKind: i.meetingKind as MeetingKind,
     onlineUrl: i.onlineUrl ?? null,
+    requiresApproval: i.requiresApproval ?? null,
 
     lat: i.lat ?? null,
     lng: i.lng ?? null,

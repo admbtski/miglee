@@ -95,6 +95,7 @@ fragment IntentLight on Intent {
   startAt
   endAt
   allowJoinLate
+  requiresApproval
 
   meetingKind
   onlineUrl
@@ -147,6 +148,7 @@ fragment IntentCore on Intent {
   startAt
   endAt
   allowJoinLate
+  requiresApproval
 
   meetingKind
   onlineUrl

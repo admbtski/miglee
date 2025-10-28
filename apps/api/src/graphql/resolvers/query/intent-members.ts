@@ -30,6 +30,9 @@ const MEMBER_INCLUDE = {
   addedBy: true,
 } satisfies Prisma.IntentMemberInclude;
 
+/** ──────────────────────────────────────────────────────────────────────────
+ *  Auth helpers
+ *  ───────────────────────────────────────────────────────────────────────── */
 async function authUser(ctx: MercuriusContext) {
   if (!ctx.user?.id) {
     throw new GraphQLError('Authentication required.', {
@@ -46,21 +49,43 @@ async function resolveViewerRole(intentId: string, viewerId?: string) {
     select: { role: true, status: true },
   });
   if (!me) return null;
-  if (me.status !== 'JOINED') return null;
+  if (me.status !== IntentMemberStatus.JOINED) return null;
   return me.role as IntentMemberRole;
 }
 
+/**
+ * Dla użytkowników nie-będących OWNER/MODERATOR — ogranicz widoczność tylko do JOINED.
+ * Opcjonalnie uwzględnia żądany status (dla modów).
+ */
 function restrictForNonMods(
   viewerRole: IntentMemberRole | null,
   desiredStatus?: IntentMemberStatus | null
-): { status: IntentMemberStatus } {
-  // only OWNER/MODERATOR can view non-JOINED
-  if (viewerRole === 'OWNER' || viewerRole === 'MODERATOR') {
-    return desiredStatus ? { status: desiredStatus } : ({} as any);
+): Prisma.IntentMemberWhereInput {
+  if (
+    viewerRole === IntentMemberRole.OWNER ||
+    viewerRole === IntentMemberRole.MODERATOR
+  ) {
+    return desiredStatus ? { status: desiredStatus } : {};
   }
   return { status: IntentMemberStatus.JOINED };
 }
 
+/** Przyda się gdybyś kiedyś chciał filtrować bany z list (na razie nie używamy). */
+function excludeBannedUnlessMod(
+  viewerRole: IntentMemberRole | null
+): Prisma.IntentMemberWhereInput {
+  if (
+    viewerRole === IntentMemberRole.OWNER ||
+    viewerRole === IntentMemberRole.MODERATOR
+  ) {
+    return {};
+  }
+  return { NOT: { status: IntentMemberStatus.BANNED } };
+}
+
+/** ──────────────────────────────────────────────────────────────────────────
+ *  Queries
+ *  ───────────────────────────────────────────────────────────────────────── */
 export const intentMembersQuery: QueryResolvers['intentMembers'] =
   resolverWithMetrics(
     'Query',
@@ -71,18 +96,25 @@ export const intentMembersQuery: QueryResolvers['intentMembers'] =
 
       const viewerRole = await resolveViewerRole(intentId, user?.id);
       const statusFilter = restrictForNonMods(viewerRole, status ?? null);
+      const bannedFilter = excludeBannedUnlessMod(viewerRole);
 
       const where: Prisma.IntentMemberWhereInput = {
         intentId,
         ...(role ? { role } : {}),
-        ...(statusFilter as any),
+        ...statusFilter,
+        ...bannedFilter,
       };
 
       const list = await prisma.intentMember.findMany({
         where,
         take,
         skip,
-        orderBy: [{ role: 'asc' }, { status: 'asc' }, { joinedAt: 'asc' }],
+        orderBy: [
+          { role: 'asc' },
+          { status: 'asc' },
+          { joinedAt: 'asc' },
+          { createdAt: 'asc' },
+        ],
         include: MEMBER_INCLUDE,
       });
 
@@ -105,7 +137,12 @@ export const intentMemberQuery: QueryResolvers['intentMember'] =
       if (!row) return null;
 
       // non-mods can only see JOINED members
-      if (!(viewerRole === 'OWNER' || viewerRole === 'MODERATOR')) {
+      if (
+        !(
+          viewerRole === IntentMemberRole.OWNER ||
+          viewerRole === IntentMemberRole.MODERATOR
+        )
+      ) {
         if (row.status !== IntentMemberStatus.JOINED) return null;
       }
 
@@ -147,8 +184,11 @@ export const intentMemberStatsQuery: QueryResolvers['intentMemberStats'] =
     async (_p, { intentId }, { user }) => {
       const viewerRole = await resolveViewerRole(intentId, user?.id);
 
-      // OWNER/MODERATOR: real counts by status
-      if (viewerRole === 'OWNER' || viewerRole === 'MODERATOR') {
+      // OWNER/MODERATOR: pełne zliczenia
+      if (
+        viewerRole === IntentMemberRole.OWNER ||
+        viewerRole === IntentMemberRole.MODERATOR
+      ) {
         const byStatus = await prisma.intentMember.groupBy({
           by: ['status'],
           where: { intentId },
@@ -159,19 +199,19 @@ export const intentMemberStatsQuery: QueryResolvers['intentMemberStats'] =
           byStatus.find((r) => r.status === s)?._count ?? 0;
 
         return {
-          joined: reduce('JOINED'),
-          pending: reduce('PENDING'),
-          invited: reduce('INVITED'),
-          rejected: reduce('REJECTED'),
-          banned: reduce('BANNED'),
-          left: reduce('LEFT'),
-          kicked: reduce('KICKED'),
+          joined: reduce(IntentMemberStatus.JOINED),
+          pending: reduce(IntentMemberStatus.PENDING),
+          invited: reduce(IntentMemberStatus.INVITED),
+          rejected: reduce(IntentMemberStatus.REJECTED),
+          banned: reduce(IntentMemberStatus.BANNED),
+          left: reduce(IntentMemberStatus.LEFT),
+          kicked: reduce(IntentMemberStatus.KICKED),
         };
       }
 
-      // inni: eksponuj tylko liczbę JOINED (pozostałe 0)
+      // inni: eksponuj tylko JOINED
       const joined = await prisma.intentMember.count({
-        where: { intentId, status: 'JOINED' },
+        where: { intentId, status: IntentMemberStatus.JOINED },
       });
       return {
         joined,

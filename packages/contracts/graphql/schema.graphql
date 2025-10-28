@@ -116,6 +116,8 @@ enum NotificationKind {
   INTENT_INVITE
   INTENT_MEMBERSHIP_APPROVED
   INTENT_MEMBERSHIP_REJECTED
+  INTENT_MEMBERSHIP_BANNED
+  INTENT_MEMBERSHIP_UNBANNED
   INTENT_REMINDER
   SYSTEM
 }
@@ -225,6 +227,7 @@ type Intent {
   startAt: DateTime!
   endAt: DateTime!
   allowJoinLate: Boolean!
+  requiresApproval: Boolean!
 
   meetingKind: MeetingKind!
   onlineUrl: String
@@ -249,6 +252,9 @@ type Intent {
   hasStarted: Boolean!
   hasEnded: Boolean!
 
+  # Back-compat / convenience aliases for fragments & sorting
+  membersCount: Int! # = joinedCount
+  maxParticipants: Int! # = max
   # Cancellation (read-only state)
   canceledAt: DateTime
   canceledBy: User
@@ -353,6 +359,7 @@ input CreateIntentInput {
   startAt: DateTime!
   endAt: DateTime!
   allowJoinLate: Boolean! = true
+  requiresApproval: Boolean = false
 
   meetingKind: MeetingKind! = ONSITE
   onlineUrl: String
@@ -363,7 +370,7 @@ input CreateIntentInput {
 
 input UpdateIntentInput {
   title: String
-  categorySlugs: [ID!]
+  categorySlugs: [String!]
   tagSlugs: [String!]
   description: String
   notes: String
@@ -376,6 +383,7 @@ input UpdateIntentInput {
   startAt: DateTime
   endAt: DateTime
   allowJoinLate: Boolean
+  requiresApproval: Boolean
 
   meetingKind: MeetingKind
   onlineUrl: String
@@ -410,6 +418,23 @@ input UpdateMemberRoleInput {
   intentId: ID!
   userId: ID!
   role: IntentMemberRole!
+}
+
+# NEW: Ban / Unban / Cancel pending-or-invite
+input BanMemberInput {
+  intentId: ID!
+  userId: ID!
+  note: String
+}
+
+input UnbanMemberInput {
+  intentId: ID!
+  userId: ID!
+}
+
+input CancelPendingOrInviteForUserInput {
+  intentId: ID!
+  userId: ID!
 }
 
 # ------------------------------------------------------------------------------
@@ -519,15 +544,22 @@ type Mutation {
   cancelIntent(id: ID!, reason: String): Intent!
 
   # memberships (user endpoints)
-  requestJoinIntent(intentId: ID!): Intent! # aliased to joinMember; returns full Intent
+  requestJoinIntent(intentId: ID!): Intent! # alias of joinMember; returns full Intent
   cancelJoinRequest(intentId: ID!): Boolean!
-  leaveIntent(intentId: ID!): Intent! # returns updated Intent
-  # membership (owner/mod endpoints) — all return updated Intent
+  leaveIntent(intentId: ID!): Intent!
+  acceptInvite(intentId: ID!): Intent!
+
+  # memberships (owner/mod endpoints) — all return updated Intent unless noted
   inviteMember(input: InviteMemberInput!): Intent!
   approveMembership(input: ApproveMembershipInput!): Intent!
   rejectMembership(input: RejectMembershipInput!): Intent!
   kickMember(input: KickMemberInput!): Intent!
   updateMemberRole(input: UpdateMemberRoleInput!): Intent!
+  banMember(input: BanMemberInput!): Intent!
+  unbanMember(input: UnbanMemberInput!): Intent!
+  cancelPendingOrInviteForUser(
+    input: CancelPendingOrInviteForUserInput!
+  ): Boolean!
 
   # notifications
   addNotification(

@@ -53,7 +53,21 @@ mutation KickMember($input: KickMemberInput!) {
   }
 }
 
-# Owner/moderator updates a member's role
+# Owner/moderator bans a member (permanent block)
+mutation BanMember($input: BanMemberInput!) {
+  banMember(input: $input) {
+    ...IntentCore
+  }
+}
+
+# Owner/moderator cancels a pending or invited membership
+mutation CancelPendingOrInviteForUser(
+  $input: CancelPendingOrInviteForUserInput!
+) {
+  cancelPendingOrInviteForUser(input: $input)
+}
+
+# Owner/moderator updates a member's role (OWNER / MODERATOR / PARTICIPANT)
 mutation UpdateMemberRole($input: UpdateMemberRoleInput!) {
   updateMemberRole(input: $input) {
     ...IntentCore

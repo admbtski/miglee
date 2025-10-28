@@ -1,32 +1,35 @@
 /* eslint-disable no-console */
 // prisma/seed.ts
 import {
-  PrismaClient,
-  Prisma,
-  Visibility,
-  Mode,
-  MeetingKind,
-  Role,
-  Level,
+  Category,
+  Intent,
   IntentMemberRole,
   IntentMemberStatus,
-  NotificationKind,
+  Level,
+  MeetingKind,
+  Mode,
   NotificationEntity,
+  NotificationKind,
+  Prisma,
+  PrismaClient,
+  Role,
+  Tag,
   // DB types (optional)
   User,
-  Category,
-  Tag,
-  Intent,
+  Visibility,
 } from '@prisma/client';
+import {
+  CATEGORY_DEFS,
+  CITIES,
+  FIRST_NAMES,
+  FIXED_IDS,
+  FIXED_INTENTS_TARGET,
+  LAST_NAMES,
+  TAGS,
+  TITLE_BY_CATEGORY,
+} from './constants';
 
 const prisma = new PrismaClient();
-
-/** ---------- Fixed IDs (handy for tests/demos) ---------- */
-const FIXED_IDS = {
-  ADMIN: 'u_admin_00000000000000000001',
-  MODERATOR: 'u_moderator_00000000000000000001',
-  USER: 'u_user_00000000000000000001',
-} as const;
 
 /** ---------- Deterministic RNG ---------- */
 function mulberry32(seed: number) {
@@ -54,7 +57,6 @@ const pickMany = <T>(arr: T[], k: number): T[] => {
   return out;
 };
 const idLike = (prefix: string) => {
-  // deterministic pseudo-id using rnd()
   const chunk = () =>
     Math.floor(rnd() * 36 ** 8)
       .toString(36)
@@ -72,237 +74,31 @@ const namesJson = (
   en,
 });
 
-/** ---------- Realistic-ish data pools ---------- */
-const FIRST_NAMES = [
-  'Adam',
-  'Zuzanna',
-  'Michał',
-  'Kasia',
-  'Bartek',
-  'Ola',
-  'Piotr',
-  'Ania',
-  'Tomek',
-  'Magda',
-  'Krzysztof',
-  'Natalia',
-  'Paweł',
-  'Ewa',
-  'Maciek',
-  'Agnieszka',
-  'Marcin',
-  'Karolina',
-];
-const LAST_NAMES = [
-  'Nowak',
-  'Kowalska',
-  'Wiśniewski',
-  'Wójcik',
-  'Kamińska',
-  'Lewandowski',
-  'Zielińska',
-  'Szymański',
-  'Dąbrowska',
-  'Kozłowski',
-  'Jankowska',
-  'Mazur',
-  'Krawczyk',
-  'Piotrowska',
-];
-
 const AVATAR_ID_POOL = Array.from({ length: 50 }, (_, i) => 100 + i); // picsum 100..149
-
-/** Cities with rough coords and sample places (for address realism) */
-const CITIES = [
-  {
-    name: 'Warszawa',
-    lat: 52.2297,
-    lng: 21.0122,
-    places: [
-      { name: 'Plac Zbawiciela', placeId: 'ChIJ0fZbavUDFkcRZbawiciela01' },
-      { name: 'PGE Narodowy', placeId: 'ChIJs7e8w40DFkcRPGENarodowy01' },
-      { name: 'Muzeum POLIN', placeId: 'ChIJB7o3-mADFkcRPolinMuseum01' },
-    ],
-  },
-  {
-    name: 'Kraków',
-    lat: 50.0647,
-    lng: 19.945,
-    places: [
-      { name: 'Rynek Główny', placeId: 'ChIJ0T2TeoAFBUcRRynekGlowny01' },
-      { name: 'Błonia', placeId: 'ChIJxzE9bR8FBUcRBloniaKrakow01' },
-      { name: 'Kazimierz', placeId: 'ChIJBc7n8DkFBUcRKazimierz01' },
-    ],
-  },
-  {
-    name: 'Gdańsk',
-    lat: 54.352,
-    lng: 18.6466,
-    places: [
-      { name: 'Długi Targ', placeId: 'ChIJQ9jAQxq3_UYRDLugiTarg01' },
-      { name: 'Molo Brzeźno', placeId: 'ChIJ-3b8rje3_UYRBrzeznoPier01' },
-      { name: 'Park Oliwski', placeId: 'ChIJG2n2mxa3_UYROliwaPark01' },
-    ],
-  },
-  {
-    name: 'Wrocław',
-    lat: 51.1079,
-    lng: 17.0385,
-    places: [
-      { name: 'Hala Stulecia', placeId: 'ChIJG9XlgbJED0cRHalaStulecia01' },
-      { name: 'Rynek', placeId: 'ChIJkz1c8bNED0cRWroclawRynek01' },
-      { name: 'Wyspa Słodowa', placeId: 'ChIJq4xUj7JED0cRWyspaSlodowa01' },
-    ],
-  },
-  {
-    name: 'Poznań',
-    lat: 52.4064,
-    lng: 16.9252,
-    places: [
-      { name: 'Stary Rynek', placeId: 'ChIJw8tc1KqNG0cRStaryRynek01' },
-      { name: 'Jezioro Malta', placeId: 'ChIJq2l1v6-NG0cRJezioroMalta01' },
-      { name: 'Park Cytadela', placeId: 'ChIJ1y5V96GNG0cRCytadelaPark01' },
-    ],
-  },
-];
-
-const CATEGORY_DEFS = [
-  {
-    slug: 'running',
-    pl: 'Bieganie',
-    de: 'Laufen',
-    en: 'Running',
-    icon: '🏃',
-    color: '#ef4444',
-  },
-  {
-    slug: 'cycling',
-    pl: 'Kolarstwo',
-    de: 'Radfahren',
-    en: 'Cycling',
-    icon: '🚴',
-    color: '#f59e0b',
-  },
-  {
-    slug: 'reading',
-    pl: 'Czytanie',
-    de: 'Lesen',
-    en: 'Reading',
-    icon: '📚',
-    color: '#10b981',
-  },
-  {
-    slug: 'coding',
-    pl: 'Programowanie',
-    de: 'Programmieren',
-    en: 'Coding',
-    icon: '💻',
-    color: '#3b82f6',
-  },
-  {
-    slug: 'boardgames',
-    pl: 'Planszówki',
-    de: 'Brettspiele',
-    en: 'Board games',
-    icon: '🎲',
-    color: '#8b5cf6',
-  },
-  {
-    slug: 'hiking',
-    pl: 'Wędrówki',
-    de: 'Wandern',
-    en: 'Hiking',
-    icon: '🥾',
-    color: '#22c55e',
-  },
-  {
-    slug: 'language-exchange',
-    pl: 'Wymiana językowa',
-    de: 'Sprachaustausch',
-    en: 'Language exchange',
-    icon: '🗣️',
-    color: '#06b6d4',
-  },
-  {
-    slug: 'photography',
-    pl: 'Fotografia',
-    de: 'Fotografie',
-    en: 'Photography',
-    icon: '📷',
-    color: '#f97316',
-  },
-  {
-    slug: 'yoga',
-    pl: 'Joga',
-    de: 'Yoga',
-    en: 'Yoga',
-    icon: '🧘',
-    color: '#a855f7',
-  },
-  {
-    slug: 'cooking',
-    pl: 'Gotowanie',
-    de: 'Kochen',
-    en: 'Cooking',
-    icon: '🍳',
-    color: '#84cc16',
-  },
-];
-
-const TAGS = [
-  'outdoor',
-  'indoor',
-  'free',
-  'paid',
-  'chill',
-  'intense',
-  'networking',
-  'study',
-  'team',
-  'solo',
-  'coffee',
-  'evening',
-  'morning',
-  'weekend',
-  'family',
-];
-
-const TITLE_BY_CATEGORY: Record<string, string[]> = {
-  running: ['Easy 5k Run', 'Intervals by the River', 'Sunday Long Run'],
-  cycling: ['City Ride After Work', 'Gravel Loop', 'Evening Sprint'],
-  reading: ['Book Club – Chapter 1', 'Quiet Reading Hour', 'Discuss & Coffee'],
-  coding: ['Hack Night', 'Open Source Sprint', 'Pair Programming'],
-  boardgames: ['Strategy Night', 'Party Games', 'Eurogames Evening'],
-  hiking: ['Forest Trail', 'Sunrise Walk', 'Weekend Hike'],
-  'language-exchange': [
-    'EN–PL Swap',
-    'Deutsch Stammtisch',
-    'Casual Language Chat',
-  ],
-  photography: [
-    'Golden Hour Walk',
-    'Portraits Basics',
-    'Composition in the City',
-  ],
-  yoga: ['Morning Flow', 'Yin & Restore', 'Sunset Yoga'],
-  cooking: ['Pasta Workshop', 'Street Food Night', 'Spices 101'],
-};
 
 /** ---------- Utilities for geo/time ---------- */
 const jitterCoord = (base: number) => base + (rnd() - 0.5) * 0.18; // ~±0.09deg
 const randomWithinCity = (city: { lat: number; lng: number }) => ({
-  lat: jitterCoord(city.lat),
-  lng: jitterCoord(city.lng),
+  lat: Number(jitterCoord(city.lat).toFixed(6)),
+  lng: Number(jitterCoord(city.lng).toFixed(6)),
 });
 const randomPlace = (city: (typeof CITIES)[number]) => pick(city.places);
 
-function randomTimeWindow(i: number) {
-  const start = new Date();
-  const addDays = Math.floor(rnd() * 26) + (i % 7 === 0 ? 1 : 0); // 0..25(+1)
-  start.setDate(start.getDate() + addDays);
+/**
+ * 60% terminów w przyszłości (0..25 dni), 40% lekko wstecz (−10..−1 dni)
+ * przydatne do testów statusów STARTED/ONGOING/HAS_ENDED.
+ */
+function randomTimeWindow() {
+  const now = new Date();
+  const future = rand() > 0.4;
+  const start = new Date(now);
+  const deltaDays = future
+    ? Math.floor(rand() * 26)
+    : -1 * (1 + Math.floor(rand() * 10));
+  start.setDate(start.getDate() + deltaDays);
   start.setMinutes(0, 0, 0);
-  start.setHours(9 + Math.floor(rnd() * 10)); // 09:00..18:00
-  const durMin = 75 + Math.floor(rnd() * 91); // 75–165
+  start.setHours(9 + Math.floor(rand() * 10)); // 09:00..18:00
+  const durMin = 75 + Math.floor(rand() * 91); // 75–165
   const end = new Date(start.getTime() + durMin * 60_000);
   return { startAt: start, endAt: end, durMin };
 }
@@ -335,6 +131,7 @@ async function seedUsers(): Promise<User[]> {
         name: 'Admin One',
         role: Role.ADMIN,
         imageUrl: `https://picsum.photos/id/10/200/200`,
+        verifiedAt: new Date(),
       },
     })
   );
@@ -346,6 +143,7 @@ async function seedUsers(): Promise<User[]> {
       name: 'Moderator One',
       role: Role.MODERATOR,
       imageUrl: `https://picsum.photos/id/11/200/200`,
+      verifiedAt: new Date(),
     },
   });
   created.push(mod1);
@@ -356,10 +154,11 @@ async function seedUsers(): Promise<User[]> {
     created.push(
       await prisma.user.create({
         data: {
-          email: emailFor(first, last),
-          name: `${first} ${last}`,
+          email: emailFor(first, last, m),
+          name: `${first} ${last}+${m}`,
           role: Role.MODERATOR,
           imageUrl: `https://picsum.photos/id/${11 + m}/200/200`,
+          ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
         },
       })
     );
@@ -373,6 +172,7 @@ async function seedUsers(): Promise<User[]> {
         name: 'User Fixed',
         role: Role.USER,
         imageUrl: `https://picsum.photos/id/19/200/200`,
+        ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
       },
     })
   );
@@ -384,9 +184,14 @@ async function seedUsers(): Promise<User[]> {
       await prisma.user.create({
         data: {
           email: emailFor(first, last, i),
-          name: `${first} ${last}`,
+          name: `${first} ${last}+${i}`,
           role: Role.USER,
           imageUrl: `https://picsum.photos/id/${pick(AVATAR_ID_POOL)}/200/200`,
+          ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
+          lastSeenAt:
+            rand() > 0.5
+              ? new Date(Date.now() - Math.floor(rand() * 7) * 86400000)
+              : null,
         },
       })
     );
@@ -443,7 +248,7 @@ async function createIntentWithMembers(opts: {
   const coords = randomWithinCity(city);
   const place = randomPlace(city);
   const firstCategory = pick(categories);
-  const { startAt, endAt } = randomTimeWindow(Math.floor(rnd() * 1000));
+  const { startAt, endAt } = randomTimeWindow();
 
   const meetingKind = pick<MeetingKind>([
     MeetingKind.ONSITE,
@@ -454,6 +259,7 @@ async function createIntentWithMembers(opts: {
   const mode = pick<Mode>([Mode.GROUP, Mode.ONE_TO_ONE]);
   const allowJoinLate = rand() > 0.3;
 
+  // ONE_TO_ONE = 2/2, GROUP = 2..(6/8/10/12)
   const min = mode === Mode.ONE_TO_ONE ? 2 : rand() > 0.5 ? 4 : 2;
   const baseMax = mode === Mode.ONE_TO_ONE ? 2 : pick([6, 8, 10, 12]);
   const max = Math.max(min, baseMax);
@@ -465,10 +271,10 @@ async function createIntentWithMembers(opts: {
       2
     ),
   ];
-  const selectedTags = pickMany(tags, 1 + Math.floor(rnd() * 3));
+  const selectedTags = pickMany(tags, 1 + Math.floor(rand() * 3));
   const levels = pickMany(
     [Level.BEGINNER, Level.INTERMEDIATE, Level.ADVANCED],
-    1 + Math.floor(rnd() * 3)
+    1 + Math.floor(rand() * 3)
   );
 
   const address =
@@ -543,7 +349,7 @@ async function createIntentWithMembers(opts: {
       },
     });
 
-    // Optional moderator
+    // Optional moderator (JOINED)
     const maybeModerator =
       rand() > 0.5
         ? await tx.user.findFirst({
@@ -566,17 +372,20 @@ async function createIntentWithMembers(opts: {
       });
     }
 
-    // Participants: fill some JOINED, respect capacity
+    // Participants: fill some JOINED, respect capacity strictly
     const alreadyJoined = await tx.intentMember.count({
       where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
     });
     const freeSlots = Math.max(0, max - alreadyJoined);
+
+    // ONE_TO_ONE: max 1 dodatkowy JOINED poza ownerem (moderator mógł już zabrać slot)
+    const maxExtraForO2O = Math.max(0, 2 - alreadyJoined);
     const targetJoined =
       mode === Mode.ONE_TO_ONE
-        ? Math.min(1, freeSlots)
+        ? Math.min(freeSlots, maxExtraForO2O)
         : Math.min(
             freeSlots,
-            2 + Math.floor(rnd() * Math.min(6, freeSlots + 1))
+            2 + Math.floor(rand() * Math.min(6, freeSlots + 1))
           );
 
     const pool = await tx.user.findMany({
@@ -584,7 +393,7 @@ async function createIntentWithMembers(opts: {
         id: { notIn: [author.id, maybeModerator?.id ?? ''] },
         role: Role.USER,
       },
-      take: 12,
+      take: 20,
     });
 
     const participants = pickMany(pool, Math.max(0, targetJoined));
@@ -601,7 +410,7 @@ async function createIntentWithMembers(opts: {
       });
     }
 
-    // Some PENDING/INVITED/REJECTED/BANNED
+    // Some PENDING/INVITED/REJECTED/BANNED (bez łamania capacity)
     const others = pool.filter((u) => !participants.find((p) => p.id === u.id));
     const extras = pickMany(others, Math.min(4, others.length));
     for (const u of extras) {
@@ -620,9 +429,9 @@ async function createIntentWithMembers(opts: {
           addedById: author.id,
           note:
             st === IntentMemberStatus.BANNED
-              ? 'Spam/abusive behavior reported.'
+              ? 'Banned during moderation (seed).'
               : st === IntentMemberStatus.REJECTED
-                ? 'Does not meet event requirements.'
+                ? 'Rejected due to capacity or profile mismatch (seed).'
                 : null,
         },
       });
@@ -636,7 +445,7 @@ async function createIntentWithMembers(opts: {
   });
 }
 
-/** ---------- Seed: Intents ---------- */
+/** ---------- Seed: Intents (random realistic) ---------- */
 async function seedIntents(opts: {
   users: User[];
   categories: Category[];
@@ -659,6 +468,325 @@ async function seedIntents(opts: {
   }
 
   return out;
+}
+
+/** ---------- EXTRA: Curated, diverse intents for FIXED IDS ---------- */
+
+type Scenario = {
+  title?: string;
+  city: (typeof CITIES)[number]['name'];
+  meetingKind: MeetingKind;
+  visibility: Visibility;
+  mode: Mode;
+  min?: number;
+  max?: number;
+  allowJoinLate?: boolean;
+  radiusKm?: number | null;
+  levels?: Level[];
+  tagSlugs?: string[];
+  when?: 'past' | 'soon' | 'future';
+};
+
+function buildScenarios(total: number): Scenario[] {
+  const scenarios: Scenario[] = [];
+  const cities = CITIES.map((c) => c.name);
+  const kinds = [
+    MeetingKind.ONSITE,
+    MeetingKind.ONLINE,
+    MeetingKind.HYBRID,
+  ] as const;
+  const vis = [Visibility.PUBLIC, Visibility.HIDDEN] as const;
+  const modes = [Mode.GROUP, Mode.ONE_TO_ONE] as const;
+  const whens: Scenario['when'][] = ['past', 'soon', 'future'];
+
+  // Kategorie → użyjemy do tytułów, by brzmiało sensownie
+  const categorySlugs = CATEGORY_DEFS.map((c) => c.slug);
+
+  for (let i = 0; i < total; i++) {
+    // deterministyczne, ale „losowe”
+    const city = cities[i % cities.length]!;
+    const meetingKind = kinds[i % kinds.length]!;
+    const visibility = vis[i % vis.length]!;
+    const mode = modes[i % modes.length]!;
+    const when = whens[i % whens.length]!;
+    const catSlug = categorySlugs[i % categorySlugs.length]!;
+    const titles = TITLE_BY_CATEGORY[catSlug] ?? ['Meetup'];
+    const title = titles[Math.floor(rnd() * titles.length)]!;
+
+    // pojemności – 1:1 → 2/2, GROUP → 2..12
+    const min = mode === Mode.ONE_TO_ONE ? 2 : rand() > 0.5 ? 4 : 2;
+    const max = mode === Mode.ONE_TO_ONE ? 2 : pick([6, 8, 10, 12]);
+
+    // radius dla onsite/hybrid, bywa 0, 0.5, 1 lub ~losowy
+    const radiusKm =
+      meetingKind === MeetingKind.ONLINE
+        ? null
+        : i % 4 === 0
+          ? 0
+          : i % 4 === 1
+            ? 0.5
+            : i % 4 === 2
+              ? 1
+              : Number((rnd() * 3).toFixed(1));
+
+    // poziomy
+    const levels = pickMany(
+      [Level.BEGINNER, Level.INTERMEDIATE, Level.ADVANCED],
+      1 + Math.floor(rand() * 3)
+    );
+
+    // tagi po slugach (TAGS to etykiety – ich slug w seedzie = lower-case z myślnikami)
+    const tagSlugs = pickMany(
+      TAGS.map((t) => t.replace(/\s+/g, '-').toLowerCase()),
+      1 + Math.floor(rand() * 3)
+    );
+
+    scenarios.push({
+      title,
+      city,
+      meetingKind,
+      visibility,
+      mode,
+      min,
+      max,
+      allowJoinLate: rand() > 0.5,
+      radiusKm,
+      levels,
+      tagSlugs,
+      when,
+    });
+  }
+
+  return scenarios;
+}
+
+const SCENARIOS: Scenario[] = buildScenarios(FIXED_INTENTS_TARGET);
+
+function findCityDef(name: string) {
+  const c = CITIES.find((x) => x.name === name)!;
+  return c ?? CITIES[0];
+}
+
+function skewedTime(when?: Scenario['when']) {
+  const base = new Date();
+  const start = new Date(base);
+  if (when === 'past') {
+    start.setDate(base.getDate() - (1 + Math.floor(rand() * 7))); // 1–7 dni temu
+  } else if (when === 'soon') {
+    start.setDate(base.getDate() + (1 + Math.floor(rand() * 5))); // 1–5 dni
+  } else {
+    start.setDate(base.getDate() + (6 + Math.floor(rand() * 20))); // 6–25 dni
+  }
+  start.setHours(9 + Math.floor(rand() * 10), 0, 0, 0);
+  const durMin = 60 + Math.floor(rand() * 121); // 60–180
+  const end = new Date(start.getTime() + durMin * 60_000);
+  return { startAt: start, endAt: end };
+}
+
+async function createPresetIntent(
+  tx: PrismaClient,
+  author: User,
+  categories: Category[],
+  tags: Tag[],
+  s: Scenario
+): Promise<{ intent: Intent; owner: User }> {
+  const city = findCityDef(s.city);
+  const coords = randomWithinCity(city);
+  const place = randomPlace(city);
+  const { startAt, endAt } = skewedTime(s.when);
+
+  const selectedCategories = pickMany(categories, 1 + Math.floor(rand() * 3));
+  const selectedTags =
+    (s.tagSlugs?.length
+      ? tags.filter((t) => s.tagSlugs!.includes(t.slug))
+      : pickMany(tags, 1 + Math.floor(rand() * 3))) || [];
+
+  const title =
+    s.title ??
+    titleFor(selectedCategories[0]?.slug ?? pick(CATEGORY_DEFS).slug);
+
+  const address =
+    s.meetingKind !== MeetingKind.ONLINE ? `${place.name}, ${city.name}` : null;
+  const onlineUrl =
+    s.meetingKind !== MeetingKind.ONSITE
+      ? pick([
+          'https://meet.google.com/abc-defg-hij',
+          'https://zoom.us/j/123456789',
+          'https://discord.gg/xyz123',
+        ])
+      : null;
+
+  const desc =
+    s.meetingKind === MeetingKind.ONSITE
+      ? `${title} near ${place.name} in ${city.name}.`
+      : s.meetingKind === MeetingKind.ONLINE
+        ? `${title} (online).`
+        : `${title} (hybrid): ${place.name}, ${city.name} or online.`;
+
+  const min = s.min ?? (s.mode === Mode.ONE_TO_ONE ? 2 : 2);
+  const max = s.max ?? (s.mode === Mode.ONE_TO_ONE ? 2 : pick([6, 8, 10, 12]));
+
+  const intent = await tx.intent.create({
+    data: {
+      title,
+      description: desc,
+      notes:
+        rand() > 0.6
+          ? pick([
+              'Bring water and comfy shoes.',
+              'Beginner friendly.',
+              'We start on time, come 10 min earlier.',
+              'Optional: camera for portraits.',
+            ])
+          : null,
+      visibility: s.visibility,
+      mode: s.mode,
+      min,
+      max,
+      startAt,
+      endAt,
+      allowJoinLate: s.allowJoinLate ?? rand() > 0.5,
+      meetingKind: s.meetingKind,
+      onlineUrl,
+      lat: s.meetingKind !== MeetingKind.ONLINE ? coords.lat : null,
+      lng: s.meetingKind !== MeetingKind.ONLINE ? coords.lng : null,
+      address,
+      placeId: s.meetingKind !== MeetingKind.ONLINE ? place.placeId : null,
+      radiusKm:
+        s.meetingKind !== MeetingKind.ONLINE
+          ? (s.radiusKm ?? (rand() > 0.7 ? Number((rnd() * 3).toFixed(1)) : 0))
+          : null,
+      levels: s.levels?.length
+        ? s.levels
+        : pickMany(
+            [Level.BEGINNER, Level.INTERMEDIATE, Level.ADVANCED],
+            1 + Math.floor(rand() * 3)
+          ),
+      categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
+      tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
+    },
+  });
+
+  // OWNER
+  await tx.intentMember.create({
+    data: {
+      intentId: intent.id,
+      userId: author.id,
+      role: IntentMemberRole.OWNER,
+      status: IntentMemberStatus.JOINED,
+      joinedAt: new Date(),
+    },
+  });
+
+  // Wypełnij część miejsc
+  const alreadyJoined = await tx.intentMember.count({
+    where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
+  });
+  const freeSlots = Math.max(0, intent.max - alreadyJoined);
+  const howMany =
+    intent.mode === Mode.ONE_TO_ONE
+      ? Math.min(freeSlots, 1)
+      : Math.min(
+          freeSlots,
+          2 + Math.floor(rand() * Math.min(6, freeSlots + 1))
+        );
+
+  const pool = await tx.user.findMany({
+    where: { id: { not: author.id }, role: Role.USER },
+    take: 20,
+  });
+  const participants = pickMany(pool, Math.max(0, howMany));
+  for (const u of participants) {
+    await tx.intentMember.create({
+      data: {
+        intentId: intent.id,
+        userId: u.id,
+        role: IntentMemberRole.PARTICIPANT,
+        status: IntentMemberStatus.JOINED,
+        addedById: author.id,
+        joinedAt: new Date(),
+      },
+    });
+  }
+
+  return { intent, owner: author };
+}
+
+async function seedIntentsForFixedUsers(opts: {
+  users: User[];
+  categories: Category[];
+  tags: Tag[];
+}): Promise<Array<{ intent: Intent; owner: User }>> {
+  const { users, categories, tags } = opts;
+  const byId = new Map(users.map((u) => [u.id, u]));
+  const admin = byId.get(FIXED_IDS.ADMIN);
+  const mod = byId.get(FIXED_IDS.MODERATOR);
+  const user = byId.get(FIXED_IDS.USER);
+
+  const authors: User[] = [admin, mod, user].filter(Boolean) as User[];
+  if (!authors.length) return [];
+
+  const pairs: Array<{ intent: Intent; owner: User }> = [];
+
+  await prisma.$transaction(async (tx) => {
+    // round-robin autorów
+    for (let i = 0; i < SCENARIOS.length; i++) {
+      const author = authors[i % authors.length]!;
+      const s = SCENARIOS[i]!;
+      const pair = await createPresetIntent(tx, author, categories, tags, s);
+      pairs.push(pair);
+    }
+
+    // Opcjonalnie anuluj 1–2 z nich + notyfikacje
+    const cancelSome = pickMany(pairs, Math.min(2, pairs.length));
+    for (const { intent, owner } of cancelSome) {
+      const updated = await tx.intent.update({
+        where: { id: intent.id },
+        data: {
+          canceledAt: new Date(),
+          canceledById: owner.id,
+          cancelReason: pick([
+            'Organizer is ill. Sorry!',
+            'Venue unavailable.',
+            'Unexpected conflict.',
+          ]),
+        },
+      });
+
+      const recips = await tx.intentMember.findMany({
+        where: {
+          intentId: updated.id,
+          status: {
+            in: [
+              IntentMemberStatus.JOINED,
+              IntentMemberStatus.PENDING,
+              IntentMemberStatus.INVITED,
+            ],
+          },
+        },
+        select: { userId: true },
+      });
+
+      if (recips.length) {
+        await tx.notification.createMany({
+          data: recips.map((m) => ({
+            kind: NotificationKind.INTENT_CANCELED,
+            recipientId: m.userId,
+            actorId: owner.id,
+            entityType: NotificationEntity.INTENT,
+            entityId: updated.id,
+            intentId: updated.id,
+            title: 'Meeting canceled',
+            body: 'Organizer posted a cancellation notice.',
+            dedupeKey: `intent_canceled:${m.userId}:${updated.id}`,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+  });
+
+  return pairs;
 }
 
 /** ---------- NEW: Seed some cancellations + notifications ---------- */
@@ -715,6 +843,7 @@ async function seedCanceledIntents(
           dedupeKey: `intent_canceled:${m.userId}:${updated.id}`,
           createdAt: new Date(),
         })),
+        skipDuplicates: true,
       });
     }
   }
@@ -725,7 +854,6 @@ async function seedCanceledIntents(
 async function seedDeletedIntentsAfterCancel(
   canceled: Array<{ intent: Intent; owner: User }>
 ) {
-  // weź niewielką próbkę anulowanych i ustaw im canceledAt sprzed 35 dni, a następnie deletedAt=teraz
   const sample = canceled.filter(() => rand() > 0.6);
   const THIRTY_FIVE_DAYS_MS = 35 * 24 * 60 * 60 * 1000;
   for (const { intent, owner } of sample) {
@@ -733,7 +861,7 @@ async function seedDeletedIntentsAfterCancel(
     await prisma.intent.update({
       where: { id: intent.id },
       data: {
-        canceledAt: canceledAtPast, // symulacja, że minęło >30 dni
+        canceledAt: canceledAtPast,
         deletedAt: new Date(),
         deletedById: owner.id,
         deleteReason: 'Auto-cleanup after 30 days from cancellation (seed).',
@@ -749,10 +877,9 @@ async function seedNotificationsGeneric(
   intentsCreated: Array<{ intent: Intent; owner: User }>,
   users: User[]
 ) {
-  // Intent-based: CREATED / REMINDER / occasional INVITE or MEMBERSHIP_APPROVED
   for (const { intent, owner } of intentsCreated) {
     const audience = users.filter((u) => u.id !== owner.id);
-    const recipients = pickMany(audience, 2 + Math.floor(rnd() * 3)); // 2..4
+    const recipients = pickMany(audience, 2 + Math.floor(rand() * 3)); // 2..4
 
     for (const r of recipients) {
       // INTENT_CREATED
@@ -846,7 +973,7 @@ async function seedNotificationsGeneric(
   for (let i = 0; i < 15; i++) {
     const payer = pick(users);
     const payId = idLike('pay');
-    const amount = (Math.floor(rnd() * 5000) + 500) / 100; // 5.00–55.00
+    const amount = (Math.floor(rand() * 5000) + 500) / 100; // 5.00–55.00
     const currency = pick([...CURRENCIES]);
 
     await prisma.notification.create({
@@ -888,17 +1015,27 @@ async function main() {
   console.log('📝 Seeding intents (30) with realistic members…');
   const intentsCreated = await seedIntents({ users, categories, tags });
 
+  console.log('🎯 Seeding curated intents for FIXED IDS…');
+  const fixedPairs = await seedIntentsForFixedUsers({
+    users,
+    categories,
+    tags,
+  });
+
+  // Obie listy mają taki sam typ: { intent, owner }
+  const allIntents = [...intentsCreated, ...fixedPairs];
+
   console.log('⛔ Seeding some canceled intents + notifications…');
-  const canceled = await seedCanceledIntents(intentsCreated);
+  const canceled = await seedCanceledIntents(allIntents);
 
   console.log('🗑️  Seeding some deleted intents (after 30 days)…');
   await seedDeletedIntentsAfterCancel(canceled);
 
   console.log('🔔 Seeding generic notifications…');
-  await seedNotificationsGeneric(intentsCreated, users);
+  await seedNotificationsGeneric(allIntents, users);
 
   console.log(
-    `✅ Done: users=${users.length}, categories=${categories.length}, tags=${tags.length}, intents=${intentsCreated.length}`
+    `✅ Done: users=${users.length}, categories=${categories.length}, tags=${tags.length}, intents=${allIntents.length}`
   );
   console.log('🆔 Fixed IDs:', FIXED_IDS);
 }

@@ -30,6 +30,7 @@ import {
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
+import { EventMembersPanelConnect } from './_components/managment/event-members-panel-connect';
 
 /** ──────────────────────────────────────────────────────────────────────────
  *  Constants / types
@@ -52,6 +53,7 @@ export default function IntentsPage() {
   const [leaveId, setLeaveId] = useState<string | null>(null);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [manageId, setManageId] = useState<string | null>(null);
 
   /** Active filters state (applied to queries) */
   const [status, setStatus] = useState<IntentStatus>(IntentStatus.Any);
@@ -362,6 +364,7 @@ export default function IntentsPage() {
                 onDelete={setDeleteId}
                 onLeave={setLeaveId}
                 onCancel={setCancelId}
+                onManage={setManageId}
               />
             ))}
           </div>
@@ -468,6 +471,14 @@ export default function IntentsPage() {
         intentId={editId ?? undefined}
         open={!!editId}
         onClose={() => setEditId(null)}
+      />
+
+      <EventMembersPanelConnect
+        intentId={manageId ?? ''}
+        canManage={true}
+        isPremium={true}
+        open={!!manageId}
+        onClose={() => setManageId(null)}
       />
 
       {/* ── MODAL: Filters (mobile) ─────────────────────────────────────────── */}

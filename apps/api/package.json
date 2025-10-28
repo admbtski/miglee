@@ -18,6 +18,7 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:reset": "prisma migrate reset",
+    "prisma:force:reset": "prisma db push --force-reset",
     "worker:reminders:dev": "tsx watch src/workers/reminders/worker.ts",
     "worker:reminders": "tsx src/workers/reminders/worker.ts"
   },
