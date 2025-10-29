@@ -9,7 +9,10 @@ import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  MutationUnbanMemberArgs,
+} from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification } from '../helpers';
 
 export const NOTIFICATION_INCLUDE = {
@@ -172,6 +175,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
 
+        // 1) Twardy ban → brak możliwości wejścia żadną ścieżką
         if (await isBanned(tx, intentId, userId)) {
           throw new GraphQLError('You are banned from this intent.', {
             extensions: { code: 'FORBIDDEN' },
@@ -181,28 +185,69 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
         const existing = await tx.intentMember.findUnique({
           where: { intentId_userId: { intentId, userId } },
         });
+
+        // 2) Jeżeli użytkownik został KICKED → musi dostać INVITE od moderatora/ownera
+        if (existing?.status === IntentMemberStatus.KICKED) {
+          throw new GraphQLError(
+            'You were removed from this intent. An organizer must invite you to join again.',
+            { extensions: { code: 'FAILED_PRECONDITION' } }
+          );
+        }
+
+        // 3) Jeżeli już jest JOINED → zwróć stan bez zmian
+        if (existing?.status === IntentMemberStatus.JOINED) {
+          return reloadFullIntent(tx, intentId);
+        }
+
+        // 4) Reaktywacja istniejącej relacji (REJECTED/LEFT/PENDING/INVITED)
         if (existing) {
-          if (existing.status === IntentMemberStatus.JOINED) {
-            return reloadFullIntent(tx, intentId);
-          }
-          // reaktywacja wniosku: INVITED/PENDING ⇒ PENDING (user prosi o dołączenie)
+          // Jeżeli był zaproszony (INVITED) i klika "dołącz" po stronie usera,
+          // traktujemy to jako prośbę o dołączenie (lub auto-join jeśli nie ma approval i nie jest FULL).
+          assertCanJoinNow(intent);
+          const joined = await countJoined(tx, intentId);
+          const isFull = joined >= intent.max;
+          const shouldBePending = intent.requiresApproval || isFull;
+
           await tx.intentMember.update({
             where: { intentId_userId: { intentId, userId } },
             data: {
-              status: intent.requiresApproval
+              status: shouldBePending
                 ? IntentMemberStatus.PENDING
                 : IntentMemberStatus.JOINED,
-              joinedAt: intent.requiresApproval ? null : new Date(),
+              joinedAt: shouldBePending ? null : new Date(),
+              // wyczyszczenie danych „kto dodał” – to jest inicjatywa usera
               addedById: null,
               note: null,
             },
           });
+
+          // powiadom moderatorów tylko gdy PENDING
+          if (shouldBePending) {
+            const moderators = intent.members.filter(
+              (m) =>
+                m.role === IntentMemberRole.OWNER ||
+                m.role === IntentMemberRole.MODERATOR
+            );
+            await Promise.all(
+              moderators.map((m) =>
+                emitIntentNotification(tx, ctx.pubsub, {
+                  kind: PrismaNotificationKind.INTENT_UPDATED,
+                  recipientId: m.userId,
+                  actorId: userId,
+                  intentId,
+                  title: 'Join request received',
+                  body: 'A user requested to join your intent.',
+                })
+              )
+            );
+          }
+
           return reloadFullIntent(tx, intentId);
         }
 
+        // 5) Nowe zgłoszenie
         assertCanJoinNow(intent);
         const joined = await countJoined(tx, intentId);
-
         const isFull = joined >= intent.max;
         const shouldBePending = intent.requiresApproval || isFull;
 
@@ -245,11 +290,11 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
     }
   );
 
-export const banIntentMemberMutation: MutationResolvers['banIntentMember'] =
+export const banMemberMutation: MutationResolvers['banMember'] =
   resolverWithMetrics(
     'Mutation',
     'banIntentMember',
-    async (_p, { intentId, userId, note }, ctx): Promise<any> => {
+    async (_p, { input: { intentId, userId, note } }, ctx): Promise<any> => {
       const actorId = assertAuth(ctx);
 
       const result = await prisma.$transaction(async (tx) => {
@@ -310,11 +355,15 @@ export const banIntentMemberMutation: MutationResolvers['banIntentMember'] =
     }
   );
 
-export const unbanIntentMemberMutation: MutationResolvers['unbanIntentMember'] =
+export const unbanMemberMutation: MutationResolvers['unbanMember'] =
   resolverWithMetrics(
     'Mutation',
     'unbanIntentMember',
-    async (_p, { intentId, userId }, ctx): Promise<any> => {
+    async (
+      _p,
+      { input: { intentId, userId } },
+      ctx: MercuriusContext
+    ): Promise<any> => {
       const actorId = assertAuth(ctx);
 
       const result = await prisma.$transaction(async (tx) => {
@@ -322,9 +371,7 @@ export const unbanIntentMemberMutation: MutationResolvers['unbanIntentMember'] =
         if (!isModeratorOrOwner(intent, actorId)) {
           throw new GraphQLError(
             'Forbidden. Moderator or owner role required.',
-            {
-              extensions: { code: 'FORBIDDEN' },
-            }
+            { extensions: { code: 'FORBIDDEN' } }
           );
         }
 
@@ -335,15 +382,14 @@ export const unbanIntentMemberMutation: MutationResolvers['unbanIntentMember'] =
           return reloadFullIntent(tx, intentId);
         }
 
-        // Neutralny stan po unbanie — zwykle REJECTED (żeby join wymagał nowej akcji usera)
+        // po unbanie ustawiamy neutralny REJECTED (user musi ponownie poprosić)
         await tx.intentMember.update({
           where: { intentId_userId: { intentId, userId } },
           data: { status: IntentMemberStatus.REJECTED, note: null },
         });
 
-        // (opcjonalnie) notyfikacja o unbanie:
         await emitIntentNotification(tx, ctx.pubsub, {
-          kind: PrismaNotificationKind.SYSTEM, // albo INTENT_MEMBERSHIP_UNBANNED
+          kind: PrismaNotificationKind.SYSTEM, // lub INTENT_MEMBERSHIP_UNBANNED jeśli dodasz
           recipientId: userId,
           actorId,
           intentId,
@@ -481,12 +527,7 @@ export const requestJoinIntentMutation: MutationResolvers['requestJoinIntent'] =
     'Mutation',
     'requestJoinIntent',
     async (_p, { intentId }, ctx) => {
-      return (joinMemberMutation as any).resolve?.(
-        undefined,
-        { intentId },
-        ctx,
-        {} as any
-      );
+      return joinMemberMutation.resolve(undefined, { intentId }, ctx);
     }
   );
 

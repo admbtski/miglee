@@ -8,8 +8,6 @@
 // file: components/manage-members/types.ts
 'use client';
 
-import * as React from 'react';
-
 export type IntentMemberRole = 'OWNER' | 'MODERATOR' | 'PARTICIPANT';
 export type IntentMemberStatus =
   | 'JOINED'
@@ -42,6 +40,7 @@ export type ManageCallbacks = {
   onMakeOwner?: (member: IntentMember) => void | Promise<void>;
   onKick?: (member: IntentMember) => void | Promise<void>;
   onBan?: (member: IntentMember) => void | Promise<void>;
+  onUnban?: (member: IntentMember) => void | Promise<void>;
   onReinvite?: (member: IntentMember) => void | Promise<void>;
   onCancelInvite?: (member: IntentMember) => void | Promise<void>;
   onApprovePending?: (member: IntentMember) => void | Promise<void>;
@@ -57,6 +56,7 @@ export type EventMembersPanelProps = ManageCallbacks & {
   canManage: boolean;
   isPremium?: boolean;
   stats?: Partial<Record<IntentMemberStatus, number>>;
+  onInvited?: (invitedUserIds: string[]) => void;
 };
 
 export const STATUS_GROUP_ORDER: IntentMemberStatus[] = [

@@ -16,6 +16,7 @@ import {
   useRejectMembershipMutation,
   useInviteMemberMutation,
   useCancelPendingOrInviteForUserMutation,
+  useUnbanMemberMutation,
 } from '@/hooks/graphql/intent-members';
 import type { IntentMember } from './types';
 import { EventMembersPanel } from './event-members-panel';
@@ -66,6 +67,7 @@ export function EventMembersPanelConnect({
   const promoteRole = useUpdateMemberRoleMutation();
   const kick = useKickMemberMutation();
   const ban = useBanMemberMutation();
+  const unban = useUnbanMemberMutation();
   const approve = useApproveMembershipMutation();
   const reject = useRejectMembershipMutation();
   const invite = useInviteMemberMutation();
@@ -119,6 +121,13 @@ export function EventMembersPanelConnect({
     });
     await refetch();
   };
+  const onUnban = async (m: IntentMember) => {
+    console.dir({ m });
+    await unban.mutateAsync({
+      input: { intentId, userId: m.userId },
+    });
+    await refetch();
+  };
   const onApprovePending = async (m: IntentMember) => {
     await approve.mutateAsync({ input: { intentId, userId: m.userId } });
     await refetch();
@@ -158,11 +167,15 @@ export function EventMembersPanelConnect({
         onMakeOwner={onMakeOwner}
         onKick={onKick}
         onBan={onBan}
+        onUnban={onUnban}
         onApprovePending={onApprovePending}
         onRejectPending={onRejectPending}
         onReinvite={onReinvite}
         onCancelInvite={onCancelInvite}
         onNotifyPremium={async () => {}}
+        onInvited={async () => {
+          await Promise.all([refetch()]);
+        }}
       />
     );
   }
@@ -183,11 +196,15 @@ export function EventMembersPanelConnect({
         onMakeOwner={onMakeOwner}
         onKick={onKick}
         onBan={onBan}
+        onUnban={onUnban}
         onApprovePending={onApprovePending}
         onRejectPending={onRejectPending}
         onReinvite={onReinvite}
         onCancelInvite={onCancelInvite}
         onNotifyPremium={async () => {}}
+        onInvited={async () => {
+          await Promise.all([refetch()]);
+        }}
       />
     );
   }
@@ -206,12 +223,16 @@ export function EventMembersPanelConnect({
       onMakeOwner={onMakeOwner}
       onKick={onKick}
       onBan={onBan}
+      onUnban={onUnban}
       onApprovePending={onApprovePending}
       onRejectPending={onRejectPending}
       onReinvite={onReinvite}
       onCancelInvite={onCancelInvite}
       onNotifyPremium={async () => {
         console.info('[Premium] notify organizers – TODO');
+      }}
+      onInvited={async () => {
+        await Promise.all([refetch()]);
       }}
     />
   );

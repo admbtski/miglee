@@ -1,23 +1,21 @@
 // file: components/manage-members/MemberManageModal.tsx
 'use client';
 
-import * as React from 'react';
-import clsx from 'clsx';
 import { Modal } from '@/components/modal/modal';
+import clsx from 'clsx';
 import {
   Ban,
   CheckCircle2,
+  Crown,
   Info,
   RotateCcw,
   Shield,
-  UserMinus,
   User as UserIcon,
+  UserMinus,
   UserX,
   XCircle,
-  Crown,
-  Bell,
 } from 'lucide-react';
-import { Avatar, Badge, iconForRole } from './ui';
+import * as React from 'react';
 import {
   EventMembersPanelProps,
   IntentMember,
@@ -25,6 +23,7 @@ import {
   ROLE_BADGE_CLASSES,
   STATUS_BADGE_CLASSES,
 } from './types';
+import { Avatar, Badge, iconForRole } from './ui';
 
 export function MemberManageModal({
   open,
@@ -44,6 +43,7 @@ export function MemberManageModal({
     | 'onMakeOwner'
     | 'onKick'
     | 'onBan'
+    | 'onUnban'
     | 'onReinvite'
     | 'onCancelInvite'
     | 'onApprovePending'
@@ -168,6 +168,15 @@ export function MemberManageModal({
               </ActionBtn>
             </>
           )}
+          {member.status === 'BANNED' && (
+            <ActionBtn
+              disabled={!canManage}
+              onClick={() => callbacks.onUnban?.(member)}
+              className="border-emerald-300 text-emerald-800 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+            >
+              <RotateCcw className="mr-1 inline-block h-4 w-4" /> Unban
+            </ActionBtn>
+          )}
 
           {member.status === 'PENDING' && (
             <>
@@ -217,7 +226,7 @@ export function MemberManageModal({
           )}
         </div>
 
-        {readOnly && (
+        {readOnly && member.status !== 'BANNED' && (
           <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300">
             <Info className="mr-2 inline-block h-4 w-4" /> Ten członek ma status
             tylko do odczytu ({member.status}) — akcje są niedostępne.

@@ -60,6 +60,12 @@ mutation BanMember($input: BanMemberInput!) {
   }
 }
 
+mutation UnbanMember($input: UnbanMemberInput!) {
+  unbanMember(input: $input) {
+    ...IntentCore
+  }
+}
+
 # Owner/moderator cancels a pending or invited membership
 mutation CancelPendingOrInviteForUser(
   $input: CancelPendingOrInviteForUserInput!

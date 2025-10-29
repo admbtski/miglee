@@ -12,6 +12,7 @@ import {
   Crown,
   Shield,
   User as UserIcon,
+  RotateCcw,
 } from 'lucide-react';
 import { ActionsDropdown, type ActionItem } from './action-dropdown';
 import { Avatar, Badge, iconForRole } from './ui';
@@ -84,6 +85,19 @@ export function MemberRow({
           },
         ] as ActionItem[])
       : []),
+    // Jeśli BANNED – pokaż UNBAN jako jedyną sensowną akcję
+    ...(member.status === 'BANNED'
+      ? ([
+          {
+            key: 'unban',
+            label: 'Unban',
+            icon: <RotateCcw className="h-4 w-4" />,
+            danger: false,
+            disabled: !canManage,
+            onClick: () => callbacks.onUnban?.(member),
+          },
+        ] as ActionItem[])
+      : []),
     ...(member.status === 'INVITED'
       ? ([
           {
@@ -124,6 +138,9 @@ export function MemberRow({
       : []),
   ];
 
+  const dropdownDisabled =
+    !canManage || (readOnly && member.status !== 'BANNED');
+
   return (
     <div className="flex items-center gap-3 rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-800">
       <Avatar src={member.user.imageUrl} name={member.user.name} />
@@ -155,7 +172,7 @@ export function MemberRow({
         >
           Szczegóły
         </button>
-        <ActionsDropdown disabled={!canManage || readOnly} actions={actions} />
+        <ActionsDropdown disabled={dropdownDisabled} actions={actions} />
       </div>
     </div>
   );

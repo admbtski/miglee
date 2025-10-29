@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bell, Filter } from 'lucide-react';
+import { Bell, Filter, UserPlus } from 'lucide-react';
 import { Modal } from '@/components/modal/modal';
 import { Badge } from './ui';
 import {
@@ -15,6 +15,7 @@ import {
 import { groupMembers } from './types';
 import { MemberManageModal } from './member-manage-modal';
 import { MembersSection } from './member-section';
+import { InviteUsersModal } from './invite-users-modal';
 
 export function EventMembersPanel({
   open,
@@ -29,6 +30,8 @@ export function EventMembersPanel({
   onMakeOwner,
   onKick,
   onBan,
+  onUnban,
+  onInvited,
   onReinvite,
   onCancelInvite,
   onApprovePending,
@@ -37,6 +40,7 @@ export function EventMembersPanel({
 }: EventMembersPanelProps) {
   const [query, setQuery] = React.useState('');
   const [selected, setSelected] = React.useState<IntentMember | null>(null);
+  const [openInvite, setOpenInvite] = React.useState(false);
   const [onlyManageable, setOnlyManageable] = React.useState(false);
 
   const callbacks = React.useMemo(
@@ -46,6 +50,7 @@ export function EventMembersPanel({
       onMakeOwner,
       onKick,
       onBan,
+      onUnban,
       onReinvite,
       onCancelInvite,
       onApprovePending,
@@ -58,6 +63,7 @@ export function EventMembersPanel({
       onMakeOwner,
       onKick,
       onBan,
+      onUnban,
       onReinvite,
       onCancelInvite,
       onApprovePending,
@@ -100,16 +106,26 @@ export function EventMembersPanel({
     }
     return out;
   }, [stats, members]);
-
+  const suggestions = React.useMemo(
+    () =>
+      members
+        .filter((m) => m.status === 'JOINED') // możesz tu podmienić logikę
+        .slice(0, 8)
+        .map((m) => ({
+          id: m.user.id,
+          name: m.user.name,
+          imageUrl: m.user.imageUrl ?? undefined,
+          email: undefined as string | undefined,
+        })),
+    [members]
+  );
   return (
     <>
       <Modal
         open={open}
         onClose={onClose}
-        variant="centered"
         labelledById="members-title"
         ariaLabel="Zarządzanie uczestnikami"
-        className="max-w-3xl"
         header={
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -126,6 +142,15 @@ export function EventMembersPanel({
                 Premium
               </span>
             )}
+            <button
+              type="button"
+              onClick={() => setOpenInvite(true)}
+              className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              title="Zaproś uczestników"
+            >
+              <UserPlus className="h-4 w-4" />
+              Zaproś
+            </button>
           </div>
         }
         content={
@@ -223,6 +248,16 @@ export function EventMembersPanel({
             await callbacks.onCancelInvite?.(m);
             setSelected(null);
           },
+        }}
+      />
+      <InviteUsersModal
+        open={openInvite}
+        onClose={() => setOpenInvite(false)}
+        intentId={intentId}
+        suggestions={suggestions}
+        onInvited={(ids) => {
+          setOpenInvite(false);
+          onInvited?.(ids); // przekaż do parenta (Connect) żeby odświeżyć listy
         }}
       />
     </>

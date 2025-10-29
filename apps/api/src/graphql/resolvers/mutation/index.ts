@@ -35,6 +35,7 @@ import {
   acceptInviteMutation,
   approveMembershipMutation,
   banIntentMemberMutation,
+  banMemberMutation,
   cancelJoinRequestMutation,
   cancelPendingOrInviteForUserMutation,
   inviteMemberMutation,
@@ -43,6 +44,7 @@ import {
   rejectMembershipMutation,
   requestJoinIntentMutation,
   unbanIntentMemberMutation,
+  unbanMemberMutation,
   updateMemberRoleMutation,
 } from './intent-members';
 import { devLoginMutation, devLogoutMutation } from './auth';
@@ -78,8 +80,8 @@ export const Mutation: Resolvers['Mutation'] = {
   rejectMembership: rejectMembershipMutation,
   kickMember: kickMemberMutation,
   updateMemberRole: updateMemberRoleMutation,
-  banMember: banIntentMemberMutation,
-  unbanMember: unbanIntentMemberMutation,
+  banMember: banMemberMutation,
+  unbanMember: unbanMemberMutation,
   cancelPendingOrInviteForUser: cancelPendingOrInviteForUserMutation,
 
   // ---- Notifications ----

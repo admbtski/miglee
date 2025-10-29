@@ -46,6 +46,9 @@ import {
   CancelPendingOrInviteForUserMutation,
   CancelPendingOrInviteForUserMutationVariables,
   CancelPendingOrInviteForUserDocument,
+  UnbanMemberMutation,
+  UnbanMemberMutationVariables,
+  UnbanMemberDocument,
 } from '@/lib/graphql/__generated__/react-query-update';
 import { gqlClient } from '@/lib/graphql/client';
 import { getQueryClient } from '@/lib/query-client/query-client';
@@ -131,6 +134,30 @@ export function buildBanMemberOptions<TContext = unknown>( // <-- NEW
   };
 }
 
+export function buildUnbanMemberOptions<TContext = unknown>( // <-- NEW
+  options?: UseMutationOptions<
+    UnbanMemberMutation,
+    unknown,
+    UnbanMemberMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  UnbanMemberMutation,
+  unknown,
+  UnbanMemberMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['UnbanMember'] as QueryKey,
+    mutationFn: async (variables: UnbanMemberMutationVariables) =>
+      gqlClient.request<UnbanMemberMutation, UnbanMemberMutationVariables>(
+        UnbanMemberDocument,
+        variables
+      ),
+    ...(options ?? {}),
+  };
+}
+
 export function buildCancelPendingOrInviteForUserOptions<TContext = unknown>( // <-- NEW
   options?: UseMutationOptions<
     CancelPendingOrInviteForUserMutation,
@@ -166,6 +193,27 @@ export function useBanMemberMutation( // <-- NEW
 ) {
   return useMutation<BanMemberMutation, unknown, BanMemberMutationVariables>(
     buildBanMemberOptions({
+      onSuccess: (_data, vars) => {
+        invalidateMembers(vars.input.intentId);
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+export function useUnbanMemberMutation( // <-- NEW
+  options?: UseMutationOptions<
+    UnbanMemberMutation,
+    unknown,
+    UnbanMemberMutationVariables
+  >
+) {
+  return useMutation<
+    UnbanMemberMutation,
+    unknown,
+    UnbanMemberMutationVariables
+  >(
+    buildUnbanMemberOptions({
       onSuccess: (_data, vars) => {
         invalidateMembers(vars.input.intentId);
       },
