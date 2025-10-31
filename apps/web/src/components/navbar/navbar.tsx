@@ -121,12 +121,11 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
               </button>
             )}
 
-            {[
-              { icon: Heart, label: 'Favourites' },
-              { icon: Globe, label: 'Language' },
-            ].map(({ icon: Icon, label }) => (
-              <IconButton key={label} icon={Icon} label={label} />
-            ))}
+            {[{ icon: Heart, label: 'Favourites' }].map(
+              ({ icon: Icon, label }) => (
+                <IconButton key={label} icon={Icon} label={label} />
+              )
+            )}
 
             <IconButton icon={MenuIcon} label="Menu" onClick={openDrawer} />
           </div>

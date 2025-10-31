@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import { Search, Tag as TagIcon, Hash, Folder, X } from 'lucide-react';
 import type { SearchOption } from '@/types/types';
+import clsx from 'clsx';
 
 type GroupId = 'TAG' | 'KEYWORD' | 'CATEGORY' | (string & {});
 type ItemKind = 'tag' | 'keyword' | 'category' | (string & {});
@@ -49,9 +50,6 @@ export type SearchComboProps = {
 
 const MIN_CHARS = 3;
 
-const cx = (...classes: Array<string | false | null | undefined>) =>
-  classes.filter(Boolean).join(' ');
-
 const defaultIconFor = (idOrKind?: GroupId | ItemKind) => {
   switch (idOrKind) {
     case 'TAG':
@@ -72,7 +70,7 @@ const defaultIconFor = (idOrKind?: GroupId | ItemKind) => {
 function Spinner({ className }: { className?: string }) {
   return (
     <span
-      className={cx('relative inline-block', className)}
+      className={clsx('relative inline-block', className)}
       role="status"
       aria-label="Loading"
     >
@@ -227,7 +225,7 @@ function _SearchCombo({
 
   return (
     <div
-      className={cx(
+      className={clsx(
         'relative rounded-2xl border border-zinc-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-900',
         className
       )}
@@ -304,7 +302,7 @@ function _SearchCombo({
                   aria-selected={hi === idx}
                   onMouseEnter={() => setHi(idx)}
                   onClick={() => pickAt(idx)}
-                  className={cx(
+                  className={clsx(
                     'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
                     hi === idx
                       ? 'bg-zinc-100 dark:bg-zinc-800'

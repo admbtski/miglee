@@ -20,12 +20,12 @@ import { ClickBurst } from '@/components/effects/click-burst';
 import { ClickParticle } from '@/components/effects/click-particle';
 import { Modal } from '@/components/modal/modal';
 import { useCooldown } from '@/hooks/use-cooldown';
-
-import { PLAN_CAPS, SponsorPlan, SponsorshipState } from './sponsorship-types';
-
-function cx(...c: Array<string | false | null | undefined>) {
-  return c.filter(Boolean).join(' ');
-}
+import {
+  PLAN_CAPS,
+  SponsorPlan,
+  SponsorshipState,
+} from './subscription-panel-types';
+import clsx from 'clsx';
 
 /** ---------- Unified ActionButton ---------- */
 function ActionButton({
@@ -66,7 +66,7 @@ function ActionButton({
 
   return (
     <div
-      className={cx(
+      className={clsx(
         'relative',
         glow && 'ring-2 ring-indigo-400/60 rounded-xl transition'
       )}
@@ -75,7 +75,7 @@ function ActionButton({
         type="button"
         onClick={handleClick}
         disabled={disabled || isCooling || loading}
-        className={cx(
+        className={clsx(
           'relative inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-400/60',
           disabled || isCooling || loading
             ? 'cursor-not-allowed bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
@@ -127,7 +127,7 @@ const toneDotRingClass: Record<HighlightTone, string> = {
 };
 
 /** ---------- MAIN COMPONENT ---------- */
-export function SponsoredContent({
+export function SubscriptionPanel({
   intentId,
   sponsorship,
   onBoostEvent,
@@ -425,7 +425,7 @@ export function SponsoredContent({
                 </div>
               </div>
               <div
-                className={cx(
+                className={clsx(
                   'justify-self-end rounded-md px-2 py-0.5 text-[11px] font-medium',
                   local.badgeEnabled
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
@@ -462,7 +462,7 @@ export function SponsoredContent({
                 <div className="flex items-center gap-2 text-sm font-semibold leading-tight">
                   {local.highlighted ? (
                     <Star
-                      className={cx('h-4 w-4', toneIconClass[highlightTone])}
+                      className={clsx('h-4 w-4', toneIconClass[highlightTone])}
                     />
                   ) : (
                     <StarOff className="h-4 w-4" />
@@ -475,7 +475,7 @@ export function SponsoredContent({
               </div>
 
               <div
-                className={cx(
+                className={clsx(
                   'justify-self-end rounded-md px-2 py-0.5 text-[11px] font-medium',
                   local.highlighted
                     ? toneChipActiveClass[highlightTone]
@@ -493,7 +493,7 @@ export function SponsoredContent({
                   key={tone}
                   type="button"
                   onClick={() => setHighlightTone(tone)}
-                  className={cx(
+                  className={clsx(
                     'h-6 w-6 rounded-full ring-2 transition-all',
                     toneDotRingClass[tone],
                     highlightTone === tone
@@ -516,7 +516,7 @@ export function SponsoredContent({
                     <StarOff className="h-4 w-4" />
                   ) : (
                     <Star
-                      className={cx('h-4 w-4', toneIconClass[highlightTone])}
+                      className={clsx('h-4 w-4', toneIconClass[highlightTone])}
                     />
                   )
                 }
@@ -572,15 +572,15 @@ export function SponsoredContent({
               return (
                 <div
                   key={plan}
-                  className={cx(
+                  className={clsx(
                     'flex flex-col rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow-md',
                     t.card
                   )}
                 >
-                  <div className={cx('text-sm font-semibold', t.title)}>
+                  <div className={clsx('text-sm font-semibold', t.title)}>
                     {titles[plan]}
                   </div>
-                  <div className={cx('mb-2 text-2xl font-bold', t.price)}>
+                  <div className={clsx('mb-2 text-2xl font-bold', t.price)}>
                     {price}
                   </div>
 
@@ -605,7 +605,7 @@ export function SponsoredContent({
 
                   <button
                     type="button"
-                    className={cx(
+                    className={clsx(
                       'mt-auto inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-medium',
                       t.button
                     )}

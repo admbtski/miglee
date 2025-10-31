@@ -8,6 +8,7 @@ import {
   SortDir,
   UsersSortBy,
 } from '@/lib/graphql/__generated__/react-query-update';
+import clsx from 'clsx';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -36,9 +37,6 @@ export type UsersQueryVars = {
   verifiedOnly?: boolean | null;
   sort?: { by: UsersSortBy; dir: SortDir } | null;
 };
-
-const cx = (...c: Array<string | false | null | undefined>) =>
-  c.filter(Boolean).join(' ');
 
 const timeAgo = (v?: string | Date | null) => {
   if (!v) return '—';
@@ -258,7 +256,7 @@ export function AdminUsersModal({
                   <button
                     type="button"
                     onClick={toggleVerified}
-                    className={cx(
+                    className={clsx(
                       'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm',
                       query.verifiedOnly
                         ? 'border-emerald-300/40 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300'
@@ -363,7 +361,7 @@ export function AdminUsersModal({
                               <tr
                                 key={u.id}
                                 onClick={() => setSelectedId(u.id)}
-                                className={cx(
+                                className={clsx(
                                   // Zebra stripes for subtle row separation
                                   i % 2 === 1
                                     ? 'bg-zinc-50/60 dark:bg-zinc-900/20'
@@ -472,7 +470,7 @@ export function AdminUsersModal({
                       type="button"
                       onClick={prevPage}
                       disabled={!canPrev || loading}
-                      className={cx(
+                      className={clsx(
                         'inline-flex items-center gap-2 rounded-xl border px-3 py-2',
                         'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900',
                         (!canPrev || loading) && 'opacity-50'
@@ -485,7 +483,7 @@ export function AdminUsersModal({
                       type="button"
                       onClick={nextPage}
                       disabled={!canNext || loading}
-                      className={cx(
+                      className={clsx(
                         'inline-flex items-center gap-2 rounded-xl border px-3 py-2',
                         'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900',
                         (!canNext || loading) && 'opacity-50'
@@ -566,7 +564,7 @@ function Badge({
       : 'bg-zinc-100 text-zinc-700 ring-zinc-600/10 dark:bg-zinc-800 dark:text-zinc-300';
   return (
     <span
-      className={cx(
+      className={clsx(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1',
         cls
       )}
@@ -587,7 +585,7 @@ function RoleBadge({ role }: { role?: string | null }) {
         : 'bg-zinc-100 text-zinc-700 ring-zinc-600/10 dark:bg-zinc-800 dark:text-zinc-300';
   return (
     <span
-      className={cx(
+      className={clsx(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1',
         style
       )}

@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, {
   ReactNode,
@@ -87,12 +88,6 @@ const PANEL_MOTION = {
     transition: { duration: 0.2 },
   },
 } as const;
-
-// ----- Helpers ----------------------------------------------------------------
-
-function cx(...parts: Array<string | undefined | false>) {
-  return parts.filter(Boolean).join(' ');
-}
 
 // ----- Component --------------------------------------------------------------
 
@@ -203,7 +198,7 @@ export function Modal({
         <motion.div
           key="overlay"
           {...OVERLAY_MOTION}
-          className={cx(
+          className={clsx(
             'absolute inset-0 bg-black/50 backdrop-blur-sm',
             backdropClassName
           )}
@@ -221,7 +216,7 @@ export function Modal({
             <div className="mx-auto my-6 w-[min(760px,92vw)]">
               <div
                 ref={panelRef}
-                className={cx(BASE_PANEL_CLASS, className)}
+                className={clsx(BASE_PANEL_CLASS, className)}
                 // Stop propagation so clicking inside the panel does not close it.
                 onClick={(e) => e.stopPropagation()}
               >
@@ -260,7 +255,7 @@ export function Modal({
               {...PANEL_MOTION.centered}
               ref={panelRef}
               onClick={(e) => e.stopPropagation()}
-              className={cx(
+              className={clsx(
                 BASE_PANEL_CLASS,
                 SIZE_CLASS[size],
                 DENSITY_CLASS[density],

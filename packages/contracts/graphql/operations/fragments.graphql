@@ -166,6 +166,9 @@ fragment IntentCore on Intent {
   isFull
   hasStarted
   hasEnded
+  canJoin
+  isOngoing
+  withinLock
 
   # Cancellation (read-only)
   canceledAt

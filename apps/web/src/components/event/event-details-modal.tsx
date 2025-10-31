@@ -1,12 +1,16 @@
 'use client';
 
 import {
+  Plan,
+  PlanBadge,
+  planRingBg,
+} from '@/app/[[...slug]]/_components/event-card';
+import {
   JoinReason,
   JoinTone,
 } from '@/app/account/intents/_components/status-badge';
 import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
 import {
-  BadgeCheck,
   Calendar,
   TicketIcon as CategoryIcon,
   Clock,
@@ -22,14 +26,11 @@ import {
   X,
 } from 'lucide-react';
 import { useMemo } from 'react';
+import { CapacityProgressBar } from '../atoms/capacity-progress-bar';
+import { VerifiedPill } from '../atoms/verified-pill';
 import { Modal } from '../modal/modal';
-import {
-  Plan,
-  PlanBadge,
-  planRingBg,
-} from '@/app/[[...slug]]/_components/event-card';
-
-export type ParticipantRole = 'OWNER' | 'MODERATOR' | 'PARTICIPANT';
+import { ParticipantRole, RoleBadge } from '../atoms/role-badge';
+import clsx from 'clsx';
 
 type JoinStatus = {
   label: string;
@@ -102,9 +103,6 @@ function formatDateRange(start: Date, end: Date) {
     : `${fmt(start)} – ${fmt(end)}`;
 }
 
-const cx = (...c: Array<string | false | undefined>) =>
-  c.filter(Boolean).join(' ');
-
 function toneClasses(tone: JoinStatus['tone']) {
   switch (tone) {
     case 'ok':
@@ -116,47 +114,6 @@ function toneClasses(tone: JoinStatus['tone']) {
     default:
       return 'bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:ring-sky-800/50';
   }
-}
-
-function VerifiedPill({ verifiedAt }: { verifiedAt?: string }) {
-  if (!verifiedAt) return null;
-  const d = parseISO(verifiedAt);
-  const text = isValidDate(d)
-    ? `Zweryfikowany organizator (od ${pad2(d.getDate())} ${MONTHS_PL_SHORT[d.getMonth()]} ${d.getFullYear()})`
-    : 'Zweryfikowany organizator';
-  return (
-    <span
-      className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full
-                 bg-sky-50 text-sky-700 ring-1 ring-sky-200
-                 dark:bg-sky-900/20 dark:text-sky-300 dark:ring-sky-800/60"
-      title={text}
-    >
-      <BadgeCheck className="w-3.5 h-3.5" />
-      Zweryfikowany
-    </span>
-  );
-}
-
-function RoleBadge({ role }: { role: ParticipantRole }) {
-  if (role === 'OWNER') {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-        <Crown className="w-3 h-3" /> Owner
-      </span>
-    );
-  }
-  if (role === 'MODERATOR') {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
-        <Shield className="w-3 h-3" /> Moderator
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-      <UserIcon className="w-3 h-3" /> Uczestnik
-    </span>
-  );
 }
 
 function Stat({
@@ -176,36 +133,6 @@ function Stat({
       </div>
       <div className="mt-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
         {value}
-      </div>
-    </div>
-  );
-}
-
-/** ⬇️ Capacity bar ze zmiennym kolorem (zielony → żółty → czerwony) */
-function CapacityBar({
-  joinedCount,
-  max,
-}: {
-  joinedCount: number;
-  max: number;
-}) {
-  const pct = Math.min(100, Math.round((joinedCount / Math.max(1, max)) * 100));
-  // HSL: 130° (zielony) → 0° (czerwony)
-  const hue = Math.max(0, 130 - Math.round((130 * pct) / 100));
-  return (
-    <div>
-      <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-        <span>Zapełnienie</span>
-        <span>{pct}%</span>
-      </div>
-      <div className="mt-1 h-2 w-full rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-        <div
-          className="h-full w-0 rounded-full transition-[width,background-color] duration-500 ease-out"
-          style={{
-            width: `${pct}%`,
-            backgroundColor: `hsl(${hue} 70% 45%)`,
-          }}
-        />
       </div>
     </div>
   );
@@ -276,7 +203,7 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
           <VerifiedPill verifiedAt={verifiedAt} />
 
           <span
-            className={cx(
+            className={clsx(
               'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ring-1',
               toneClasses(status.tone)
             )}
@@ -324,7 +251,7 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
         </div>
 
         <div className="mt-4">
-          <CapacityBar joinedCount={joinedCount} max={max} />
+          <CapacityProgressBar joinedCount={joinedCount} max={max} />
         </div>
       </div>
 
@@ -448,7 +375,7 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
         <button
           onClick={onJoin}
           disabled={!canJoin}
-          className={cx(
+          className={clsx(
             'px-3 py-2 text-sm rounded-xl font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 transition',
             canJoin
               ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:opacity-90 active:opacity-80'

@@ -1,25 +1,27 @@
 'use client';
 
-import { useMemo, useState, useCallback, KeyboardEvent } from 'react';
+import { SimpleProgressBar } from '@/components/atoms/simple-progress-bar';
+import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
 import { motion } from 'framer-motion';
 import {
+  BadgeCheck,
   Calendar,
   Clock,
-  Users,
   Lock,
   MapPin,
-  WifiIcon,
   MapPinHouseIcon,
-  BadgeCheck,
-  StarsIcon,
   StarIcon,
+  StarsIcon,
+  Users,
+  WifiIcon,
 } from 'lucide-react';
+import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
+import { EventDetailsModal } from '../../../components/event/event-details-modal';
 import {
   CategoryPills,
   TagPills,
 } from '../../../components/pill/category-tag-pill';
-import { EventDetailsModal } from '../../../components/event/event-details-modal';
-import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
+import clsx from 'clsx';
 
 export type Plan = 'default' | 'basic' | 'plus' | 'premium';
 
@@ -42,8 +44,12 @@ export interface EventCardProps {
   onJoin?: () => void | Promise<void>;
   className?: string;
   verifiedAt?: string;
+  isOngoing: boolean;
+  hasStarted: boolean;
+  withinLock: boolean;
+  canJoin: boolean;
+  isFull: boolean;
   members?: IntentMember[];
-  /** NOWE: wariant wizualny powiązany z pakietem */
   plan?: Plan;
   showSponsoredBadge?: boolean;
 }
@@ -88,8 +94,8 @@ function formatDateRange(start: Date, end: Date) {
 }
 
 const plural = (n: number, forms: [string, string, string]) => {
-  const mod10 = n % 10,
-    mod100 = n % 100;
+  const mod10 = n % 10;
+  const mod100 = n % 100;
   if (n === 1) return forms[0];
   if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14))
     return forms[1];
@@ -112,10 +118,7 @@ function humanDuration(start: Date, end: Date) {
 }
 
 const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
-const cx = (...classes: Array<string | undefined | false>) =>
-  classes.filter(Boolean).join(' ');
 
-/** Formatka do tytułu/tooltips dla verifiedAt */
 function formatVerifiedTitle(verifiedAt?: string) {
   if (!verifiedAt) return null;
   const d = parseISO(verifiedAt);
@@ -128,82 +131,48 @@ function formatVerifiedTitle(verifiedAt?: string) {
 
 /* ─────────────── Deterministyczna maszyna stanów Join ─────────────── */
 
-function computeJoinState(
-  now: Date,
-  start: Date,
-  end: Date,
-  joinedCount: number,
-  max: number,
-  lockHrs = 0
-) {
-  const hasStarted = now >= start;
-  const isOngoing = now >= start && now <= end;
-  const isFull = max > 0 && joinedCount >= max;
-  const withinLock = !hasStarted && hoursUntil(start) <= lockHrs;
-  const canJoin = !isFull && !hasStarted && !withinLock;
-
+function computeJoinState({
+  hasStarted,
+  isFull,
+  isOngoing,
+  withinLock,
+  startAt,
+}: {
+  isOngoing: boolean;
+  hasStarted: boolean;
+  withinLock: boolean;
+  isFull: boolean;
+  startAt: Date;
+}) {
   if (isOngoing)
     return {
-      canJoin,
       status: {
         label: 'Trwa teraz',
         tone: 'info' as const,
         reason: 'ONGOING' as const,
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
   if (hasStarted)
     return {
-      canJoin,
       status: {
         label: 'Rozpoczęte – dołączenie zablokowane',
-        tone: 'error' as const,
-        reason: 'STARTED' as const,
+        tone: 'error',
+        reason: 'STARTED',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
   if (isFull)
-    return {
-      canJoin,
-      status: {
-        label: 'Brak miejsc',
-        tone: 'error' as const,
-        reason: 'FULL' as const,
-      },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
-    };
+    return { status: { label: 'Brak miejsc', tone: 'error', reason: 'FULL' } };
   if (withinLock) {
-    const hrs = Math.max(0, Math.ceil(hoursUntil(start)));
+    const hrs = Math.max(0, Math.ceil(hoursUntil(startAt)));
     return {
-      canJoin,
       status: {
         label: `Start za ${hrs} h – zapisy zamknięte`,
-        tone: 'warn' as const,
-        reason: 'LOCK' as const,
+        tone: 'warn',
+        reason: 'LOCK',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
   }
-  return {
-    canJoin,
-    status: { label: 'Dostępne', tone: 'ok' as const, reason: 'OK' as const },
-    isOngoing,
-    hasStarted,
-    isFull,
-    withinLock,
-  };
+  return { status: { label: 'Dostępne', tone: 'ok', reason: 'OK' } };
 }
 
 /* ─────────────────────────── Prezentacja ─────────────────────────── */
@@ -217,11 +186,6 @@ const badgeToneClass = (tone: 'ok' | 'warn' | 'error' | 'info') =>
         ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'
         : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
 
-const progressColorClass = (active: boolean) =>
-  active
-    ? 'bg-neutral-900 dark:bg-white'
-    : 'bg-neutral-400 dark:bg-neutral-600';
-
 const capacityLabel = (joinedCount: number, min: number, max: number) =>
   `${joinedCount} / ${min}-${max} osób`;
 
@@ -229,54 +193,32 @@ function StatusBadge({
   tone,
   reason,
   label,
+  className,
 }: {
   tone: 'ok' | 'warn' | 'error' | 'info';
   reason?: string;
   label: string;
+  className?: string;
 }) {
   return (
     <div
-      className={cx(
-        'text-xs px-2 py-1 rounded-full inline-flex items-center gap-1',
-        badgeToneClass(tone)
+      className={clsx(
+        // bez stałych szerokości – kontrola przez overflow + truncate + min-w-0
+        'inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full min-w-0 overflow-hidden truncate whitespace-nowrap',
+        badgeToneClass(tone),
+        className
       )}
+      title={label}
       aria-live="polite"
     >
       {(reason === 'LOCK' || reason === 'STARTED') && (
-        <Lock className="w-3.5 h-3.5" aria-hidden />
+        <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden />
       )}
-      {label}
+      <span className="truncate">{label}</span>
     </div>
   );
 }
 
-function ProgressBar({
-  value,
-  active,
-  label = 'Postęp zapełnienia',
-}: {
-  value: number;
-  active: boolean;
-  label?: string;
-}) {
-  return (
-    <div
-      className="h-1.5 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden"
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={value}
-      aria-label={label}
-    >
-      <div
-        className={cx('h-full', progressColorClass(active))}
-        style={{ width: `${value}%` }}
-      />
-    </div>
-  );
-}
-
-/** Prosty Avatar bez overlay */
 function Avatar({ url, alt }: { url: string; alt: string }) {
   return (
     <img
@@ -289,7 +231,6 @@ function Avatar({ url, alt }: { url: string; alt: string }) {
   );
 }
 
-/** Ikonka verified z tytułem/aria generowanym z verifiedAt */
 function VerifiedBadge({ verifiedAt }: { verifiedAt?: string }) {
   if (!verifiedAt) return null;
   const title = formatVerifiedTitle(verifiedAt) ?? 'Zweryfikowany organizator';
@@ -301,11 +242,9 @@ function VerifiedBadge({ verifiedAt }: { verifiedAt?: string }) {
   );
 }
 
-/* ─────────────── WARIANTY PLANU (kolory/ringi/tła + label jako IKONA) ─────────────── */
+/* ─────────────── WARIANTY PLANU ─────────────── */
 
 export function planRingBg(plan: Plan | undefined, canJoin: boolean) {
-  // Subtelne: ring w kolorze planu + bardzo delikatna poświata tła.
-  // Dla niedostępnych: mniej nasycone tła, ale zostaje kolor ringu (sygnał planu).
   switch (plan ?? 'default') {
     case 'basic':
       return {
@@ -313,9 +252,7 @@ export function planRingBg(plan: Plan | undefined, canJoin: boolean) {
         bg: canJoin
           ? 'bg-emerald-50/40 dark:bg-emerald-900/10'
           : 'bg-neutral-50 dark:bg-neutral-950',
-        label: (
-          <StarsIcon className="w-3.5 h-3.5 text-emerald-50" aria-hidden />
-        ),
+        label: <StarsIcon className="w-3.5 h-3.5 text-emerald-50" />,
         labelClass: 'bg-emerald-600 text-white dark:bg-emerald-500',
       };
     case 'plus':
@@ -324,7 +261,7 @@ export function planRingBg(plan: Plan | undefined, canJoin: boolean) {
         bg: canJoin
           ? 'bg-indigo-50/40 dark:bg-indigo-900/10'
           : 'bg-neutral-50 dark:bg-neutral-950',
-        label: <StarIcon className="w-3.5 h-3.5 text-indigo-50" aria-hidden />,
+        label: <StarIcon className="w-3.5 h-3.5 text-indigo-50" />,
         labelClass: 'bg-indigo-600 text-white dark:bg-indigo-500',
       };
     case 'premium':
@@ -333,7 +270,7 @@ export function planRingBg(plan: Plan | undefined, canJoin: boolean) {
         bg: canJoin
           ? 'bg-amber-50/45 dark:bg-amber-900/10'
           : 'bg-neutral-50 dark:bg-neutral-950',
-        label: <StarIcon className="w-3.5 h-3.5 text-amber-50" aria-hidden />,
+        label: <StarIcon className="w-3.5 h-3.5 text-amber-50" />,
         labelClass: 'bg-amber-600 text-white dark:bg-amber-500',
       };
     default:
@@ -348,7 +285,6 @@ export function planRingBg(plan: Plan | undefined, canJoin: boolean) {
   }
 }
 
-/** Badge na kafelku — teraz wspiera ReactNode jako label (np. ikonę) */
 export function PlanBadge({
   label,
   className,
@@ -361,12 +297,11 @@ export function PlanBadge({
   if (!label) return null;
   return (
     <div
-      className={cx(
+      className={clsx(
         'pointer-events-none shrink-0 flex justify-center items-center select-none rounded-full px-1.5 py-0.5 h-min shadow-sm text-xs',
         className
       )}
       title={title}
-      aria-label={typeof label === 'string' ? label : title}
     >
       {label}
     </div>
@@ -389,25 +324,34 @@ export function EventCard({
   max,
   tags = [],
   categories = [],
-  lockHoursBeforeStart = 0,
   inline = false,
   onJoin,
   className,
   verifiedAt,
+  hasStarted,
+  isFull,
+  isOngoing,
+  canJoin,
+  withinLock,
   members = [],
-  plan = 'premium',
+  plan = 'default',
   showSponsoredBadge = true,
 }: EventCardProps) {
   const [open, setOpen] = useState(false);
 
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO, start), [endISO, start]);
-  const now = new Date();
 
-  const { canJoin, status } = useMemo(
+  const { status } = useMemo(
     () =>
-      computeJoinState(now, start, end, joinedCount, max, lockHoursBeforeStart),
-    [start.getTime(), end.getTime(), joinedCount, max, lockHoursBeforeStart]
+      computeJoinState({
+        hasStarted,
+        isFull,
+        isOngoing,
+        withinLock,
+        startAt: new Date(start),
+      }),
+    [hasStarted, isFull, isOngoing, withinLock, start]
   );
 
   const fill = Math.min(
@@ -424,7 +368,7 @@ export function EventCard({
     }
   }, []);
 
-  const planStyling = planRingBg(plan, canJoin);
+  const planStyling = planRingBg(plan, !!canJoin);
 
   const details = (
     <EventDetailsModal
@@ -458,7 +402,7 @@ export function EventCard({
     return (
       <>
         <div
-          className={cx(
+          className={clsx(
             'relative flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm cursor-pointer select-none',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 rounded-lg',
             className
@@ -489,26 +433,28 @@ export function EventCard({
               {address ? ` • ${address}` : ''}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <PlanBadge
-              label={planStyling.label}
-              className={planStyling.labelClass}
-              title={
-                plan === 'basic'
-                  ? 'Basic'
-                  : plan === 'plus'
-                    ? 'Plus'
-                    : plan === 'premium'
-                      ? 'Premium'
-                      : undefined
-              }
-            />
+          <div className="flex items-center gap-3 min-w-0">
+            {showSponsoredBadge && (
+              <PlanBadge
+                label={planStyling.label}
+                className={planStyling.labelClass}
+                title={
+                  plan === 'basic'
+                    ? 'Basic'
+                    : plan === 'plus'
+                      ? 'Plus'
+                      : plan === 'premium'
+                        ? 'Premium'
+                        : undefined
+                }
+              />
+            )}
             <StatusBadge
               tone={status.tone}
               reason={status.reason}
               label={status.label}
             />
-            <span className="text-xs text-neutral-600 dark:text-neutral-400">
+            <span className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
               {capacityLabel(joinedCount, min, max)}
             </span>
           </div>
@@ -525,7 +471,7 @@ export function EventCard({
         layout="size"
         whileHover={{ y: canJoin ? -2 : 0, scale: canJoin ? 1.01 : 1 }}
         transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-        className={cx(
+        className={clsx(
           'relative w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1',
           planStyling.ring,
           planStyling.bg,
@@ -541,16 +487,13 @@ export function EventCard({
       >
         {/* Range + duration */}
         <div className="flex items-center justify-between gap-1">
-          <div className="flex items-center justify-center min-w-0 gap-1 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
+          <div className="flex items-center min-w-0 gap-1 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
             <Calendar className="w-4 h-4 shrink-0" />
-            <span
-              className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap"
-              title={formatDateRange(start, end)}
-            >
+            <span className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
               {formatDateRange(start, end)}
             </span>
           </div>
-          <div className="flex items-center justify-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          <div className="flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
             <Clock className="w-4 h-4 shrink-0" />
             <span>{humanDuration(start, end)}</span>
           </div>
@@ -580,7 +523,7 @@ export function EventCard({
             {address && !onlineUrl && (
               <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <MapPin className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate whitespace-nowrap" title={address}>
+                <span className="truncate" title={address}>
                   {address}
                 </span>
               </p>
@@ -589,7 +532,7 @@ export function EventCard({
             {!address && onlineUrl && (
               <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <WifiIcon className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate whitespace-nowrap" title="Online">
+                <span className="truncate" title="Online">
                   Online
                 </span>
               </p>
@@ -598,7 +541,7 @@ export function EventCard({
             {address && onlineUrl && (
               <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
                 <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate whitespace-nowrap" title="Hybrid">
+                <span className="truncate" title="Hybrid">
                   {address}, Hybrid
                 </span>
               </p>
@@ -608,15 +551,15 @@ export function EventCard({
 
         {/* Capacity + status */}
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm shrink-0 text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
+          <div className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
             <Users className="w-4 h-4" aria-hidden />
             <span>{capacityLabel(joinedCount, min, max)}</span>
           </div>
-          <div className="shrink-0 flex gap-1 items-center">
+          <div className="flex items-center gap-1 min-w-0">
             {showSponsoredBadge && (
               <PlanBadge
                 label={planStyling.label}
-                className={cx(planStyling.labelClass, 'shadow-md/30')}
+                className={clsx(planStyling.labelClass, 'shadow-md/30')}
                 title={
                   plan === 'basic'
                     ? 'Basic'
@@ -637,8 +580,7 @@ export function EventCard({
           </div>
         </div>
 
-        {/* Progress bar */}
-        <ProgressBar value={fill} active={canJoin} />
+        <SimpleProgressBar value={fill} active={canJoin} />
 
         {/* Pills */}
         <div className="flex items-center gap-3 mt-2">
@@ -652,17 +594,3 @@ export function EventCard({
     </>
   );
 }
-
-/* ─────────────────────────── Eksport utils ─────────────────────────── */
-export const _utils = {
-  formatDateRange,
-  humanDuration,
-  hoursUntil,
-  parseISO,
-  plural,
-  badgeToneClass,
-  progressColorClass,
-  capacityLabel,
-  computeJoinState,
-  cx,
-};

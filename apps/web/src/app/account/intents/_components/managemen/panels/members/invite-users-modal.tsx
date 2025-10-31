@@ -7,27 +7,19 @@ import { Modal } from '@/components/modal/modal';
 import { useInviteMemberMutation } from '@/hooks/graphql/intent-members';
 import { useUsersQuery } from '@/hooks/graphql/users';
 import { IntentMemberCoreFragment_IntentMember_user_User as GqlUser } from '@/lib/graphql/__generated__/react-query-update';
+import clsx from 'clsx';
 
-/* ---------------------------------- API ---------------------------------- */
+/* ---------------------------------- TYPES ---------------------------------- */
 
 export type InviteUsersModalProps = {
   open: boolean;
   onClose: () => void;
-
-  /** ID wydarzenia do którego zapraszamy */
   intentId: string;
-
-  /** Opcjonalne podpowiedzi do „Suggested attendees” (np. znajomi / ostatnio zapraszani) */
   suggestions?: Array<Pick<GqlUser, 'id' | 'name' | 'imageUrl' | 'email'>>;
-
-  /** Callback po skutecznym zaproszeniu (zwraca listę userId z sukcesem) */
   onInvited?: (invitedUserIds: string[]) => void;
 };
 
-/* ------------------------------ Pomocnicze UI ----------------------------- */
-
-const cx = (...c: Array<string | false | null | undefined>) =>
-  c.filter(Boolean).join(' ');
+/* ---------------------------------- UI PARTS ---------------------------------- */
 
 function Avatar({
   user,
@@ -40,7 +32,7 @@ function Avatar({
 }) {
   const initials = (user.name ?? '')
     .split(' ')
-    .map((x) => x[0])
+    .map((x) => x?.[0] ?? '')
     .join('')
     .slice(0, 2)
     .toUpperCase();
@@ -54,7 +46,7 @@ function Avatar({
     />
   ) : (
     <div
-      className={cx(
+      className={clsx(
         'grid place-items-center bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300 dark:ring-zinc-700',
         rounded
       )}
@@ -89,7 +81,7 @@ function Chip({
   );
 }
 
-/* --------------------------------- Modal --------------------------------- */
+/* ---------------------------------- MODAL ---------------------------------- */
 
 export function InviteUsersModal({
   open,
@@ -98,13 +90,11 @@ export function InviteUsersModal({
   suggestions = [],
   onInvited,
 }: InviteUsersModalProps) {
-  /* ------------------------------ Query state ----------------------------- */
-
+  /* ------------------------------ STATE ------------------------------ */
   const [q, setQ] = useState('');
   const [limit, setLimit] = useState(10);
   const [offset, setOffset] = useState(0);
 
-  // debounce input (300ms)
   const [debounced, setDebounced] = useState(q);
   useEffect(() => {
     const id = setTimeout(() => setDebounced(q), 300);
@@ -116,10 +106,6 @@ export function InviteUsersModal({
       limit,
       offset,
       q: debounced.trim().length >= 2 ? debounced.trim() : null,
-      role: null,
-      verifiedOnly: null,
-      sortBy: undefined,
-      sortDir: undefined,
     },
     { enabled: open }
   );
@@ -128,8 +114,6 @@ export function InviteUsersModal({
   const total = data?.users.pageInfo.total ?? 0;
   const canPrev = offset > 0;
   const canNext = offset + limit < total;
-
-  /* --------------------------- Selection (multi) -------------------------- */
 
   const [selected, setSelected] = useState<Record<string, GqlUser>>({});
   const selectedList = useMemo(() => Object.values(selected), [selected]);
@@ -149,7 +133,6 @@ export function InviteUsersModal({
       return next;
     });
 
-  // Clear selection when modal closes
   useEffect(() => {
     if (!open) {
       setSelected({});
@@ -158,10 +141,7 @@ export function InviteUsersModal({
     }
   }, [open]);
 
-  /* ---------------------------- Invite (batch) ---------------------------- */
-
-  const inviteOne = useInviteMemberMutation(); // expects { intentId, userId }
-
+  const inviteOne = useInviteMemberMutation();
   const [inviting, setInviting] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -175,10 +155,7 @@ export function InviteUsersModal({
     const results = await Promise.allSettled(
       ids.map(async (userId, idx) => {
         const res = await inviteOne.mutateAsync({
-          input: {
-            intentId,
-            userId,
-          },
+          input: { intentId, userId },
         });
         setProgress(Math.round(((idx + 1) / ids.length) * 100));
         return res;
@@ -194,19 +171,12 @@ export function InviteUsersModal({
       else failed.push({ id, reason: r.reason });
     });
 
-    // TODO: podmień na system toastów
-    console.log(
-      `Invited OK: ${okIds.length}, failed: ${failed.length}`,
-      failed.map((f) => f.id)
-    );
-
     onInvited?.(okIds);
     setInviting(false);
-
     if (failed.length === 0) onClose();
   }
 
-  /* ------------------------------ Modal parts ----------------------------- */
+  /* ------------------------------ HEADER ------------------------------ */
 
   const Header = (
     <div className="flex items-center justify-between gap-3">
@@ -232,17 +202,10 @@ export function InviteUsersModal({
     </div>
   );
 
-  const Content = (
-    <div className="min-h-0">
-      {/* Selected chips */}
-      {selectedList.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          {selectedList.map((u) => (
-            <Chip key={u.id} user={u} onRemove={removePick} />
-          ))}
-        </div>
-      )}
+  /* ------------------------------ CONTENT ------------------------------ */
 
+  const Content = (
+    <div className="flex flex-col">
       {/* Search input */}
       <div className="mb-3 flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
         <Search className="h-4 w-4 opacity-60" />
@@ -260,99 +223,122 @@ export function InviteUsersModal({
         )}
       </div>
 
-      {/* Results list */}
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        {users.length === 0 ? (
-          <div className="grid place-items-center p-10 text-sm text-zinc-500">
-            {debounced.trim().length < 2
-              ? 'Type at least 2 characters to search'
-              : 'No users found'}
-          </div>
-        ) : (
-          <ul className="max-h-[46vh] overflow-auto [scrollbar-gutter:stable] divide-y divide-zinc-100 dark:divide-zinc-900">
-            {users.map((u) => {
-              const picked = !!selected[u.id];
-              return (
-                <li key={u.id}>
-                  <button
-                    type="button"
-                    onClick={() => togglePick(u as GqlUser)}
-                    className={cx(
-                      'flex w-full items-center gap-3 px-3 py-3 text-left transition-colors',
-                      'hover:bg-zinc-50 dark:hover:bg-zinc-900/50',
-                      picked && 'bg-indigo-50/60 dark:bg-indigo-900/20'
-                    )}
-                  >
-                    <Avatar user={u} size={36} rounded="rounded-full" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">
-                        {u.name || '—'}
-                      </div>
-                      <div className="truncate text-xs text-zinc-500">
-                        {u.email ?? '—'}
-                      </div>
-                    </div>
-                    <span
-                      className={cx(
-                        'grid h-7 w-7 place-items-center rounded-full border',
-                        picked
-                          ? 'border-indigo-300 bg-indigo-600 text-white'
-                          : 'border-zinc-300 text-transparent'
+      {/* Scrollable list (z sticky paginacją w środku) */}
+      <div className="relative rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="max-h-[54vh] overflow-y-auto [scrollbar-gutter:stable]">
+          {users.length === 0 ? (
+            <div className="grid h-full place-items-center p-10 text-sm text-zinc-500">
+              {debounced.trim().length < 2
+                ? 'Type at least 2 characters to search'
+                : 'No users found'}
+            </div>
+          ) : (
+            <>
+              <ul className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                {users.map((u) => {
+                  const picked = !!selected[u.id];
+                  return (
+                    <li key={u.id}>
+                      <button
+                        type="button"
+                        onClick={() => togglePick(u as GqlUser)}
+                        className={clsx(
+                          'flex w-full items-center gap-3 px-3 py-3 text-left transition-colors',
+                          'hover:bg-zinc-50 dark:hover:bg-zinc-900/50',
+                          picked && 'bg-indigo-50/60 dark:bg-indigo-900/20'
+                        )}
+                      >
+                        <Avatar user={u} size={40} rounded="rounded-full" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">
+                            {u.name || '—'}
+                          </div>
+                          <div className="truncate text-xs text-zinc-500">
+                            {u.email ?? '—'}
+                          </div>
+                        </div>
+                        <span
+                          className={clsx(
+                            'grid h-7 w-7 place-items-center rounded-full border',
+                            picked
+                              ? 'border-indigo-300 bg-indigo-600 text-white'
+                              : 'border-zinc-300 bg-white text-transparent dark:bg-zinc-900'
+                          )}
+                        >
+                          <Check className="h-4 w-4" />
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Sticky pagination */}
+              <div className="sticky bottom-0 border-t border-zinc-200 bg-white/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-zinc-800 dark:bg-zinc-950/90">
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <div className="hidden sm:block text-xs text-zinc-500">
+                    Total {total} · Offset {offset} · Limit {limit}
+                  </div>
+                  <div className="ml-auto flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        canPrev && setOffset(Math.max(0, offset - limit))
+                      }
+                      disabled={!canPrev || isLoading || isFetching}
+                      className={clsx(
+                        'inline-flex items-center gap-2 rounded-xl border px-3 py-1.5',
+                        'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900',
+                        (!canPrev || isLoading || isFetching) && 'opacity-50'
                       )}
-                      aria-hidden
                     >
-                      <Check className="h-4 w-4" />
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                      ‹ Prev
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => canNext && setOffset(offset + limit)}
+                      disabled={!canNext || isLoading || isFetching}
+                      className={clsx(
+                        'inline-flex items-center gap-2 rounded-xl border px-3 py-1.5',
+                        'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900',
+                        (!canNext || isLoading || isFetching) && 'opacity-50'
+                      )}
+                    >
+                      Next ›
+                    </button>
+                    <div className="relative hidden sm:block">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                      >
+                        Page: {limit}
+                        <ChevronDown className="h-4 w-4 opacity-70" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
-          <div className="text-xs text-zinc-500">
-            Total {total} · Offset {offset} · Limit {limit}
+      {/* ▼▼▼ PRZENIESIONE TUTAJ: WYBRANI UŻYTKOWNICY (POD LISTĄ) ▼▼▼ */}
+      {selectedList.length > 0 && (
+        <div className="mt-3">
+          <div className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            Selected ({selectedList.length})
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => canPrev && setOffset(Math.max(0, offset - limit))}
-              disabled={!canPrev || isLoading || isFetching}
-              className={cx(
-                'inline-flex items-center gap-2 rounded-xl border px-3 py-1.5',
-                'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900',
-                (!canPrev || isLoading || isFetching) && 'opacity-50'
-              )}
-            >
-              ‹ Prev
-            </button>
-            <button
-              type="button"
-              onClick={() => canNext && setOffset(offset + limit)}
-              disabled={!canNext || isLoading || isFetching}
-              className={cx(
-                'inline-flex items-center gap-2 rounded-xl border px-3 py-1.5',
-                'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900',
-                (!canNext || isLoading || isFetching) && 'opacity-50'
-              )}
-            >
-              Next ›
-            </button>
-
-            {/* Page size (placeholder) */}
-            <div className="relative">
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-              >
-                Page: {limit} <ChevronDown className="h-4 w-4 opacity-70" />
-              </button>
+          <div className="max-h-24 overflow-auto [scrollbar-gutter:stable] rounded-xl border border-zinc-200 p-2 dark:border-zinc-800">
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedList.map((u) => (
+                <Chip key={u.id} user={u} onRemove={removePick} />
+              ))}
             </div>
           </div>
         </div>
-      </div>
+      )}
+      {/* ▲▲▲ KONIEC BLOKU Z CHIPAMI ▲▲▲ */}
 
       {/* Suggestions */}
       {suggestions.length > 0 && (
@@ -366,15 +352,14 @@ export function InviteUsersModal({
                   key={u.id}
                   type="button"
                   onClick={() => togglePick(u as GqlUser)}
-                  className={cx(
-                    'relative grid place-items-center rounded-full p-0.5',
-                    'ring-1 ring-zinc-200 hover:ring-indigo-400 dark:ring-zinc-700'
+                  className={clsx(
+                    'relative grid place-items-center rounded-full p-0.5 ring-1 ring-zinc-200 hover:ring-indigo-400 dark:ring-zinc-700'
                   )}
                   title={u.name || u.email || ''}
                 >
                   <Avatar user={u} size={44} />
                   <span
-                    className={cx(
+                    className={clsx(
                       'absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full border',
                       picked
                         ? 'border-indigo-300 bg-indigo-600 text-white'
@@ -392,17 +377,16 @@ export function InviteUsersModal({
     </div>
   );
 
+  /* ------------------------------ FOOTER ------------------------------ */
+
   const Footer = (
-    <div className="flex items-center justify-between gap-3">
-      <div className="text-xs text-zinc-500">
-        Selected: {selectedList.length}
-      </div>
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
         <button
           type="button"
           onClick={() => refetch()}
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
           disabled={isFetching}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 px-3 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900 sm:w-auto"
         >
           {isFetching ? (
             <>
@@ -416,8 +400,8 @@ export function InviteUsersModal({
           type="button"
           onClick={handleInvite}
           disabled={inviting || selectedList.length === 0}
-          className={cx(
-            'inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500',
+          className={clsx(
+            'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 sm:w-auto',
             (inviting || selectedList.length === 0) && 'opacity-60'
           )}
         >
@@ -443,8 +427,8 @@ export function InviteUsersModal({
       size="lg"
       density="comfortable"
       ariaLabel="Invite users to the event"
-      content={Content}
       header={Header}
+      content={Content}
       footer={Footer}
     />
   );

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
+import clsx from 'clsx';
 
 type Country = { code: string; name: string; flag: string };
 
@@ -27,9 +28,6 @@ const COUNTRIES: Country[] = [
   { code: 'CA', name: 'Canada', flag: '🇨🇦' },
   { code: 'AU', name: 'Australia', flag: '🇦🇺' },
 ];
-
-const cx = (...c: Array<string | false | null | undefined>) =>
-  c.filter(Boolean).join(' ');
 
 export function CountryCombo({
   label = 'Country',
@@ -75,7 +73,7 @@ export function CountryCombo({
   }, []);
 
   return (
-    <div className={cx('block', className)} ref={wrapRef}>
+    <div className={clsx('block', className)} ref={wrapRef}>
       <div className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
         {label}
       </div>
@@ -171,7 +169,7 @@ export function CountryCombo({
                     onChange?.(c.code);
                     setOpen(false);
                   }}
-                  className={cx(
+                  className={clsx(
                     'flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm',
                     // LIGHT hover
                     'hover:bg-zinc-50',

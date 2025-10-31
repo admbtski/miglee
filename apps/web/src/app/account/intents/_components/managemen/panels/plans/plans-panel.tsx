@@ -2,11 +2,8 @@
 
 import * as React from 'react';
 import { Megaphone } from 'lucide-react';
-import { SponsorPlan } from './sponsorship-types';
-
-function cx(...c: Array<string | false | null | undefined>) {
-  return c.filter(Boolean).join(' ');
-}
+import { SponsorPlan } from '../subscription/subscription-panel-types';
+import clsx from 'clsx';
 
 function planStyles(plan: SponsorPlan) {
   switch (plan) {
@@ -47,7 +44,7 @@ function hasAccessBySubscription(
   return weight[subscription] >= weight[target];
 }
 
-export function SponsorContent({
+export function PlansPanel({
   intentId,
   onPurchase,
   subscriptionPlan = 'None',
@@ -119,7 +116,7 @@ export function SponsorContent({
           return (
             <div
               key={plan}
-              className={cx(
+              className={clsx(
                 'relative flex flex-col rounded-2xl border p-4 transition-shadow shadow-sm hover:shadow-md',
                 s.card
               )}
@@ -128,7 +125,7 @@ export function SponsorContent({
               {/* znacznik "W subskrypcji" gdy pokryte */}
               {covered && (
                 <span
-                  className={cx(
+                  className={clsx(
                     'absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold',
                     s.pill
                   )}
@@ -137,8 +134,10 @@ export function SponsorContent({
                 </span>
               )}
 
-              <div className={cx('text-sm font-semibold', s.title)}>{plan}</div>
-              <div className={cx('mb-2 text-2xl font-bold', s.price)}>
+              <div className={clsx('text-sm font-semibold', s.title)}>
+                {plan}
+              </div>
+              <div className={clsx('mb-2 text-2xl font-bold', s.price)}>
                 {price}
               </div>
 
@@ -150,7 +149,7 @@ export function SponsorContent({
 
               <button
                 type="button"
-                className={cx(
+                className={clsx(
                   'mt-auto inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-medium',
                   covered
                     ? 'cursor-not-allowed bg-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200'

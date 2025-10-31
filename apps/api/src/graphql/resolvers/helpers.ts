@@ -162,15 +162,36 @@ export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
 
 /* ---- Intent computed helpers ---- */
 
+const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
+
 function computeIntentDerived(i: IntentWithGraph) {
   const now = new Date();
+  const lockHrs = 6;
+
+  const startDate = new Date(i.startAt);
+  const endDate = new Date(i.startAt);
+
   const joinedCount = i.members.filter((m) => m.status === 'JOINED').length;
   const isFull = joinedCount >= i.max;
-  const hasStarted = now >= new Date(i.startAt);
-  const hasEnded = now > new Date(i.endAt);
-  const isCanceled = Boolean((i as any).canceledAt);
-  const isDeleted = Boolean((i as any).deletedAt);
-  return { joinedCount, isFull, hasStarted, hasEnded, isCanceled, isDeleted };
+  const hasStarted = now >= startDate;
+  const isOngoing = now >= startDate && now <= endDate;
+  const hasEnded = now > endDate;
+  const isCanceled = Boolean(i.canceledAt);
+  const isDeleted = Boolean(i.deletedAt);
+  const withinLock = !hasStarted && hoursUntil(startDate) <= lockHrs;
+  const canJoin = !isFull && !hasStarted && !withinLock;
+
+  return {
+    joinedCount,
+    isFull,
+    hasStarted,
+    hasEnded,
+    isCanceled,
+    isDeleted,
+    isOngoing,
+    withinLock,
+    canJoin,
+  };
 }
 
 function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
@@ -181,8 +202,17 @@ function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
 }
 
 export function mapIntent(i: IntentWithGraph): GQLIntent {
-  const { joinedCount, isFull, hasStarted, hasEnded, isCanceled, isDeleted } =
-    computeIntentDerived(i);
+  const {
+    joinedCount,
+    isFull,
+    hasStarted,
+    hasEnded,
+    isCanceled,
+    isDeleted,
+    canJoin,
+    isOngoing,
+    withinLock,
+  } = computeIntentDerived(i);
 
   return {
     id: i.id,
@@ -219,8 +249,8 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
 
     // --- soft-delete
     deletedAt: (i as any).deletedAt ?? null,
-    deletedBy: (i as any).deletedBy ? mapUser((i as any).deletedBy) : null,
-    deleteReason: (i as any).deleteReason ?? null,
+    deletedBy: i.deletedBy ? mapUser(i.deletedBy) : null,
+    deleteReason: i.deleteReason ?? null,
     isDeleted,
 
     // ✅ REQUIRED by SDL
@@ -231,10 +261,14 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     owner: resolveOwnerFromMembers(i),
     members: i.members.map(mapIntentMember),
 
+    // Computed helpers (resolver-calculated)
     joinedCount,
     isFull,
     hasStarted,
     hasEnded,
+    canJoin,
+    isOngoing,
+    withinLock,
 
     createdAt: i.createdAt,
     updatedAt: i.updatedAt,

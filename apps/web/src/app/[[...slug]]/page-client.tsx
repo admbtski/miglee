@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 
 import { Footer } from '../../components/footer/footer';
 import { Navbar } from '../../components/navbar/navbar';
-import { EventCard, Plan } from './_components/event-card';
+import { EventCard } from './_components/event-card';
 import { MapImagePanel } from './_components/map-image-panel';
 
 import { FilterModal } from './_components/filter-modal';
@@ -247,6 +247,11 @@ export function IntentsPage() {
                     categories={item.categories.map(
                       (c) => c.names[appLanguage]
                     )}
+                    isOngoing={item.isOngoing}
+                    hasStarted={item.hasStarted}
+                    isFull={item.isFull}
+                    withinLock={item.withinLock}
+                    canJoin={item.canJoin}
                     verifiedAt={item.owner?.verifiedAt as string}
                     members={item.members as IntentMember[]}
                     onJoin={() => {

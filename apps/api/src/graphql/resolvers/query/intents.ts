@@ -18,12 +18,6 @@ const INTENT_INCLUDE = {
   deletedBy: true,
 } satisfies Prisma.IntentInclude;
 
-/**
- * Query: intents (paginated IntentsResult)
- * - respektuje nowy SDL z pageInfo
- * - wspiera memberId (intenty, w których user jest członkiem)
- * - domyślnie UKRYWA anulowane (canceledAt IS NULL)
- */
 export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
   'intents',

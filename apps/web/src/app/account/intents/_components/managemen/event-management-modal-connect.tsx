@@ -18,7 +18,7 @@ import {
   useUnbanMemberMutation,
 } from '@/hooks/graphql/intent-members';
 import type { IntentMember } from './types';
-import { EventMembersPanel } from './event-members-panel';
+import { EventManagementModal } from './event-management-modal';
 
 function mapGqlMember(m: GQLIntentMember): IntentMember {
   return {
@@ -38,7 +38,7 @@ function mapGqlMember(m: GQLIntentMember): IntentMember {
   };
 }
 
-export function EventMembersPanelConnect({
+export function EventManagementModalConnect({
   intentId,
   isPremium,
   canManage,
@@ -73,7 +73,7 @@ export function EventMembersPanelConnect({
   const cancelPendingOrInvite = useCancelPendingOrInviteForUserMutation();
 
   const members: IntentMember[] = React.useMemo(
-    () => (rawMembers?.intentMembers ?? []).map(mapGqlMember),
+    () => (rawMembers?.intentMembers ?? []).map(mapGqlMember as any), // todo any
     [rawMembers]
   );
 
@@ -153,7 +153,7 @@ export function EventMembersPanelConnect({
 
   if (isLoading) {
     return (
-      <EventMembersPanel
+      <EventManagementModal
         open={open}
         onClose={onClose}
         intentId={intentId}
@@ -182,7 +182,7 @@ export function EventMembersPanelConnect({
   if (isError) {
     // Render an empty modal with a simple error message (you can customize)
     return (
-      <EventMembersPanel
+      <EventManagementModal
         open={open}
         onClose={onClose}
         intentId={intentId}
@@ -209,7 +209,7 @@ export function EventMembersPanelConnect({
   }
 
   return (
-    <EventMembersPanel
+    <EventManagementModal
       open={open}
       onClose={onClose}
       intentId={intentId}

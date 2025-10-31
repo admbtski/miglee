@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { ChevronDown, Folder, HashIcon } from 'lucide-react';
 import React, { JSX, useEffect, useRef, useState } from 'react';
 
@@ -28,11 +29,6 @@ function useOutsideClose<T extends HTMLElement>(
   return ref;
 }
 
-const cx = (...classes: Array<string | false | undefined>) =>
-  classes.filter(Boolean).join(' ');
-
-/* ───────────────────────────── Pill ───────────────────────────── */
-
 type PillVariant = 'solid' | 'ghost';
 
 export function Pill({
@@ -55,7 +51,7 @@ export function Pill({
       : 'bg-transparent text-neutral-700 dark:text-neutral-300';
   return (
     <Comp
-      className={cx('px-2 py-1 text-xs rounded-lg', base, className)}
+      className={clsx('px-2 py-1 text-xs rounded-lg', base, className)}
       title={typeof title === 'string' ? title : undefined}
     >
       {children}
@@ -112,7 +108,7 @@ export function OverflowPills({
   return (
     <div
       ref={wrapperRef}
-      className={cx(
+      className={clsx(
         'relative min-w-0 inline-flex items-center gap-2',
         className
       )}
@@ -121,7 +117,7 @@ export function OverflowPills({
       {/* Primary pill (acts as toggle when there is overflow) */}
       <button
         type="button"
-        className={cx(
+        className={clsx(
           'min-w-0 cursor-pointer inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg',
           'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
         )}
@@ -137,7 +133,7 @@ export function OverflowPills({
           <>
             <span className="opacity-70">+{count}</span>
             <ChevronDown
-              className={cx('w-3.5 h-3.5 transition', open && 'rotate-180')}
+              className={clsx('w-3.5 h-3.5 transition', open && 'rotate-180')}
               aria-hidden
             />
           </>
@@ -150,7 +146,7 @@ export function OverflowPills({
           id={menuId}
           role="menu"
           aria-label={menuLabel}
-          className={cx(
+          className={clsx(
             'absolute left-0 top-[calc(100%+8px)] z-50 w-64 p-2',
             'rounded-2xl border bg-white shadow-2xl ring-1 ring-black/5',
             'border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900'

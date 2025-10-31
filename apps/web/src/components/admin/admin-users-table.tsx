@@ -8,6 +8,7 @@ import {
   ShieldQuestion,
   MoreHorizontal,
 } from 'lucide-react';
+import clsx from 'clsx';
 
 export type AdminUser = {
   id: string;
@@ -18,10 +19,6 @@ export type AdminUser = {
   createdAt?: string | Date | null;
   verifiedAt?: string | Date | null;
 };
-
-function cx(...v: Array<string | false | null | undefined>) {
-  return v.filter(Boolean).join(' ');
-}
 
 function fmtDate(v?: string | Date | null) {
   return v ? new Date(v).toLocaleString() : '—';
@@ -42,7 +39,7 @@ export function AdminUsersTable({
 }) {
   return (
     <div
-      className={cx(
+      className={clsx(
         // scrollable container with sticky header support
         'min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable] rounded-xl',
         'ring-1 ring-black/5 dark:ring-white/10',
@@ -94,7 +91,7 @@ export function AdminUsersTable({
             users.map((u) => (
               <tr
                 key={u.id}
-                className={cx(
+                className={clsx(
                   'hover:bg-zinc-50 dark:hover:bg-zinc-900/40',
                   onRowClick && 'cursor-pointer'
                 )}
@@ -203,7 +200,7 @@ function RoleBadge({ role }: { role?: string | null }) {
         : 'bg-zinc-100 text-zinc-700 ring-zinc-600/10 dark:bg-zinc-800 dark:text-zinc-300';
   return (
     <span
-      className={cx(
+      className={clsx(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1',
         style
       )}

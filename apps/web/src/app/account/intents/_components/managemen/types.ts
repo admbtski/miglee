@@ -40,7 +40,7 @@ export type ManageCallbacks = {
   onNotifyPremium?: (intentId: string) => void | Promise<void>;
 };
 
-export type EventMembersPanelProps = ManageCallbacks & {
+export type EventManagementModalProps = ManageCallbacks & {
   open: boolean;
   onClose: () => void;
   intentId: string;

@@ -30,7 +30,7 @@ import {
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
-import { EventMembersPanelConnect } from './_components/managment/event-members-panel-connect';
+import { EventManagementModalConnect } from './_components/managemen/event-management-modal-connect';
 
 /** ──────────────────────────────────────────────────────────────────────────
  *  Constants / types
@@ -473,7 +473,7 @@ export default function IntentsPage() {
         onClose={() => setEditId(null)}
       />
 
-      <EventMembersPanelConnect
+      <EventManagementModalConnect
         intentId={manageId ?? ''}
         canManage={true}
         isPremium={true}

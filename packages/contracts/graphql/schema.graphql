@@ -251,10 +251,10 @@ type Intent {
   isFull: Boolean!
   hasStarted: Boolean!
   hasEnded: Boolean!
+  canJoin: Boolean!
+  isOngoing: Boolean!
+  withinLock: Boolean!
 
-  # Back-compat / convenience aliases for fragments & sorting
-  membersCount: Int! # = joinedCount
-  maxParticipants: Int! # = max
   # Cancellation (read-only state)
   canceledAt: DateTime
   canceledBy: User

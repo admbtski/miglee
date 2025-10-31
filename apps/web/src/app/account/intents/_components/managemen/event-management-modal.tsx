@@ -2,27 +2,24 @@
 
 import { Modal } from '@/components/modal/modal';
 import {
+  ArrowLeft,
   BadgeDollarSign,
   Bell,
   CheckCircle2,
   Loader2,
   Sparkles,
   Users,
-  ArrowLeft,
 } from 'lucide-react';
 import * as React from 'react';
-import { InviteUsersModal } from './invite-users-modal';
-import { MemberManageModal } from './member-manage-modal';
-import { MembersContent } from './panels/members-panel';
-import { SponsorContent } from './panels/sponsor-panel';
-import { SponsoredContent } from './panels/sponsored-panel';
-import { EventMembersPanelProps, IntentMember } from './types';
+import { InviteUsersModal } from './panels/members/invite-users-modal';
+import { MemberManageModal } from './panels/members/member-manage-modal';
+import { MembersPanel } from './panels/members/members-panel';
+import { PlansPanel } from './panels/plans/plans-panel';
+import { SubscriptionPanel } from './panels/subscription/subscription-panel';
+import { EventManagementModalProps, IntentMember } from './types';
+import clsx from 'clsx';
 
-function cx(...c: Array<string | false | null | undefined>) {
-  return c.filter(Boolean).join(' ');
-}
-
-type TabKey = 'MEMBERS' | 'SPONSOR' | 'NOTIFICATIONS' | 'SPONSORED';
+type TabKey = 'MEMBERS' | 'PLANS' | 'NOTIFICATIONS' | 'SUBSCRIPTION';
 type SponsorPlan = 'Basic' | 'Plus' | 'Pro';
 
 type SponsorshipState = {
@@ -32,7 +29,7 @@ type SponsorshipState = {
   badgeEnabled: boolean;
 };
 
-export function EventMembersPanel({
+export function EventManagementModal({
   open,
   onClose,
   intentId,
@@ -65,7 +62,7 @@ export function EventMembersPanel({
   onToggleSponsoredBadge,
   onPurchaseSponsorship,
   onUpgradeSponsorshipPlan,
-}: EventMembersPanelProps & {
+}: EventManagementModalProps & {
   currentSponsorship?: SponsorshipState | null;
   onPurchaseSponsorship?: (
     intentId: string,
@@ -225,18 +222,18 @@ export function EventMembersPanel({
       {(
         [
           { key: 'MEMBERS', label: 'Uczestnicy', Icon: Users },
-          { key: 'SPONSOR', label: 'Sponsorowanie', Icon: BadgeDollarSign },
-          { key: 'SPONSORED', label: 'Pakiet (aktywny)', Icon: Sparkles },
+          { key: 'PLANS', label: 'Sponsorowanie', Icon: BadgeDollarSign },
+          { key: 'SUBSCRIPTION', label: 'Pakiet (aktywny)', Icon: Sparkles },
           { key: 'NOTIFICATIONS', label: 'Powiadomienia', Icon: Bell },
         ] as const
       ).map(({ key, label, Icon }) => {
-        if (key === 'SPONSORED' && !currentSponsorship) return null;
+        if (key === 'SUBSCRIPTION' && !currentSponsorship) return null;
         const active = activeTab === (key as TabKey);
         return (
           <button
             key={key}
             onClick={() => setActiveTab(key as TabKey)}
-            className={cx(
+            className={clsx(
               'w-full inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 truncate',
               active
                 ? 'bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-sm'
@@ -312,7 +309,7 @@ export function EventMembersPanel({
               type="button"
               disabled={sending}
               onClick={handleSendNotifications}
-              className={cx(
+              className={clsx(
                 'inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500',
                 sending && 'opacity-60'
               )}
@@ -349,24 +346,26 @@ export function EventMembersPanel({
             {Tabs}
             <div className="rounded-2xl border border-white/10 bg-white/1 p-4 backdrop-blur-sm dark:border-zinc-800/40">
               {activeTab === 'MEMBERS' && (
-                <MembersContent
+                <MembersPanel
                   members={members}
                   canManage={canManage}
                   callbacks={callbacks}
                   onOpenManage={setSelected}
                   stats={counts}
+                  intentId={intentId}
+                  onInvited={onInvited}
                 />
               )}
 
-              {activeTab === 'SPONSOR' && (
-                <SponsorContent
+              {activeTab === 'PLANS' && (
+                <PlansPanel
                   intentId={intentId}
                   onPurchase={onPurchaseSponsorship}
                 />
               )}
 
-              {activeTab === 'SPONSORED' && currentSponsorship && (
-                <SponsoredContent
+              {activeTab === 'SUBSCRIPTION' && currentSponsorship && (
+                <SubscriptionPanel
                   intentId={intentId}
                   sponsorship={currentSponsorship}
                   onBoostEvent={onBoostEvent}
