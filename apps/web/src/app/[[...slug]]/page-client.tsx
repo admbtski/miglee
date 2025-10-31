@@ -12,9 +12,9 @@ import { MapImagePanel } from './_components/map-image-panel';
 import { FilterModal } from './_components/filter-modal';
 import { useCommittedMapVisible } from './_hooks/use-comitted-map-vision';
 import { useCommittedFilters } from './_hooks/use-committed-filters';
-import { useCommittedSort } from './_hooks/use-committed-sort';
+import { useCommittedSort } from './_hooks/use-committed-sort'; // ⬅️ nowa wersja
 
-import { useIntentsInfiniteQuery } from '@/hooks/graphql/intents'; // ⬅️ ważne
+import { useIntentsInfiniteQuery } from '@/hooks/graphql/intents';
 import {
   GetIntentsQueryVariables,
   IntentMember,
@@ -47,6 +47,8 @@ export function IntentsPage() {
     apply,
   } = useCommittedFilters();
 
+  const { sort, setSort, sortVars } = useCommittedSort();
+
   const variables = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
     () => ({
       limit: DEFAULT_LIMIT,
@@ -64,6 +66,9 @@ export function IntentsPage() {
       memberId: undefined,
       distanceKm: city ? distanceKm : null,
       near: undefined,
+
+      // ⬇️ tu wpina się mapowanie UI -> GQL sortBy/sortDir
+      ...(sortVars as any),
     }),
     [
       startISO,
@@ -76,6 +81,7 @@ export function IntentsPage() {
       verifiedOnly,
       city,
       distanceKm,
+      sortVars,
     ]
   );
 
@@ -95,7 +101,6 @@ export function IntentsPage() {
 
   const loadedCount = flatItems.length;
 
-  const { sort, setSort } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
   const [filtersOpen, setFiltersOpen] = useState(false);
 

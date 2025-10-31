@@ -5,6 +5,8 @@ import {
   QueryResolvers,
   IntentStatus,
   MeetingKind,
+  IntentsSortBy,
+  SortDir,
 } from '../../__generated__/resolvers-types';
 import { mapIntent } from '../helpers';
 
@@ -14,7 +16,7 @@ const INTENT_INCLUDE = {
   categories: true,
   tags: true,
   members: { include: { user: true, addedBy: true } },
-  canceledBy: true, // NEW
+  canceledBy: true,
   deletedBy: true,
 } satisfies Prisma.IntentInclude;
 
@@ -127,13 +129,47 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
 
     if (AND.length) where.AND = AND;
 
+    // ────────────── SORTOWANIE ──────────────
+    const dir: Prisma.SortOrder = args.sortDir === SortDir.Asc ? 'asc' : 'desc';
+
+    let orderBy: Prisma.IntentOrderByWithRelationInput[] = [];
+
+    switch (args.sortBy) {
+      case IntentsSortBy.StartAt:
+        orderBy = [{ startAt: dir }, { createdAt: 'desc' }, { id: 'desc' }];
+        break;
+
+      case IntentsSortBy.CreatedAt:
+        orderBy = [{ createdAt: dir }, { id: 'desc' }];
+        break;
+
+      case IntentsSortBy.UpdatedAt:
+        orderBy = [{ updatedAt: dir }, { createdAt: 'desc' }, { id: 'desc' }];
+        break;
+
+      case IntentsSortBy.MembersCount:
+        // sortowanie po liczbie członków (wszystkich); jeśli chcesz tylko JOINED,
+        // rozważ denormalizację/cachowanie pola joinedCount i sort po nim.
+        orderBy = [
+          { members: { _count: dir } },
+          { startAt: 'asc' },
+          { id: 'desc' },
+        ];
+        break;
+
+      default:
+        // backendowy default – jak wcześniej
+        orderBy = [{ startAt: 'asc' }, { createdAt: 'desc' }, { id: 'desc' }];
+        break;
+    }
+
     const total = await prisma.intent.count({ where });
 
     const rows = await prisma.intent.findMany({
       where,
       take,
       skip,
-      orderBy: [{ startAt: 'asc' }, { createdAt: 'desc' }],
+      orderBy,
       include: INTENT_INCLUDE,
     });
 

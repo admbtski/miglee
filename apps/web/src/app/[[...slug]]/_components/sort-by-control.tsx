@@ -1,16 +1,28 @@
 'use client';
 
 import clsx from 'clsx';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 
-export type SortKey = 'default' | 'latest' | 'salary_desc' | 'salary_asc';
+export type SortKey =
+  | 'default'
+  | 'start_asc'
+  | 'start_desc'
+  | 'created_desc'
+  | 'created_asc'
+  | 'updated_desc'
+  | 'members_desc'
+  | 'members_asc';
 
-const OPTIONS: { value: SortKey; label: string }[] = [
+const OPTIONS: { value: SortKey; label: string; hint?: string }[] = [
   { value: 'default', label: 'Default' },
-  { value: 'latest', label: 'Latest' },
-  { value: 'salary_desc', label: 'Highest salary' },
-  { value: 'salary_asc', label: 'Lowest salary' },
+  { value: 'start_asc', label: 'Start — soonest first' },
+  { value: 'start_desc', label: 'Start — latest first' },
+  { value: 'created_desc', label: 'Newest (created)' },
+  { value: 'created_asc', label: 'Oldest (created)' },
+  { value: 'updated_desc', label: 'Recently updated' },
+  { value: 'members_desc', label: 'Most popular (members)' },
+  { value: 'members_asc', label: 'Least popular (members)' },
 ];
 
 export function SortByControl({
@@ -37,11 +49,9 @@ export function SortByControl({
         setOpen(false);
       }
     }
-
     function onEsc(e: KeyboardEvent & any) {
       if ((e as KeyboardEvent).key === 'Escape') setOpen(false);
     }
-
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onEsc);
     return () => {
@@ -67,7 +77,7 @@ export function SortByControl({
       >
         <span className="opacity-80">Sort by:</span>
         <span className="font-medium">{current?.label ?? ''}</span>
-        <ChevronDown className="h-4 w-4 opacity-80" />
+        <ChevronDown className="h-4 w-4 shrink-0 opacity-80" />
       </button>
 
       {open && (
@@ -75,7 +85,7 @@ export function SortByControl({
           ref={menuRef}
           role="menu"
           className={clsx(
-            'absolute right-0 top-[calc(100%+8px)] z-50 w-56 p-1',
+            'absolute right-0 top-[calc(100%+8px)] z-50 w-64 p-1',
             'rounded-2xl border bg-white shadow-2xl ring-1 ring-black/5',
             'border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900'
           )}
@@ -92,13 +102,14 @@ export function SortByControl({
                   setOpen(false);
                 }}
                 className={clsx(
-                  'block w-full select-none rounded-xl px-3 py-2 text-left text-sm cursor-pointer',
+                  'group flex w-full items-center justify-between select-none rounded-xl px-3 py-2 text-left text-sm cursor-pointer',
                   active
                     ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100'
                     : 'hover:bg-zinc-100 dark:hover:bg-zinc-800'
                 )}
               >
-                {opt.label}
+                <span className="truncate">{opt.label}</span>
+                {active && <Check className="ml-2 h-4 w-4 opacity-80" />}
               </button>
             );
           })}
