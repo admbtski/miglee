@@ -1,4 +1,3 @@
-// file: components/manage-members/MemberManageModal.tsx
 'use client';
 
 import { Modal } from '@/components/modal/modal';

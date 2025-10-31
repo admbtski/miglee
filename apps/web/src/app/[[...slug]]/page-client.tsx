@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 
 import { Footer } from '../../components/footer/footer';
 import { Navbar } from '../../components/navbar/navbar';
-import { EventCard } from './_components/event-card';
+import { EventCard, Plan } from './_components/event-card';
 import { MapImagePanel } from './_components/map-image-panel';
 
 import { FilterModal } from './_components/filter-modal';
@@ -213,7 +213,7 @@ export function IntentsPage() {
                     className="w-full h-48 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900"
                   />
                 ))
-              : flatItems.map((item) => (
+              : flatItems.map((item, i) => (
                   <EventCard
                     key={item.id}
                     startISO={item.startAt}
@@ -224,6 +224,18 @@ export function IntentsPage() {
                     organizerName={
                       item.owner?.name ?? item.owner?.email ?? 'Unknown'
                     }
+                    plan={((_index) => {
+                      if (_index % 7 === 0) {
+                        return 'premium';
+                      }
+                      if (_index % 5 === 0) {
+                        return 'plus';
+                      }
+                      if (_index % 3 === 0) {
+                        return 'basic';
+                      }
+                      return 'default';
+                    })(i)}
                     title={item.title ?? '-'}
                     description={item.description ?? '-'}
                     address={item.address!}

@@ -1,4 +1,3 @@
-// file: components/manage-members/MembersSection.tsx
 'use client';
 
 import * as React from 'react';

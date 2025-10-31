@@ -1,4 +1,3 @@
-// file: components/manage-members/MemberRow.tsx
 'use client';
 
 import * as React from 'react';

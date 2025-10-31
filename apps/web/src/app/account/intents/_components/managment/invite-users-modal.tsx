@@ -1,4 +1,3 @@
-// components/invite/InviteUsersModal.tsx
 'use client';
 
 import { Check, ChevronDown, Loader2, Search, UserPlus, X } from 'lucide-react';

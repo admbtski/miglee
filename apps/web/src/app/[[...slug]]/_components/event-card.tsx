@@ -11,13 +11,17 @@ import {
   WifiIcon,
   MapPinHouseIcon,
   BadgeCheck,
+  StarsIcon,
+  StarIcon,
 } from 'lucide-react';
 import {
   CategoryPills,
   TagPills,
 } from '../../../components/pill/category-tag-pill';
-import { EventDetailsModal } from '../../../components/event/event-details-modal'; // ⬅️ NEW
+import { EventDetailsModal } from '../../../components/event/event-details-modal';
 import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
+
+export type Plan = 'default' | 'basic' | 'plus' | 'premium';
 
 export interface EventCardProps {
   startISO: string;
@@ -39,6 +43,9 @@ export interface EventCardProps {
   className?: string;
   verifiedAt?: string;
   members?: IntentMember[];
+  /** NOWE: wariant wizualny powiązany z pakietem */
+  plan?: Plan;
+  showSponsoredBadge?: boolean;
 }
 
 /* ───────────────────────────── Utils ───────────────────────────── */
@@ -228,7 +235,7 @@ function StatusBadge({
   label: string;
 }) {
   return (
-    <span
+    <div
       className={cx(
         'text-xs px-2 py-1 rounded-full inline-flex items-center gap-1',
         badgeToneClass(tone)
@@ -239,7 +246,7 @@ function StatusBadge({
         <Lock className="w-3.5 h-3.5" aria-hidden />
       )}
       {label}
-    </span>
+    </div>
   );
 }
 
@@ -294,6 +301,78 @@ function VerifiedBadge({ verifiedAt }: { verifiedAt?: string }) {
   );
 }
 
+/* ─────────────── WARIANTY PLANU (kolory/ringi/tła + label jako IKONA) ─────────────── */
+
+export function planRingBg(plan: Plan | undefined, canJoin: boolean) {
+  // Subtelne: ring w kolorze planu + bardzo delikatna poświata tła.
+  // Dla niedostępnych: mniej nasycone tła, ale zostaje kolor ringu (sygnał planu).
+  switch (plan ?? 'default') {
+    case 'basic':
+      return {
+        ring: 'ring-emerald-300/60 dark:ring-emerald-700/50',
+        bg: canJoin
+          ? 'bg-emerald-50/40 dark:bg-emerald-900/10'
+          : 'bg-neutral-50 dark:bg-neutral-950',
+        label: (
+          <StarsIcon className="w-3.5 h-3.5 text-emerald-50" aria-hidden />
+        ),
+        labelClass: 'bg-emerald-600 text-white dark:bg-emerald-500',
+      };
+    case 'plus':
+      return {
+        ring: 'ring-indigo-300/60 dark:ring-indigo-700/50',
+        bg: canJoin
+          ? 'bg-indigo-50/40 dark:bg-indigo-900/10'
+          : 'bg-neutral-50 dark:bg-neutral-950',
+        label: <StarIcon className="w-3.5 h-3.5 text-indigo-50" aria-hidden />,
+        labelClass: 'bg-indigo-600 text-white dark:bg-indigo-500',
+      };
+    case 'premium':
+      return {
+        ring: 'ring-amber-400/70 dark:ring-amber-700/60',
+        bg: canJoin
+          ? 'bg-amber-50/45 dark:bg-amber-900/10'
+          : 'bg-neutral-50 dark:bg-neutral-950',
+        label: <StarIcon className="w-3.5 h-3.5 text-amber-50" aria-hidden />,
+        labelClass: 'bg-amber-600 text-white dark:bg-amber-500',
+      };
+    default:
+      return {
+        ring: 'ring-neutral-200/70 dark:ring-neutral-800',
+        bg: canJoin
+          ? 'bg-white dark:bg-neutral-900'
+          : 'bg-neutral-50 dark:bg-neutral-950',
+        label: undefined,
+        labelClass: '',
+      };
+  }
+}
+
+/** Badge na kafelku — teraz wspiera ReactNode jako label (np. ikonę) */
+export function PlanBadge({
+  label,
+  className,
+  title,
+}: {
+  label?: React.ReactNode;
+  className: string;
+  title?: string;
+}) {
+  if (!label) return null;
+  return (
+    <div
+      className={cx(
+        'pointer-events-none shrink-0 flex justify-center items-center select-none rounded-full px-1.5 py-0.5 h-min shadow-sm text-xs',
+        className
+      )}
+      title={title}
+      aria-label={typeof label === 'string' ? label : title}
+    >
+      {label}
+    </div>
+  );
+}
+
 /* ─────────────────────────── Komponent ─────────────────────────── */
 
 export function EventCard({
@@ -316,6 +395,8 @@ export function EventCard({
   className,
   verifiedAt,
   members = [],
+  plan = 'premium',
+  showSponsoredBadge = true,
 }: EventCardProps) {
   const [open, setOpen] = useState(false);
 
@@ -343,13 +424,42 @@ export function EventCard({
     }
   }, []);
 
-  /* Inline */
+  const planStyling = planRingBg(plan, canJoin);
+
+  const details = (
+    <EventDetailsModal
+      open={open}
+      onClose={closeModal}
+      onJoin={onJoin}
+      data={{
+        startISO,
+        endISO,
+        description,
+        address,
+        onlineUrl,
+        categories,
+        tags,
+        min,
+        max,
+        joinedCount,
+        organizerName,
+        avatarUrl,
+        verifiedAt,
+        status,
+        canJoin,
+        members,
+        plan,
+      }}
+    />
+  );
+
+  /* ───────── Inline wariant ───────── */
   if (inline) {
     return (
       <>
         <div
           className={cx(
-            'flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm cursor-pointer select-none',
+            'relative flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm cursor-pointer select-none',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 rounded-lg',
             className
           )}
@@ -358,6 +468,7 @@ export function EventCard({
           onClick={openModal}
           onKeyDown={onKeyPress}
           aria-label={`Szczegóły wydarzenia: ${organizerName}`}
+          data-plan={plan}
         >
           <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
           <div className="flex-1 min-w-0">
@@ -379,6 +490,19 @@ export function EventCard({
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <PlanBadge
+              label={planStyling.label}
+              className={planStyling.labelClass}
+              title={
+                plan === 'basic'
+                  ? 'Basic'
+                  : plan === 'plus'
+                    ? 'Plus'
+                    : plan === 'premium'
+                      ? 'Premium'
+                      : undefined
+              }
+            />
             <StatusBadge
               tone={status.tone}
               reason={status.reason}
@@ -389,36 +513,12 @@ export function EventCard({
             </span>
           </div>
         </div>
-
-        {/* Modal */}
-        <EventDetailsModal
-          open={open}
-          onClose={closeModal}
-          onJoin={onJoin}
-          data={{
-            startISO,
-            endISO,
-            description,
-            address,
-            onlineUrl,
-            categories,
-            tags,
-            min,
-            max,
-            joinedCount,
-            organizerName,
-            avatarUrl,
-            verifiedAt,
-            status,
-            canJoin,
-            members,
-          }}
-        />
+        {details}
       </>
     );
   }
 
-  /* Tile */
+  /* ───────── Tile wariant ───────── */
   return (
     <>
       <motion.div
@@ -426,10 +526,9 @@ export function EventCard({
         whileHover={{ y: canJoin ? -2 : 0, scale: canJoin ? 1.01 : 1 }}
         transition={{ type: 'spring', stiffness: 600, damping: 20 }}
         className={cx(
-          'w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1 ring-neutral-200/70 dark:ring-neutral-800',
-          canJoin
-            ? 'bg-white dark:bg-neutral-900'
-            : 'bg-neutral-50 dark:bg-neutral-950',
+          'relative w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1',
+          planStyling.ring,
+          planStyling.bg,
           'cursor-pointer select-none',
           className
         )}
@@ -438,6 +537,7 @@ export function EventCard({
         onClick={openModal}
         onKeyDown={onKeyPress}
         aria-label={`Szczegóły wydarzenia: ${organizerName}`}
+        data-plan={plan}
       >
         {/* Range + duration */}
         <div className="flex items-center justify-between gap-1">
@@ -512,7 +612,23 @@ export function EventCard({
             <Users className="w-4 h-4" aria-hidden />
             <span>{capacityLabel(joinedCount, min, max)}</span>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 flex gap-1 items-center">
+            {showSponsoredBadge && (
+              <PlanBadge
+                label={planStyling.label}
+                className={cx(planStyling.labelClass, 'shadow-md/30')}
+                title={
+                  plan === 'basic'
+                    ? 'Basic'
+                    : plan === 'plus'
+                      ? 'Plus'
+                      : plan === 'premium'
+                        ? 'Premium'
+                        : undefined
+                }
+              />
+            )}
+
             <StatusBadge
               tone={status.tone}
               reason={status.reason}
@@ -523,6 +639,8 @@ export function EventCard({
 
         {/* Progress bar */}
         <ProgressBar value={fill} active={canJoin} />
+
+        {/* Pills */}
         <div className="flex items-center gap-3 mt-2">
           <CategoryPills categories={categories ?? []} />
           <TagPills tags={tags ?? []} />
@@ -530,29 +648,7 @@ export function EventCard({
       </motion.div>
 
       {/* Modal */}
-      <EventDetailsModal
-        open={open}
-        onClose={closeModal}
-        onJoin={onJoin}
-        data={{
-          startISO,
-          endISO,
-          description,
-          address,
-          onlineUrl,
-          categories,
-          tags,
-          min,
-          max,
-          joinedCount,
-          organizerName,
-          avatarUrl,
-          verifiedAt,
-          status,
-          canJoin,
-          members,
-        }}
-      />
+      {details}
     </>
   );
 }

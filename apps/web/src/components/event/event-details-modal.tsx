@@ -23,6 +23,11 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Modal } from '../modal/modal';
+import {
+  Plan,
+  PlanBadge,
+  planRingBg,
+} from '@/app/[[...slug]]/_components/event-card';
 
 export type ParticipantRole = 'OWNER' | 'MODERATOR' | 'PARTICIPANT';
 
@@ -55,6 +60,7 @@ type Props = {
     status: JoinStatus;
     canJoin: boolean;
     members: IntentMember[];
+    plan?: Plan;
   };
 };
 
@@ -226,6 +232,7 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
     status,
     canJoin,
     members,
+    plan,
   } = data;
 
   const start = useMemo(() => parseISO(startISO), [startISO]);
@@ -238,6 +245,8 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
   const owners = members.filter((p) => p.role === 'OWNER');
   const mods = members.filter((p) => p.role === 'MODERATOR');
   const users = members.filter((p) => p.role === 'PARTICIPANT');
+
+  const planStyling = planRingBg(plan, canJoin);
 
   // Tytuł: preferuj eventTitle, w innym wypadku weź 1. linię opisu (do ~80 znaków), fallback na zakres dat.
   const title =
@@ -275,6 +284,10 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
             <Info className="w-3.5 h-3.5" />
             {status.label}
           </span>
+          <PlanBadge
+            text={planStyling.label}
+            className={planStyling.labelClass}
+          />
         </div>
       </div>
 

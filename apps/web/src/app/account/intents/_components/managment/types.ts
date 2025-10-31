@@ -1,11 +1,3 @@
-// ============================================================================
-// Event Members Management (Modal) – Split Components
-// Tech: React + TypeScript + Tailwind + Framer Motion
-// Files below use the pattern `// file: <relative path>` to indicate placement.
-// You can put them under: `apps/web/src/components/manage-members/`
-// ============================================================================
-
-// file: components/manage-members/types.ts
 'use client';
 
 export type IntentMemberRole = 'OWNER' | 'MODERATOR' | 'PARTICIPANT';
