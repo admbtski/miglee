@@ -14,122 +14,83 @@ export type JoinReason =
   | 'DELETED'
   | 'CANCELED';
 
-export function computeJoinState(
-  now: Date,
-  start: Date,
-  end: Date,
-  joinedCount: number,
-  max: number,
-  lockHrs = 0,
-  isCanceled?: boolean | null,
-  isDeleted?: boolean | null
-): {
-  canJoin: boolean;
+export function computeJoinState({
+  hasStarted,
+  isFull,
+  isOngoing,
+  isDeleted,
+  isCanceled,
+  withinLock,
+  startAt,
+}: {
+  isOngoing?: boolean | null;
+  hasStarted?: boolean | null;
+  withinLock?: boolean | null;
+  isDeleted?: boolean | null;
+  isCanceled?: boolean | null;
+  isFull?: boolean | null;
+  startAt?: Date | null;
+}): {
   status: {
     label: string;
     tone: JoinTone;
     reason: JoinReason;
   };
-  isOngoing: boolean;
-  hasStarted: boolean;
-  isFull: boolean;
-  withinLock: boolean;
 } {
-  const hasStarted = now >= start;
-  const isOngoing = now >= start && now <= end;
-  const isFull = max > 0 && joinedCount >= max;
-  const withinLock = !hasStarted && hoursUntil(start) <= lockHrs;
-  const canJoin = !isFull && !hasStarted && !withinLock && !isCanceled;
-
   if (isDeleted)
     return {
-      canJoin,
       status: {
         label: 'Usunięte',
         tone: 'error',
         reason: 'DELETED',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
 
   if (isCanceled)
     return {
-      canJoin,
       status: {
         label: 'Odwołane',
         tone: 'warn',
         reason: 'CANCELED',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
 
   if (isOngoing)
     return {
-      canJoin,
       status: {
         label: 'Trwa teraz',
         tone: 'info',
         reason: 'ONGOING',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
   if (hasStarted)
     return {
-      canJoin,
       status: {
         label: 'Rozpoczęte',
         tone: 'error',
         reason: 'STARTED',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
   if (isFull)
     return {
-      canJoin,
       status: {
         label: 'Brak miejsc',
         tone: 'error',
         reason: 'FULL',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
-  if (withinLock) {
-    const hrs = Math.max(0, Math.ceil(hoursUntil(start)));
+  if (withinLock && startAt) {
+    const hrs = Math.max(0, Math.ceil(hoursUntil(startAt)));
     return {
-      canJoin,
       status: {
         label: `Start za ${hrs} h.`,
         tone: 'warn',
         reason: 'LOCK',
       },
-      isOngoing,
-      hasStarted,
-      isFull,
-      withinLock,
     };
   }
   return {
-    canJoin,
     status: { label: 'Dostępne', tone: 'ok', reason: 'OK' },
-    isOngoing,
-    hasStarted,
-    isFull,
-    withinLock,
   };
 }
 

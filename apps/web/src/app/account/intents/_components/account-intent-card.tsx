@@ -8,15 +8,18 @@ import {
   WifiIcon,
 } from 'lucide-react';
 import { useMemo } from 'react';
+import {
+  computeJoinState,
+  StatusBadge,
+} from '../../../../components/atoms/status-badge';
 import { ActionMenu } from './action-menu';
-import { capacityLabel, formatDateRange, parseISO } from './formatters';
-import { computeJoinState, StatusBadge } from './status-badge';
+import { capacityLabel, formatDateRange } from './formatters';
 
 export function AccountIntentCard(props: {
   id?: string;
   description?: string | null;
   title?: string | null;
-  startAt?: string | null;
+  startAt: string;
   endAt?: string | null;
   address?: string | null;
   onlineUrl?: string | null;
@@ -27,7 +30,11 @@ export function AccountIntentCard(props: {
   tags?: string[];
   lockHoursBeforeStart?: number;
   isCanceled?: boolean | null;
+  isFull?: boolean | null;
+  isOngoing?: boolean | null;
   isDeleted?: boolean | null;
+  hasStarted?: boolean | null;
+  withinLock?: boolean | null;
 
   owned?: boolean;
   onPreview?: (id: string) => void | Promise<void>;
@@ -52,6 +59,10 @@ export function AccountIntentCard(props: {
     lockHoursBeforeStart = 0,
     isCanceled,
     isDeleted,
+    isFull,
+    isOngoing,
+    hasStarted,
+    withinLock,
     owned,
     onPreview,
     onEdit,
@@ -66,29 +77,19 @@ export function AccountIntentCard(props: {
   const isOnline = !address && !!onlineUrl;
   const isHybrid = !!address && !!onlineUrl;
 
-  const { status } = useMemo(() => {
-    const now = new Date();
-    const start = parseISO(startAt) ?? now;
-    const end = parseISO(endAt) ?? now;
-    return computeJoinState(
-      now,
-      start,
-      end,
-      joinedCount,
-      max,
-      lockHoursBeforeStart,
-      isCanceled,
-      isDeleted
-    );
-  }, [
-    startAt,
-    endAt,
-    joinedCount,
-    max,
-    lockHoursBeforeStart,
-    isCanceled,
-    isDeleted,
-  ]);
+  const { status } = useMemo(
+    () =>
+      computeJoinState({
+        startAt: new Date(startAt),
+        isCanceled,
+        isDeleted,
+        isFull,
+        isOngoing,
+        hasStarted,
+        withinLock,
+      }),
+    [hasStarted, isCanceled, isDeleted, isFull, isOngoing, startAt, withinLock]
+  );
 
   return (
     <div className="relative min-w-0 flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">

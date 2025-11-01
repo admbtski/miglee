@@ -5,10 +5,7 @@ import {
   PlanBadge,
   planRingBg,
 } from '@/app/[[...slug]]/_components/event-card';
-import {
-  JoinReason,
-  JoinTone,
-} from '@/app/account/intents/_components/status-badge';
+import { JoinReason, JoinTone } from '@/components/atoms/status-badge';
 import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
 import {
   Calendar,
@@ -159,7 +156,7 @@ export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
     status,
     canJoin,
     members,
-    plan,
+    plan = 'plus',
   } = data;
 
   const start = useMemo(() => parseISO(startISO), [startISO]);

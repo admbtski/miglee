@@ -22,6 +22,7 @@ import {
   TagPills,
 } from '../../../components/pill/category-tag-pill';
 import clsx from 'clsx';
+import { computeJoinState, StatusBadge } from '@/components/atoms/status-badge';
 
 export type Plan = 'default' | 'basic' | 'plus' | 'premium';
 
@@ -45,6 +46,8 @@ export interface EventCardProps {
   className?: string;
   verifiedAt?: string;
   isOngoing: boolean;
+  isCanceled: boolean;
+  isDeleted: boolean;
   hasStarted: boolean;
   withinLock: boolean;
   canJoin: boolean;
@@ -117,8 +120,6 @@ function humanDuration(start: Date, end: Date) {
   return parts.length ? parts.join(' ') : '< 1 min';
 }
 
-const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
-
 function formatVerifiedTitle(verifiedAt?: string) {
   if (!verifiedAt) return null;
   const d = parseISO(verifiedAt);
@@ -129,95 +130,8 @@ function formatVerifiedTitle(verifiedAt?: string) {
   return `Zweryfikowany organizator (od ${day} ${mon} ${year})`;
 }
 
-/* ─────────────── Deterministyczna maszyna stanów Join ─────────────── */
-
-function computeJoinState({
-  hasStarted,
-  isFull,
-  isOngoing,
-  withinLock,
-  startAt,
-}: {
-  isOngoing: boolean;
-  hasStarted: boolean;
-  withinLock: boolean;
-  isFull: boolean;
-  startAt: Date;
-}) {
-  if (isOngoing)
-    return {
-      status: {
-        label: 'Trwa teraz',
-        tone: 'info' as const,
-        reason: 'ONGOING' as const,
-      },
-    };
-  if (hasStarted)
-    return {
-      status: {
-        label: 'Rozpoczęte – dołączenie zablokowane',
-        tone: 'error',
-        reason: 'STARTED',
-      },
-    };
-  if (isFull)
-    return { status: { label: 'Brak miejsc', tone: 'error', reason: 'FULL' } };
-  if (withinLock) {
-    const hrs = Math.max(0, Math.ceil(hoursUntil(startAt)));
-    return {
-      status: {
-        label: `Start za ${hrs} h – zapisy zamknięte`,
-        tone: 'warn',
-        reason: 'LOCK',
-      },
-    };
-  }
-  return { status: { label: 'Dostępne', tone: 'ok', reason: 'OK' } };
-}
-
-/* ─────────────────────────── Prezentacja ─────────────────────────── */
-
-const badgeToneClass = (tone: 'ok' | 'warn' | 'error' | 'info') =>
-  tone === 'error'
-    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-    : tone === 'warn'
-      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-      : tone === 'info'
-        ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'
-        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
-
 const capacityLabel = (joinedCount: number, min: number, max: number) =>
   `${joinedCount} / ${min}-${max} osób`;
-
-function StatusBadge({
-  tone,
-  reason,
-  label,
-  className,
-}: {
-  tone: 'ok' | 'warn' | 'error' | 'info';
-  reason?: string;
-  label: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={clsx(
-        // bez stałych szerokości – kontrola przez overflow + truncate + min-w-0
-        'inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full min-w-0 overflow-hidden truncate whitespace-nowrap',
-        badgeToneClass(tone),
-        className
-      )}
-      title={label}
-      aria-live="polite"
-    >
-      {(reason === 'LOCK' || reason === 'STARTED') && (
-        <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden />
-      )}
-      <span className="truncate">{label}</span>
-    </div>
-  );
-}
 
 function Avatar({ url, alt }: { url: string; alt: string }) {
   return (
@@ -331,6 +245,8 @@ export function EventCard({
   hasStarted,
   isFull,
   isOngoing,
+  isCanceled,
+  isDeleted,
   canJoin,
   withinLock,
   members = [],
@@ -345,13 +261,15 @@ export function EventCard({
   const { status } = useMemo(
     () =>
       computeJoinState({
-        hasStarted,
+        startAt: new Date(startISO),
+        isCanceled,
+        isDeleted,
         isFull,
         isOngoing,
+        hasStarted,
         withinLock,
-        startAt: new Date(start),
       }),
-    [hasStarted, isFull, isOngoing, withinLock, start]
+    [hasStarted, isCanceled, isDeleted, isFull, isOngoing, startISO, withinLock]
   );
 
   const fill = Math.min(

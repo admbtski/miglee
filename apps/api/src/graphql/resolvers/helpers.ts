@@ -179,7 +179,8 @@ function computeIntentDerived(i: IntentWithGraph) {
   const isCanceled = Boolean(i.canceledAt);
   const isDeleted = Boolean(i.deletedAt);
   const withinLock = !hasStarted && hoursUntil(startDate) <= lockHrs;
-  const canJoin = !isFull && !hasStarted && !withinLock;
+  const canJoin =
+    !isFull && !hasStarted && !withinLock && !isDeleted && !isCanceled;
 
   return {
     joinedCount,
@@ -269,6 +270,9 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     canJoin,
     isOngoing,
     withinLock,
+    isOnline: i.meetingKind === 'ONLINE',
+    isHybrid: i.meetingKind === 'HYBRID',
+    isOnsite: i.meetingKind === 'ONSITE',
 
     createdAt: i.createdAt,
     updatedAt: i.updatedAt,

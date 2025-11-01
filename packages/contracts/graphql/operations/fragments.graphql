@@ -169,6 +169,9 @@ fragment IntentCore on Intent {
   canJoin
   isOngoing
   withinLock
+  isOnsite
+  isOnline
+  isHybrid
 
   # Cancellation (read-only)
   canceledAt

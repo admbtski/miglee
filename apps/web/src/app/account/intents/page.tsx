@@ -14,7 +14,7 @@ import { CreateEditIntentModalConnect } from '@/components/create-edit-intent/cr
 import { EventDetailsModal } from '@/components/event/event-details-modal';
 
 import { appLanguage } from '@/constants/language';
-import { computeJoinState } from './_components/status-badge';
+import { computeJoinState } from '../../../components/atoms/status-badge';
 
 import { Modal } from '@/components/modal/modal';
 import { useIntentsInfiniteQuery } from '@/hooks/graphql/intents';
@@ -356,6 +356,10 @@ export default function IntentsPage() {
                 max={it.max}
                 isCanceled={it.isCanceled}
                 isDeleted={it.isDeleted}
+                isFull={it.isFull}
+                hasStarted={it.hasStarted}
+                isOngoing={it.isOngoing}
+                withinLock={it.withinLock}
                 categories={it.categories?.map((c) => c.slug)}
                 tags={it.tags?.map((t) => t.label)}
                 lockHoursBeforeStart={Number(lockHoursFallback(it))}
@@ -440,28 +444,16 @@ export default function IntentsPage() {
           organizerName: preview?.owner?.name!,
           avatarUrl: preview?.owner?.imageUrl!,
           verifiedAt: preview?.owner?.verifiedAt!,
-          status: computeJoinState(
-            new Date(),
-            new Date(preview?.startAt!),
-            new Date(preview?.endAt!),
-            preview?.joinedCount!,
-            preview?.max!,
-            // @ts-expect-error – fallback
-            preview?.lockHoursBeforeStart ?? 0,
-            preview?.isCanceled!,
-            preview?.isDeleted!
-          ).status,
-          canJoin: computeJoinState(
-            new Date(),
-            new Date(preview?.startAt!),
-            new Date(preview?.endAt!),
-            preview?.joinedCount!,
-            preview?.max!,
-            // @ts-expect-error – fallback
-            preview?.lockHoursBeforeStart ?? 0,
-            preview?.isCanceled!,
-            preview?.isDeleted!
-          ).canJoin,
+          status: computeJoinState({
+            hasStarted: preview?.hasStarted!,
+            isFull: preview?.isFull!,
+            isOngoing: preview?.isOngoing!,
+            isDeleted: preview?.isDeleted!,
+            isCanceled: preview?.isCanceled!,
+            withinLock: preview?.withinLock!,
+            startAt: new Date(preview?.startAt!),
+          }).status,
+          canJoin: preview?.canJoin!,
           members: preview?.members ?? [],
         }}
       />

@@ -254,6 +254,9 @@ type Intent {
   canJoin: Boolean!
   isOngoing: Boolean!
   withinLock: Boolean!
+  isOnsite: Boolean!
+  isOnline: Boolean!
+  isHybrid: Boolean!
 
   # Cancellation (read-only state)
   canceledAt: DateTime

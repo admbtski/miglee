@@ -8,7 +8,6 @@ import {
   SearchIcon,
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import * as React from 'react';
 
 export type DesktopSearchBarProps = {
   q: string;

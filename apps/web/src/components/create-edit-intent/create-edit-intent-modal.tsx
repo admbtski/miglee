@@ -238,7 +238,7 @@ export function CreateEditIntentModal({
                   }
                 );
                 setCategories(initialCategories);
-                setTags(initialCategories);
+                setTags(initialTags);
                 setFormKey((k) => k + 1); // ← hard reset UI
               }}
               className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
