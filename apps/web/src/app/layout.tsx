@@ -3,7 +3,7 @@ import { Poppins } from 'next/font/google';
 
 import OtelInit from '@/lib/config/otel-init';
 import { WebVitals } from '@/lib/config/web-vitals';
-import { ThemeProvider } from '@/providers/theme/theme-provider';
+import { ThemeProvider } from '@/features/theme/provider/theme-provider';
 import { InlineThemeScript } from './scripts/inline/inline-theme-script';
 import '../styles/globals.css';
 

@@ -27,7 +27,7 @@ import {
   MarkAllNotificationsReadMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
-import { getWsClient } from '@/lib/api/wsClient';
+import { getWsClient } from '@/lib/api/ws-client';
 import { getQueryClient } from '@/lib/config/query-client';
 import {
   InfiniteData,

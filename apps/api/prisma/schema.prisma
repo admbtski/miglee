@@ -15,47 +15,46 @@ datasource db {
 // Enums
 // =============================================================================
 
-/// Visibility level for intents
 enum Visibility {
   PUBLIC
   HIDDEN
 }
 
-/// Meeting capacity mode
+enum JoinMode {
+  OPEN
+  REQUEST
+  INVITE_ONLY
+}
+
 enum Mode {
   ONE_TO_ONE
   GROUP
 }
 
-/// Type of meeting location/format
 enum MeetingKind {
   ONSITE
   ONLINE
   HYBRID
 }
 
-/// Global user role (system-wide permissions)
 enum Role {
   ADMIN
   MODERATOR
   USER
 }
 
-/// Skill/experience level
 enum Level {
   BEGINNER
   INTERMEDIATE
   ADVANCED
 }
 
-/// Role within a specific intent
 enum IntentMemberRole {
   OWNER
   MODERATOR
   PARTICIPANT
 }
 
-/// Membership lifecycle status
 enum IntentMemberStatus {
   JOINED
   PENDING
@@ -66,7 +65,6 @@ enum IntentMemberStatus {
   KICKED
 }
 
-/// Notification type/category
 enum NotificationKind {
   INTENT_CREATED
   INTENT_UPDATED
@@ -76,10 +74,15 @@ enum NotificationKind {
   INTENT_MEMBERSHIP_APPROVED
   INTENT_MEMBERSHIP_REJECTED
   INTENT_REMINDER
+  JOIN_REQUEST
+  NEW_MESSAGE
+  NEW_COMMENT
+  NEW_REVIEW
+  BANNED
+  UNBANNED
   SYSTEM
 }
 
-/// Entity type for polymorphic notification targets
 enum NotificationEntity {
   INTENT
   MESSAGE
@@ -90,29 +93,121 @@ enum NotificationEntity {
   OTHER
 }
 
+enum SponsorPlan {
+  BASIC
+  PLUS
+  PRO
+}
+
+enum SponsorshipStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PLUS
+  PRO
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+enum MemberEvent {
+  JOIN
+  REQUEST
+  APPROVE
+  REJECT
+  LEAVE
+  KICK
+  BAN
+  UNBAN
+  INVITE
+  ACCEPT_INVITE
+}
+
+enum ReportEntity {
+  INTENT
+  COMMENT
+  REVIEW
+  USER
+  MESSAGE
+}
+
+enum AttachmentKind {
+  IMAGE
+  FILE
+  LINK
+}
+
 // =============================================================================
 // Models
 // =============================================================================
 
-/// User account
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
-  name       String    @unique
-  imageUrl   String
-  role       Role      @default(USER)
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String   @unique
+  imageUrl   String?
+  role       Role     @default(USER)
   verifiedAt DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   lastSeenAt DateTime?
 
+  // Profile / Preferences
+  locale     String?   // e.g. "pl-PL", "en-US"
+  tz         String?   // IANA TZ, np. "Europe/Warsaw"
+  acceptedTermsAt      DateTime?
+  acceptedMarketingAt  DateTime?
+
   // Relations
-  notifications      Notification[]
-  intentMembers      IntentMember[]
-  addedMemberships   IntentMember[] @relation("IntentMemberAddedBy")
-  actedNotifications Notification[] @relation("NotificationActor")
-  canceledIntents    Intent[]       @relation("IntentCanceledBy")
-  deletedIntents     Intent[]       @relation("IntentDeletedBy")
+  notifications        Notification[]
+  actedNotifications   Notification[] @relation("NotificationActor")
+  intentMembers        IntentMember[]
+  addedMemberships     IntentMember[] @relation("IntentMemberAddedBy")
+  canceledIntents      Intent[]       @relation("IntentCanceledBy")
+  deletedIntents       Intent[]       @relation("IntentDeletedBy")
+  ownedIntents         Intent[]       @relation("IntentOwner")
+  memberEventsAsSubject IntentMemberEvent[] @relation("MemberEventUser")
+  memberEventsAsActor   IntentMemberEvent[] @relation("MemberEventActor")
+
+  // Social
+  commentsWritten      Comment[]      @relation("CommentAuthor")
+  reviewsWritten       Review[]       @relation("ReviewAuthor")
+
+  // DM
+  dmThreadsA           DmThread[]     @relation("DmA")
+  dmThreadsB           DmThread[]     @relation("DmB")
+  dmMessages           DmMessage[]
+  dmMutes              DmMute[]
+
+  // Mutes / Prefs
+  notificationPreference NotificationPreference?
+  intentMutes           IntentMute[]
+
+  // Moderation
+  reportsFiled         Report[]       @relation("ReportAuthor")
+  blocksInitiated      UserBlock[]    @relation("Blocker")
+  blocksReceived       UserBlock[]    @relation("Blocked")
+
+  // Ownership transfers
+  ownershipTransfersFrom IntentOwnershipTransfer[] @relation("IotFrom")
+  ownershipTransfersTo   IntentOwnershipTransfer[] @relation("IotTo")
+  ownershipTransfersActed IntentOwnershipTransfer[] @relation("IotActor")
+
+  // Monetization
+  subscriptions        UserSubscription[]
+  eventSponsorships    EventSponsorship[] @relation("SponsorUser")
 
   @@index([email])
   @@index([name])
@@ -121,24 +216,19 @@ model User {
   @@map("users")
 }
 
-/// Category for intent classification (with i18n names)
 model Category {
   id        String   @id @default(cuid())
   slug      String   @unique
-  names     Json // JSON object with language keys: { "en": "...", "pl": "...", "de": "..." }
-  icon      String?
-  color     String?
+  names     Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  intents Intent[]
+  intents   Intent[]
 
   @@index([slug])
   @@map("categories")
 }
 
-/// Tag for intent filtering and search
 model Tag {
   id        String   @id @default(cuid())
   label     String
@@ -146,74 +236,87 @@ model Tag {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  intents Intent[]
+  intents   Intent[]
 
   @@index([label])
   @@index([slug])
   @@map("tags")
 }
 
-/// Intent (meeting/event)
 model Intent {
   id          String  @id @default(cuid())
   title       String
   description String?
   notes       String?
 
-  // Many-to-many relations
-  categories Category[]
-  tags       Tag[]
+  categories  Category[]
+  tags        Tag[]
 
-  // Visibility & capacity
-  visibility       Visibility @default(PUBLIC)
-  requiresApproval Boolean    @default(false)
-  mode             Mode       @default(GROUP)
-  min              Int        @default(2)
-  max              Int        @default(50)
+  visibility  Visibility @default(PUBLIC)
+  joinMode    JoinMode   @default(OPEN)
 
-  // Timing
+  mode        Mode @default(GROUP)
+  min         Int  @default(2)
+  max         Int  @default(50)
+
   startAt       DateTime
   endAt         DateTime
-  allowJoinLate Boolean  @default(true)
+  allowJoinLate Boolean @default(true)
 
-  // Meeting format
   meetingKind MeetingKind @default(ONSITE)
   onlineUrl   String?
 
-  // Location (optional, for ONSITE/HYBRID)
   lat      Float?
   lng      Float?
   address  String?
   placeId  String?
   radiusKm Float?
 
-  // Skill levels (array enum)
-  levels Level[] @default([])
+  levels   Level[] @default([])
 
-  // Cancellation (read-only business state)
+  // Privacy toggles (for Hidden)
+  showMemberCount Boolean @default(true)
+  showAddress     Boolean @default(false)
+
+  // Derived counters
+  joinedCount   Int @default(0)
+  commentsCount Int @default(0)
+  messagesCount Int @default(0)
+
+  // Ownership
+  ownerId String?
+  owner   User?    @relation("IntentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownershipTransfers IntentOwnershipTransfer[]
+
+  // Cancellation / deletion
   canceledAt   DateTime?
   canceledById String?
   canceledBy   User?     @relation("IntentCanceledBy", fields: [canceledById], references: [id], onDelete: SetNull)
   cancelReason String?
 
-  // Soft-delete (typically set 30+ days after cancellation)
   deletedAt    DateTime?
   deletedById  String?
   deletedBy    User?     @relation("IntentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   deleteReason String?
 
   // Relations
-  members       IntentMember[]
-  notifications Notification[]
+  members        IntentMember[]
+  memberEvents   IntentMemberEvent[]
+  notifications  Notification[]
+  comments       Comment[]
+  reviews        Review[]
+  sponsorship    EventSponsorship?
+  inviteLinks    IntentInviteLink[]
+  mutes          IntentMute[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Indexes for common queries
+  // Indexes
   @@index([startAt])
   @@index([endAt])
   @@index([visibility])
+  @@index([joinMode])
   @@index([mode])
   @@index([meetingKind])
   @@index([lat, lng])
@@ -221,40 +324,32 @@ model Intent {
   @@index([canceledAt])
   @@index([deletedAt])
   @@index([createdAt])
-  // Composite indexes for common query patterns
-  @@index([visibility, startAt])
-  @@index([visibility, canceledAt, deletedAt])
+  @@index([visibility, meetingKind, startAt])
+  @@index([visibility, startAt, joinedCount])
   @@map("intents")
 }
 
-/// Intent membership (user participation in an intent)
 model IntentMember {
-  id String @id @default(cuid())
-
+  id       String @id @default(cuid())
   intentId String
   userId   String
 
-  // Relations
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intent   Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Membership details
-  role   IntentMemberRole   @default(PARTICIPANT)
-  status IntentMemberStatus @default(PENDING)
+  role     IntentMemberRole   @default(PARTICIPANT)
+  status   IntentMemberStatus @default(PENDING)
 
-  // Audit: who added this member
   addedById String?
   addedBy   User?   @relation("IntentMemberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
 
-  // Lifecycle timestamps
   joinedAt DateTime?
   leftAt   DateTime?
-  note     String? // Reason for rejection/kick
+  note     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Constraints & indexes
   @@unique([intentId, userId])
   @@index([userId, status])
   @@index([intentId, status])
@@ -264,39 +359,129 @@ model IntentMember {
   @@map("intent_members")
 }
 
-/// Notification for user activity feed
+model IntentMemberEvent {
+  id        String      @id @default(cuid())
+  intentId  String
+  userId    String
+  actorId   String?
+  kind      MemberEvent
+  note      String?
+  createdAt DateTime    @default(now())
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  user  User  @relation("MemberEventUser",  fields: [userId],  references: [id], onDelete: Cascade)
+  actor User? @relation("MemberEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([intentId, createdAt])
+  @@index([userId, createdAt])
+  @@map("intent_member_events")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  intentId  String
+  authorId  String
+  threadId  String   // root comment id; dla rootów = id (ustaw w app)
+  parentId  String?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  author User   @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  parent Comment? @relation("CommentParent", fields: [parentId], references: [id], onDelete: SetNull)
+  replies Comment[] @relation("CommentParent")
+
+  @@index([intentId, createdAt])
+  @@index([authorId, createdAt])
+  @@index([intentId, threadId, createdAt])
+  @@index([parentId, createdAt])
+  @@map("comments")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  intentId  String
+  authorId  String
+  rating    Int      // enforce 1..5 in SQL CHECK
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  author User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([intentId, authorId])
+  @@index([intentId, createdAt])
+  @@index([authorId, createdAt])
+  @@index([intentId, rating, createdAt])
+  @@map("reviews")
+}
+
+model DmThread {
+  id            String   @id @default(cuid())
+  aUserId       String
+  bUserId       String
+  pairKey       String   @unique // `${min(aUserId,bUserId)}|${max(aUserId,bUserId)}`
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastMessageAt DateTime?
+
+  aUser   User @relation("DmA", fields: [aUserId], references: [id], onDelete: Cascade)
+  bUser   User @relation("DmB", fields: [bUserId], references: [id], onDelete: Cascade)
+  messages DmMessage[]
+  mutes    DmMute[]
+
+  @@index([aUserId, bUserId])
+  @@index([lastMessageAt])
+  @@map("dm_threads")
+}
+
+model DmMessage {
+  id        String   @id @default(cuid())
+  threadId  String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+  deletedAt DateTime?
+
+  thread DmThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+  @@index([senderId, createdAt])
+  @@map("dm_messages")
+}
+
 model Notification {
   id String @id @default(cuid())
 
   kind NotificationKind
 
-  // Recipient (required)
   recipientId String
   recipient   User   @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
-  // Actor (optional - who triggered this notification)
   actorId String?
   actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
 
-  // Polymorphic entity reference
   entityType NotificationEntity
   entityId   String?
 
-  // Convenience: direct intent reference (when entityType=INTENT)
   intentId String?
   intent   Intent? @relation(fields: [intentId], references: [id], onDelete: SetNull)
 
-  // Content
   title     String?
   body      String?
   data      Json?
-  dedupeKey String? // Prevents duplicate notifications
+  dedupeKey String?
 
-  // Status
   readAt    DateTime?
   createdAt DateTime  @default(now())
 
-  // Constraints & indexes
   @@unique([recipientId, dedupeKey])
   @@index([recipientId, readAt])
   @@index([recipientId, createdAt])
@@ -304,4 +489,183 @@ model Notification {
   @@index([recipientId, kind, readAt])
   @@index([intentId])
   @@map("notifications")
+}
+
+// ========================== Moderation ==========================
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("user_blocks")
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  reporterId String
+  entity     ReportEntity
+  entityId   String
+  reason     String
+  status     String       @default("OPEN")
+  createdAt  DateTime     @default(now())
+  resolvedAt DateTime?
+
+  reporter User @relation("ReportAuthor", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([entity, entityId])
+  @@index([status, createdAt])
+  @@map("reports")
+}
+
+// ========================== Monetization ==========================
+
+model UserSubscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  plan                 SubscriptionPlan   @default(BASIC)
+  status               SubscriptionStatus @default(INCOMPLETE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean @default(false)
+  canceledAt           DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([stripeSubscriptionId])
+  @@index([currentPeriodEnd])
+  @@map("user_subscriptions")
+}
+
+model EventSponsorship {
+  id           String            @id @default(cuid())
+  intentId     String            @unique
+  sponsorId    String
+  plan         SponsorPlan       @default(BASIC)
+  status       SponsorshipStatus @default(PENDING)
+  highlightOn  Boolean           @default(false)
+  startedAt    DateTime?
+  endsAt       DateTime?
+  boostsUsed   Int               @default(0)
+  localPushes  Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  intent  Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  sponsor User   @relation("SponsorUser", fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  @@index([plan, status])
+  @@index([endsAt])
+  @@map("event_sponsorships")
+}
+
+model PaymentEvent {
+  id          String   @id @default(cuid())
+  provider    String   @default("stripe")
+  eventId     String   @unique
+  type        String
+  payload     Json
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+  success     Boolean  @default(false)
+  attempt     Int      @default(1)
+  lastError   String?
+
+  @@index([type, receivedAt])
+  @@map("payment_events")
+}
+
+// ========================== Invites ==========================
+
+model IntentInviteLink {
+  id         String   @id @default(cuid())
+  intentId   String
+  code       String   @unique
+  maxUses    Int?
+  usedCount  Int      @default(0)
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@index([intentId, expiresAt])
+  @@map("intent_invite_links")
+}
+
+// ========================== Preferences & Mutes ==========================
+
+model NotificationPreference {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  emailOnInvite       Boolean @default(true)
+  emailOnJoinRequest  Boolean @default(true)
+  emailOnMessage      Boolean @default(false)
+  pushOnReminder      Boolean @default(true)
+  inAppOnEverything   Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model IntentMute {
+  id        String   @id @default(cuid())
+  intentId  String
+  userId    String
+  muted     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([intentId, userId])
+  @@map("intent_mutes")
+}
+
+model DmMute {
+  id        String   @id @default(cuid())
+  threadId  String
+  userId    String
+  muted     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  thread DmThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@map("dm_mutes")
+}
+
+// ========================== Ownership transfers ==========================
+
+model IntentOwnershipTransfer {
+  id         String   @id @default(cuid())
+  intentId   String
+  fromUserId String
+  toUserId   String
+  actorId    String?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  intent   Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  fromUser User   @relation("IotFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User   @relation("IotTo",   fields: [toUserId],   references: [id], onDelete: Cascade)
+  actor    User?  @relation("IotActor", fields: [actorId],   references: [id], onDelete: SetNull)
+
+  @@index([intentId, createdAt])
+  @@map("intent_ownership_transfers")
 }
