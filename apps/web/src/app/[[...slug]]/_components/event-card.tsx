@@ -1,7 +1,7 @@
 'use client';
 
-import { SimpleProgressBar } from '@/components/atoms/simple-progress-bar';
-import { IntentMember } from '@/lib/graphql/__generated__/react-query-update';
+import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
+import { IntentMember } from '@/lib/api/__generated__/react-query-update';
 import { motion } from 'framer-motion';
 import {
   BadgeCheck,
@@ -16,13 +16,10 @@ import {
   WifiIcon,
 } from 'lucide-react';
 import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
-import { EventDetailsModal } from '../../../components/event/event-details-modal';
-import {
-  CategoryPills,
-  TagPills,
-} from '../../../components/pill/category-tag-pill';
+import { EventDetailsModal } from '@/features/intents/components/event-details-modal';
+import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
 import clsx from 'clsx';
-import { computeJoinState, StatusBadge } from '@/components/atoms/status-badge';
+import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
 
 export type Plan = 'default' | 'basic' | 'plus' | 'premium';
 

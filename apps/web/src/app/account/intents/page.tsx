@@ -10,14 +10,14 @@ import { KindFilter } from './_components/kind-filter';
 import { SortFilter } from './_components/sort-filter';
 import { StatusFilter } from './_components/status-filter';
 
-import { CreateEditIntentModalConnect } from '@/components/create-edit-intent/create-edit-intent-modal-connect';
-import { EventDetailsModal } from '@/components/event/event-details-modal';
+import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
+import { EventDetailsModal } from '@/features/intents/components/event-details-modal';
 
-import { appLanguage } from '@/constants/language';
-import { computeJoinState } from '../../../components/atoms/status-badge';
+import { appLanguage } from '@/lib/config/language';
+import { computeJoinState } from '@/components/ui/status-badge';
 
-import { Modal } from '@/components/modal/modal';
-import { useIntentsInfiniteQuery } from '@/hooks/graphql/intents';
+import { Modal } from '@/components/feedback/modal';
+import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 import {
   IntentsResultCoreFragment_IntentsResult_items_Intent as IntentItem,
   IntentsSortBy,
@@ -26,7 +26,7 @@ import {
   SortDir,
   Visibility,
   type GetIntentsQueryVariables,
-} from '@/lib/graphql/__generated__/react-query-update';
+} from '@/lib/api/__generated__/react-query-update';
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';

@@ -1,5 +1,5 @@
 'use client';
-import { IntentStatus } from '@/lib/graphql/__generated__/react-query-update';
+import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
 import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';

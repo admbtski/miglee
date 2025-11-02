@@ -1,7 +1,7 @@
 'use client';
 
-import { NoticeModal } from '@/components/modal/notice-modal';
-import { useCancelIntentMutation } from '@/hooks/graphql/intents';
+import { NoticeModal } from '@/components/feedback/notice-modal';
+import { useCancelIntentMutation } from '@/lib/api/intents';
 import { useCallback, useState } from 'react';
 
 type Props = {

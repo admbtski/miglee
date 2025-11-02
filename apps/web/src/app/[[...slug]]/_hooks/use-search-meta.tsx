@@ -1,8 +1,8 @@
 'use client';
 
-import { appLanguage, appLanguageFallback } from '@/constants/language';
-import { useGetCategoriesQuery } from '@/hooks/graphql/categories';
-import { useGetTagsQuery } from '@/hooks/graphql/tags';
+import { appLanguage, appLanguageFallback } from '@/lib/config/language';
+import { useGetCategoriesQuery } from '@/lib/api/categories';
+import { useGetTagsQuery } from '@/lib/api/tags';
 import { useEffect, useMemo, useState } from 'react';
 
 const MIN_CHARS = 3;

@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { Footer } from '../../components/footer/footer';
-import { Navbar } from '../../components/navbar/navbar';
+import { Footer } from '@/components/layout/footer';
+import { Navbar } from '@/components/layout/navbar';
 import { EventCard } from './_components/event-card';
 import { MapImagePanel } from './_components/map-image-panel';
 
@@ -14,15 +14,15 @@ import { useCommittedMapVisible } from './_hooks/use-comitted-map-vision';
 import { useCommittedFilters } from './_hooks/use-committed-filters';
 import { useCommittedSort } from './_hooks/use-committed-sort';
 
-import { useIntentsInfiniteQuery } from '@/hooks/graphql/intents';
 import {
   GetIntentsQueryVariables,
   IntentMember,
   IntentStatus,
   Visibility,
-} from '@/lib/graphql/__generated__/react-query-update';
+} from '@/lib/api/__generated__/react-query-update';
+import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 
-import { appLanguage } from '@/constants/language';
+import { appLanguage } from '@/lib/config/language';
 import { DesktopSearchBar } from './_components/desktop-search-bar';
 import { SortByControl } from './_components/sort-by-control';
 import { ToggleMap } from './_components/toggle-map';

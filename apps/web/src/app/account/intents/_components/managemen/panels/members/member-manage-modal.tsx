@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal } from '@/components/modal/modal';
+import { Modal } from '@/components/feedback/modal';
 import clsx from 'clsx';
 import {
   Ban,

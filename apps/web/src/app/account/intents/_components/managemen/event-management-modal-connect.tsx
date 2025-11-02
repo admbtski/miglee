@@ -4,7 +4,7 @@ import * as React from 'react';
 import type {
   IntentMember as GQLIntentMember,
   IntentMemberRole as GQLRole,
-} from '@/lib/graphql/__generated__/react-query-update';
+} from '@/lib/api/__generated__/react-query-update';
 import {
   useIntentMembersQuery,
   useIntentMemberStatsQuery,
@@ -16,7 +16,7 @@ import {
   useInviteMemberMutation,
   useCancelPendingOrInviteForUserMutation,
   useUnbanMemberMutation,
-} from '@/hooks/graphql/intent-members';
+} from '@/lib/api/intent-members';
 import type { IntentMember } from './types';
 import { EventManagementModal } from './event-management-modal';
 

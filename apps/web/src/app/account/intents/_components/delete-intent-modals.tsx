@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { NoticeModal } from '@/components/modal/notice-modal';
-import { useDeleteIntentMutation } from '@/hooks/graphql/intents';
+import { NoticeModal } from '@/components/feedback/notice-modal';
+import { useDeleteIntentMutation } from '@/lib/api/intents';
 
 type Props = {
   /** ID of intent to delete; when null, the confirm dialog is closed */

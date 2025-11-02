@@ -3,10 +3,10 @@
 import { Check, ChevronDown, Loader2, Search, UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { Modal } from '@/components/modal/modal';
-import { useInviteMemberMutation } from '@/hooks/graphql/intent-members';
-import { useUsersQuery } from '@/hooks/graphql/users';
-import { IntentMemberCoreFragment_IntentMember_user_User as GqlUser } from '@/lib/graphql/__generated__/react-query-update';
+import { Modal } from '@/components/feedback/modal';
+import { useInviteMemberMutation } from '@/lib/api/intent-members';
+import { useUsersQuery } from '@/lib/api/users';
+import { IntentMemberCoreFragment_IntentMember_user_User as GqlUser } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
 
 /* ---------------------------------- TYPES ---------------------------------- */

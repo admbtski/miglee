@@ -1,12 +1,12 @@
 'use client';
 
-import { appLanguage, appLanguageFallback } from '@/constants/language';
-import { useGetCategoriesBySlugsQuery } from '@/hooks/graphql/categories';
+import { appLanguage, appLanguageFallback } from '@/lib/config/language';
+import { useGetCategoriesBySlugsQuery } from '@/lib/api/categories';
 import {
   IntentStatus,
   Level,
   MeetingKind,
-} from '@/lib/graphql/__generated__/react-query-update';
+} from '@/lib/api/__generated__/react-query-update';
 import {
   AlertCircle,
   Calendar as CalendarIcon,
@@ -25,7 +25,7 @@ import React, {
   useState,
 } from 'react';
 import { SearchMeta, useSearchMeta } from '../_hooks/use-search-meta';
-import { useGetTagsBySlugsQuery } from '@/hooks/graphql/tags';
+import { useGetTagsBySlugsQuery } from '@/lib/api/tags';
 import SearchCombo from './search-combo';
 
 /* ────────────────────────────────────────────────────────────────────────── */

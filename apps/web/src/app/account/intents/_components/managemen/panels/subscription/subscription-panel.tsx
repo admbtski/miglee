@@ -14,11 +14,11 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
-import { CooldownRing } from '@/components/atoms/cooldown-ring';
-import { QuotaBar } from '@/components/atoms/quota-bar';
-import { ClickBurst } from '@/components/effects/click-burst';
-import { ClickParticle } from '@/components/effects/click-particle';
-import { Modal } from '@/components/modal/modal';
+import { CooldownRing } from '@/components/ui/cooldown-ring';
+import { QuotaBar } from '@/components/ui/quota-bar';
+import { ClickBurst } from '@/components/ui/click-burst';
+import { ClickParticle } from '@/components/ui/click-particle';
+import { Modal } from '@/components/feedback/modal';
 import { useCooldown } from '@/hooks/use-cooldown';
 import {
   PLAN_CAPS,

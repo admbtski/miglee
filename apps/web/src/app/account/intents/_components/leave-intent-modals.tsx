@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { NoticeModal } from '@/components/modal/notice-modal';
+import { NoticeModal } from '@/components/feedback/notice-modal';
 
 type Props = {
   /** ID of intent to leave; when null, the confirm dialog is closed */

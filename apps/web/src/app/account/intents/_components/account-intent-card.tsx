@@ -1,5 +1,5 @@
 'use client';
-import { CategoryPills, TagPills } from '@/components/pill/category-tag-pill';
+import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
 import {
   Calendar,
   MapPin,
@@ -8,10 +8,7 @@ import {
   WifiIcon,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import {
-  computeJoinState,
-  StatusBadge,
-} from '../../../../components/atoms/status-badge';
+import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
 import { ActionMenu } from './action-menu';
 import { capacityLabel, formatDateRange } from './formatters';
 

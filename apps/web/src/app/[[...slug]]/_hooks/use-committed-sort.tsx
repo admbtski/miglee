@@ -5,8 +5,8 @@ import { useCallback, useMemo } from 'react';
 import {
   IntentsSortBy,
   SortDir,
-} from '@/lib/graphql/__generated__/react-query-update';
-import type { GetIntentsQueryVariables } from '@/lib/graphql/__generated__/react-query-update';
+} from '@/lib/api/__generated__/react-query-update';
+import type { GetIntentsQueryVariables } from '@/lib/api/__generated__/react-query-update';
 
 export type SortKey =
   | 'default'
