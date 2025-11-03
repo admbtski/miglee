@@ -1,25 +1,42 @@
+// EventCard.tsx
 'use client';
 
+import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
-import { IntentMember } from '@/lib/api/__generated__/react-query-update';
+import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
+import type { JoinTone, JoinReason } from '@/components/ui/status-badge';
+import { EventDetailsModal } from '@/features/intents/components/event-details-modal';
+import {
+  AddressVisibility,
+  IntentMember,
+  Level,
+  MembersVisibility,
+} from '@/lib/api/__generated__/react-query-update';
+import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import {
   BadgeCheck,
   Calendar,
   Clock,
-  Lock,
+  Eye,
+  EyeOff,
+  Gauge,
+  Map as MapIcon,
   MapPin,
   MapPinHouseIcon,
+  Rocket,
+  Sprout,
   StarIcon,
   StarsIcon,
+  UserCheck,
   Users,
-  WifiIcon,
+  Wifi as WifiIcon,
 } from 'lucide-react';
-import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
-import { EventDetailsModal } from '@/features/intents/components/event-details-modal';
-import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
-import clsx from 'clsx';
-import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
+import React, { KeyboardEvent, useCallback, useMemo, useState } from 'react';
+
+/* ───────────────────────────── Types ───────────────────────────── */
+
+type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
 export type Plan = 'default' | 'basic' | 'plus' | 'premium';
 
@@ -37,11 +54,12 @@ export interface EventCardProps {
   max: number;
   tags?: string[];
   categories: string[];
-  lockHoursBeforeStart?: number;
+  lockHoursBeforeStart?: number; // rezerwacja pod przyszłe reguły
   inline?: boolean;
   onJoin?: () => void | Promise<void>;
   className?: string;
   verifiedAt?: string;
+
   isOngoing: boolean;
   isCanceled: boolean;
   isDeleted: boolean;
@@ -49,6 +67,14 @@ export interface EventCardProps {
   withinLock: boolean;
   canJoin: boolean;
   isFull: boolean;
+
+  isHybrid: boolean;
+  isOnline: boolean;
+  isOnsite: boolean;
+
+  levels: Level[];
+  addressVisibility: AddressVisibility;
+  membersVisibility: MembersVisibility; // (na razie nieużywane)
   members?: IntentMember[];
   plan?: Plan;
   showSponsoredBadge?: boolean;
@@ -67,7 +93,6 @@ const MONTHS_PL_SHORT = [
   'sie',
   'wrz',
   'paź',
-  'lis',
   'gru',
 ] as const;
 
@@ -127,8 +152,7 @@ function formatVerifiedTitle(verifiedAt?: string) {
   return `Zweryfikowany organizator (od ${day} ${mon} ${year})`;
 }
 
-const capacityLabel = (joinedCount: number, min: number, max: number) =>
-  `${joinedCount} / ${min}-${max} osób`;
+/* ───────────────────────────── Atomy ───────────────────────────── */
 
 function Avatar({ url, alt }: { url: string; alt: string }) {
   return (
@@ -148,8 +172,144 @@ function VerifiedBadge({ verifiedAt }: { verifiedAt?: string }) {
   return (
     <BadgeCheck
       className="w-3.5 h-3.5 shrink-0 text-sky-500 dark:text-sky-400"
-      aria-label={title}
+      aria-label={title ?? undefined}
+      role="img"
     />
+  );
+}
+
+/* ─────────────── Mapowania: Levels & AddressVisibility ─────────────── */
+
+const LEVEL_META: Record<
+  Level,
+  { label: string; Icon: IconType; tone: string; ring: string }
+> = {
+  [Level.Beginner]: {
+    label: 'Beginner',
+    Icon: Sprout,
+    tone: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-200 dark:ring-emerald-700/60',
+  },
+  [Level.Intermediate]: {
+    label: 'Intermediate',
+    Icon: Gauge,
+    tone: 'text-indigo-700 dark:text-indigo-300',
+    ring: 'ring-indigo-200 dark:ring-indigo-700/60',
+  },
+  [Level.Advanced]: {
+    label: 'Advanced',
+    Icon: Rocket,
+    tone: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-200 dark:ring-amber-700/60',
+  },
+};
+
+/** Stabilna kolejność prezentacji leveli. */
+const LEVEL_ORDER: Record<Level, number> = {
+  [Level.Beginner]: 0,
+  [Level.Intermediate]: 1,
+  [Level.Advanced]: 2,
+};
+
+function normalizeAV(
+  av: AddressVisibility
+): 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN' {
+  const s = String(av).toUpperCase();
+  if (s.includes('PUBLIC')) return 'PUBLIC';
+  if (s.includes('AFTER_JOIN')) return 'AFTER_JOIN';
+  return 'HIDDEN';
+}
+
+function addressVisibilityMeta(av: AddressVisibility) {
+  const v = normalizeAV(av);
+  switch (v) {
+    case 'PUBLIC':
+      return {
+        label: 'Adres publiczny',
+        Icon: Eye,
+        tone: 'text-emerald-700 dark:text-emerald-300',
+        ring: 'ring-emerald-200 dark:ring-emerald-700/60',
+        canShow: true,
+        hint: 'Dokładny adres widoczny publicznie',
+      };
+    case 'AFTER_JOIN':
+      return {
+        label: 'Adres po dołączeniu',
+        Icon: UserCheck,
+        tone: 'text-indigo-700 dark:text-indigo-300',
+        ring: 'ring-indigo-200 dark:ring-indigo-700/60',
+        canShow: false,
+        hint: 'Dokładny adres dostępny po dołączeniu',
+      };
+    case 'HIDDEN':
+    default:
+      return {
+        label: 'Adres ukryty',
+        Icon: EyeOff,
+        tone: 'text-neutral-600 dark:text-neutral-300',
+        ring: 'ring-neutral-200 dark:ring-neutral-700',
+        canShow: false,
+        hint: 'Dokładny adres nie jest ujawniany',
+      };
+  }
+}
+
+/* ─────────────── Capacity Badge (spójny z computeJoinState) ─────────────── */
+
+function CapacityBadge({
+  joinedCount,
+  min,
+  max,
+  isFull,
+  canJoin,
+  statusReason,
+}: {
+  joinedCount: number;
+  min: number;
+  max: number;
+  isFull: boolean;
+  canJoin: boolean;
+  statusReason: JoinReason;
+}) {
+  const spotsLeft = Math.max(0, max - joinedCount);
+  const fillPct = Math.min(
+    100,
+    Math.round((joinedCount / Math.max(1, max)) * 100)
+  );
+
+  const toneClass =
+    isFull || statusReason === 'FULL'
+      ? 'text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-800/50'
+      : canJoin
+        ? fillPct >= 80
+          ? 'text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-800/50'
+          : 'text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800/50'
+        : 'text-neutral-700 dark:text-neutral-300 ring-neutral-200 dark:ring-neutral-700';
+
+  const label =
+    isFull || statusReason === 'FULL'
+      ? `Brak miejsc • ${joinedCount} / ${min}-${max}`
+      : canJoin
+        ? `${joinedCount} / ${max} • ${spotsLeft} ${plural(spotsLeft, ['wolne', 'wolne', 'wolnych'])}`
+        : `${joinedCount} / ${max}`;
+
+  const aria =
+    isFull || statusReason === 'FULL'
+      ? `Brak miejsc. Zajętość ${joinedCount} w zakresie ${min}-${max}.`
+      : `Zajętość ${joinedCount} z ${max}. ${spotsLeft} ${plural(spotsLeft, ['miejsce', 'miejsca', 'miejsc'])} wolne.`;
+
+  return (
+    <span
+      className={clsx(
+        'inline-flex truncate items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ring-1 bg-white/80 dark:bg-neutral-900/60',
+        toneClass
+      )}
+      aria-label={aria}
+      title={aria}
+    >
+      <Users className="w-3.5 h-3.5" aria-hidden />
+      <span className="font-medium truncate">{label}</span>
+    </span>
   );
 }
 
@@ -213,13 +373,14 @@ export function PlanBadge({
         className
       )}
       title={title}
+      aria-hidden
     >
       {label}
     </div>
   );
 }
 
-/* ─────────────────────────── Komponent ─────────────────────────── */
+/* ─────────────────────────── Component ─────────────────────────── */
 
 export function EventCard({
   startISO,
@@ -248,7 +409,13 @@ export function EventCard({
   withinLock,
   members = [],
   plan = 'default',
+  addressVisibility,
+  levels,
+  membersVisibility, // eslint-disable-line @typescript-eslint/no-unused-vars
   showSponsoredBadge = true,
+  isHybrid,
+  isOnline,
+  isOnsite,
 }: EventCardProps) {
   const [open, setOpen] = useState(false);
 
@@ -258,7 +425,7 @@ export function EventCard({
   const { status } = useMemo(
     () =>
       computeJoinState({
-        startAt: new Date(startISO),
+        startAt: start,
         isCanceled,
         isDeleted,
         isFull,
@@ -266,24 +433,37 @@ export function EventCard({
         hasStarted,
         withinLock,
       }),
-    [hasStarted, isCanceled, isDeleted, isFull, isOngoing, startISO, withinLock]
+    [start, hasStarted, isCanceled, isDeleted, isFull, isOngoing, withinLock]
   );
 
-  const fill = Math.min(
-    100,
-    Math.round((joinedCount / Math.max(1, max)) * 100)
+  const fill = useMemo(
+    () => Math.min(100, Math.round((joinedCount / Math.max(1, max)) * 100)),
+    [joinedCount, max]
   );
 
   const openModal = useCallback(() => setOpen(true), []);
   const closeModal = useCallback(() => setOpen(false), []);
-  const onKeyPress = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setOpen(true);
     }
   }, []);
 
-  const planStyling = planRingBg(plan, !!canJoin);
+  const planStyling = useMemo(
+    () => planRingBg(plan, !!canJoin),
+    [plan, canJoin]
+  );
+  const avMeta = useMemo(
+    () => addressVisibilityMeta(addressVisibility),
+    [addressVisibility]
+  );
+
+  const sortedLevels = useMemo(
+    () =>
+      (levels ?? []).slice().sort((a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]),
+    [levels]
+  );
 
   const details = (
     <EventDetailsModal
@@ -312,6 +492,58 @@ export function EventCard({
     />
   );
 
+  /* ───────── helper widoku lokalizacji (wg addressVisibility) ───────── */
+  const renderLocationRow = () => {
+    if (isOnsite && !isOnline) {
+      return avMeta.canShow ? (
+        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate" title={address}>
+            {address}
+          </span>
+        </p>
+      ) : (
+        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <MapIcon className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate" title={avMeta.hint}>
+            {avMeta.label}
+          </span>
+        </p>
+      );
+    }
+
+    if (isOnline && !isOnsite) {
+      return (
+        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <WifiIcon className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate" title="Online">
+            Online
+          </span>
+        </p>
+      );
+    }
+
+    if (isHybrid || (address && onlineUrl)) {
+      return avMeta.canShow ? (
+        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate" title="Hybrid">
+            {address}, Hybrid
+          </span>
+        </p>
+      ) : (
+        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <MapIcon className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate" title={avMeta.hint}>
+            Hybrid • {avMeta.label}
+          </span>
+        </p>
+      );
+    }
+
+    return null;
+  };
+
   /* ───────── Inline wariant ───────── */
   if (inline) {
     return (
@@ -325,7 +557,7 @@ export function EventCard({
           role="button"
           tabIndex={0}
           onClick={openModal}
-          onKeyDown={onKeyPress}
+          onKeyDown={handleKeyDown}
           aria-label={`Szczegóły wydarzenia: ${organizerName}`}
           data-plan={plan}
         >
@@ -337,19 +569,22 @@ export function EventCard({
             >
               <span className="inline-flex items-center gap-1.5 max-w-full">
                 <span className="truncate">{organizerName}</span>
-                <VerifiedBadge verifiedAt={verifiedAt!} />
+                <VerifiedBadge verifiedAt={verifiedAt} />
               </span>
             </p>
             <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
               {title}
             </p>
+
+            {/* zakres + lokalizacja */}
             <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
               {formatDateRange(start, end)} • {humanDuration(start, end)}
-              {address ? ` • ${address}` : ''}
             </p>
+            {renderLocationRow()}
           </div>
+
           <div className="flex items-center gap-3 min-w-0">
-            {showSponsoredBadge && (
+            {showSponsoredBadge && planStyling.label && (
               <PlanBadge
                 label={planStyling.label}
                 className={planStyling.labelClass}
@@ -369,9 +604,15 @@ export function EventCard({
               reason={status.reason}
               label={status.label}
             />
-            <span className="text-xs text-neutral-600 dark:text-neutral-400 truncate">
-              {capacityLabel(joinedCount, min, max)}
-            </span>
+            <CapacityBadge
+              joinedCount={joinedCount}
+              min={min}
+              max={max}
+              isFull={isFull}
+              canJoin={canJoin}
+              statusTone={status.tone}
+              statusReason={status.reason}
+            />
           </div>
         </div>
         {details}
@@ -396,7 +637,7 @@ export function EventCard({
         role="button"
         tabIndex={0}
         onClick={openModal}
-        onKeyDown={onKeyPress}
+        onKeyDown={handleKeyDown}
         aria-label={`Szczegóły wydarzenia: ${organizerName}`}
         data-plan={plan}
       >
@@ -423,7 +664,7 @@ export function EventCard({
               title={organizerName}
             >
               <span className="inline-flex items-center max-w-full gap-1">
-                <VerifiedBadge verifiedAt={verifiedAt!} />
+                <VerifiedBadge verifiedAt={verifiedAt} />
                 <span className="truncate">{organizerName}</span>
               </span>
             </p>
@@ -435,43 +676,42 @@ export function EventCard({
               {description}
             </p>
 
-            {address && !onlineUrl && (
-              <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate" title={address}>
-                  {address}
-                </span>
-              </p>
-            )}
+            <div className="flex flex-row flex-nowrap gap-2">
+              {/* Lokalizacja zgodnie z addressVisibility */}
+              {renderLocationRow()}
 
-            {!address && onlineUrl && (
-              <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                <WifiIcon className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate" title="Online">
-                  Online
-                </span>
-              </p>
-            )}
-
-            {address && onlineUrl && (
-              <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate" title="Hybrid">
-                  {address}, Hybrid
-                </span>
-              </p>
-            )}
+              {/* Badge widoczności adresu — TYLKO gdy adres nie jest publiczny */}
+              {!avMeta.canShow && (
+                <div
+                  className={clsx(
+                    'mt-1 inline-flex truncate text-nowrap items-center gap-1 rounded-full px-1 py-0.5 text-[11px] ring-1',
+                    avMeta.tone,
+                    avMeta.ring,
+                    'bg-white/80 dark:bg-neutral-900/60'
+                  )}
+                  title={avMeta.hint}
+                >
+                  <avMeta.Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span className="font-medium truncate">{avMeta.label}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Capacity + status */}
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
-            <Users className="w-4 h-4" aria-hidden />
-            <span>{capacityLabel(joinedCount, min, max)}</span>
-          </div>
+          <CapacityBadge
+            joinedCount={joinedCount}
+            min={min}
+            max={max}
+            isFull={isFull}
+            canJoin={canJoin}
+            statusTone={status.tone}
+            statusReason={status.reason}
+          />
           <div className="flex items-center gap-1 min-w-0">
-            {showSponsoredBadge && (
+            {showSponsoredBadge && planStyling.label && (
               <PlanBadge
                 label={planStyling.label}
                 className={clsx(planStyling.labelClass, 'shadow-md/30')}
@@ -486,7 +726,6 @@ export function EventCard({
                 }
               />
             )}
-
             <StatusBadge
               tone={status.tone}
               reason={status.reason}
@@ -498,9 +737,34 @@ export function EventCard({
         <SimpleProgressBar value={fill} active={canJoin} />
 
         {/* Pills */}
-        <div className="flex items-center gap-3 mt-2">
-          <CategoryPills categories={categories ?? []} />
-          <TagPills tags={tags ?? []} />
+        <div className="flex flex-wrap items-center gap-2 mt-1">
+          {/* Levels pills (jeśli są) */}
+          {sortedLevels.length > 0 && (
+            <div className="flex flex-nowrap items-center gap-1.5 min-w-0">
+              {sortedLevels.map((lv) => {
+                const meta = LEVEL_META[lv];
+                if (!meta) return null;
+                const { Icon, label, tone, ring } = meta;
+                return (
+                  <span
+                    key={lv}
+                    className={clsx(
+                      'inline-flex items-center gap-1 truncate rounded-full px-2 py-0.5 text-[11px] ring-1 bg-white/80 dark:bg-neutral-900/60',
+                      tone,
+                      ring
+                    )}
+                    title={`Poziom: ${label}`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span className="font-medium truncate">{label}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          <CategoryPills categories={categories} />
+          <TagPills tags={tags} />
         </div>
       </motion.div>
 

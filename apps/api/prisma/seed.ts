@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 // prisma/seed.ts
 import {
+  AddressVisibility,
   Category,
   Intent,
   IntentMemberRole,
@@ -8,6 +9,7 @@ import {
   JoinMode,
   Level,
   MeetingKind,
+  MembersVisibility,
   Mode,
   NotificationEntity,
   NotificationKind,
@@ -262,8 +264,29 @@ async function createIntentWithMembers(opts: {
   ]);
   const mode = pick<Mode>([Mode.GROUP, Mode.ONE_TO_ONE]);
   const allowJoinLate = rand() > 0.3;
-  const showMemberCount = rand() > 0.2; // 80% show member count
-  const showAddress = visibility === Visibility.HIDDEN ? rand() > 0.5 : true;
+
+  // Members visibility: mostly PUBLIC, sometimes AFTER_JOIN, rarely HIDDEN
+  const membersVisibility = pick<MembersVisibility>([
+    MembersVisibility.PUBLIC,
+    MembersVisibility.PUBLIC,
+    MembersVisibility.PUBLIC,
+    MembersVisibility.AFTER_JOIN,
+    MembersVisibility.HIDDEN,
+  ]);
+
+  // Address visibility: if event is HIDDEN, address can vary; otherwise mostly PUBLIC
+  const addressVisibility =
+    visibility === Visibility.HIDDEN
+      ? pick<AddressVisibility>([
+          AddressVisibility.PUBLIC,
+          AddressVisibility.AFTER_JOIN,
+          AddressVisibility.HIDDEN,
+        ])
+      : pick<AddressVisibility>([
+          AddressVisibility.PUBLIC,
+          AddressVisibility.PUBLIC,
+          AddressVisibility.AFTER_JOIN,
+        ]);
 
   // ONE_TO_ONE = 2/2, GROUP = 2..(6/8/10/12)
   const min = mode === Mode.ONE_TO_ONE ? 2 : rand() > 0.5 ? 4 : 2;
@@ -340,8 +363,8 @@ async function createIntentWithMembers(opts: {
         placeId: meetingKind !== MeetingKind.ONLINE ? place.placeId : null,
         radiusKm: radiusKm ?? null,
         levels,
-        showMemberCount,
-        showAddress,
+        membersVisibility,
+        addressVisibility,
         ownerId: author.id,
         categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
         tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
@@ -602,7 +625,7 @@ function skewedTime(when?: Scenario['when']) {
 }
 
 async function createPresetIntent(
-  tx: PrismaClient,
+  tx: Prisma.TransactionClient,
   author: User,
   categories: Category[],
   tags: Tag[],
@@ -644,6 +667,29 @@ async function createPresetIntent(
   const min = s.min ?? (s.mode === Mode.ONE_TO_ONE ? 2 : 2);
   const max = s.max ?? (s.mode === Mode.ONE_TO_ONE ? 2 : pick([6, 8, 10, 12]));
 
+  // Members visibility: mostly PUBLIC, sometimes AFTER_JOIN, rarely HIDDEN
+  const membersVisibility = pick<MembersVisibility>([
+    MembersVisibility.PUBLIC,
+    MembersVisibility.PUBLIC,
+    MembersVisibility.PUBLIC,
+    MembersVisibility.AFTER_JOIN,
+    MembersVisibility.HIDDEN,
+  ]);
+
+  // Address visibility: based on event visibility
+  const addressVisibility =
+    s.visibility === Visibility.HIDDEN
+      ? pick<AddressVisibility>([
+          AddressVisibility.PUBLIC,
+          AddressVisibility.AFTER_JOIN,
+          AddressVisibility.HIDDEN,
+        ])
+      : pick<AddressVisibility>([
+          AddressVisibility.PUBLIC,
+          AddressVisibility.PUBLIC,
+          AddressVisibility.AFTER_JOIN,
+        ]);
+
   const intent = await tx.intent.create({
     data: {
       title,
@@ -681,8 +727,8 @@ async function createPresetIntent(
             [Level.BEGINNER, Level.INTERMEDIATE, Level.ADVANCED],
             1 + Math.floor(rand() * 3)
           ),
-      showMemberCount: rand() > 0.2,
-      showAddress: s.visibility === Visibility.HIDDEN ? rand() > 0.5 : true,
+      membersVisibility,
+      addressVisibility,
       ownerId: author.id,
       categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
       tags: { connect: selectedTags.map((t) => ({ id: t.id })) },

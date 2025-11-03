@@ -3,12 +3,7 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import {
-  mapDmThread,
-  mapDmMessage,
-  mapDmMute,
-  createPairKey,
-} from '../helpers';
+import { createPairKey, mapDmMessage, mapDmThread } from '../helpers';
 
 const DM_THREAD_INCLUDE = {
   aUser: true,
@@ -88,7 +83,7 @@ export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
     });
 
     return {
-      items: threads.map((t) => mapDmThread(t as any, user.id)),
+      items: threads.map((t) => mapDmThread(t, user.id)),
       pageInfo: {
         total,
         limit: take,
@@ -163,7 +158,7 @@ export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
       });
     }
 
-    return thread ? mapDmThread(thread as any, user.id) : null;
+    return thread ? mapDmThread(thread, user.id) : null;
   }
 );
 
@@ -227,6 +222,6 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
         include: DM_MESSAGE_INCLUDE,
       });
 
-      return messages.map((m) => mapDmMessage(m as any));
+      return messages.map(mapDmMessage);
     }
   );

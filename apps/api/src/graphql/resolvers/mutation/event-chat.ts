@@ -11,7 +11,6 @@ import {
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import { pubsub } from '../../../lib/pubsub';
 import {
   sanitizeMessageContent,
   canEdit,
@@ -50,7 +49,7 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
   resolverWithMetrics(
     'Mutation',
     'sendIntentMessage',
-    async (_p, { input }, { user }) => {
+    async (_p, { input }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -110,10 +109,13 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
       });
 
       // Publish to WebSocket subscribers
-      await pubsub.publish(`intentMessageAdded:${intentId}`, {
-        intentMessageAdded: mapIntentChatMessage(
-          message as IntentChatMessageWithGraph
-        ),
+      await pubsub.publish({
+        topic: `intentMessageAdded:${intentId}`,
+        payload: {
+          intentMessageAdded: mapIntentChatMessage(
+            message as IntentChatMessageWithGraph
+          ),
+        },
       });
 
       // Create notifications for other JOINED members (skip muted users)
@@ -169,7 +171,7 @@ export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
   resolverWithMetrics(
     'Mutation',
     'editIntentMessage',
-    async (_p, { id, input }, { user }) => {
+    async (_p, { id, input }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -234,10 +236,14 @@ export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
       });
 
       // Publish update to WebSocket
-      await pubsub.publish(`intentMessageAdded:${existing.intentId}`, {
-        intentMessageAdded: mapIntentChatMessage(
-          updated as IntentChatMessageWithGraph
-        ),
+
+      await pubsub.publish({
+        topic: `intentMessageAdded:${existing.intentId}`,
+        payload: {
+          intentMessageAdded: mapIntentChatMessage(
+            updated as IntentChatMessageWithGraph
+          ),
+        },
       });
 
       return mapIntentChatMessage(updated as IntentChatMessageWithGraph);
@@ -360,7 +366,7 @@ export const markIntentChatReadMutation: MutationResolvers['markIntentChatRead']
       // Guard: user must be JOINED
       await requireJoinedMember(user.id, intentId);
 
-      const timestamp = at || new Date();
+      const timestamp = at ? new Date(at) : new Date();
 
       // Upsert IntentChatRead
       await prisma.intentChatRead.upsert({

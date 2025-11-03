@@ -9,10 +9,7 @@ import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import type {
-  MutationResolvers,
-  MutationUnbanMemberArgs,
-} from '../../__generated__/resolvers-types';
+import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification } from '../helpers';
 
 export const NOTIFICATION_INCLUDE = {

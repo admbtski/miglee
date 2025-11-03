@@ -175,7 +175,7 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
         include: COMMENT_INCLUDE,
       });
 
-      return mapComment(updated as any);
+      return mapComment(updated);
     }
   );
 

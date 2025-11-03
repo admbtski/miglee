@@ -22,12 +22,14 @@ import { TimeStep } from './time-step';
 import { IntentFormValues } from './types';
 import { defaultIntentValues, useIntentForm } from './use-intent-form';
 import { CategoryOption, TagOption } from '@/types/types';
+import { PrivacyStep } from './privacy-step';
 
 const STEP_META = [
   { key: 'basics', label: 'Basics', Icon: SquarePenIcon },
   { key: 'capacity', label: 'Capacity', Icon: UsersIcon },
   { key: 'time', label: 'Time', Icon: CalendarClockIcon },
   { key: 'place', label: 'Place', Icon: MapPinnedIcon },
+  { key: 'privacy', label: 'Privacy', Icon: HatGlassesIcon },
   { key: 'review', label: 'Review', Icon: HatGlassesIcon },
 ];
 
@@ -36,6 +38,7 @@ const EDIT_STEP_META = [
   { key: 'capacity', label: 'Edit capacity', Icon: UsersIcon },
   { key: 'time', label: 'Edit time', Icon: CalendarClockIcon },
   { key: 'place', label: 'Edit place', Icon: MapPinnedIcon },
+  { key: 'privacy', label: 'Edit privacy', Icon: HatGlassesIcon },
   { key: 'review', label: 'Edit review', Icon: HatGlassesIcon },
 ];
 
@@ -175,10 +178,17 @@ export function CreateEditIntentModal({
             'location.address',
             'location.placeId',
             'location.radiusKm',
-            'visibility',
             'notes',
             'meetingKind',
             'onlineUrl',
+          ]);
+        case 4:
+          return await trigger([
+            'visibility',
+            'joinMode',
+            'showMemberCount',
+            'showAddress',
+            'levels',
           ]);
         default:
           return true;
@@ -312,7 +322,9 @@ export function CreateEditIntentModal({
             />
           )}
 
-          {step === 4 && (
+          {step === 4 && <PrivacyStep form={form} />}
+
+          {step === 5 && (
             <ReviewStep
               values={form.getValues()} // po „next” już spłukane
               showMapPreview

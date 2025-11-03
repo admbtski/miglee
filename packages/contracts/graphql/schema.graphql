@@ -36,6 +36,11 @@ type PageInfo {
   hasPrev: Boolean!
 }
 
+type CursorPageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
 type UsersResult {
   items: [User!]!
   pageInfo: PageInfo!
@@ -59,6 +64,18 @@ input UsersSort {
 "Visibility of an intent"
 enum Visibility {
   PUBLIC
+  HIDDEN
+}
+
+enum AddressVisibility {
+  PUBLIC
+  AFTER_JOIN
+  HIDDEN
+}
+
+enum MembersVisibility {
+  PUBLIC
+  AFTER_JOIN
   HIDDEN
 }
 
@@ -222,7 +239,7 @@ type SessionUser {
   name: String!
   email: String!
   role: Role!
-  imageUrl: String!
+  imageUrl: String
   verifiedAt: DateTime
 }
 
@@ -231,7 +248,7 @@ type User {
   id: ID!
   email: String!
   name: String!
-  imageUrl: String!
+  imageUrl: String
   role: Role!
   verifiedAt: DateTime
   createdAt: DateTime!
@@ -312,9 +329,8 @@ type Intent {
   # PostgreSQL enum[]
   levels: [Level!]!
 
-  # Privacy toggles (for Hidden visibility)
-  showMemberCount: Boolean!
-  showAddress: Boolean!
+  addressVisibility: AddressVisibility!
+  membersVisibility: MembersVisibility!
 
   # Derived counters
   joinedCount: Int!
@@ -574,7 +590,7 @@ type IntentChatMessage {
 "Paginated intent chat messages result"
 type IntentChatMessagesResult {
   items: [IntentChatMessage!]!
-  pageInfo: PageInfo!
+  pageInfo: CursorPageInfo!
   hasMore: Boolean!
 }
 
@@ -635,8 +651,8 @@ input CreateIntentInput {
   levels: [Level!]
 
   # Privacy toggles
-  showMemberCount: Boolean = true
-  showAddress: Boolean = false
+  addressVisibility: AddressVisibility! = PUBLIC
+  membersVisibility: MembersVisibility! = PUBLIC
 }
 
 input UpdateIntentInput {
@@ -662,9 +678,8 @@ input UpdateIntentInput {
   location: LocationInput
   levels: [Level!]
 
-  # Privacy toggles
-  showMemberCount: Boolean
-  showAddress: Boolean
+  addressVisibility: AddressVisibility
+  membersVisibility: MembersVisibility
 }
 
 input InviteMemberInput {

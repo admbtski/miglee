@@ -7,7 +7,7 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapUserBlock, type UserBlockWithGraph } from '../helpers';
+import { mapUserBlock } from '../helpers';
 
 const USER_BLOCK_INCLUDE = {
   blocker: true,
@@ -40,13 +40,16 @@ export const myBlocksQuery: QueryResolvers['myBlocks'] = resolverWithMetrics(
       }),
     ]);
 
-    const items = blocks.map((b) => mapUserBlock(b as UserBlockWithGraph));
+    const items = blocks.map((b) => mapUserBlock(b));
 
     return {
       items,
       pageInfo: {
-        hasNextPage: offset + limit < total,
-        endCursor: null,
+        total,
+        limit,
+        offset,
+        hasNext: offset + limit < total,
+        hasPrev: offset > 0,
       },
     };
   }

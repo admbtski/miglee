@@ -49,25 +49,39 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
         });
       }
 
-      const data: Prisma.NotificationPreferenceUpdateInput = {};
-      if (input.emailOnInvite !== undefined)
-        data.emailOnInvite = input.emailOnInvite;
-      if (input.emailOnJoinRequest !== undefined)
-        data.emailOnJoinRequest = input.emailOnJoinRequest;
-      if (input.emailOnMessage !== undefined)
-        data.emailOnMessage = input.emailOnMessage;
-      if (input.pushOnReminder !== undefined)
-        data.pushOnReminder = input.pushOnReminder;
-      if (input.inAppOnEverything !== undefined)
-        data.inAppOnEverything = input.inAppOnEverything;
+      // Build update/create data
+      const updateData: Prisma.NotificationPreferenceUpdateInput = {};
+      if (input.emailOnInvite !== undefined && input.emailOnInvite !== null)
+        updateData.emailOnInvite = input.emailOnInvite;
+      if (
+        input.emailOnJoinRequest !== undefined &&
+        input.emailOnJoinRequest !== null
+      )
+        updateData.emailOnJoinRequest = input.emailOnJoinRequest;
+      if (input.emailOnMessage !== undefined && input.emailOnMessage !== null)
+        updateData.emailOnMessage = input.emailOnMessage;
+      if (input.pushOnReminder !== undefined && input.pushOnReminder !== null)
+        updateData.pushOnReminder = input.pushOnReminder;
+      if (
+        input.inAppOnEverything !== undefined &&
+        input.inAppOnEverything !== null
+      )
+        updateData.inAppOnEverything = input.inAppOnEverything;
+
+      // For create, we need plain values (not field update operations)
+      const createData: Prisma.NotificationPreferenceCreateInput = {
+        user: { connect: { id: user.id } },
+        emailOnInvite: input.emailOnInvite ?? undefined,
+        emailOnJoinRequest: input.emailOnJoinRequest ?? undefined,
+        emailOnMessage: input.emailOnMessage ?? undefined,
+        pushOnReminder: input.pushOnReminder ?? undefined,
+        inAppOnEverything: input.inAppOnEverything ?? undefined,
+      };
 
       const preferences = await prisma.notificationPreference.upsert({
         where: { userId: user.id },
-        create: {
-          userId: user.id,
-          ...data,
-        },
-        update: data,
+        create: createData,
+        update: updateData,
         include: NOTIFICATION_PREFERENCE_INCLUDE,
       });
 

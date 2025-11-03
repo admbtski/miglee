@@ -4,15 +4,12 @@
 
 import type { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
+import { buildCursor, buildCursorWhere } from '../../../lib/chat-utils';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import { buildCursor, buildCursorWhere } from '../../../lib/chat-utils';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import {
-  mapIntentChatMessage,
-  type IntentChatMessageWithGraph,
-} from '../helpers';
 import { requireJoinedMember } from '../chat-guards';
+import { mapIntentChatMessage } from '../helpers';
 
 const MESSAGE_INCLUDE = {
   author: true,
@@ -58,9 +55,7 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
       const hasMore = messages.length > limit;
       const items = hasMore ? messages.slice(0, limit) : messages;
 
-      const mappedItems = items.map((m) =>
-        mapIntentChatMessage(m as IntentChatMessageWithGraph)
-      );
+      const mappedItems = items.map((m) => mapIntentChatMessage(m));
 
       // Build cursor for last item
       const lastItem = items[items.length - 1];

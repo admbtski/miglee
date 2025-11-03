@@ -110,8 +110,8 @@ fragment IntentLight on Intent {
 
   levels
 
-  showMemberCount
-  showAddress
+  addressVisibility
+  membersVisibility
 
   # Computed helpers
   joinedCount
@@ -170,8 +170,8 @@ fragment IntentCore on Intent {
 
   levels
 
-  showMemberCount
-  showAddress
+  addressVisibility
+  membersVisibility
 
   # Computed helpers (resolver-calculated)
   joinedCount
@@ -271,6 +271,11 @@ fragment PageInfoCore on PageInfo {
   offset
   hasNext
   hasPrev
+}
+
+fragment CursorPageInfoCore on CursorPageInfo {
+  hasNextPage
+  endCursor
 }
 
 fragment UsersResultCore on UsersResult {
@@ -545,7 +550,7 @@ fragment IntentChatMessagesResultCore on IntentChatMessagesResult {
     ...IntentChatMessageWithReply
   }
   pageInfo {
-    ...PageInfoCore
+    ...CursorPageInfoCore
   }
   hasMore
 }

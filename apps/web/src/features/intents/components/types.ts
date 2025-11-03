@@ -1,6 +1,8 @@
 'use client';
 
 import {
+  JoinMode,
+  Level,
   MeetingKind,
   Mode,
   Visibility,
@@ -34,6 +36,10 @@ export type CreateIntentInput = {
     radiusKm?: number;
   };
   visibility: Visibility;
+  joinModel: JoinMode;
+  levels: Level[];
+  showMemberCount: boolean;
+  showAddress: boolean;
   notes?: string;
 };
 

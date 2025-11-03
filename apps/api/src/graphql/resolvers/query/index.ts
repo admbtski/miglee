@@ -15,11 +15,7 @@ import {
   intentMemberStatsQuery,
   myMembershipsQuery,
 } from './intent-members';
-import {
-  dmThreadsQuery,
-  dmThreadQuery,
-  dmMessagesQuery,
-} from './dm';
+import { dmThreadsQuery, dmThreadQuery, dmMessagesQuery } from './dm';
 import { commentsQuery, commentQuery } from './comments';
 import {
   reviewsQuery,
@@ -57,7 +53,6 @@ export const Query: Resolvers['Query'] = {
   dmThreads: dmThreadsQuery,
   dmThread: dmThreadQuery,
   dmMessages: dmMessagesQuery,
-  dmMute: dmMuteQuery,
   comments: commentsQuery,
   comment: commentQuery,
   reviews: reviewsQuery,

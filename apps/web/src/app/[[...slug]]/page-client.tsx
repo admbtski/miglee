@@ -268,10 +268,16 @@ export function IntentsPage() {
                     isDeleted={item.isOngoing}
                     hasStarted={item.hasStarted}
                     isFull={item.isFull}
+                    isHybrid={item.isHybrid}
+                    isOnline={item.isOnline}
+                    isOnsite={item.isOnsite}
                     withinLock={item.withinLock}
                     canJoin={item.canJoin}
                     verifiedAt={item.owner?.verifiedAt as string}
                     members={item.members as IntentMember[]}
+                    levels={item.levels}
+                    addressVisibility={item.addressVisibility}
+                    membersVisibility={item.membersVisibility}
                     onJoin={() => {
                       console.log('join intent', item.id);
                     }}

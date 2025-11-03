@@ -1,11 +1,10 @@
 import type { Prisma } from '@prisma/client';
-import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { mapComment } from '../helpers';
 
-const COMMENT_INCLUDE = {
+const commentInclude = {
   author: true,
   intent: true,
   parent: true,
@@ -59,11 +58,11 @@ export const commentsQuery: QueryResolvers['comments'] = resolverWithMetrics(
       take,
       skip,
       orderBy: { createdAt: 'desc' },
-      include: COMMENT_INCLUDE,
+      include: commentInclude,
     });
 
     return {
-      items: comments.map((c) => mapComment(c as any)),
+      items: comments.map(mapComment),
       pageInfo: {
         total,
         limit: take,
@@ -84,7 +83,7 @@ export const commentQuery: QueryResolvers['comment'] = resolverWithMetrics(
   async (_p, { id }) => {
     const comment = await prisma.comment.findUnique({
       where: { id },
-      include: COMMENT_INCLUDE,
+      include: commentInclude,
     });
 
     if (!comment) {
@@ -95,6 +94,6 @@ export const commentQuery: QueryResolvers['comment'] = resolverWithMetrics(
       return null;
     }
 
-    return mapComment(comment as any);
+    return mapComment(comment);
   }
 );

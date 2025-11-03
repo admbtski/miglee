@@ -54,6 +54,7 @@ export const IntentSchema = z
       .optional()
       .or(z.literal('')),
     mode: z.enum(['ONE_TO_ONE', 'GROUP']),
+    levels: z.array(z.enum(['ADVANCED', 'BEGINNER', 'INTERMEDIATE'])),
     min: z.number().int().min(2, 'Min capacity is 2'),
     max: z.number().int().max(50, 'Max capacity is 50'),
     startAt: z
@@ -65,6 +66,8 @@ export const IntentSchema = z
       ),
     endAt: z.date().transform((d) => new Date(d)),
     allowJoinLate: z.boolean(),
+    showMemberCount: z.boolean(),
+    showAddress: z.boolean(),
 
     meetingKind: MeetingKind,
     onlineUrl: z
@@ -80,6 +83,7 @@ export const IntentSchema = z
     location: LocationSchema,
 
     visibility: z.enum(['PUBLIC', 'HIDDEN']),
+    joinMode: z.enum(['INVITE_ONLY', 'OPEN', 'REQUEST']),
     notes: z
       .string()
       .trim()
@@ -191,6 +195,10 @@ export const defaultIntentValues: IntentFormValues = {
     placeId: '',
   },
   visibility: 'PUBLIC',
+  joinMode: 'OPEN',
+  levels: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'],
+  showAddress: false,
+  showMemberCount: false,
   notes: '',
 };
 

@@ -75,7 +75,7 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
           intentId,
           code,
           maxUses: maxUses ?? null,
-          expiresAt: expiresAt ?? null,
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
         },
         include: INVITE_LINK_INCLUDE,
       });
@@ -228,10 +228,10 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
         data: { usedCount: { increment: 1 } },
       });
 
-      // Update intent participantsCount
+      // Update intent joinedCount
       await prisma.intent.update({
         where: { id: link.intentId },
-        data: { participantsCount: { increment: 1 } },
+        data: { joinedCount: { increment: 1 } },
       });
 
       return mapIntent(link.intent as IntentWithGraph);

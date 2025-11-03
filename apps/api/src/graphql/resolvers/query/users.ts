@@ -24,6 +24,10 @@ function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
     updatedAt: u.updatedAt,
     verifiedAt: u.verifiedAt,
     lastSeenAt: u.lastSeenAt,
+    acceptedMarketingAt: u.acceptedMarketingAt,
+    acceptedTermsAt: u.acceptedTermsAt,
+    locale: u.locale,
+    tz: u.tz,
   };
 }
 

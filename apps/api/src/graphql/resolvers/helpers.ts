@@ -17,7 +17,6 @@ import type {
   IntentMember as GQLIntentMember,
   DmThread as GQLDmThread,
   DmMessage as GQLDmMessage,
-  DmMute as GQLDmMute,
   Comment as GQLComment,
   Review as GQLReview,
   Report as GQLReport,
@@ -27,11 +26,20 @@ import type {
   NotificationPreference as GQLNotificationPreference,
   IntentMute as GQLIntentMute,
   DmMute as GQLDmMute,
+  JoinMode,
+  AddressVisibility,
+  MembersVisibility,
 } from '../__generated__/resolvers-types';
 
 /* =============================================================================
  * Prisma payload types (strict includes) — kopiuj te include do zapytań!
  * ========================================================================== */
+
+const LEVEL_ORDER: Record<Level, number> = {
+  BEGINNER: 0,
+  INTERMEDIATE: 1,
+  ADVANCED: 2,
+};
 
 export type IntentMemberWithUsers = Prisma.IntentMemberGetPayload<{
   include: { user: true; addedBy: true };
@@ -83,18 +91,6 @@ export type DmThreadWithGraph = Prisma.DmThreadGetPayload<{
 export type DmMessageWithGraph = Prisma.DmMessageGetPayload<{
   include: {
     sender: true;
-    thread: {
-      include: {
-        aUser: true;
-        bUser: true;
-      };
-    };
-  };
-}>;
-
-export type DmMuteWithGraph = Prisma.DmMuteGetPayload<{
-  include: {
-    user: true;
     thread: {
       include: {
         aUser: true;
@@ -365,7 +361,7 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     notes: i.notes ?? null,
 
     visibility: i.visibility as Visibility,
-    joinMode: (i as any).joinMode ?? 'OPEN',
+    joinMode: (i.joinMode as JoinMode) ?? 'OPEN',
     mode: i.mode as Mode,
     min: i.min,
     max: i.max,
@@ -383,28 +379,30 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     placeId: i.placeId ?? null,
     radiusKm: i.radiusKm ?? null,
 
-    levels: (i.levels ?? []) as Level[],
+    levels: ((i.levels ?? []) as Level[]).sort(
+      (a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]
+    ),
 
     // Privacy toggles
-    showMemberCount: (i as any).showMemberCount ?? true,
-    showAddress: (i as any).showAddress ?? false,
+    addressVisibility: i.addressVisibility as AddressVisibility,
+    membersVisibility: i.membersVisibility as MembersVisibility,
 
     // Derived counters
     joinedCount,
-    commentsCount: (i as any).commentsCount ?? 0,
-    messagesCount: (i as any).messagesCount ?? 0,
+    commentsCount: i.commentsCount ?? 0,
+    messagesCount: i.messagesCount ?? 0,
 
     // Ownership
-    ownerId: (i as any).ownerId ?? null,
+    ownerId: i.ownerId ?? null,
 
     // --- cancellation
-    canceledAt: (i as any).canceledAt ?? null,
-    canceledBy: (i as any).canceledBy ? mapUser((i as any).canceledBy) : null,
-    cancelReason: (i as any).cancelReason ?? null,
+    canceledAt: i.canceledAt ?? null,
+    canceledBy: i.canceledBy ? mapUser(i.canceledBy) : null,
+    cancelReason: i.cancelReason ?? null,
     isCanceled,
 
     // --- soft-delete
-    deletedAt: (i as any).deletedAt ?? null,
+    deletedAt: i.deletedAt ?? null,
     deletedBy: i.deletedBy ? mapUser(i.deletedBy) : null,
     deleteReason: i.deleteReason ?? null,
     isDeleted,
@@ -474,8 +472,8 @@ export function mapDmThread(
     updatedAt: t.updatedAt,
     lastMessageAt: t.lastMessageAt ?? null,
 
-    aUser: mapUser(t.aUser as any),
-    bUser: mapUser(t.bUser as any),
+    aUser: mapUser(t.aUser),
+    bUser: mapUser(t.bUser),
     messages: [], // Loaded separately via dmMessages query
 
     unreadCount,

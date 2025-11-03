@@ -1,21 +1,20 @@
 import type { Prisma } from '@prisma/client';
 import {
-  NotificationKind as PrismaNotificationKind,
   NotificationEntity as PrismaNotificationEntity,
+  NotificationKind as PrismaNotificationKind,
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
+import { createDmPairKey } from '../../../lib/chat-utils';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import { checkDmAllowed } from '../chat-guards';
 import {
-  mapDmMessage,
-  mapDmMute,
-  mapDmThread,
   createPairKey,
+  mapDmMessage,
+  mapDmThread,
   mapNotification,
 } from '../helpers';
-import { createDmPairKey } from '../../../lib/chat-utils';
-import { checkDmAllowed } from '../chat-guards';
 
 const DM_MESSAGE_INCLUDE = {
   sender: true,

@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import { QueryResolvers } from '../../__generated__/resolvers-types';
-import { toJSONObject } from '../helpers';
+import { mapCategory } from '../helpers';
 
 const categorySelect = {
   id: true,
@@ -46,22 +46,10 @@ export const categoriesQuery: QueryResolvers['categories'] =
         where,
         take,
         orderBy: { slug: 'asc' },
-        select: {
-          id: true,
-          slug: true,
-          names: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: categorySelect,
       });
 
-      return list.map((c) => ({
-        id: c.id,
-        slug: c.slug,
-        names: toJSONObject(c.names),
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-      }));
+      return list.map(mapCategory);
     }
   );
 
@@ -88,22 +76,10 @@ export const categoriesBySlugsQuery: QueryResolvers['categoriesBySlugs'] =
         where,
         take,
         orderBy: { slug: 'asc' },
-        select: {
-          id: true,
-          slug: true,
-          names: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: categorySelect,
       });
 
-      return list.map((c) => ({
-        id: c.id,
-        slug: c.slug,
-        names: toJSONObject(c.names),
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-      }));
+      return list.map(mapCategory);
     }
   );
 
@@ -116,15 +92,7 @@ export const categoryQuery: QueryResolvers['category'] = resolverWithMetrics(
         where: { id },
         select: categorySelect,
       });
-      return c
-        ? {
-            id: c.id,
-            slug: c.slug,
-            names: toJSONObject(c.names),
-            createdAt: c.createdAt,
-            updatedAt: c.updatedAt,
-          }
-        : null;
+      return c ? mapCategory(c) : null;
     }
 
     if (slug) {
@@ -132,15 +100,7 @@ export const categoryQuery: QueryResolvers['category'] = resolverWithMetrics(
         where: { slug },
         select: categorySelect,
       });
-      return c
-        ? {
-            id: c.id,
-            slug: c.slug,
-            names: toJSONObject(c.names),
-            createdAt: c.createdAt,
-            updatedAt: c.updatedAt,
-          }
-        : null;
+      return c ? mapCategory(c) : null;
     }
 
     return null;

@@ -118,7 +118,7 @@ export function StatusBadge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] leading-tight md:px-2 md:py-1 md:text-xs ${toneClasses(tone)}`}
+      className={`inline-flex truncate items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] leading-tight md:px-2 md:py-1 md:text-xs ${toneClasses(tone)}`}
       aria-live="polite"
     >
       {(reason === 'LOCK' || reason === 'STARTED') && (
