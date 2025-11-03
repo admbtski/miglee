@@ -8,8 +8,6 @@ const categorySelect = {
   id: true,
   slug: true,
   names: true,
-  icon: true,
-  color: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.CategorySelect;
@@ -52,8 +50,6 @@ export const categoriesQuery: QueryResolvers['categories'] =
           id: true,
           slug: true,
           names: true,
-          icon: true,
-          color: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -63,8 +59,6 @@ export const categoriesQuery: QueryResolvers['categories'] =
         id: c.id,
         slug: c.slug,
         names: toJSONObject(c.names),
-        icon: c.icon,
-        color: c.color,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
       }));
@@ -98,8 +92,6 @@ export const categoriesBySlugsQuery: QueryResolvers['categoriesBySlugs'] =
           id: true,
           slug: true,
           names: true,
-          icon: true,
-          color: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -109,8 +101,6 @@ export const categoriesBySlugsQuery: QueryResolvers['categoriesBySlugs'] =
         id: c.id,
         slug: c.slug,
         names: toJSONObject(c.names),
-        icon: c.icon,
-        color: c.color,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
       }));
@@ -131,8 +121,6 @@ export const categoryQuery: QueryResolvers['category'] = resolverWithMetrics(
             id: c.id,
             slug: c.slug,
             names: toJSONObject(c.names),
-            icon: c.icon,
-            color: c.color,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
           }
@@ -149,8 +137,6 @@ export const categoryQuery: QueryResolvers['category'] = resolverWithMetrics(
             id: c.id,
             slug: c.slug,
             names: toJSONObject(c.names),
-            icon: c.icon,
-            color: c.color,
             createdAt: c.createdAt,
             updatedAt: c.updatedAt,
           }

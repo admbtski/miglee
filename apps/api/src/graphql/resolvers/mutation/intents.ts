@@ -32,6 +32,7 @@ export const NOTIFICATION_INCLUDE = {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
+      owner: true,
       canceledBy: true,
       deletedBy: true,
     },
@@ -42,6 +43,7 @@ const INTENT_INCLUDE = {
   categories: true,
   tags: true,
   members: { include: { user: true, addedBy: true } },
+  owner: true,
   canceledBy: true,
   deletedBy: true,
 } satisfies Prisma.IntentInclude;
@@ -228,6 +230,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
             notes: input.notes ?? null,
 
             visibility: input.visibility as PrismaVisibility,
+            joinMode: (input as any).joinMode ?? 'OPEN',
             mode: input.mode as PrismaMode,
             min: input.min,
             max: input.max,
@@ -240,6 +243,11 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
             onlineUrl: input.onlineUrl ?? null,
 
             levels: (input.levels ?? []) as PrismaLevel[],
+
+            showMemberCount: (input as any).showMemberCount ?? true,
+            showAddress: (input as any).showAddress ?? false,
+
+            ownerId: ownerId,
 
             ...loc,
             categories: categoriesData,
@@ -370,6 +378,9 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         ...(input.visibility !== undefined
           ? { visibility: input.visibility as PrismaVisibility }
           : {}),
+        ...((input as any).joinMode !== undefined
+          ? { joinMode: (input as any).joinMode }
+          : {}),
         ...(input.mode !== undefined ? { mode: input.mode as PrismaMode } : {}),
         ...(typeof input.min === 'number' ? { min: input.min } : {}),
         ...(typeof input.max === 'number' ? { max: input.max } : {}),
@@ -390,6 +401,13 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           : {}),
         ...(input.levels !== undefined
           ? { levels: input.levels as PrismaLevel[] }
+          : {}),
+
+        ...(typeof (input as any).showMemberCount === 'boolean'
+          ? { showMemberCount: (input as any).showMemberCount }
+          : {}),
+        ...(typeof (input as any).showAddress === 'boolean'
+          ? { showAddress: (input as any).showAddress }
           : {}),
 
         ...(Object.prototype.hasOwnProperty.call(loc, 'lat')

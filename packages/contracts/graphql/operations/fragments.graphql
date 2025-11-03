@@ -21,14 +21,16 @@ fragment UserCore on User {
   createdAt
   updatedAt
   lastSeenAt
+  locale
+  tz
+  acceptedTermsAt
+  acceptedMarketingAt
 }
 
 fragment CategoryCore on Category {
   id
   slug
   names # JSONObject with translated labels by locale
-  icon
-  color
   createdAt
   updatedAt
 }
@@ -88,6 +90,7 @@ fragment IntentLight on Intent {
   description
 
   visibility
+  joinMode
   mode
   min
   max
@@ -95,7 +98,6 @@ fragment IntentLight on Intent {
   startAt
   endAt
   allowJoinLate
-  requiresApproval
 
   meetingKind
   onlineUrl
@@ -108,13 +110,20 @@ fragment IntentLight on Intent {
 
   levels
 
+  showMemberCount
+  showAddress
+
   # Computed helpers
   joinedCount
+  commentsCount
+  messagesCount
   isFull
   hasStarted
   hasEnded
   isCanceled
   isDeleted
+
+  ownerId
 
   createdAt
   updatedAt
@@ -141,6 +150,7 @@ fragment IntentCore on Intent {
   notes
 
   visibility
+  joinMode
   mode
   min
   max
@@ -148,7 +158,6 @@ fragment IntentCore on Intent {
   startAt
   endAt
   allowJoinLate
-  requiresApproval
 
   meetingKind
   onlineUrl
@@ -161,8 +170,13 @@ fragment IntentCore on Intent {
 
   levels
 
+  showMemberCount
+  showAddress
+
   # Computed helpers (resolver-calculated)
   joinedCount
+  commentsCount
+  messagesCount
   isFull
   hasStarted
   hasEnded
@@ -172,6 +186,9 @@ fragment IntentCore on Intent {
   isOnsite
   isOnline
   isHybrid
+
+  # Ownership
+  ownerId
 
   # Cancellation (read-only)
   canceledAt
@@ -287,6 +304,206 @@ fragment NotificationsResultCore on NotificationsResult {
 fragment IntentsResultLight on IntentsResult {
   items {
     ...IntentLight
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+# =============================================================================
+# Direct Messages Fragments
+# =============================================================================
+
+fragment DmMessageCore on DmMessage {
+  id
+  threadId
+  senderId
+  content
+  createdAt
+  readAt
+  deletedAt
+  sender {
+    id
+    name
+    imageUrl
+  }
+}
+
+fragment DmThreadCore on DmThread {
+  id
+  aUserId
+  bUserId
+  pairKey
+  createdAt
+  updatedAt
+  lastMessageAt
+  unreadCount
+
+  aUser {
+    id
+    name
+    imageUrl
+    lastSeenAt
+  }
+  bUser {
+    id
+    name
+    imageUrl
+    lastSeenAt
+  }
+
+  lastMessage {
+    ...DmMessageCore
+  }
+}
+
+fragment DmThreadLight on DmThread {
+  id
+  aUserId
+  bUserId
+  createdAt
+  updatedAt
+  lastMessageAt
+  unreadCount
+
+  aUser {
+    id
+    name
+    imageUrl
+  }
+  bUser {
+    id
+    name
+    imageUrl
+  }
+
+  lastMessage {
+    id
+    content
+    createdAt
+    senderId
+  }
+}
+
+fragment DmMuteCore on DmMute {
+  id
+  threadId
+  userId
+  muted
+  createdAt
+}
+
+fragment DmThreadsResultCore on DmThreadsResult {
+  items {
+    ...DmThreadCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+# =============================================================================
+# Comments Fragments
+# =============================================================================
+
+fragment CommentCore on Comment {
+  id
+  intentId
+  authorId
+  threadId
+  parentId
+  content
+  createdAt
+  updatedAt
+  deletedAt
+  repliesCount
+
+  author {
+    id
+    name
+    imageUrl
+  }
+}
+
+fragment CommentWithReplies on Comment {
+  ...CommentCore
+  replies {
+    ...CommentCore
+  }
+}
+
+fragment CommentsResultCore on CommentsResult {
+  items {
+    ...CommentCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+# =============================================================================
+# Reviews Fragments
+# =============================================================================
+
+fragment ReviewCore on Review {
+  id
+  intentId
+  authorId
+  rating
+  content
+  createdAt
+  updatedAt
+  deletedAt
+
+  author {
+    id
+    name
+    imageUrl
+  }
+}
+
+fragment ReviewsResultCore on ReviewsResult {
+  items {
+    ...ReviewCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+fragment ReviewStatsCore on ReviewStats {
+  totalCount
+  averageRating
+  ratingDistribution {
+    rating
+    count
+  }
+}
+
+# =============================================================================
+# Reports Fragments
+# =============================================================================
+
+fragment ReportCore on Report {
+  id
+  reporterId
+  entity
+  entityId
+  reason
+  status
+  createdAt
+  resolvedAt
+
+  reporter {
+    id
+    name
+    imageUrl
+  }
+}
+
+fragment ReportsResultCore on ReportsResult {
+  items {
+    ...ReportCore
   }
   pageInfo {
     ...PageInfoCore

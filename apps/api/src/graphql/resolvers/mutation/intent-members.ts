@@ -23,6 +23,7 @@ export const NOTIFICATION_INCLUDE = {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
+      owner: true,
       canceledBy: true,
       deletedBy: true,
     },
@@ -120,6 +121,7 @@ function reloadFullIntent(tx: Tx, intentId: string) {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
+      owner: true,
       canceledBy: true,
       deletedBy: true,
     },
@@ -206,7 +208,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           assertCanJoinNow(intent);
           const joined = await countJoined(tx, intentId);
           const isFull = joined >= intent.max;
-          const shouldBePending = intent.requiresApproval || isFull;
+          const shouldBePending = intent.joinMode !== 'OPEN' || isFull;
 
           await tx.intentMember.update({
             where: { intentId_userId: { intentId, userId } },
@@ -249,7 +251,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
         assertCanJoinNow(intent);
         const joined = await countJoined(tx, intentId);
         const isFull = joined >= intent.max;
-        const shouldBePending = intent.requiresApproval || isFull;
+        const shouldBePending = intent.joinMode !== 'OPEN' || isFull;
 
         await tx.intentMember.create({
           data: {

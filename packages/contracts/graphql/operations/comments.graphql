@@ -1,0 +1,52 @@
+# =============================================================================
+# Comment Queries
+# =============================================================================
+
+# Get comments for an intent
+query GetComments(
+  $intentId: ID!
+  $limit: Int = 50
+  $offset: Int = 0
+  $threadId: ID
+  $parentId: ID
+) {
+  comments(
+    intentId: $intentId
+    limit: $limit
+    offset: $offset
+    threadId: $threadId
+    parentId: $parentId
+  ) {
+    ...CommentsResultCore
+  }
+}
+
+# Get a single comment with replies
+query GetComment($id: ID!) {
+  comment(id: $id) {
+    ...CommentWithReplies
+  }
+}
+
+# =============================================================================
+# Comment Mutations
+# =============================================================================
+
+# Create a new comment
+mutation CreateComment($input: CreateCommentInput!) {
+  createComment(input: $input) {
+    ...CommentCore
+  }
+}
+
+# Update a comment
+mutation UpdateComment($id: ID!, $input: UpdateCommentInput!) {
+  updateComment(id: $id, input: $input) {
+    ...CommentCore
+  }
+}
+
+# Delete a comment
+mutation DeleteComment($id: ID!) {
+  deleteComment(id: $id)
+}

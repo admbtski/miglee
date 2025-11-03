@@ -15,6 +15,20 @@ import {
   intentMemberStatsQuery,
   myMembershipsQuery,
 } from './intent-members';
+import {
+  dmThreadsQuery,
+  dmThreadQuery,
+  dmMessagesQuery,
+  dmMuteQuery,
+} from './dm';
+import { commentsQuery, commentQuery } from './comments';
+import {
+  reviewsQuery,
+  reviewQuery,
+  reviewStatsQuery,
+  myReviewQuery,
+} from './reviews';
+import { reportsQuery, reportQuery } from './reports';
 
 export const Query: Resolvers['Query'] = {
   notifications: notificationsQuery,
@@ -33,4 +47,16 @@ export const Query: Resolvers['Query'] = {
   intentMembers: intentMembersQuery,
   intentMemberStats: intentMemberStatsQuery,
   myMemberships: myMembershipsQuery,
+  dmThreads: dmThreadsQuery,
+  dmThread: dmThreadQuery,
+  dmMessages: dmMessagesQuery,
+  dmMute: dmMuteQuery,
+  comments: commentsQuery,
+  comment: commentQuery,
+  reviews: reviewsQuery,
+  review: reviewQuery,
+  reviewStats: reviewStatsQuery,
+  myReview: myReviewQuery,
+  reports: reportsQuery,
+  report: reportQuery,
 };

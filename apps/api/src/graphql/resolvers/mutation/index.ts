@@ -34,7 +34,6 @@ import {
 import {
   acceptInviteMutation,
   approveMembershipMutation,
-  banIntentMemberMutation,
   banMemberMutation,
   cancelJoinRequestMutation,
   cancelPendingOrInviteForUserMutation,
@@ -43,10 +42,42 @@ import {
   leaveIntentMutation,
   rejectMembershipMutation,
   requestJoinIntentMutation,
-  unbanIntentMemberMutation,
   unbanMemberMutation,
   updateMemberRoleMutation,
 } from './intent-members';
+
+// DM mutations
+import {
+  sendDmMessageMutation,
+  updateDmMessageMutation,
+  deleteDmMessageMutation,
+  markDmMessageReadMutation,
+  markDmThreadReadMutation,
+  muteDmThreadMutation,
+  deleteDmThreadMutation,
+} from './dm';
+
+// Comment mutations
+import {
+  createCommentMutation,
+  updateCommentMutation,
+  deleteCommentMutation,
+} from './comments';
+
+// Review mutations
+import {
+  createReviewMutation,
+  updateReviewMutation,
+  deleteReviewMutation,
+} from './reviews';
+
+// Report mutations
+import {
+  createReportMutation,
+  updateReportStatusMutation,
+  deleteReportMutation,
+} from './reports';
+
 import { devLoginMutation, devLogoutMutation } from './auth';
 
 /**
@@ -89,6 +120,30 @@ export const Mutation: Resolvers['Mutation'] = {
   deleteNotification: deleteNotificationMutation,
   markNotificationRead: markNotificationReadMutation,
   markAllNotificationsRead: markAllNotificationsReadMutation,
+
+  // ---- DM (Direct Messages) ----
+  sendDmMessage: sendDmMessageMutation,
+  updateDmMessage: updateDmMessageMutation,
+  deleteDmMessage: deleteDmMessageMutation,
+  markDmMessageRead: markDmMessageReadMutation,
+  markDmThreadRead: markDmThreadReadMutation,
+  muteDmThread: muteDmThreadMutation,
+  deleteDmThread: deleteDmThreadMutation,
+
+  // ---- Comments ----
+  createComment: createCommentMutation,
+  updateComment: updateCommentMutation,
+  deleteComment: deleteCommentMutation,
+
+  // ---- Reviews ----
+  createReview: createReviewMutation,
+  updateReview: updateReviewMutation,
+  deleteReview: deleteReviewMutation,
+
+  // ---- Reports ----
+  createReport: createReportMutation,
+  updateReportStatus: updateReportStatusMutation,
+  deleteReport: deleteReportMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

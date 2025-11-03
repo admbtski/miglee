@@ -1,0 +1,90 @@
+# =============================================================================
+# DM Queries
+# =============================================================================
+
+# Get all DM threads for current user
+query GetDmThreads(
+  $limit: Int = 20
+  $offset: Int = 0
+  $unreadOnly: Boolean = false
+) {
+  dmThreads(limit: $limit, offset: $offset, unreadOnly: $unreadOnly) {
+    ...DmThreadsResultCore
+  }
+}
+
+# Get a specific DM thread by ID or by other user ID
+query GetDmThread($id: ID, $otherUserId: ID) {
+  dmThread(id: $id, otherUserId: $otherUserId) {
+    ...DmThreadCore
+  }
+}
+
+# Get messages in a thread
+query GetDmMessages(
+  $threadId: ID!
+  $limit: Int = 50
+  $offset: Int = 0
+  $beforeMessageId: ID
+) {
+  dmMessages(
+    threadId: $threadId
+    limit: $limit
+    offset: $offset
+    beforeMessageId: $beforeMessageId
+  ) {
+    ...DmMessageCore
+  }
+}
+
+# Get mute status for a thread
+query GetDmMute($threadId: ID!) {
+  dmMute(threadId: $threadId) {
+    ...DmMuteCore
+  }
+}
+
+# =============================================================================
+# DM Mutations
+# =============================================================================
+
+# Send a new message (creates thread if doesn't exist)
+mutation SendDmMessage($input: SendDmMessageInput!) {
+  sendDmMessage(input: $input) {
+    ...DmMessageCore
+  }
+}
+
+# Update an existing message
+mutation UpdateDmMessage($id: ID!, $input: UpdateDmMessageInput!) {
+  updateDmMessage(id: $id, input: $input) {
+    ...DmMessageCore
+  }
+}
+
+# Delete a message (soft delete)
+mutation DeleteDmMessage($id: ID!) {
+  deleteDmMessage(id: $id)
+}
+
+# Mark a single message as read
+mutation MarkDmMessageRead($id: ID!) {
+  markDmMessageRead(id: $id)
+}
+
+# Mark all messages in a thread as read
+mutation MarkDmThreadRead($threadId: ID!) {
+  markDmThreadRead(threadId: $threadId)
+}
+
+# Mute or unmute a thread
+mutation MuteDmThread($input: MuteDmThreadInput!) {
+  muteDmThread(input: $input) {
+    ...DmMuteCore
+  }
+}
+
+# Delete entire thread
+mutation DeleteDmThread($id: ID!) {
+  deleteDmThread(id: $id)
+}

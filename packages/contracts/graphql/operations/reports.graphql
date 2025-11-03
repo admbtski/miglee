@@ -1,0 +1,45 @@
+# =============================================================================
+# Report Queries (Admin only)
+# =============================================================================
+
+# Get all reports (admin only)
+query GetReports(
+  $limit: Int = 20
+  $offset: Int = 0
+  $status: ReportStatus
+  $entity: ReportEntity
+) {
+  reports(limit: $limit, offset: $offset, status: $status, entity: $entity) {
+    ...ReportsResultCore
+  }
+}
+
+# Get a single report (admin only)
+query GetReport($id: ID!) {
+  report(id: $id) {
+    ...ReportCore
+  }
+}
+
+# =============================================================================
+# Report Mutations
+# =============================================================================
+
+# Create a new report
+mutation CreateReport($input: CreateReportInput!) {
+  createReport(input: $input) {
+    ...ReportCore
+  }
+}
+
+# Update report status (admin only)
+mutation UpdateReportStatus($id: ID!, $input: UpdateReportStatusInput!) {
+  updateReportStatus(id: $id, input: $input) {
+    ...ReportCore
+  }
+}
+
+# Delete a report (admin only)
+mutation DeleteReport($id: ID!) {
+  deleteReport(id: $id)
+}

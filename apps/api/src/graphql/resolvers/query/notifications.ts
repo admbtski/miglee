@@ -13,6 +13,7 @@ export const NOTIFICATION_INCLUDE = {
       categories: true,
       tags: true,
       members: { include: { user: true, addedBy: true } },
+      owner: true,
       canceledBy: true,
       deletedBy: true,
     },

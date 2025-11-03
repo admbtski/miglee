@@ -62,6 +62,13 @@ enum Visibility {
   HIDDEN
 }
 
+"Join mode - how users can join an intent"
+enum JoinMode {
+  OPEN
+  REQUEST
+  INVITE_ONLY
+}
+
 "Meeting mode / capacity grouping"
 enum Mode {
   ONE_TO_ONE
@@ -107,6 +114,20 @@ enum IntentMemberStatus {
   KICKED
 }
 
+"Member event type for audit log"
+enum MemberEvent {
+  JOIN
+  REQUEST
+  APPROVE
+  REJECT
+  LEAVE
+  KICK
+  BAN
+  UNBAN
+  INVITE
+  ACCEPT_INVITE
+}
+
 "High-level notification category/kind"
 enum NotificationKind {
   INTENT_CREATED
@@ -116,9 +137,13 @@ enum NotificationKind {
   INTENT_INVITE
   INTENT_MEMBERSHIP_APPROVED
   INTENT_MEMBERSHIP_REJECTED
-  INTENT_MEMBERSHIP_BANNED
-  INTENT_MEMBERSHIP_UNBANNED
   INTENT_REMINDER
+  JOIN_REQUEST
+  NEW_MESSAGE
+  NEW_COMMENT
+  NEW_REVIEW
+  BANNED
+  UNBANNED
   SYSTEM
 }
 
@@ -131,6 +156,48 @@ enum NotificationEntity {
   USER
   SYSTEM
   OTHER
+}
+
+"Report entity type"
+enum ReportEntity {
+  INTENT
+  COMMENT
+  REVIEW
+  USER
+  MESSAGE
+}
+
+"Subscription plan tiers"
+enum SubscriptionPlan {
+  BASIC
+  PLUS
+  PRO
+}
+
+"Subscription status"
+enum SubscriptionStatus {
+  INCOMPLETE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+"Event sponsorship plan tiers"
+enum SponsorPlan {
+  BASIC
+  PLUS
+  PRO
+}
+
+"Sponsorship status"
+enum SponsorshipStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
 }
 
 "Intent dynamic status (computed on read)"
@@ -170,6 +237,12 @@ type User {
   createdAt: DateTime!
   updatedAt: DateTime!
   lastSeenAt: DateTime
+
+  # Profile / Preferences
+  locale: String
+  tz: String
+  acceptedTermsAt: DateTime
+  acceptedMarketingAt: DateTime
 }
 
 "Category with translated names in JSON, e.g. { pl,de,en }"
@@ -178,8 +251,6 @@ type Category {
   slug: String!
   # Prefer JSONObject to guarantee an object (key->value). Switch to JSON if you truly allow any JSON value.
   names: JSONObject!
-  icon: String
-  color: String
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -220,6 +291,7 @@ type Intent {
   tags: [Tag!]!
 
   visibility: Visibility!
+  joinMode: JoinMode!
   mode: Mode!
   min: Int!
   max: Int!
@@ -227,7 +299,6 @@ type Intent {
   startAt: DateTime!
   endAt: DateTime!
   allowJoinLate: Boolean!
-  requiresApproval: Boolean!
 
   meetingKind: MeetingKind!
   onlineUrl: String
@@ -241,13 +312,23 @@ type Intent {
   # PostgreSQL enum[]
   levels: [Level!]!
 
-  # Derived convenience (computed by resolver):
+  # Privacy toggles (for Hidden visibility)
+  showMemberCount: Boolean!
+  showAddress: Boolean!
+
+  # Derived counters
+  joinedCount: Int!
+  commentsCount: Int!
+  messagesCount: Int!
+
+  # Ownership
+  ownerId: String
   owner: User
+
   # Access policy: OWNER/MODERATOR can see all statuses; others see JOINED only.
   members: [IntentMember!]!
 
   # Computed helpers
-  joinedCount: Int!
   isFull: Boolean!
   hasStarted: Boolean!
   hasEnded: Boolean!
@@ -311,21 +392,173 @@ type IntentMemberStats {
 }
 
 # ------------------------------------------------------------------------------
+# Direct Messages (DM)
+# ------------------------------------------------------------------------------
+
+"Direct message thread between two users"
+type DmThread {
+  id: ID!
+  aUserId: ID!
+  bUserId: ID!
+  pairKey: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  lastMessageAt: DateTime
+
+  aUser: User!
+  bUser: User!
+  messages: [DmMessage!]!
+
+  # Computed helpers
+  unreadCount: Int!
+  lastMessage: DmMessage
+}
+
+"Direct message in a thread"
+type DmMessage {
+  id: ID!
+  threadId: ID!
+  senderId: ID!
+  content: String!
+  createdAt: DateTime!
+  readAt: DateTime
+  deletedAt: DateTime
+
+  thread: DmThread!
+  sender: User!
+}
+
+"DM thread mute preference"
+type DmMute {
+  id: ID!
+  threadId: ID!
+  userId: ID!
+  muted: Boolean!
+  createdAt: DateTime!
+
+  thread: DmThread!
+  user: User!
+}
+
+"Paginated DM threads result"
+type DmThreadsResult {
+  items: [DmThread!]!
+  pageInfo: PageInfo!
+}
+
+# ------------------------------------------------------------------------------
+# Comments
+# ------------------------------------------------------------------------------
+
+"Comment on an intent (2-level threading)"
+type Comment {
+  id: ID!
+  intentId: ID!
+  authorId: ID!
+  threadId: ID!
+  parentId: ID
+  content: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+
+  intent: Intent!
+  author: User!
+  parent: Comment
+  replies: [Comment!]!
+
+  # Computed
+  repliesCount: Int!
+}
+
+"Paginated comments result"
+type CommentsResult {
+  items: [Comment!]!
+  pageInfo: PageInfo!
+}
+
+# ------------------------------------------------------------------------------
+# Reviews
+# ------------------------------------------------------------------------------
+
+"Review for an intent (1-5 stars)"
+type Review {
+  id: ID!
+  intentId: ID!
+  authorId: ID!
+  rating: Int!
+  content: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+
+  intent: Intent!
+  author: User!
+}
+
+"Paginated reviews result"
+type ReviewsResult {
+  items: [Review!]!
+  pageInfo: PageInfo!
+}
+
+"Review statistics for an intent"
+type ReviewStats {
+  totalCount: Int!
+  averageRating: Float!
+  ratingDistribution: [RatingCount!]!
+}
+
+"Rating count for a specific star rating"
+type RatingCount {
+  rating: Int!
+  count: Int!
+}
+
+# ------------------------------------------------------------------------------
+# Reports
+# ------------------------------------------------------------------------------
+
+"Report status"
+enum ReportStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+"Report for content moderation"
+type Report {
+  id: ID!
+  reporterId: ID!
+  entity: ReportEntity!
+  entityId: ID!
+  reason: String!
+  status: ReportStatus!
+  createdAt: DateTime!
+  resolvedAt: DateTime
+
+  reporter: User!
+}
+
+"Paginated reports result"
+type ReportsResult {
+  items: [Report!]!
+  pageInfo: PageInfo!
+}
+
+# ------------------------------------------------------------------------------
 # Inputs
 # ------------------------------------------------------------------------------
 
 input CreateCategoryInput {
   slug: String!
   names: JSONObject! # keep aligned with Category.names
-  icon: String
-  color: String
 }
 
 input UpdateCategoryInput {
   slug: String
   names: JSONObject
-  icon: String
-  color: String
 }
 
 input CreateTagInput {
@@ -355,6 +588,7 @@ input CreateIntentInput {
   tagSlugs: [String!]
 
   visibility: Visibility! = PUBLIC
+  joinMode: JoinMode! = OPEN
   mode: Mode! = GROUP
   min: Int! = 2
   max: Int! = 50
@@ -362,13 +596,16 @@ input CreateIntentInput {
   startAt: DateTime!
   endAt: DateTime!
   allowJoinLate: Boolean! = true
-  requiresApproval: Boolean = false
 
   meetingKind: MeetingKind! = ONSITE
   onlineUrl: String
 
   location: LocationInput
   levels: [Level!]
+
+  # Privacy toggles
+  showMemberCount: Boolean = true
+  showAddress: Boolean = false
 }
 
 input UpdateIntentInput {
@@ -379,6 +616,7 @@ input UpdateIntentInput {
   notes: String
 
   visibility: Visibility
+  joinMode: JoinMode
   mode: Mode
   min: Int
   max: Int
@@ -386,13 +624,16 @@ input UpdateIntentInput {
   startAt: DateTime
   endAt: DateTime
   allowJoinLate: Boolean
-  requiresApproval: Boolean
 
   meetingKind: MeetingKind
   onlineUrl: String
 
   location: LocationInput
   levels: [Level!]
+
+  # Privacy toggles
+  showMemberCount: Boolean
+  showAddress: Boolean
 }
 
 input InviteMemberInput {
@@ -440,6 +681,55 @@ input CancelPendingOrInviteForUserInput {
   userId: ID!
 }
 
+# DM Inputs
+input SendDmMessageInput {
+  recipientId: ID!
+  content: String!
+}
+
+input UpdateDmMessageInput {
+  content: String!
+}
+
+input MuteDmThreadInput {
+  threadId: ID!
+  muted: Boolean!
+}
+
+# Comment Inputs
+input CreateCommentInput {
+  intentId: ID!
+  content: String!
+  parentId: ID
+}
+
+input UpdateCommentInput {
+  content: String!
+}
+
+# Review Inputs
+input CreateReviewInput {
+  intentId: ID!
+  rating: Int!
+  content: String
+}
+
+input UpdateReviewInput {
+  rating: Int
+  content: String
+}
+
+# Report Inputs
+input CreateReportInput {
+  entity: ReportEntity!
+  entityId: ID!
+  reason: String!
+}
+
+input UpdateReportStatusInput {
+  status: ReportStatus!
+}
+
 # ------------------------------------------------------------------------------
 # Queries
 # ------------------------------------------------------------------------------
@@ -459,6 +749,7 @@ type Query {
     limit: Int = 20
     offset: Int = 0
     visibility: Visibility
+    joinMode: JoinMode
     ownerId: ID
     memberId: ID
     upcomingAfter: DateTime
@@ -524,6 +815,59 @@ type Query {
   user(id: ID!): User
 
   me: SessionUser
+
+  # DM Queries
+  dmThreads(
+    limit: Int = 20
+    offset: Int = 0
+    unreadOnly: Boolean = false
+  ): DmThreadsResult!
+
+  dmThread(id: ID, otherUserId: ID): DmThread
+
+  dmMessages(
+    threadId: ID!
+    limit: Int = 50
+    offset: Int = 0
+    beforeMessageId: ID
+  ): [DmMessage!]!
+
+  dmMute(threadId: ID!): DmMute
+
+  # Comment Queries
+  comments(
+    intentId: ID!
+    limit: Int = 50
+    offset: Int = 0
+    threadId: ID
+    parentId: ID
+  ): CommentsResult!
+
+  comment(id: ID!): Comment
+
+  # Review Queries
+  reviews(
+    intentId: ID!
+    limit: Int = 20
+    offset: Int = 0
+    rating: Int
+  ): ReviewsResult!
+
+  review(id: ID!): Review
+
+  reviewStats(intentId: ID!): ReviewStats!
+
+  myReview(intentId: ID!): Review
+
+  # Report Queries (admin only)
+  reports(
+    limit: Int = 20
+    offset: Int = 0
+    status: ReportStatus
+    entity: ReportEntity
+  ): ReportsResult!
+
+  report(id: ID!): Report
 }
 
 # ------------------------------------------------------------------------------
@@ -547,11 +891,10 @@ type Mutation {
   cancelIntent(id: ID!, reason: String): Intent!
 
   # memberships (user endpoints)
-  requestJoinIntent(intentId: ID!): Intent! # alias of joinMember; returns full Intent
-  cancelJoinRequest(intentId: ID!): Boolean!
-  leaveIntent(intentId: ID!): Intent!
-  acceptInvite(intentId: ID!): Intent!
-
+  requestJoinIntent(intentId: ID!): Intent! # User requests to join (creates PENDING or JOINED based on joinMode)
+  cancelJoinRequest(intentId: ID!): Boolean! # User cancels their pending request
+  leaveIntent(intentId: ID!): Intent! # User leaves an intent they've joined
+  acceptInvite(intentId: ID!): Intent! # User accepts an invitation (INVITED -> JOINED)
   # memberships (owner/mod endpoints) — all return updated Intent unless noted
   inviteMember(input: InviteMemberInput!): Intent!
   approveMembership(input: ApproveMembershipInput!): Intent!
@@ -578,6 +921,29 @@ type Mutation {
   markNotificationRead(id: ID!): Boolean!
   deleteNotification(id: ID!): Boolean!
   markAllNotificationsRead(recipientId: ID!): Int! # returns count
+  # DM Mutations
+  sendDmMessage(input: SendDmMessageInput!): DmMessage!
+  updateDmMessage(id: ID!, input: UpdateDmMessageInput!): DmMessage!
+  deleteDmMessage(id: ID!): Boolean!
+  markDmMessageRead(id: ID!): Boolean!
+  markDmThreadRead(threadId: ID!): Int! # returns count of marked messages
+  muteDmThread(input: MuteDmThreadInput!): DmMute!
+  deleteDmThread(id: ID!): Boolean!
+
+  # Comment Mutations
+  createComment(input: CreateCommentInput!): Comment!
+  updateComment(id: ID!, input: UpdateCommentInput!): Comment!
+  deleteComment(id: ID!): Boolean!
+
+  # Review Mutations
+  createReview(input: CreateReviewInput!): Review!
+  updateReview(id: ID!, input: UpdateReviewInput!): Review!
+  deleteReview(id: ID!): Boolean!
+
+  # Report Mutations
+  createReport(input: CreateReportInput!): Report!
+  updateReportStatus(id: ID!, input: UpdateReportStatusInput!): Report! # admin only
+  deleteReport(id: ID!): Boolean! # admin only
   # dev only
   devLogin(name: String!): SessionUser
   devLogout: Boolean!

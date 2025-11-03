@@ -6,6 +6,7 @@ query GetIntents(
   $limit: Int = 20
   $offset: Int = 0
   $visibility: Visibility
+  $joinMode: JoinMode
   $ownerId: ID
   $memberId: ID
   $upcomingAfter: DateTime
@@ -26,6 +27,7 @@ query GetIntents(
     limit: $limit
     offset: $offset
     visibility: $visibility
+    joinMode: $joinMode
     ownerId: $ownerId
     memberId: $memberId
     upcomingAfter: $upcomingAfter

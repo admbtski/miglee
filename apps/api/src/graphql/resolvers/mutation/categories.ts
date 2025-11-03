@@ -25,8 +25,6 @@ const categorySelect = {
   id: true,
   slug: true,
   names: true,
-  icon: true,
-  color: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.CategorySelect;
@@ -55,8 +53,6 @@ export const createCategoryMutation: MutationResolvers['createCategory'] =
         data: {
           slug,
           names: input.names, // GraphQL JSON -> Prisma.JsonValue
-          icon: input.icon ?? null,
-          color: input.color ?? null,
         },
         select: categorySelect,
       });
@@ -65,8 +61,6 @@ export const createCategoryMutation: MutationResolvers['createCategory'] =
         id: created.id,
         slug: created.slug,
         names: toJSONObject(created.names),
-        icon: created.icon,
-        color: created.color,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       };
@@ -120,13 +114,6 @@ export const updateCategoryMutation: MutationResolvers['updateCategory'] =
         data.names = input.names;
       }
 
-      // Optional nullable string fields
-      if (input.icon === null) data.icon = null;
-      else if (input.icon !== undefined) data.icon = input.icon;
-
-      if (input.color === null) data.color = null;
-      else if (input.color !== undefined) data.color = input.color;
-
       try {
         const updated = await prisma.category.update({
           where: { id },
@@ -138,8 +125,6 @@ export const updateCategoryMutation: MutationResolvers['updateCategory'] =
           id: updated.id,
           slug: updated.slug,
           names: toJSONObject(updated.names),
-          icon: updated.icon,
-          color: updated.color,
           createdAt: updated.createdAt,
           updatedAt: updated.updatedAt,
         };

@@ -16,6 +16,7 @@ const INTENT_INCLUDE = {
   categories: true,
   tags: true,
   members: { include: { user: true, addedBy: true } },
+  owner: true,
   canceledBy: true,
   deletedBy: true,
 } satisfies Prisma.IntentInclude;
@@ -31,9 +32,10 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
     const AND: Prisma.IntentWhereInput[] = [];
 
     if (args.visibility) where.visibility = args.visibility;
+    if (args.joinMode) where.joinMode = args.joinMode as any;
 
     if (args.ownerId) {
-      AND.push({ members: { some: { role: 'OWNER', userId: args.ownerId } } });
+      AND.push({ ownerId: args.ownerId });
     }
 
     if (args.memberId) {

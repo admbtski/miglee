@@ -5,6 +5,7 @@ import {
   Intent,
   IntentMemberRole,
   IntentMemberStatus,
+  JoinMode,
   Level,
   MeetingKind,
   Mode,
@@ -209,8 +210,6 @@ async function seedCategories(): Promise<Category[]> {
         data: {
           slug: c.slug,
           names: namesJson(c.pl, c.de, c.en),
-          icon: c.icon,
-          color: c.color,
         },
       })
     );
@@ -256,8 +255,15 @@ async function createIntentWithMembers(opts: {
     MeetingKind.HYBRID,
   ]);
   const visibility = rand() > 0.15 ? Visibility.PUBLIC : Visibility.HIDDEN;
+  const joinMode = pick<JoinMode>([
+    JoinMode.OPEN,
+    JoinMode.REQUEST,
+    JoinMode.INVITE_ONLY,
+  ]);
   const mode = pick<Mode>([Mode.GROUP, Mode.ONE_TO_ONE]);
   const allowJoinLate = rand() > 0.3;
+  const showMemberCount = rand() > 0.2; // 80% show member count
+  const showAddress = visibility === Visibility.HIDDEN ? rand() > 0.5 : true;
 
   // ONE_TO_ONE = 2/2, GROUP = 2..(6/8/10/12)
   const min = mode === Mode.ONE_TO_ONE ? 2 : rand() > 0.5 ? 4 : 2;
@@ -319,6 +325,7 @@ async function createIntentWithMembers(opts: {
         description,
         notes,
         visibility,
+        joinMode,
         mode,
         min,
         max,
@@ -333,6 +340,9 @@ async function createIntentWithMembers(opts: {
         placeId: meetingKind !== MeetingKind.ONLINE ? place.placeId : null,
         radiusKm: radiusKm ?? null,
         levels,
+        showMemberCount,
+        showAddress,
+        ownerId: author.id,
         categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
         tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
       },
@@ -477,6 +487,7 @@ type Scenario = {
   city: (typeof CITIES)[number]['name'];
   meetingKind: MeetingKind;
   visibility: Visibility;
+  joinMode?: JoinMode;
   mode: Mode;
   min?: number;
   max?: number;
@@ -496,6 +507,11 @@ function buildScenarios(total: number): Scenario[] {
     MeetingKind.HYBRID,
   ] as const;
   const vis = [Visibility.PUBLIC, Visibility.HIDDEN] as const;
+  const joinModes = [
+    JoinMode.OPEN,
+    JoinMode.REQUEST,
+    JoinMode.INVITE_ONLY,
+  ] as const;
   const modes = [Mode.GROUP, Mode.ONE_TO_ONE] as const;
   const whens: Scenario['when'][] = ['past', 'soon', 'future'];
 
@@ -503,10 +519,11 @@ function buildScenarios(total: number): Scenario[] {
   const categorySlugs = CATEGORY_DEFS.map((c) => c.slug);
 
   for (let i = 0; i < total; i++) {
-    // deterministyczne, ale „losowe”
+    // deterministyczne, ale „losowe"
     const city = cities[i % cities.length]!;
     const meetingKind = kinds[i % kinds.length]!;
     const visibility = vis[i % vis.length]!;
+    const joinMode = joinModes[i % joinModes.length]!;
     const mode = modes[i % modes.length]!;
     const when = whens[i % whens.length]!;
     const catSlug = categorySlugs[i % categorySlugs.length]!;
@@ -546,6 +563,7 @@ function buildScenarios(total: number): Scenario[] {
       city,
       meetingKind,
       visibility,
+      joinMode,
       mode,
       min,
       max,
@@ -640,6 +658,7 @@ async function createPresetIntent(
             ])
           : null,
       visibility: s.visibility,
+      joinMode: s.joinMode ?? JoinMode.OPEN,
       mode: s.mode,
       min,
       max,
@@ -662,6 +681,9 @@ async function createPresetIntent(
             [Level.BEGINNER, Level.INTERMEDIATE, Level.ADVANCED],
             1 + Math.floor(rand() * 3)
           ),
+      showMemberCount: rand() > 0.2,
+      showAddress: s.visibility === Visibility.HIDDEN ? rand() > 0.5 : true,
+      ownerId: author.id,
       categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
       tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
     },
@@ -998,6 +1020,376 @@ async function seedNotificationsGeneric(
   }
 }
 
+/** ---------- Seed: DM Threads and Messages ---------- */
+async function seedDmThreads(users: User[]) {
+  const threads: any[] = [];
+  const messages: any[] = [];
+
+  // Create 15-20 random DM threads between users
+  const threadCount = 15 + Math.floor(rand() * 6); // 15-20 threads
+
+  for (let i = 0; i < threadCount; i++) {
+    const user1 = pick(users);
+    let user2 = pick(users);
+
+    // Ensure different users
+    while (user2.id === user1.id) {
+      user2 = pick(users);
+    }
+
+    const sortedIds = [user1.id, user2.id].sort();
+    const aUserId = sortedIds[0]!;
+    const bUserId = sortedIds[1]!;
+    const pairKey = `${aUserId}|${bUserId}`;
+
+    // Check if thread already exists
+    const existing = threads.find((t) => t.pairKey === pairKey);
+    if (existing) continue;
+
+    const thread = await prisma.dmThread.create({
+      data: {
+        aUserId,
+        bUserId,
+        pairKey,
+      },
+    });
+
+    threads.push(thread);
+
+    // Create 3-10 messages in this thread
+    const messageCount = 3 + Math.floor(rand() * 8);
+    let lastMessageAt = new Date(
+      Date.now() - Math.floor(rand() * 7) * 86400000
+    ); // 0-7 days ago
+
+    for (let j = 0; j < messageCount; j++) {
+      const sender = rand() > 0.5 ? user1 : user2;
+      const messageContent = pick([
+        'Hey! How are you?',
+        'Are you coming to the event?',
+        'Thanks for the invite!',
+        'See you there!',
+        'Let me know if you need anything.',
+        'That sounds great!',
+        "I'm interested in joining.",
+        'What time does it start?',
+        'Can I bring a friend?',
+        'Looking forward to it!',
+        'Do you have more details?',
+        'Count me in!',
+        "Sorry, I can't make it.",
+        'Maybe next time!',
+        'Thanks for organizing this.',
+        'Where exactly is the location?',
+        'Is there a fee?',
+        'What should I bring?',
+        'See you soon!',
+        'Thanks for the update!',
+      ]);
+
+      // Messages are spread over time
+      const messageTime = new Date(
+        lastMessageAt.getTime() + Math.floor(rand() * 3600000)
+      ); // 0-1 hour after previous
+
+      const message = await prisma.dmMessage.create({
+        data: {
+          threadId: thread.id,
+          senderId: sender.id,
+          content: messageContent,
+          createdAt: messageTime,
+          // 70% of messages are read
+          readAt:
+            rand() > 0.3 ? new Date(messageTime.getTime() + 300000) : null,
+        },
+      });
+
+      messages.push(message);
+      lastMessageAt = messageTime;
+    }
+
+    // Update thread's lastMessageAt
+    await prisma.dmThread.update({
+      where: { id: thread.id },
+      data: { lastMessageAt },
+    });
+
+    // 20% chance of muting the thread for one user
+    if (rand() > 0.8) {
+      const muteUser = rand() > 0.5 ? user1 : user2;
+      await prisma.dmMute.create({
+        data: {
+          threadId: thread.id,
+          userId: muteUser.id,
+          muted: true,
+        },
+      });
+    }
+  }
+
+  console.log(
+    `💬 Created ${threads.length} DM threads with ${messages.length} messages`
+  );
+  return { threads, messages };
+}
+
+/** ---------- Seed: Comments ---------- */
+async function seedComments(
+  allIntents: Array<{ intent: any; owner: User }>,
+  users: User[]
+) {
+  const comments: any[] = [];
+
+  // Add comments to 60% of intents
+  const intentsToComment = allIntents.filter(() => rand() > 0.4).slice(0, 20);
+
+  for (const { intent } of intentsToComment) {
+    // Skip deleted or canceled intents
+    if (intent.deletedAt || intent.canceledAt) continue;
+
+    // Get members of this intent
+    const members = await prisma.intentMember.findMany({
+      where: {
+        intentId: intent.id,
+        status: 'JOINED',
+      },
+      select: { userId: true },
+    });
+
+    if (members.length === 0) continue;
+
+    // Create 2-8 root comments
+    const rootCount = 2 + Math.floor(rand() * 7);
+
+    for (let i = 0; i < rootCount; i++) {
+      const author = members[Math.floor(rand() * members.length)];
+      const commentContent = pick([
+        'Looking forward to this event!',
+        'Great idea, count me in!',
+        'What should I bring?',
+        'Is parking available nearby?',
+        'Can I bring a friend?',
+        'Excited to meet everyone!',
+        'Thanks for organizing this!',
+        'What time should we arrive?',
+        'Is there a backup plan for bad weather?',
+        'This sounds amazing!',
+      ]);
+
+      const rootComment = await prisma.comment.create({
+        data: {
+          intentId: intent.id,
+          authorId: author!.userId,
+          content: commentContent,
+          threadId: intent.id, // Root comments use intent ID as threadId
+          createdAt: new Date(Date.now() - Math.floor(rand() * 5) * 86400000), // 0-5 days ago
+        },
+      });
+
+      comments.push(rootComment);
+
+      // 40% chance of having 1-3 replies
+      if (rand() > 0.6) {
+        const replyCount = 1 + Math.floor(rand() * 3);
+        for (let j = 0; j < replyCount; j++) {
+          const replyAuthor = members[Math.floor(rand() * members.length)];
+          const replyContent = pick([
+            'Good question!',
+            'I was wondering the same thing.',
+            'Thanks for asking!',
+            'See you there!',
+            'Me too!',
+            'Great point!',
+            'I can help with that.',
+            'Let me know if you need anything.',
+          ]);
+
+          const reply = await prisma.comment.create({
+            data: {
+              intentId: intent.id,
+              authorId: replyAuthor!.userId,
+              content: replyContent,
+              threadId: rootComment.id,
+              parentId: rootComment.id,
+              createdAt: new Date(
+                rootComment.createdAt.getTime() + Math.floor(rand() * 86400000)
+              ), // 0-1 day after parent
+            },
+          });
+
+          comments.push(reply);
+        }
+      }
+    }
+
+    // Update intent commentsCount
+    await prisma.intent.update({
+      where: { id: intent.id },
+      data: {
+        commentsCount: comments.filter((c) => c.intentId === intent.id).length,
+      },
+    });
+  }
+
+  console.log(`💭 Created ${comments.length} comments`);
+  return comments;
+}
+
+/** ---------- Seed: Reviews ---------- */
+async function seedReviews(
+  allIntents: Array<{ intent: any; owner: User }>,
+  users: User[]
+) {
+  const reviews: any[] = [];
+
+  // Add reviews only to past intents
+  const pastIntents = allIntents.filter(
+    ({ intent }) =>
+      intent.endAt < new Date() && !intent.deletedAt && !intent.canceledAt
+  );
+
+  for (const { intent } of pastIntents) {
+    // Get members who joined
+    const members = await prisma.intentMember.findMany({
+      where: {
+        intentId: intent.id,
+        status: 'JOINED',
+      },
+      select: { userId: true },
+    });
+
+    if (members.length === 0) continue;
+
+    // 50-80% of members leave reviews
+    const reviewerCount = Math.floor(members.length * (0.5 + rand() * 0.3));
+
+    for (let i = 0; i < reviewerCount; i++) {
+      const reviewer = members[i];
+      if (!reviewer) continue;
+
+      // Rating distribution: mostly 4-5 stars
+      const ratingRoll = rand();
+      let rating: number;
+      if (ratingRoll > 0.8) rating = 5;
+      else if (ratingRoll > 0.5) rating = 4;
+      else if (ratingRoll > 0.3) rating = 3;
+      else if (ratingRoll > 0.1) rating = 2;
+      else rating = 1;
+
+      const reviewContent =
+        rating >= 4
+          ? pick([
+              'Great event, really enjoyed it!',
+              'Well organized and fun!',
+              'Would definitely join again.',
+              'Met some amazing people!',
+              'Exceeded my expectations!',
+              null, // Some reviews have no content
+            ])
+          : rating === 3
+            ? pick([
+                'It was okay, could be better.',
+                'Not bad, but not great either.',
+                null,
+              ])
+            : pick([
+                'Not what I expected.',
+                'Could have been better organized.',
+                'Disappointed.',
+              ]);
+
+      const review = await prisma.review.create({
+        data: {
+          intentId: intent.id,
+          authorId: reviewer.userId,
+          rating,
+          content: reviewContent,
+          createdAt: new Date(
+            intent.endAt.getTime() + Math.floor(rand() * 3) * 86400000
+          ), // 0-3 days after event
+        },
+      });
+
+      reviews.push(review);
+    }
+  }
+
+  console.log(`⭐ Created ${reviews.length} reviews`);
+  return reviews;
+}
+
+/** ---------- Seed: Reports ---------- */
+async function seedReports(
+  allIntents: Array<{ intent: any; owner: User }>,
+  users: User[]
+) {
+  const reports: any[] = [];
+
+  // Create 5-10 sample reports
+  const reportCount = 5 + Math.floor(rand() * 6);
+
+  for (let i = 0; i < reportCount; i++) {
+    const reporter = pick(users);
+    const entityType = pick(['INTENT', 'COMMENT', 'REVIEW', 'USER', 'MESSAGE']);
+
+    let entityId: string | null = null;
+
+    // Find a valid entity to report
+    switch (entityType) {
+      case 'INTENT': {
+        const intent = pick(
+          allIntents.filter(({ intent }) => !intent.deletedAt)
+        );
+        entityId = intent?.intent.id;
+        break;
+      }
+      case 'USER': {
+        const user = pick(users.filter((u) => u.id !== reporter.id));
+        entityId = user?.id;
+        break;
+      }
+      // For COMMENT, REVIEW, MESSAGE - we'd need to query them
+      // Skipping for simplicity in seed
+      default:
+        continue;
+    }
+
+    if (!entityId) continue;
+
+    const reason = pick([
+      'Inappropriate content',
+      'Spam or misleading',
+      'Harassment or bullying',
+      'Hate speech',
+      'Violence or dangerous content',
+      'False information',
+      'Copyright violation',
+    ]);
+
+    const status = pick(['OPEN', 'INVESTIGATING', 'RESOLVED', 'DISMISSED']);
+
+    const report = await prisma.report.create({
+      data: {
+        reporterId: reporter.id,
+        entity: entityType as any,
+        entityId,
+        reason,
+        status,
+        createdAt: new Date(Date.now() - Math.floor(rand() * 30) * 86400000), // 0-30 days ago
+        resolvedAt:
+          status === 'RESOLVED' || status === 'DISMISSED'
+            ? new Date(Date.now() - Math.floor(rand() * 10) * 86400000)
+            : null,
+      },
+    });
+
+    reports.push(report);
+  }
+
+  console.log(`🚨 Created ${reports.length} reports`);
+  return reports;
+}
+
 /** ---------- Main ---------- */
 async function main() {
   console.log('🧹 Clearing DB…');
@@ -1033,6 +1425,18 @@ async function main() {
 
   console.log('🔔 Seeding generic notifications…');
   await seedNotificationsGeneric(allIntents, users);
+
+  console.log('💬 Seeding DM threads and messages…');
+  await seedDmThreads(users);
+
+  console.log('💭 Seeding comments…');
+  await seedComments(allIntents, users);
+
+  console.log('⭐ Seeding reviews…');
+  await seedReviews(allIntents, users);
+
+  console.log('🚨 Seeding reports…');
+  await seedReports(allIntents, users);
 
   console.log(
     `✅ Done: users=${users.length}, categories=${categories.length}, tags=${tags.length}, intents=${allIntents.length}`

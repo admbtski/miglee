@@ -7,6 +7,7 @@ import type {
   NotificationEntity,
   NotificationKind,
   Visibility,
+  ReportStatus,
   // GraphQL result types:
   Intent as GQLIntent,
   Notification as GQLNotification,
@@ -14,6 +15,12 @@ import type {
   Category as GQLCategory,
   Tag as GQLTag,
   IntentMember as GQLIntentMember,
+  DmThread as GQLDmThread,
+  DmMessage as GQLDmMessage,
+  DmMute as GQLDmMute,
+  Comment as GQLComment,
+  Review as GQLReview,
+  Report as GQLReport,
 } from '../__generated__/resolvers-types';
 
 /* =============================================================================
@@ -29,6 +36,7 @@ export type IntentWithGraph = Prisma.IntentGetPayload<{
     categories: true;
     tags: true;
     members: { include: { user: true; addedBy: true } };
+    owner: true; // właściciel (ownerId)
     canceledBy: true; // kto anulował
     deletedBy: true; // kto usunął
   };
@@ -43,10 +51,81 @@ export type NotificationWithGraph = Prisma.NotificationGetPayload<{
         categories: true;
         tags: true;
         members: { include: { user: true; addedBy: true } };
+        owner: true;
         canceledBy: true;
         deletedBy: true;
       };
     };
+  };
+}>;
+
+export type DmThreadWithGraph = Prisma.DmThreadGetPayload<{
+  include: {
+    aUser: true;
+    bUser: true;
+    messages: {
+      include: {
+        sender: true;
+      };
+      orderBy: { createdAt: 'desc' };
+      take: 1;
+    };
+    mutes: true;
+  };
+}>;
+
+export type DmMessageWithGraph = Prisma.DmMessageGetPayload<{
+  include: {
+    sender: true;
+    thread: {
+      include: {
+        aUser: true;
+        bUser: true;
+      };
+    };
+  };
+}>;
+
+export type DmMuteWithGraph = Prisma.DmMuteGetPayload<{
+  include: {
+    user: true;
+    thread: {
+      include: {
+        aUser: true;
+        bUser: true;
+      };
+    };
+  };
+}>;
+
+export type CommentWithGraph = Prisma.CommentGetPayload<{
+  include: {
+    author: true;
+    intent: true;
+    parent: true;
+    replies: {
+      include: {
+        author: true;
+      };
+    };
+    _count: {
+      select: {
+        replies: true;
+      };
+    };
+  };
+}>;
+
+export type ReviewWithGraph = Prisma.ReviewGetPayload<{
+  include: {
+    author: true;
+    intent: true;
+  };
+}>;
+
+export type ReportWithGraph = Prisma.ReportGetPayload<{
+  include: {
+    reporter: true;
   };
 }>;
 
@@ -118,6 +197,10 @@ export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
     lastSeenAt: u.lastSeenAt,
+    locale: (u as any).locale ?? null,
+    tz: (u as any).tz ?? null,
+    acceptedTermsAt: (u as any).acceptedTermsAt ?? null,
+    acceptedMarketingAt: (u as any).acceptedMarketingAt ?? null,
   };
 }
 
@@ -128,8 +211,6 @@ export function mapCategory(
     id: c.id,
     slug: c.slug,
     names: toJSONObject(c.names),
-    icon: c.icon ?? null,
-    color: c.color ?? null,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };
@@ -196,6 +277,11 @@ function computeIntentDerived(i: IntentWithGraph) {
 }
 
 function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
+  // Prefer the owner relation if available (ownerId field)
+  if ((i as any).owner) {
+    return mapUser((i as any).owner);
+  }
+  // Fallback to finding owner in members
   const owner = i.members.find(
     (m) => m.role === 'OWNER' && m.status === 'JOINED' && (m as any).user
   ) as any;
@@ -222,6 +308,7 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     notes: i.notes ?? null,
 
     visibility: i.visibility as Visibility,
+    joinMode: (i as any).joinMode ?? 'OPEN',
     mode: i.mode as Mode,
     min: i.min,
     max: i.max,
@@ -232,7 +319,6 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
 
     meetingKind: i.meetingKind as MeetingKind,
     onlineUrl: i.onlineUrl ?? null,
-    requiresApproval: i.requiresApproval ?? null,
 
     lat: i.lat ?? null,
     lng: i.lng ?? null,
@@ -241,6 +327,18 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     radiusKm: i.radiusKm ?? null,
 
     levels: (i.levels ?? []) as Level[],
+
+    // Privacy toggles
+    showMemberCount: (i as any).showMemberCount ?? true,
+    showAddress: (i as any).showAddress ?? false,
+
+    // Derived counters
+    joinedCount,
+    commentsCount: (i as any).commentsCount ?? 0,
+    messagesCount: (i as any).messagesCount ?? 0,
+
+    // Ownership
+    ownerId: (i as any).ownerId ?? null,
 
     // --- cancellation
     canceledAt: (i as any).canceledAt ?? null,
@@ -263,7 +361,6 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     members: i.members.map(mapIntentMember),
 
     // Computed helpers (resolver-calculated)
-    joinedCount,
     isFull,
     hasStarted,
     hasEnded,
@@ -298,5 +395,123 @@ export function mapNotification(n: NotificationWithGraph): GQLNotification {
     entityId: n.entityId ?? null,
 
     intent: n.intent ? mapIntent(n.intent) : null,
+  };
+}
+
+/* ---- DM Thread ---- */
+export function mapDmThread(
+  t: DmThreadWithGraph,
+  currentUserId?: string
+): GQLDmThread {
+  const lastMessage = t.messages?.[0] ?? null;
+
+  // Count unread messages for current user
+  const unreadCount = currentUserId ? ((t as any)._count?.messages ?? 0) : 0;
+
+  return {
+    id: t.id,
+    aUserId: t.aUserId,
+    bUserId: t.bUserId,
+    pairKey: t.pairKey,
+    createdAt: t.createdAt,
+    updatedAt: t.updatedAt,
+    lastMessageAt: t.lastMessageAt ?? null,
+
+    aUser: mapUser(t.aUser as any),
+    bUser: mapUser(t.bUser as any),
+    messages: [], // Loaded separately via dmMessages query
+
+    unreadCount,
+    lastMessage: lastMessage ? mapDmMessage(lastMessage as any) : null,
+  };
+}
+
+/* ---- DM Message ---- */
+export function mapDmMessage(m: DmMessageWithGraph): GQLDmMessage {
+  return {
+    id: m.id,
+    threadId: m.threadId,
+    senderId: m.senderId,
+    content: m.content,
+    createdAt: m.createdAt,
+    readAt: m.readAt ?? null,
+    deletedAt: m.deletedAt ?? null,
+
+    thread: m.thread ? (mapDmThread(m.thread as any) as any) : ({} as any),
+    sender: mapUser(m.sender as any),
+  };
+}
+
+/* ---- DM Mute ---- */
+export function mapDmMute(m: DmMuteWithGraph): GQLDmMute {
+  return {
+    id: m.id,
+    threadId: m.threadId,
+    userId: m.userId,
+    muted: m.muted,
+    createdAt: m.createdAt,
+
+    thread: m.thread ? (mapDmThread(m.thread as any) as any) : ({} as any),
+    user: mapUser(m.user as any),
+  };
+}
+
+/* ---- DM Helpers ---- */
+export function createPairKey(userId1: string, userId2: string): string {
+  return [userId1, userId2].sort().join('|');
+}
+
+/* ---- Comment ---- */
+export function mapComment(c: CommentWithGraph): GQLComment {
+  return {
+    id: c.id,
+    intentId: c.intentId,
+    authorId: c.authorId,
+    threadId: c.threadId,
+    parentId: c.parentId ?? null,
+    content: c.content,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+    deletedAt: c.deletedAt ?? null,
+
+    intent: c.intent ? (mapIntent(c.intent as any) as any) : ({} as any),
+    author: mapUser(c.author as any),
+    parent: c.parent ? (mapComment(c.parent as any) as any) : null,
+    replies: c.replies?.map((r) => mapComment(r as any) as any) ?? [],
+
+    repliesCount: (c as any)._count?.replies ?? 0,
+  };
+}
+
+/* ---- Review ---- */
+export function mapReview(r: ReviewWithGraph): GQLReview {
+  return {
+    id: r.id,
+    intentId: r.intentId,
+    authorId: r.authorId,
+    rating: r.rating,
+    content: r.content ?? null,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+    deletedAt: r.deletedAt ?? null,
+
+    intent: r.intent ? (mapIntent(r.intent as any) as any) : ({} as any),
+    author: mapUser(r.author as any),
+  };
+}
+
+/* ---- Report ---- */
+export function mapReport(r: ReportWithGraph): GQLReport {
+  return {
+    id: r.id,
+    reporterId: r.reporterId,
+    entity: r.entity as any,
+    entityId: r.entityId,
+    reason: r.reason,
+    status: (r.status as ReportStatus) ?? 'OPEN',
+    createdAt: r.createdAt,
+    resolvedAt: r.resolvedAt ?? null,
+
+    reporter: mapUser(r.reporter as any),
   };
 }

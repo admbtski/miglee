@@ -1,0 +1,64 @@
+# =============================================================================
+# Review Queries
+# =============================================================================
+
+# Get reviews for an intent
+query GetReviews(
+  $intentId: ID!
+  $limit: Int = 20
+  $offset: Int = 0
+  $rating: Int
+) {
+  reviews(
+    intentId: $intentId
+    limit: $limit
+    offset: $offset
+    rating: $rating
+  ) {
+    ...ReviewsResultCore
+  }
+}
+
+# Get a single review
+query GetReview($id: ID!) {
+  review(id: $id) {
+    ...ReviewCore
+  }
+}
+
+# Get review statistics for an intent
+query GetReviewStats($intentId: ID!) {
+  reviewStats(intentId: $intentId) {
+    ...ReviewStatsCore
+  }
+}
+
+# Get current user's review for an intent
+query GetMyReview($intentId: ID!) {
+  myReview(intentId: $intentId) {
+    ...ReviewCore
+  }
+}
+
+# =============================================================================
+# Review Mutations
+# =============================================================================
+
+# Create a new review
+mutation CreateReview($input: CreateReviewInput!) {
+  createReview(input: $input) {
+    ...ReviewCore
+  }
+}
+
+# Update a review
+mutation UpdateReview($id: ID!, $input: UpdateReviewInput!) {
+  updateReview(id: $id, input: $input) {
+    ...ReviewCore
+  }
+}
+
+# Delete a review
+mutation DeleteReview($id: ID!) {
+  deleteReview(id: $id)
+}
