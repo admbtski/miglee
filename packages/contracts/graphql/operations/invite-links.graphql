@@ -1,0 +1,35 @@
+# =============================================================================
+# Intent Invite Links Operations
+# =============================================================================
+
+# Queries
+query GetIntentInviteLinks($intentId: ID!) {
+  intentInviteLinks(intentId: $intentId) {
+    ...IntentInviteLinkCore
+  }
+}
+
+query GetIntentInviteLink($code: String!) {
+  intentInviteLink(code: $code) {
+    ...IntentInviteLinkCore
+  }
+}
+
+# Mutations
+mutation CreateIntentInviteLink($input: CreateIntentInviteLinkInput!) {
+  createIntentInviteLink(input: $input) {
+    ...IntentInviteLinkCore
+  }
+}
+
+mutation DeleteIntentInviteLink($id: ID!) {
+  deleteIntentInviteLink(id: $id)
+}
+
+mutation UseIntentInviteLink($code: String!) {
+  useIntentInviteLink(code: $code) {
+    id
+    title
+    # Add other intent fields as needed
+  }
+}

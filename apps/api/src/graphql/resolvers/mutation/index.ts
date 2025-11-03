@@ -48,12 +48,12 @@ import {
 
 // DM mutations
 import {
+  createOrGetDmThreadMutation,
   sendDmMessageMutation,
   updateDmMessageMutation,
   deleteDmMessageMutation,
   markDmMessageReadMutation,
   markDmThreadReadMutation,
-  muteDmThreadMutation,
   deleteDmThreadMutation,
 } from './dm';
 
@@ -77,6 +77,31 @@ import {
   updateReportStatusMutation,
   deleteReportMutation,
 } from './reports';
+
+// Event Chat mutations
+import {
+  sendIntentMessageMutation,
+  editIntentMessageMutation,
+  deleteIntentMessageMutation,
+  markIntentChatReadMutation,
+} from './event-chat';
+
+// User Blocks mutations
+import { blockUserMutation, unblockUserMutation } from './user-blocks';
+
+// Intent Invite Links mutations
+import {
+  createIntentInviteLinkMutation,
+  deleteIntentInviteLinkMutation,
+  useIntentInviteLinkMutation,
+} from './invite-links';
+
+// Notification Preferences & Mutes mutations
+import {
+  updateNotificationPreferencesMutation,
+  muteIntentMutation,
+  muteDmThreadMutation,
+} from './preferences-and-mutes';
 
 import { devLoginMutation, devLogoutMutation } from './auth';
 
@@ -122,13 +147,19 @@ export const Mutation: Resolvers['Mutation'] = {
   markAllNotificationsRead: markAllNotificationsReadMutation,
 
   // ---- DM (Direct Messages) ----
+  createOrGetDmThread: createOrGetDmThreadMutation,
   sendDmMessage: sendDmMessageMutation,
   updateDmMessage: updateDmMessageMutation,
   deleteDmMessage: deleteDmMessageMutation,
   markDmMessageRead: markDmMessageReadMutation,
   markDmThreadRead: markDmThreadReadMutation,
-  muteDmThread: muteDmThreadMutation,
   deleteDmThread: deleteDmThreadMutation,
+
+  // ---- Event Chat ----
+  sendIntentMessage: sendIntentMessageMutation,
+  editIntentMessage: editIntentMessageMutation,
+  deleteIntentMessage: deleteIntentMessageMutation,
+  markIntentChatRead: markIntentChatReadMutation,
 
   // ---- Comments ----
   createComment: createCommentMutation,
@@ -144,6 +175,20 @@ export const Mutation: Resolvers['Mutation'] = {
   createReport: createReportMutation,
   updateReportStatus: updateReportStatusMutation,
   deleteReport: deleteReportMutation,
+
+  // ---- User Blocks ----
+  blockUser: blockUserMutation,
+  unblockUser: unblockUserMutation,
+
+  // ---- Intent Invite Links ----
+  createIntentInviteLink: createIntentInviteLinkMutation,
+  deleteIntentInviteLink: deleteIntentInviteLinkMutation,
+  useIntentInviteLink: useIntentInviteLinkMutation,
+
+  // ---- Notification Preferences & Mutes ----
+  updateNotificationPreferences: updateNotificationPreferencesMutation,
+  muteIntent: muteIntentMutation,
+  muteDmThread: muteDmThreadMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

@@ -19,7 +19,6 @@ import {
   dmThreadsQuery,
   dmThreadQuery,
   dmMessagesQuery,
-  dmMuteQuery,
 } from './dm';
 import { commentsQuery, commentQuery } from './comments';
 import {
@@ -29,6 +28,14 @@ import {
   myReviewQuery,
 } from './reviews';
 import { reportsQuery, reportQuery } from './reports';
+import { intentMessagesQuery, intentUnreadCountQuery } from './event-chat';
+import { myBlocksQuery, isBlockedQuery } from './user-blocks';
+import { intentInviteLinksQuery, intentInviteLinkQuery } from './invite-links';
+import {
+  myNotificationPreferencesQuery,
+  intentMuteQuery,
+  dmMuteQuery,
+} from './preferences-and-mutes';
 
 export const Query: Resolvers['Query'] = {
   notifications: notificationsQuery,
@@ -59,4 +66,13 @@ export const Query: Resolvers['Query'] = {
   myReview: myReviewQuery,
   reports: reportsQuery,
   report: reportQuery,
+  intentMessages: intentMessagesQuery,
+  intentUnreadCount: intentUnreadCountQuery,
+  myBlocks: myBlocksQuery,
+  isBlocked: isBlockedQuery,
+  intentInviteLinks: intentInviteLinksQuery,
+  intentInviteLink: intentInviteLinkQuery,
+  myNotificationPreferences: myNotificationPreferencesQuery,
+  intentMute: intentMuteQuery,
+  dmMute: dmMuteQuery,
 };

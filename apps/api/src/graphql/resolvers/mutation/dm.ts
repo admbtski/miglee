@@ -10,9 +10,12 @@ import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import {
   mapDmMessage,
   mapDmMute,
+  mapDmThread,
   createPairKey,
   mapNotification,
 } from '../helpers';
+import { createDmPairKey } from '../../../lib/chat-utils';
+import { checkDmAllowed } from '../chat-guards';
 
 const DM_MESSAGE_INCLUDE = {
   sender: true,
@@ -38,6 +41,53 @@ const NOTIFICATION_INCLUDE = {
     },
   },
 } satisfies Prisma.NotificationInclude;
+
+const DM_THREAD_INCLUDE = {
+  aUser: true,
+  bUser: true,
+} satisfies Prisma.DmThreadInclude;
+
+/**
+ * Mutation: Create or get existing DM thread
+ */
+export const createOrGetDmThreadMutation: MutationResolvers['createOrGetDmThread'] =
+  resolverWithMetrics(
+    'Mutation',
+    'createOrGetDmThread',
+    async (_p, { userId }, { user }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Check if DM is allowed (no blocks, not self)
+      await checkDmAllowed(user.id, userId);
+
+      // Create canonical pair key
+      const pairKey = createDmPairKey(user.id, userId);
+      const [aUserId, bUserId] = pairKey.split('|') as [string, string];
+
+      // Find or create thread
+      let thread = await prisma.dmThread.findUnique({
+        where: { pairKey },
+        include: DM_THREAD_INCLUDE,
+      });
+
+      if (!thread) {
+        thread = await prisma.dmThread.create({
+          data: {
+            aUserId,
+            bUserId,
+            pairKey,
+          },
+          include: DM_THREAD_INCLUDE,
+        });
+      }
+
+      return mapDmThread(thread as any);
+    }
+  );
 
 /**
  * Mutation: Send a DM message (creates thread if doesn't exist)
@@ -393,70 +443,6 @@ export const markDmThreadReadMutation: MutationResolvers['markDmThreadRead'] =
       });
 
       return result.count;
-    }
-  );
-
-/**
- * Mutation: Mute or unmute a thread
- */
-export const muteDmThreadMutation: MutationResolvers['muteDmThread'] =
-  resolverWithMetrics(
-    'Mutation',
-    'muteDmThread',
-    async (_p, { input }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-
-      const { threadId, muted } = input;
-
-      // Verify thread exists and user is part of it
-      const thread = await prisma.dmThread.findUnique({
-        where: { id: threadId },
-        select: { aUserId: true, bUserId: true },
-      });
-
-      if (!thread) {
-        throw new GraphQLError('Thread not found.', {
-          extensions: { code: 'NOT_FOUND' },
-        });
-      }
-
-      if (thread.aUserId !== user.id && thread.bUserId !== user.id) {
-        throw new GraphQLError('Access denied.', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
-
-      const muteRecord = await prisma.dmMute.upsert({
-        where: {
-          threadId_userId: {
-            threadId,
-            userId: user.id,
-          },
-        },
-        create: {
-          threadId,
-          userId: user.id,
-          muted,
-        },
-        update: {
-          muted,
-        },
-        include: {
-          user: true,
-          thread: {
-            include: {
-              aUser: true,
-              bUser: true,
-            },
-          },
-        },
-      });
-
-      return mapDmMute(muteRecord as any);
     }
   );
 

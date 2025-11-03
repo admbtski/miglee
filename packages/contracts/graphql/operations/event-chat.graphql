@@ -1,0 +1,49 @@
+# =============================================================================
+# Event Chat Operations
+# =============================================================================
+
+# Queries
+query GetIntentMessages($intentId: ID!, $after: String, $limit: Int = 50) {
+  intentMessages(intentId: $intentId, after: $after, limit: $limit) {
+    ...IntentChatMessagesResultCore
+  }
+}
+
+query GetIntentUnreadCount($intentId: ID!) {
+  intentUnreadCount(intentId: $intentId)
+}
+
+# Mutations
+mutation SendIntentMessage($input: SendIntentMessageInput!) {
+  sendIntentMessage(input: $input) {
+    ...IntentChatMessageWithReply
+  }
+}
+
+mutation EditIntentMessage($id: ID!, $input: EditIntentMessageInput!) {
+  editIntentMessage(id: $id, input: $input) {
+    ...IntentChatMessageWithReply
+  }
+}
+
+mutation DeleteIntentMessage($id: ID!, $soft: Boolean = true) {
+  deleteIntentMessage(id: $id, soft: $soft)
+}
+
+mutation MarkIntentChatRead($intentId: ID!, $at: DateTime) {
+  markIntentChatRead(intentId: $intentId, at: $at)
+}
+
+# Subscriptions
+subscription OnIntentMessageAdded($intentId: ID!) {
+  intentMessageAdded(intentId: $intentId) {
+    ...IntentChatMessageWithReply
+  }
+}
+
+subscription OnIntentTyping($intentId: ID!) {
+  intentTyping(intentId: $intentId) {
+    userId
+    isTyping
+  }
+}

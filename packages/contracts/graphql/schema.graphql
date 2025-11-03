@@ -548,6 +548,37 @@ type ReportsResult {
 }
 
 # ------------------------------------------------------------------------------
+# Event Chat (Intent Chat Messages)
+# ------------------------------------------------------------------------------
+
+"Message in an intent chat room"
+type IntentChatMessage {
+  id: ID!
+  intentId: ID!
+  authorId: ID!
+  content: String!
+  replyToId: ID
+  createdAt: DateTime!
+  editedAt: DateTime
+  deletedAt: DateTime
+
+  intent: Intent!
+  author: User!
+  replyTo: IntentChatMessage
+
+  # Computed
+  isEdited: Boolean!
+  isDeleted: Boolean!
+}
+
+"Paginated intent chat messages result"
+type IntentChatMessagesResult {
+  items: [IntentChatMessage!]!
+  pageInfo: PageInfo!
+  hasMore: Boolean!
+}
+
+# ------------------------------------------------------------------------------
 # Inputs
 # ------------------------------------------------------------------------------
 
@@ -691,11 +722,6 @@ input UpdateDmMessageInput {
   content: String!
 }
 
-input MuteDmThreadInput {
-  threadId: ID!
-  muted: Boolean!
-}
-
 # Comment Inputs
 input CreateCommentInput {
   intentId: ID!
@@ -728,6 +754,33 @@ input CreateReportInput {
 
 input UpdateReportStatusInput {
   status: ReportStatus!
+}
+
+# Event Chat Inputs
+input SendIntentMessageInput {
+  intentId: ID!
+  content: String!
+  replyToId: ID
+}
+
+input EditIntentMessageInput {
+  content: String!
+}
+
+# Intent Invite Link Inputs
+input CreateIntentInviteLinkInput {
+  intentId: ID!
+  maxUses: Int
+  expiresAt: DateTime
+}
+
+# Notification Preference Inputs
+input UpdateNotificationPreferenceInput {
+  emailOnInvite: Boolean
+  emailOnJoinRequest: Boolean
+  emailOnMessage: Boolean
+  pushOnReminder: Boolean
+  inAppOnEverything: Boolean
 }
 
 # ------------------------------------------------------------------------------
@@ -832,8 +885,6 @@ type Query {
     beforeMessageId: ID
   ): [DmMessage!]!
 
-  dmMute(threadId: ID!): DmMute
-
   # Comment Queries
   comments(
     intentId: ID!
@@ -868,6 +919,30 @@ type Query {
   ): ReportsResult!
 
   report(id: ID!): Report
+
+  # Event Chat Queries
+  intentMessages(
+    intentId: ID!
+    after: String
+    limit: Int = 50
+  ): IntentChatMessagesResult!
+
+  intentUnreadCount(intentId: ID!): Int!
+
+  # User Block Queries
+  myBlocks(limit: Int = 50, offset: Int = 0): UserBlocksResult!
+  isBlocked(userId: ID!): Boolean!
+
+  # Intent Invite Link Queries
+  intentInviteLinks(intentId: ID!): [IntentInviteLink!]!
+  intentInviteLink(code: String!): IntentInviteLink
+
+  # Notification Preference Queries
+  myNotificationPreferences: NotificationPreference!
+
+  # Mute Queries
+  intentMute(intentId: ID!): IntentMute
+  dmMute(threadId: ID!): DmMute
 }
 
 # ------------------------------------------------------------------------------
@@ -927,7 +1002,6 @@ type Mutation {
   deleteDmMessage(id: ID!): Boolean!
   markDmMessageRead(id: ID!): Boolean!
   markDmThreadRead(threadId: ID!): Int! # returns count of marked messages
-  muteDmThread(input: MuteDmThreadInput!): DmMute!
   deleteDmThread(id: ID!): Boolean!
 
   # Comment Mutations
@@ -944,6 +1018,32 @@ type Mutation {
   createReport(input: CreateReportInput!): Report!
   updateReportStatus(id: ID!, input: UpdateReportStatusInput!): Report! # admin only
   deleteReport(id: ID!): Boolean! # admin only
+  # Event Chat Mutations
+  sendIntentMessage(input: SendIntentMessageInput!): IntentChatMessage!
+  editIntentMessage(id: ID!, input: EditIntentMessageInput!): IntentChatMessage!
+  deleteIntentMessage(id: ID!, soft: Boolean = true): Boolean!
+  markIntentChatRead(intentId: ID!, at: DateTime): Boolean!
+
+  # DM Mutations (extend existing)
+  createOrGetDmThread(userId: ID!): DmThread!
+
+  # User Block Mutations
+  blockUser(userId: ID!): UserBlock!
+  unblockUser(userId: ID!): Boolean!
+
+  # Intent Invite Link Mutations
+  createIntentInviteLink(input: CreateIntentInviteLinkInput!): IntentInviteLink!
+  deleteIntentInviteLink(id: ID!): Boolean!
+  useIntentInviteLink(code: String!): Intent! # Join via invite link
+  # Notification Preference Mutations
+  updateNotificationPreferences(
+    input: UpdateNotificationPreferenceInput!
+  ): NotificationPreference!
+
+  # Mute Mutations
+  muteIntent(intentId: ID!, muted: Boolean!): IntentMute!
+  muteDmThread(threadId: ID!, muted: Boolean!): DmMute!
+
   # dev only
   devLogin(name: String!): SessionUser
   devLogout: Boolean!
@@ -956,4 +1056,114 @@ type Mutation {
 type Subscription {
   notificationAdded(recipientId: ID!): Notification!
   notificationBadgeChanged(recipientId: ID!): NotificationBadgeChanged!
+
+  # Event Chat Subscriptions
+  intentMessageAdded(intentId: ID!): IntentChatMessage!
+  intentTyping(intentId: ID!): TypingIndicator!
+
+  # DM Subscriptions
+  dmMessageAdded(threadId: ID!): DmMessage!
+  dmTyping(threadId: ID!): TypingIndicator!
+}
+
+# Typing indicator for real-time presence
+type TypingIndicator {
+  userId: ID!
+  isTyping: Boolean!
+}
+
+# ------------------------------------------------------------------------------
+# User Blocks
+# ------------------------------------------------------------------------------
+
+"User block for preventing interactions"
+type UserBlock {
+  id: ID!
+  blockerId: ID!
+  blockedId: ID!
+  createdAt: DateTime!
+
+  blocker: User!
+  blocked: User!
+}
+
+"Paginated user blocks result"
+type UserBlocksResult {
+  items: [UserBlock!]!
+  pageInfo: PageInfo!
+}
+
+# ------------------------------------------------------------------------------
+# Intent Invite Links
+# ------------------------------------------------------------------------------
+
+"Invite link for intent with usage limits"
+type IntentInviteLink {
+  id: ID!
+  intentId: ID!
+  code: String!
+  maxUses: Int
+  usedCount: Int!
+  expiresAt: DateTime
+  createdAt: DateTime!
+
+  intent: Intent!
+
+  # Computed
+  isExpired: Boolean!
+  isMaxedOut: Boolean!
+  isValid: Boolean!
+}
+
+"Paginated invite links result"
+type IntentInviteLinksResult {
+  items: [IntentInviteLink!]!
+  pageInfo: PageInfo!
+}
+
+# ------------------------------------------------------------------------------
+# Notification Preferences
+# ------------------------------------------------------------------------------
+
+"User notification preferences"
+type NotificationPreference {
+  id: ID!
+  userId: ID!
+  emailOnInvite: Boolean!
+  emailOnJoinRequest: Boolean!
+  emailOnMessage: Boolean!
+  pushOnReminder: Boolean!
+  inAppOnEverything: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  user: User!
+}
+
+# ------------------------------------------------------------------------------
+# Mutes (Intent & DM)
+# ------------------------------------------------------------------------------
+
+"Intent mute status"
+type IntentMute {
+  id: ID!
+  intentId: ID!
+  userId: ID!
+  muted: Boolean!
+  createdAt: DateTime!
+
+  intent: Intent!
+  user: User!
+}
+
+"DM thread mute status"
+type DmMute {
+  id: ID!
+  threadId: ID!
+  userId: ID!
+  muted: Boolean!
+  createdAt: DateTime!
+
+  thread: DmThread!
+  user: User!
 }

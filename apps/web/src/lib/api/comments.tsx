@@ -1,23 +1,28 @@
 'use client';
 
 import {
-  useQuery,
   useMutation,
+  type UseMutationOptions,
+  useQuery,
   useQueryClient,
   type UseQueryOptions,
-  type UseMutationOptions,
-} from '@tantml:parameter>@tanstack/react-query';
-import type {
-  GetCommentsQuery,
-  GetCommentsQueryVariables,
-  GetCommentQuery,
-  GetCommentQueryVariables,
-  CreateCommentMutation,
-  CreateCommentMutationVariables,
-  UpdateCommentMutation,
-  UpdateCommentMutationVariables,
-  DeleteCommentMutation,
-  DeleteCommentMutationVariables,
+} from '@tanstack/react-query';
+import {
+  CreateCommentDocument,
+  type CreateCommentMutation,
+  type CreateCommentMutationVariables,
+  DeleteCommentDocument,
+  type DeleteCommentMutation,
+  type DeleteCommentMutationVariables,
+  GetCommentDocument,
+  type GetCommentQuery,
+  type GetCommentQueryVariables,
+  GetCommentsDocument,
+  type GetCommentsQuery,
+  type GetCommentsQueryVariables,
+  UpdateCommentDocument,
+  type UpdateCommentMutation,
+  type UpdateCommentMutationVariables,
 } from './__generated__/react-query-update';
 import { gqlClient } from './client';
 
@@ -52,25 +57,7 @@ export function useGetComments(
     queryKey: commentKeys.list(variables),
     queryFn: async () => {
       const res = await gqlClient.request<GetCommentsQuery>(
-        /* GraphQL */ `
-          query GetComments(
-            $intentId: ID!
-            $limit: Int = 50
-            $offset: Int = 0
-            $threadId: ID
-            $parentId: ID
-          ) {
-            comments(
-              intentId: $intentId
-              limit: $limit
-              offset: $offset
-              threadId: $threadId
-              parentId: $parentId
-            ) {
-              ...CommentsResultCore
-            }
-          }
-        `,
+        GetCommentsDocument,
         variables
       );
       return res;
@@ -94,13 +81,7 @@ export function useGetComment(
     queryKey: commentKeys.detail(variables.id),
     queryFn: async () => {
       const res = await gqlClient.request<GetCommentQuery>(
-        /* GraphQL */ `
-          query GetComment($id: ID!) {
-            comment(id: $id) {
-              ...CommentWithReplies
-            }
-          }
-        `,
+        GetCommentDocument,
         variables
       );
       return res;
@@ -133,13 +114,7 @@ export function useCreateComment(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateCommentMutation>(
-        /* GraphQL */ `
-          mutation CreateComment($input: CreateCommentInput!) {
-            createComment(input: $input) {
-              ...CommentCore
-            }
-          }
-        `,
+        CreateCommentDocument,
         variables
       );
       return res;
@@ -178,13 +153,7 @@ export function useUpdateComment(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UpdateCommentMutation>(
-        /* GraphQL */ `
-          mutation UpdateComment($id: ID!, $input: UpdateCommentInput!) {
-            updateComment(id: $id, input: $input) {
-              ...CommentCore
-            }
-          }
-        `,
+        UpdateCommentDocument,
         variables
       );
       return res;
@@ -220,11 +189,7 @@ export function useDeleteComment(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteCommentMutation>(
-        /* GraphQL */ `
-          mutation DeleteComment($id: ID!) {
-            deleteComment(id: $id)
-          }
-        `,
+        DeleteCommentDocument,
         variables
       );
       return res;

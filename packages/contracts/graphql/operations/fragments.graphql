@@ -509,3 +509,127 @@ fragment ReportsResultCore on ReportsResult {
     ...PageInfoCore
   }
 }
+
+# =============================================================================
+# Event Chat Fragments
+# =============================================================================
+
+fragment IntentChatMessageCore on IntentChatMessage {
+  id
+  intentId
+  authorId
+  content
+  replyToId
+  createdAt
+  editedAt
+  deletedAt
+  isEdited
+  isDeleted
+
+  author {
+    id
+    name
+    imageUrl
+  }
+}
+
+fragment IntentChatMessageWithReply on IntentChatMessage {
+  ...IntentChatMessageCore
+  replyTo {
+    ...IntentChatMessageCore
+  }
+}
+
+fragment IntentChatMessagesResultCore on IntentChatMessagesResult {
+  items {
+    ...IntentChatMessageWithReply
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+  hasMore
+}
+
+# =============================================================================
+# User Blocks Fragments
+# =============================================================================
+
+fragment UserBlockCore on UserBlock {
+  id
+  blockerId
+  blockedId
+  createdAt
+
+  blocker {
+    id
+    name
+    imageUrl
+  }
+  blocked {
+    id
+    name
+    imageUrl
+  }
+}
+
+fragment UserBlocksResultCore on UserBlocksResult {
+  items {
+    ...UserBlockCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+# =============================================================================
+# Intent Invite Links Fragments
+# =============================================================================
+
+fragment IntentInviteLinkCore on IntentInviteLink {
+  id
+  intentId
+  code
+  maxUses
+  usedCount
+  expiresAt
+  createdAt
+  isExpired
+  isMaxedOut
+  isValid
+}
+
+# =============================================================================
+# Notification Preferences Fragments
+# =============================================================================
+
+fragment NotificationPreferenceCore on NotificationPreference {
+  id
+  userId
+  emailOnInvite
+  emailOnJoinRequest
+  emailOnMessage
+  pushOnReminder
+  inAppOnEverything
+  createdAt
+  updatedAt
+}
+
+# =============================================================================
+# Mutes Fragments
+# =============================================================================
+
+fragment IntentMuteCore on IntentMute {
+  id
+  intentId
+  userId
+  muted
+  createdAt
+}
+
+fragment DmMuteCore on DmMute {
+  id
+  threadId
+  userId
+  muted
+  createdAt
+}

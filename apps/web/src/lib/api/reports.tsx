@@ -1,23 +1,28 @@
 'use client';
 
 import {
-  useQuery,
   useMutation,
+  type UseMutationOptions,
+  useQuery,
   useQueryClient,
   type UseQueryOptions,
-  type UseMutationOptions,
 } from '@tanstack/react-query';
-import type {
-  GetReportsQuery,
-  GetReportsQueryVariables,
-  GetReportQuery,
-  GetReportQueryVariables,
-  CreateReportMutation,
-  CreateReportMutationVariables,
-  UpdateReportStatusMutation,
-  UpdateReportStatusMutationVariables,
-  DeleteReportMutation,
-  DeleteReportMutationVariables,
+import {
+  CreateReportDocument,
+  type CreateReportMutation,
+  type CreateReportMutationVariables,
+  DeleteReportDocument,
+  type DeleteReportMutation,
+  type DeleteReportMutationVariables,
+  GetReportDocument,
+  type GetReportQuery,
+  type GetReportQueryVariables,
+  GetReportsDocument,
+  type GetReportsQuery,
+  type GetReportsQueryVariables,
+  UpdateReportStatusDocument,
+  type UpdateReportStatusMutation,
+  type UpdateReportStatusMutationVariables,
 } from './__generated__/react-query-update';
 import { gqlClient } from './client';
 
@@ -52,23 +57,7 @@ export function useGetReports(
     queryKey: reportKeys.list(variables),
     queryFn: async () => {
       const res = await gqlClient.request<GetReportsQuery>(
-        /* GraphQL */ `
-          query GetReports(
-            $limit: Int = 20
-            $offset: Int = 0
-            $status: ReportStatus
-            $entity: ReportEntity
-          ) {
-            reports(
-              limit: $limit
-              offset: $offset
-              status: $status
-              entity: $entity
-            ) {
-              ...ReportsResultCore
-            }
-          }
-        `,
+        GetReportsDocument,
         variables
       );
       return res;
@@ -88,13 +77,7 @@ export function useGetReport(
     queryKey: reportKeys.detail(variables.id),
     queryFn: async () => {
       const res = await gqlClient.request<GetReportQuery>(
-        /* GraphQL */ `
-          query GetReport($id: ID!) {
-            report(id: $id) {
-              ...ReportCore
-            }
-          }
-        `,
+        GetReportDocument,
         variables
       );
       return res;
@@ -127,13 +110,7 @@ export function useCreateReport(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateReportMutation>(
-        /* GraphQL */ `
-          mutation CreateReport($input: CreateReportInput!) {
-            createReport(input: $input) {
-              ...ReportCore
-            }
-          }
-        `,
+        CreateReportDocument,
         variables
       );
       return res;
@@ -167,16 +144,7 @@ export function useUpdateReportStatus(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UpdateReportStatusMutation>(
-        /* GraphQL */ `
-          mutation UpdateReportStatus(
-            $id: ID!
-            $input: UpdateReportStatusInput!
-          ) {
-            updateReportStatus(id: $id, input: $input) {
-              ...ReportCore
-            }
-          }
-        `,
+        UpdateReportStatusDocument,
         variables
       );
       return res;
@@ -212,11 +180,7 @@ export function useDeleteReport(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteReportMutation>(
-        /* GraphQL */ `
-          mutation DeleteReport($id: ID!) {
-            deleteReport(id: $id)
-          }
-        `,
+        DeleteReportDocument,
         variables
       );
       return res;

@@ -1,0 +1,47 @@
+# =============================================================================
+# Notification Preferences & Mutes Operations
+# =============================================================================
+
+# Notification Preferences Queries
+query GetMyNotificationPreferences {
+  myNotificationPreferences {
+    ...NotificationPreferenceCore
+  }
+}
+
+# Notification Preferences Mutations
+mutation UpdateNotificationPreferences(
+  $input: UpdateNotificationPreferenceInput!
+) {
+  updateNotificationPreferences(input: $input) {
+    ...NotificationPreferenceCore
+  }
+}
+
+# Intent Mute Queries
+query GetIntentMute($intentId: ID!) {
+  intentMute(intentId: $intentId) {
+    ...IntentMuteCore
+  }
+}
+
+# Intent Mute Mutations
+mutation MuteIntent($intentId: ID!, $muted: Boolean!) {
+  muteIntent(intentId: $intentId, muted: $muted) {
+    ...IntentMuteCore
+  }
+}
+
+# DM Mute Queries
+query GetDmMute($threadId: ID!) {
+  dmMute(threadId: $threadId) {
+    ...DmMuteCore
+  }
+}
+
+# DM Mute Mutations
+mutation MuteDmThread($threadId: ID!, $muted: Boolean!) {
+  muteDmThread(threadId: $threadId, muted: $muted) {
+    ...DmMuteCore
+  }
+}

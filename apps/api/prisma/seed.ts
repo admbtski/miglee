@@ -1390,6 +1390,324 @@ async function seedReports(
   return reports;
 }
 
+/** ---------- Seed: Event Chat Messages ---------- */
+async function seedEventChatMessages(
+  allIntents: Array<{ intent: any; owner: User }>,
+  users: User[]
+) {
+  const messages: any[] = [];
+
+  // Add chat messages to 70% of intents
+  const intentsToChat = allIntents
+    .filter(() => rand() > 0.3)
+    .filter(({ intent }) => !intent.deletedAt && !intent.canceledAt)
+    .slice(0, 25);
+
+  for (const { intent } of intentsToChat) {
+    // Get JOINED members
+    const members = await prisma.intentMember.findMany({
+      where: {
+        intentId: intent.id,
+        status: 'JOINED',
+      },
+      select: { userId: true },
+    });
+
+    if (members.length === 0) continue;
+
+    // Create 5-20 messages
+    const messageCount = 5 + Math.floor(rand() * 16);
+
+    let lastMessageTime = new Date(
+      intent.createdAt.getTime() + Math.floor(rand() * 3600000)
+    );
+
+    for (let i = 0; i < messageCount; i++) {
+      const author = members[Math.floor(rand() * members.length)];
+      const messageContent = pick([
+        'Hey everyone! 👋',
+        'Looking forward to this!',
+        'What time are we meeting?',
+        'Should I bring anything?',
+        'See you all there!',
+        'Thanks for organizing this!',
+        'Count me in!',
+        'This is going to be awesome!',
+        'Anyone else excited?',
+        'Let me know if you need help with anything.',
+        'Where exactly is the meeting point?',
+        'Is there parking nearby?',
+        'Can we reschedule if it rains?',
+        'I might be a few minutes late.',
+        'Looking forward to meeting you all!',
+        'This is my first time, any tips?',
+        'Thanks for the invite!',
+        'See you soon!',
+        'Great idea!',
+        'Im in!',
+      ]);
+
+      const message = await prisma.intentChatMessage.create({
+        data: {
+          intentId: intent.id,
+          authorId: author!.userId,
+          content: messageContent,
+          createdAt: lastMessageTime,
+        },
+      });
+
+      messages.push(message);
+
+      // Next message 5-60 minutes later
+      lastMessageTime = new Date(
+        lastMessageTime.getTime() + (5 + Math.floor(rand() * 55)) * 60000
+      );
+
+      // 10% chance of a reply
+      if (rand() > 0.9 && messages.length > 0) {
+        const replyTo = messages[Math.floor(rand() * messages.length)];
+        if (replyTo.intentId === intent.id) {
+          const replyAuthor = members[Math.floor(rand() * members.length)];
+          const replyContent = pick([
+            'Good question!',
+            'I was wondering the same thing.',
+            'Thanks!',
+            'Sounds good!',
+            'Me too!',
+            'Agreed!',
+            'Let me check.',
+            'I can help with that.',
+          ]);
+
+          const reply = await prisma.intentChatMessage.create({
+            data: {
+              intentId: intent.id,
+              authorId: replyAuthor!.userId,
+              content: replyContent,
+              replyToId: replyTo.id,
+              createdAt: new Date(lastMessageTime.getTime() + 60000),
+            },
+          });
+
+          messages.push(reply);
+        }
+      }
+    }
+
+    // Update intent messagesCount
+    await prisma.intent.update({
+      where: { id: intent.id },
+      data: {
+        messagesCount: messages.filter((m) => m.intentId === intent.id).length,
+      },
+    });
+
+    // Create IntentChatRead for some members (50% have read)
+    for (const member of members) {
+      if (rand() > 0.5) {
+        const lastReadAt = new Date(
+          lastMessageTime.getTime() - Math.floor(rand() * 3600000)
+        );
+        await prisma.intentChatRead.create({
+          data: {
+            intentId: intent.id,
+            userId: member.userId,
+            lastReadAt,
+          },
+        });
+      }
+    }
+  }
+
+  console.log(`💬 Created ${messages.length} event chat messages`);
+  return messages;
+}
+
+/** ---------- Seed: User Blocks ---------- */
+async function seedUserBlocks(users: User[]) {
+  const blocks: any[] = [];
+
+  // Create 5-10 random blocks
+  const blockCount = 5 + Math.floor(rand() * 6);
+
+  for (let i = 0; i < blockCount; i++) {
+    const blocker = pick(users);
+    let blocked = pick(users);
+
+    // Ensure different users
+    while (blocked.id === blocker.id) {
+      blocked = pick(users);
+    }
+
+    // Check if block already exists
+    const existing = blocks.find(
+      (b) =>
+        (b.blockerId === blocker.id && b.blockedId === blocked.id) ||
+        (b.blockerId === blocked.id && b.blockedId === blocker.id)
+    );
+
+    if (existing) continue;
+
+    const block = await prisma.userBlock.create({
+      data: {
+        blockerId: blocker.id,
+        blockedId: blocked.id,
+      },
+    });
+
+    blocks.push(block);
+  }
+
+  console.log(`🚫 Created ${blocks.length} user blocks`);
+  return blocks;
+}
+
+/** ---------- Seed: Intent Invite Links ---------- */
+async function seedIntentInviteLinks(
+  allIntents: Array<{ intent: any; owner: User }>
+) {
+  const links: any[] = [];
+
+  // Add invite links to 30% of intents
+  const intentsWithLinks = allIntents
+    .filter(() => rand() > 0.7)
+    .filter(({ intent }) => !intent.deletedAt && !intent.canceledAt)
+    .slice(0, 10);
+
+  for (const { intent } of intentsWithLinks) {
+    // Create 1-3 invite links per intent
+    const linkCount = 1 + Math.floor(rand() * 3);
+
+    for (let i = 0; i < linkCount; i++) {
+      const maxUses = rand() > 0.5 ? 10 + Math.floor(rand() * 40) : null;
+      const expiresAt =
+        rand() > 0.6
+          ? new Date(Date.now() + (7 + Math.floor(rand() * 23)) * 86400000)
+          : null; // 7-30 days from now
+
+      const usedCount = maxUses ? Math.floor(rand() * Math.min(maxUses, 5)) : 0;
+
+      const link = await prisma.intentInviteLink.create({
+        data: {
+          intentId: intent.id,
+          code: `INV${Math.random().toString(36).substring(2, 12).toUpperCase()}`,
+          maxUses,
+          usedCount,
+          expiresAt,
+        },
+      });
+
+      links.push(link);
+    }
+  }
+
+  console.log(`🔗 Created ${links.length} intent invite links`);
+  return links;
+}
+
+/** ---------- Seed: Notification Preferences ---------- */
+async function seedNotificationPreferences(users: User[]) {
+  const preferences: any[] = [];
+
+  // Create preferences for 80% of users with varied settings
+  const usersWithPrefs = users.filter(() => rand() > 0.2);
+
+  for (const user of usersWithPrefs) {
+    const pref = await prisma.notificationPreference.create({
+      data: {
+        userId: user.id,
+        emailOnInvite: rand() > 0.3,
+        emailOnJoinRequest: rand() > 0.3,
+        emailOnMessage: rand() > 0.7, // Most disable email for messages
+        pushOnReminder: rand() > 0.2,
+        inAppOnEverything: rand() > 0.1,
+      },
+    });
+
+    preferences.push(pref);
+  }
+
+  console.log(`⚙️  Created ${preferences.length} notification preferences`);
+  return preferences;
+}
+
+/** ---------- Seed: Intent & DM Mutes ---------- */
+async function seedMutes(
+  allIntents: Array<{ intent: any; owner: User }>,
+  users: User[]
+) {
+  const intentMutes: any[] = [];
+  const dmMutes: any[] = [];
+
+  // Mute 10-15 random intent/user combinations
+  const intentMuteCount = 10 + Math.floor(rand() * 6);
+
+  for (let i = 0; i < intentMuteCount; i++) {
+    const intent = pick(allIntents.filter(({ intent }) => !intent.deletedAt));
+    const user = pick(users);
+
+    // Check if user is a member
+    const member = await prisma.intentMember.findUnique({
+      where: {
+        intentId_userId: {
+          intentId: intent.intent.id,
+          userId: user.id,
+        },
+      },
+    });
+
+    if (!member) continue;
+
+    // Check if mute already exists
+    const existing = intentMutes.find(
+      (m) => m.intentId === intent.intent.id && m.userId === user.id
+    );
+
+    if (existing) continue;
+
+    const mute = await prisma.intentMute.create({
+      data: {
+        intentId: intent.intent.id,
+        userId: user.id,
+        muted: true,
+      },
+    });
+
+    intentMutes.push(mute);
+  }
+
+  // Mute 5-10 random DM threads
+  const dmThreads = await prisma.dmThread.findMany({
+    take: 20,
+    select: { id: true, aUserId: true, bUserId: true },
+  });
+
+  const dmMuteCount = Math.min(5 + Math.floor(rand() * 6), dmThreads.length);
+
+  for (let i = 0; i < dmMuteCount; i++) {
+    const thread = dmThreads[i];
+    if (!thread) continue;
+
+    // Randomly mute for one of the participants
+    const userId = rand() > 0.5 ? thread.aUserId : thread.bUserId;
+
+    const mute = await prisma.dmMute.create({
+      data: {
+        threadId: thread.id,
+        userId,
+        muted: true,
+      },
+    });
+
+    dmMutes.push(mute);
+  }
+
+  console.log(
+    `🔕 Created ${intentMutes.length} intent mutes and ${dmMutes.length} DM mutes`
+  );
+  return { intentMutes, dmMutes };
+}
+
 /** ---------- Main ---------- */
 async function main() {
   console.log('🧹 Clearing DB…');
@@ -1437,6 +1755,21 @@ async function main() {
 
   console.log('🚨 Seeding reports…');
   await seedReports(allIntents, users);
+
+  console.log('💬 Seeding event chat messages…');
+  await seedEventChatMessages(allIntents, users);
+
+  console.log('🚫 Seeding user blocks…');
+  await seedUserBlocks(users);
+
+  console.log('🔗 Seeding intent invite links…');
+  await seedIntentInviteLinks(allIntents);
+
+  console.log('⚙️  Seeding notification preferences…');
+  await seedNotificationPreferences(users);
+
+  console.log('🔕 Seeding mutes…');
+  await seedMutes(allIntents, users);
 
   console.log(
     `✅ Done: users=${users.length}, categories=${categories.length}, tags=${tags.length}, intents=${allIntents.length}`

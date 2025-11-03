@@ -1,27 +1,34 @@
 'use client';
 
 import {
-  useQuery,
   useMutation,
+  type UseMutationOptions,
+  useQuery,
   useQueryClient,
   type UseQueryOptions,
-  type UseMutationOptions,
 } from '@tanstack/react-query';
-import type {
-  GetReviewsQuery,
-  GetReviewsQueryVariables,
-  GetReviewQuery,
-  GetReviewQueryVariables,
-  GetReviewStatsQuery,
-  GetReviewStatsQueryVariables,
-  GetMyReviewQuery,
-  GetMyReviewQueryVariables,
-  CreateReviewMutation,
-  CreateReviewMutationVariables,
-  UpdateReviewMutation,
-  UpdateReviewMutationVariables,
-  DeleteReviewMutation,
-  DeleteReviewMutationVariables,
+import {
+  CreateReviewDocument,
+  type CreateReviewMutation,
+  type CreateReviewMutationVariables,
+  DeleteReviewDocument,
+  type DeleteReviewMutation,
+  type DeleteReviewMutationVariables,
+  GetMyReviewDocument,
+  type GetMyReviewQuery,
+  type GetMyReviewQueryVariables,
+  GetReviewDocument,
+  type GetReviewQuery,
+  type GetReviewQueryVariables,
+  GetReviewsDocument,
+  type GetReviewsQuery,
+  type GetReviewsQueryVariables,
+  GetReviewStatsDocument,
+  type GetReviewStatsQuery,
+  type GetReviewStatsQueryVariables,
+  UpdateReviewDocument,
+  type UpdateReviewMutation,
+  type UpdateReviewMutationVariables,
 } from './__generated__/react-query-update';
 import { gqlClient } from './client';
 
@@ -58,23 +65,7 @@ export function useGetReviews(
     queryKey: reviewKeys.list(variables),
     queryFn: async () => {
       const res = await gqlClient.request<GetReviewsQuery>(
-        /* GraphQL */ `
-          query GetReviews(
-            $intentId: ID!
-            $limit: Int = 20
-            $offset: Int = 0
-            $rating: Int
-          ) {
-            reviews(
-              intentId: $intentId
-              limit: $limit
-              offset: $offset
-              rating: $rating
-            ) {
-              ...ReviewsResultCore
-            }
-          }
-        `,
+        GetReviewsDocument,
         variables
       );
       return res;
@@ -95,13 +86,7 @@ export function useGetReview(
     queryKey: reviewKeys.detail(variables.id),
     queryFn: async () => {
       const res = await gqlClient.request<GetReviewQuery>(
-        /* GraphQL */ `
-          query GetReview($id: ID!) {
-            review(id: $id) {
-              ...ReviewCore
-            }
-          }
-        `,
+        GetReviewDocument,
         variables
       );
       return res;
@@ -125,13 +110,7 @@ export function useGetReviewStats(
     queryKey: reviewKeys.stats(variables.intentId),
     queryFn: async () => {
       const res = await gqlClient.request<GetReviewStatsQuery>(
-        /* GraphQL */ `
-          query GetReviewStats($intentId: ID!) {
-            reviewStats(intentId: $intentId) {
-              ...ReviewStatsCore
-            }
-          }
-        `,
+        GetReviewStatsDocument,
         variables
       );
       return res;
@@ -155,13 +134,7 @@ export function useGetMyReview(
     queryKey: reviewKeys.myReview(variables.intentId),
     queryFn: async () => {
       const res = await gqlClient.request<GetMyReviewQuery>(
-        /* GraphQL */ `
-          query GetMyReview($intentId: ID!) {
-            myReview(intentId: $intentId) {
-              ...ReviewCore
-            }
-          }
-        `,
+        GetMyReviewDocument,
         variables
       );
       return res;
@@ -194,13 +167,7 @@ export function useCreateReview(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateReviewMutation>(
-        /* GraphQL */ `
-          mutation CreateReview($input: CreateReviewInput!) {
-            createReview(input: $input) {
-              ...ReviewCore
-            }
-          }
-        `,
+        CreateReviewDocument,
         variables
       );
       return res;
@@ -249,13 +216,7 @@ export function useUpdateReview(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UpdateReviewMutation>(
-        /* GraphQL */ `
-          mutation UpdateReview($id: ID!, $input: UpdateReviewInput!) {
-            updateReview(id: $id, input: $input) {
-              ...ReviewCore
-            }
-          }
-        `,
+        UpdateReviewDocument,
         variables
       );
       return res;
@@ -295,11 +256,7 @@ export function useDeleteReview(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteReviewMutation>(
-        /* GraphQL */ `
-          mutation DeleteReview($id: ID!) {
-            deleteReview(id: $id)
-          }
-        `,
+        DeleteReviewDocument,
         variables
       );
       return res;

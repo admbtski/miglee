@@ -277,10 +277,6 @@ model Intent {
   placeId  String?
   radiusKm Float?
 
-  // Search & Geo (optional; managed via raw SQL triggers/migrations)
-  searchTsv Unsupported("tsvector")?
-  geom      Unsupported("geography")?
-
   levels   Level[] @default([])
 
   // Privacy toggles (for Hidden)
@@ -339,8 +335,6 @@ model Intent {
   @@index([createdAt])
   @@index([visibility, meetingKind, startAt])
   @@index([visibility, startAt, joinedCount])
-  @@index([searchTsv], type: Gin)
-  @@index([geom], type: Gist)
   @@map("intents")
 }
 

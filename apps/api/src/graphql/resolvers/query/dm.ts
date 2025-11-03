@@ -230,38 +230,3 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
       return messages.map((m) => mapDmMessage(m as any));
     }
   );
-
-/**
- * Query: Get mute status for a thread
- */
-export const dmMuteQuery: QueryResolvers['dmMute'] = resolverWithMetrics(
-  'Query',
-  'dmMute',
-  async (_p, { threadId }, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
-
-    const mute = await prisma.dmMute.findUnique({
-      where: {
-        threadId_userId: {
-          threadId,
-          userId: user.id,
-        },
-      },
-      include: {
-        user: true,
-        thread: {
-          include: {
-            aUser: true,
-            bUser: true,
-          },
-        },
-      },
-    });
-
-    return mute ? mapDmMute(mute as any) : null;
-  }
-);

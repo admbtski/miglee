@@ -1,0 +1,25 @@
+# =============================================================================
+# User Blocks Operations
+# =============================================================================
+
+# Queries
+query GetMyBlocks($limit: Int = 50, $offset: Int = 0) {
+  myBlocks(limit: $limit, offset: $offset) {
+    ...UserBlocksResultCore
+  }
+}
+
+query IsBlocked($userId: ID!) {
+  isBlocked(userId: $userId)
+}
+
+# Mutations
+mutation BlockUser($userId: ID!) {
+  blockUser(userId: $userId) {
+    ...UserBlockCore
+  }
+}
+
+mutation UnblockUser($userId: ID!) {
+  unblockUser(userId: $userId)
+}

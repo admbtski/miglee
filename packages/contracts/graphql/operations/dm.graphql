@@ -77,13 +77,6 @@ mutation MarkDmThreadRead($threadId: ID!) {
   markDmThreadRead(threadId: $threadId)
 }
 
-# Mute or unmute a thread
-mutation MuteDmThread($input: MuteDmThreadInput!) {
-  muteDmThread(input: $input) {
-    ...DmMuteCore
-  }
-}
-
 # Delete entire thread
 mutation DeleteDmThread($id: ID!) {
   deleteDmThread(id: $id)

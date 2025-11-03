@@ -21,6 +21,12 @@ import type {
   Comment as GQLComment,
   Review as GQLReview,
   Report as GQLReport,
+  IntentChatMessage as GQLIntentChatMessage,
+  UserBlock as GQLUserBlock,
+  IntentInviteLink as GQLIntentInviteLink,
+  NotificationPreference as GQLNotificationPreference,
+  IntentMute as GQLIntentMute,
+  DmMute as GQLDmMute,
 } from '../__generated__/resolvers-types';
 
 /* =============================================================================
@@ -126,6 +132,57 @@ export type ReviewWithGraph = Prisma.ReviewGetPayload<{
 export type ReportWithGraph = Prisma.ReportGetPayload<{
   include: {
     reporter: true;
+  };
+}>;
+
+export type IntentChatMessageWithGraph = Prisma.IntentChatMessageGetPayload<{
+  include: {
+    author: true;
+    intent: true;
+    replyTo: {
+      include: {
+        author: true;
+      };
+    };
+  };
+}>;
+
+export type UserBlockWithGraph = Prisma.UserBlockGetPayload<{
+  include: {
+    blocker: true;
+    blocked: true;
+  };
+}>;
+
+export type IntentInviteLinkWithGraph = Prisma.IntentInviteLinkGetPayload<{
+  include: {
+    intent: true;
+  };
+}>;
+
+export type NotificationPreferenceWithGraph =
+  Prisma.NotificationPreferenceGetPayload<{
+    include: {
+      user: true;
+    };
+  }>;
+
+export type IntentMuteWithGraph = Prisma.IntentMuteGetPayload<{
+  include: {
+    intent: true;
+    user: true;
+  };
+}>;
+
+export type DmMuteWithGraph = Prisma.DmMuteGetPayload<{
+  include: {
+    thread: {
+      include: {
+        aUser: true;
+        bUser: true;
+      };
+    };
+    user: true;
   };
 }>;
 
@@ -442,20 +499,6 @@ export function mapDmMessage(m: DmMessageWithGraph): GQLDmMessage {
   };
 }
 
-/* ---- DM Mute ---- */
-export function mapDmMute(m: DmMuteWithGraph): GQLDmMute {
-  return {
-    id: m.id,
-    threadId: m.threadId,
-    userId: m.userId,
-    muted: m.muted,
-    createdAt: m.createdAt,
-
-    thread: m.thread ? (mapDmThread(m.thread as any) as any) : ({} as any),
-    user: mapUser(m.user as any),
-  };
-}
-
 /* ---- DM Helpers ---- */
 export function createPairKey(userId1: string, userId2: string): string {
   return [userId1, userId2].sort().join('|');
@@ -513,5 +556,116 @@ export function mapReport(r: ReportWithGraph): GQLReport {
     resolvedAt: r.resolvedAt ?? null,
 
     reporter: mapUser(r.reporter as any),
+  };
+}
+
+/* ---- IntentChatMessage ---- */
+export function mapIntentChatMessage(
+  m: IntentChatMessageWithGraph
+): GQLIntentChatMessage {
+  return {
+    id: m.id,
+    intentId: m.intentId,
+    authorId: m.authorId,
+    content: m.content,
+    replyToId: m.replyToId ?? null,
+    createdAt: m.createdAt,
+    editedAt: m.editedAt ?? null,
+    deletedAt: m.deletedAt ?? null,
+
+    intent: m.intent ? (mapIntent(m.intent as any) as any) : ({} as any),
+    author: mapUser(m.author as any),
+    replyTo: m.replyTo ? (mapIntentChatMessage(m.replyTo as any) as any) : null,
+
+    isEdited: !!m.editedAt,
+    isDeleted: !!m.deletedAt,
+  };
+}
+
+/* ---- UserBlock ---- */
+export function mapUserBlock(b: UserBlockWithGraph): GQLUserBlock {
+  return {
+    id: b.id,
+    blockerId: b.blockerId,
+    blockedId: b.blockedId,
+    createdAt: b.createdAt,
+
+    blocker: mapUser(b.blocker as any),
+    blocked: mapUser(b.blocked as any),
+  };
+}
+
+/* ---- IntentInviteLink ---- */
+export function mapIntentInviteLink(
+  link: IntentInviteLinkWithGraph
+): GQLIntentInviteLink {
+  const now = new Date();
+  const isExpired = link.expiresAt ? link.expiresAt < now : false;
+  const isMaxedOut = link.maxUses ? link.usedCount >= link.maxUses : false;
+  const isValid = !isExpired && !isMaxedOut;
+
+  return {
+    id: link.id,
+    intentId: link.intentId,
+    code: link.code,
+    maxUses: link.maxUses ?? null,
+    usedCount: link.usedCount,
+    expiresAt: link.expiresAt ?? null,
+    createdAt: link.createdAt,
+
+    intent: link.intent ? (mapIntent(link.intent as any) as any) : ({} as any),
+
+    isExpired,
+    isMaxedOut,
+    isValid,
+  };
+}
+
+/* ---- NotificationPreference ---- */
+export function mapNotificationPreference(
+  pref: NotificationPreferenceWithGraph
+): GQLNotificationPreference {
+  return {
+    id: pref.id,
+    userId: pref.userId,
+    emailOnInvite: pref.emailOnInvite,
+    emailOnJoinRequest: pref.emailOnJoinRequest,
+    emailOnMessage: pref.emailOnMessage,
+    pushOnReminder: pref.pushOnReminder,
+    inAppOnEverything: pref.inAppOnEverything,
+    createdAt: pref.createdAt,
+    updatedAt: pref.updatedAt,
+
+    user: mapUser(pref.user as any),
+  };
+}
+
+/* ---- IntentMute ---- */
+export function mapIntentMute(mute: IntentMuteWithGraph): GQLIntentMute {
+  return {
+    id: mute.id,
+    intentId: mute.intentId,
+    userId: mute.userId,
+    muted: mute.muted,
+    createdAt: mute.createdAt,
+
+    intent: mute.intent ? (mapIntent(mute.intent as any) as any) : ({} as any),
+    user: mapUser(mute.user as any),
+  };
+}
+
+/* ---- DmMute ---- */
+export function mapDmMute(mute: DmMuteWithGraph): GQLDmMute {
+  return {
+    id: mute.id,
+    threadId: mute.threadId,
+    userId: mute.userId,
+    muted: mute.muted,
+    createdAt: mute.createdAt,
+
+    thread: mute.thread
+      ? (mapDmThread(mute.thread as any) as any)
+      : ({} as any),
+    user: mapUser(mute.user as any),
   };
 }

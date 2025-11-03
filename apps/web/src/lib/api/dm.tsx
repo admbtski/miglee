@@ -1,35 +1,40 @@
 'use client';
 
 import {
-  useQuery,
   useMutation,
+  type UseMutationOptions,
+  useQuery,
   useQueryClient,
   type UseQueryOptions,
-  type UseMutationOptions,
 } from '@tanstack/react-query';
-import type {
-  GetDmThreadsQuery,
-  GetDmThreadsQueryVariables,
-  GetDmThreadQuery,
-  GetDmThreadQueryVariables,
-  GetDmMessagesQuery,
-  GetDmMessagesQueryVariables,
-  GetDmMuteQuery,
-  GetDmMuteQueryVariables,
-  SendDmMessageMutation,
-  SendDmMessageMutationVariables,
-  UpdateDmMessageMutation,
-  UpdateDmMessageMutationVariables,
-  DeleteDmMessageMutation,
-  DeleteDmMessageMutationVariables,
-  MarkDmMessageReadMutation,
-  MarkDmMessageReadMutationVariables,
-  MarkDmThreadReadMutation,
-  MarkDmThreadReadMutationVariables,
-  MuteDmThreadMutation,
-  MuteDmThreadMutationVariables,
-  DeleteDmThreadMutation,
-  DeleteDmThreadMutationVariables,
+import {
+  DeleteDmMessageDocument,
+  type DeleteDmMessageMutation,
+  type DeleteDmMessageMutationVariables,
+  DeleteDmThreadDocument,
+  type DeleteDmThreadMutation,
+  type DeleteDmThreadMutationVariables,
+  GetDmMessagesDocument,
+  type GetDmMessagesQuery,
+  type GetDmMessagesQueryVariables,
+  GetDmThreadDocument,
+  type GetDmThreadQuery,
+  type GetDmThreadQueryVariables,
+  GetDmThreadsDocument,
+  type GetDmThreadsQuery,
+  type GetDmThreadsQueryVariables,
+  MarkDmMessageReadDocument,
+  type MarkDmMessageReadMutation,
+  type MarkDmMessageReadMutationVariables,
+  MarkDmThreadReadDocument,
+  type MarkDmThreadReadMutation,
+  type MarkDmThreadReadMutationVariables,
+  SendDmMessageDocument,
+  type SendDmMessageMutation,
+  type SendDmMessageMutationVariables,
+  UpdateDmMessageDocument,
+  type UpdateDmMessageMutation,
+  type UpdateDmMessageMutationVariables,
 } from './__generated__/react-query-update';
 import { gqlClient } from './client';
 
@@ -69,17 +74,7 @@ export function useGetDmThreads(
     queryKey: dmKeys.threadsList(variables),
     queryFn: async () => {
       const res = await gqlClient.request<GetDmThreadsQuery>(
-        /* GraphQL */ `
-          query GetDmThreads(
-            $limit: Int = 20
-            $offset: Int = 0
-            $unreadOnly: Boolean = false
-          ) {
-            dmThreads(limit: $limit, offset: $offset, unreadOnly: $unreadOnly) {
-              ...DmThreadsResultCore
-            }
-          }
-        `,
+        GetDmThreadsDocument,
         variables
       );
       return res;
@@ -99,16 +94,10 @@ export function useGetDmThread(
   >
 ) {
   return useQuery<GetDmThreadQuery, Error>({
-    queryKey: dmKeys.thread(variables.id, variables.otherUserId),
+    queryKey: dmKeys.thread(variables.id!, variables.otherUserId!),
     queryFn: async () => {
       const res = await gqlClient.request<GetDmThreadQuery>(
-        /* GraphQL */ `
-          query GetDmThread($id: ID, $otherUserId: ID) {
-            dmThread(id: $id, otherUserId: $otherUserId) {
-              ...DmThreadCore
-            }
-          }
-        `,
+        GetDmThreadDocument,
         variables
       );
       return res;
@@ -136,50 +125,7 @@ export function useGetDmMessages(
     }),
     queryFn: async () => {
       const res = await gqlClient.request<GetDmMessagesQuery>(
-        /* GraphQL */ `
-          query GetDmMessages(
-            $threadId: ID!
-            $limit: Int = 50
-            $offset: Int = 0
-            $beforeMessageId: ID
-          ) {
-            dmMessages(
-              threadId: $threadId
-              limit: $limit
-              offset: $offset
-              beforeMessageId: $beforeMessageId
-            ) {
-              ...DmMessageCore
-            }
-          }
-        `,
-        variables
-      );
-      return res;
-    },
-    enabled: !!variables.threadId,
-    ...options,
-  });
-}
-
-/**
- * Get mute status for a thread
- */
-export function useGetDmMute(
-  variables: GetDmMuteQueryVariables,
-  options?: Omit<UseQueryOptions<GetDmMuteQuery, Error>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery<GetDmMuteQuery, Error>({
-    queryKey: dmKeys.mute(variables.threadId),
-    queryFn: async () => {
-      const res = await gqlClient.request<GetDmMuteQuery>(
-        /* GraphQL */ `
-          query GetDmMute($threadId: ID!) {
-            dmMute(threadId: $threadId) {
-              ...DmMuteCore
-            }
-          }
-        `,
+        GetDmMessagesDocument,
         variables
       );
       return res;
@@ -212,13 +158,7 @@ export function useSendDmMessage(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<SendDmMessageMutation>(
-        /* GraphQL */ `
-          mutation SendDmMessage($input: SendDmMessageInput!) {
-            sendDmMessage(input: $input) {
-              ...DmMessageCore
-            }
-          }
-        `,
+        SendDmMessageDocument,
         variables
       );
       return res;
@@ -261,13 +201,7 @@ export function useUpdateDmMessage(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UpdateDmMessageMutation>(
-        /* GraphQL */ `
-          mutation UpdateDmMessage($id: ID!, $input: UpdateDmMessageInput!) {
-            updateDmMessage(id: $id, input: $input) {
-              ...DmMessageCore
-            }
-          }
-        `,
+        UpdateDmMessageDocument,
         variables
       );
       return res;
@@ -303,11 +237,7 @@ export function useDeleteDmMessage(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteDmMessageMutation>(
-        /* GraphQL */ `
-          mutation DeleteDmMessage($id: ID!) {
-            deleteDmMessage(id: $id)
-          }
-        `,
+        DeleteDmMessageDocument,
         variables
       );
       return res;
@@ -339,11 +269,7 @@ export function useMarkDmMessageRead(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<MarkDmMessageReadMutation>(
-        /* GraphQL */ `
-          mutation MarkDmMessageRead($id: ID!) {
-            markDmMessageRead(id: $id)
-          }
-        `,
+        MarkDmMessageReadDocument,
         variables
       );
       return res;
@@ -374,11 +300,7 @@ export function useMarkDmThreadRead(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<MarkDmThreadReadMutation>(
-        /* GraphQL */ `
-          mutation MarkDmThreadRead($threadId: ID!) {
-            markDmThreadRead(threadId: $threadId)
-          }
-        `,
+        MarkDmThreadReadDocument,
         variables
       );
       return res;
@@ -391,51 +313,6 @@ export function useMarkDmThreadRead(
       queryClient.invalidateQueries({
         queryKey: dmKeys.messages(variables.threadId),
       });
-    },
-    ...options,
-  });
-}
-
-/**
- * Mute or unmute a thread
- */
-export function useMuteDmThread(
-  options?: UseMutationOptions<
-    MuteDmThreadMutation,
-    Error,
-    MuteDmThreadMutationVariables
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    MuteDmThreadMutation,
-    Error,
-    MuteDmThreadMutationVariables
-  >({
-    mutationFn: async (variables) => {
-      const res = await gqlClient.request<MuteDmThreadMutation>(
-        /* GraphQL */ `
-          mutation MuteDmThread($input: MuteDmThreadInput!) {
-            muteDmThread(input: $input) {
-              ...DmMuteCore
-            }
-          }
-        `,
-        variables
-      );
-      return res;
-    },
-    onSuccess: (data) => {
-      const mute = data.muteDmThread;
-      if (mute) {
-        queryClient.invalidateQueries({
-          queryKey: dmKeys.mute(mute.threadId),
-        });
-        queryClient.invalidateQueries({
-          queryKey: dmKeys.thread(mute.threadId),
-        });
-      }
     },
     ...options,
   });
@@ -460,11 +337,7 @@ export function useDeleteDmThread(
   >({
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteDmThreadMutation>(
-        /* GraphQL */ `
-          mutation DeleteDmThread($id: ID!) {
-            deleteDmThread(id: $id)
-          }
-        `,
+        DeleteDmThreadDocument,
         variables
       );
       return res;
