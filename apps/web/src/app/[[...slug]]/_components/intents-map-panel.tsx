@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl, { Map, Popup, LngLatLike } from 'maplibre-gl';
+import { useGetClustersQuery } from '@/lib/api/map-clusters';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -226,9 +227,11 @@ export function IntentsMapPanel({
   intents,
   fullHeight = false,
   defaultCenter = { lat: 52.2319, lng: 21.0067 },
-  defaultZoom = 12,
+  defaultZoom = 10,
   lang = 'pl',
   styleUrl = 'https://demotiles.maplibre.org/style.json',
+  useServerClustering = false,
+  filters,
 }: {
   intents: IntentMapItem[];
   fullHeight?: boolean;
@@ -237,10 +240,44 @@ export function IntentsMapPanel({
   lang?: string;
   /** podmień na swój styl (MapLibre/MapTiler/self-hosted) */
   styleUrl?: string;
+  /** włącz serwerowe klastrowanie zamiast klienta MapLibre */
+  useServerClustering?: boolean;
+  /** filtry dla serwerowego klastrowania */
+  filters?: {
+    categorySlugs?: string[];
+    levels?: ('BEGINNER' | 'INTERMEDIATE' | 'ADVANCED')[];
+    verifiedOnly?: boolean;
+  };
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const popupRef = useRef<Popup | null>(null);
+
+  // Track map bounds and zoom for server-side clustering
+  const [mapBounds, setMapBounds] = useState<{
+    swLat: number;
+    swLon: number;
+    neLat: number;
+    neLon: number;
+  } | null>(null);
+  const [mapZoom, setMapZoom] = useState<number>(defaultZoom);
+
+  // Server-side clusters query
+  const { data: clustersData } = useGetClustersQuery(
+    {
+      bbox: mapBounds || {
+        swLat: defaultCenter.lat - 0.1,
+        swLon: defaultCenter.lng - 0.1,
+        neLat: defaultCenter.lat + 0.1,
+        neLon: defaultCenter.lng + 0.1,
+      },
+      zoom: mapZoom,
+      filters: filters || undefined,
+    },
+    {
+      enabled: useServerClustering && !!mapBounds,
+    }
+  );
 
   const fc = useMemo(() => toFeatureCollection(intents, lang), [intents, lang]);
 
@@ -288,10 +325,29 @@ export function IntentsMapPanel({
         }
       }
 
+      // Update bounds on map move
+      const updateBounds = () => {
+        const bounds = map.getBounds();
+        setMapBounds({
+          swLat: bounds.getSouth(),
+          swLon: bounds.getWest(),
+          neLat: bounds.getNorth(),
+          neLon: bounds.getEast(),
+        });
+        setMapZoom(map.getZoom());
+      };
+
+      if (useServerClustering) {
+        // Initial bounds update
+        updateBounds();
+        // Update on moveend
+        map.on('moveend', updateBounds);
+      }
+
       map.addSource('intents', {
         type: 'geojson',
         data: fc as any,
-        cluster: true,
+        cluster: !useServerClustering, // Client-side clustering only when not using server
         clusterRadius: 60,
         clusterMaxZoom: 14,
       });
@@ -446,8 +502,9 @@ export function IntentsMapPanel({
     src.setData(fc);
   }, [fc]);
 
-  // fit bounds na zmianę danych
+  // fit bounds na zmianę danych (only for client-side)
   useEffect(() => {
+    if (useServerClustering) return;
     const map = mapRef.current;
     if (!map) return;
     const coords = (fc.features as any[]).map((f) => f.geometry.coordinates);
@@ -462,7 +519,123 @@ export function IntentsMapPanel({
       [coords[0][0], coords[0][1], coords[0][0], coords[0][1]]
     );
     map.fitBounds(b as any, { padding: 60, duration: 0 });
-  }, [fc]);
+  }, [fc, useServerClustering]);
+
+  // Update server-side clusters
+  useEffect(() => {
+    if (!useServerClustering || !clustersData) return;
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+
+    const clusters = clustersData.clusters || [];
+
+    // Convert server clusters to GeoJSON
+    const clusterFeatures = clusters.map((cluster) => ({
+      type: 'Feature' as const,
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [cluster.longitude, cluster.latitude],
+      },
+      properties: {
+        cluster: true,
+        cluster_id: cluster.id,
+        point_count: cluster.count,
+        region: cluster.region,
+      },
+    }));
+
+    const clusterGeoJson = {
+      type: 'FeatureCollection' as const,
+      features: clusterFeatures,
+    };
+
+    // Update or create server clusters source
+    const serverSource = map.getSource('server-clusters') as any;
+    if (serverSource) {
+      serverSource.setData(clusterGeoJson);
+    } else if (map.isStyleLoaded()) {
+      map.addSource('server-clusters', {
+        type: 'geojson',
+        data: clusterGeoJson,
+      });
+
+      // Add cluster circles layer
+      if (!map.getLayer('server-clusters-circles')) {
+        map.addLayer({
+          id: 'server-clusters-circles',
+          type: 'circle',
+          source: 'server-clusters',
+          paint: {
+            'circle-color': [
+              'step',
+              ['get', 'point_count'],
+              '#a5b4fc',
+              10,
+              '#60a5fa',
+              25,
+              '#34d399',
+              50,
+              '#22d3ee',
+            ],
+            'circle-radius': [
+              'step',
+              ['get', 'point_count'],
+              16,
+              10,
+              20,
+              25,
+              24,
+              50,
+              28,
+            ],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#fff',
+          },
+        });
+      }
+
+      // Add cluster count labels
+      if (!map.getLayer('server-clusters-count')) {
+        map.addLayer({
+          id: 'server-clusters-count',
+          type: 'symbol',
+          source: 'server-clusters',
+          layout: {
+            'text-field': ['get', 'point_count'],
+            'text-font': ['Noto Sans Regular'],
+            'text-size': 12,
+          },
+          paint: { 'text-color': '#0f172a' },
+        });
+      }
+
+      // Click handler for server clusters - zoom in
+      map.on('click', 'server-clusters-circles', (e) => {
+        const features = map.queryRenderedFeatures(e.point, {
+          layers: ['server-clusters-circles'],
+        });
+        const feature = features[0];
+        if (!feature) return;
+
+        const coordinates = (feature.geometry as any).coordinates as [
+          number,
+          number,
+        ];
+        map.easeTo({
+          center: coordinates,
+          zoom: map.getZoom() + 2,
+        });
+      });
+
+      // Cursor pointer on hover
+      map.on('mouseenter', 'server-clusters-circles', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'server-clusters-circles', () => {
+        map.getCanvas().style.cursor = '';
+      });
+    }
+  }, [clustersData, useServerClustering]);
 
   return (
     <div className="relative h-full">

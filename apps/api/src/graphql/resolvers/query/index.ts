@@ -32,6 +32,7 @@ import {
   intentMuteQuery,
   dmMuteQuery,
 } from './preferences-and-mutes';
+import { clustersQuery, regionIntentsQuery } from './map-clusters';
 
 export const Query: Resolvers['Query'] = {
   notifications: notificationsQuery,
@@ -70,4 +71,6 @@ export const Query: Resolvers['Query'] = {
   myNotificationPreferences: myNotificationPreferencesQuery,
   intentMute: intentMuteQuery,
   dmMute: dmMuteQuery,
+  clusters: clustersQuery,
+  regionIntents: regionIntentsQuery,
 };

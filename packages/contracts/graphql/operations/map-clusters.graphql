@@ -1,0 +1,75 @@
+query GetClusters(
+  $bbox: BBoxInput!
+  $zoom: Float!
+  $filters: ClusterFiltersInput
+) {
+  clusters(bbox: $bbox, zoom: $zoom, filters: $filters) {
+    id
+    latitude
+    longitude
+    count
+    region
+    geoJson
+  }
+}
+
+query GetRegionIntents(
+  $region: String!
+  $page: Int
+  $perPage: Int
+  $filters: ClusterFiltersInput
+) {
+  regionIntents(
+    region: $region
+    page: $page
+    perPage: $perPage
+    filters: $filters
+  ) {
+    data {
+      id
+      title
+      description
+      startAt
+      endAt
+      lat
+      lng
+      address
+      placeId
+      meetingKind
+      visibility
+      joinMode
+      mode
+      min
+      max
+      joinedCount
+      isFull
+      hasStarted
+      hasEnded
+      canJoin
+      categories {
+        id
+        slug
+        names
+      }
+      tags {
+        id
+        slug
+        label
+      }
+      levels
+      owner {
+        id
+        name
+        imageUrl
+        verifiedAt
+      }
+    }
+    meta {
+      page
+      totalItems
+      totalPages
+      prevPage
+      nextPage
+    }
+  }
+}

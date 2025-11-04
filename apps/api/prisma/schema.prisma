@@ -290,6 +290,10 @@ model Intent {
   placeId  String?
   radiusKm Float?
 
+  // Note: PostGIS 'geom' column (geography(Point, 4326)) is managed via SQL migration
+  // and not directly in this schema. See migration: 20251104220540_add_postgis_geom
+  // The 'geom' column is automatically populated from lat/lng and has a GIST index.
+
   levels Level[] @default([])
 
   addressVisibility AddressVisibility @default(PUBLIC)

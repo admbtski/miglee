@@ -1,0 +1,259 @@
+import type { QueryResolvers } from '../../__generated__/resolvers-types';
+import { prisma } from '../../../lib/prisma';
+import {
+  clamp,
+  lngLatToTile,
+  tileToBBox,
+  encodeRegion,
+  decodeRegion,
+  tileToGeoJsonPolygon,
+} from '../../../lib/geo/webmercator';
+
+/**
+ * Clusters query - returns clustered intent points for a map viewport
+ * Groups intents by WebMercator tile at computed zoom level
+ */
+export const clustersQuery: QueryResolvers['clusters'] = async (
+  _parent,
+  args,
+  _ctx
+) => {
+  const { bbox, zoom, filters } = args;
+
+  // Compute cluster zoom level (Zc) - clamped between 2 and 12
+  const Zc = clamp(Math.floor(zoom) - 2, 2, 12);
+
+  // Build WHERE conditions for filters
+  const whereConditions: string[] = [];
+  const params: any[] = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
+  let paramIndex = 5;
+
+  // Filter by verified owners
+  if (filters?.verifiedOnly) {
+    whereConditions.push(`u.verified_at IS NOT NULL`);
+  }
+
+  // Filter by categories
+  if (filters?.categorySlugs && filters.categorySlugs.length > 0) {
+    whereConditions.push(
+      `EXISTS (
+        SELECT 1 FROM "_CategoryToIntent" ci
+        INNER JOIN categories c ON c.id = ci."A"
+        WHERE ci."B" = i.id AND c.slug = ANY($${paramIndex}::text[])
+      )`
+    );
+    params.push(filters.categorySlugs);
+    paramIndex++;
+  }
+
+  // Filter by levels
+  if (filters?.levels && filters.levels.length > 0) {
+    whereConditions.push(`i.levels && $${paramIndex}::"Level"[]`);
+    params.push(filters.levels);
+    paramIndex++;
+  }
+
+  const whereClause =
+    whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
+
+  // Query intents within bounding box with optional filters
+  const rows = await prisma.$queryRawUnsafe<
+    { id: string; lat: number; lng: number }[]
+  >(
+    `
+    WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
+    SELECT i.id, i.lat, i.lng
+    FROM intents i
+    INNER JOIN users u ON u.id = i.owner_id
+    CROSS JOIN bbox
+    WHERE i.geom IS NOT NULL
+      AND ST_Intersects(i.geom, bbox.geom)
+      AND i.visibility = 'PUBLIC'
+      AND i.canceled_at IS NULL
+      AND i.deleted_at IS NULL
+      ${whereClause}
+    `,
+    ...params
+  );
+
+  // Group intents by tile coordinates
+  const tileMap = new Map<
+    string,
+    {
+      x: number;
+      y: number;
+      z: number;
+      sumLat: number;
+      sumLng: number;
+      count: number;
+    }
+  >();
+
+  for (const row of rows) {
+    const { x, y } = lngLatToTile(row.lng, row.lat, Zc);
+    const key = `${x}|${y}`;
+    let tile = tileMap.get(key);
+    if (!tile) {
+      tile = { x, y, z: Zc, sumLat: 0, sumLng: 0, count: 0 };
+      tileMap.set(key, tile);
+    }
+    tile.sumLat += row.lat;
+    tile.sumLng += row.lng;
+    tile.count++;
+  }
+
+  // Convert tiles to clusters
+  let id = 0;
+  return Array.from(tileMap.values()).map((tile) => {
+    const centroidLat = tile.sumLat / tile.count;
+    const centroidLng = tile.sumLng / tile.count;
+    const geoJson = tileToGeoJsonPolygon(tile.x, tile.y, tile.z);
+
+    return {
+      id: String(id++),
+      latitude: centroidLat,
+      longitude: centroidLng,
+      count: tile.count,
+      region: encodeRegion(tile.z, tile.x, tile.y),
+      geoJson,
+    };
+  });
+};
+
+/**
+ * RegionIntents query - returns paginated intents for a specific map tile region
+ */
+export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
+  _parent,
+  args,
+  _ctx
+) => {
+  const { region, page = 1, perPage = 20, filters } = args;
+
+  // Decode region token to tile coordinates
+  const { z, x, y } = decodeRegion(region);
+  const bbox = tileToBBox(x, y, z);
+
+  // Clamp pagination parameters
+  const take = Math.max(1, Math.min(perPage, 50));
+  const skip = Math.max(0, (page - 1) * take);
+
+  // Build WHERE conditions for filters
+  const whereConditions: string[] = [];
+  const params: any[] = [
+    bbox.swLon,
+    bbox.swLat,
+    bbox.neLon,
+    bbox.neLat,
+    take,
+    skip,
+  ];
+  let paramIndex = 7;
+
+  // Filter by verified owners
+  if (filters?.verifiedOnly) {
+    whereConditions.push(`u.verified_at IS NOT NULL`);
+  }
+
+  // Filter by categories
+  if (filters?.categorySlugs && filters.categorySlugs.length > 0) {
+    whereConditions.push(
+      `EXISTS (
+        SELECT 1 FROM "_CategoryToIntent" ci
+        INNER JOIN categories c ON c.id = ci."A"
+        WHERE ci."B" = i.id AND c.slug = ANY($${paramIndex}::text[])
+      )`
+    );
+    params.push(filters.categorySlugs);
+    paramIndex++;
+  }
+
+  // Filter by levels
+  if (filters?.levels && filters.levels.length > 0) {
+    whereConditions.push(`i.levels && $${paramIndex}::"Level"[]`);
+    params.push(filters.levels);
+    paramIndex++;
+  }
+
+  const whereClause =
+    whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
+
+  // Query intents in tile region with pagination
+  const items = await prisma.$queryRawUnsafe<any[]>(
+    `
+    WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
+    SELECT i.id
+    FROM intents i
+    INNER JOIN users u ON u.id = i.owner_id
+    CROSS JOIN bbox
+    WHERE i.geom IS NOT NULL
+      AND ST_Intersects(i.geom, bbox.geom)
+      AND i.visibility = 'PUBLIC'
+      AND i.canceled_at IS NULL
+      AND i.deleted_at IS NULL
+      ${whereClause}
+    ORDER BY i.start_at ASC
+    LIMIT $5 OFFSET $6
+    `,
+    ...params
+  );
+
+  // Count total intents in region
+  const countParams: any[] = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
+  if (filters?.categorySlugs && filters.categorySlugs.length > 0) {
+    countParams.push(filters.categorySlugs);
+  }
+  if (filters?.levels && filters.levels.length > 0) {
+    countParams.push(filters.levels);
+  }
+
+  const totalRows = await prisma.$queryRawUnsafe<{ c: number }[]>(
+    `
+    WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
+    SELECT COUNT(*)::int AS c
+    FROM intents i
+    INNER JOIN users u ON u.id = i.owner_id
+    CROSS JOIN bbox
+    WHERE i.geom IS NOT NULL
+      AND ST_Intersects(i.geom, bbox.geom)
+      AND i.visibility = 'PUBLIC'
+      AND i.canceled_at IS NULL
+      AND i.deleted_at IS NULL
+      ${whereClause}
+    `,
+    ...countParams
+  );
+  const total = totalRows[0]?.c ?? 0;
+
+  // Fetch full intent objects using Prisma
+  const intentIds = items.map((item) => item.id);
+  const intents = await prisma.intent.findMany({
+    where: {
+      id: { in: intentIds },
+    },
+    include: {
+      categories: true,
+      tags: true,
+      owner: true,
+    },
+    orderBy: {
+      startAt: 'asc',
+    },
+  });
+
+  // Build pagination metadata
+  const totalPages = Math.max(1, Math.ceil(total / take));
+  const prevPage = page > 1 ? page - 1 : null;
+  const nextPage = skip + items.length < total ? page + 1 : null;
+
+  return {
+    data: intents as any,
+    meta: {
+      page,
+      totalItems: total,
+      totalPages,
+      prevPage,
+      nextPage,
+    },
+  };
+};

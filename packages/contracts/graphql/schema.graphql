@@ -595,6 +595,50 @@ type IntentChatMessagesResult {
 }
 
 # ------------------------------------------------------------------------------
+# Map Clustering
+# ------------------------------------------------------------------------------
+
+"Bounding box for map viewport"
+input BBoxInput {
+  swLat: Float!
+  swLon: Float!
+  neLat: Float!
+  neLon: Float!
+}
+
+"Filters for clustering map intents"
+input ClusterFiltersInput {
+  categorySlugs: [String!]
+  levels: [Level!]
+  verifiedOnly: Boolean
+}
+
+"Clustered point on the map representing one or more intents"
+type Cluster {
+  id: ID!
+  latitude: Float!
+  longitude: Float!
+  count: Int!
+  region: String!
+  geoJson: JSON!
+}
+
+"Page metadata for region intents"
+type PageMeta {
+  page: Int!
+  totalItems: Int!
+  totalPages: Int!
+  prevPage: Int
+  nextPage: Int
+}
+
+"Paginated result for intents in a map region"
+type RegionIntentPage {
+  data: [Intent!]!
+  meta: PageMeta!
+}
+
+# ------------------------------------------------------------------------------
 # Inputs
 # ------------------------------------------------------------------------------
 
@@ -958,6 +1002,20 @@ type Query {
   # Mute Queries
   intentMute(intentId: ID!): IntentMute
   dmMute(threadId: ID!): DmMute
+
+  # Map Clustering Queries
+  clusters(
+    bbox: BBoxInput!
+    zoom: Float!
+    filters: ClusterFiltersInput
+  ): [Cluster!]!
+
+  regionIntents(
+    region: String!
+    page: Int = 1
+    perPage: Int = 20
+    filters: ClusterFiltersInput
+  ): RegionIntentPage!
 }
 
 # ------------------------------------------------------------------------------

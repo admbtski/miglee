@@ -2,7 +2,10 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 import { join } from 'path';
 
 const config: CodegenConfig = {
-  schema: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql',
+  schema: join(
+    process.cwd(),
+    '../../packages/contracts/graphql/schema.graphql'
+  ),
   documents: join(
     process.cwd(),
     '../../packages/contracts/graphql/operations/**/*.graphql'
