@@ -19,6 +19,8 @@ import { computeJoinState } from '@/components/ui/status-badge';
 import { Modal } from '@/components/feedback/modal';
 import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 import {
+  AddressVisibility,
+  MembersVisibility,
   IntentsResultCoreFragment_IntentsResult_items_Intent as IntentItem,
   IntentsSortBy,
   IntentStatus,
@@ -31,6 +33,14 @@ import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
 import { EventManagementModalConnect } from './_components/managemen/event-management-modal-connect';
+import { Plan } from '@/components/ui/plan-theme';
+
+function planForIndex(i: number): Plan {
+  if (i % 7 === 0) return 'premium';
+  if (i % 5 === 0) return 'plus';
+  if (i % 3 === 0) return 'basic';
+  return 'default';
+}
 
 /** ──────────────────────────────────────────────────────────────────────────
  *  Constants / types
@@ -80,7 +90,6 @@ export default function IntentsPage() {
     setDraftStatus(status);
     setDraftKinds(kinds);
     setDraftSort({ by: sortBy, dir: sortDir });
-    // deps intentionally limited: we want a snapshot at open-time
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersOpen]);
 
@@ -340,7 +349,7 @@ export default function IntentsPage() {
       {!active.isLoading && !active.error && flatItems.length > 0 && (
         <>
           <div className="grid gap-4 lg:grid-cols-2">
-            {flatItems.map((it) => (
+            {flatItems.map((it, index) => (
               <AccountIntentCard
                 key={it.id}
                 id={it.id}
@@ -356,12 +365,18 @@ export default function IntentsPage() {
                 max={it.max}
                 isCanceled={it.isCanceled}
                 isDeleted={it.isDeleted}
+                addressVisibility={it.addressVisibility}
                 isFull={it.isFull}
                 hasStarted={it.hasStarted}
-                isOngoing={it.isOngoing}
                 withinLock={it.withinLock}
                 categories={it.categories?.map((c) => c.slug)}
                 tags={it.tags?.map((t) => t.label)}
+                levels={it.levels ?? []}
+                isOngoing={it.isOngoing}
+                isOnline={it.isOnline}
+                isOnsite={it.isOnsite}
+                isHybrid={it.isHybrid}
+                plan={planForIndex(index)}
                 lockHoursBeforeStart={Number(lockHoursFallback(it))}
                 onPreview={handlePreview}
                 onEdit={setEditId}
@@ -407,15 +422,11 @@ export default function IntentsPage() {
         onClose={() => setLeaveId(null)}
         // Inject your actual leave mutation here:
         leaveAction={async () => {
-          // TODO: replace with your real mutation, e.g.:
-          // const { mutateAsync: leaveIntent } = useLeaveIntentMutation();
-          // await leaveIntent({ id });
-          // Temporary no-op so it compiles if you haven't wired the hook yet:
+          // TODO wire real mutation
           return Promise.resolve();
         }}
         onSuccess={() => {
-          // Optional: invalidate/refetch after leaving
-          // active.refetch?.();
+          // Optional refetch
         }}
       />
 
@@ -429,32 +440,53 @@ export default function IntentsPage() {
       <EventDetailsModal
         open={!!preview}
         onClose={() => setPreview(undefined)}
-        onJoin={() => {}}
+        onJoin={() => {
+          // Możesz tu zawołać join mutation lub przejść do detalu
+          // Na razie zamykamy modal po kliknięciu "Dołącz"
+          setPreview(undefined);
+        }}
+        detailsHref={
+          preview?.id ? `/intents/${encodeURIComponent(preview.id)}` : undefined
+        }
         data={{
+          eventId: preview?.id,
+          title: preview?.title ?? '—',
           startISO: preview?.startAt!,
-          endISO: preview?.endAt!,
-          description: preview?.description!,
-          address: preview?.description!,
-          onlineUrl: preview?.description!,
-          categories: preview?.categories.map((c) => c.names[appLanguage])!,
-          tags: preview?.tags.map((c) => c.label)!,
-          min: preview?.min!,
-          max: preview?.max!,
-          joinedCount: preview?.joinedCount!,
-          organizerName: preview?.owner?.name!,
-          avatarUrl: preview?.owner?.imageUrl!,
-          verifiedAt: preview?.owner?.verifiedAt!,
+          endISO: preview?.endAt ?? preview?.startAt!,
+          organizerName: preview?.owner?.name ?? '—',
+          avatarUrl: preview?.owner?.imageUrl ?? '/avatar.svg',
+          description: preview?.description ?? '',
+          address: preview?.address ?? undefined,
+          onlineUrl: preview?.onlineUrl ?? undefined,
+          categories:
+            preview?.categories?.map((c) => c.names?.[appLanguage] ?? c.slug) ??
+            [],
+          tags: preview?.tags?.map((t) => t.label) ?? [],
+          levels: preview?.levels ?? [],
+          min: preview?.min ?? 2,
+          max: preview?.max ?? Math.max(2, preview?.min ?? 2),
+          joinedCount: preview?.joinedCount ?? 0,
+          verifiedAt: preview?.owner?.verifiedAt ?? undefined,
           status: computeJoinState({
-            hasStarted: preview?.hasStarted!,
-            isFull: preview?.isFull!,
-            isOngoing: preview?.isOngoing!,
-            isDeleted: preview?.isDeleted!,
-            isCanceled: preview?.isCanceled!,
-            withinLock: preview?.withinLock!,
-            startAt: new Date(preview?.startAt!),
+            hasStarted: preview?.hasStarted ?? false,
+            isFull: preview?.isFull ?? false,
+            isOngoing: preview?.isOngoing ?? false,
+            isDeleted: preview?.isDeleted ?? false,
+            isCanceled: preview?.isCanceled ?? false,
+            withinLock: preview?.withinLock ?? false,
+            startAt: new Date(preview?.startAt ?? Date.now()),
           }).status,
-          canJoin: preview?.canJoin!,
+          canJoin: preview?.canJoin ?? false,
+          membersVisibility:
+            (preview?.membersVisibility as MembersVisibility) ??
+            MembersVisibility.Public,
           members: preview?.members ?? [],
+          addressVisibility:
+            (preview?.addressVisibility as AddressVisibility) ??
+            AddressVisibility.Public,
+          plan: 'default',
+          showSponsoredBadge: true,
+          lockHoursBeforeStart: Number(lockHoursFallback(preview)),
         }}
       />
 

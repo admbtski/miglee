@@ -203,10 +203,10 @@ export function ActionMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
-        className="inline-flex items-center justify-center rounded-md border border-zinc-200 bg-white p-1.5 text-zinc-600 shadow-sm hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="inline-flex relative -right-1 items-center justify-center rounded-md border border-zinc-200 bg-white p-2 text-zinc-600 shadow-sm hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
         {...getReferenceProps()}
       >
-        <MoreVertical className="w-4 h-4" aria-hidden />
+        <MoreVertical className="w-3 h-3" aria-hidden />
       </button>
 
       {open && (

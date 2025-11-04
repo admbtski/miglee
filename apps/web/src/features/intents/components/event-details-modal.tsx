@@ -1,33 +1,54 @@
+// EventDetailsModal.tsx
 'use client';
 
+import { Modal } from '@/components/feedback/modal';
 import {
-  Plan,
-  PlanBadge,
-  planRingBg,
-} from '@/app/[[...slug]]/_components/event-card';
-import { JoinReason, JoinTone } from '@/components/ui/status-badge';
-import { IntentMember } from '@/lib/api/__generated__/react-query-update';
+  CapacityProgressBar,
+  getPct,
+} from '@/components/ui/capacity-progress-bar';
+import {
+  InlineCategoryPills,
+  InlineTagPills,
+} from '@/components/ui/inline-category-tag-pill';
+import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
+import { PlanBadge } from '@/components/ui/plan-badge';
+import { RoleBadge } from '@/components/ui/role-badge';
+import {
+  StatusBadge,
+  type JoinReason,
+  type JoinTone,
+} from '@/components/ui/status-badge';
+import { VerifiedBadge } from '@/components/ui/verified-badge';
+import {
+  AddressVisibility,
+  IntentMember,
+  IntentMemberRole,
+  Level,
+  MembersVisibility,
+} from '@/lib/api/__generated__/react-query-update';
+import clsx from 'clsx';
 import {
   Calendar,
-  TicketIcon as CategoryIcon,
+  CalendarDays,
   Clock,
-  Crown,
   Info,
   Link as LinkIcon,
+  ListChecks,
+  Lock,
   MapPin,
+  Share2,
   Shield,
-  Tag as TagIcon,
-  User as UserIcon,
+  UserPlus,
   Users,
-  WifiIcon,
+  Video,
   X,
 } from 'lucide-react';
 import { useMemo } from 'react';
-import { CapacityProgressBar } from '@/components/ui/capacity-progress-bar';
-import { VerifiedPill } from '@/components/ui/verified-pill';
-import { Modal } from '@/components/feedback/modal';
-import { ParticipantRole, RoleBadge } from '@/components/ui/role-badge';
-import clsx from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+import { planTheme, type Plan } from '@/components/ui/plan-theme';
+
+/* ───────────────────────────── Typy ───────────────────────────── */
 
 type JoinStatus = {
   label: string;
@@ -39,9 +60,12 @@ type Props = {
   open?: boolean;
   onClose?: () => void;
   onJoin?: () => void | Promise<void>;
+
+  detailsHref?: string;
+
   data: {
     eventId?: string;
-    eventTitle?: string;
+    title: string;
     startISO: string;
     endISO: string;
     organizerName: string;
@@ -51,14 +75,20 @@ type Props = {
     onlineUrl?: string;
     categories: string[];
     tags: string[];
+    levels?: Level[];
     min: number;
     max: number;
     joinedCount: number;
     verifiedAt?: string;
     status: JoinStatus;
     canJoin: boolean;
-    members: IntentMember[];
+    membersVisibility: MembersVisibility;
+    members?: IntentMember[];
+    addressVisibility: AddressVisibility;
     plan?: Plan;
+    showSponsoredBadge?: boolean;
+    /** blokada dołączania X godzin przed startem (opcjonalna) */
+    lockHoursBeforeStart?: number;
   };
 };
 
@@ -78,6 +108,7 @@ const MONTHS_PL_SHORT = [
   'lis',
   'gru',
 ] as const;
+
 const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
 const isValidDate = (d: Date) =>
   d instanceof Date && !Number.isNaN(d.getTime());
@@ -93,353 +124,84 @@ function formatDateRange(start: Date, end: Date) {
     start.getDate() === end.getDate();
 
   const fmt = (d: Date) =>
-    `${pad2(d.getDate())} ${MONTHS_PL_SHORT[d.getMonth()]}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    `${pad2(d.getDate())} ${MONTHS_PL_SHORT[d.getMonth()]}, ${pad2(
+      d.getHours()
+    )}:${pad2(d.getMinutes())}`;
 
   return sameDay
     ? `${fmt(start)} – ${pad2(end.getHours())}:${pad2(end.getMinutes())}`
     : `${fmt(start)} – ${fmt(end)}`;
 }
 
-function toneClasses(tone: JoinStatus['tone']) {
-  switch (tone) {
-    case 'ok':
-      return 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:ring-emerald-800/50';
-    case 'warn':
-      return 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-800/50';
-    case 'error':
-      return 'bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:ring-rose-800/50';
-    default:
-      return 'bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:ring-sky-800/50';
-  }
+function humanDuration(start: Date, end: Date) {
+  const ms = Math.max(0, end.getTime() - start.getTime());
+  const total = Math.round(ms / 60000);
+  const days = Math.floor(total / (60 * 24));
+  const hours = Math.floor((total - days * 24 * 60) / 60);
+  const mins = total % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days} ${days === 1 ? 'dzień' : 'dni'}`);
+  if (hours > 0) parts.push(`${hours} h`);
+  if (mins > 0 && days === 0) parts.push(`${mins} min`);
+  return parts.length ? parts.join(' ') : '< 1 min';
 }
+
+function meetingKind(address?: string, onlineUrl?: string) {
+  if (address && onlineUrl) return { label: 'Hybrydowe', icon: Video };
+  if (address) return { label: 'Stacjonarne', icon: MapPin };
+  if (onlineUrl) return { label: 'Online', icon: Video };
+  return { label: 'Rodzaj wydarzenia', icon: Shield };
+}
+
+function normalizeAddressVisibility(
+  av: AddressVisibility
+): 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN' {
+  const s = String(av).toUpperCase();
+  if (s.includes('PUBLIC')) return 'PUBLIC';
+  if (s.includes('AFTER_JOIN')) return 'AFTER_JOIN';
+  return 'HIDDEN';
+}
+
+function normalizeMembersVisibility(
+  mv: MembersVisibility
+): 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN' {
+  const s = String(mv).toUpperCase();
+  if (s.includes('PUBLIC')) return 'PUBLIC';
+  if (s.includes('AFTER_JOIN')) return 'AFTER_JOIN';
+  return 'HIDDEN';
+}
+
+const LEVEL_LABEL: Record<Level, string> = {
+  [Level.Beginner]: 'Beginner',
+  [Level.Intermediate]: 'Intermediate',
+  [Level.Advanced]: 'Advanced',
+};
+
+/* ───────────────────────────── Komponenty atomowe ───────────────────────────── */
 
 function Stat({
   icon: Icon,
   label,
   value,
+  title,
 }: {
   icon: any;
   label: string;
   value: string;
+  title?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3">
-      <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-        <Icon className="w-4 h-4" />
+    <div
+      className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3 bg-white/70 dark:bg-neutral-900/40"
+      title={title}
+    >
+      <div className="flex items-center gap-2 text-md text-neutral-500 dark:text-neutral-400">
+        <Icon className="w-5 h-5" />
         {label}
       </div>
-      <div className="mt-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+      <div className="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
         {value}
       </div>
-    </div>
-  );
-}
-
-/* ───────────────────────────── Modal ───────────────────────────── */
-
-export function EventDetailsModal({ open, onClose, onJoin, data }: Props) {
-  const {
-    eventTitle,
-    startISO,
-    endISO,
-    organizerName,
-    avatarUrl,
-    description,
-    address,
-    onlineUrl,
-    categories,
-    tags,
-    min,
-    max,
-    joinedCount,
-    verifiedAt,
-    status,
-    canJoin,
-    members,
-    plan = 'plus',
-  } = data;
-
-  const start = useMemo(() => parseISO(startISO), [startISO]);
-  const end = useMemo(() => parseISO(endISO, start), [endISO, start]);
-
-  if (!data) {
-    return null;
-  }
-
-  const owners = members.filter((p) => p.role === 'OWNER');
-  const mods = members.filter((p) => p.role === 'MODERATOR');
-  const users = members.filter((p) => p.role === 'PARTICIPANT');
-
-  const planStyling = planRingBg(plan, canJoin);
-
-  // Tytuł: preferuj eventTitle, w innym wypadku weź 1. linię opisu (do ~80 znaków), fallback na zakres dat.
-  const title =
-    eventTitle?.trim() ||
-    (description?.split('\n')[0] || '').slice(0, 80) ||
-    `Wydarzenie • ${formatDateRange(start, end)}`;
-
-  const header = (
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        {/* Tytuł */}
-        <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-          {title}
-        </h3>
-
-        {/* Organizer + status + verified */}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-            <img
-              src={avatarUrl}
-              alt={organizerName}
-              className="w-6 h-6 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
-            />
-            <span className="truncate">{organizerName}</span>
-          </span>
-
-          <VerifiedPill verifiedAt={verifiedAt} />
-
-          <span
-            className={clsx(
-              'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ring-1',
-              toneClasses(status.tone)
-            )}
-          >
-            <Info className="w-3.5 h-3.5" />
-            {status.label}
-          </span>
-          <PlanBadge
-            text={planStyling.label}
-            className={planStyling.labelClass}
-          />
-        </div>
-      </div>
-
-      <button
-        className="self-start inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-        onClick={onClose}
-      >
-        <X className="w-4 h-4" />
-        Zamknij
-      </button>
-    </div>
-  );
-
-  const content = (
-    <div className="space-y-6">
-      {/* Statystyki i capacity */}
-      <div className="rounded-3xl border border-neutral-200 dark:border-neutral-800 p-4 bg-gradient-to-br from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-900/60">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Stat
-            icon={Calendar}
-            label="Data"
-            value={formatDateRange(start, end)}
-          />
-          <Stat
-            icon={Clock}
-            label="Czas trwania"
-            value={`${Math.max(1, Math.ceil((+end - +start) / 3600000))} h`}
-          />
-          <Stat
-            icon={Users}
-            label="Uczestnicy"
-            value={`${joinedCount} / ${min}-${max}`}
-          />
-        </div>
-
-        <div className="mt-4">
-          <CapacityProgressBar joinedCount={joinedCount} max={max} />
-        </div>
-      </div>
-
-      {/* Opis */}
-      {!!description?.trim() && (
-        <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-          <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
-            Opis
-          </h3>
-          <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-6">
-            {description}
-          </p>
-        </div>
-      )}
-
-      {/* Szczegóły (kompaktowy key–value) */}
-      <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-        <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
-          Szczegóły
-        </h3>
-        <dl className="grid grid-cols-1 gap-2">
-          <DetailRow
-            icon={<Calendar className="w-4 h-4" />}
-            label="Termin"
-            value={formatDateRange(start, end)}
-          />
-          <DetailRow
-            icon={<Users className="w-4 h-4" />}
-            label="Limit miejsc"
-            value={`${min}-${max} osób`}
-          />
-          {address && (
-            <DetailRow
-              icon={<MapPin className="w-4 h-4" />}
-              label="Lokalizacja"
-              value={address}
-            />
-          )}
-          {!address && (
-            <DetailRow
-              icon={<WifiIcon className="w-4 h-4" />}
-              label="Tryb"
-              value="Wydarzenie online"
-            />
-          )}
-          {!!categories?.length && (
-            <DetailRow
-              icon={<CategoryIcon className="w-4 h-4" />}
-              label="Kategorie"
-              value={categories.join(', ')}
-            />
-          )}
-          {!!tags?.length && (
-            <DetailRow
-              icon={<TagIcon className="w-4 h-4" />}
-              label="Tagi"
-              value={tags.join(', ')}
-            />
-          )}
-          {onlineUrl && (
-            <DetailRow
-              icon={<LinkIcon className="w-4 h-4" />}
-              label="Dostęp"
-              value={
-                <a
-                  href={onlineUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2 hover:opacity-80"
-                >
-                  Otwórz link do spotkania
-                </a>
-              }
-            />
-          )}
-        </dl>
-
-        {/* Mini-mapa placeholder */}
-        {address && (
-          <div className="mt-3 h-40 w-full rounded-xl bg-[linear-gradient(135deg,#e5e7eb,#f5f5f5)] dark:bg-[linear-gradient(135deg,#0a0a0a,#171717)] flex items-center justify-center text-xs text-neutral-500 dark:text-neutral-400">
-            Podgląd mapy
-          </div>
-        )}
-      </div>
-
-      {/* Uczestnicy – zawsze jedna kolumna */}
-      <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4">
-        <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
-          Uczestnicy
-        </h3>
-
-        {!members?.length && (
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Brak uczestników.
-          </p>
-        )}
-
-        {!!members?.length && (
-          <div className="grid grid-cols-1 gap-6">
-            <PeopleGroup title="Owner" people={owners} />
-            <PeopleGroup title="Moderatorzy" people={mods} />
-            <PeopleGroup title="Uczestnicy" people={users} />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  const footer = (
-    <div className="flex items-center justify-between gap-3">
-      <div className="text-xs text-neutral-500 dark:text-neutral-400">
-        {status.label} • {joinedCount}/{min}-{max} osób
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onClose}
-          className="px-3 py-2 text-sm rounded-xl bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-        >
-          Zamknij
-        </button>
-        <button
-          onClick={onJoin}
-          disabled={!canJoin}
-          className={clsx(
-            'px-3 py-2 text-sm rounded-xl font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 transition',
-            canJoin
-              ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:opacity-90 active:opacity-80'
-              : 'bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500 cursor-not-allowed'
-          )}
-          aria-disabled={!canJoin}
-        >
-          Dołącz
-        </button>
-      </div>
-    </div>
-  );
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      header={header}
-      content={content}
-      footer={footer}
-    />
-  );
-}
-
-/* ───────────────────────────── Pomocnicze bloki ───────────────────────────── */
-
-function PeopleGroup({
-  title,
-  people,
-}: {
-  title: string;
-  people: IntentMember[];
-}) {
-  if (!people?.length) {
-    return (
-      <div>
-        <h4 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-2">
-          {title}
-        </h4>
-        <div className="text-xs text-neutral-400 dark:text-neutral-600">—</div>
-      </div>
-    );
-  }
-  return (
-    <div>
-      <h4 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-2">
-        {title} ({people.length})
-      </h4>
-      <ul className="space-y-2">
-        {people.map((p) => (
-          <li key={p.id} className="flex items-center gap-3">
-            <img
-              src={p.user.imageUrl ?? '/avatar.svg'}
-              alt={p.user.name}
-              className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
-              loading="lazy"
-              decoding="async"
-            />
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm text-neutral-800 dark:text-neutral-200 truncate">
-                {p.user.name}
-              </span>
-              <RoleBadge role={p.role as ParticipantRole} />
-            </div>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -459,13 +221,688 @@ function DetailRow({
         {icon}
       </div>
       <div className="min-w-0">
-        <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+        <div className="text-md font-medium text-neutral-500 dark:text-neutral-400">
           {label}
         </div>
-        <div className="text-sm text-neutral-800 dark:text-neutral-200 break-words">
+        <div className="text-lg text-neutral-800 dark:text-neutral-200 break-words">
           {value}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MetaInfoSection({
+  statusLabel,
+  joinedCount,
+  min,
+  max,
+  mk,
+  av,
+  mv,
+  className,
+}: {
+  statusLabel: string;
+  joinedCount: number;
+  min: number;
+  max: number;
+  mk: { label: string; icon: React.ComponentType<{ className?: string }> };
+  av: 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
+  mv: 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
+  className?: string;
+}) {
+  return (
+    <section
+      className={clsx(
+        'rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3',
+        className
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-[13px] text-neutral-700 dark:text-neutral-300 min-w-0">
+        {/* ───────── Status + zajętość ───────── */}
+        <span className="inline-flex items-center gap-1 truncate">
+          <Info className="w-4 h-4 opacity-70" />
+          {statusLabel} • {joinedCount}/{min}-{max} osób
+        </span>
+
+        <span className="opacity-30" aria-hidden>
+          •
+        </span>
+
+        {/* ───────── Typ spotkania ───────── */}
+        <span className="inline-flex items-center gap-1 truncate">
+          <mk.icon className="w-4 h-4 opacity-70" />
+          {mk.label}
+        </span>
+
+        <span className="opacity-30" aria-hidden>
+          •
+        </span>
+
+        {/* ───────── Widoczność adresu ───────── */}
+        <span className="inline-flex items-center gap-1 truncate">
+          <MapPin className="w-4 h-4 opacity-70" />
+          {av === 'PUBLIC'
+            ? 'Adres publiczny'
+            : av === 'AFTER_JOIN'
+              ? 'Adres po dołączeniu'
+              : 'Adres ukryty'}
+        </span>
+
+        <span className="opacity-30" aria-hidden>
+          •
+        </span>
+
+        {/* ───────── Widoczność listy uczestników ───────── */}
+        <span className="inline-flex items-center gap-1 truncate">
+          <Users className="w-4 h-4 opacity-70" />
+          {mv === 'PUBLIC'
+            ? 'Lista publiczna'
+            : mv === 'AFTER_JOIN'
+              ? 'Lista po dołączeniu'
+              : 'Lista ukryta'}
+        </span>
+
+        <span className="opacity-30" aria-hidden>
+          •
+        </span>
+
+        {/* ───────── Szybkie podsumowanie terminu ───────── */}
+        <span className="inline-flex items-center gap-1 truncate">
+          <CalendarDays className="w-4 h-4 opacity-70" />
+          {min}-{max} osób maksymalnie
+        </span>
+
+        <span className="opacity-30" aria-hidden>
+          •
+        </span>
+
+        {/* ───────── Symboliczna lista / struktura ───────── */}
+        <span className="inline-flex items-center gap-1 truncate">
+          <ListChecks className="w-4 h-4 opacity-70" />
+          Zasady uczestnictwa
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function PeopleInline({
+  members,
+  max = 6,
+}: {
+  members: IntentMember[];
+  max?: number;
+}) {
+  if (!members?.length) return null;
+  const shown = members.slice(0, max);
+  const rest = Math.max(0, members.length - shown.length);
+  return (
+    <div className="flex items-center -space-x-2">
+      {shown.map((m) => (
+        <img
+          key={m.id}
+          src={m.user.imageUrl ?? '/avatar.svg'}
+          alt={m.user.name}
+          className="w-10 h-10 rounded-full border border-white dark:border-neutral-900 object-cover"
+          loading="lazy"
+          decoding="async"
+          title={m.user.name}
+        />
+      ))}
+      {rest > 0 && (
+        <div
+          title={`+${rest} więcej`}
+          className="w-10 h-10 rounded-full border border-white dark:border-neutral-900 bg-neutral-200 dark:bg-neutral-700 text-[11px] flex items-center justify-center font-medium text-neutral-700 dark:text-neutral-200"
+        >
+          +{rest}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────────── Component ───────────────────────────── */
+
+export function EventDetailsModal({
+  open,
+  onClose,
+  onJoin,
+  detailsHref,
+  data,
+}: Props) {
+  if (!data) return null;
+
+  const {
+    eventId,
+    title,
+    startISO,
+    endISO,
+    organizerName,
+    avatarUrl,
+    description,
+    address,
+    onlineUrl,
+    categories,
+    tags,
+    levels = [],
+    min,
+    max,
+    joinedCount,
+    verifiedAt,
+    status,
+    canJoin,
+    members = [],
+    membersVisibility,
+    addressVisibility,
+    plan = 'default',
+    showSponsoredBadge = true,
+    lockHoursBeforeStart,
+  } = data;
+
+  const theme = planTheme(plan);
+
+  const start = useMemo(() => parseISO(startISO), [startISO]);
+  const end = useMemo(() => parseISO(endISO, start), [endISO, start]);
+  const sortedLevels = useMemo(() => sortLevels(levels), [levels]);
+
+  const now = new Date();
+  const msLeft = Math.max(0, start.getTime() - now.getTime());
+  const hoursLeft = msLeft / 36e5;
+  const isLockActive =
+    typeof lockHoursBeforeStart === 'number' &&
+    lockHoursBeforeStart > 0 &&
+    hoursLeft <= lockHoursBeforeStart;
+
+  const mv = normalizeMembersVisibility(membersVisibility);
+  const av = normalizeAddressVisibility(addressVisibility);
+
+  const owners = members.filter((p) => p.role === IntentMemberRole.Owner);
+  const mods = members.filter((p) => p.role === IntentMemberRole.Moderator);
+  const users = members.filter((p) => p.role === IntentMemberRole.Participant);
+
+  const mk = meetingKind(address, onlineUrl);
+
+  const pct = getPct({ joinedCount, max });
+
+  const ctaDisabled = !canJoin || isLockActive;
+  const ctaLabel = ctaDisabled
+    ? isLockActive
+      ? 'Zablokowane'
+      : 'Niedostępne'
+    : 'Dołącz';
+
+  // ⬇️ Nawigacja do detalu
+  const computedHref =
+    detailsHref ??
+    (eventId ? `/intents/${encodeURIComponent(eventId)}` : undefined);
+
+  // Nagłówek — mocniejszy gradient per plan + subtelna siatka
+  const header = (
+    <div className="relative">
+      <div
+        className={twMerge(
+          'pointer-events-none absolute -inset-4.5 rounded-3xl blur-[0.6px]',
+          theme.headerBg
+        )}
+      />
+
+      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h3
+            className={
+              'text-2xl font-bold text-neutral-900 dark:text-neutral-50 truncate'
+            }
+          >
+            {title}
+          </h3>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 text-md text-neutral-700 dark:text-neutral-300">
+              <img
+                src={avatarUrl}
+                alt={organizerName}
+                className="w-9 h-9 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+              />
+              <span className="truncate">{organizerName}</span>
+            </span>
+
+            <VerifiedBadge
+              variant="iconText"
+              size="md"
+              verifiedAt={verifiedAt}
+            />
+
+            <StatusBadge
+              variant="iconText"
+              tone={status.tone}
+              label={status.label}
+            />
+
+            {showSponsoredBadge && plan && plan !== 'default' && (
+              <PlanBadge plan={plan} variant="iconText" />
+            )}
+
+            {isLockActive && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium text-amber-800 bg-amber-100 dark:text-amber-200 dark:bg-amber-900/40"
+                title={`Dołączanie zablokowane ${lockHoursBeforeStart} h przed startem`}
+              >
+                <Lock className="h-3.5 w-3.5" />
+                Zablokowane &nbsp;
+                <span className="opacity-80">
+                  {Math.max(0, Math.ceil(hoursLeft))}h
+                </span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          {!!onlineUrl && (
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(onlineUrl).catch(() => {});
+              }}
+              className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+              title="Skopiuj link do spotkania"
+            >
+              <Share2 className="w-4 h-4" />
+              Kopiuj link
+            </button>
+          )}
+          <button
+            className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+            onClick={onClose}
+          >
+            <X className="w-4 h-4" />
+            Zamknij
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Wrapper sekcji z tintem planu
+  const Section: React.FC<{
+    title?: string;
+    className?: string;
+    children: React.ReactNode;
+  }> = ({ title, className, children }) => (
+    <section
+      className={clsx(
+        'rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4',
+        theme.sectionBg,
+        className
+      )}
+    >
+      {title && (
+        <h3 className="text-md font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
+          {title}
+        </h3>
+      )}
+      {children}
+    </section>
+  );
+
+  // Treść
+  const content = (
+    <div className="space-y-6">
+      {/* Statystyki */}
+      <div
+        className={clsx(
+          'rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3',
+          theme.sectionBg
+        )}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <Stat
+            icon={Calendar}
+            label="Termin"
+            value={formatDateRange(start, end)}
+          />
+          <Stat
+            icon={Clock}
+            label="Czas trwania"
+            value={humanDuration(start, end)}
+          />
+          <Stat
+            icon={mk.icon}
+            label="Rodzaj"
+            value={
+              av === 'PUBLIC'
+                ? mk.label
+                : mk.label +
+                  (av === 'AFTER_JOIN'
+                    ? ' • adres po dołączeniu'
+                    : ' • adres ukryty')
+            }
+            title={address}
+          />
+        </div>
+      </div>
+
+      {/* Capacity */}
+      <Section title="Capacity">
+        <div className="flex flex-col gap-3">
+          <div className="text-md text-neutral-700 dark:text-neutral-300">
+            <span className="font-medium">{joinedCount}</span> zajętych miejsc z{' '}
+            <span className="font-medium">{max}</span>
+          </div>
+
+          <div className="w-full">
+            <div className="flex items-center justify-between text-sm text-neutral-500 dark:text-neutral-400">
+              <span>Zapełnienie</span>
+              <span>{pct}%</span>
+            </div>
+
+            <div className="mt-1">
+              <CapacityProgressBar joinedCount={joinedCount} max={max} />
+            </div>
+          </div>
+
+          {members?.length > 0 && mv === 'PUBLIC' && (
+            <div className="flex items-center justify-between">
+              <PeopleInline members={members} />
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                Min: {min} • Max: {max}
+              </div>
+            </div>
+          )}
+
+          {mv === 'AFTER_JOIN' && (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Lista uczestników będzie widoczna po dołączeniu.
+            </p>
+          )}
+          {mv === 'HIDDEN' && (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Lista uczestników jest ukryta przez organizatora.
+            </p>
+          )}
+        </div>
+      </Section>
+
+      {/* Poziomy + kategorie/tagi */}
+      {(levels.length || categories.length || tags.length) && (
+        <Section title="Kontekst">
+          <div className="flex flex-wrap items-start gap-2">
+            {sortedLevels.map((lv) => (
+              <LevelBadge
+                key={lv}
+                level={lv}
+                size="lg"
+                variant="iconText"
+                title={LEVEL_LABEL[lv]}
+              />
+            ))}
+            {categories.length ? (
+              <InlineCategoryPills size="lg" items={categories} />
+            ) : null}
+            {tags.length ? <InlineTagPills size="lg" items={tags} /> : null}
+          </div>
+        </Section>
+      )}
+
+      {/* Opis */}
+      {!!description?.trim() && (
+        <Section title="Opis">
+          <p className="text-md text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-6">
+            {description}
+          </p>
+        </Section>
+      )}
+
+      {/* Szczegóły */}
+      <Section title="Szczegóły">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <dl className="grid grid-cols-1 gap-2">
+              <DetailRow
+                icon={<Calendar className="w-5 h-5" />}
+                label="Termin"
+                value={formatDateRange(start, end)}
+              />
+              <DetailRow
+                icon={<Users className="w-5 h-5" />}
+                label="Limit miejsc"
+                value={`${min}-${max} osób`}
+              />
+              {/* Adres / Online z respektowaniem addressVisibility */}
+              {address && (
+                <DetailRow
+                  icon={<MapPin className="w-5 h-5" />}
+                  label="Lokalizacja"
+                  value={
+                    av === 'PUBLIC'
+                      ? address
+                      : av === 'AFTER_JOIN'
+                        ? 'Adres widoczny po dołączeniu'
+                        : 'Adres ukryty'
+                  }
+                />
+              )}
+              {!address && onlineUrl && (
+                <DetailRow
+                  icon={<Video className="w-5 h-5" />}
+                  label="Tryb"
+                  value="Wydarzenie online"
+                />
+              )}
+              {!!onlineUrl && (
+                <DetailRow
+                  icon={<LinkIcon className="w-5 h-5" />}
+                  label="Dostęp online"
+                  value={
+                    <a
+                      href={onlineUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 hover:opacity-80"
+                    >
+                      Otwórz link do spotkania
+                    </a>
+                  }
+                />
+              )}
+              <DetailRow
+                icon={<Shield className="w-5 h-5" />}
+                label="Organizator"
+                value={
+                  <span className="inline-flex items-center gap-2">
+                    <img
+                      src={avatarUrl}
+                      alt={organizerName}
+                      className="w-5 h-5 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                    />
+                    {organizerName}
+                  </span>
+                }
+              />
+            </dl>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {/* Mapa (placeholder) tylko gdy mamy adres i wolno go pokazać */}
+            {address && av === 'PUBLIC' && (
+              <div className="h-36 w-full rounded-xl bg-[linear-gradient(135deg,#e5e7eb,#f5f5f5)] dark:bg-[linear-gradient(135deg,#0a0a0a,#171717)] flex items-center justify-center text-sm text-neutral-500 dark:text-neutral-400">
+                Podgląd mapy
+              </div>
+            )}
+            {address && av !== 'PUBLIC' && (
+              <div className="h-36 w-full rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 text-sm text-neutral-500 dark:text-neutral-400 grid place-items-center">
+                Adres niepubliczny
+              </div>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      {/* Uczestnicy */}
+      <Section title="Uczestnicy">
+        {mv === 'HIDDEN' && (
+          <p className="text-md text-neutral-600 dark:text-neutral-400">
+            Lista uczestników jest ukryta przez organizatora.
+          </p>
+        )}
+        {mv === 'AFTER_JOIN' && (
+          <p className="text-md text-neutral-600 dark:text-neutral-400">
+            Lista uczestników będzie widoczna po dołączeniu.
+          </p>
+        )}
+
+        {mv === 'PUBLIC' && !members?.length && (
+          <p className="text-md text-neutral-600 dark:text-neutral-400">
+            Brak uczestników.
+          </p>
+        )}
+
+        {mv === 'PUBLIC' && !!members?.length && (
+          <div className="grid grid-cols-1 gap-6">
+            <PeopleGroup title="Owner" people={owners} />
+            <PeopleGroup title="Moderatorzy" people={mods} />
+            <PeopleGroup title="Uczestnicy" people={users} />
+          </div>
+        )}
+      </Section>
+
+      <MetaInfoSection
+        className={theme.sectionBg}
+        statusLabel={status.label}
+        joinedCount={joinedCount}
+        min={min}
+        max={max}
+        mk={mk}
+        av={av}
+        mv={mv}
+      />
+    </div>
+  );
+
+  const footer = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="text-sm text-neutral-500 dark:text-neutral-400">
+        {status.label} • {joinedCount}/{min}-{max} osób
+      </div>
+
+      <div className="flex w-full sm:w-auto items-stretch sm:items-center gap-2">
+        {/* Secondary: Szczegóły */}
+        <a
+          href={computedHref ?? undefined}
+          className={clsx(
+            'inline-flex items-center justify-center gap-2 h-10 rounded-xl px-3 text-md transition outline-none',
+            'ring-1 ring-neutral-200 dark:ring-neutral-800',
+            computedHref
+              ? 'bg-neutral-50 text-neutral-800 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700'
+              : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800/80 dark:text-neutral-500 cursor-not-allowed'
+          )}
+          aria-disabled={!computedHref}
+          title={
+            computedHref ? 'Przejdź do szczegółów' : 'Brak adresu szczegółu'
+          }
+        >
+          <Info className="w-4 h-4" />
+          Szczegóły
+        </a>
+
+        {/* Separator tylko na desktopie */}
+        <span
+          aria-hidden
+          className="hidden sm:block h-6 w-px bg-neutral-200 dark:bg-neutral-800 mx-1"
+        />
+
+        {/* Tertiary: Zamknij */}
+        <button
+          onClick={onClose}
+          className={clsx(
+            'inline-flex items-center justify-center gap-2 h-10 rounded-xl px-3 text-md transition outline-none',
+            'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800',
+            'focus-visible:ring-2 focus-visible:ring-sky-500/60'
+          )}
+        >
+          <X className="w-4 h-4" />
+          Zamknij
+        </button>
+
+        {/* Primary: Dołącz */}
+        <button
+          onClick={onJoin}
+          disabled={ctaDisabled}
+          className={clsx(
+            'inline-flex items-center justify-center gap-2 h-10 rounded-xl px-4 text-md font-medium transition outline-none',
+            'focus-visible:ring-2 focus-visible:ring-sky-500/60',
+            !ctaDisabled
+              ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:opacity-90 active:opacity-80'
+              : 'bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500 cursor-not-allowed'
+          )}
+          aria-disabled={ctaDisabled}
+          title={
+            isLockActive
+              ? `Dołączanie zablokowane ${lockHoursBeforeStart} h przed startem`
+              : undefined
+          }
+        >
+          <UserPlus className="w-4 h-4" />
+          {ctaLabel}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Modal
+      className={twMerge(theme.ringExtra, theme.glow, 'backdrop-blur-[2px]')}
+      density="compact"
+      size="lg"
+      open={open}
+      onClose={onClose}
+      header={header}
+      content={content}
+      footer={footer}
+    />
+  );
+}
+
+/* ───────────────────────────── Helpers ───────────────────────────── */
+
+function PeopleGroup({
+  title,
+  people,
+}: {
+  title: string;
+  people: IntentMember[];
+}) {
+  return (
+    <div>
+      <h4 className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 mb-2">
+        {title} {people?.length ? `(${people.length})` : ''}
+      </h4>
+
+      {!people?.length ? (
+        <div className="text-sm text-neutral-400 dark:text-neutral-600">
+          Brak
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {people.map((p) => (
+            <li key={p.id} className="flex items-center gap-3">
+              <img
+                src={p.user.imageUrl ?? '/avatar.svg'}
+                alt={p.user.name}
+                className="w-11 h-11 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
+                loading="lazy"
+                decoding="async"
+              />
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-md text-neutral-800 dark:text-neutral-200 truncate">
+                  {p.user.name}
+                </span>
+                <RoleBadge role={p.role} size="md" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

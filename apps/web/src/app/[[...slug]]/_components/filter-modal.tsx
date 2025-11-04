@@ -1,20 +1,14 @@
 'use client';
 
-import { appLanguage, appLanguageFallback } from '@/lib/config/language';
-import { useGetCategoriesBySlugsQuery } from '@/lib/api/categories';
 import {
   IntentStatus,
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
-import {
-  AlertCircle,
-  Calendar as CalendarIcon,
-  Check,
-  MapPin,
-  SlidersHorizontal,
-  X,
-} from 'lucide-react';
+import { useGetCategoriesBySlugsQuery } from '@/lib/api/categories';
+import { useGetTagsBySlugsQuery } from '@/lib/api/tags';
+import { appLanguage, appLanguageFallback } from '@/lib/config/language';
+import { AlertCircle, Check, MapPin, SlidersHorizontal, X } from 'lucide-react';
 import React, {
   memo,
   useCallback,
@@ -25,7 +19,6 @@ import React, {
   useState,
 } from 'react';
 import { SearchMeta, useSearchMeta } from '../_hooks/use-search-meta';
-import { useGetTagsBySlugsQuery } from '@/lib/api/tags';
 import SearchCombo from './search-combo';
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -90,6 +83,35 @@ const normalizeISO = (v?: string | null) => {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 };
 
+/* ── DATETIME-LOCAL ↔ ISO helpers (ważne: input chce lokalny bez strefy) ── */
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
+
+/** Z ISO (UTC) → tekst dla <input type="datetime-local"> w lokalnym czasie */
+function isoToLocalInput(iso?: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear();
+  const mm = pad2(d.getMonth() + 1);
+  const dd = pad2(d.getDate());
+  const hh = pad2(d.getHours());
+  const mi = pad2(d.getMinutes());
+  // bez sekund i bez Z
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+/** Z wartości z inputa (lokalna) → pełne ISO (UTC) do backendu */
+function localInputToISO(val?: string | null): string | null {
+  if (!val) return null;
+  const d = new Date(val); // traktowane jako lokalny czas
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** Utwórz ISO (UTC) z obiektu Date (liczonego lokalnie) */
+function dateToISO(d: Date): string {
+  return new Date(d.getTime()).toISOString();
+}
+
 /* ────────────────────────────────────────────────────────────────────────── */
 /* UI atoms */
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -124,6 +146,28 @@ const Pill = memo(function Pill({
     </button>
   );
 });
+
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="mb-2 text-sm font-medium">{title}</div>
+      {hint && (
+        <div className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+          {hint}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* component */
@@ -166,19 +210,13 @@ export function FilterModal({
   const [categories, setCategories] = useState<SearchMeta['categories']>([]);
   const [tags, setTags] = useState<SearchMeta['tags']>([]);
 
+  /* prefill categories/tags by slugs */
   const { data: categoriesBySlugsData } = useGetCategoriesBySlugsQuery(
-    {
-      slugs: initialCategories,
-    },
-    {
-      enabled: initialCategories.length > 0,
-    }
+    { slugs: initialCategories },
+    { enabled: initialCategories.length > 0 }
   );
-
   const { data: tagsBySlugsData } = useGetTagsBySlugsQuery(
-    {
-      slugs: initialTags,
-    },
+    { slugs: initialTags },
     { enabled: initialTags.length > 0 }
   );
 
@@ -399,7 +437,7 @@ export function FilterModal({
     const push = (key: string, label: string, onClear: () => void) =>
       arr.push({ key, label, onClear });
 
-    if (q) push('q', `Query: ${q}`, () => setQ(''));
+    if (q) push('q', `Szukaj: “${q}”`, () => setQ(''));
     if (city) push('city', city, () => selectCity(null));
     if (city && distanceKm !== DEFAULT_DISTANCE)
       push('distance', `${distanceKm} km`, () =>
@@ -412,25 +450,25 @@ export function FilterModal({
     if (endISO)
       push('end', new Date(endISO).toLocaleString(), () => setEndISO(null));
     if (status !== IntentStatus.Any)
-      push('status', status, () => setStatus(IntentStatus.Any));
+      push('status', `Status: ${status}`, () => setStatus(IntentStatus.Any));
     if (kinds.length)
-      push('kinds', `Kinds: ${kinds.join(', ')}`, () => setKinds([]));
+      push('kinds', `Tryb: ${kinds.join(', ')}`, () => setKinds([]));
     if (levels.length)
-      push('levels', `Level: ${levels.join(', ')}`, () => setLevels([]));
+      push('levels', `Poziom: ${levels.join(', ')}`, () => setLevels([]));
     if (verifiedOnly)
-      push('verified', 'Verified only', () => setVerifiedOnly(false));
+      push('verified', 'Zweryfikowani', () => setVerifiedOnly(false));
     if (tags.length)
-      push('tags', `Tags: ${tags.map((t) => t.label).join(', ')}`, () =>
+      push('tags', `Tagi: ${tags.map((t) => t.label).join(', ')}`, () =>
         setTags([])
       );
     if (keywords.length)
-      push('keywords', `Keywords: ${keywords.join(', ')}`, () =>
+      push('keywords', `Słowa kluczowe: ${keywords.join(', ')}`, () =>
         setKeywords([])
       );
     if (categories.length)
       push(
         'categories',
-        `Categories: ${categories.map((c) => c.label).join(', ')}`,
+        `Kategorie: ${categories.map((c) => c.label).join(', ')}`,
         () => setCategories([])
       );
 
@@ -451,10 +489,78 @@ export function FilterModal({
     selectCity,
   ]);
 
-  /* inputs helpers */
-  const startForInput = startISO ?? '';
-  const endForInput = endISO ?? '';
-  const endMin = startISO ?? undefined;
+  /* inputs helpers (render lokalny format dla datetime-local) */
+  const startForInput = useMemo(() => isoToLocalInput(startISO), [startISO]);
+  const endForInput = useMemo(() => isoToLocalInput(endISO), [endISO]);
+  const endMin = startForInput || undefined;
+
+  /* presets: date range (liczone lokalnie, zapisywane jako ISO/UTC do stanu) */
+  const applyPreset = useCallback(
+    (preset: 'now1h' | 'tonight' | 'tomorrow' | 'weekend' | '7days') => {
+      const now = new Date();
+      const start = new Date(now);
+      const end = new Date(now);
+
+      switch (preset) {
+        case 'now1h': {
+          end.setHours(end.getHours() + 1);
+          break;
+        }
+        case 'tonight': {
+          // 18:00–22:00 dzisiaj, jeśli już po 22, to jutro 18–22
+          const base = new Date(now);
+          if (base.getHours() >= 22) base.setDate(base.getDate() + 1);
+          base.setHours(18, 0, 0, 0);
+          start.setTime(base.getTime());
+          const e = new Date(base);
+          e.setHours(22, 0, 0, 0);
+          end.setTime(e.getTime());
+          break;
+        }
+        case 'tomorrow': {
+          const t = new Date(now);
+          t.setDate(t.getDate() + 1);
+          t.setHours(9, 0, 0, 0);
+          start.setTime(t.getTime());
+          const e = new Date(t);
+          e.setHours(21, 0, 0, 0);
+          end.setTime(e.getTime());
+          break;
+        }
+        case 'weekend': {
+          // najbliższa sobota 10:00 → niedziela 22:00
+          const d = new Date(now);
+          const day = d.getDay(); // 0=nd, 6=sb
+          const deltaToSat =
+            (6 - day + 7) % 7 || (day === 6 && d.getHours() < 10 ? 0 : 7);
+          const sat = new Date(d);
+          sat.setDate(d.getDate() + deltaToSat);
+          sat.setHours(10, 0, 0, 0);
+          const sun = new Date(sat);
+          sun.setDate(sat.getDate() + 1);
+          sun.setHours(22, 0, 0, 0);
+          start.setTime(sat.getTime());
+          end.setTime(sun.getTime());
+          break;
+        }
+        case '7days': {
+          const s = new Date(now);
+          s.setHours(0, 0, 0, 0);
+          const e = new Date(s);
+          e.setDate(e.getDate() + 7);
+          e.setHours(23, 59, 0, 0);
+          start.setTime(s.getTime());
+          end.setTime(e.getTime());
+          break;
+        }
+      }
+
+      // zapis w stanie jako ISO (UTC) – inputy pokażą lokalny czas dzięki isoToLocalInput
+      setStartISO(dateToISO(start));
+      setEndISO(dateToISO(end));
+    },
+    []
+  );
 
   /* ──────────────────────────────────────────────────────────────────────── */
   /* render */
@@ -475,7 +581,7 @@ export function FilterModal({
       />
 
       <div className="absolute inset-0 overflow-y-auto">
-        <div className="mx-auto my-6 w-[min(760px,92vw)]">
+        <div className="mx-auto my-6 w-[min(780px,92vw)]">
           <div className="bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10">
             {/* header */}
             <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/85 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
@@ -491,30 +597,37 @@ export function FilterModal({
                 className="flex items-center gap-2 text-base font-medium"
               >
                 <SlidersHorizontal className="w-4 h-4" />
-                Filters
+                Filtry wyszukiwania
               </div>
               <button
                 onClick={handleClear}
-                className="px-3 py-1 text-sm font-medium text-red-600 rounded-full bg-red-500/10 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
+                disabled={!isDirty}
+                className="px-3 py-1 text-sm font-medium rounded-full ring-1 disabled:opacity-40 disabled:cursor-not-allowed
+                bg-red-500/10 text-red-600 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
+                title={
+                  isDirty ? 'Wyczyść wszystkie' : 'Brak zmian do wyczyszczenia'
+                }
               >
-                Clear
+                Wyczyść
               </button>
             </div>
 
             {/* chips */}
             {chips.length > 0 && (
-              <div className="flex flex-wrap gap-2 px-4 pt-3">
-                {chips.map((c) => (
-                  <button
-                    key={c.key}
-                    onClick={c.onClear}
-                    className="inline-flex items-center gap-2 px-3 py-1 text-sm border rounded-full border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-200"
-                    title="Remove filter"
-                  >
-                    <span className="max-w-[12rem] truncate">{c.label}</span>
-                    <X className="h-3.5 w-3.5 opacity-60" />
-                  </button>
-                ))}
+              <div className="px-4 pt-3">
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                  {chips.map((c) => (
+                    <button
+                      key={c.key}
+                      onClick={c.onClear}
+                      className="inline-flex items-center gap-2 px-3 py-1 text-sm border rounded-full border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-200"
+                      title="Usuń filtr"
+                    >
+                      <span className="truncate max-w-[14rem]">{c.label}</span>
+                      <X className="h-3.5 w-3.5 opacity-60" />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -529,7 +642,7 @@ export function FilterModal({
                 groups={[
                   {
                     id: 'TAG',
-                    label: 'Tags',
+                    label: 'Tagi',
                     items: data.tags,
                     selected: tags,
                     onSelect: (c) =>
@@ -537,17 +650,9 @@ export function FilterModal({
                         xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
                       ),
                   },
-                  // {
-                  //   id: 'KEYWORD',
-                  //   label: 'Keywords',
-                  //   items: data.keywords,
-                  //   selected: keywords,
-                  //   onSelect: (k: string) =>
-                  //     setKeywords((xs) => (xs.includes(k) ? xs : [...xs, k])),
-                  // },
                   {
                     id: 'CATEGORY',
-                    label: 'Categories',
+                    label: 'Kategorie',
                     items: data.categories,
                     selected: categories,
                     onSelect: (c) =>
@@ -558,153 +663,216 @@ export function FilterModal({
                 ]}
                 placeholder={
                   loading
-                    ? 'Loading suggestions…'
-                    : 'Search tags, keywords, or categories…'
+                    ? 'Ładowanie podpowiedzi…'
+                    : 'Szukaj tagów lub kategorii…'
                 }
               />
 
               {/* Location combobox */}
-              <div className="relative p-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="flex items-center gap-2 px-1">
-                  <MapPin className="w-4 h-4 opacity-60" />
-                  <input
-                    ref={inputRef}
-                    role="combobox"
-                    aria-controls={listboxId}
-                    aria-expanded={openList}
-                    aria-autocomplete="list"
-                    aria-activedescendant={
-                      openList && cityOptions[highlight]
-                        ? `${listboxId}-opt-${highlight}`
-                        : undefined
-                    }
-                    id={comboboxId}
-                    value={cityQuery}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setCityQuery(v);
-                      setOpenList(true);
-                      setHighlight(0);
-                    }}
-                    onFocus={() => setOpenList(true)}
-                    onKeyDown={(e) => {
-                      if (!openList) return;
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setHighlight((h) =>
-                          Math.min(h + 1, Math.max(0, cityOptions.length - 1))
-                        );
-                      } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setHighlight((h) => Math.max(h - 1, 0));
-                      } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const pick = cityOptions[highlight];
-                        if (pick) selectCity(pick);
-                      } else if (e.key === 'Escape') {
-                        setOpenList(false);
+              <Section
+                title="Lokalizacja"
+                hint="Wybierz miasto, aby filtrować po odległości."
+              >
+                <div className="relative p-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
+                  <div className="flex items-center gap-2 px-1">
+                    <MapPin className="w-4 h-4 opacity-60" />
+                    <input
+                      ref={inputRef}
+                      role="combobox"
+                      aria-controls={listboxId}
+                      aria-expanded={openList}
+                      aria-autocomplete="list"
+                      aria-activedescendant={
+                        openList && cityOptions[highlight]
+                          ? `${listboxId}-opt-${highlight}`
+                          : undefined
                       }
-                    }}
-                    placeholder="Location (autocomplete)"
-                    className="w-full py-2 text-sm bg-transparent outline-none placeholder:text-zinc-400"
-                  />
-                  {cityQuery && (
-                    <button
-                      onClick={() => {
-                        setCityQuery('');
-                        selectCity(null);
+                      id={comboboxId}
+                      value={cityQuery}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCityQuery(v);
                         setOpenList(true);
+                        setHighlight(0);
                       }}
-                      className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      aria-label="Clear location"
+                      onFocus={() => setOpenList(true)}
+                      onKeyDown={(e) => {
+                        if (!openList) return;
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setHighlight((h) =>
+                            Math.min(h + 1, Math.max(0, cityOptions.length - 1))
+                          );
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setHighlight((h) => Math.max(h - 1, 0));
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const pick = cityOptions[highlight];
+                          if (pick) selectCity(pick);
+                        } else if (e.key === 'Escape') {
+                          setOpenList(false);
+                        }
+                      }}
+                      placeholder="Miasto (autocomplete)"
+                      className="w-full py-2 text-sm bg-transparent outline-none placeholder:text-zinc-400"
+                    />
+                    {cityQuery && (
+                      <button
+                        onClick={() => {
+                          setCityQuery('');
+                          selectCity(null);
+                          setOpenList(true);
+                        }}
+                        className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        aria-label="Wyczyść lokalizację"
+                      >
+                        <X className="w-4 h-4 opacity-60" />
+                      </button>
+                    )}
+                  </div>
+
+                  {openList && (
+                    <div
+                      ref={listRef}
+                      id={listboxId}
+                      role="listbox"
+                      className="absolute left-0 right-0 z-20 mt-2 overflow-auto bg-white border shadow-lg max-h-60 rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900"
                     >
-                      <X className="w-4 h-4 opacity-60" />
-                    </button>
+                      {cityOptions.length === 0 ? (
+                        <div className="px-3 py-2 text-sm opacity-60">
+                          Brak dopasowań
+                        </div>
+                      ) : (
+                        cityOptions.map((name, idx) => {
+                          const active = idx === highlight;
+                          return (
+                            <button
+                              key={name}
+                              id={`${listboxId}-opt-${idx}`}
+                              ref={active ? activeOptionRef : null}
+                              role="option"
+                              aria-selected={active}
+                              onMouseEnter={() => setHighlight(idx)}
+                              onClick={() => selectCity(name)}
+                              className={[
+                                'block w-full cursor-pointer px-3 py-2 text-left text-sm',
+                                active
+                                  ? 'bg-zinc-100 dark:bg-zinc-800'
+                                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
+                              ].join(' ')}
+                            >
+                              {name}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
                   )}
                 </div>
 
-                {openList && (
-                  <div
-                    ref={listRef}
-                    id={listboxId}
-                    role="listbox"
-                    className="absolute left-0 right-0 z-20 mt-2 overflow-auto bg-white border shadow-lg max-h-60 rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900"
-                  >
-                    {cityOptions.length === 0 ? (
-                      <div className="px-3 py-2 text-sm opacity-60">
-                        Brak dopasowań
-                      </div>
-                    ) : (
-                      cityOptions.map((name, idx) => {
-                        const active = idx === highlight;
-                        return (
-                          <button
-                            key={name}
-                            id={`${listboxId}-opt-${idx}`}
-                            ref={active ? activeOptionRef : null}
-                            role="option"
-                            aria-selected={active}
-                            onMouseEnter={() => setHighlight(idx)}
-                            onClick={() => selectCity(name)}
-                            className={[
-                              'block w-full cursor-pointer px-3 py-2 text-left text-sm',
-                              active
-                                ? 'bg-zinc-100 dark:bg-zinc-800'
-                                : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
-                            ].join(' ')}
-                          >
-                            {name}
-                          </button>
-                        );
-                      })
-                    )}
+                {/* Distance + presets */}
+                <div
+                  aria-disabled={!city}
+                  className={[
+                    'mt-3 px-3 py-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900',
+                    !city ? 'opacity-50' : '',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-zinc-500">Odległość</span>
+                    <span className="text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
+                      {city ? `${distanceKm} km` : 'Globalnie'}
+                    </span>
                   </div>
-                )}
-              </div>
-
-              {/* Distance */}
-              <div className="px-3 py-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-500">Distance</span>
-                  <span className="text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
-                    {distanceKm} km
-                  </span>
+                  <input
+                    type="range"
+                    min={5}
+                    max={100}
+                    step={5}
+                    value={distanceKm}
+                    onChange={(e) => setDistanceKm(Number(e.target.value))}
+                    className="w-full mt-2 accent-indigo-600 disabled:opacity-50"
+                    aria-label="Odległość w kilometrach"
+                    disabled={!city}
+                  />
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {[5, 10, 20, 30, 50, 100].map((km) => (
+                      <button
+                        key={km}
+                        type="button"
+                        disabled={!city}
+                        onClick={() => setDistanceKm(km)}
+                        className={[
+                          'rounded-full px-2 py-0.5 text-xs ring-1',
+                          distanceKm === km
+                            ? 'bg-indigo-600 text-white ring-indigo-600'
+                            : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
+                          !city ? 'opacity-60' : '',
+                        ].join(' ')}
+                        aria-label={`Ustaw ${km} km`}
+                      >
+                        {km} km
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min={5}
-                  max={100}
-                  step={5}
-                  value={distanceKm}
-                  onChange={(e) => setDistanceKm(Number(e.target.value))}
-                  className="w-full mt-2 accent-indigo-600"
-                  aria-label="Distance in kilometers"
-                />
-              </div>
+              </Section>
 
               {/* Date range */}
-              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="flex items-center gap-2 mb-2 text-sm font-medium">
-                  <CalendarIcon className="w-4 h-4" />
-                  Date range
+              <Section
+                title="Zakres dat"
+                hint="Skorzystaj z presetów lub ustaw własny zakres."
+              >
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    { id: 'now1h', label: 'Teraz +1h' },
+                    { id: 'tonight', label: 'Dziś wieczorem' },
+                    { id: 'tomorrow', label: 'Jutro' },
+                    { id: 'weekend', label: 'Weekend' },
+                    { id: '7days', label: 'Najbliższe 7 dni' },
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        applyPreset(
+                          p.id as
+                            | 'now1h'
+                            | 'tonight'
+                            | 'tomorrow'
+                            | 'weekend'
+                            | '7days'
+                        )
+                      }
+                      className="rounded-full px-2.5 py-1 text-xs ring-1 bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
+
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
                     <span className="w-20 shrink-0 text-zinc-500">Start</span>
                     <input
                       type="datetime-local"
                       value={startForInput}
-                      onChange={(e) => setStartISO(e.target.value || null)}
+                      onChange={(e) =>
+                        setStartISO(localInputToISO(e.target.value))
+                      }
                       className="w-full bg-transparent outline-none"
                     />
                   </label>
                   <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                    <span className="w-20 shrink-0 text-zinc-500">End</span>
+                    <span className="w-20 shrink-0 text-zinc-500">Koniec</span>
                     <input
                       type="datetime-local"
                       value={endForInput}
-                      min={endMin ?? undefined}
-                      onChange={(e) => setEndISO(e.target.value || null)}
+                      min={endMin}
+                      onChange={(e) =>
+                        setEndISO(localInputToISO(e.target.value))
+                      }
                       className="w-full bg-transparent outline-none"
                     />
                   </label>
@@ -716,11 +884,10 @@ export function FilterModal({
                     {dateError}
                   </p>
                 )}
-              </div>
+              </Section>
 
               {/* Status */}
-              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="mb-2 text-sm font-medium">Status</div>
+              <Section title="Status">
                 <div className="flex flex-wrap gap-2">
                   {[
                     IntentStatus.Any,
@@ -734,17 +901,16 @@ export function FilterModal({
                       key={val}
                       active={status === val}
                       onClick={() => setStatus(val)}
-                      title={`Filter by ${val}`}
+                      title={`Filtruj: ${val}`}
                     >
                       {val}
                     </Pill>
                   ))}
                 </div>
-              </div>
+              </Section>
 
               {/* Kinds */}
-              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="mb-2 text-sm font-medium">Kinds</div>
+              <Section title="Tryb spotkania">
                 <div className="flex flex-wrap gap-2">
                   {[
                     MeetingKind.Onsite,
@@ -761,18 +927,17 @@ export function FilterModal({
                             active ? curr.filter((x) => x !== t) : [...curr, t]
                           )
                         }
-                        title={`Toggle ${t}`}
+                        title={`Przełącz: ${t}`}
                       >
                         {t}
                       </Pill>
                     );
                   })}
                 </div>
-              </div>
+              </Section>
 
               {/* Level */}
-              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="mb-2 text-sm font-medium">Level</div>
+              <Section title="Poziom">
                 <div className="flex flex-wrap gap-2">
                   {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
                     (lv) => {
@@ -788,7 +953,7 @@ export function FilterModal({
                                 : [...curr, lv]
                             )
                           }
-                          title={`Toggle ${lv}`}
+                          title={`Przełącz: ${lv}`}
                         >
                           {lv}
                         </Pill>
@@ -796,18 +961,20 @@ export function FilterModal({
                     }
                   )}
                 </div>
-              </div>
+              </Section>
 
               {/* Verified */}
-              <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                <div className="mb-2 text-sm font-medium">Organizer</div>
+              <Section
+                title="Organizator"
+                hint="Pokaż tylko zweryfikowanych organizatorów."
+              >
                 <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none text-zinc-800 dark:text-zinc-200">
                   <input
                     type="checkbox"
                     className="sr-only peer"
                     checked={verifiedOnly}
                     onChange={(e) => setVerifiedOnly(e.target.checked)}
-                    aria-label="Verified organizers only"
+                    aria-label="Tylko zweryfikowani organizatorzy"
                   />
                   <span
                     className={`inline-flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${verifiedOnly ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
@@ -816,25 +983,28 @@ export function FilterModal({
                       className={`h-4 w-4 rounded-full bg-white transition-transform ${verifiedOnly ? 'translate-x-4' : 'translate-x-0'}`}
                     />
                   </span>
-                  Verified only
+                  Tylko zweryfikowani
                 </label>
-              </div>
+              </Section>
             </div>
 
             {/* footer */}
             <div className="sticky bottom-0 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
               <div className="flex items-center justify-between gap-3">
-                {resultsCount != null && (
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {resultsCount} wynik{resultsCount === 1 ? '' : 'ów'}
-                  </div>
-                )}
+                <div
+                  className="text-sm text-zinc-600 dark:text-zinc-400"
+                  aria-live="polite"
+                >
+                  {resultsCount != null
+                    ? `${resultsCount} wynik${resultsCount === 1 ? '' : 'ów'}`
+                    : '—'}
+                </div>
                 <div className="flex items-center gap-2 ml-auto">
                   <button
                     onClick={onClose}
                     className="px-4 py-2 text-sm border rounded-xl border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
                   >
-                    Cancel
+                    Anuluj
                   </button>
                   <button
                     onClick={handleApply}
@@ -844,13 +1014,13 @@ export function FilterModal({
                       applyDisabled
                         ? dateError
                           ? dateError
-                          : 'No changes'
-                        : 'Apply'
+                          : 'Brak zmian'
+                        : 'Zastosuj'
                     }
                   >
                     {resultsCount != null
-                      ? `Show results (${resultsCount})`
-                      : 'Show results'}
+                      ? `Pokaż wyniki (${resultsCount})`
+                      : 'Pokaż wyniki'}
                   </button>
                 </div>
               </div>

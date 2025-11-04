@@ -3,16 +3,20 @@
 
 import { SegmentedControl } from '@/components/ui/segment-control';
 import {
+  AddressVisibility,
+  MembersVisibility,
+} from '@/lib/api/__generated__/react-query-update';
+import {
   Eye,
   EyeOff,
+  Gauge,
   Info,
-  Link as LinkIcon, // zostawiony jeśli używasz gdzieś indziej
-  Users,
   Lock,
   Mail,
-  Sprout,
-  Gauge,
   Rocket,
+  Sprout,
+  UserCheck,
+  Users,
 } from 'lucide-react';
 import * as React from 'react';
 import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
@@ -92,9 +96,9 @@ export function PrivacyStep({
 
   const joinModeHintId = 'join-mode-hint';
   const visibilityHintId = 'visibility-hint';
-  const memberCountHintId = 'member-count-hint';
-  const showAddressHintId = 'show-address-hint';
   const levelsHintId = 'levels-hint';
+  const addrVisHintId = 'addr-vis-hint';
+  const memVisHintId = 'mem-vis-hint';
 
   const toggleLevel = (lv: LevelValue) => {
     const next = levels.includes(lv)
@@ -197,7 +201,7 @@ export function PrivacyStep({
         )}
       </div>
 
-      {/* Levels (multi-select, z ikonami) */}
+      {/* Levels */}
       <div className="mb-1 flex items-center justify-between">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Poziom uczestników
@@ -236,121 +240,119 @@ export function PrivacyStep({
           );
         })}
       </div>
-
       {errors.levels && (
         <p className="mt-1 text-xs text-red-600">
           {String(errors.levels.message)}
         </p>
       )}
 
-      {/* showMemberCount */}
+      {/* Members visibility */}
       <div>
         <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Licznik uczestników
+          Widoczność listy uczestników
         </label>
         <p
-          id={memberCountHintId}
+          id={memVisHintId}
           className="mb-2 text-xs text-zinc-500 dark:text-zinc-400"
         >
-          Pokaż aktualną liczbę osób, które dołączyły (np. <i>7 / 20</i>) —
-          zwiększa transparentność i motywację do zapisu.
+          <b>Publiczna</b> — każdy widzi listę uczestników. <b>Po dołączeniu</b>{' '}
+          — lista widoczna dopiero po dołączeniu. <b>Ukryta</b> — lista
+          niewidoczna dla gości i uczestników (widziana tylko przez
+          organizatorów).
         </p>
 
-        <label className="flex cursor-pointer items-center gap-3 select-none text-sm text-zinc-700 dark:text-zinc-300">
-          <input
-            type="checkbox"
-            {...register('showMemberCount')}
-            className="sr-only peer"
-            aria-describedby={memberCountHintId}
-          />
-          <div
-            className="
-              relative h-6 w-11 rounded-full
-              bg-zinc-300 dark:bg-zinc-700
-              transition-colors duration-300
-              shadow-inner
-              peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
-              after:content-[''] after:absolute after:left-1 after:top-1
-              after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-md
-              after:transition-all after:duration-300 after:ease-in-out
-              after:transform peer-checked:after:translate-x-5
-              peer-checked:after:shadow-[0_0_6px_rgba(99,102,241,0.6)]
-            "
-          />
-          <span className="transition-colors duration-300 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
-            Pokaż liczbę uczestników
-          </span>
-        </label>
-        {errors.showMemberCount && (
+        <Controller
+          control={control}
+          name="membersVisibility"
+          render={({ field }) => (
+            <SegmentedControl<MembersVisibility>
+              aria-label="Widoczność uczestników"
+              aria-describedby={memVisHintId}
+              value={field.value as MembersVisibility}
+              size="md"
+              fullWidth
+              withPill
+              animated
+              onChange={(v) => field.onChange(v)}
+              options={[
+                {
+                  value: MembersVisibility.Public,
+                  label: 'Publiczna',
+                  Icon: Users,
+                },
+                {
+                  value: MembersVisibility.AfterJoin,
+                  label: 'Po dołączeniu',
+                  Icon: UserCheck,
+                },
+                {
+                  value: MembersVisibility.Hidden,
+                  label: 'Ukryta',
+                  Icon: EyeOff,
+                },
+              ]}
+            />
+          )}
+        />
+        {errors.membersVisibility && (
           <p className="mt-1 text-xs text-red-600">
-            {String(errors.showMemberCount.message)}
+            {String(errors.membersVisibility.message)}
           </p>
         )}
       </div>
 
-      {/* showAddress */}
+      {/* Address visibility (segment zamiast checkboxa showAddress) */}
       <div>
         <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Widoczność adresu
         </label>
         <p
-          id={showAddressHintId}
+          id={addrVisHintId}
           className="mb-2 text-xs text-zinc-500 dark:text-zinc-400"
         >
-          Włącz, by pokazać dokładny adres w szczegółach. Wyłącz, jeśli wolisz
-          pokazać tylko przybliżenie (np. z promieniem).
+          <b>Publiczny</b> — każdy widzi dokładny adres. <b>Po dołączeniu</b> —
+          dokładny adres dostaną tylko osoby, które dołączą. <b>Ukryty</b> —
+          dokładny adres nie jest ujawniany.
         </p>
 
-        <label className="flex cursor-pointer items-center gap-3 select-none text-sm text-zinc-700 dark:text-zinc-300">
-          <input
-            type="checkbox"
-            {...register('showAddress')}
-            className="sr-only peer"
-            aria-describedby={showAddressHintId}
-          />
-          <div
-            className="
-              relative h-6 w-11 rounded-full
-              bg-zinc-300 dark:bg-zinc-700
-              transition-colors duration-300
-              shadow-inner
-              peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
-              after:content-[''] after:absolute after:left-1 after:top-1
-              after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-md
-              after:transition-all after:duration-300 after:ease-in-out
-              after:transform peer-checked:after:translate-x-5
-              peer-checked:after:shadow-[0_0_6px_rgba(99,102,241,0.6)]
-            "
-          />
-          <span className="transition-colors duration-300 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
-            Pokaż dokładny adres
-          </span>
-        </label>
-        {errors.showAddress && (
+        <Controller
+          control={control}
+          name="addressVisibility"
+          render={({ field }) => (
+            <SegmentedControl<AddressVisibility>
+              aria-label="Widoczność adresu"
+              aria-describedby={addrVisHintId}
+              value={field.value as AddressVisibility}
+              size="md"
+              fullWidth
+              withPill
+              animated
+              onChange={(v) => field.onChange(v)}
+              options={[
+                {
+                  value: AddressVisibility.Public,
+                  label: 'Publiczny',
+                  Icon: Eye,
+                },
+                {
+                  value: AddressVisibility.AfterJoin,
+                  label: 'Po dołączeniu',
+                  Icon: UserCheck,
+                },
+                {
+                  value: AddressVisibility.Hidden,
+                  label: 'Ukryty',
+                  Icon: EyeOff,
+                },
+              ]}
+            />
+          )}
+        />
+        {errors.addressVisibility && (
           <p className="mt-1 text-xs text-red-600">
-            {String(errors.showAddress.message)}
+            {String(errors.addressVisibility.message)}
           </p>
         )}
-      </div>
-
-      {/* Info note */}
-      <div
-        role="note"
-        className="flex items-start gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
-                   text-blue-700 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
-      >
-        <span
-          aria-hidden="true"
-          className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full
-                     bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60
-                     dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
-        >
-          <Info className="h-3.5 w-3.5" />
-        </span>
-        <p className="text-sm leading-5">
-          Dla prywatnych miejsc rozważ <b>Ukryte</b> i ustaw <b>promień</b>
-          {radiusMetersText} &gt; 0, aby zamaskować dokładny adres na mapie.
-        </p>
       </div>
     </div>
   );

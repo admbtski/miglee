@@ -19,6 +19,9 @@ import {
   IntentMember,
   IntentStatus,
   Visibility,
+  AddressVisibility,
+  MembersVisibility,
+  Level,
 } from '@/lib/api/__generated__/react-query-update';
 import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 
@@ -26,10 +29,129 @@ import { appLanguage } from '@/lib/config/language';
 import { DesktopSearchBar } from './_components/desktop-search-bar';
 import { SortByControl } from './_components/sort-by-control';
 import { ToggleMap } from './_components/toggle-map';
+import type { EventCardProps } from './_components/event-card';
+import { Plan } from '@/components/ui/plan-theme';
 
 const upcomingAfterDefault = new Date().toISOString();
 const DEFAULT_LIMIT = 5;
 const NAV_H = 86;
+
+/* ───────────────────────────── Adapter ───────────────────────────── */
+
+type IntentListItem = {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  startAt: string;
+  endAt: string;
+  address?: string | null;
+  onlineUrl?: string | null;
+
+  joinedCount: number;
+  min: number;
+  max: number;
+
+  tags: Array<{ label: string }>;
+  categories: Array<{ names: Record<string, string> }>;
+
+  isOngoing: boolean;
+  isCanceled: boolean;
+  isDeleted: boolean;
+  hasStarted: boolean;
+  isFull: boolean;
+  withinLock: boolean;
+  canJoin: boolean;
+
+  isHybrid: boolean;
+  isOnline: boolean;
+  isOnsite: boolean;
+
+  levels: Level[];
+  addressVisibility: AddressVisibility;
+  membersVisibility: MembersVisibility;
+
+  owner?: {
+    imageUrl?: string | null;
+    name?: string | null;
+    email?: string | null;
+    verifiedAt?: string | null;
+  } | null;
+
+  members?: IntentMember[] | null;
+};
+
+const FALLBACK_AVATAR =
+  'https://i.pravatar.cc/150?u=intent-owner-fallback&img=12';
+
+function planForIndex(i: number): Plan {
+  if (i % 7 === 0) return 'premium';
+  if (i % 5 === 0) return 'plus';
+  if (i % 3 === 0) return 'basic';
+  return 'default';
+}
+
+const notEmptyString = (v: unknown): v is string =>
+  typeof v === 'string' && v.length > 0;
+
+function mapIntentToEventCardProps(
+  item: IntentListItem,
+  index: number,
+  lang: string
+): EventCardProps {
+  const tags = (item.tags ?? []).map((t) => t.label).filter(notEmptyString);
+
+  const categories = (item.categories ?? [])
+    .map((c) => c.names?.[lang] ?? Object.values(c.names ?? {})[0])
+    .filter(notEmptyString);
+
+  return {
+    startISO: item.startAt,
+    endISO: item.endAt,
+
+    avatarUrl: item.owner?.imageUrl ?? FALLBACK_AVATAR,
+    organizerName: item.owner?.name ?? item.owner?.email ?? 'Unknown organizer',
+    verifiedAt: item.owner?.verifiedAt ?? undefined,
+
+    title: item.title ?? '-',
+    description: item.description ?? '-',
+
+    address: item.address ?? undefined,
+    onlineUrl: item.onlineUrl ?? undefined,
+
+    joinedCount: item.joinedCount,
+    min: item.min,
+    max: item.max,
+
+    tags,
+    categories,
+
+    isOngoing: item.isOngoing,
+    isCanceled: item.isCanceled,
+    isDeleted: item.isDeleted,
+    hasStarted: item.hasStarted,
+    withinLock: item.withinLock,
+    canJoin: item.canJoin,
+    isFull: item.isFull,
+
+    isHybrid: item.isHybrid,
+    isOnline: item.isOnline,
+    isOnsite: item.isOnsite,
+
+    levels: item.levels ?? [],
+    addressVisibility: item.addressVisibility,
+    membersVisibility: item.membersVisibility,
+    members: (item.members ?? undefined) as IntentMember[] | undefined,
+
+    plan: planForIndex(index),
+    showSponsoredBadge: true,
+
+    onJoin: () => {
+      console.log('join intent', item.id);
+    },
+  };
+}
+
+/* ───────────────────────────── Page ───────────────────────────── */
 
 export function IntentsPage() {
   const {
@@ -128,15 +250,9 @@ export function IntentsPage() {
   ]);
 
   let headerLeft = '';
-  if (isLoading) {
-    headerLeft = 'Loading…';
-  }
-  if (!isLoading && error) {
-    headerLeft = 'Failed to load';
-  }
-  if (!isLoading && !error) {
-    headerLeft = `All events in ${city || 'Global'} — `;
-  }
+  if (isLoading) headerLeft = 'Loading…';
+  if (!isLoading && error) headerLeft = 'Failed to load';
+  if (!isLoading && !error) headerLeft = `All events in ${city || 'Global'} — `;
 
   const pages = data?.pages ?? [];
   const flatItems = pages?.flatMap((p) => p.intents.items) ?? [];
@@ -221,88 +337,40 @@ export function IntentsPage() {
             layout="position"
             className="grid grid-cols-1 gap-6 mt-3 sm:grid-cols-2 xl:grid-cols-3"
           >
-            {showSkeletons && (
-              <>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={`sk-${i}`}
-                    className="w-full h-48 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900"
-                  />
-                ))}
-              </>
-            )}
+            {showSkeletons &&
+              Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={`sk-${i}`}
+                  className="w-full h-48 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900"
+                />
+              ))}
 
-            {showItems && (
-              <>
-                {flatItems.map((item, i) => (
-                  <EventCard
-                    key={item.id}
-                    startISO={item.startAt}
-                    endISO={item.endAt}
-                    avatarUrl={
-                      item.owner?.imageUrl ?? 'https://i.pravatar.cc/150?img=12'
-                    }
-                    organizerName={
-                      item.owner?.name ?? item.owner?.email ?? 'Unknown'
-                    }
-                    plan={((_index) => {
-                      // todo
-                      if (_index % 7 === 0) return 'premium';
-                      if (_index % 5 === 0) return 'plus';
-                      if (_index % 3 === 0) return 'basic';
-                      return 'default';
-                    })(i)}
-                    title={item.title || '-'}
-                    description={item.description || '-'}
-                    address={item.address!}
-                    onlineUrl={item.onlineUrl!}
-                    joinedCount={item.joinedCount}
-                    min={item.min}
-                    max={item.max}
-                    tags={item.tags.map((t) => t.label)}
-                    categories={item.categories.map(
-                      (c) => c.names[appLanguage]
-                    )}
-                    isOngoing={item.isOngoing}
-                    isCanceled={item.isOngoing}
-                    isDeleted={item.isOngoing}
-                    hasStarted={item.hasStarted}
-                    isFull={item.isFull}
-                    isHybrid={item.isHybrid}
-                    isOnline={item.isOnline}
-                    isOnsite={item.isOnsite}
-                    withinLock={item.withinLock}
-                    canJoin={item.canJoin}
-                    verifiedAt={item.owner?.verifiedAt as string}
-                    members={item.members as IntentMember[]}
-                    levels={item.levels}
-                    addressVisibility={item.addressVisibility}
-                    membersVisibility={item.membersVisibility}
-                    onJoin={() => {
-                      console.log('join intent', item.id);
-                    }}
-                  />
-                ))}
-              </>
-            )}
+            {showItems &&
+              flatItems.map((item, i) => (
+                <EventCard
+                  key={item.id}
+                  {...mapIntentToEventCardProps(
+                    item as unknown as IntentListItem,
+                    i,
+                    appLanguage
+                  )}
+                />
+              ))}
           </motion.div>
 
           {/* Load more */}
           {canShowLoadMoreContainer && (
             <div className="mt-6 flex justify-center">
-              {canLoadMore && (
+              {canLoadMore ? (
                 <button
                   type="button"
                   className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
                 >
-                  {isFetchingNextPage && 'Loading…'}
-                  {!isFetchingNextPage && 'Load more'}
+                  {isFetchingNextPage ? 'Loading…' : 'Load more'}
                 </button>
-              )}
-
-              {!canLoadMore && (
+              ) : (
                 <span className="text-xs opacity-60">
                   Wszystko załadowane ({loadedCount})
                 </span>

@@ -1,26 +1,30 @@
-import type { Prisma } from '@prisma/client';
+import type {
+  AddressVisibility,
+  MembersVisibility,
+  Prisma,
+} from '@prisma/client';
 import {
   Level as PrismaLevel,
   MeetingKind as PrismaMeetingKind,
   Mode as PrismaMode,
-  NotificationKind as PrismaNotificationKind,
   NotificationEntity as PrismaNotificationEntity,
+  NotificationKind as PrismaNotificationKind,
   Visibility as PrismaVisibility,
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
+import {
+  clearReminders,
+  enqueueReminders,
+  rescheduleReminders,
+} from '../../../workers/reminders/queue';
 import type {
   CreateIntentInput,
   Intent as GQLIntent,
   MutationResolvers,
 } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification, pickLocation } from '../helpers';
-import {
-  enqueueReminders,
-  rescheduleReminders,
-  clearReminders,
-} from '../../../workers/reminders/queue';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -229,7 +233,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
             description: input.description ?? null,
             notes: input.notes ?? null,
 
-            visibility: input.visibility as PrismaVisibility,
+            visibility: input.visibility,
             joinMode: (input as any).joinMode ?? 'OPEN',
             mode: input.mode as PrismaMode,
             min: input.min,
@@ -244,8 +248,8 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
 
             levels: (input.levels ?? []) as PrismaLevel[],
 
-            showMemberCount: (input as any).showMemberCount ?? true,
-            showAddress: (input as any).showAddress ?? false,
+            addressVisibility: input.addressVisibility,
+            membersVisibility: input.membersVisibility,
 
             ownerId: ownerId,
 
@@ -301,7 +305,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         return fullIntent;
       });
 
-      return mapIntent(full);
+      return mapIntent(full, user.id);
     }
   );
 
@@ -312,6 +316,8 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
     'updateIntent',
     async (_p, { id, input }, { user, pubsub }): Promise<GQLIntent> => {
       assertUpdateInput(input);
+
+      console.dir({ input });
 
       const current = await prisma.intent.findUnique({
         where: { id },
@@ -378,7 +384,13 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         ...(input.visibility !== undefined
           ? { visibility: input.visibility as PrismaVisibility }
           : {}),
-        ...((input as any).joinMode !== undefined
+        ...(input.addressVisibility !== undefined
+          ? { addressVisibility: input.addressVisibility as AddressVisibility }
+          : {}),
+        ...(input.membersVisibility !== undefined
+          ? { membersVisibility: input.membersVisibility as MembersVisibility }
+          : {}),
+        ...(input.joinMode !== undefined
           ? { joinMode: (input as any).joinMode }
           : {}),
         ...(input.mode !== undefined ? { mode: input.mode as PrismaMode } : {}),
@@ -403,39 +415,34 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           ? { levels: input.levels as PrismaLevel[] }
           : {}),
 
-        ...(typeof (input as any).showMemberCount === 'boolean'
-          ? { showMemberCount: (input as any).showMemberCount }
-          : {}),
-        ...(typeof (input as any).showAddress === 'boolean'
-          ? { showAddress: (input as any).showAddress }
-          : {}),
-
         ...(Object.prototype.hasOwnProperty.call(loc, 'lat')
-          ? { lat: (loc as any).lat }
+          ? { lat: loc.lat }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'lng')
-          ? { lng: (loc as any).lng }
+          ? { lng: loc.lng }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'address')
-          ? { address: (loc as any).address }
+          ? { address: loc.address }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'placeId')
-          ? { placeId: (loc as any).placeId }
+          ? { placeId: loc.placeId }
           : {}),
         ...(Object.prototype.hasOwnProperty.call(loc, 'radiusKm')
-          ? { radiusKm: (loc as any).radiusKm }
+          ? { radiusKm: loc.radiusKm }
           : {}),
 
         ...(categoriesUpdate ? { categories: categoriesUpdate } : {}),
         ...(tagsUpdate ? { tags: tagsUpdate } : {}),
       };
 
+      console.dir({ data });
       const updated = await prisma.intent.update({
         where: { id },
         data,
         include: INTENT_INCLUDE,
       });
 
+      console.dir({ updated });
       if (
         updated.mode === 'ONE_TO_ONE' &&
         !(updated.min === 2 && updated.max === 2)
@@ -504,7 +511,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
       }
       // =========================================
 
-      return mapIntent(updated);
+      return mapIntent(updated, user?.id);
     }
   );
 
@@ -541,7 +548,7 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
           where: { id },
           include: INTENT_INCLUDE,
         });
-        return mapIntent(full);
+        return mapIntent(full, user.id);
       }
 
       const recipients = intent.members
@@ -611,7 +618,7 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
         return updated;
       });
 
-      return mapIntent(full);
+      return mapIntent(full, user.id);
     }
   );
 

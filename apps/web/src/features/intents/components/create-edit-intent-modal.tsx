@@ -186,9 +186,9 @@ export function CreateEditIntentModal({
           return await trigger([
             'visibility',
             'joinMode',
-            'showMemberCount',
-            'showAddress',
             'levels',
+            'addressVisibility',
+            'membersVisibility',
           ]);
         default:
           return true;

@@ -1,13 +1,11 @@
 'use client';
 
 import {
-  Link as LinkIcon,
-  Paperclip,
-  Pencil,
-  Upload,
-  Trash2,
   Image as ImageIcon,
+  Link as LinkIcon,
   Plus,
+  Trash2,
+  Upload,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 

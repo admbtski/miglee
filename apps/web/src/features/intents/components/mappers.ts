@@ -1,10 +1,13 @@
 'use client';
 
 import type {
+  AddressVisibility,
   CreateIntentInput,
   Intent,
   IntentsResultCoreFragment_IntentsResult_items_Intent,
+  JoinMode,
   MeetingKind,
+  MembersVisibility,
   Mode,
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
@@ -21,13 +24,13 @@ export function mapIntentToFormValues(
     categorySlugs: intent.categories?.map((c) => c.slug) ?? [],
     tagSlugs: intent.tags?.map((t) => t.slug) ?? [],
     description: intent.description ?? '',
-    mode: intent.mode as IntentFormValues['mode'],
+    mode: intent.mode,
     min: intent.min ?? 2,
     max: intent.max ?? 50,
     startAt: new Date(intent.startAt),
     endAt: new Date(intent.endAt),
     allowJoinLate: !!intent.allowJoinLate,
-    meetingKind: intent.meetingKind as IntentFormValues['meetingKind'],
+    meetingKind: intent.meetingKind,
     onlineUrl: intent.onlineUrl ?? '',
     location: {
       placeId: intent.placeId ?? undefined,
@@ -36,7 +39,11 @@ export function mapIntentToFormValues(
       address: intent.address ?? undefined,
       radiusKm: intent.radiusKm ?? undefined,
     },
-    visibility: intent.visibility as IntentFormValues['visibility'],
+    visibility: intent.visibility,
+    addressVisibility: intent.addressVisibility,
+    membersVisibility: intent.membersVisibility,
+    joinMode: intent.joinMode,
+    levels: intent.levels,
     notes: intent.notes ?? '',
   };
 }
@@ -56,6 +63,9 @@ export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
     meetingKind: v.meetingKind as MeetingKind,
     location: {},
     visibility: v.visibility as Visibility,
+    addressVisibility: v.addressVisibility as AddressVisibility,
+    membersVisibility: v.visibility as MembersVisibility,
+    joinMode: v.joinMode as JoinMode,
     description: v.description,
     notes: v.notes,
     onlineUrl: v.onlineUrl,

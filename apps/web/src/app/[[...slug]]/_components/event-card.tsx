@@ -1,10 +1,14 @@
 // EventCard.tsx
 'use client';
 
+import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
+import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
+import { PlanBadge } from '@/components/ui/plan-badge';
+import { Plan, planTheme } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
-import type { JoinTone, JoinReason } from '@/components/ui/status-badge';
+import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventDetailsModal } from '@/features/intents/components/event-details-modal';
 import {
   AddressVisibility,
@@ -15,30 +19,19 @@ import {
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import {
-  BadgeCheck,
   Calendar,
   Clock,
   Eye,
   EyeOff,
-  Gauge,
   Map as MapIcon,
   MapPin,
   MapPinHouseIcon,
-  Rocket,
-  Sprout,
-  StarIcon,
-  StarsIcon,
   UserCheck,
-  Users,
   Wifi as WifiIcon,
 } from 'lucide-react';
-import React, { KeyboardEvent, useCallback, useMemo, useState } from 'react';
+import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
 
 /* ───────────────────────────── Types ───────────────────────────── */
-
-type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-
-export type Plan = 'default' | 'basic' | 'plus' | 'premium';
 
 export interface EventCardProps {
   startISO: string;
@@ -54,7 +47,7 @@ export interface EventCardProps {
   max: number;
   tags?: string[];
   categories: string[];
-  lockHoursBeforeStart?: number; // rezerwacja pod przyszłe reguły
+  lockHoursBeforeStart?: number;
   inline?: boolean;
   onJoin?: () => void | Promise<void>;
   className?: string;
@@ -74,7 +67,7 @@ export interface EventCardProps {
 
   levels: Level[];
   addressVisibility: AddressVisibility;
-  membersVisibility: MembersVisibility; // (na razie nieużywane)
+  membersVisibility: MembersVisibility;
   members?: IntentMember[];
   plan?: Plan;
   showSponsoredBadge?: boolean;
@@ -133,23 +126,12 @@ function humanDuration(start: Date, end: Date) {
   const days = Math.floor(total / (60 * 24));
   const hours = Math.floor((total - days * 24 * 60) / 60);
   const mins = total % 60;
-
   const parts: string[] = [];
   if (days > 0) parts.push(`${days} ${plural(days, ['dzień', 'dni', 'dni'])}`);
   if (hours > 0) parts.push(`${hours} h`);
   if (mins > 0 && days === 0)
     parts.push(`${mins} ${plural(mins, ['minuta', 'minuty', 'minut'])}`);
   return parts.length ? parts.join(' ') : '< 1 min';
-}
-
-function formatVerifiedTitle(verifiedAt?: string) {
-  if (!verifiedAt) return null;
-  const d = parseISO(verifiedAt);
-  if (!isValidDate(d)) return 'Zweryfikowany organizator';
-  const day = pad2(d.getDate());
-  const mon = MONTHS_PL_SHORT[d.getMonth()];
-  const year = d.getFullYear();
-  return `Zweryfikowany organizator (od ${day} ${mon} ${year})`;
 }
 
 /* ───────────────────────────── Atomy ───────────────────────────── */
@@ -165,51 +147,6 @@ function Avatar({ url, alt }: { url: string; alt: string }) {
     />
   );
 }
-
-function VerifiedBadge({ verifiedAt }: { verifiedAt?: string }) {
-  if (!verifiedAt) return null;
-  const title = formatVerifiedTitle(verifiedAt) ?? 'Zweryfikowany organizator';
-  return (
-    <BadgeCheck
-      className="w-3.5 h-3.5 shrink-0 text-sky-500 dark:text-sky-400"
-      aria-label={title ?? undefined}
-      role="img"
-    />
-  );
-}
-
-/* ─────────────── Mapowania: Levels & AddressVisibility ─────────────── */
-
-const LEVEL_META: Record<
-  Level,
-  { label: string; Icon: IconType; tone: string; ring: string }
-> = {
-  [Level.Beginner]: {
-    label: 'Beginner',
-    Icon: Sprout,
-    tone: 'text-emerald-700 dark:text-emerald-300',
-    ring: 'ring-emerald-200 dark:ring-emerald-700/60',
-  },
-  [Level.Intermediate]: {
-    label: 'Intermediate',
-    Icon: Gauge,
-    tone: 'text-indigo-700 dark:text-indigo-300',
-    ring: 'ring-indigo-200 dark:ring-indigo-700/60',
-  },
-  [Level.Advanced]: {
-    label: 'Advanced',
-    Icon: Rocket,
-    tone: 'text-amber-700 dark:text-amber-300',
-    ring: 'ring-amber-200 dark:ring-amber-700/60',
-  },
-};
-
-/** Stabilna kolejność prezentacji leveli. */
-const LEVEL_ORDER: Record<Level, number> = {
-  [Level.Beginner]: 0,
-  [Level.Intermediate]: 1,
-  [Level.Advanced]: 2,
-};
 
 function normalizeAV(
   av: AddressVisibility
@@ -254,132 +191,6 @@ function addressVisibilityMeta(av: AddressVisibility) {
   }
 }
 
-/* ─────────────── Capacity Badge (spójny z computeJoinState) ─────────────── */
-
-function CapacityBadge({
-  joinedCount,
-  min,
-  max,
-  isFull,
-  canJoin,
-  statusReason,
-}: {
-  joinedCount: number;
-  min: number;
-  max: number;
-  isFull: boolean;
-  canJoin: boolean;
-  statusReason: JoinReason;
-}) {
-  const spotsLeft = Math.max(0, max - joinedCount);
-  const fillPct = Math.min(
-    100,
-    Math.round((joinedCount / Math.max(1, max)) * 100)
-  );
-
-  const toneClass =
-    isFull || statusReason === 'FULL'
-      ? 'text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-800/50'
-      : canJoin
-        ? fillPct >= 80
-          ? 'text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-800/50'
-          : 'text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800/50'
-        : 'text-neutral-700 dark:text-neutral-300 ring-neutral-200 dark:ring-neutral-700';
-
-  const label =
-    isFull || statusReason === 'FULL'
-      ? `Brak miejsc • ${joinedCount} / ${min}-${max}`
-      : canJoin
-        ? `${joinedCount} / ${max} • ${spotsLeft} ${plural(spotsLeft, ['wolne', 'wolne', 'wolnych'])}`
-        : `${joinedCount} / ${max}`;
-
-  const aria =
-    isFull || statusReason === 'FULL'
-      ? `Brak miejsc. Zajętość ${joinedCount} w zakresie ${min}-${max}.`
-      : `Zajętość ${joinedCount} z ${max}. ${spotsLeft} ${plural(spotsLeft, ['miejsce', 'miejsca', 'miejsc'])} wolne.`;
-
-  return (
-    <span
-      className={clsx(
-        'inline-flex truncate items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ring-1 bg-white/80 dark:bg-neutral-900/60',
-        toneClass
-      )}
-      aria-label={aria}
-      title={aria}
-    >
-      <Users className="w-3.5 h-3.5" aria-hidden />
-      <span className="font-medium truncate">{label}</span>
-    </span>
-  );
-}
-
-/* ─────────────── WARIANTY PLANU ─────────────── */
-
-export function planRingBg(plan: Plan | undefined, canJoin: boolean) {
-  switch (plan ?? 'default') {
-    case 'basic':
-      return {
-        ring: 'ring-emerald-300/60 dark:ring-emerald-700/50',
-        bg: canJoin
-          ? 'bg-emerald-50/40 dark:bg-emerald-900/10'
-          : 'bg-neutral-50 dark:bg-neutral-950',
-        label: <StarsIcon className="w-3.5 h-3.5 text-emerald-50" />,
-        labelClass: 'bg-emerald-600 text-white dark:bg-emerald-500',
-      };
-    case 'plus':
-      return {
-        ring: 'ring-indigo-300/60 dark:ring-indigo-700/50',
-        bg: canJoin
-          ? 'bg-indigo-50/40 dark:bg-indigo-900/10'
-          : 'bg-neutral-50 dark:bg-neutral-950',
-        label: <StarIcon className="w-3.5 h-3.5 text-indigo-50" />,
-        labelClass: 'bg-indigo-600 text-white dark:bg-indigo-500',
-      };
-    case 'premium':
-      return {
-        ring: 'ring-amber-400/70 dark:ring-amber-700/60',
-        bg: canJoin
-          ? 'bg-amber-50/45 dark:bg-amber-900/10'
-          : 'bg-neutral-50 dark:bg-neutral-950',
-        label: <StarIcon className="w-3.5 h-3.5 text-amber-50" />,
-        labelClass: 'bg-amber-600 text-white dark:bg-amber-500',
-      };
-    default:
-      return {
-        ring: 'ring-neutral-200/70 dark:ring-neutral-800',
-        bg: canJoin
-          ? 'bg-white dark:bg-neutral-900'
-          : 'bg-neutral-50 dark:bg-neutral-950',
-        label: undefined,
-        labelClass: '',
-      };
-  }
-}
-
-export function PlanBadge({
-  label,
-  className,
-  title,
-}: {
-  label?: React.ReactNode;
-  className: string;
-  title?: string;
-}) {
-  if (!label) return null;
-  return (
-    <div
-      className={clsx(
-        'pointer-events-none shrink-0 flex justify-center items-center select-none rounded-full px-1.5 py-0.5 h-min shadow-sm text-xs',
-        className
-      )}
-      title={title}
-      aria-hidden
-    >
-      {label}
-    </div>
-  );
-}
-
 /* ─────────────────────────── Component ─────────────────────────── */
 
 export function EventCard({
@@ -411,7 +222,7 @@ export function EventCard({
   plan = 'default',
   addressVisibility,
   levels,
-  membersVisibility, // eslint-disable-line @typescript-eslint/no-unused-vars
+  membersVisibility, // info: przekazywane do modala
   showSponsoredBadge = true,
   isHybrid,
   isOnline,
@@ -450,27 +261,23 @@ export function EventCard({
     }
   }, []);
 
-  const planStyling = useMemo(
-    () => planRingBg(plan, !!canJoin),
-    [plan, canJoin]
-  );
+  // ✅ przekazujemy canJoin do planRingBg
+  const planStyling = useMemo(() => planTheme(plan), [plan, canJoin]);
   const avMeta = useMemo(
     () => addressVisibilityMeta(addressVisibility),
     [addressVisibility]
   );
 
-  const sortedLevels = useMemo(
-    () =>
-      (levels ?? []).slice().sort((a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]),
-    [levels]
-  );
+  const sortedLevels = useMemo(() => sortLevels(levels), [levels]);
 
   const details = (
     <EventDetailsModal
       open={open}
       onClose={closeModal}
       onJoin={onJoin}
+      detailsHref="/"
       data={{
+        title,
         startISO,
         endISO,
         description,
@@ -478,6 +285,7 @@ export function EventCard({
         onlineUrl,
         categories,
         tags,
+        levels,
         min,
         max,
         joinedCount,
@@ -487,24 +295,30 @@ export function EventCard({
         status,
         canJoin,
         members,
+        membersVisibility,
+        addressVisibility,
         plan,
+        showSponsoredBadge,
+        lockHoursBeforeStart: 6,
       }}
     />
   );
 
-  /* ───────── helper widoku lokalizacji (wg addressVisibility) ───────── */
   const renderLocationRow = () => {
+    const base =
+      'flex items-center min-w-0 gap-1.5 mt-1 text-xs text-neutral-600 dark:text-neutral-400';
+
     if (isOnsite && !isOnline) {
       return avMeta.canShow ? (
-        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-          <MapPin className="w-3.5 h-3.5 shrink-0" />
+        <p className={base}>
+          <MapPin className="w-3.5 h-3.5 shrink-0 align-middle" />
           <span className="truncate" title={address}>
             {address}
           </span>
         </p>
       ) : (
-        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-          <MapIcon className="w-3.5 h-3.5 shrink-0" />
+        <p className={base}>
+          <MapIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
           <span className="truncate" title={avMeta.hint}>
             {avMeta.label}
           </span>
@@ -514,8 +328,8 @@ export function EventCard({
 
     if (isOnline && !isOnsite) {
       return (
-        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-          <WifiIcon className="w-3.5 h-3.5 shrink-0" />
+        <p className={base}>
+          <WifiIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
           <span className="truncate" title="Online">
             Online
           </span>
@@ -525,15 +339,15 @@ export function EventCard({
 
     if (isHybrid || (address && onlineUrl)) {
       return avMeta.canShow ? (
-        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-          <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0" />
+        <p className={base}>
+          <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
           <span className="truncate" title="Hybrid">
-            {address}, Hybrid
+            {address} • Hybrid
           </span>
         </p>
       ) : (
-        <p className="flex items-center min-w-0 gap-1 mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-          <MapIcon className="w-3.5 h-3.5 shrink-0" />
+        <p className={base}>
+          <MapIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
           <span className="truncate" title={avMeta.hint}>
             Hybrid • {avMeta.label}
           </span>
@@ -584,33 +398,22 @@ export function EventCard({
           </div>
 
           <div className="flex items-center gap-3 min-w-0">
-            {showSponsoredBadge && planStyling.label && (
-              <PlanBadge
-                label={planStyling.label}
-                className={planStyling.labelClass}
-                title={
-                  plan === 'basic'
-                    ? 'Basic'
-                    : plan === 'plus'
-                      ? 'Plus'
-                      : plan === 'premium'
-                        ? 'Premium'
-                        : undefined
-                }
+            {showSponsoredBadge && plan && plan !== 'default' && (
+              <PlanBadge plan={plan} size="xs" variant="icon" />
+            )}
+            {status.reason !== 'FULL' && (
+              <StatusBadge
+                tone={status.tone}
+                reason={status.reason}
+                label={status.label}
               />
             )}
-            <StatusBadge
-              tone={status.tone}
-              reason={status.reason}
-              label={status.label}
-            />
             <CapacityBadge
               joinedCount={joinedCount}
               min={min}
               max={max}
               isFull={isFull}
               canJoin={canJoin}
-              statusTone={status.tone}
               statusReason={status.reason}
             />
           </div>
@@ -631,6 +434,8 @@ export function EventCard({
           'relative w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1',
           planStyling.ring,
           planStyling.bg,
+          planStyling?.ringExtra,
+          planStyling?.glow,
           'cursor-pointer select-none',
           className
         )}
@@ -642,15 +447,15 @@ export function EventCard({
         data-plan={plan}
       >
         {/* Range + duration */}
-        <div className="flex items-center justify-between gap-1">
-          <div className="flex items-center min-w-0 gap-1 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
-            <Calendar className="w-4 h-4 shrink-0" />
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center min-w-0 gap-1.5 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
+            <Calendar className="w-4 h-4 shrink-0 align-middle" />
             <span className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
               {formatDateRange(start, end)}
             </span>
           </div>
-          <div className="flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-            <Clock className="w-4 h-4 shrink-0" />
+          <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+            <Clock className="w-4 h-4 shrink-0 align-middle" />
             <span>{humanDuration(start, end)}</span>
           </div>
         </div>
@@ -663,8 +468,12 @@ export function EventCard({
               className="text-sm font-medium truncate text-neutral-900 dark:text-neutral-100"
               title={organizerName}
             >
-              <span className="inline-flex items-center max-w-full gap-1">
-                <VerifiedBadge verifiedAt={verifiedAt} />
+              <span className="inline-flex items-center max-w-full gap-1.5">
+                <VerifiedBadge
+                  size="sm"
+                  variant="icon"
+                  verifiedAt={verifiedAt}
+                />
                 <span className="truncate">{organizerName}</span>
               </span>
             </p>
@@ -677,21 +486,19 @@ export function EventCard({
             </p>
 
             <div className="flex flex-row flex-nowrap gap-2">
-              {/* Lokalizacja zgodnie z addressVisibility */}
               {renderLocationRow()}
 
-              {/* Badge widoczności adresu — TYLKO gdy adres nie jest publiczny */}
               {!avMeta.canShow && (
                 <div
                   className={clsx(
-                    'mt-1 inline-flex truncate text-nowrap items-center gap-1 rounded-full px-1 py-0.5 text-[11px] ring-1',
+                    'mt-1 inline-flex truncate text-nowrap items-center gap-1.5 rounded-full px-1 py-0.5 text-[11px] ring-1',
                     avMeta.tone,
                     avMeta.ring,
                     'bg-white/80 dark:bg-neutral-900/60'
                   )}
                   title={avMeta.hint}
                 >
-                  <avMeta.Icon className="w-3.5 h-3.5 shrink-0" />
+                  <avMeta.Icon className="w-3.5 h-3.5 shrink-0 align-middle" />
                   <span className="font-medium truncate">{avMeta.label}</span>
                 </div>
               )}
@@ -703,68 +510,45 @@ export function EventCard({
         <div className="flex items-center justify-between gap-3">
           <CapacityBadge
             joinedCount={joinedCount}
+            size="sm"
             min={min}
             max={max}
             isFull={isFull}
             canJoin={canJoin}
-            statusTone={status.tone}
             statusReason={status.reason}
           />
-          <div className="flex items-center gap-1 min-w-0">
-            {showSponsoredBadge && planStyling.label && (
-              <PlanBadge
-                label={planStyling.label}
-                className={clsx(planStyling.labelClass, 'shadow-md/30')}
-                title={
-                  plan === 'basic'
-                    ? 'Basic'
-                    : plan === 'plus'
-                      ? 'Plus'
-                      : plan === 'premium'
-                        ? 'Premium'
-                        : undefined
-                }
+          <div className="flex items-center gap-1.5 min-w-0">
+            {showSponsoredBadge && plan && plan !== 'default' && (
+              <PlanBadge plan={plan} size="xs" variant="icon" />
+            )}
+            {status.reason !== 'FULL' && (
+              <StatusBadge
+                size="xs"
+                tone={status.tone}
+                reason={status.reason}
+                label={status.label}
               />
             )}
-            <StatusBadge
-              tone={status.tone}
-              reason={status.reason}
-              label={status.label}
-            />
           </div>
         </div>
 
-        <SimpleProgressBar value={fill} active={canJoin} />
+        {/* Progress */}
+        <div className="mt-1.5">
+          <SimpleProgressBar value={fill} active={canJoin} />
+        </div>
 
         {/* Pills */}
-        <div className="flex flex-wrap items-center gap-2 mt-1">
-          {/* Levels pills (jeśli są) */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-1">
           {sortedLevels.length > 0 && (
             <div className="flex flex-nowrap items-center gap-1.5 min-w-0">
-              {sortedLevels.map((lv) => {
-                const meta = LEVEL_META[lv];
-                if (!meta) return null;
-                const { Icon, label, tone, ring } = meta;
-                return (
-                  <span
-                    key={lv}
-                    className={clsx(
-                      'inline-flex items-center gap-1 truncate rounded-full px-2 py-0.5 text-[11px] ring-1 bg-white/80 dark:bg-neutral-900/60',
-                      tone,
-                      ring
-                    )}
-                    title={`Poziom: ${label}`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span className="font-medium truncate">{label}</span>
-                  </span>
-                );
-              })}
+              {sortedLevels.map((lv) => (
+                <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
+              ))}
             </div>
           )}
 
-          <CategoryPills categories={categories} />
-          <TagPills tags={tags} />
+          <CategoryPills categories={categories} size="sm" />
+          <TagPills tags={tags} size="sm" />
         </div>
       </motion.div>
 

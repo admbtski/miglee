@@ -234,9 +234,74 @@ export function pickLocation(
 }
 
 /* =============================================================================
+ * Helpers (viewer-aware visibility)
+ * ========================================================================== */
+
+function getViewerMembership(i: IntentWithGraph, viewerId?: string) {
+  const m =
+    viewerId &&
+    (i.members.find((mm) => mm.userId === viewerId) as
+      | (IntentMemberWithUsers & { status: string; role: string })
+      | undefined);
+
+  const role =
+    (m?.role as 'OWNER' | 'MODERATOR' | 'PARTICIPANT' | undefined) ?? null;
+  const status =
+    (m?.status as
+      | 'JOINED'
+      | 'PENDING'
+      | 'INVITED'
+      | 'REJECTED'
+      | 'BANNED'
+      | 'LEFT'
+      | 'KICKED'
+      | undefined) ?? null;
+
+  const viewerJoined = status === 'JOINED';
+  const isOwnerOrModerator = role === 'OWNER' || role === 'MODERATOR';
+  const isParticipant = viewerJoined; // „participant” w Twoim wymaganiu = realnie dołączony
+
+  return {
+    role,
+    status,
+    viewerJoined,
+    isOwnerOrModerator,
+    isParticipant,
+    member: m,
+  };
+}
+
+type VisibilityLike =
+  | 'PUBLIC'
+  | 'HIDDEN'
+  | 'AFTER_JOIN'
+  | 'JOINED_ONLY'
+  | 'INVITED_ONLY'
+  | null
+  | undefined;
+
+/**
+ * Reguły:
+ * - PUBLIC: zawsze widać.
+ * - HIDDEN: widzą OWNER/MODERATOR.
+ * - AFTER_JOIN / JOINED_ONLY / INVITED_ONLY: widzą OWNER/MODERATOR oraz uczestnik (JOINED).
+ */
+function canSeeWithRole(
+  vis: VisibilityLike,
+  opts: { isOwnerOrModerator: boolean; isParticipant: boolean }
+): boolean {
+  if (!vis) return true;
+  if (vis === 'PUBLIC') return true;
+  if (vis === 'HIDDEN') return opts.isOwnerOrModerator;
+  if (vis === 'AFTER_JOIN' || vis === 'JOINED_ONLY' || vis === 'INVITED_ONLY') {
+    return opts.isOwnerOrModerator || opts.isParticipant;
+  }
+  return true;
+}
+
+/* =============================================================================
  * Mappers (strictly typed, no any)
  *  - WYMAGAJĄ: IntentWithGraph / IntentMemberWithUsers / NotificationWithGraph
- *  - Jeśli chcesz wersje "shallow", zrób osobne funkcje i typy.
  * ========================================================================== */
 
 export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
@@ -303,7 +368,7 @@ function computeIntentDerived(i: IntentWithGraph) {
   const lockHrs = 6;
 
   const startDate = new Date(i.startAt);
-  const endDate = new Date(i.startAt);
+  const endDate = new Date(i.endAt ?? i.startAt);
 
   const joinedCount = i.members.filter((m) => m.status === 'JOINED').length;
   const isFull = joinedCount >= i.max;
@@ -330,18 +395,16 @@ function computeIntentDerived(i: IntentWithGraph) {
 }
 
 function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
-  // Prefer the owner relation if available (ownerId field)
   if ((i as any).owner) {
     return mapUser((i as any).owner);
   }
-  // Fallback to finding owner in members
   const owner = i.members.find(
     (m) => m.role === 'OWNER' && m.status === 'JOINED' && (m as any).user
   ) as any;
   return owner ? mapUser(owner.user) : null;
 }
 
-export function mapIntent(i: IntentWithGraph): GQLIntent {
+export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
   const {
     joinedCount,
     isFull,
@@ -353,6 +416,31 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     isOngoing,
     withinLock,
   } = computeIntentDerived(i);
+
+  const { isOwnerOrModerator, isParticipant } = getViewerMembership(
+    i,
+    viewerId
+  );
+
+  // --- Members visibility (uwzględnia role)
+  const canSeeMembers = canSeeWithRole(
+    i.membersVisibility as MembersVisibility,
+    { isOwnerOrModerator, isParticipant }
+  );
+  const visibleMembers = canSeeMembers ? i.members : [];
+
+  // --- Address/online visibility (uwzględnia role)
+  const canSeeLocationAndUrl = canSeeWithRole(
+    i.addressVisibility as AddressVisibility,
+    { isOwnerOrModerator, isParticipant }
+  );
+
+  const lat = canSeeLocationAndUrl ? (i.lat ?? null) : null;
+  const lng = canSeeLocationAndUrl ? (i.lng ?? null) : null;
+  const address = canSeeLocationAndUrl ? (i.address ?? null) : null;
+  const placeId = canSeeLocationAndUrl ? (i.placeId ?? null) : null;
+  const radiusKm = canSeeLocationAndUrl ? (i.radiusKm ?? null) : null;
+  const onlineUrl = canSeeLocationAndUrl ? (i.onlineUrl ?? null) : null;
 
   return {
     id: i.id,
@@ -371,23 +459,23 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
     allowJoinLate: i.allowJoinLate,
 
     meetingKind: i.meetingKind as MeetingKind,
-    onlineUrl: i.onlineUrl ?? null,
+    onlineUrl,
 
-    lat: i.lat ?? null,
-    lng: i.lng ?? null,
-    address: i.address ?? null,
-    placeId: i.placeId ?? null,
-    radiusKm: i.radiusKm ?? null,
+    lat,
+    lng,
+    address,
+    placeId,
+    radiusKm,
 
     levels: ((i.levels ?? []) as Level[]).sort(
       (a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]
     ),
 
-    // Privacy toggles
+    // Privacy toggles (zwracamy je zawsze, to tylko deklaracja trybu)
     addressVisibility: i.addressVisibility as AddressVisibility,
     membersVisibility: i.membersVisibility as MembersVisibility,
 
-    // Derived counters
+    // Derived counters (liczby nie są ukrywane)
     joinedCount,
     commentsCount: i.commentsCount ?? 0,
     messagesCount: i.messagesCount ?? 0,
@@ -413,7 +501,7 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
 
     // convenience + computed
     owner: resolveOwnerFromMembers(i),
-    members: i.members.map(mapIntentMember),
+    members: visibleMembers.map(mapIntentMember),
 
     // Computed helpers (resolver-calculated)
     isFull,
@@ -432,7 +520,10 @@ export function mapIntent(i: IntentWithGraph): GQLIntent {
 }
 
 /* ---- Notification ---- */
-export function mapNotification(n: NotificationWithGraph): GQLNotification {
+export function mapNotification(
+  n: NotificationWithGraph,
+  viewerId?: string
+): GQLNotification {
   return {
     id: n.id,
     kind: (n.kind as NotificationKind) ?? 'SYSTEM',
@@ -449,7 +540,7 @@ export function mapNotification(n: NotificationWithGraph): GQLNotification {
     entityType: (n.entityType as NotificationEntity) ?? 'OTHER',
     entityId: n.entityId ?? null,
 
-    intent: n.intent ? mapIntent(n.intent) : null,
+    intent: n.intent ? mapIntent(n.intent as any, viewerId) : null,
   };
 }
 
@@ -459,8 +550,6 @@ export function mapDmThread(
   currentUserId?: string
 ): GQLDmThread {
   const lastMessage = t.messages?.[0] ?? null;
-
-  // Count unread messages for current user
   const unreadCount = currentUserId ? ((t as any)._count?.messages ?? 0) : 0;
 
   return {
@@ -474,7 +563,7 @@ export function mapDmThread(
 
     aUser: mapUser(t.aUser),
     bUser: mapUser(t.bUser),
-    messages: [], // Loaded separately via dmMessages query
+    messages: [], // ładowane osobno
 
     unreadCount,
     lastMessage: lastMessage ? mapDmMessage(lastMessage as any) : null,
@@ -503,7 +592,7 @@ export function createPairKey(userId1: string, userId2: string): string {
 }
 
 /* ---- Comment ---- */
-export function mapComment(c: CommentWithGraph): GQLComment {
+export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
   return {
     id: c.id,
     intentId: c.intentId,
@@ -515,17 +604,19 @@ export function mapComment(c: CommentWithGraph): GQLComment {
     updatedAt: c.updatedAt,
     deletedAt: c.deletedAt ?? null,
 
-    intent: c.intent ? (mapIntent(c.intent as any) as any) : ({} as any),
+    intent: c.intent
+      ? (mapIntent(c.intent as any, viewerId) as any)
+      : ({} as any),
     author: mapUser(c.author as any),
-    parent: c.parent ? (mapComment(c.parent as any) as any) : null,
-    replies: c.replies?.map((r) => mapComment(r as any) as any) ?? [],
+    parent: c.parent ? (mapComment(c.parent as any, viewerId) as any) : null,
+    replies: c.replies?.map((r) => mapComment(r as any, viewerId) as any) ?? [],
 
     repliesCount: (c as any)._count?.replies ?? 0,
   };
 }
 
 /* ---- Review ---- */
-export function mapReview(r: ReviewWithGraph): GQLReview {
+export function mapReview(r: ReviewWithGraph, viewerId?: string): GQLReview {
   return {
     id: r.id,
     intentId: r.intentId,
@@ -536,7 +627,9 @@ export function mapReview(r: ReviewWithGraph): GQLReview {
     updatedAt: r.updatedAt,
     deletedAt: r.deletedAt ?? null,
 
-    intent: r.intent ? (mapIntent(r.intent as any) as any) : ({} as any),
+    intent: r.intent
+      ? (mapIntent(r.intent as any, viewerId) as any)
+      : ({} as any),
     author: mapUser(r.author as any),
   };
 }
@@ -559,7 +652,8 @@ export function mapReport(r: ReportWithGraph): GQLReport {
 
 /* ---- IntentChatMessage ---- */
 export function mapIntentChatMessage(
-  m: IntentChatMessageWithGraph
+  m: IntentChatMessageWithGraph,
+  viewerId?: string
 ): GQLIntentChatMessage {
   return {
     id: m.id,
@@ -571,9 +665,13 @@ export function mapIntentChatMessage(
     editedAt: m.editedAt ?? null,
     deletedAt: m.deletedAt ?? null,
 
-    intent: m.intent ? (mapIntent(m.intent as any) as any) : ({} as any),
+    intent: m.intent
+      ? (mapIntent(m.intent as any, viewerId) as any)
+      : ({} as any),
     author: mapUser(m.author as any),
-    replyTo: m.replyTo ? (mapIntentChatMessage(m.replyTo as any) as any) : null,
+    replyTo: m.replyTo
+      ? (mapIntentChatMessage(m.replyTo as any, viewerId) as any)
+      : null,
 
     isEdited: !!m.editedAt,
     isDeleted: !!m.deletedAt,
@@ -595,7 +693,8 @@ export function mapUserBlock(b: UserBlockWithGraph): GQLUserBlock {
 
 /* ---- IntentInviteLink ---- */
 export function mapIntentInviteLink(
-  link: IntentInviteLinkWithGraph
+  link: IntentInviteLinkWithGraph,
+  viewerId?: string
 ): GQLIntentInviteLink {
   const now = new Date();
   const isExpired = link.expiresAt ? link.expiresAt < now : false;
@@ -611,7 +710,9 @@ export function mapIntentInviteLink(
     expiresAt: link.expiresAt ?? null,
     createdAt: link.createdAt,
 
-    intent: link.intent ? (mapIntent(link.intent as any) as any) : ({} as any),
+    intent: link.intent
+      ? (mapIntent(link.intent as any, viewerId) as any)
+      : ({} as any),
 
     isExpired,
     isMaxedOut,
@@ -639,7 +740,10 @@ export function mapNotificationPreference(
 }
 
 /* ---- IntentMute ---- */
-export function mapIntentMute(mute: IntentMuteWithGraph): GQLIntentMute {
+export function mapIntentMute(
+  mute: IntentMuteWithGraph,
+  viewerId?: string
+): GQLIntentMute {
   return {
     id: mute.id,
     intentId: mute.intentId,
@@ -647,7 +751,9 @@ export function mapIntentMute(mute: IntentMuteWithGraph): GQLIntentMute {
     muted: mute.muted,
     createdAt: mute.createdAt,
 
-    intent: mute.intent ? (mapIntent(mute.intent as any) as any) : ({} as any),
+    intent: mute.intent
+      ? (mapIntent(mute.intent as any, viewerId) as any)
+      : ({} as any),
     user: mapUser(mute.user as any),
   };
 }

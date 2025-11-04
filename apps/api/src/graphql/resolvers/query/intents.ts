@@ -24,7 +24,7 @@ const INTENT_INCLUDE = {
 export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
   'intents',
-  async (_p, args) => {
+  async (_p, args, { user }) => {
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
 
@@ -176,7 +176,7 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
     });
 
     return {
-      items: rows.map(mapIntent),
+      items: rows.map((r) => mapIntent(r, user?.id)),
       pageInfo: {
         total,
         limit: take,
@@ -191,11 +191,11 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
 export const intentQuery: QueryResolvers['intent'] = resolverWithMetrics(
   'Query',
   'intent',
-  async (_p, { id }) => {
+  async (_p, { id }, { user }) => {
     const row = await prisma.intent.findUnique({
       where: { id },
       include: INTENT_INCLUDE,
     });
-    return row ? mapIntent(row) : null;
+    return row ? mapIntent(row, user?.id) : null;
   }
 );
