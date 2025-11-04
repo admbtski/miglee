@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
 import { EventCard } from './_components/event-card';
-import { MapImagePanel } from './_components/map-image-panel';
+import { IntentsMapPanel } from './_components/intents-map-panel';
 
 import { FilterModal } from './_components/filter-modal';
 import { useCommittedMapVisible } from './_hooks/use-comitted-map-vision';
@@ -46,6 +46,8 @@ type IntentListItem = {
   endAt: string;
   address?: string | null;
   onlineUrl?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 
   joinedCount: number;
   min: number;
@@ -389,7 +391,22 @@ export function IntentsPage() {
               transition={{ type: 'spring', duration: 0.5, bounce: 0 }}
             >
               <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))]">
-                <MapImagePanel label={city || 'Polska'} fullHeight />
+                <IntentsMapPanel
+                  intents={flatItems.map((item) => ({
+                    id: item.id,
+                    title: item.title ?? 'Untitled',
+                    startAt: item.startAt,
+                    address: item.address,
+                    lat: item.lat,
+                    lng: item.lng,
+                    joinedCount: item.joinedCount,
+                    max: item.max,
+                    categories: item.categories ?? [],
+                    owner: item.owner,
+                  }))}
+                  fullHeight
+                  lang={appLanguage}
+                />
               </div>
             </motion.aside>
           )}
