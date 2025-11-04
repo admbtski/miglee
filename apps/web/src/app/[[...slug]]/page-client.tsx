@@ -392,17 +392,30 @@ export function IntentsPage() {
             >
               <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))]">
                 <IntentsMapPanel
-                  intents={flatItems.map((item) => ({
+                  intents={flatItems.map((item, i) => ({
                     id: item.id,
                     title: item.title ?? 'Untitled',
                     startAt: item.startAt,
+                    endAt: item.endAt,
+                    description: item.description,
                     address: item.address,
+                    onlineUrl: item.onlineUrl,
                     lat: item.lat,
                     lng: item.lng,
                     joinedCount: item.joinedCount,
                     max: item.max,
+                    tags: item.tags ?? [],
                     categories: item.categories ?? [],
-                    owner: item.owner,
+                    isOnline: item.isOnline,
+                    isOnsite: item.isOnsite,
+                    isHybrid: item.isHybrid,
+                    addressVisibility: item.addressVisibility,
+                    levels: item.levels ?? [],
+                    plan: planForIndex(i), // jak w EventCard
+                    owner: {
+                      name: item.owner?.name,
+                      imageUrl: item.owner?.imageUrl,
+                    },
                   }))}
                   fullHeight
                   lang={appLanguage}

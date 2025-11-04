@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { importMarker, loadGoogleMaps } from '@/features/maps/utils/googleMaps';
+import { useEffect, useMemo, useRef } from 'react';
+import maplibregl, { Map, Popup, LngLatLike } from 'maplibre-gl';
 
-type LatLng = google.maps.LatLngLiteral;
+/* ───────────────────────────── Types ───────────────────────────── */
 
 export type IntentMapItem = {
   id: string;
@@ -19,128 +19,60 @@ export type IntentMapItem = {
   joinedCount: number;
   max: number;
 
-  // mini-pigułki
   tags?: Array<{ label: string }>;
   categories: Array<{ names: Record<string, string> }>;
 
-  // widoczność adresu i tryb — jeśli masz:
   addressVisibility?: 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN' | string;
   isOnsite?: boolean;
   isOnline?: boolean;
   isHybrid?: boolean;
 
-  // poziomy (opcjonalnie)
   levels?: Array<'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'>;
 
-  // plan / premium badge (opcjonalnie)
+  /** wpływa na iconę pina */
   plan?: 'default' | 'basic' | 'plus' | 'premium';
 
-  owner?: {
-    name?: string | null;
-    imageUrl?: string | null;
-    verifiedAt?: string | null;
-  } | null;
+  owner?: { name?: string | null; imageUrl?: string | null } | null;
 };
 
-const DEBUG = false;
+const isNum = (x?: number | null) =>
+  typeof x === 'number' && Number.isFinite(x);
 
-/* ───────────────────────────── Utils ───────────────────────────── */
+/* ───────────────────────────── Mini utils ───────────────────────────── */
 
-function isValidLatLng(
-  lat?: number | null,
-  lng?: number | null
-): lat is number {
-  return (
-    typeof lat === 'number' &&
-    typeof lng === 'number' &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng) &&
-    !(lat === 0 && lng === 0)
-  );
-}
-
-function rafDebounce<T extends (...args: any[]) => void>(fn: T) {
-  let raf = 0;
-  return (...args: Parameters<T>) => {
-    if (raf) cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => fn(...args));
-  };
-}
-
-function pad2(n: number) {
-  return n < 10 ? `0${n}` : String(n);
-}
-
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
 function formatDateRange(
   startISO: string,
   endISO?: string | null,
-  lang = 'en'
+  lang = 'pl'
 ) {
-  const start = new Date(startISO);
-  const end = endISO ? new Date(endISO) : null;
+  const s = new Date(startISO);
+  const e = endISO ? new Date(endISO) : null;
   const fmt = (d: Date) =>
-    `${pad2(d.getDate())} ${d.toLocaleString(lang, {
-      month: 'short',
-    })}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-
-  if (!end) return fmt(start);
-  const sameDay =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth() &&
-    start.getDate() === end.getDate();
-
-  return sameDay
-    ? `${fmt(start)} – ${pad2(end.getHours())}:${pad2(end.getMinutes())}`
-    : `${fmt(start)} – ${fmt(end)}`;
+    `${pad2(d.getDate())} ${d.toLocaleString(lang, { month: 'short' })}, ${pad2(
+      d.getHours()
+    )}:${pad2(d.getMinutes())}`;
+  if (!e) return fmt(s);
+  const same =
+    s.getFullYear() === e.getFullYear() &&
+    s.getMonth() === e.getMonth() &&
+    s.getDate() === e.getDate();
+  return same
+    ? `${fmt(s)} – ${pad2(e.getHours())}:${pad2(e.getMinutes())}`
+    : `${fmt(s)} – ${fmt(e)}`;
 }
-
 function humanDuration(startISO: string, endISO?: string | null) {
   if (!endISO) return '';
-  const start = new Date(startISO);
-  const end = new Date(endISO);
-  const ms = Math.max(0, end.getTime() - start.getTime());
-  const total = Math.round(ms / 60000);
-  const h = Math.floor(total / 60);
-  const m = total % 60;
+  const s = new Date(startISO);
+  const e = new Date(endISO);
+  const mins = Math.max(0, Math.round((e.getTime() - s.getTime()) / 60000));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
   if (h && m) return `${h} h ${m} min`;
   if (h) return `${h} h`;
   if (m) return `${m} min`;
   return '< 1 min';
 }
-
-function normalizeAV(
-  av?: string
-): { label: string; hint: string; icon: string } | null {
-  if (!av) return null;
-  const s = String(av).toUpperCase();
-  if (s.includes('PUBLIC'))
-    return {
-      label: 'Adres publiczny',
-      hint: 'Widoczny dla wszystkich',
-      icon: '🟢',
-    };
-  if (s.includes('AFTER_JOIN'))
-    return {
-      label: 'Adres po dołączeniu',
-      hint: 'Widoczny po dołączeniu',
-      icon: '🔒',
-    };
-  return { label: 'Adres ukryty', hint: 'Dokładny adres niejawny', icon: '🕶️' };
-}
-
-function levelLabel(lv: string) {
-  switch (lv) {
-    case 'BEGINNER':
-      return 'Beginner';
-    case 'INTERMEDIATE':
-      return 'Intermediate';
-    case 'ADVANCED':
-      return 'Advanced';
-    default:
-      return lv;
-  }
-}
-
 function planColors(plan?: IntentMapItem['plan']) {
   switch (plan) {
     case 'premium':
@@ -153,178 +85,139 @@ function planColors(plan?: IntentMapItem['plan']) {
       return { ring: '#64748b', fill: '#6366f1' };
   }
 }
-
-/** Elegancki, lekki marker (SVG) z obwódką planu. */
-function createMarkerSVG(plan?: IntentMapItem['plan']) {
+/** SVG pina -> data URL */
+function pinDataUrl(plan?: IntentMapItem['plan']) {
   const { ring, fill } = planColors(plan);
   const svg = `
-    <svg width="42" height="58" viewBox="0 0 42 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="drop" x="-20" y="-20" width="82" height="98" filterUnits="userSpaceOnUse">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity=".25"/>
-        </filter>
-        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="${fill}" />
-          <stop offset="1" stop-color="#4f46e5" />
-        </linearGradient>
-      </defs>
-      <g filter="url(#drop)">
-        <path d="M21 55c7-11 19-19 19-32C40 10.85 31.15 2 21 2S2 10.85 2 23c0 13 12 21 19 32z" fill="url(#g)" stroke="${ring}" stroke-width="2" />
-        <circle cx="21" cy="23" r="7.5" fill="white" />
-      </g>
-    </svg>
-  `;
-  const el = document.createElement('div');
-  el.style.willChange = 'transform';
-  el.style.cursor = 'pointer';
-  el.innerHTML = svg;
-  el.addEventListener('mouseenter', () => {
-    el.style.transform = 'translateY(-2px) scale(1.02)';
-  });
-  el.addEventListener('mouseleave', () => {
-    el.style.transform = 'translateY(0) scale(1)';
-  });
-  return el;
+  <svg width="42" height="58" viewBox="0 0 42 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${fill}" />
+        <stop offset="1" stop-color="#4f46e5" />
+      </linearGradient>
+    </defs>
+    <path d="M21 55c7-11 19-19 19-32C40 10.85 31.15 2 21 2S2 10.85 2 23c0 13 12 21 19 32z" fill="url(#g)" stroke="${ring}" stroke-width="2" />
+    <circle cx="21" cy="23" r="7.5" fill="white" />
+  </svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
-/** Mini „card” dla InfoWindow: z datą, capacity, pills, adresem i ownerem. */
-function buildInfoContent(intent: IntentMapItem, lang: string) {
-  const categoryName =
-    intent.categories[0]?.names?.[lang] ??
-    Object.values(intent.categories[0]?.names ?? {})[0] ??
-    '';
-
-  const dateRange = formatDateRange(intent.startAt, intent.endAt, lang);
-  const duration = humanDuration(intent.startAt, intent.endAt);
+function infoHTML(i: IntentMapItem, lang: string) {
   const pct = Math.min(
     100,
-    Math.round((intent.joinedCount / Math.max(1, intent.max)) * 100)
+    Math.round((i.joinedCount / Math.max(1, i.max)) * 100)
   );
+  const range = formatDateRange(i.startAt, i.endAt, lang);
+  const dur = humanDuration(i.startAt, i.endAt);
+  const cat = i.categories?.[0]
+    ? (i.categories[0].names?.[lang] ??
+      Object.values(i.categories[0].names ?? {})[0] ??
+      '')
+    : '';
 
-  const av = normalizeAV(intent.addressVisibility);
-  const modeBadge = intent.isHybrid
-    ? 'Hybrid'
-    : intent.isOnline
-      ? 'Online'
-      : intent.isOnsite
-        ? 'Onsite'
-        : '';
-
-  const levels =
-    (intent.levels ?? [])
-      .map(
-        (lv) => `
-      <span style="
-        display:inline-flex;align-items:center;gap:6px;
-        font-size:11px;font-weight:600;color:#334155;
-        background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;
-        padding:2px 8px;white-space:nowrap
-      ">${levelLabel(lv)}</span>`
-      )
-      .join(' ') || '';
-
-  const plan =
-    intent.plan && intent.plan !== 'default'
-      ? `<span style="
-          display:inline-flex;align-items:center;gap:6px;
-          font-size:11px;font-weight:700;color:white;background:${planColors(intent.plan).fill};
-          border-radius:999px;padding:2px 8px;white-space:nowrap;letter-spacing:.2px
-        ">${intent.plan.toUpperCase()}</span>`
+  const planChip =
+    i.plan && i.plan !== 'default'
+      ? `<span style="display:inline-flex;align-items:center;font-size:11px;font-weight:700;color:white;background:${planColors(i.plan).fill};
+         border-radius:999px;padding:2px 8px;white-space:nowrap;letter-spacing:.2px">${i.plan.toUpperCase()}</span>`
       : '';
 
   const tags =
-    (intent.tags ?? [])
+    (i.tags ?? [])
       .slice(0, 6)
       .map(
-        (t) => `
-        <span style="
-          display:inline-flex;align-items:center;gap:6px;
-          font-size:11px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:999px;
-          padding:2px 8px;white-space:nowrap
-        ">#${t.label}</span>`
+        (t) =>
+          `<span style="display:inline-flex;align-items:center;font-size:11px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:999px;padding:2px 8px;white-space:nowrap;margin-right:6px">#${t.label}</span>`
       )
-      .join(' ') || '';
+      .join('') || '';
 
-  const categoryChip = categoryName
-    ? `<span style="
-        display:inline-flex;align-items:center;gap:6px;
-        font-size:11px;font-weight:600;color:#4f46e5;background:#eef2ff;border:1px solid #e0e7ff;border-radius:999px;
-        padding:2px 8px;white-space:nowrap
-      ">${categoryName}</span>`
-    : '';
+  const levels =
+    (i.levels ?? [])
+      .map(
+        (lv) =>
+          `<span style="display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:#334155;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:2px 8px;white-space:nowrap;margin-right:6px">${lv}</span>`
+      )
+      .join('') || '';
 
-  const addrRow =
-    intent.isOnline && !intent.isOnsite
-      ? `<div style="display:flex;align-items:center;gap:8px;color:#52525b;font-size:13px">
-           <span>📡</span><span>Online</span>
-         </div>`
-      : intent.address
-        ? `<div style="display:flex;align-items:center;gap:8px;color:#52525b;font-size:13px">
-           <span>📍</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${intent.address}</span>
-         </div>`
-        : av
-          ? `<div style="display:flex;align-items:center;gap:8px;color:#52525b;font-size:13px">
-           <span>${av.icon}</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${modeBadge ? modeBadge + ' • ' : ''}${av.label}</span>
-         </div>`
-          : '';
+  const addressRow =
+    i.isOnline && !i.isOnsite
+      ? `<div style="display:flex;align-items:center;gap:8px;color:#52525b;font-size:13px"><span>📡</span><span>Online</span></div>`
+      : i.address
+        ? `<div style="display:flex;align-items:center;gap:8px;color:#52525b;font-size:13px"><span>📍</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.address}</span></div>`
+        : '';
 
   const owner =
-    intent.owner?.name || intent.owner?.imageUrl
+    i.owner?.name || i.owner?.imageUrl
       ? `<div style="display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid #e5e7eb">
-           ${
-             intent.owner?.imageUrl
-               ? `<img src="${intent.owner.imageUrl}" alt="${intent.owner?.name ?? 'owner'}"
-                     style="width:24px;height:24px;border-radius:999px;object-fit:cover" />`
-               : ''
-           }
-           <span style="font-size:12px;color:#6b7280">by ${intent.owner?.name ?? 'Organizer'}</span>
+           ${i.owner?.imageUrl ? `<img src="${i.owner.imageUrl}" style="width:24px;height:24px;border-radius:999px;object-fit:cover" />` : ''}
+           <span style="font-size:12px;color:#6b7280">by ${i.owner?.name ?? 'Organizer'}</span>
          </div>`
       : '';
 
   return `
-    <div style="
-      max-width:320px;padding:12px 12px 10px 12px;border-radius:14px;
-      background: white;border:1px solid #e5e7eb;box-shadow:0 8px 24px rgba(0,0,0,.08);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif;
-    ">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.25;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${intent.title}</div>
-        ${plan}
-      </div>
-
-      <div style="display:flex;align-items:center;gap:10px;color:#52525b;font-size:13px;margin:6px 0 2px">
-        <span>📅</span>
-        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${dateRange}</span>
-      </div>
-
-      ${
-        duration
-          ? `<div style="display:flex;align-items:center;gap:10px;color:#6b7280;font-size:12px;margin:0 0 6px">
-               <span>⏱️</span><span>${duration}</span>
-             </div>`
-          : ''
-      }
-
-      ${addrRow}
-
-      <div style="margin:8px 0 6px">
-        <div style="height:6px;border-radius:999px;background:#f1f5f9;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:#6366f1;transition:width .3s ease"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;color:#64748b;font-size:11px;margin-top:4px">
-          <span>Uczestnicy</span><span>${intent.joinedCount}/${intent.max}</span>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0">
-        ${levels}
-        ${categoryChip}
-        ${tags}
-      </div>
-
-      ${owner}
+  <div style="max-width:320px;padding:12px 12px 10px;border-radius:14px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 8px 24px rgba(0,0,0,.08);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="font-size:15px;font-weight:700;color:#111827;line-height:1.25;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.title}</div>
+      ${planChip}
     </div>
-  `;
+
+    <div style="display:flex;align-items:center;gap:10px;color:#52525b;font-size:13px;margin:6px 0 2px">
+      <span>📅</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${range}</span>
+    </div>
+    ${dur ? `<div style="display:flex;align-items:center;gap:10px;color:#6b7280;font-size:12px;margin:0 0 6px"><span>⏱️</span><span>${dur}</span></div>` : ''}
+
+    ${addressRow}
+
+    <div style="margin:8px 0 6px">
+      <div style="height:6px;border-radius:999px;background:#f1f5f9;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:#6366f1;transition:width .3s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#64748b;font-size:11px;margin-top:4px">
+        <span>Uczestnicy</span><span>${i.joinedCount}/${i.max}</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0">
+      ${levels}${cat ? `<span style="display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:#4f46e5;background:#eef2ff;border:1px solid #e0e7ff;border-radius:999px;padding:2px 8px;white-space:nowrap">${cat}</span>` : ''}${tags}
+    </div>
+
+    ${owner}
+  </div>`;
+}
+
+/* ───────────────────────────── GeoJSON + clusters ───────────────────────────── */
+
+function toFeatureCollection(items: IntentMapItem[], lang: string) {
+  return {
+    type: 'FeatureCollection',
+    features: items
+      .filter((i) => isNum(i.lat) && isNum(i.lng))
+      .map((i) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [i.lng!, i.lat!] },
+        properties: {
+          id: i.id,
+          title: i.title,
+          startAt: i.startAt,
+          endAt: i.endAt ?? null,
+          description: i.description ?? null,
+          address: i.address ?? null,
+          onlineUrl: i.onlineUrl ?? null,
+          joinedCount: i.joinedCount,
+          max: i.max,
+          tags: i.tags ?? [],
+          categories: i.categories ?? [],
+          addressVisibility: i.addressVisibility ?? null,
+          isOnsite: !!i.isOnsite,
+          isOnline: !!i.isOnline,
+          isHybrid: !!i.isHybrid,
+          levels: i.levels ?? [],
+          plan: i.plan ?? 'default',
+          owner: i.owner ?? null,
+          lang,
+        },
+      })),
+  } as const;
 }
 
 /* ───────────────────────────── Component ───────────────────────────── */
@@ -334,236 +227,254 @@ export function IntentsMapPanel({
   fullHeight = false,
   defaultCenter = { lat: 52.2319, lng: 21.0067 },
   defaultZoom = 12,
-  lang = 'en',
+  lang = 'pl',
+  styleUrl = 'https://demotiles.maplibre.org/style.json',
 }: {
   intents: IntentMapItem[];
   fullHeight?: boolean;
-  defaultCenter?: LatLng;
+  defaultCenter?: { lat: number; lng: number };
   defaultZoom?: number;
   lang?: string;
+  /** podmień na swój styl (MapLibre/MapTiler/self-hosted) */
+  styleUrl?: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
-  const markersRef = useRef<
-    Map<
-      string,
-      {
-        marker: google.maps.marker.AdvancedMarkerElement;
-        listeners: google.maps.MapsEventListener[];
-        lat: number;
-        lng: number;
-      }
-    >
-  >(new Map());
-  const [mapReady, setMapReady] = useState(false);
+  const mapRef = useRef<Map | null>(null);
+  const popupRef = useRef<Popup | null>(null);
 
-  const validIntents = useMemo(
-    () =>
-      intents
-        .filter((i) => isValidLatLng(i.lat, i.lng))
-        .slice()
-        .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
-    [intents]
-  );
-
-  const positionsSignature = useMemo(
-    () => validIntents.map((i) => `${i.id}:${i.lat},${i.lng}`).join('|'),
-    [validIntents]
-  );
+  const fc = useMemo(() => toFeatureCollection(intents, lang), [intents, lang]);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!containerRef.current || mapRef.current) return;
 
-    (async () => {
-      if (!containerRef.current || mapRef.current) return;
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: styleUrl,
+      center: [defaultCenter.lng, defaultCenter.lat],
+      zoom: defaultZoom,
+      attributionControl: true,
+    });
 
-      // (gdybyś chciał wymusić re-init mapy, zakomentuj warunek wyżej)
-    })();
+    map.addControl(
+      new maplibregl.NavigationControl({ visualizePitch: true }),
+      'top-right'
+    );
+    map.addControl(
+      new maplibregl.ScaleControl({ unit: 'metric' }),
+      'bottom-left'
+    );
 
-    (async () => {
-      if (mapRef.current || !containerRef.current) return;
-      const g = await loadGoogleMaps();
-      if (cancelled) return;
+    mapRef.current = map;
+    popupRef.current = new maplibregl.Popup({
+      closeButton: true,
+      closeOnMove: true,
+      maxWidth: '360px',
+    });
 
-      const map = new g.maps.Map(containerRef.current, {
-        center: defaultCenter,
-        zoom: defaultZoom,
-        streetViewControl: false,
-        mapTypeControl: false,
-        fullscreenControl: false,
-        mapId: 'intents-map-id',
-        minZoom: 4,
-        maxZoom: 18,
+    map.on('load', async () => {
+      // zarejestruj obrazy pinów (1x per plan)
+      const plans: Array<NonNullable<IntentMapItem['plan']>> = [
+        'default',
+        'basic',
+        'plus',
+        'premium',
+      ];
+      for (const p of plans) {
+        const img = new Image();
+        img.src = pinDataUrl(p);
+        await img.decode().catch(() => {});
+        if (!map.hasImage(`pin-${p}`)) {
+          map.addImage(`pin-${p}`, img, { pixelRatio: 2 });
+        }
+      }
+
+      map.addSource('intents', {
+        type: 'geojson',
+        data: fc as any,
+        cluster: true,
+        clusterRadius: 60,
+        clusterMaxZoom: 14,
       });
 
-      infoWindowRef.current = new g.maps.InfoWindow({ disableAutoPan: false });
-      mapRef.current = map;
-
-      const onceIdle = g.maps.event.addListenerOnce(map, 'idle', () => {
-        if (!cancelled) setMapReady(true);
+      // klastry
+      map.addLayer({
+        id: 'clusters',
+        type: 'circle',
+        source: 'intents',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            '#a5b4fc',
+            10,
+            '#60a5fa',
+            25,
+            '#34d399',
+            50,
+            '#22d3ee',
+          ],
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            16,
+            10,
+            20,
+            25,
+            24,
+            50,
+            28,
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#fff',
+        },
       });
 
-      return () => {
-        g.maps.event.removeListener(onceIdle);
-      };
-    })();
+      map.addLayer({
+        id: 'cluster-count',
+        type: 'symbol',
+        source: 'intents',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 12,
+        },
+        paint: { 'text-color': '#0f172a' },
+      });
+
+      // pojedyncze punkty – symbol z obrazkiem zależnym od planu
+      map.addLayer({
+        id: 'unclustered',
+        type: 'symbol',
+        source: 'intents',
+        filter: ['!', ['has', 'point_count']],
+        layout: {
+          'icon-image': [
+            'match',
+            ['get', 'plan'],
+            'premium',
+            'pin-premium',
+            'plus',
+            'pin-plus',
+            'basic',
+            'pin-basic',
+            /* default */ 'pin-default',
+          ],
+          'icon-size': 0.65,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+        },
+      });
+
+      // interakcje
+      map.on('click', 'clusters', (e) => {
+        const f = map.queryRenderedFeatures(e.point, {
+          layers: ['clusters'],
+        })[0];
+        const clusterId = f?.properties?.cluster_id;
+        const src = map.getSource('intents') as any;
+        src.getClusterExpansionZoom(clusterId, (_err: any, z: number) => {
+          map.easeTo({
+            center: (f.geometry as any).coordinates as LngLatLike,
+            zoom: z,
+          });
+        });
+      });
+
+      map.on('click', 'unclustered', (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        const p = f.properties!;
+        // uwaga: właściwości tablicowe były serializowane — tu je odzyskujemy:
+        const parseJSON = (v: any) => {
+          try {
+            return typeof v === 'string' ? JSON.parse(v) : v;
+          } catch {
+            return [];
+          }
+        };
+        const data: IntentMapItem = {
+          id: p.id,
+          title: p.title,
+          startAt: p.startAt,
+          endAt: p.endAt !== 'null' ? p.endAt : null,
+          description: p.description !== 'null' ? p.description : null,
+          address: p.address !== 'null' ? p.address : null,
+          onlineUrl: p.onlineUrl !== 'null' ? p.onlineUrl : null,
+          joinedCount: Number(p.joinedCount),
+          max: Number(p.max),
+          tags: parseJSON(p.tags),
+          categories: parseJSON(p.categories),
+          addressVisibility:
+            p.addressVisibility !== 'null' ? p.addressVisibility : null,
+          isOnsite: p.isOnsite === 'true',
+          isOnline: p.isOnline === 'true',
+          isHybrid: p.isHybrid === 'true',
+          levels: parseJSON(p.levels),
+          plan: (p.plan as any) || 'default',
+          owner: parseJSON(p.owner),
+        };
+        const html = infoHTML(data, p.lang || lang);
+        const coords = (f.geometry as any).coordinates as [number, number];
+
+        popupRef.current!.setLngLat(coords).setHTML(html).addTo(map);
+      });
+
+      const setCursor = (on: boolean) =>
+        (map.getCanvas().style.cursor = on ? 'pointer' : '');
+      map.on('mouseenter', 'clusters', () => setCursor(true));
+      map.on('mouseleave', 'clusters', () => setCursor(false));
+      map.on('mouseenter', 'unclustered', () => setCursor(true));
+      map.on('mouseleave', 'unclustered', () => setCursor(false));
+    });
 
     return () => {
-      cancelled = true;
-
-      markersRef.current.forEach(({ marker, listeners }) => {
-        listeners.forEach((l) => l.remove());
-        marker.map = null;
-      });
-      markersRef.current.clear();
-
-      infoWindowRef.current?.close();
-      infoWindowRef.current = null;
-
+      popupRef.current?.remove();
+      mapRef.current?.remove();
+      popupRef.current = null;
       mapRef.current = null;
-      setMapReady(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [defaultCenter.lat, defaultCenter.lng, defaultZoom, styleUrl]);
 
-  const fitBoundsDebounced = useMemo(
-    () =>
-      rafDebounce(
-        (g: typeof google, map: google.maps.Map, items: IntentMapItem[]) => {
-          if (items.length <= 1) return;
-          const b = new g.maps.LatLngBounds();
-          for (const it of items) {
-            if (isValidLatLng(it.lat, it.lng)) {
-              b.extend({ lat: it.lat!, lng: it.lng! });
-            }
-          }
-          map.fitBounds(b, { top: 50, right: 50, bottom: 50, left: 50 });
-        }
-      ),
-    []
-  );
-
-  const onMarkerClick = useCallback(
-    (
-      intent: IntentMapItem,
-      marker: google.maps.marker.AdvancedMarkerElement
-    ) => {
-      const map = mapRef.current;
-      const info = infoWindowRef.current;
-      if (!map || !info) return;
-
-      info.setContent(buildInfoContent(intent, lang));
-      info.open({ map, anchor: marker });
-    },
-    [lang]
-  );
-
-  const createMarkerEl = useCallback((intent: IntentMapItem) => {
-    // elegancki SVG z kolorem wg planu
-    return createMarkerSVG(intent.plan);
-  }, []);
-
+  // aktualizacja danych bez rekreacji mapy
   useEffect(() => {
-    (async () => {
-      if (!mapReady || !mapRef.current) return;
-      const g = await loadGoogleMaps();
-      const { AdvancedMarkerElement } = await importMarker();
-      const map = mapRef.current!;
-      const known = markersRef.current;
-
-      // remove
-      for (const [id, entry] of known) {
-        if (!validIntents.find((i) => i.id === id)) {
-          entry.listeners.forEach((l) => l.remove());
-          entry.marker.map = null;
-          known.delete(id);
-          if (DEBUG) console.log('[map] remove', id);
-        }
-      }
-
-      // add / update
-      for (const intent of validIntents) {
-        if (!isValidLatLng(intent.lat, intent.lng)) continue;
-        const lat = intent.lat!;
-        const lng = intent.lng!;
-        const existing = known.get(intent.id);
-
-        if (!existing) {
-          const content = createMarkerEl(intent);
-          const marker = new AdvancedMarkerElement({
-            map,
-            position: { lat, lng },
-            content,
-            gmpDraggable: false,
-          });
-          const listeners: google.maps.MapsEventListener[] = [];
-          listeners.push(
-            marker.addListener('click', () => onMarkerClick(intent, marker))
-          );
-          known.set(intent.id, { marker, listeners, lat, lng });
-          if (DEBUG) console.log('[map] add', intent.id);
-          continue;
-        }
-
-        if (existing.lat !== lat || existing.lng !== lng) {
-          existing.marker.position = { lat, lng };
-          existing.lat = lat;
-          existing.lng = lng;
-          if (DEBUG) console.log('[map] update', intent.id);
-        }
-      }
-
-      // bounds / center
-      if (validIntents.length > 1) {
-        fitBoundsDebounced(g, map, validIntents);
-      } else if (validIntents.length === 1) {
-        const i0 = validIntents[0]!;
-        map.setCenter({ lat: i0.lat!, lng: i0.lng! });
-        map.setZoom(14);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapReady, positionsSignature, lang, onMarkerClick, createMarkerEl]);
-
-  // autoresize
-  useEffect(() => {
-    if (!mapRef.current || !containerRef.current) return;
     const map = mapRef.current;
-    const ro = new ResizeObserver(() => {
-      google.maps.event.trigger(map, 'resize');
-    });
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [mapReady]);
+    if (!map) return;
+    const src = map.getSource('intents') as any;
+    if (!src) return;
+    src.setData(fc);
+  }, [fc]);
 
-  if (validIntents.length === 0) {
-    return (
-      <div
-        className={`flex items-center justify-center rounded-2xl border bg-zinc-50 dark:bg-zinc-900 ${
-          fullHeight ? 'h-full' : 'h-[420px]'
-        }`}
-      >
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          No locations to display
-        </p>
-      </div>
+  // fit bounds na zmianę danych
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const coords = (fc.features as any[]).map((f) => f.geometry.coordinates);
+    if (!coords.length) return;
+    const b = coords.reduce(
+      (acc: [number, number, number, number], [lng, lat]: [number, number]) => [
+        Math.min(acc[0], lng),
+        Math.min(acc[1], lat),
+        Math.max(acc[2], lng),
+        Math.max(acc[3], lat),
+      ],
+      [coords[0][0], coords[0][1], coords[0][0], coords[0][1]]
     );
-  }
+    map.fitBounds(b as any, { padding: 60, duration: 0 });
+  }, [fc]);
 
   return (
     <div className="relative h-full">
       <div
         ref={containerRef}
-        className={`rounded-2xl border bg-white dark:bg-zinc-900 overflow-hidden ${
-          fullHeight ? 'h-full' : 'h-[420px]'
-        }`}
+        className={`rounded-2xl border overflow-hidden ${fullHeight ? 'h-full' : 'h-[420px]'} bg-white dark:bg-zinc-900`}
         aria-label="Intents map"
       />
       <div className="absolute top-4 left-4 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-zinc-200 dark:border-zinc-700">
         <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-          📍 {validIntents.length} location
-          {validIntents.length !== 1 ? 's' : ''}
+          📍 {(fc.features as any[]).length} location
+          {(fc.features as any[]).length !== 1 ? 's' : ''}
         </p>
       </div>
     </div>
