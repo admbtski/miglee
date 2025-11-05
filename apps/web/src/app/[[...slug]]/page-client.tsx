@@ -98,7 +98,12 @@ const notEmptyString = (v: unknown): v is string =>
 function mapIntentToEventCardProps(
   item: IntentListItem,
   index: number,
-  lang: string
+  lang: string,
+  onHover?: (
+    intentId: string | null,
+    lat?: number | null,
+    lng?: number | null
+  ) => void
 ): EventCardProps {
   const tags = (item.tags ?? []).map((t) => t.label).filter(notEmptyString);
 
@@ -107,6 +112,9 @@ function mapIntentToEventCardProps(
     .filter(notEmptyString);
 
   return {
+    intentId: item.id,
+    lat: item.lat,
+    lng: item.lng,
     startISO: item.startAt,
     endISO: item.endAt,
 
@@ -150,6 +158,7 @@ function mapIntentToEventCardProps(
     onJoin: () => {
       console.log('join intent', item.id);
     },
+    onHover,
   };
 }
 
@@ -173,6 +182,25 @@ export function IntentsPage() {
   } = useCommittedFilters();
 
   const { sort, setSort, sortVars } = useCommittedSort();
+
+  // State for hover synchronization between cards and map
+  const [hoveredIntent, setHoveredIntent] = useState<{
+    id: string;
+    lat: number | null;
+    lng: number | null;
+  } | null>(null);
+
+  const handleIntentHover = (
+    intentId: string | null,
+    lat?: number | null,
+    lng?: number | null
+  ) => {
+    if (!intentId) {
+      setHoveredIntent(null);
+    } else {
+      setHoveredIntent({ id: intentId, lat: lat ?? null, lng: lng ?? null });
+    }
+  };
 
   const variables = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
     () => ({
@@ -354,7 +382,8 @@ export function IntentsPage() {
                   {...mapIntentToEventCardProps(
                     item as unknown as IntentListItem,
                     i,
-                    appLanguage
+                    appLanguage,
+                    handleIntentHover
                   )}
                 />
               ))}
@@ -403,6 +432,9 @@ export function IntentsPage() {
                     // Navigate to intent details or open modal
                     window.location.href = `/${intentId}`;
                   }}
+                  hoveredIntentId={hoveredIntent?.id ?? null}
+                  hoveredLat={hoveredIntent?.lat ?? null}
+                  hoveredLng={hoveredIntent?.lng ?? null}
                 />
               </div>
             </motion.aside>

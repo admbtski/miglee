@@ -34,6 +34,9 @@ import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
 /* ───────────────────────────── Types ───────────────────────────── */
 
 export interface EventCardProps {
+  intentId?: string;
+  lat?: number | null;
+  lng?: number | null;
   startISO: string;
   endISO: string;
   avatarUrl: string;
@@ -71,6 +74,11 @@ export interface EventCardProps {
   members?: IntentMember[];
   plan?: Plan;
   showSponsoredBadge?: boolean;
+  onHover?: (
+    intentId: string | null,
+    lat?: number | null,
+    lng?: number | null
+  ) => void;
 }
 
 /* ───────────────────────────── Utils ───────────────────────────── */
@@ -194,6 +202,9 @@ function addressVisibilityMeta(av: AddressVisibility) {
 /* ─────────────────────────── Component ─────────────────────────── */
 
 export function EventCard({
+  intentId,
+  lat,
+  lng,
   startISO,
   endISO,
   avatarUrl,
@@ -227,6 +238,7 @@ export function EventCard({
   isHybrid,
   isOnline,
   isOnsite,
+  onHover,
 }: EventCardProps) {
   const [open, setOpen] = useState(false);
 
@@ -260,6 +272,18 @@ export function EventCard({
       setOpen(true);
     }
   }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    if (intentId && onHover) {
+      onHover(intentId, lat, lng);
+    }
+  }, [intentId, lat, lng, onHover]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (onHover) {
+      onHover(null);
+    }
+  }, [onHover]);
 
   // ✅ przekazujemy canJoin do planRingBg
   const planStyling = useMemo(() => planTheme(plan), [plan, canJoin]);
@@ -372,6 +396,8 @@ export function EventCard({
           tabIndex={0}
           onClick={openModal}
           onKeyDown={handleKeyDown}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           aria-label={`Szczegóły wydarzenia: ${organizerName}`}
           data-plan={plan}
         >
@@ -443,6 +469,8 @@ export function EventCard({
         tabIndex={0}
         onClick={openModal}
         onKeyDown={handleKeyDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         aria-label={`Szczegóły wydarzenia: ${organizerName}`}
         data-plan={plan}
       >

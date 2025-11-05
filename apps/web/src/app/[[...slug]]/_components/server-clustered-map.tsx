@@ -35,6 +35,9 @@ export interface ServerClusteredMapProps {
     verifiedOnly?: boolean;
   };
   onIntentClick?: (intentId: string) => void;
+  hoveredIntentId?: string | null;
+  hoveredLat?: number | null;
+  hoveredLng?: number | null;
 }
 
 type ClusterPoint = {
@@ -174,6 +177,38 @@ function Avatar({
   );
 }
 
+/* ───────────────────────────── CSS Animations ───────────────────────────── */
+
+const PULSE_KEYFRAMES = `
+@keyframes marker-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 6px 14px rgba(0,0,0,0.18), 
+      0 0 0 0 rgba(99, 102, 241, 0.7),
+      inset 0 0 0 0 rgba(255, 255, 255, 0);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 
+      0 8px 20px rgba(0,0,0,0.3), 
+      0 0 0 10px rgba(99, 102, 241, 0),
+      inset 0 0 15px 2px rgba(255, 255, 255, 0.4);
+    opacity: 0.95;
+  }
+}
+`;
+
+// Inject keyframes to document once
+if (typeof document !== 'undefined') {
+  const styleId = 'marker-pulse-keyframes';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = PULSE_KEYFRAMES;
+    document.head.appendChild(style);
+  }
+}
+
 /* ───────────────────────────── Kategorie → kolory ───────────────────────────── */
 
 const CATEGORY_THEME: Record<
@@ -233,10 +268,7 @@ function createFancyClusterEl(
   el.style.backgroundImage = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
   el.style.position = 'relative';
   el.style.pointerEvents = 'auto';
-  el.style.willChange = 'transform';
   el.style.cursor = 'pointer';
-  el.style.backfaceVisibility = 'hidden';
-  (el.style as any).transform = 'translateZ(0)';
   el.tabIndex = 0;
   el.setAttribute('role', 'button');
   el.setAttribute('aria-label', `Klastrowane intenty: ${count}`);
@@ -265,13 +297,6 @@ function restyleFancyClusterEl(
   count: number,
   meta: ClusterMeta
 ) {
-  const size = Math.min(28 + count * 2, 52);
-  const nextSize = `${size}px`;
-  if (el.style.width !== nextSize) {
-    el.style.width = nextSize;
-    el.style.height = nextSize;
-  }
-
   const bg = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
   if (el.style.backgroundImage !== bg) {
     el.style.backgroundImage = bg;
@@ -347,11 +372,9 @@ function computeDominantMeta(intents: PopupIntent[]): ClusterMeta {
 
 function PopupItem({
   intent,
-  index,
   onClick,
 }: {
   intent: PopupIntent;
-  index: number;
   onClick?: (id: string) => void;
 }) {
   const {
@@ -499,7 +522,6 @@ function RegionPopup({
         {intents.map((it, index) => (
           <PopupItem
             key={it.id}
-            index={index}
             intent={{
               ...it,
               plan: (function planForIndex(i: number): Plan {
@@ -523,11 +545,13 @@ export function ServerClusteredMap({
   defaultCenter = { lat: 52.2319, lng: 21.0067 },
   defaultZoom = 10,
   fullHeight = false,
-  lang = 'pl',
   styleUrlLight = 'https://tiles.openfreemap.org/styles/liberty',
   styleUrlDark = 'https://tiles.openfreemap.org/styles/dark',
   filters,
   onIntentClick,
+  hoveredIntentId,
+  hoveredLat,
+  hoveredLng,
 }: ServerClusteredMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -607,11 +631,16 @@ export function ServerClusteredMap({
           neLon: defaultCenter.lng + 0.1,
         },
         zoom: Math.round(mapZoom),
-        filters: filters || undefined,
+        filters: filters
+          ? {
+              categorySlugs: filters.categorySlugs,
+              levels: filters.levels as any,
+              verifiedOnly: filters.verifiedOnly,
+            }
+          : undefined,
       },
       {
         enabled: !!mapBounds,
-        keepPreviousData: true,
         staleTime: 10_000,
         gcTime: 60_000,
       }
@@ -622,11 +651,16 @@ export function ServerClusteredMap({
       region: selectedRegion || '',
       page: 1,
       perPage: 50,
-      filters: filters || undefined,
+      filters: filters
+        ? {
+            categorySlugs: filters.categorySlugs,
+            levels: filters.levels as any,
+            verifiedOnly: filters.verifiedOnly,
+          }
+        : undefined,
     },
     {
       enabled: !!selectedRegion,
-      keepPreviousData: true,
       staleTime: 15_000,
       gcTime: 60_000,
     }
@@ -641,7 +675,9 @@ export function ServerClusteredMap({
       style: currentStyleUrl,
       center: [defaultCenter.lng, defaultCenter.lat],
       zoom: defaultZoom,
-      attributionControl: true,
+      attributionControl: {
+        compact: true,
+      },
       fadeDuration: 0,
       crossSourceCollisions: false,
     });
@@ -730,54 +766,56 @@ export function ServerClusteredMap({
 
   /* ───────── Stabilny render klastrów (pooled + throttled) ───────── */
 
-  const applyClusters = useThrottled(
-    (clusters: ClusterPoint[]) => {
-      const map = mapRef.current;
-      if (!map) return;
-      const pool = markerPoolRef.current;
-      const cache = metaCacheRef.current;
-      const nextKeys = new Set<string>();
+  const applyClusters = useThrottled((clusters: ClusterPoint[]) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const pool = markerPoolRef.current;
+    const cache = metaCacheRef.current;
+    const nextKeys = new Set<string>();
 
-      for (const c of clusters) {
-        const key = c.region;
-        nextKeys.add(key);
+    for (const c of clusters) {
+      const key = c.region;
+      nextKeys.add(key);
 
-        const meta = cache.get(key) ?? defaultClusterMeta();
-        const existing = pool.get(key);
+      const meta = cache.get(key) ?? defaultClusterMeta();
+      const existing = pool.get(key);
 
-        if (existing) {
-          existing.marker.setLngLat([c.longitude, c.latitude]);
-        } else {
-          const el = createFancyClusterEl(c.count, meta);
-          const marker = new maplibregl.Marker({
-            element: el,
-            anchor: 'center',
-          })
-            .setLngLat([c.longitude, c.latitude])
-            .addTo(map);
-
-          const open = (ev?: Event) => {
-            ev?.stopPropagation?.();
-            setSelectedRegion(c.region);
-          };
-          el.addEventListener('click', open);
-          el.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') open(e);
-          });
-
-          pool.set(key, { marker, el, count: c.count });
+      if (existing) {
+        // Aktualizuj pozycję i count
+        existing.marker.setLngLat([c.longitude, c.latitude]);
+        if (existing.count !== c.count) {
+          existing.count = c.count;
+          restyleFancyClusterEl(existing.el, c.count, meta);
         }
-      }
+      } else {
+        const el = createFancyClusterEl(c.count, meta);
+        const marker = new maplibregl.Marker({
+          element: el,
+          anchor: 'center',
+        })
+          .setLngLat([c.longitude, c.latitude])
+          .addTo(map);
 
-      for (const [key, entry] of pool.entries()) {
-        if (!nextKeys.has(key)) {
-          entry.marker.remove();
-          pool.delete(key);
-        }
+        const open = (ev?: Event) => {
+          ev?.stopPropagation?.();
+          setSelectedRegion(c.region);
+        };
+        el.addEventListener('click', open);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') open(e);
+        });
+
+        pool.set(key, { marker, el, count: c.count });
       }
-    },
-    THROTTLE_MS // 120ms
-  );
+    }
+
+    for (const [key, entry] of pool.entries()) {
+      if (!nextKeys.has(key)) {
+        entry.marker.remove();
+        pool.delete(key);
+      }
+    }
+  }, THROTTLE_MS);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -793,8 +831,32 @@ export function ServerClusteredMap({
       popup = popupRef.current;
     if (!map || !popup) return;
 
-    const intents = (regionIntentsData.regionIntents.data ||
-      []) as PopupIntent[];
+    const rawIntents = regionIntentsData.regionIntents.data || [];
+    const intents: PopupIntent[] = rawIntents.map((intent: any) => ({
+      id: intent.id,
+      title: intent.title ?? '',
+      startAt: intent.startAt,
+      endAt: intent.endAt,
+      address: intent.address,
+      joinedCount: intent.joinedCount,
+      min: intent.min,
+      max: intent.max,
+      owner: intent.owner,
+      lat: intent.lat,
+      lng: intent.lng,
+      isCanceled: intent.isCanceled ?? false,
+      isDeleted: intent.isDeleted ?? false,
+      isFull: intent.isFull ?? false,
+      isOngoing: intent.isOngoing ?? false,
+      hasStarted: intent.hasStarted ?? false,
+      withinLock: intent.withinLock ?? false,
+      canJoin: intent.canJoin ?? false,
+      levels: (intent.levels as GqlLevel[]) ?? null,
+      plan: (intent.plan as Plan) ?? null,
+      meetingKind:
+        (intent.meetingKind as 'ONSITE' | 'ONLINE' | 'HYBRID') ?? null,
+      categorySlugs: intent.categories?.map((c: any) => c.slug) ?? null,
+    }));
     if (!intents.length) {
       setSelectedRegion(null);
       return;
@@ -838,6 +900,54 @@ export function ServerClusteredMap({
     }
   }, [selectedRegion, regionIntentsData, onIntentClick]);
 
+  /* ───────── Hover Effect: Find and pulse marker ───────── */
+
+  useEffect(() => {
+    if (!hoveredIntentId || hoveredLat == null || hoveredLng == null) {
+      // Remove pulse from all markers
+      for (const { el } of markerPoolRef.current.values()) {
+        el.style.animation = '';
+      }
+      return;
+    }
+
+    // Find the cluster that contains this intent's coordinates
+    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
+    let closestCluster: ClusterPoint | null = null;
+    let minDistance = Infinity;
+
+    // Find closest cluster to the hovered intent coordinates
+    for (const cluster of clusters) {
+      const distance = Math.sqrt(
+        Math.pow(cluster.latitude - hoveredLat, 2) +
+          Math.pow(cluster.longitude - hoveredLng, 2)
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestCluster = cluster;
+      }
+    }
+
+    // Dynamiczny threshold w zależności od zoomu
+    // Im mniejszy zoom, tym większy threshold (klastry są bardziej "zgrupowane")
+    const zoomLevel = mapRef.current?.getZoom() ?? defaultZoom;
+    const dynamicThreshold = Math.max(0.05, 5 / Math.pow(2, zoomLevel - 5));
+
+    // Apply pulse animation to the closest cluster
+    if (closestCluster && minDistance < dynamicThreshold) {
+      const pooled = markerPoolRef.current.get(closestCluster.region);
+
+      if (pooled) {
+        // Remove animation from all others first
+        for (const { el } of markerPoolRef.current.values()) {
+          el.style.animation = '';
+        }
+        // Apply pulse to matched cluster - NO TRANSFORM!
+        pooled.el.style.animation = 'marker-pulse 1.5s ease-in-out infinite';
+      }
+    }
+  }, [hoveredIntentId, hoveredLat, hoveredLng, clustersData]);
+
   /* ───────── Render ───────── */
 
   return (
@@ -850,7 +960,7 @@ export function ServerClusteredMap({
           'bg-white dark:bg-zinc-900'
         )}
         aria-label="Server-clustered intents map"
-        style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
+        style={{ backfaceVisibility: 'hidden' }}
       />
 
       {clustersLoading && (
