@@ -8,6 +8,7 @@ import {
   decodeRegion,
   tileToGeoJsonPolygon,
 } from '../../../lib/geo/webmercator';
+import { mapIntent } from '../helpers';
 
 /**
  * Clusters query - returns clustered intent points for a map viewport
@@ -30,7 +31,7 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
 
   // Filter by verified owners
   if (filters?.verifiedOnly) {
-    whereConditions.push(`u.verified_at IS NOT NULL`);
+    whereConditions.push(`u.verifiedAt IS NOT NULL`);
   }
 
   // Filter by categories
@@ -152,7 +153,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
 
   // Filter by verified owners
   if (filters?.verifiedOnly) {
-    whereConditions.push(`u.verified_at IS NOT NULL`);
+    whereConditions.push(`u.verifiedAt IS NOT NULL`);
   }
 
   // Filter by categories
@@ -234,7 +235,10 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     include: {
       categories: true,
       tags: true,
+      members: { include: { user: true, addedBy: true } },
       owner: true,
+      canceledBy: true,
+      deletedBy: true,
     },
     orderBy: {
       startAt: 'asc',
@@ -247,7 +251,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
   const nextPage = skip + items.length < total ? page + 1 : null;
 
   return {
-    data: intents as any,
+    data: intents.map((i) => mapIntent(i)),
     meta: {
       page,
       totalItems: total,
