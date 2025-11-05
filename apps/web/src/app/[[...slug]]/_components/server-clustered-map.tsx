@@ -7,6 +7,7 @@ import { Plan } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
+import { useTheme } from '@/features/theme/provider/theme-provider';
 import { useThrottled } from '@/hooks/use-throttled';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import {
@@ -123,40 +124,6 @@ function changedEnough(prev: number, next: number, eps: number) {
   return Math.abs(prev - next) > eps;
 }
 
-/** Tailwind dark mode detection */
-function useTailwindDarkMode(): boolean {
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof document !== 'undefined') {
-      const html = document.documentElement;
-      if (html.classList.contains('dark')) return true;
-    }
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
-
-  useEffect(() => {
-    const html = document.documentElement;
-    const mm = window.matchMedia?.('(prefers-color-scheme: dark)');
-    const update = () =>
-      setIsDark(html.classList.contains('dark') || !!mm?.matches);
-
-    const obs = new MutationObserver(update);
-    obs.observe(html, { attributes: true, attributeFilter: ['class'] });
-    const onChange = () => update();
-    mm?.addEventListener?.('change', onChange);
-    update();
-
-    return () => {
-      obs.disconnect();
-      mm?.removeEventListener?.('change', onChange);
-    };
-  }, []);
-
-  return isDark;
-}
-
 function Avatar({
   url,
   alt,
@@ -216,14 +183,8 @@ function buildLayers(
     phase: number,
     zoomLevel: number
   ): number => {
-    // Skok do góry na osi Y (latitude) - ~1cm na ekranie
-    // Przelicz piksele na stopnie szerokości w zależności od zoomu
-    // Na zoom 10: 1px ≈ 0.0000054 stopni
-    // Wzór: degrees = pixels * 156543.03 * cos(lat) / (256 * 2^zoom)
-    // Dla uproszczenia przy lat=52°: degrees ≈ pixels * (0.0000054 / 2^(zoom-10))
-
-    const pixelsToJump = 1035; // ~1cm (nieco większy dla lepszej widoczności)
-    const baseDegreesPerPixel = 0.0000054; // na zoom 10
+    const pixelsToJump = 1035;
+    const baseDegreesPerPixel = 0.0000054;
     const degreesPerPixel = baseDegreesPerPixel / Math.pow(2, zoomLevel - 10);
     const maxJumpDegrees = pixelsToJump * degreesPerPixel;
 
@@ -242,6 +203,7 @@ function buildLayers(
   };
 
   const jumpOffsetLat = getJumpOffsetLatDegrees(pulse, zoom);
+  const getBaseRadius = (d: ClusterPoint) => Math.min(14 + d.count * 1.1, 28);
 
   // Wszystkie normalne markery (bez highlighted)
   const normalPoints = new ScatterplotLayer<ClusterPoint>({
@@ -250,17 +212,10 @@ function buildLayers(
     pickable: true,
     radiusUnits: 'pixels',
     getPosition: (d) => [d.longitude, d.latitude, 0],
-    getRadius: (d) => Math.min(14 + d.count * 1.6, 28),
+    getRadius: getBaseRadius,
     getFillColor: [99, 102, 241, 220],
     getLineColor: [0, 0, 0, 80],
     getLineWidth: 1.5,
-    transitions: {
-      getRadius: 120,
-      getFillColor: 120,
-    },
-    updateTriggers: {
-      getRadius: clusters.map((c) => c.count).join(','),
-    },
   });
 
   // Skaczący marker (highlighted) - przesunięty w górę na osi Y (latitude)
@@ -271,7 +226,7 @@ function buildLayers(
         pickable: true,
         radiusUnits: 'pixels',
         getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
-        getRadius: (d) => Math.min(14 + d.count * 1.6, 28) + 3,
+        getRadius: getBaseRadius,
         getFillColor: [120, 130, 255, 240],
         getLineColor: [0, 0, 0, 80],
         getLineWidth: 1.5,
@@ -293,9 +248,9 @@ function buildLayers(
         filled: false,
         getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
         getRadius: (d) => {
-          const base = Math.min(14 + d.count * 1.6, 28);
+          const bRadius = getBaseRadius(d);
           const pulseScale = 1 + 0.15 * Math.sin(pulse * Math.PI * 2);
-          return (base + 8) * pulseScale;
+          return (bRadius + 4) * pulseScale;
         },
         getLineColor: [
           120,
@@ -303,7 +258,13 @@ function buildLayers(
           255,
           Math.round(180 - 100 * Math.abs(Math.sin(pulse * Math.PI * 2))),
         ],
-        getLineWidth: 2.5,
+        getLineWidth: (d) => {
+          // Skaluj szerokość linii proporcjonalnie do rozmiaru markera
+          // Minimalnie 2.5px, maksymalnie 5px
+          const base = getBaseRadius(d);
+          return Math.max(2.5, Math.min(base * 0.15, 5));
+        },
+        lineWidthUnits: 'pixels',
         updateTriggers: {
           getPosition: pulse,
           getRadius: pulse,
@@ -358,6 +319,54 @@ function buildLayers(
 }
 
 /* ───────────────────────────── Popup UI (React) ───────────────────────────── */
+
+function PopupItemSkeleton() {
+  return (
+    <div
+      className={clsx(
+        'w-full rounded-xl ring-1 px-3 py-2',
+        'bg-white dark:bg-zinc-900',
+        'ring-zinc-200 dark:ring-zinc-800',
+        'animate-pulse'
+      )}
+    >
+      <div className="flex items-start gap-2">
+        <div className="flex-1 min-w-0">
+          {/* Title skeleton */}
+          <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-1.5" />
+
+          {/* Date skeleton */}
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="w-3.5 h-3.5 bg-zinc-200 dark:bg-zinc-700 rounded shrink-0" />
+            <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-32" />
+          </div>
+
+          {/* Address skeleton */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <div className="w-3.5 h-3.5 bg-zinc-200 dark:bg-zinc-700 rounded shrink-0" />
+            <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-40" />
+          </div>
+        </div>
+      </div>
+
+      {/* Owner skeleton */}
+      <div className="mt-2 flex items-center gap-2">
+        <div className="w-[22px] h-[22px] bg-zinc-200 dark:bg-zinc-700 rounded-full shrink-0" />
+        <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24" />
+      </div>
+
+      {/* Progress bar skeleton */}
+      <div className="mt-1.5 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full w-full" />
+
+      {/* Badges skeleton */}
+      <div className="mt-2 flex gap-1.5">
+        <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-12" />
+        <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-16" />
+        <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-14" />
+      </div>
+    </div>
+  );
+}
 
 function PopupItem({
   intent,
@@ -495,9 +504,11 @@ function PopupItem({
 function RegionPopup({
   intents,
   onIntentClick,
+  isLoading,
 }: {
   intents: PopupIntent[];
   onIntentClick?: (id: string) => void;
+  isLoading?: boolean;
 }) {
   return (
     <div
@@ -508,21 +519,30 @@ function RegionPopup({
       )}
     >
       <div className="p-2 grid gap-2">
-        {intents.map((it, index) => (
-          <PopupItem
-            key={it.id}
-            intent={{
-              ...it,
-              plan: (function planForIndex(i: number): Plan {
-                if (i % 7 === 0) return 'premium';
-                if (i % 5 === 0) return 'plus';
-                if (i % 3 === 0) return 'basic';
-                return 'default';
-              })(index),
-            }}
-            onClick={onIntentClick}
-          />
-        ))}
+        {isLoading ? (
+          // Wyświetl 3 szkielety podczas ładowania
+          <>
+            <PopupItemSkeleton />
+            <PopupItemSkeleton />
+            <PopupItemSkeleton />
+          </>
+        ) : (
+          intents.map((it, index) => (
+            <PopupItem
+              key={it.id}
+              intent={{
+                ...it,
+                plan: (function planForIndex(i: number): Plan {
+                  if (i % 7 === 0) return 'premium';
+                  if (i % 5 === 0) return 'plus';
+                  if (i % 3 === 0) return 'basic';
+                  return 'default';
+                })(index),
+              }}
+              onClick={onIntentClick}
+            />
+          ))
+        )}
       </div>
     </div>
   );
@@ -566,10 +586,11 @@ export function ServerClusteredMap({
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 
   // Tailwind theme
-  const isDark = useTailwindDarkMode();
-  const currentStyleUrl = isDark ? styleUrlDark : styleUrlLight;
-  const prevStyleUrlRef = useRef<string | null>(null);
+  const { resolvedTheme } = useTheme();
+  const currentStyleUrl =
+    resolvedTheme === 'dark' ? styleUrlDark : styleUrlLight;
 
+  // Debug theme changes
   // Throttler do bounds/zoom
   const throttledBoundsUpdate = useThrottled(() => {
     const map = mapRef.current;
@@ -627,25 +648,26 @@ export function ServerClusteredMap({
       }
     );
 
-  const { data: regionIntentsData } = useGetRegionIntentsQuery(
-    {
-      region: selectedRegion || '',
-      page: 1,
-      perPage: 50,
-      filters: filters
-        ? {
-            categorySlugs: filters.categorySlugs,
-            levels: filters.levels as any,
-            verifiedOnly: filters.verifiedOnly,
-          }
-        : undefined,
-    },
-    {
-      enabled: !!selectedRegion,
-      staleTime: 15_000,
-      gcTime: 60_000,
-    }
-  );
+  const { data: regionIntentsData, isLoading: regionIntentsLoading } =
+    useGetRegionIntentsQuery(
+      {
+        region: selectedRegion || '',
+        page: 1,
+        perPage: 50,
+        filters: filters
+          ? {
+              categorySlugs: filters.categorySlugs,
+              levels: filters.levels as any,
+              verifiedOnly: filters.verifiedOnly,
+            }
+          : undefined,
+      },
+      {
+        enabled: !!selectedRegion,
+        staleTime: 15_000,
+        gcTime: 60_000,
+      }
+    );
 
   // Poprzednie dane klastrów (zatrzymaj podczas ładowania)
   const prevClustersRef = useRef<ClusterPoint[]>([]);
@@ -741,6 +763,7 @@ export function ServerClusteredMap({
       closeButton: true,
       closeOnClick: true,
       maxWidth: '460px',
+      className: 'map-popup-high-z',
     });
 
     const onLoad = () => {
@@ -796,17 +819,22 @@ export function ServerClusteredMap({
   // Zmiana stylu (dark/light)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    if (prevStyleUrlRef.current === currentStyleUrl) return;
-    prevStyleUrlRef.current = currentStyleUrl;
+    if (!map) {
+      return;
+    }
 
     map.off('moveend', throttledBoundsUpdate);
     map.setStyle(currentStyleUrl);
 
     const rewire = () => {
+      console.log('[THEME] Rewiring after style change');
       throttledBoundsUpdate();
       map.on('moveend', throttledBoundsUpdate);
       if (deckOverlayRef.current && lastLayersRef.current.length) {
+        console.log(
+          '[THEME] Reapplying deck.gl layers:',
+          lastLayersRef.current.length
+        );
         deckOverlayRef.current.setProps({ layers: lastLayersRef.current });
       }
     };
@@ -838,10 +866,33 @@ export function ServerClusteredMap({
   /* ───────── Popup React ───────── */
 
   useEffect(() => {
-    if (!selectedRegion || !regionIntentsData?.regionIntents) return;
+    if (!selectedRegion) return;
     const map = mapRef.current,
       popup = popupRef.current;
     if (!map || !popup) return;
+
+    // Jeśli ładujemy, pokaż skeleton
+    if (regionIntentsLoading) {
+      // Znajdź klaster dla wybranego regionu, żeby pokazać popup w dobrym miejscu
+      const cluster = clusters.find((c) => c.region === selectedRegion);
+      if (cluster && popupRootRef.current && popupContainerRef.current) {
+        popupRootRef.current.render(
+          <RegionPopup intents={[]} onIntentClick={() => {}} isLoading={true} />
+        );
+        requestAnimationFrame(() => {
+          popup
+            .setLngLat([cluster.longitude, cluster.latitude])
+            .setDOMContent(popupContainerRef.current!)
+            .addTo(map);
+          const onClose = () => setSelectedRegion(null);
+          popup.once('close', onClose);
+        });
+      }
+      return;
+    }
+
+    // Dane załadowane
+    if (!regionIntentsData?.regionIntents) return;
 
     const rawIntents = regionIntentsData.regionIntents.data || [];
     const intents: PopupIntent[] = rawIntents.map((intent: any) => ({
@@ -888,6 +939,7 @@ export function ServerClusteredMap({
       popupRootRef.current.render(
         <RegionPopup
           intents={intents}
+          isLoading={false}
           onIntentClick={(id) => {
             onIntentClick?.(id);
             popup.remove();
@@ -904,12 +956,35 @@ export function ServerClusteredMap({
         popup.once('close', onClose);
       });
     }
-  }, [selectedRegion, regionIntentsData, onIntentClick]);
+  }, [
+    selectedRegion,
+    regionIntentsData,
+    regionIntentsLoading,
+    onIntentClick,
+    clusters,
+  ]);
 
   /* ───────── Render ───────── */
 
   return (
     <div className="relative h-full">
+      <style jsx global>{`
+        /* Popup z-index fix - musi być wyżej niż deck.gl canvas */
+        .maplibregl-popup.map-popup-high-z {
+          z-index: 1000 !important;
+        }
+
+        /* Deck.gl canvas - niższy z-index */
+        .deck-canvas {
+          z-index: 1 !important;
+        }
+
+        /* MapLibre canvas - bazowy poziom */
+        .maplibregl-canvas {
+          z-index: 0 !important;
+        }
+      `}</style>
+
       <div
         ref={containerRef}
         className={clsx(
