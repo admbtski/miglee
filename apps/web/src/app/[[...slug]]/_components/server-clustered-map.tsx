@@ -186,9 +186,10 @@ function buildLayers(
   opts: {
     hovered?: { lat?: number | null; lng?: number | null };
     pulse?: number; // 0..1 — faza animacji
+    zoom?: number; // zoom level dla kalkulacji offset
   } = {}
 ) {
-  const { hovered, pulse = 0 } = opts;
+  const { hovered, pulse = 0, zoom = 10 } = opts;
 
   // Znajdź najbliższy klaster do hovered
   let highlighted: ClusterPoint | null = null;
@@ -206,78 +207,116 @@ function buildLayers(
   }
   const highlightedRegion = highlighted?.region ?? null;
 
-  // Skala pulsu (od 1.0 do ~1.35)
-  const pulseScale = 1 + 0.35 * (0.5 + 0.5 * Math.sin(pulse * Math.PI * 2));
+  // Animacja skoku: skok do góry i powrót
+  // pulse: 0->1 w czasie 1200ms
+  // 0-0.4: skok do góry (~1cm ekranowy)
+  // 0.4-0.8: powrót na miejsce
+  // 0.8-1.0: pauza
+  const getJumpOffsetLatDegrees = (
+    phase: number,
+    zoomLevel: number
+  ): number => {
+    // Skok do góry na osi Y (latitude) - ~1cm na ekranie
+    // Przelicz piksele na stopnie szerokości w zależności od zoomu
+    // Na zoom 10: 1px ≈ 0.0000054 stopni
+    // Wzór: degrees = pixels * 156543.03 * cos(lat) / (256 * 2^zoom)
+    // Dla uproszczenia przy lat=52°: degrees ≈ pixels * (0.0000054 / 2^(zoom-10))
 
-  const basePoints = new ScatterplotLayer<ClusterPoint>({
-    id: 'clusters-scatter',
-    data: clusters,
+    const pixelsToJump = 1035; // ~1cm (nieco większy dla lepszej widoczności)
+    const baseDegreesPerPixel = 0.0000054; // na zoom 10
+    const degreesPerPixel = baseDegreesPerPixel / Math.pow(2, zoomLevel - 10);
+    const maxJumpDegrees = pixelsToJump * degreesPerPixel;
+
+    if (phase < 0.4) {
+      // Skok w górę - ease-out
+      const t = phase / 0.4;
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      return eased * maxJumpDegrees;
+    } else if (phase < 0.8) {
+      // Powrót - ease-in
+      const t = (phase - 0.4) / 0.4;
+      const eased = Math.pow(t, 2); // ease-in quad (szybszy powrót)
+      return (1 - eased) * maxJumpDegrees;
+    }
+    return 0; // pauza
+  };
+
+  const jumpOffsetLat = getJumpOffsetLatDegrees(pulse, zoom);
+
+  // Wszystkie normalne markery (bez highlighted)
+  const normalPoints = new ScatterplotLayer<ClusterPoint>({
+    id: 'clusters-normal',
+    data: clusters.filter((c) => c.region !== highlightedRegion),
     pickable: true,
     radiusUnits: 'pixels',
-    parameters: { depthTest: false, depthMask: false },
-    getPosition: (d) => [d.longitude, d.latitude],
-    getRadius: (d) => {
-      const base = Math.min(14 + d.count * 1.6, 28);
-      // podbij delikatnie radius dla highlight (bez pulsowania — to robi ring)
-      return d.region === highlightedRegion ? base + 3 : base;
-    },
-    getFillColor: (d) =>
-      d.region === highlightedRegion
-        ? [120, 130, 255, 240]
-        : [99, 102, 241, 220],
+    getPosition: (d) => [d.longitude, d.latitude, 0],
+    getRadius: (d) => Math.min(14 + d.count * 1.6, 28),
+    getFillColor: [99, 102, 241, 220],
     getLineColor: [0, 0, 0, 80],
     getLineWidth: 1.5,
     transitions: {
-      // brak animacji pozycji — zmniejsza mikromrugnięcia
       getRadius: 120,
       getFillColor: 120,
     },
     updateTriggers: {
-      getRadius:
-        clusters.map((c) => c.count).join(',') + '|' + highlightedRegion,
-      getFillColor: highlightedRegion,
+      getRadius: clusters.map((c) => c.count).join(','),
     },
   });
 
-  // Warstwa pulsującego pierścienia nad podświetlonym klastrem
-  const pulseRing =
-    highlightedRegion != null
-      ? new ScatterplotLayer<ClusterPoint>({
-          id: 'clusters-pulse',
-          data: clusters.filter((c) => c.region === highlightedRegion),
-          pickable: false,
-          radiusUnits: 'pixels',
-          billboard: true,
-          parameters: { depthTest: false, depthMask: false },
-          stroked: true,
-          filled: false,
-          getPosition: (d) => [d.longitude, d.latitude],
-          getRadius: (d) => {
-            const base = Math.min(14 + d.count * 1.6, 28);
-            return base * pulseScale * 1.3; // większy, oddech
-          },
-          getLineColor: [
-            99,
-            102,
-            241,
-            Math.round(
-              150 + 80 * (1 - Math.abs(Math.sin(pulse * Math.PI * 2)))
-            ),
-          ],
-          getLineWidth: 2.5,
-          // kluczowe — aktualizuj na zmianę fazy
-          updateTriggers: {
-            getRadius: pulse,
-            getLineColor: pulse,
-          },
-        })
-      : null;
+  // Skaczący marker (highlighted) - przesunięty w górę na osi Y (latitude)
+  const jumpingPoint = highlightedRegion
+    ? new ScatterplotLayer<ClusterPoint>({
+        id: 'clusters-jumping',
+        data: clusters.filter((c) => c.region === highlightedRegion),
+        pickable: true,
+        radiusUnits: 'pixels',
+        getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
+        getRadius: (d) => Math.min(14 + d.count * 1.6, 28) + 3,
+        getFillColor: [120, 130, 255, 240],
+        getLineColor: [0, 0, 0, 80],
+        getLineWidth: 1.5,
+        updateTriggers: {
+          getPosition: pulse,
+        },
+      })
+    : null;
 
-  const labels = new TextLayer<ClusterPoint>({
-    id: 'clusters-labels',
-    data: clusters,
-    parameters: { depthTest: false, depthMask: false },
-    getPosition: (d) => [d.longitude, d.latitude],
+  // Pulsujący ring - podąża za skokiem
+  const pulseRing = highlightedRegion
+    ? new ScatterplotLayer<ClusterPoint>({
+        id: 'clusters-pulse',
+        data: clusters.filter((c) => c.region === highlightedRegion),
+        pickable: false,
+        radiusUnits: 'pixels',
+        billboard: true,
+        stroked: true,
+        filled: false,
+        getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
+        getRadius: (d) => {
+          const base = Math.min(14 + d.count * 1.6, 28);
+          const pulseScale = 1 + 0.15 * Math.sin(pulse * Math.PI * 2);
+          return (base + 8) * pulseScale;
+        },
+        getLineColor: [
+          120,
+          130,
+          255,
+          Math.round(180 - 100 * Math.abs(Math.sin(pulse * Math.PI * 2))),
+        ],
+        getLineWidth: 2.5,
+        updateTriggers: {
+          getPosition: pulse,
+          getRadius: pulse,
+          getLineColor: pulse,
+        },
+      })
+    : null;
+
+  // Labels dla normalnych
+  const normalLabels = new TextLayer<ClusterPoint>({
+    id: 'clusters-labels-normal',
+    data: clusters.filter((c) => c.region !== highlightedRegion),
+    getPosition: (d) => [d.longitude, d.latitude, 0],
     getText: (d) => String(d.count),
     getSize: 12,
     sizeUnits: 'pixels',
@@ -289,7 +328,33 @@ function buildLayers(
     backgroundPadding: [2, 2],
   });
 
-  return pulseRing ? [basePoints, pulseRing, labels] : [basePoints, labels];
+  // Label dla skaczącego - podąża za skokiem
+  const jumpingLabel = highlightedRegion
+    ? new TextLayer<ClusterPoint>({
+        id: 'clusters-labels-jumping',
+        data: clusters.filter((c) => c.region === highlightedRegion),
+        getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
+        getText: (d) => String(d.count),
+        getSize: 12,
+        sizeUnits: 'pixels',
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'center',
+        getColor: [255, 255, 255, 255],
+        background: true,
+        getBackgroundColor: [0, 0, 0, 60],
+        backgroundPadding: [2, 2],
+        updateTriggers: {
+          getPosition: pulse,
+        },
+      })
+    : null;
+
+  const layers = [normalPoints, normalLabels];
+  if (jumpingPoint) layers.push(jumpingPoint);
+  if (pulseRing) layers.push(pulseRing);
+  if (jumpingLabel) layers.push(jumpingLabel);
+
+  return layers;
 }
 
 /* ───────────────────────────── Popup UI (React) ───────────────────────────── */
@@ -606,7 +671,10 @@ export function ServerClusteredMap({
   const [pulseTick, setPulseTick] = useState(0);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
-  const PULSE_PERIOD_MS = 1200; // okres „oddechu”
+  const PULSE_PERIOD_MS = 1200; // okres „oddechu"
+
+  // Zoom tracking dla jump animation
+  const [currentZoom, setCurrentZoom] = useState(10);
 
   useEffect(() => {
     const wantsPulse = hoveredLat != null && hoveredLng != null;
@@ -636,13 +704,14 @@ export function ServerClusteredMap({
     };
   }, [hoveredLat, hoveredLng]);
 
-  // Warstwy — memo (zależne także od pulseTick)
+  // Warstwy — memo (zależne także od pulseTick i zoom)
   const layers = useMemo(() => {
     return buildLayers(clusters, {
       hovered: { lat: hoveredLat ?? null, lng: hoveredLng ?? null },
       pulse: pulseTick,
+      zoom: currentZoom,
     });
-  }, [clusters, hoveredLat, hoveredLng, pulseTick]);
+  }, [clusters, hoveredLat, hoveredLng, pulseTick, currentZoom]);
 
   // Inicjalizacja mapy
   useEffect(() => {
@@ -677,6 +746,13 @@ export function ServerClusteredMap({
     const onLoad = () => {
       throttledBoundsUpdate();
       map.on('moveend', throttledBoundsUpdate);
+
+      // Update zoom state dla jump animation
+      const updateZoom = () => {
+        setCurrentZoom(map.getZoom());
+      };
+      updateZoom(); // initial
+      map.on('zoom', updateZoom);
 
       // deck.gl overlay – osobny canvas (no flicker)
       const overlay = new MapboxOverlay({ interleaved: false });
