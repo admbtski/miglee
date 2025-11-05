@@ -229,7 +229,7 @@ export function IntentsMapPanel({
   defaultCenter = { lat: 52.2319, lng: 21.0067 },
   defaultZoom = 10,
   lang = 'pl',
-  styleUrl = 'https://demotiles.maplibre.org/style.json',
+  styleUrl = 'https://tiles.openfreemap.org/styles/bright/style.json',
   useServerClustering = false,
   filters,
 }: {

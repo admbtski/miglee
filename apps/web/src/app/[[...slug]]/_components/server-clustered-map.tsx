@@ -28,10 +28,10 @@ export interface ServerClusteredMapProps {
 
 export function ServerClusteredMap({
   defaultCenter = { lat: 52.2319, lng: 21.0067 },
-  defaultZoom = 12,
+  defaultZoom = 10,
   fullHeight = false,
   lang = 'pl',
-  styleUrl = 'https://demotiles.maplibre.org/style.json',
+  styleUrl = 'https://tiles.openfreemap.org/styles/liberty',
   filters,
   onIntentClick,
 }: ServerClusteredMapProps) {
