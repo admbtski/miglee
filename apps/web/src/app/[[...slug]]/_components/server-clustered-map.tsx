@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import maplibregl, { Map, Popup } from 'maplibre-gl';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import maplibregl from 'maplibre-gl';
 import {
   useGetClustersQuery,
   useGetRegionIntentsQuery,
 } from '@/lib/api/map-clusters';
+import { createRoot, Root } from 'react-dom/client';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 /* ───────────────────────────── Types ───────────────────────────── */
@@ -24,6 +25,165 @@ export interface ServerClusteredMapProps {
   onIntentClick?: (intentId: string) => void;
 }
 
+type ClusterPoint = {
+  id: string;
+  latitude: number;
+  longitude: number;
+  count: number;
+  region: string; // stabilny klucz kafelka
+};
+
+type PopupIntent = {
+  id: string;
+  title: string;
+  startAt: string;
+  address?: string | null;
+  joinedCount?: number | null;
+  max?: number | null;
+  owner?: { name?: string | null } | null;
+  lat?: number | null;
+  lng?: number | null;
+};
+
+/* ───────────────────────────── Popup UI (React) ───────────────────────────── */
+
+function RegionPopup({
+  intents,
+  lang = 'pl',
+  onIntentClick,
+  onClose,
+}: {
+  intents: PopupIntent[];
+  lang?: string;
+  onIntentClick?: (id: string) => void;
+  onClose?: () => void;
+}) {
+  const countLabel = useMemo(() => {
+    const n = intents.length;
+    if (n === 1) return '1 intent w tym obszarze';
+    if (n >= 2 && n <= 4) return `${n} intenty w tym obszarze`;
+    return `${n} intentów w tym obszarze`;
+  }, [intents.length]);
+
+  return (
+    <div className="max-w-[360px] max-h-[420px] overflow-y-auto font-sans">
+      <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="m-0 text-[15px] font-bold text-zinc-900 dark:text-zinc-100">
+            {countLabel}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-xs px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+          >
+            Zamknij
+          </button>
+        </div>
+      </div>
+
+      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        {intents.map((intent) => {
+          const dateStr = new Date(intent.startAt).toLocaleString(lang, {
+            day: '2-digit',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit',
+          } as any);
+          return (
+            <button
+              key={intent.id}
+              onClick={() => onIntentClick?.(intent.id)}
+              className="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
+            >
+              <div className="text-[14px] font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
+                {intent.title}
+              </div>
+              <div className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+                📅 {dateStr}
+              </div>
+              {intent.address ? (
+                <div className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+                  📍 {intent.address}
+                </div>
+              ) : null}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {(intent.joinedCount != null || intent.max != null) && (
+                  <span className="inline-flex text-[11px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 rounded-full px-2 py-[2px]">
+                    {intent.joinedCount ?? 0}/{intent.max ?? '—'} osób
+                  </span>
+                )}
+                {intent.owner?.name && (
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    👤 {intent.owner.name}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────── Helpers ───────────────────────────── */
+
+function hashClusters(arr: ClusterPoint[]): string {
+  return arr
+    .map(
+      (c) =>
+        `${c.region}:${c.latitude.toFixed(5)},${c.longitude.toFixed(5)}:${c.count}`
+    )
+    .sort()
+    .join('|');
+}
+
+function throttle<T extends (...args: any[]) => void>(fn: T, ms: number): T {
+  let last = 0;
+  let timeout: any = null;
+  let lastArgs: any[] | null = null;
+  const run = () => {
+    last = Date.now();
+    timeout = null;
+    if (lastArgs) {
+      // @ts-ignore
+      fn(...lastArgs);
+      lastArgs = null;
+    }
+  };
+  // @ts-ignore
+  return function (...args: any[]) {
+    const now = Date.now();
+    const remain = ms - (now - last);
+    if (remain <= 0) {
+      last = now;
+      fn(...args);
+    } else {
+      lastArgs = args;
+      if (!timeout) timeout = setTimeout(run, remain);
+    }
+  } as T;
+}
+
+function createClusterElement(count: number): HTMLDivElement {
+  const el = document.createElement('div');
+  el.className =
+    'rounded-full text-white font-bold shadow-lg ring-2 ring-white ' +
+    'bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-pink-500 ' +
+    'flex items-center justify-center select-none';
+  const size = Math.min(24 + count * 2, 48);
+  el.style.width = `${size}px`;
+  el.style.height = `${size}px`;
+  el.style.pointerEvents = 'auto';
+  el.style.willChange = 'transform';
+  const label = document.createElement('span');
+  label.textContent = String(count);
+  label.style.fontSize = '12px';
+  label.style.lineHeight = '1';
+  el.appendChild(label);
+  return el;
+}
+
 /* ───────────────────────────── Component ───────────────────────────── */
 
 export function ServerClusteredMap({
@@ -36,10 +196,22 @@ export function ServerClusteredMap({
   onIntentClick,
 }: ServerClusteredMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<Map | null>(null);
-  const popupRef = useRef<Popup | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const popupRef = useRef<maplibregl.Popup | null>(null);
 
-  // Track map bounds and zoom for server-side clustering
+  // popup React root (utrzymywany, nie tworzymy w kółko)
+  const popupRootRef = useRef<Root | null>(null);
+  const popupContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // pooling markerów: region -> { marker, el, count }
+  const markerPoolRef = useRef<
+    Map<
+      string,
+      { marker: maplibregl.Marker; el: HTMLDivElement; count: number }
+    >
+  >(new Map());
+
+  // stan mapy
   const [mapBounds, setMapBounds] = useState<{
     swLat: number;
     swLon: number;
@@ -48,10 +220,10 @@ export function ServerClusteredMap({
   } | null>(null);
   const [mapZoom, setMapZoom] = useState<number>(defaultZoom);
 
-  // Selected cluster region for showing intents
+  // region selected
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 
-  // Fetch clusters for current viewport
+  // data
   const { data: clustersData, isLoading: clustersLoading } =
     useGetClustersQuery(
       {
@@ -64,12 +236,9 @@ export function ServerClusteredMap({
         zoom: mapZoom,
         filters: filters || undefined,
       },
-      {
-        enabled: !!mapBounds,
-      }
+      { enabled: !!mapBounds }
     );
 
-  // Fetch intents for selected cluster region
   const { data: regionIntentsData } = useGetRegionIntentsQuery(
     {
       region: selectedRegion || '',
@@ -77,12 +246,10 @@ export function ServerClusteredMap({
       perPage: 50,
       filters: filters || undefined,
     },
-    {
-      enabled: !!selectedRegion,
-    }
+    { enabled: !!selectedRegion }
   );
 
-  // Initialize map
+  // init map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -111,7 +278,6 @@ export function ServerClusteredMap({
     });
 
     map.on('load', () => {
-      // Update bounds on map move
       const updateBounds = () => {
         const bounds = map.getBounds();
         setMapBounds({
@@ -122,217 +288,152 @@ export function ServerClusteredMap({
         });
         setMapZoom(map.getZoom());
       };
-
-      // Initial bounds update
       updateBounds();
-
-      // Update on moveend (after pan/zoom)
       map.on('moveend', updateBounds);
-
-      // Add empty source for clusters
-      map.addSource('server-clusters', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: [],
-        },
-      });
-
-      // Cluster circles
-      map.addLayer({
-        id: 'server-clusters-circles',
-        type: 'circle',
-        source: 'server-clusters',
-        paint: {
-          'circle-color': [
-            'step',
-            ['get', 'point_count'],
-            '#a5b4fc',
-            10,
-            '#60a5fa',
-            25,
-            '#34d399',
-            50,
-            '#22d3ee',
-          ],
-          'circle-radius': [
-            'step',
-            ['get', 'point_count'],
-            18,
-            10,
-            24,
-            25,
-            30,
-            50,
-            36,
-          ],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff',
-        },
-      });
-
-      // Cluster count labels
-      map.addLayer({
-        id: 'server-clusters-count',
-        type: 'symbol',
-        source: 'server-clusters',
-        layout: {
-          'text-field': ['get', 'point_count'],
-          'text-font': ['Noto Sans Regular'],
-          'text-size': 13,
-        },
-        paint: { 'text-color': '#0f172a' },
-      });
-
-      // Click handler for clusters
-      map.on('click', 'server-clusters-circles', (e) => {
-        const features = map.queryRenderedFeatures(e.point, {
-          layers: ['server-clusters-circles'],
-        });
-        const feature = features[0];
-        if (!feature || !feature.properties) return;
-
-        const region = feature.properties.region;
-        setSelectedRegion(region);
-      });
-
-      // Cursor pointer on hover
-      map.on('mouseenter', 'server-clusters-circles', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-      map.on('mouseleave', 'server-clusters-circles', () => {
-        map.getCanvas().style.cursor = '';
-      });
     });
 
     return () => {
+      // popup cleanup
+      if (popupRootRef.current) {
+        popupRootRef.current.unmount();
+        popupRootRef.current = null;
+      }
       popupRef.current?.remove();
-      mapRef.current?.remove();
       popupRef.current = null;
+      popupContainerRef.current = null;
+
+      // marker pool cleanup
+      for (const { marker } of markerPoolRef.current.values()) {
+        marker.remove();
+      }
+      markerPoolRef.current.clear();
+
+      mapRef.current?.remove();
       mapRef.current = null;
     };
   }, [defaultCenter.lat, defaultCenter.lng, defaultZoom, styleUrl]);
 
-  // Update clusters when data arrives
-  useEffect(() => {
-    if (!clustersData?.clusters) return;
-    const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+  /* ───────────────────────────── Render clusters (pooled, throttled) ───────────────────────────── */
 
-    const clusters = clustersData.clusters || [];
-
-    // Convert server clusters to GeoJSON
-    const clusterFeatures = clusters.map((cluster) => ({
-      type: 'Feature' as const,
-      geometry: {
-        type: 'Point' as const,
-        coordinates: [cluster.longitude, cluster.latitude],
-      },
-      properties: {
-        cluster: true,
-        cluster_id: cluster.id,
-        point_count: cluster.count,
-        region: cluster.region,
-      },
-    }));
-
-    const clusterGeoJson = {
-      type: 'FeatureCollection' as const,
-      features: clusterFeatures,
-    };
-
-    // Update source
-    const source = map.getSource('server-clusters') as any;
-    if (source) {
-      source.setData(clusterGeoJson);
-    }
+  const clustersHash = useMemo(() => {
+    const arr: ClusterPoint[] = clustersData?.clusters ?? [];
+    return hashClusters(arr);
   }, [clustersData]);
 
-  // Show popup with intents when region is selected
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
+
+    const apply = () => {
+      const pool = markerPoolRef.current;
+      const nextKeys = new Set<string>();
+
+      // update / create
+      for (const c of clusters) {
+        const key = c.region; // stabilny dla kafelka
+        nextKeys.add(key);
+        const existing = pool.get(key);
+        if (existing) {
+          // update tylko jeśli zmieniły się coords lub count
+          if (existing.count !== c.count) {
+            existing.count = c.count;
+            existing.el.innerHTML = '';
+            const elNew = createClusterElement(c.count);
+            existing.el.className = elNew.className;
+            existing.el.style.cssText = elNew.style.cssText;
+            existing.el.appendChild(elNew.firstChild as Node);
+          }
+          existing.marker.setLngLat([c.longitude, c.latitude]);
+        } else {
+          const el = createClusterElement(c.count);
+          const marker = new maplibregl.Marker({
+            element: el,
+            anchor: 'center',
+          })
+            .setLngLat([c.longitude, c.latitude])
+            .addTo(map);
+
+          el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            setSelectedRegion(c.region);
+          });
+
+          pool.set(key, { marker, el, count: c.count });
+        }
+      }
+
+      // remove stale
+      for (const [key, entry] of pool.entries()) {
+        if (!nextKeys.has(key)) {
+          entry.marker.remove();
+          pool.delete(key);
+        }
+      }
+    };
+
+    const throttled = throttle(apply, 250);
+    throttled();
+  }, [clustersHash]);
+
+  /* ───────────────────────────── React popup ───────────────────────────── */
+
   useEffect(() => {
     if (!selectedRegion || !regionIntentsData?.regionIntents) return;
     const map = mapRef.current;
     const popup = popupRef.current;
     if (!map || !popup) return;
 
-    const intents = regionIntentsData.regionIntents.data || [];
-    if (intents.length === 0) {
+    const intents = (regionIntentsData.regionIntents.data ||
+      []) as PopupIntent[];
+    if (!intents.length) {
       setSelectedRegion(null);
       return;
     }
 
-    // Calculate center of intents for popup position
-    const validIntents = intents.filter((i) => i.lat != null && i.lng != null);
-    if (validIntents.length === 0) return;
+    const valid = intents.filter((i) => i.lat != null && i.lng != null);
+    if (!valid.length) {
+      setSelectedRegion(null);
+      return;
+    }
 
-    const avgLat =
-      validIntents.reduce((sum, i) => sum + (i.lat || 0), 0) /
-      validIntents.length;
-    const avgLng =
-      validIntents.reduce((sum, i) => sum + (i.lng || 0), 0) /
-      validIntents.length;
+    const avgLat = valid.reduce((s, i) => s + (i.lat || 0), 0) / valid.length;
+    const avgLng = valid.reduce((s, i) => s + (i.lng || 0), 0) / valid.length;
 
-    // Build HTML for popup
-    const html = `
-      <div style="max-width:360px;max-height:400px;overflow-y:auto;font-family:system-ui,-apple-system,sans-serif">
-        <div style="padding:12px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:white;z-index:1">
-          <h3 style="margin:0;font-size:15px;font-weight:700;color:#111827">
-            ${intents.length} ${intents.length === 1 ? 'Intent' : 'Intenty'} w tym obszarze
-          </h3>
-        </div>
-        ${intents
-          .map(
-            (intent) => `
-          <div style="padding:12px;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background 0.2s"
-               onmouseover="this.style.background='#f9fafb'"
-               onmouseout="this.style.background='white'"
-               onclick="window.dispatchEvent(new CustomEvent('intentClick', { detail: '${intent.id}' }))">
-            <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:4px">${intent.title}</div>
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">
-              📅 ${new Date(intent.startAt).toLocaleDateString(lang, {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-            ${
-              intent.address
-                ? `<div style="font-size:12px;color:#6b7280">📍 ${intent.address}</div>`
-                : ''
-            }
-            <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
-              <div style="display:inline-flex;font-size:11px;color:#4f46e5;background:#eef2ff;border-radius:999px;padding:2px 8px">
-                ${intent.joinedCount}/${intent.max} osób
-              </div>
-              ${
-                intent.owner?.name
-                  ? `<div style="font-size:11px;color:#6b7280">👤 ${intent.owner.name}</div>`
-                  : ''
-              }
-            </div>
-          </div>
-        `
-          )
-          .join('')}
-      </div>
-    `;
+    if (!popupContainerRef.current)
+      popupContainerRef.current = document.createElement('div');
 
-    popup.setLngLat([avgLng, avgLat]).setHTML(html).addTo(map);
+    if (!popupRootRef.current) {
+      popupRootRef.current = createRoot(popupContainerRef.current);
+    }
 
-    // Listen for intent clicks from popup
-    const handleIntentClick = (e: CustomEvent<string>) => {
-      if (onIntentClick) {
-        onIntentClick(e.detail);
-      }
+    const handleClose = () => {
       popup.remove();
       setSelectedRegion(null);
     };
 
-    window.addEventListener('intentClick', handleIntentClick as any);
+    popupRootRef.current.render(
+      <RegionPopup
+        intents={intents}
+        lang={lang}
+        onIntentClick={(id) => {
+          onIntentClick?.(id);
+          handleClose();
+        }}
+        onClose={handleClose}
+      />
+    );
+
+    popup
+      .setLngLat([avgLng, avgLat])
+      .setDOMContent(popupContainerRef.current!)
+      .addTo(map);
+
+    const onPopupClose = () => handleClose();
+    popup.once('close', onPopupClose);
 
     return () => {
-      window.removeEventListener('intentClick', handleIntentClick as any);
+      popup.off('close', onPopupClose);
     };
   }, [selectedRegion, regionIntentsData, lang, onIntentClick]);
 
@@ -346,7 +447,6 @@ export function ServerClusteredMap({
         aria-label="Server-clustered intents map"
       />
 
-      {/* Loading indicator */}
       {clustersLoading && (
         <div className="absolute top-4 right-4 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-zinc-200 dark:border-zinc-700">
           <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
@@ -355,19 +455,24 @@ export function ServerClusteredMap({
         </div>
       )}
 
-      {/* Cluster count badge */}
       {clustersData?.clusters && (
         <div className="absolute top-4 left-4 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-zinc-200 dark:border-zinc-700">
           <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            🗺️ {clustersData.clusters.reduce((sum, c) => sum + c.count, 0)}{' '}
-            {clustersData.clusters.reduce((sum, c) => sum + c.count, 0) === 1
+            🗺️{' '}
+            {clustersData.clusters.reduce(
+              (sum: number, c: ClusterPoint) => sum + c.count,
+              0
+            )}{' '}
+            {clustersData.clusters.reduce(
+              (sum: number, c: ClusterPoint) => sum + c.count,
+              0
+            ) === 1
               ? 'intent'
               : 'intenty'}
           </p>
         </div>
       )}
 
-      {/* Attribution */}
       <div className="absolute bottom-2 left-2 z-10 text-[10px] text-zinc-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-900/80 px-2 py-1 rounded">
         © OpenStreetMap • MapLibre GL
       </div>
