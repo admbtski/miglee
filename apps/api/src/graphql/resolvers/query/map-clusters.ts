@@ -21,21 +21,33 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
 ) => {
   const { bbox, zoom, filters } = args;
 
-  // Compute cluster zoom level (Zc) - clamped between 2 and 12
-  const Zc = clamp(Math.floor(zoom) - 2, 2, 12);
+  // ───────────────── Clustering tuning ─────────────────
+  // Wyższy Zc => mniejsze kafelki => mniej agresywne klastrowanie
+  // (+1 względem "gołego" zoomu daje subtelne rozrzedzenie)
+  const baseZ = clamp(Math.floor(zoom), 2, 16);
+  const Zc = clamp(baseZ + 1, 3, 16);
 
-  // Build WHERE conditions for filters
+  // kafelek staje się klastrem dopiero od tylu punktów
+  const MIN_CLUSTER_SIZE = 3;
+
+  // bardzo mały jitter (ok. 3–5 metrów) dla pojedynczych punktów,
+  // żeby markery nie nakładały się idealnie
+  const jitter = (lat: number, lng: number, salt: number) => {
+    // ~5m w stopniach (zależnie od szer. geogr.; tu prosto i bezpiecznie)
+    const J = 0.00005;
+    const s = Math.sin((lat + lng + salt) * 12.9898) * 43758.5453;
+    const r1 = s - Math.floor(s) - 0.5;
+    const r2 = s * 1.1337 - Math.floor(s * 1.1337) - 0.5;
+    return { lat: lat + r1 * J, lng: lng + r2 * J };
+  };
+
+  // ───────────────── SQL (jak było) ─────────────────
   const whereConditions: string[] = [];
   const params: any[] = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
   let paramIndex = 5;
 
-  // Filter by verified owners
-  if (filters?.verifiedOnly) {
-    whereConditions.push(`u.verifiedAt IS NOT NULL`);
-  }
-
-  // Filter by categories
-  if (filters?.categorySlugs && filters.categorySlugs.length > 0) {
+  if (filters?.verifiedOnly) whereConditions.push(`u.verifiedAt IS NOT NULL`);
+  if (filters?.categorySlugs?.length) {
     whereConditions.push(
       `EXISTS (
         SELECT 1 FROM "_CategoryToIntent" ci
@@ -46,18 +58,15 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     params.push(filters.categorySlugs);
     paramIndex++;
   }
-
-  // Filter by levels
-  if (filters?.levels && filters.levels.length > 0) {
+  if (filters?.levels?.length) {
     whereConditions.push(`i.levels && $${paramIndex}::"Level"[]`);
     params.push(filters.levels);
     paramIndex++;
   }
+  const whereClause = whereConditions.length
+    ? `AND ${whereConditions.join(' AND ')}`
+    : '';
 
-  const whereClause =
-    whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
-
-  // Query intents within bounding box with optional filters
   const rows = await prisma.$queryRawUnsafe<
     { id: string; lat: number; lng: number }[]
   >(
@@ -77,48 +86,75 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     ...params
   );
 
-  // Group intents by tile coordinates
-  const tileMap = new Map<
-    string,
-    {
-      x: number;
-      y: number;
-      z: number;
-      sumLat: number;
-      sumLng: number;
-      count: number;
-    }
-  >();
+  // ───────────────── Grupowanie po kafelku ─────────────────
+  type TileAgg = {
+    x: number;
+    y: number;
+    z: number;
+    sumLat: number;
+    sumLng: number;
+    count: number;
+    points: Array<{ lat: number; lng: number; id: string }>;
+  };
+
+  const tileMap = new Map<string, TileAgg>();
 
   for (const row of rows) {
     const { x, y } = lngLatToTile(row.lng, row.lat, Zc);
     const key = `${x}|${y}`;
     let tile = tileMap.get(key);
     if (!tile) {
-      tile = { x, y, z: Zc, sumLat: 0, sumLng: 0, count: 0 };
+      tile = { x, y, z: Zc, sumLat: 0, sumLng: 0, count: 0, points: [] };
       tileMap.set(key, tile);
     }
     tile.sumLat += row.lat;
     tile.sumLng += row.lng;
     tile.count++;
+    tile.points.push({ lat: row.lat, lng: row.lng, id: row.id });
   }
 
-  // Convert tiles to clusters
-  let id = 0;
-  return Array.from(tileMap.values()).map((tile) => {
-    const centroidLat = tile.sumLat / tile.count;
-    const centroidLng = tile.sumLng / tile.count;
-    const geoJson = tileToGeoJsonPolygon(tile.x, tile.y, tile.z);
+  // ───────────────── Konwersja do wyników ─────────────────
+  let autoId = 0;
+  const out: Array<{
+    id: string;
+    latitude: number;
+    longitude: number;
+    count: number;
+    region: string;
+    geoJson: any;
+  }> = [];
 
-    return {
-      id: String(id++),
-      latitude: centroidLat,
-      longitude: centroidLng,
-      count: tile.count,
-      region: encodeRegion(tile.z, tile.x, tile.y),
-      geoJson,
-    };
-  });
+  for (const tile of tileMap.values()) {
+    if (tile.count >= MIN_CLUSTER_SIZE) {
+      // pełny klaster (centroid kafelka)
+      const centroidLat = tile.sumLat / tile.count;
+      const centroidLng = tile.sumLng / tile.count;
+      out.push({
+        id: String(autoId++),
+        latitude: centroidLat,
+        longitude: centroidLng,
+        count: tile.count,
+        region: encodeRegion(tile.z, tile.x, tile.y),
+        geoJson: tileToGeoJsonPolygon(tile.x, tile.y, tile.z),
+      });
+    } else {
+      // za mało punktów -> pokaż pojedyncze pinezki (count=1) z lekkim jitterem
+      for (const p of tile.points) {
+        const j = jitter(p.lat, p.lng, autoId);
+        out.push({
+          id: String(autoId++),
+          latitude: j.lat,
+          longitude: j.lng,
+          count: 1,
+          // region: używamy tego samego kafelka (OK dla paginacji regionIntents)
+          region: encodeRegion(tile.z, tile.x, tile.y),
+          geoJson: tileToGeoJsonPolygon(tile.x, tile.y, tile.z),
+        });
+      }
+    }
+  }
+
+  return out;
 };
 
 /**
