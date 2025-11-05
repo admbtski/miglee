@@ -28,7 +28,7 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
   const Zc = clamp(baseZ + 1, 3, 16);
 
   // kafelek staje się klastrem dopiero od tylu punktów
-  const MIN_CLUSTER_SIZE = 3;
+  const MIN_CLUSTER_SIZE = 1;
 
   // bardzo mały jitter (ok. 3–5 metrów) dla pojedynczych punktów,
   // żeby markery nie nakładały się idealnie

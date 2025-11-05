@@ -7,6 +7,7 @@ import { Plan, planTheme } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
+import { useThrottled } from '@/hooks/use-throttled';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import {
   useGetClustersQuery,
@@ -68,7 +69,7 @@ type PopupIntent = {
   withinLock: boolean;
   canJoin?: boolean | null;
   levels?: GqlLevel[] | null;
-  plan?: Plan | null; // 'default' | 'basic' | 'plus' | 'pro'
+  plan?: Plan | null;
   meetingKind?: 'ONSITE' | 'ONLINE' | 'HYBRID' | null;
   categorySlugs?: string[] | null;
 };
@@ -108,43 +109,16 @@ function formatDateRange(startISO: string, endISO: string) {
     : `${fmt(start)} – ${fmt(end)}`;
 }
 
-function hashClusters(arr: ClusterPoint[]): string {
-  return arr
-    .map(
-      (c) =>
-        `${c.region}:${c.latitude.toFixed(5)},${c.longitude.toFixed(5)}:${c.count}`
-    )
-    .sort()
-    .join('|');
+const ROUND4 = (n: number) => Math.round(n * 1e4) / 1e4;
+const BOUNDS_EPS = 0.0008; // ~80m
+const ZOOM_EPS = 0.01;
+const THROTTLE_MS = 300;
+
+function changedEnough(prev: number, next: number, eps: number) {
+  return Math.abs(prev - next) > eps;
 }
 
-function throttle<T extends (...args: any[]) => void>(fn: T, ms: number): T {
-  let last = 0,
-    timeout: any = null,
-    lastArgs: any[] | null = null;
-  const run = () => {
-    last = Date.now();
-    timeout = null;
-    if (lastArgs) {
-      /* @ts-ignore */ fn(...lastArgs);
-      lastArgs = null;
-    }
-  };
-  // @ts-ignore
-  return function (...args: any[]) {
-    const now = Date.now();
-    const remain = ms - (now - last);
-    if (remain <= 0) {
-      last = now;
-      fn(...args);
-    } else {
-      lastArgs = args;
-      if (!timeout) timeout = setTimeout(run, remain);
-    }
-  } as T;
-}
-
-/** Tailwind dark mode detection (class `dark` or prefers-color-scheme) */
+/** Tailwind dark mode detection */
 function useTailwindDarkMode(): boolean {
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof document !== 'undefined') {
@@ -239,41 +213,6 @@ function defaultClusterMeta(): ClusterMeta {
   };
 }
 
-/* ───────────────────────────── Markery klastrów ───────────────────────────── */
-
-function mkIcon(kind: 'ONSITE' | 'ONLINE' | 'HYBRID' | 'UNKNOWN') {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('width', '14');
-  svg.setAttribute('height', '14');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'white');
-  svg.setAttribute('stroke-width', '2');
-
-  const path = document.createElementNS(svg.namespaceURI, 'path');
-  switch (kind) {
-    case 'ONSITE':
-      path.setAttribute(
-        'd',
-        'M12 21s-6-5.7-6-10a6 6 0 1 1 12 0c0 4.3-6 10-6 10z'
-      );
-      break;
-    case 'ONLINE':
-      path.setAttribute(
-        'd',
-        'M2 8a10 10 0 0 1 20 0M4 12a8 8 0 0 1 16 0M7 16a5 5 0 0 1 10 0'
-      );
-      break;
-    case 'HYBRID':
-      path.setAttribute('d', 'M3 10h8v8H3zM13 6h8v12h-8z');
-      break;
-    default:
-      path.setAttribute('d', 'M12 2v20M2 12h20');
-  }
-  svg.appendChild(path);
-  return svg;
-}
-
 function createFancyClusterEl(
   count: number,
   meta: ClusterMeta
@@ -290,13 +229,15 @@ function createFancyClusterEl(
   el.style.color = 'white';
   el.style.fontWeight = '800';
   el.style.fontVariantNumeric = 'tabular-nums';
-  el.style.boxShadow = '0 8px 20px rgba(0,0,0,0.25)';
+  el.style.boxShadow = '0 6px 14px rgba(0,0,0,0.18)';
   el.style.backgroundImage = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
   el.style.position = 'relative';
   el.style.pointerEvents = 'auto';
   el.style.willChange = 'transform';
   el.style.cursor = 'pointer';
-  el.tabIndex = 0; // a11y
+  el.style.backfaceVisibility = 'hidden';
+  (el.style as any).transform = 'translateZ(0)';
+  el.tabIndex = 0;
   el.setAttribute('role', 'button');
   el.setAttribute('aria-label', `Klastrowane intenty: ${count}`);
 
@@ -304,30 +245,11 @@ function createFancyClusterEl(
   ring.className = `absolute inset-0 rounded-full ring-2 ${meta.ringClass}`;
   el.appendChild(ring);
 
-  const iconWrap = document.createElement('div');
-  iconWrap.setAttribute('role', 'mk');
-  Object.assign(iconWrap.style, {
-    position: 'absolute',
-    top: '-6px',
-    left: '-6px',
-    width: '18px',
-    height: '18px',
-    borderRadius: '9999px',
-    background: 'rgba(0,0,0,0.28)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backdropFilter: 'blur(4px)',
-  } as CSSStyleDeclaration);
-  iconWrap.appendChild(mkIcon(meta.meetingKind));
-  el.appendChild(iconWrap);
-
   const label = document.createElement('span');
   label.textContent = String(count);
   label.style.fontSize = '12px';
   el.appendChild(label);
 
-  // focus ring
   el.addEventListener(
     'focus',
     () => (ring.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.45)')
@@ -337,44 +259,36 @@ function createFancyClusterEl(
   return el;
 }
 
+/** Leniwy restyle (bez zdejmowania/wstawiania ikon) */
 function restyleFancyClusterEl(
   el: HTMLDivElement,
   count: number,
   meta: ClusterMeta
 ) {
   const size = Math.min(28 + count * 2, 52);
-  el.style.width = `${size}px`;
-  el.style.height = `${size}px`;
-  el.style.backgroundImage = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
+  const nextSize = `${size}px`;
+  if (el.style.width !== nextSize) {
+    el.style.width = nextSize;
+    el.style.height = nextSize;
+  }
+
+  const bg = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
+  if (el.style.backgroundImage !== bg) {
+    el.style.backgroundImage = bg;
+  }
 
   const ring = el.querySelector(
     'div.absolute.inset-0.rounded-full'
   ) as HTMLDivElement | null;
-  if (ring)
-    ring.className = `absolute inset-0 rounded-full ring-2 ${meta.ringClass}`;
-
-  const iconWrap = el.querySelector('div[role="mk"]') as HTMLDivElement | null;
-  if (iconWrap) iconWrap.remove();
-  const wrap = document.createElement('div');
-  wrap.setAttribute('role', 'mk');
-  Object.assign(wrap.style, {
-    position: 'absolute',
-    top: '-6px',
-    left: '-6px',
-    width: '18px',
-    height: '18px',
-    borderRadius: '9999px',
-    background: 'rgba(0,0,0,0.28)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backdropFilter: 'blur(4px)',
-  } as CSSStyleDeclaration);
-  wrap.appendChild(mkIcon(meta.meetingKind));
-  el.appendChild(wrap);
+  if (ring) {
+    const want = `absolute inset-0 rounded-full ring-2 ${meta.ringClass}`;
+    if (ring.className !== want) ring.className = want;
+  }
 
   const label = el.querySelector('span');
-  if (label) label.textContent = String(count);
+  if (label && label.textContent !== String(count)) {
+    label.textContent = String(count);
+  }
 }
 
 /* ───────────────────────────── Dominant meta ───────────────────────────── */
@@ -433,9 +347,11 @@ function computeDominantMeta(intents: PopupIntent[]): ClusterMeta {
 
 function PopupItem({
   intent,
+  index,
   onClick,
 }: {
   intent: PopupIntent;
+  index: number;
   onClick?: (id: string) => void;
 }) {
   const {
@@ -453,17 +369,17 @@ function PopupItem({
   } = intent;
 
   const fill = useMemo(
-    () => Math.min(100, Math.round((joinedCount / Math.max(1, max)) * 100)),
+    () =>
+      Math.min(
+        100,
+        Math.round(((joinedCount ?? 0) / Math.max(1, max ?? 1)) * 100)
+      ),
     [joinedCount, max]
   );
 
   const levelsSorted = useMemo(
     () => sortLevels((intent.levels ?? []) as GqlLevel[]),
     [intent.levels]
-  );
-  const theme = useMemo(
-    () => planTheme((intent.plan ?? 'default') as Plan),
-    [intent.plan]
   );
 
   const { status } = useMemo(
@@ -484,14 +400,13 @@ function PopupItem({
     <button
       onClick={() => onClick?.(intent.id)}
       className={clsx(
-        'group w-full text-left rounded-xl ring-1 px-3.5 py-3 transition-all',
+        'cursor-pointer group w-full text-left rounded-xl ring-1 px-3 py-2 transition-all',
         'bg-white dark:bg-zinc-900',
         'ring-zinc-200 dark:ring-zinc-800',
         'hover:shadow-sm hover:-translate-y-[1px]',
         'focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-indigo-500/50'
       )}
     >
-      {/* header: title + plan accent */}
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
@@ -499,19 +414,7 @@ function PopupItem({
               {intent.title}
             </h4>
             {intent.plan && intent.plan !== 'default' && (
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span
-                  className={clsx(
-                    'inline-flex w-2.5 h-2.5 rounded-full ring-2',
-                    theme.ring
-                  )}
-                />
-                <PlanBadge
-                  plan={intent.plan as Plan}
-                  size="xs"
-                  variant="icon"
-                />
-              </div>
+              <PlanBadge plan={intent.plan as Plan} size="xs" variant="icon" />
             )}
           </div>
 
@@ -529,14 +432,12 @@ function PopupItem({
         </div>
       </div>
 
-      {/* organizer row */}
       {intent.owner?.name ? (
         <div className="mt-2 flex items-center gap-2 min-w-0">
           <Avatar url={intent.owner?.imageUrl} alt="Organizer" size={22} />
           <p className="text-[12px] truncate text-neutral-900 dark:text-neutral-100">
             <span className="inline-flex items-center gap-1.5 max-w-full">
               <span className="truncate">{intent.owner?.name}</span>
-              {/* pokaż tylko gdy rzeczywiście zweryfikowany */}
               {intent.owner?.verifiedAt && (
                 <VerifiedBadge
                   size="sm"
@@ -548,12 +449,12 @@ function PopupItem({
           </p>
         </div>
       ) : null}
-      {/* Progress */}
+
       <div className="mt-1.5">
         <SimpleProgressBar value={fill} active />
       </div>
-      {/* capacity row */}
-      <div className="mt-2 flex flex-wrap items-center gap-1">
+
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <CapacityBadge
           size="sm"
           statusReason={status.reason}
@@ -575,11 +476,6 @@ function PopupItem({
           <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
         ))}
       </div>
-
-      {/* thin plan underline accent */}
-      {intent.plan && intent.plan !== 'default' ? (
-        <div className={clsx('mt-3 h-[2px] rounded-full', theme.ring)} />
-      ) : null}
     </button>
   );
 }
@@ -591,18 +487,30 @@ function RegionPopup({
   intents: PopupIntent[];
   onIntentClick?: (id: string) => void;
 }) {
-  // scroll shadow – wizualny hint przewijania
   return (
     <div
       className={clsx(
-        'max-w-[280px] max-h-[520px] overflow-y-auto font-sans relative',
+        'max-w-[280px] max-h-[420px] overflow-y-auto font-sans relative',
         'bg-white dark:bg-zinc-900',
         'rounded-2xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800'
       )}
     >
       <div className="p-2 grid gap-2">
-        {intents.map((it) => (
-          <PopupItem key={it.id} intent={it} onClick={onIntentClick} />
+        {intents.map((it, index) => (
+          <PopupItem
+            key={it.id}
+            index={index}
+            intent={{
+              ...it,
+              plan: (function planForIndex(i: number): Plan {
+                if (i % 7 === 0) return 'premium';
+                if (i % 5 === 0) return 'plus';
+                if (i % 3 === 0) return 'basic';
+                return 'default';
+              })(index),
+            }}
+            onClick={onIntentClick}
+          />
         ))}
       </div>
     </div>
@@ -625,7 +533,7 @@ export function ServerClusteredMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
 
-  // React root dla popupu
+  // React root dla popupu – tworzymy JEDEN raz
   const popupRootRef = useRef<Root | null>(null);
   const popupContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -657,7 +565,38 @@ export function ServerClusteredMap({
   const currentStyleUrl = isDark ? styleUrlDark : styleUrlLight;
   const prevStyleUrlRef = useRef<string | null>(null);
 
-  // data
+  // Throttler do bounds/zoom
+  const throttledBoundsUpdate = useThrottled(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const b = map.getBounds();
+    const next = {
+      swLat: ROUND4(b.getSouth()),
+      swLon: ROUND4(b.getWest()),
+      neLat: ROUND4(b.getNorth()),
+      neLon: ROUND4(b.getEast()),
+    };
+
+    setMapZoom((prev) => {
+      const z = map.getZoom();
+      return changedEnough(prev, z, ZOOM_EPS) ? z : prev;
+    });
+
+    setMapBounds((prev) => {
+      if (
+        !prev ||
+        changedEnough(prev.swLat, next.swLat, BOUNDS_EPS) ||
+        changedEnough(prev.swLon, next.swLon, BOUNDS_EPS) ||
+        changedEnough(prev.neLat, next.neLat, BOUNDS_EPS) ||
+        changedEnough(prev.neLon, next.neLon, BOUNDS_EPS)
+      ) {
+        return next;
+      }
+      return prev;
+    });
+  }, THROTTLE_MS);
+
+  // Queries (mniej refetchy)
   const { data: clustersData, isLoading: clustersLoading } =
     useGetClustersQuery(
       {
@@ -667,10 +606,15 @@ export function ServerClusteredMap({
           neLat: defaultCenter.lat + 0.1,
           neLon: defaultCenter.lng + 0.1,
         },
-        zoom: mapZoom,
+        zoom: Math.round(mapZoom),
         filters: filters || undefined,
       },
-      { enabled: !!mapBounds }
+      {
+        enabled: !!mapBounds,
+        keepPreviousData: true,
+        staleTime: 10_000,
+        gcTime: 60_000,
+      }
     );
 
   const { data: regionIntentsData } = useGetRegionIntentsQuery(
@@ -680,10 +624,15 @@ export function ServerClusteredMap({
       perPage: 50,
       filters: filters || undefined,
     },
-    { enabled: !!selectedRegion }
+    {
+      enabled: !!selectedRegion,
+      keepPreviousData: true,
+      staleTime: 15_000,
+      gcTime: 60_000,
+    }
   );
 
-  // init map
+  // Inicjalizacja mapy
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -693,6 +642,8 @@ export function ServerClusteredMap({
       center: [defaultCenter.lng, defaultCenter.lat],
       zoom: defaultZoom,
       attributionControl: true,
+      fadeDuration: 0,
+      crossSourceCollisions: false,
     });
 
     map.addControl(
@@ -711,60 +662,78 @@ export function ServerClusteredMap({
       maxWidth: '460px',
     });
 
-    map.on('load', () => {
-      const updateBounds = () => {
-        const b = map.getBounds();
-        setMapBounds({
-          swLat: b.getSouth(),
-          swLon: b.getWest(),
-          neLat: b.getNorth(),
-          neLon: b.getEast(),
-        });
-        setMapZoom(map.getZoom());
-      };
-      updateBounds();
-      map.on('moveend', updateBounds);
-    });
+    const onLoad = () => {
+      throttledBoundsUpdate(); // inicjalny
+      //  map.on('move', throttledBoundsUpdate);
+      map.on('moveend', throttledBoundsUpdate);
+
+      // podczas ruchu chowamy popup (płynność)
+      // map.on('movestart', () => {
+      //   popupRef.current?.remove();
+      //   setSelectedRegion(null);
+      // });
+    };
+
+    if (map.isStyleLoaded()) onLoad();
+    else map.on('load', onLoad);
+
+    // Przygotuj jeden kontener + root dla popupu na przyszłość
+    popupContainerRef.current = document.createElement('div');
+    popupRootRef.current = createRoot(popupContainerRef.current);
 
     return () => {
+      // zamknij i wyczyść popup React
       if (popupRootRef.current) {
         popupRootRef.current.unmount();
         popupRootRef.current = null;
       }
+      popupContainerRef.current = null;
+
       popupRef.current?.remove();
       popupRef.current = null;
-      popupContainerRef.current = null;
+
       for (const { marker } of markerPoolRef.current.values()) marker.remove();
       markerPoolRef.current.clear();
       metaCacheRef.current.clear();
+
       mapRef.current?.remove();
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // motyw → setStyle
+  // Zmiana stylu (dark/light)
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     if (prevStyleUrlRef.current === currentStyleUrl) return;
     prevStyleUrlRef.current = currentStyleUrl;
+
+    // zdejmij poprzednie listenery zanim podmienisz style
+    // map.off('move', throttledBoundsUpdate);
+    map.off('moveend', throttledBoundsUpdate);
+
     map.setStyle(currentStyleUrl);
-  }, [currentStyleUrl]);
 
-  /* ───────── Render klastrów (pooled + themed) ───────── */
+    const rewire = () => {
+      throttledBoundsUpdate();
+      // map.on('move', throttledBoundsUpdate);
+      map.on('moveend', throttledBoundsUpdate);
+      // map.on('movestart', () => {
+      //   popupRef.current?.remove();
+      //   setSelectedRegion(null);
+      // });
+    };
+    if (map.isStyleLoaded()) rewire();
+    else map.once('load', rewire);
+  }, [currentStyleUrl, throttledBoundsUpdate]);
 
-  const clustersHash = useMemo(
-    () => hashClusters(clustersData?.clusters ?? []),
-    [clustersData]
-  );
+  /* ───────── Stabilny render klastrów (pooled + throttled) ───────── */
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-
-    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
-    const apply = () => {
+  const applyClusters = useThrottled(
+    (clusters: ClusterPoint[]) => {
+      const map = mapRef.current;
+      if (!map) return;
       const pool = markerPoolRef.current;
       const cache = metaCacheRef.current;
       const nextKeys = new Set<string>();
@@ -777,10 +746,6 @@ export function ServerClusteredMap({
         const existing = pool.get(key);
 
         if (existing) {
-          if (existing.count !== c.count) {
-            existing.count = c.count;
-            restyleFancyClusterEl(existing.el, c.count, meta);
-          }
           existing.marker.setLngLat([c.longitude, c.latitude]);
         } else {
           const el = createFancyClusterEl(c.count, meta);
@@ -791,7 +756,6 @@ export function ServerClusteredMap({
             .setLngLat([c.longitude, c.latitude])
             .addTo(map);
 
-          // click + klawiatura
           const open = (ev?: Event) => {
             ev?.stopPropagation?.();
             setSelectedRegion(c.region);
@@ -811,10 +775,15 @@ export function ServerClusteredMap({
           pool.delete(key);
         }
       }
-    };
+    },
+    THROTTLE_MS // 120ms
+  );
 
-    throttle(apply, 100)();
-  }, [clustersHash]);
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
+    applyClusters(clusters);
+  }, [clustersData, applyClusters]);
 
   /* ───────── Popup + aktualizacja meta markera ───────── */
 
@@ -845,31 +814,28 @@ export function ServerClusteredMap({
     const avgLat = valid.reduce((s, i) => s + (i.lat || 0), 0) / valid.length;
     const avgLng = valid.reduce((s, i) => s + (i.lng || 0), 0) / valid.length;
 
-    if (!popupContainerRef.current)
-      popupContainerRef.current = document.createElement('div');
-    if (!popupRootRef.current)
-      popupRootRef.current = createRoot(popupContainerRef.current);
-
-    popupRootRef.current.render(
-      <RegionPopup
-        intents={intents}
-        onIntentClick={(id) => {
-          onIntentClick?.(id);
-          popup.remove();
-          setSelectedRegion(null);
-        }}
-      />
-    );
-
-    popup
-      .setLngLat([avgLng, avgLat])
-      .setDOMContent(popupContainerRef.current!)
-      .addTo(map);
-    const onClose = () => setSelectedRegion(null);
-    popup.once('close', onClose);
-    return () => {
-      popup.off('close', onClose);
-    };
+    // render React popup do wcześniej przygotowanego root
+    if (popupRootRef.current && popupContainerRef.current) {
+      popupRootRef.current.render(
+        <RegionPopup
+          intents={intents}
+          onIntentClick={(id) => {
+            onIntentClick?.(id);
+            popup.remove();
+            setSelectedRegion(null);
+          }}
+        />
+      );
+      // odczekaj 1 klatkę
+      requestAnimationFrame(() => {
+        popup
+          .setLngLat([avgLng, avgLat])
+          .setDOMContent(popupContainerRef.current!)
+          .addTo(map);
+        const onClose = () => setSelectedRegion(null);
+        popup.once('close', onClose);
+      });
+    }
   }, [selectedRegion, regionIntentsData, onIntentClick]);
 
   /* ───────── Render ───────── */
@@ -879,11 +845,12 @@ export function ServerClusteredMap({
       <div
         ref={containerRef}
         className={clsx(
-          'rounded-2xl border overflow-hidden',
+          'rounded-2xl overflow-hidden',
           fullHeight ? 'h-full' : 'h-[520px]',
           'bg-white dark:bg-zinc-900'
         )}
         aria-label="Server-clustered intents map"
+        style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
       />
 
       {clustersLoading && (
@@ -893,29 +860,6 @@ export function ServerClusteredMap({
           </p>
         </div>
       )}
-
-      {clustersData?.clusters && (
-        <div className="absolute top-4 left-4 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-zinc-200 dark:border-zinc-700">
-          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            🗺️{' '}
-            {clustersData.clusters.reduce(
-              (sum: number, c: ClusterPoint) => sum + c.count,
-              0
-            )}{' '}
-            {(() => {
-              const n = clustersData.clusters.reduce(
-                (s: number, c: ClusterPoint) => s + c.count,
-                0
-              );
-              return n === 1 ? 'intent' : n <= 4 ? 'intenty' : 'intentów';
-            })()}
-          </p>
-        </div>
-      )}
-
-      <div className="absolute bottom-2 left-2 z-10 text-[10px] text-zinc-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-900/80 px-2 py-1 rounded">
-        © OpenStreetMap • MapLibre GL
-      </div>
     </div>
   );
 }
