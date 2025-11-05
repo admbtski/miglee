@@ -1,13 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
+import { CapacityBadge } from '@/components/ui/capacity-badge';
+import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
+import { PlanBadge } from '@/components/ui/plan-badge';
+import { Plan, planTheme } from '@/components/ui/plan-theme';
+import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
+import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
+import { VerifiedBadge } from '@/components/ui/verified-badge';
+import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import {
   useGetClustersQuery,
   useGetRegionIntentsQuery,
 } from '@/lib/api/map-clusters';
-import { createRoot, Root } from 'react-dom/client';
+import clsx from 'clsx';
+import { Calendar, MapPinIcon } from 'lucide-react';
+import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot, Root } from 'react-dom/client';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -16,7 +26,8 @@ export interface ServerClusteredMapProps {
   defaultZoom?: number;
   fullHeight?: boolean;
   lang?: string;
-  styleUrl?: string;
+  styleUrlLight?: string;
+  styleUrlDark?: string;
   filters?: {
     categorySlugs?: string[];
     levels?: ('BEGINNER' | 'INTERMEDIATE' | 'ADVANCED')[];
@@ -30,103 +41,72 @@ type ClusterPoint = {
   latitude: number;
   longitude: number;
   count: number;
-  region: string; // stabilny klucz kafelka
+  region: string;
 };
 
 type PopupIntent = {
   id: string;
   title: string;
   startAt: string;
+  endAt: string;
   address?: string | null;
   joinedCount?: number | null;
+  min?: number | null;
   max?: number | null;
-  owner?: { name?: string | null } | null;
+  owner?: {
+    name?: string | null;
+    imageUrl?: string | null;
+    verifiedAt?: string | null;
+  } | null;
   lat?: number | null;
   lng?: number | null;
+  isCanceled: boolean;
+  isDeleted: boolean;
+  isFull: boolean;
+  isOngoing: boolean;
+  hasStarted: boolean;
+  withinLock: boolean;
+  canJoin?: boolean | null;
+  levels?: GqlLevel[] | null;
+  plan?: Plan | null; // 'default' | 'basic' | 'plus' | 'pro'
+  meetingKind?: 'ONSITE' | 'ONLINE' | 'HYBRID' | null;
+  categorySlugs?: string[] | null;
 };
 
-/* ───────────────────────────── Popup UI (React) ───────────────────────────── */
+/* ───────────────────────────── Utils ───────────────────────────── */
 
-function RegionPopup({
-  intents,
-  lang = 'pl',
-  onIntentClick,
-  onClose,
-}: {
-  intents: PopupIntent[];
-  lang?: string;
-  onIntentClick?: (id: string) => void;
-  onClose?: () => void;
-}) {
-  const countLabel = useMemo(() => {
-    const n = intents.length;
-    if (n === 1) return '1 intent w tym obszarze';
-    if (n >= 2 && n <= 4) return `${n} intenty w tym obszarze`;
-    return `${n} intentów w tym obszarze`;
-  }, [intents.length]);
+const MONTHS_PL_SHORT = [
+  'sty',
+  'lut',
+  'mar',
+  'kwi',
+  'maj',
+  'cze',
+  'lip',
+  'sie',
+  'wrz',
+  'paź',
+  'gru',
+] as const;
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
 
-  return (
-    <div className="max-w-[360px] max-h-[420px] overflow-y-auto font-sans">
-      <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="m-0 text-[15px] font-bold text-zinc-900 dark:text-zinc-100">
-            {countLabel}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-xs px-2 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
-          >
-            Zamknij
-          </button>
-        </div>
-      </div>
+function formatDateRange(startISO: string, endISO: string) {
+  const start = new Date(startISO);
+  const end = new Date(endISO);
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate();
 
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-        {intents.map((intent) => {
-          const dateStr = new Date(intent.startAt).toLocaleString(lang, {
-            day: '2-digit',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          } as any);
-          return (
-            <button
-              key={intent.id}
-              onClick={() => onIntentClick?.(intent.id)}
-              className="w-full text-left px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors"
-            >
-              <div className="text-[14px] font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
-                {intent.title}
-              </div>
-              <div className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
-                📅 {dateStr}
-              </div>
-              {intent.address ? (
-                <div className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
-                  📍 {intent.address}
-                </div>
-              ) : null}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {(intent.joinedCount != null || intent.max != null) && (
-                  <span className="inline-flex text-[11px] text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 rounded-full px-2 py-[2px]">
-                    {intent.joinedCount ?? 0}/{intent.max ?? '—'} osób
-                  </span>
-                )}
-                {intent.owner?.name && (
-                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    👤 {intent.owner.name}
-                  </span>
-                )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  const fmt = (d: Date) =>
+    `${pad2(d.getDate())} ${MONTHS_PL_SHORT[d.getMonth()]}, ${pad2(
+      d.getHours()
+    )}:${pad2(d.getMinutes())}`;
+
+  return sameDay
+    ? `${fmt(start)} – ${pad2(end.getHours())}:${pad2(end.getMinutes())}`
+    : `${fmt(start)} – ${fmt(end)}`;
 }
-
-/* ───────────────────────────── Helpers ───────────────────────────── */
 
 function hashClusters(arr: ClusterPoint[]): string {
   return arr
@@ -139,15 +119,14 @@ function hashClusters(arr: ClusterPoint[]): string {
 }
 
 function throttle<T extends (...args: any[]) => void>(fn: T, ms: number): T {
-  let last = 0;
-  let timeout: any = null;
-  let lastArgs: any[] | null = null;
+  let last = 0,
+    timeout: any = null,
+    lastArgs: any[] | null = null;
   const run = () => {
     last = Date.now();
     timeout = null;
     if (lastArgs) {
-      // @ts-ignore
-      fn(...lastArgs);
+      /* @ts-ignore */ fn(...lastArgs);
       lastArgs = null;
     }
   };
@@ -165,33 +144,480 @@ function throttle<T extends (...args: any[]) => void>(fn: T, ms: number): T {
   } as T;
 }
 
-function createClusterElement(count: number): HTMLDivElement {
+/** Tailwind dark mode detection (class `dark` or prefers-color-scheme) */
+function useTailwindDarkMode(): boolean {
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof document !== 'undefined') {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) return true;
+    }
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const mm = window.matchMedia?.('(prefers-color-scheme: dark)');
+    const update = () =>
+      setIsDark(html.classList.contains('dark') || !!mm?.matches);
+
+    const obs = new MutationObserver(update);
+    obs.observe(html, { attributes: true, attributeFilter: ['class'] });
+    const onChange = () => update();
+    mm?.addEventListener?.('change', onChange);
+    update();
+
+    return () => {
+      obs.disconnect();
+      mm?.removeEventListener?.('change', onChange);
+    };
+  }, []);
+
+  return isDark;
+}
+
+function Avatar({
+  url,
+  alt,
+  size = 24,
+}: {
+  url?: string | null;
+  alt: string;
+  size?: number;
+}) {
+  const s = `${size}px`;
+  return (
+    <img
+      src={url || '/avatar-fallback.png'}
+      alt={alt}
+      className="object-cover rounded-full border border-neutral-200 dark:border-neutral-700"
+      style={{ width: s, height: s }}
+      loading="lazy"
+      decoding="async"
+    />
+  );
+}
+
+/* ───────────────────────────── Kategorie → kolory ───────────────────────────── */
+
+const CATEGORY_THEME: Record<
+  string,
+  { light: string; dark: string; from: string; to: string }
+> = {
+  running: {
+    light: '#e0f2fe',
+    dark: '#0b2536',
+    from: '#38bdf8',
+    to: '#0ea5e9',
+  },
+  yoga: { light: '#ecfccb', dark: '#0a2514', from: '#84cc16', to: '#16a34a' },
+  games: { light: '#efe6ff', dark: '#1a1030', from: '#a78bfa', to: '#8b5cf6' },
+  study: { light: '#fee2e2', dark: '#2b1111', from: '#f87171', to: '#ef4444' },
+  cooking: {
+    light: '#fef3c7',
+    dark: '#2b1f0a',
+    from: '#f59e0b',
+    to: '#d97706',
+  },
+};
+
+type ClusterMeta = {
+  meetingKind: 'ONSITE' | 'ONLINE' | 'HYBRID' | 'UNKNOWN';
+  colorFrom: string;
+  colorTo: string;
+  ringClass: string;
+};
+
+function defaultClusterMeta(): ClusterMeta {
+  return {
+    meetingKind: 'UNKNOWN',
+    colorFrom: '#6366f1',
+    colorTo: '#8b5cf6',
+    ringClass: 'ring-indigo-300 dark:ring-indigo-700/60',
+  };
+}
+
+/* ───────────────────────────── Markery klastrów ───────────────────────────── */
+
+function mkIcon(kind: 'ONSITE' | 'ONLINE' | 'HYBRID' | 'UNKNOWN') {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', '14');
+  svg.setAttribute('height', '14');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'white');
+  svg.setAttribute('stroke-width', '2');
+
+  const path = document.createElementNS(svg.namespaceURI, 'path');
+  switch (kind) {
+    case 'ONSITE':
+      path.setAttribute(
+        'd',
+        'M12 21s-6-5.7-6-10a6 6 0 1 1 12 0c0 4.3-6 10-6 10z'
+      );
+      break;
+    case 'ONLINE':
+      path.setAttribute(
+        'd',
+        'M2 8a10 10 0 0 1 20 0M4 12a8 8 0 0 1 16 0M7 16a5 5 0 0 1 10 0'
+      );
+      break;
+    case 'HYBRID':
+      path.setAttribute('d', 'M3 10h8v8H3zM13 6h8v12h-8z');
+      break;
+    default:
+      path.setAttribute('d', 'M12 2v20M2 12h20');
+  }
+  svg.appendChild(path);
+  return svg;
+}
+
+function createFancyClusterEl(
+  count: number,
+  meta: ClusterMeta
+): HTMLDivElement {
   const el = document.createElement('div');
-  el.className =
-    'rounded-full text-white font-bold shadow-lg ring-2 ring-white ' +
-    'bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-pink-500 ' +
-    'flex items-center justify-center select-none';
-  const size = Math.min(24 + count * 2, 48);
+  const size = Math.min(28 + count * 2, 52);
+
   el.style.width = `${size}px`;
   el.style.height = `${size}px`;
+  el.style.borderRadius = '9999px';
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.justifyContent = 'center';
+  el.style.color = 'white';
+  el.style.fontWeight = '800';
+  el.style.fontVariantNumeric = 'tabular-nums';
+  el.style.boxShadow = '0 8px 20px rgba(0,0,0,0.25)';
+  el.style.backgroundImage = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
+  el.style.position = 'relative';
   el.style.pointerEvents = 'auto';
   el.style.willChange = 'transform';
+  el.style.cursor = 'pointer';
+  el.tabIndex = 0; // a11y
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', `Klastrowane intenty: ${count}`);
+
+  const ring = document.createElement('div');
+  ring.className = `absolute inset-0 rounded-full ring-2 ${meta.ringClass}`;
+  el.appendChild(ring);
+
+  const iconWrap = document.createElement('div');
+  iconWrap.setAttribute('role', 'mk');
+  Object.assign(iconWrap.style, {
+    position: 'absolute',
+    top: '-6px',
+    left: '-6px',
+    width: '18px',
+    height: '18px',
+    borderRadius: '9999px',
+    background: 'rgba(0,0,0,0.28)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backdropFilter: 'blur(4px)',
+  } as CSSStyleDeclaration);
+  iconWrap.appendChild(mkIcon(meta.meetingKind));
+  el.appendChild(iconWrap);
+
   const label = document.createElement('span');
   label.textContent = String(count);
   label.style.fontSize = '12px';
-  label.style.lineHeight = '1';
   el.appendChild(label);
+
+  // focus ring
+  el.addEventListener(
+    'focus',
+    () => (ring.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.45)')
+  );
+  el.addEventListener('blur', () => (ring.style.boxShadow = 'none'));
+
   return el;
 }
 
-/* ───────────────────────────── Component ───────────────────────────── */
+function restyleFancyClusterEl(
+  el: HTMLDivElement,
+  count: number,
+  meta: ClusterMeta
+) {
+  const size = Math.min(28 + count * 2, 52);
+  el.style.width = `${size}px`;
+  el.style.height = `${size}px`;
+  el.style.backgroundImage = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
+
+  const ring = el.querySelector(
+    'div.absolute.inset-0.rounded-full'
+  ) as HTMLDivElement | null;
+  if (ring)
+    ring.className = `absolute inset-0 rounded-full ring-2 ${meta.ringClass}`;
+
+  const iconWrap = el.querySelector('div[role="mk"]') as HTMLDivElement | null;
+  if (iconWrap) iconWrap.remove();
+  const wrap = document.createElement('div');
+  wrap.setAttribute('role', 'mk');
+  Object.assign(wrap.style, {
+    position: 'absolute',
+    top: '-6px',
+    left: '-6px',
+    width: '18px',
+    height: '18px',
+    borderRadius: '9999px',
+    background: 'rgba(0,0,0,0.28)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backdropFilter: 'blur(4px)',
+  } as CSSStyleDeclaration);
+  wrap.appendChild(mkIcon(meta.meetingKind));
+  el.appendChild(wrap);
+
+  const label = el.querySelector('span');
+  if (label) label.textContent = String(count);
+}
+
+/* ───────────────────────────── Dominant meta ───────────────────────────── */
+
+function computeDominantMeta(intents: PopupIntent[]): ClusterMeta {
+  if (!intents.length) return defaultClusterMeta();
+
+  const kindCount: Record<string, number> = {};
+  for (const it of intents) {
+    const k = it.meetingKind ?? 'UNKNOWN';
+    kindCount[k] = (kindCount[k] ?? 0) + 1;
+  }
+  const meetingKind =
+    (Object.entries(kindCount).sort((a, b) => b[1] - a[1])[0]?.[0] as
+      | 'ONSITE'
+      | 'ONLINE'
+      | 'HYBRID'
+      | 'UNKNOWN') ?? 'UNKNOWN';
+
+  const catCount: Record<string, number> = {};
+  for (const it of intents) {
+    const slug = it.categorySlugs?.[0];
+    if (slug) catCount[slug] = (catCount[slug] ?? 0) + 1;
+  }
+  const topCat = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+  const planRank: Record<Plan | 'default', number> = {
+    default: 0,
+    basic: 1,
+    plus: 2,
+    pro: 3,
+  } as any;
+  let bestPlan: Plan | 'default' = 'default';
+  for (const it of intents) {
+    const p = (it.plan ?? 'default') as Plan | 'default';
+    if (planRank[p] > planRank[bestPlan]) bestPlan = p;
+  }
+  const theme = planTheme(bestPlan as Plan);
+
+  const t = (topCat && CATEGORY_THEME[topCat]) || {
+    light: '#e0e7ff',
+    dark: '#0f172a',
+    from: '#6366f1',
+    to: '#8b5cf6',
+  };
+
+  return {
+    meetingKind,
+    colorFrom: t.from,
+    colorTo: t.to,
+    ringClass: theme.ring,
+  };
+}
+
+/* ───────────────────────────── Popup UI (React) ───────────────────────────── */
+
+function PopupItem({
+  intent,
+  onClick,
+}: {
+  intent: PopupIntent;
+  onClick?: (id: string) => void;
+}) {
+  const {
+    startAt,
+    endAt,
+    isCanceled,
+    isDeleted,
+    isFull,
+    isOngoing,
+    hasStarted,
+    joinedCount,
+    max,
+    withinLock,
+    canJoin,
+  } = intent;
+
+  const fill = useMemo(
+    () => Math.min(100, Math.round((joinedCount / Math.max(1, max)) * 100)),
+    [joinedCount, max]
+  );
+
+  const levelsSorted = useMemo(
+    () => sortLevels((intent.levels ?? []) as GqlLevel[]),
+    [intent.levels]
+  );
+  const theme = useMemo(
+    () => planTheme((intent.plan ?? 'default') as Plan),
+    [intent.plan]
+  );
+
+  const { status } = useMemo(
+    () =>
+      computeJoinState({
+        startAt: new Date(startAt),
+        isCanceled,
+        isDeleted,
+        isFull,
+        isOngoing,
+        hasStarted,
+        withinLock,
+      }),
+    [startAt, hasStarted, isCanceled, isDeleted, isFull, isOngoing, withinLock]
+  );
+
+  return (
+    <button
+      onClick={() => onClick?.(intent.id)}
+      className={clsx(
+        'group w-full text-left rounded-xl ring-1 px-3.5 py-3 transition-all',
+        'bg-white dark:bg-zinc-900',
+        'ring-zinc-200 dark:ring-zinc-800',
+        'hover:shadow-sm hover:-translate-y-[1px]',
+        'focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-indigo-500/50'
+      )}
+    >
+      {/* header: title + plan accent */}
+      <div className="flex items-start gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="m-0 text-[15px] font-semibold leading-5 text-zinc-900 dark:text-zinc-100 truncate">
+              {intent.title}
+            </h4>
+            {intent.plan && intent.plan !== 'default' && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className={clsx(
+                    'inline-flex w-2.5 h-2.5 rounded-full ring-2',
+                    theme.ring
+                  )}
+                />
+                <PlanBadge
+                  plan={intent.plan as Plan}
+                  size="xs"
+                  variant="icon"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+            <Calendar className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{formatDateRange(startAt, endAt)}</span>
+          </div>
+
+          {intent.address ? (
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+              <MapPinIcon className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{intent.address}</span>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* organizer row */}
+      {intent.owner?.name ? (
+        <div className="mt-2 flex items-center gap-2 min-w-0">
+          <Avatar url={intent.owner?.imageUrl} alt="Organizer" size={22} />
+          <p className="text-[12px] truncate text-neutral-900 dark:text-neutral-100">
+            <span className="inline-flex items-center gap-1.5 max-w-full">
+              <span className="truncate">{intent.owner?.name}</span>
+              {/* pokaż tylko gdy rzeczywiście zweryfikowany */}
+              {intent.owner?.verifiedAt && (
+                <VerifiedBadge
+                  size="sm"
+                  variant="icon"
+                  verifiedAt={intent.owner.verifiedAt}
+                />
+              )}
+            </span>
+          </p>
+        </div>
+      ) : null}
+      {/* Progress */}
+      <div className="mt-1.5">
+        <SimpleProgressBar value={fill} active />
+      </div>
+      {/* capacity row */}
+      <div className="mt-2 flex flex-wrap items-center gap-1">
+        <CapacityBadge
+          size="sm"
+          statusReason={status.reason}
+          joinedCount={intent.joinedCount ?? 0}
+          min={intent.min ?? 0}
+          max={intent.max ?? 0}
+          isFull={isFull}
+          canJoin={!!canJoin}
+        />
+        {status.reason !== 'FULL' && (
+          <StatusBadge
+            size="sm"
+            tone={status.tone}
+            reason={status.reason}
+            label={status.label}
+          />
+        )}
+        {levelsSorted.map((lv) => (
+          <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
+        ))}
+      </div>
+
+      {/* thin plan underline accent */}
+      {intent.plan && intent.plan !== 'default' ? (
+        <div className={clsx('mt-3 h-[2px] rounded-full', theme.ring)} />
+      ) : null}
+    </button>
+  );
+}
+
+function RegionPopup({
+  intents,
+  onIntentClick,
+}: {
+  intents: PopupIntent[];
+  onIntentClick?: (id: string) => void;
+}) {
+  // scroll shadow – wizualny hint przewijania
+  return (
+    <div
+      className={clsx(
+        'max-w-[280px] max-h-[520px] overflow-y-auto font-sans relative',
+        'bg-white dark:bg-zinc-900',
+        'rounded-2xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800'
+      )}
+    >
+      <div className="p-2 grid gap-2">
+        {intents.map((it) => (
+          <PopupItem key={it.id} intent={it} onClick={onIntentClick} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────── Map Component ───────────────────────────── */
 
 export function ServerClusteredMap({
   defaultCenter = { lat: 52.2319, lng: 21.0067 },
   defaultZoom = 10,
   fullHeight = false,
   lang = 'pl',
-  styleUrl = 'https://tiles.openfreemap.org/styles/liberty',
+  styleUrlLight = 'https://tiles.openfreemap.org/styles/liberty',
+  styleUrlDark = 'https://tiles.openfreemap.org/styles/dark',
   filters,
   onIntentClick,
 }: ServerClusteredMapProps) {
@@ -199,11 +625,11 @@ export function ServerClusteredMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
 
-  // popup React root (utrzymywany, nie tworzymy w kółko)
+  // React root dla popupu
   const popupRootRef = useRef<Root | null>(null);
   const popupContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // pooling markerów: region -> { marker, el, count }
+  // pooling markerów
   const markerPoolRef = useRef<
     Map<
       string,
@@ -211,7 +637,10 @@ export function ServerClusteredMap({
     >
   >(new Map());
 
-  // stan mapy
+  // cache metadanych klastrów
+  const metaCacheRef = useRef<Map<string, ClusterMeta>>(new Map());
+
+  // bounds & zoom
   const [mapBounds, setMapBounds] = useState<{
     swLat: number;
     swLon: number;
@@ -220,8 +649,13 @@ export function ServerClusteredMap({
   } | null>(null);
   const [mapZoom, setMapZoom] = useState<number>(defaultZoom);
 
-  // region selected
+  // selected region
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+
+  // Tailwind theme
+  const isDark = useTailwindDarkMode();
+  const currentStyleUrl = isDark ? styleUrlDark : styleUrlLight;
+  const prevStyleUrlRef = useRef<string | null>(null);
 
   // data
   const { data: clustersData, isLoading: clustersLoading } =
@@ -255,7 +689,7 @@ export function ServerClusteredMap({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: styleUrl,
+      style: currentStyleUrl,
       center: [defaultCenter.lng, defaultCenter.lat],
       zoom: defaultZoom,
       attributionControl: true,
@@ -274,17 +708,17 @@ export function ServerClusteredMap({
     popupRef.current = new maplibregl.Popup({
       closeButton: true,
       closeOnClick: true,
-      maxWidth: '400px',
+      maxWidth: '460px',
     });
 
     map.on('load', () => {
       const updateBounds = () => {
-        const bounds = map.getBounds();
+        const b = map.getBounds();
         setMapBounds({
-          swLat: bounds.getSouth(),
-          swLon: bounds.getWest(),
-          neLat: bounds.getNorth(),
-          neLon: bounds.getEast(),
+          swLat: b.getSouth(),
+          swLon: b.getWest(),
+          neLat: b.getNorth(),
+          neLon: b.getEast(),
         });
         setMapZoom(map.getZoom());
       };
@@ -293,7 +727,6 @@ export function ServerClusteredMap({
     });
 
     return () => {
-      // popup cleanup
       if (popupRootRef.current) {
         popupRootRef.current.unmount();
         popupRootRef.current = null;
@@ -301,52 +734,56 @@ export function ServerClusteredMap({
       popupRef.current?.remove();
       popupRef.current = null;
       popupContainerRef.current = null;
-
-      // marker pool cleanup
-      for (const { marker } of markerPoolRef.current.values()) {
-        marker.remove();
-      }
+      for (const { marker } of markerPoolRef.current.values()) marker.remove();
       markerPoolRef.current.clear();
-
+      metaCacheRef.current.clear();
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [defaultCenter.lat, defaultCenter.lng, defaultZoom, styleUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  /* ───────────────────────────── Render clusters (pooled, throttled) ───────────────────────────── */
+  // motyw → setStyle
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (prevStyleUrlRef.current === currentStyleUrl) return;
+    prevStyleUrlRef.current = currentStyleUrl;
+    map.setStyle(currentStyleUrl);
+  }, [currentStyleUrl]);
 
-  const clustersHash = useMemo(() => {
-    const arr: ClusterPoint[] = clustersData?.clusters ?? [];
-    return hashClusters(arr);
-  }, [clustersData]);
+  /* ───────── Render klastrów (pooled + themed) ───────── */
+
+  const clustersHash = useMemo(
+    () => hashClusters(clustersData?.clusters ?? []),
+    [clustersData]
+  );
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
-    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
 
+    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
     const apply = () => {
       const pool = markerPoolRef.current;
+      const cache = metaCacheRef.current;
       const nextKeys = new Set<string>();
 
-      // update / create
       for (const c of clusters) {
-        const key = c.region; // stabilny dla kafelka
+        const key = c.region;
         nextKeys.add(key);
+
+        const meta = cache.get(key) ?? defaultClusterMeta();
         const existing = pool.get(key);
+
         if (existing) {
-          // update tylko jeśli zmieniły się coords lub count
           if (existing.count !== c.count) {
             existing.count = c.count;
-            existing.el.innerHTML = '';
-            const elNew = createClusterElement(c.count);
-            existing.el.className = elNew.className;
-            existing.el.style.cssText = elNew.style.cssText;
-            existing.el.appendChild(elNew.firstChild as Node);
+            restyleFancyClusterEl(existing.el, c.count, meta);
           }
           existing.marker.setLngLat([c.longitude, c.latitude]);
         } else {
-          const el = createClusterElement(c.count);
+          const el = createFancyClusterEl(c.count, meta);
           const marker = new maplibregl.Marker({
             element: el,
             anchor: 'center',
@@ -354,16 +791,20 @@ export function ServerClusteredMap({
             .setLngLat([c.longitude, c.latitude])
             .addTo(map);
 
-          el.addEventListener('click', (ev) => {
-            ev.stopPropagation();
+          // click + klawiatura
+          const open = (ev?: Event) => {
+            ev?.stopPropagation?.();
             setSelectedRegion(c.region);
+          };
+          el.addEventListener('click', open);
+          el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') open(e);
           });
 
           pool.set(key, { marker, el, count: c.count });
         }
       }
 
-      // remove stale
       for (const [key, entry] of pool.entries()) {
         if (!nextKeys.has(key)) {
           entry.marker.remove();
@@ -372,16 +813,15 @@ export function ServerClusteredMap({
       }
     };
 
-    const throttled = throttle(apply, 250);
-    throttled();
+    throttle(apply, 100)();
   }, [clustersHash]);
 
-  /* ───────────────────────────── React popup ───────────────────────────── */
+  /* ───────── Popup + aktualizacja meta markera ───────── */
 
   useEffect(() => {
     if (!selectedRegion || !regionIntentsData?.regionIntents) return;
-    const map = mapRef.current;
-    const popup = popupRef.current;
+    const map = mapRef.current,
+      popup = popupRef.current;
     if (!map || !popup) return;
 
     const intents = (regionIntentsData.regionIntents.data ||
@@ -397,30 +837,27 @@ export function ServerClusteredMap({
       return;
     }
 
+    const meta = computeDominantMeta(intents);
+    metaCacheRef.current.set(selectedRegion, meta);
+    const pooled = markerPoolRef.current.get(selectedRegion);
+    if (pooled) restyleFancyClusterEl(pooled.el, pooled.count, meta);
+
     const avgLat = valid.reduce((s, i) => s + (i.lat || 0), 0) / valid.length;
     const avgLng = valid.reduce((s, i) => s + (i.lng || 0), 0) / valid.length;
 
     if (!popupContainerRef.current)
       popupContainerRef.current = document.createElement('div');
-
-    if (!popupRootRef.current) {
+    if (!popupRootRef.current)
       popupRootRef.current = createRoot(popupContainerRef.current);
-    }
-
-    const handleClose = () => {
-      popup.remove();
-      setSelectedRegion(null);
-    };
 
     popupRootRef.current.render(
       <RegionPopup
         intents={intents}
-        lang={lang}
         onIntentClick={(id) => {
           onIntentClick?.(id);
-          handleClose();
+          popup.remove();
+          setSelectedRegion(null);
         }}
-        onClose={handleClose}
       />
     );
 
@@ -428,29 +865,31 @@ export function ServerClusteredMap({
       .setLngLat([avgLng, avgLat])
       .setDOMContent(popupContainerRef.current!)
       .addTo(map);
-
-    const onPopupClose = () => handleClose();
-    popup.once('close', onPopupClose);
-
+    const onClose = () => setSelectedRegion(null);
+    popup.once('close', onClose);
     return () => {
-      popup.off('close', onPopupClose);
+      popup.off('close', onClose);
     };
-  }, [selectedRegion, regionIntentsData, lang, onIntentClick]);
+  }, [selectedRegion, regionIntentsData, onIntentClick]);
+
+  /* ───────── Render ───────── */
 
   return (
     <div className="relative h-full">
       <div
         ref={containerRef}
-        className={`rounded-2xl border overflow-hidden ${
-          fullHeight ? 'h-full' : 'h-[520px]'
-        } bg-white dark:bg-zinc-900`}
+        className={clsx(
+          'rounded-2xl border overflow-hidden',
+          fullHeight ? 'h-full' : 'h-[520px]',
+          'bg-white dark:bg-zinc-900'
+        )}
         aria-label="Server-clustered intents map"
       />
 
       {clustersLoading && (
         <div className="absolute top-4 right-4 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-zinc-200 dark:border-zinc-700">
           <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            🔄 Ładowanie...
+            🔄 Ładowanie…
           </p>
         </div>
       )}
@@ -463,12 +902,13 @@ export function ServerClusteredMap({
               (sum: number, c: ClusterPoint) => sum + c.count,
               0
             )}{' '}
-            {clustersData.clusters.reduce(
-              (sum: number, c: ClusterPoint) => sum + c.count,
-              0
-            ) === 1
-              ? 'intent'
-              : 'intenty'}
+            {(() => {
+              const n = clustersData.clusters.reduce(
+                (s: number, c: ClusterPoint) => s + c.count,
+                0
+              );
+              return n === 1 ? 'intent' : n <= 4 ? 'intenty' : 'intentów';
+            })()}
           </p>
         </div>
       )}

@@ -534,7 +534,7 @@ export function EventCard({
 
         {/* Progress */}
         <div className="mt-1.5">
-          <SimpleProgressBar value={fill} active={canJoin} />
+          <SimpleProgressBar value={fill} active />
         </div>
 
         {/* Pills */}
