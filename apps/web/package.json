@@ -12,6 +12,7 @@
     "gql:gen": "graphql-codegen --config src/lib/api/codegen.ts"
   },
   "dependencies": {
+    "@deck.gl/mapbox": "^9.2.2",
     "@floating-ui/react": "^0.27.16",
     "@floating-ui/react-dom": "^2.1.6",
     "@googlemaps/js-api-loader": "^2.0.1",
@@ -44,6 +45,7 @@
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
+    "deck.gl": "^9.2.2",
     "framer-motion": "^12.23.22",
     "graphql": "^16.11.0",
     "graphql-request": "^7.2.0",

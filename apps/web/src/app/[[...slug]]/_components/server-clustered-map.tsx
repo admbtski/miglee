@@ -3,7 +3,7 @@
 import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { PlanBadge } from '@/components/ui/plan-badge';
-import { Plan, planTheme } from '@/components/ui/plan-theme';
+import { Plan } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
@@ -13,7 +13,9 @@ import {
   useGetClustersQuery,
   useGetRegionIntentsQuery,
 } from '@/lib/api/map-clusters';
+import { MapboxOverlay } from '@deck.gl/mapbox';
 import clsx from 'clsx';
+import { ScatterplotLayer, TextLayer } from 'deck.gl';
 import { Calendar, MapPinIcon } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -177,195 +179,117 @@ function Avatar({
   );
 }
 
-/* ───────────────────────────── CSS Animations ───────────────────────────── */
+/* ───────────────────────────── deck.gl Layer Builder ───────────────────────────── */
 
-const PULSE_KEYFRAMES = `
-@keyframes marker-pulse {
-  0%, 100% {
-    box-shadow: 
-      0 6px 14px rgba(0,0,0,0.18), 
-      0 0 0 0 rgba(99, 102, 241, 0.7),
-      inset 0 0 0 0 rgba(255, 255, 255, 0);
-    opacity: 1;
-  }
-  50% {
-    box-shadow: 
-      0 8px 20px rgba(0,0,0,0.3), 
-      0 0 0 10px rgba(99, 102, 241, 0),
-      inset 0 0 15px 2px rgba(255, 255, 255, 0.4);
-    opacity: 0.95;
-  }
-}
-`;
-
-// Inject keyframes to document once
-if (typeof document !== 'undefined') {
-  const styleId = 'marker-pulse-keyframes';
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = PULSE_KEYFRAMES;
-    document.head.appendChild(style);
-  }
-}
-
-/* ───────────────────────────── Kategorie → kolory ───────────────────────────── */
-
-const CATEGORY_THEME: Record<
-  string,
-  { light: string; dark: string; from: string; to: string }
-> = {
-  running: {
-    light: '#e0f2fe',
-    dark: '#0b2536',
-    from: '#38bdf8',
-    to: '#0ea5e9',
-  },
-  yoga: { light: '#ecfccb', dark: '#0a2514', from: '#84cc16', to: '#16a34a' },
-  games: { light: '#efe6ff', dark: '#1a1030', from: '#a78bfa', to: '#8b5cf6' },
-  study: { light: '#fee2e2', dark: '#2b1111', from: '#f87171', to: '#ef4444' },
-  cooking: {
-    light: '#fef3c7',
-    dark: '#2b1f0a',
-    from: '#f59e0b',
-    to: '#d97706',
-  },
-};
-
-type ClusterMeta = {
-  meetingKind: 'ONSITE' | 'ONLINE' | 'HYBRID' | 'UNKNOWN';
-  colorFrom: string;
-  colorTo: string;
-  ringClass: string;
-};
-
-function defaultClusterMeta(): ClusterMeta {
-  return {
-    meetingKind: 'UNKNOWN',
-    colorFrom: '#6366f1',
-    colorTo: '#8b5cf6',
-    ringClass: 'ring-indigo-300 dark:ring-indigo-700/60',
-  };
-}
-
-function createFancyClusterEl(
-  count: number,
-  meta: ClusterMeta
-): HTMLDivElement {
-  const el = document.createElement('div');
-  const size = Math.min(28 + count * 2, 52);
-
-  el.style.width = `${size}px`;
-  el.style.height = `${size}px`;
-  el.style.borderRadius = '9999px';
-  el.style.display = 'flex';
-  el.style.alignItems = 'center';
-  el.style.justifyContent = 'center';
-  el.style.color = 'white';
-  el.style.fontWeight = '800';
-  el.style.fontVariantNumeric = 'tabular-nums';
-  el.style.boxShadow = '0 6px 14px rgba(0,0,0,0.18)';
-  el.style.backgroundImage = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
-  el.style.position = 'relative';
-  el.style.pointerEvents = 'auto';
-  el.style.cursor = 'pointer';
-  el.tabIndex = 0;
-  el.setAttribute('role', 'button');
-  el.setAttribute('aria-label', `Klastrowane intenty: ${count}`);
-
-  const ring = document.createElement('div');
-  ring.className = `absolute inset-0 rounded-full ring-2 ${meta.ringClass}`;
-  el.appendChild(ring);
-
-  const label = document.createElement('span');
-  label.textContent = String(count);
-  label.style.fontSize = '12px';
-  el.appendChild(label);
-
-  el.addEventListener(
-    'focus',
-    () => (ring.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.45)')
-  );
-  el.addEventListener('blur', () => (ring.style.boxShadow = 'none'));
-
-  return el;
-}
-
-/** Leniwy restyle (bez zdejmowania/wstawiania ikon) */
-function restyleFancyClusterEl(
-  el: HTMLDivElement,
-  count: number,
-  meta: ClusterMeta
+function buildLayers(
+  clusters: ClusterPoint[],
+  opts: {
+    hovered?: { lat?: number | null; lng?: number | null };
+    pulse?: number; // 0..1 — faza animacji
+  } = {}
 ) {
-  const bg = `linear-gradient(135deg, ${meta.colorFrom}, ${meta.colorTo})`;
-  if (el.style.backgroundImage !== bg) {
-    el.style.backgroundImage = bg;
+  const { hovered, pulse = 0 } = opts;
+
+  // Znajdź najbliższy klaster do hovered
+  let highlighted: ClusterPoint | null = null;
+  if (hovered?.lat != null && hovered?.lng != null && clusters.length) {
+    let min = Infinity;
+    for (const c of clusters) {
+      const dx = c.latitude - hovered.lat!;
+      const dy = c.longitude - hovered.lng!;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < min) {
+        min = d2;
+        highlighted = c;
+      }
+    }
   }
+  const highlightedRegion = highlighted?.region ?? null;
 
-  const ring = el.querySelector(
-    'div.absolute.inset-0.rounded-full'
-  ) as HTMLDivElement | null;
-  if (ring) {
-    const want = `absolute inset-0 rounded-full ring-2 ${meta.ringClass}`;
-    if (ring.className !== want) ring.className = want;
-  }
+  // Skala pulsu (od 1.0 do ~1.35)
+  const pulseScale = 1 + 0.35 * (0.5 + 0.5 * Math.sin(pulse * Math.PI * 2));
 
-  const label = el.querySelector('span');
-  if (label && label.textContent !== String(count)) {
-    label.textContent = String(count);
-  }
-}
+  const basePoints = new ScatterplotLayer<ClusterPoint>({
+    id: 'clusters-scatter',
+    data: clusters,
+    pickable: true,
+    radiusUnits: 'pixels',
+    parameters: { depthTest: false, depthMask: false },
+    getPosition: (d) => [d.longitude, d.latitude],
+    getRadius: (d) => {
+      const base = Math.min(14 + d.count * 1.6, 28);
+      // podbij delikatnie radius dla highlight (bez pulsowania — to robi ring)
+      return d.region === highlightedRegion ? base + 3 : base;
+    },
+    getFillColor: (d) =>
+      d.region === highlightedRegion
+        ? [120, 130, 255, 240]
+        : [99, 102, 241, 220],
+    getLineColor: [0, 0, 0, 80],
+    getLineWidth: 1.5,
+    transitions: {
+      // brak animacji pozycji — zmniejsza mikromrugnięcia
+      getRadius: 120,
+      getFillColor: 120,
+    },
+    updateTriggers: {
+      getRadius:
+        clusters.map((c) => c.count).join(',') + '|' + highlightedRegion,
+      getFillColor: highlightedRegion,
+    },
+  });
 
-/* ───────────────────────────── Dominant meta ───────────────────────────── */
+  // Warstwa pulsującego pierścienia nad podświetlonym klastrem
+  const pulseRing =
+    highlightedRegion != null
+      ? new ScatterplotLayer<ClusterPoint>({
+          id: 'clusters-pulse',
+          data: clusters.filter((c) => c.region === highlightedRegion),
+          pickable: false,
+          radiusUnits: 'pixels',
+          billboard: true,
+          parameters: { depthTest: false, depthMask: false },
+          stroked: true,
+          filled: false,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: (d) => {
+            const base = Math.min(14 + d.count * 1.6, 28);
+            return base * pulseScale * 1.3; // większy, oddech
+          },
+          getLineColor: [
+            99,
+            102,
+            241,
+            Math.round(
+              150 + 80 * (1 - Math.abs(Math.sin(pulse * Math.PI * 2)))
+            ),
+          ],
+          getLineWidth: 2.5,
+          // kluczowe — aktualizuj na zmianę fazy
+          updateTriggers: {
+            getRadius: pulse,
+            getLineColor: pulse,
+          },
+        })
+      : null;
 
-function computeDominantMeta(intents: PopupIntent[]): ClusterMeta {
-  if (!intents.length) return defaultClusterMeta();
+  const labels = new TextLayer<ClusterPoint>({
+    id: 'clusters-labels',
+    data: clusters,
+    parameters: { depthTest: false, depthMask: false },
+    getPosition: (d) => [d.longitude, d.latitude],
+    getText: (d) => String(d.count),
+    getSize: 12,
+    sizeUnits: 'pixels',
+    getTextAnchor: 'middle',
+    getAlignmentBaseline: 'center',
+    getColor: [255, 255, 255, 255],
+    background: true,
+    getBackgroundColor: [0, 0, 0, 60],
+    backgroundPadding: [2, 2],
+  });
 
-  const kindCount: Record<string, number> = {};
-  for (const it of intents) {
-    const k = it.meetingKind ?? 'UNKNOWN';
-    kindCount[k] = (kindCount[k] ?? 0) + 1;
-  }
-  const meetingKind =
-    (Object.entries(kindCount).sort((a, b) => b[1] - a[1])[0]?.[0] as
-      | 'ONSITE'
-      | 'ONLINE'
-      | 'HYBRID'
-      | 'UNKNOWN') ?? 'UNKNOWN';
-
-  const catCount: Record<string, number> = {};
-  for (const it of intents) {
-    const slug = it.categorySlugs?.[0];
-    if (slug) catCount[slug] = (catCount[slug] ?? 0) + 1;
-  }
-  const topCat = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0];
-
-  const planRank: Record<Plan | 'default', number> = {
-    default: 0,
-    basic: 1,
-    plus: 2,
-    pro: 3,
-  } as any;
-  let bestPlan: Plan | 'default' = 'default';
-  for (const it of intents) {
-    const p = (it.plan ?? 'default') as Plan | 'default';
-    if (planRank[p] > planRank[bestPlan]) bestPlan = p;
-  }
-  const theme = planTheme(bestPlan as Plan);
-
-  const t = (topCat && CATEGORY_THEME[topCat]) || {
-    light: '#e0e7ff',
-    dark: '#0f172a',
-    from: '#6366f1',
-    to: '#8b5cf6',
-  };
-
-  return {
-    meetingKind,
-    colorFrom: t.from,
-    colorTo: t.to,
-    ringClass: theme.ring,
-  };
+  return pulseRing ? [basePoints, pulseRing, labels] : [basePoints, labels];
 }
 
 /* ───────────────────────────── Popup UI (React) ───────────────────────────── */
@@ -549,7 +473,6 @@ export function ServerClusteredMap({
   styleUrlDark = 'https://tiles.openfreemap.org/styles/dark',
   filters,
   onIntentClick,
-  hoveredIntentId,
   hoveredLat,
   hoveredLng,
 }: ServerClusteredMapProps) {
@@ -561,16 +484,9 @@ export function ServerClusteredMap({
   const popupRootRef = useRef<Root | null>(null);
   const popupContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // pooling markerów
-  const markerPoolRef = useRef<
-    Map<
-      string,
-      { marker: maplibregl.Marker; el: HTMLDivElement; count: number }
-    >
-  >(new Map());
-
-  // cache metadanych klastrów
-  const metaCacheRef = useRef<Map<string, ClusterMeta>>(new Map());
+  // deck.gl overlay (oddzielny canvas — brak z-fightingu)
+  const deckOverlayRef = useRef<MapboxOverlay | null>(null);
+  const lastLayersRef = useRef<any[]>([]);
 
   // bounds & zoom
   const [mapBounds, setMapBounds] = useState<{
@@ -666,6 +582,68 @@ export function ServerClusteredMap({
     }
   );
 
+  // Poprzednie dane klastrów (zatrzymaj podczas ładowania)
+  const prevClustersRef = useRef<ClusterPoint[]>([]);
+
+  // Płaskie dane do warstw (stabilny input do memo)
+  const clusters: ClusterPoint[] = useMemo(() => {
+    const newClusters = (clustersData?.clusters ?? []) as ClusterPoint[];
+
+    // Podczas ładowania zachowaj poprzednie dane - NO FLICKER!
+    if (clustersLoading && prevClustersRef.current.length > 0) {
+      return prevClustersRef.current;
+    }
+
+    // Zapisz nowe dane jako poprzednie
+    if (newClusters.length > 0) {
+      prevClustersRef.current = newClusters;
+    }
+
+    return newClusters;
+  }, [clustersData?.clusters, clustersLoading]);
+
+  /* ───────── Pulse animation state (0..1) ───────── */
+  const [pulseTick, setPulseTick] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number | null>(null);
+  const PULSE_PERIOD_MS = 1200; // okres „oddechu”
+
+  useEffect(() => {
+    const wantsPulse = hoveredLat != null && hoveredLng != null;
+    if (!wantsPulse) {
+      // zatrzymaj i zresetuj
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      lastTimeRef.current = null;
+      setPulseTick(0);
+      return;
+    }
+
+    const loop = (t: number) => {
+      if (lastTimeRef.current == null) lastTimeRef.current = t;
+      const elapsed = t - lastTimeRef.current;
+      // przelicz na 0..1
+      const phase = (elapsed % PULSE_PERIOD_MS) / PULSE_PERIOD_MS;
+      setPulseTick(phase);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      lastTimeRef.current = null;
+    };
+  }, [hoveredLat, hoveredLng]);
+
+  // Warstwy — memo (zależne także od pulseTick)
+  const layers = useMemo(() => {
+    return buildLayers(clusters, {
+      hovered: { lat: hoveredLat ?? null, lng: hoveredLng ?? null },
+      pulse: pulseTick,
+    });
+  }, [clusters, hoveredLat, hoveredLng, pulseTick]);
+
   // Inicjalizacja mapy
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -675,9 +653,7 @@ export function ServerClusteredMap({
       style: currentStyleUrl,
       center: [defaultCenter.lng, defaultCenter.lat],
       zoom: defaultZoom,
-      attributionControl: {
-        compact: true,
-      },
+      attributionControl: { compact: true },
       fadeDuration: 0,
       crossSourceCollisions: false,
     });
@@ -699,26 +675,28 @@ export function ServerClusteredMap({
     });
 
     const onLoad = () => {
-      throttledBoundsUpdate(); // inicjalny
-      //  map.on('move', throttledBoundsUpdate);
+      throttledBoundsUpdate();
       map.on('moveend', throttledBoundsUpdate);
 
-      // podczas ruchu chowamy popup (płynność)
-      // map.on('movestart', () => {
-      //   popupRef.current?.remove();
-      //   setSelectedRegion(null);
-      // });
+      // deck.gl overlay – osobny canvas (no flicker)
+      const overlay = new MapboxOverlay({ interleaved: false });
+      map.addControl(overlay as any);
+      deckOverlayRef.current = overlay;
+
+      if (layers?.length) {
+        lastLayersRef.current = layers;
+        overlay.setProps({ layers });
+      }
     };
 
     if (map.isStyleLoaded()) onLoad();
     else map.on('load', onLoad);
 
-    // Przygotuj jeden kontener + root dla popupu na przyszłość
+    // kontener + root dla popupu
     popupContainerRef.current = document.createElement('div');
     popupRootRef.current = createRoot(popupContainerRef.current);
 
     return () => {
-      // zamknij i wyczyść popup React
       if (popupRootRef.current) {
         popupRootRef.current.unmount();
         popupRootRef.current = null;
@@ -728,9 +706,10 @@ export function ServerClusteredMap({
       popupRef.current?.remove();
       popupRef.current = null;
 
-      for (const { marker } of markerPoolRef.current.values()) marker.remove();
-      markerPoolRef.current.clear();
-      metaCacheRef.current.clear();
+      if (deckOverlayRef.current) {
+        deckOverlayRef.current.finalize();
+        deckOverlayRef.current = null;
+      }
 
       mapRef.current?.remove();
       mapRef.current = null;
@@ -745,85 +724,42 @@ export function ServerClusteredMap({
     if (prevStyleUrlRef.current === currentStyleUrl) return;
     prevStyleUrlRef.current = currentStyleUrl;
 
-    // zdejmij poprzednie listenery zanim podmienisz style
-    // map.off('move', throttledBoundsUpdate);
     map.off('moveend', throttledBoundsUpdate);
-
     map.setStyle(currentStyleUrl);
 
     const rewire = () => {
       throttledBoundsUpdate();
-      // map.on('move', throttledBoundsUpdate);
       map.on('moveend', throttledBoundsUpdate);
-      // map.on('movestart', () => {
-      //   popupRef.current?.remove();
-      //   setSelectedRegion(null);
-      // });
+      if (deckOverlayRef.current && lastLayersRef.current.length) {
+        deckOverlayRef.current.setProps({ layers: lastLayersRef.current });
+      }
     };
     if (map.isStyleLoaded()) rewire();
     else map.once('load', rewire);
   }, [currentStyleUrl, throttledBoundsUpdate]);
 
-  /* ───────── Stabilny render klastrów (pooled + throttled) ───────── */
-
-  const applyClusters = useThrottled((clusters: ClusterPoint[]) => {
-    const map = mapRef.current;
-    if (!map) return;
-    const pool = markerPoolRef.current;
-    const cache = metaCacheRef.current;
-    const nextKeys = new Set<string>();
-
-    for (const c of clusters) {
-      const key = c.region;
-      nextKeys.add(key);
-
-      const meta = cache.get(key) ?? defaultClusterMeta();
-      const existing = pool.get(key);
-
-      if (existing) {
-        // Aktualizuj pozycję i count
-        existing.marker.setLngLat([c.longitude, c.latitude]);
-        if (existing.count !== c.count) {
-          existing.count = c.count;
-          restyleFancyClusterEl(existing.el, c.count, meta);
-        }
-      } else {
-        const el = createFancyClusterEl(c.count, meta);
-        const marker = new maplibregl.Marker({
-          element: el,
-          anchor: 'center',
-        })
-          .setLngLat([c.longitude, c.latitude])
-          .addTo(map);
-
-        const open = (ev?: Event) => {
-          ev?.stopPropagation?.();
-          setSelectedRegion(c.region);
-        };
-        el.addEventListener('click', open);
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') open(e);
-        });
-
-        pool.set(key, { marker, el, count: c.count });
-      }
-    }
-
-    for (const [key, entry] of pool.entries()) {
-      if (!nextKeys.has(key)) {
-        entry.marker.remove();
-        pool.delete(key);
-      }
-    }
-  }, THROTTLE_MS);
-
+  // Render/mount warstw tylko gdy layers się realnie zmieniają
   useEffect(() => {
-    if (!mapRef.current) return;
-    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
-    applyClusters(clusters);
-  }, [clustersData, applyClusters]);
+    if (!deckOverlayRef.current || !layers?.length) return;
+    lastLayersRef.current = layers;
+    deckOverlayRef.current.setProps({
+      layers,
+      onClick: (info: any) => {
+        const obj = info.object as ClusterPoint | null;
+        if (!obj) return;
+        setSelectedRegion(obj.region);
+      },
+      onHover: (info: any) => {
+        if (mapRef.current) {
+          mapRef.current.getCanvas().style.cursor = info.object
+            ? 'pointer'
+            : '';
+        }
+      },
+    });
+  }, [layers]);
 
-  /* ───────── Popup + aktualizacja meta markera ───────── */
+  /* ───────── Popup React ───────── */
 
   useEffect(() => {
     if (!selectedRegion || !regionIntentsData?.regionIntents) return;
@@ -857,6 +793,7 @@ export function ServerClusteredMap({
         (intent.meetingKind as 'ONSITE' | 'ONLINE' | 'HYBRID') ?? null,
       categorySlugs: intent.categories?.map((c: any) => c.slug) ?? null,
     }));
+
     if (!intents.length) {
       setSelectedRegion(null);
       return;
@@ -868,15 +805,9 @@ export function ServerClusteredMap({
       return;
     }
 
-    const meta = computeDominantMeta(intents);
-    metaCacheRef.current.set(selectedRegion, meta);
-    const pooled = markerPoolRef.current.get(selectedRegion);
-    if (pooled) restyleFancyClusterEl(pooled.el, pooled.count, meta);
-
     const avgLat = valid.reduce((s, i) => s + (i.lat || 0), 0) / valid.length;
     const avgLng = valid.reduce((s, i) => s + (i.lng || 0), 0) / valid.length;
 
-    // render React popup do wcześniej przygotowanego root
     if (popupRootRef.current && popupContainerRef.current) {
       popupRootRef.current.render(
         <RegionPopup
@@ -888,7 +819,6 @@ export function ServerClusteredMap({
           }}
         />
       );
-      // odczekaj 1 klatkę
       requestAnimationFrame(() => {
         popup
           .setLngLat([avgLng, avgLat])
@@ -899,54 +829,6 @@ export function ServerClusteredMap({
       });
     }
   }, [selectedRegion, regionIntentsData, onIntentClick]);
-
-  /* ───────── Hover Effect: Find and pulse marker ───────── */
-
-  useEffect(() => {
-    if (!hoveredIntentId || hoveredLat == null || hoveredLng == null) {
-      // Remove pulse from all markers
-      for (const { el } of markerPoolRef.current.values()) {
-        el.style.animation = '';
-      }
-      return;
-    }
-
-    // Find the cluster that contains this intent's coordinates
-    const clusters: ClusterPoint[] = clustersData?.clusters ?? [];
-    let closestCluster: ClusterPoint | null = null;
-    let minDistance = Infinity;
-
-    // Find closest cluster to the hovered intent coordinates
-    for (const cluster of clusters) {
-      const distance = Math.sqrt(
-        Math.pow(cluster.latitude - hoveredLat, 2) +
-          Math.pow(cluster.longitude - hoveredLng, 2)
-      );
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestCluster = cluster;
-      }
-    }
-
-    // Dynamiczny threshold w zależności od zoomu
-    // Im mniejszy zoom, tym większy threshold (klastry są bardziej "zgrupowane")
-    const zoomLevel = mapRef.current?.getZoom() ?? defaultZoom;
-    const dynamicThreshold = Math.max(0.05, 5 / Math.pow(2, zoomLevel - 5));
-
-    // Apply pulse animation to the closest cluster
-    if (closestCluster && minDistance < dynamicThreshold) {
-      const pooled = markerPoolRef.current.get(closestCluster.region);
-
-      if (pooled) {
-        // Remove animation from all others first
-        for (const { el } of markerPoolRef.current.values()) {
-          el.style.animation = '';
-        }
-        // Apply pulse to matched cluster - NO TRANSFORM!
-        pooled.el.style.animation = 'marker-pulse 1.5s ease-in-out infinite';
-      }
-    }
-  }, [hoveredIntentId, hoveredLat, hoveredLng, clustersData]);
 
   /* ───────── Render ───────── */
 
