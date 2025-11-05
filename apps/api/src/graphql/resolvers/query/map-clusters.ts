@@ -64,13 +64,13 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
     SELECT i.id, i.lat, i.lng
     FROM intents i
-    INNER JOIN users u ON u.id = i.owner_id
+    INNER JOIN users u ON u.id = i."ownerId"
     CROSS JOIN bbox
     WHERE i.geom IS NOT NULL
       AND ST_Intersects(i.geom, bbox.geom)
       AND i.visibility = 'PUBLIC'
-      AND i.canceled_at IS NULL
-      AND i.deleted_at IS NULL
+      AND i."canceledAt" IS NULL
+      AND i."deletedAt" IS NULL
       ${whereClause}
     `,
     ...params
@@ -184,15 +184,15 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
     SELECT i.id
     FROM intents i
-    INNER JOIN users u ON u.id = i.owner_id
+    INNER JOIN users u ON u.id = i."ownerId"
     CROSS JOIN bbox
     WHERE i.geom IS NOT NULL
       AND ST_Intersects(i.geom, bbox.geom)
       AND i.visibility = 'PUBLIC'
-      AND i.canceled_at IS NULL
-      AND i.deleted_at IS NULL
+      AND i."canceledAt" IS NULL
+      AND i."deletedAt" IS NULL
       ${whereClause}
-    ORDER BY i.start_at ASC
+    ORDER BY i."startAt" ASC
     LIMIT $5 OFFSET $6
     `,
     ...params
@@ -212,13 +212,13 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
     SELECT COUNT(*)::int AS c
     FROM intents i
-    INNER JOIN users u ON u.id = i.owner_id
+    INNER JOIN users u ON u.id = i."ownerId"
     CROSS JOIN bbox
     WHERE i.geom IS NOT NULL
       AND ST_Intersects(i.geom, bbox.geom)
       AND i.visibility = 'PUBLIC'
-      AND i.canceled_at IS NULL
-      AND i.deleted_at IS NULL
+      AND i."canceledAt" IS NULL
+      AND i."deletedAt" IS NULL
       ${whereClause}
     `,
     ...countParams

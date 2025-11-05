@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
 import { EventCard } from './_components/event-card';
-import { IntentsMapPanel } from './_components/intents-map-panel';
+import { ServerClusteredMap } from './_components/server-clustered-map';
 
 import { FilterModal } from './_components/filter-modal';
 import { useCommittedMapVisible } from './_hooks/use-comitted-map-vision';
@@ -391,34 +391,18 @@ export function IntentsPage() {
               transition={{ type: 'spring', duration: 0.5, bounce: 0 }}
             >
               <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))]">
-                <IntentsMapPanel
-                  intents={flatItems.map((item, i) => ({
-                    id: item.id,
-                    title: item.title ?? 'Untitled',
-                    startAt: item.startAt,
-                    endAt: item.endAt,
-                    description: item.description,
-                    address: item.address,
-                    onlineUrl: item.onlineUrl,
-                    lat: item.lat,
-                    lng: item.lng,
-                    joinedCount: item.joinedCount,
-                    max: item.max,
-                    tags: item.tags ?? [],
-                    categories: item.categories ?? [],
-                    isOnline: item.isOnline,
-                    isOnsite: item.isOnsite,
-                    isHybrid: item.isHybrid,
-                    addressVisibility: item.addressVisibility,
-                    levels: item.levels ?? [],
-                    plan: planForIndex(i), // jak w EventCard
-                    owner: {
-                      name: item.owner?.name,
-                      imageUrl: item.owner?.imageUrl,
-                    },
-                  }))}
+                <ServerClusteredMap
                   fullHeight
                   lang={appLanguage}
+                  filters={{
+                    categorySlugs: categories,
+                    levels: levels as any,
+                    verifiedOnly: verifiedOnly,
+                  }}
+                  onIntentClick={(intentId) => {
+                    // Navigate to intent details or open modal
+                    window.location.href = `/${intentId}`;
+                  }}
                 />
               </div>
             </motion.aside>
