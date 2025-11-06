@@ -891,11 +891,12 @@ export function FilterModal({
                 <div className="flex flex-wrap gap-2">
                   {[
                     IntentStatus.Any,
+                    IntentStatus.Available,
                     IntentStatus.Ongoing,
-                    IntentStatus.Started,
                     IntentStatus.Full,
                     IntentStatus.Locked,
-                    IntentStatus.Available,
+                    IntentStatus.Past,
+                    IntentStatus.Locked,
                   ].map((val) => (
                     <Pill
                       key={val}

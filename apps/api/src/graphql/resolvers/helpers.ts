@@ -203,11 +203,11 @@ export function pickLocation(
  * ========================================================================== */
 
 function getViewerMembership(i: IntentWithGraph, viewerId?: string) {
-  const m =
-    viewerId &&
-    (i.members.find((mm) => mm.userId === viewerId) as
-      | (IntentMemberWithUsers & { status: string; role: string })
-      | undefined);
+  const m = viewerId
+    ? (i.members.find((mm) => mm.userId === viewerId) as
+        | (IntentMemberWithUsers & { status: string; role: string })
+        | undefined)
+    : undefined;
 
   const role =
     (m?.role as 'OWNER' | 'MODERATOR' | 'PARTICIPANT' | undefined) ?? null;
@@ -335,10 +335,11 @@ function computeIntentDerived(i: IntentWithGraph) {
   const endDate = new Date(i.endAt ?? i.startAt);
 
   const joinedCount = i.members.filter((m) => m.status === 'JOINED').length;
-  const isFull = typeof i.max === 'number' ? joinedCount >= i.max : false;
+  const isFull =
+    typeof i.max === 'number' && i.max > 0 ? joinedCount >= i.max : false;
   const hasStarted = now >= startDate;
-  const isOngoing = now >= startDate && now <= endDate;
-  const hasEnded = now > endDate;
+  const isOngoing = now >= startDate && now < endDate;
+  const hasEnded = now >= endDate;
   const isCanceled = Boolean(i.canceledAt);
   const isDeleted = Boolean(i.deletedAt);
   const withinLock = !hasStarted && hoursUntil(startDate) <= lockHrs;
@@ -615,7 +616,7 @@ export function mapNotification(
 /* ---- DM Thread ---- */
 export function mapDmThread(
   t: DmThreadWithGraph,
-  currentUserId?: string
+  _currentUserId?: string
 ): GQLDmThread {
   const lastMessage = t.messages?.[0] ?? null;
 

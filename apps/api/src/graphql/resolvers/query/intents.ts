@@ -33,6 +33,10 @@ function computeJoinOpenAndFlags(row: {
   joinCutoffMinutesBeforeStart: number | null;
   lateJoinCutoffMinutesAfterStart: number | null;
   joinManuallyClosed: boolean;
+  canceledAt: Date | null;
+  deletedAt: Date | null;
+  joinedCount: number;
+  max: number;
 }) {
   const now = new Date();
   const { startAt, endAt } = row;
@@ -40,6 +44,17 @@ function computeJoinOpenAndFlags(row: {
   const beforeStart = now < startAt;
   const during = now >= startAt && now < endAt;
   const ended = now >= endAt;
+
+  // Hard blocks first (deleted, canceled, ended, full)
+  if (row.deletedAt || row.canceledAt || ended) {
+    return { joinOpen: false, ended, during, beforeStart };
+  }
+
+  const isFull =
+    typeof row.max === 'number' && row.max > 0 && row.joinedCount >= row.max;
+  if (isFull) {
+    return { joinOpen: false, ended, during, beforeStart };
+  }
 
   if (row.joinManuallyClosed) {
     return { joinOpen: false, ended, during, beforeStart };
@@ -85,7 +100,7 @@ function computeJoinOpenAndFlags(row: {
     return { joinOpen: true, ended, during, beforeStart };
   }
 
-  // ended
+  // ended (redundant but explicit)
   return { joinOpen: false, ended: true, during: false, beforeStart: false };
 }
 
@@ -93,13 +108,25 @@ function buildBaseWhere(args: Parameters<QueryResolvers['intents']>[1]) {
   const where: Prisma.IntentWhereInput = {};
   const AND: Prisma.IntentWhereInput[] = [];
 
-  if (args.visibility) where.visibility = args.visibility;
+  // Visibility: jeśli podano memberId, członek może zobaczyć HIDDEN intenty
+  if (args.visibility && !args.memberId) {
+    where.visibility = args.visibility;
+  } else if (args.visibility && args.memberId) {
+    // Członek widzi intenty z danym visibility LUB te, w których jest członkiem
+    AND.push({
+      OR: [
+        { visibility: args.visibility },
+        { members: { some: { userId: args.memberId } } },
+      ],
+    });
+  }
+
   if (args.joinMode) where.joinMode = args.joinMode as any;
 
   if (args.ownerId) AND.push({ ownerId: args.ownerId });
-  if (args.memberId) {
+  if (args.memberId && !args.visibility) {
+    // Jeśli nie ma filtra visibility, po prostu filtruj po członkostwie
     AND.push({ members: { some: { userId: args.memberId } } });
-    // członek widzi też HIDDEN, jeśli jest członkiem
   }
 
   if (args.upcomingAfter)
@@ -234,14 +261,17 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
     const wantsPast = args.status === IntentStatus.Past;
 
     if (wantsCanceled) {
-      baseWhere.AND = [...(baseWhere.AND ?? []), { canceledAt: { not: null } }];
+      const existing = Array.isArray(baseWhere.AND) ? baseWhere.AND : [];
+      baseWhere.AND = [...existing, { canceledAt: { not: null } }];
     }
     if (wantsDeleted) {
-      baseWhere.AND = [...(baseWhere.AND ?? []), { deletedAt: { not: null } }];
+      const existing = Array.isArray(baseWhere.AND) ? baseWhere.AND : [];
+      baseWhere.AND = [...existing, { deletedAt: { not: null } }];
     }
     if (wantsOngoing) {
+      const existing = Array.isArray(baseWhere.AND) ? baseWhere.AND : [];
       baseWhere.AND = [
-        ...(baseWhere.AND ?? []),
+        ...existing,
         { startAt: { lte: now } },
         { endAt: { gt: now } },
         { canceledAt: null },
@@ -249,8 +279,9 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       ];
     }
     if (wantsPast) {
+      const existing = Array.isArray(baseWhere.AND) ? baseWhere.AND : [];
       baseWhere.AND = [
-        ...(baseWhere.AND ?? []),
+        ...existing,
         { endAt: { lt: now } },
         { canceledAt: null },
         { deletedAt: null },
@@ -340,6 +371,10 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
         joinCutoffMinutesBeforeStart: r.joinCutoffMinutesBeforeStart,
         lateJoinCutoffMinutesAfterStart: r.lateJoinCutoffMinutesAfterStart,
         joinManuallyClosed: r.joinManuallyClosed,
+        canceledAt: r.canceledAt,
+        deletedAt: r.deletedAt,
+        joinedCount: r.joinedCount,
+        max: r.max,
       });
 
       const isFull =

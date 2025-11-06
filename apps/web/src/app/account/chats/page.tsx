@@ -16,283 +16,148 @@ import {
   Shield,
   Link as LinkIcon,
   Pencil,
+  Hash,
+  User2,
+  Check,
 } from 'lucide-react';
+
+// ─── IMPORT MOCKÓW ────────────────────────────────────────────────────────────
+// Jeśli w mocku masz inne nazwy/typy, dostosuj ścieżkę i aliasy poniżej.
+import {
+  DM_CONVERSATIONS as DEMO_DMS,
+  CHANNEL_CONVERSATIONS as DEMO_CHANNELS,
+  DM_MESSAGES as RAW_DEMO_DM_MESSAGES,
+  CHANNEL_MESSAGES as RAW_DEMO_CHANNEL_MESSAGES,
+} from './mock-chat-data';
+
+/* ───────────────────────────── Types ───────────────────────────── */
+
+type ChatKind = 'dm' | 'channel';
 
 export type Conversation = {
   id: string;
+  kind: ChatKind;
   title: string;
   membersCount: number;
   preview: string;
-  lastMessageAt: string;
+  lastMessageAt: string; // e.g. "1m", "14m"
   unread: number;
   avatar?: string;
+  lastReadAt?: number; // epoch ms
 };
 
 export type Message = {
   id: string;
   text: string;
-  at: string;
+  at: number; // epoch ms
   side: 'left' | 'right';
   author: { id: string; name: string; avatar?: string };
   block?: boolean;
 };
 
-const DEMO_CONVERSATIONS: Conversation[] = [
-  {
-    id: 't1',
-    title: 'Technical issues',
-    membersCount: 4,
-    preview: 'Great! 👍',
-    lastMessageAt: '1m',
-    unread: 0,
-    avatar: 'T',
-  },
-  {
-    id: 't2',
-    title: 'Costa Quinn',
-    membersCount: 2,
-    preview: 'Yes, you can!',
-    lastMessageAt: '1m',
-    unread: 0,
-    avatar: 'https://i.pravatar.cc/40?img=12',
-  },
-  {
-    id: 't3',
-    title: 'Rachel Doe',
-    membersCount: 2,
-    preview: 'Using the static method…',
-    lastMessageAt: '14m',
-    unread: 3,
-    avatar: 'R',
-  },
-  {
-    id: 't4',
-    title: 'Bugs/Improvements',
-    membersCount: 18,
-    preview: 'I found a bug…',
-    lastMessageAt: '1h',
-    unread: 0,
-    avatar: '🐞',
-  },
-];
+// Ujednolicenie typów na wypadek gdy mock używa `any[]`
+const DEMO_DM_MESSAGES: Record<string, Message[]> =
+  RAW_DEMO_DM_MESSAGES as unknown as Record<string, Message[]>;
+const DEMO_CHANNEL_MESSAGES: Record<string, Message[]> =
+  RAW_DEMO_CHANNEL_MESSAGES as unknown as Record<string, Message[]>;
 
-const DEMO_MESSAGES: Record<string, Message[]> = {
-  t1: [
-    {
-      id: 'm1',
-      text: 'Hello everyone',
-      at: '09:12',
-      side: 'left',
-      author: { id: 'u2', name: 'Louise' },
-    },
-    {
-      id: 'm2',
-      text: 'Hi Louise',
-      at: '09:13',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'm3',
-      text: 'How are you?',
-      at: '09:13',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'm4',
-      text: 'After the purchase, user should receive two emails, one from us…',
-      at: '10:25',
-      side: 'left',
-      author: { id: 'u3', name: 'Alex' },
-      block: true,
-    },
-    {
-      id: 'm5',
-      text: 'ohh I didn’t notice that typo 😳',
-      at: '10:26',
-      side: 'left',
-      author: { id: 'u4', name: 'Sam' },
-    },
-    {
-      id: 'm6',
-      text: 'Great! 👍',
-      at: '10:27',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'm7',
-      text: 'We also need to add pagination to messages API.',
-      at: '13:01',
-      side: 'left',
-      author: { id: 'u3', name: 'Alex' },
-    },
-    {
-      id: 'm8',
-      text: 'Yep, cursor-based please (createdAt, id).',
-      at: '13:05',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'm9',
-      text: 'And unread separator based on lastReadAt.',
-      at: '13:06',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'm10',
-      text: 'Roger. I’ll wire React Query + websocket live updates.',
-      at: '13:08',
-      side: 'left',
-      author: { id: 'u2', name: 'Louise' },
-    },
-    {
-      id: 'm11',
-      text: 'Don’t forget optimistic UI + retry queue.',
-      at: '13:09',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'm12',
-      text: 'Copy that. Also draft typing indicators.',
-      at: '13:11',
-      side: 'left',
-      author: { id: 'u4', name: 'Sam' },
-    },
-    {
-      id: 'm13',
-      text: 'We can fake them with timers for now.',
-      at: '13:12',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'm14',
-      text: 'Ok. I’ll add skeleton loader when fetching older items.',
-      at: '13:13',
-      side: 'left',
-      author: { id: 'u2', name: 'Louise' },
-    },
-    {
-      id: 'm15',
-      text: 'Nice. Let’s ship MVP today.',
-      at: '13:15',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-  ],
-  t2: [
-    {
-      id: 'c1',
-      text: 'Hey Costa, did you check the docs?',
-      at: '08:01',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'c2',
-      text: 'Yes, you can!',
-      at: '08:02',
-      side: 'left',
-      author: { id: 'u5', name: 'Costa' },
-    },
-  ],
-  t3: [
-    {
-      id: 'r1',
-      text: 'Using the static method might be fine, but prefer DI.',
-      at: '11:44',
-      side: 'left',
-      author: { id: 'u6', name: 'Rachel' },
-    },
-    {
-      id: 'r2',
-      text: 'Agree, let’s keep it pure.',
-      at: '11:45',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-  ],
-  t4: [
-    {
-      id: 'b1',
-      text: 'I found a bug…',
-      at: '16:20',
-      side: 'left',
-      author: { id: 'u7', name: 'QA' },
-    },
-    {
-      id: 'b2',
-      text: 'Steps?',
-      at: '16:21',
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    },
-    {
-      id: 'b3',
-      text: 'Open profile, click edit, save → 500.',
-      at: '16:22',
-      side: 'left',
-      author: { id: 'u7', name: 'QA' },
-    },
-  ],
-};
+/* ───────────────────────────── Page ───────────────────────────── */
 
 export default function ChatsPage() {
-  const [activeId, setActiveId] = useState<string | undefined>(undefined);
-  const [mobileView, setMobileView] = useState<'list' | 'thread'>('list');
+  const [tab, setTab] = useState<ChatKind>('dm');
 
-  const conversations = DEMO_CONVERSATIONS;
+  // independent active selections per tab
+  const [activeDmId, setActiveDmId] = useState<string | undefined>(
+    DEMO_DMS[0]?.id
+  );
+  const [activeChId, setActiveChId] = useState<string | undefined>(
+    DEMO_CHANNELS[0]?.id
+  );
+
+  // local state for messages (so onSend re-renders)
+  const [dmMessages, setDmMessages] =
+    useState<Record<string, Message[]>>(DEMO_DM_MESSAGES);
+  const [chMessages, setChMessages] = useState<Record<string, Message[]>>(
+    DEMO_CHANNEL_MESSAGES
+  );
+
+  const conversations: Conversation[] =
+    tab === 'dm'
+      ? (DEMO_DMS as Conversation[])
+      : (DEMO_CHANNELS as Conversation[]);
+  const activeId = tab === 'dm' ? activeDmId : activeChId;
+
   const active = useMemo(
     () => conversations.find((c) => c.id === activeId),
     [conversations, activeId]
   );
 
+  function handlePick(id: string) {
+    if (tab === 'dm') setActiveDmId(id);
+    else setActiveChId(id);
+  }
+
+  function handleSend(text: string) {
+    if (!active) return;
+    const message: Message = {
+      id: 'm' + Math.random().toString(36).slice(2),
+      text,
+      at: Date.now(),
+      side: 'right',
+      author: { id: 'me', name: 'You' },
+    };
+    if (active.kind === 'dm') {
+      setDmMessages((prev) => ({
+        ...prev,
+        [active.id]: [...(prev[active.id] ?? []), message],
+      }));
+    } else {
+      setChMessages((prev) => ({
+        ...prev,
+        [active.id]: [...(prev[active.id] ?? []), message],
+      }));
+    }
+  }
+
+  const messages = useMemo(() => {
+    if (!active) return [];
+    return active.kind === 'dm'
+      ? (dmMessages[active.id] ?? [])
+      : (chMessages[active.id] ?? []);
+  }, [active, dmMessages, chMessages]);
+
   return (
-    <ChatShell listVisible={mobileView === 'list'}>
+    <ChatShell listVisible>
       <ChatShell.ListPane>
+        <ChatTabs tab={tab} setTab={setTab} />
         <ChatList
           items={conversations}
           activeId={activeId}
-          onPick={(id) => {
-            setActiveId(id);
-            setMobileView('thread');
-          }}
+          onPick={(id) => handlePick(id)}
         />
       </ChatShell.ListPane>
 
       <ChatShell.ThreadPane>
         {active ? (
           <ChatThread
+            kind={active.kind}
             title={active.title}
             members={active.membersCount}
             avatar={active.avatar}
-            messages={DEMO_MESSAGES[active.id] ?? []}
-            onBackMobile={() => setMobileView('list')}
-            onSend={(text) => {
-              DEMO_MESSAGES[active.id] = [
-                ...(DEMO_MESSAGES[active.id] ?? []),
-                {
-                  id: 'm' + Math.random().toString(36).slice(2),
-                  text,
-                  at: new Date().toTimeString().slice(0, 5),
-                  side: 'right',
-                  author: { id: 'me', name: 'You' },
-                },
-              ];
-            }}
+            lastReadAt={active.lastReadAt}
+            messages={messages}
+            onBackMobile={() => {}}
+            onSend={handleSend}
           />
         ) : (
-          <EmptyThread onBackMobile={() => setMobileView('list')} />
+          <EmptyThread onBackMobile={() => {}} />
         )}
       </ChatShell.ThreadPane>
     </ChatShell>
   );
 }
+
+/* ───────────────────────────── Shell & panes ───────────────────────────── */
 
 export function ChatShell({
   children,
@@ -358,6 +223,47 @@ ChatShell.ThreadPane = function ThreadPane({
   );
 };
 
+/* ───────────────────────────── Tabs ───────────────────────────── */
+
+function ChatTabs({
+  tab,
+  setTab,
+}: {
+  tab: ChatKind;
+  setTab: (t: ChatKind) => void;
+}) {
+  return (
+    <div className="mb-2 grid grid-cols-2 gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1 text-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <button
+        className={[
+          'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors',
+          tab === 'dm'
+            ? 'bg-white shadow-sm ring-1 ring-black/5 dark:bg-zinc-800'
+            : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60',
+        ].join(' ')}
+        onClick={() => setTab('dm')}
+      >
+        <User2 className="w-4 h-4" />
+        DM
+      </button>
+      <button
+        className={[
+          'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors',
+          tab === 'channel'
+            ? 'bg-white shadow-sm ring-1 ring-black/5 dark:bg-zinc-800'
+            : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60',
+        ].join(' ')}
+        onClick={() => setTab('channel')}
+      >
+        <Hash className="w-4 h-4" />
+        Channels
+      </button>
+    </div>
+  );
+}
+
+/* ───────────────────────────── List ───────────────────────────── */
+
 export function ChatList({
   items,
   activeId,
@@ -368,7 +274,7 @@ export function ChatList({
   onPick: (id: string) => void;
 }) {
   return (
-    <div className="grid h-full grid-rows-[auto_1fr_auto] gap-3">
+    <div className="grid h-[calc(100%-2.5rem)] grid-rows-[auto_1fr_auto] gap-3">
       <div className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-900/10 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div className="font-semibold">Inbox</div>
         <div className="flex items-center gap-2 text-zinc-400">
@@ -395,7 +301,18 @@ export function ChatList({
               <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
                 <Avatar token={c.avatar} />
                 <div className="min-w-0">
-                  <div className="font-medium truncate">{c.title}</div>
+                  <div className="flex items-center gap-2">
+                    {c.kind === 'channel' ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600 ring-1 ring-black/5 dark:bg-zinc-800 dark:text-zinc-300">
+                        <Hash className="w-3 h-3" /> Channel
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600 ring-1 ring-black/5 dark:bg-zinc-800 dark:text-zinc-300">
+                        <User2 className="w-3 h-3" /> DM
+                      </span>
+                    )}
+                    <div className="font-medium truncate">{c.title}</div>
+                  </div>
                   <div className="mt-0.5 text-sm truncate text-zinc-600 dark:text-zinc-400">
                     {c.preview}
                   </div>
@@ -435,30 +352,46 @@ function Avatar({ token }: { token?: string }) {
   );
 }
 
+/* ───────────────────────────── Thread ───────────────────────────── */
+
 export function ChatThread({
+  kind,
   title,
   members,
   avatar,
   messages,
+  lastReadAt,
   onBackMobile,
   onSend,
 }: {
+  kind: ChatKind;
   title: string;
   members: number;
   avatar?: string;
   messages: Message[];
+  lastReadAt?: number;
   onBackMobile: () => void;
   onSend: (text: string) => void;
 }) {
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setTyping(true), 1200);
+    const t2 = setTimeout(() => setTyping(false), 3800);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(t2);
+    };
+  }, [title]);
 
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [messages.length]);
+  }, [messages.length, typing]);
 
   function submit() {
     const text = input.trim();
@@ -466,6 +399,13 @@ export function ChatThread({
     onSend(text);
     setInput('');
   }
+
+  const [older, newer] = useMemo(() => {
+    if (!lastReadAt) return [messages, []] as const;
+    const older = messages.filter((m) => m.at <= lastReadAt);
+    const newer = messages.filter((m) => m.at > lastReadAt);
+    return [older, newer] as const;
+  }, [messages, lastReadAt]);
 
   return (
     <div className="grid h-full min-h-[540px] min-w-0 grid-rows-[auto_1fr_auto]">
@@ -481,24 +421,37 @@ export function ChatThread({
           </button>
           <Avatar token={avatar} />
           <div className="min-w-0">
-            <div className="text-sm font-semibold truncate">{title}</div>
+            <div className="text-sm font-semibold truncate">
+              {kind === 'channel' ? `#${title}` : title}
+            </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-              {members} members
+              {kind === 'channel' ? `${members} members` : 'Direct message'}
             </div>
           </div>
         </div>
-        <button
-          className="inline-flex items-center justify-center h-9 w-9 rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          title="More options"
-          aria-label="More options"
-          onClick={() => setShowDetails(true)}
-        >
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          {kind === 'channel' && (
+            <button
+              className="inline-flex items-center justify-center h-9 w-9 rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              aria-label="Pinned"
+              title="Pinned"
+            >
+              <Pin className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            className="inline-flex items-center justify-center h-9 w-9 rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            title="More options"
+            aria-label="More options"
+            onClick={() => setShowDetails(true)}
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {showDetails ? (
-        <ChatDetails onClose={() => setShowDetails(false)} />
+        <ChatDetails onClose={() => setShowDetails(false)} kind={kind} />
       ) : (
         <>
           <div
@@ -506,29 +459,36 @@ export function ChatThread({
             className="min-h-0 p-4 overflow-auto md:p-5"
             aria-live="polite"
           >
-            <DateSeparator>01 May</DateSeparator>
-            {messages.slice(0, 3).map((m) =>
+            {older.map((m) =>
               m.side === 'right' ? (
-                <MsgOut key={m.id} time={m.at}>
+                <MsgOut key={m.id} time={fmtTime(m.at)}>
                   {m.text}
                 </MsgOut>
               ) : (
-                <MsgIn key={m.id} time={m.at} block={m.block}>
+                <MsgIn key={m.id} time={fmtTime(m.at)} block={m.block}>
                   {m.text}
                 </MsgIn>
               )
             )}
-            <DateSeparator>02 May</DateSeparator>
-            {messages.slice(3).map((m) =>
+
+            {newer.length > 0 && <UnreadSeparator />}
+
+            {newer.map((m) =>
               m.side === 'right' ? (
-                <MsgOut key={m.id} time={m.at}>
+                <MsgOut key={m.id} time={fmtTime(m.at)}>
                   {m.text}
                 </MsgOut>
               ) : (
-                <MsgIn key={m.id} time={m.at} block={m.block}>
+                <MsgIn key={m.id} time={fmtTime(m.at)} block={m.block}>
                   {m.text}
                 </MsgIn>
               )
+            )}
+
+            {typing && (
+              <MsgIn time="">
+                <TypingDots />
+              </MsgIn>
             )}
           </div>
 
@@ -543,7 +503,9 @@ export function ChatThread({
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Message Group"
+                placeholder={
+                  kind === 'channel' ? `Message #${title}` : `Message ${title}`
+                }
                 className="min-w-0 py-2 text-sm bg-transparent outline-none resize-none max-h-40 placeholder:text-zinc-400"
                 rows={1}
                 onKeyDown={(e) => {
@@ -569,10 +531,20 @@ export function ChatThread({
   );
 }
 
-function DateSeparator({ children }: { children: React.ReactNode }) {
+function fmtTime(epoch: number) {
+  const d = new Date(epoch);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function UnreadSeparator() {
   return (
-    <div className="py-4 text-center text-[11px] uppercase tracking-wide text-zinc-500">
-      {children}
+    <div className="relative my-4 flex items-center justify-center">
+      <div className="absolute inset-x-0 h-px bg-zinc-200 dark:bg-zinc-800" />
+      <span className="relative z-10 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-600 ring-1 ring-black/5 dark:bg-zinc-900 dark:text-zinc-300">
+        <Check className="w-3 h-3" /> Unread
+      </span>
     </div>
   );
 }
@@ -632,6 +604,16 @@ const MsgOut = ({
   </Bubble>
 );
 
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-60" />
+      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-60 [animation-delay:120ms]" />
+      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-60 [animation-delay:240ms]" />
+    </span>
+  );
+}
+
 function EmptyThread({ onBackMobile }: { onBackMobile: () => void }) {
   return (
     <div className="grid h-full min-h-[540px] grid-rows-[auto_1fr]">
@@ -655,12 +637,18 @@ function EmptyThread({ onBackMobile }: { onBackMobile: () => void }) {
   );
 }
 
-// Chat details panel (replaces thread content when "..." is clicked)
-function ChatDetails({ onClose }: { onClose: () => void }) {
+/* ───────────────────────────── Details (kind-aware) ───────────────────────────── */
+
+function ChatDetails({
+  onClose,
+  kind,
+}: {
+  onClose: () => void;
+  kind: ChatKind;
+}) {
   const [openCustomize, setOpenCustomize] = useState(true);
   return (
     <div className="grid h-full grid-rows-[auto_1fr]">
-      {/* Details header */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <button
@@ -675,9 +663,7 @@ function ChatDetails({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Body */}
       <div className="min-h-0 p-4 overflow-auto md:p-5">
-        {/* Quick actions */}
         <div className="flex gap-3 mb-4">
           <button className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
             <Bell className="w-4 h-4" /> Mute
@@ -687,7 +673,6 @@ function ChatDetails({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Section: Customize chat */}
         <div className="mb-6 overflow-hidden border rounded-2xl border-zinc-200 dark:border-zinc-700">
           <button
             className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
@@ -710,7 +695,11 @@ function ChatDetails({ onClose }: { onClose: () => void }) {
             >
               <Row
                 icon={<Pencil className="w-4 h-4" />}
-                label="Change chat name"
+                label={
+                  kind === 'channel'
+                    ? 'Change channel name'
+                    : 'Change chat name'
+                }
               />
               <Row
                 icon={<ImageIcon className="w-4 h-4" />}
@@ -728,24 +717,33 @@ function ChatDetails({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        {/* Section: Members */}
-        <Section title="Chat members">
-          <Row icon={<Users className="w-4 h-4" />} label="Manage members" />
+        <Section
+          title={kind === 'channel' ? 'Channel members' : 'Participants'}
+        >
+          <Row
+            icon={<Users className="w-4 h-4" />}
+            label={kind === 'channel' ? 'Manage members' : 'View profile'}
+          />
         </Section>
 
-        {/* Section: Media, files and links */}
         <Section title="Media, files and links">
           <Row icon={<ImageIcon className="w-4 h-4" />} label="Media" />
           <Row icon={<LinkIcon className="w-4 h-4" />} label="Links" />
         </Section>
 
-        {/* Section: Privacy & support */}
         <Section title="Privacy & support">
-          <Row icon={<Shield className="w-4 h-4" />} label="Privacy settings" />
           <Row
-            icon={<Pin className="w-4 h-4" />}
-            label="View pinned messages"
+            icon={<Shield className="w-4 h-4" />}
+            label={
+              kind === 'channel' ? 'Channel privacy' : 'Conversation privacy'
+            }
           />
+          {kind === 'channel' && (
+            <Row
+              icon={<Pin className="w-4 h-4" />}
+              label="View pinned messages"
+            />
+          )}
         </Section>
       </div>
     </div>

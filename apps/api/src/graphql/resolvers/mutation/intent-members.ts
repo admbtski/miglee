@@ -106,6 +106,8 @@ async function loadIntentWithMembers(tx: Tx, intentId: string) {
       startAt: true,
       endAt: true,
       allowJoinLate: true,
+      max: true,
+      joinMode: true,
       joinOpensMinutesBeforeStart: true,
       joinCutoffMinutesBeforeStart: true,
       lateJoinCutoffMinutesAfterStart: true,
@@ -227,7 +229,7 @@ function evaluateJoinWindow(intent: {
     }
   }
 
-  return { open: true as const, reason: null as const };
+  return { open: true as const, reason: null };
 }
 
 function assertCanJoinNow(intent: Parameters<typeof evaluateJoinWindow>[0]) {
@@ -384,6 +386,14 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
             },
           });
 
+          // Update joinedCount if member actually joined (not pending)
+          if (!shouldBePending) {
+            await tx.intent.update({
+              where: { id: intentId },
+              data: { joinedCount: { increment: 1 } },
+            });
+          }
+
           await emitMemberEvent(tx, {
             intentId,
             userId,
@@ -427,6 +437,14 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
             joinedAt: shouldBePending ? null : new Date(),
           },
         });
+
+        // Update joinedCount if member actually joined (not pending)
+        if (!shouldBePending) {
+          await tx.intent.update({
+            where: { id: intentId },
+            data: { joinedCount: { increment: 1 } },
+          });
+        }
 
         await emitMemberEvent(tx, {
           intentId,
@@ -500,6 +518,12 @@ export const acceptInviteMutation: MutationResolvers['acceptInvite'] =
             status: IntentMemberStatus.JOINED,
             joinedAt: new Date(),
           },
+        });
+
+        // Increment joinedCount
+        await tx.intent.update({
+          where: { id: intentId },
+          data: { joinedCount: { increment: 1 } },
         });
 
         await emitMemberEvent(tx, {
@@ -664,6 +688,12 @@ export const leaveIntentMutation: MutationResolvers['leaveIntent'] =
           data: { status: IntentMemberStatus.LEFT, leftAt: new Date() },
         });
 
+        // Decrement joinedCount
+        await tx.intent.update({
+          where: { id: intentId },
+          data: { joinedCount: { decrement: 1 } },
+        });
+
         await emitMemberEvent(tx, {
           intentId,
           userId,
@@ -719,6 +749,12 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
             joinedAt: new Date(),
             addedById: actorId,
           },
+        });
+
+        // Increment joinedCount
+        await tx.intent.update({
+          where: { id: intentId },
+          data: { joinedCount: { increment: 1 } },
         });
 
         await emitMemberEvent(tx, {
@@ -826,6 +862,12 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
           },
         });
 
+        // Decrement joinedCount
+        await tx.intent.update({
+          where: { id: intentId },
+          data: { joinedCount: { decrement: 1 } },
+        });
+
         await emitMemberEvent(tx, {
           intentId,
           userId,
@@ -862,6 +904,9 @@ export const banMemberMutation: MutationResolvers['banMember'] =
           where: { intentId_userId: { intentId, userId } },
         });
 
+        // Track if we need to decrement joinedCount (only if user was JOINED)
+        const wasJoined = existing?.status === IntentMemberStatus.JOINED;
+
         if (!existing) {
           await tx.intentMember.create({
             data: {
@@ -880,6 +925,14 @@ export const banMemberMutation: MutationResolvers['banMember'] =
               leftAt: new Date(),
               note: note ?? null,
             },
+          });
+        }
+
+        // Decrement joinedCount if user was JOINED before ban
+        if (wasJoined) {
+          await tx.intent.update({
+            where: { id: intentId },
+            data: { joinedCount: { decrement: 1 } },
           });
         }
 

@@ -10,7 +10,6 @@ const STATUS_OPTIONS: { value: IntentStatus; label: string }[] = [
   { value: IntentStatus.Full, label: 'Brak miejsc' },
   { value: IntentStatus.Locked, label: 'Zablokowane' },
   { value: IntentStatus.Ongoing, label: 'Trwa teraz' },
-  { value: IntentStatus.Started, label: 'Rozpoczęte' },
   { value: IntentStatus.Deleted, label: 'Usunięte' },
   { value: IntentStatus.Canceled, label: 'Anulowane' },
 ];

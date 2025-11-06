@@ -223,7 +223,6 @@ function buildLayers(
     getRadius: getBaseRadius,
     getFillColor: [99, 102, 241, 220],
     getLineColor: [59, 130, 246, 255], // intensywniejszy niebieski border
-    stroked: true,
   });
 
   // Marker po którym najechano myszką (nie skacze, ale ma większy border)
@@ -239,7 +238,7 @@ function buildLayers(
           getRadius: getBaseRadius,
           getFillColor: [120, 130, 255, 240],
           getLineColor: [59, 130, 246, 255], // intensywniejszy niebieski border
-          getLineWidth: 3, // stały border 6px - zawsze widoczny
+          getLineWidth: 4, // stały border 6px - zawsze widoczny
           stroked: true,
           filled: true,
         })

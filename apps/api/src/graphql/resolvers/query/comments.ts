@@ -62,7 +62,7 @@ export const commentsQuery: QueryResolvers['comments'] = resolverWithMetrics(
     });
 
     return {
-      items: comments.map(mapComment),
+      items: comments.map((c) => mapComment(c, user?.id)),
       pageInfo: {
         total,
         limit: take,

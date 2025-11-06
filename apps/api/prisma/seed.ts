@@ -474,10 +474,19 @@ async function createIntentWithMembers(opts: {
       });
     }
 
+    // Update intent joinedCount with actual count
+    const finalJoinedCount = await tx.intentMember.count({
+      where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
+    });
+    await tx.intent.update({
+      where: { id: intent.id },
+      data: { joinedCount: finalJoinedCount },
+    });
+
     return {
       intent,
       owner: author,
-      participants: alreadyJoined + participants.length,
+      participants: finalJoinedCount,
     };
   });
 }
@@ -790,6 +799,15 @@ async function createPresetIntent(
       },
     });
   }
+
+  // Update intent joinedCount with actual count
+  const finalJoinedCount = await tx.intentMember.count({
+    where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
+  });
+  await tx.intent.update({
+    where: { id: intent.id },
+    data: { joinedCount: finalJoinedCount },
+  });
 
   return { intent, owner: author };
 }
