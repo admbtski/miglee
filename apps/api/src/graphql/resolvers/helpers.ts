@@ -1,5 +1,6 @@
 // apps/api/src/graphql/helpers.ts
 import { Prisma } from '@prisma/client';
+import { IntentStatus, JoinLockReason } from '../__generated__/resolvers-types';
 import type {
   Level,
   MeetingKind,
@@ -357,6 +358,93 @@ function computeIntentDerived(i: IntentWithGraph) {
   };
 }
 
+/**
+ * Compute high-level IntentStatus from derived flags.
+ * Priority order: DELETED > CANCELED > PAST > ONGOING > FULL > LOCKED > AVAILABLE
+ */
+function computeIntentStatus(
+  derived: ReturnType<typeof computeIntentDerived>
+): IntentStatus {
+  if (derived.isDeleted) return IntentStatus.Deleted;
+  if (derived.isCanceled) return IntentStatus.Canceled;
+  if (derived.hasEnded) return IntentStatus.Past;
+  if (derived.isOngoing) return IntentStatus.Ongoing;
+  if (derived.isFull) return IntentStatus.Full;
+  if (derived.withinLock) return IntentStatus.Locked;
+  return IntentStatus.Available;
+}
+
+/**
+ * Compute whether joins are currently open and the lock reason if not.
+ */
+function computeJoinOpenAndReason(i: IntentWithGraph): {
+  joinOpen: boolean;
+  lockReason: JoinLockReason | null;
+} {
+  const now = new Date();
+  const { startAt, endAt, joinMode, joinManuallyClosed, allowJoinLate } = i;
+  const {
+    joinOpensMinutesBeforeStart,
+    joinCutoffMinutesBeforeStart,
+    lateJoinCutoffMinutesAfterStart,
+  } = i;
+
+  const hasStarted = now >= startAt;
+  const hasEnded = now >= endAt;
+  const derived = computeIntentDerived(i);
+
+  // Hard blocks first
+  if (derived.isDeleted)
+    return { joinOpen: false, lockReason: JoinLockReason.Deleted };
+  if (derived.isCanceled)
+    return { joinOpen: false, lockReason: JoinLockReason.Canceled };
+  if (hasEnded) return { joinOpen: false, lockReason: JoinLockReason.Ended };
+  if (derived.isFull)
+    return { joinOpen: false, lockReason: JoinLockReason.Full };
+  if (joinManuallyClosed)
+    return { joinOpen: false, lockReason: JoinLockReason.Manual };
+  if (joinMode === 'INVITE_ONLY')
+    return { joinOpen: false, lockReason: JoinLockReason.InviteOnly };
+
+  // Time-based windows
+  if (!hasStarted) {
+    // Before start
+    if (joinOpensMinutesBeforeStart != null) {
+      const openTime = new Date(
+        startAt.getTime() - joinOpensMinutesBeforeStart * 60_000
+      );
+      if (now < openTime) {
+        return { joinOpen: false, lockReason: JoinLockReason.NotOpenYet };
+      }
+    }
+
+    if (joinCutoffMinutesBeforeStart != null) {
+      const cutoffTime = new Date(
+        startAt.getTime() - joinCutoffMinutesBeforeStart * 60_000
+      );
+      if (now >= cutoffTime) {
+        return { joinOpen: false, lockReason: JoinLockReason.Cutoff };
+      }
+    }
+  } else {
+    // After start
+    if (!allowJoinLate) {
+      return { joinOpen: false, lockReason: JoinLockReason.NoLateJoin };
+    }
+
+    if (lateJoinCutoffMinutesAfterStart != null) {
+      const lateCutoff = new Date(
+        startAt.getTime() + lateJoinCutoffMinutesAfterStart * 60_000
+      );
+      if (now >= lateCutoff) {
+        return { joinOpen: false, lockReason: JoinLockReason.LateCutoff };
+      }
+    }
+  }
+
+  return { joinOpen: true, lockReason: null };
+}
+
 function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
   if ((i as any).owner) {
     return mapUser((i as any).owner);
@@ -368,6 +456,7 @@ function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
 }
 
 export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
+  const derived = computeIntentDerived(i);
   const {
     joinedCount,
     isFull,
@@ -378,7 +467,9 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     canJoin,
     isOngoing,
     withinLock,
-  } = computeIntentDerived(i);
+  } = derived;
+  const status = computeIntentStatus(derived);
+  const { joinOpen, lockReason } = computeJoinOpenAndReason(i);
 
   const { isOwnerOrModerator, isParticipant } = getViewerMembership(
     i,
@@ -419,7 +510,18 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
 
     startAt: i.startAt,
     endAt: i.endAt,
+
+    // Join control fields
+    joinOpensMinutesBeforeStart: i.joinOpensMinutesBeforeStart ?? null,
+    joinCutoffMinutesBeforeStart: i.joinCutoffMinutesBeforeStart ?? null,
     allowJoinLate: i.allowJoinLate,
+    lateJoinCutoffMinutesAfterStart: i.lateJoinCutoffMinutesAfterStart ?? null,
+    joinManuallyClosed: i.joinManuallyClosed,
+    joinManuallyClosedAt: i.joinManuallyClosedAt ?? null,
+    joinManuallyClosedBy: (i as any).joinManuallyClosedBy
+      ? mapUser((i as any).joinManuallyClosedBy)
+      : null,
+    joinManualCloseReason: i.joinManualCloseReason ?? null,
 
     meetingKind: i.meetingKind as MeetingKind,
     onlineUrl,
@@ -467,12 +569,15 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     members: visibleMembers.map(mapIntentMember),
 
     // Computed helpers
+    status,
     isFull,
     hasStarted,
     hasEnded,
     canJoin,
     isOngoing,
     withinLock,
+    joinOpen,
+    lockReason,
     isOnline: i.meetingKind === 'ONLINE',
     isHybrid: i.meetingKind === 'HYBRID',
     isOnsite: i.meetingKind === 'ONSITE',

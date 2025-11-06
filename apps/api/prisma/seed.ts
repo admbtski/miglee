@@ -1791,28 +1791,6 @@ async function seedMutes(
 }
 
 /** ---------- Main ---------- */
-/**
- * Sync PostGIS geom column from lat/lng
- * This ensures all intents with coordinates have the geom column populated
- */
-async function syncGeomColumn() {
-  try {
-    const result = await prisma.$executeRaw`
-      UPDATE "intents"
-      SET geom = ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography
-      WHERE lat IS NOT NULL 
-        AND lng IS NOT NULL
-        AND (geom IS NULL OR geom IS DISTINCT FROM ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography)
-    `;
-    console.log(`   ✓ Synced ${result} intent(s) with geom column`);
-  } catch (error) {
-    console.warn(
-      '   ⚠️  Could not sync geom column (PostGIS extension may not be installed yet)',
-      error instanceof Error ? error.message : error
-    );
-  }
-}
-
 async function main() {
   console.log('🧹 Clearing DB…');
   await clearDb();
@@ -1874,9 +1852,6 @@ async function main() {
 
   console.log('🔕 Seeding mutes…');
   await seedMutes(allIntents, users);
-
-  console.log('🗺️  Syncing PostGIS geom column…');
-  await syncGeomColumn();
 
   console.log(
     `✅ Done: users=${users.length}, categories=${categories.length}, tags=${tags.length}, intents=${allIntents.length}`
