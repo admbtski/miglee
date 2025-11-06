@@ -10,7 +10,7 @@ import {
 } from '../../__generated__/resolvers-types';
 import { mapIntent } from '../helpers';
 
-const LOCK_WINDOW_MS = 6 * 60 * 60 * 1000; // 6h
+const MINUTE_MS = 60 * 1000;
 
 const INTENT_INCLUDE = {
   categories: true,
@@ -19,7 +19,200 @@ const INTENT_INCLUDE = {
   owner: true,
   canceledBy: true,
   deletedBy: true,
+  // jeśli masz relację w Prisma:
+  // joinManuallyClosedBy: true,
 } satisfies Prisma.IntentInclude;
+
+/* ───────────────────────────── Helpers ───────────────────────────── */
+
+function computeJoinOpenAndFlags(row: {
+  startAt: Date;
+  endAt: Date;
+  allowJoinLate: boolean;
+  joinOpensMinutesBeforeStart: number | null;
+  joinCutoffMinutesBeforeStart: number | null;
+  lateJoinCutoffMinutesAfterStart: number | null;
+  joinManuallyClosed: boolean;
+}) {
+  const now = new Date();
+  const { startAt, endAt } = row;
+
+  const beforeStart = now < startAt;
+  const during = now >= startAt && now < endAt;
+  const ended = now >= endAt;
+
+  if (row.joinManuallyClosed) {
+    return { joinOpen: false, ended, during, beforeStart };
+  }
+
+  if (beforeStart) {
+    // not-open-yet window
+    if (
+      row.joinOpensMinutesBeforeStart != null &&
+      now <
+        new Date(
+          startAt.getTime() - row.joinOpensMinutesBeforeStart * MINUTE_MS
+        )
+    ) {
+      return { joinOpen: false, ended, during, beforeStart };
+    }
+    // pre-start cutoff
+    if (
+      row.joinCutoffMinutesBeforeStart != null &&
+      now >=
+        new Date(
+          startAt.getTime() - row.joinCutoffMinutesBeforeStart * MINUTE_MS
+        )
+    ) {
+      return { joinOpen: false, ended, during, beforeStart };
+    }
+    return { joinOpen: true, ended, during, beforeStart };
+  }
+
+  if (during) {
+    if (!row.allowJoinLate) {
+      return { joinOpen: false, ended, during, beforeStart };
+    }
+    if (
+      row.lateJoinCutoffMinutesAfterStart != null &&
+      now >=
+        new Date(
+          startAt.getTime() + row.lateJoinCutoffMinutesAfterStart * MINUTE_MS
+        )
+    ) {
+      return { joinOpen: false, ended, during, beforeStart };
+    }
+    return { joinOpen: true, ended, during, beforeStart };
+  }
+
+  // ended
+  return { joinOpen: false, ended: true, during: false, beforeStart: false };
+}
+
+function buildBaseWhere(args: Parameters<QueryResolvers['intents']>[1]) {
+  const where: Prisma.IntentWhereInput = {};
+  const AND: Prisma.IntentWhereInput[] = [];
+
+  if (args.visibility) where.visibility = args.visibility;
+  if (args.joinMode) where.joinMode = args.joinMode as any;
+
+  if (args.ownerId) AND.push({ ownerId: args.ownerId });
+  if (args.memberId) {
+    AND.push({ members: { some: { userId: args.memberId } } });
+    // członek widzi też HIDDEN, jeśli jest członkiem
+  }
+
+  if (args.upcomingAfter)
+    AND.push({ startAt: { gte: args.upcomingAfter as Date } });
+  if (args.endingBefore)
+    AND.push({ endAt: { lte: args.endingBefore as Date } });
+
+  if (args.categorySlugs?.length)
+    AND.push({ categories: { some: { slug: { in: args.categorySlugs } } } });
+  if (args.tagSlugs?.length)
+    AND.push({ tags: { some: { slug: { in: args.tagSlugs } } } });
+
+  if (args.levels?.length) AND.push({ levels: { hasSome: args.levels } });
+  if (args.kinds?.length)
+    AND.push({ meetingKind: { in: args.kinds as MeetingKind[] } });
+
+  if (args.verifiedOnly) {
+    AND.push({
+      members: { some: { role: 'OWNER', user: { is: { verifiedAt: {} } } } },
+    });
+  }
+
+  if (args.keywords?.length) {
+    // UWAGA: każde słowo działa jak AND( OR(fields CONTAINS kw) ) – czyli „wszystkie słowa muszą wystąpić”.
+    for (const kw of args.keywords) {
+      const containsCI = { contains: kw, mode: 'insensitive' as const };
+      AND.push({
+        OR: [
+          { title: containsCI },
+          { description: containsCI },
+          { address: containsCI },
+          {
+            tags: {
+              some: { OR: [{ slug: containsCI }, { label: containsCI }] },
+            },
+          },
+          { categories: { some: { slug: containsCI } } },
+        ],
+      });
+    }
+  }
+
+  if (AND.length) where.AND = AND;
+  return where;
+}
+
+function buildOrderBy(args: Parameters<QueryResolvers['intents']>[1]) {
+  const dir: Prisma.SortOrder = args.sortDir === SortDir.Asc ? 'asc' : 'desc';
+
+  switch (args.sortBy) {
+    case IntentsSortBy.StartAt:
+      return [
+        { startAt: dir },
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ] as Prisma.IntentOrderByWithRelationInput[];
+    case IntentsSortBy.CreatedAt:
+      return [
+        { createdAt: dir },
+        { id: 'desc' },
+      ] as Prisma.IntentOrderByWithRelationInput[];
+    case IntentsSortBy.UpdatedAt:
+      return [
+        { updatedAt: dir },
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ] as Prisma.IntentOrderByWithRelationInput[];
+    case IntentsSortBy.MembersCount:
+      // sortuje po całkowitej liczbie członków; jeśli chcesz tylko JOINED, użyj denormalizacji joinedCount
+      return [
+        { members: { _count: dir } },
+        { startAt: 'asc' },
+        { id: 'desc' },
+      ] as Prisma.IntentOrderByWithRelationInput[];
+    default:
+      return [
+        { startAt: 'asc' },
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ] as Prisma.IntentOrderByWithRelationInput[];
+  }
+}
+
+function applyDistanceBox(
+  where: Prisma.IntentWhereInput,
+  near: { lat?: number | null; lng?: number | null } | null | undefined,
+  distanceKm?: number | null
+) {
+  if (
+    typeof distanceKm === 'number' &&
+    Number.isFinite(distanceKm) &&
+    near?.lat != null &&
+    near?.lng != null
+  ) {
+    const lat = near.lat!;
+    const lng = near.lng!;
+    const km = distanceKm;
+
+    const latDelta = km / 111;
+    const lonDelta =
+      km / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.0001));
+
+    const AND: Prisma.IntentWhereInput[] = [
+      { lat: { gte: lat - latDelta, lte: lat + latDelta } },
+      { lng: { gte: lng - lonDelta, lte: lng + lonDelta } },
+    ];
+    where.AND = where.AND
+      ? [...(where.AND as Prisma.IntentWhereInput[]), ...AND]
+      : AND;
+  }
+}
+
+/* ───────────────────────────── Main Resolver ───────────────────────────── */
 
 export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
@@ -27,156 +220,177 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   async (_p, args, { user }) => {
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
+    const now = new Date();
 
-    const where: Prisma.IntentWhereInput = {};
-    const AND: Prisma.IntentWhereInput[] = [];
+    // Bazowy where/sort
+    const baseWhere = buildBaseWhere(args);
+    applyDistanceBox(baseWhere, args.near ?? null, args.distanceKm ?? null);
+    const orderBy = buildOrderBy(args);
 
-    if (args.visibility) where.visibility = args.visibility;
-    if (args.joinMode) where.joinMode = args.joinMode as any;
+    // Szybkie statusy w SQL (CANCELED, DELETED, ONGOING, PAST)
+    const wantsCanceled = args.status === IntentStatus.Canceled;
+    const wantsDeleted = args.status === IntentStatus.Deleted;
+    const wantsOngoing = args.status === IntentStatus.Ongoing;
+    const wantsPast = args.status === IntentStatus.Past;
 
-    if (args.ownerId) {
-      AND.push({ ownerId: args.ownerId });
+    if (wantsCanceled) {
+      baseWhere.AND = [...(baseWhere.AND ?? []), { canceledAt: { not: null } }];
+    }
+    if (wantsDeleted) {
+      baseWhere.AND = [...(baseWhere.AND ?? []), { deletedAt: { not: null } }];
+    }
+    if (wantsOngoing) {
+      baseWhere.AND = [
+        ...(baseWhere.AND ?? []),
+        { startAt: { lte: now } },
+        { endAt: { gt: now } },
+        { canceledAt: null },
+        { deletedAt: null },
+      ];
+    }
+    if (wantsPast) {
+      baseWhere.AND = [
+        ...(baseWhere.AND ?? []),
+        { endAt: { lt: now } },
+        { canceledAt: null },
+        { deletedAt: null },
+      ];
     }
 
-    if (args.memberId) {
-      AND.push({ members: { some: { userId: args.memberId } } });
-      // brak wymuszenia visibility => członek widzi też HIDDEN, jeśli jest członkiem
-    }
+    const statusNeedsPostFilter =
+      args.status &&
+      ![
+        IntentStatus.Any,
+        IntentStatus.Canceled,
+        IntentStatus.Deleted,
+        IntentStatus.Ongoing,
+        IntentStatus.Past,
+      ].includes(args.status);
 
-    if (args.upcomingAfter)
-      AND.push({ startAt: { gte: args.upcomingAfter as Date } });
-    if (args.endingBefore)
-      AND.push({ endAt: { lte: args.endingBefore as Date } });
-
-    if (args.categorySlugs?.length)
-      AND.push({ categories: { some: { slug: { in: args.categorySlugs } } } });
-    if (args.tagSlugs?.length)
-      AND.push({ tags: { some: { slug: { in: args.tagSlugs } } } });
-
-    if (args.levels?.length) AND.push({ levels: { hasSome: args.levels } });
-    if (args.kinds?.length)
-      AND.push({ meetingKind: { in: args.kinds as MeetingKind[] } });
-
-    if (args.verifiedOnly) {
-      AND.push({
-        members: { some: { role: 'OWNER', user: { is: { verifiedAt: {} } } } },
+    // Gałąź A: status nie wymaga post-filtra → standardowe count + findMany
+    if (!statusNeedsPostFilter) {
+      const total = await prisma.intent.count({ where: baseWhere });
+      const rows = await prisma.intent.findMany({
+        where: baseWhere,
+        take,
+        skip,
+        orderBy,
+        include: INTENT_INCLUDE,
       });
+
+      return {
+        items: rows.map((r) => mapIntent(r, user?.id)),
+        pageInfo: {
+          total,
+          limit: take,
+          offset: skip,
+          hasPrev: skip > 0,
+          hasNext: skip + take < total,
+        },
+      };
     }
 
-    if (args.keywords?.length) {
-      for (const kw of args.keywords) {
-        const containsCI = { contains: kw, mode: 'insensitive' as const };
-        AND.push({
-          OR: [
-            { title: containsCI },
-            { description: containsCI },
-            { address: containsCI },
-            {
-              tags: {
-                some: { OR: [{ slug: containsCI }, { label: containsCI }] },
-              },
-            },
-            { categories: { some: { slug: containsCI } } },
+    // Gałąź B: status wymaga wyliczenia (FULL / LOCKED / AVAILABLE)
+    // Wstępnie ograniczamy kandydatów do przyszłości (endAt > now), by uniknąć zbędnych rekordów.
+    const preFilterForComputed: Prisma.IntentWhereInput = {
+      endAt: { gt: now },
+      canceledAt: null,
+      deletedAt: null,
+    };
+    const computedWhere: Prisma.IntentWhereInput = baseWhere.AND
+      ? {
+          AND: [
+            ...(baseWhere.AND as Prisma.IntentWhereInput[]),
+            preFilterForComputed,
           ],
-        });
-      }
-    }
+        }
+      : preFilterForComputed;
 
-    if (args.status && args.status !== IntentStatus.Any) {
-      const now = new Date();
-      const lockTo = new Date(now.getTime() + LOCK_WINDOW_MS);
+    const candidateSelect = {
+      id: true,
+      startAt: true,
+      endAt: true,
+      allowJoinLate: true,
+      joinOpensMinutesBeforeStart: true,
+      joinCutoffMinutesBeforeStart: true,
+      lateJoinCutoffMinutesAfterStart: true,
+      joinManuallyClosed: true,
+      canceledAt: true,
+      deletedAt: true,
+      joinedCount: true,
+      max: true,
+    } satisfies Prisma.IntentSelect;
+
+    // UWAGA: dla bardzo dużych zbiorów rozważ queryRaw + window functions / materializację.
+    const allCandidateRows = await prisma.intent.findMany({
+      where: computedWhere,
+      select: candidateSelect,
+      orderBy,
+    });
+
+    const filteredIds: string[] = [];
+    for (const r of allCandidateRows) {
+      if (r.canceledAt || r.deletedAt) continue;
+
+      const { joinOpen, ended } = computeJoinOpenAndFlags({
+        startAt: r.startAt,
+        endAt: r.endAt,
+        allowJoinLate: r.allowJoinLate,
+        joinOpensMinutesBeforeStart: r.joinOpensMinutesBeforeStart,
+        joinCutoffMinutesBeforeStart: r.joinCutoffMinutesBeforeStart,
+        lateJoinCutoffMinutesAfterStart: r.lateJoinCutoffMinutesAfterStart,
+        joinManuallyClosed: r.joinManuallyClosed,
+      });
+
+      const isFull =
+        typeof r.max === 'number' && r.max > 0 && r.joinedCount >= r.max;
+
       switch (args.status) {
-        case IntentStatus.Canceled:
-          AND.push({ canceledAt: { not: null } });
-          break;
-        case IntentStatus.Deleted:
-          AND.push({ deletedAt: { not: null } });
-          break;
-        case IntentStatus.Ongoing:
-          AND.push({ startAt: { lte: now }, endAt: { gte: now } });
-          break;
-        case IntentStatus.Started:
-          // to jest "ENDED" – rozważ zmianę enuma w SDL
-          AND.push({ startAt: { lt: now }, endAt: { lt: now } });
+        case IntentStatus.Full:
+          if (!ended && isFull) filteredIds.push(r.id);
           break;
         case IntentStatus.Locked:
-          AND.push({ startAt: { gt: now, lte: lockTo } });
+          // locked = joinOpen === false i event nie zakończony
+          if (!ended && !joinOpen) filteredIds.push(r.id);
           break;
         case IntentStatus.Available:
-          AND.push({ startAt: { gt: lockTo } });
+          // available = joinOpen === true (w tym late-join, jeśli dozwolony)
+          if (!ended && joinOpen) filteredIds.push(r.id);
           break;
-        case IntentStatus.Full:
-          // TODO: agregacja/denormalizacja
+        default:
           break;
       }
     }
 
-    if (
-      typeof args.distanceKm === 'number' &&
-      Number.isFinite(args.distanceKm) &&
-      args.near?.lat != null &&
-      args.near?.lng != null
-    ) {
-      const lat = args.near.lat!;
-      const lng = args.near.lng!;
-      const km = args.distanceKm;
+    const total = filteredIds.length;
 
-      const latDelta = km / 111;
-      const lonDelta =
-        km / (111 * Math.max(Math.cos((lat * Math.PI) / 180), 0.0001));
+    // Paginate na ID (stabilny porządek wg orderBy z fetchu kandydatów)
+    const pageIds = filteredIds.slice(skip, skip + take);
 
-      AND.push({ lat: { gte: lat - latDelta, lte: lat + latDelta } });
-      AND.push({ lng: { gte: lng - lonDelta, lte: lng + lonDelta } });
+    if (pageIds.length === 0) {
+      return {
+        items: [],
+        pageInfo: {
+          total,
+          limit: take,
+          offset: skip,
+          hasPrev: skip > 0,
+          hasNext: skip + take < total,
+        },
+      };
     }
 
-    if (AND.length) where.AND = AND;
-
-    // ────────────── SORTOWANIE ──────────────
-    const dir: Prisma.SortOrder = args.sortDir === SortDir.Asc ? 'asc' : 'desc';
-
-    let orderBy: Prisma.IntentOrderByWithRelationInput[] = [];
-
-    switch (args.sortBy) {
-      case IntentsSortBy.StartAt:
-        orderBy = [{ startAt: dir }, { createdAt: 'desc' }, { id: 'desc' }];
-        break;
-
-      case IntentsSortBy.CreatedAt:
-        orderBy = [{ createdAt: dir }, { id: 'desc' }];
-        break;
-
-      case IntentsSortBy.UpdatedAt:
-        orderBy = [{ updatedAt: dir }, { createdAt: 'desc' }, { id: 'desc' }];
-        break;
-
-      case IntentsSortBy.MembersCount:
-        // sortowanie po liczbie członków (wszystkich); jeśli chcesz tylko JOINED,
-        // rozważ denormalizację/cachowanie pola joinedCount i sort po nim.
-        orderBy = [
-          { members: { _count: dir } },
-          { startAt: 'asc' },
-          { id: 'desc' },
-        ];
-        break;
-
-      default:
-        // backendowy default – jak wcześniej
-        orderBy = [{ startAt: 'asc' }, { createdAt: 'desc' }, { id: 'desc' }];
-        break;
-    }
-
-    const total = await prisma.intent.count({ where });
-
-    const rows = await prisma.intent.findMany({
-      where,
-      take,
-      skip,
-      orderBy,
+    // Dociągnij pełne rekordy (zachowaj order wg pageIds)
+    const pageRows = await prisma.intent.findMany({
+      where: { id: { in: pageIds } },
       include: INTENT_INCLUDE,
     });
 
+    const byId = new Map(pageRows.map((r) => [r.id, r]));
+    const ordered = pageIds.map((id) => byId.get(id)!).filter(Boolean);
+
     return {
-      items: rows.map((r) => mapIntent(r, user?.id)),
+      items: ordered.map((r) => mapIntent(r, user?.id)),
       pageInfo: {
         total,
         limit: take,

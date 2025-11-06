@@ -4,6 +4,7 @@ import {
   IntentMemberStatus,
   NotificationEntity as PrismaNotificationEntity,
   NotificationKind as PrismaNotificationKind,
+  MemberEvent,
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
@@ -11,6 +12,10 @@ import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification } from '../helpers';
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                               Includes / types                             */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
@@ -32,6 +37,10 @@ type Tx = Omit<
   '$extends' | '$transaction' | '$disconnect' | '$connect' | '$on'
 >;
 
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                               Auth / Roles                                 */
+/* ────────────────────────────────────────────────────────────────────────── */
+
 function assertAuth(ctx: MercuriusContext): string {
   if (!ctx.user?.id) {
     throw new GraphQLError('Authentication required.', {
@@ -39,40 +48,6 @@ function assertAuth(ctx: MercuriusContext): string {
     });
   }
   return ctx.user.id;
-}
-
-async function isBanned(tx: Tx, intentId: string, userId: string) {
-  const banned = await tx.intentMember.findUnique({
-    where: { intentId_userId: { intentId, userId } },
-    select: { status: true },
-  });
-  return banned?.status === IntentMemberStatus.BANNED;
-}
-
-async function loadIntentWithMembers(tx: Tx, intentId: string) {
-  const intent = await tx.intent.findUnique({
-    where: { id: intentId },
-    include: {
-      members: true,
-    },
-  });
-  if (!intent) {
-    throw new GraphQLError('Intent not found.', {
-      extensions: { code: 'NOT_FOUND', field: 'intentId' },
-    });
-  }
-  // READ-ONLY: zablokuj każdą mutację członkowską dla canceled/deleted
-  if ((intent as any).deletedAt) {
-    throw new GraphQLError('Intent is deleted.', {
-      extensions: { code: 'FAILED_PRECONDITION' },
-    });
-  }
-  if ((intent as any).canceledAt) {
-    throw new GraphQLError('Intent is canceled and read-only.', {
-      extensions: { code: 'FAILED_PRECONDITION' },
-    });
-  }
-  return intent;
 }
 
 function isModeratorOrOwner(
@@ -96,19 +71,84 @@ function isOwner(
   );
 }
 
-function countJoined(tx: Tx, intentId: string) {
-  return tx.intentMember.count({
-    where: { intentId, status: IntentMemberStatus.JOINED },
-  });
+function requireModOrOwner(
+  intent: { members: { userId: string; role: IntentMemberRole }[] },
+  userId: string
+) {
+  if (!isModeratorOrOwner(intent, userId)) {
+    throw new GraphQLError('Forbidden. Moderator or owner role required.', {
+      extensions: { code: 'FORBIDDEN' },
+    });
+  }
 }
 
-function assertCanJoinNow(intent: { allowJoinLate: boolean; startAt: Date }) {
-  const now = new Date();
-  if (!intent.allowJoinLate && now >= new Date(intent.startAt)) {
-    throw new GraphQLError('Joining is locked after the event start.', {
+function requireOwner(
+  intent: { members: { userId: string; role: IntentMemberRole }[] },
+  userId: string
+) {
+  if (!isOwner(intent, userId)) {
+    throw new GraphQLError('Only the owner can perform this action.', {
+      extensions: { code: 'FORBIDDEN' },
+    });
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                          Intent loading & guards                            */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+async function loadIntentWithMembers(tx: Tx, intentId: string) {
+  const intent = await tx.intent.findUnique({
+    where: { id: intentId },
+    select: {
+      id: true,
+      // ─ join-window fields (ważne dla evaluateJoinWindow)
+      startAt: true,
+      endAt: true,
+      allowJoinLate: true,
+      joinOpensMinutesBeforeStart: true,
+      joinCutoffMinutesBeforeStart: true,
+      lateJoinCutoffMinutesAfterStart: true,
+      joinManuallyClosed: true,
+      // ─ pola do guardów read-only
+      deletedAt: true,
+      canceledAt: true,
+      // ─ członkowie do sprawdzania ról/uprawnień
+      members: {
+        select: {
+          userId: true,
+          role: true,
+          status: true,
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          intentId: true,
+          addedById: true,
+          joinedAt: true,
+          leftAt: true,
+          note: true,
+        },
+      },
+    },
+  });
+
+  if (!intent) {
+    throw new GraphQLError('Intent not found.', {
+      extensions: { code: 'NOT_FOUND', field: 'intentId' },
+    });
+  }
+  if (intent.deletedAt) {
+    throw new GraphQLError('Intent is deleted.', {
       extensions: { code: 'FAILED_PRECONDITION' },
     });
   }
+  if (intent.canceledAt) {
+    throw new GraphQLError('Intent is canceled and read-only.', {
+      extensions: { code: 'FAILED_PRECONDITION' },
+    });
+  }
+
+  return intent;
 }
 
 function reloadFullIntent(tx: Tx, intentId: string) {
@@ -124,6 +164,106 @@ function reloadFullIntent(tx: Tx, intentId: string) {
     },
   });
 }
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                          Join window / capacity                             */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+function evaluateJoinWindow(intent: {
+  startAt: Date;
+  endAt: Date;
+  allowJoinLate: boolean;
+  joinOpensMinutesBeforeStart: number | null;
+  joinCutoffMinutesBeforeStart: number | null;
+  lateJoinCutoffMinutesAfterStart: number | null;
+  joinManuallyClosed: boolean;
+}) {
+  const now = new Date();
+  const start = new Date(intent.startAt);
+  const end = new Date(intent.endAt);
+
+  if (intent.joinManuallyClosed) {
+    return { open: false, reason: 'MANUALLY_CLOSED' as const };
+  }
+
+  // Pre-open window (optional)
+  if (
+    intent.joinOpensMinutesBeforeStart != null &&
+    now <
+      new Date(start.getTime() - intent.joinOpensMinutesBeforeStart * 60_000)
+  ) {
+    return { open: false, reason: 'NOT_OPEN_YET' as const };
+  }
+
+  // Cutoff before start (optional)
+  if (
+    intent.joinCutoffMinutesBeforeStart != null &&
+    now >=
+      new Date(
+        start.getTime() - intent.joinCutoffMinutesBeforeStart * 60_000
+      ) &&
+    now < start
+  ) {
+    return { open: false, reason: 'PRE_START_CUTOFF' as const };
+  }
+
+  // After start
+  if (now >= start) {
+    if (!intent.allowJoinLate) {
+      return { open: false, reason: 'LATE_JOIN_DISABLED' as const };
+    }
+    if (
+      intent.lateJoinCutoffMinutesAfterStart != null &&
+      now >=
+        new Date(
+          start.getTime() + intent.lateJoinCutoffMinutesAfterStart * 60_000
+        ) &&
+      now < end
+    ) {
+      return { open: false, reason: 'LATE_JOIN_CUTOFF' as const };
+    }
+    if (now >= end) {
+      return { open: false, reason: 'ENDED' as const };
+    }
+  }
+
+  return { open: true as const, reason: null as const };
+}
+
+function assertCanJoinNow(intent: Parameters<typeof evaluateJoinWindow>[0]) {
+  const { open, reason } = evaluateJoinWindow(intent);
+  if (!open) {
+    throw new GraphQLError('Joining is locked.', {
+      extensions: { code: 'FAILED_PRECONDITION', reason },
+    });
+  }
+}
+
+function isFull(currentJoined: number, max: number) {
+  return currentJoined >= max;
+}
+
+function countJoined(tx: Tx, intentId: string) {
+  return tx.intentMember.count({
+    where: { intentId, status: IntentMemberStatus.JOINED },
+  });
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                           Status helpers / checks                           */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+async function isBanned(tx: Tx, intentId: string, userId: string) {
+  const banned = await tx.intentMember.findUnique({
+    where: { intentId_userId: { intentId, userId } },
+    select: { status: true },
+  });
+  return banned?.status === IntentMemberStatus.BANNED;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                          Notifications & audit                              */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 async function emitIntentNotification(
   tx: Tx,
@@ -162,7 +302,30 @@ async function emitIntentNotification(
   });
 }
 
-/* ----------------------------- Mutations ----------------------------- */
+async function emitMemberEvent(
+  tx: Tx,
+  params: {
+    intentId: string;
+    userId: string; // subject
+    actorId?: string | null;
+    kind: MemberEvent;
+    note?: string | null;
+  }
+) {
+  await tx.intentMemberEvent.create({
+    data: {
+      intentId: params.intentId,
+      userId: params.userId,
+      actorId: params.actorId ?? null,
+      kind: params.kind,
+      note: params.note ?? null,
+    },
+  });
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                                  Mutations                                 */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 export const joinMemberMutation: MutationResolvers['joinMember'] =
   resolverWithMetrics(
@@ -174,7 +337,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
 
-        // 1) Twardy ban → brak możliwości wejścia żadną ścieżką
+        // Ban: twarda blokada
         if (await isBanned(tx, intentId, userId)) {
           throw new GraphQLError('You are banned from this intent.', {
             extensions: { code: 'FORBIDDEN' },
@@ -185,7 +348,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           where: { intentId_userId: { intentId, userId } },
         });
 
-        // 2) Jeżeli użytkownik został KICKED → musi dostać INVITE od moderatora/ownera
+        // Po KICKED — tylko zaproszenie od organizatora
         if (existing?.status === IntentMemberStatus.KICKED) {
           throw new GraphQLError(
             'You were removed from this intent. An organizer must invite you to join again.',
@@ -193,19 +356,21 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           );
         }
 
-        // 3) Jeżeli już jest JOINED → zwróć stan bez zmian
+        // Już JOINED → idempotentnie zwróć stan
         if (existing?.status === IntentMemberStatus.JOINED) {
           return reloadFullIntent(tx, intentId);
         }
 
-        // 4) Reaktywacja istniejącej relacji (REJECTED/LEFT/PENDING/INVITED)
+        const joined = await countJoined(tx, intentId);
+        const full = isFull(joined, intent.max);
+
+        // Sprawdź okno zapisów (tylko jeśli próbujemy coś zmienić)
+        assertCanJoinNow(intent);
+
+        // Reaktywacja istniejącej relacji
         if (existing) {
-          // Jeżeli był zaproszony (INVITED) i klika "dołącz" po stronie usera,
-          // traktujemy to jako prośbę o dołączenie (lub auto-join jeśli nie ma approval i nie jest FULL).
-          assertCanJoinNow(intent);
-          const joined = await countJoined(tx, intentId);
-          const isFull = joined >= intent.max;
-          const shouldBePending = intent.joinMode !== 'OPEN' || isFull;
+          // INVITED przez orga → klik usera = join jeśli nie pełny i tryb OPEN; inaczej PENDING
+          const shouldBePending = intent.joinMode !== 'OPEN' || full;
 
           await tx.intentMember.update({
             where: { intentId_userId: { intentId, userId } },
@@ -214,13 +379,17 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
                 ? IntentMemberStatus.PENDING
                 : IntentMemberStatus.JOINED,
               joinedAt: shouldBePending ? null : new Date(),
-              // wyczyszczenie danych „kto dodał” – to jest inicjatywa usera
               addedById: null,
               note: null,
             },
           });
 
-          // powiadom moderatorów tylko gdy PENDING
+          await emitMemberEvent(tx, {
+            intentId,
+            userId,
+            kind: shouldBePending ? MemberEvent.REQUEST : MemberEvent.JOIN,
+          });
+
           if (shouldBePending) {
             const moderators = intent.members.filter(
               (m) =>
@@ -230,7 +399,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
             await Promise.all(
               moderators.map((m) =>
                 emitIntentNotification(tx, ctx.pubsub, {
-                  kind: PrismaNotificationKind.INTENT_UPDATED,
+                  kind: PrismaNotificationKind.JOIN_REQUEST,
                   recipientId: m.userId,
                   actorId: userId,
                   intentId,
@@ -244,11 +413,8 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           return reloadFullIntent(tx, intentId);
         }
 
-        // 5) Nowe zgłoszenie
-        assertCanJoinNow(intent);
-        const joined = await countJoined(tx, intentId);
-        const isFull = joined >= intent.max;
-        const shouldBePending = intent.joinMode !== 'OPEN' || isFull;
+        // Nowe podejście
+        const shouldBePending = intent.joinMode !== 'OPEN' || full;
 
         await tx.intentMember.create({
           data: {
@@ -262,6 +428,12 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           },
         });
 
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          kind: shouldBePending ? MemberEvent.REQUEST : MemberEvent.JOIN,
+        });
+
         if (shouldBePending) {
           const moderators = intent.members.filter(
             (m) =>
@@ -271,7 +443,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
           await Promise.all(
             moderators.map((m) =>
               emitIntentNotification(tx, ctx.pubsub, {
-                kind: PrismaNotificationKind.INTENT_UPDATED,
+                kind: PrismaNotificationKind.JOIN_REQUEST,
                 recipientId: m.userId,
                 actorId: userId,
                 intentId,
@@ -281,120 +453,6 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
             )
           );
         }
-
-        return reloadFullIntent(tx, intentId);
-      });
-
-      return mapIntent(result);
-    }
-  );
-
-export const banMemberMutation: MutationResolvers['banMember'] =
-  resolverWithMetrics(
-    'Mutation',
-    'banIntentMember',
-    async (_p, { input: { intentId, userId, note } }, ctx): Promise<any> => {
-      const actorId = assertAuth(ctx);
-
-      const result = await prisma.$transaction(async (tx) => {
-        const intent = await loadIntentWithMembers(tx, intentId);
-        if (!isModeratorOrOwner(intent, actorId)) {
-          throw new GraphQLError(
-            'Forbidden. Moderator or owner role required.',
-            {
-              extensions: { code: 'FORBIDDEN' },
-            }
-          );
-        }
-        if (isOwner(intent, userId)) {
-          throw new GraphQLError('Cannot ban the owner.', {
-            extensions: { code: 'FAILED_PRECONDITION' },
-          });
-        }
-
-        const existing = await tx.intentMember.findUnique({
-          where: { intentId_userId: { intentId, userId } },
-        });
-
-        if (!existing) {
-          await tx.intentMember.create({
-            data: {
-              intentId,
-              userId,
-              role: IntentMemberRole.PARTICIPANT,
-              status: IntentMemberStatus.BANNED,
-              note: note ?? null,
-            },
-          });
-        } else if (existing.status !== IntentMemberStatus.BANNED) {
-          await tx.intentMember.update({
-            where: { intentId_userId: { intentId, userId } },
-            data: {
-              status: IntentMemberStatus.BANNED,
-              leftAt: new Date(),
-              note: note ?? null,
-            },
-          });
-        }
-
-        // (opcjonalnie) notyfikacja o banie:
-        await emitIntentNotification(tx, ctx.pubsub, {
-          kind: PrismaNotificationKind.SYSTEM, // albo nowy enum INTENT_MEMBERSHIP_BANNED
-          recipientId: userId,
-          actorId,
-          intentId,
-          title: 'You were banned',
-          body: 'You have been banned from this intent.',
-        });
-
-        return reloadFullIntent(tx, intentId);
-      });
-
-      return mapIntent(result);
-    }
-  );
-
-export const unbanMemberMutation: MutationResolvers['unbanMember'] =
-  resolverWithMetrics(
-    'Mutation',
-    'unbanIntentMember',
-    async (
-      _p,
-      { input: { intentId, userId } },
-      ctx: MercuriusContext
-    ): Promise<any> => {
-      const actorId = assertAuth(ctx);
-
-      const result = await prisma.$transaction(async (tx) => {
-        const intent = await loadIntentWithMembers(tx, intentId);
-        if (!isModeratorOrOwner(intent, actorId)) {
-          throw new GraphQLError(
-            'Forbidden. Moderator or owner role required.',
-            { extensions: { code: 'FORBIDDEN' } }
-          );
-        }
-
-        const existing = await tx.intentMember.findUnique({
-          where: { intentId_userId: { intentId, userId } },
-        });
-        if (!existing || existing.status !== IntentMemberStatus.BANNED) {
-          return reloadFullIntent(tx, intentId);
-        }
-
-        // po unbanie ustawiamy neutralny REJECTED (user musi ponownie poprosić)
-        await tx.intentMember.update({
-          where: { intentId_userId: { intentId, userId } },
-          data: { status: IntentMemberStatus.REJECTED, note: null },
-        });
-
-        await emitIntentNotification(tx, ctx.pubsub, {
-          kind: PrismaNotificationKind.SYSTEM, // lub INTENT_MEMBERSHIP_UNBANNED jeśli dodasz
-          recipientId: userId,
-          actorId,
-          intentId,
-          title: 'Ban lifted',
-          body: 'You can request to join again.',
-        });
 
         return reloadFullIntent(tx, intentId);
       });
@@ -430,7 +488,7 @@ export const acceptInviteMutation: MutationResolvers['acceptInvite'] =
 
         assertCanJoinNow(intent);
         const joined = await countJoined(tx, intentId);
-        if (joined >= intent.max) {
+        if (isFull(joined, intent.max)) {
           throw new GraphQLError('Capacity reached. Cannot join now.', {
             extensions: { code: 'FAILED_PRECONDITION' },
           });
@@ -444,6 +502,12 @@ export const acceptInviteMutation: MutationResolvers['acceptInvite'] =
           },
         });
 
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          kind: MemberEvent.ACCEPT_INVITE,
+        });
+
         return reloadFullIntent(tx, intentId);
       });
 
@@ -455,20 +519,27 @@ export const inviteMemberMutation: MutationResolvers['inviteMember'] =
   resolverWithMetrics(
     'Mutation',
     'inviteMember',
-    async (_p, { input: { intentId, userId } }, ctx): Promise<any> => {
+    async (_p, { input: { intentId, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
+
+      if (actorId === userId) {
+        throw new GraphQLError('You cannot invite yourself.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
+        requireModOrOwner(intent, actorId);
 
-        if (!isModeratorOrOwner(intent, actorId)) {
-          throw new GraphQLError(
-            'Forbidden. Moderator or owner role required.',
-            { extensions: { code: 'FORBIDDEN' } }
-          );
-        }
         if (isOwner(intent, userId)) {
           throw new GraphQLError('Cannot invite the owner.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          });
+        }
+
+        if (await isBanned(tx, intentId, userId)) {
+          throw new GraphQLError('User is banned for this intent.', {
             extensions: { code: 'FAILED_PRECONDITION' },
           });
         }
@@ -476,12 +547,6 @@ export const inviteMemberMutation: MutationResolvers['inviteMember'] =
         const existing = await tx.intentMember.findUnique({
           where: { intentId_userId: { intentId, userId } },
         });
-
-        if (await isBanned(tx, intentId, userId)) {
-          throw new GraphQLError('User is banned for this intent.', {
-            extensions: { code: 'FAILED_PRECONDITION' },
-          });
-        }
 
         if (!existing) {
           await tx.intentMember.create({
@@ -503,6 +568,13 @@ export const inviteMemberMutation: MutationResolvers['inviteMember'] =
             },
           });
         }
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind: MemberEvent.INVITE,
+        });
 
         await emitIntentNotification(tx, ctx.pubsub, {
           kind: PrismaNotificationKind.INTENT_INVITE,
@@ -526,6 +598,7 @@ export const requestJoinIntentMutation: MutationResolvers['requestJoinIntent'] =
     'Mutation',
     'requestJoinIntent',
     async (_p, { intentId }, ctx) => {
+      // alias do joinMember
       return joinMemberMutation.resolve(undefined, { intentId }, ctx);
     }
   );
@@ -537,7 +610,6 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
     async (_p, { intentId }, ctx) => {
       const userId = assertAuth(ctx);
 
-      // Jeśli intent jest read-only, nie musimy rzucać — usuwamy swoją prośbę.
       const res = await prisma.intentMember.deleteMany({
         where: {
           intentId,
@@ -548,6 +620,17 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
         },
       });
 
+      // (opcjonalnie) event audytowy
+      if (res.count > 0) {
+        await prisma.intentMemberEvent.create({
+          data: {
+            intentId,
+            userId,
+            kind: MemberEvent.REJECT, // semantycznie „wycofanie”; można dodać osobny ENUM jeśli chcesz
+          },
+        });
+      }
+
       return res.count > 0;
     }
   );
@@ -556,7 +639,7 @@ export const leaveIntentMutation: MutationResolvers['leaveIntent'] =
   resolverWithMetrics(
     'Mutation',
     'leaveIntent',
-    async (_p, { intentId }, ctx): Promise<any> => {
+    async (_p, { intentId }, ctx) => {
       const userId = assertAuth(ctx);
 
       const result = await prisma.$transaction(async (tx) => {
@@ -581,6 +664,12 @@ export const leaveIntentMutation: MutationResolvers['leaveIntent'] =
           data: { status: IntentMemberStatus.LEFT, leftAt: new Date() },
         });
 
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          kind: MemberEvent.LEAVE,
+        });
+
         return reloadFullIntent(tx, intentId);
       });
 
@@ -592,11 +681,12 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
   resolverWithMetrics(
     'Mutation',
     'approveMembership',
-    async (_p, { input: { intentId, userId } }, ctx): Promise<any> => {
+    async (_p, { input: { intentId, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
+        requireModOrOwner(intent, actorId);
 
         if (await isBanned(tx, intentId, userId)) {
           throw new GraphQLError('User is banned for this intent.', {
@@ -604,16 +694,9 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
           });
         }
 
-        if (!isModeratorOrOwner(intent, actorId)) {
-          throw new GraphQLError(
-            'Forbidden. Moderator or owner role required.',
-            { extensions: { code: 'FORBIDDEN' } }
-          );
-        }
-
         assertCanJoinNow(intent);
         const joined = await countJoined(tx, intentId);
-        if (joined >= intent.max) {
+        if (isFull(joined, intent.max)) {
           throw new GraphQLError(
             'Capacity reached. Cannot approve more members.',
             { extensions: { code: 'FAILED_PRECONDITION' } }
@@ -623,9 +706,9 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
         const member = await tx.intentMember.findUnique({
           where: { intentId_userId: { intentId, userId } },
         });
-        if (!member) {
-          throw new GraphQLError('Membership not found.', {
-            extensions: { code: 'NOT_FOUND' },
+        if (!member || member.status !== IntentMemberStatus.PENDING) {
+          throw new GraphQLError('No pending membership to approve.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
           });
         }
 
@@ -636,6 +719,13 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
             joinedAt: new Date(),
             addedById: actorId,
           },
+        });
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind: MemberEvent.APPROVE,
         });
 
         await emitIntentNotification(tx, ctx.pubsub, {
@@ -658,30 +748,33 @@ export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
   resolverWithMetrics(
     'Mutation',
     'rejectMembership',
-    async (_p, { input: { intentId, note, userId } }, ctx): Promise<any> => {
+    async (_p, { input: { intentId, note, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
-        if (!isModeratorOrOwner(intent, actorId)) {
-          throw new GraphQLError(
-            'Forbidden. Moderator or owner role required.',
-            { extensions: { code: 'FORBIDDEN' } }
-          );
-        }
+        requireModOrOwner(intent, actorId);
 
         const member = await tx.intentMember.findUnique({
           where: { intentId_userId: { intentId, userId } },
         });
-        if (!member) {
-          throw new GraphQLError('Membership not found.', {
-            extensions: { code: 'NOT_FOUND' },
+        if (!member || member.status !== IntentMemberStatus.PENDING) {
+          throw new GraphQLError('No pending membership to reject.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
           });
         }
 
         await tx.intentMember.update({
           where: { intentId_userId: { intentId, userId } },
           data: { status: IntentMemberStatus.REJECTED, note: note ?? null },
+        });
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind: MemberEvent.REJECT,
+          note: note ?? null,
         });
 
         await emitIntentNotification(tx, ctx.pubsub, {
@@ -704,17 +797,13 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
   resolverWithMetrics(
     'Mutation',
     'kickMember',
-    async (_p, { input: { intentId, note, userId } }, ctx): Promise<any> => {
+    async (_p, { input: { intentId, note, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
-        if (!isModeratorOrOwner(intent, actorId)) {
-          throw new GraphQLError(
-            'Forbidden. Moderator or owner role required.',
-            { extensions: { code: 'FORBIDDEN' } }
-          );
-        }
+        requireModOrOwner(intent, actorId);
+
         if (isOwner(intent, userId)) {
           throw new GraphQLError('Cannot kick the owner.', {
             extensions: { code: 'FAILED_PRECONDITION' },
@@ -737,6 +826,127 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
           },
         });
 
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind: MemberEvent.KICK,
+          note: note ?? null,
+        });
+
+        return reloadFullIntent(tx, intentId);
+      });
+
+      return mapIntent(result);
+    }
+  );
+
+export const banMemberMutation: MutationResolvers['banMember'] =
+  resolverWithMetrics(
+    'Mutation',
+    'banIntentMember',
+    async (_p, { input: { intentId, userId, note } }, ctx) => {
+      const actorId = assertAuth(ctx);
+
+      const result = await prisma.$transaction(async (tx) => {
+        const intent = await loadIntentWithMembers(tx, intentId);
+        requireModOrOwner(intent, actorId);
+
+        if (isOwner(intent, userId)) {
+          throw new GraphQLError('Cannot ban the owner.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          });
+        }
+
+        const existing = await tx.intentMember.findUnique({
+          where: { intentId_userId: { intentId, userId } },
+        });
+
+        if (!existing) {
+          await tx.intentMember.create({
+            data: {
+              intentId,
+              userId,
+              role: IntentMemberRole.PARTICIPANT,
+              status: IntentMemberStatus.BANNED,
+              note: note ?? null,
+            },
+          });
+        } else if (existing.status !== IntentMemberStatus.BANNED) {
+          await tx.intentMember.update({
+            where: { intentId_userId: { intentId, userId } },
+            data: {
+              status: IntentMemberStatus.BANNED,
+              leftAt: new Date(),
+              note: note ?? null,
+            },
+          });
+        }
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind: MemberEvent.BAN,
+          note: note ?? null,
+        });
+
+        await emitIntentNotification(tx, ctx.pubsub, {
+          kind: PrismaNotificationKind.BANNED,
+          recipientId: userId,
+          actorId,
+          intentId,
+          title: 'You were banned',
+          body: 'You have been banned from this intent.',
+        });
+
+        return reloadFullIntent(tx, intentId);
+      });
+
+      return mapIntent(result);
+    }
+  );
+
+export const unbanMemberMutation: MutationResolvers['unbanMember'] =
+  resolverWithMetrics(
+    'Mutation',
+    'unbanIntentMember',
+    async (_p, { input: { intentId, userId } }, ctx) => {
+      const actorId = assertAuth(ctx);
+
+      const result = await prisma.$transaction(async (tx) => {
+        const intent = await loadIntentWithMembers(tx, intentId);
+        requireModOrOwner(intent, actorId);
+
+        const existing = await tx.intentMember.findUnique({
+          where: { intentId_userId: { intentId, userId } },
+        });
+        if (!existing || existing.status !== IntentMemberStatus.BANNED) {
+          return reloadFullIntent(tx, intentId);
+        }
+
+        // Po unbanie → REJECTED (neutralny stan, user musi złożyć nową prośbę)
+        await tx.intentMember.update({
+          where: { intentId_userId: { intentId, userId } },
+          data: { status: IntentMemberStatus.REJECTED, note: null },
+        });
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind: MemberEvent.UNBAN,
+        });
+
+        await emitIntentNotification(tx, ctx.pubsub, {
+          kind: PrismaNotificationKind.UNBANNED,
+          recipientId: userId,
+          actorId,
+          intentId,
+          title: 'Ban lifted',
+          body: 'You can request to join again.',
+        });
+
         return reloadFullIntent(tx, intentId);
       });
 
@@ -748,16 +958,13 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
   resolverWithMetrics(
     'Mutation',
     'updateMemberRole',
-    async (_p, { input: { intentId, role, userId } }, ctx): Promise<any> => {
+    async (_p, { input: { intentId, role, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
-        if (!isOwner(intent, actorId)) {
-          throw new GraphQLError('Only the owner can change member roles.', {
-            extensions: { code: 'FORBIDDEN' },
-          });
-        }
+        requireOwner(intent, actorId);
+
         if (isOwner(intent, userId)) {
           throw new GraphQLError(
             'Owner role cannot be changed via this mutation.',
@@ -779,25 +986,31 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
           data: { role },
         });
 
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind:
+            role === IntentMemberRole.MODERATOR
+              ? MemberEvent.APPROVE
+              : MemberEvent.REJECT, // prosty mapping; rozważ dodanie osobnych eventów PROMOTE/DEMOTE
+        });
+
         return reloadFullIntent(tx, intentId);
       });
 
       return mapIntent(result);
     }
   );
+
 export const cancelPendingOrInviteForUserMutation: MutationResolvers['cancelPendingOrInviteForUser'] =
   resolverWithMetrics(
     'Mutation',
     'cancelPendingOrInviteForUser',
     async (_p, { input: { intentId, userId } }, ctx) => {
-      const actorId = ctx.user?.id;
-      if (!actorId) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+      const actorId = assertAuth(ctx);
 
-      // Check permissions: actor must be OWNER or MODERATOR and JOINED in this intent
+      // uprawnienia: OWNER/MODERATOR oraz JOINED
       const actorMembership = await prisma.intentMember.findUnique({
         where: { intentId_userId: { intentId, userId: actorId } },
         select: { role: true, status: true },
@@ -815,7 +1028,6 @@ export const cancelPendingOrInviteForUserMutation: MutationResolvers['cancelPend
         );
       }
 
-      // Remove the target user's PENDING or INVITED membership (if any)
       const res = await prisma.intentMember.deleteMany({
         where: {
           intentId,
@@ -826,9 +1038,16 @@ export const cancelPendingOrInviteForUserMutation: MutationResolvers['cancelPend
         },
       });
 
-      // Optional: you could emit a notification here if needed
-      // (np. INTENT_UPDATED do właściciela / użytkownika)
-      // Pomijamy, bo mutacja zwraca tylko Boolean.
+      if (res.count > 0) {
+        await prisma.intentMemberEvent.create({
+          data: {
+            intentId,
+            userId,
+            actorId,
+            kind: MemberEvent.REJECT, // „odwołanie zaproszenia/pendingu” – możesz dodać osobny enum CANCEL_PENDING
+          },
+        });
+      }
 
       return res.count > 0;
     }

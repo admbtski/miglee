@@ -171,6 +171,7 @@ enum NotificationEntity {
   PAYMENT
   INVOICE
   USER
+  REVIEW
   SYSTEM
   OTHER
 }
@@ -221,12 +222,27 @@ enum SponsorshipStatus {
 enum IntentStatus {
   ANY
   ONGOING
-  STARTED
+  PAST
   FULL
   LOCKED
   AVAILABLE
   CANCELED
   DELETED
+}
+
+"Why joining is locked (computed)"
+enum JoinLockReason {
+  FULL
+  INVITE_ONLY
+  NOT_OPEN_YET
+  CUTOFF
+  NO_LATE_JOIN
+  LATE_CUTOFF
+  MANUAL
+  ENDED
+  CANCELED
+  DELETED
+  OTHER
 }
 
 # ------------------------------------------------------------------------------
@@ -266,7 +282,6 @@ type User {
 type Category {
   id: ID!
   slug: String!
-  # Prefer JSONObject to guarantee an object (key->value). Switch to JSON if you truly allow any JSON value.
   names: JSONObject!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -315,7 +330,34 @@ type Intent {
 
   startAt: DateTime!
   endAt: DateTime!
+
+  """
+  Open joins X minutes before start (null = open immediately after publish)
+  """
+  joinOpensMinutesBeforeStart: Int
+
+  """
+  Close joins before start when now >= startAt - X minutes (null = no pre-start cutoff)
+  """
+  joinCutoffMinutesBeforeStart: Int
+
+  """
+  Allow joining after the event has started (late join)
+  """
   allowJoinLate: Boolean!
+
+  """
+  Close late join when now >= startAt + X minutes (null = allowed until endAt)
+  """
+  lateJoinCutoffMinutesAfterStart: Int
+
+  """
+  Manual kill-switch for joins; overrides time/cutoff windows
+  """
+  joinManuallyClosed: Boolean!
+  joinManuallyClosedAt: DateTime
+  joinManuallyClosedBy: User
+  joinManualCloseReason: String
 
   meetingKind: MeetingKind!
   onlineUrl: String
@@ -344,24 +386,26 @@ type Intent {
   # Access policy: OWNER/MODERATOR can see all statuses; others see JOINED only.
   members: [IntentMember!]!
 
-  # Computed helpers
+  # ---------- Computed helpers ----------
+  status: IntentStatus! # single, high-level status
   isFull: Boolean!
   hasStarted: Boolean!
   hasEnded: Boolean!
-  canJoin: Boolean!
   isOngoing: Boolean!
-  withinLock: Boolean!
+  canJoin: Boolean! # generic yes/no for primary CTA
+  joinOpen: Boolean! # precise: can the viewer join *now*
+  lockReason: JoinLockReason # when joinOpen=false, why
   isOnsite: Boolean!
   isOnline: Boolean!
   isHybrid: Boolean!
-
+  withinLock: Boolean! # ← DODAJ TO
   # Cancellation (read-only state)
   canceledAt: DateTime
   canceledBy: User
   cancelReason: String
   isCanceled: Boolean!
 
-  # Soft-delete (read-only state; typically set >= 30d after cancel)
+  # Soft-delete (read-only state)
   deletedAt: DateTime
   deletedBy: User
   deleteReason: String
@@ -644,7 +688,7 @@ type RegionIntentPage {
 
 input CreateCategoryInput {
   slug: String!
-  names: JSONObject! # keep aligned with Category.names
+  names: JSONObject!
 }
 
 input UpdateCategoryInput {
@@ -686,7 +730,12 @@ input CreateIntentInput {
 
   startAt: DateTime!
   endAt: DateTime!
+
+  # Joins windows / cutoffs
+  joinOpensMinutesBeforeStart: Int
+  joinCutoffMinutesBeforeStart: Int
   allowJoinLate: Boolean! = true
+  lateJoinCutoffMinutesAfterStart: Int
 
   meetingKind: MeetingKind! = ONSITE
   onlineUrl: String
@@ -694,7 +743,7 @@ input CreateIntentInput {
   location: LocationInput
   levels: [Level!]
 
-  # Privacy toggles
+  # Privacy
   addressVisibility: AddressVisibility! = PUBLIC
   membersVisibility: MembersVisibility! = PUBLIC
 }
@@ -714,7 +763,14 @@ input UpdateIntentInput {
 
   startAt: DateTime
   endAt: DateTime
+
+  # Joins windows / cutoffs
+  joinOpensMinutesBeforeStart: Int
+  joinCutoffMinutesBeforeStart: Int
   allowJoinLate: Boolean
+  lateJoinCutoffMinutesAfterStart: Int
+  joinManuallyClosed: Boolean
+  joinManualCloseReason: String
 
   meetingKind: MeetingKind
   onlineUrl: String
@@ -847,7 +903,6 @@ input UpdateNotificationPreferenceInput {
 # ------------------------------------------------------------------------------
 
 type Query {
-  # Notifications feed; server should enforce recipientId === current user (unless admin policy applies).
   notifications(
     recipientId: ID!
     unreadOnly: Boolean = false
@@ -856,7 +911,6 @@ type Query {
     offset: Int = 0
   ): NotificationsResult!
 
-  # Intents listing with rich filters. `status=FULL` requires counting JOINED vs `max` (handle in resolver).
   intents(
     limit: Int = 20
     offset: Int = 0
@@ -881,7 +935,6 @@ type Query {
 
   intent(id: ID!): Intent
 
-  # Intent members queries; resolvers should restrict visibility for non-mods to JOINED only.
   intentMembers(
     intentId: ID!
     status: IntentMemberStatus
@@ -892,7 +945,6 @@ type Query {
 
   intentMember(intentId: ID!, userId: ID!): IntentMember
 
-  # Current user's memberships across intents
   myMemberships(
     status: IntentMemberStatus
     role: IntentMemberRole
@@ -900,7 +952,6 @@ type Query {
     offset: Int = 0
   ): [IntentMember!]!
 
-  # Aggregated counters (owner/mod get full distribution; others get joined-only)
   intentMemberStats(intentId: ID!): IntentMemberStats!
 
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
@@ -912,14 +963,11 @@ type Query {
   tag(id: ID, slug: String): Tag
 
   users(
-    # pagination
     limit: Int = 50
     offset: Int = 0
-    # filtering
     q: String
     role: Role
     verifiedOnly: Boolean
-    # sorting
     sortBy: UsersSortBy = CREATED_AT
     sortDir: SortDir = DESC
   ): UsersResult!
@@ -1021,7 +1069,6 @@ type Query {
 # ------------------------------------------------------------------------------
 # Mutations
 # ------------------------------------------------------------------------------
-
 type Mutation {
   # categories & tags
   createCategory(input: CreateCategoryInput!): Category!
@@ -1039,11 +1086,12 @@ type Mutation {
   cancelIntent(id: ID!, reason: String): Intent!
 
   # memberships (user endpoints)
-  requestJoinIntent(intentId: ID!): Intent! # User requests to join (creates PENDING or JOINED based on joinMode)
-  cancelJoinRequest(intentId: ID!): Boolean! # User cancels their pending request
-  leaveIntent(intentId: ID!): Intent! # User leaves an intent they've joined
-  acceptInvite(intentId: ID!): Intent! # User accepts an invitation (INVITED -> JOINED)
-  # memberships (owner/mod endpoints) — all return updated Intent unless noted
+  requestJoinIntent(intentId: ID!): Intent!
+  cancelJoinRequest(intentId: ID!): Boolean!
+  leaveIntent(intentId: ID!): Intent!
+  acceptInvite(intentId: ID!): Intent!
+
+  # memberships (owner/mod endpoints)
   inviteMember(input: InviteMemberInput!): Intent!
   approveMembership(input: ApproveMembershipInput!): Intent!
   rejectMembership(input: RejectMembershipInput!): Intent!
@@ -1068,52 +1116,50 @@ type Mutation {
 
   markNotificationRead(id: ID!): Boolean!
   deleteNotification(id: ID!): Boolean!
-  markAllNotificationsRead(recipientId: ID!): Int! # returns count
-  # DM Mutations
+  markAllNotificationsRead(recipientId: ID!): Int!
+
+  # DM
   sendDmMessage(input: SendDmMessageInput!): DmMessage!
   updateDmMessage(id: ID!, input: UpdateDmMessageInput!): DmMessage!
   deleteDmMessage(id: ID!): Boolean!
   markDmMessageRead(id: ID!): Boolean!
-  markDmThreadRead(threadId: ID!): Int! # returns count of marked messages
-  deleteDmThread(id: ID!): Boolean!
+  markDmThreadRead(threadId: ID!): Int!
+  deleteDmThread(id: ID!): Boolean! # ← DODANE
+  createOrGetDmThread(userId: ID!): DmThread!
 
-  # Comment Mutations
+  # Comments
   createComment(input: CreateCommentInput!): Comment!
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
   deleteComment(id: ID!): Boolean!
 
-  # Review Mutations
+  # Reviews
   createReview(input: CreateReviewInput!): Review!
   updateReview(id: ID!, input: UpdateReviewInput!): Review!
   deleteReview(id: ID!): Boolean!
 
-  # Report Mutations
+  # Reports
   createReport(input: CreateReportInput!): Report!
-  updateReportStatus(id: ID!, input: UpdateReportStatusInput!): Report! # admin only
-  deleteReport(id: ID!): Boolean! # admin only
-  # Event Chat Mutations
+  updateReportStatus(id: ID!, input: UpdateReportStatusInput!): Report!
+  deleteReport(id: ID!): Boolean!
+
+  # Event Chat
   sendIntentMessage(input: SendIntentMessageInput!): IntentChatMessage!
   editIntentMessage(id: ID!, input: EditIntentMessageInput!): IntentChatMessage!
   deleteIntentMessage(id: ID!, soft: Boolean = true): Boolean!
   markIntentChatRead(intentId: ID!, at: DateTime): Boolean!
 
-  # DM Mutations (extend existing)
-  createOrGetDmThread(userId: ID!): DmThread!
-
-  # User Block Mutations
-  blockUser(userId: ID!): UserBlock!
-  unblockUser(userId: ID!): Boolean!
-
-  # Intent Invite Link Mutations
-  createIntentInviteLink(input: CreateIntentInviteLinkInput!): IntentInviteLink!
-  deleteIntentInviteLink(id: ID!): Boolean!
-  useIntentInviteLink(code: String!): Intent! # Join via invite link
-  # Notification Preference Mutations
+  # User Blocks
+  blockUser(userId: ID!): UserBlock! # ← DODANE
+  unblockUser(userId: ID!): Boolean! # ← DODANE
+  # Intent Invite Links
+  createIntentInviteLink(input: CreateIntentInviteLinkInput!): IntentInviteLink! # ← DODANE
+  deleteIntentInviteLink(id: ID!): Boolean! # ← DODANE
+  useIntentInviteLink(code: String!): Intent! # ← DODANE
+  # Notification Preferences
   updateNotificationPreferences(
     input: UpdateNotificationPreferenceInput!
-  ): NotificationPreference!
-
-  # Mute Mutations
+  ): NotificationPreference! # ← DODANE
+  # Mutes
   muteIntent(intentId: ID!, muted: Boolean!): IntentMute!
   muteDmThread(threadId: ID!, muted: Boolean!): DmMute!
 

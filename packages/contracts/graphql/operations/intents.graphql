@@ -49,12 +49,22 @@ query GetIntents(
 }
 
 # Lightweight query for lists (better performance)
+# Dodano najczęstsze filtry: status/kinds/levels/keywords/verifiedOnly (+near)
 query GetIntentsLight(
   $limit: Int = 20
   $offset: Int = 0
   $visibility: Visibility
   $upcomingAfter: DateTime
+  $endingBefore: DateTime
   $categorySlugs: [ID!]
+  $tagSlugs: [String!]
+  $levels: [Level!]
+  $kinds: [MeetingKind!]
+  $keywords: [String!]
+  $status: IntentStatus
+  $verifiedOnly: Boolean
+  $distanceKm: Int
+  $near: LocationInput
   $sortBy: IntentsSortBy = START_AT
   $sortDir: SortDir = ASC
 ) {
@@ -63,7 +73,16 @@ query GetIntentsLight(
     offset: $offset
     visibility: $visibility
     upcomingAfter: $upcomingAfter
+    endingBefore: $endingBefore
     categorySlugs: $categorySlugs
+    tagSlugs: $tagSlugs
+    levels: $levels
+    kinds: $kinds
+    keywords: $keywords
+    status: $status
+    verifiedOnly: $verifiedOnly
+    distanceKm: $distanceKm
+    near: $near
     sortBy: $sortBy
     sortDir: $sortDir
   ) {

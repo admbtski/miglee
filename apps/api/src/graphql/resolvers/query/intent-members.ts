@@ -6,17 +6,24 @@ import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
   IntentMember as GQLIntentMember,
+  IntentMemberRole as GqlIntentMemberRole,
+  IntentMemberStatus as GqlIntentMemberStatus,
   QueryResolvers,
 } from '../../__generated__/resolvers-types';
-import { IntentMemberWithUsers, mapUser } from '../helpers';
+import type { IntentMemberWithUsers } from '../helpers';
+import { mapUser } from '../helpers';
 
-export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
+/* ────────────────────────────────────────────────────────────────────────────
+ * Mapping
+ * ────────────────────────────────────────────────────────────────────────── */
+
+function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
   return {
     id: m.id,
     intentId: m.intentId,
     userId: m.userId,
-    role: m.role as any,
-    status: m.status as any,
+    role: m.role as unknown as GqlIntentMemberRole,
+    status: m.status as unknown as GqlIntentMemberStatus,
     joinedAt: m.joinedAt ?? null,
     leftAt: m.leftAt ?? null,
     note: m.note ?? null,
@@ -30,9 +37,10 @@ const MEMBER_INCLUDE = {
   addedBy: true,
 } satisfies Prisma.IntentMemberInclude;
 
-/** ──────────────────────────────────────────────────────────────────────────
- *  Auth helpers
- *  ───────────────────────────────────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────────────────────
+ * Auth & role helpers
+ * ────────────────────────────────────────────────────────────────────────── */
+
 async function authUser(ctx: MercuriusContext) {
   if (!ctx.user?.id) {
     throw new GraphQLError('Authentication required.', {
@@ -42,50 +50,84 @@ async function authUser(ctx: MercuriusContext) {
   return ctx.user.id;
 }
 
-async function resolveViewerRole(intentId: string, viewerId?: string) {
+function isMod(role: IntentMemberRole | null): boolean {
+  return role === IntentMemberRole.OWNER || role === IntentMemberRole.MODERATOR;
+}
+
+/**
+ * Zwraca rolę widza (jeśli JOINED) dla danego intentu albo null.
+ */
+async function resolveViewerRole(
+  intentId: string,
+  viewerId?: string
+): Promise<IntentMemberRole | null> {
   if (!viewerId) return null;
+
   const me = await prisma.intentMember.findUnique({
     where: { intentId_userId: { intentId, userId: viewerId } },
     select: { role: true, status: true },
   });
+
   if (!me) return null;
   if (me.status !== IntentMemberStatus.JOINED) return null;
-  return me.role as IntentMemberRole;
+  return me.role;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Filters & ordering
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Jeśli nie-moderator: widzi wyłącznie JOINED (i ukrywa BANNED).
+ * Jeśli moderator/owner: może filtrować dowolnym statusem/rolą.
+ */
+function buildMemberWhere(
+  intentId: string,
+  viewerRole: IntentMemberRole | null,
+  opts: {
+    desiredStatus?: IntentMemberStatus | null;
+    desiredRole?: IntentMemberRole | null;
+  }
+): Prisma.IntentMemberWhereInput {
+  const base: Prisma.IntentMemberWhereInput = { intentId };
+
+  // Filtr roli (jeśli podany)
+  if (opts.desiredRole) {
+    base.role = opts.desiredRole;
+  }
+
+  if (isMod(viewerRole)) {
+    // Mod/Owner: pełny zakres, ewentualnie status na żądanie
+    if (opts.desiredStatus) {
+      base.status = opts.desiredStatus;
+    }
+    return base;
+  }
+
+  // Nie-mod: pokazuj tylko JOINED (i z definicji nie pokazuj BANNED)
+  return {
+    ...base,
+    status: IntentMemberStatus.JOINED,
+  };
 }
 
 /**
- * Dla użytkowników nie-będących OWNER/MODERATOR — ogranicz widoczność tylko do JOINED.
- * Opcjonalnie uwzględnia żądany status (dla modów).
+ * Spójny porządek: rola ↑, status ↑, joinedAt ↑, createdAt ↑
+ * (wspiera paginację offsetową i przewidywalny UI)
  */
-function restrictForNonMods(
-  viewerRole: IntentMemberRole | null,
-  desiredStatus?: IntentMemberStatus | null
-): Prisma.IntentMemberWhereInput {
-  if (
-    viewerRole === IntentMemberRole.OWNER ||
-    viewerRole === IntentMemberRole.MODERATOR
-  ) {
-    return desiredStatus ? { status: desiredStatus } : {};
-  }
-  return { status: IntentMemberStatus.JOINED };
+function buildMemberOrder(): Prisma.IntentMemberOrderByWithRelationInput[] {
+  return [
+    { role: 'asc' },
+    { status: 'asc' },
+    { joinedAt: 'asc' },
+    { createdAt: 'asc' },
+  ];
 }
 
-/** Przyda się gdybyś kiedyś chciał filtrować bany z list (na razie nie używamy). */
-function excludeBannedUnlessMod(
-  viewerRole: IntentMemberRole | null
-): Prisma.IntentMemberWhereInput {
-  if (
-    viewerRole === IntentMemberRole.OWNER ||
-    viewerRole === IntentMemberRole.MODERATOR
-  ) {
-    return {};
-  }
-  return { NOT: { status: IntentMemberStatus.BANNED } };
-}
+/* ────────────────────────────────────────────────────────────────────────────
+ * Queries
+ * ────────────────────────────────────────────────────────────────────────── */
 
-/** ──────────────────────────────────────────────────────────────────────────
- *  Queries
- *  ───────────────────────────────────────────────────────────────────────── */
 export const intentMembersQuery: QueryResolvers['intentMembers'] =
   resolverWithMetrics(
     'Query',
@@ -95,30 +137,21 @@ export const intentMembersQuery: QueryResolvers['intentMembers'] =
       const skip = Math.max(0, offset ?? 0);
 
       const viewerRole = await resolveViewerRole(intentId, user?.id);
-      const statusFilter = restrictForNonMods(viewerRole, status ?? null);
-      const bannedFilter = excludeBannedUnlessMod(viewerRole);
 
-      const where: Prisma.IntentMemberWhereInput = {
-        intentId,
-        ...(role ? { role } : {}),
-        ...statusFilter,
-        ...bannedFilter,
-      };
+      const where = buildMemberWhere(intentId, viewerRole, {
+        desiredStatus: (status as unknown as IntentMemberStatus | null) ?? null,
+        desiredRole: (role as unknown as IntentMemberRole | null) ?? null,
+      });
 
       const list = await prisma.intentMember.findMany({
         where,
         take,
         skip,
-        orderBy: [
-          { role: 'asc' },
-          { status: 'asc' },
-          { joinedAt: 'asc' },
-          { createdAt: 'asc' },
-        ],
+        orderBy: buildMemberOrder(),
         include: MEMBER_INCLUDE,
       });
 
-      return list.map(mapIntentMember);
+      return list.map((m) => mapIntentMember(m as IntentMemberWithUsers));
     }
   );
 
@@ -136,14 +169,9 @@ export const intentMemberQuery: QueryResolvers['intentMember'] =
 
       if (!row) return null;
 
-      // non-mods can only see JOINED members
-      if (
-        !(
-          viewerRole === IntentMemberRole.OWNER ||
-          viewerRole === IntentMemberRole.MODERATOR
-        )
-      ) {
-        if (row.status !== IntentMemberStatus.JOINED) return null;
+      // Nie-modowie widzą tylko JOINED
+      if (!isMod(viewerRole) && row.status !== IntentMemberStatus.JOINED) {
+        return null;
       }
 
       return mapIntentMember(row as IntentMemberWithUsers);
@@ -156,13 +184,14 @@ export const myMembershipsQuery: QueryResolvers['myMemberships'] =
     'myMemberships',
     async (_p, { status, role, limit, offset }, ctx) => {
       const me = await authUser(ctx);
+
       const take = Math.max(1, Math.min(limit ?? 50, 200));
       const skip = Math.max(0, offset ?? 0);
 
       const where: Prisma.IntentMemberWhereInput = {
         userId: me,
-        ...(status ? { status } : {}),
-        ...(role ? { role } : {}),
+        ...(status ? { status: status as unknown as IntentMemberStatus } : {}),
+        ...(role ? { role: role as unknown as IntentMemberRole } : {}),
       };
 
       const list = await prisma.intentMember.findMany({
@@ -173,7 +202,7 @@ export const myMembershipsQuery: QueryResolvers['myMemberships'] =
         include: MEMBER_INCLUDE,
       });
 
-      return list.map(mapIntentMember);
+      return list.map((m) => mapIntentMember(m as IntentMemberWithUsers));
     }
   );
 
@@ -184,35 +213,32 @@ export const intentMemberStatsQuery: QueryResolvers['intentMemberStats'] =
     async (_p, { intentId }, { user }) => {
       const viewerRole = await resolveViewerRole(intentId, user?.id);
 
-      // OWNER/MODERATOR: pełne zliczenia
-      if (
-        viewerRole === IntentMemberRole.OWNER ||
-        viewerRole === IntentMemberRole.MODERATOR
-      ) {
+      if (isMod(viewerRole)) {
         const byStatus = await prisma.intentMember.groupBy({
           by: ['status'],
           where: { intentId },
           _count: true,
         });
 
-        const reduce = (s: IntentMemberStatus) =>
+        const get = (s: IntentMemberStatus) =>
           byStatus.find((r) => r.status === s)?._count ?? 0;
 
         return {
-          joined: reduce(IntentMemberStatus.JOINED),
-          pending: reduce(IntentMemberStatus.PENDING),
-          invited: reduce(IntentMemberStatus.INVITED),
-          rejected: reduce(IntentMemberStatus.REJECTED),
-          banned: reduce(IntentMemberStatus.BANNED),
-          left: reduce(IntentMemberStatus.LEFT),
-          kicked: reduce(IntentMemberStatus.KICKED),
+          joined: get(IntentMemberStatus.JOINED),
+          pending: get(IntentMemberStatus.PENDING),
+          invited: get(IntentMemberStatus.INVITED),
+          rejected: get(IntentMemberStatus.REJECTED),
+          banned: get(IntentMemberStatus.BANNED),
+          left: get(IntentMemberStatus.LEFT),
+          kicked: get(IntentMemberStatus.KICKED),
         };
       }
 
-      // inni: eksponuj tylko JOINED
+      // Nie-modowie: tylko JOINED
       const joined = await prisma.intentMember.count({
         where: { intentId, status: IntentMemberStatus.JOINED },
       });
+
       return {
         joined,
         pending: 0,

@@ -27,6 +27,7 @@ import type {
 import { mapIntent, mapNotification, pickLocation } from '../helpers';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const MIN_START_BUFFER_MS = 5 * 60 * 1000; // >= now + 5 min
 
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
@@ -52,16 +53,48 @@ const INTENT_INCLUDE = {
   deletedBy: true,
 } satisfies Prisma.IntentInclude;
 
+/* ───────────────────────────── Validation ───────────────────────────── */
+
+function assertStartEnd(startAt: Date, endAt: Date) {
+  if (!(startAt instanceof Date) || isNaN(+startAt)) {
+    throw new GraphQLError('`startAt` must be a valid Date.', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'startAt' },
+    });
+  }
+  if (!(endAt instanceof Date) || isNaN(+endAt)) {
+    throw new GraphQLError('`endAt` must be a valid Date.', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'endAt' },
+    });
+  }
+  if (startAt >= endAt) {
+    throw new GraphQLError('`startAt` must be earlier than `endAt`.', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'startAt/endAt' },
+    });
+  }
+  const now = Date.now();
+  if (+startAt < now + MIN_START_BUFFER_MS) {
+    throw new GraphQLError(
+      '`startAt` must be at least 5 minutes in the future.',
+      {
+        extensions: { code: 'BAD_USER_INPUT', field: 'startAt' },
+      }
+    );
+  }
+}
+
 function assertCreateInput(input: CreateIntentInput) {
-  if (
-    !input.categorySlugs ||
-    input.categorySlugs.length < 1 ||
-    input.categorySlugs.length > 3
-  ) {
+  if (!input.categorySlugs?.length || input.categorySlugs.length > 3) {
     throw new GraphQLError('You must select between 1 and 3 categories.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'categorySlugs' },
     });
   }
+  // time
+  assertStartEnd(
+    input.startAt as unknown as Date,
+    input.endAt as unknown as Date
+  );
+
+  // capacity
   if (input.mode === PrismaMode.ONE_TO_ONE) {
     if (input.min !== 2 || input.max !== 2) {
       throw new GraphQLError('For ONE_TO_ONE, min and max must both equal 2.', {
@@ -78,6 +111,7 @@ function assertCreateInput(input: CreateIntentInput) {
     });
   }
 
+  // meeting kind constraints
   const hasCoords = !!(
     input?.location &&
     (input.location.lat != null || input.location.lng != null)
@@ -112,21 +146,20 @@ function assertCreateInput(input: CreateIntentInput) {
 }
 
 function assertUpdateInput(input: any) {
-  if (input.title === null) {
+  // null-protection on immutable-ish scalars
+  if (input.title === null)
     throw new GraphQLError('`title` cannot be null.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'title' },
     });
-  }
-  if (input.min === null) {
+  if (input.min === null)
     throw new GraphQLError('`min` cannot be null.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'min' },
     });
-  }
-  if (input.max === null) {
+  if (input.max === null)
     throw new GraphQLError('`max` cannot be null.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'max' },
     });
-  }
+
   if (
     typeof input.min === 'number' &&
     typeof input.max === 'number' &&
@@ -146,6 +179,7 @@ function assertUpdateInput(input: any) {
       });
     }
   }
+  // online URL nullability guard when ONLINE explicitly set
   if (
     input.meetingKind === PrismaMeetingKind.ONLINE &&
     input.onlineUrl === null
@@ -154,6 +188,8 @@ function assertUpdateInput(input: any) {
       extensions: { code: 'BAD_USER_INPUT', field: 'onlineUrl' },
     });
   }
+
+  // HYBRID guard when neither url nor coords are provided/updated
   if (input.meetingKind === PrismaMeetingKind.HYBRID) {
     const hasCoords =
       input?.location &&
@@ -178,7 +214,14 @@ function assertUpdateInput(input: any) {
       );
     }
   }
+
+  // if both provided, validate time relationship
+  if (input.startAt !== undefined && input.endAt !== undefined) {
+    assertStartEnd(input.startAt as Date, input.endAt as Date);
+  }
 }
+
+/* ───────────────────────────── Guards ───────────────────────────── */
 
 function assertNotReadOnly(intent: {
   canceledAt: Date | null;
@@ -195,6 +238,8 @@ function assertNotReadOnly(intent: {
     });
   }
 }
+
+/* ───────────────────────────── Mutations ───────────────────────────── */
 
 /** Create Intent */
 export const createIntentMutation: MutationResolvers['createIntent'] =
@@ -233,7 +278,9 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
             description: input.description ?? null,
             notes: input.notes ?? null,
 
-            visibility: input.visibility,
+            visibility: (input.visibility ??
+              PrismaVisibility.PUBLIC) as PrismaVisibility,
+            // joinMode może nie być w SDL — fallback na OPEN
             joinMode: (input as any).joinMode ?? 'OPEN',
             mode: input.mode as PrismaMode,
             min: input.min,
@@ -248,10 +295,12 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
 
             levels: (input.levels ?? []) as PrismaLevel[],
 
-            addressVisibility: input.addressVisibility,
-            membersVisibility: input.membersVisibility,
+            addressVisibility: (input.addressVisibility ??
+              'PUBLIC') as AddressVisibility,
+            membersVisibility: (input.membersVisibility ??
+              'PUBLIC') as MembersVisibility,
 
-            ownerId: ownerId,
+            ownerId,
 
             ...loc,
             categories: categoriesData,
@@ -294,8 +343,12 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           payload: { notificationAdded: mapNotification(notification) },
         });
 
-        // Zaplanuj przypomnienia (24h..15m)
-        await enqueueReminders(intent.id, intent.startAt);
+        // Reminders (24h..15m)
+        try {
+          await enqueueReminders(intent.id, intent.startAt);
+        } catch {
+          // loguj w workerze/metrics; nie blokuj transakcji
+        }
 
         const fullIntent = await tx.intent.findUniqueOrThrow({
           where: { id: intent.id },
@@ -309,7 +362,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
     }
   );
 
-/** Update Intent (publikacja INTENT_UPDATED) */
+/** Update Intent (publikacja INTENT_UPDATED + reschedule reminders) */
 export const updateIntentMutation: MutationResolvers['updateIntent'] =
   resolverWithMetrics(
     'Mutation',
@@ -317,11 +370,14 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
     async (_p, { id, input }, { user, pubsub }): Promise<GQLIntent> => {
       assertUpdateInput(input);
 
-      console.dir({ input });
-
       const current = await prisma.intent.findUnique({
         where: { id },
-        select: { canceledAt: true, deletedAt: true, startAt: true },
+        select: {
+          canceledAt: true,
+          deletedAt: true,
+          startAt: true,
+          mode: true,
+        },
       });
       if (!current) {
         throw new GraphQLError('Intent not found.', {
@@ -330,7 +386,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
       }
       assertNotReadOnly(current);
 
-      // Wyciągnij listę odbiorców (JOINED/PENDING/INVITED) przed update
+      // odbiorcy przed update
       const members = await prisma.intentMember.findMany({
         where: {
           intentId: id,
@@ -435,14 +491,12 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         ...(tagsUpdate ? { tags: tagsUpdate } : {}),
       };
 
-      console.dir({ data });
       const updated = await prisma.intent.update({
         where: { id },
         data,
         include: INTENT_INCLUDE,
       });
 
-      console.dir({ updated });
       if (
         updated.mode === 'ONE_TO_ONE' &&
         !(updated.min === 2 && updated.max === 2)
@@ -452,21 +506,18 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         });
       }
 
-      // Reschedule reminders jeśli zmienił się startAt
-      if (
-        typeof input.startAt !== 'undefined' &&
-        current.startAt &&
-        new Date(input.startAt as Date).getTime() !==
-          new Date(current.startAt).getTime()
-      ) {
-        await rescheduleReminders(updated.id, updated.startAt);
+      // reminders
+      if (typeof input.startAt !== 'undefined') {
+        try {
+          await rescheduleReminders(updated.id, updated.startAt);
+        } catch {
+          // nie blokuj mutacji
+        }
       }
 
-      // ===== NEW: publikacja INTENT_UPDATED =====
+      // publish INTENT_UPDATED
       if (recipients.length > 0) {
-        // dedupe po dacie update – żeby przy wielokrotnych update’ach nie spamować
         const dedupeStamp = updated.updatedAt.toISOString();
-
         await prisma.notification.createMany({
           data: recipients.map((recipientId) => ({
             kind: PrismaNotificationKind.INTENT_UPDATED,
@@ -483,7 +534,6 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           skipDuplicates: true,
         });
 
-        // Push realtime: list + badge
         await Promise.all(
           recipients.map(async (recipientId) => {
             const n = await prisma.notification.findFirst({
@@ -509,13 +559,12 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           })
         );
       }
-      // =========================================
 
       return mapIntent(updated, user?.id);
     }
   );
 
-/** Cancel Intent – jak było (sprzątanie reminders + publikacje) */
+/** Cancel Intent – sprzątanie reminders + publikacje */
 export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
   resolverWithMetrics(
     'Mutation',
@@ -542,7 +591,6 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
           extensions: { code: 'FAILED_PRECONDITION' },
         });
       }
-
       if (intent.canceledAt) {
         const full = await prisma.intent.findUniqueOrThrow({
           where: { id },
@@ -568,7 +616,9 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
 
         try {
           await clearReminders(id);
-        } catch {}
+        } catch {
+          // swallow
+        }
 
         if (recipients.length > 0) {
           await tx.notification.createMany({
@@ -622,7 +672,7 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
     }
   );
 
-/** Delete Intent (SOFT) — teraz z publikacją INTENT_UPDATED: "Meeting deleted" */
+/** Delete Intent (SOFT) — z publikacją INTENT_DELETED */
 export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
   resolverWithMetrics(
     'Mutation',
@@ -654,7 +704,6 @@ export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
         );
       }
 
-      // pobierz odbiorców
       const members = await prisma.intentMember.findMany({
         where: {
           intentId: id,
@@ -674,7 +723,7 @@ export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
       });
 
       if (recipients.length > 0) {
-        const dedupe = `intent_deleted:${Date.now()}`; // wystarczy na jednorazowe zdarzenie
+        const dedupe = `intent_deleted:${Date.now()}`;
 
         await prisma.notification.createMany({
           data: recipients.map((recipientId) => ({

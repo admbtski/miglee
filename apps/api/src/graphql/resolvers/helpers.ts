@@ -78,9 +78,7 @@ export type DmThreadWithGraph = Prisma.DmThreadGetPayload<{
     aUser: true;
     bUser: true;
     messages: {
-      include: {
-        sender: true;
-      };
+      include: { sender: true };
       orderBy: { createdAt: 'desc' };
       take: 1;
     };
@@ -105,79 +103,45 @@ export type CommentWithGraph = Prisma.CommentGetPayload<{
     author: true;
     intent: true;
     parent: true;
-    replies: {
-      include: {
-        author: true;
-      };
-    };
-    _count: {
-      select: {
-        replies: true;
-      };
-    };
+    replies: { include: { author: true } };
+    _count: { select: { replies: true } };
   };
 }>;
 
 export type ReviewWithGraph = Prisma.ReviewGetPayload<{
-  include: {
-    author: true;
-    intent: true;
-  };
+  include: { author: true; intent: true };
 }>;
 
 export type ReportWithGraph = Prisma.ReportGetPayload<{
-  include: {
-    reporter: true;
-  };
+  include: { reporter: true };
 }>;
 
 export type IntentChatMessageWithGraph = Prisma.IntentChatMessageGetPayload<{
   include: {
     author: true;
     intent: true;
-    replyTo: {
-      include: {
-        author: true;
-      };
-    };
+    replyTo: { include: { author: true } };
   };
 }>;
 
 export type UserBlockWithGraph = Prisma.UserBlockGetPayload<{
-  include: {
-    blocker: true;
-    blocked: true;
-  };
+  include: { blocker: true; blocked: true };
 }>;
 
 export type IntentInviteLinkWithGraph = Prisma.IntentInviteLinkGetPayload<{
-  include: {
-    intent: true;
-  };
+  include: { intent: true };
 }>;
 
 export type NotificationPreferenceWithGraph =
-  Prisma.NotificationPreferenceGetPayload<{
-    include: {
-      user: true;
-    };
-  }>;
+  Prisma.NotificationPreferenceGetPayload<{ include: { user: true } }>;
 
 export type IntentMuteWithGraph = Prisma.IntentMuteGetPayload<{
-  include: {
-    intent: true;
-    user: true;
-  };
+  include: { intent: true; user: true };
 }>;
 
 export type DmMuteWithGraph = Prisma.DmMuteGetPayload<{
   include: {
-    thread: {
-      include: {
-        aUser: true;
-        bUser: true;
-      };
-    };
+    thread: { include: { aUser: true; bUser: true } };
     user: true;
   };
 }>;
@@ -194,7 +158,7 @@ export function toJSONObject(v: Prisma.JsonValue): JSONObject {
     : {};
 }
 
-/** Safe JSON input to Prisma (GraphQL null vs SQL NULL semantics). */
+/** Safe JSON input do Prisma (GraphQL null vs SQL NULL semantics). */
 export function toInputJson(
   v: unknown
 ):
@@ -259,7 +223,7 @@ function getViewerMembership(i: IntentWithGraph, viewerId?: string) {
 
   const viewerJoined = status === 'JOINED';
   const isOwnerOrModerator = role === 'OWNER' || role === 'MODERATOR';
-  const isParticipant = viewerJoined; // „participant” w Twoim wymaganiu = realnie dołączony
+  const isParticipant = viewerJoined; // „participant” w interfejsie = realnie JOINED
 
   return {
     role,
@@ -300,8 +264,7 @@ function canSeeWithRole(
 }
 
 /* =============================================================================
- * Mappers (strictly typed, no any)
- *  - WYMAGAJĄ: IntentWithGraph / IntentMemberWithUsers / NotificationWithGraph
+ * Mappers (strict typing)
  * ========================================================================== */
 
 export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
@@ -365,13 +328,13 @@ const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
 
 function computeIntentDerived(i: IntentWithGraph) {
   const now = new Date();
-  const lockHrs = 6;
+  const lockHrs = 6; // spójne z resolverem listy
 
   const startDate = new Date(i.startAt);
   const endDate = new Date(i.endAt ?? i.startAt);
 
   const joinedCount = i.members.filter((m) => m.status === 'JOINED').length;
-  const isFull = joinedCount >= i.max;
+  const isFull = typeof i.max === 'number' ? joinedCount >= i.max : false;
   const hasStarted = now >= startDate;
   const isOngoing = now >= startDate && now <= endDate;
   const hasEnded = now > endDate;
@@ -422,14 +385,14 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     viewerId
   );
 
-  // --- Members visibility (uwzględnia role)
+  // Members visibility (po rolach)
   const canSeeMembers = canSeeWithRole(
     i.membersVisibility as MembersVisibility,
     { isOwnerOrModerator, isParticipant }
   );
   const visibleMembers = canSeeMembers ? i.members : [];
 
-  // --- Address/online visibility (uwzględnia role)
+  // Address/online visibility (po rolach)
   const canSeeLocationAndUrl = canSeeWithRole(
     i.addressVisibility as AddressVisibility,
     { isOwnerOrModerator, isParticipant }
@@ -471,39 +434,39 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
       (a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]
     ),
 
-    // Privacy toggles (zwracamy je zawsze, to tylko deklaracja trybu)
+    // Privacy toggles (zwracamy zawsze)
     addressVisibility: i.addressVisibility as AddressVisibility,
     membersVisibility: i.membersVisibility as MembersVisibility,
 
-    // Derived counters (liczby nie są ukrywane)
+    // Denormalized counters
     joinedCount,
-    commentsCount: i.commentsCount ?? 0,
-    messagesCount: i.messagesCount ?? 0,
+    commentsCount: (i as any).commentsCount ?? 0,
+    messagesCount: (i as any).messagesCount ?? 0,
 
     // Ownership
     ownerId: i.ownerId ?? null,
 
-    // --- cancellation
+    // Cancellation
     canceledAt: i.canceledAt ?? null,
     canceledBy: i.canceledBy ? mapUser(i.canceledBy) : null,
     cancelReason: i.cancelReason ?? null,
     isCanceled,
 
-    // --- soft-delete
+    // Soft-delete
     deletedAt: i.deletedAt ?? null,
     deletedBy: i.deletedBy ? mapUser(i.deletedBy) : null,
     deleteReason: i.deleteReason ?? null,
     isDeleted,
 
-    // ✅ REQUIRED by SDL
+    // Collections
     categories: i.categories.map(mapCategory),
     tags: i.tags.map(mapTag),
 
-    // convenience + computed
+    // Convenience relations
     owner: resolveOwnerFromMembers(i),
     members: visibleMembers.map(mapIntentMember),
 
-    // Computed helpers (resolver-calculated)
+    // Computed helpers
     isFull,
     hasStarted,
     hasEnded,
@@ -550,7 +513,10 @@ export function mapDmThread(
   currentUserId?: string
 ): GQLDmThread {
   const lastMessage = t.messages?.[0] ?? null;
-  const unreadCount = currentUserId ? ((t as any)._count?.messages ?? 0) : 0;
+
+  // Uwaga: realny unreadCount zwykle liczony osobnym zapytaniem;
+  // tutaj pozostawiamy 0 lub wartość ze specjalnego _count (jeśli dociągasz).
+  const unreadCount = 0;
 
   return {
     id: t.id,
@@ -563,7 +529,7 @@ export function mapDmThread(
 
     aUser: mapUser(t.aUser),
     bUser: mapUser(t.bUser),
-    messages: [], // ładowane osobno
+    messages: [],
 
     unreadCount,
     lastMessage: lastMessage ? mapDmMessage(lastMessage as any) : null,

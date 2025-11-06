@@ -97,7 +97,16 @@ fragment IntentLight on Intent {
 
   startAt
   endAt
+
+  # ── Join windows / status (new)
+  status
   allowJoinLate
+  joinOpensMinutesBeforeStart
+  joinCutoffMinutesBeforeStart
+  lateJoinCutoffMinutesAfterStart
+  joinManuallyClosed
+  joinOpen
+  lockReason
 
   meetingKind
   onlineUrl
@@ -113,7 +122,7 @@ fragment IntentLight on Intent {
   addressVisibility
   membersVisibility
 
-  # Computed helpers
+  # Derived / computed
   joinedCount
   commentsCount
   messagesCount
@@ -122,6 +131,8 @@ fragment IntentLight on Intent {
   hasEnded
   isCanceled
   isDeleted
+  canJoin
+  isOngoing
 
   ownerId
 
@@ -157,7 +168,20 @@ fragment IntentCore on Intent {
 
   startAt
   endAt
+
+  # ── Join windows / cutoffs / manual lock (new)
   allowJoinLate
+  joinOpensMinutesBeforeStart
+  joinCutoffMinutesBeforeStart
+  lateJoinCutoffMinutesAfterStart
+  joinManuallyClosed
+  joinManuallyClosedAt
+  joinManuallyClosedBy {
+    id
+    name
+    imageUrl
+  }
+  joinManualCloseReason
 
   meetingKind
   onlineUrl
@@ -174,6 +198,7 @@ fragment IntentCore on Intent {
   membersVisibility
 
   # Computed helpers (resolver-calculated)
+  status # (new)
   joinedCount
   commentsCount
   messagesCount
@@ -181,6 +206,8 @@ fragment IntentCore on Intent {
   hasStarted
   hasEnded
   canJoin
+  joinOpen # (new)
+  lockReason # (new)
   isOngoing
   withinLock
   isOnsite
@@ -198,7 +225,7 @@ fragment IntentCore on Intent {
   cancelReason
   isCanceled
 
-  # Soft-delete (typically set 30+ days after cancellation)
+  # Soft-delete (read-only)
   deletedAt
   deletedBy {
     ...UserCore
@@ -216,7 +243,7 @@ fragment IntentCore on Intent {
     ...TagCore
   }
 
-  # Convenience relations (resolver-calculated / access-controlled)
+  # Convenience relations (access-controlled)
   owner {
     ...UserCore
   }
@@ -255,12 +282,14 @@ fragment NotificationCore on Notification {
     id
     title
     startAt
+    status # useful for surfacing context in toasts
   }
 }
 
 fragment NotificationBadgeChangedCore on NotificationBadgeChanged {
   recipientId
 }
+
 # =============================================================================
 # Pagination Fragments
 # =============================================================================

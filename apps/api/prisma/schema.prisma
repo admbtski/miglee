@@ -12,7 +12,9 @@ datasource db {
 }
 
 // =============================================================================
-// Enums
+/**
+ * Enums
+ */
 // =============================================================================
 
 enum Visibility {
@@ -163,7 +165,9 @@ enum AttachmentKind {
 }
 
 // =============================================================================
-// Models
+/**
+ * Models
+ */
 // =============================================================================
 
 model User {
@@ -193,6 +197,9 @@ model User {
   ownedIntents          Intent[]            @relation("IntentOwner")
   memberEventsAsSubject IntentMemberEvent[] @relation("MemberEventUser")
   memberEventsAsActor   IntentMemberEvent[] @relation("MemberEventActor")
+
+  // NEW: intents z ręcznie zamkniętymi zapisami
+  joinClosedIntents Intent[] @relation("IntentJoinClosedBy")
 
   // Social
   commentsWritten Comment[] @relation("CommentAuthor")
@@ -277,9 +284,24 @@ model Intent {
   min  Int  @default(2)
   max  Int  @default(50)
 
-  startAt       DateTime
-  endAt         DateTime
-  allowJoinLate Boolean  @default(true)
+  startAt DateTime
+  endAt   DateTime
+
+  // ── Zapisy / okna / cutoffy ────────────────────────────────────────────────
+  /// Otwarcie zapisów X minut przed startem (null = bez ograniczeń, od publikacji).
+  joinOpensMinutesBeforeStart     Int?
+  /// Zamknięcie zapisów przed startem: now >= startAt - X minut (null = brak pre-cutoffu).
+  joinCutoffMinutesBeforeStart    Int?
+  /// Pozwól dołączać po starcie (late join).
+  allowJoinLate                   Boolean   @default(true)
+  /// Zamknięcie late-join po starcie: now >= startAt + X minut (null = do endAt).
+  lateJoinCutoffMinutesAfterStart Int?
+  /// Ręczne zamknięcie zapisów (nadpisuje powyższe).
+  joinManuallyClosed              Boolean   @default(false)
+  joinManuallyClosedAt            DateTime?
+  joinManuallyClosedById          String?
+  joinManuallyClosedBy            User?     @relation("IntentJoinClosedBy", fields: [joinManuallyClosedById], references: [id], onDelete: SetNull)
+  joinManualCloseReason           String?
 
   meetingKind MeetingKind @default(ONSITE)
   onlineUrl   String?
@@ -351,6 +373,11 @@ model Intent {
   @@index([createdAt])
   @@index([visibility, meetingKind, startAt])
   @@index([visibility, startAt, joinedCount])
+  // NOWE indeksy pod filtrowanie zapisów/cutoffów
+  @@index([joinManuallyClosed, startAt])
+  @@index([joinOpensMinutesBeforeStart])
+  @@index([joinCutoffMinutesBeforeStart])
+  @@index([lateJoinCutoffMinutesAfterStart])
   @@map("intents")
 }
 
