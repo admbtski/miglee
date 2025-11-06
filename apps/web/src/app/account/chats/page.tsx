@@ -19,16 +19,26 @@ import {
   Hash,
   User2,
   Check,
+  Loader2,
 } from 'lucide-react';
 
-// ─── IMPORT MOCKÓW ────────────────────────────────────────────────────────────
-// Jeśli w mocku masz inne nazwy/typy, dostosuj ścieżkę i aliasy poniżej.
+// API Hooks
+import { useMeQuery } from '@/lib/api/auth';
 import {
-  DM_CONVERSATIONS as DEMO_DMS,
-  CHANNEL_CONVERSATIONS as DEMO_CHANNELS,
-  DM_MESSAGES as RAW_DEMO_DM_MESSAGES,
-  CHANNEL_MESSAGES as RAW_DEMO_CHANNEL_MESSAGES,
-} from './mock-chat-data';
+  useGetDmThreads,
+  useGetDmMessages,
+  useSendDmMessage,
+  useMarkDmThreadRead,
+} from '@/lib/api/dm';
+import {
+  useGetIntentMessages,
+  useSendIntentMessage,
+  useMarkIntentChatRead,
+  useGetIntentUnreadCount,
+} from '@/lib/api/event-chat';
+import { useDmMessageAdded } from '@/lib/api/dm-subscriptions';
+import { useIntentMessageAdded } from '@/lib/api/event-chat-subscriptions';
+import { useMyMembershipsQuery } from '@/lib/api/intent-members';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -55,36 +65,135 @@ export type Message = {
   block?: boolean;
 };
 
-// Ujednolicenie typów na wypadek gdy mock używa `any[]`
-const DEMO_DM_MESSAGES: Record<string, Message[]> =
-  RAW_DEMO_DM_MESSAGES as unknown as Record<string, Message[]>;
-const DEMO_CHANNEL_MESSAGES: Record<string, Message[]> =
-  RAW_DEMO_CHANNEL_MESSAGES as unknown as Record<string, Message[]>;
-
 /* ───────────────────────────── Page ───────────────────────────── */
 
-export default function ChatsPage() {
+export default function ChatsPageIntegrated() {
+  const { data: meData } = useMeQuery();
+  const currentUserId = meData?.me?.id;
+
   const [tab, setTab] = useState<ChatKind>('dm');
 
-  // independent active selections per tab
-  const [activeDmId, setActiveDmId] = useState<string | undefined>(
-    DEMO_DMS[0]?.id
-  );
-  const [activeChId, setActiveChId] = useState<string | undefined>(
-    DEMO_CHANNELS[0]?.id
+  // Independent active selections per tab
+  const [activeDmId, setActiveDmId] = useState<string | undefined>();
+  const [activeChId, setActiveChId] = useState<string | undefined>();
+
+  // Fetch DM threads
+  const { data: dmThreadsData, isLoading: dmThreadsLoading } = useGetDmThreads(
+    { limit: 50, offset: 0 },
+    { enabled: !!currentUserId }
   );
 
-  // local state for messages (so onSend re-renders)
-  const [dmMessages, setDmMessages] =
-    useState<Record<string, Message[]>>(DEMO_DM_MESSAGES);
-  const [chMessages, setChMessages] = useState<Record<string, Message[]>>(
-    DEMO_CHANNEL_MESSAGES
+  // Fetch user's intent memberships (for channels)
+  const { data: membershipsData, isLoading: membershipsLoading } =
+    useMyMembershipsQuery(
+      { limit: 100, offset: 0 },
+      { enabled: !!currentUserId }
+    );
+
+  // Fetch DM messages for active thread
+  const { data: dmMessagesData, isLoading: dmMessagesLoading } =
+    useGetDmMessages(
+      { threadId: activeDmId!, limit: 100, offset: 0 },
+      { enabled: !!activeDmId }
+    );
+
+  // Fetch intent messages for active channel
+  const {
+    data: intentMessagesData,
+    isLoading: intentMessagesLoading,
+    fetchNextPage: fetchNextIntentPage,
+    hasNextPage: hasNextIntentPage,
+  } = useGetIntentMessages({ intentId: activeChId!, limit: 50 }, {
+    enabled: !!activeChId,
+  } as any);
+
+  // Fetch unread count for active channel
+  const { data: intentUnreadData } = useGetIntentUnreadCount(
+    { intentId: activeChId! },
+    { enabled: !!activeChId, refetchInterval: 10000 } // Refetch every 10s
   );
+
+  // Mutations
+  const sendDmMessage = useSendDmMessage();
+  const sendIntentMessage = useSendIntentMessage();
+  const markDmRead = useMarkDmThreadRead();
+  const markIntentRead = useMarkIntentChatRead();
+
+  // Subscriptions
+  useDmMessageAdded({
+    threadId: activeDmId!,
+    enabled: !!activeDmId && tab === 'dm',
+  });
+
+  useIntentMessageAdded({
+    intentId: activeChId!,
+    enabled: !!activeChId && tab === 'channel',
+  });
+
+  // Map DM threads to conversations
+  const dmConversations: Conversation[] = useMemo(() => {
+    if (!dmThreadsData?.dmThreads?.items || !currentUserId) return [];
+
+    return dmThreadsData.dmThreads.items.map((thread) => {
+      const otherUser =
+        thread.aUserId === currentUserId ? thread.bUser : thread.aUser;
+      const lastMsg = thread.lastMessage;
+
+      return {
+        id: thread.id,
+        kind: 'dm' as const,
+        title: otherUser.name || 'Unknown',
+        membersCount: 2,
+        preview: lastMsg?.content || 'No messages yet',
+        lastMessageAt: formatRelativeTime(
+          thread.lastMessageAt || thread.createdAt
+        ),
+        unread: thread.unreadCount || 0,
+        avatar: otherUser.imageUrl || undefined,
+      };
+    });
+  }, [dmThreadsData, currentUserId]);
+
+  // Map user's intent memberships to channel conversations
+  const channelConversations: Conversation[] = useMemo(() => {
+    const items = (membershipsData?.myMemberships as any)?.items;
+    if (!items || !currentUserId) return [];
+
+    return items
+      .filter((membership: any) => {
+        // Only show JOINED members
+        return membership.status === 'JOINED';
+      })
+      .map((membership: any) => {
+        const intent = membership.intent;
+        if (!intent) return null;
+
+        // Get last message from intent (if available)
+        const lastMessage =
+          intent.messagesCount > 0 ? 'Recent activity' : 'No messages yet';
+
+        // Use unread count from query if this is the active channel
+        const unreadCount =
+          intent.id === activeChId
+            ? (intentUnreadData?.intentUnreadCount ?? 0)
+            : 0;
+
+        return {
+          id: intent.id,
+          kind: 'channel' as const,
+          title: intent.title || 'Untitled Event',
+          membersCount: intent.joinedCount || 0,
+          preview: lastMessage,
+          lastMessageAt: formatRelativeTime(intent.updatedAt),
+          unread: unreadCount,
+          avatar: intent.owner?.imageUrl || undefined,
+        };
+      })
+      .filter((c: Conversation | null): c is Conversation => c !== null);
+  }, [membershipsData, currentUserId, activeChId, intentUnreadData]);
 
   const conversations: Conversation[] =
-    tab === 'dm'
-      ? (DEMO_DMS as Conversation[])
-      : (DEMO_CHANNELS as Conversation[]);
+    tab === 'dm' ? dmConversations : channelConversations;
   const activeId = tab === 'dm' ? activeDmId : activeChId;
 
   const active = useMemo(
@@ -92,49 +201,139 @@ export default function ChatsPage() {
     [conversations, activeId]
   );
 
+  // Set first conversation as active on load
+  useEffect(() => {
+    if (tab === 'dm' && !activeDmId && dmConversations.length > 0) {
+      setActiveDmId(dmConversations[0]?.id);
+    }
+  }, [tab, activeDmId, dmConversations]);
+
+  useEffect(() => {
+    if (tab === 'channel' && !activeChId && channelConversations.length > 0) {
+      setActiveChId(channelConversations[0]?.id);
+    }
+  }, [tab, activeChId, channelConversations]);
+
   function handlePick(id: string) {
     if (tab === 'dm') setActiveDmId(id);
     else setActiveChId(id);
   }
 
   function handleSend(text: string) {
-    if (!active) return;
-    const message: Message = {
-      id: 'm' + Math.random().toString(36).slice(2),
-      text,
-      at: Date.now(),
-      side: 'right',
-      author: { id: 'me', name: 'You' },
-    };
+    if (!active || !currentUserId) return;
+
     if (active.kind === 'dm') {
-      setDmMessages((prev) => ({
-        ...prev,
-        [active.id]: [...(prev[active.id] ?? []), message],
-      }));
+      // Get the other user ID from the thread
+      const thread = dmThreadsData?.dmThreads?.items?.find(
+        (t) => t.id === activeDmId
+      );
+      if (!thread) return;
+
+      const recipientId =
+        thread.aUserId === currentUserId ? thread.bUserId : thread.aUserId;
+
+      sendDmMessage.mutate({
+        input: {
+          recipientId,
+          content: text,
+        },
+      });
     } else {
-      setChMessages((prev) => ({
-        ...prev,
-        [active.id]: [...(prev[active.id] ?? []), message],
-      }));
+      sendIntentMessage.mutate({
+        input: {
+          intentId: active.id,
+          content: text,
+        },
+      });
     }
   }
 
+  // Map messages
   const messages = useMemo(() => {
-    if (!active) return [];
-    return active.kind === 'dm'
-      ? (dmMessages[active.id] ?? [])
-      : (chMessages[active.id] ?? []);
-  }, [active, dmMessages, chMessages]);
+    if (!active || !currentUserId) return [];
+
+    if (active.kind === 'dm') {
+      // dmMessages returns array directly, not { items: [] }
+      const items = dmMessagesData?.dmMessages;
+
+      if (!items || items.length === 0) {
+        return [];
+      }
+
+      return items.map((msg: any) => ({
+        id: msg.id,
+        text: msg.content,
+        at: new Date(msg.createdAt).getTime(),
+        side: (msg.senderId === currentUserId ? 'right' : 'left') as
+          | 'left'
+          | 'right',
+        author: {
+          id: msg.sender.id,
+          name: msg.sender.name || 'Unknown',
+          avatar: msg.sender.imageUrl || undefined,
+        },
+        block: !!msg.deletedAt,
+      }));
+    } else {
+      const pages = intentMessagesData?.pages;
+      if (!pages) return [];
+
+      const allMessages = pages.flatMap(
+        (page: any) => page.intentMessages?.items || []
+      );
+
+      return allMessages.map((msg: any) => ({
+        id: msg.id,
+        text: msg.content,
+        at: new Date(msg.createdAt).getTime(),
+        side: (msg.authorId === currentUserId ? 'right' : 'left') as
+          | 'left'
+          | 'right',
+        author: {
+          id: msg.author.id,
+          name: msg.author.name || 'Unknown',
+          avatar: msg.author.imageUrl || undefined,
+        },
+        block: !!msg.deletedAt,
+      }));
+    }
+  }, [active, currentUserId, dmMessagesData, intentMessagesData]);
+
+  // Mark as read when opening a conversation
+  useEffect(() => {
+    if (!active) return;
+
+    if (active.kind === 'dm' && activeDmId) {
+      markDmRead.mutate({ threadId: activeDmId });
+    } else if (active.kind === 'channel' && activeChId) {
+      markIntentRead.mutate({ intentId: activeChId });
+    }
+  }, [activeDmId, activeChId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!currentUserId) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+      </div>
+    );
+  }
 
   return (
     <ChatShell listVisible>
       <ChatShell.ListPane>
         <ChatTabs tab={tab} setTab={setTab} />
-        <ChatList
-          items={conversations}
-          activeId={activeId}
-          onPick={(id) => handlePick(id)}
-        />
+        {(dmThreadsLoading && tab === 'dm') ||
+        (membershipsLoading && tab === 'channel') ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+          </div>
+        ) : (
+          <ChatList
+            items={conversations}
+            activeId={activeId}
+            onPick={(id) => handlePick(id)}
+          />
+        )}
       </ChatShell.ListPane>
 
       <ChatShell.ThreadPane>
@@ -146,8 +345,14 @@ export default function ChatsPage() {
             avatar={active.avatar}
             lastReadAt={active.lastReadAt}
             messages={messages}
+            loading={tab === 'dm' ? dmMessagesLoading : intentMessagesLoading}
             onBackMobile={() => {}}
             onSend={handleSend}
+            onLoadMore={
+              tab === 'channel' && hasNextIntentPage
+                ? () => fetchNextIntentPage()
+                : undefined
+            }
           />
         ) : (
           <EmptyThread onBackMobile={() => {}} />
@@ -361,8 +566,10 @@ export function ChatThread({
   avatar,
   messages,
   lastReadAt,
+  loading,
   onBackMobile,
   onSend,
+  onLoadMore,
 }: {
   kind: ChatKind;
   title: string;
@@ -370,28 +577,20 @@ export function ChatThread({
   avatar?: string;
   messages: Message[];
   lastReadAt?: number;
+  loading?: boolean;
   onBackMobile: () => void;
   onSend: (text: string) => void;
+  onLoadMore?: () => void;
 }) {
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [typing, setTyping] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setTyping(true), 1200);
-    const t2 = setTimeout(() => setTyping(false), 3800);
-    return () => {
-      clearTimeout(t);
-      clearTimeout(t2);
-    };
-  }, [title]);
 
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [messages.length, typing]);
+  }, [messages.length]);
 
   function submit() {
     const text = input.trim();
@@ -459,37 +658,50 @@ export function ChatThread({
             className="min-h-0 p-4 overflow-auto md:p-5"
             aria-live="polite"
           >
-            {older.map((m) =>
-              m.side === 'right' ? (
-                <MsgOut key={m.id} time={fmtTime(m.at)}>
-                  {m.text}
-                </MsgOut>
-              ) : (
-                <MsgIn key={m.id} time={fmtTime(m.at)} block={m.block}>
-                  {m.text}
-                </MsgIn>
-              )
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+              </div>
             )}
+
+            {!loading && onLoadMore && (
+              <div className="flex justify-center mb-4">
+                <button
+                  onClick={onLoadMore}
+                  className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  Load more
+                </button>
+              </div>
+            )}
+
+            {!loading &&
+              older.map((m) =>
+                m.side === 'right' ? (
+                  <MsgOut key={m.id} time={fmtTime(m.at)}>
+                    {m.text}
+                  </MsgOut>
+                ) : (
+                  <MsgIn key={m.id} time={fmtTime(m.at)} block={m.block}>
+                    {m.text}
+                  </MsgIn>
+                )
+              )}
 
             {newer.length > 0 && <UnreadSeparator />}
 
-            {newer.map((m) =>
-              m.side === 'right' ? (
-                <MsgOut key={m.id} time={fmtTime(m.at)}>
-                  {m.text}
-                </MsgOut>
-              ) : (
-                <MsgIn key={m.id} time={fmtTime(m.at)} block={m.block}>
-                  {m.text}
-                </MsgIn>
-              )
-            )}
-
-            {typing && (
-              <MsgIn time="">
-                <TypingDots />
-              </MsgIn>
-            )}
+            {!loading &&
+              newer.map((m) =>
+                m.side === 'right' ? (
+                  <MsgOut key={m.id} time={fmtTime(m.at)}>
+                    {m.text}
+                  </MsgOut>
+                ) : (
+                  <MsgIn key={m.id} time={fmtTime(m.at)} block={m.block}>
+                    {m.text}
+                  </MsgIn>
+                )
+              )}
           </div>
 
           <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
@@ -536,6 +748,20 @@ function fmtTime(epoch: number) {
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
   return `${hh}:${mm}`;
+}
+
+function formatRelativeTime(isoString: string): string {
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins}m`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d`;
 }
 
 function UnreadSeparator() {
@@ -603,16 +829,6 @@ const MsgOut = ({
     {children}
   </Bubble>
 );
-
-function TypingDots() {
-  return (
-    <span className="inline-flex items-center gap-1">
-      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-60" />
-      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-60 [animation-delay:120ms]" />
-      <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-60 [animation-delay:240ms]" />
-    </span>
-  );
-}
 
 function EmptyThread({ onBackMobile }: { onBackMobile: () => void }) {
   return (
