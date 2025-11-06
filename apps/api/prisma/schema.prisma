@@ -158,12 +158,6 @@ enum ReportEntity {
   MESSAGE
 }
 
-enum AttachmentKind {
-  IMAGE
-  FILE
-  LINK
-}
-
 // =============================================================================
 /**
  * Models

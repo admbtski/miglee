@@ -22,10 +22,13 @@ import {
   type DeleteIntentMessageMutationVariables,
   type MarkIntentChatReadMutation,
   type MarkIntentChatReadMutationVariables,
+  type MuteIntentMutation,
+  type MuteIntentMutationVariables,
   SendIntentMessageDocument,
   EditIntentMessageDocument,
   DeleteIntentMessageDocument,
   MarkIntentChatReadDocument,
+  MuteIntentDocument,
   GetIntentMessagesDocument,
   GetIntentUnreadCountDocument,
 } from './__generated__/react-query-update';
@@ -248,6 +251,36 @@ export function useMarkIntentChatRead(
       // Invalidate unread count
       queryClient.invalidateQueries({
         queryKey: eventChatKeys.unreadCount(variables.intentId),
+      });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Mute/unmute an intent chat
+ */
+export function useMuteIntent(
+  options?: UseMutationOptions<
+    MuteIntentMutation,
+    Error,
+    MuteIntentMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<MuteIntentMutation, Error, MuteIntentMutationVariables>({
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<MuteIntentMutation>(
+        MuteIntentDocument,
+        variables
+      );
+      return res;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate intent query to update mute status
+      queryClient.invalidateQueries({
+        queryKey: ['intents', 'detail', variables.intentId],
       });
     },
     ...options,

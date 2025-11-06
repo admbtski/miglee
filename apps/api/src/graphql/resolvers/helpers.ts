@@ -615,14 +615,13 @@ export function mapNotification(
 
 /* ---- DM Thread ---- */
 export function mapDmThread(
-  t: DmThreadWithGraph,
+  t: DmThreadWithGraph & { unreadCount?: number },
   _currentUserId?: string
 ): GQLDmThread {
   const lastMessage = t.messages?.[0] ?? null;
 
-  // Uwaga: realny unreadCount zwykle liczony osobnym zapytaniem;
-  // tutaj pozostawiamy 0 lub wartość ze specjalnego _count (jeśli dociągasz).
-  const unreadCount = 0;
+  // Use provided unreadCount or default to 0
+  const unreadCount = t.unreadCount ?? 0;
 
   return {
     id: t.id,

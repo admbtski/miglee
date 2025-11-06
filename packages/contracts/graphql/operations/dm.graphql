@@ -48,6 +48,13 @@ query GetDmMute($threadId: ID!) {
 # DM Mutations
 # =============================================================================
 
+# Create or get existing DM thread
+mutation CreateOrGetDmThread($userId: ID!) {
+  createOrGetDmThread(userId: $userId) {
+    ...DmThreadCore
+  }
+}
+
 # Send a new message (creates thread if doesn't exist)
 mutation SendDmMessage($input: SendDmMessageInput!) {
   sendDmMessage(input: $input) {
@@ -80,4 +87,30 @@ mutation MarkDmThreadRead($threadId: ID!) {
 # Delete entire thread
 mutation DeleteDmThread($id: ID!) {
   deleteDmThread(id: $id)
+}
+
+# Mute/unmute a DM thread
+mutation MuteDmThread($threadId: ID!, $muted: Boolean!) {
+  muteDmThread(threadId: $threadId, muted: $muted) {
+    ...DmMuteCore
+  }
+}
+
+# =============================================================================
+# DM Subscriptions
+# =============================================================================
+
+# Subscribe to new messages in a thread
+subscription OnDmMessageAdded($threadId: ID!) {
+  dmMessageAdded(threadId: $threadId) {
+    ...DmMessageCore
+  }
+}
+
+# Subscribe to typing indicators in a thread
+subscription OnDmTyping($threadId: ID!) {
+  dmTyping(threadId: $threadId) {
+    userId
+    isTyping
+  }
 }

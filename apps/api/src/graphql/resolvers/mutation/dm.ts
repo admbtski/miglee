@@ -4,7 +4,8 @@ import {
   NotificationKind as PrismaNotificationKind,
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
-import { createDmPairKey } from '../../../lib/chat-utils';
+import { createDmPairKey, sanitizeDmContent } from '../../../lib/chat-utils';
+import { checkDmSendRateLimit } from '../../../lib/chat-rate-limit';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
@@ -104,28 +105,15 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
 
       const { recipientId, content } = input;
 
-      // Validate content
-      if (!content || content.trim().length === 0) {
-        throw new GraphQLError('Message content cannot be empty.', {
-          extensions: { code: 'BAD_USER_INPUT', field: 'content' },
-        });
-      }
-
-      if (content.length > 5000) {
-        throw new GraphQLError(
-          'Message content too long (max 5000 characters).',
-          {
-            extensions: { code: 'BAD_USER_INPUT', field: 'content' },
-          }
-        );
-      }
-
       // Cannot message yourself
       if (recipientId === user.id) {
         throw new GraphQLError('Cannot send message to yourself.', {
           extensions: { code: 'BAD_USER_INPUT', field: 'recipientId' },
         });
       }
+
+      // Sanitize content (validates length and format)
+      const sanitizedContent = sanitizeDmContent(content);
 
       // Verify recipient exists
       const recipient = await prisma.user.findUnique({
@@ -158,6 +146,9 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
       const pairKey = createPairKey(user.id, recipientId);
       const [aUserId, bUserId] = pairKey.split('|');
 
+      // Check rate limit (after validation, before DB writes)
+      await checkDmSendRateLimit(user.id, pairKey);
+
       const result = await prisma.$transaction(async (tx) => {
         // Find or create thread
         let thread = await tx.dmThread.findUnique({
@@ -179,7 +170,7 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
           data: {
             threadId: thread.id,
             senderId: user.id,
-            content: content.trim(),
+            content: sanitizedContent,
           },
           include: DM_MESSAGE_INCLUDE,
         });
@@ -210,7 +201,7 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
               entityType: PrismaNotificationEntity.MESSAGE,
               entityId: message.id,
               title: `New message from ${user.name}`,
-              body: content.substring(0, 100),
+              body: sanitizedContent.substring(0, 100),
               dedupeKey: `dm_message:${recipientId}:${message.id}`,
             },
             include: NOTIFICATION_INCLUDE,
@@ -233,6 +224,14 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
         return message;
       });
 
+      // Publish DM message to WebSocket subscribers
+      await pubsub?.publish({
+        topic: `dmMessageAdded:${result.threadId}`,
+        payload: {
+          dmMessageAdded: mapDmMessage(result as any),
+        },
+      });
+
       return mapDmMessage(result as any);
     }
   );
@@ -253,21 +252,8 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
 
       const { content } = input;
 
-      // Validate content
-      if (!content || content.trim().length === 0) {
-        throw new GraphQLError('Message content cannot be empty.', {
-          extensions: { code: 'BAD_USER_INPUT', field: 'content' },
-        });
-      }
-
-      if (content.length > 5000) {
-        throw new GraphQLError(
-          'Message content too long (max 5000 characters).',
-          {
-            extensions: { code: 'BAD_USER_INPUT', field: 'content' },
-          }
-        );
-      }
+      // Sanitize content (validates length and format)
+      const sanitizedContent = sanitizeDmContent(content);
 
       // Find message and verify ownership
       const existing = await prisma.dmMessage.findUnique({
@@ -295,7 +281,10 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
 
       const updated = await prisma.dmMessage.update({
         where: { id },
-        data: { content: content.trim() },
+        data: {
+          content: sanitizedContent,
+          editedAt: new Date(),
+        },
         include: DM_MESSAGE_INCLUDE,
       });
 
@@ -402,6 +391,7 @@ export const markDmMessageReadMutation: MutationResolvers['markDmMessageRead'] =
 
 /**
  * Mutation: Mark all messages in a thread as read
+ * Uses DmRead table to track lastReadAt timestamp per user
  */
 export const markDmThreadReadMutation: MutationResolvers['markDmThreadRead'] =
   resolverWithMetrics(
@@ -431,17 +421,50 @@ export const markDmThreadReadMutation: MutationResolvers['markDmThreadRead'] =
         });
       }
 
-      const result = await prisma.dmMessage.updateMany({
+      const now = new Date();
+
+      // Upsert DmRead record
+      await prisma.dmRead.upsert({
+        where: {
+          threadId_userId: {
+            threadId,
+            userId: user.id,
+          },
+        },
+        create: {
+          threadId,
+          userId: user.id,
+          lastReadAt: now,
+        },
+        update: {
+          lastReadAt: now,
+        },
+      });
+
+      // Count how many messages were marked as read (for backwards compatibility)
+      const unreadCount = await prisma.dmMessage.count({
         where: {
           threadId,
           senderId: { not: user.id },
-          readAt: null,
           deletedAt: null,
+          createdAt: {
+            gt:
+              (
+                await prisma.dmRead.findUnique({
+                  where: {
+                    threadId_userId: {
+                      threadId,
+                      userId: user.id,
+                    },
+                  },
+                  select: { lastReadAt: true },
+                })
+              )?.lastReadAt || new Date(0),
+          },
         },
-        data: { readAt: new Date() },
       });
 
-      return result.count;
+      return unreadCount;
     }
   );
 

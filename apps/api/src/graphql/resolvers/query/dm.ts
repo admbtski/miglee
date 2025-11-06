@@ -68,22 +68,35 @@ export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
       orderBy: [{ lastMessageAt: 'desc' }, { updatedAt: 'desc' }],
       include: {
         ...DM_THREAD_INCLUDE,
-        _count: {
-          select: {
-            messages: {
-              where: {
-                senderId: { not: user.id },
-                readAt: null,
-                deletedAt: null,
-              },
-            },
+        reads: {
+          where: {
+            userId: user.id,
           },
         },
       },
     });
 
+    // Calculate unread count for each thread using DmRead
+    const threadsWithUnread = await Promise.all(
+      threads.map(async (t) => {
+        const lastReadAt =
+          t.reads.find((r) => r.userId === user.id)?.lastReadAt || new Date(0);
+
+        const unreadCount = await prisma.dmMessage.count({
+          where: {
+            threadId: t.id,
+            senderId: { not: user.id },
+            deletedAt: null,
+            createdAt: { gt: lastReadAt },
+          },
+        });
+
+        return { ...t, unreadCount };
+      })
+    );
+
     return {
-      items: threads.map((t) => mapDmThread(t, user.id)),
+      items: threadsWithUnread.map((t) => mapDmThread(t as any, user.id)),
       pageInfo: {
         total,
         limit: take,
@@ -116,15 +129,9 @@ export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
         where: { id },
         include: {
           ...DM_THREAD_INCLUDE,
-          _count: {
-            select: {
-              messages: {
-                where: {
-                  senderId: { not: user.id },
-                  readAt: null,
-                  deletedAt: null,
-                },
-              },
+          reads: {
+            where: {
+              userId: user.id,
             },
           },
         },
@@ -143,22 +150,33 @@ export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
         where: { pairKey },
         include: {
           ...DM_THREAD_INCLUDE,
-          _count: {
-            select: {
-              messages: {
-                where: {
-                  senderId: { not: user.id },
-                  readAt: null,
-                  deletedAt: null,
-                },
-              },
+          reads: {
+            where: {
+              userId: user.id,
             },
           },
         },
       });
     }
 
-    return thread ? mapDmThread(thread, user.id) : null;
+    if (!thread) {
+      return null;
+    }
+
+    // Calculate unread count using DmRead
+    const lastReadAt =
+      thread.reads.find((r) => r.userId === user.id)?.lastReadAt || new Date(0);
+
+    const unreadCount = await prisma.dmMessage.count({
+      where: {
+        threadId: thread.id,
+        senderId: { not: user.id },
+        deletedAt: null,
+        createdAt: { gt: lastReadAt },
+      },
+    });
+
+    return mapDmThread({ ...thread, unreadCount } as any, user.id);
   }
 );
 

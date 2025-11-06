@@ -34,6 +34,13 @@ mutation MarkIntentChatRead($intentId: ID!, $at: DateTime) {
   markIntentChatRead(intentId: $intentId, at: $at)
 }
 
+# Mute/unmute an intent chat
+mutation MuteIntent($intentId: ID!, $muted: Boolean!) {
+  muteIntent(intentId: $intentId, muted: $muted) {
+    ...IntentMuteCore
+  }
+}
+
 # Subscriptions
 subscription OnIntentMessageAdded($intentId: ID!) {
   intentMessageAdded(intentId: $intentId) {

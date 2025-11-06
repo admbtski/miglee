@@ -8,6 +8,9 @@ import {
   type UseQueryOptions,
 } from '@tanstack/react-query';
 import {
+  CreateOrGetDmThreadDocument,
+  type CreateOrGetDmThreadMutation,
+  type CreateOrGetDmThreadMutationVariables,
   DeleteDmMessageDocument,
   type DeleteDmMessageMutation,
   type DeleteDmMessageMutationVariables,
@@ -29,6 +32,9 @@ import {
   MarkDmThreadReadDocument,
   type MarkDmThreadReadMutation,
   type MarkDmThreadReadMutationVariables,
+  MuteDmThreadDocument,
+  type MuteDmThreadMutation,
+  type MuteDmThreadMutationVariables,
   SendDmMessageDocument,
   type SendDmMessageMutation,
   type SendDmMessageMutationVariables,
@@ -138,6 +144,46 @@ export function useGetDmMessages(
 // =============================================================================
 // Mutations
 // =============================================================================
+
+/**
+ * Create or get existing DM thread
+ */
+export function useCreateOrGetDmThread(
+  options?: UseMutationOptions<
+    CreateOrGetDmThreadMutation,
+    Error,
+    CreateOrGetDmThreadMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    CreateOrGetDmThreadMutation,
+    Error,
+    CreateOrGetDmThreadMutationVariables
+  >({
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<CreateOrGetDmThreadMutation>(
+        CreateOrGetDmThreadDocument,
+        variables
+      );
+      return res;
+    },
+    onSuccess: (data) => {
+      // Invalidate threads list
+      queryClient.invalidateQueries({ queryKey: dmKeys.threads() });
+
+      // Cache the thread
+      const thread = data.createOrGetDmThread;
+      if (thread) {
+        queryClient.setQueryData(dmKeys.thread(thread.id), {
+          dmThread: thread,
+        });
+      }
+    },
+    ...options,
+  });
+}
 
 /**
  * Send a new DM message
@@ -344,6 +390,44 @@ export function useDeleteDmThread(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dmKeys.threads() });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Mute/unmute a DM thread
+ */
+export function useMuteDmThread(
+  options?: UseMutationOptions<
+    MuteDmThreadMutation,
+    Error,
+    MuteDmThreadMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    MuteDmThreadMutation,
+    Error,
+    MuteDmThreadMutationVariables
+  >({
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<MuteDmThreadMutation>(
+        MuteDmThreadDocument,
+        variables
+      );
+      return res;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate mute query
+      queryClient.invalidateQueries({
+        queryKey: dmKeys.mute(variables.threadId),
+      });
+      // Invalidate thread to update mute status
+      queryClient.invalidateQueries({
+        queryKey: dmKeys.thread(variables.threadId),
+      });
     },
     ...options,
   });

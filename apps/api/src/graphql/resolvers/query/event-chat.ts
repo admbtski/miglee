@@ -6,6 +6,7 @@ import type { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { buildCursor, buildCursorWhere } from '../../../lib/chat-utils';
 import { prisma } from '../../../lib/prisma';
+import { healthRedis } from '../../../lib/redis';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { requireJoinedMember } from '../chat-guards';
@@ -76,6 +77,7 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
 
 /**
  * Query: Get unread count for intent chat
+ * Uses Redis cache with 10s TTL to reduce DB load
  */
 export const intentUnreadCountQuery: QueryResolvers['intentUnreadCount'] =
   resolverWithMetrics(
@@ -90,6 +92,19 @@ export const intentUnreadCountQuery: QueryResolvers['intentUnreadCount'] =
 
       // Guard: user must be JOINED
       await requireJoinedMember(user.id, intentId);
+
+      const cacheKey = `chat:intent:unread:${intentId}:${user.id}`;
+
+      // Try to get from cache
+      try {
+        const cached = await healthRedis.get(cacheKey);
+        if (cached !== null) {
+          return parseInt(cached, 10);
+        }
+      } catch (error) {
+        // Log but don't fail on cache errors
+        console.error('Redis cache read error:', error);
+      }
 
       // Get last read timestamp
       const chatRead = await prisma.intentChatRead.findUnique({
@@ -115,6 +130,14 @@ export const intentUnreadCountQuery: QueryResolvers['intentUnreadCount'] =
           createdAt: { gt: lastReadAt },
         },
       });
+
+      // Cache the result for 10 seconds
+      try {
+        await healthRedis.setex(cacheKey, 10, unreadCount.toString());
+      } catch (error) {
+        // Log but don't fail on cache errors
+        console.error('Redis cache write error:', error);
+      }
 
       return unreadCount;
     }

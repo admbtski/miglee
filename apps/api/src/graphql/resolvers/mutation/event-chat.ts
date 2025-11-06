@@ -10,6 +10,7 @@ import {
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
+import { healthRedis } from '../../../lib/redis';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import {
   sanitizeMessageContent,
@@ -385,6 +386,15 @@ export const markIntentChatReadMutation: MutationResolvers['markIntentChatRead']
           lastReadAt: timestamp,
         },
       });
+
+      // Invalidate unread count cache
+      const cacheKey = `chat:intent:unread:${intentId}:${user.id}`;
+      try {
+        await healthRedis.del(cacheKey);
+      } catch (error) {
+        // Log but don't fail on cache errors
+        console.error('Redis cache invalidation error:', error);
+      }
 
       return true;
     }
