@@ -23,6 +23,10 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
+export function clamp(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
+
 /* ───────────────────────────── Types ───────────────────────────── */
 
 export interface ServerClusteredMapProps {
@@ -154,11 +158,12 @@ function buildLayers(
     hovered?: { lat?: number | null; lng?: number | null };
     pulse?: number; // 0..1 — faza animacji
     zoom?: number; // zoom level dla kalkulacji offset
+    hoveredRegion?: string | null; // region po którym najechano myszką
   } = {}
 ) {
-  const { hovered, pulse = 0, zoom = 10 } = opts;
+  const { hovered, pulse = 0, zoom = 10, hoveredRegion = null } = opts;
 
-  // Znajdź najbliższy klaster do hovered
+  // Znajdź najbliższy klaster do hovered (dla card hover)
   let highlighted: ClusterPoint | null = null;
   if (hovered?.lat != null && hovered?.lng != null && clusters.length) {
     let min = Infinity;
@@ -203,20 +208,42 @@ function buildLayers(
   };
 
   const jumpOffsetLat = getJumpOffsetLatDegrees(pulse, zoom);
-  const getBaseRadius = (d: ClusterPoint) => Math.min(14 + d.count * 1.1, 28);
+  const getBaseRadius = (d: ClusterPoint) => clamp(16, 16 + d.count * 0.05, 20);
 
-  // Wszystkie normalne markery (bez highlighted)
+  // Wszystkie normalne markery (bez highlighted i bez mouse-hovered)
   const normalPoints = new ScatterplotLayer<ClusterPoint>({
     id: 'clusters-normal',
-    data: clusters.filter((c) => c.region !== highlightedRegion),
+    data: clusters.filter(
+      (c) => c.region !== highlightedRegion && c.region !== hoveredRegion
+    ),
     pickable: true,
     radiusUnits: 'pixels',
+    lineWidthUnits: 'pixels',
     getPosition: (d) => [d.longitude, d.latitude, 0],
     getRadius: getBaseRadius,
     getFillColor: [99, 102, 241, 220],
-    getLineColor: [0, 0, 0, 80],
-    getLineWidth: 1.5,
+    getLineColor: [59, 130, 246, 255], // intensywniejszy niebieski border
+    stroked: true,
   });
+
+  // Marker po którym najechano myszką (nie skacze, ale ma większy border)
+  const mouseHoveredPoint =
+    hoveredRegion && hoveredRegion !== highlightedRegion
+      ? new ScatterplotLayer<ClusterPoint>({
+          id: 'clusters-mouse-hovered',
+          data: clusters.filter((c) => c.region === hoveredRegion),
+          pickable: true,
+          radiusUnits: 'pixels',
+          lineWidthUnits: 'pixels',
+          getPosition: (d) => [d.longitude, d.latitude, 0],
+          getRadius: getBaseRadius,
+          getFillColor: [120, 130, 255, 240],
+          getLineColor: [59, 130, 246, 255], // intensywniejszy niebieski border
+          getLineWidth: 3, // stały border 6px - zawsze widoczny
+          stroked: true,
+          filled: true,
+        })
+      : null;
 
   // Skaczący marker (highlighted) - przesunięty w górę na osi Y (latitude)
   const jumpingPoint = highlightedRegion
@@ -225,11 +252,12 @@ function buildLayers(
         data: clusters.filter((c) => c.region === highlightedRegion),
         pickable: true,
         radiusUnits: 'pixels',
+        lineWidthUnits: 'pixels',
         getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
         getRadius: getBaseRadius,
         getFillColor: [120, 130, 255, 240],
         getLineColor: [0, 0, 0, 80],
-        getLineWidth: 1.5,
+        getLineWidth: 2, // stały border 2px
         updateTriggers: {
           getPosition: pulse,
         },
@@ -243,6 +271,7 @@ function buildLayers(
         data: clusters.filter((c) => c.region === highlightedRegion),
         pickable: false,
         radiusUnits: 'pixels',
+        lineWidthUnits: 'pixels',
         billboard: true,
         stroked: true,
         filled: false,
@@ -258,13 +287,7 @@ function buildLayers(
           255,
           Math.round(180 - 100 * Math.abs(Math.sin(pulse * Math.PI * 2))),
         ],
-        getLineWidth: (d) => {
-          // Skaluj szerokość linii proporcjonalnie do rozmiaru markera
-          // Minimalnie 2.5px, maksymalnie 5px
-          const base = getBaseRadius(d);
-          return Math.max(2.5, Math.min(base * 0.15, 5));
-        },
-        lineWidthUnits: 'pixels',
+        getLineWidth: 3, // stały border 3px dla pulse ring
         updateTriggers: {
           getPosition: pulse,
           getRadius: pulse,
@@ -273,10 +296,12 @@ function buildLayers(
       })
     : null;
 
-  // Labels dla normalnych
+  // Labels dla normalnych (bez highlighted i bez mouse-hovered)
   const normalLabels = new TextLayer<ClusterPoint>({
     id: 'clusters-labels-normal',
-    data: clusters.filter((c) => c.region !== highlightedRegion),
+    data: clusters.filter(
+      (c) => c.region !== highlightedRegion && c.region !== hoveredRegion
+    ),
     getPosition: (d) => [d.longitude, d.latitude, 0],
     getText: (d) => String(d.count),
     getSize: 12,
@@ -285,9 +310,28 @@ function buildLayers(
     getAlignmentBaseline: 'center',
     getColor: [255, 255, 255, 255],
     background: true,
-    getBackgroundColor: [0, 0, 0, 60],
-    backgroundPadding: [2, 2],
+    getBackgroundColor: [0, 0, 0, 0],
+    backgroundPadding: [0, 0],
   });
+
+  // Label dla mouse-hovered markera
+  const mouseHoveredLabel =
+    hoveredRegion && hoveredRegion !== highlightedRegion
+      ? new TextLayer<ClusterPoint>({
+          id: 'clusters-labels-mouse-hovered',
+          data: clusters.filter((c) => c.region === hoveredRegion),
+          getPosition: (d) => [d.longitude, d.latitude, 0],
+          getText: (d) => String(d.count),
+          getSize: 12,
+          sizeUnits: 'pixels',
+          getTextAnchor: 'middle',
+          getAlignmentBaseline: 'center',
+          getColor: [255, 255, 255, 255],
+          background: true,
+          getBackgroundColor: [0, 0, 0, 0],
+          backgroundPadding: [2, 2],
+        })
+      : null;
 
   // Label dla skaczącego - podąża za skokiem
   const jumpingLabel = highlightedRegion
@@ -302,7 +346,7 @@ function buildLayers(
         getAlignmentBaseline: 'center',
         getColor: [255, 255, 255, 255],
         background: true,
-        getBackgroundColor: [0, 0, 0, 60],
+        getBackgroundColor: [0, 0, 0, 0],
         backgroundPadding: [2, 2],
         updateTriggers: {
           getPosition: pulse,
@@ -311,6 +355,8 @@ function buildLayers(
     : null;
 
   const layers = [normalPoints, normalLabels];
+  if (mouseHoveredPoint) layers.push(mouseHoveredPoint);
+  if (mouseHoveredLabel) layers.push(mouseHoveredLabel);
   if (jumpingPoint) layers.push(jumpingPoint);
   if (pulseRing) layers.push(pulseRing);
   if (jumpingLabel) layers.push(jumpingLabel);
@@ -585,6 +631,9 @@ export function ServerClusteredMap({
   // selected region
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 
+  // hovered region (mouse hover na markerze)
+  const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
+
   // Tailwind theme
   const { resolvedTheme } = useTheme();
   const currentStyleUrl =
@@ -726,14 +775,15 @@ export function ServerClusteredMap({
     };
   }, [hoveredLat, hoveredLng]);
 
-  // Warstwy — memo (zależne także od pulseTick i zoom)
+  // Warstwy — memo (zależne także od pulseTick, zoom i hoveredRegion)
   const layers = useMemo(() => {
     return buildLayers(clusters, {
       hovered: { lat: hoveredLat ?? null, lng: hoveredLng ?? null },
       pulse: pulseTick,
       zoom: currentZoom,
+      hoveredRegion,
     });
-  }, [clusters, hoveredLat, hoveredLng, pulseTick, currentZoom]);
+  }, [clusters, hoveredLat, hoveredLng, pulseTick, currentZoom, hoveredRegion]);
 
   // Inicjalizacja mapy
   useEffect(() => {
@@ -854,10 +904,18 @@ export function ServerClusteredMap({
         setSelectedRegion(obj.region);
       },
       onHover: (info: any) => {
+        const obj = info.object as ClusterPoint | null;
+
+        // Ustaw hoveredRegion
+        if (obj) {
+          setHoveredRegion(obj.region);
+        } else {
+          setHoveredRegion(null);
+        }
+
+        // Zmień kursor
         if (mapRef.current) {
-          mapRef.current.getCanvas().style.cursor = info.object
-            ? 'pointer'
-            : '';
+          mapRef.current.getCanvas().style.cursor = obj ? 'pointer' : '';
         }
       },
     });
