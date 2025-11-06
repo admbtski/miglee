@@ -180,7 +180,11 @@ async function seedUsers(): Promise<User[]> {
     })
   );
 
-  for (let i = 0; i < 20; i++) {
+  // Zwiększona liczba użytkowników: 100 dla większej różnorodności
+  const USERS_COUNT = 100;
+  console.log(`   Creating ${USERS_COUNT} regular users...`);
+
+  for (let i = 0; i < USERS_COUNT; i++) {
     const first = pick(FIRST_NAMES);
     const last = pick(LAST_NAMES);
     created.push(
@@ -490,7 +494,12 @@ async function seedIntents(opts: {
   const authorPool = users.filter((u) => u.role !== Role.USER);
   const userPool = users;
 
-  for (let i = 0; i < 30; i++) {
+  // Zwiększona liczba intentów: 500 dla lepszego testowania map clustering
+  const INTENTS_COUNT = 500;
+
+  console.log(`   Creating ${INTENTS_COUNT} intents...`);
+
+  for (let i = 0; i < INTENTS_COUNT; i++) {
     const author = rand() > 0.65 ? pick(authorPool) : pick(userPool);
     const { intent, owner } = await createIntentWithMembers({
       author,
@@ -498,6 +507,11 @@ async function seedIntents(opts: {
       tags,
     });
     out.push({ intent, owner });
+
+    // Progress indicator co 50 intentów
+    if ((i + 1) % 50 === 0) {
+      console.log(`   Progress: ${i + 1}/${INTENTS_COUNT} intents created`);
+    }
   }
 
   return out;
@@ -1737,6 +1751,28 @@ async function seedMutes(
     // Randomly mute for one of the participants
     const userId = rand() > 0.5 ? thread.aUserId : thread.bUserId;
 
+    // Check if mute already exists in local array
+    const existingDmMute = dmMutes.find(
+      (m) => m.threadId === thread.id && m.userId === userId
+    );
+
+    if (existingDmMute) continue;
+
+    // Check if mute already exists in database
+    const existingInDb = await prisma.dmMute.findUnique({
+      where: {
+        threadId_userId: {
+          threadId: thread.id,
+          userId,
+        },
+      },
+    });
+
+    if (existingInDb) {
+      dmMutes.push(existingInDb);
+      continue;
+    }
+
     const mute = await prisma.dmMute.create({
       data: {
         threadId: thread.id,
@@ -1790,7 +1826,7 @@ async function main() {
   console.log('🗂️  Seeding categories…');
   const categories = await seedCategories();
 
-  console.log('📝 Seeding intents (30) with realistic members…');
+  console.log('📝 Seeding intents (500) with realistic members…');
   const intentsCreated = await seedIntents({ users, categories, tags });
 
   console.log('🎯 Seeding curated intents for FIXED IDS…');

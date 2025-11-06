@@ -54,6 +54,8 @@ export const CITIES = [
       { name: 'Plac Zbawiciela', placeId: 'ChIJ0fZbavUDFkcRZbawiciela01' },
       { name: 'PGE Narodowy', placeId: 'ChIJs7e8w40DFkcRPGENarodowy01' },
       { name: 'Muzeum POLIN', placeId: 'ChIJB7o3-mADFkcRPolinMuseum01' },
+      { name: 'Łazienki Królewskie', placeId: 'ChIJLazienki0001' },
+      { name: 'Stare Miasto', placeId: 'ChIJStareMiasto01' },
     ],
   },
   {
@@ -64,6 +66,8 @@ export const CITIES = [
       { name: 'Rynek Główny', placeId: 'ChIJ0T2TeoAFBUcRRynekGlowny01' },
       { name: 'Błonia', placeId: 'ChIJxzE9bR8FBUcRBloniaKrakow01' },
       { name: 'Kazimierz', placeId: 'ChIJBc7n8DkFBUcRKazimierz01' },
+      { name: 'Wawel', placeId: 'ChIJWawel0001' },
+      { name: 'Nowa Huta', placeId: 'ChIJNowaHuta01' },
     ],
   },
   {
@@ -74,6 +78,7 @@ export const CITIES = [
       { name: 'Długi Targ', placeId: 'ChIJQ9jAQxq3_UYRDLugiTarg01' },
       { name: 'Molo Brzeźno', placeId: 'ChIJ-3b8rje3_UYRBrzeznoPier01' },
       { name: 'Park Oliwski', placeId: 'ChIJG2n2mxa3_UYROliwaPark01' },
+      { name: 'Stare Miasto', placeId: 'ChIJStareMiastoGdansk01' },
     ],
   },
   {
@@ -84,6 +89,7 @@ export const CITIES = [
       { name: 'Hala Stulecia', placeId: 'ChIJG9XlgbJED0cRHalaStulecia01' },
       { name: 'Rynek', placeId: 'ChIJkz1c8bNED0cRWroclawRynek01' },
       { name: 'Wyspa Słodowa', placeId: 'ChIJq4xUj7JED0cRWyspaSlodowa01' },
+      { name: 'Ostrów Tumski', placeId: 'ChIJOstrowTumski01' },
     ],
   },
   {
@@ -94,6 +100,57 @@ export const CITIES = [
       { name: 'Stary Rynek', placeId: 'ChIJw8tc1KqNG0cRStaryRynek01' },
       { name: 'Jezioro Malta', placeId: 'ChIJq2l1v6-NG0cRJezioroMalta01' },
       { name: 'Park Cytadela', placeId: 'ChIJ1y5V96GNG0cRCytadelaPark01' },
+      { name: 'Stary Browar', placeId: 'ChIJStaryBrowar01' },
+    ],
+  },
+  {
+    name: 'Łódź',
+    lat: 51.7592,
+    lng: 19.456,
+    places: [
+      { name: 'Piotrkowska', placeId: 'ChIJPiotrkowska01' },
+      { name: 'Manufaktura', placeId: 'ChIJManufaktura01' },
+      { name: 'Park Poniatowskiego', placeId: 'ChIJParkPoniatowskiego01' },
+    ],
+  },
+  {
+    name: 'Katowice',
+    lat: 50.2649,
+    lng: 19.0238,
+    places: [
+      { name: 'Spodek', placeId: 'ChIJSpodek01' },
+      { name: 'Strefa Kultury', placeId: 'ChIJStrefaKultury01' },
+      { name: 'Park Kościuszki', placeId: 'ChIJParkKosciuszki01' },
+    ],
+  },
+  {
+    name: 'Szczecin',
+    lat: 53.4285,
+    lng: 14.5528,
+    places: [
+      { name: 'Wały Chrobrego', placeId: 'ChIJWalyChrobrego01' },
+      { name: 'Jasne Błonia', placeId: 'ChIJJasneBlonia01' },
+      { name: 'Stare Miasto', placeId: 'ChIJStareMiastoSzczecin01' },
+    ],
+  },
+  {
+    name: 'Lublin',
+    lat: 51.2465,
+    lng: 22.5684,
+    places: [
+      { name: 'Stare Miasto', placeId: 'ChIJStareMiastoLublin01' },
+      { name: 'Zamek Lubelski', placeId: 'ChIJZamekLubelski01' },
+      { name: 'Plac Litewski', placeId: 'ChIJPlacLitewski01' },
+    ],
+  },
+  {
+    name: 'Białystok',
+    lat: 53.1325,
+    lng: 23.1688,
+    places: [
+      { name: 'Rynek Kościuszki', placeId: 'ChIJRynekKosciuszki01' },
+      { name: 'Pałac Branickich', placeId: 'ChIJPalacBranickich01' },
+      { name: 'Park Planty', placeId: 'ChIJParkPlanty01' },
     ],
   },
 ];

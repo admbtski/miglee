@@ -25,7 +25,7 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
   // Wyższy Zc => mniejsze kafelki => mniej agresywne klastrowanie
   // (+1 względem "gołego" zoomu daje subtelne rozrzedzenie)
   const baseZ = clamp(Math.floor(zoom), 2, 16);
-  const Zc = clamp(baseZ + 1, 3, 16);
+  const Zc = clamp(baseZ + 2, 3, 16);
 
   // kafelek staje się klastrem dopiero od tylu punktów
   const MIN_CLUSTER_SIZE = 1;
