@@ -63,6 +63,9 @@ import {
 } from '@/lib/api/reactions';
 import { MessageReactions } from '@/components/chat/MessageReactions';
 import { ReadReceipt } from '@/components/chat/ReadReceipt';
+import { MessageActions } from '@/components/chat/MessageActions';
+import { ReactionsBar } from '@/components/chat/ReactionsBar';
+import { MessageMenuPopover } from '@/components/chat/MessageMenuPopover';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -892,6 +895,13 @@ export function ChatThread({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
 
+  // Reply state
+  const [replyToMessage, setReplyToMessage] = useState<{
+    id: string;
+    text: string;
+    author: string;
+  } | null>(null);
+
   // Throttled typing handler - max 1 request per 2s
   const lastTypingSent = useRef<number>(0);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -981,6 +991,7 @@ export function ChatThread({
     if (!text) return;
     onSend(text);
     setInput('');
+    setReplyToMessage(null); // Clear reply after sending
     // Stop typing indicator after sending
     onTyping?.(false);
   }
@@ -1073,6 +1084,17 @@ export function ChatThread({
                     onRemoveReaction={(emoji) =>
                       onRemoveReaction?.(m.id, emoji)
                     }
+                    onReply={() => {
+                      setReplyToMessage({
+                        id: m.id,
+                        text: m.text,
+                        author: title || 'User',
+                      });
+                    }}
+                    onReport={() => {
+                      console.log('Report message:', m.id);
+                      // TODO: Open report modal
+                    }}
                   >
                     {m.text}
                   </MsgOut>
@@ -1086,6 +1108,17 @@ export function ChatThread({
                     onRemoveReaction={(emoji) =>
                       onRemoveReaction?.(m.id, emoji)
                     }
+                    onReply={() => {
+                      setReplyToMessage({
+                        id: m.id,
+                        text: m.text,
+                        author: title || 'User',
+                      });
+                    }}
+                    onReport={() => {
+                      console.log('Report message:', m.id);
+                      // TODO: Open report modal
+                    }}
                   >
                     {m.text}
                   </MsgIn>
@@ -1106,6 +1139,17 @@ export function ChatThread({
                     onRemoveReaction={(emoji) =>
                       onRemoveReaction?.(m.id, emoji)
                     }
+                    onReply={() => {
+                      setReplyToMessage({
+                        id: m.id,
+                        text: m.text,
+                        author: title || 'User',
+                      });
+                    }}
+                    onReport={() => {
+                      console.log('Report message:', m.id);
+                      // TODO: Open report modal
+                    }}
                   >
                     {m.text}
                   </MsgOut>
@@ -1119,6 +1163,17 @@ export function ChatThread({
                     onRemoveReaction={(emoji) =>
                       onRemoveReaction?.(m.id, emoji)
                     }
+                    onReply={() => {
+                      setReplyToMessage({
+                        id: m.id,
+                        text: m.text,
+                        author: title || 'User',
+                      });
+                    }}
+                    onReport={() => {
+                      console.log('Report message:', m.id);
+                      // TODO: Open report modal
+                    }}
                   >
                     {m.text}
                   </MsgIn>
@@ -1150,6 +1205,28 @@ export function ChatThread({
           </div>
 
           <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
+            {/* Reply Preview */}
+            {replyToMessage && (
+              <div className="mx-auto max-w-3xl mb-2 flex items-center gap-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Replying to {replyToMessage.author}
+                  </div>
+                  <div className="text-sm text-zinc-800 dark:text-zinc-200 truncate">
+                    {replyToMessage.text}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyToMessage(null)}
+                  className="flex-shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  aria-label="Cancel reply"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1236,17 +1313,17 @@ function Bubble({
   block?: boolean;
 }) {
   const base =
-    'max-w-[80%] rounded-2xl px-3 py-2 text-sm inline-flex items-end gap-2';
+    'rounded-2xl px-4 py-2.5 text-sm inline-flex items-end gap-2 shadow-sm';
   const cls =
     align === 'right'
-      ? 'ml-auto bg-indigo-600 text-white'
+      ? 'bg-[#4A45FF] text-white rounded-br-md'
       : block
-        ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800/70 dark:text-zinc-100'
-        : 'bg-zinc-800/70 text-zinc-100 dark:bg-zinc-800';
+        ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800/70 dark:text-zinc-100 rounded-bl-md'
+        : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800/70 dark:text-zinc-100 rounded-bl-md';
   const timeCls =
     align === 'right' ? 'text-[10px] opacity-90' : 'text-[10px] text-zinc-400';
   return (
-    <div className="flex w-full mb-2">
+    <div className="flex w-full">
       <div className={[base, cls].join(' ')}>
         <span className="leading-5 whitespace-pre-wrap">{children}</span>
         {time && <span className={timeCls}>{time}</span>}
@@ -1261,6 +1338,8 @@ const MsgIn = ({
   block,
   onAddReaction,
   onRemoveReaction,
+  onReply,
+  onReport,
 }: {
   children: React.ReactNode;
   message: Message;
@@ -1268,20 +1347,83 @@ const MsgIn = ({
   block?: boolean;
   onAddReaction: (emoji: string) => void;
   onRemoveReaction: (emoji: string) => void;
+  onReply: () => void;
+  onReport: () => void;
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [showReactionsBar, setShowReactionsBar] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const reactionsButtonRef = useRef<HTMLButtonElement>(null);
   const hasReactions = message.reactions && message.reactions.length > 0;
+
   return (
-    <div className="group">
-      <Bubble align="left" time={time} block={block}>
-        {children}
-      </Bubble>
-      <div
-        className={`ml-12 transition-opacity ${hasReactions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-      >
-        <MessageReactions
-          reactions={message.reactions || []}
-          onAddReaction={onAddReaction}
-          onRemoveReaction={onRemoveReaction}
+    <div
+      className={`group relative flex items-center gap-2 mr-auto ${
+        hasReactions ? 'mb-3' : 'mb-1'
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Reactions Bar */}
+      <ReactionsBar
+        isOpen={showReactionsBar}
+        onClose={() => setShowReactionsBar(false)}
+        referenceElement={reactionsButtonRef.current}
+        onSelectEmoji={(emoji) => {
+          const existing = message.reactions?.find((r) => r.emoji === emoji);
+          if (existing?.reacted) {
+            onRemoveReaction(emoji);
+          } else {
+            onAddReaction(emoji);
+          }
+        }}
+      />
+
+      {/* Message Menu Popover */}
+      {showMenu && (
+        <div className="absolute top-0 left-12 z-50 mt-2">
+          <MessageMenuPopover
+            isOpen={showMenu}
+            onClose={() => setShowMenu(false)}
+            onReport={onReport}
+            align="left"
+          />
+        </div>
+      )}
+
+      {/* Message Bubble */}
+      <div className="relative max-w-[75%]">
+        <Bubble align="left" time={time} block={block}>
+          {children}
+        </Bubble>
+
+        {/* Reactions pinned to bottom edge, centered-right */}
+        {hasReactions && (
+          <div className="absolute -bottom-2 right-4">
+            <MessageReactions
+              reactions={message.reactions || []}
+              onToggleReaction={(emoji, reacted) => {
+                if (reacted) {
+                  onRemoveReaction(emoji);
+                } else {
+                  onAddReaction(emoji);
+                }
+              }}
+              align="left"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Mini Action Row - in same row, always reserve space */}
+      <div className="flex-shrink-0">
+        <MessageActions
+          isVisible={isHovered}
+          align="left"
+          onReply={onReply}
+          onOpenReactions={() => setShowReactionsBar(true)}
+          onOpenMenu={() => setShowMenu(true)}
+          reactionsButtonRef={reactionsButtonRef}
         />
       </div>
     </div>
@@ -1295,6 +1437,8 @@ const MsgOut = ({
   isLast,
   onAddReaction,
   onRemoveReaction,
+  onReply,
+  onReport,
 }: {
   children: React.ReactNode;
   message: Message;
@@ -1302,26 +1446,85 @@ const MsgOut = ({
   isLast?: boolean;
   onAddReaction: (emoji: string) => void;
   onRemoveReaction: (emoji: string) => void;
+  onReply: () => void;
+  onReport: () => void;
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [showReactionsBar, setShowReactionsBar] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const reactionsButtonRef = useRef<HTMLButtonElement>(null);
   const hasReactions = message.reactions && message.reactions.length > 0;
+
   return (
-    <div className="group">
-      <Bubble align="right" time={time}>
-        {children}
-      </Bubble>
-      <div className="flex flex-col items-end">
-        <div
-          className={`mr-12 transition-opacity ${hasReactions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-        >
-          <MessageReactions
-            reactions={message.reactions || []}
-            onAddReaction={onAddReaction}
-            onRemoveReaction={onRemoveReaction}
+    <div
+      className={`group relative flex items-center gap-2 ml-auto justify-end ${
+        hasReactions ? 'mb-3' : 'mb-1'
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Reactions Bar */}
+      <ReactionsBar
+        isOpen={showReactionsBar}
+        onClose={() => setShowReactionsBar(false)}
+        referenceElement={reactionsButtonRef.current}
+        onSelectEmoji={(emoji) => {
+          const existing = message.reactions?.find((r) => r.emoji === emoji);
+          if (existing?.reacted) {
+            onRemoveReaction(emoji);
+          } else {
+            onAddReaction(emoji);
+          }
+        }}
+      />
+
+      {/* Message Menu Popover */}
+      {showMenu && (
+        <div className="absolute top-0 right-12 z-50 mt-2">
+          <MessageMenuPopover
+            isOpen={showMenu}
+            onClose={() => setShowMenu(false)}
+            onReport={onReport}
+            align="right"
           />
         </div>
+      )}
+
+      {/* Mini Action Row - in same row, always reserve space, LEFT of message */}
+      <div className="flex-shrink-0 flex flex-col items-end gap-1">
+        <MessageActions
+          isVisible={isHovered}
+          align="right"
+          onReply={onReply}
+          onOpenReactions={() => setShowReactionsBar(true)}
+          onOpenMenu={() => setShowMenu(true)}
+          reactionsButtonRef={reactionsButtonRef}
+        />
         {isLast && message.side === 'right' && (
-          <div className="mr-12 mt-1">
-            <ReadReceipt readAt={message.readAt} isLastMessage={true} />
+          <ReadReceipt readAt={message.readAt} isLastMessage={true} />
+        )}
+      </div>
+
+      {/* Message Bubble */}
+      <div className="relative max-w-[75%]">
+        <Bubble align="right" time={time}>
+          {children}
+        </Bubble>
+
+        {/* Reactions pinned to bottom edge, centered-left */}
+        {hasReactions && (
+          <div className="absolute -bottom-2 left-4">
+            <MessageReactions
+              reactions={message.reactions || []}
+              onToggleReaction={(emoji, reacted) => {
+                if (reacted) {
+                  onRemoveReaction(emoji);
+                } else {
+                  onAddReaction(emoji);
+                }
+              }}
+              align="right"
+            />
           </div>
         )}
       </div>
