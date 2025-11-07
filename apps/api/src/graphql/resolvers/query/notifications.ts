@@ -34,12 +34,6 @@ export const notificationsQuery: QueryResolvers['notifications'] =
         extensions: { code: 'UNAUTHENTICATED' },
       });
     }
-    if (args.recipientId !== user.id) {
-      // (opcjonalnie: dopuść ADMIN)
-      throw new GraphQLError('Access denied for requested recipient.', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
 
     // --- pagination ---
     const take = Math.max(1, Math.min(args.limit ?? 50, 200));

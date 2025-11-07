@@ -66,6 +66,14 @@ import { ReadReceipt } from '@/components/chat/ReadReceipt';
 import { MessageActions } from '@/components/chat/MessageActions';
 import { ReactionsBar } from '@/components/chat/ReactionsBar';
 import { MessageMenuPopover } from '@/components/chat/MessageMenuPopover';
+import { EditMessageModal } from '@/components/chat/EditMessageModal';
+import { DeleteConfirmModal } from '@/components/chat/DeleteConfirmModal';
+import {
+  useUpdateDmMessage,
+  useDeleteDmMessage,
+  useEditIntentMessage,
+  useDeleteIntentMessage,
+} from '@/lib/api/message-actions';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -97,6 +105,8 @@ export type Message = {
     reacted: boolean;
   }>;
   readAt?: string | null;
+  editedAt?: string | null;
+  deletedAt?: string | null;
 };
 
 /* ───────────────────────────── Page ───────────────────────────── */
@@ -116,6 +126,17 @@ export default function ChatsPageIntegrated() {
   const [dmTypingUsers, setDmTypingUsers] = useState<Set<string>>(new Set());
   const [channelTypingUsers, setChannelTypingUsers] = useState<Set<string>>(
     new Set()
+  );
+
+  // Edit/Delete state
+  const [editingMessage, setEditingMessage] = useState<{
+    id: string;
+    content: string;
+    threadId?: string;
+    intentId?: string;
+  } | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
+    null
   );
 
   // Fetch DM threads
@@ -167,6 +188,12 @@ export default function ChatsPageIntegrated() {
   const removeDmReaction = useRemoveDmReaction();
   const addIntentReaction = useAddIntentReaction();
   const removeIntentReaction = useRemoveIntentReaction();
+
+  // Edit/Delete mutations
+  const updateDmMessage = useUpdateDmMessage();
+  const deleteDmMessage = useDeleteDmMessage();
+  const editIntentMessage = useEditIntentMessage();
+  const deleteIntentMessage = useDeleteIntentMessage();
 
   // Subscriptions
   const dmSubResult = useDmMessageAdded({
@@ -484,6 +511,73 @@ export default function ChatsPageIntegrated() {
     }
   }
 
+  // Edit/Delete handlers
+  const handleEditMessage = (
+    messageId: string,
+    content: string,
+    threadId?: string,
+    intentId?: string
+  ) => {
+    setEditingMessage({ id: messageId, content, threadId, intentId });
+  };
+
+  const handleSaveEdit = async (newContent: string) => {
+    if (!editingMessage) return;
+
+    console.log('[Edit] Saving:', {
+      messageId: editingMessage.id,
+      content: newContent,
+      threadId: editingMessage.threadId,
+      intentId: editingMessage.intentId,
+    });
+
+    try {
+      if (editingMessage.threadId) {
+        console.log('[Edit] Calling updateDmMessage');
+        await updateDmMessage.mutateAsync({
+          id: editingMessage.id,
+          input: { content: newContent },
+        });
+      } else if (editingMessage.intentId) {
+        console.log('[Edit] Calling editIntentMessage');
+        await editIntentMessage.mutateAsync({
+          id: editingMessage.id,
+          input: { content: newContent },
+        });
+      }
+      console.log('[Edit] Success!');
+      setEditingMessage(null);
+    } catch (error) {
+      console.error('[Edit Error]', error);
+    }
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    setDeletingMessageId(messageId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingMessageId) return;
+
+    try {
+      if (tab === 'dm' && activeDmId) {
+        await deleteDmMessage.mutateAsync({
+          id: deletingMessageId,
+          threadId: activeDmId,
+        });
+      } else if (tab === 'channel' && activeChId) {
+        await deleteIntentMessage.mutateAsync({
+          id: deletingMessageId,
+          soft: true,
+          intentId: activeChId,
+        });
+      }
+      setDeletingMessageId(null);
+    } catch (error) {
+      console.error('[Delete Error]', error);
+    }
+  };
+
   // Map messages
   const messages = useMemo(() => {
     if (!active || !currentUserId) return [];
@@ -518,6 +612,8 @@ export default function ChatsPageIntegrated() {
         block: !!msg.deletedAt,
         reactions: msg.reactions || [],
         readAt: msg.readAt,
+        editedAt: msg.editedAt,
+        deletedAt: msg.deletedAt,
       }));
     } else {
       const pages = intentMessagesData?.pages;
@@ -541,6 +637,8 @@ export default function ChatsPageIntegrated() {
         },
         block: !!msg.deletedAt,
         reactions: msg.reactions || [],
+        editedAt: msg.editedAt,
+        deletedAt: msg.deletedAt,
       }));
     }
   }, [active, currentUserId, dmMessagesData, intentMessagesData]);
@@ -596,68 +694,98 @@ export default function ChatsPageIntegrated() {
   }
 
   return (
-    <ChatShell listVisible>
-      <ChatShell.ListPane>
-        <ChatTabs tab={tab} setTab={setTab} />
-        {(dmThreadsLoading && tab === 'dm') ||
-        (membershipsLoading && tab === 'channel') ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-          </div>
-        ) : (
-          <ChatList
-            items={conversations}
-            activeId={activeId}
-            onPick={(id) => handlePick(id)}
-          />
-        )}
-      </ChatShell.ListPane>
+    <>
+      <ChatShell listVisible>
+        <ChatShell.ListPane>
+          <ChatTabs tab={tab} setTab={setTab} />
+          {(dmThreadsLoading && tab === 'dm') ||
+          (membershipsLoading && tab === 'channel') ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+            </div>
+          ) : (
+            <ChatList
+              items={conversations}
+              activeId={activeId}
+              onPick={(id) => handlePick(id)}
+            />
+          )}
+        </ChatShell.ListPane>
 
-      <ChatShell.ThreadPane>
-        {active ? (
-          <ChatThread
-            kind={active.kind}
-            title={active.title}
-            members={active.membersCount}
-            avatar={active.avatar}
-            lastReadAt={active.lastReadAt}
-            messages={messages}
-            loading={tab === 'dm' ? dmMessagesLoading : intentMessagesLoading}
-            typingUserNames={typingUserNames}
-            onBackMobile={() => {}}
-            onSend={handleSend}
-            onAddReaction={(messageId, emoji) => {
-              if (active?.kind === 'dm') {
-                addDmReaction.mutate({ messageId, emoji });
-              } else {
-                addIntentReaction.mutate({ messageId, emoji });
+        <ChatShell.ThreadPane>
+          {active ? (
+            <ChatThread
+              kind={active.kind}
+              title={active.title}
+              members={active.membersCount}
+              avatar={active.avatar}
+              lastReadAt={active.lastReadAt}
+              messages={messages}
+              loading={tab === 'dm' ? dmMessagesLoading : intentMessagesLoading}
+              typingUserNames={typingUserNames}
+              onBackMobile={() => {}}
+              onSend={handleSend}
+              onAddReaction={(messageId, emoji) => {
+                if (active?.kind === 'dm') {
+                  addDmReaction.mutate({ messageId, emoji });
+                } else {
+                  addIntentReaction.mutate({ messageId, emoji });
+                }
+              }}
+              onRemoveReaction={(messageId, emoji) => {
+                if (active?.kind === 'dm') {
+                  removeDmReaction.mutate({ messageId, emoji });
+                } else {
+                  removeIntentReaction.mutate({ messageId, emoji });
+                }
+              }}
+              onLoadMore={
+                tab === 'channel' && hasNextIntentPage
+                  ? () => fetchNextIntentPage()
+                  : undefined
               }
-            }}
-            onRemoveReaction={(messageId, emoji) => {
-              if (active?.kind === 'dm') {
-                removeDmReaction.mutate({ messageId, emoji });
-              } else {
-                removeIntentReaction.mutate({ messageId, emoji });
-              }
-            }}
-            onLoadMore={
-              tab === 'channel' && hasNextIntentPage
-                ? () => fetchNextIntentPage()
-                : undefined
-            }
-            onTyping={(isTyping) => {
-              if (active.kind === 'dm' && activeDmId) {
-                publishDmTyping.mutate({ threadId: activeDmId, isTyping });
-              } else if (active.kind === 'channel' && activeChId) {
-                publishIntentTyping.mutate({ intentId: activeChId, isTyping });
-              }
-            }}
-          />
-        ) : (
-          <EmptyThread onBackMobile={() => {}} />
-        )}
-      </ChatShell.ThreadPane>
-    </ChatShell>
+              onTyping={(isTyping) => {
+                if (active.kind === 'dm' && activeDmId) {
+                  publishDmTyping.mutate({ threadId: activeDmId, isTyping });
+                } else if (active.kind === 'channel' && activeChId) {
+                  publishIntentTyping.mutate({
+                    intentId: activeChId,
+                    isTyping,
+                  });
+                }
+              }}
+              onEditMessage={(messageId, content) => {
+                if (active.kind === 'dm' && activeDmId) {
+                  handleEditMessage(messageId, content, activeDmId, undefined);
+                } else if (active.kind === 'channel' && activeChId) {
+                  handleEditMessage(messageId, content, undefined, activeChId);
+                }
+              }}
+              onDeleteMessage={handleDeleteMessage}
+            />
+          ) : (
+            <EmptyThread onBackMobile={() => {}} />
+          )}
+        </ChatShell.ThreadPane>
+      </ChatShell>
+
+      {/* Edit Message Modal */}
+      <EditMessageModal
+        isOpen={!!editingMessage}
+        onClose={() => setEditingMessage(null)}
+        onSave={handleSaveEdit}
+        initialContent={editingMessage?.content || ''}
+        isLoading={updateDmMessage.isPending || editIntentMessage.isPending}
+      />
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deletingMessageId}
+        onClose={() => setDeletingMessageId(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteDmMessage.isPending || deleteIntentMessage.isPending}
+      />
+    </>
   );
 }
 
@@ -873,6 +1001,8 @@ export function ChatThread({
   onTyping,
   onAddReaction = () => {},
   onRemoveReaction = () => {},
+  onEditMessage,
+  onDeleteMessage,
 }: {
   kind: ChatKind;
   title: string;
@@ -888,6 +1018,13 @@ export function ChatThread({
   onTyping?: (isTyping: boolean) => void;
   onAddReaction?: (messageId: string, emoji: string) => void;
   onRemoveReaction?: (messageId: string, emoji: string) => void;
+  onEditMessage?: (
+    messageId: string,
+    content: string,
+    threadId?: string,
+    intentId?: string
+  ) => void;
+  onDeleteMessage?: (messageId: string) => void;
 }) {
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -1093,7 +1230,12 @@ export function ChatThread({
                     }}
                     onReport={() => {
                       console.log('Report message:', m.id);
-                      // TODO: Open report modal
+                    }}
+                    onEdit={() => {
+                      onEditMessage?.(m.id, m.text);
+                    }}
+                    onDelete={() => {
+                      onDeleteMessage?.(m.id);
                     }}
                   >
                     {m.text}
@@ -1148,7 +1290,12 @@ export function ChatThread({
                     }}
                     onReport={() => {
                       console.log('Report message:', m.id);
-                      // TODO: Open report modal
+                    }}
+                    onEdit={() => {
+                      onEditMessage?.(m.id, m.text);
+                    }}
+                    onDelete={() => {
+                      onDeleteMessage?.(m.id);
                     }}
                   >
                     {m.text}
@@ -1306,11 +1453,15 @@ function Bubble({
   children,
   time,
   block,
+  editedAt,
+  deletedAt,
 }: {
   align?: 'left' | 'right';
   children: React.ReactNode;
   time?: string;
   block?: boolean;
+  editedAt?: string | null;
+  deletedAt?: string | null;
 }) {
   const base =
     'rounded-2xl px-4 py-2.5 text-sm inline-flex items-end gap-2 shadow-sm';
@@ -1322,10 +1473,22 @@ function Bubble({
         : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800/70 dark:text-zinc-100 rounded-bl-md';
   const timeCls =
     align === 'right' ? 'text-[10px] opacity-90' : 'text-[10px] text-zinc-400';
+
   return (
     <div className="flex w-full">
       <div className={[base, cls].join(' ')}>
-        <span className="leading-5 whitespace-pre-wrap">{children}</span>
+        {deletedAt ? (
+          <span className="leading-5 italic text-neutral-400">
+            This message was deleted
+          </span>
+        ) : (
+          <>
+            <span className="leading-5 whitespace-pre-wrap">{children}</span>
+            {editedAt && (
+              <span className="text-xs text-neutral-400 ml-1">(edited)</span>
+            )}
+          </>
+        )}
         {time && <span className={timeCls}>{time}</span>}
       </div>
     </div>
@@ -1386,6 +1549,8 @@ const MsgIn = ({
             isOpen={showMenu}
             onClose={() => setShowMenu(false)}
             onReport={onReport}
+            canEdit={false}
+            canDelete={false}
             align="left"
           />
         </div>
@@ -1393,7 +1558,13 @@ const MsgIn = ({
 
       {/* Message Bubble */}
       <div className="relative max-w-[75%]">
-        <Bubble align="left" time={time} block={block}>
+        <Bubble
+          align="left"
+          time={time}
+          block={block}
+          editedAt={message.editedAt}
+          deletedAt={message.deletedAt}
+        >
           {children}
         </Bubble>
 
@@ -1439,6 +1610,8 @@ const MsgOut = ({
   onRemoveReaction,
   onReply,
   onReport,
+  onEdit,
+  onDelete,
 }: {
   children: React.ReactNode;
   message: Message;
@@ -1448,6 +1621,8 @@ const MsgOut = ({
   onRemoveReaction: (emoji: string) => void;
   onReply: () => void;
   onReport: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showReactionsBar, setShowReactionsBar] = useState(false);
@@ -1484,7 +1659,11 @@ const MsgOut = ({
           <MessageMenuPopover
             isOpen={showMenu}
             onClose={() => setShowMenu(false)}
+            onEdit={onEdit}
+            onDelete={onDelete}
             onReport={onReport}
+            canEdit={!message.deletedAt}
+            canDelete={!message.deletedAt}
             align="right"
           />
         </div>
@@ -1507,7 +1686,12 @@ const MsgOut = ({
 
       {/* Message Bubble */}
       <div className="relative max-w-[75%]">
-        <Bubble align="right" time={time}>
+        <Bubble
+          align="right"
+          time={time}
+          editedAt={message.editedAt}
+          deletedAt={message.deletedAt}
+        >
           {children}
         </Bubble>
 

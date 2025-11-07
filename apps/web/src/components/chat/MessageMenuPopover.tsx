@@ -1,23 +1,31 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag } from 'lucide-react';
+import { Flag, Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 interface MessageMenuPopoverProps {
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onReport: () => void;
   position?: { top: number; left: number };
   align?: 'left' | 'right';
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 export function MessageMenuPopover({
   isOpen,
   onClose,
+  onEdit,
+  onDelete,
   onReport,
   position,
   align = 'left',
+  canEdit = false,
+  canDelete = false,
 }: MessageMenuPopoverProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +59,16 @@ export function MessageMenuPopover({
     };
   }, [isOpen, onClose]);
 
+  const handleEdit = () => {
+    onEdit?.();
+    onClose();
+  };
+
+  const handleDelete = () => {
+    onDelete?.();
+    onClose();
+  };
+
   const handleReport = () => {
     onReport();
     onClose();
@@ -81,6 +99,34 @@ export function MessageMenuPopover({
           />
 
           <div className="relative bg-white dark:bg-neutral-900">
+            {canEdit && (
+              <button
+                onClick={handleEdit}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:bg-neutral-100 dark:focus:bg-neutral-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                role="menuitem"
+                style={{ minHeight: '48px' }}
+              >
+                <Pencil className="h-5 w-5 text-indigo-500" />
+                <span className="font-medium">Edit</span>
+              </button>
+            )}
+
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:bg-neutral-100 dark:focus:bg-neutral-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                role="menuitem"
+                style={{ minHeight: '48px' }}
+              >
+                <Trash2 className="h-5 w-5 text-red-500" />
+                <span className="font-medium">Delete</span>
+              </button>
+            )}
+
+            {(canEdit || canDelete) && (
+              <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
+            )}
+
             <button
               onClick={handleReport}
               className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:bg-neutral-100 dark:focus:bg-neutral-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
