@@ -36,8 +36,11 @@ import {
   useMarkIntentChatRead,
   useGetIntentUnreadCount,
 } from '@/lib/api/event-chat';
-import { useDmMessageAdded } from '@/lib/api/dm-subscriptions';
-import { useIntentMessageAdded } from '@/lib/api/event-chat-subscriptions';
+import { useDmMessageAdded, useDmTyping } from '@/lib/api/dm-subscriptions';
+import {
+  useIntentMessageAdded,
+  useIntentTyping,
+} from '@/lib/api/event-chat-subscriptions';
 import { useMyMembershipsQuery } from '@/lib/api/intent-members';
 
 /* ───────────────────────────── Types ───────────────────────────── */
@@ -76,6 +79,12 @@ export default function ChatsPageIntegrated() {
   // Independent active selections per tab
   const [activeDmId, setActiveDmId] = useState<string | undefined>();
   const [activeChId, setActiveChId] = useState<string | undefined>();
+
+  // Typing indicators state
+  const [dmTypingUsers, setDmTypingUsers] = useState<Set<string>>(new Set());
+  const [channelTypingUsers, setChannelTypingUsers] = useState<Set<string>>(
+    new Set()
+  );
 
   // Fetch DM threads
   const { data: dmThreadsData, isLoading: dmThreadsLoading } = useGetDmThreads(
@@ -128,6 +137,45 @@ export default function ChatsPageIntegrated() {
   useIntentMessageAdded({
     intentId: activeChId!,
     enabled: !!activeChId && tab === 'channel',
+  });
+
+  // Typing indicators subscriptions
+  useDmTyping({
+    threadId: activeDmId!,
+    enabled: !!activeDmId && tab === 'dm',
+    onTyping: ({ userId, isTyping }) => {
+      // Don't show typing for current user
+      if (userId === currentUserId) return;
+
+      setDmTypingUsers((prev) => {
+        const next = new Set(prev);
+        if (isTyping) {
+          next.add(userId);
+        } else {
+          next.delete(userId);
+        }
+        return next;
+      });
+    },
+  });
+
+  useIntentTyping({
+    intentId: activeChId!,
+    enabled: !!activeChId && tab === 'channel',
+    onTyping: ({ userId, isTyping }) => {
+      // Don't show typing for current user
+      if (userId === currentUserId) return;
+
+      setChannelTypingUsers((prev) => {
+        const next = new Set(prev);
+        if (isTyping) {
+          next.add(userId);
+        } else {
+          next.delete(userId);
+        }
+        return next;
+      });
+    },
   });
 
   // Map DM threads to conversations
@@ -310,6 +358,37 @@ export default function ChatsPageIntegrated() {
     }
   }, [activeDmId, activeChId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Get typing user names for display
+  const typingUserNames = useMemo(() => {
+    const typingUsers = tab === 'dm' ? dmTypingUsers : channelTypingUsers;
+    if (typingUsers.size === 0) return null;
+
+    // For DM, get the other user's name
+    if (tab === 'dm' && active) {
+      const thread = dmThreadsData?.dmThreads?.items?.find(
+        (t) => t.id === activeDmId
+      );
+      if (!thread) return null;
+
+      const otherUser =
+        thread.aUserId === currentUserId ? thread.bUser : thread.aUser;
+      return [otherUser.name || 'Someone'];
+    }
+
+    // For channels, we'd need to fetch user names (simplified for now)
+    return [
+      `${typingUsers.size} ${typingUsers.size === 1 ? 'person' : 'people'}`,
+    ];
+  }, [
+    tab,
+    dmTypingUsers,
+    channelTypingUsers,
+    active,
+    dmThreadsData,
+    activeDmId,
+    currentUserId,
+  ]);
+
   if (!currentUserId) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -346,6 +425,7 @@ export default function ChatsPageIntegrated() {
             lastReadAt={active.lastReadAt}
             messages={messages}
             loading={tab === 'dm' ? dmMessagesLoading : intentMessagesLoading}
+            typingUserNames={typingUserNames}
             onBackMobile={() => {}}
             onSend={handleSend}
             onLoadMore={
@@ -567,6 +647,7 @@ export function ChatThread({
   messages,
   lastReadAt,
   loading,
+  typingUserNames,
   onBackMobile,
   onSend,
   onLoadMore,
@@ -578,6 +659,7 @@ export function ChatThread({
   messages: Message[];
   lastReadAt?: number;
   loading?: boolean;
+  typingUserNames?: string[] | null;
   onBackMobile: () => void;
   onSend: (text: string) => void;
   onLoadMore?: () => void;
@@ -702,6 +784,11 @@ export function ChatThread({
                   </MsgIn>
                 )
               )}
+
+            {/* Typing indicator */}
+            {typingUserNames && typingUserNames.length > 0 && (
+              <TypingIndicator names={typingUserNames} />
+            )}
           </div>
 
           <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
@@ -829,6 +916,26 @@ const MsgOut = ({
     {children}
   </Bubble>
 );
+
+function TypingIndicator({ names }: { names: string[] }) {
+  const text =
+    names.length === 1
+      ? `${names[0]} is typing`
+      : `${names.join(', ')} are typing`;
+
+  return (
+    <div className="flex w-full mb-2 animate-fade-in">
+      <div className="max-w-[80%] rounded-2xl px-3 py-2 text-sm inline-flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800">
+        <span className="text-xs text-zinc-600 dark:text-zinc-400">{text}</span>
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 opacity-60" />
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 opacity-60 [animation-delay:120ms]" />
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 opacity-60 [animation-delay:240ms]" />
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function EmptyThread({ onBackMobile }: { onBackMobile: () => void }) {
   return (

@@ -367,7 +367,7 @@ function MessageList({ messages }: { messages: Message[] }) {
 ### Wysokie priorytety
 
 - [x] ~~Dodać listę Intent/Channels~~ ✅ **GOTOWE!**
-- [ ] Implementacja typing indicators UI
+- [x] ~~Implementacja typing indicators UI~~ ✅ **GOTOWE!**
 - [ ] Optimistic updates dla wysyłania wiadomości
 - [ ] Error boundaries dla błędów WebSocket
 - [ ] Retry logic dla failed messages

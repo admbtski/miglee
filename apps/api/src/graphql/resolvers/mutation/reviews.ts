@@ -131,7 +131,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
         });
       }
 
-      return mapReview(review as any);
+      return mapReview(review);
     }
   );
 
@@ -208,7 +208,7 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
         include: REVIEW_INCLUDE,
       });
 
-      return mapReview(updated as any);
+      return mapReview(updated);
     }
   );
 

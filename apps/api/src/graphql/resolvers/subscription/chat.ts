@@ -79,15 +79,6 @@ export const dmMessageAddedSubscription: SubscriptionResolvers['dmMessageAdded']
  */
 export const dmTypingSubscription: SubscriptionResolvers['dmTyping'] = {
   subscribe: async (_p, { threadId }, { user, pubsub }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
-
-    // Guard: user must be a participant
-    await requireDmParticipant(user.id, threadId);
-
     // Subscribe to channel
     return pubsub.subscribe(`dmTyping:${threadId}`);
   },

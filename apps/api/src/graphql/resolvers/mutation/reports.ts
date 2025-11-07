@@ -171,7 +171,7 @@ export const updateReportStatusMutation: MutationResolvers['updateReportStatus']
         include: REPORT_INCLUDE,
       });
 
-      return mapReport(updated as any);
+      return mapReport(updated);
     }
   );
 

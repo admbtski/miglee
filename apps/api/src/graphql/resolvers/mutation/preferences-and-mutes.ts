@@ -85,9 +85,7 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
         include: NOTIFICATION_PREFERENCE_INCLUDE,
       });
 
-      return mapNotificationPreference(
-        preferences as NotificationPreferenceWithGraph
-      );
+      return mapNotificationPreference(preferences);
     }
   );
 
@@ -123,7 +121,7 @@ export const muteIntentMutation: MutationResolvers['muteIntent'] =
         include: INTENT_MUTE_INCLUDE,
       });
 
-      return mapIntentMute(intentMute as IntentMuteWithGraph);
+      return mapIntentMute(intentMute);
     }
   );
 
@@ -159,6 +157,6 @@ export const muteDmThreadMutation: MutationResolvers['muteDmThread'] =
         include: DM_MUTE_INCLUDE,
       });
 
-      return mapDmMute(dmMute as DmMuteWithGraph);
+      return mapDmMute(dmMute);
     }
   );

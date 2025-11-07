@@ -7,7 +7,7 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
-import { mapUserBlock, type UserBlockWithGraph } from '../helpers';
+import { mapUserBlock } from '../helpers';
 
 const USER_BLOCK_INCLUDE = {
   blocker: true,
@@ -54,15 +54,11 @@ export const blockUserMutation: MutationResolvers['blockUser'] =
             blockedId: userId,
           },
         },
+        include: USER_BLOCK_INCLUDE,
       });
 
       if (existing) {
-        // Already blocked, return existing
-        const block = await prisma.userBlock.findUnique({
-          where: { id: existing.id },
-          include: USER_BLOCK_INCLUDE,
-        });
-        return mapUserBlock(block as UserBlockWithGraph);
+        return mapUserBlock(existing);
       }
 
       // Create block
@@ -74,7 +70,7 @@ export const blockUserMutation: MutationResolvers['blockUser'] =
         include: USER_BLOCK_INCLUDE,
       });
 
-      return mapUserBlock(block as UserBlockWithGraph);
+      return mapUserBlock(block);
     }
   );
 
