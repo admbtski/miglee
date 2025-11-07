@@ -105,6 +105,16 @@ import {
   muteDmThreadMutation,
 } from './preferences-and-mutes';
 
+// Reactions mutations
+import {
+  addDmReactionMutation,
+  removeDmReactionMutation,
+} from './dm-reactions';
+import {
+  addIntentReactionMutation,
+  removeIntentReactionMutation,
+} from './intent-reactions';
+
 import { devLoginMutation, devLogoutMutation } from './auth';
 
 /**
@@ -193,6 +203,12 @@ export const Mutation: Resolvers['Mutation'] = {
   updateNotificationPreferences: updateNotificationPreferencesMutation,
   muteIntent: muteIntentMutation,
   muteDmThread: muteDmThreadMutation,
+
+  // ---- Reactions ----
+  addDmReaction: addDmReactionMutation,
+  removeDmReaction: removeDmReactionMutation,
+  addIntentReaction: addIntentReactionMutation,
+  removeIntentReaction: removeIntentReactionMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

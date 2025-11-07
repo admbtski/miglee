@@ -240,6 +240,34 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
         include: DM_MESSAGE_INCLUDE,
       });
 
-      return messages.map(mapDmMessage);
+      // Get the other user's lastReadAt to determine if messages are read
+      const otherUserId =
+        thread.aUserId === user.id ? thread.bUserId : thread.aUserId;
+
+      const otherUserRead = await prisma.dmRead.findUnique({
+        where: {
+          threadId_userId: {
+            threadId,
+            userId: otherUserId,
+          },
+        },
+        select: { lastReadAt: true },
+      });
+
+      // Map messages with readAt based on other user's lastReadAt
+      return messages.map((msg) => {
+        // Only show readAt for messages sent by current user
+        const readAt =
+          msg.senderId === user.id &&
+          otherUserRead?.lastReadAt &&
+          msg.createdAt <= otherUserRead.lastReadAt
+            ? otherUserRead.lastReadAt
+            : null;
+
+        return {
+          ...mapDmMessage(msg),
+          readAt,
+        };
+      });
     }
   );

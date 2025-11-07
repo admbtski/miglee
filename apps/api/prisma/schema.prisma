@@ -200,15 +200,17 @@ model User {
   reviewsWritten  Review[]  @relation("ReviewAuthor")
 
   // DM
-  dmThreadsA DmThread[]  @relation("DmA")
-  dmThreadsB DmThread[]  @relation("DmB")
-  dmMessages DmMessage[]
-  dmMutes    DmMute[]
-  dmReads    DmRead[] // last read per thread
+  dmThreadsA        DmThread[]          @relation("DmA")
+  dmThreadsB        DmThread[]          @relation("DmB")
+  dmMessages        DmMessage[]
+  dmMutes           DmMute[]
+  dmReads           DmRead[] // last read per thread
+  dmMessageReactions DmMessageReaction[] @relation("DmMessageReactions")
 
   // Event Chat
-  intentChatMessages IntentChatMessage[]
-  intentChatReads    IntentChatRead[]
+  intentChatMessages         IntentChatMessage[]
+  intentChatReads            IntentChatRead[]
+  intentChatMessageReactions IntentChatMessageReaction[] @relation("IntentChatMessageReactions")
 
   // Mutes / Prefs
   notificationPreference NotificationPreference?
@@ -497,12 +499,29 @@ model DmMessage {
   editedAt  DateTime? // added for parity with event chat
   deletedAt DateTime?
 
-  thread DmThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  thread    DmThread            @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender    User                @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions DmMessageReaction[]
 
   @@index([threadId, createdAt])
   @@index([senderId, createdAt])
   @@map("dm_messages")
+}
+
+model DmMessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String // 👍, ❤️, 😂, 😮, 😢, 🙏
+  createdAt DateTime @default(now())
+
+  message DmMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User      @relation("DmMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+  @@map("dm_message_reactions")
 }
 
 model Notification {
@@ -551,8 +570,9 @@ model IntentChatMessage {
   editedAt  DateTime?
   deletedAt DateTime?
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  intent    Intent                     @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  author    User                       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reactions IntentChatMessageReaction[]
 
   replyTo IntentChatMessage?  @relation("IntentChatReply", fields: [replyToId], references: [id], onDelete: SetNull)
   replies IntentChatMessage[] @relation("IntentChatReply")
@@ -560,6 +580,22 @@ model IntentChatMessage {
   @@index([intentId, createdAt])
   @@index([authorId, createdAt])
   @@map("intent_chat_messages")
+}
+
+model IntentChatMessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  emoji     String // 👍, ❤️, 😂, 😮, 😢, 🙏
+  createdAt DateTime @default(now())
+
+  message IntentChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User               @relation("IntentChatMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+  @@map("intent_chat_message_reactions")
 }
 
 model IntentChatRead {

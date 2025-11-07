@@ -361,6 +361,20 @@ fragment DmMessageCore on DmMessage {
     name
     imageUrl
   }
+  reactions {
+    ...MessageReactionCore
+  }
+}
+
+fragment MessageReactionCore on MessageReaction {
+  emoji
+  count
+  users {
+    id
+    name
+    imageUrl
+  }
+  reacted
 }
 
 fragment DmThreadCore on DmThread {
@@ -564,6 +578,9 @@ fragment IntentChatMessageCore on IntentChatMessage {
     id
     name
     imageUrl
+  }
+  reactions {
+    ...MessageReactionCore
   }
 }
 

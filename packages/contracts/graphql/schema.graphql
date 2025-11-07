@@ -486,6 +486,7 @@ type DmMessage {
 
   thread: DmThread!
   sender: User!
+  reactions: [MessageReaction!]!
 }
 
 "DM thread mute preference"
@@ -625,10 +626,19 @@ type IntentChatMessage {
   intent: Intent!
   author: User!
   replyTo: IntentChatMessage
+  reactions: [MessageReaction!]!
 
   # Computed
   isEdited: Boolean!
   isDeleted: Boolean!
+}
+
+"Aggregated reaction for a message"
+type MessageReaction {
+  emoji: String!
+  count: Int!
+  users: [User!]!
+  reacted: Boolean!
 }
 
 "Paginated intent chat messages result"
@@ -1150,6 +1160,12 @@ type Mutation {
   markIntentChatRead(intentId: ID!, at: DateTime): Boolean!
   publishIntentTyping(intentId: ID!, isTyping: Boolean!): Boolean!
 
+  # Reactions
+  addDmReaction(messageId: ID!, emoji: String!): Boolean!
+  removeDmReaction(messageId: ID!, emoji: String!): Boolean!
+  addIntentReaction(messageId: ID!, emoji: String!): Boolean!
+  removeIntentReaction(messageId: ID!, emoji: String!): Boolean!
+
   # User Blocks
   blockUser(userId: ID!): UserBlock! # ← DODANE
   unblockUser(userId: ID!): Boolean! # ← DODANE
@@ -1181,10 +1197,25 @@ type Subscription {
   # Event Chat Subscriptions
   intentMessageAdded(intentId: ID!): IntentChatMessage!
   intentTyping(intentId: ID!): TypingIndicator!
+  intentReactionAdded(intentId: ID!): ReactionEvent!
 
   # DM Subscriptions
   dmMessageAdded(threadId: ID!): DmMessage!
   dmTyping(threadId: ID!): TypingIndicator!
+  dmReactionAdded(threadId: ID!): ReactionEvent!
+}
+
+# Reaction event for subscriptions
+type ReactionEvent {
+  messageId: ID!
+  userId: ID!
+  emoji: String!
+  action: ReactionAction!
+}
+
+enum ReactionAction {
+  ADD
+  REMOVE
 }
 
 # Typing indicator for real-time presence

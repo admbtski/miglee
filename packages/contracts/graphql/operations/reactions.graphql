@@ -1,0 +1,51 @@
+# =============================================================================
+# Reaction Operations
+# =============================================================================
+
+# Mutations
+mutation AddDmReaction($messageId: ID!, $emoji: String!) {
+  addDmReaction(messageId: $messageId, emoji: $emoji)
+}
+
+mutation RemoveDmReaction($messageId: ID!, $emoji: String!) {
+  removeDmReaction(messageId: $messageId, emoji: $emoji)
+}
+
+mutation AddIntentReaction($messageId: ID!, $emoji: String!) {
+  addIntentReaction(messageId: $messageId, emoji: $emoji)
+}
+
+mutation RemoveIntentReaction($messageId: ID!, $emoji: String!) {
+  removeIntentReaction(messageId: $messageId, emoji: $emoji)
+}
+
+# Subscriptions
+subscription OnDmReactionAdded($threadId: ID!) {
+  dmReactionAdded(threadId: $threadId) {
+    messageId
+    userId
+    emoji
+    action
+  }
+}
+
+subscription OnIntentReactionAdded($intentId: ID!) {
+  intentReactionAdded(intentId: $intentId) {
+    messageId
+    userId
+    emoji
+    action
+  }
+}
+
+# Fragments
+fragment MessageReactionCore on MessageReaction {
+  emoji
+  count
+  users {
+    id
+    name
+    imageUrl
+  }
+  reacted
+}

@@ -78,7 +78,7 @@ export const dmMessageAddedSubscription: SubscriptionResolvers['dmMessageAdded']
  * Subscription: Typing indicator for DM thread
  */
 export const dmTypingSubscription: SubscriptionResolvers['dmTyping'] = {
-  subscribe: async (_p, { threadId }, { user, pubsub }) => {
+  subscribe: async (_p, { threadId }, { pubsub }) => {
     // Subscribe to channel
     return pubsub.subscribe(`dmTyping:${threadId}`);
   },
@@ -86,3 +86,57 @@ export const dmTypingSubscription: SubscriptionResolvers['dmTyping'] = {
     return payload.dmTyping;
   },
 };
+
+/**
+ * Subscription: Reaction added/removed in intent chat
+ */
+export const intentReactionAddedSubscription: SubscriptionResolvers['intentReactionAdded'] =
+  {
+    subscribe: async (
+      _p: any,
+      { intentId }: { intentId: string },
+      { user, pubsub }: any
+    ) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Guard: user must be JOINED
+      await requireJoinedMember(user.id, intentId);
+
+      // Subscribe to channel
+      return pubsub.subscribe(`intentReactionAdded:${intentId}`);
+    },
+    resolve: (payload: any) => {
+      return payload.intentReactionAdded;
+    },
+  };
+
+/**
+ * Subscription: Reaction added/removed in DM thread
+ */
+export const dmReactionAddedSubscription: SubscriptionResolvers['dmReactionAdded'] =
+  {
+    subscribe: async (
+      _p: any,
+      { threadId }: { threadId: string },
+      { user, pubsub }: any
+    ) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Guard: user must be a participant
+      await requireDmParticipant(user.id, threadId);
+
+      // Subscribe to channel
+      return pubsub.subscribe(`dmReactionAdded:${threadId}`);
+    },
+    resolve: (payload: any) => {
+      return payload.dmReactionAdded;
+    },
+  };

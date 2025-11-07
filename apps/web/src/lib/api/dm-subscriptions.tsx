@@ -86,12 +86,23 @@ export function useDmMessageAdded(params: {
 
               const message = result.data?.dmMessageAdded;
               if (message) {
+                console.log(
+                  '[DM Sub] Message received:',
+                  message.id,
+                  'ThreadID:',
+                  threadId
+                );
                 if (onMessageRef.current) {
                   onMessageRef.current(message);
                 } else {
                   // Default: invalidate messages query
+                  console.log(
+                    '[DM Sub] Invalidating queries for threadId:',
+                    threadId
+                  );
+                  // Invalidate all messages queries for this thread (regardless of filters)
                   queryClient.invalidateQueries({
-                    queryKey: dmKeys.messages(threadId),
+                    queryKey: ['dm', 'messages', threadId],
                   });
                   queryClient.invalidateQueries({
                     queryKey: dmKeys.thread(threadId),
@@ -144,6 +155,113 @@ export function useDmMessageAdded(params: {
   }, [threadId, enabled, queryClient]);
 
   return { connected };
+}
+
+/**
+ * Subscribe to ALL DM threads for a user (for badge updates)
+ * This subscribes to all threads in the list to catch new messages in background
+ */
+export function useDmThreadsSubscriptions(params: {
+  threadIds: string[];
+  enabled?: boolean;
+}) {
+  const { threadIds, enabled = true } = params;
+  const queryClient = useQueryClient();
+  const unsubscribesRef = useRef<Map<string, () => void>>(new Map());
+  const [connectedCount, setConnectedCount] = useState(0);
+
+  useEffect(() => {
+    if (!enabled || threadIds.length === 0) return;
+
+    const setupSubscriptions = async () => {
+      try {
+        const client = (await getWsClient()) as Client;
+
+        // Unsubscribe from threads that are no longer in the list
+        const currentThreadIds = new Set(threadIds);
+        for (const [threadId, unsubscribe] of unsubscribesRef.current) {
+          if (!currentThreadIds.has(threadId)) {
+            try {
+              unsubscribe();
+            } catch {}
+            unsubscribesRef.current.delete(threadId);
+          }
+        }
+
+        // Subscribe to new threads
+        for (const threadId of threadIds) {
+          if (unsubscribesRef.current.has(threadId)) continue;
+
+          const payload: SubscribePayload = {
+            query: print(OnDmMessageAddedDocument),
+            variables: { threadId },
+          };
+
+          const unsubscribe = client.subscribe<OnDmMessageAddedSubscription>(
+            payload,
+            {
+              next: (result) => {
+                if (result.errors?.length) {
+                  console.error(
+                    `❌ DM threads subscription error for ${threadId}:`,
+                    result.errors
+                  );
+                  return;
+                }
+
+                const message = result.data?.dmMessageAdded;
+                if (message) {
+                  console.log(
+                    `[DM Threads Sub] New message in thread ${threadId}`
+                  );
+                  // Invalidate threads list to update badges and last message
+                  queryClient.invalidateQueries({
+                    queryKey: ['dm', 'threads'],
+                  });
+                  // Also invalidate messages for this specific thread
+                  queryClient.invalidateQueries({
+                    queryKey: ['dm', 'messages', threadId],
+                  });
+                }
+              },
+              error: (err) => {
+                console.error(
+                  `❌ DM threads subscription error for ${threadId}:`,
+                  err
+                );
+              },
+              complete: () => {
+                console.log(
+                  `[DM Threads Sub] Subscription completed for ${threadId}`
+                );
+              },
+            }
+          );
+
+          unsubscribesRef.current.set(threadId, unsubscribe);
+        }
+
+        setConnectedCount(unsubscribesRef.current.size);
+      } catch (err) {
+        console.error('❗ DM threads subscriptions setup failed:', err);
+      }
+    };
+
+    void setupSubscriptions();
+
+    return () => {
+      // Cleanup all subscriptions
+      for (const [, unsubscribe] of unsubscribesRef.current) {
+        try {
+          unsubscribe();
+        } catch {}
+      }
+      unsubscribesRef.current.clear();
+      setConnectedCount(0);
+    };
+  }, [threadIds, enabled, queryClient]);
+
+  return { connectedCount };
 }
 
 /**

@@ -8,6 +8,8 @@ import {
   intentTypingSubscription,
   dmMessageAddedSubscription,
   dmTypingSubscription,
+  intentReactionAddedSubscription,
+  dmReactionAddedSubscription,
 } from './chat';
 
 export const Subscription: Resolvers['Subscription'] = {
@@ -17,4 +19,6 @@ export const Subscription: Resolvers['Subscription'] = {
   intentTyping: intentTypingSubscription,
   dmMessageAdded: dmMessageAddedSubscription,
   dmTyping: dmTypingSubscription,
+  intentReactionAdded: intentReactionAddedSubscription,
+  dmReactionAdded: dmReactionAddedSubscription,
 };

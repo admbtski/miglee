@@ -397,7 +397,7 @@ export const markDmThreadReadMutation: MutationResolvers['markDmThreadRead'] =
   resolverWithMetrics(
     'Mutation',
     'markDmThreadRead',
-    async (_p, { threadId }, { user }) => {
+    async (_p, { threadId }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -460,6 +460,27 @@ export const markDmThreadReadMutation: MutationResolvers['markDmThreadRead'] =
                   select: { lastReadAt: true },
                 })
               )?.lastReadAt || new Date(0),
+          },
+        },
+      });
+
+      // Publish read event to notify other user (sender) about read status
+      // This allows real-time "Seen" updates
+      await pubsub?.publish({
+        topic: `dmMessageAdded:${threadId}`,
+        payload: {
+          dmMessageAdded: {
+            // Dummy message to trigger invalidation
+            id: 'read-event',
+            threadId,
+            senderId: user.id,
+            content: '',
+            createdAt: now,
+            readAt: now,
+            deletedAt: null,
+            sender: { id: user.id, name: '', imageUrl: null },
+            thread: {} as any,
+            reactions: [],
           },
         },
       });
