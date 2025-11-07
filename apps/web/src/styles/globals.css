@@ -134,3 +134,43 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@layer utilities {
+  .tw-typing {
+    @apply inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-zinc-200 dark:bg-zinc-800;
+  }
+  .tw-typing-dot {
+    @apply inline-block h-1 w-1 rounded-full bg-zinc-400 dark:bg-zinc-500;
+    animation: twTypingWave 900ms ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+  .tw-typing-dot:nth-child(2) {
+    animation-delay: 120ms;
+  }
+  .tw-typing-dot:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  @keyframes twTypingWave {
+    0% {
+      transform: translateY(0) scale(0.95);
+      opacity: 0.5;
+    }
+    25% {
+      transform: translateY(-5px) scale(1.05);
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(0) scale(0.95);
+      opacity: 0.65;
+    }
+    75% {
+      transform: translateY(5px) scale(1);
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateY(0) scale(0.95);
+      opacity: 0.5;
+    }
+  }
+}

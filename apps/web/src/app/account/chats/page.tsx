@@ -29,12 +29,16 @@ import {
   useGetDmMessages,
   useSendDmMessage,
   useMarkDmThreadRead,
+  usePublishDmTyping,
+  dmKeys,
 } from '@/lib/api/dm';
 import {
   useGetIntentMessages,
   useSendIntentMessage,
   useMarkIntentChatRead,
   useGetIntentUnreadCount,
+  usePublishIntentTyping,
+  eventChatKeys,
 } from '@/lib/api/event-chat';
 import { useDmMessageAdded, useDmTyping } from '@/lib/api/dm-subscriptions';
 import {
@@ -42,6 +46,21 @@ import {
   useIntentTyping,
 } from '@/lib/api/event-chat-subscriptions';
 import { useMyMembershipsQuery } from '@/lib/api/intent-members';
+import { useQueryClient } from '@tanstack/react-query';
+
+/* ───────────────────────────── Helpers ───────────────────────────── */
+
+// Simple debounce helper
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -71,6 +90,7 @@ export type Message = {
 /* ───────────────────────────── Page ───────────────────────────── */
 
 export default function ChatsPageIntegrated() {
+  const queryClient = useQueryClient();
   const { data: meData } = useMeQuery();
   const currentUserId = meData?.me?.id;
 
@@ -102,7 +122,7 @@ export default function ChatsPageIntegrated() {
   // Fetch DM messages for active thread
   const { data: dmMessagesData, isLoading: dmMessagesLoading } =
     useGetDmMessages(
-      { threadId: activeDmId!, limit: 100, offset: 0 },
+      { threadId: activeDmId!, limit: 10, offset: 0 },
       { enabled: !!activeDmId }
     );
 
@@ -126,6 +146,8 @@ export default function ChatsPageIntegrated() {
   const sendDmMessage = useSendDmMessage();
   const sendIntentMessage = useSendIntentMessage();
   const markDmRead = useMarkDmThreadRead();
+  const publishDmTyping = usePublishDmTyping();
+  const publishIntentTyping = usePublishIntentTyping();
   const markIntentRead = useMarkIntentChatRead();
 
   // Subscriptions
@@ -139,7 +161,11 @@ export default function ChatsPageIntegrated() {
     enabled: !!activeChId && tab === 'channel',
   });
 
-  // Typing indicators subscriptions
+  // Typing indicators subscriptions with auto-clear
+  const typingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map()
+  );
+
   useDmTyping({
     threadId: activeDmId!,
     enabled: !!activeDmId && tab === 'dm',
@@ -147,10 +173,27 @@ export default function ChatsPageIntegrated() {
       // Don't show typing for current user
       if (userId === currentUserId) return;
 
+      // Clear existing timeout
+      const existingTimeout = typingTimeouts.current.get(`dm-${userId}`);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+        typingTimeouts.current.delete(`dm-${userId}`);
+      }
+
       setDmTypingUsers((prev) => {
         const next = new Set(prev);
         if (isTyping) {
           next.add(userId);
+          // Auto-clear after 5 seconds
+          const timeout = setTimeout(() => {
+            setDmTypingUsers((p) => {
+              const n = new Set(p);
+              n.delete(userId);
+              return n;
+            });
+            typingTimeouts.current.delete(`dm-${userId}`);
+          }, 5000);
+          typingTimeouts.current.set(`dm-${userId}`, timeout);
         } else {
           next.delete(userId);
         }
@@ -166,10 +209,27 @@ export default function ChatsPageIntegrated() {
       // Don't show typing for current user
       if (userId === currentUserId) return;
 
+      // Clear existing timeout
+      const existingTimeout = typingTimeouts.current.get(`intent-${userId}`);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+        typingTimeouts.current.delete(`intent-${userId}`);
+      }
+
       setChannelTypingUsers((prev) => {
         const next = new Set(prev);
         if (isTyping) {
           next.add(userId);
+          // Auto-clear after 5 seconds
+          const timeout = setTimeout(() => {
+            setChannelTypingUsers((p) => {
+              const n = new Set(p);
+              n.delete(userId);
+              return n;
+            });
+            typingTimeouts.current.delete(`intent-${userId}`);
+          }, 5000);
+          typingTimeouts.current.set(`intent-${userId}`, timeout);
         } else {
           next.delete(userId);
         }
@@ -280,19 +340,158 @@ export default function ChatsPageIntegrated() {
       const recipientId =
         thread.aUserId === currentUserId ? thread.bUserId : thread.aUserId;
 
-      sendDmMessage.mutate({
-        input: {
-          recipientId,
-          content: text,
+      // Optimistic update: add message immediately
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage = {
+        id: tempId,
+        threadId: activeDmId!,
+        senderId: currentUserId,
+        content: text,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deletedAt: null,
+        editedAt: null,
+        sender: {
+          id: currentUserId,
+          name: meData?.me?.name || 'You',
+          imageUrl: meData?.me?.imageUrl || null,
         },
+      };
+
+      // Add to cache immediately
+      queryClient.setQueryData(dmKeys.messages(activeDmId!), (old: any) => {
+        if (!old?.dmMessages) return old;
+        return {
+          dmMessages: [...(old.dmMessages || []), optimisticMessage],
+        };
       });
+
+      sendDmMessage.mutate(
+        {
+          input: {
+            recipientId,
+            content: text,
+          },
+        },
+        {
+          onSuccess: (data) => {
+            // Replace optimistic message with real one
+            queryClient.setQueryData(
+              dmKeys.messages(activeDmId!),
+              (old: any) => {
+                if (!old?.dmMessages) return old;
+                const messages = old.dmMessages.filter(
+                  (m: any) => m.id !== tempId
+                );
+                return {
+                  dmMessages: [...messages, data.sendDmMessage],
+                };
+              }
+            );
+            // Also invalidate threads to update last message
+            queryClient.invalidateQueries({ queryKey: dmKeys.threads() });
+          },
+          onError: () => {
+            // Remove optimistic message on error
+            queryClient.setQueryData(
+              dmKeys.messages(activeDmId!),
+              (old: any) => {
+                if (!old?.dmMessages) return old;
+                return {
+                  dmMessages: old.dmMessages.filter(
+                    (m: any) => m.id !== tempId
+                  ),
+                };
+              }
+            );
+          },
+        }
+      );
     } else {
-      sendIntentMessage.mutate({
-        input: {
-          intentId: active.id,
-          content: text,
+      // Optimistic update for intent messages
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage = {
+        id: tempId,
+        intentId: active.id,
+        userId: currentUserId,
+        content: text,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deletedAt: null,
+        editedAt: null,
+        replyToId: null,
+        user: {
+          id: currentUserId,
+          name: meData?.me?.name || 'You',
+          imageUrl: meData?.me?.imageUrl || null,
         },
-      });
+      };
+
+      // Add to cache immediately
+      queryClient.setQueryData(
+        eventChatKeys.messages(active.id),
+        (old: any) => {
+          if (!old?.pages) return old;
+          const newPages = [...old.pages];
+          if (newPages.length > 0) {
+            newPages[newPages.length - 1] = {
+              ...newPages[newPages.length - 1],
+              items: [
+                ...(newPages[newPages.length - 1].items || []),
+                optimisticMessage,
+              ],
+            };
+          }
+          return { ...old, pages: newPages };
+        }
+      );
+
+      sendIntentMessage.mutate(
+        {
+          input: {
+            intentId: active.id,
+            content: text,
+          },
+        },
+        {
+          onSuccess: (data) => {
+            // Replace optimistic message with real one
+            queryClient.setQueryData(
+              eventChatKeys.messages(active.id),
+              (old: any) => {
+                if (!old?.pages) return old;
+                const newPages = [...old.pages];
+                if (newPages.length > 0) {
+                  const lastPageIndex = newPages.length - 1;
+                  const lastPage = newPages[lastPageIndex];
+                  const filteredItems = lastPage.items.filter(
+                    (m: any) => m.id !== tempId
+                  );
+                  newPages[lastPageIndex] = {
+                    ...lastPage,
+                    items: [...filteredItems, data.sendIntentMessage],
+                  };
+                }
+                return { ...old, pages: newPages };
+              }
+            );
+          },
+          onError: () => {
+            // Remove optimistic message on error
+            queryClient.setQueryData(
+              eventChatKeys.messages(active.id),
+              (old: any) => {
+                if (!old?.pages) return old;
+                const newPages = old.pages.map((page: any) => ({
+                  ...page,
+                  items: page.items.filter((m: any) => m.id !== tempId),
+                }));
+                return { ...old, pages: newPages };
+              }
+            );
+          },
+        }
+      );
     }
   }
 
@@ -433,6 +632,13 @@ export default function ChatsPageIntegrated() {
                 ? () => fetchNextIntentPage()
                 : undefined
             }
+            onTyping={(isTyping) => {
+              if (active.kind === 'dm' && activeDmId) {
+                publishDmTyping.mutate({ threadId: activeDmId, isTyping });
+              } else if (active.kind === 'channel' && activeChId) {
+                publishIntentTyping.mutate({ intentId: activeChId, isTyping });
+              }
+            }}
           />
         ) : (
           <EmptyThread onBackMobile={() => {}} />
@@ -651,6 +857,7 @@ export function ChatThread({
   onBackMobile,
   onSend,
   onLoadMore,
+  onTyping,
 }: {
   kind: ChatKind;
   title: string;
@@ -663,10 +870,20 @@ export function ChatThread({
   onBackMobile: () => void;
   onSend: (text: string) => void;
   onLoadMore?: () => void;
+  onTyping?: (isTyping: boolean) => void;
 }) {
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+
+  // Debounced typing handler
+  const debouncedTyping = useMemo(
+    () =>
+      debounce((text: string) => {
+        onTyping?.(text.length > 0);
+      }, 300),
+    [onTyping]
+  );
 
   useEffect(() => {
     const el = listRef.current;
@@ -679,6 +896,8 @@ export function ChatThread({
     if (!text) return;
     onSend(text);
     setInput('');
+    // Stop typing indicator after sending
+    onTyping?.(false);
   }
 
   const [older, newer] = useMemo(() => {
@@ -801,7 +1020,11 @@ export function ChatThread({
             >
               <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setInput(newValue);
+                  debouncedTyping(newValue);
+                }}
                 placeholder={
                   kind === 'channel' ? `Message #${title}` : `Message ${title}`
                 }
@@ -919,20 +1142,17 @@ const MsgOut = ({
 
 function TypingIndicator({ names }: { names: string[] }) {
   const text =
-    names.length === 1
-      ? `${names[0]} is typing`
-      : `${names.join(', ')} are typing`;
-
+    names.length === 1 ? `${names[0]} pisze…` : `${names.join(', ')} piszą…`;
   return (
-    <div className="flex w-full mb-2 animate-fade-in">
-      <div className="max-w-[80%] rounded-2xl px-3 py-2 text-sm inline-flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800">
-        <span className="text-xs text-zinc-600 dark:text-zinc-400">{text}</span>
-        <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 opacity-60" />
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 opacity-60 [animation-delay:120ms]" />
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-zinc-400 opacity-60 [animation-delay:240ms]" />
-        </span>
-      </div>
+    <div className="tw-typing" aria-live="polite" aria-label="typing">
+      <span className="text-xs text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+        {text}
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <span className="tw-typing-dot" />
+        <span className="tw-typing-dot" />
+        <span className="tw-typing-dot" />
+      </span>
     </div>
   );
 }

@@ -41,6 +41,9 @@ import {
   UpdateDmMessageDocument,
   type UpdateDmMessageMutation,
   type UpdateDmMessageMutationVariables,
+  PublishDmTypingDocument,
+  type PublishDmTypingMutation,
+  type PublishDmTypingMutationVariables,
 } from './__generated__/react-query-update';
 import { gqlClient } from './client';
 
@@ -209,7 +212,7 @@ export function useSendDmMessage(
       );
       return res;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       // Invalidate threads list
       queryClient.invalidateQueries({ queryKey: dmKeys.threads() });
 
@@ -428,6 +431,32 @@ export function useMuteDmThread(
       queryClient.invalidateQueries({
         queryKey: dmKeys.thread(variables.threadId),
       });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Publish typing indicator for DM thread
+ */
+export function usePublishDmTyping(
+  options?: UseMutationOptions<
+    PublishDmTypingMutation,
+    Error,
+    PublishDmTypingMutationVariables
+  >
+) {
+  return useMutation<
+    PublishDmTypingMutation,
+    Error,
+    PublishDmTypingMutationVariables
+  >({
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<PublishDmTypingMutation>(
+        PublishDmTypingDocument,
+        variables
+      );
+      return res;
     },
     ...options,
   });

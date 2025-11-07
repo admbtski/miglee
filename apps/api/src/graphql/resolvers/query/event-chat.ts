@@ -42,14 +42,14 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
       // Build where clause for cursor pagination
       const cursorWhere = buildCursorWhere(after);
 
-      // Fetch messages (DESC order)
+      // Fetch messages (ASC order - oldest first for chat display)
       const messages = await prisma.intentChatMessage.findMany({
         where: {
           intentId,
           ...cursorWhere,
         },
         include: MESSAGE_INCLUDE,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
         take: limit + 1, // Fetch one extra to check hasMore
       });
 

@@ -24,11 +24,14 @@ import {
   type MarkIntentChatReadMutationVariables,
   type MuteIntentMutation,
   type MuteIntentMutationVariables,
+  type PublishIntentTypingMutation,
+  type PublishIntentTypingMutationVariables,
   SendIntentMessageDocument,
   EditIntentMessageDocument,
   DeleteIntentMessageDocument,
   MarkIntentChatReadDocument,
   MuteIntentDocument,
+  PublishIntentTypingDocument,
   GetIntentMessagesDocument,
   GetIntentUnreadCountDocument,
 } from './__generated__/react-query-update';
@@ -135,7 +138,7 @@ export function useSendIntentMessage(
       );
       return res;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate messages list
       queryClient.invalidateQueries({
         queryKey: eventChatKeys.messages(variables.input.intentId),
@@ -247,7 +250,7 @@ export function useMarkIntentChatRead(
       );
       return res;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalidate unread count
       queryClient.invalidateQueries({
         queryKey: eventChatKeys.unreadCount(variables.intentId),
@@ -282,6 +285,32 @@ export function useMuteIntent(
       queryClient.invalidateQueries({
         queryKey: ['intents', 'detail', variables.intentId],
       });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Publish typing indicator for intent chat
+ */
+export function usePublishIntentTyping(
+  options?: UseMutationOptions<
+    PublishIntentTypingMutation,
+    Error,
+    PublishIntentTypingMutationVariables
+  >
+) {
+  return useMutation<
+    PublishIntentTypingMutation,
+    Error,
+    PublishIntentTypingMutationVariables
+  >({
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<PublishIntentTypingMutation>(
+        PublishIntentTypingDocument,
+        variables
+      );
+      return res;
     },
     ...options,
   });

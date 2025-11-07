@@ -9,6 +9,7 @@ import { config } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers';
 import { redisEmitter } from '../lib/redis';
+import { prisma } from '../lib/prisma';
 import opentelemetry from '@opentelemetry/api';
 import { getOperationAST } from 'graphql';
 
@@ -45,7 +46,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
       emitter: redisEmitter,
       fullWsTransport: true,
       onDisconnect: () => fastify.log.info('WS disconnect'),
-      onConnect: async (data: {
+      onConnect: async (_data: {
         payload: { headers: { Authorization: string } };
       }) => {
         await 1;
@@ -54,29 +55,46 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
           test123: 'test123',
         };
       },
-      context: async (socket: WebSocket, req: FastifyRequest) => {
-        await 1;
+      context: async (_socket: WebSocket, req: FastifyRequest) => {
+        // Get user from headers (same as createContext)
+        const userId = (req.headers['x-user-id'] as string | undefined)?.trim();
+
+        const user = userId
+          ? await prisma.user.findUnique({ where: { id: userId } })
+          : null;
 
         return {
           req,
-          // user: userMock.user,
+          user: user
+            ? {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role as any,
+                imageUrl: user.imageUrl,
+                verifiedAt: user.verifiedAt,
+              }
+            : null,
           pubsub: fastify.graphql.pubsub,
         };
       },
     },
   });
 
-  fastify.graphql.addHook('preExecution', async (schema, document, context) => {
-    const ast = getOperationAST(document, undefined);
-    const operation = ast?.operation ?? 'query'; // 'query' | 'mutation' | 'subscription'
-    const operationName = ast?.name?.value ?? 'anonymous'; // nazwa operacji jeśli podana
+  fastify.graphql.addHook(
+    'preExecution',
+    async (_schema, document, context) => {
+      const ast = getOperationAST(document, undefined);
+      const operation = ast?.operation ?? 'query'; // 'query' | 'mutation' | 'subscription'
+      const operationName = ast?.name?.value ?? 'anonymous'; // nazwa operacji jeśli podana
 
-    context.request.__gql = {
-      start: process.hrtime.bigint(),
-      operation,
-      operationName,
-    };
-  });
+      context.request.__gql = {
+        start: process.hrtime.bigint(),
+        operation,
+        operationName,
+      };
+    }
+  );
 
   fastify.graphql.addHook('onResolution', async (execution, context) => {
     const meta = context.request.__gql;

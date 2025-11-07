@@ -236,7 +236,7 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
         where,
         take,
         skip,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' }, // Oldest first for chat display
         include: DM_MESSAGE_INCLUDE,
       });
 

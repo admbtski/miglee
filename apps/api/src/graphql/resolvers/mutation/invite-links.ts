@@ -199,7 +199,7 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
 
       if (existing && existing.status === 'JOINED') {
         // Already joined, just return intent
-        return mapIntent(link.intent as IntentWithGraph);
+        return mapIntent(link.intent);
       }
 
       // Create or update membership
@@ -234,6 +234,6 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
         data: { joinedCount: { increment: 1 } },
       });
 
-      return mapIntent(link.intent as IntentWithGraph);
+      return mapIntent(link.intent);
     }
   );

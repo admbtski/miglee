@@ -399,3 +399,35 @@ export const markIntentChatReadMutation: MutationResolvers['markIntentChatRead']
       return true;
     }
   );
+
+/**
+ * Publish typing indicator for intent chat
+ */
+export const publishIntentTypingMutation: MutationResolvers['publishIntentTyping'] =
+  resolverWithMetrics(
+    'Mutation',
+    'publishIntentTyping',
+    async (_p, { intentId, isTyping }, { user, pubsub }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Guard: user must be JOINED
+      await requireJoinedMember(user.id, intentId);
+
+      // Publish typing event
+      await pubsub?.publish({
+        topic: `intentTyping:${intentId}`,
+        payload: {
+          intentTyping: {
+            userId: user.id,
+            isTyping,
+          },
+        },
+      });
+
+      return true;
+    }
+  );

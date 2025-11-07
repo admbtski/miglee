@@ -41,6 +41,11 @@ mutation MuteIntent($intentId: ID!, $muted: Boolean!) {
   }
 }
 
+# Publish typing indicator
+mutation PublishIntentTyping($intentId: ID!, $isTyping: Boolean!) {
+  publishIntentTyping(intentId: $intentId, isTyping: $isTyping)
+}
+
 # Subscriptions
 subscription OnIntentMessageAdded($intentId: ID!) {
   intentMessageAdded(intentId: $intentId) {

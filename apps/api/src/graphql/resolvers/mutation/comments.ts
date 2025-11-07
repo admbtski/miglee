@@ -109,7 +109,7 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         data: { commentsCount: { increment: 1 } },
       });
 
-      return mapComment(comment as any);
+      return mapComment(comment);
     }
   );
 

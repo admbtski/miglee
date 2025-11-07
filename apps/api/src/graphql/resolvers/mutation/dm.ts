@@ -512,3 +512,50 @@ export const deleteDmThreadMutation: MutationResolvers['deleteDmThread'] =
       return true;
     }
   );
+
+/**
+ * Publish typing indicator for DM thread
+ */
+export const publishDmTypingMutation: MutationResolvers['publishDmTyping'] =
+  resolverWithMetrics(
+    'Mutation',
+    'publishDmTyping',
+    async (_p, { threadId, isTyping }, { user, pubsub }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Verify user has access to thread
+      const thread = await prisma.dmThread.findUnique({
+        where: { id: threadId },
+      });
+
+      if (!thread) {
+        throw new GraphQLError('Thread not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check if user is part of the thread
+      if (thread.aUserId !== user.id && thread.bUserId !== user.id) {
+        throw new GraphQLError('Access denied.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      // Publish typing event
+      await pubsub?.publish({
+        topic: `dmTyping:${threadId}`,
+        payload: {
+          dmTyping: {
+            userId: user.id,
+            isTyping,
+          },
+        },
+      });
+
+      return true;
+    }
+  );

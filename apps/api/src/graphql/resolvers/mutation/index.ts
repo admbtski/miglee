@@ -55,6 +55,7 @@ import {
   markDmMessageReadMutation,
   markDmThreadReadMutation,
   deleteDmThreadMutation,
+  publishDmTypingMutation,
 } from './dm';
 
 // Comment mutations
@@ -84,6 +85,7 @@ import {
   editIntentMessageMutation,
   deleteIntentMessageMutation,
   markIntentChatReadMutation,
+  publishIntentTypingMutation,
 } from './event-chat';
 
 // User Blocks mutations
@@ -154,12 +156,14 @@ export const Mutation: Resolvers['Mutation'] = {
   markDmMessageRead: markDmMessageReadMutation,
   markDmThreadRead: markDmThreadReadMutation,
   deleteDmThread: deleteDmThreadMutation,
+  publishDmTyping: publishDmTypingMutation,
 
   // ---- Event Chat ----
   sendIntentMessage: sendIntentMessageMutation,
   editIntentMessage: editIntentMessageMutation,
   deleteIntentMessage: deleteIntentMessageMutation,
   markIntentChatRead: markIntentChatReadMutation,
+  publishIntentTyping: publishIntentTypingMutation,
 
   // ---- Comments ----
   createComment: createCommentMutation,

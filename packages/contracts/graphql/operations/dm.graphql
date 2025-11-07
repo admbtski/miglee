@@ -96,6 +96,11 @@ mutation MuteDmThread($threadId: ID!, $muted: Boolean!) {
   }
 }
 
+# Publish typing indicator
+mutation PublishDmTyping($threadId: ID!, $isTyping: Boolean!) {
+  publishDmTyping(threadId: $threadId, isTyping: $isTyping)
+}
+
 # =============================================================================
 # DM Subscriptions
 # =============================================================================

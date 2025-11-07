@@ -1126,6 +1126,7 @@ type Mutation {
   markDmThreadRead(threadId: ID!): Int!
   deleteDmThread(id: ID!): Boolean! # ← DODANE
   createOrGetDmThread(userId: ID!): DmThread!
+  publishDmTyping(threadId: ID!, isTyping: Boolean!): Boolean!
 
   # Comments
   createComment(input: CreateCommentInput!): Comment!
@@ -1147,6 +1148,7 @@ type Mutation {
   editIntentMessage(id: ID!, input: EditIntentMessageInput!): IntentChatMessage!
   deleteIntentMessage(id: ID!, soft: Boolean = true): Boolean!
   markIntentChatRead(intentId: ID!, at: DateTime): Boolean!
+  publishIntentTyping(intentId: ID!, isTyping: Boolean!): Boolean!
 
   # User Blocks
   blockUser(userId: ID!): UserBlock! # ← DODANE
