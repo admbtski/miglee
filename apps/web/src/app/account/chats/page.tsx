@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import {
   ArrowLeft,
   Send,
@@ -18,7 +19,6 @@ import {
   Pencil,
   Hash,
   User2,
-  Check,
   Loader2,
 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ import {
 import { useMeQuery } from '@/lib/api/auth';
 import {
   useGetDmThreads,
-  useGetDmMessages,
+  useGetDmMessagesInfinite,
   useSendDmMessage,
   useMarkDmThreadRead,
   usePublishDmTyping,
@@ -167,12 +167,16 @@ export default function ChatsPageIntegrated() {
       { enabled: !!currentUserId }
     );
 
-  // Fetch DM messages for active thread
-  const { data: dmMessagesData, isLoading: dmMessagesLoading } =
-    useGetDmMessages(
-      { threadId: activeDmId!, limit: 100, offset: 0 },
-      { enabled: !!activeDmId }
-    );
+  // Fetch DM messages for active thread (infinite query)
+  const {
+    data: dmMessagesData,
+    isLoading: dmMessagesLoading,
+    fetchNextPage: fetchNextDmPage,
+    hasNextPage: hasNextDmPage,
+    isFetchingNextPage: isFetchingNextDmPage,
+  } = useGetDmMessagesInfinite(activeDmId!, {
+    enabled: !!activeDmId,
+  });
 
   // Fetch intent messages for active channel
   const {
@@ -180,9 +184,9 @@ export default function ChatsPageIntegrated() {
     isLoading: intentMessagesLoading,
     fetchNextPage: fetchNextIntentPage,
     hasNextPage: hasNextIntentPage,
-  } = useGetIntentMessages({ intentId: activeChId!, limit: 50 }, {
+  } = useGetIntentMessages(activeChId!, {
     enabled: !!activeChId,
-  } as any);
+  });
 
   // Fetch unread count for active channel
   const { data: intentUnreadData } = useGetIntentUnreadCount(
@@ -368,7 +372,7 @@ export default function ChatsPageIntegrated() {
       // Update cache directly instead of refetching
       // Use the same query key as useGetDmMessages
       queryClient.setQueryData(
-        dmKeys.messages(threadId, { limit: 100, offset: 0 }),
+        dmKeys.messages(threadId, { first: 20 }),
         (oldData: any) => {
           console.log(
             '[DM Sub] Updating cache for thread:',
@@ -376,22 +380,30 @@ export default function ChatsPageIntegrated() {
             'oldData:',
             oldData
           );
-          if (!oldData?.dmMessages) {
-            console.log('[DM Sub] No dmMessages in cache, returning oldData');
+          if (!oldData?.dmMessages?.edges) {
+            console.log(
+              '[DM Sub] No dmMessages edges in cache, returning oldData'
+            );
             return oldData;
           }
 
           const updated = {
             ...oldData,
-            dmMessages: oldData.dmMessages.map((msg: any) =>
-              msg.id === message.id
-                ? {
-                    ...msg,
-                    content: message.content,
-                    editedAt: message.editedAt,
-                  }
-                : msg
-            ),
+            dmMessages: {
+              ...oldData.dmMessages,
+              edges: oldData.dmMessages.edges.map((edge: any) =>
+                edge.node.id === message.id
+                  ? {
+                      ...edge,
+                      node: {
+                        ...edge.node,
+                        content: message.content,
+                        editedAt: message.editedAt,
+                      },
+                    }
+                  : edge
+              ),
+            },
           };
           console.log('[DM Sub] Cache updated, new data:', updated);
           return updated;
@@ -430,7 +442,7 @@ export default function ChatsPageIntegrated() {
       // Update cache directly - set deletedAt instead of removing message
       // Use the same query key as useGetDmMessages
       queryClient.setQueryData(
-        dmKeys.messages(threadId, { limit: 100, offset: 0 }),
+        dmKeys.messages(threadId, { first: 100 }),
         (oldData: any) => {
           console.log(
             '[DM Sub] Deleting message in cache for thread:',
@@ -438,21 +450,29 @@ export default function ChatsPageIntegrated() {
             'oldData:',
             oldData
           );
-          if (!oldData?.dmMessages) {
-            console.log('[DM Sub] No dmMessages in cache, returning oldData');
+          if (!oldData?.dmMessages?.edges) {
+            console.log(
+              '[DM Sub] No dmMessages edges in cache, returning oldData'
+            );
             return oldData;
           }
 
           const updated = {
             ...oldData,
-            dmMessages: oldData.dmMessages.map((msg: any) =>
-              msg.id === event.messageId
-                ? {
-                    ...msg,
-                    deletedAt: event.deletedAt,
-                  }
-                : msg
-            ),
+            dmMessages: {
+              ...oldData.dmMessages,
+              edges: oldData.dmMessages.edges.map((edge: any) =>
+                edge.node.id === event.messageId
+                  ? {
+                      ...edge,
+                      node: {
+                        ...edge.node,
+                        deletedAt: event.deletedAt,
+                      },
+                    }
+                  : edge
+              ),
+            },
           };
           console.log(
             '[DM Sub] Cache updated after delete, new data:',
@@ -842,20 +862,26 @@ export default function ChatsPageIntegrated() {
         // Optimistic update for sender - update cache immediately
         // Use the same query key as useGetDmMessages
         queryClient.setQueryData(
-          dmKeys.messages(editingMessage.threadId, { limit: 100, offset: 0 }),
+          dmKeys.messages(editingMessage.threadId, { first: 100 }),
           (oldData: any) => {
-            if (!oldData?.dmMessages) return oldData;
+            if (!oldData?.dmMessages?.edges) return oldData;
             return {
               ...oldData,
-              dmMessages: oldData.dmMessages.map((msg: any) =>
-                msg.id === editingMessage.id
-                  ? {
-                      ...msg,
-                      content: newContent,
-                      editedAt: new Date().toISOString(),
-                    }
-                  : msg
-              ),
+              dmMessages: {
+                ...oldData.dmMessages,
+                edges: oldData.dmMessages.edges.map((edge: any) =>
+                  edge.node.id === editingMessage.id
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          content: newContent,
+                          editedAt: new Date().toISOString(),
+                        },
+                      }
+                    : edge
+                ),
+              },
             };
           }
         );
@@ -916,19 +942,25 @@ export default function ChatsPageIntegrated() {
         // Optimistic update for sender - set deletedAt immediately
         // Use the same query key as useGetDmMessages
         queryClient.setQueryData(
-          dmKeys.messages(activeDmId, { limit: 100, offset: 0 }),
+          dmKeys.messages(activeDmId, { first: 100 }),
           (oldData: any) => {
-            if (!oldData?.dmMessages) return oldData;
+            if (!oldData?.dmMessages?.edges) return oldData;
             return {
               ...oldData,
-              dmMessages: oldData.dmMessages.map((msg: any) =>
-                msg.id === deletingMessageId
-                  ? {
-                      ...msg,
-                      deletedAt: new Date().toISOString(),
-                    }
-                  : msg
-              ),
+              dmMessages: {
+                ...oldData.dmMessages,
+                edges: oldData.dmMessages.edges.map((edge: any) =>
+                  edge.node.id === deletingMessageId
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          deletedAt: new Date().toISOString(),
+                        },
+                      }
+                    : edge
+                ),
+              },
             };
           }
         );
@@ -975,21 +1007,28 @@ export default function ChatsPageIntegrated() {
     if (!active || !currentUserId) return [];
 
     if (active.kind === 'dm') {
-      // dmMessages returns array directly, not { items: [] }
-      const items = dmMessagesData?.dmMessages;
+      // dmMessages now uses infinite query with pages
+      const pages = dmMessagesData?.pages;
+      if (!pages) return [];
+
+      // Flatten all pages - pages are loaded newest first, so reverse them
+      const reversedPages = [...pages].reverse();
+      const allMessages = reversedPages.flatMap(
+        (page: any) => page.dmMessages?.edges?.map((e: any) => e.node) || []
+      );
 
       console.log(
         '[Messages] DM items count:',
-        items?.length || 0,
+        allMessages.length,
         'ThreadID:',
         activeDmId
       );
 
-      if (!items || items.length === 0) {
+      if (allMessages.length === 0) {
         return [];
       }
 
-      return items.map((msg: any) => ({
+      return allMessages.map((msg: any) => ({
         id: msg.id,
         text: msg.content,
         at: new Date(msg.createdAt).getTime(),
@@ -1012,7 +1051,7 @@ export default function ChatsPageIntegrated() {
       if (!pages) return [];
 
       const allMessages = pages.flatMap(
-        (page: any) => page.intentMessages?.items || []
+        (page: any) => page.intentMessages?.edges?.map((e: any) => e.node) || []
       );
 
       return allMessages.map((msg: any) => ({
@@ -1161,7 +1200,11 @@ export default function ChatsPageIntegrated() {
               avatar={(active || activeThreadData)?.avatar}
               lastReadAt={active?.lastReadAt || activeThreadData?.lastReadAt}
               messages={messages}
-              loading={tab === 'dm' ? dmMessagesLoading : intentMessagesLoading}
+              loading={
+                tab === 'dm'
+                  ? dmMessagesLoading || isFetchingNextDmPage
+                  : intentMessagesLoading
+              }
               typingUserNames={typingUserNames}
               onBackMobile={() => {}}
               onSend={handleSend}
@@ -1180,9 +1223,17 @@ export default function ChatsPageIntegrated() {
                 }
               }}
               onLoadMore={
-                tab === 'channel' && hasNextIntentPage
-                  ? () => fetchNextIntentPage()
-                  : undefined
+                tab === 'dm' && hasNextDmPage
+                  ? () => {
+                      console.log('[LoadMore] Fetching next DM page...');
+                      fetchNextDmPage();
+                    }
+                  : tab === 'channel' && hasNextIntentPage
+                    ? () => {
+                        console.log('[LoadMore] Fetching next Intent page...');
+                        fetchNextIntentPage();
+                      }
+                    : undefined
               }
               onTyping={(isTyping) => {
                 if ((active || activeThreadData)?.kind === 'dm' && activeDmId) {
@@ -1519,10 +1570,11 @@ export function ChatThread({
   isDraft?: boolean;
 }) {
   const [input, setInput] = useState('');
-  const listRef = useRef<HTMLDivElement | null>(null);
+  const virtuosoRef = useRef<any>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Reply state
   const [replyToMessage, setReplyToMessage] = useState<{
@@ -1573,14 +1625,12 @@ export function ChatThread({
   // Auto-scroll to bottom on new messages (only if already at bottom)
   const prevMessagesLength = useRef(messages.length);
   useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-
-    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-
     // If new messages and user is at bottom, scroll down
     if (messages.length > prevMessagesLength.current && isAtBottom) {
-      el.scrollTop = el.scrollHeight;
+      virtuosoRef.current?.scrollToIndex({
+        index: messages.length - 1,
+        behavior: 'auto',
+      });
       setNewMessagesCount(0);
     }
     // If new messages and user scrolled up, show button
@@ -1589,29 +1639,13 @@ export function ChatThread({
     }
 
     prevMessagesLength.current = messages.length;
-  }, [messages.length]);
-
-  // Handle scroll to detect if user scrolled up
-  useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-
-    const handleScroll = () => {
-      const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-      setShowScrollButton(!isAtBottom);
-      if (isAtBottom) {
-        setNewMessagesCount(0);
-      }
-    };
-
-    el.addEventListener('scroll', handleScroll);
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [messages.length, isAtBottom]);
 
   const scrollToBottom = () => {
-    const el = listRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    virtuosoRef.current?.scrollToIndex({
+      index: messages.length - 1,
+      behavior: 'smooth',
+    });
     setNewMessagesCount(0);
   };
 
@@ -1625,15 +1659,8 @@ export function ChatThread({
     onTyping?.(false);
   }
 
-  const [older, newer] = useMemo(() => {
-    if (!lastReadAt) return [messages, []] as const;
-    const older = messages.filter((m) => m.at <= lastReadAt);
-    const newer = messages.filter((m) => m.at > lastReadAt);
-    return [older, newer] as const;
-  }, [messages, lastReadAt]);
-
   return (
-    <div className="grid h-full min-h-[540px] min-w-0 grid-rows-[auto_1fr_auto]">
+    <div className="grid h-full max-h-screen min-h-[540px] min-w-0 grid-rows-[auto_1fr_auto]">
       <div className="flex items-center justify-between gap-3 p-4 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center min-w-0 gap-2">
           <button
@@ -1679,11 +1706,8 @@ export function ChatThread({
         <ChatDetails onClose={() => setShowDetails(false)} kind={kind} />
       ) : (
         <>
-          <div
-            ref={listRef}
-            className="min-h-0 p-4 overflow-auto md:p-5"
-            aria-live="polite"
-          >
+          <div className="min-h-0 max-h-[calc(100vh-200px)] relative overflow-x-hidden">
+            {/* Empty state for draft */}
             {/* Draft conversation hint */}
             {isDraft && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
@@ -1701,148 +1725,100 @@ export function ChatThread({
               </div>
             )}
 
-            {loading && (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-              </div>
-            )}
-
-            {!loading && onLoadMore && (
-              <div className="flex justify-center mb-4">
-                <button
-                  onClick={onLoadMore}
-                  className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  Load more
-                </button>
-              </div>
-            )}
-
-            {!loading &&
-              older.map((m, idx) =>
-                m.side === 'right' ? (
-                  <MsgOut
-                    key={m.id}
-                    message={m}
-                    time={fmtTime(m.at)}
-                    isLast={idx === older.length - 1 && newer.length === 0}
-                    onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
-                    onRemoveReaction={(emoji) =>
-                      onRemoveReaction?.(m.id, emoji)
-                    }
-                    onReply={() => {
-                      setReplyToMessage({
-                        id: m.id,
-                        text: m.text,
-                        author: title || 'User',
-                      });
-                    }}
-                    onReport={() => {
-                      console.log('Report message:', m.id);
-                    }}
-                    onEdit={() => {
-                      onEditMessage?.(m.id, m.text);
-                    }}
-                    onDelete={() => {
-                      onDeleteMessage?.(m.id);
-                    }}
-                  >
-                    {m.text}
-                  </MsgOut>
-                ) : (
-                  <MsgIn
-                    key={m.id}
-                    message={m}
-                    time={fmtTime(m.at)}
-                    block={m.block}
-                    onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
-                    onRemoveReaction={(emoji) =>
-                      onRemoveReaction?.(m.id, emoji)
-                    }
-                    onReply={() => {
-                      setReplyToMessage({
-                        id: m.id,
-                        text: m.text,
-                        author: title || 'User',
-                      });
-                    }}
-                    onReport={() => {
-                      console.log('Report message:', m.id);
-                      // TODO: Open report modal
-                    }}
-                  >
-                    {m.text}
-                  </MsgIn>
-                )
-              )}
-
-            {newer.length > 0 && <UnreadSeparator />}
-
-            {!loading &&
-              newer.map((m, idx) =>
-                m.side === 'right' ? (
-                  <MsgOut
-                    key={m.id}
-                    message={m}
-                    time={fmtTime(m.at)}
-                    isLast={idx === newer.length - 1}
-                    onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
-                    onRemoveReaction={(emoji) =>
-                      onRemoveReaction?.(m.id, emoji)
-                    }
-                    onReply={() => {
-                      setReplyToMessage({
-                        id: m.id,
-                        text: m.text,
-                        author: title || 'User',
-                      });
-                    }}
-                    onReport={() => {
-                      console.log('Report message:', m.id);
-                    }}
-                    onEdit={() => {
-                      onEditMessage?.(m.id, m.text);
-                    }}
-                    onDelete={() => {
-                      onDeleteMessage?.(m.id);
-                    }}
-                  >
-                    {m.text}
-                  </MsgOut>
-                ) : (
-                  <MsgIn
-                    key={m.id}
-                    message={m}
-                    time={fmtTime(m.at)}
-                    block={m.block}
-                    onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
-                    onRemoveReaction={(emoji) =>
-                      onRemoveReaction?.(m.id, emoji)
-                    }
-                    onReply={() => {
-                      setReplyToMessage({
-                        id: m.id,
-                        text: m.text,
-                        author: title || 'User',
-                      });
-                    }}
-                    onReport={() => {
-                      console.log('Report message:', m.id);
-                      // TODO: Open report modal
-                    }}
-                  >
-                    {m.text}
-                  </MsgIn>
-                )
-              )}
-
-            {/* Typing indicator */}
-            {typingUserNames && typingUserNames.length > 0 && (
-              <TypingIndicator names={typingUserNames} />
+            {/* Virtuoso List */}
+            {messages.length > 0 && (
+              <Virtuoso
+                ref={virtuosoRef}
+                data={messages}
+                initialTopMostItemIndex={messages.length - 1}
+                followOutput="auto"
+                atBottomStateChange={setIsAtBottom}
+                startReached={() => {
+                  if (onLoadMore && !loading && !isLoadingMore) {
+                    console.log('[Virtuoso] Reached top, loading more...');
+                    setIsLoadingMore(true);
+                    onLoadMore();
+                    // Reset flag after a delay to prevent rapid calls
+                    setTimeout(() => setIsLoadingMore(false), 1000);
+                  }
+                }}
+                style={{ height: '100%', overflowX: 'hidden' }}
+                className="px-4 md:px-5"
+                itemContent={(index, m) =>
+                  m.side === 'right' ? (
+                    <MsgOut
+                      key={m.id}
+                      message={m}
+                      time={fmtTime(m.at)}
+                      isLast={index === messages.length - 1}
+                      onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
+                      onRemoveReaction={(emoji) =>
+                        onRemoveReaction?.(m.id, emoji)
+                      }
+                      onReply={() => {
+                        setReplyToMessage({
+                          id: m.id,
+                          text: m.text,
+                          author: title || 'User',
+                        });
+                      }}
+                      onReport={() => {
+                        console.log('Report message:', m.id);
+                      }}
+                      onEdit={() => {
+                        onEditMessage?.(m.id, m.text);
+                      }}
+                      onDelete={() => {
+                        onDeleteMessage?.(m.id);
+                      }}
+                    >
+                      {m.text}
+                    </MsgOut>
+                  ) : (
+                    <MsgIn
+                      key={m.id}
+                      message={m}
+                      time={fmtTime(m.at)}
+                      block={m.block}
+                      onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
+                      onRemoveReaction={(emoji) =>
+                        onRemoveReaction?.(m.id, emoji)
+                      }
+                      onReply={() => {
+                        setReplyToMessage({
+                          id: m.id,
+                          text: m.text,
+                          author: title || 'User',
+                        });
+                      }}
+                      onReport={() => {
+                        console.log('Report message:', m.id);
+                        // TODO: Open report modal
+                      }}
+                    >
+                      {m.text}
+                    </MsgIn>
+                  )
+                }
+                components={{
+                  Footer: () =>
+                    typingUserNames && typingUserNames.length > 0 ? (
+                      <div className="px-4 md:px-5">
+                        <TypingIndicator names={typingUserNames} />
+                      </div>
+                    ) : null,
+                  Header: () =>
+                    loading ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                      </div>
+                    ) : null,
+                }}
+              />
             )}
 
             {/* Scroll to bottom button */}
-            {showScrollButton && (
+            {!isAtBottom && (
               <div className="absolute bottom-20 right-6 z-10">
                 <button
                   onClick={scrollToBottom}
@@ -1944,17 +1920,6 @@ function formatRelativeTime(isoString: string): string {
   if (diffHours < 24) return `${diffHours}h`;
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d`;
-}
-
-function UnreadSeparator() {
-  return (
-    <div className="relative my-4 flex items-center justify-center">
-      <div className="absolute inset-x-0 h-px bg-zinc-200 dark:bg-zinc-800" />
-      <span className="relative z-10 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-600 ring-1 ring-black/5 dark:bg-zinc-900 dark:text-zinc-300">
-        <Check className="w-3 h-3" /> Unread
-      </span>
-    </div>
-  );
 }
 
 function Bubble({

@@ -6,6 +6,8 @@ import {
   useQuery,
   useQueryClient,
   type UseQueryOptions,
+  useInfiniteQuery,
+  type UseInfiniteQueryOptions,
 } from '@tanstack/react-query';
 import {
   CreateOrGetDmThreadDocument,
@@ -117,7 +119,7 @@ export function useGetDmThread(
 }
 
 /**
- * Get messages in a thread
+ * Get messages in a thread (legacy - for backward compatibility)
  */
 export function useGetDmMessages(
   variables: GetDmMessagesQueryVariables,
@@ -128,9 +130,9 @@ export function useGetDmMessages(
 ) {
   return useQuery<GetDmMessagesQuery, Error>({
     queryKey: dmKeys.messages(variables.threadId, {
-      limit: variables.limit,
-      offset: variables.offset,
-      beforeMessageId: variables.beforeMessageId,
+      first: variables.first,
+      before: variables.before,
+      after: variables.after,
     }),
     queryFn: async () => {
       const res = await gqlClient.request<GetDmMessagesQuery>(
@@ -140,6 +142,43 @@ export function useGetDmMessages(
       return res;
     },
     enabled: !!variables.threadId,
+    ...options,
+  });
+}
+
+/**
+ * Get messages with infinite scroll (cursor-based, reverse)
+ * Loads newest messages first, then older messages with `before` cursor
+ */
+export function useGetDmMessagesInfinite(
+  threadId: string,
+  options?: Omit<
+    UseInfiniteQueryOptions<GetDmMessagesQuery, Error>,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+) {
+  return useInfiniteQuery<GetDmMessagesQuery, Error>({
+    queryKey: dmKeys.messages(threadId, { infinite: true }),
+    queryFn: async ({ pageParam }) => {
+      const res = await gqlClient.request<GetDmMessagesQuery>(
+        GetDmMessagesDocument,
+        {
+          threadId,
+          first: 20,
+          before: pageParam as string | undefined,
+        }
+      );
+      return res;
+    },
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => {
+      // For reverse scroll: "next" page is actually older messages (before cursor)
+      if (lastPage.dmMessages.pageInfo.hasPreviousPage) {
+        return lastPage.dmMessages.pageInfo.startCursor;
+      }
+      return undefined;
+    },
+    enabled: !!threadId,
     ...options,
   });
 }

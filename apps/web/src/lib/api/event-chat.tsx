@@ -56,31 +56,39 @@ export const eventChatKeys = {
 /**
  * Get messages for an intent (infinite scroll with cursor pagination)
  */
+/**
+ * Get messages with infinite scroll (cursor-based, reverse)
+ * Loads newest messages first, then older messages with `before` cursor
+ */
 export function useGetIntentMessages(
-  variables: GetIntentMessagesQueryVariables,
+  intentId: string,
   options?: Omit<
     UseInfiniteQueryOptions<GetIntentMessagesQuery, Error>,
-    'queryKey' | 'queryFn' | 'getNextPageParam'
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
   >
 ) {
   return useInfiniteQuery<GetIntentMessagesQuery, Error>({
-    queryKey: eventChatKeys.messages(variables.intentId),
+    queryKey: eventChatKeys.messages(intentId),
     queryFn: async ({ pageParam }) => {
       const res = await gqlClient.request<GetIntentMessagesQuery>(
         GetIntentMessagesDocument,
         {
-          ...variables,
-          after: pageParam as string | undefined,
+          intentId,
+          first: 20,
+          before: pageParam as string | undefined,
         }
       );
       return res;
     },
+    initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
-      const hasMore = lastPage.intentMessages.hasMore;
-      const endCursor = lastPage.intentMessages.pageInfo.endCursor;
-      return hasMore && endCursor ? endCursor : undefined;
+      // For reverse scroll: "next" page is actually older messages (before cursor)
+      if (lastPage.intentMessages.pageInfo.hasPreviousPage) {
+        return lastPage.intentMessages.pageInfo.startCursor;
+      }
+      return undefined;
     },
-    enabled: !!variables.intentId,
+    enabled: !!intentId,
     ...options,
   });
 }

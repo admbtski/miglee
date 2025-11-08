@@ -181,13 +181,35 @@ export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
 );
 
 /**
- * Query: Get messages in a thread
+ * Encode cursor for pagination
+ */
+function encodeCursor(createdAt: Date, id: string): string {
+  return Buffer.from(`${createdAt.getTime()}:${id}`).toString('base64');
+}
+
+/**
+ * Decode cursor for pagination
+ */
+function decodeCursor(cursor: string): { createdAt: Date; id: string } | null {
+  try {
+    const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
+    const [timestamp, id] = decoded.split(':');
+    return { createdAt: new Date(parseInt(timestamp, 10)), id };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Query: Get messages in a thread (cursor-based, reverse infinite scroll)
+ * Default: returns newest 20 messages in ASC order (oldest to newest)
+ * For loading older: use `before` cursor
  */
 export const dmMessagesQuery: QueryResolvers['dmMessages'] =
   resolverWithMetrics(
     'Query',
     'dmMessages',
-    async (_p, { threadId, limit, offset, beforeMessageId }, { user }) => {
+    async (_p, { threadId, first = 20, before, after }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -212,33 +234,52 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
         });
       }
 
-      const take = Math.max(1, Math.min(limit ?? 50, 200));
-      const skip = Math.max(0, offset ?? 0);
+      const take = Math.max(1, Math.min(first, 100));
 
       const where: Prisma.DmMessageWhereInput = {
         threadId,
-        // Don't filter deletedAt - we want to show deleted messages with "Usunięta wiadomość"
       };
 
-      // Pagination before a specific message (for infinite scroll)
-      if (beforeMessageId) {
-        const beforeMessage = await prisma.dmMessage.findUnique({
-          where: { id: beforeMessageId },
-          select: { createdAt: true },
-        });
-
-        if (beforeMessage) {
-          where.createdAt = { lt: beforeMessage.createdAt };
+      // Cursor-based pagination
+      if (before) {
+        const decoded = decodeCursor(before);
+        if (decoded) {
+          where.OR = [
+            { createdAt: { lt: decoded.createdAt } },
+            {
+              createdAt: decoded.createdAt,
+              id: { lt: decoded.id },
+            },
+          ];
         }
       }
 
+      if (after) {
+        const decoded = decodeCursor(after);
+        if (decoded) {
+          where.OR = [
+            { createdAt: { gt: decoded.createdAt } },
+            {
+              createdAt: decoded.createdAt,
+              id: { gt: decoded.id },
+            },
+          ];
+        }
+      }
+
+      // Fetch one extra to determine hasNextPage/hasPreviousPage
       const messages = await prisma.dmMessage.findMany({
         where,
-        take,
-        skip,
-        orderBy: { createdAt: 'asc' }, // Oldest first for chat display
+        take: take + 1,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], // Newest first for cursor logic
         include: DM_MESSAGE_INCLUDE,
       });
+
+      const hasMore = messages.length > take;
+      const items = hasMore ? messages.slice(0, take) : messages;
+
+      // Reverse to get oldest-to-newest for display
+      items.reverse();
 
       // Get the other user's lastReadAt to determine if messages are read
       const otherUserId =
@@ -254,9 +295,8 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
         select: { lastReadAt: true },
       });
 
-      // Map messages with readAt based on other user's lastReadAt
-      return messages.map((msg) => {
-        // Only show readAt for messages sent by current user
+      // Build edges
+      const edges = items.map((msg) => {
         const readAt =
           msg.senderId === user.id &&
           otherUserRead?.lastReadAt &&
@@ -265,9 +305,51 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
             : null;
 
         return {
-          ...mapDmMessage(msg),
-          readAt,
+          node: {
+            ...mapDmMessage(msg),
+            readAt,
+          },
+          cursor: encodeCursor(msg.createdAt, msg.id),
         };
       });
+
+      // Determine pageInfo
+      const startCursor = edges.length > 0 ? edges[0]!.cursor : null;
+      const endCursor =
+        edges.length > 0 ? edges[edges.length - 1]!.cursor : null;
+
+      // Check if there are older messages (hasPreviousPage)
+      let hasPreviousPage = false;
+      if (edges.length > 0 && !after) {
+        const oldestMessage = items[0];
+        if (oldestMessage) {
+          const olderCount = await prisma.dmMessage.count({
+            where: {
+              threadId,
+              OR: [
+                { createdAt: { lt: oldestMessage.createdAt } },
+                {
+                  createdAt: oldestMessage.createdAt,
+                  id: { lt: oldestMessage.id },
+                },
+              ],
+            },
+          });
+          hasPreviousPage = olderCount > 0;
+        }
+      }
+
+      // hasNextPage is true if we fetched more than requested
+      const hasNextPage = before ? hasMore : false;
+
+      return {
+        edges,
+        pageInfo: {
+          hasNextPage,
+          hasPreviousPage,
+          startCursor,
+          endCursor,
+        },
+      };
     }
   );

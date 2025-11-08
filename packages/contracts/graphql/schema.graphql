@@ -38,6 +38,8 @@ type PageInfo {
 
 type CursorPageInfo {
   hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
   endCursor: String
 }
 
@@ -508,6 +510,17 @@ type DmThreadsResult {
   pageInfo: PageInfo!
 }
 
+"Cursor-based DM messages connection"
+type DmMessagesConnection {
+  edges: [DmMessageEdge!]!
+  pageInfo: CursorPageInfo!
+}
+
+type DmMessageEdge {
+  node: DmMessage!
+  cursor: String!
+}
+
 # ------------------------------------------------------------------------------
 # Comments
 # ------------------------------------------------------------------------------
@@ -647,6 +660,17 @@ type IntentChatMessagesResult {
   items: [IntentChatMessage!]!
   pageInfo: CursorPageInfo!
   hasMore: Boolean!
+}
+
+"Cursor-based Intent messages connection"
+type IntentMessagesConnection {
+  edges: [IntentMessageEdge!]!
+  pageInfo: CursorPageInfo!
+}
+
+type IntentMessageEdge {
+  node: IntentChatMessage!
+  cursor: String!
 }
 
 # ------------------------------------------------------------------------------
@@ -998,10 +1022,10 @@ type Query {
 
   dmMessages(
     threadId: ID!
-    limit: Int = 50
-    offset: Int = 0
-    beforeMessageId: ID
-  ): [DmMessage!]!
+    first: Int = 20
+    before: String
+    after: String
+  ): DmMessagesConnection!
 
   # Comment Queries
   comments(
@@ -1041,9 +1065,10 @@ type Query {
   # Event Chat Queries
   intentMessages(
     intentId: ID!
+    first: Int = 20
+    before: String
     after: String
-    limit: Int = 50
-  ): IntentChatMessagesResult!
+  ): IntentMessagesConnection!
 
   intentUnreadCount(intentId: ID!): Int!
 

@@ -137,31 +137,55 @@ export function parseCursor(cursor: string): CursorData | null {
 }
 
 /**
- * Build Prisma where clause for cursor-based pagination (DESC order)
- * Messages are sorted by createdAt DESC, id DESC
+ * Build Prisma where clause for cursor-based pagination
+ * @param before - cursor for fetching older messages (before this cursor)
+ * @param after - cursor for fetching newer messages (after this cursor)
  */
-export function buildCursorWhere(cursor: string | null | undefined): any {
-  if (!cursor) {
-    return {};
+export function buildCursorWhere(
+  before?: string | null,
+  after?: string | null
+): any {
+  if (before) {
+    const parsed = parseCursor(before);
+    if (!parsed) {
+      throw new GraphQLError('Invalid before cursor format.', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'before' },
+      });
+    }
+
+    // For fetching older messages: (createdAt, id) < cursor
+    return {
+      OR: [
+        { createdAt: { lt: parsed.createdAt } },
+        {
+          createdAt: parsed.createdAt,
+          id: { lt: parsed.id },
+        },
+      ],
+    };
   }
 
-  const parsed = parseCursor(cursor);
-  if (!parsed) {
-    throw new GraphQLError('Invalid cursor format.', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'after' },
-    });
+  if (after) {
+    const parsed = parseCursor(after);
+    if (!parsed) {
+      throw new GraphQLError('Invalid after cursor format.', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'after' },
+      });
+    }
+
+    // For fetching newer messages: (createdAt, id) > cursor
+    return {
+      OR: [
+        { createdAt: { gt: parsed.createdAt } },
+        {
+          createdAt: parsed.createdAt,
+          id: { gt: parsed.id },
+        },
+      ],
+    };
   }
 
-  // For DESC pagination: fetch records where (createdAt, id) < cursor
-  return {
-    OR: [
-      { createdAt: { lt: parsed.createdAt } },
-      {
-        createdAt: parsed.createdAt,
-        id: { lt: parsed.id },
-      },
-    ],
-  };
+  return {};
 }
 
 // =============================================================================

@@ -2,10 +2,31 @@
 # Event Chat Operations
 # =============================================================================
 
-# Queries
-query GetIntentMessages($intentId: ID!, $after: String, $limit: Int = 50) {
-  intentMessages(intentId: $intentId, after: $after, limit: $limit) {
-    ...IntentChatMessagesResultCore
+# Queries (cursor-based)
+query GetIntentMessages(
+  $intentId: ID!
+  $first: Int = 20
+  $before: String
+  $after: String
+) {
+  intentMessages(
+    intentId: $intentId
+    first: $first
+    before: $before
+    after: $after
+  ) {
+    edges {
+      node {
+        ...IntentChatMessageWithReply
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
   }
 }
 

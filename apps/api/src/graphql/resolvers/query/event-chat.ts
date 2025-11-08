@@ -23,13 +23,15 @@ const MESSAGE_INCLUDE = {
 } satisfies Prisma.IntentChatMessageInclude;
 
 /**
- * Query: Get messages for an intent (cursor-based pagination, DESC)
+ * Query: Get messages for an intent (cursor-based, reverse infinite scroll)
+ * Default: returns newest 20 messages in ASC order (oldest to newest)
+ * For loading older: use `before` cursor
  */
 export const intentMessagesQuery: QueryResolvers['intentMessages'] =
   resolverWithMetrics(
     'Query',
     'intentMessages',
-    async (_p, { intentId, after, limit = 50 }, { user }) => {
+    async (_p, { intentId, first = 20, before, after }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -39,38 +41,71 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
       // Guard: user must be JOINED
       await requireJoinedMember(user.id, intentId);
 
-      // Build where clause for cursor pagination
-      const cursorWhere = buildCursorWhere(after);
+      const take = Math.max(1, Math.min(first, 100));
 
-      // Fetch messages (ASC order - oldest first for chat display)
+      // Build where clause for cursor pagination
+      const cursorWhere = buildCursorWhere(before, after);
+
+      // Fetch messages (DESC order to get newest first, then reverse)
       const messages = await prisma.intentChatMessage.findMany({
         where: {
           intentId,
           ...cursorWhere,
         },
         include: MESSAGE_INCLUDE,
-        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-        take: limit + 1, // Fetch one extra to check hasMore
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: take + 1, // Fetch one extra to check hasMore
       });
 
-      const hasMore = messages.length > limit;
-      const items = hasMore ? messages.slice(0, limit) : messages;
+      const hasMore = messages.length > take;
+      const items = hasMore ? messages.slice(0, take) : messages;
 
-      const mappedItems = items.map((m) => mapIntentChatMessage(m));
+      // Reverse to get oldest-to-newest for display
+      items.reverse();
 
-      // Build cursor for last item
-      const lastItem = items[items.length - 1];
-      const endCursor = lastItem
-        ? buildCursor({ createdAt: lastItem.createdAt, id: lastItem.id })
-        : null;
+      // Build edges
+      const edges = items.map((msg) => ({
+        node: mapIntentChatMessage(msg),
+        cursor: buildCursor({ createdAt: msg.createdAt, id: msg.id }),
+      }));
+
+      // Determine pageInfo
+      const startCursor = edges.length > 0 ? edges[0]!.cursor : null;
+      const endCursor =
+        edges.length > 0 ? edges[edges.length - 1]!.cursor : null;
+
+      // Check if there are older messages (hasPreviousPage)
+      let hasPreviousPage = false;
+      if (edges.length > 0 && !after) {
+        const oldestMessage = items[0];
+        if (oldestMessage) {
+          const olderCount = await prisma.intentChatMessage.count({
+            where: {
+              intentId,
+              OR: [
+                { createdAt: { lt: oldestMessage.createdAt } },
+                {
+                  createdAt: oldestMessage.createdAt,
+                  id: { lt: oldestMessage.id },
+                },
+              ],
+            },
+          });
+          hasPreviousPage = olderCount > 0;
+        }
+      }
+
+      // hasNextPage is true if we fetched more than requested (when using before)
+      const hasNextPage = before ? hasMore : false;
 
       return {
-        items: mappedItems,
+        edges,
         pageInfo: {
-          hasNextPage: hasMore,
+          hasNextPage,
+          hasPreviousPage,
+          startCursor,
           endCursor,
         },
-        hasMore,
       };
     }
   );

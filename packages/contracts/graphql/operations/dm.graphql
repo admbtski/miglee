@@ -20,20 +20,31 @@ query GetDmThread($id: ID, $otherUserId: ID) {
   }
 }
 
-# Get messages in a thread
+# Get messages in a thread (cursor-based)
 query GetDmMessages(
   $threadId: ID!
-  $limit: Int = 50
-  $offset: Int = 0
-  $beforeMessageId: ID
+  $first: Int = 20
+  $before: String
+  $after: String
 ) {
   dmMessages(
     threadId: $threadId
-    limit: $limit
-    offset: $offset
-    beforeMessageId: $beforeMessageId
+    first: $first
+    before: $before
+    after: $after
   ) {
-    ...DmMessageCore
+    edges {
+      node {
+        ...DmMessageCore
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
   }
 }
 
