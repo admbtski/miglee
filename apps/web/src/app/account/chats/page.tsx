@@ -68,6 +68,7 @@ import { ReactionsBar } from '@/components/chat/ReactionsBar';
 import { MessageMenuPopover } from '@/components/chat/MessageMenuPopover';
 import { EditMessageModal } from '@/components/chat/EditMessageModal';
 import { DeleteConfirmModal } from '@/components/chat/DeleteConfirmModal';
+import { UserPicker, type PickedUser } from '@/components/chat/UserPicker';
 import {
   useUpdateDmMessage,
   useDeleteDmMessage,
@@ -138,6 +139,16 @@ export default function ChatsPageIntegrated() {
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
     null
   );
+
+  // User picker state (for "Start a conversation")
+  const [showUserPicker, setShowUserPicker] = useState(false);
+
+  // Draft conversation state (before first message is sent)
+  const [draftConversation, setDraftConversation] = useState<{
+    userId: string;
+    userName: string;
+    userAvatar?: string | null;
+  } | null>(null);
 
   // Fetch DM threads
   const { data: dmThreadsData, isLoading: dmThreadsLoading } = useGetDmThreads(
@@ -429,12 +440,17 @@ export default function ChatsPageIntegrated() {
     [conversations, activeId]
   );
 
-  // Set first conversation as active on load
+  // Set first conversation as active on load (but not if we have a draft)
   useEffect(() => {
-    if (tab === 'dm' && !activeDmId && dmConversations.length > 0) {
+    if (
+      tab === 'dm' &&
+      !activeDmId &&
+      !draftConversation &&
+      dmConversations.length > 0
+    ) {
       setActiveDmId(dmConversations[0]?.id);
     }
-  }, [tab, activeDmId, dmConversations]);
+  }, [tab, activeDmId, draftConversation, dmConversations]);
 
   useEffect(() => {
     if (tab === 'channel' && !activeChId && channelConversations.length > 0) {
@@ -443,11 +459,93 @@ export default function ChatsPageIntegrated() {
   }, [tab, activeChId, channelConversations]);
 
   function handlePick(id: string) {
-    if (tab === 'dm') setActiveDmId(id);
-    else setActiveChId(id);
+    if (tab === 'dm') {
+      setActiveDmId(id);
+      setDraftConversation(null); // Clear draft when picking existing thread
+    } else {
+      setActiveChId(id);
+    }
   }
 
+  // Handle user selection from UserPicker
+  const handleSelectUser = async (user: PickedUser) => {
+    if (!currentUserId) return;
+
+    console.log('[UserPicker] Selected user:', user);
+
+    // Check if thread already exists with this user
+    const existingThread = dmThreadsData?.dmThreads?.items?.find(
+      (t) =>
+        (t.aUserId === currentUserId && t.bUserId === user.id) ||
+        (t.bUserId === currentUserId && t.aUserId === user.id)
+    );
+
+    if (existingThread) {
+      // Thread exists - open it directly
+      console.log('[UserPicker] Found existing thread:', existingThread.id);
+      setActiveDmId(existingThread.id);
+      setDraftConversation(null);
+    } else {
+      // No thread exists - create draft conversation
+      console.log('[UserPicker] Creating draft conversation with:', user.name);
+      setDraftConversation({
+        userId: user.id,
+        userName: user.name,
+        userAvatar: user.imageUrl,
+      });
+      setActiveDmId(undefined); // Clear active thread
+    }
+
+    // Close the user picker modal
+    setShowUserPicker(false);
+  };
+
+  // Handle "Start a conversation" button click
+  const handleStartConversation = () => {
+    setShowUserPicker(true);
+  };
+
   function handleSend(text: string) {
+    // Handle draft conversation (first message creates thread)
+    if (draftConversation && !activeDmId && currentUserId) {
+      console.log(
+        '[Draft] Sending first message to:',
+        draftConversation.userName
+      );
+
+      sendDmMessage.mutate(
+        {
+          input: {
+            recipientId: draftConversation.userId,
+            content: text,
+          },
+        },
+        {
+          onSuccess: (data) => {
+            console.log('[Draft] First message sent, thread created:', data);
+
+            // Clear draft
+            setDraftConversation(null);
+
+            // Set the new thread as active
+            const newThreadId = data.sendDmMessage?.threadId;
+            if (newThreadId) {
+              setActiveDmId(newThreadId);
+            }
+
+            // Refresh threads list
+            queryClient.invalidateQueries({
+              queryKey: dmKeys.threads(),
+            });
+          },
+          onError: (error) => {
+            console.error('[Draft] Error sending first message:', error);
+          },
+        }
+      );
+      return;
+    }
+
     if (!active || !currentUserId) return;
 
     if (active.kind === 'dm') {
@@ -685,6 +783,26 @@ export default function ChatsPageIntegrated() {
     currentUserId,
   ]);
 
+  const activeThreadData = useMemo(() => {
+    if (tab === 'dm' && activeDmId && !active) {
+      const thread = dmThreadsData?.dmThreads?.items?.find(
+        (t) => t.id === activeDmId
+      );
+      if (thread && currentUserId) {
+        const otherUser =
+          thread.aUserId === currentUserId ? thread.bUser : thread.aUser;
+        return {
+          kind: 'dm' as const,
+          title: otherUser.name || 'Unknown',
+          members: 2,
+          avatar: otherUser.imageUrl || undefined,
+          lastReadAt: undefined,
+        };
+      }
+    }
+    return null;
+  }, [tab, activeDmId, active, dmThreadsData, currentUserId]);
+
   if (!currentUserId) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -692,6 +810,12 @@ export default function ChatsPageIntegrated() {
       </div>
     );
   }
+
+  // Determine what to show in thread pane
+  const showDraftConversation =
+    draftConversation && !activeDmId && tab === 'dm';
+  const showActiveThread =
+    (active || activeDmId || activeChId) && !showDraftConversation;
 
   return (
     <>
@@ -708,32 +832,54 @@ export default function ChatsPageIntegrated() {
               items={conversations}
               activeId={activeId}
               onPick={(id) => handlePick(id)}
+              onStartConversation={
+                tab === 'dm' ? handleStartConversation : undefined
+              }
+              showStartButton={tab === 'dm' && conversations.length === 0}
             />
           )}
         </ChatShell.ListPane>
 
         <ChatShell.ThreadPane>
-          {active ? (
+          {showDraftConversation ? (
             <ChatThread
-              kind={active.kind}
-              title={active.title}
-              members={active.membersCount}
-              avatar={active.avatar}
-              lastReadAt={active.lastReadAt}
+              kind="dm"
+              title={draftConversation.userName}
+              members={2}
+              avatar={draftConversation.userAvatar || undefined}
+              messages={[]}
+              loading={false}
+              typingUserNames={null}
+              onBackMobile={() => setDraftConversation(null)}
+              onSend={handleSend}
+              onAddReaction={() => {}}
+              onRemoveReaction={() => {}}
+              onTyping={() => {
+                // Draft doesn't have threadId yet, so no typing indicator
+              }}
+              isDraft={true}
+            />
+          ) : showActiveThread ? (
+            <ChatThread
+              kind={(active || activeThreadData)?.kind || 'dm'}
+              title={(active || activeThreadData)?.title || 'Chat'}
+              members={active?.membersCount || activeThreadData?.members || 2}
+              avatar={(active || activeThreadData)?.avatar}
+              lastReadAt={active?.lastReadAt || activeThreadData?.lastReadAt}
               messages={messages}
               loading={tab === 'dm' ? dmMessagesLoading : intentMessagesLoading}
               typingUserNames={typingUserNames}
               onBackMobile={() => {}}
               onSend={handleSend}
               onAddReaction={(messageId, emoji) => {
-                if (active?.kind === 'dm') {
+                if ((active || activeThreadData)?.kind === 'dm') {
                   addDmReaction.mutate({ messageId, emoji });
                 } else {
                   addIntentReaction.mutate({ messageId, emoji });
                 }
               }}
               onRemoveReaction={(messageId, emoji) => {
-                if (active?.kind === 'dm') {
+                if ((active || activeThreadData)?.kind === 'dm') {
                   removeDmReaction.mutate({ messageId, emoji });
                 } else {
                   removeIntentReaction.mutate({ messageId, emoji });
@@ -745,9 +891,12 @@ export default function ChatsPageIntegrated() {
                   : undefined
               }
               onTyping={(isTyping) => {
-                if (active.kind === 'dm' && activeDmId) {
+                if ((active || activeThreadData)?.kind === 'dm' && activeDmId) {
                   publishDmTyping.mutate({ threadId: activeDmId, isTyping });
-                } else if (active.kind === 'channel' && activeChId) {
+                } else if (
+                  (active || activeThreadData)?.kind === 'channel' &&
+                  activeChId
+                ) {
                   publishIntentTyping.mutate({
                     intentId: activeChId,
                     isTyping,
@@ -755,9 +904,12 @@ export default function ChatsPageIntegrated() {
                 }
               }}
               onEditMessage={(messageId, content) => {
-                if (active.kind === 'dm' && activeDmId) {
+                if ((active || activeThreadData)?.kind === 'dm' && activeDmId) {
                   handleEditMessage(messageId, content, activeDmId, undefined);
-                } else if (active.kind === 'channel' && activeChId) {
+                } else if (
+                  (active || activeThreadData)?.kind === 'channel' &&
+                  activeChId
+                ) {
                   handleEditMessage(messageId, content, undefined, activeChId);
                 }
               }}
@@ -784,6 +936,13 @@ export default function ChatsPageIntegrated() {
         onClose={() => setDeletingMessageId(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteDmMessage.isPending || deleteIntentMessage.isPending}
+      />
+
+      {/* User Picker Modal */}
+      <UserPicker
+        isOpen={showUserPicker}
+        onClose={() => setShowUserPicker(false)}
+        onSelectUser={handleSelectUser}
       />
     </>
   );
@@ -900,10 +1059,14 @@ export function ChatList({
   items,
   activeId,
   onPick,
+  onStartConversation,
+  showStartButton,
 }: {
   items: Conversation[];
   activeId?: string;
   onPick: (id: string) => void;
+  onStartConversation?: () => void;
+  showStartButton?: boolean;
 }) {
   return (
     <div className="grid h-[calc(100%-2.5rem)] grid-rows-[auto_1fr_auto] gap-3">
@@ -916,6 +1079,39 @@ export function ChatList({
       </div>
 
       <div className="min-h-0 space-y-2 overflow-auto">
+        {/* Show "Start a conversation" button when no DMs */}
+        {showStartButton && onStartConversation && (
+          <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+            <div className="p-4 rounded-full bg-zinc-100 dark:bg-zinc-800">
+              <User2 className="w-8 h-8 text-zinc-400" />
+            </div>
+            <div>
+              <h3 className="mb-1 text-sm font-semibold">No messages yet</h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Start a conversation with someone
+              </p>
+            </div>
+            <button
+              onClick={onStartConversation}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-indigo-600 rounded-xl hover:bg-indigo-500"
+            >
+              <User2 className="w-4 h-4" />
+              Start a conversation
+            </button>
+          </div>
+        )}
+
+        {/* Show smaller "Start" button when DMs exist */}
+        {!showStartButton && onStartConversation && items.length > 0 && (
+          <button
+            onClick={onStartConversation}
+            className="flex items-center justify-center w-full gap-2 px-3 py-2 text-sm font-medium transition-colors border rounded-xl border-zinc-200 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            <User2 className="w-4 h-4" />
+            New conversation
+          </button>
+        )}
+
         {items.map((c) => {
           const active = c.id === activeId;
           return (
@@ -1003,6 +1199,7 @@ export function ChatThread({
   onRemoveReaction = () => {},
   onEditMessage,
   onDeleteMessage,
+  isDraft = false,
 }: {
   kind: ChatKind;
   title: string;
@@ -1025,6 +1222,7 @@ export function ChatThread({
     intentId?: string
   ) => void;
   onDeleteMessage?: (messageId: string) => void;
+  isDraft?: boolean;
 }) {
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -1192,6 +1390,23 @@ export function ChatThread({
             className="min-h-0 p-4 overflow-auto md:p-5"
             aria-live="polite"
           >
+            {/* Draft conversation hint */}
+            {isDraft && messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                <div className="p-4 rounded-full bg-indigo-100 dark:bg-indigo-900/30">
+                  <User2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="mb-1 text-sm font-semibold">
+                    Start your conversation with {title}
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Send your first message to begin chatting
+                  </p>
+                </div>
+              </div>
+            )}
+
             {loading && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
@@ -1517,6 +1732,7 @@ const MsgIn = ({
   const [showReactionsBar, setShowReactionsBar] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const reactionsButtonRef = useRef<HTMLButtonElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const hasReactions = message.reactions && message.reactions.length > 0;
 
   return (
@@ -1543,18 +1759,15 @@ const MsgIn = ({
       />
 
       {/* Message Menu Popover */}
-      {showMenu && (
-        <div className="absolute top-0 left-12 z-50 mt-2">
-          <MessageMenuPopover
-            isOpen={showMenu}
-            onClose={() => setShowMenu(false)}
-            onReport={onReport}
-            canEdit={false}
-            canDelete={false}
-            align="left"
-          />
-        </div>
-      )}
+      <MessageMenuPopover
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        onReport={onReport}
+        canEdit={false}
+        canDelete={false}
+        align="left"
+        referenceElement={menuButtonRef.current}
+      />
 
       {/* Message Bubble */}
       <div className="relative max-w-[75%]">
@@ -1595,6 +1808,7 @@ const MsgIn = ({
           onOpenReactions={() => setShowReactionsBar(true)}
           onOpenMenu={() => setShowMenu(true)}
           reactionsButtonRef={reactionsButtonRef}
+          menuButtonRef={menuButtonRef}
         />
       </div>
     </div>
@@ -1628,6 +1842,7 @@ const MsgOut = ({
   const [showReactionsBar, setShowReactionsBar] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const reactionsButtonRef = useRef<HTMLButtonElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const hasReactions = message.reactions && message.reactions.length > 0;
 
   return (
@@ -1654,20 +1869,17 @@ const MsgOut = ({
       />
 
       {/* Message Menu Popover */}
-      {showMenu && (
-        <div className="absolute top-0 right-12 z-50 mt-2">
-          <MessageMenuPopover
-            isOpen={showMenu}
-            onClose={() => setShowMenu(false)}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onReport={onReport}
-            canEdit={!message.deletedAt}
-            canDelete={!message.deletedAt}
-            align="right"
-          />
-        </div>
-      )}
+      <MessageMenuPopover
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onReport={onReport}
+        canEdit={!message.deletedAt}
+        canDelete={!message.deletedAt}
+        align="right"
+        referenceElement={menuButtonRef.current}
+      />
 
       {/* Mini Action Row - in same row, always reserve space, LEFT of message */}
       <div className="flex-shrink-0 flex flex-col items-end gap-1">
@@ -1678,6 +1890,7 @@ const MsgOut = ({
           onOpenReactions={() => setShowReactionsBar(true)}
           onOpenMenu={() => setShowMenu(true)}
           reactionsButtonRef={reactionsButtonRef}
+          menuButtonRef={menuButtonRef}
         />
         {isLast && message.side === 'right' && (
           <ReadReceipt readAt={message.readAt} isLastMessage={true} />

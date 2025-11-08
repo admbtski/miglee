@@ -40,6 +40,7 @@ export function ReactionsBar({
     whileElementsMounted: autoUpdate,
     placement: 'top',
     strategy: 'absolute',
+    transform: true,
   });
 
   const dismiss = useDismiss(context);

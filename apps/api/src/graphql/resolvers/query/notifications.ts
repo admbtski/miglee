@@ -35,6 +35,13 @@ export const notificationsQuery: QueryResolvers['notifications'] =
       });
     }
 
+    if (args.recipientId !== user.id) {
+      // (opcjonalnie: dopuść ADMIN)
+      throw new GraphQLError('Access denied for requested recipient.', {
+        extensions: { code: 'FORBIDDEN' },
+      });
+    }
+
     // --- pagination ---
     const take = Math.max(1, Math.min(args.limit ?? 50, 200));
     const skip = Math.max(0, args.offset ?? 0);

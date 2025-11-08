@@ -104,7 +104,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
 
             {isAuthed ? (
               <NotificationBell
-                recipientId={'u_admin_00000000000000000001'}
+                recipientId={data.me?.id!}
                 limit={10}
                 className=""
               />
@@ -144,10 +144,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
               </button>
             ) : (
               <>
-                <NotificationBell
-                  recipientId={'u_admin_00000000000000000001'}
-                  limit={8}
-                />
+                <NotificationBell recipientId={data.me?.id!} limit={8} />
                 <UserMenuControlled
                   onNavigate={(key) => console.log('navigate:', key)}
                 />

@@ -2,7 +2,17 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flag, Pencil, Trash2 } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  useDismiss,
+  useRole,
+  useInteractions,
+} from '@floating-ui/react';
 
 interface MessageMenuPopoverProps {
   isOpen: boolean;
@@ -10,10 +20,10 @@ interface MessageMenuPopoverProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onReport: () => void;
-  position?: { top: number; left: number };
   align?: 'left' | 'right';
   canEdit?: boolean;
   canDelete?: boolean;
+  referenceElement: HTMLElement | null;
 }
 
 export function MessageMenuPopover({
@@ -22,21 +32,36 @@ export function MessageMenuPopover({
   onEdit,
   onDelete,
   onReport,
-  position,
   align = 'left',
   canEdit = false,
   canDelete = false,
+  referenceElement,
 }: MessageMenuPopoverProps) {
-  const menuRef = useRef<HTMLDivElement>(null);
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: (open) => {
+      if (!open) onClose();
+    },
+    middleware: [offset(8), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+    placement: align === 'right' ? 'bottom-end' : 'bottom-start',
+    strategy: 'absolute',
+    transform: true,
+  });
+
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: 'menu' });
+
+  const { getFloatingProps } = useInteractions([dismiss, role]);
+
+  useEffect(() => {
+    if (isOpen && referenceElement) {
+      refs.setReference(referenceElement);
+    }
+  }, [isOpen, referenceElement, refs]);
 
   useEffect(() => {
     if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -44,17 +69,9 @@ export function MessageMenuPopover({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
 
-    // Focus trap
-    if (menuRef.current) {
-      const firstButton = menuRef.current.querySelector('button');
-      firstButton?.focus();
-    }
-
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen, onClose]);
@@ -74,30 +91,29 @@ export function MessageMenuPopover({
     onClose();
   };
 
+  // Don't render if no reference element
+  if (!referenceElement) return null;
+
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          ref={menuRef}
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.16 }}
-          className="absolute z-50 bg-white dark:bg-neutral-900 shadow-xl rounded-xl overflow-hidden min-w-[180px]"
-          style={
-            position ? { top: position.top, left: position.left } : undefined
-          }
+          ref={refs.setFloating}
+          style={floatingStyles}
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{
+            duration: 0.18,
+            type: 'spring',
+            stiffness: 400,
+            damping: 25,
+          }}
+          className="z-50 bg-white dark:bg-neutral-900 shadow-xl rounded-xl overflow-hidden min-w-[180px] border border-neutral-200 dark:border-neutral-800"
           role="menu"
           aria-label="Message actions"
+          {...getFloatingProps()}
         >
-          {/* Tail/arrow pointing to message */}
-          <div
-            className={`absolute -top-2 ${
-              align === 'right' ? 'right-4' : 'left-4'
-            } w-4 h-4 bg-white dark:bg-neutral-900 transform rotate-45`}
-            style={{ boxShadow: '-2px -2px 4px rgba(0,0,0,0.05)' }}
-          />
-
           <div className="relative bg-white dark:bg-neutral-900">
             {canEdit && (
               <button
