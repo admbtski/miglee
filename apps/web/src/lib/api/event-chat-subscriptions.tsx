@@ -7,6 +7,10 @@ import { print } from 'graphql';
 import {
   OnIntentMessageAddedDocument,
   type OnIntentMessageAddedSubscription,
+  OnIntentMessageUpdatedDocument,
+  type OnIntentMessageUpdatedSubscription,
+  OnIntentMessageDeletedDocument,
+  type OnIntentMessageDeletedSubscription,
   OnIntentTypingDocument,
   type OnIntentTypingSubscription,
 } from './__generated__/react-query-update';
@@ -260,6 +264,284 @@ export function useIntentTyping(params: {
       }
     };
   }, [intentId, enabled]);
+
+  return { connected };
+}
+
+/**
+ * Subscribe to message updates in an intent chat
+ */
+export function useIntentMessageUpdated(params: {
+  intentId: string;
+  onMessageUpdated?: (
+    message: NonNullable<
+      OnIntentMessageUpdatedSubscription['intentMessageUpdated']
+    >
+  ) => void;
+  enabled?: boolean;
+}) {
+  const { intentId, onMessageUpdated, enabled = true } = params;
+  const queryClient = useQueryClient();
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef(0);
+  const onMessageUpdatedRef = useRef(onMessageUpdated);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    onMessageUpdatedRef.current = onMessageUpdated;
+  }, [onMessageUpdated]);
+
+  useEffect(() => {
+    if (!enabled || !intentId) return;
+
+    let isActive = true;
+    const mySession = ++sessionRef.current;
+    const backoffMs = [1000, 2000, 5000, 10000] as const;
+    let attempt = 0;
+
+    const scheduleRetry = () => {
+      const delay = backoffMs[Math.min(attempt, backoffMs.length - 1)];
+      attempt += 1;
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = setTimeout(() => {
+        if (!isActive || mySession !== sessionRef.current) return;
+        void subscribeOnce();
+      }, delay);
+    };
+
+    const subscribeOnce = async () => {
+      try {
+        const client = (await getWsClient()) as Client;
+        if (!isActive || mySession !== sessionRef.current) return;
+
+        const payload: SubscribePayload = {
+          query: print(OnIntentMessageUpdatedDocument),
+          variables: { intentId },
+        };
+
+        if (unsubscribeRef.current) {
+          try {
+            unsubscribeRef.current();
+          } catch {}
+          unsubscribeRef.current = null;
+        }
+
+        unsubscribeRef.current =
+          client.subscribe<OnIntentMessageUpdatedSubscription>(payload, {
+            next: (result) => {
+              if (!connected) setConnected(true);
+
+              if (result.errors?.length) {
+                console.error(
+                  '❌ Intent message updated subscription errors:',
+                  result.errors
+                );
+                return;
+              }
+
+              const message = result.data?.intentMessageUpdated;
+              if (message) {
+                console.log(
+                  '[Intent Sub] Message updated:',
+                  message.id,
+                  'IntentID:',
+                  intentId
+                );
+                if (onMessageUpdatedRef.current) {
+                  onMessageUpdatedRef.current(message);
+                } else {
+                  // Default: invalidate messages query
+                  queryClient.invalidateQueries({
+                    queryKey: eventChatKeys.messages(intentId),
+                  });
+                }
+              }
+            },
+            error: (err) => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              console.error(
+                '❌ Intent message updated subscription error:',
+                err
+              );
+              setConnected(false);
+              scheduleRetry();
+            },
+            complete: () => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              setConnected(false);
+              scheduleRetry();
+            },
+          });
+      } catch (err) {
+        if (!isActive || mySession !== sessionRef.current) return;
+        console.error(
+          '❗ Intent message updated subscription setup failed:',
+          err
+        );
+        setConnected(false);
+        scheduleRetry();
+      }
+    };
+
+    void subscribeOnce();
+
+    return () => {
+      isActive = false;
+      sessionRef.current++;
+      setConnected(false);
+
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current();
+        } catch {}
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [intentId, enabled, queryClient]);
+
+  return { connected };
+}
+
+/**
+ * Subscribe to message deletions in an intent chat
+ */
+export function useIntentMessageDeleted(params: {
+  intentId: string;
+  onMessageDeleted?: (
+    event: NonNullable<
+      OnIntentMessageDeletedSubscription['intentMessageDeleted']
+    >
+  ) => void;
+  enabled?: boolean;
+}) {
+  const { intentId, onMessageDeleted, enabled = true } = params;
+  const queryClient = useQueryClient();
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef(0);
+  const onMessageDeletedRef = useRef(onMessageDeleted);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    onMessageDeletedRef.current = onMessageDeleted;
+  }, [onMessageDeleted]);
+
+  useEffect(() => {
+    if (!enabled || !intentId) return;
+
+    let isActive = true;
+    const mySession = ++sessionRef.current;
+    const backoffMs = [1000, 2000, 5000, 10000] as const;
+    let attempt = 0;
+
+    const scheduleRetry = () => {
+      const delay = backoffMs[Math.min(attempt, backoffMs.length - 1)];
+      attempt += 1;
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = setTimeout(() => {
+        if (!isActive || mySession !== sessionRef.current) return;
+        void subscribeOnce();
+      }, delay);
+    };
+
+    const subscribeOnce = async () => {
+      try {
+        const client = (await getWsClient()) as Client;
+        if (!isActive || mySession !== sessionRef.current) return;
+
+        const payload: SubscribePayload = {
+          query: print(OnIntentMessageDeletedDocument),
+          variables: { intentId },
+        };
+
+        if (unsubscribeRef.current) {
+          try {
+            unsubscribeRef.current();
+          } catch {}
+          unsubscribeRef.current = null;
+        }
+
+        unsubscribeRef.current =
+          client.subscribe<OnIntentMessageDeletedSubscription>(payload, {
+            next: (result) => {
+              if (!connected) setConnected(true);
+
+              if (result.errors?.length) {
+                console.error(
+                  '❌ Intent message deleted subscription errors:',
+                  result.errors
+                );
+                return;
+              }
+
+              const event = result.data?.intentMessageDeleted;
+              if (event) {
+                console.log(
+                  '[Intent Sub] Message deleted:',
+                  event.messageId,
+                  'IntentID:',
+                  intentId
+                );
+                if (onMessageDeletedRef.current) {
+                  onMessageDeletedRef.current(event);
+                } else {
+                  // Default: invalidate messages query
+                  queryClient.invalidateQueries({
+                    queryKey: eventChatKeys.messages(intentId),
+                  });
+                }
+              }
+            },
+            error: (err) => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              console.error(
+                '❌ Intent message deleted subscription error:',
+                err
+              );
+              setConnected(false);
+              scheduleRetry();
+            },
+            complete: () => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              setConnected(false);
+              scheduleRetry();
+            },
+          });
+      } catch (err) {
+        if (!isActive || mySession !== sessionRef.current) return;
+        console.error(
+          '❗ Intent message deleted subscription setup failed:',
+          err
+        );
+        setConnected(false);
+        scheduleRetry();
+      }
+    };
+
+    void subscribeOnce();
+
+    return () => {
+      isActive = false;
+      sessionRef.current++;
+      setConnected(false);
+
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current();
+        } catch {}
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [intentId, enabled, queryClient]);
 
   return { connected };
 }

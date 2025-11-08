@@ -355,6 +355,7 @@ fragment DmMessageCore on DmMessage {
   content
   createdAt
   readAt
+  editedAt
   deletedAt
   sender {
     id

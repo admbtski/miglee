@@ -7,6 +7,10 @@ import { print } from 'graphql';
 import {
   OnDmMessageAddedDocument,
   type OnDmMessageAddedSubscription,
+  OnDmMessageUpdatedDocument,
+  type OnDmMessageUpdatedSubscription,
+  OnDmMessageDeletedDocument,
+  type OnDmMessageDeletedSubscription,
   OnDmTypingDocument,
   type OnDmTypingSubscription,
 } from './__generated__/react-query-update';
@@ -380,6 +384,316 @@ export function useDmTyping(params: {
       }
     };
   }, [threadId, enabled]);
+
+  return { connected };
+}
+
+/**
+ * Subscribe to message updates in a DM thread
+ */
+export function useDmMessageUpdated(params: {
+  threadId: string;
+  onMessageUpdated?: (
+    message: NonNullable<OnDmMessageUpdatedSubscription['dmMessageUpdated']>
+  ) => void;
+  enabled?: boolean;
+}) {
+  const { threadId, onMessageUpdated, enabled = true } = params;
+  const queryClient = useQueryClient();
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef(0);
+  const onMessageUpdatedRef = useRef(onMessageUpdated);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    onMessageUpdatedRef.current = onMessageUpdated;
+  }, [onMessageUpdated]);
+
+  useEffect(() => {
+    console.log(
+      '[DM Sub Hook UPDATE] useEffect triggered, enabled:',
+      enabled,
+      'threadId:',
+      threadId
+    );
+    if (!enabled || !threadId) {
+      console.log('[DM Sub Hook UPDATE] Not enabled or no threadId, returning');
+      return;
+    }
+
+    console.log('[DM Sub Hook UPDATE] Starting subscription setup...');
+    let isActive = true;
+    const mySession = ++sessionRef.current;
+    const backoffMs = [1000, 2000, 5000, 10000] as const;
+    let attempt = 0;
+
+    const scheduleRetry = () => {
+      const delay = backoffMs[Math.min(attempt, backoffMs.length - 1)];
+      attempt += 1;
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = setTimeout(() => {
+        if (!isActive || mySession !== sessionRef.current) return;
+        void subscribeOnce();
+      }, delay);
+    };
+
+    const subscribeOnce = async () => {
+      console.log(
+        '[DM Sub Hook UPDATE] subscribeOnce called, getting WS client...'
+      );
+      try {
+        const client = (await getWsClient()) as Client;
+        console.log('[DM Sub Hook UPDATE] WS client obtained, subscribing...');
+        if (!isActive || mySession !== sessionRef.current) return;
+
+        const payload: SubscribePayload = {
+          query: print(OnDmMessageUpdatedDocument),
+          variables: { threadId },
+        };
+        console.log('[DM Sub Hook UPDATE] Payload:', payload);
+
+        if (unsubscribeRef.current) {
+          try {
+            unsubscribeRef.current();
+          } catch {}
+          unsubscribeRef.current = null;
+        }
+
+        unsubscribeRef.current =
+          client.subscribe<OnDmMessageUpdatedSubscription>(payload, {
+            next: (result) => {
+              if (!connected) setConnected(true);
+
+              if (result.errors?.length) {
+                console.error(
+                  '❌ DM message updated subscription errors:',
+                  result.errors
+                );
+                return;
+              }
+
+              const message = result.data?.dmMessageUpdated;
+              if (message) {
+                console.log(
+                  '[DM Sub Hook] Message updated received:',
+                  message.id,
+                  'ThreadID:',
+                  threadId,
+                  'Has callback:',
+                  !!onMessageUpdatedRef.current
+                );
+                if (onMessageUpdatedRef.current) {
+                  console.log('[DM Sub Hook] Calling callback...');
+                  onMessageUpdatedRef.current(message);
+                  console.log('[DM Sub Hook] Callback called!');
+                } else {
+                  console.log(
+                    '[DM Sub Hook] No callback, invalidating queries'
+                  );
+                  // Default: invalidate messages query
+                  queryClient.invalidateQueries({
+                    queryKey: dmKeys.messages(threadId),
+                  });
+                }
+              } else {
+                console.log('[DM Sub Hook] No message in result.data');
+              }
+            },
+            error: (err) => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              console.error('❌ DM message updated subscription error:', err);
+              setConnected(false);
+              scheduleRetry();
+            },
+            complete: () => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              setConnected(false);
+              scheduleRetry();
+            },
+          });
+      } catch (err) {
+        if (!isActive || mySession !== sessionRef.current) return;
+        console.error('❗ DM message updated subscription setup failed:', err);
+        setConnected(false);
+        scheduleRetry();
+      }
+    };
+
+    void subscribeOnce();
+
+    return () => {
+      isActive = false;
+      sessionRef.current++;
+      setConnected(false);
+
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current();
+        } catch {}
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [threadId, enabled, queryClient]);
+
+  return { connected };
+}
+
+/**
+ * Subscribe to message deletions in a DM thread
+ */
+export function useDmMessageDeleted(params: {
+  threadId: string;
+  onMessageDeleted?: (
+    event: NonNullable<OnDmMessageDeletedSubscription['dmMessageDeleted']>
+  ) => void;
+  enabled?: boolean;
+}) {
+  const { threadId, onMessageDeleted, enabled = true } = params;
+  const queryClient = useQueryClient();
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef(0);
+  const onMessageDeletedRef = useRef(onMessageDeleted);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    onMessageDeletedRef.current = onMessageDeleted;
+  }, [onMessageDeleted]);
+
+  useEffect(() => {
+    console.log(
+      '[DM Sub Hook DELETE] useEffect triggered, enabled:',
+      enabled,
+      'threadId:',
+      threadId
+    );
+    if (!enabled || !threadId) {
+      console.log('[DM Sub Hook DELETE] Not enabled or no threadId, returning');
+      return;
+    }
+
+    console.log('[DM Sub Hook DELETE] Starting subscription setup...');
+    let isActive = true;
+    const mySession = ++sessionRef.current;
+    const backoffMs = [1000, 2000, 5000, 10000] as const;
+    let attempt = 0;
+
+    const scheduleRetry = () => {
+      const delay = backoffMs[Math.min(attempt, backoffMs.length - 1)];
+      attempt += 1;
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = setTimeout(() => {
+        if (!isActive || mySession !== sessionRef.current) return;
+        void subscribeOnce();
+      }, delay);
+    };
+
+    const subscribeOnce = async () => {
+      console.log(
+        '[DM Sub Hook DELETE] subscribeOnce called, getting WS client...'
+      );
+      try {
+        const client = (await getWsClient()) as Client;
+        console.log('[DM Sub Hook DELETE] WS client obtained, subscribing...');
+        if (!isActive || mySession !== sessionRef.current) return;
+
+        const payload: SubscribePayload = {
+          query: print(OnDmMessageDeletedDocument),
+          variables: { threadId },
+        };
+        console.log('[DM Sub Hook DELETE] Payload:', payload);
+
+        if (unsubscribeRef.current) {
+          try {
+            unsubscribeRef.current();
+          } catch {}
+          unsubscribeRef.current = null;
+        }
+
+        unsubscribeRef.current =
+          client.subscribe<OnDmMessageDeletedSubscription>(payload, {
+            next: (result) => {
+              if (!connected) setConnected(true);
+
+              if (result.errors?.length) {
+                console.error(
+                  '❌ DM message deleted subscription errors:',
+                  result.errors
+                );
+                return;
+              }
+
+              const event = result.data?.dmMessageDeleted;
+              if (event) {
+                console.log(
+                  '[DM Sub Hook] Message deleted received:',
+                  event.messageId,
+                  'ThreadID:',
+                  threadId,
+                  'Has callback:',
+                  !!onMessageDeletedRef.current
+                );
+                if (onMessageDeletedRef.current) {
+                  console.log('[DM Sub Hook] Calling delete callback...');
+                  onMessageDeletedRef.current(event);
+                  console.log('[DM Sub Hook] Delete callback called!');
+                } else {
+                  console.log(
+                    '[DM Sub Hook] No callback, invalidating queries'
+                  );
+                  // Default: invalidate messages query
+                  queryClient.invalidateQueries({
+                    queryKey: dmKeys.messages(threadId),
+                  });
+                }
+              } else {
+                console.log('[DM Sub Hook] No event in result.data');
+              }
+            },
+            error: (err) => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              console.error('❌ DM message deleted subscription error:', err);
+              setConnected(false);
+              scheduleRetry();
+            },
+            complete: () => {
+              if (!isActive || mySession !== sessionRef.current) return;
+              setConnected(false);
+              scheduleRetry();
+            },
+          });
+      } catch (err) {
+        if (!isActive || mySession !== sessionRef.current) return;
+        console.error('❗ DM message deleted subscription setup failed:', err);
+        setConnected(false);
+        scheduleRetry();
+      }
+    };
+
+    void subscribeOnce();
+
+    return () => {
+      isActive = false;
+      sessionRef.current++;
+      setConnected(false);
+
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current();
+        } catch {}
+        unsubscribeRef.current = null;
+      }
+    };
+  }, [threadId, enabled, queryClient]);
 
   return { connected };
 }

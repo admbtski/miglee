@@ -53,6 +53,19 @@ subscription OnIntentMessageAdded($intentId: ID!) {
   }
 }
 
+subscription OnIntentMessageUpdated($intentId: ID!) {
+  intentMessageUpdated(intentId: $intentId) {
+    ...IntentChatMessageWithReply
+  }
+}
+
+subscription OnIntentMessageDeleted($intentId: ID!) {
+  intentMessageDeleted(intentId: $intentId) {
+    messageId
+    deletedAt
+  }
+}
+
 subscription OnIntentTyping($intentId: ID!) {
   intentTyping(intentId: $intentId) {
     userId

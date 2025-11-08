@@ -140,3 +140,95 @@ export const dmReactionAddedSubscription: SubscriptionResolvers['dmReactionAdded
       return payload.dmReactionAdded;
     },
   };
+
+/**
+ * Subscription: DM message updated
+ */
+export const dmMessageUpdatedSubscription: SubscriptionResolvers['dmMessageUpdated'] =
+  {
+    subscribe: async (_p, { threadId }, { user, pubsub }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Guard: user must be a participant
+      await requireDmParticipant(user.id, threadId);
+
+      // Subscribe to channel
+      return pubsub.subscribe(`dmMessageUpdated:${threadId}`);
+    },
+    resolve: (payload: any) => {
+      return payload.dmMessageUpdated;
+    },
+  };
+
+/**
+ * Subscription: DM message deleted
+ */
+export const dmMessageDeletedSubscription: SubscriptionResolvers['dmMessageDeleted'] =
+  {
+    subscribe: async (_p, { threadId }, { user, pubsub }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Guard: user must be a participant
+      await requireDmParticipant(user.id, threadId);
+
+      // Subscribe to channel
+      return pubsub.subscribe(`dmMessageDeleted:${threadId}`);
+    },
+    resolve: (payload: any) => {
+      return payload.dmMessageDeleted;
+    },
+  };
+
+/**
+ * Subscription: Intent message updated
+ */
+export const intentMessageUpdatedSubscription: SubscriptionResolvers['intentMessageUpdated'] =
+  {
+    subscribe: async (_p, { intentId }, { user, pubsub }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Guard: user must be JOINED
+      await requireJoinedMember(user.id, intentId);
+
+      // Subscribe to channel
+      return pubsub.subscribe(`intentMessageUpdated:${intentId}`);
+    },
+    resolve: (payload: any) => {
+      return payload.intentMessageUpdated;
+    },
+  };
+
+/**
+ * Subscription: Intent message deleted
+ */
+export const intentMessageDeletedSubscription: SubscriptionResolvers['intentMessageDeleted'] =
+  {
+    subscribe: async (_p, { intentId }, { user, pubsub }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Guard: user must be JOINED
+      await requireJoinedMember(user.id, intentId);
+
+      // Subscribe to channel
+      return pubsub.subscribe(`intentMessageDeleted:${intentId}`);
+    },
+    resolve: (payload: any) => {
+      return payload.intentMessageDeleted;
+    },
+  };

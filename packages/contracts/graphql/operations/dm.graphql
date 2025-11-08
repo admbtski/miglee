@@ -112,6 +112,21 @@ subscription OnDmMessageAdded($threadId: ID!) {
   }
 }
 
+# Subscribe to message updates in a thread
+subscription OnDmMessageUpdated($threadId: ID!) {
+  dmMessageUpdated(threadId: $threadId) {
+    ...DmMessageCore
+  }
+}
+
+# Subscribe to message deletions in a thread
+subscription OnDmMessageDeleted($threadId: ID!) {
+  dmMessageDeleted(threadId: $threadId) {
+    messageId
+    deletedAt
+  }
+}
+
 # Subscribe to typing indicators in a thread
 subscription OnDmTyping($threadId: ID!) {
   dmTyping(threadId: $threadId) {

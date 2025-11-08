@@ -482,6 +482,7 @@ type DmMessage {
   content: String!
   createdAt: DateTime!
   readAt: DateTime
+  editedAt: DateTime
   deletedAt: DateTime
 
   thread: DmThread!
@@ -1196,11 +1197,15 @@ type Subscription {
 
   # Event Chat Subscriptions
   intentMessageAdded(intentId: ID!): IntentChatMessage!
+  intentMessageUpdated(intentId: ID!): IntentChatMessage!
+  intentMessageDeleted(intentId: ID!): MessageDeletedEvent!
   intentTyping(intentId: ID!): TypingIndicator!
   intentReactionAdded(intentId: ID!): ReactionEvent!
 
   # DM Subscriptions
   dmMessageAdded(threadId: ID!): DmMessage!
+  dmMessageUpdated(threadId: ID!): DmMessage!
+  dmMessageDeleted(threadId: ID!): MessageDeletedEvent!
   dmTyping(threadId: ID!): TypingIndicator!
   dmReactionAdded(threadId: ID!): ReactionEvent!
 }
@@ -1216,6 +1221,12 @@ type ReactionEvent {
 enum ReactionAction {
   ADD
   REMOVE
+}
+
+# Message deleted event for subscriptions
+type MessageDeletedEvent {
+  messageId: ID!
+  deletedAt: DateTime!
 }
 
 # Typing indicator for real-time presence

@@ -243,7 +243,7 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
   resolverWithMetrics(
     'Mutation',
     'updateDmMessage',
-    async (_p, { id, input }, { user }) => {
+    async (_p, { id, input }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -258,7 +258,7 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
       // Find message and verify ownership
       const existing = await prisma.dmMessage.findUnique({
         where: { id },
-        select: { senderId: true, deletedAt: true },
+        select: { senderId: true, deletedAt: true, threadId: true },
       });
 
       if (!existing) {
@@ -288,7 +288,17 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
         include: DM_MESSAGE_INCLUDE,
       });
 
-      return mapDmMessage(updated as any);
+      const result = mapDmMessage(updated as any);
+
+      // Publish update event
+      await pubsub.publish({
+        topic: `dmMessageUpdated:${existing.threadId}`,
+        payload: {
+          dmMessageUpdated: result,
+        },
+      });
+
+      return result;
     }
   );
 
@@ -299,7 +309,7 @@ export const deleteDmMessageMutation: MutationResolvers['deleteDmMessage'] =
   resolverWithMetrics(
     'Mutation',
     'deleteDmMessage',
-    async (_p, { id }, { user }) => {
+    async (_p, { id }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -308,7 +318,7 @@ export const deleteDmMessageMutation: MutationResolvers['deleteDmMessage'] =
 
       const existing = await prisma.dmMessage.findUnique({
         where: { id },
-        select: { senderId: true, deletedAt: true },
+        select: { senderId: true, deletedAt: true, threadId: true },
       });
 
       if (!existing) {
@@ -325,9 +335,21 @@ export const deleteDmMessageMutation: MutationResolvers['deleteDmMessage'] =
         return true; // Already deleted
       }
 
+      const deletedAt = new Date();
       await prisma.dmMessage.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: { deletedAt },
+      });
+
+      // Publish delete event
+      await pubsub.publish({
+        topic: `dmMessageDeleted:${existing.threadId}`,
+        payload: {
+          dmMessageDeleted: {
+            messageId: id,
+            deletedAt: deletedAt.toISOString(),
+          },
+        },
       });
 
       return true;

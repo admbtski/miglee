@@ -650,6 +650,7 @@ export function mapDmMessage(m: DmMessageWithGraph): GQLDmMessage {
     content: m.content,
     createdAt: m.createdAt,
     readAt: m.readAt ?? null,
+    editedAt: m.editedAt ?? null,
     deletedAt: m.deletedAt ?? null,
 
     thread: m.thread ? (mapDmThread(m.thread as any) as any) : ({} as any),

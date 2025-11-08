@@ -236,18 +236,19 @@ export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
         include: MESSAGE_INCLUDE,
       });
 
-      // Publish update to WebSocket
+      const result = mapIntentChatMessage(
+        updated as IntentChatMessageWithGraph
+      );
 
+      // Publish update to WebSocket
       await pubsub.publish({
-        topic: `intentMessageAdded:${existing.intentId}`,
+        topic: `intentMessageUpdated:${existing.intentId}`,
         payload: {
-          intentMessageAdded: mapIntentChatMessage(
-            updated as IntentChatMessageWithGraph
-          ),
+          intentMessageUpdated: result,
         },
       });
 
-      return mapIntentChatMessage(updated as IntentChatMessageWithGraph);
+      return result;
     }
   );
 
@@ -261,7 +262,7 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
   resolverWithMetrics(
     'Mutation',
     'deleteIntentMessage',
-    async (_p, { id, soft = true }, { user }) => {
+    async (_p, { id, soft = true }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -316,9 +317,21 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
           return true; // Already deleted
         }
 
+        const deletedAt = new Date();
         await prisma.intentChatMessage.update({
           where: { id },
-          data: { deletedAt: new Date() },
+          data: { deletedAt },
+        });
+
+        // Publish delete event
+        await pubsub.publish({
+          topic: `intentMessageDeleted:${existing.intentId}`,
+          payload: {
+            intentMessageDeleted: {
+              messageId: id,
+              deletedAt: deletedAt.toISOString(),
+            },
+          },
         });
 
         return true;

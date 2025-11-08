@@ -42,11 +42,15 @@ import {
 } from '@/lib/api/event-chat';
 import {
   useDmMessageAdded,
+  useDmMessageUpdated,
+  useDmMessageDeleted,
   useDmTyping,
   useDmThreadsSubscriptions,
 } from '@/lib/api/dm-subscriptions';
 import {
   useIntentMessageAdded,
+  useIntentMessageUpdated,
+  useIntentMessageDeleted,
   useIntentTyping,
 } from '@/lib/api/event-chat-subscriptions';
 import {
@@ -334,6 +338,204 @@ export default function ChatsPageIntegrated() {
         }
         return next;
       });
+    },
+  });
+
+  // Subscribe to message updates (DM)
+  const dmUpdateSubEnabled = !!activeDmId && tab === 'dm';
+  console.log(
+    '[DM Sub Update] Enabled:',
+    dmUpdateSubEnabled,
+    'ThreadID:',
+    activeDmId,
+    'Tab:',
+    tab
+  );
+
+  useDmMessageUpdated({
+    threadId: activeDmId!,
+    enabled: dmUpdateSubEnabled,
+    onMessageUpdated: (message) => {
+      console.log(
+        '[DM Sub] ✅ Message updated RECEIVED:',
+        message.id,
+        message.content
+      );
+
+      // Use message.threadId from the event to ensure we update the correct thread
+      const threadId = message.threadId;
+
+      // Update cache directly instead of refetching
+      // Use the same query key as useGetDmMessages
+      queryClient.setQueryData(
+        dmKeys.messages(threadId, { limit: 100, offset: 0 }),
+        (oldData: any) => {
+          console.log(
+            '[DM Sub] Updating cache for thread:',
+            threadId,
+            'oldData:',
+            oldData
+          );
+          if (!oldData?.dmMessages) {
+            console.log('[DM Sub] No dmMessages in cache, returning oldData');
+            return oldData;
+          }
+
+          const updated = {
+            ...oldData,
+            dmMessages: oldData.dmMessages.map((msg: any) =>
+              msg.id === message.id
+                ? {
+                    ...msg,
+                    content: message.content,
+                    editedAt: message.editedAt,
+                  }
+                : msg
+            ),
+          };
+          console.log('[DM Sub] Cache updated, new data:', updated);
+          return updated;
+        }
+      );
+    },
+  });
+
+  // Subscribe to message deletions (DM)
+  const dmDeleteSubEnabled = !!activeDmId && tab === 'dm';
+  console.log(
+    '[DM Sub Delete] Enabled:',
+    dmDeleteSubEnabled,
+    'ThreadID:',
+    activeDmId,
+    'Tab:',
+    tab
+  );
+
+  useDmMessageDeleted({
+    threadId: activeDmId!,
+    enabled: dmDeleteSubEnabled,
+    onMessageDeleted: (event) => {
+      console.log(
+        '[DM Sub] ✅ Message deleted RECEIVED:',
+        event.messageId,
+        event.deletedAt
+      );
+
+      // We need to find which thread this message belongs to
+      // Since we only have messageId, we need to update all thread caches
+      // or better - get threadId from the subscription context
+      // For now, use activeDmId as we're subscribed to specific thread
+      const threadId = activeDmId!;
+
+      // Update cache directly - set deletedAt instead of removing message
+      // Use the same query key as useGetDmMessages
+      queryClient.setQueryData(
+        dmKeys.messages(threadId, { limit: 100, offset: 0 }),
+        (oldData: any) => {
+          console.log(
+            '[DM Sub] Deleting message in cache for thread:',
+            threadId,
+            'oldData:',
+            oldData
+          );
+          if (!oldData?.dmMessages) {
+            console.log('[DM Sub] No dmMessages in cache, returning oldData');
+            return oldData;
+          }
+
+          const updated = {
+            ...oldData,
+            dmMessages: oldData.dmMessages.map((msg: any) =>
+              msg.id === event.messageId
+                ? {
+                    ...msg,
+                    deletedAt: event.deletedAt,
+                  }
+                : msg
+            ),
+          };
+          console.log(
+            '[DM Sub] Cache updated after delete, new data:',
+            updated
+          );
+          return updated;
+        }
+      );
+    },
+  });
+
+  // Subscribe to message updates (Intent)
+  useIntentMessageUpdated({
+    intentId: activeChId!,
+    enabled: !!activeChId && tab === 'channel',
+    onMessageUpdated: (message) => {
+      console.log('[Intent Sub] Message updated:', message.id, message.content);
+
+      // Update cache directly instead of refetching
+      queryClient.setQueryData(
+        eventChatKeys.messages(activeChId!),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              intentMessages: {
+                ...page.intentMessages,
+                items: page.intentMessages?.items?.map((msg: any) =>
+                  msg.id === message.id
+                    ? {
+                        ...msg,
+                        content: message.content,
+                        editedAt: message.editedAt,
+                      }
+                    : msg
+                ),
+              },
+            })),
+          };
+        }
+      );
+    },
+  });
+
+  // Subscribe to message deletions (Intent)
+  useIntentMessageDeleted({
+    intentId: activeChId!,
+    enabled: !!activeChId && tab === 'channel',
+    onMessageDeleted: (event) => {
+      console.log(
+        '[Intent Sub] Message deleted:',
+        event.messageId,
+        event.deletedAt
+      );
+
+      // Update cache directly - set deletedAt instead of removing message
+      queryClient.setQueryData(
+        eventChatKeys.messages(activeChId!),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              intentMessages: {
+                ...page.intentMessages,
+                items: page.intentMessages?.items?.map((msg: any) =>
+                  msg.id === event.messageId
+                    ? {
+                        ...msg,
+                        deletedAt: event.deletedAt,
+                      }
+                    : msg
+                ),
+              },
+            })),
+          };
+        }
+      );
     },
   });
 
@@ -636,12 +838,59 @@ export default function ChatsPageIntegrated() {
           id: editingMessage.id,
           input: { content: newContent },
         });
+
+        // Optimistic update for sender - update cache immediately
+        // Use the same query key as useGetDmMessages
+        queryClient.setQueryData(
+          dmKeys.messages(editingMessage.threadId, { limit: 100, offset: 0 }),
+          (oldData: any) => {
+            if (!oldData?.dmMessages) return oldData;
+            return {
+              ...oldData,
+              dmMessages: oldData.dmMessages.map((msg: any) =>
+                msg.id === editingMessage.id
+                  ? {
+                      ...msg,
+                      content: newContent,
+                      editedAt: new Date().toISOString(),
+                    }
+                  : msg
+              ),
+            };
+          }
+        );
       } else if (editingMessage.intentId) {
         console.log('[Edit] Calling editIntentMessage');
         await editIntentMessage.mutateAsync({
           id: editingMessage.id,
           input: { content: newContent },
         });
+
+        // Optimistic update for sender
+        queryClient.setQueryData(
+          eventChatKeys.messages(editingMessage.intentId),
+          (oldData: any) => {
+            if (!oldData?.pages) return oldData;
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                intentMessages: {
+                  ...page.intentMessages,
+                  items: page.intentMessages?.items?.map((msg: any) =>
+                    msg.id === editingMessage.id
+                      ? {
+                          ...msg,
+                          content: newContent,
+                          editedAt: new Date().toISOString(),
+                        }
+                      : msg
+                  ),
+                },
+              })),
+            };
+          }
+        );
       }
       console.log('[Edit] Success!');
       setEditingMessage(null);
@@ -663,12 +912,57 @@ export default function ChatsPageIntegrated() {
           id: deletingMessageId,
           threadId: activeDmId,
         });
+
+        // Optimistic update for sender - set deletedAt immediately
+        // Use the same query key as useGetDmMessages
+        queryClient.setQueryData(
+          dmKeys.messages(activeDmId, { limit: 100, offset: 0 }),
+          (oldData: any) => {
+            if (!oldData?.dmMessages) return oldData;
+            return {
+              ...oldData,
+              dmMessages: oldData.dmMessages.map((msg: any) =>
+                msg.id === deletingMessageId
+                  ? {
+                      ...msg,
+                      deletedAt: new Date().toISOString(),
+                    }
+                  : msg
+              ),
+            };
+          }
+        );
       } else if (tab === 'channel' && activeChId) {
         await deleteIntentMessage.mutateAsync({
           id: deletingMessageId,
           soft: true,
           intentId: activeChId,
         });
+
+        // Optimistic update for sender
+        queryClient.setQueryData(
+          eventChatKeys.messages(activeChId),
+          (oldData: any) => {
+            if (!oldData?.pages) return oldData;
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                intentMessages: {
+                  ...page.intentMessages,
+                  items: page.intentMessages?.items?.map((msg: any) =>
+                    msg.id === deletingMessageId
+                      ? {
+                          ...msg,
+                          deletedAt: new Date().toISOString(),
+                        }
+                      : msg
+                  ),
+                },
+              })),
+            };
+          }
+        );
       }
       setDeletingMessageId(null);
     } catch (error) {
@@ -1694,7 +1988,7 @@ function Bubble({
       <div className={[base, cls].join(' ')}>
         {deletedAt ? (
           <span className="leading-5 italic text-neutral-400">
-            This message was deleted
+            Usunięta wiadomość
           </span>
         ) : (
           <>

@@ -217,7 +217,7 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
 
       const where: Prisma.DmMessageWhereInput = {
         threadId,
-        deletedAt: null,
+        // Don't filter deletedAt - we want to show deleted messages with "Usunięta wiadomość"
       };
 
       // Pagination before a specific message (for infinite scroll)
