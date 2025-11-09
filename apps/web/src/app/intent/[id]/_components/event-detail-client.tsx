@@ -9,6 +9,8 @@ import { EventJoinSection } from './event-join-section';
 import { EventActions } from './event-actions';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
+import { useMemo } from 'react';
+import { useMeQuery } from '@/lib/api/auth';
 
 type EventDetailClientProps = {
   intentId: string;
@@ -16,6 +18,7 @@ type EventDetailClientProps = {
 
 export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const { data, isLoading, error } = useIntentDetail(intentId);
+  const { data: authData } = useMeQuery();
 
   if (isLoading) {
     return <EventDetailSkeleton />;
@@ -37,6 +40,27 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   }
 
   const intent = data.intent;
+  const currentUserId = authData?.me?.id;
+
+  // Check user membership status
+  const userMembership = useMemo(() => {
+    if (!currentUserId || !intent.members) return null;
+    return intent.members.find((m: any) => m.userId === currentUserId);
+  }, [currentUserId, intent.members]);
+
+  const isOwner = userMembership?.role === 'OWNER';
+  const isModerator = userMembership?.role === 'MODERATOR';
+  const isJoined = userMembership?.status === 'JOINED';
+  const isPending = userMembership?.status === 'PENDING';
+  const isInvited = userMembership?.status === 'INVITED';
+
+  // Determine if user can see members based on visibility settings
+  const canSeeMembers = useMemo(() => {
+    if (intent.membersVisibility === 'PUBLIC') return true;
+    if (intent.membersVisibility === 'AFTER_JOIN')
+      return isJoined || isOwner || isModerator;
+    return isOwner || isModerator; // HIDDEN
+  }, [intent.membersVisibility, isJoined, isOwner, isModerator]);
 
   // Transform GraphQL data to EventDetailsData
   const eventData: EventDetailsData = {
@@ -135,6 +159,16 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       joinedCount: intent.joinedCount,
       joinMode: intent.joinMode as any,
     }),
+    userMembership: currentUserId
+      ? {
+          isOwner,
+          isModerator,
+          isJoined,
+          isPending,
+          isInvited,
+          canSeeMembers,
+        }
+      : undefined,
     createdAt: intent.createdAt,
     updatedAt: intent.updatedAt,
   };

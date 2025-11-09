@@ -25,7 +25,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { id } = await params;
+  await params; // Resolve params for Next.js
 
   // TODO: Fetch intent data for metadata
   return {

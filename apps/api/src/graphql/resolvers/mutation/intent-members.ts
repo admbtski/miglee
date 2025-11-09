@@ -622,8 +622,8 @@ export const requestJoinIntentMutation: MutationResolvers['requestJoinIntent'] =
     'Mutation',
     'requestJoinIntent',
     async (_p, { intentId }, ctx) => {
-      // alias do joinMember
-      return joinMemberMutation.resolve(undefined, { intentId }, ctx);
+      // alias do joinMember - wywołaj bezpośrednio
+      return joinMemberMutation(_p, { intentId }, ctx, {} as any);
     }
   );
 

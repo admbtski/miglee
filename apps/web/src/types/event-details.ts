@@ -120,6 +120,16 @@ export type EventDetailsData = {
   // Computed (po stronie frontu)
   joinState: JoinStateResult;
 
+  // User membership info (computed)
+  userMembership?: {
+    isOwner: boolean;
+    isModerator: boolean;
+    isJoined: boolean;
+    isPending: boolean;
+    isInvited: boolean;
+    canSeeMembers: boolean;
+  };
+
   // Timestamps
   createdAt: string;
   updatedAt: string;

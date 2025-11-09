@@ -4,7 +4,6 @@ import {
   MapPin,
   Calendar,
   Users,
-  ShieldCheck,
   Sparkles,
   XCircle,
   Trash2,
@@ -25,7 +24,10 @@ export function EventHero({ event }: EventHeroProps) {
   const isHighlighted =
     event.sponsorship?.highlightOn && event.sponsorship.status === 'ACTIVE';
 
-  const sortedLevels = useMemo(() => sortLevels(event.levels), [event.levels]);
+  const sortedLevels = useMemo(
+    () => sortLevels(event.levels as Level[]),
+    [event.levels]
+  );
 
   return (
     <div className="relative rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40">

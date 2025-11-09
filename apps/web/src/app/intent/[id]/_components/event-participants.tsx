@@ -6,7 +6,8 @@ type EventParticipantsProps = {
 };
 
 export function EventParticipants({ event }: EventParticipantsProps) {
-  const canSeeMembers = event.membersVisibility === 'PUBLIC' || event.members;
+  const canSeeMembers =
+    event.userMembership?.canSeeMembers ?? event.membersVisibility === 'PUBLIC';
 
   if (!canSeeMembers) {
     return (
@@ -16,8 +17,8 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         </h2>
         <p className="text-md text-neutral-600 dark:text-neutral-400">
           {event.membersVisibility === 'AFTER_JOIN'
-            ? 'Lista uczestników widoczna po dołączeniu'
-            : 'Lista uczestników ukryta'}
+            ? 'Lista uczestników będzie widoczna po dołączeniu.'
+            : 'Lista uczestników jest ukryta przez organizatora.'}
         </p>
       </div>
     );
@@ -175,7 +176,7 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
           {member.user.verifiedAt && (
             <ShieldCheck
               className="h-4 w-4 flex-shrink-0 text-blue-500"
-              title="Zweryfikowany"
+              aria-label="Zweryfikowany"
             />
           )}
         </div>
