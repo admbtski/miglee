@@ -7,12 +7,16 @@ import {
   Link as LinkIcon,
   Sparkles,
 } from 'lucide-react';
+import { useState } from 'react';
+import { EventChatModal } from './event-chat-modal';
 
 type EventActionsProps = {
   event: EventDetailsData;
 };
 
 export function EventActions({ event }: EventActionsProps) {
+  const [chatOpen, setChatOpen] = useState(false);
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -61,11 +65,17 @@ export function EventActions({ event }: EventActionsProps) {
 
           {/* Chat (if joined) */}
           <button
-            disabled
+            onClick={() => setChatOpen(true)}
+            disabled={!event.userMembership?.isJoined}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
             <MessageCircle className="h-4 w-4" />
             <span>Otwórz czat</span>
+            {event.messagesCount > 0 && (
+              <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">
+                {event.messagesCount}
+              </span>
+            )}
           </button>
 
           {/* Mute */}
@@ -159,6 +169,14 @@ export function EventActions({ event }: EventActionsProps) {
             )}
           </div>
         )}
+
+      {/* Chat Modal */}
+      <EventChatModal
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        intentId={event.id}
+        intentTitle={event.title}
+      />
     </div>
   );
 }
