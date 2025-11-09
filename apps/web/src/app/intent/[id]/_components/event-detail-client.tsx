@@ -1,6 +1,6 @@
 'use client';
 
-import { useGetIntentQuery } from '@/lib/api/__generated__/react-query-update';
+import { useIntentDetail } from '@/hooks/use-intent-detail';
 import { EventDetailSkeleton } from './event-detail-skeleton';
 import { EventHero } from './event-hero';
 import { EventDetails } from './event-details';
@@ -15,9 +15,7 @@ type EventDetailClientProps = {
 };
 
 export function EventDetailClient({ intentId }: EventDetailClientProps) {
-  const { data, isLoading, error } = useGetIntentQuery({
-    id: intentId,
-  });
+  const { data, isLoading, error } = useIntentDetail(intentId);
 
   if (isLoading) {
     return <EventDetailSkeleton />;
@@ -38,7 +36,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     );
   }
 
-  const intent = data.intent;
+  const intent = data.intent as any;
 
   // Transform GraphQL data to EventDetailsData
   const eventData: EventDetailsData = {
@@ -78,11 +76,11 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     description: intent.description,
     notes: intent.notes,
     levels: intent.levels as any[],
-    categories: intent.categories.map((cat) => ({
+    categories: intent.categories.map((cat: any) => ({
       slug: cat.slug,
       name: (cat.names as any)?.pl ?? cat.slug,
     })),
-    tags: intent.tags.map((tag) => ({
+    tags: intent.tags.map((tag: any) => ({
       slug: tag.slug,
       label: tag.label,
     })),
@@ -90,7 +88,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     cancelReason: intent.cancelReason,
     deletedAt: intent.deletedAt,
     deleteReason: intent.deleteReason,
-    members: intent.members?.map((m) => ({
+    members: intent.members?.map((m: any) => ({
       id: m.id,
       role: m.role as any,
       status: m.status as any,
@@ -105,24 +103,24 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     })),
     commentsCount: intent.commentsCount,
     messagesCount: intent.messagesCount,
-    sponsorship: (intent as any).sponsorship
+    sponsorship: intent.sponsorship
       ? {
-          plan: (intent as any).sponsorship.plan as any,
-          status: (intent as any).sponsorship.status as any,
-          highlightOn: (intent as any).sponsorship.highlightOn,
+          plan: intent.sponsorship.plan as any,
+          status: intent.sponsorship.status as any,
+          highlightOn: intent.sponsorship.highlightOn,
           sponsor: {
-            id: (intent as any).sponsorship.sponsor.id,
-            name: (intent as any).sponsorship.sponsor.name,
+            id: intent.sponsorship.sponsor.id,
+            name: intent.sponsorship.sponsor.name,
           },
-          startedAt: (intent as any).sponsorship.startedAt,
-          endsAt: (intent as any).sponsorship.endsAt,
+          startedAt: intent.sponsorship.startedAt ?? null,
+          endsAt: intent.sponsorship.endsAt ?? null,
         }
       : undefined,
-    inviteLinks: (intent as any).inviteLinks?.map((link: any) => ({
+    inviteLinks: intent.inviteLinks?.map((link: any) => ({
       code: link.code,
-      maxUses: link.maxUses,
+      maxUses: link.maxUses ?? null,
       usedCount: link.usedCount,
-      expiresAt: link.expiresAt,
+      expiresAt: link.expiresAt ?? null,
     })),
     joinState: computeJoinState(new Date(), {
       startAt: new Date(intent.startAt),

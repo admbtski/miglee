@@ -435,7 +435,7 @@ export function EventDetailsModal({
   // ⬇️ Nawigacja do detalu
   const computedHref =
     detailsHref ??
-    (eventId ? `/intents/${encodeURIComponent(eventId)}` : undefined);
+    (eventId ? `/intent/${encodeURIComponent(eventId)}` : undefined);
 
   // Nagłówek — mocniejszy gradient per plan + subtelna siatka
   const header = (

@@ -299,8 +299,8 @@ export function EventCard({
       open={open}
       onClose={closeModal}
       onJoin={onJoin}
-      detailsHref="/"
       data={{
+        eventId: intentId,
         title,
         startISO,
         endISO,
