@@ -413,8 +413,31 @@ type Intent {
   deleteReason: String
   isDeleted: Boolean!
 
+  # Relations
+  sponsorship: EventSponsorship
+  inviteLinks: [IntentInviteLink!]!
+
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+"Event sponsorship for highlighted/boosted intents"
+type EventSponsorship {
+  id: ID!
+  intentId: ID!
+  sponsorId: ID!
+  plan: SponsorPlan!
+  status: SponsorshipStatus!
+  highlightOn: Boolean!
+  startedAt: DateTime
+  endsAt: DateTime
+  boostsUsed: Int!
+  localPushes: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  intent: Intent!
+  sponsor: User!
 }
 
 "Notification stored in DB; polymorphic target"

@@ -252,6 +252,17 @@ fragment IntentCore on Intent {
   }
 }
 
+# Extended intent fragment for detail page (includes sponsorship, inviteLinks)
+fragment IntentDetail on Intent {
+  ...IntentCore
+  sponsorship {
+    ...EventSponsorshipCore
+  }
+  inviteLinks {
+    ...IntentInviteLinkCore
+  }
+}
+
 # =============================================================================
 # Notification Fragments
 # =============================================================================
@@ -692,4 +703,29 @@ fragment DmMuteCore on DmMute {
   userId
   muted
   createdAt
+}
+
+# =============================================================================
+# Event Sponsorship Fragments
+# =============================================================================
+
+fragment EventSponsorshipCore on EventSponsorship {
+  id
+  intentId
+  sponsorId
+  plan
+  status
+  highlightOn
+  startedAt
+  endsAt
+  boostsUsed
+  localPushes
+  createdAt
+  updatedAt
+
+  sponsor {
+    id
+    name
+    imageUrl
+  }
 }

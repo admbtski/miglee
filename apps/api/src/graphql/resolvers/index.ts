@@ -7,6 +7,10 @@ import {
   dmMessageReactionsResolver,
   intentChatMessageReactionsResolver,
 } from './fields/message-reactions';
+import {
+  intentSponsorshipResolver,
+  intentInviteLinksResolver,
+} from './fields/intent';
 
 export const resolvers: Pick<
   Resolvers,
@@ -17,6 +21,7 @@ export const resolvers: Pick<
   | 'JSONObject'
   | 'DmMessage'
   | 'IntentChatMessage'
+  | 'Intent'
 > = {
   JSON: JSONScalar,
   JSONObject: JSONObjectScalar,
@@ -28,5 +33,9 @@ export const resolvers: Pick<
   },
   IntentChatMessage: {
     reactions: intentChatMessageReactionsResolver,
+  },
+  Intent: {
+    sponsorship: intentSponsorshipResolver,
+    inviteLinks: intentInviteLinksResolver,
   },
 };
