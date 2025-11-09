@@ -36,7 +36,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     );
   }
 
-  const intent = data.intent as any;
+  const intent = data.intent;
 
   // Transform GraphQL data to EventDetailsData
   const eventData: EventDetailsData = {
@@ -140,22 +140,38 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   };
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
-      {/* Hero Section */}
-      <EventHero event={eventData} />
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+      {/* Back Navigation */}
+      <div className="border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+        <div className="container mx-auto max-w-6xl px-4 py-3">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            ← Powrót do listy wydarzeń
+          </a>
+        </div>
+      </div>
 
-      {/* Main Content Grid */}
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        {/* Left Column - Main Content */}
-        <div className="space-y-6 lg:col-span-2">
-          <EventDetails event={eventData} />
-          <EventParticipants event={eventData} />
+      <div className="container mx-auto max-w-6xl px-4 py-6">
+        {/* Hero Section */}
+        <div className="mb-6">
+          <EventHero event={eventData} />
         </div>
 
-        {/* Right Column - Sidebar */}
-        <div className="space-y-6">
-          <EventJoinSection event={eventData} />
-          <EventActions event={eventData} />
+        {/* Main Content Grid */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          {/* Left Column - Main Content */}
+          <div className="space-y-6 min-w-0">
+            <EventDetails event={eventData} />
+            <EventParticipants event={eventData} />
+          </div>
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            <EventJoinSection event={eventData} />
+            <EventActions event={eventData} />
+          </div>
         </div>
       </div>
     </div>

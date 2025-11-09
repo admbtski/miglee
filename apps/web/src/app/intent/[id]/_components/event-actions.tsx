@@ -5,6 +5,7 @@ import {
   Flag,
   BellOff,
   Link as LinkIcon,
+  Sparkles,
 } from 'lucide-react';
 
 type EventActionsProps = {
@@ -34,54 +35,54 @@ export function EventActions({ event }: EventActionsProps) {
   return (
     <div className="space-y-4">
       {/* Quick Actions */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-800">
-        <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-2xl border border-neutral-200 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
+        <h3 className="mb-3 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
           Akcje
         </h3>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           {/* Share */}
           <button
             onClick={handleShare}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
-            <Share2 className="h-5 w-5" />
+            <Share2 className="h-4 w-4" />
             <span>Udostępnij</span>
           </button>
 
           {/* Copy Link */}
           <button
             onClick={handleCopyLink}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
-            <LinkIcon className="h-5 w-5" />
+            <LinkIcon className="h-4 w-4" />
             <span>Kopiuj link</span>
           </button>
 
           {/* Chat (if joined) */}
           <button
             disabled
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className="h-4 w-4" />
             <span>Otwórz czat</span>
           </button>
 
           {/* Mute */}
           <button
             disabled
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
-            <BellOff className="h-5 w-5" />
+            <BellOff className="h-4 w-4" />
             <span>Wycisz powiadomienia</span>
           </button>
 
           {/* Report */}
           <button
             disabled
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
           >
-            <Flag className="h-5 w-5" />
+            <Flag className="h-4 w-4" />
             <span>Zgłoś</span>
           </button>
         </div>
@@ -89,8 +90,8 @@ export function EventActions({ event }: EventActionsProps) {
 
       {/* Invite Links (Owner/Mod only) */}
       {event.inviteLinks && event.inviteLinks.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-800">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <div className="rounded-2xl border border-neutral-200 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
+          <h3 className="mb-3 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             Linki zaproszeń
           </h3>
 
@@ -98,10 +99,10 @@ export function EventActions({ event }: EventActionsProps) {
             {event.inviteLinks.map((link) => (
               <div
                 key={link.code}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900"
+                className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900"
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <code className="text-xs font-mono text-gray-900 dark:text-gray-100">
+                  <code className="text-xs font-mono text-neutral-900 dark:text-neutral-100">
                     {link.code}
                   </code>
                   <button
@@ -116,7 +117,7 @@ export function EventActions({ event }: EventActionsProps) {
                     Kopiuj
                   </button>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
                   <span>
                     {link.usedCount}
                     {link.maxUses ? ` / ${link.maxUses}` : ''} użyć
@@ -137,10 +138,13 @@ export function EventActions({ event }: EventActionsProps) {
       {/* Sponsorship Info (if highlighted) */}
       {event.sponsorship?.highlightOn &&
         event.sponsorship.status === 'ACTIVE' && (
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950">
-            <h3 className="mb-2 text-sm font-semibold text-yellow-900 dark:text-yellow-100">
-              Wydarzenie wyróżnione
-            </h3>
+          <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950">
+            <div className="mb-2 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <h3 className="text-sm font-semibold text-yellow-900 dark:text-yellow-100">
+                Wydarzenie wyróżnione
+              </h3>
+            </div>
             <p className="text-xs text-yellow-800 dark:text-yellow-200">
               To wydarzenie jest sponsorowane przez{' '}
               <span className="font-medium">
