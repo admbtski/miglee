@@ -230,6 +230,16 @@ export default function ChatsPageIntegrated() {
         return;
       }
 
+      console.log('[DM Sub] New message received:', message.id);
+
+      // Invalidate queries to refetch messages
+      queryClient.invalidateQueries({
+        queryKey: ['dm', 'messages', activeDmId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: dmKeys.threads(),
+      });
+
       // Auto-mark as read when new message arrives in active thread
       if (activeDmId && message.senderId !== currentUserId) {
         console.log('[DM Sub] Auto-marking as read:', message.id);
@@ -242,6 +252,16 @@ export default function ChatsPageIntegrated() {
     intentId: activeChId!,
     enabled: !!activeChId && tab === 'channel',
     onMessage: (message) => {
+      console.log('[Intent Sub] New message received:', message.id);
+
+      // Invalidate queries to refetch messages
+      queryClient.invalidateQueries({
+        queryKey: eventChatKeys.messages(activeChId!),
+      });
+      queryClient.invalidateQueries({
+        queryKey: eventChatKeys.unreadCount(activeChId!),
+      });
+
       // Auto-mark as read when new message arrives in active channel
       if (activeChId && message.authorId !== currentUserId) {
         console.log('[Intent Sub] Auto-marking as read:', message.id);
@@ -375,9 +395,9 @@ export default function ChatsPageIntegrated() {
       const threadId = message.threadId;
 
       // Update cache directly instead of refetching
-      // Use the same query key as useGetDmMessages
+      // Use the same query key as useGetDmMessagesInfinite
       queryClient.setQueryData(
-        dmKeys.messages(threadId, { first: 20 }),
+        dmKeys.messages(threadId, { infinite: true }),
         (oldData: any) => {
           console.log(
             '[DM Sub] Updating cache for thread:',
@@ -385,30 +405,34 @@ export default function ChatsPageIntegrated() {
             'oldData:',
             oldData
           );
-          if (!oldData?.dmMessages?.edges) {
-            console.log(
-              '[DM Sub] No dmMessages edges in cache, returning oldData'
-            );
+          if (!oldData?.pages) {
+            console.log('[DM Sub] No pages in cache, returning oldData');
             return oldData;
           }
 
           const updated = {
             ...oldData,
-            dmMessages: {
-              ...oldData.dmMessages,
-              edges: oldData.dmMessages.edges.map((edge: any) =>
-                edge.node.id === message.id
-                  ? {
-                      ...edge,
-                      node: {
-                        ...edge.node,
-                        content: message.content,
-                        editedAt: message.editedAt,
-                      },
-                    }
-                  : edge
-              ),
-            },
+            pages: oldData.pages.map((page: any) => {
+              if (!page.dmMessages?.edges) return page;
+              return {
+                ...page,
+                dmMessages: {
+                  ...page.dmMessages,
+                  edges: page.dmMessages.edges.map((edge: any) =>
+                    edge.node.id === message.id
+                      ? {
+                          ...edge,
+                          node: {
+                            ...edge.node,
+                            content: message.content,
+                            editedAt: message.editedAt,
+                          },
+                        }
+                      : edge
+                  ),
+                },
+              };
+            }),
           };
           console.log('[DM Sub] Cache updated, new data:', updated);
           return updated;
@@ -445,9 +469,9 @@ export default function ChatsPageIntegrated() {
       const threadId = activeDmId!;
 
       // Update cache directly - set deletedAt instead of removing message
-      // Use the same query key as useGetDmMessages
+      // Use the same query key as useGetDmMessagesInfinite
       queryClient.setQueryData(
-        dmKeys.messages(threadId, { first: 100 }),
+        dmKeys.messages(threadId, { infinite: true }),
         (oldData: any) => {
           console.log(
             '[DM Sub] Deleting message in cache for thread:',
@@ -455,29 +479,33 @@ export default function ChatsPageIntegrated() {
             'oldData:',
             oldData
           );
-          if (!oldData?.dmMessages?.edges) {
-            console.log(
-              '[DM Sub] No dmMessages edges in cache, returning oldData'
-            );
+          if (!oldData?.pages) {
+            console.log('[DM Sub] No pages in cache, returning oldData');
             return oldData;
           }
 
           const updated = {
             ...oldData,
-            dmMessages: {
-              ...oldData.dmMessages,
-              edges: oldData.dmMessages.edges.map((edge: any) =>
-                edge.node.id === event.messageId
-                  ? {
-                      ...edge,
-                      node: {
-                        ...edge.node,
-                        deletedAt: event.deletedAt,
-                      },
-                    }
-                  : edge
-              ),
-            },
+            pages: oldData.pages.map((page: any) => {
+              if (!page.dmMessages?.edges) return page;
+              return {
+                ...page,
+                dmMessages: {
+                  ...page.dmMessages,
+                  edges: page.dmMessages.edges.map((edge: any) =>
+                    edge.node.id === event.messageId
+                      ? {
+                          ...edge,
+                          node: {
+                            ...edge.node,
+                            deletedAt: event.deletedAt,
+                          },
+                        }
+                      : edge
+                  ),
+                },
+              };
+            }),
           };
           console.log(
             '[DM Sub] Cache updated after delete, new data:',
@@ -500,26 +528,35 @@ export default function ChatsPageIntegrated() {
       queryClient.setQueryData(
         eventChatKeys.messages(activeChId!),
         (oldData: any) => {
+          console.log('[Intent Sub] Old cache data:', oldData);
           if (!oldData?.pages) return oldData;
 
-          return {
+          const updated = {
             ...oldData,
-            pages: oldData.pages.map((page: any) => ({
-              ...page,
-              intentMessages: {
-                ...page.intentMessages,
-                items: page.intentMessages?.items?.map((msg: any) =>
-                  msg.id === message.id
-                    ? {
-                        ...msg,
-                        content: message.content,
-                        editedAt: message.editedAt,
-                      }
-                    : msg
-                ),
-              },
-            })),
+            pages: oldData.pages.map((page: any) => {
+              if (!page.intentMessages?.edges) return page;
+              return {
+                ...page,
+                intentMessages: {
+                  ...page.intentMessages,
+                  edges: page.intentMessages.edges.map((edge: any) =>
+                    edge.node.id === message.id
+                      ? {
+                          ...edge,
+                          node: {
+                            ...edge.node,
+                            content: message.content,
+                            editedAt: message.editedAt,
+                          },
+                        }
+                      : edge
+                  ),
+                },
+              };
+            }),
           };
+          console.log('[Intent Sub] Updated cache data:', updated);
+          return updated;
         }
       );
     },
@@ -540,25 +577,34 @@ export default function ChatsPageIntegrated() {
       queryClient.setQueryData(
         eventChatKeys.messages(activeChId!),
         (oldData: any) => {
+          console.log('[Intent Sub Delete] Old cache data:', oldData);
           if (!oldData?.pages) return oldData;
 
-          return {
+          const updated = {
             ...oldData,
-            pages: oldData.pages.map((page: any) => ({
-              ...page,
-              intentMessages: {
-                ...page.intentMessages,
-                items: page.intentMessages?.items?.map((msg: any) =>
-                  msg.id === event.messageId
-                    ? {
-                        ...msg,
-                        deletedAt: event.deletedAt,
-                      }
-                    : msg
-                ),
-              },
-            })),
+            pages: oldData.pages.map((page: any) => {
+              if (!page.intentMessages?.edges) return page;
+              return {
+                ...page,
+                intentMessages: {
+                  ...page.intentMessages,
+                  edges: page.intentMessages.edges.map((edge: any) =>
+                    edge.node.id === event.messageId
+                      ? {
+                          ...edge,
+                          node: {
+                            ...edge.node,
+                            deletedAt: event.deletedAt,
+                          },
+                        }
+                      : edge
+                  ),
+                },
+              };
+            }),
           };
+          console.log('[Intent Sub Delete] Updated cache data:', updated);
+          return updated;
         }
       );
     },
@@ -622,17 +668,16 @@ export default function ChatsPageIntegrated() {
 
   // Map user's intent memberships to channel conversations
   const channelConversations: Conversation[] = useMemo(() => {
-    const items = (membershipsData?.myMemberships as any)?.items;
-    if (!items || !currentUserId) return [];
+    const memberships = membershipsData?.myMemberships;
+    if (!memberships || !currentUserId) return [];
 
-    return items
-      .filter((membership: any) => {
-        // Only show JOINED members
-        return membership.status === 'JOINED';
-      })
-      .map((membership: any) => {
+    console.dir({ memberships });
+
+    return memberships
+      .filter((membership) => membership.status === 'JOINED')
+      .flatMap((membership): Conversation[] => {
         const intent = membership.intent;
-        if (!intent) return null;
+        if (!intent) return [];
 
         // Get last message from intent (if available)
         const lastMessage =
@@ -644,18 +689,19 @@ export default function ChatsPageIntegrated() {
             ? (intentUnreadData?.intentUnreadCount ?? 0)
             : 0;
 
-        return {
-          id: intent.id,
-          kind: 'channel' as const,
-          title: intent.title || 'Untitled Event',
-          membersCount: intent.joinedCount || 0,
-          preview: lastMessage,
-          lastMessageAt: formatRelativeTime(intent.updatedAt),
-          unread: unreadCount,
-          avatar: intent.owner?.imageUrl || undefined,
-        };
-      })
-      .filter((c: Conversation | null): c is Conversation => c !== null);
+        return [
+          {
+            id: intent.id,
+            kind: 'channel' as const,
+            title: intent.title || 'Untitled Event',
+            membersCount: intent.joinedCount || 0,
+            preview: lastMessage,
+            lastMessageAt: formatRelativeTime(intent.updatedAt),
+            unread: unreadCount,
+            avatar: intent.owner?.imageUrl || undefined,
+          },
+        ];
+      });
   }, [membershipsData, currentUserId, activeChId, intentUnreadData]);
 
   const conversations: Conversation[] =
@@ -867,28 +913,34 @@ export default function ChatsPageIntegrated() {
         });
 
         // Optimistic update for sender - update cache immediately
-        // Use the same query key as useGetDmMessages
+        // Use the same query key as useGetDmMessagesInfinite
         queryClient.setQueryData(
-          dmKeys.messages(editingMessage.threadId, { first: 100 }),
+          dmKeys.messages(editingMessage.threadId, { infinite: true }),
           (oldData: any) => {
-            if (!oldData?.dmMessages?.edges) return oldData;
+            if (!oldData?.pages) return oldData;
             return {
               ...oldData,
-              dmMessages: {
-                ...oldData.dmMessages,
-                edges: oldData.dmMessages.edges.map((edge: any) =>
-                  edge.node.id === editingMessage.id
-                    ? {
-                        ...edge,
-                        node: {
-                          ...edge.node,
-                          content: newContent,
-                          editedAt: new Date().toISOString(),
-                        },
-                      }
-                    : edge
-                ),
-              },
+              pages: oldData.pages.map((page: any) => {
+                if (!page.dmMessages?.edges) return page;
+                return {
+                  ...page,
+                  dmMessages: {
+                    ...page.dmMessages,
+                    edges: page.dmMessages.edges.map((edge: any) =>
+                      edge.node.id === editingMessage.id
+                        ? {
+                            ...edge,
+                            node: {
+                              ...edge.node,
+                              content: newContent,
+                              editedAt: new Date().toISOString(),
+                            },
+                          }
+                        : edge
+                    ),
+                  },
+                };
+              }),
             };
           }
         );
@@ -910,14 +962,17 @@ export default function ChatsPageIntegrated() {
                 ...page,
                 intentMessages: {
                   ...page.intentMessages,
-                  items: page.intentMessages?.items?.map((msg: any) =>
-                    msg.id === editingMessage.id
+                  edges: page.intentMessages?.edges?.map((edge: any) =>
+                    edge.node.id === editingMessage.id
                       ? {
-                          ...msg,
-                          content: newContent,
-                          editedAt: new Date().toISOString(),
+                          ...edge,
+                          node: {
+                            ...edge.node,
+                            content: newContent,
+                            editedAt: new Date().toISOString(),
+                          },
                         }
-                      : msg
+                      : edge
                   ),
                 },
               })),
@@ -947,27 +1002,33 @@ export default function ChatsPageIntegrated() {
         });
 
         // Optimistic update for sender - set deletedAt immediately
-        // Use the same query key as useGetDmMessages
+        // Use the same query key as useGetDmMessagesInfinite
         queryClient.setQueryData(
-          dmKeys.messages(activeDmId, { first: 100 }),
+          dmKeys.messages(activeDmId, { infinite: true }),
           (oldData: any) => {
-            if (!oldData?.dmMessages?.edges) return oldData;
+            if (!oldData?.pages) return oldData;
             return {
               ...oldData,
-              dmMessages: {
-                ...oldData.dmMessages,
-                edges: oldData.dmMessages.edges.map((edge: any) =>
-                  edge.node.id === deletingMessageId
-                    ? {
-                        ...edge,
-                        node: {
-                          ...edge.node,
-                          deletedAt: new Date().toISOString(),
-                        },
-                      }
-                    : edge
-                ),
-              },
+              pages: oldData.pages.map((page: any) => {
+                if (!page.dmMessages?.edges) return page;
+                return {
+                  ...page,
+                  dmMessages: {
+                    ...page.dmMessages,
+                    edges: page.dmMessages.edges.map((edge: any) =>
+                      edge.node.id === deletingMessageId
+                        ? {
+                            ...edge,
+                            node: {
+                              ...edge.node,
+                              deletedAt: new Date().toISOString(),
+                            },
+                          }
+                        : edge
+                    ),
+                  },
+                };
+              }),
             };
           }
         );
@@ -989,13 +1050,16 @@ export default function ChatsPageIntegrated() {
                 ...page,
                 intentMessages: {
                   ...page.intentMessages,
-                  items: page.intentMessages?.items?.map((msg: any) =>
-                    msg.id === deletingMessageId
+                  edges: page.intentMessages?.edges?.map((edge: any) =>
+                    edge.node.id === deletingMessageId
                       ? {
-                          ...msg,
-                          deletedAt: new Date().toISOString(),
+                          ...edge,
+                          node: {
+                            ...edge.node,
+                            deletedAt: new Date().toISOString(),
+                          },
                         }
-                      : msg
+                      : edge
                   ),
                 },
               })),
@@ -1080,7 +1144,7 @@ export default function ChatsPageIntegrated() {
       if (!pages) return [];
 
       const allMessages = pages.flatMap(
-        (page) => page.intentMessages?.edges?.map((e: any) => e.node) || []
+        (page) => page.intentMessages?.edges?.map((e) => e.node) || []
       );
 
       return allMessages.map((msg) => {

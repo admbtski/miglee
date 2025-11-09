@@ -64,6 +64,9 @@ fragment IntentMemberCore on IntentMember {
     name
     imageUrl
   }
+  intent {
+    ...IntentLight
+  }
 }
 
 # Lightweight member fragment (for lists)

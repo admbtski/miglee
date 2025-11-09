@@ -11,6 +11,7 @@ import {
   intentSponsorshipResolver,
   intentInviteLinksResolver,
 } from './fields/intent';
+import { intentMemberIntentResolver } from './fields/intent-member';
 
 export const resolvers: Pick<
   Resolvers,
@@ -22,6 +23,7 @@ export const resolvers: Pick<
   | 'DmMessage'
   | 'IntentChatMessage'
   | 'Intent'
+  | 'IntentMember'
 > = {
   JSON: JSONScalar,
   JSONObject: JSONObjectScalar,
@@ -37,5 +39,8 @@ export const resolvers: Pick<
   Intent: {
     sponsorship: intentSponsorshipResolver,
     inviteLinks: intentInviteLinksResolver,
+  },
+  IntentMember: {
+    intent: intentMemberIntentResolver,
   },
 };

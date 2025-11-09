@@ -312,6 +312,7 @@ type IntentMember {
   note: String
 
   user: User!
+  intent: Intent!
 }
 
 "Intent"
