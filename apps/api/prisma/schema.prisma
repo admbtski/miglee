@@ -494,6 +494,7 @@ model DmMessage {
   threadId  String
   senderId  String
   content   String
+  replyToId String?
   createdAt DateTime  @default(now())
   readAt    DateTime?
   editedAt  DateTime? // added for parity with event chat
@@ -502,6 +503,9 @@ model DmMessage {
   thread    DmThread            @relation(fields: [threadId], references: [id], onDelete: Cascade)
   sender    User                @relation(fields: [senderId], references: [id], onDelete: Cascade)
   reactions DmMessageReaction[]
+
+  replyTo DmMessage?  @relation("DmMessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies DmMessage[] @relation("DmMessageReply")
 
   @@index([threadId, createdAt])
   @@index([senderId, createdAt])

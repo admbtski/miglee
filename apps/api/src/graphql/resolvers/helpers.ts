@@ -96,6 +96,11 @@ export type DmMessageWithGraph = Prisma.DmMessageGetPayload<{
         bUser: true;
       };
     };
+    replyTo: {
+      include: {
+        sender: true;
+      };
+    };
   };
 }>;
 
@@ -648,6 +653,7 @@ export function mapDmMessage(m: DmMessageWithGraph): GQLDmMessage {
     threadId: m.threadId,
     senderId: m.senderId,
     content: m.content,
+    replyToId: m.replyToId ?? null,
     createdAt: m.createdAt,
     readAt: m.readAt ?? null,
     editedAt: m.editedAt ?? null,
@@ -655,6 +661,23 @@ export function mapDmMessage(m: DmMessageWithGraph): GQLDmMessage {
 
     thread: m.thread ? (mapDmThread(m.thread as any) as any) : ({} as any),
     sender: mapUser(m.sender as any),
+    replyTo: m.replyTo
+      ? {
+          id: m.replyTo.id,
+          threadId: m.replyTo.threadId,
+          senderId: m.replyTo.senderId,
+          content: m.replyTo.content,
+          replyToId: m.replyTo.replyToId ?? null,
+          createdAt: m.replyTo.createdAt,
+          readAt: m.replyTo.readAt ?? null,
+          editedAt: m.replyTo.editedAt ?? null,
+          deletedAt: m.replyTo.deletedAt ?? null,
+          thread: {} as any, // Avoid circular reference
+          sender: mapUser(m.replyTo.sender as any),
+          reactions: [], // Don't need reactions for reply preview
+        }
+      : null,
+    reactions: [], // Will be populated by field resolver
   };
 }
 

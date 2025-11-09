@@ -26,6 +26,11 @@ const DM_MESSAGE_INCLUDE = {
       bUser: true,
     },
   },
+  replyTo: {
+    include: {
+      sender: true,
+    },
+  },
 } satisfies Prisma.DmMessageInclude;
 
 /**

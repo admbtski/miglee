@@ -20,9 +20,9 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
 
           <div
             className={[
-              'mx-auto max-w-6xl px-4 sm:px-6 lg:px-8',
+              'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8',
               'py-6 sm:py-8 lg:py-10',
-              'grid gap-4 md:gap-6 md:grid-cols-[minmax(220px,280px)_1fr]',
+              'grid gap-4 md:gap-6 md:grid-cols-[minmax(220px,240px)_1fr]',
               'isolate',
             ].join(' ')}
           >

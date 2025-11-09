@@ -353,6 +353,7 @@ fragment DmMessageCore on DmMessage {
   threadId
   senderId
   content
+  replyToId
   createdAt
   readAt
   editedAt
@@ -364,6 +365,13 @@ fragment DmMessageCore on DmMessage {
   }
   reactions {
     ...MessageReactionCore
+  }
+}
+
+fragment DmMessageWithReply on DmMessage {
+  ...DmMessageCore
+  replyTo {
+    ...DmMessageCore
   }
 }
 

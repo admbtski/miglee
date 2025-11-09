@@ -482,6 +482,7 @@ type DmMessage {
   threadId: ID!
   senderId: ID!
   content: String!
+  replyToId: ID
   createdAt: DateTime!
   readAt: DateTime
   editedAt: DateTime
@@ -489,6 +490,7 @@ type DmMessage {
 
   thread: DmThread!
   sender: User!
+  replyTo: DmMessage
   reactions: [MessageReaction!]!
 }
 
@@ -866,6 +868,7 @@ input CancelPendingOrInviteForUserInput {
 input SendDmMessageInput {
   recipientId: ID!
   content: String!
+  replyToId: ID
 }
 
 input UpdateDmMessageInput {

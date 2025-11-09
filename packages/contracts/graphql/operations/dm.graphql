@@ -35,7 +35,7 @@ query GetDmMessages(
   ) {
     edges {
       node {
-        ...DmMessageCore
+        ...DmMessageWithReply
       }
       cursor
     }
@@ -69,14 +69,14 @@ mutation CreateOrGetDmThread($userId: ID!) {
 # Send a new message (creates thread if doesn't exist)
 mutation SendDmMessage($input: SendDmMessageInput!) {
   sendDmMessage(input: $input) {
-    ...DmMessageCore
+    ...DmMessageWithReply
   }
 }
 
 # Update an existing message
 mutation UpdateDmMessage($id: ID!, $input: UpdateDmMessageInput!) {
   updateDmMessage(id: $id, input: $input) {
-    ...DmMessageCore
+    ...DmMessageWithReply
   }
 }
 
@@ -119,14 +119,14 @@ mutation PublishDmTyping($threadId: ID!, $isTyping: Boolean!) {
 # Subscribe to new messages in a thread
 subscription OnDmMessageAdded($threadId: ID!) {
   dmMessageAdded(threadId: $threadId) {
-    ...DmMessageCore
+    ...DmMessageWithReply
   }
 }
 
 # Subscribe to message updates in a thread
 subscription OnDmMessageUpdated($threadId: ID!) {
   dmMessageUpdated(threadId: $threadId) {
-    ...DmMessageCore
+    ...DmMessageWithReply
   }
 }
 

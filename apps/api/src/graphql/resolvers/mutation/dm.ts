@@ -25,6 +25,11 @@ const DM_MESSAGE_INCLUDE = {
       bUser: true,
     },
   },
+  replyTo: {
+    include: {
+      sender: true,
+    },
+  },
 } satisfies Prisma.DmMessageInclude;
 
 const NOTIFICATION_INCLUDE = {
@@ -103,7 +108,7 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
         });
       }
 
-      const { recipientId, content } = input;
+      const { recipientId, content, replyToId } = input;
 
       // Cannot message yourself
       if (recipientId === user.id) {
@@ -114,6 +119,20 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
 
       // Sanitize content (validates length and format)
       const sanitizedContent = sanitizeDmContent(content);
+
+      // Validate replyToId if provided
+      if (replyToId) {
+        const replyMessage = await prisma.dmMessage.findUnique({
+          where: { id: replyToId },
+          select: { threadId: true },
+        });
+
+        if (!replyMessage) {
+          throw new GraphQLError('Reply message not found.', {
+            extensions: { code: 'NOT_FOUND', field: 'replyToId' },
+          });
+        }
+      }
 
       // Verify recipient exists
       const recipient = await prisma.user.findUnique({
@@ -171,6 +190,7 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
             threadId: thread.id,
             senderId: user.id,
             content: sanitizedContent,
+            replyToId: replyToId || undefined,
           },
           include: DM_MESSAGE_INCLUDE,
         });

@@ -112,6 +112,11 @@ export type Message = {
   readAt?: string | null;
   editedAt?: string | null;
   deletedAt?: string | null;
+  replyTo?: {
+    id: string;
+    author: { id: string; name: string };
+    content: string;
+  } | null;
 };
 
 /* ───────────────────────────── Page ───────────────────────────── */
@@ -727,7 +732,7 @@ export default function ChatsPageIntegrated() {
     setShowUserPicker(true);
   };
 
-  function handleSend(text: string) {
+  function handleSend(text: string, replyToId?: string) {
     // Handle draft conversation (first message creates thread)
     if (draftConversation && !activeDmId && currentUserId) {
       console.log(
@@ -792,6 +797,7 @@ export default function ChatsPageIntegrated() {
           input: {
             recipientId,
             content: text,
+            replyToId: replyToId || undefined,
           },
         },
         {
@@ -817,6 +823,7 @@ export default function ChatsPageIntegrated() {
           input: {
             intentId: active.id,
             content: text,
+            replyToId: replyToId || undefined,
           },
         },
         {
@@ -1028,24 +1035,46 @@ export default function ChatsPageIntegrated() {
         return [];
       }
 
-      return allMessages.map((msg: any) => ({
-        id: msg.id,
-        text: msg.content,
-        at: new Date(msg.createdAt).getTime(),
-        side: (msg.senderId === currentUserId ? 'right' : 'left') as
-          | 'left'
-          | 'right',
-        author: {
-          id: msg.sender.id,
-          name: msg.sender.name || 'Unknown',
-          avatar: msg.sender.imageUrl || undefined,
-        },
-        block: !!msg.deletedAt,
-        reactions: msg.reactions || [],
-        readAt: msg.readAt,
-        editedAt: msg.editedAt,
-        deletedAt: msg.deletedAt,
-      }));
+      return allMessages.map((msg: any) => {
+        // Debug: Check if replyTo exists
+        if (msg.replyTo) {
+          console.log('[DM Message with Reply]', {
+            messageId: msg.id,
+            content: msg.content.substring(0, 30),
+            replyToId: msg.replyToId,
+            replyTo: msg.replyTo,
+          });
+        }
+
+        return {
+          id: msg.id,
+          text: msg.content,
+          at: new Date(msg.createdAt).getTime(),
+          side: (msg.senderId === currentUserId ? 'right' : 'left') as
+            | 'left'
+            | 'right',
+          author: {
+            id: msg.sender.id,
+            name: msg.sender.name || 'Unknown',
+            avatar: msg.sender.imageUrl || undefined,
+          },
+          block: !!msg.deletedAt,
+          reactions: msg.reactions || [],
+          readAt: msg.readAt,
+          editedAt: msg.editedAt,
+          deletedAt: msg.deletedAt,
+          replyTo: msg.replyTo
+            ? {
+                id: msg.replyTo.id,
+                author: {
+                  id: msg.replyTo.sender.id,
+                  name: msg.replyTo.sender.name || 'Unknown',
+                },
+                content: msg.replyTo.content,
+              }
+            : null,
+        };
+      });
     } else {
       const pages = intentMessagesData?.pages;
       if (!pages) return [];
@@ -1054,23 +1083,35 @@ export default function ChatsPageIntegrated() {
         (page: any) => page.intentMessages?.edges?.map((e: any) => e.node) || []
       );
 
-      return allMessages.map((msg: any) => ({
-        id: msg.id,
-        text: msg.content,
-        at: new Date(msg.createdAt).getTime(),
-        side: (msg.authorId === currentUserId ? 'right' : 'left') as
-          | 'left'
-          | 'right',
-        author: {
-          id: msg.author.id,
-          name: msg.author.name || 'Unknown',
-          avatar: msg.author.imageUrl || undefined,
-        },
-        block: !!msg.deletedAt,
-        reactions: msg.reactions || [],
-        editedAt: msg.editedAt,
-        deletedAt: msg.deletedAt,
-      }));
+      return allMessages.map((msg: any) => {
+        return {
+          id: msg.id,
+          text: msg.content,
+          at: new Date(msg.createdAt).getTime(),
+          side: (msg.authorId === currentUserId ? 'right' : 'left') as
+            | 'left'
+            | 'right',
+          author: {
+            id: msg.author.id,
+            name: msg.author.name || 'Unknown',
+            avatar: msg.author.imageUrl || undefined,
+          },
+          block: !!msg.deletedAt,
+          reactions: msg.reactions || [],
+          editedAt: msg.editedAt,
+          deletedAt: msg.deletedAt,
+          replyTo: msg.replyTo
+            ? {
+                id: msg.replyTo.id,
+                author: {
+                  id: msg.replyTo.author.id,
+                  name: msg.replyTo.author.name || 'Unknown',
+                },
+                content: msg.replyTo.content,
+              }
+            : null,
+        };
+      });
     }
   }, [active, currentUserId, dmMessagesData, intentMessagesData]);
 
@@ -1305,7 +1346,7 @@ export function ChatShell({
   const [list, thread] = React.Children.toArray(children);
   return (
     <div className="w-full h-full">
-      <div className="hidden md:grid md:h-full md:grid-cols-[clamp(280px,22vw,360px)_minmax(0,1fr)] md:gap-6">
+      <div className="hidden md:grid md:h-full md:grid-cols-[clamp(260px,20vw,360px)_minmax(0,1fr)] md:gap-6">
         {list}
         {thread}
       </div>
@@ -1493,7 +1534,7 @@ export function ChatList({
                 <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
                   <div className="text-xs text-zinc-500">{c.lastMessageAt}</div>
                   {c.unread > 0 && (
-                    <span className="inline-flex h-5 min-w-[1.25rem] shrink-0 justify-center rounded-full bg-indigo-600 px-2 text-[11px] font-semibold leading-none text-white">
+                    <span className="inline-flex items-center h-5 min-w-[1.25rem] shrink-0 justify-center rounded-full bg-indigo-600 px-2 text-[11px] font-semibold leading-none text-white">
                       {c.unread}
                     </span>
                   )}
@@ -1555,7 +1596,7 @@ export function ChatThread({
   loading?: boolean;
   typingUserNames?: string[] | null;
   onBackMobile: () => void;
-  onSend: (text: string) => void;
+  onSend: (text: string, replyToId?: string) => void;
   onLoadMore?: () => void;
   onTyping?: (isTyping: boolean) => void;
   onAddReaction?: (messageId: string, emoji: string) => void;
@@ -1574,7 +1615,11 @@ export function ChatThread({
   const [showDetails, setShowDetails] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Start with a large number so we can prepend (load older messages)
+  const INITIAL_INDEX = 100000;
+  const [firstItemIndex, setFirstItemIndex] = useState(
+    INITIAL_INDEX - messages.length
+  );
 
   // Reply state
   const [replyToMessage, setReplyToMessage] = useState<{
@@ -1582,6 +1627,11 @@ export function ChatThread({
     text: string;
     author: string;
   } | null>(null);
+
+  // Track the last message ID to detect new messages (not prepended old ones)
+  const lastMessageIdRef = useRef<string | null>(
+    messages.length > 0 ? (messages[messages.length - 1]?.id ?? null) : null
+  );
 
   // Throttled typing handler - max 1 request per 2s
   const lastTypingSent = useRef<number>(0);
@@ -1622,28 +1672,38 @@ export function ChatThread({
     [onTyping]
   );
 
-  // Auto-scroll to bottom on new messages (only if already at bottom)
-  const prevMessagesLength = useRef(messages.length);
+  // Auto-scroll to bottom on new messages if already at bottom
+  // Only count NEW messages (appended at end), not old ones (prepended at start)
   useEffect(() => {
-    // If new messages and user is at bottom, scroll down
-    if (messages.length > prevMessagesLength.current && isAtBottom) {
-      virtuosoRef.current?.scrollToIndex({
-        index: messages.length - 1,
-        behavior: 'auto',
-      });
-      setNewMessagesCount(0);
-    }
-    // If new messages and user scrolled up, show button
-    else if (messages.length > prevMessagesLength.current && !isAtBottom) {
-      setNewMessagesCount((prev) => prev + 1);
+    if (messages.length === 0) return;
+
+    const currentLastMessage = messages[messages.length - 1];
+    if (!currentLastMessage) return;
+
+    const lastMessageId = lastMessageIdRef.current;
+
+    // Check if the last message changed (new message appended)
+    if (lastMessageId && currentLastMessage.id !== lastMessageId) {
+      // New message was added at the end
+      if (isAtBottom) {
+        virtuosoRef.current?.scrollToIndex({
+          index: 'LAST',
+          behavior: 'auto',
+        });
+        setNewMessagesCount(0);
+      } else {
+        // User scrolled up, increment counter
+        setNewMessagesCount((prev) => prev + 1);
+      }
     }
 
-    prevMessagesLength.current = messages.length;
-  }, [messages.length, isAtBottom]);
+    // Update the last message ID
+    lastMessageIdRef.current = currentLastMessage.id;
+  }, [messages, isAtBottom]);
 
   const scrollToBottom = () => {
     virtuosoRef.current?.scrollToIndex({
-      index: messages.length - 1,
+      index: 'LAST',
       behavior: 'smooth',
     });
     setNewMessagesCount(0);
@@ -1652,12 +1712,37 @@ export function ChatThread({
   function submit() {
     const text = input.trim();
     if (!text) return;
-    onSend(text);
+    onSend(text, replyToMessage?.id);
     setInput('');
     setReplyToMessage(null); // Clear reply after sending
     // Stop typing indicator after sending
     onTyping?.(false);
   }
+
+  const prevMessagesLengthRef = useRef(messages.length);
+  const isLoadingMoreRef = useRef(false);
+
+  // Adjust firstItemIndex when prepending messages (loading older)
+  useEffect(() => {
+    const currentLength = messages.length;
+    const prevLength = prevMessagesLengthRef.current;
+
+    if (currentLength > prevLength && isLoadingMoreRef.current) {
+      // Messages were prepended (added at the beginning)
+      const prependedCount = currentLength - prevLength;
+      setFirstItemIndex((prev) => prev - prependedCount);
+      isLoadingMoreRef.current = false;
+    }
+
+    prevMessagesLengthRef.current = currentLength;
+  }, [messages.length]);
+
+  const handleStartReached = () => {
+    if (!onLoadMore || loading || isLoadingMoreRef.current) return;
+    console.log('[Virtuoso] Start reached, loading more...');
+    isLoadingMoreRef.current = true;
+    onLoadMore();
+  };
 
   return (
     <div className="grid h-full max-h-screen min-h-[540px] min-w-0 grid-rows-[auto_1fr_auto]">
@@ -1730,27 +1815,25 @@ export function ChatThread({
               <Virtuoso
                 ref={virtuosoRef}
                 data={messages}
-                initialTopMostItemIndex={messages.length - 1}
-                followOutput="auto"
+                firstItemIndex={firstItemIndex}
+                initialTopMostItemIndex={firstItemIndex + messages.length - 1}
+                followOutput={isAtBottom ? 'smooth' : false}
                 atBottomStateChange={setIsAtBottom}
-                startReached={() => {
-                  if (onLoadMore && !loading && !isLoadingMore) {
-                    console.log('[Virtuoso] Reached top, loading more...');
-                    setIsLoadingMore(true);
-                    onLoadMore();
-                    // Reset flag after a delay to prevent rapid calls
-                    setTimeout(() => setIsLoadingMore(false), 1000);
-                  }
+                startReached={handleStartReached}
+                computeItemKey={(index, m) => m.id}
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  overflowX: 'hidden',
                 }}
-                style={{ height: '100%', overflowX: 'hidden' }}
-                className="px-4 md:px-5"
                 itemContent={(index, m) =>
                   m.side === 'right' ? (
                     <MsgOut
                       key={m.id}
+                      className="pr-2"
                       message={m}
                       time={fmtTime(m.at)}
-                      isLast={index === messages.length - 1}
+                      isLast={index === firstItemIndex + messages.length - 1}
                       onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
                       onRemoveReaction={(emoji) =>
                         onRemoveReaction?.(m.id, emoji)
@@ -1777,6 +1860,7 @@ export function ChatThread({
                   ) : (
                     <MsgIn
                       key={m.id}
+                      className="pl-2"
                       message={m}
                       time={fmtTime(m.at)}
                       block={m.block}
@@ -1801,12 +1885,14 @@ export function ChatThread({
                   )
                 }
                 components={{
-                  Footer: () =>
-                    typingUserNames && typingUserNames.length > 0 ? (
-                      <div className="px-4 md:px-5">
+                  // Stała wysokość kontenera na typing → brak skoków przy pojawianiu/zanikaniu
+                  Footer: () => (
+                    <div className="px-4 md:px-5 min-h-[28px]">
+                      {typingUserNames && typingUserNames.length > 0 ? (
                         <TypingIndicator names={typingUserNames} />
-                      </div>
-                    ) : null,
+                      ) : null}
+                    </div>
+                  ),
                   Header: () =>
                     loading ? (
                       <div className="flex justify-center py-4">
@@ -1839,22 +1925,40 @@ export function ChatThread({
           <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
             {/* Reply Preview */}
             {replyToMessage && (
-              <div className="mx-auto max-w-3xl mb-2 flex items-center gap-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-2">
+              <div className="mx-auto max-w-3xl mb-3 flex items-start gap-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 px-4 py-3 border-l-4 border-indigo-500 shadow-sm">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                    Replying to {replyToMessage.author}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                      Odpowiadasz na
+                    </span>
+                    <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                      {replyToMessage.author}
+                    </span>
                   </div>
-                  <div className="text-sm text-zinc-800 dark:text-zinc-200 truncate">
-                    {replyToMessage.text}
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 italic">
+                    "{replyToMessage.text}"
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setReplyToMessage(null)}
-                  className="flex-shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                  aria-label="Cancel reply"
+                  className="flex-shrink-0 p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-white/50 dark:hover:text-zinc-200 dark:hover:bg-zinc-800/50 transition-colors"
+                  aria-label="Anuluj odpowiedź"
+                  title="Anuluj odpowiedź"
                 >
-                  ✕
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
                 </button>
               </div>
             )}
@@ -1929,6 +2033,7 @@ function Bubble({
   block,
   editedAt,
   deletedAt,
+  replyTo,
 }: {
   align?: 'left' | 'right';
   children: React.ReactNode;
@@ -1936,9 +2041,14 @@ function Bubble({
   block?: boolean;
   editedAt?: string | null;
   deletedAt?: string | null;
+  replyTo?: {
+    id: string;
+    author: { id: string; name: string };
+    content: string;
+  } | null;
 }) {
   const base =
-    'rounded-2xl px-4 py-2.5 text-sm inline-flex items-end gap-2 shadow-sm';
+    'rounded-2xl px-4 py-2.5 text-sm inline-flex shadow-sm max-w-full break-words';
   const cls =
     align === 'right'
       ? 'bg-[#4A45FF] text-white rounded-br-md'
@@ -1948,22 +2058,59 @@ function Bubble({
   const timeCls =
     align === 'right' ? 'text-[10px] opacity-90' : 'text-[10px] text-zinc-400';
 
+  // Debug: Log when replyTo is present
+  if (replyTo) {
+    console.log('[Bubble] Rendering with replyTo:', {
+      hasReplyTo: !!replyTo,
+      replyToAuthor: replyTo.author.name,
+      replyToContent: replyTo.content.substring(0, 30),
+      align,
+      deletedAt,
+      willRender: !deletedAt,
+    });
+  }
+
   return (
-    <div className="flex w-full">
-      <div className={[base, cls].join(' ')}>
-        {deletedAt ? (
-          <span className="leading-5 italic text-neutral-400">
-            Usunięta wiadomość
-          </span>
-        ) : (
-          <>
-            <span className="leading-5 whitespace-pre-wrap">{children}</span>
-            {editedAt && (
-              <span className="text-xs text-neutral-400 ml-1">(edited)</span>
-            )}
-          </>
+    <div className="flex w-full min-w-0">
+      <div className={[base, cls].join(' ') + ' flex-col items-start'}>
+        {/* Reply Preview */}
+        {replyTo && !deletedAt && (
+          <div
+            className={`mb-2 px-3 py-2 rounded-lg border-l-2 ${
+              align === 'right'
+                ? 'bg-white/10 border-white/30'
+                : 'bg-zinc-200/50 dark:bg-zinc-700/50 border-zinc-400 dark:border-zinc-500'
+            }`}
+          >
+            <div className="text-xs font-medium opacity-80 mb-0.5">
+              {replyTo.author.name}
+            </div>
+            <div className="text-xs opacity-70 line-clamp-2">
+              {replyTo.content}
+            </div>
+          </div>
         )}
-        {time && <span className={timeCls}>{time}</span>}
+
+        {/* Main Content */}
+        <div className="flex items-end gap-2 w-full">
+          {deletedAt ? (
+            <span className="leading-5 italic text-neutral-400">
+              Usunięta wiadomość
+            </span>
+          ) : (
+            <>
+              <span className="leading-5 whitespace-pre-wrap break-words overflow-wrap-anywhere min-w-0">
+                {children}
+              </span>
+              {editedAt && (
+                <span className="text-xs text-neutral-400 ml-1 flex-shrink-0">
+                  (edited)
+                </span>
+              )}
+            </>
+          )}
+          {time && <span className={timeCls + ' flex-shrink-0'}>{time}</span>}
+        </div>
       </div>
     </div>
   );
@@ -1977,6 +2124,7 @@ const MsgIn = ({
   onRemoveReaction,
   onReply,
   onReport,
+  className,
 }: {
   children: React.ReactNode;
   message: Message;
@@ -1986,6 +2134,7 @@ const MsgIn = ({
   onRemoveReaction: (emoji: string) => void;
   onReply: () => void;
   onReport: () => void;
+  className?: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showReactionsBar, setShowReactionsBar] = useState(false);
@@ -1996,8 +2145,8 @@ const MsgIn = ({
 
   return (
     <div
-      className={`group relative flex items-center gap-2 mr-auto ${
-        hasReactions ? 'mb-3' : 'mb-1'
+      className={`group relative flex items-center gap-2 mr-auto ${className} ${
+        hasReactions ? 'mb-6' : 'mb-3'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -2029,13 +2178,14 @@ const MsgIn = ({
       />
 
       {/* Message Bubble */}
-      <div className="relative max-w-[75%]">
+      <div className="relative max-w-[75%] min-w-0">
         <Bubble
           align="left"
           time={time}
           block={block}
           editedAt={message.editedAt}
           deletedAt={message.deletedAt}
+          replyTo={message.replyTo}
         >
           {children}
         </Bubble>
@@ -2085,6 +2235,7 @@ const MsgOut = ({
   onReport,
   onEdit,
   onDelete,
+  className,
 }: {
   children: React.ReactNode;
   message: Message;
@@ -2096,6 +2247,7 @@ const MsgOut = ({
   onReport: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  className?: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showReactionsBar, setShowReactionsBar] = useState(false);
@@ -2106,7 +2258,7 @@ const MsgOut = ({
 
   return (
     <div
-      className={`group relative flex items-center gap-2 ml-auto justify-end ${
+      className={`group relative flex items-center gap-2 ml-auto justify-end ${className} ${
         hasReactions ? 'mb-3' : 'mb-1'
       }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -2157,12 +2309,13 @@ const MsgOut = ({
       </div>
 
       {/* Message Bubble */}
-      <div className="relative max-w-[75%]">
+      <div className="relative max-w-[75%] min-w-0">
         <Bubble
           align="right"
           time={time}
           editedAt={message.editedAt}
           deletedAt={message.deletedAt}
+          replyTo={message.replyTo}
         >
           {children}
         </Bubble>
