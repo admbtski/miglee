@@ -11,7 +11,6 @@ import {
 } from '@tanstack/react-query';
 import {
   type GetIntentMessagesQuery,
-  type GetIntentMessagesQueryVariables,
   type GetIntentUnreadCountQuery,
   type GetIntentUnreadCountQueryVariables,
   type SendIntentMessageMutation,
@@ -64,7 +63,7 @@ export function useGetIntentMessages(
   intentId: string,
   options?: Omit<
     UseInfiniteQueryOptions<GetIntentMessagesQuery, Error>,
-    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam' | 'select'
   >
 ) {
   return useInfiniteQuery<GetIntentMessagesQuery, Error>({

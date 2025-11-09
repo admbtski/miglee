@@ -1080,10 +1080,10 @@ export default function ChatsPageIntegrated() {
       if (!pages) return [];
 
       const allMessages = pages.flatMap(
-        (page: any) => page.intentMessages?.edges?.map((e: any) => e.node) || []
+        (page) => page.intentMessages?.edges?.map((e: any) => e.node) || []
       );
 
-      return allMessages.map((msg: any) => {
+      return allMessages.map((msg) => {
         return {
           id: msg.id,
           text: msg.content,

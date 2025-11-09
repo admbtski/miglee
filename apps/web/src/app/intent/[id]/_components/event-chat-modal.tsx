@@ -2,7 +2,7 @@
 
 import { Modal } from '@/components/feedback/modal';
 import { X } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import {
   useGetIntentMessages,
   useSendIntentMessage,
@@ -59,8 +59,11 @@ export function EventChatModal({
     null
   );
 
-  // Typing state
+  // Typing state with auto-clear timeouts
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const typingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map()
+  );
 
   // Fetch messages (infinite query)
   const {
@@ -86,6 +89,11 @@ export function EventChatModal({
     intentId,
     enabled: open,
     onMessage: (message) => {
+      // Invalidate queries to fetch new messages
+      queryClient.invalidateQueries({
+        queryKey: eventChatKeys.messages(intentId),
+      });
+
       // Auto-mark as read
       if (message.authorId !== currentUserId) {
         markRead.mutate({ intentId });
@@ -162,16 +170,35 @@ export function EventChatModal({
     },
   });
 
-  // Typing indicator subscription
+  // Typing indicator subscription with auto-clear
   useIntentTyping({
     intentId,
     enabled: open,
     onTyping: ({ userId, isTyping }) => {
+      // Don't show typing for current user
       if (userId === currentUserId) return;
+
+      // Clear existing timeout
+      const existingTimeout = typingTimeouts.current.get(`intent-${userId}`);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+        typingTimeouts.current.delete(`intent-${userId}`);
+      }
+
       setTypingUsers((prev) => {
         const next = new Set(prev);
         if (isTyping) {
           next.add(userId);
+          // Auto-clear after 5 seconds
+          const timeout = setTimeout(() => {
+            setTypingUsers((p) => {
+              const n = new Set(p);
+              n.delete(userId);
+              return n;
+            });
+            typingTimeouts.current.delete(`intent-${userId}`);
+          }, 5000);
+          typingTimeouts.current.set(`intent-${userId}`, timeout);
         } else {
           next.delete(userId);
         }

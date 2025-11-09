@@ -197,9 +197,9 @@ export function useIntentReactionAdded(params: {
               const reaction = result.data?.intentReactionAdded;
               if (reaction) {
                 // Invalidate messages to refetch with updated reactions
-                // Use prefix match to invalidate all queries for this intent
+                // Use correct query key structure: ['eventChat', 'messages', intentId]
                 queryClient.invalidateQueries({
-                  queryKey: ['event-chat', 'messages', intentId],
+                  queryKey: ['eventChat', 'messages', intentId],
                 });
 
                 console.log(
