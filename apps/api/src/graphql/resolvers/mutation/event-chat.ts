@@ -138,10 +138,10 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
         select: { userId: true },
       });
 
-      const mutedUserIds = new Set(mutes.map((m) => m.userId));
+      const mutedUserIds = new Set(mutes?.map((m) => m.userId) ?? []);
 
       // Create notifications for non-muted members
-      const notificationsToCreate = members
+      const notificationsToCreate = (members ?? [])
         .filter((m) => !mutedUserIds.has(m.userId))
         .map((m) => ({
           kind: PrismaNotificationKind.NEW_MESSAGE,

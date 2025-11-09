@@ -176,6 +176,7 @@ export function EventActions({ event }: EventActionsProps) {
         onClose={() => setChatOpen(false)}
         intentId={event.id}
         intentTitle={event.title}
+        membersCount={event.joinedCount}
       />
     </div>
   );

@@ -18,13 +18,13 @@ interface RateLimitConfig {
 const RATE_LIMITS = {
   // Event chat: 10 messages per 30 seconds per (user, intent)
   eventChatSend: {
-    maxRequests: 10,
+    maxRequests: 30,
     windowSeconds: 30,
     burstLimit: 5,
   },
   // DM: 10 messages per 30 seconds per user per thread
   dmSend: {
-    maxRequests: 10,
+    maxRequests: 30,
     windowSeconds: 30,
     burstLimit: 5,
   },

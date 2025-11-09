@@ -1,22 +1,42 @@
 'use client';
 
 import { Modal } from '@/components/feedback/modal';
-import { X, Send, Loader2 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { X } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import {
   useGetIntentMessages,
   useSendIntentMessage,
+  useMarkIntentChatRead,
+  usePublishIntentTyping,
+  eventChatKeys,
 } from '@/lib/api/event-chat';
-import { useIntentMessageAdded } from '@/lib/api/event-chat-subscriptions';
+import {
+  useIntentMessageAdded,
+  useIntentMessageUpdated,
+  useIntentMessageDeleted,
+  useIntentTyping,
+} from '@/lib/api/event-chat-subscriptions';
+import {
+  useAddIntentReaction,
+  useRemoveIntentReaction,
+} from '@/lib/api/reactions';
+import { useIntentReactionAdded } from '@/lib/api/reactions-subscriptions';
+import {
+  useEditIntentMessage,
+  useDeleteIntentMessage,
+} from '@/lib/api/message-actions';
 import { useQueryClient } from '@tanstack/react-query';
-import { eventChatKeys } from '@/lib/api/event-chat';
 import { useMeQuery } from '@/lib/api/auth';
+import { ChatThread, type Message } from '@/app/account/chats/page';
+import { EditMessageModal } from '@/components/chat/EditMessageModal';
+import { DeleteConfirmModal } from '@/components/chat/DeleteConfirmModal';
 
 type EventChatModalProps = {
   open: boolean;
   onClose: () => void;
   intentId: string;
   intentTitle: string;
+  membersCount?: number;
 };
 
 export function EventChatModal({
@@ -24,72 +44,307 @@ export function EventChatModal({
   onClose,
   intentId,
   intentTitle,
+  membersCount = 0,
 }: EventChatModalProps) {
-  const [messageText, setMessageText] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-
-  // Get current user
   const { data: authData } = useMeQuery();
   const currentUserId = authData?.me?.id;
 
+  // Edit/Delete state
+  const [editingMessage, setEditingMessage] = useState<{
+    id: string;
+    content: string;
+  } | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
+    null
+  );
+
+  // Typing state
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+
   // Fetch messages (infinite query)
-  const { data: messagesData, isLoading } = useGetIntentMessages(intentId, {
+  const {
+    data: messagesData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+  } = useGetIntentMessages(intentId, {
     enabled: open,
   });
 
-  // Send message mutation
+  // Mutations
   const sendMessage = useSendIntentMessage();
+  const markRead = useMarkIntentChatRead();
+  const publishTyping = usePublishIntentTyping();
+  const addReaction = useAddIntentReaction();
+  const removeReaction = useRemoveIntentReaction();
+  const editMessage = useEditIntentMessage();
+  const deleteMessage = useDeleteIntentMessage();
 
-  // Subscribe to new messages
+  // Subscriptions
   useIntentMessageAdded({
     intentId,
     enabled: open,
-    onMessage: () => {
-      // Invalidate to refetch messages
-      queryClient.invalidateQueries({
-        queryKey: eventChatKeys.messages(intentId),
+    onMessage: (message) => {
+      // Auto-mark as read
+      if (message.authorId !== currentUserId) {
+        markRead.mutate({ intentId });
+      }
+    },
+  });
+
+  useIntentMessageUpdated({
+    intentId,
+    enabled: open,
+    onMessageUpdated: (message) => {
+      // Update cache directly (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(intentId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              intentMessages: {
+                ...page.intentMessages,
+                edges: page.intentMessages?.edges?.map((edge: any) =>
+                  edge.node.id === message.id
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          content: message.content,
+                          editedAt: message.editedAt,
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+    },
+  });
+
+  useIntentMessageDeleted({
+    intentId,
+    enabled: open,
+    onMessageDeleted: (event) => {
+      // Update cache directly (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(intentId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              intentMessages: {
+                ...page.intentMessages,
+                edges: page.intentMessages?.edges?.map((edge: any) =>
+                  edge.node.id === event.messageId
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          deletedAt: event.deletedAt,
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+    },
+  });
+
+  // Typing indicator subscription
+  useIntentTyping({
+    intentId,
+    enabled: open,
+    onTyping: ({ userId, isTyping }) => {
+      if (userId === currentUserId) return;
+      setTypingUsers((prev) => {
+        const next = new Set(prev);
+        if (isTyping) {
+          next.add(userId);
+        } else {
+          next.delete(userId);
+        }
+        return next;
       });
     },
   });
 
-  // Extract messages from pages
-  const messages =
-    messagesData?.pages?.flatMap((page) => page.intentMessages.items) ?? [];
+  // Reaction subscription
+  useIntentReactionAdded({
+    intentId,
+    enabled: open,
+  });
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length]);
+  // Map messages to ChatThread format
+  const messages: Message[] = useMemo(() => {
+    if (!messagesData?.pages || !currentUserId) return [];
 
-  const handleSend = async () => {
-    if (!messageText.trim() || sendMessage.isPending) return;
+    const pages = messagesData.pages;
+    // Extract messages from edges structure: { edges: [{ node, cursor }], pageInfo }
+    const allMessages = pages.flatMap(
+      (page: any) =>
+        page.intentMessages?.edges?.map((edge: any) => edge.node) || []
+    );
 
-    const text = messageText.trim();
-    setMessageText('');
+    return allMessages.map((msg: any) => ({
+      id: msg.id,
+      text: msg.content,
+      at: new Date(msg.createdAt).getTime(),
+      side: (msg.authorId === currentUserId ? 'right' : 'left') as
+        | 'left'
+        | 'right',
+      author: {
+        id: msg.author.id,
+        name: msg.author.name || 'Unknown',
+        avatar: msg.author.imageUrl || undefined,
+      },
+      block: !!msg.deletedAt,
+      reactions: msg.reactions || [],
+      editedAt: msg.editedAt,
+      deletedAt: msg.deletedAt,
+      replyTo: msg.replyTo
+        ? {
+            id: msg.replyTo.id,
+            author: {
+              id: msg.replyTo.author.id,
+              name: msg.replyTo.author.name || 'Unknown',
+            },
+            content: msg.replyTo.content,
+          }
+        : null,
+    }));
+  }, [messagesData, currentUserId]);
 
-    try {
-      await sendMessage.mutateAsync({
+  // Handlers
+  const handleSend = (text: string, replyToId?: string) => {
+    sendMessage.mutate(
+      {
         input: {
           intentId,
           content: text,
+          replyToId: replyToId || undefined,
         },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: eventChatKeys.messages(intentId),
+          });
+        },
+      }
+    );
+  };
+
+  const handleEditMessage = (messageId: string, content: string) => {
+    setEditingMessage({ id: messageId, content });
+  };
+
+  const handleSaveEdit = async (newContent: string) => {
+    if (!editingMessage) return;
+
+    try {
+      await editMessage.mutateAsync({
+        id: editingMessage.id,
+        input: { content: newContent },
       });
+
+      // Optimistic update (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(intentId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              intentMessages: {
+                ...page.intentMessages,
+                edges: page.intentMessages?.edges?.map((edge: any) =>
+                  edge.node.id === editingMessage.id
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          content: newContent,
+                          editedAt: new Date().toISOString(),
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+
+      setEditingMessage(null);
     } catch (error) {
-      console.error('Failed to send message:', error);
-      // Restore message on error
-      setMessageText(text);
+      console.error('Failed to edit message:', error);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  const handleDeleteMessage = (messageId: string) => {
+    setDeletingMessageId(messageId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingMessageId) return;
+
+    try {
+      await deleteMessage.mutateAsync({
+        id: deletingMessageId,
+        soft: true,
+        intentId,
+      });
+
+      // Optimistic update (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(intentId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              intentMessages: {
+                ...page.intentMessages,
+                edges: page.intentMessages?.edges?.map((edge: any) =>
+                  edge.node.id === deletingMessageId
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          deletedAt: new Date().toISOString(),
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+
+      setDeletingMessageId(null);
+    } catch (error) {
+      console.error('Failed to delete message:', error);
     }
   };
+
+  // Get typing user names (simplified - would need to fetch user data)
+  const typingUserNames =
+    typingUsers.size > 0 ? [`${typingUsers.size} osób`] : null;
 
   const header = (
     <div className="flex items-center justify-between">
@@ -111,94 +366,48 @@ export function EventChatModal({
   );
 
   const content = (
-    <div className="flex h-[500px] flex-col">
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {isLoading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
-          </div>
-        )}
+    <div className="h-[calc(100vh-200px)] min-h-[500px]">
+      <ChatThread
+        kind="channel"
+        title={intentTitle}
+        members={membersCount}
+        messages={messages}
+        loading={isLoading}
+        typingUserNames={typingUserNames}
+        onBackMobile={() => {}}
+        onSend={handleSend}
+        onLoadMore={hasNextPage ? fetchNextPage : undefined}
+        onTyping={(isTyping) => {
+          publishTyping.mutate({ intentId, isTyping });
+        }}
+        onAddReaction={(messageId, emoji) => {
+          addReaction.mutate({ messageId, emoji });
+        }}
+        onRemoveReaction={(messageId, emoji) => {
+          removeReaction.mutate({ messageId, emoji });
+        }}
+        onEditMessage={(messageId, content) => {
+          handleEditMessage(messageId, content);
+        }}
+        onDeleteMessage={handleDeleteMessage}
+      />
 
-        {!isLoading && messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Brak wiadomości
-            </p>
-            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
-              Rozpocznij rozmowę!
-            </p>
-          </div>
-        )}
+      {/* Edit Message Modal */}
+      <EditMessageModal
+        isOpen={!!editingMessage}
+        onClose={() => setEditingMessage(null)}
+        onSave={handleSaveEdit}
+        initialContent={editingMessage?.content || ''}
+        isLoading={editMessage.isPending}
+      />
 
-        {messages.map((message: any) => {
-          const isOwn = message.sender?.id === currentUserId;
-          return (
-            <div
-              key={message.id}
-              className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                  isOwn
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
-                }`}
-              >
-                {!isOwn && (
-                  <p className="mb-1 text-xs font-medium opacity-70">
-                    {message.sender?.name ?? 'Unknown'}
-                  </p>
-                )}
-                <p className="whitespace-pre-wrap break-words text-sm">
-                  {message.content}
-                </p>
-                <p
-                  className={`mt-1 text-xs ${
-                    isOwn
-                      ? 'text-blue-100'
-                      : 'text-neutral-500 dark:text-neutral-400'
-                  }`}
-                >
-                  {new Date(message.createdAt).toLocaleTimeString('pl-PL', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Area */}
-      <div className="border-t border-neutral-200 p-4 dark:border-neutral-800">
-        <div className="flex gap-2">
-          <textarea
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Napisz wiadomość..."
-            rows={2}
-            className="flex-1 resize-none rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-500"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!messageText.trim() || sendMessage.isPending}
-            className="flex h-auto items-center justify-center rounded-xl bg-blue-600 px-4 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-800"
-          >
-            {sendMessage.isPending ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Send className="h-5 w-5" />
-            )}
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-          Naciśnij Enter aby wysłać, Shift+Enter dla nowej linii
-        </p>
-      </div>
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deletingMessageId}
+        onClose={() => setDeletingMessageId(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteMessage.isPending}
+      />
     </div>
   );
 
@@ -206,7 +415,7 @@ export function EventChatModal({
     <Modal
       open={open}
       onClose={onClose}
-      size="md"
+      size="xl"
       density="compact"
       header={header}
       content={content}

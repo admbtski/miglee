@@ -207,9 +207,10 @@ export function pickLocation(
  * Helpers (viewer-aware visibility)
  * ========================================================================== */
 
-function getViewerMembership(i: IntentWithGraph, viewerId?: string) {
+function getViewerMembership(i: IntentWithGraph | any, viewerId?: string) {
+  // Safe access to members - may be undefined if not included
   const m = viewerId
-    ? (i.members.find((mm) => mm.userId === viewerId) as
+    ? ((i.members ?? []).find((mm: any) => mm.userId === viewerId) as
         | (IntentMemberWithUsers & { status: string; role: string })
         | undefined)
     : undefined;
@@ -332,14 +333,17 @@ export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
 
 const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
 
-function computeIntentDerived(i: IntentWithGraph) {
+function computeIntentDerived(i: IntentWithGraph | any) {
   const now = new Date();
   const lockHrs = 6; // spójne z resolverem listy
 
   const startDate = new Date(i.startAt);
   const endDate = new Date(i.endAt ?? i.startAt);
 
-  const joinedCount = i.members.filter((m) => m.status === 'JOINED').length;
+  // Safe access to members - may be undefined if not included
+  const joinedCount = (i.members ?? []).filter(
+    (m: any) => m.status === 'JOINED'
+  ).length;
   const isFull =
     typeof i.max === 'number' && i.max > 0 ? joinedCount >= i.max : false;
   const hasStarted = now >= startDate;
@@ -451,12 +455,13 @@ function computeJoinOpenAndReason(i: IntentWithGraph): {
   return { joinOpen: true, lockReason: null };
 }
 
-function resolveOwnerFromMembers(i: IntentWithGraph): GQLUser | null {
+function resolveOwnerFromMembers(i: IntentWithGraph | any): GQLUser | null {
   if ((i as any).owner) {
     return mapUser((i as any).owner);
   }
-  const owner = i.members.find(
-    (m) => m.role === 'OWNER' && m.status === 'JOINED' && (m as any).user
+  // Safe access to members - may be undefined if not included
+  const owner = (i.members ?? []).find(
+    (m: any) => m.role === 'OWNER' && m.status === 'JOINED' && (m as any).user
   ) as any;
   return owner ? mapUser(owner.user) : null;
 }
@@ -487,7 +492,8 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     i.membersVisibility as MembersVisibility,
     { isOwnerOrModerator, isParticipant }
   );
-  const visibleMembers = canSeeMembers ? i.members : [];
+  // Safe access to members - may be undefined if not included
+  const visibleMembers = canSeeMembers ? (i.members ?? []) : [];
 
   // Address/online visibility (po rolach)
   const canSeeLocationAndUrl = canSeeWithRole(
@@ -566,9 +572,9 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     deleteReason: i.deleteReason ?? null,
     isDeleted,
 
-    // Collections
-    categories: i.categories.map(mapCategory),
-    tags: i.tags.map(mapTag),
+    // Collections (safe access - may be undefined if not included)
+    categories: (i.categories ?? []).map(mapCategory),
+    tags: (i.tags ?? []).map(mapTag),
 
     // Convenience relations
     owner: resolveOwnerFromMembers(i),
