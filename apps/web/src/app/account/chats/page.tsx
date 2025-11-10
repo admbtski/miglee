@@ -397,6 +397,7 @@ export default function ChatsPageIntegrated() {
       // Update cache directly instead of refetching
       // Use the same query key as useGetDmMessagesInfinite
       queryClient.setQueryData(
+        // @ts-expect-error - infinite is used internally by react-query
         dmKeys.messages(threadId, { infinite: true }),
         (oldData: any) => {
           console.log(
@@ -471,6 +472,7 @@ export default function ChatsPageIntegrated() {
       // Update cache directly - set deletedAt instead of removing message
       // Use the same query key as useGetDmMessagesInfinite
       queryClient.setQueryData(
+        // @ts-expect-error - infinite is used internally by react-query
         dmKeys.messages(threadId, { infinite: true }),
         (oldData: any) => {
           console.log(
@@ -915,6 +917,7 @@ export default function ChatsPageIntegrated() {
         // Optimistic update for sender - update cache immediately
         // Use the same query key as useGetDmMessagesInfinite
         queryClient.setQueryData(
+          // @ts-expect-error - infinite is used internally by react-query
           dmKeys.messages(editingMessage.threadId, { infinite: true }),
           (oldData: any) => {
             if (!oldData?.pages) return oldData;
@@ -1004,6 +1007,7 @@ export default function ChatsPageIntegrated() {
         // Optimistic update for sender - set deletedAt immediately
         // Use the same query key as useGetDmMessagesInfinite
         queryClient.setQueryData(
+          // @ts-expect-error - infinite is used internally by react-query
           dmKeys.messages(activeDmId, { infinite: true }),
           (oldData: any) => {
             if (!oldData?.pages) return oldData;
@@ -1313,14 +1317,14 @@ export default function ChatsPageIntegrated() {
               typingUserNames={typingUserNames}
               onBackMobile={() => {}}
               onSend={handleSend}
-              onAddReaction={(messageId, emoji) => {
+              onAddReaction={(messageId: string, emoji: string) => {
                 if ((active || activeThreadData)?.kind === 'dm') {
                   addDmReaction.mutate({ messageId, emoji });
                 } else {
                   addIntentReaction.mutate({ messageId, emoji });
                 }
               }}
-              onRemoveReaction={(messageId, emoji) => {
+              onRemoveReaction={(messageId: string, emoji: string) => {
                 if ((active || activeThreadData)?.kind === 'dm') {
                   removeDmReaction.mutate({ messageId, emoji });
                 } else {
@@ -1340,7 +1344,7 @@ export default function ChatsPageIntegrated() {
                       }
                     : undefined
               }
-              onTyping={(isTyping) => {
+              onTyping={(isTyping: boolean) => {
                 if ((active || activeThreadData)?.kind === 'dm' && activeDmId) {
                   publishDmTyping.mutate({ threadId: activeDmId, isTyping });
                 } else if (
@@ -1353,7 +1357,7 @@ export default function ChatsPageIntegrated() {
                   });
                 }
               }}
-              onEditMessage={(messageId, content) => {
+              onEditMessage={(messageId: string, content: string) => {
                 if ((active || activeThreadData)?.kind === 'dm' && activeDmId) {
                   handleEditMessage(messageId, content, activeDmId, undefined);
                 } else if (
@@ -1638,7 +1642,6 @@ export function ChatThread({
   members,
   avatar,
   messages,
-  lastReadAt,
   loading,
   typingUserNames,
   onBackMobile,
@@ -1884,7 +1887,7 @@ export function ChatThread({
                 followOutput={isAtBottom ? 'smooth' : false}
                 atBottomStateChange={setIsAtBottom}
                 startReached={handleStartReached}
-                computeItemKey={(index, m) => m.id}
+                computeItemKey={(_index, m) => m.id}
                 style={{
                   height: '100%',
                   width: '100%',
