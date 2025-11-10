@@ -9,13 +9,14 @@ import { Plan, planTheme } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
-import { EventDetailsModal } from '@/features/intents/components/event-details-modal';
+import { Avatar } from '@/components/ui/avatar';
 import {
   AddressVisibility,
   IntentMember,
   Level,
   MembersVisibility,
 } from '@/lib/api/__generated__/react-query-update';
+import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import {
@@ -29,7 +30,21 @@ import {
   UserCheck,
   Wifi as WifiIcon,
 } from 'lucide-react';
-import { KeyboardEvent, useCallback, useMemo, useState } from 'react';
+import {
+  KeyboardEvent,
+  lazy,
+  Suspense,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
+
+// Lazy load EventDetailsModal for better performance
+const EventDetailsModal = lazy(() =>
+  import('@/features/intents/components/event-details-modal').then((mod) => ({
+    default: mod.EventDetailsModal,
+  }))
+);
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -82,79 +97,6 @@ export interface EventCardProps {
 }
 
 /* ───────────────────────────── Utils ───────────────────────────── */
-
-const MONTHS_PL_SHORT = [
-  'sty',
-  'lut',
-  'mar',
-  'kwi',
-  'maj',
-  'cze',
-  'lip',
-  'sie',
-  'wrz',
-  'paź',
-  'gru',
-] as const;
-
-const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
-const isValidDate = (d: Date) =>
-  d instanceof Date && !Number.isNaN(d.getTime());
-const parseISO = (iso: string, fallback: Date = new Date()) => {
-  const d = new Date(iso);
-  return isValidDate(d) ? d : fallback;
-};
-
-function formatDateRange(start: Date, end: Date) {
-  const sameDay =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth() &&
-    start.getDate() === end.getDate();
-
-  const fmt = (d: Date) =>
-    `${pad2(d.getDate())} ${MONTHS_PL_SHORT[d.getMonth()]}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-
-  return sameDay
-    ? `${fmt(start)} – ${pad2(end.getHours())}:${pad2(end.getMinutes())}`
-    : `${fmt(start)} – ${fmt(end)}`;
-}
-
-const plural = (n: number, forms: [string, string, string]) => {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (n === 1) return forms[0];
-  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14))
-    return forms[1];
-  return forms[2];
-};
-
-function humanDuration(start: Date, end: Date) {
-  const ms = Math.max(0, end.getTime() - start.getTime());
-  const total = Math.round(ms / 60000);
-  const days = Math.floor(total / (60 * 24));
-  const hours = Math.floor((total - days * 24 * 60) / 60);
-  const mins = total % 60;
-  const parts: string[] = [];
-  if (days > 0) parts.push(`${days} ${plural(days, ['dzień', 'dni', 'dni'])}`);
-  if (hours > 0) parts.push(`${hours} h`);
-  if (mins > 0 && days === 0)
-    parts.push(`${mins} ${plural(mins, ['minuta', 'minuty', 'minut'])}`);
-  return parts.length ? parts.join(' ') : '< 1 min';
-}
-
-/* ───────────────────────────── Atomy ───────────────────────────── */
-
-function Avatar({ url, alt }: { url: string; alt: string }) {
-  return (
-    <img
-      src={url}
-      alt={alt}
-      className="object-cover w-12 h-12 border rounded-full border-neutral-200 dark:border-neutral-700"
-      loading="lazy"
-      decoding="async"
-    />
-  );
-}
 
 function normalizeAV(
   av: AddressVisibility
@@ -243,7 +185,7 @@ export function EventCard({
   const [open, setOpen] = useState(false);
 
   const start = useMemo(() => parseISO(startISO), [startISO]);
-  const end = useMemo(() => parseISO(endISO, start), [endISO, start]);
+  const end = useMemo(() => parseISO(endISO), [endISO]);
 
   const { status } = useMemo(
     () =>
@@ -294,39 +236,41 @@ export function EventCard({
 
   const sortedLevels = useMemo(() => sortLevels(levels), [levels]);
 
-  const details = (
-    <EventDetailsModal
-      open={open}
-      onClose={closeModal}
-      onJoin={onJoin}
-      data={{
-        eventId: intentId,
-        title,
-        startISO,
-        endISO,
-        description,
-        address,
-        onlineUrl,
-        categories,
-        tags,
-        levels,
-        min,
-        max,
-        joinedCount,
-        organizerName,
-        avatarUrl,
-        verifiedAt,
-        status,
-        canJoin,
-        members,
-        membersVisibility,
-        addressVisibility,
-        plan,
-        showSponsoredBadge,
-        lockHoursBeforeStart: 6,
-      }}
-    />
-  );
+  const details = open ? (
+    <Suspense fallback={null}>
+      <EventDetailsModal
+        open={open}
+        onClose={closeModal}
+        onJoin={onJoin}
+        data={{
+          eventId: intentId,
+          title,
+          startISO,
+          endISO,
+          description,
+          address,
+          onlineUrl,
+          categories,
+          tags,
+          levels,
+          min,
+          max,
+          joinedCount,
+          organizerName,
+          avatarUrl,
+          verifiedAt,
+          status,
+          canJoin,
+          members,
+          membersVisibility,
+          addressVisibility,
+          plan,
+          showSponsoredBadge,
+          lockHoursBeforeStart: 6,
+        }}
+      />
+    </Suspense>
+  ) : null;
 
   const renderLocationRow = () => {
     const base =
@@ -418,7 +362,7 @@ export function EventCard({
 
             {/* zakres + lokalizacja */}
             <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
-              {formatDateRange(start, end)} • {humanDuration(start, end)}
+              {formatDateRange(startISO, endISO)} • {humanDuration(start, end)}
             </p>
             {renderLocationRow()}
           </div>
@@ -479,7 +423,7 @@ export function EventCard({
           <div className="flex items-center min-w-0 gap-1.5 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
             <Calendar className="w-4 h-4 shrink-0 align-middle" />
             <span className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
-              {formatDateRange(start, end)}
+              {formatDateRange(startISO, endISO)}
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
@@ -490,7 +434,7 @@ export function EventCard({
 
         {/* Organizer & description + location */}
         <div className="flex items-start min-w-0 gap-3 mt-1">
-          <Avatar url={avatarUrl} alt="Organizer" />
+          <Avatar url={avatarUrl} alt="Organizer" size={48} />
           <div className="flex-1 min-w-0">
             <p
               className="text-sm font-medium truncate text-neutral-900 dark:text-neutral-100"

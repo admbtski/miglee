@@ -1,12 +1,5 @@
 'use client';
 
-import { CapacityBadge } from '@/components/ui/capacity-badge';
-import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
-import { PlanBadge } from '@/components/ui/plan-badge';
-import { Plan } from '@/components/ui/plan-theme';
-import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
-import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
-import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { useTheme } from '@/features/theme/provider/theme-provider';
 import { useThrottled } from '@/hooks/use-throttled';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
@@ -17,11 +10,12 @@ import {
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import clsx from 'clsx';
 import { ScatterplotLayer, TextLayer } from 'deck.gl';
-import { Calendar, MapPinIcon } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
+import { RegionPopup, PopupIntent } from './map-popup';
+import { Plan } from '@/components/ui/plan-theme';
 
 export function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
@@ -55,69 +49,7 @@ type ClusterPoint = {
   region: string;
 };
 
-type PopupIntent = {
-  id: string;
-  title: string;
-  startAt: string;
-  endAt: string;
-  address?: string | null;
-  joinedCount?: number | null;
-  min?: number | null;
-  max?: number | null;
-  owner?: {
-    name?: string | null;
-    imageUrl?: string | null;
-    verifiedAt?: string | null;
-  } | null;
-  lat?: number | null;
-  lng?: number | null;
-  isCanceled: boolean;
-  isDeleted: boolean;
-  isFull: boolean;
-  isOngoing: boolean;
-  hasStarted: boolean;
-  withinLock: boolean;
-  canJoin?: boolean | null;
-  levels?: GqlLevel[] | null;
-  plan?: Plan | null;
-  meetingKind?: 'ONSITE' | 'ONLINE' | 'HYBRID' | null;
-  categorySlugs?: string[] | null;
-};
-
 /* ───────────────────────────── Utils ───────────────────────────── */
-
-const MONTHS_PL_SHORT = [
-  'sty',
-  'lut',
-  'mar',
-  'kwi',
-  'maj',
-  'cze',
-  'lip',
-  'sie',
-  'wrz',
-  'paź',
-  'gru',
-] as const;
-const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
-
-function formatDateRange(startISO: string, endISO: string) {
-  const start = new Date(startISO);
-  const end = new Date(endISO);
-  const sameDay =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth() &&
-    start.getDate() === end.getDate();
-
-  const fmt = (d: Date) =>
-    `${pad2(d.getDate())} ${MONTHS_PL_SHORT[d.getMonth()]}, ${pad2(
-      d.getHours()
-    )}:${pad2(d.getMinutes())}`;
-
-  return sameDay
-    ? `${fmt(start)} – ${pad2(end.getHours())}:${pad2(end.getMinutes())}`
-    : `${fmt(start)} – ${fmt(end)}`;
-}
 
 const ROUND4 = (n: number) => Math.round(n * 1e4) / 1e4;
 const BOUNDS_EPS = 0.0008; // ~80m
@@ -126,28 +58,6 @@ const THROTTLE_MS = 300;
 
 function changedEnough(prev: number, next: number, eps: number) {
   return Math.abs(prev - next) > eps;
-}
-
-function Avatar({
-  url,
-  alt,
-  size = 24,
-}: {
-  url?: string | null;
-  alt: string;
-  size?: number;
-}) {
-  const s = `${size}px`;
-  return (
-    <img
-      src={url || '/avatar-fallback.png'}
-      alt={alt}
-      className="object-cover rounded-full border border-neutral-200 dark:border-neutral-700"
-      style={{ width: s, height: s }}
-      loading="lazy"
-      decoding="async"
-    />
-  );
 }
 
 /* ───────────────────────────── deck.gl Layer Builder ───────────────────────────── */
@@ -363,239 +273,9 @@ function buildLayers(
   return layers;
 }
 
-/* ───────────────────────────── Popup UI (React) ───────────────────────────── */
-
-function PopupItemSkeleton() {
-  return (
-    <div
-      className={clsx(
-        'w-full rounded-xl ring-1 px-3 py-2',
-        'bg-white dark:bg-zinc-900',
-        'ring-zinc-200 dark:ring-zinc-800',
-        'animate-pulse'
-      )}
-    >
-      <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
-          {/* Title skeleton */}
-          <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-1.5" />
-
-          {/* Date skeleton */}
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <div className="w-3.5 h-3.5 bg-zinc-200 dark:bg-zinc-700 rounded shrink-0" />
-            <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-32" />
-          </div>
-
-          {/* Address skeleton */}
-          <div className="flex items-center gap-1.5 mt-1">
-            <div className="w-3.5 h-3.5 bg-zinc-200 dark:bg-zinc-700 rounded shrink-0" />
-            <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-40" />
-          </div>
-        </div>
-      </div>
-
-      {/* Owner skeleton */}
-      <div className="mt-2 flex items-center gap-2">
-        <div className="w-[22px] h-[22px] bg-zinc-200 dark:bg-zinc-700 rounded-full shrink-0" />
-        <div className="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-24" />
-      </div>
-
-      {/* Progress bar skeleton */}
-      <div className="mt-1.5 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full w-full" />
-
-      {/* Badges skeleton */}
-      <div className="mt-2 flex gap-1.5">
-        <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-12" />
-        <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-16" />
-        <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-14" />
-      </div>
-    </div>
-  );
-}
-
-function PopupItem({
-  intent,
-  onClick,
-}: {
-  intent: PopupIntent;
-  onClick?: (id: string) => void;
-}) {
-  const {
-    startAt,
-    endAt,
-    isCanceled,
-    isDeleted,
-    isFull,
-    isOngoing,
-    hasStarted,
-    joinedCount,
-    max,
-    withinLock,
-    canJoin,
-  } = intent;
-
-  const fill = useMemo(
-    () =>
-      Math.min(
-        100,
-        Math.round(((joinedCount ?? 0) / Math.max(1, max ?? 1)) * 100)
-      ),
-    [joinedCount, max]
-  );
-
-  const levelsSorted = useMemo(
-    () => sortLevels((intent.levels ?? []) as GqlLevel[]),
-    [intent.levels]
-  );
-
-  const { status } = useMemo(
-    () =>
-      computeJoinState({
-        startAt: new Date(startAt),
-        isCanceled,
-        isDeleted,
-        isFull,
-        isOngoing,
-        hasStarted,
-        withinLock,
-      }),
-    [startAt, hasStarted, isCanceled, isDeleted, isFull, isOngoing, withinLock]
-  );
-
-  return (
-    <button
-      onClick={() => onClick?.(intent.id)}
-      className={clsx(
-        'cursor-pointer group w-full text-left rounded-xl ring-1 px-3 py-2 transition-all',
-        'bg-white dark:bg-zinc-900',
-        'ring-zinc-200 dark:ring-zinc-800',
-        'hover:shadow-sm hover:-translate-y-[1px]',
-        'focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-indigo-500/50'
-      )}
-    >
-      <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="m-0 text-[15px] font-semibold leading-5 text-zinc-900 dark:text-zinc-100 truncate">
-              {intent.title}
-            </h4>
-            {intent.plan && intent.plan !== 'default' && (
-              <PlanBadge plan={intent.plan as Plan} size="xs" variant="icon" />
-            )}
-          </div>
-
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-            <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{formatDateRange(startAt, endAt)}</span>
-          </div>
-
-          {intent.address ? (
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-              <MapPinIcon className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{intent.address}</span>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {intent.owner?.name ? (
-        <div className="mt-2 flex items-center gap-2 min-w-0">
-          <Avatar url={intent.owner?.imageUrl} alt="Organizer" size={22} />
-          <p className="text-[12px] truncate text-neutral-900 dark:text-neutral-100">
-            <span className="inline-flex items-center gap-1.5 max-w-full">
-              <span className="truncate">{intent.owner?.name}</span>
-              {intent.owner?.verifiedAt && (
-                <VerifiedBadge
-                  size="sm"
-                  variant="icon"
-                  verifiedAt={intent.owner.verifiedAt}
-                />
-              )}
-            </span>
-          </p>
-        </div>
-      ) : null}
-
-      <div className="mt-1.5">
-        <SimpleProgressBar value={fill} active />
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <CapacityBadge
-          size="sm"
-          statusReason={status.reason}
-          joinedCount={intent.joinedCount ?? 0}
-          min={intent.min ?? 0}
-          max={intent.max ?? 0}
-          isFull={isFull}
-          canJoin={!!canJoin}
-        />
-        {status.reason !== 'FULL' && (
-          <StatusBadge
-            size="sm"
-            tone={status.tone}
-            reason={status.reason}
-            label={status.label}
-          />
-        )}
-        {levelsSorted.map((lv) => (
-          <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
-        ))}
-      </div>
-    </button>
-  );
-}
-
-function RegionPopup({
-  intents,
-  onIntentClick,
-  isLoading,
-}: {
-  intents: PopupIntent[];
-  onIntentClick?: (id: string) => void;
-  isLoading?: boolean;
-}) {
-  return (
-    <div
-      className={clsx(
-        'max-w-[280px] max-h-[420px] overflow-y-auto font-sans relative',
-        'bg-white dark:bg-zinc-900',
-        'rounded-2xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800'
-      )}
-    >
-      <div className="p-2 grid gap-2">
-        {isLoading ? (
-          // Wyświetl 3 szkielety podczas ładowania
-          <>
-            <PopupItemSkeleton />
-            <PopupItemSkeleton />
-            <PopupItemSkeleton />
-          </>
-        ) : (
-          intents.map((it, index) => (
-            <PopupItem
-              key={it.id}
-              intent={{
-                ...it,
-                plan: (function planForIndex(i: number): Plan {
-                  if (i % 7 === 0) return 'premium';
-                  if (i % 5 === 0) return 'plus';
-                  if (i % 3 === 0) return 'basic';
-                  return 'default';
-                })(index),
-              }}
-              onClick={onIntentClick}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
 /* ───────────────────────────── Map Component ───────────────────────────── */
 
-export function ServerClusteredMap({
+function ServerClusteredMapComponent({
   defaultCenter = { lat: 52.2319, lng: 21.0067 },
   defaultZoom = 10,
   fullHeight = false,
@@ -1063,3 +743,9 @@ export function ServerClusteredMap({
     </div>
   );
 }
+
+// Export as default for lazy loading
+export default ServerClusteredMapComponent;
+
+// Named export for backward compatibility
+export { ServerClusteredMapComponent as ServerClusteredMap };

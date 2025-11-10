@@ -3,8 +3,8 @@
 import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { EventCard } from '../event-card';
-import type { IntentListItem, IntentHoverCallback } from '../../_types/intent';
-import { mapIntentToEventCardProps } from '../../_lib/adapters/intent-adapter';
+import type { IntentListItem, IntentHoverCallback } from '@/types/intent';
+import { mapIntentToEventCardProps } from '@/lib/adapters/intent-adapter';
 import { LoadingSkeleton } from './loading-skeleton';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';

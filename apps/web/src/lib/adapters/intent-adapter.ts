@@ -1,7 +1,7 @@
-import type { IntentListItem, IntentHoverCallback } from '../../_types/intent';
-import type { EventCardProps } from '../../_components/event-card/index';
-import { INTENTS_CONFIG } from '../constants';
-import { notEmptyString } from '../utils';
+import type { IntentListItem, IntentHoverCallback } from '@/types/intent';
+import type { EventCardProps } from '@/app/[[...slug]]/_components/event-card/index';
+import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import { notEmptyString } from '@/lib/utils/intents';
 import { planForIndex } from './plan-utils';
 
 /**

@@ -20,7 +20,9 @@ export type DesktopSearchBarProps = {
   className?: string;
 };
 
-/** Desktop-only search bar used in the navbar. Fully controlled via props. */
+/**
+ * Desktop-only search bar used in the navbar. Fully controlled via props.
+ */
 export function DesktopSearchBar({
   q,
   city,

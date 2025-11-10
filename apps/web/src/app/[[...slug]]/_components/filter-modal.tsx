@@ -16,7 +16,17 @@ import React, {
 } from 'react';
 import { SearchMeta, useSearchMeta } from '../_hooks/use-search-meta';
 import SearchCombo from './search-combo';
-import { INTENTS_CONFIG } from '../_lib/constants';
+import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import { CITIES } from '@/lib/constants/cities';
+import {
+  isoToLocalInput,
+  localInputToISO,
+  dateToISO,
+  normalizeISO,
+} from '@/lib/utils/date';
+import { Pill } from '@/components/ui/pill';
+import { Section } from '@/components/ui/section';
+import { ErrorBoundary } from '@/components/feedback/error-boundary';
 
 // Note: FilterSection, FilterPill, FilterChips, LocationSection, DateRangeSection
 // components are available in ./filters/ for future refactoring
@@ -25,92 +35,7 @@ import { INTENTS_CONFIG } from '../_lib/constants';
 /* constants & helpers */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-const CITIES = [
-  { name: 'Kraków', lat: 50.0647, lon: 19.945 },
-  { name: 'Warszawa', lat: 52.2297, lon: 21.0122 },
-  { name: 'Gdańsk', lat: 54.352, lon: 18.6466 },
-  { name: 'Wrocław', lat: 51.1079, lon: 17.0385 },
-  { name: 'Poznań', lat: 52.4064, lon: 16.9252 },
-] as const;
-
 const DEFAULT_DISTANCE = INTENTS_CONFIG.DEFAULT_DISTANCE_KM;
-
-const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
-
-/** Z ISO (UTC) → tekst dla <input type="datetime-local"> w lokalnym czasie */
-function isoToLocalInput(iso?: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const yyyy = d.getFullYear();
-  const mm = pad2(d.getMonth() + 1);
-  const dd = pad2(d.getDate());
-  const hh = pad2(d.getHours());
-  const mi = pad2(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-/** Z wartości z inputa (lokalna) → pełne ISO (UTC) do backendu */
-function localInputToISO(val?: string | null): string | null {
-  if (!val) return null;
-  const d = new Date(val);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
-
-/** Utwórz ISO (UTC) z obiektu Date (liczonego lokalnie) */
-function dateToISO(d: Date): string {
-  return new Date(d.getTime()).toISOString();
-}
-
-const Pill = React.memo(function Pill({
-  active,
-  onClick,
-  children,
-  title,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  title?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={[
-        'cursor-pointer rounded-full px-3 py-1.5 text-sm ring-1 transition',
-        active
-          ? 'bg-zinc-900 text-white ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:ring-white'
-          : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
-      ].join(' ')}
-    >
-      <span className="inline-flex items-center gap-1">{children}</span>
-    </button>
-  );
-});
-
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="mb-2 text-sm font-medium">{title}</div>
-      {hint && (
-        <div className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          {hint}
-        </div>
-      )}
-      {children}
-    </div>
-  );
-}
 
 export type NextFilters = {
   q: string;
@@ -152,12 +77,6 @@ const arraysEq = <T,>(a?: readonly T[], b?: readonly T[]) => {
   if (aa.length !== bb.length) return false;
   for (let i = 0; i < aa.length; i++) if (aa[i] !== bb[i]) return false;
   return true;
-};
-
-const normalizeISO = (v?: string | null) => {
-  if (!v) return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
 };
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -520,466 +439,479 @@ export function FilterModal({
   const applyDisabled = !isDirty || !!dateError;
 
   return (
-    <div
-      className="fixed inset-0 z-[100]"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="filters-title"
-    >
+    <ErrorBoundary>
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+        className="fixed inset-0 z-[100]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="filters-title"
+      >
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={onClose}
+        />
 
-      <div className="absolute inset-0 overflow-y-auto">
-        <div className="mx-auto my-6 w-[min(780px,92vw)]">
-          <div className="bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10">
-            {/* header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/85 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
-              <button
-                onClick={onClose}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <div
-                id="filters-title"
-                className="flex items-center gap-2 text-base font-medium"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filtry wyszukiwania
-              </div>
-              <button
-                onClick={handleClear}
-                disabled={!isDirty}
-                className="px-3 py-1 text-sm font-medium rounded-full ring-1 disabled:opacity-40 disabled:cursor-not-allowed
-                bg-red-500/10 text-red-600 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
-                title={
-                  isDirty ? 'Wyczyść wszystkie' : 'Brak zmian do wyczyszczenia'
-                }
-              >
-                Wyczyść
-              </button>
-            </div>
-
-            {/* chips */}
-            {chips.length > 0 && (
-              <div className="px-4 pt-3">
-                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                  {chips.map((c) => (
-                    <button
-                      key={c.key}
-                      onClick={c.onClear}
-                      className="inline-flex items-center gap-2 px-3 py-1 text-sm border rounded-full border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-200"
-                      title="Usuń filtr"
-                    >
-                      <span className="truncate max-w-[14rem]">{c.label}</span>
-                      <X className="h-3.5 w-3.5 opacity-60" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* body */}
-            <div className="p-4 space-y-6">
-              {/* GROUPED SEARCH */}
-              <SearchCombo
-                value={q}
-                onChangeValue={setQ}
-                onSubmitFreeText={setQ}
-                loading={loading}
-                groups={[
-                  {
-                    id: 'TAG',
-                    label: 'Tagi',
-                    items: data.tags,
-                    selected: tags,
-                    onSelect: (c) =>
-                      setTags((xs) =>
-                        xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
-                      ),
-                  },
-                  {
-                    id: 'CATEGORY',
-                    label: 'Kategorie',
-                    items: data.categories,
-                    selected: categories,
-                    onSelect: (c) =>
-                      setCategories((xs) =>
-                        xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
-                      ),
-                  },
-                ]}
-                placeholder={
-                  loading
-                    ? 'Ładowanie podpowiedzi…'
-                    : 'Szukaj tagów lub kategorii…'
-                }
-              />
-
-              {/* Location combobox */}
-              <Section
-                title="Lokalizacja"
-                hint="Wybierz miasto, aby filtrować po odległości."
-              >
-                <div className="relative p-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                  <div className="flex items-center gap-2 px-1">
-                    <MapPin className="w-4 h-4 opacity-60" />
-                    <input
-                      ref={inputRef}
-                      role="combobox"
-                      aria-controls={listboxId}
-                      aria-expanded={openList}
-                      aria-autocomplete="list"
-                      aria-activedescendant={
-                        openList && cityOptions[highlight]
-                          ? `${listboxId}-opt-${highlight}`
-                          : undefined
-                      }
-                      id={comboboxId}
-                      value={cityQuery}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setCityQuery(v);
-                        setOpenList(true);
-                        setHighlight(0);
-                      }}
-                      onFocus={() => setOpenList(true)}
-                      onKeyDown={(e) => {
-                        if (!openList) return;
-                        if (e.key === 'ArrowDown') {
-                          e.preventDefault();
-                          setHighlight((h) =>
-                            Math.min(h + 1, Math.max(0, cityOptions.length - 1))
-                          );
-                        } else if (e.key === 'ArrowUp') {
-                          e.preventDefault();
-                          setHighlight((h) => Math.max(h - 1, 0));
-                        } else if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const pick = cityOptions[highlight];
-                          if (pick) selectCity(pick);
-                        } else if (e.key === 'Escape') {
-                          setOpenList(false);
-                        }
-                      }}
-                      placeholder="Miasto (autocomplete)"
-                      className="w-full py-2 text-sm bg-transparent outline-none placeholder:text-zinc-400"
-                    />
-                    {cityQuery && (
-                      <button
-                        onClick={() => {
-                          setCityQuery('');
-                          selectCity(null);
-                          setOpenList(true);
-                        }}
-                        className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        aria-label="Wyczyść lokalizację"
-                      >
-                        <X className="w-4 h-4 opacity-60" />
-                      </button>
-                    )}
-                  </div>
-
-                  {openList && (
-                    <div
-                      ref={listRef}
-                      id={listboxId}
-                      role="listbox"
-                      className="absolute left-0 right-0 z-20 mt-2 overflow-auto bg-white border shadow-lg max-h-60 rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900"
-                    >
-                      {cityOptions.length === 0 ? (
-                        <div className="px-3 py-2 text-sm opacity-60">
-                          Brak dopasowań
-                        </div>
-                      ) : (
-                        cityOptions.map((name, idx) => {
-                          const active = idx === highlight;
-                          return (
-                            <button
-                              key={name}
-                              id={`${listboxId}-opt-${idx}`}
-                              ref={active ? activeOptionRef : null}
-                              role="option"
-                              aria-selected={active}
-                              onMouseEnter={() => setHighlight(idx)}
-                              onClick={() => selectCity(name)}
-                              className={[
-                                'block w-full cursor-pointer px-3 py-2 text-left text-sm',
-                                active
-                                  ? 'bg-zinc-100 dark:bg-zinc-800'
-                                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
-                              ].join(' ')}
-                            >
-                              {name}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Distance + presets */}
-                <div
-                  aria-disabled={!city}
-                  className={[
-                    'mt-3 px-3 py-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900',
-                    !city ? 'opacity-50' : '',
-                  ].join(' ')}
+        <div className="absolute inset-0 overflow-y-auto">
+          <div className="mx-auto my-6 w-[min(780px,92vw)]">
+            <div className="bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10">
+              {/* header */}
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/85 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
+                <button
+                  onClick={onClose}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  aria-label="Close"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-500">Odległość</span>
-                    <span className="text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
-                      {city ? `${distanceKm} km` : 'Globalnie'}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={5}
-                    max={100}
-                    step={5}
-                    value={distanceKm}
-                    onChange={(e) => setDistanceKm(Number(e.target.value))}
-                    className="w-full mt-2 accent-indigo-600 disabled:opacity-50"
-                    aria-label="Odległość w kilometrach"
-                    disabled={!city}
-                  />
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {[5, 10, 20, 30, 50, 100].map((km) => (
+                  <X className="w-4 h-4" />
+                </button>
+                <div
+                  id="filters-title"
+                  className="flex items-center gap-2 text-base font-medium"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filtry wyszukiwania
+                </div>
+                <button
+                  onClick={handleClear}
+                  disabled={!isDirty}
+                  className="px-3 py-1 text-sm font-medium rounded-full ring-1 disabled:opacity-40 disabled:cursor-not-allowed
+                bg-red-500/10 text-red-600 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
+                  title={
+                    isDirty
+                      ? 'Wyczyść wszystkie'
+                      : 'Brak zmian do wyczyszczenia'
+                  }
+                >
+                  Wyczyść
+                </button>
+              </div>
+
+              {/* chips */}
+              {chips.length > 0 && (
+                <div className="px-4 pt-3">
+                  <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    {chips.map((c) => (
                       <button
-                        key={km}
-                        type="button"
-                        disabled={!city}
-                        onClick={() => setDistanceKm(km)}
-                        className={[
-                          'rounded-full px-2 py-0.5 text-xs ring-1',
-                          distanceKm === km
-                            ? 'bg-indigo-600 text-white ring-indigo-600'
-                            : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
-                          !city ? 'opacity-60' : '',
-                        ].join(' ')}
-                        aria-label={`Ustaw ${km} km`}
+                        key={c.key}
+                        onClick={c.onClear}
+                        className="inline-flex items-center gap-2 px-3 py-1 text-sm border rounded-full border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-200"
+                        title="Usuń filtr"
                       >
-                        {km} km
+                        <span className="truncate max-w-[14rem]">
+                          {c.label}
+                        </span>
+                        <X className="h-3.5 w-3.5 opacity-60" />
                       </button>
                     ))}
                   </div>
                 </div>
-              </Section>
+              )}
 
-              {/* Date range */}
-              <Section
-                title="Zakres dat"
-                hint="Skorzystaj z presetów lub ustaw własny zakres."
-              >
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {[
-                    { id: 'now1h', label: 'Teraz +1h' },
-                    { id: 'tonight', label: 'Dziś wieczorem' },
-                    { id: 'tomorrow', label: 'Jutro' },
-                    { id: 'weekend', label: 'Weekend' },
-                    { id: '7days', label: 'Najbliższe 7 dni' },
-                  ].map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() =>
-                        applyPreset(
-                          p.id as
-                            | 'now1h'
-                            | 'tonight'
-                            | 'tomorrow'
-                            | 'weekend'
-                            | '7days'
-                        )
-                      }
-                      className="rounded-full px-2.5 py-1 text-xs ring-1 bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700"
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
+              {/* body */}
+              <div className="p-4 space-y-6">
+                {/* GROUPED SEARCH */}
+                <SearchCombo
+                  value={q}
+                  onChangeValue={setQ}
+                  onSubmitFreeText={setQ}
+                  loading={loading}
+                  groups={[
+                    {
+                      id: 'TAG',
+                      label: 'Tagi',
+                      items: data.tags,
+                      selected: tags,
+                      onSelect: (c) =>
+                        setTags((xs) =>
+                          xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
+                        ),
+                    },
+                    {
+                      id: 'CATEGORY',
+                      label: 'Kategorie',
+                      items: data.categories,
+                      selected: categories,
+                      onSelect: (c) =>
+                        setCategories((xs) =>
+                          xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
+                        ),
+                    },
+                  ]}
+                  placeholder={
+                    loading
+                      ? 'Ładowanie podpowiedzi…'
+                      : 'Szukaj tagów lub kategorii…'
+                  }
+                />
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                    <span className="w-20 shrink-0 text-zinc-500">Start</span>
+                {/* Location combobox */}
+                <Section
+                  title="Lokalizacja"
+                  hint="Wybierz miasto, aby filtrować po odległości."
+                >
+                  <div className="relative p-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
+                    <div className="flex items-center gap-2 px-1">
+                      <MapPin className="w-4 h-4 opacity-60" />
+                      <input
+                        ref={inputRef}
+                        role="combobox"
+                        aria-controls={listboxId}
+                        aria-expanded={openList}
+                        aria-autocomplete="list"
+                        aria-activedescendant={
+                          openList && cityOptions[highlight]
+                            ? `${listboxId}-opt-${highlight}`
+                            : undefined
+                        }
+                        id={comboboxId}
+                        value={cityQuery}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setCityQuery(v);
+                          setOpenList(true);
+                          setHighlight(0);
+                        }}
+                        onFocus={() => setOpenList(true)}
+                        onKeyDown={(e) => {
+                          if (!openList) return;
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setHighlight((h) =>
+                              Math.min(
+                                h + 1,
+                                Math.max(0, cityOptions.length - 1)
+                              )
+                            );
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setHighlight((h) => Math.max(h - 1, 0));
+                          } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const pick = cityOptions[highlight];
+                            if (pick) selectCity(pick);
+                          } else if (e.key === 'Escape') {
+                            setOpenList(false);
+                          }
+                        }}
+                        placeholder="Miasto (autocomplete)"
+                        className="w-full py-2 text-sm bg-transparent outline-none placeholder:text-zinc-400"
+                      />
+                      {cityQuery && (
+                        <button
+                          onClick={() => {
+                            setCityQuery('');
+                            selectCity(null);
+                            setOpenList(true);
+                          }}
+                          className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                          aria-label="Wyczyść lokalizację"
+                        >
+                          <X className="w-4 h-4 opacity-60" />
+                        </button>
+                      )}
+                    </div>
+
+                    {openList && (
+                      <div
+                        ref={listRef}
+                        id={listboxId}
+                        role="listbox"
+                        className="absolute left-0 right-0 z-20 mt-2 overflow-auto bg-white border shadow-lg max-h-60 rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900"
+                      >
+                        {cityOptions.length === 0 ? (
+                          <div className="px-3 py-2 text-sm opacity-60">
+                            Brak dopasowań
+                          </div>
+                        ) : (
+                          cityOptions.map((name, idx) => {
+                            const active = idx === highlight;
+                            return (
+                              <button
+                                key={name}
+                                id={`${listboxId}-opt-${idx}`}
+                                ref={active ? activeOptionRef : null}
+                                role="option"
+                                aria-selected={active}
+                                onMouseEnter={() => setHighlight(idx)}
+                                onClick={() => selectCity(name)}
+                                className={[
+                                  'block w-full cursor-pointer px-3 py-2 text-left text-sm',
+                                  active
+                                    ? 'bg-zinc-100 dark:bg-zinc-800'
+                                    : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60',
+                                ].join(' ')}
+                              >
+                                {name}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Distance + presets */}
+                  <div
+                    aria-disabled={!city}
+                    className={[
+                      'mt-3 px-3 py-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900',
+                      !city ? 'opacity-50' : '',
+                    ].join(' ')}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-zinc-500">Odległość</span>
+                      <span className="text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
+                        {city ? `${distanceKm} km` : 'Globalnie'}
+                      </span>
+                    </div>
                     <input
-                      type="datetime-local"
-                      value={startForInput}
-                      onChange={(e) =>
-                        setStartISO(localInputToISO(e.target.value))
-                      }
-                      className="w-full bg-transparent outline-none"
+                      type="range"
+                      min={5}
+                      max={100}
+                      step={5}
+                      value={distanceKm}
+                      onChange={(e) => setDistanceKm(Number(e.target.value))}
+                      className="w-full mt-2 accent-indigo-600 disabled:opacity-50"
+                      aria-label="Odległość w kilometrach"
+                      disabled={!city}
                     />
-                  </label>
-                  <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-                    <span className="w-20 shrink-0 text-zinc-500">Koniec</span>
-                    <input
-                      type="datetime-local"
-                      value={endForInput}
-                      min={endMin}
-                      onChange={(e) =>
-                        setEndISO(localInputToISO(e.target.value))
-                      }
-                      className="w-full bg-transparent outline-none"
-                    />
-                  </label>
-                </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {[5, 10, 20, 30, 50, 100].map((km) => (
+                        <button
+                          key={km}
+                          type="button"
+                          disabled={!city}
+                          onClick={() => setDistanceKm(km)}
+                          className={[
+                            'rounded-full px-2 py-0.5 text-xs ring-1',
+                            distanceKm === km
+                              ? 'bg-indigo-600 text-white ring-indigo-600'
+                              : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
+                            !city ? 'opacity-60' : '',
+                          ].join(' ')}
+                          aria-label={`Ustaw ${km} km`}
+                        >
+                          {km} km
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </Section>
 
-                {dateError && (
-                  <p className="inline-flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
-                    <AlertCircle className="w-4 h-4" />
-                    {dateError}
-                  </p>
-                )}
-              </Section>
-
-              {/* Status */}
-              <Section title="Status">
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    IntentStatus.Any,
-                    IntentStatus.Available,
-                    IntentStatus.Ongoing,
-                    IntentStatus.Full,
-                    IntentStatus.Locked,
-                    IntentStatus.Past,
-                    IntentStatus.Locked,
-                  ].map((val) => (
-                    <Pill
-                      key={val}
-                      active={status === val}
-                      onClick={() => setStatus(val)}
-                      title={`Filtruj: ${val}`}
-                    >
-                      {val}
-                    </Pill>
-                  ))}
-                </div>
-              </Section>
-
-              {/* Kinds */}
-              <Section title="Tryb spotkania">
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    MeetingKind.Onsite,
-                    MeetingKind.Online,
-                    MeetingKind.Hybrid,
-                  ].map((t) => {
-                    const active = kinds.includes(t);
-                    return (
-                      <Pill
-                        key={t}
-                        active={active}
+                {/* Date range */}
+                <Section
+                  title="Zakres dat"
+                  hint="Skorzystaj z presetów lub ustaw własny zakres."
+                >
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {[
+                      { id: 'now1h', label: 'Teraz +1h' },
+                      { id: 'tonight', label: 'Dziś wieczorem' },
+                      { id: 'tomorrow', label: 'Jutro' },
+                      { id: 'weekend', label: 'Weekend' },
+                      { id: '7days', label: 'Najbliższe 7 dni' },
+                    ].map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
                         onClick={() =>
-                          setKinds((curr) =>
-                            active ? curr.filter((x) => x !== t) : [...curr, t]
+                          applyPreset(
+                            p.id as
+                              | 'now1h'
+                              | 'tonight'
+                              | 'tomorrow'
+                              | 'weekend'
+                              | '7days'
                           )
                         }
-                        title={`Przełącz: ${t}`}
+                        className="rounded-full px-2.5 py-1 text-xs ring-1 bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700"
                       >
-                        {t}
-                      </Pill>
-                    );
-                  })}
-                </div>
-              </Section>
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
 
-              {/* Level */}
-              <Section title="Poziom">
-                <div className="flex flex-wrap gap-2">
-                  {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
-                    (lv) => {
-                      const active = levels.includes(lv);
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
+                      <span className="w-20 shrink-0 text-zinc-500">Start</span>
+                      <input
+                        type="datetime-local"
+                        value={startForInput}
+                        onChange={(e) =>
+                          setStartISO(localInputToISO(e.target.value))
+                        }
+                        className="w-full bg-transparent outline-none"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
+                      <span className="w-20 shrink-0 text-zinc-500">
+                        Koniec
+                      </span>
+                      <input
+                        type="datetime-local"
+                        value={endForInput}
+                        min={endMin}
+                        onChange={(e) =>
+                          setEndISO(localInputToISO(e.target.value))
+                        }
+                        className="w-full bg-transparent outline-none"
+                      />
+                    </label>
+                  </div>
+
+                  {dateError && (
+                    <p className="inline-flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
+                      <AlertCircle className="w-4 h-4" />
+                      {dateError}
+                    </p>
+                  )}
+                </Section>
+
+                {/* Status */}
+                <Section title="Status">
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      IntentStatus.Any,
+                      IntentStatus.Available,
+                      IntentStatus.Ongoing,
+                      IntentStatus.Full,
+                      IntentStatus.Locked,
+                      IntentStatus.Past,
+                      IntentStatus.Locked,
+                    ].map((val) => (
+                      <Pill
+                        key={val}
+                        active={status === val}
+                        onClick={() => setStatus(val)}
+                        title={`Filtruj: ${val}`}
+                      >
+                        {val}
+                      </Pill>
+                    ))}
+                  </div>
+                </Section>
+
+                {/* Kinds */}
+                <Section title="Tryb spotkania">
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      MeetingKind.Onsite,
+                      MeetingKind.Online,
+                      MeetingKind.Hybrid,
+                    ].map((t) => {
+                      const active = kinds.includes(t);
                       return (
                         <Pill
-                          key={lv}
+                          key={t}
                           active={active}
                           onClick={() =>
-                            setLevels((curr) =>
+                            setKinds((curr) =>
                               active
-                                ? curr.filter((x) => x !== lv)
-                                : [...curr, lv]
+                                ? curr.filter((x) => x !== t)
+                                : [...curr, t]
                             )
                           }
-                          title={`Przełącz: ${lv}`}
+                          title={`Przełącz: ${t}`}
                         >
-                          {lv}
+                          {t}
                         </Pill>
                       );
-                    }
-                  )}
-                </div>
-              </Section>
+                    })}
+                  </div>
+                </Section>
 
-              {/* Verified */}
-              <Section
-                title="Organizator"
-                hint="Pokaż tylko zweryfikowanych organizatorów."
-              >
-                <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none text-zinc-800 dark:text-zinc-200">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={verifiedOnly}
-                    onChange={(e) => setVerifiedOnly(e.target.checked)}
-                    aria-label="Tylko zweryfikowani organizatorzy"
-                  />
-                  <span
-                    className={`inline-flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${verifiedOnly ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
-                  >
-                    <span
-                      className={`h-4 w-4 rounded-full bg-white transition-transform ${verifiedOnly ? 'translate-x-4' : 'translate-x-0'}`}
-                    />
-                  </span>
-                  Tylko zweryfikowani
-                </label>
-              </Section>
-            </div>
+                {/* Level */}
+                <Section title="Poziom">
+                  <div className="flex flex-wrap gap-2">
+                    {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
+                      (lv) => {
+                        const active = levels.includes(lv);
+                        return (
+                          <Pill
+                            key={lv}
+                            active={active}
+                            onClick={() =>
+                              setLevels((curr) =>
+                                active
+                                  ? curr.filter((x) => x !== lv)
+                                  : [...curr, lv]
+                              )
+                            }
+                            title={`Przełącz: ${lv}`}
+                          >
+                            {lv}
+                          </Pill>
+                        );
+                      }
+                    )}
+                  </div>
+                </Section>
 
-            {/* footer */}
-            <div className="sticky bottom-0 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
-              <div className="flex items-center justify-between gap-3">
-                <div
-                  className="text-sm text-zinc-600 dark:text-zinc-400"
-                  aria-live="polite"
+                {/* Verified */}
+                <Section
+                  title="Organizator"
+                  hint="Pokaż tylko zweryfikowanych organizatorów."
                 >
-                  {resultsCount != null
-                    ? `${resultsCount} wynik${resultsCount === 1 ? '' : 'ów'}`
-                    : '—'}
-                </div>
-                <div className="flex items-center gap-2 ml-auto">
-                  <button
-                    onClick={onClose}
-                    className="px-4 py-2 text-sm border rounded-xl border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                  >
-                    Anuluj
-                  </button>
-                  <button
-                    onClick={handleApply}
-                    disabled={applyDisabled}
-                    className="px-5 py-2 text-sm font-medium text-white shadow-sm rounded-xl bg-zinc-900 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600"
-                    title={
-                      applyDisabled
-                        ? dateError
-                          ? dateError
-                          : 'Brak zmian'
-                        : 'Zastosuj'
-                    }
+                  <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none text-zinc-800 dark:text-zinc-200">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={verifiedOnly}
+                      onChange={(e) => setVerifiedOnly(e.target.checked)}
+                      aria-label="Tylko zweryfikowani organizatorzy"
+                    />
+                    <span
+                      className={`inline-flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${verifiedOnly ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                    >
+                      <span
+                        className={`h-4 w-4 rounded-full bg-white transition-transform ${verifiedOnly ? 'translate-x-4' : 'translate-x-0'}`}
+                      />
+                    </span>
+                    Tylko zweryfikowani
+                  </label>
+                </Section>
+              </div>
+
+              {/* footer */}
+              <div className="sticky bottom-0 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
+                <div className="flex items-center justify-between gap-3">
+                  <div
+                    className="text-sm text-zinc-600 dark:text-zinc-400"
+                    aria-live="polite"
                   >
                     {resultsCount != null
-                      ? `Pokaż wyniki (${resultsCount})`
-                      : 'Pokaż wyniki'}
-                  </button>
+                      ? `${resultsCount} wynik${resultsCount === 1 ? '' : 'ów'}`
+                      : '—'}
+                  </div>
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      onClick={onClose}
+                      className="px-4 py-2 text-sm border rounded-xl border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                    >
+                      Anuluj
+                    </button>
+                    <button
+                      onClick={handleApply}
+                      disabled={applyDisabled}
+                      className="px-5 py-2 text-sm font-medium text-white shadow-sm rounded-xl bg-zinc-900 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600"
+                      title={
+                        applyDisabled
+                          ? dateError
+                            ? dateError
+                            : 'Brak zmian'
+                          : 'Zastosuj'
+                      }
+                    >
+                      {resultsCount != null
+                        ? `Pokaż wyniki (${resultsCount})`
+                        : 'Pokaż wyniki'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

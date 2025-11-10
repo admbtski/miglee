@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { HoveredIntentState, IntentHoverCallback } from '../_types/intent';
+import type { HoveredIntentState, IntentHoverCallback } from '@/types/intent';
 
 const HOVER_DEBOUNCE_MS = 100;
 

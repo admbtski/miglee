@@ -2,16 +2,30 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState, useCallback } from 'react';
 
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
-import { ErrorBoundary } from '@/components/error-boundary';
-import { ServerClusteredMap } from './_components/server-clustered-map';
-import { FilterModal } from './_components/filter-modal';
+import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { DesktopSearchBar } from './_components/desktop-search-bar';
 import { EventsHeader } from './_components/events-list/events-header';
 import { EventsGrid } from './_components/events-list/events-grid';
+import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
+import { EventsGridHybrid } from './_components/events-list/events-grid-hybrid';
+import { FEATURES } from '@/lib/constants/features';
+
+// Lazy load heavy components for better performance
+const ServerClusteredMap = lazy(
+  () =>
+    // @ts-expect-error - Dynamic import with moduleResolution node16
+    import('./_components/server-clustered-map')
+);
+
+const FilterModalRefactored = lazy(
+  () =>
+    // @ts-expect-error - Dynamic import with moduleResolution node16
+    import('./_components/filter-modal-refactored')
+);
 
 import { useCommittedMapVisible } from './_hooks/use-committed-map-vision';
 import { useCommittedFilters } from './_hooks/use-committed-filters';
@@ -27,9 +41,12 @@ import {
 import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 import { appLanguage } from '@/lib/config/language';
 
-import type { IntentListItem } from './_types/intent';
-import { INTENTS_CONFIG, getUpcomingAfterDefault } from './_lib/constants';
-import { buildGridCols } from './_lib/utils';
+import type { IntentListItem } from '@/types/intent';
+import {
+  INTENTS_CONFIG,
+  getUpcomingAfterDefault,
+} from '@/lib/constants/intents';
+import { buildGridCols } from '@/lib/utils/intents';
 
 /* ───────────────────────────── Page ───────────────────────────── */
 
@@ -56,6 +73,36 @@ export function IntentsPage() {
   const activeFilters = useActiveFiltersCount(filters);
   const [hoveredIntent, handleIntentHover] = useDebouncedHover();
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Memoize callbacks for better performance
+  const handleOpenFilters = useCallback(() => setFiltersOpen(true), []);
+  const handleCloseFilters = useCallback(() => setFiltersOpen(false), []);
+  const handleToggleMap = useCallback(() => toggleMap(), [toggleMap]);
+  const handleSortChange = useCallback(
+    (newSort: any) => setSort(newSort),
+    [setSort]
+  );
+
+  const handleApplyFilters = useCallback(
+    (next: any) => {
+      apply({
+        q: next.q,
+        city: next.city,
+        distanceKm: next.distanceKm,
+        startISO: next.startISO ?? null,
+        endISO: next.endISO ?? null,
+        status: next.status ?? IntentStatus.Any,
+        kinds: next.kinds ?? [],
+        levels: next.levels ?? [],
+        verifiedOnly: !!next.verifiedOnly,
+        tags: next.tags ?? [],
+        keywords: next.keywords ?? [],
+        categories: next.categories ?? [],
+      });
+      setFiltersOpen(false);
+    },
+    [apply]
+  );
 
   const variables = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
     () => ({
@@ -124,12 +171,12 @@ export function IntentsPage() {
               q={q}
               city={city}
               distanceKm={distanceKm}
-              onOpenFilters={() => setFiltersOpen(true)}
+              onOpenFilters={handleOpenFilters}
             />
           }
           mobileSearchButton={
             <button
-              onClick={() => setFiltersOpen(true)}
+              onClick={handleOpenFilters}
               title={'Search'}
               aria-label={'Search'}
               className="cursor-pointer rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -150,21 +197,46 @@ export function IntentsPage() {
               isFetching={isFetching}
               mapVisible={mapVisible}
               sort={sort}
-              onToggleMap={toggleMap}
-              onSortChange={setSort}
+              onToggleMap={handleToggleMap}
+              onSortChange={handleSortChange}
             />
 
             <ErrorBoundary>
-              <EventsGrid
-                items={flatItems as unknown as IntentListItem[]}
-                isLoading={isLoading}
-                error={error}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                lang={appLanguage}
-                onLoadMore={fetchNextPage}
-                onHover={handleIntentHover}
-              />
+              {FEATURES.VIRTUALIZATION_MODE === 'always' ? (
+                <EventsGridVirtualized
+                  items={flatItems as unknown as IntentListItem[]}
+                  isLoading={isLoading}
+                  error={error}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  lang={appLanguage}
+                  onLoadMore={fetchNextPage}
+                  onHover={handleIntentHover}
+                />
+              ) : FEATURES.VIRTUALIZATION_MODE === 'hybrid' ? (
+                <EventsGridHybrid
+                  items={flatItems as unknown as IntentListItem[]}
+                  isLoading={isLoading}
+                  error={error}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  lang={appLanguage}
+                  onLoadMore={fetchNextPage}
+                  onHover={handleIntentHover}
+                  virtualizationThreshold={FEATURES.VIRTUALIZATION_THRESHOLD}
+                />
+              ) : (
+                <EventsGrid
+                  items={flatItems as unknown as IntentListItem[]}
+                  isLoading={isLoading}
+                  error={error}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  lang={appLanguage}
+                  onLoadMore={fetchNextPage}
+                  onHover={handleIntentHover}
+                />
+              )}
             </ErrorBoundary>
           </motion.section>
 
@@ -179,22 +251,32 @@ export function IntentsPage() {
               >
                 <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))]">
                   <ErrorBoundary>
-                    <ServerClusteredMap
-                      fullHeight
-                      lang={appLanguage}
-                      filters={{
-                        categorySlugs: categories,
-                        levels: levels as any,
-                        verifiedOnly: verifiedOnly,
-                      }}
-                      onIntentClick={(intentId) => {
-                        // Navigate to intent details or open modal
-                        window.location.href = `/${intentId}`;
-                      }}
-                      hoveredIntentId={hoveredIntent?.id ?? null}
-                      hoveredLat={hoveredIntent?.lat ?? null}
-                      hoveredLng={hoveredIntent?.lng ?? null}
-                    />
+                    <Suspense
+                      fallback={
+                        <div className="flex items-center justify-center h-full bg-zinc-100 dark:bg-zinc-900 rounded-2xl">
+                          <div className="text-sm text-zinc-500">
+                            Ładowanie mapy...
+                          </div>
+                        </div>
+                      }
+                    >
+                      <ServerClusteredMap
+                        fullHeight
+                        lang={appLanguage}
+                        filters={{
+                          categorySlugs: categories,
+                          levels: levels as any,
+                          verifiedOnly: verifiedOnly,
+                        }}
+                        onIntentClick={(intentId: string) => {
+                          // Navigate to intent details or open modal
+                          window.location.href = `/${intentId}`;
+                        }}
+                        hoveredIntentId={hoveredIntent?.id ?? null}
+                        hoveredLat={hoveredIntent?.lat ?? null}
+                        hoveredLng={hoveredIntent?.lng ?? null}
+                      />
+                    </Suspense>
                   </ErrorBoundary>
                 </div>
               </motion.aside>
@@ -207,38 +289,30 @@ export function IntentsPage() {
         </main>
 
         {filtersOpen && (
-          <FilterModal
-            initialQ={q}
-            initialCity={city}
-            initialDistanceKm={distanceKm}
-            initialStartISO={startISO}
-            initialEndISO={endISO}
-            initialStatus={status}
-            initialKinds={kinds}
-            initialLevels={levels}
-            initialVerifiedOnly={verifiedOnly}
-            initialTags={tags}
-            initialKeywords={keywords}
-            initialCategories={categories}
-            onApply={(next) => {
-              apply({
-                q: next.q,
-                city: next.city,
-                distanceKm: next.distanceKm,
-                startISO: next.startISO ?? null,
-                endISO: next.endISO ?? null,
-                status: next.status ?? IntentStatus.Any,
-                kinds: next.kinds ?? [],
-                levels: next.levels ?? [],
-                verifiedOnly: !!next.verifiedOnly,
-                tags: next.tags ?? [],
-                keywords: next.keywords ?? [],
-                categories: next.categories ?? [],
-              });
-              setFiltersOpen(false);
-            }}
-            onClose={() => setFiltersOpen(false)}
-          />
+          <Suspense
+            fallback={
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="text-white">Ładowanie filtrów...</div>
+              </div>
+            }
+          >
+            <FilterModalRefactored
+              initialQ={q}
+              initialCity={city}
+              initialDistanceKm={distanceKm}
+              initialStartISO={startISO}
+              initialEndISO={endISO}
+              initialStatus={status}
+              initialKinds={kinds}
+              initialLevels={levels}
+              initialVerifiedOnly={verifiedOnly}
+              initialTags={tags}
+              initialKeywords={keywords}
+              initialCategories={categories}
+              onApply={handleApplyFilters}
+              onClose={handleCloseFilters}
+            />
+          </Suspense>
         )}
       </div>
     </ErrorBoundary>

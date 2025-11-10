@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { CommittedFilters } from './use-committed-filters';
 import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
-import { INTENTS_CONFIG } from '../_lib/constants';
+import { INTENTS_CONFIG } from '@/lib/constants/intents';
 
 /**
  * Calculates the number of active filters
