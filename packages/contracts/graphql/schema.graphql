@@ -1064,6 +1064,8 @@ type Query {
   tagsBySlugs(slugs: [String!]!, limit: Int): [Tag!]!
   tags(query: String, limit: Int = 50): [Tag!]!
   tag(id: ID, slug: String): Tag
+  checkTagSlugAvailable(slug: String!): Boolean!
+  getTagUsageCount(slug: String!): Int!
 
   users(
     limit: Int = 50

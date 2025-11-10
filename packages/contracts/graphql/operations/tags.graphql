@@ -1,41 +1,58 @@
-# =============================================================================
-# Tag Queries
-# =============================================================================
+# Tag Management Operations
 
-# Get multiple tags by their slugs
-query GetTagsBySlugs($slugs: [String!]!, $limit: Int = 50) {
-  tagsBySlugs(slugs: $slugs, limit: $limit) {
-    ...TagCore
-  }
-}
+# ============================================
+# QUERIES
+# ============================================
 
-# Search/list tags
-query GetTags($query: String, $limit: Int = 50) {
+query GetTags($query: String, $limit: Int) {
   tags(query: $query, limit: $limit) {
-    ...TagCore
+    id
+    slug
+    label
+    createdAt
+    updatedAt
   }
 }
 
-# Get a single tag by ID or slug
 query GetTag($id: ID, $slug: String) {
   tag(id: $id, slug: $slug) {
-    ...TagCore
+    id
+    slug
+    label
+    createdAt
+    updatedAt
   }
 }
 
-# =============================================================================
-# Tag Mutations (Admin/Moderator)
-# =============================================================================
+query CheckTagSlugAvailable($slug: String!) {
+  checkTagSlugAvailable(slug: $slug)
+}
+
+query GetTagUsageCount($slug: String!) {
+  getTagUsageCount(slug: $slug)
+}
+
+# ============================================
+# MUTATIONS
+# ============================================
 
 mutation CreateTag($input: CreateTagInput!) {
   createTag(input: $input) {
-    ...TagCore
+    id
+    slug
+    label
+    createdAt
+    updatedAt
   }
 }
 
 mutation UpdateTag($id: ID!, $input: UpdateTagInput!) {
   updateTag(id: $id, input: $input) {
-    ...TagCore
+    id
+    slug
+    label
+    createdAt
+    updatedAt
   }
 }
 

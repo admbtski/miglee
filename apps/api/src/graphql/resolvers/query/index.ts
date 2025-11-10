@@ -8,7 +8,13 @@ import {
   checkCategorySlugAvailableQuery,
   getCategoryUsageCountQuery,
 } from './categories';
-import { tagsQuery, tagQuery, tagsBySlugsQuery } from './tags';
+import {
+  tagsQuery,
+  tagQuery,
+  tagsBySlugsQuery,
+  checkTagSlugAvailableQuery,
+  getTagUsageCountQuery,
+} from './tags';
 import { usersQuery, userQuery } from './users';
 import { meQuery } from './auth';
 import {
@@ -62,6 +68,8 @@ export const Query: Resolvers['Query'] = {
   tagsBySlugs: tagsBySlugsQuery,
   tags: tagsQuery,
   tag: tagQuery,
+  checkTagSlugAvailable: checkTagSlugAvailableQuery,
+  getTagUsageCount: getTagUsageCountQuery,
   users: usersQuery,
   user: userQuery,
   me: meQuery,

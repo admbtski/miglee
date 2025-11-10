@@ -3,7 +3,10 @@ import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import {
+  Role,
+  type MutationResolvers,
+} from '../../__generated__/resolvers-types';
 import { mapNotification } from '../helpers';
 
 export const NOTIFICATION_INCLUDE = {
@@ -44,8 +47,7 @@ export const addNotificationMutation: MutationResolvers['addNotification'] =
         });
       }
 
-      if (recipientId !== user.id) {
-        // jeśli chcesz dopuścić adminów – dodaj warunek roli
+      if (user.role === Role.User) {
         throw new GraphQLError(
           'Not allowed to send notifications to other users.',
           { extensions: { code: 'FORBIDDEN' } }

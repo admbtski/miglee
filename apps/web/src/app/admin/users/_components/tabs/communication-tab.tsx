@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Send, Bell, AlertCircle } from 'lucide-react';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import { useAddNotificationMutation } from '@/lib/api/notifications';
+import { NotificationKind } from '@/lib/api/__generated__/react-query-update';
 
 type CommunicationTabProps = {
   userId: string;
@@ -24,7 +25,7 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
     try {
       await addNotificationMutation.mutateAsync({
         recipientId: userId,
-        kind: 'SYSTEM',
+        kind: NotificationKind.System,
         title: notificationTitle,
         body: notificationBody,
       });

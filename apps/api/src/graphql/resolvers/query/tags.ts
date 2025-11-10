@@ -97,3 +97,45 @@ export const tagQuery: QueryResolvers['tag'] = resolverWithMetrics(
     return null;
   }
 );
+
+export const checkTagSlugAvailableQuery: QueryResolvers['checkTagSlugAvailable'] =
+  resolverWithMetrics(
+    'Query',
+    'checkTagSlugAvailable',
+    async (_p, { slug }) => {
+      const trimmedSlug = slug.trim().toLowerCase();
+
+      if (!trimmedSlug) {
+        return false;
+      }
+
+      const existing = await prisma.tag.findUnique({
+        where: { slug: trimmedSlug },
+        select: { id: true },
+      });
+
+      return !existing; // true if available (not found)
+    }
+  );
+
+export const getTagUsageCountQuery: QueryResolvers['getTagUsageCount'] =
+  resolverWithMetrics('Query', 'getTagUsageCount', async (_p, { slug }) => {
+    const trimmedSlug = slug.trim();
+
+    if (!trimmedSlug) {
+      return 0;
+    }
+
+    // Count intents that use this tag (many-to-many relation)
+    const count = await prisma.intent.count({
+      where: {
+        tags: {
+          some: {
+            slug: trimmedSlug,
+          },
+        },
+      },
+    });
+
+    return count;
+  });

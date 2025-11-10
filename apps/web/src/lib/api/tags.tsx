@@ -9,9 +9,6 @@ import {
   GetTagDocument,
   GetTagQuery,
   GetTagQueryVariables,
-  GetTagsBySlugsDocument,
-  GetTagsBySlugsQuery,
-  GetTagsBySlugsQueryVariables,
   GetTagsDocument,
   GetTagsQuery,
   GetTagsQueryVariables,
@@ -19,6 +16,12 @@ import {
   UpdateTagDocument,
   UpdateTagMutation,
   UpdateTagMutationVariables,
+  CheckTagSlugAvailableDocument,
+  CheckTagSlugAvailableQuery,
+  CheckTagSlugAvailableQueryVariables,
+  GetTagUsageCountDocument,
+  GetTagUsageCountQuery,
+  GetTagUsageCountQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
@@ -36,14 +39,6 @@ export const GET_TAGS_LIST_KEY = (variables?: GetTagsQueryVariables) =>
 
 export const GET_TAG_ONE_KEY = (variables?: GetTagQueryVariables) =>
   variables ? (['GetTag', variables] as const) : (['GetTag'] as const);
-
-// NEW:
-export const GET_TAGS_BY_SLUGS_KEY = (
-  variables?: GetTagsBySlugsQueryVariables
-) =>
-  variables
-    ? (['GetTagsBySlugs', variables] as const)
-    : (['GetTagsBySlugs'] as const);
 
 // -------- Queries --------
 export function buildGetTagsOptions(
@@ -115,44 +110,6 @@ export function useGetTagQuery(
   });
 }
 
-// NEW: -------- tagsBySlugs --------
-export function buildGetTagsBySlugsOptions(
-  variables?: GetTagsBySlugsQueryVariables,
-  options?: Omit<
-    UseQueryOptions<GetTagsBySlugsQuery, Error, GetTagsBySlugsQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-): UseQueryOptions<GetTagsBySlugsQuery, Error, GetTagsBySlugsQuery, QueryKey> {
-  return {
-    queryKey: GET_TAGS_BY_SLUGS_KEY(variables) as unknown as QueryKey,
-    queryFn: async () =>
-      variables
-        ? gqlClient.request<GetTagsBySlugsQuery, GetTagsBySlugsQueryVariables>(
-            GetTagsBySlugsDocument,
-            variables
-          )
-        : gqlClient.request<GetTagsBySlugsQuery>(GetTagsBySlugsDocument),
-    ...(options ?? {}),
-  };
-}
-
-export function useGetTagsBySlugsQuery(
-  variables: GetTagsBySlugsQueryVariables,
-  options?: Omit<
-    UseQueryOptions<GetTagsBySlugsQuery, Error, GetTagsBySlugsQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery({
-    ...buildGetTagsBySlugsOptions(variables, options),
-    enabled:
-      (options?.enabled ?? true) &&
-      !!variables?.slugs &&
-      Array.isArray(variables.slugs) &&
-      variables.slugs.length > 0,
-  });
-}
-
 // -------- Mutations --------
 export function buildCreateTagOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -192,8 +149,7 @@ export function useCreateTagMutation(
         // invalidate lists (including bySlugs)
         qc.invalidateQueries({
           predicate: (q) =>
-            Array.isArray(q.queryKey) &&
-            (q.queryKey[0] === 'GetTags' || q.queryKey[0] === 'GetTagsBySlugs'),
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetTags',
         });
       },
       ...(options ?? {}),
@@ -239,8 +195,7 @@ export function useUpdateTagMutation(
         // invalidate lists (including bySlugs)
         qc.invalidateQueries({
           predicate: (q) =>
-            Array.isArray(q.queryKey) &&
-            (q.queryKey[0] === 'GetTags' || q.queryKey[0] === 'GetTagsBySlugs'),
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetTags',
         });
         // invalidate single by id
         if (vars.id) {
@@ -310,4 +265,54 @@ export function useDeleteTagMutation(
       ...(options ?? {}),
     })
   );
+}
+
+/* ----------------------- NEW: Check Slug & Usage ----------------------- */
+
+export function useCheckTagSlugAvailableQuery(
+  variables: CheckTagSlugAvailableQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      CheckTagSlugAvailableQuery,
+      unknown,
+      CheckTagSlugAvailableQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: ['CheckTagSlugAvailable', variables] as unknown as QueryKey,
+    queryFn: async () =>
+      gqlClient.request<
+        CheckTagSlugAvailableQuery,
+        CheckTagSlugAvailableQueryVariables
+      >(CheckTagSlugAvailableDocument, variables),
+    enabled: !!variables.slug && variables.slug.trim().length > 0,
+    ...(options ?? {}),
+  });
+}
+
+export function useGetTagUsageCountQuery(
+  variables: GetTagUsageCountQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      GetTagUsageCountQuery,
+      unknown,
+      GetTagUsageCountQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: ['GetTagUsageCount', variables] as unknown as QueryKey,
+    queryFn: async () =>
+      gqlClient.request<GetTagUsageCountQuery, GetTagUsageCountQueryVariables>(
+        GetTagUsageCountDocument,
+        variables
+      ),
+    enabled: !!variables.slug && variables.slug.trim().length > 0,
+    ...(options ?? {}),
+  });
 }
