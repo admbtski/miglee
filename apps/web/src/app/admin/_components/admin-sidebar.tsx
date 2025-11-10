@@ -1,0 +1,138 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard,
+  Users,
+  Flag,
+  MessageSquare,
+  Bell,
+  Tag,
+  Calendar,
+  DollarSign,
+  Settings,
+  Shield,
+  BarChart3,
+  Folder,
+  Star,
+} from 'lucide-react';
+import clsx from 'clsx';
+
+const navigation = [
+  {
+    name: 'Dashboard',
+    href: '/admin',
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  {
+    name: 'Użytkownicy',
+    href: '/admin/users',
+    icon: Users,
+  },
+  {
+    name: 'Wydarzenia',
+    href: '/admin/intents',
+    icon: Calendar,
+  },
+  {
+    name: 'Raporty',
+    href: '/admin/reports',
+    icon: Flag,
+    badge: 'TODO', // TODO: Replace with actual count
+  },
+  {
+    name: 'Komentarze',
+    href: '/admin/comments',
+    icon: MessageSquare,
+  },
+  {
+    name: 'Recenzje',
+    href: '/admin/reviews',
+    icon: Star,
+  },
+  {
+    name: 'Kategorie',
+    href: '/admin/categories',
+    icon: Folder,
+  },
+  {
+    name: 'Tagi',
+    href: '/admin/tags',
+    icon: Tag,
+  },
+  {
+    name: 'Powiadomienia',
+    href: '/admin/notifications',
+    icon: Bell,
+  },
+  {
+    name: 'Wiadomości DM',
+    href: '/admin/dm',
+    icon: MessageSquare,
+  },
+  {
+    name: 'Sponsoring',
+    href: '/admin/sponsorship',
+    icon: DollarSign,
+  },
+  {
+    name: 'Statystyki',
+    href: '/admin/analytics',
+    icon: BarChart3,
+  },
+  {
+    name: 'Narzędzia',
+    href: '/admin/tools',
+    icon: Settings,
+  },
+  {
+    name: 'Bezpieczeństwo',
+    href: '/admin/security',
+    icon: Shield,
+  },
+];
+
+export function AdminSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="w-64 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex h-16 items-center border-b border-gray-200 px-6 dark:border-gray-800">
+        <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          Admin Panel
+        </h1>
+      </div>
+
+      <nav className="space-y-1 p-4">
+        {navigation.map((item) => {
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname?.startsWith(item.href);
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={clsx(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="flex-1">{item.name}</span>
+              {item.badge && (
+                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900 dark:text-red-300">
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}

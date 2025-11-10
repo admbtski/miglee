@@ -300,6 +300,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       deck.gl:
         specifier: ^9.2.2
         version: 9.2.2(@arcgis/core@4.34.7)(@luma.gl/constants@9.2.3)(@luma.gl/gltf@9.2.3(@luma.gl/constants@9.2.3)(@luma.gl/core@9.2.3)(@luma.gl/engine@9.2.3(@luma.gl/core@9.2.3)(@luma.gl/shadertools@9.2.3(@luma.gl/core@9.2.3)))(@luma.gl/shadertools@9.2.3(@luma.gl/core@9.2.3)))(@luma.gl/shadertools@9.2.3(@luma.gl/core@9.2.3))(@luma.gl/webgl@9.2.3(@luma.gl/core@9.2.3))(@math.gl/web-mercator@4.1.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -3604,6 +3607,9 @@ packages:
 
   dataloader@2.2.3:
     resolution: {integrity: sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==, tarball: https://registry.npmjs.org/dataloader/-/dataloader-2.2.3.tgz}
+
+  date-fns@4.1.0:
+    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==, tarball: https://registry.npmjs.org/date-fns/-/date-fns-4.1.0.tgz}
 
   dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==, tarball: https://registry.npmjs.org/dateformat/-/dateformat-4.6.3.tgz}
@@ -10249,6 +10255,8 @@ snapshots:
       is-data-view: 1.0.2
 
   dataloader@2.2.3: {}
+
+  date-fns@4.1.0: {}
 
   dateformat@4.6.3: {}
 
