@@ -11,7 +11,7 @@
 'use client';
 
 import { memo, useCallback, useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import { VirtuosoGrid } from 'react-virtuoso';
 import { EventCard } from '../event-card';
 import type { IntentListItem, IntentHoverCallback } from '@/types/intent';
 import { mapIntentToEventCardProps } from '@/lib/adapters/intent-adapter';
@@ -82,23 +82,46 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
     return null;
   }, [hasNextPage, isFetchingNextPage, items.length]);
 
-  // Render item with proper grid layout
+  // Render item in grid
   const renderItem = useCallback(
     (index: number) => {
       const props = mappedItems[index];
-      return (
-        <div className="pb-6">
-          <EventCard key={props.intentId} {...props} />
-        </div>
-      );
+      if (!props) return null;
+      return <EventCard {...props} />;
     },
     [mappedItems]
   );
 
-  // Compute item size for better performance
+  // Compute item key for better performance
   const computeItemKey = useCallback(
     (index: number) => mappedItems[index]?.intentId || `item-${index}`,
     [mappedItems]
+  );
+
+  // Grid components for VirtuosoGrid with responsive columns
+  const gridComponents = useMemo(
+    () => ({
+      List: ({ style, children, ...props }: any) => (
+        <div
+          {...props}
+          style={{
+            ...style,
+            display: 'grid',
+            // Responsive grid: 1 col on mobile, 2 on tablet, 3 on desktop
+            gridTemplateColumns:
+              'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+            gap: '1.5rem',
+            padding: '0.75rem 0',
+          }}
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
+        >
+          {children}
+        </div>
+      ),
+      Item: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+      Footer,
+    }),
+    [Footer]
   );
 
   if (showNoResults) {
@@ -120,20 +143,18 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
   if (showItems) {
     return (
       <div className="mt-3">
-        <Virtuoso
+        <VirtuosoGrid
           data={mappedItems}
           endReached={handleEndReached}
           overscan={300}
           itemContent={renderItem}
           computeItemKey={computeItemKey}
-          components={{
-            Footer,
-          }}
+          components={gridComponents}
           style={{
             height: 'calc(100vh - 200px)',
             minHeight: '400px',
           }}
-          className="virtuoso-events-list"
+          className="virtuoso-events-grid"
         />
       </div>
     );
