@@ -13,3 +13,14 @@ export function planForIndex(index: number): Plan {
   if (index % 3 === 0) return 'basic';
   return 'default';
 }
+
+/**
+ * Extracts lockHoursBeforeStart from intent item with fallback
+ * @param item - Intent item (may not have the field in fragment)
+ * @returns Lock hours or 0 as fallback
+ */
+export function getLockHoursFallback(item?: unknown): number {
+  return (
+    (item as Record<string, unknown> | undefined)?.['lockHoursBeforeStart'] ?? 0
+  );
+}
