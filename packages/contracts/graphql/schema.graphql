@@ -1058,6 +1058,8 @@ type Query {
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
   categories(query: String, limit: Int = 50): [Category!]!
   category(id: ID, slug: String): Category
+  checkCategorySlugAvailable(slug: String!): Boolean!
+  getCategoryUsageCount(slug: String!): Int!
 
   tagsBySlugs(slugs: [String!]!, limit: Int): [Tag!]!
   tags(query: String, limit: Int = 50): [Tag!]!

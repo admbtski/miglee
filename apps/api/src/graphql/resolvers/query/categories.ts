@@ -106,3 +106,49 @@ export const categoryQuery: QueryResolvers['category'] = resolverWithMetrics(
     return null;
   }
 );
+
+export const checkCategorySlugAvailableQuery: QueryResolvers['checkCategorySlugAvailable'] =
+  resolverWithMetrics(
+    'Query',
+    'checkCategorySlugAvailable',
+    async (_p, { slug }) => {
+      const trimmedSlug = slug.trim().toLowerCase();
+
+      if (!trimmedSlug) {
+        return false;
+      }
+
+      const existing = await prisma.category.findUnique({
+        where: { slug: trimmedSlug },
+        select: { id: true },
+      });
+
+      return !existing; // true if available (not found)
+    }
+  );
+
+export const getCategoryUsageCountQuery: QueryResolvers['getCategoryUsageCount'] =
+  resolverWithMetrics(
+    'Query',
+    'getCategoryUsageCount',
+    async (_p, { slug }) => {
+      const trimmedSlug = slug.trim();
+
+      if (!trimmedSlug) {
+        return 0;
+      }
+
+      // Count intents that use this category (many-to-many relation)
+      const count = await prisma.intent.count({
+        where: {
+          categories: {
+            some: {
+              slug: trimmedSlug,
+            },
+          },
+        },
+      });
+
+      return count;
+    }
+  );

@@ -5,9 +5,6 @@ import {
   DeleteCategoryDocument,
   DeleteCategoryMutation,
   DeleteCategoryMutationVariables,
-  GetCategoriesBySlugsDocument,
-  GetCategoriesBySlugsQuery,
-  GetCategoriesBySlugsQueryVariables,
   GetCategoriesDocument,
   GetCategoriesQuery,
   GetCategoriesQueryVariables,
@@ -17,7 +14,12 @@ import {
   UpdateCategoryDocument,
   UpdateCategoryMutation,
   UpdateCategoryMutationVariables,
-  // ⬇️ NEW:
+  CheckCategorySlugAvailableDocument,
+  CheckCategorySlugAvailableQuery,
+  CheckCategorySlugAvailableQueryVariables,
+  GetCategoryUsageCountDocument,
+  GetCategoryUsageCountQuery,
+  GetCategoryUsageCountQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
@@ -42,14 +44,6 @@ export const GET_CATEGORY_ONE_KEY = (variables?: GetCategoryQueryVariables) =>
   variables
     ? (['GetCategory', variables] as const)
     : (['GetCategory'] as const);
-
-// ⬇️ NEW: klucz pod listę po slugach
-export const GET_CATEGORIES_BY_SLUGS_KEY = (
-  variables?: GetCategoriesBySlugsQueryVariables
-) =>
-  variables
-    ? (['GetCategoriesBySlugs', variables] as const)
-    : (['GetCategoriesBySlugs'] as const);
 
 /* -------------------------------- QUERIES -------------------------------- */
 
@@ -126,57 +120,6 @@ export function useGetCategoryQuery(
   });
 }
 
-/* ⬇️ NEW: GET by slugs */
-
-export function buildGetCategoriesBySlugsOptions(
-  variables?: GetCategoriesBySlugsQueryVariables,
-  options?: Omit<
-    UseQueryOptions<
-      GetCategoriesBySlugsQuery,
-      Error,
-      GetCategoriesBySlugsQuery,
-      QueryKey
-    >,
-    'queryKey' | 'queryFn'
-  >
-): UseQueryOptions<
-  GetCategoriesBySlugsQuery,
-  Error,
-  GetCategoriesBySlugsQuery,
-  QueryKey
-> {
-  return {
-    queryKey: GET_CATEGORIES_BY_SLUGS_KEY(variables) as unknown as QueryKey,
-    queryFn: async () => {
-      if (variables) {
-        return gqlClient.request<
-          GetCategoriesBySlugsQuery,
-          GetCategoriesBySlugsQueryVariables
-        >(GetCategoriesBySlugsDocument, variables);
-      }
-      return gqlClient.request<GetCategoriesBySlugsQuery>(
-        GetCategoriesBySlugsDocument
-      );
-    },
-    ...(options ?? {}),
-  };
-}
-
-export function useGetCategoriesBySlugsQuery(
-  variables: GetCategoriesBySlugsQueryVariables,
-  options?: Omit<
-    UseQueryOptions<
-      GetCategoriesBySlugsQuery,
-      Error,
-      GetCategoriesBySlugsQuery,
-      QueryKey
-    >,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery(buildGetCategoriesBySlugsOptions(variables, options));
-}
-
 /* ------------------------------- MUTATIONS ------------------------------- */
 
 export function buildCreateCategoryOptions<TContext = unknown>(
@@ -222,12 +165,6 @@ export function useCreateCategoryMutation(
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
-        });
-        // ⬇️ NEW: odśwież też listy po slugach
-        qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) &&
-            q.queryKey[0] === 'GetCategoriesBySlugs',
         });
       },
       ...(options ?? {}),
@@ -277,12 +214,6 @@ export function useUpdateCategoryMutation(
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
-        });
-        // ⬇️ NEW: również listy po slugach
-        qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) &&
-            q.queryKey[0] === 'GetCategoriesBySlugs',
         });
 
         if (vars.id) {
@@ -348,12 +279,6 @@ export function useDeleteCategoryMutation(
           predicate: (q) =>
             Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
         });
-        // ⬇️ NEW: i po slugach
-        qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) &&
-            q.queryKey[0] === 'GetCategoriesBySlugs',
-        });
 
         if (vars.id) {
           qc.invalidateQueries({
@@ -366,4 +291,54 @@ export function useDeleteCategoryMutation(
       ...(options ?? {}),
     })
   );
+}
+
+/* ----------------------- NEW: Check Slug & Usage ----------------------- */
+
+export function useCheckCategorySlugAvailableQuery(
+  variables: CheckCategorySlugAvailableQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      CheckCategorySlugAvailableQuery,
+      unknown,
+      CheckCategorySlugAvailableQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: ['CheckCategorySlugAvailable', variables] as unknown as QueryKey,
+    queryFn: async () =>
+      gqlClient.request<
+        CheckCategorySlugAvailableQuery,
+        CheckCategorySlugAvailableQueryVariables
+      >(CheckCategorySlugAvailableDocument, variables),
+    enabled: !!variables.slug && variables.slug.trim().length > 0,
+    ...(options ?? {}),
+  });
+}
+
+export function useGetCategoryUsageCountQuery(
+  variables: GetCategoryUsageCountQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      GetCategoryUsageCountQuery,
+      unknown,
+      GetCategoryUsageCountQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: ['GetCategoryUsageCount', variables] as unknown as QueryKey,
+    queryFn: async () =>
+      gqlClient.request<
+        GetCategoryUsageCountQuery,
+        GetCategoryUsageCountQueryVariables
+      >(GetCategoryUsageCountDocument, variables),
+    enabled: !!variables.slug && variables.slug.trim().length > 0,
+    ...(options ?? {}),
+  });
 }

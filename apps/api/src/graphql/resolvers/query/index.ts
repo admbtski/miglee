@@ -5,6 +5,8 @@ import {
   categoriesBySlugsQuery,
   categoriesQuery,
   categoryQuery,
+  checkCategorySlugAvailableQuery,
+  getCategoryUsageCountQuery,
 } from './categories';
 import { tagsQuery, tagQuery, tagsBySlugsQuery } from './tags';
 import { usersQuery, userQuery } from './users';
@@ -55,6 +57,8 @@ export const Query: Resolvers['Query'] = {
   categoriesBySlugs: categoriesBySlugsQuery,
   categories: categoriesQuery,
   category: categoryQuery,
+  checkCategorySlugAvailable: checkCategorySlugAvailableQuery,
+  getCategoryUsageCount: getCategoryUsageCountQuery,
   tagsBySlugs: tagsBySlugsQuery,
   tags: tagsQuery,
   tag: tagQuery,

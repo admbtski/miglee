@@ -1,0 +1,353 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Modal } from '@/components/feedback/modal';
+import { Plus, AlertCircle, Check, Loader2 } from 'lucide-react';
+import {
+  useCreateCategoryMutation,
+  useCheckCategorySlugAvailableQuery,
+} from '@/lib/api/categories';
+import { generateSlug, isValidSlug } from '@/lib/utils/slug';
+
+type AddCategoryModalProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+type LanguageTab = 'pl' | 'en' | 'de';
+
+export function AddCategoryModal({ open, onClose }: AddCategoryModalProps) {
+  const [activeTab, setActiveTab] = useState<LanguageTab>('pl');
+  const [slug, setSlug] = useState('');
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [names, setNames] = useState<Record<string, string>>({
+    pl: '',
+    en: '',
+    de: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const createMutation = useCreateCategoryMutation();
+
+  // Check slug availability (debounced via enabled flag)
+  const { data: slugAvailable, isLoading: checkingSlug } =
+    useCheckCategorySlugAvailableQuery(
+      { slug },
+      {
+        enabled: !!slug && slug.length > 0 && isValidSlug(slug),
+        staleTime: 5000,
+      }
+    );
+
+  // Auto-generate slug from PL name if not manually edited
+  useEffect(() => {
+    if (!slugManuallyEdited && names.pl) {
+      const generated = generateSlug(names.pl);
+      setSlug(generated);
+    }
+  }, [names.pl, slugManuallyEdited]);
+
+  const handleNameChange = (lang: string, value: string) => {
+    // Trim and collapse whitespace
+    const cleaned = value.replace(/\s+/g, ' ');
+    setNames((prev) => ({ ...prev, [lang]: cleaned }));
+    setErrors((prev) => ({ ...prev, [lang]: '' }));
+  };
+
+  const handleSlugChange = (value: string) => {
+    setSlug(value.toLowerCase().trim());
+    setSlugManuallyEdited(true);
+    setErrors((prev) => ({ ...prev, slug: '' }));
+  };
+
+  const handleSlugBlur = () => {
+    // Validate slug format
+    if (slug && !isValidSlug(slug)) {
+      setErrors((prev) => ({
+        ...prev,
+        slug: 'Nieprawidłowy format slug (tylko małe litery, cyfry i myślniki)',
+      }));
+    } else if (slug && slugAvailable === false) {
+      setErrors((prev) => ({ ...prev, slug: 'Slug zajęty' }));
+    }
+  };
+
+  const copyFromPl = () => {
+    if (names.pl) {
+      setNames((prev) => ({
+        ...prev,
+        en: prev.en || prev.pl,
+        de: prev.de || prev.pl,
+      }));
+    }
+  };
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // PL name required
+    if (!names.pl || names.pl.trim().length < 2) {
+      newErrors.pl = 'Nazwa polska jest wymagana (min. 2 znaki)';
+    } else if (names.pl.trim().length > 50) {
+      newErrors.pl = 'Nazwa polska zbyt długa (max. 50 znaków)';
+    }
+
+    // Optional EN/DE validation
+    if (names.en && names.en.trim().length > 50) {
+      newErrors.en = 'Nazwa angielska zbyt długa (max. 50 znaków)';
+    }
+    if (names.de && names.de.trim().length > 50) {
+      newErrors.de = 'Nazwa niemiecka zbyt długa (max. 50 znaków)';
+    }
+
+    // Slug required and valid
+    if (!slug || slug.trim().length === 0) {
+      newErrors.slug = 'Slug jest wymagany';
+    } else if (!isValidSlug(slug)) {
+      newErrors.slug = 'Nieprawidłowy format slug';
+    } else if (slugAvailable === false) {
+      newErrors.slug = 'Slug zajęty';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    try {
+      // Build names object (only include non-empty values)
+      const namesPayload: Record<string, string> = {};
+      if (names.pl.trim()) namesPayload.pl = names.pl.trim();
+      if (names.en.trim()) namesPayload.en = names.en.trim();
+      if (names.de.trim()) namesPayload.de = names.de.trim();
+
+      await createMutation.mutateAsync({
+        input: {
+          slug: slug.trim(),
+          names: namesPayload,
+        },
+      });
+
+      // Reset and close
+      setSlug('');
+      setSlugManuallyEdited(false);
+      setNames({ pl: '', en: '', de: '' });
+      setErrors({});
+      setActiveTab('pl');
+      onClose();
+    } catch (error: any) {
+      console.error('Failed to create category:', error);
+      setErrors((prev) => ({
+        ...prev,
+        submit: error.message || 'Nie udało się utworzyć kategorii',
+      }));
+    }
+  };
+
+  const handleClose = () => {
+    if (!createMutation.isPending) {
+      setSlug('');
+      setSlugManuallyEdited(false);
+      setNames({ pl: '', en: '', de: '' });
+      setErrors({});
+      setActiveTab('pl');
+      onClose();
+    }
+  };
+
+  const translationCount = [names.pl, names.en, names.de].filter(
+    (n) => n.trim().length > 0
+  ).length;
+
+  return (
+    <Modal
+      open={open}
+      onClose={handleClose}
+      variant="centered"
+      size="lg"
+      header={
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <Plus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <span>Dodaj kategorię</span>
+        </h3>
+      }
+      content={
+        <div className="space-y-6">
+          {/* Slug */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Slug <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                onBlur={handleSlugBlur}
+                placeholder="np. sport-i-rekreacja"
+                disabled={createMutation.isPending}
+                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  errors.slug
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                } dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100`}
+              />
+              {checkingSlug && (
+                <div className="absolute right-3 top-2.5">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                </div>
+              )}
+              {!checkingSlug && slug && isValidSlug(slug) && slugAvailable && (
+                <div className="absolute right-3 top-2.5">
+                  <Check className="h-4 w-4 text-green-500" />
+                </div>
+              )}
+            </div>
+            {errors.slug && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.slug}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              Autogenerowany z nazwy polskiej (możesz nadpisać)
+            </p>
+          </div>
+
+          {/* Language Tabs */}
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nazwy (wielojęzyczne)
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600 dark:text-gray-400">
+                  {translationCount}/3 tłumaczeń
+                </span>
+                <button
+                  type="button"
+                  onClick={copyFromPl}
+                  disabled={!names.pl || createMutation.isPending}
+                  className="text-xs text-blue-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-400"
+                >
+                  Uzupełnij z PL
+                </button>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="mb-3 flex gap-2 border-b border-gray-200 dark:border-gray-700">
+              {(['pl', 'en', 'de'] as LanguageTab[]).map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setActiveTab(lang)}
+                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                    activeTab === lang
+                      ? 'border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                  }`}
+                >
+                  {lang.toUpperCase()}
+                  {lang === 'pl' && (
+                    <span className="ml-1 text-red-500">*</span>
+                  )}
+                  {names[lang] && (
+                    <span className="ml-1 text-green-500">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Active Tab Content */}
+            <div>
+              <input
+                type="text"
+                value={names[activeTab]}
+                onChange={(e) => handleNameChange(activeTab, e.target.value)}
+                placeholder={`Nazwa w języku ${
+                  activeTab === 'pl'
+                    ? 'polskim'
+                    : activeTab === 'en'
+                      ? 'angielskim'
+                      : 'niemieckim'
+                }`}
+                disabled={createMutation.isPending}
+                className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  errors[activeTab]
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                } dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100`}
+              />
+              {errors[activeTab] && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  {errors[activeTab]}
+                </p>
+              )}
+              {activeTab === 'pl' && (
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  Wymagane (2-50 znaków)
+                </p>
+              )}
+              {activeTab !== 'pl' && (
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  Opcjonalne (max. 50 znaków)
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* JSON Preview */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Podgląd JSON (readonly)
+            </label>
+            <pre className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              {JSON.stringify(
+                Object.fromEntries(
+                  Object.entries(names).filter(([_, v]) => v.trim())
+                ),
+                null,
+                2
+              )}
+            </pre>
+          </div>
+
+          {/* Submit Error */}
+          {errors.submit && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950/30">
+              <div className="flex items-center gap-2 text-sm text-red-800 dark:text-red-300">
+                <AlertCircle className="h-4 w-4" />
+                <span>{errors.submit}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      }
+      footer={
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={createMutation.isPending}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Anuluj
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={createMutation.isPending || checkingSlug}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {createMutation.isPending && (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            )}
+            {createMutation.isPending ? 'Tworzenie...' : 'Utwórz kategorię'}
+          </button>
+        </div>
+      }
+    />
+  );
+}

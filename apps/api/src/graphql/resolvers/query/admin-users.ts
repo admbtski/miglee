@@ -6,7 +6,7 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapComment, mapReview } from '../helpers';
+import { mapComment, mapReview, mapUser } from '../helpers';
 
 /**
  * Helper: Check if user is admin
@@ -233,15 +233,15 @@ export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
       const take = Math.min(limit, 100);
       const skip = offset;
 
-      // Get DM threads where user is either userA or userB
+      // Get DM threads where user is either aUser or bUser
       const [threads, total] = await Promise.all([
         prisma.dmThread.findMany({
           where: {
-            OR: [{ userAId: userId }, { userBId: userId }],
+            OR: [{ aUserId: userId }, { bUserId: userId }],
           },
           include: {
-            userA: true,
-            userB: true,
+            aUser: true,
+            bUser: true,
             _count: {
               select: { messages: true },
             },
@@ -254,7 +254,7 @@ export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
         }),
         prisma.dmThread.count({
           where: {
-            OR: [{ userAId: userId }, { userBId: userId }],
+            OR: [{ aUserId: userId }, { bUserId: userId }],
           },
         }),
       ]);
@@ -266,9 +266,9 @@ export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
         lastMessageAt: thread.lastMessageAt,
         messageCount: thread._count.messages,
         otherUser:
-          thread.userAId === userId
-            ? mapUser(thread.userB as any)
-            : mapUser(thread.userA as any),
+          thread.aUserId === userId
+            ? mapUser(thread.bUser as any)
+            : mapUser(thread.aUser as any),
       }));
 
       return {

@@ -1,41 +1,58 @@
-# =============================================================================
-# Category Queries
-# =============================================================================
+# Category Management Operations
 
-# Get multiple categories by their slugs
-query GetCategoriesBySlugs($slugs: [String!]!, $limit: Int = 50) {
-  categoriesBySlugs(slugs: $slugs, limit: $limit) {
-    ...CategoryCore
-  }
-}
+# ============================================
+# QUERIES
+# ============================================
 
-# Search/list categories
-query GetCategories($query: String, $limit: Int = 50) {
+query GetCategories($query: String, $limit: Int) {
   categories(query: $query, limit: $limit) {
-    ...CategoryCore
+    id
+    slug
+    names
+    createdAt
+    updatedAt
   }
 }
 
-# Get a single category by ID or slug
 query GetCategory($id: ID, $slug: String) {
   category(id: $id, slug: $slug) {
-    ...CategoryCore
+    id
+    slug
+    names
+    createdAt
+    updatedAt
   }
 }
 
-# =============================================================================
-# Category Mutations (Admin only)
-# =============================================================================
+query CheckCategorySlugAvailable($slug: String!) {
+  checkCategorySlugAvailable(slug: $slug)
+}
+
+query GetCategoryUsageCount($slug: String!) {
+  getCategoryUsageCount(slug: $slug)
+}
+
+# ============================================
+# MUTATIONS
+# ============================================
 
 mutation CreateCategory($input: CreateCategoryInput!) {
   createCategory(input: $input) {
-    ...CategoryCore
+    id
+    slug
+    names
+    createdAt
+    updatedAt
   }
 }
 
 mutation UpdateCategory($id: ID!, $input: UpdateCategoryInput!) {
   updateCategory(id: $id, input: $input) {
-    ...CategoryCore
+    id
+    slug
+    names
+    createdAt
+    updatedAt
   }
 }
 
