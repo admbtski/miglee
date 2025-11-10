@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { gqlClient } from '@/lib/api/client';
+import {
+  GetIntentDetailQuery,
+  GetIntentQueryVariables,
+} from '@/lib/api/__generated__/react-query-update';
 
 /**
  * Dedykowane query dla detalu wydarzenia
@@ -229,7 +233,10 @@ export function useIntentDetail(intentId: string) {
   return useQuery({
     queryKey: ['intent-detail', intentId],
     queryFn: async () => {
-      const response = await gqlClient.request<any>(GetIntentDetailDocument, {
+      const response = await gqlClient.request<
+        GetIntentDetailQuery,
+        GetIntentQueryVariables
+      >(GetIntentDetailDocument, {
         id: intentId,
       });
       return response;

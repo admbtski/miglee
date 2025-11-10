@@ -7,18 +7,29 @@ import { EventDetails } from './event-details';
 import { EventParticipants } from './event-participants';
 import { EventJoinSection } from './event-join-section';
 import { EventActions } from './event-actions';
+import { EventAdminPanel } from './event-admin-panel';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMeQuery } from '@/lib/api/auth';
+import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
+import { EventManagementModalConnect } from '@/app/account/intents/_components/managemen/event-management-modal-connect';
+import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
+import { DeleteIntentModals } from '@/app/account/intents/_components/delete-intent-modals';
 
 type EventDetailClientProps = {
   intentId: string;
 };
 
 export function EventDetailClient({ intentId }: EventDetailClientProps) {
-  const { data, isLoading, error } = useIntentDetail(intentId);
+  const { data, isLoading, error, refetch } = useIntentDetail(intentId);
   const { data: authData } = useMeQuery();
+
+  // Modal states
+  const [editOpen, setEditOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [cancelId, setCancelId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   if (isLoading) {
     return <EventDetailSkeleton />;
@@ -45,7 +56,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   // Check user membership status
   const userMembership = useMemo(() => {
     if (!currentUserId || !intent.members) return null;
-    return intent.members.find((m: any) => m.userId === currentUserId);
+    return intent.members.find((m) => m.userId === currentUserId);
   }, [currentUserId, intent.members]);
 
   const isOwner = userMembership?.role === 'OWNER';
@@ -204,10 +215,65 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
             <EventJoinSection event={eventData} />
+
+            {/* Admin Panel - tylko dla właściciela i moderatorów */}
+            <EventAdminPanel
+              event={eventData}
+              onEdit={() => setEditOpen(true)}
+              onManage={() => setManageOpen(true)}
+              onCancel={() => setCancelId(intentId)}
+              onDelete={() => setDeleteId(intentId)}
+            />
+
             <EventActions event={eventData} />
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CreateEditIntentModalConnect
+        intentId={editOpen ? intentId : undefined}
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          refetch();
+        }}
+      />
+
+      <EventManagementModalConnect
+        intentId={intentId}
+        canManage={isOwner || isModerator}
+        isPremium={!!eventData.sponsorship}
+        open={manageOpen}
+        onClose={() => {
+          setManageOpen(false);
+          refetch();
+        }}
+      />
+
+      <CancelIntentModals
+        cancelId={cancelId}
+        onClose={() => setCancelId(null)}
+        onSuccess={() => {
+          refetch();
+        }}
+        title="Anulować wydarzenie?"
+        subtitle="Uczestnicy zostaną powiadomieni o anulowaniu. Ta akcja jest odwracalna."
+        successTitle="Wydarzenie anulowane"
+        successSubtitle="Wydarzenie zostało pomyślnie anulowane."
+      />
+
+      <DeleteIntentModals
+        deleteId={deleteId}
+        onClose={() => setDeleteId(null)}
+        onSuccess={() => {
+          refetch();
+        }}
+        title="Usunąć wydarzenie?"
+        subtitle="Ta akcja jest nieodwracalna. Wszystkie dane zostaną trwale usunięte."
+        successTitle="Wydarzenie usunięte"
+        successSubtitle="Wydarzenie zostało trwale usunięte."
+      />
     </div>
   );
 }

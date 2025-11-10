@@ -23,6 +23,7 @@ import type {
   CreateIntentInput,
   Intent as GQLIntent,
   MutationResolvers,
+  UpdateIntentInput,
 } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification, pickLocation } from '../helpers';
 
@@ -82,6 +83,7 @@ function assertStartEnd(startAt: Date, endAt: Date) {
   }
 }
 
+// todo: validation
 function assertCreateInput(input: CreateIntentInput) {
   if (!input.categorySlugs?.length || input.categorySlugs.length > 3) {
     throw new GraphQLError('You must select between 1 and 3 categories.', {
@@ -145,7 +147,8 @@ function assertCreateInput(input: CreateIntentInput) {
   }
 }
 
-function assertUpdateInput(input: any) {
+// todo: validation
+function assertUpdateInput(input: UpdateIntentInput) {
   // null-protection on immutable-ish scalars
   if (input.title === null)
     throw new GraphQLError('`title` cannot be null.', {
@@ -247,8 +250,6 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
     'Mutation',
     'createIntent',
     async (_p, { input }, { user, pubsub }): Promise<GQLIntent> => {
-      assertCreateInput(input);
-
       const ownerId = user?.id;
       if (!ownerId) {
         throw new GraphQLError(
@@ -258,6 +259,8 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           }
         );
       }
+
+      assertCreateInput(input);
 
       const loc = pickLocation(input.location) ?? {};
 
@@ -363,11 +366,22 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
   );
 
 /** Update Intent (publikacja INTENT_UPDATED + reschedule reminders) */
+// todo: can be updated only by owner
 export const updateIntentMutation: MutationResolvers['updateIntent'] =
   resolverWithMetrics(
     'Mutation',
     'updateIntent',
     async (_p, { id, input }, { user, pubsub }): Promise<GQLIntent> => {
+      const ownerId = user?.id;
+      if (!ownerId) {
+        throw new GraphQLError(
+          'ownerId is required or an authenticated user must be present.',
+          {
+            extensions: { code: 'UNAUTHENTICATED' },
+          }
+        );
+      }
+
       assertUpdateInput(input);
 
       const current = await prisma.intent.findUnique({
@@ -565,6 +579,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
   );
 
 /** Cancel Intent – sprzątanie reminders + publikacje */
+// todo: can be canceled only by owner
 export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
   resolverWithMetrics(
     'Mutation',
@@ -673,12 +688,21 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
   );
 
 /** Delete Intent (SOFT) — z publikacją INTENT_DELETED */
+// todo: can be deleted only by owner
 export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
   resolverWithMetrics(
     'Mutation',
     'deleteIntent',
     async (_p, { id }, { user, pubsub }) => {
       const actorId = user?.id ?? null;
+      if (!actorId) {
+        throw new GraphQLError(
+          'actorId is required or an authenticated user must be present.',
+          {
+            extensions: { code: 'UNAUTHENTICATED' },
+          }
+        );
+      }
 
       const row = await prisma.intent.findUnique({
         where: { id },

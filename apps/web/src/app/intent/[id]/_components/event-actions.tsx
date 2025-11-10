@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { EventChatModal } from './event-chat-modal';
+import { ReportIntentModal } from './report-intent-modal';
 
 type EventActionsProps = {
   event: EventDetailsData;
@@ -16,6 +17,7 @@ type EventActionsProps = {
 
 export function EventActions({ event }: EventActionsProps) {
   const [chatOpen, setChatOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -89,8 +91,8 @@ export function EventActions({ event }: EventActionsProps) {
 
           {/* Report */}
           <button
-            disabled
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
+            onClick={() => setReportOpen(true)}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
           >
             <Flag className="h-4 w-4" />
             <span>Zgłoś</span>
@@ -177,6 +179,14 @@ export function EventActions({ event }: EventActionsProps) {
         intentId={event.id}
         intentTitle={event.title}
         membersCount={event.joinedCount}
+      />
+
+      {/* Report Modal */}
+      <ReportIntentModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        intentId={event.id}
+        intentTitle={event.title}
       />
     </div>
   );

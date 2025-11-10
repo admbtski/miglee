@@ -446,7 +446,7 @@ export default function IntentsPage() {
           setPreview(undefined);
         }}
         detailsHref={
-          preview?.id ? `/intents/${encodeURIComponent(preview.id)}` : undefined
+          preview?.id ? `/intent/${encodeURIComponent(preview.id)}` : undefined
         }
         data={{
           eventId: preview?.id,

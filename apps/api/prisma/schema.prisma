@@ -369,7 +369,6 @@ model Intent {
   @@index([createdAt])
   @@index([visibility, meetingKind, startAt])
   @@index([visibility, startAt, joinedCount])
-  // NOWE indeksy pod filtrowanie zapisów/cutoffów
   @@index([joinManuallyClosed, startAt])
   @@index([joinOpensMinutesBeforeStart])
   @@index([joinCutoffMinutesBeforeStart])
