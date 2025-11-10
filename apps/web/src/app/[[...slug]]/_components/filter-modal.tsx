@@ -5,12 +5,8 @@ import {
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
-import { useGetCategoriesBySlugsQuery } from '@/lib/api/categories';
-import { useGetTagsBySlugsQuery } from '@/lib/api/tags';
-import { appLanguage, appLanguageFallback } from '@/lib/config/language';
-import { AlertCircle, Check, MapPin, SlidersHorizontal, X } from 'lucide-react';
+import { AlertCircle, MapPin, SlidersHorizontal, X } from 'lucide-react';
 import React, {
-  memo,
   useCallback,
   useEffect,
   useId,
@@ -20,6 +16,10 @@ import React, {
 } from 'react';
 import { SearchMeta, useSearchMeta } from '../_hooks/use-search-meta';
 import SearchCombo from './search-combo';
+import { INTENTS_CONFIG } from '../_lib/constants';
+
+// Note: FilterSection, FilterPill, FilterChips, LocationSection, DateRangeSection
+// components are available in ./filters/ for future refactoring
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* constants & helpers */
@@ -33,7 +33,84 @@ const CITIES = [
   { name: 'Poznań', lat: 52.4064, lon: 16.9252 },
 ] as const;
 
-const DEFAULT_DISTANCE = 30;
+const DEFAULT_DISTANCE = INTENTS_CONFIG.DEFAULT_DISTANCE_KM;
+
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
+
+/** Z ISO (UTC) → tekst dla <input type="datetime-local"> w lokalnym czasie */
+function isoToLocalInput(iso?: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear();
+  const mm = pad2(d.getMonth() + 1);
+  const dd = pad2(d.getDate());
+  const hh = pad2(d.getHours());
+  const mi = pad2(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+/** Z wartości z inputa (lokalna) → pełne ISO (UTC) do backendu */
+function localInputToISO(val?: string | null): string | null {
+  if (!val) return null;
+  const d = new Date(val);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** Utwórz ISO (UTC) z obiektu Date (liczonego lokalnie) */
+function dateToISO(d: Date): string {
+  return new Date(d.getTime()).toISOString();
+}
+
+const Pill = React.memo(function Pill({
+  active,
+  onClick,
+  children,
+  title,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={[
+        'cursor-pointer rounded-full px-3 py-1.5 text-sm ring-1 transition',
+        active
+          ? 'bg-zinc-900 text-white ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:ring-white'
+          : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
+      ].join(' ')}
+    >
+      <span className="inline-flex items-center gap-1">{children}</span>
+    </button>
+  );
+});
+
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="mb-2 text-sm font-medium">{title}</div>
+      {hint && (
+        <div className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+          {hint}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
 
 export type NextFilters = {
   q: string;
@@ -83,92 +160,6 @@ const normalizeISO = (v?: string | null) => {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 };
 
-/* ── DATETIME-LOCAL ↔ ISO helpers (ważne: input chce lokalny bez strefy) ── */
-const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
-
-/** Z ISO (UTC) → tekst dla <input type="datetime-local"> w lokalnym czasie */
-function isoToLocalInput(iso?: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const yyyy = d.getFullYear();
-  const mm = pad2(d.getMonth() + 1);
-  const dd = pad2(d.getDate());
-  const hh = pad2(d.getHours());
-  const mi = pad2(d.getMinutes());
-  // bez sekund i bez Z
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-/** Z wartości z inputa (lokalna) → pełne ISO (UTC) do backendu */
-function localInputToISO(val?: string | null): string | null {
-  if (!val) return null;
-  const d = new Date(val); // traktowane jako lokalny czas
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
-
-/** Utwórz ISO (UTC) z obiektu Date (liczonego lokalnie) */
-function dateToISO(d: Date): string {
-  return new Date(d.getTime()).toISOString();
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/* UI atoms */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-const Pill = memo(function Pill({
-  active,
-  onClick,
-  children,
-  title,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  title?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={[
-        'cursor-pointer rounded-full px-3 py-1.5 text-sm ring-1 transition',
-        active
-          ? 'bg-zinc-900 text-white ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:ring-white'
-          : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
-      ].join(' ')}
-    >
-      <span className="inline-flex items-center gap-1">
-        {active && <Check className="h-3.5 w-3.5" />}
-        {children}
-      </span>
-    </button>
-  );
-});
-
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="p-3 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="mb-2 text-sm font-medium">{title}</div>
-      {hint && (
-        <div className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          {hint}
-        </div>
-      )}
-      {children}
-    </div>
-  );
-}
-
 /* ────────────────────────────────────────────────────────────────────────── */
 /* component */
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -210,47 +201,7 @@ export function FilterModal({
   const [categories, setCategories] = useState<SearchMeta['categories']>([]);
   const [tags, setTags] = useState<SearchMeta['tags']>([]);
 
-  /* prefill categories/tags by slugs */
-  const { data: categoriesBySlugsData } = useGetCategoriesBySlugsQuery(
-    { slugs: initialCategories },
-    { enabled: initialCategories.length > 0 }
-  );
-  const { data: tagsBySlugsData } = useGetTagsBySlugsQuery(
-    { slugs: initialTags },
-    { enabled: initialTags.length > 0 }
-  );
-
-  useEffect(() => {
-    const c = categoriesBySlugsData?.categoriesBySlugs ?? [];
-    if (c.length > 0) {
-      setCategories(
-        c.map((c) => ({
-          id: c.id,
-          label:
-            c.names[appLanguage] ??
-            c.names[appLanguageFallback] ??
-            c.slug ??
-            '-',
-          slug: c.slug,
-        }))
-      );
-    }
-  }, [categoriesBySlugsData]);
-
-  useEffect(() => {
-    const t = tagsBySlugsData?.tagsBySlugs ?? [];
-    if (t.length > 0) {
-      setTags(
-        t.map((t) => ({
-          id: t.id,
-          label: t.label,
-          slug: t.slug,
-        }))
-      );
-    }
-  }, [tagsBySlugsData]);
-
-  /* meta */
+  /* meta - for search suggestions */
   const { data, loading } = useSearchMeta(q);
 
   /* combobox: city */
