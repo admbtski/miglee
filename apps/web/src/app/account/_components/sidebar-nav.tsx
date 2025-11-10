@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 
 import {
   useFloating,
@@ -77,7 +77,7 @@ const NAV: Item[] = [
   { key: 'logout', label: 'Sign out', icon: LogOut, tone: 'danger' },
 ];
 
-export function AccountSidebarMobile({
+export const AccountSidebarMobile = memo(function AccountSidebarMobile({
   placement = 'bottom-start',
   strategy = 'fixed',
 }: {
@@ -253,9 +253,9 @@ export function AccountSidebarMobile({
       )}
     </div>
   );
-}
+});
 
-export function AccountSidebarDesktop({
+export const AccountSidebarDesktop = memo(function AccountSidebarDesktop({
   className = '',
 }: {
   className?: string;
@@ -322,4 +322,4 @@ export function AccountSidebarDesktop({
       })}
     </nav>
   );
-}
+});

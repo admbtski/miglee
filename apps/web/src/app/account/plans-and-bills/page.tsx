@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   ArrowRight,
   Download,
@@ -103,12 +103,16 @@ export default function BillingPage() {
     Math.round((plan.seatsUsed / plan.seatsTotal) * 100)
   );
 
-  // Card actions (mock backend)
-  const setDefaultCard = (id: string) =>
+  // Card actions (mock backend) - memoized
+  const setDefaultCard = useCallback((id: string) => {
     setCards((prev) => prev.map((c) => ({ ...c, isDefault: c.id === id })));
-  const saveEditedCard = (updated: CardItem) =>
+  }, []);
+
+  const saveEditedCard = useCallback((updated: CardItem) => {
     setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-  const addNewCard = (data: Omit<CardItem, 'id'>) => {
+  }, []);
+
+  const addNewCard = useCallback((data: Omit<CardItem, 'id'>) => {
     const id = `pm_${Date.now()}`;
     setCards((prev) => {
       const cleared = data.isDefault
@@ -116,9 +120,22 @@ export default function BillingPage() {
         : prev;
       return [...cleared, { id, ...data }];
     });
-  };
-  const deleteCard = (id: string) =>
+  }, []);
+
+  const deleteCard = useCallback((id: string) => {
     setCards((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
+  const handleManageOpen = useCallback(() => setManageOpen(true), []);
+  const handleManageClose = useCallback(() => setManageOpen(false), []);
+  const handleAddOpen = useCallback(() => setAddOpen(true), []);
+  const handleAddClose = useCallback(() => setAddOpen(false), []);
+  const handleEditClose = useCallback(() => setEditOpen(null), []);
+  const handleConfirmDeleteClose = useCallback(
+    () => setConfirmDelete(null),
+    []
+  );
+  const handleInvoiceViewClose = useCallback(() => setInvoiceView(null), []);
 
   return (
     <>

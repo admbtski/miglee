@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, memo, useCallback } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
+import { SectionCard } from '@/components/ui/section-card';
 
 /* ─────────────────────────  Settings Page  ───────────────────────── */
 
@@ -37,7 +38,7 @@ export default function SettingsPage() {
   const weekdays = ['Monday', 'Sunday', 'Saturday'];
   const weekends = ['Sunday', 'Saturday', 'Friday'];
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     // TODO: Call your mutation / REST endpoint
     console.log('save settings', {
       language,
@@ -48,7 +49,17 @@ export default function SettingsPage() {
       weekend,
       theme,
     });
-  };
+  }, [language, autoTz, tz, dateFormat, weekStart, weekend, theme]);
+
+  const handleReset = useCallback(() => {
+    setLanguage('en-GB');
+    setAutoTz(true);
+    setTz('Europe/London');
+    setDateFormat('MDY');
+    setWeekStart('Monday');
+    setWeekend('Sunday');
+    setTheme('system');
+  }, []);
 
   return (
     <>
@@ -168,16 +179,7 @@ export default function SettingsPage() {
         <button
           type="button"
           className="px-4 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900/60"
-          onClick={() => {
-            // reset demo
-            setLanguage('en-GB');
-            setAutoTz(true);
-            setTz('Europe/London');
-            setDateFormat('MDY');
-            setWeekStart('Monday');
-            setWeekend('Sunday');
-            setTheme('system');
-          }}
+          onClick={handleReset}
         >
           Cancel
         </button>
@@ -188,29 +190,7 @@ export default function SettingsPage() {
 
 /* ─────────────────────────  Building blocks  ───────────────────────── */
 
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      className="
-        mb-6 rounded-2xl border border-zinc-200 bg-white/95 p-5 shadow-sm
-        dark:border-zinc-700 dark:bg-[#171a1f]/80 backdrop-blur-[2px]
-      "
-    >
-      <h3 className="mb-4 text-sm font-semibold tracking-wide uppercase text-zinc-700 dark:text-zinc-300">
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-function Row({
+const Row = memo(function Row({
   label,
   help,
   children,
@@ -234,9 +214,9 @@ function Row({
       </div>
     </div>
   );
-}
+});
 
-function Select({
+const Select = memo(function Select({
   value,
   onChange,
   options,
@@ -271,9 +251,9 @@ function Select({
       </span>
     </div>
   );
-}
+});
 
-function Toggle({
+const Toggle = memo(function Toggle({
   checked,
   onChange,
   label,
@@ -305,9 +285,9 @@ function Toggle({
       {label && <span className="text-sm">{label}</span>}
     </button>
   );
-}
+});
 
-function RadioGroup({
+const RadioGroup = memo(function RadioGroup({
   value,
   onChange,
   options,
@@ -353,9 +333,9 @@ function RadioGroup({
       })}
     </div>
   );
-}
+});
 
-function ThemeCard({
+const ThemeCard = memo(function ThemeCard({
   title,
   icon: Icon,
   active,
@@ -414,4 +394,4 @@ function ThemeCard({
       </div>
     </button>
   );
-}
+});
