@@ -47,6 +47,7 @@ import {
   getUpcomingAfterDefault,
 } from '@/lib/constants/intents';
 import { buildGridCols } from '@/lib/utils/intents';
+import { SortKey } from './_components/sort-by-control';
 
 /* ───────────────────────────── Page ───────────────────────────── */
 
@@ -77,11 +78,8 @@ export function IntentsPage() {
   // Memoize callbacks for better performance
   const handleOpenFilters = useCallback(() => setFiltersOpen(true), []);
   const handleCloseFilters = useCallback(() => setFiltersOpen(false), []);
-  const handleToggleMap = useCallback(() => toggleMap(), [toggleMap]);
-  const handleSortChange = useCallback(
-    (newSort: any) => setSort(newSort),
-    [setSort]
-  );
+  const handleToggleMap = useCallback(toggleMap, [toggleMap]);
+  const handleSortChange = useCallback(setSort, [setSort]);
 
   const handleApplyFilters = useCallback(
     (next: any) => {

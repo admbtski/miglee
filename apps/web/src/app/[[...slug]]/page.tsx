@@ -1,4 +1,3 @@
-import { AdminPanelLauncher } from '@/features/admin/components/admin-panel-launcher';
 import { buildGetCategoriesOptions } from '@/lib/api/categories';
 import { getQueryClient } from '@/lib/config/query-client';
 import { trace } from '@opentelemetry/api';
@@ -17,7 +16,6 @@ export default async function Page() {
   return (
     <HydrationBoundary state={dehydrate(client)}>
       <IntentsPage />
-      <AdminPanelLauncher />
     </HydrationBoundary>
   );
 }
