@@ -986,6 +986,19 @@ input AdminCreateUserInput {
   verified: Boolean! = false
 }
 
+# Admin Intent Management Inputs
+input AdminBulkUpdateIntentsInput {
+  visibility: Visibility
+  joinManuallyClosed: Boolean
+  joinManualCloseReason: String
+}
+
+type AdminBulkUpdateResult {
+  success: Int!
+  failed: Int!
+  errors: [String!]
+}
+
 # ------------------------------------------------------------------------------
 # Queries
 # ------------------------------------------------------------------------------
@@ -1346,6 +1359,17 @@ type Mutation {
   adminCreateUser(input: AdminCreateUserInput!): User!
   adminSuspendUser(id: ID!, reason: String): User!
   adminUnsuspendUser(id: ID!): User!
+
+  # Admin - Intent Management
+  adminUpdateIntent(id: ID!, input: UpdateIntentInput!): Intent!
+  adminDeleteIntent(id: ID!): Boolean!
+  adminCancelIntent(id: ID!, reason: String): Intent!
+  adminRestoreIntent(id: ID!): Intent!
+  adminChangeIntentOwner(intentId: ID!, newOwnerId: ID!): Intent!
+  adminBulkUpdateIntents(
+    ids: [ID!]!
+    input: AdminBulkUpdateIntentsInput!
+  ): AdminBulkUpdateResult!
 
   # dev only
   devLogin(name: String!): SessionUser

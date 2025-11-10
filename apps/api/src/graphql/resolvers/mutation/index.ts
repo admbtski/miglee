@@ -127,6 +127,16 @@ import {
   adminUnsuspendUserMutation,
 } from './admin-users';
 
+// Admin Intent Management mutations
+import {
+  adminUpdateIntentMutation,
+  adminDeleteIntentMutation,
+  adminCancelIntentMutation,
+  adminRestoreIntentMutation,
+  adminChangeIntentOwnerMutation,
+  adminBulkUpdateIntentsMutation,
+} from './admin-intents';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -139,6 +149,14 @@ export const Mutation: Resolvers['Mutation'] = {
   adminCreateUser: adminCreateUserMutation,
   adminSuspendUser: adminSuspendUserMutation,
   adminUnsuspendUser: adminUnsuspendUserMutation,
+
+  // ---- Admin Intent Management ----
+  adminUpdateIntent: adminUpdateIntentMutation,
+  adminDeleteIntent: adminDeleteIntentMutation,
+  adminCancelIntent: adminCancelIntentMutation,
+  adminRestoreIntent: adminRestoreIntentMutation,
+  adminChangeIntentOwner: adminChangeIntentOwnerMutation,
+  adminBulkUpdateIntents: adminBulkUpdateIntentsMutation,
 
   // ---- Category ----
   createCategory: createCategoryMutation,

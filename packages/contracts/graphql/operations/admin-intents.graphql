@@ -1,0 +1,60 @@
+# Admin Intent Management Operations
+
+# ============================================
+# MUTATIONS - Intent Management
+# ============================================
+
+mutation AdminUpdateIntent($id: ID!, $input: UpdateIntentInput!) {
+  adminUpdateIntent(id: $id, input: $input) {
+    id
+    title
+    visibility
+    joinManuallyClosed
+    joinManualCloseReason
+    updatedAt
+  }
+}
+
+mutation AdminDeleteIntent($id: ID!) {
+  adminDeleteIntent(id: $id)
+}
+
+mutation AdminCancelIntent($id: ID!, $reason: String) {
+  adminCancelIntent(id: $id, reason: $reason) {
+    id
+    title
+    canceledAt
+    cancelReason
+  }
+}
+
+mutation AdminRestoreIntent($id: ID!) {
+  adminRestoreIntent(id: $id) {
+    id
+    title
+    canceledAt
+    deletedAt
+  }
+}
+
+mutation AdminChangeIntentOwner($intentId: ID!, $newOwnerId: ID!) {
+  adminChangeIntentOwner(intentId: $intentId, newOwnerId: $newOwnerId) {
+    id
+    title
+    owner {
+      id
+      name
+    }
+  }
+}
+
+mutation AdminBulkUpdateIntents(
+  $ids: [ID!]!
+  $input: AdminBulkUpdateIntentsInput!
+) {
+  adminBulkUpdateIntents(ids: $ids, input: $input) {
+    success
+    failed
+    errors
+  }
+}
