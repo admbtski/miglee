@@ -1,5 +1,32 @@
 /**
  * Custom hook for Channel (Intent) chat functionality
+ *
+ * @description
+ * Provides complete Channel chat functionality including:
+ * - Fetching and transforming user memberships (channels)
+ * - Fetching and transforming channel messages
+ * - Sending messages with reply support
+ * - Real-time subscriptions (new messages, edits, deletes, reactions, typing)
+ * - Typing indicators
+ * - Mark as read
+ * - Unread count tracking
+ *
+ * @example
+ * ```tsx
+ * const channelChat = useChannelChat({
+ *   myUserId: 'user-123',
+ *   activeIntentId: 'intent-456',
+ * });
+ *
+ * // Send message
+ * channelChat.sendMessage('Hello channel!', replyToId);
+ *
+ * // Check unread count
+ * console.log(channelChat.unreadCount);
+ *
+ * // Typing indicator
+ * channelChat.handleTyping(true);
+ * ```
  */
 
 'use client';
@@ -24,10 +51,20 @@ import { useIntentReactionAdded } from '@/lib/api/reactions-subscriptions';
 import { useMyMembershipsQuery } from '@/lib/api/intent-members';
 import type { Message } from '../_types';
 
+// =============================================================================
+// Types
+// =============================================================================
+
 type UseChannelChatProps = {
+  /** Current user ID for determining message sides and reactions */
   myUserId?: string;
+  /** Active intent (channel) ID to fetch messages for */
   activeIntentId?: string;
 };
+
+// =============================================================================
+// Hook
+// =============================================================================
 
 export function useChannelChat({
   myUserId,

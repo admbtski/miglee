@@ -1,5 +1,33 @@
 /**
- * Custom hook for DM chat functionality
+ * Custom hook for DM (Direct Message) chat functionality
+ *
+ * @description
+ * Provides complete DM chat functionality including:
+ * - Fetching and transforming DM threads
+ * - Fetching and transforming messages with infinite scroll
+ * - Sending messages with reply support
+ * - Real-time subscriptions (new messages, edits, deletes, reactions, typing)
+ * - Typing indicators
+ * - Mark as read
+ *
+ * @example
+ * ```tsx
+ * const dmChat = useDmChat({
+ *   myUserId: 'user-123',
+ *   activeThreadId: 'thread-456',
+ * });
+ *
+ * // Send message
+ * dmChat.sendMessage('Hello!', replyToId);
+ *
+ * // Load more messages
+ * if (dmChat.hasMore) {
+ *   dmChat.loadMore();
+ * }
+ *
+ * // Typing indicator
+ * dmChat.handleTyping(true);
+ * ```
  */
 
 'use client';
@@ -25,10 +53,20 @@ import { useDmReactionAdded } from '@/lib/api/reactions-subscriptions';
 import type { Message } from '../_types';
 import { formatRelativeTime } from '../page';
 
+// =============================================================================
+// Types
+// =============================================================================
+
 type UseDmChatProps = {
+  /** Current user ID for determining message sides and reactions */
   myUserId?: string;
+  /** Active DM thread ID to fetch messages for */
   activeThreadId?: string;
 };
+
+// =============================================================================
+// Hook
+// =============================================================================
 
 export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   const queryClient = useQueryClient();

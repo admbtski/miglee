@@ -1,5 +1,25 @@
 /**
  * Custom hook for message actions (edit, delete, reactions)
+ *
+ * @description
+ * Provides unified interface for editing, deleting, and reacting to messages
+ * in both DM and Channel contexts. Handles state management and API calls.
+ *
+ * @example
+ * ```tsx
+ * const messageActions = useMessageActions({
+ *   kind: 'dm',
+ *   threadId: 'thread-123',
+ * });
+ *
+ * // Edit message
+ * messageActions.handleEditMessage(messageId, content);
+ * messageActions.handleSaveEdit();
+ *
+ * // Delete message
+ * messageActions.handleDeleteMessage(messageId);
+ * messageActions.handleConfirmDelete();
+ * ```
  */
 
 'use client';
@@ -18,11 +38,22 @@ import {
   useRemoveIntentReaction,
 } from '@/lib/api/reactions';
 
+// =============================================================================
+// Types
+// =============================================================================
+
 type UseMessageActionsProps = {
+  /** Chat type: 'dm' for direct messages, 'channel' for intent chats */
   kind: 'dm' | 'channel';
+  /** DM thread ID (required if kind is 'dm') */
   threadId?: string;
+  /** Intent ID (required if kind is 'channel') */
   intentId?: string;
 };
+
+// =============================================================================
+// Hook
+// =============================================================================
 
 export function useMessageActions({
   kind,
