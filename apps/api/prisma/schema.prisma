@@ -165,15 +165,16 @@ enum ReportEntity {
 // =============================================================================
 
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
-  name       String    @unique
-  imageUrl   String?
-  role       Role      @default(USER)
-  verifiedAt DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  lastSeenAt DateTime?
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String    @unique
+  imageUrl    String?
+  role        Role      @default(USER)
+  verifiedAt  DateTime?
+  suspendedAt DateTime? // Admin suspension
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastSeenAt  DateTime?
 
   // Profile / Preferences
   locale              String? // e.g. "pl-PL", "en-US"

@@ -117,11 +117,29 @@ import {
 
 import { devLoginMutation, devLogoutMutation } from './auth';
 
+// Admin User Management mutations
+import {
+  adminUpdateUserMutation,
+  adminDeleteUserMutation,
+  adminInviteUserMutation,
+  adminCreateUserMutation,
+  adminSuspendUserMutation,
+  adminUnsuspendUserMutation,
+} from './admin-users';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
  */
 export const Mutation: Resolvers['Mutation'] = {
+  // ---- Admin User Management ----
+  adminUpdateUser: adminUpdateUserMutation,
+  adminDeleteUser: adminDeleteUserMutation,
+  adminInviteUser: adminInviteUserMutation,
+  adminCreateUser: adminCreateUserMutation,
+  adminSuspendUser: adminSuspendUserMutation,
+  adminUnsuspendUser: adminUnsuspendUserMutation,
+
   // ---- Category ----
   createCategory: createCategoryMutation,
   updateCategory: updateCategoryMutation,

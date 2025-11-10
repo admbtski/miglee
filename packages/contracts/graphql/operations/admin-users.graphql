@@ -1,0 +1,183 @@
+# Admin User Management Operations
+
+# ============================================
+# MUTATIONS - User Management
+# ============================================
+
+mutation AdminUpdateUser($id: ID!, $input: AdminUpdateUserInput!) {
+  adminUpdateUser(id: $id, input: $input) {
+    id
+    name
+    email
+    role
+    verifiedAt
+    suspendedAt
+    locale
+    createdAt
+    updatedAt
+    lastSeenAt
+  }
+}
+
+mutation AdminDeleteUser($id: ID!, $anonymize: Boolean) {
+  adminDeleteUser(id: $id, anonymize: $anonymize)
+}
+
+mutation AdminInviteUser($input: AdminInviteUserInput!) {
+  adminInviteUser(input: $input) {
+    id
+    name
+    email
+    role
+    verifiedAt
+    createdAt
+  }
+}
+
+mutation AdminCreateUser($input: AdminCreateUserInput!) {
+  adminCreateUser(input: $input) {
+    id
+    name
+    email
+    role
+    verifiedAt
+    createdAt
+  }
+}
+
+# ============================================
+# QUERIES - Content
+# ============================================
+
+query AdminUserComments($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserComments(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      content
+      createdAt
+      deletedAt
+      author {
+        id
+        name
+      }
+      intent {
+        id
+        title
+      }
+    }
+    pageInfo {
+      total
+      hasMore
+    }
+  }
+}
+
+query AdminUserReviews($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserReviews(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      rating
+      content
+      createdAt
+      deletedAt
+      author {
+        id
+        name
+      }
+      intent {
+        id
+        title
+      }
+    }
+    pageInfo {
+      total
+      hasMore
+    }
+  }
+}
+
+# ============================================
+# QUERIES - Intents & Memberships
+# ============================================
+
+query AdminUserMemberships($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserMemberships(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      status
+      role
+      joinedAt
+      intent {
+        id
+        title
+        startAt
+      }
+    }
+    pageInfo {
+      total
+      hasMore
+    }
+  }
+}
+
+query AdminUserIntents($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserIntents(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      title
+      startAt
+      status
+      joinedCount
+    }
+    pageInfo {
+      total
+      hasMore
+    }
+  }
+}
+
+# ============================================
+# MUTATIONS - Suspension
+# ============================================
+
+mutation AdminSuspendUser($id: ID!, $reason: String) {
+  adminSuspendUser(id: $id, reason: $reason) {
+    id
+    name
+    email
+    suspendedAt
+  }
+}
+
+mutation AdminUnsuspendUser($id: ID!) {
+  adminUnsuspendUser(id: $id) {
+    id
+    name
+    email
+    suspendedAt
+  }
+}
+
+# ============================================
+# QUERIES - DM Threads
+# ============================================
+
+query AdminUserDmThreads($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserDmThreads(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      createdAt
+      lastMessageAt
+      messageCount
+      otherUser {
+        id
+        name
+        imageUrl
+      }
+    }
+    pageInfo {
+      total
+      hasMore
+    }
+  }
+}

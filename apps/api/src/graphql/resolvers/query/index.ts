@@ -33,8 +33,22 @@ import {
   dmMuteQuery,
 } from './preferences-and-mutes';
 import { clustersQuery, regionIntentsQuery } from './map-clusters';
+import {
+  adminUserCommentsQuery,
+  adminUserReviewsQuery,
+  adminUserMembershipsQuery,
+  adminUserIntentsQuery,
+  adminUserDmThreadsQuery,
+} from './admin-users';
 
 export const Query: Resolvers['Query'] = {
+  // Admin queries
+  adminUserComments: adminUserCommentsQuery,
+  adminUserReviews: adminUserReviewsQuery,
+  adminUserMemberships: adminUserMembershipsQuery,
+  adminUserIntents: adminUserIntentsQuery,
+  adminUserDmThreads: adminUserDmThreadsQuery,
+
   notifications: notificationsQuery,
   intents: intentsQuery,
   intent: intentQuery,

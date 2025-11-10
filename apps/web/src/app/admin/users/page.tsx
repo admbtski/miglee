@@ -10,11 +10,15 @@ import { Search, UserPlus, Eye, Shield, CheckCircle } from 'lucide-react';
 import { useUsersQuery } from '@/lib/api/users';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { UserDetailModal } from './_components/user-detail-modal';
+import { AddUserModal } from './_components/add-user-modal';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<Role | undefined>();
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [addUserOpen, setAddUserOpen] = useState(false);
 
   const { data, isLoading } = useUsersQuery({
     q: search || undefined,
@@ -27,6 +31,10 @@ export default function UsersPage() {
 
   const users = data?.users?.items ?? [];
   const total = data?.users?.pageInfo?.total ?? 0;
+
+  const handleRefresh = () => {
+    // Refetch will happen automatically due to React Query
+  };
 
   return (
     <div className="space-y-6">
@@ -42,6 +50,7 @@ export default function UsersPage() {
         </div>
         <button
           type="button"
+          onClick={() => setAddUserOpen(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
         >
           <UserPlus className="h-4 w-4" />
@@ -245,6 +254,7 @@ export default function UsersPage() {
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                       <button
                         type="button"
+                        onClick={() => setSelectedUserId(user.id)}
                         className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                       >
                         <Eye className="h-4 w-4" />
@@ -258,6 +268,22 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {selectedUserId && (
+        <UserDetailModal
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+          onRefresh={handleRefresh}
+        />
+      )}
+
+      <AddUserModal
+        open={addUserOpen}
+        onClose={() => setAddUserOpen(false)}
+        onSuccess={handleRefresh}
+      />
     </div>
   );
 }

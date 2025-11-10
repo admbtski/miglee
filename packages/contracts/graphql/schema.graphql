@@ -269,6 +269,7 @@ type User {
   imageUrl: String
   role: Role!
   verifiedAt: DateTime
+  suspendedAt: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
   lastSeenAt: DateTime
@@ -961,6 +962,31 @@ input UpdateNotificationPreferenceInput {
 }
 
 # ------------------------------------------------------------------------------
+# Admin Input Types
+# ------------------------------------------------------------------------------
+
+input AdminUpdateUserInput {
+  name: String
+  email: String
+  role: Role
+  verifiedAt: DateTime
+  locale: String
+}
+
+input AdminInviteUserInput {
+  email: String!
+  name: String
+  role: Role! = USER
+}
+
+input AdminCreateUserInput {
+  email: String!
+  name: String
+  role: Role! = USER
+  verified: Boolean! = false
+}
+
+# ------------------------------------------------------------------------------
 # Queries
 # ------------------------------------------------------------------------------
 
@@ -1127,6 +1153,85 @@ type Query {
     perPage: Int = 20
     filters: ClusterFiltersInput
   ): RegionIntentPage!
+
+  # Admin User Management Queries
+  adminUserComments(userId: ID!, limit: Int, offset: Int): AdminCommentsResult!
+  adminUserReviews(userId: ID!, limit: Int, offset: Int): AdminReviewsResult!
+  adminUserMemberships(
+    userId: ID!
+    limit: Int
+    offset: Int
+  ): AdminMembershipsResult!
+  adminUserIntents(userId: ID!, limit: Int, offset: Int): AdminIntentsResult!
+  adminUserDmThreads(
+    userId: ID!
+    limit: Int
+    offset: Int
+  ): AdminDmThreadsResult!
+}
+
+# ------------------------------------------------------------------------------
+# Admin Result Types
+# ------------------------------------------------------------------------------
+
+type AdminCommentsResult {
+  items: [Comment!]!
+  pageInfo: AdminPageInfo!
+}
+
+type AdminReviewsResult {
+  items: [Review!]!
+  pageInfo: AdminPageInfo!
+}
+
+type AdminMembershipsResult {
+  items: [AdminMembershipItem!]!
+  pageInfo: AdminPageInfo!
+}
+
+type AdminIntentsResult {
+  items: [AdminIntentItem!]!
+  pageInfo: AdminPageInfo!
+}
+
+type AdminDmThreadsResult {
+  items: [AdminDmThreadItem!]!
+  pageInfo: AdminPageInfo!
+}
+
+type AdminPageInfo {
+  total: Int!
+  hasMore: Boolean!
+}
+
+type AdminMembershipItem {
+  id: ID!
+  status: IntentMemberStatus!
+  role: IntentMemberRole!
+  joinedAt: DateTime
+  intent: AdminIntentSummary!
+}
+
+type AdminIntentItem {
+  id: ID!
+  title: String!
+  startAt: DateTime!
+  status: String!
+  joinedCount: Int!
+}
+
+type AdminDmThreadItem {
+  id: ID!
+  createdAt: DateTime!
+  lastMessageAt: DateTime
+  otherUser: User!
+  messageCount: Int!
+}
+
+type AdminIntentSummary {
+  id: ID!
+  title: String!
+  startAt: DateTime!
 }
 
 # ------------------------------------------------------------------------------
@@ -1233,6 +1338,14 @@ type Mutation {
   # Mutes
   muteIntent(intentId: ID!, muted: Boolean!): IntentMute!
   muteDmThread(threadId: ID!, muted: Boolean!): DmMute!
+
+  # Admin - User Management
+  adminUpdateUser(id: ID!, input: AdminUpdateUserInput!): User!
+  adminDeleteUser(id: ID!, anonymize: Boolean): Boolean!
+  adminInviteUser(input: AdminInviteUserInput!): User!
+  adminCreateUser(input: AdminCreateUserInput!): User!
+  adminSuspendUser(id: ID!, reason: String): User!
+  adminUnsuspendUser(id: ID!): User!
 
   # dev only
   devLogin(name: String!): SessionUser
