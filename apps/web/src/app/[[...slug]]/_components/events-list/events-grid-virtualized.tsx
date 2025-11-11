@@ -6,12 +6,14 @@
  * - Dramatically reduces DOM nodes for large lists
  * - Smooth scrolling even with 1000+ items
  * - Automatic infinite scroll
+ * - Uses window scroll for natural page scrolling
+ * - VirtuosoGrid for proper grid layout support
  */
 
 'use client';
 
 import { memo, useCallback, useMemo } from 'react';
-import { VirtuosoGrid } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
 import { EventCard } from '../event-card';
 import type { IntentListItem, IntentHoverCallback } from '@/types/intent';
 import { mapIntentToEventCardProps } from '@/lib/adapters/intent-adapter';
@@ -54,6 +56,15 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
     [items, lang, onHover]
   );
 
+  // Group items into rows of 2 for stable rendering (2 columns on desktop, 1 on mobile)
+  const itemRows = useMemo(() => {
+    const rows: Array<Array<(typeof mappedItems)[number]>> = [];
+    for (let i = 0; i < mappedItems.length; i += 2) {
+      rows.push(mappedItems.slice(i, i + 2));
+    }
+    return rows;
+  }, [mappedItems]);
+
   // Load more when reaching end
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -82,43 +93,42 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
     return null;
   }, [hasNextPage, isFetchingNextPage, items.length]);
 
-  // Render item in grid
-  const renderItem = useCallback(
+  // Render row of 2 items (1 on mobile, 2 on desktop)
+  const renderRow = useCallback(
     (index: number) => {
-      const props = mappedItems[index];
-      if (!props) return null;
-      return <EventCard {...props} />;
+      const row = itemRows[index];
+      if (!row || row.length === 0) return null;
+
+      return (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {row.map((props) => (
+            <EventCard key={props.intentId} {...props} />
+          ))}
+          {/* Fill empty slot to maintain grid structure on desktop */}
+          {row.length < 2 && <div className="invisible hidden md:block" />}
+        </div>
+      );
     },
-    [mappedItems]
+    [itemRows]
   );
 
-  // Compute item key for better performance
-  const computeItemKey = useCallback(
-    (index: number) => mappedItems[index]?.intentId || `item-${index}`,
-    [mappedItems]
+  // Compute row key for better performance
+  const computeRowKey = useCallback(
+    (index: number) => {
+      const row = itemRows[index];
+      return row?.[0]?.intentId || `row-${index}`;
+    },
+    [itemRows]
   );
 
-  // Grid components for VirtuosoGrid with responsive columns
-  const gridComponents = useMemo(
+  // Components for Virtuoso with spacing between rows
+  const virtuosoComponents = useMemo(
     () => ({
-      List: ({ style, children, ...props }: any) => (
-        <div
-          {...props}
-          style={{
-            ...style,
-            display: 'grid',
-            // Responsive grid: 1 col on mobile, 2 on tablet, 3 on desktop
-            gridTemplateColumns:
-              'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
-            gap: '1.5rem',
-            padding: '0.75rem 0',
-          }}
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"
-        >
+      List: ({ children, ...props }: any) => (
+        <div {...props} className="flex flex-col gap-6">
           {children}
         </div>
       ),
-      Item: ({ children, ...props }: any) => <div {...props}>{children}</div>,
       Footer,
     }),
     [Footer]
@@ -134,7 +144,7 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
 
   if (showSkeletons) {
     return (
-      <div className="grid grid-cols-1 gap-6 mt-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 mt-3 md:grid-cols-2">
         <LoadingSkeleton count={6} />
       </div>
     );
@@ -143,18 +153,17 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
   if (showItems) {
     return (
       <div className="mt-3">
-        <VirtuosoGrid
-          data={mappedItems}
+        <Virtuoso
+          useWindowScroll
+          data={itemRows}
+          totalCount={itemRows.length}
           endReached={handleEndReached}
-          overscan={300}
-          itemContent={renderItem}
-          computeItemKey={computeItemKey}
-          components={gridComponents}
-          style={{
-            height: 'calc(100vh - 200px)',
-            minHeight: '400px',
-          }}
-          className="virtuoso-events-grid"
+          overscan={5}
+          itemContent={renderRow}
+          computeItemKey={computeRowKey}
+          components={virtuosoComponents}
+          increaseViewportBy={{ top: 800, bottom: 1600 }}
+          defaultItemHeight={450}
         />
       </div>
     );

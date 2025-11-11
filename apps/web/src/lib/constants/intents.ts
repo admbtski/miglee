@@ -4,7 +4,7 @@
 
 export const INTENTS_CONFIG = {
   /** Default number of intents to fetch per page */
-  DEFAULT_LIMIT: 20,
+  DEFAULT_LIMIT: 30,
 
   /** Navbar height in pixels for sticky positioning */
   NAV_HEIGHT: 86,

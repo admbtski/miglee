@@ -9,10 +9,10 @@ export const FEATURES = {
    * - 'hybrid': Use virtualization only for large lists (50+ items)
    * - 'never': Never use virtualization (default grid)
    */
-  VIRTUALIZATION_MODE: 'never' as 'always' | 'hybrid' | 'never',
+  VIRTUALIZATION_MODE: 'always' as 'always' | 'hybrid' | 'never',
 
   /** Threshold for hybrid mode (number of items) */
-  VIRTUALIZATION_THRESHOLD: 50,
+  VIRTUALIZATION_THRESHOLD: 5,
 
   /** Enable experimental features */
   EXPERIMENTAL: false,
