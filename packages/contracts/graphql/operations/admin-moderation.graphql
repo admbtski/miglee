@@ -1,0 +1,86 @@
+# Admin Content Moderation Operations
+
+# ============================================
+# QUERIES - Content Moderation
+# ============================================
+
+query AdminComments($limit: Int, $offset: Int, $intentId: ID, $userId: ID) {
+  adminComments(
+    limit: $limit
+    offset: $offset
+    intentId: $intentId
+    userId: $userId
+  ) {
+    items {
+      id
+      content
+      createdAt
+      updatedAt
+      deletedAt
+      author {
+        id
+        name
+        imageUrl
+      }
+      intent {
+        id
+        title
+      }
+      repliesCount
+    }
+    pageInfo {
+      total
+      hasMore
+    }
+  }
+}
+
+query AdminReviews(
+  $limit: Int
+  $offset: Int
+  $intentId: ID
+  $userId: ID
+  $rating: Int
+) {
+  adminReviews(
+    limit: $limit
+    offset: $offset
+    intentId: $intentId
+    userId: $userId
+    rating: $rating
+  ) {
+    items {
+      id
+      rating
+      content
+      createdAt
+      updatedAt
+      deletedAt
+      author {
+        id
+        name
+        imageUrl
+      }
+      intent {
+        id
+        title
+      }
+    }
+    pageInfo {
+      total
+      hasMore
+    }
+  }
+}
+
+# ============================================
+# MUTATIONS - Content Moderation
+# ============================================
+
+mutation AdminDeleteComment($id: ID!) {
+  adminDeleteComment(id: $id)
+}
+
+mutation AdminDeleteReview($id: ID!) {
+  adminDeleteReview(id: $id)
+}

@@ -1186,6 +1186,21 @@ type Query {
     limit: Int
     offset: Int
   ): AdminDmThreadsResult!
+
+  # Admin Content Moderation Queries
+  adminComments(
+    limit: Int
+    offset: Int
+    intentId: ID
+    userId: ID
+  ): AdminCommentsResult!
+  adminReviews(
+    limit: Int
+    offset: Int
+    intentId: ID
+    userId: ID
+    rating: Int
+  ): AdminReviewsResult!
 }
 
 # ------------------------------------------------------------------------------
@@ -1375,6 +1390,10 @@ type Mutation {
     ids: [ID!]!
     input: AdminBulkUpdateIntentsInput!
   ): AdminBulkUpdateResult!
+
+  # Admin - Content Moderation
+  adminDeleteComment(id: ID!): Boolean!
+  adminDeleteReview(id: ID!): Boolean!
 
   # Admin - Intent Member Management
   adminUpdateMemberRole(input: UpdateMemberRoleInput!): Intent!

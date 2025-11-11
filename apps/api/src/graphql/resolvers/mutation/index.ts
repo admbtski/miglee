@@ -141,6 +141,12 @@ import {
   adminUnbanMemberMutation,
 } from './admin-intents';
 
+// Admin Content Moderation mutations
+import {
+  adminDeleteCommentMutation,
+  adminDeleteReviewMutation,
+} from './admin-moderation';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -167,6 +173,10 @@ export const Mutation: Resolvers['Mutation'] = {
   adminKickMember: adminKickMemberMutation,
   adminBanMember: adminBanMemberMutation,
   adminUnbanMember: adminUnbanMemberMutation,
+
+  // ---- Admin Content Moderation ----
+  adminDeleteComment: adminDeleteCommentMutation,
+  adminDeleteReview: adminDeleteReviewMutation,
 
   // ---- Category ----
   createCategory: createCategoryMutation,

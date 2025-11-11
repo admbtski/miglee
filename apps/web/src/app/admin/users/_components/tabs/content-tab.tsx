@@ -5,7 +5,6 @@ import {
   MessageSquare,
   Star,
   Trash2,
-  RotateCcw,
   ExternalLink,
   Loader2,
 } from 'lucide-react';
@@ -15,6 +14,10 @@ import {
   useAdminUserCommentsQuery,
   useAdminUserReviewsQuery,
 } from '@/lib/api/admin-users';
+import {
+  useAdminDeleteComment,
+  useAdminDeleteReview,
+} from '@/lib/api/admin-comments';
 import Link from 'next/link';
 
 type ContentTabProps = {
@@ -39,22 +42,36 @@ export function ContentTab({ userId }: ContentTabProps) {
       offset: 0,
     });
 
+  const deleteCommentMutation = useAdminDeleteComment();
+  const deleteReviewMutation = useAdminDeleteReview();
+
   const comments = commentsData?.adminUserComments?.items ?? [];
   const reviews = reviewsData?.adminUserReviews?.items ?? [];
 
   const handleDeleteComment = async (commentId: string) => {
-    // TODO: Implement deleteComment mutation
-    console.log('Delete comment:', commentId);
-  };
+    if (!confirm('Czy na pewno chcesz usunąć ten komentarz?')) {
+      return;
+    }
 
-  const handleRestoreComment = async (commentId: string) => {
-    // TODO: Implement restore comment (currently not in schema)
-    console.log('Restore comment:', commentId);
+    try {
+      await deleteCommentMutation.mutateAsync(commentId);
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      alert('Nie udało się usunąć komentarza');
+    }
   };
 
   const handleDeleteReview = async (reviewId: string) => {
-    // TODO: Implement deleteReview mutation
-    console.log('Delete review:', reviewId);
+    if (!confirm('Czy na pewno chcesz usunąć tę recenzję?')) {
+      return;
+    }
+
+    try {
+      await deleteReviewMutation.mutateAsync(reviewId);
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      alert('Nie udało się usunąć recenzji');
+    }
   };
 
   return (
@@ -157,10 +174,15 @@ export function ContentTab({ userId }: ContentTabProps) {
                       {!comment.deletedAt && (
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
-                          className="ml-4 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                          disabled={deleteCommentMutation.isPending}
+                          className="ml-4 text-red-600 hover:text-red-800 disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
                           title="Usuń komentarz"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deleteCommentMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </button>
                       )}
                     </div>
@@ -257,10 +279,15 @@ export function ContentTab({ userId }: ContentTabProps) {
                       {!review.deletedAt && (
                         <button
                           onClick={() => handleDeleteReview(review.id)}
-                          className="ml-4 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                          disabled={deleteReviewMutation.isPending}
+                          className="ml-4 text-red-600 hover:text-red-800 disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
                           title="Usuń recenzję"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deleteReviewMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </button>
                       )}
                     </div>

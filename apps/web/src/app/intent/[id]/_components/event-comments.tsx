@@ -98,10 +98,15 @@ function CommentItem({
         },
       });
       setReplyContent('');
-      onReply(comment.id);
+      onReply(''); // Close reply form
 
-      // Expand the thread to show the new reply
-      onToggleThread(comment.id);
+      // Ensure the thread is expanded to show the new reply
+      if (!isExpanded) {
+        onToggleThread(comment.id);
+      } else {
+        // If already expanded, refetch replies to show the new one immediately
+        repliesQuery.refetch();
+      }
     } catch (error) {
       console.error('Failed to create reply:', error);
     }
@@ -116,7 +121,7 @@ function CommentItem({
         {/* Author & Actions */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            {comment.author.imageUrl && (
+            {comment.author?.imageUrl && (
               <img
                 src={comment.author.imageUrl}
                 alt={comment.author.name}
@@ -125,7 +130,7 @@ function CommentItem({
             )}
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {comment.author.name}
+                {comment.author?.name || 'N/A'}
               </p>
               <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 {format(new Date(comment.createdAt), 'dd MMM yyyy, HH:mm', {

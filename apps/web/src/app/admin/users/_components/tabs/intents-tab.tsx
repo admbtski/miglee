@@ -17,6 +17,15 @@ import {
   useAdminUserMembershipsQuery,
   useAdminUserIntentsQuery,
 } from '@/lib/api/admin-users';
+import {
+  useAdminKickMemberMutation,
+  useAdminBanMemberMutation,
+  useAdminUnbanMemberMutation,
+} from '@/lib/api/admin-intent-members';
+import {
+  useApproveMembershipMutation,
+  useRejectMembershipMutation,
+} from '@/lib/api/intent-members';
 import Link from 'next/link';
 
 type IntentsTabProps = {
@@ -26,7 +35,6 @@ type IntentsTabProps = {
 export function IntentsTab({ userId }: IntentsTabProps) {
   const [membershipsOpen, setMembershipsOpen] = useState(false);
   const [intentsOpen, setIntentsOpen] = useState(false);
-  const [selectedMembership, setSelectedMembership] = useState<any>(null);
 
   const { data: membershipsData, isLoading: membershipsLoading } =
     useAdminUserMembershipsQuery({
@@ -42,32 +50,112 @@ export function IntentsTab({ userId }: IntentsTabProps) {
       offset: 0,
     });
 
+  const kickMemberMutation = useAdminKickMemberMutation();
+  const banMemberMutation = useAdminBanMemberMutation();
+  const unbanMemberMutation = useAdminUnbanMemberMutation();
+  const approveMembershipMutation = useApproveMembershipMutation();
+  const rejectMembershipMutation = useRejectMembershipMutation();
+
   const memberships = membershipsData?.adminUserMemberships?.items ?? [];
   const intents = intentsData?.adminUserIntents?.items ?? [];
 
   const handleKickMember = async (intentId: string) => {
-    // TODO: Implement adminKickMember mutation
-    console.log('Kick member:', intentId, userId);
+    if (
+      !confirm('Czy na pewno chcesz wyrzucić tego użytkownika z wydarzenia?')
+    ) {
+      return;
+    }
+
+    try {
+      await kickMemberMutation.mutateAsync({
+        input: {
+          intentId,
+          userId,
+          note: 'Wyrzucony przez administratora',
+        },
+      });
+    } catch (error) {
+      console.error('Failed to kick member:', error);
+      alert('Nie udało się wyrzucić użytkownika');
+    }
   };
 
   const handleBanMember = async (intentId: string) => {
-    // TODO: Implement adminBanMember mutation
-    console.log('Ban member:', intentId, userId);
+    if (
+      !confirm(
+        'Czy na pewno chcesz zbanować tego użytkownika na tym wydarzeniu?'
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await banMemberMutation.mutateAsync({
+        input: {
+          intentId,
+          userId,
+          note: 'Zbanowany przez administratora',
+        },
+      });
+    } catch (error) {
+      console.error('Failed to ban member:', error);
+      alert('Nie udało się zbanować użytkownika');
+    }
   };
 
   const handleUnbanMember = async (intentId: string) => {
-    // TODO: Implement adminUnbanMember mutation
-    console.log('Unban member:', intentId, userId);
+    if (!confirm('Czy na pewno chcesz odbanować tego użytkownika?')) {
+      return;
+    }
+
+    try {
+      await unbanMemberMutation.mutateAsync({
+        input: {
+          intentId,
+          userId,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to unban member:', error);
+      alert('Nie udało się odbanować użytkownika');
+    }
   };
 
   const handleApproveMembership = async (intentId: string) => {
-    // TODO: Implement adminApproveMembership mutation
-    console.log('Approve membership:', intentId, userId);
+    if (!confirm('Czy na pewno chcesz zatwierdzić to członkostwo?')) {
+      return;
+    }
+
+    try {
+      await approveMembershipMutation.mutateAsync({
+        input: {
+          intentId,
+          userId,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to approve membership:', error);
+      alert('Nie udało się zatwierdzić członkostwa');
+    }
   };
 
   const handleRejectMembership = async (intentId: string) => {
-    // TODO: Implement adminRejectMembership mutation
-    console.log('Reject membership:', intentId, userId);
+    if (!confirm('Czy na pewno chcesz odrzucić to członkostwo?')) {
+      return;
+    }
+
+    try {
+      await rejectMembershipMutation.mutateAsync({
+        input: {
+          intentId,
+          userId,
+          note: 'Odrzucone przez administratora',
+        },
+      });
+    } catch (error) {
+      console.error('Failed to reject membership:', error);
+      alert('Nie udało się odrzucić członkostwa');
+    }
   };
 
   return (
@@ -165,18 +253,28 @@ export function IntentsTab({ userId }: IntentsTabProps) {
                               onClick={() =>
                                 handleApproveMembership(membership.intent.id)
                               }
-                              className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-800 dark:text-green-400"
+                              disabled={approveMembershipMutation.isPending}
+                              className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-800 disabled:opacity-50 dark:text-green-400"
                             >
-                              <CheckCircle className="h-4 w-4" />
+                              {approveMembershipMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4" />
+                              )}
                               Zatwierdź
                             </button>
                             <button
                               onClick={() =>
                                 handleRejectMembership(membership.intent.id)
                               }
-                              className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+                              disabled={rejectMembershipMutation.isPending}
+                              className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50 dark:text-red-400"
                             >
-                              <XCircle className="h-4 w-4" />
+                              {rejectMembershipMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <XCircle className="h-4 w-4" />
+                              )}
                               Odrzuć
                             </button>
                           </>
@@ -187,18 +285,28 @@ export function IntentsTab({ userId }: IntentsTabProps) {
                               onClick={() =>
                                 handleKickMember(membership.intent.id)
                               }
-                              className="inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-800 dark:text-orange-400"
+                              disabled={kickMemberMutation.isPending}
+                              className="inline-flex items-center gap-1 text-sm text-orange-600 hover:text-orange-800 disabled:opacity-50 dark:text-orange-400"
                             >
-                              <UserMinus className="h-4 w-4" />
+                              {kickMemberMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <UserMinus className="h-4 w-4" />
+                              )}
                               Wyrzuć
                             </button>
                             <button
                               onClick={() =>
                                 handleBanMember(membership.intent.id)
                               }
-                              className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+                              disabled={banMemberMutation.isPending}
+                              className="inline-flex items-center gap-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50 dark:text-red-400"
                             >
-                              <Ban className="h-4 w-4" />
+                              {banMemberMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Ban className="h-4 w-4" />
+                              )}
                               Zbanuj
                             </button>
                           </>
@@ -208,9 +316,14 @@ export function IntentsTab({ userId }: IntentsTabProps) {
                             onClick={() =>
                               handleUnbanMember(membership.intent.id)
                             }
-                            className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-800 dark:text-green-400"
+                            disabled={unbanMemberMutation.isPending}
+                            className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-800 disabled:opacity-50 dark:text-green-400"
                           >
-                            <CheckCircle className="h-4 w-4" />
+                            {unbanMemberMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4" />
+                            )}
                             Odbanuj
                           </button>
                         )}

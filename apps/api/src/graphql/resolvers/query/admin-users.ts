@@ -48,7 +48,7 @@ export const adminUserCommentsQuery: QueryResolvers['adminUserComments'] =
         include: {
           author: true,
           intent: true,
-          parent: true,
+          parent: { include: { author: true } },
           replies: { include: { author: true } },
           _count: { select: { replies: true } },
         },

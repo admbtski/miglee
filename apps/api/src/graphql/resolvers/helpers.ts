@@ -710,7 +710,7 @@ export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
     intent: c.intent
       ? (mapIntent(c.intent as any, viewerId) as any)
       : ({} as any),
-    author: mapUser(c.author as any),
+    author: c.author ? mapUser(c.author as any) : (null as any),
     parent: c.parent ? (mapComment(c.parent as any, viewerId) as any) : null,
     replies: c.replies?.map((r) => mapComment(r as any, viewerId) as any) ?? [],
 
@@ -733,7 +733,7 @@ export function mapReview(r: ReviewWithGraph, viewerId?: string): GQLReview {
     intent: r.intent
       ? (mapIntent(r.intent as any, viewerId) as any)
       : ({} as any),
-    author: mapUser(r.author as any),
+    author: r.author ? mapUser(r.author as any) : (null as any),
   };
 }
 
