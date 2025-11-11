@@ -238,15 +238,11 @@ export const adminSuspendUserMutation: MutationResolvers['adminSuspendUser'] =
         where: { id },
         data: {
           suspendedAt: new Date(),
+          suspensionReason: reason || null,
         },
       });
 
-      // Optional: Log suspension reason (could be stored in audit log)
-      if (reason) {
-        console.log(`User ${id} suspended by admin. Reason: ${reason}`);
-      }
-
-      return mapUser(updatedUser as any);
+      return mapUser(updatedUser);
     }
   );
 
@@ -276,6 +272,7 @@ export const adminUnsuspendUserMutation: MutationResolvers['adminUnsuspendUser']
         where: { id },
         data: {
           suspendedAt: null,
+          suspensionReason: null,
         },
       });
 

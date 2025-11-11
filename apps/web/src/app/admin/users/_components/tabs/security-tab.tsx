@@ -12,12 +12,10 @@ import {
   Ban,
   CheckCircle,
   MessageSquare,
-  Trash2,
   AlertTriangle,
   Loader2,
   ExternalLink,
 } from 'lucide-react';
-import { NoticeModal } from '@/components/feedback/notice-modal';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import Link from 'next/link';
@@ -53,8 +51,6 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
   const isSuspended = !!user?.suspendedAt;
 
   const isBlockLoading = false; // TODO: Add loading state when block mutation is implemented
-  const isSuspendLoading =
-    suspendMutation.isPending || unsuspendMutation.isPending;
 
   const handleBlock = async () => {
     // TODO: Implement adminBlockUser mutation

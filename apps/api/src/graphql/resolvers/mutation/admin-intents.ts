@@ -296,3 +296,251 @@ export const adminBulkUpdateIntentsMutation: MutationResolvers['adminBulkUpdateI
       };
     }
   );
+
+/**
+ * Mutation: Admin update member role
+ */
+export const adminUpdateMemberRoleMutation: MutationResolvers['adminUpdateMemberRole'] =
+  resolverWithMetrics(
+    'Mutation',
+    'adminUpdateMemberRole',
+    async (_p, { input }, { user }) => {
+      requireAdmin(user);
+
+      const { intentId, userId, role } = input;
+
+      // Check if intent exists
+      const intent = await prisma.intent.findUnique({
+        where: { id: intentId },
+      });
+
+      if (!intent) {
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check if member exists
+      const member = await prisma.intentMember.findUnique({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+      });
+
+      if (!member) {
+        throw new GraphQLError('Member not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Prevent changing owner role
+      if (member.role === 'OWNER') {
+        throw new GraphQLError('Cannot change owner role.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      // Update member role
+      await prisma.intentMember.update({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+        data: {
+          role,
+        },
+      });
+
+      return intent as any;
+    }
+  );
+
+/**
+ * Mutation: Admin kick member
+ */
+export const adminKickMemberMutation: MutationResolvers['adminKickMember'] =
+  resolverWithMetrics(
+    'Mutation',
+    'adminKickMember',
+    async (_p, { input }, { user }) => {
+      requireAdmin(user);
+
+      const { intentId, userId } = input;
+
+      // Check if intent exists
+      const intent = await prisma.intent.findUnique({
+        where: { id: intentId },
+      });
+
+      if (!intent) {
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check if member exists
+      const member = await prisma.intentMember.findUnique({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+      });
+
+      if (!member) {
+        throw new GraphQLError('Member not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Prevent kicking owner
+      if (member.role === 'OWNER') {
+        throw new GraphQLError('Cannot kick the owner.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      // Update member status to LEFT with leftAt timestamp
+      await prisma.intentMember.update({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+        data: {
+          status: 'LEFT',
+          leftAt: new Date(),
+        },
+      });
+
+      return intent as any;
+    }
+  );
+
+/**
+ * Mutation: Admin ban member
+ */
+export const adminBanMemberMutation: MutationResolvers['adminBanMember'] =
+  resolverWithMetrics(
+    'Mutation',
+    'adminBanMember',
+    async (_p, { input }, { user }) => {
+      requireAdmin(user);
+
+      const { intentId, userId } = input;
+
+      // Check if intent exists
+      const intent = await prisma.intent.findUnique({
+        where: { id: intentId },
+      });
+
+      if (!intent) {
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check if member exists
+      const member = await prisma.intentMember.findUnique({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+      });
+
+      if (!member) {
+        throw new GraphQLError('Member not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Prevent banning owner
+      if (member.role === 'OWNER') {
+        throw new GraphQLError('Cannot ban the owner.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      // Update member status to BANNED
+      await prisma.intentMember.update({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+        data: {
+          status: 'BANNED',
+          leftAt: new Date(),
+        },
+      });
+
+      return intent as any;
+    }
+  );
+
+/**
+ * Mutation: Admin unban member
+ */
+export const adminUnbanMemberMutation: MutationResolvers['adminUnbanMember'] =
+  resolverWithMetrics(
+    'Mutation',
+    'adminUnbanMember',
+    async (_p, { input }, { user }) => {
+      requireAdmin(user);
+
+      const { intentId, userId } = input;
+
+      // Check if intent exists
+      const intent = await prisma.intent.findUnique({
+        where: { id: intentId },
+      });
+
+      if (!intent) {
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check if member exists
+      const member = await prisma.intentMember.findUnique({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+      });
+
+      if (!member) {
+        throw new GraphQLError('Member not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Update member status to LEFT (they can rejoin if they want)
+      await prisma.intentMember.update({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId,
+          },
+        },
+        data: {
+          status: 'LEFT',
+          leftAt: new Date(),
+        },
+      });
+
+      return intent as any;
+    }
+  );

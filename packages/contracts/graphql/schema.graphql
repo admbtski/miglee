@@ -270,6 +270,7 @@ type User {
   role: Role!
   verifiedAt: DateTime
   suspendedAt: DateTime
+  suspensionReason: String
   createdAt: DateTime!
   updatedAt: DateTime!
   lastSeenAt: DateTime
@@ -1374,6 +1375,12 @@ type Mutation {
     ids: [ID!]!
     input: AdminBulkUpdateIntentsInput!
   ): AdminBulkUpdateResult!
+
+  # Admin - Intent Member Management
+  adminUpdateMemberRole(input: UpdateMemberRoleInput!): Intent!
+  adminKickMember(input: KickMemberInput!): Intent!
+  adminBanMember(input: BanMemberInput!): Intent!
+  adminUnbanMember(input: UnbanMemberInput!): Intent!
 
   # dev only
   devLogin(name: String!): SessionUser

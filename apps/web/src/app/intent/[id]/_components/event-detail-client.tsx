@@ -8,6 +8,7 @@ import { EventParticipants } from './event-participants';
 import { EventJoinSection } from './event-join-section';
 import { EventActions } from './event-actions';
 import { EventAdminPanel } from './event-admin-panel';
+import { EventComments } from './event-comments';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
 import { useMemo, useState } from 'react';
@@ -210,6 +211,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           <div className="space-y-6 min-w-0">
             <EventDetails event={eventData} />
             <EventParticipants event={eventData} />
+            <EventComments event={eventData} />
           </div>
 
           {/* Right Column - Sidebar */}

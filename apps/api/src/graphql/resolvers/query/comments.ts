@@ -7,7 +7,11 @@ import { mapComment } from '../helpers';
 const commentInclude = {
   author: true,
   intent: true,
-  parent: true,
+  parent: {
+    include: {
+      author: true,
+    },
+  },
   replies: {
     include: {
       author: true,

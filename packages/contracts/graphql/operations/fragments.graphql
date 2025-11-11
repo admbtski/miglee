@@ -18,6 +18,9 @@ fragment UserCore on User {
   role
   imageUrl
   verifiedAt
+  suspendedAt
+  suspensionReason
+  createdAt
   createdAt
   updatedAt
   lastSeenAt

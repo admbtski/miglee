@@ -58,3 +58,35 @@ mutation AdminBulkUpdateIntents(
     errors
   }
 }
+
+# ============================================
+# MUTATIONS - Intent Member Management
+# ============================================
+
+mutation AdminUpdateMemberRole($input: UpdateMemberRoleInput!) {
+  adminUpdateMemberRole(input: $input) {
+    id
+    title
+  }
+}
+
+mutation AdminKickMember($input: KickMemberInput!) {
+  adminKickMember(input: $input) {
+    id
+    title
+  }
+}
+
+mutation AdminBanMember($input: BanMemberInput!) {
+  adminBanMember(input: $input) {
+    id
+    title
+  }
+}
+
+mutation AdminUnbanMember($input: UnbanMemberInput!) {
+  adminUnbanMember(input: $input) {
+    id
+    title
+  }
+}

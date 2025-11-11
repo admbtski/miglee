@@ -135,6 +135,10 @@ import {
   adminRestoreIntentMutation,
   adminChangeIntentOwnerMutation,
   adminBulkUpdateIntentsMutation,
+  adminUpdateMemberRoleMutation,
+  adminKickMemberMutation,
+  adminBanMemberMutation,
+  adminUnbanMemberMutation,
 } from './admin-intents';
 
 /**
@@ -157,6 +161,12 @@ export const Mutation: Resolvers['Mutation'] = {
   adminRestoreIntent: adminRestoreIntentMutation,
   adminChangeIntentOwner: adminChangeIntentOwnerMutation,
   adminBulkUpdateIntents: adminBulkUpdateIntentsMutation,
+
+  // ---- Admin Intent Member Management ----
+  adminUpdateMemberRole: adminUpdateMemberRoleMutation,
+  adminKickMember: adminKickMemberMutation,
+  adminBanMember: adminBanMemberMutation,
+  adminUnbanMember: adminUnbanMemberMutation,
 
   // ---- Category ----
   createCategory: createCategoryMutation,

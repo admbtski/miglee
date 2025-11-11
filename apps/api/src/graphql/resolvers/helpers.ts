@@ -108,7 +108,7 @@ export type CommentWithGraph = Prisma.CommentGetPayload<{
   include: {
     author: true;
     intent: true;
-    parent: true;
+    parent: { include: { author: true } };
     replies: { include: { author: true } };
     _count: { select: { replies: true } };
   };
@@ -285,6 +285,8 @@ export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
     lastSeenAt: u.lastSeenAt,
+    suspendedAt: u.suspendedAt,
+    suspensionReason: (u as any).suspensionReason ?? null,
     locale: (u as any).locale ?? null,
     tz: (u as any).tz ?? null,
     acceptedTermsAt: (u as any).acceptedTermsAt ?? null,

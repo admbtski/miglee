@@ -22,6 +22,8 @@ function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
     role: mapRole(u.role),
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
+    suspendedAt: u.suspendedAt,
+    suspensionReason: (u as any).suspensionReason ?? null,
     verifiedAt: u.verifiedAt,
     lastSeenAt: u.lastSeenAt,
     acceptedMarketingAt: u.acceptedMarketingAt,
