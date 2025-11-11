@@ -1,12 +1,52 @@
 /**
- * Hook for reverse infinite scroll with cursor-based pagination
- * - Starts at bottom (newest messages)
+ * Custom hook for reverse infinite scroll (chat-style)
+ *
+ * @description
+ * Implements reverse infinite scrolling pattern commonly used in chat applications:
+ * - Starts at bottom (newest messages first)
  * - Loads older messages when scrolling up
- * - Preserves scroll position after loading
- * - Supports prefetch
+ * - Preserves scroll position after loading new content
+ * - Supports prefetch for smoother UX
+ * - Tracks scroll position and "at bottom" state
+ *
+ * Features:
+ * - Automatic scroll position preservation
+ * - Configurable load threshold
+ * - Optional prefetch with multiplier
+ * - "At bottom" detection
+ * - Programmatic scroll to bottom
+ *
+ * @example
+ * ```tsx
+ * const { scrollRef, isAtBottom, scrollToBottom, scrollFromBottom } =
+ *   useReverseInfiniteScroll({
+ *     hasMore: hasNextPage,
+ *     isLoading: isFetchingNextPage,
+ *     onLoadMore: fetchNextPage,
+ *     threshold: 200,
+ *     enablePrefetch: true,
+ *   });
+ *
+ * return (
+ *   <div ref={scrollRef} className="overflow-auto h-full">
+ *     {messages.map(msg => <Message key={msg.id} {...msg} />)}
+ *     {!isAtBottom && (
+ *       <button onClick={() => scrollToBottom(true)}>
+ *         Scroll to bottom
+ *       </button>
+ *     )}
+ *   </div>
+ * );
+ * ```
  */
 
+'use client';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+// =============================================================================
+// Types
+// =============================================================================
 
 export interface ReverseInfiniteScrollOptions {
   /** Whether there are more items to load (hasPreviousPage) */
@@ -24,15 +64,19 @@ export interface ReverseInfiniteScrollOptions {
 }
 
 export interface ReverseInfiniteScrollResult {
-  /** Ref to attach to scroll container */
+  /** Ref to attach to scroll container element */
   scrollRef: React.RefObject<HTMLDivElement | null>;
-  /** Whether currently at bottom */
+  /** Whether user is currently at bottom (within 50px) */
   isAtBottom: boolean;
-  /** Scroll to bottom programmatically */
+  /** Scroll to bottom programmatically (with optional smooth animation) */
   scrollToBottom: (smooth?: boolean) => void;
-  /** Current scroll position from bottom */
+  /** Current scroll distance from bottom in pixels */
   scrollFromBottom: number;
 }
+
+// =============================================================================
+// Hook
+// =============================================================================
 
 export function useReverseInfiniteScroll(
   options: ReverseInfiniteScrollOptions

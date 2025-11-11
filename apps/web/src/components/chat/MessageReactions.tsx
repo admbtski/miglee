@@ -9,19 +9,19 @@ export interface MessageReaction {
 
 interface MessageReactionsProps {
   reactions: MessageReaction[];
-  onToggleReaction: (emoji: string, reacted: boolean) => void;
+  onReactionClick: (emoji: string) => void;
   align?: 'left' | 'right';
 }
 
 export function MessageReactions({
   reactions,
-  onToggleReaction,
+  onReactionClick,
   align = 'left',
 }: MessageReactionsProps) {
   if (reactions.length === 0) return null;
 
-  const handleReactionClick = (emoji: string, reacted: boolean) => {
-    onToggleReaction(emoji, reacted);
+  const handleReactionClick = (emoji: string) => {
+    onReactionClick(emoji);
   };
 
   const getTooltip = (reaction: MessageReaction) => {
@@ -45,7 +45,7 @@ export function MessageReactions({
       {reactions.map((reaction) => (
         <button
           key={reaction.emoji}
-          onClick={() => handleReactionClick(reaction.emoji, reaction.reacted)}
+          onClick={() => handleReactionClick(reaction.emoji)}
           className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs transition-all duration-200 transform hover:scale-110 active:scale-95 ${
             reaction.reacted
               ? 'bg-[#4A45FF]/10 ring-1 ring-[#4A45FF]/30'

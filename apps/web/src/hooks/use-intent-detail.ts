@@ -1,3 +1,31 @@
+/**
+ * Custom hook for fetching complete intent (event) details
+ *
+ * @description
+ * Provides comprehensive intent data including:
+ * - Basic info (title, description, dates, location)
+ * - Join settings (mode, capacity, windows, manual locks)
+ * - Visibility and privacy settings
+ * - Members and owner information
+ * - Categories and tags
+ * - Sponsorship details (if applicable)
+ * - Invite links (for owner/moderators)
+ * - Computed helpers (status, canJoin, isFull, etc.)
+ *
+ * @example
+ * ```tsx
+ * const { data, isLoading, error } = useIntentDetail('intent-123');
+ *
+ * if (isLoading) return <LoadingSkeleton />;
+ * if (error) return <ErrorState />;
+ *
+ * const intent = data?.intent;
+ * console.log(intent.title, intent.status, intent.canJoin);
+ * ```
+ */
+
+'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { gqlClient } from '@/lib/api/client';
 import {
@@ -5,9 +33,13 @@ import {
   GetIntentQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 
+// =============================================================================
+// GraphQL Document
+// =============================================================================
+
 /**
- * Dedykowane query dla detalu wydarzenia
- * Zawiera wszystkie potrzebne pola włącznie z sponsorship i inviteLinks
+ * Complete intent detail query with all fields
+ * Includes sponsorship and inviteLinks
  */
 const GetIntentDetailDocument = `
   query GetIntentDetail($id: ID!) {
@@ -229,6 +261,16 @@ const GetIntentDetailDocument = `
   }
 `;
 
+// =============================================================================
+// Hook
+// =============================================================================
+
+/**
+ * Fetch complete intent details by ID
+ *
+ * @param intentId - Intent ID to fetch
+ * @returns React Query result with intent data
+ */
 export function useIntentDetail(intentId: string) {
   return useQuery({
     queryKey: ['intent-detail', intentId],

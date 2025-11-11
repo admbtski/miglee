@@ -20,8 +20,8 @@ import type { ChatKind, Message } from '../_types';
 // Import sub-components
 import { Avatar } from './avatar';
 import { TypingIndicator } from './typing-indicator';
-import { MsgIn, MsgOut } from './message-bubble';
 import { ChatDetails } from './chat-details';
+import { MsgIn, MsgOut } from './message-bubble';
 
 type ChatThreadProps = {
   kind: ChatKind;

@@ -1,14 +1,61 @@
-// hooks/use-debounced-value.ts
+/**
+ * Custom hook for debouncing values
+ *
+ * @description
+ * Returns a debounced version of the input value that only updates after
+ * a specified delay of inactivity. Useful for search inputs, form validation,
+ * or any scenario where you want to reduce the frequency of updates.
+ *
+ * Features:
+ * - Trailing debounce (updates after delay)
+ * - Optional leading debounce (immediate first update)
+ * - Custom equality comparator
+ * - Automatic cleanup
+ *
+ * @example
+ * ```tsx
+ * // Basic usage
+ * const [searchQuery, setSearchQuery] = useState('');
+ * const debouncedQuery = useDebouncedValue(searchQuery, 300);
+ *
+ * useEffect(() => {
+ *   // This only runs 300ms after user stops typing
+ *   fetchResults(debouncedQuery);
+ * }, [debouncedQuery]);
+ *
+ * // With leading option
+ * const debouncedValue = useDebouncedValue(value, 500, { leading: true });
+ *
+ * // With custom equality
+ * const debouncedObj = useDebouncedValue(obj, 300, {
+ *   equals: (a, b) => a.id === b.id,
+ * });
+ * ```
+ */
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
 
+// =============================================================================
+// Types
+// =============================================================================
+
 export type EqualityFn<T> = (a: T, b: T) => boolean;
 
+// =============================================================================
+// Hook
+// =============================================================================
+
 /**
- * Returns a debounced version of `value` that updates after `delay` ms of inactivity.
- * - Optional equality comparator prevents unnecessary updates.
- * - Optional `leading` emits on the first value change immediately, then debounces subsequent changes.
+ * Debounce a value with optional leading emission and custom equality
+ *
+ * @param value - Value to debounce
+ * @param delay - Delay in milliseconds (default: 300)
+ * @param options - Optional configuration
+ * @param options.equals - Custom equality comparator
+ * @param options.leading - Emit immediately on first change, then debounce
+ * @returns Debounced value
  */
 export function useDebouncedValue<T>(
   value: T,

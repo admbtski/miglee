@@ -1,31 +1,74 @@
 /**
- * Simple virtualization hook for chat messages
- * Renders only visible items based on scroll position
+ * Custom hook for simple list virtualization
+ *
+ * @description
+ * Provides basic virtualization for long lists by rendering only visible items.
+ * Calculates which items should be rendered based on scroll position and viewport size.
+ * Includes overscan to prevent flickering during fast scrolling.
+ *
+ * Features:
+ * - Renders only visible items + overscan
+ * - Automatic scroll position tracking
+ * - Configurable overscan count
+ * - Performance optimized with useCallback
+ *
+ * @example
+ * ```tsx
+ * const containerRef = useRef<HTMLDivElement>(null);
+ * const { startIndex, endIndex, totalHeight, offsetTop } = useVirtualizedList({
+ *   itemCount: 1000,
+ *   estimatedItemHeight: 60,
+ *   overscanCount: 5,
+ *   containerRef,
+ * });
+ *
+ * return (
+ *   <div ref={containerRef} style={{ height: '400px', overflow: 'auto' }}>
+ *     <div style={{ height: totalHeight, position: 'relative' }}>
+ *       <div style={{ transform: `translateY(${offsetTop}px)` }}>
+ *         {items.slice(startIndex, endIndex).map(item => (
+ *           <Item key={item.id} {...item} />
+ *         ))}
+ *       </div>
+ *     </div>
+ *   </div>
+ * );
+ * ```
  */
+
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+// =============================================================================
+// Types
+// =============================================================================
+
 interface UseVirtualizedListOptions {
-  /** Total number of items */
+  /** Total number of items in the list */
   itemCount: number;
   /** Estimated height of each item in pixels */
   estimatedItemHeight: number;
-  /** Number of items to render outside viewport (overscan) */
+  /** Number of items to render outside viewport (overscan) for smooth scrolling */
   overscanCount?: number;
-  /** Container ref */
+  /** Ref to the scroll container element */
   containerRef: React.RefObject<HTMLElement>;
 }
 
 interface VirtualizedListResult {
-  /** Start index of visible range */
+  /** Start index of visible range (including overscan) */
   startIndex: number;
-  /** End index of visible range */
+  /** End index of visible range (including overscan) */
   endIndex: number;
-  /** Total height of all items (for scroll container) */
+  /** Total height of all items (for scroll container sizing) */
   totalHeight: number;
-  /** Offset from top for visible items */
+  /** Offset from top for visible items (for positioning) */
   offsetTop: number;
 }
+
+// =============================================================================
+// Hook
+// =============================================================================
 
 export function useVirtualizedList({
   itemCount,

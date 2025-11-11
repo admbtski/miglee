@@ -4,7 +4,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import type { Message } from '../_types';
 import { MessageReactions } from '@/components/chat/MessageReactions';
 import { ReadReceipt } from '@/components/chat/ReadReceipt';
@@ -115,8 +115,19 @@ export const MsgIn = ({
   onReply,
   onReport,
 }: MsgInProps) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [actionsVisible, setActionsVisible] = useState(false);
+
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const reactionsButtonRef = useRef<HTMLButtonElement>(null);
+
   return (
-    <div className={`flex items-start gap-3 py-2 ${className}`}>
+    <div
+      className={`flex items-start gap-3 py-2 ${className}`}
+      onMouseEnter={() => setActionsVisible(true)}
+      onMouseLeave={() => setActionsVisible(false)}
+    >
       <div className="flex-1 min-w-0">
         <Bubble
           align="left"
@@ -132,7 +143,9 @@ export const MsgIn = ({
           <MessageReactions
             reactions={message.reactions}
             onReactionClick={(emoji) => {
-              const reaction = message.reactions?.find((r) => r.emoji === emoji);
+              const reaction = message.reactions?.find(
+                (r) => r.emoji === emoji
+              );
               if (reaction?.reacted) {
                 onRemoveReaction?.(emoji);
               } else {
@@ -142,19 +155,33 @@ export const MsgIn = ({
           />
         )}
       </div>
-      <MessageMenuPopover
-        onReply={onReply}
-        onReport={onReport}
-        renderTrigger={(open) => (
-          <MessageActions
-            onReply={onReply}
-            onReport={onReport}
-            align="left"
-            open={open}
-          />
-        )}
+
+      <MessageActions
+        isVisible={actionsVisible}
+        align="left"
+        onReply={onReply || (() => {})}
+        onOpenReactions={() => setReactionsOpen(true)}
+        onOpenMenu={() => setMenuOpen(true)}
+        reactionsButtonRef={reactionsButtonRef}
+        menuButtonRef={menuButtonRef}
       />
-      <ReactionsBar onReact={onAddReaction} align="left" />
+
+      <MessageMenuPopover
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onReport={onReport || (() => {})}
+        align="left"
+        canEdit={false}
+        canDelete={false}
+        referenceElement={menuButtonRef.current}
+      />
+
+      <ReactionsBar
+        isOpen={reactionsOpen}
+        onClose={() => setReactionsOpen(false)}
+        onSelectEmoji={(emoji) => onAddReaction?.(emoji)}
+        referenceElement={reactionsButtonRef.current}
+      />
     </div>
   );
 };
@@ -186,26 +213,49 @@ export const MsgOut = ({
   onEdit,
   onDelete,
 }: MsgOutProps) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [actionsVisible, setActionsVisible] = useState(false);
+
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const reactionsButtonRef = useRef<HTMLButtonElement>(null);
+
   return (
-    <div className={`flex items-start justify-end gap-3 py-2 ${className}`}>
-      <ReactionsBar onReact={onAddReaction} align="right" />
+    <div
+      className={`flex items-start justify-end gap-3 py-2 ${className}`}
+      onMouseEnter={() => setActionsVisible(true)}
+      onMouseLeave={() => setActionsVisible(false)}
+    >
+      <MessageActions
+        isVisible={actionsVisible}
+        align="right"
+        onReply={onReply || (() => {})}
+        onOpenReactions={() => setReactionsOpen(true)}
+        onOpenMenu={() => setMenuOpen(true)}
+        reactionsButtonRef={reactionsButtonRef}
+        menuButtonRef={menuButtonRef}
+      />
+
       <MessageMenuPopover
-        onReply={onReply}
-        onReport={onReport}
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
         onEdit={onEdit}
         onDelete={onDelete}
-        renderTrigger={(open) => (
-          <MessageActions
-            onReply={onReply}
-            onReport={onReport}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            align="right"
-            open={open}
-          />
-        )}
+        onReport={onReport || (() => {})}
+        align="right"
+        canEdit={!!onEdit}
+        canDelete={!!onDelete}
+        referenceElement={menuButtonRef.current}
       />
-      <div className="flex-1 min-w-0 flex flex-col items-end">
+
+      <ReactionsBar
+        isOpen={reactionsOpen}
+        onClose={() => setReactionsOpen(false)}
+        onSelectEmoji={(emoji) => onAddReaction?.(emoji)}
+        referenceElement={reactionsButtonRef.current}
+      />
+
+      <div className="flex flex-col items-end">
         <Bubble
           align="right"
           time={time}
@@ -219,7 +269,9 @@ export const MsgOut = ({
           <MessageReactions
             reactions={message.reactions}
             onReactionClick={(emoji) => {
-              const reaction = message.reactions?.find((r) => r.emoji === emoji);
+              const reaction = message.reactions?.find(
+                (r) => r.emoji === emoji
+              );
               if (reaction?.reacted) {
                 onRemoveReaction?.(emoji);
               } else {
@@ -233,4 +285,3 @@ export const MsgOut = ({
     </div>
   );
 };
-

@@ -52,6 +52,10 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
   const isBlocked = false; // TODO: Implement user blocking system
   const isSuspended = !!user?.suspendedAt;
 
+  const isBlockLoading = false; // TODO: Add loading state when block mutation is implemented
+  const isSuspendLoading =
+    suspendMutation.isPending || unsuspendMutation.isPending;
+
   const handleBlock = async () => {
     // TODO: Implement adminBlockUser mutation
     console.log('Block user:', userId, blockReason);
@@ -245,10 +249,10 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
               </button>
               <button
                 onClick={handleBlock}
-                disabled={loading}
+                disabled={isBlockLoading}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? 'Blokowanie...' : 'Zablokuj'}
+                {isBlockLoading ? 'Blokowanie...' : 'Zablokuj'}
               </button>
             </div>
           </div>

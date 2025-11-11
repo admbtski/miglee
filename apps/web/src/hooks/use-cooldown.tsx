@@ -1,4 +1,50 @@
+/**
+ * Custom hook for managing cooldown timers
+ *
+ * @description
+ * Provides a simple cooldown timer system for rate-limiting user actions.
+ * Tracks multiple cooldowns by key, automatically decrements every second.
+ * Useful for preventing spam, rate-limiting API calls, or implementing
+ * time-based restrictions.
+ *
+ * Features:
+ * - Multiple cooldowns tracked by key
+ * - Automatic countdown (1 second intervals)
+ * - Check if action is cooling down
+ * - Get remaining time
+ *
+ * @example
+ * ```tsx
+ * const { start, get, isCooling } = useCooldown();
+ *
+ * const handleAction = () => {
+ *   if (isCooling('myAction')) {
+ *     alert(`Wait ${get('myAction')} seconds`);
+ *     return;
+ *   }
+ *
+ *   // Perform action
+ *   doSomething();
+ *
+ *   // Start 10 second cooldown
+ *   start('myAction', 10);
+ * };
+ *
+ * return (
+ *   <button onClick={handleAction} disabled={isCooling('myAction')}>
+ *     {isCooling('myAction') ? `Wait ${get('myAction')}s` : 'Click me'}
+ *   </button>
+ * );
+ * ```
+ */
+
+'use client';
+
 import { useCallback, useEffect, useState } from 'react';
+
+// =============================================================================
+// Hook
+// =============================================================================
 
 export function useCooldown() {
   const [remaining, setRemaining] = useState<Record<string, number>>({});

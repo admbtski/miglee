@@ -60,7 +60,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
         const userId = (req.headers['x-user-id'] as string | undefined)?.trim();
 
         const user = userId
-          ? await prisma.user.findUnique({ where: { id: userId } })
+          ? await prisma.users.findUnique({ where: { id: userId } })
           : null;
 
         return {
