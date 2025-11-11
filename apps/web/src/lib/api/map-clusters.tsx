@@ -9,7 +9,13 @@ import {
   GetRegionIntentsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
-import { useQuery, UseQueryOptions, QueryKey } from '@tanstack/react-query';
+import {
+  useQuery,
+  UseQueryOptions,
+  QueryKey,
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
+} from '@tanstack/react-query';
 
 // ==================== Clusters Query ====================
 
@@ -98,4 +104,54 @@ export function useGetRegionIntentsQuery(
   >
 ) {
   return useQuery(buildGetRegionIntentsOptions(variables, options));
+}
+
+// ==================== Region Intents Infinite Query ====================
+
+export function useGetRegionIntentsInfiniteQuery(
+  variables: Omit<GetRegionIntentsQueryVariables, 'page'>,
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      GetRegionIntentsQuery,
+      Error,
+      GetRegionIntentsQuery,
+      QueryKey,
+      number
+    >,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+) {
+  return useInfiniteQuery({
+    queryKey: ['GetRegionIntentsInfinite', variables] as unknown as QueryKey,
+    queryFn: async ({ pageParam = 1 }) => {
+      // Additional validation to prevent empty region queries
+      if (!variables.region || variables.region.trim() === '') {
+        throw new Error('Region is required');
+      }
+
+      return gqlClient.request<
+        GetRegionIntentsQuery,
+        GetRegionIntentsQueryVariables
+      >(GetRegionIntentsDocument, {
+        ...variables,
+        page: pageParam,
+      });
+    },
+    getNextPageParam: (lastPage) => {
+      const meta = lastPage.regionIntents?.meta;
+      if (!meta) return undefined;
+
+      // Jeśli jest nextPage w meta, zwróć go
+      if (meta.nextPage) {
+        return meta.nextPage;
+      }
+
+      return undefined; // Brak kolejnych stron
+    },
+    initialPageParam: 1,
+    enabled: !!variables.region && variables.region.trim() !== '',
+    staleTime: 30_000,
+    gcTime: 120_000,
+    ...options,
+  });
 }

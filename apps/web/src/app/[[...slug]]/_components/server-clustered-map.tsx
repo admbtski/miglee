@@ -5,7 +5,7 @@ import { useThrottled } from '@/hooks/use-throttled';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import {
   useGetClustersQuery,
-  useGetRegionIntentsQuery,
+  useGetRegionIntentsInfiniteQuery,
 } from '@/lib/api/map-clusters';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import clsx from 'clsx';
@@ -376,26 +376,30 @@ function ServerClusteredMapComponent({
       }
     );
 
-  const { data: regionIntentsData, isLoading: regionIntentsLoading } =
-    useGetRegionIntentsQuery(
-      {
-        region: selectedRegion || '',
-        page: 1,
-        perPage: 50,
-        filters: filters
-          ? {
-              categorySlugs: filters.categorySlugs,
-              levels: filters.levels as any,
-              verifiedOnly: filters.verifiedOnly,
-            }
-          : undefined,
-      },
-      {
-        enabled: !!selectedRegion,
-        staleTime: 15_000,
-        gcTime: 60_000,
-      }
-    );
+  const {
+    data: regionIntentsData,
+    isLoading: regionIntentsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useGetRegionIntentsInfiniteQuery(
+    {
+      region: selectedRegion || '',
+      perPage: 20,
+      filters: filters
+        ? {
+            categorySlugs: filters.categorySlugs,
+            levels: filters.levels as any,
+            verifiedOnly: filters.verifiedOnly,
+          }
+        : undefined,
+    },
+    {
+      enabled: !!selectedRegion,
+      staleTime: 15_000,
+      gcTime: 60_000,
+    }
+  );
 
   // Poprzednie dane klastrów (zatrzymaj podczas ładowania)
   const prevClustersRef = useRef<ClusterPoint[]>([]);
@@ -603,36 +607,52 @@ function ServerClusteredMapComponent({
   /* ───────── Popup React ───────── */
 
   useEffect(() => {
-    if (!selectedRegion) return;
+    if (!selectedRegion) {
+      // Zamknij popup gdy region nie jest wybrany
+      if (popupRef.current) {
+        popupRef.current.remove();
+      }
+      return;
+    }
+
     const map = mapRef.current,
       popup = popupRef.current;
     if (!map || !popup) return;
 
-    // Jeśli ładujemy, pokaż skeleton
-    if (regionIntentsLoading) {
+    // Jeśli ładujemy pierwszą stronę, pokaż skeleton
+    if (regionIntentsLoading && !(regionIntentsData as any)?.pages?.length) {
       // Znajdź klaster dla wybranego regionu, żeby pokazać popup w dobrym miejscu
       const cluster = clusters.find((c) => c.region === selectedRegion);
       if (cluster && popupRootRef.current && popupContainerRef.current) {
         popupRootRef.current.render(
           <RegionPopup intents={[]} onIntentClick={() => {}} isLoading={true} />
         );
-        requestAnimationFrame(() => {
-          popup
-            .setLngLat([cluster.longitude, cluster.latitude])
-            .setDOMContent(popupContainerRef.current!)
-            .addTo(map);
-          const onClose = () => setSelectedRegion(null);
-          popup.once('close', onClose);
-        });
+
+        // Tylko otwórz popup jeśli nie jest już otwarty
+        if (!popup.isOpen()) {
+          requestAnimationFrame(() => {
+            popup
+              .setLngLat([cluster.longitude, cluster.latitude])
+              .setDOMContent(popupContainerRef.current!)
+              .addTo(map);
+
+            // Dodaj listener zamknięcia
+            popup.once('close', () => setSelectedRegion(null));
+          });
+        }
       }
       return;
     }
 
-    // Dane załadowane
-    if (!regionIntentsData?.regionIntents) return;
+    // Dane załadowane - flatten all pages
+    const pages = (regionIntentsData as any)?.pages;
+    if (!pages) return;
 
-    const rawIntents = regionIntentsData.regionIntents.data || [];
-    const intents: PopupIntent[] = rawIntents.map((intent: any) => ({
+    const allIntents = pages.flatMap(
+      (page: any) => page.regionIntents?.data || []
+    );
+
+    const intents: PopupIntent[] = allIntents.map((intent: any) => ({
       id: intent.id,
       title: intent.title ?? '',
       startAt: intent.startAt,
@@ -658,14 +678,18 @@ function ServerClusteredMapComponent({
       categorySlugs: intent.categories?.map((c: any) => c.slug) ?? null,
     }));
 
+    // Nie zamykaj popup jeśli brak danych - może to być błąd sieciowy
     if (!intents.length) {
-      setSelectedRegion(null);
+      console.warn('No intents found for region:', selectedRegion);
       return;
     }
 
     const valid = intents.filter((i) => i.lat != null && i.lng != null);
     if (!valid.length) {
-      setSelectedRegion(null);
+      console.warn(
+        'No valid intents with coordinates for region:',
+        selectedRegion
+      );
       return;
     }
 
@@ -677,6 +701,14 @@ function ServerClusteredMapComponent({
         <RegionPopup
           intents={intents}
           isLoading={false}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadMore={() => {
+            // Only fetch next page if we still have a selected region
+            if (selectedRegion) {
+              fetchNextPage();
+            }
+          }}
           onIntentClick={(id) => {
             onIntentClick?.(id);
             popup.remove();
@@ -684,14 +716,19 @@ function ServerClusteredMapComponent({
           }}
         />
       );
-      requestAnimationFrame(() => {
-        popup
-          .setLngLat([avgLng, avgLat])
-          .setDOMContent(popupContainerRef.current!)
-          .addTo(map);
-        const onClose = () => setSelectedRegion(null);
-        popup.once('close', onClose);
-      });
+
+      // Tylko dodaj popup jeśli nie jest już otwarty
+      if (!popup.isOpen()) {
+        requestAnimationFrame(() => {
+          popup
+            .setLngLat([avgLng, avgLat])
+            .setDOMContent(popupContainerRef.current!)
+            .addTo(map);
+
+          // Dodaj listener zamknięcia
+          popup.once('close', () => setSelectedRegion(null));
+        });
+      }
     }
   }, [
     selectedRegion,
