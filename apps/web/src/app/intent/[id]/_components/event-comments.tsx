@@ -18,9 +18,11 @@ import {
   Reply,
   ChevronDown,
   ChevronUp,
+  Flag,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { ReportCommentModal } from './report-comment-modal';
 import type { EventDetailsData } from '@/types/event-details';
 
 type EventCommentsProps = {
@@ -35,6 +37,7 @@ type CommentItemProps = {
   onEdit: (id: string, content: string) => void;
   onDelete: (id: string) => void;
   onReply: (parentId: string) => void;
+  onReport: (commentId: string, authorName: string) => void;
   onToggleThread: (commentId: string) => void;
   editingId: string | null;
   editingContent: string;
@@ -55,6 +58,7 @@ function CommentItem({
   onEdit,
   onDelete,
   onReply,
+  onReport,
   onToggleThread,
   editingId,
   editingContent,
@@ -143,27 +147,41 @@ function CommentItem({
             </div>
           </div>
 
-          {isAuthor && !isEditing && (
+          {currentUserId && !isEditing && (
             <div className="relative opacity-0 transition-opacity group-hover:opacity-100">
               <div className="group/menu relative">
                 <button className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                   <MoreVertical className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                 </button>
                 <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right scale-0 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-transform group-hover/menu:scale-100 dark:bg-zinc-800">
-                  <button
-                    onClick={() => onEdit(comment.id, comment.content)}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                    Edytuj
-                  </button>
-                  <button
-                    onClick={() => onDelete(comment.id)}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Usuń
-                  </button>
+                  {isAuthor ? (
+                    <>
+                      <button
+                        onClick={() => onEdit(comment.id, comment.content)}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Edytuj
+                      </button>
+                      <button
+                        onClick={() => onDelete(comment.id)}
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Usuń
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        onReport(comment.id, comment.author?.name || 'N/A')
+                      }
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    >
+                      <Flag className="h-4 w-4" />
+                      Zgłoś
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -295,6 +313,7 @@ function CommentItem({
               onEdit={onEdit}
               onDelete={onDelete}
               onReply={onReply}
+              onReport={onReport}
               onToggleThread={onToggleThread}
               editingId={editingId}
               editingContent={editingContent}
@@ -325,6 +344,11 @@ export function EventComments({ event }: EventCommentsProps) {
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(
     new Set()
   );
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [commentToReport, setCommentToReport] = useState<{
+    id: string;
+    authorName: string;
+  } | null>(null);
 
   // Query for top-level comments only
   const { data: commentsData, isLoading } = useGetComments({
@@ -387,6 +411,11 @@ export function EventComments({ event }: EventCommentsProps) {
     } catch (error) {
       console.error('Failed to delete comment:', error);
     }
+  };
+
+  const handleReportComment = (commentId: string, authorName: string) => {
+    setCommentToReport({ id: commentId, authorName });
+    setReportModalOpen(true);
   };
 
   const toggleThread = (commentId: string) => {
@@ -475,6 +504,7 @@ export function EventComments({ event }: EventCommentsProps) {
               onEdit={handleEdit}
               onDelete={handleDeleteComment}
               onReply={handleReply}
+              onReport={handleReportComment}
               onToggleThread={toggleThread}
               editingId={editingId}
               editingContent={editingContent}
@@ -488,6 +518,19 @@ export function EventComments({ event }: EventCommentsProps) {
             />
           ))}
         </div>
+      )}
+
+      {/* Report Comment Modal */}
+      {commentToReport && (
+        <ReportCommentModal
+          open={reportModalOpen}
+          onClose={() => {
+            setReportModalOpen(false);
+            setCommentToReport(null);
+          }}
+          commentId={commentToReport.id}
+          commentAuthor={commentToReport.authorName}
+        />
       )}
     </div>
   );

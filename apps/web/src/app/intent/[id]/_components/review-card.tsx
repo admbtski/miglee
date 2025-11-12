@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { Star, Trash2, Edit2 } from 'lucide-react';
+import { Star, Trash2, Edit2, Flag } from 'lucide-react';
 
 type ReviewCardProps = {
   review: {
@@ -19,6 +19,7 @@ type ReviewCardProps = {
   currentUserId?: string;
   onEdit?: (reviewId: string) => void;
   onDelete?: (reviewId: string) => void;
+  onReport?: (reviewId: string, authorName: string) => void;
 };
 
 export function ReviewCard({
@@ -26,6 +27,7 @@ export function ReviewCard({
   currentUserId,
   onEdit,
   onDelete,
+  onReport,
 }: ReviewCardProps) {
   const isAuthor = currentUserId === review.author.id;
 
@@ -80,26 +82,42 @@ export function ReviewCard({
           </div>
         </div>
 
-        {/* Actions (only for author) */}
-        {isAuthor && (onEdit || onDelete) && (
+        {/* Actions */}
+        {currentUserId && (
           <div className="flex items-center gap-2 ml-2">
-            {onEdit && (
-              <button
-                onClick={() => onEdit(review.id)}
-                className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                title="Edytuj recenzję"
-              >
-                <Edit2 className="h-4 w-4" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={() => onDelete(review.id)}
-                className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
-                title="Usuń recenzję"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+            {isAuthor ? (
+              <>
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(review.id)}
+                    className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    title="Edytuj recenzję"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(review.id)}
+                    className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                    title="Usuń recenzję"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                {onReport && (
+                  <button
+                    onClick={() => onReport(review.id, review.author.name)}
+                    className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    title="Zgłoś recenzję"
+                  >
+                    <Flag className="h-4 w-4" />
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

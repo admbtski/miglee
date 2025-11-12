@@ -12,6 +12,7 @@ import {
 import { ReviewCard } from './review-card';
 import { ReviewStats } from './review-stats';
 import { AddReviewModal } from './add-review-modal';
+import { ReportReviewModal } from './report-review-modal';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import type { EventDetailsData } from '@/types/event-details';
 
@@ -23,6 +24,11 @@ export function EventReviews({ event }: EventReviewsProps) {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<string | null>(null);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reviewToReport, setReviewToReport] = useState<{
+    id: string;
+    authorName: string;
+  } | null>(null);
 
   const { data: authData } = useMeQuery();
   const currentUserId = authData?.me?.id;
@@ -98,6 +104,11 @@ export function EventReviews({ event }: EventReviewsProps) {
   const handleDeleteClick = (reviewId: string) => {
     setReviewToDelete(reviewId);
     setDeleteModalOpen(true);
+  };
+
+  const handleReportClick = (reviewId: string, authorName: string) => {
+    setReviewToReport({ id: reviewId, authorName });
+    setReportModalOpen(true);
   };
 
   const handleModalClose = () => {
@@ -207,6 +218,7 @@ export function EventReviews({ event }: EventReviewsProps) {
               currentUserId={currentUserId}
               onEdit={handleEditReview}
               onDelete={handleDeleteClick}
+              onReport={handleReportClick}
             />
           ))}
         </div>
@@ -236,6 +248,19 @@ export function EventReviews({ event }: EventReviewsProps) {
       >
         <></>
       </NoticeModal>
+
+      {/* Report Review Modal */}
+      {reviewToReport && (
+        <ReportReviewModal
+          open={reportModalOpen}
+          onClose={() => {
+            setReportModalOpen(false);
+            setReviewToReport(null);
+          }}
+          reviewId={reviewToReport.id}
+          reviewAuthor={reviewToReport.authorName}
+        />
+      )}
     </div>
   );
 }
