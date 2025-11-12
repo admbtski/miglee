@@ -29,7 +29,14 @@ export function mapIntentToFormValues(
     max: intent.max ?? 50,
     startAt: new Date(intent.startAt),
     endAt: new Date(intent.endAt),
+
+    // Join windows / cutoffs
+    joinOpensMinutesBeforeStart: intent.joinOpensMinutesBeforeStart ?? null,
+    joinCutoffMinutesBeforeStart: intent.joinCutoffMinutesBeforeStart ?? null,
     allowJoinLate: !!intent.allowJoinLate,
+    lateJoinCutoffMinutesAfterStart:
+      intent.lateJoinCutoffMinutesAfterStart ?? null,
+
     meetingKind: intent.meetingKind,
     onlineUrl: intent.onlineUrl ?? '',
     location: {
@@ -51,12 +58,19 @@ export function mapIntentToFormValues(
 export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
   const input: CreateIntentInput = {
     title: v.title,
-    levels: [], //todo
+    levels: v.levels ?? [],
     categorySlugs: v.categorySlugs,
     tagSlugs: v.tagSlugs,
     startAt: v.startAt.toISOString(),
     endAt: v.endAt.toISOString(),
+
+    // Join windows / cutoffs
+    joinOpensMinutesBeforeStart: v.joinOpensMinutesBeforeStart ?? undefined,
+    joinCutoffMinutesBeforeStart: v.joinCutoffMinutesBeforeStart ?? undefined,
     allowJoinLate: v.allowJoinLate,
+    lateJoinCutoffMinutesAfterStart:
+      v.lateJoinCutoffMinutesAfterStart ?? undefined,
+
     min: v.min,
     max: v.max,
     mode: v.mode as Mode,
@@ -64,7 +78,7 @@ export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
     location: {},
     visibility: v.visibility as Visibility,
     addressVisibility: v.addressVisibility as AddressVisibility,
-    membersVisibility: v.visibility as MembersVisibility,
+    membersVisibility: v.membersVisibility as MembersVisibility,
     joinMode: v.joinMode as JoinMode,
     description: v.description,
     notes: v.notes,

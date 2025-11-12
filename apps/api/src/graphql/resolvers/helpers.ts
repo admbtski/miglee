@@ -345,7 +345,6 @@ const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
 
 function computeIntentDerived(i: IntentWithGraph | any) {
   const now = new Date();
-  const lockHrs = 6; // spójne z resolverem listy
 
   const startDate = new Date(i.startAt);
   const endDate = new Date(i.endAt ?? i.startAt);
@@ -361,9 +360,46 @@ function computeIntentDerived(i: IntentWithGraph | any) {
   const hasEnded = now >= endDate;
   const isCanceled = Boolean(i.canceledAt);
   const isDeleted = Boolean(i.deletedAt);
-  const withinLock = !hasStarted && hoursUntil(startDate) <= lockHrs;
+
+  // withinLock: true when in any time-based "closing" window or manual close
+  let withinLock = false;
+
+  if (i.joinManuallyClosed) {
+    withinLock = true;
+  } else if (!hasStarted) {
+    // Before start: check NOT_OPEN_YET or CUTOFF
+    if (i.joinOpensMinutesBeforeStart != null) {
+      const openTime = new Date(
+        startDate.getTime() - i.joinOpensMinutesBeforeStart * 60_000
+      );
+      if (now < openTime) {
+        withinLock = true; // NOT_OPEN_YET
+      }
+    }
+    if (!withinLock && i.joinCutoffMinutesBeforeStart != null) {
+      const cutoffTime = new Date(
+        startDate.getTime() - i.joinCutoffMinutesBeforeStart * 60_000
+      );
+      if (now >= cutoffTime) {
+        withinLock = true; // CUTOFF
+      }
+    }
+  } else if (!hasEnded) {
+    // After start, before end: check NO_LATE_JOIN or LATE_CUTOFF
+    if (!i.allowJoinLate) {
+      withinLock = true; // NO_LATE_JOIN
+    } else if (i.lateJoinCutoffMinutesAfterStart != null) {
+      const lateCutoff = new Date(
+        startDate.getTime() + i.lateJoinCutoffMinutesAfterStart * 60_000
+      );
+      if (now >= lateCutoff) {
+        withinLock = true; // LATE_CUTOFF
+      }
+    }
+  }
+
   const canJoin =
-    !isFull && !hasStarted && !withinLock && !isDeleted && !isCanceled;
+    !isFull && !withinLock && !isDeleted && !isCanceled && !hasEnded;
 
   return {
     joinedCount,

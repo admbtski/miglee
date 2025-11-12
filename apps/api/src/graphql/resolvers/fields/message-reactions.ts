@@ -8,6 +8,7 @@ import type {
   IntentChatMessageResolvers,
   MessageReaction,
 } from '../../__generated__/resolvers-types';
+import { mapUser } from '../helpers';
 
 /**
  * Aggregate reactions for a DM message
@@ -60,15 +61,7 @@ function aggregateReactions(
   return Object.entries(grouped).map(([emoji, items]) => ({
     emoji,
     count: items.length,
-    users: items.map((r) => ({
-      id: r.user.id,
-      name: r.user.name,
-      imageUrl: r.user.imageUrl,
-      // Add other required User fields with defaults
-      email: '',
-      role: 'USER' as const,
-      verifiedAt: null,
-    })),
+    users: items.slice(0, 20).map((r) => mapUser(r.user as any)), // Cap at 20 users
     reacted: currentUserId
       ? items.some((r) => r.userId === currentUserId)
       : false,

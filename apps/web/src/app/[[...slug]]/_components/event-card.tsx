@@ -77,6 +77,7 @@ export interface EventCardProps {
   isDeleted: boolean;
   hasStarted: boolean;
   withinLock: boolean;
+  lockReason?: string | null;
   canJoin: boolean;
   isFull: boolean;
 
@@ -172,6 +173,7 @@ export function EventCard({
   isDeleted,
   canJoin,
   withinLock,
+  lockReason,
   members = [],
   plan = 'default',
   addressVisibility,
@@ -198,8 +200,18 @@ export function EventCard({
         isOngoing,
         hasStarted,
         withinLock,
+        lockReason: lockReason as any,
       }),
-    [start, hasStarted, isCanceled, isDeleted, isFull, isOngoing, withinLock]
+    [
+      start,
+      hasStarted,
+      isCanceled,
+      isDeleted,
+      isFull,
+      isOngoing,
+      withinLock,
+      lockReason,
+    ]
   );
 
   const fill = useMemo(

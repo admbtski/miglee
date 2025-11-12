@@ -67,7 +67,30 @@ export const IntentSchema = z
         'Start must be in the future (5 min buffer)'
       ),
     endAt: z.date().transform((d) => new Date(d)),
+
+    // Join windows / cutoffs
+    joinOpensMinutesBeforeStart: z
+      .number()
+      .int()
+      .min(0, 'Must be 0 or positive')
+      .max(10080, 'Max 7 days (10080 minutes)')
+      .optional()
+      .nullable(),
+    joinCutoffMinutesBeforeStart: z
+      .number()
+      .int()
+      .min(0, 'Must be 0 or positive')
+      .max(10080, 'Max 7 days (10080 minutes)')
+      .optional()
+      .nullable(),
     allowJoinLate: z.boolean(),
+    lateJoinCutoffMinutesAfterStart: z
+      .number()
+      .int()
+      .min(0, 'Must be 0 or positive')
+      .max(10080, 'Max 7 days (10080 minutes)')
+      .optional()
+      .nullable(),
 
     meetingKind: MeetingKind,
     onlineUrl: z
@@ -184,7 +207,13 @@ export const defaultIntentValues: IntentFormValues = {
   max: 2,
   startAt: new Date(Date.now() + NOW_BUFFER_MS),
   endAt: new Date(Date.now() + NOW_BUFFER_MS + 60 * 60 * 1000),
+
+  // Join windows / cutoffs - defaults to null (no restrictions)
+  joinOpensMinutesBeforeStart: null,
+  joinCutoffMinutesBeforeStart: null,
   allowJoinLate: true,
+  lateJoinCutoffMinutesAfterStart: null,
+
   meetingKind: 'ONSITE',
   onlineUrl: '',
   location: {

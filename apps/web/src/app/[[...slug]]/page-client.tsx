@@ -2,17 +2,17 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
-import { lazy, Suspense, useMemo, useState, useCallback } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
+import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
-import { ErrorBoundary } from '@/components/feedback/error-boundary';
-import { DesktopSearchBar } from './_components/desktop-search-bar';
-import { EventsHeader } from './_components/events-list/events-header';
-import { EventsGrid } from './_components/events-list/events-grid';
-import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
-import { EventsGridHybrid } from './_components/events-list/events-grid-hybrid';
 import { FEATURES } from '@/lib/constants/features';
+import { DesktopSearchBar } from './_components/desktop-search-bar';
+import { EventsGrid } from './_components/events-list/events-grid';
+import { EventsGridHybrid } from './_components/events-list/events-grid-hybrid';
+import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
+import { EventsHeader } from './_components/events-list/events-header';
 
 // Lazy load heavy components for better performance
 const ServerClusteredMap = lazy(
@@ -27,10 +27,10 @@ const FilterModalRefactored = lazy(
     import('./_components/filter-modal-refactored')
 );
 
-import { useCommittedMapVisible } from './_hooks/use-committed-map-vision';
-import { useCommittedFilters } from './_hooks/use-committed-filters';
-import { useCommittedSort } from './_hooks/use-committed-sort';
 import { useActiveFiltersCount } from './_hooks/use-active-filters-count';
+import { useCommittedFilters } from './_hooks/use-committed-filters';
+import { useCommittedMapVisible } from './_hooks/use-committed-map-vision';
+import { useCommittedSort } from './_hooks/use-committed-sort';
 import { useDebouncedHover } from './_hooks/use-debounced-hover';
 
 import {
@@ -41,13 +41,12 @@ import {
 import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 import { appLanguage } from '@/lib/config/language';
 
-import type { IntentListItem } from '@/types/intent';
 import {
-  INTENTS_CONFIG,
   getUpcomingAfterDefault,
+  INTENTS_CONFIG,
 } from '@/lib/constants/intents';
 import { buildGridCols } from '@/lib/utils/intents';
-import { SortKey } from './_components/sort-by-control';
+import type { IntentListItem } from '@/types/intent';
 
 /* ───────────────────────────── Page ───────────────────────────── */
 

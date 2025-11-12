@@ -417,45 +417,156 @@ export function TimeStep({
         </div>
       </div>
 
-      {/* Allow join late */}
-      <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Joining
-        </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Pozwól dołączyć po starcie — przydatne przy spotkaniach otwartych.
-        </p>
-
-        <label className="flex cursor-pointer items-center gap-3 select-none text-sm text-zinc-700 dark:text-zinc-300">
-          <input
-            type="checkbox"
-            {...register('allowJoinLate')}
-            className="sr-only peer"
-          />
-
-          {/* tor + thumb jako ::after */}
-          <div
-            className="
-      relative h-6 w-11 rounded-full
-      bg-zinc-300 dark:bg-zinc-700
-      transition-colors duration-300
-      shadow-inner
-      peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
-
-      after:content-[''] after:absolute after:left-1 after:top-1
-      after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-md
-      after:transition-all after:duration-300 after:ease-in-out
-      after:transform
-      peer-checked:after:translate-x-5
-      peer-checked:after:shadow-[0_0_6px_rgba(99,102,241,0.6)]
-    "
-          />
-
-          <span className="transition-colors duration-300 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
-            Allow joining after start
+      {/* Join windows / cutoffs - Advanced options */}
+      <details className="group rounded-2xl border border-zinc-300 dark:border-zinc-700">
+        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50 rounded-2xl transition-colors select-none">
+          <span className="flex items-center gap-2">
+            <span>⚙️</span>
+            <span>Advanced join settings</span>
           </span>
-        </label>
-      </div>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 group-open:rotate-180 transition-transform">
+            ▼
+          </span>
+        </summary>
+
+        <div className="space-y-4 px-4 pb-4 pt-2">
+          <div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Kontroluj kiedy użytkownicy mogą dołączyć do wydarzenia. Pozostaw
+              puste dla domyślnych ustawień.
+            </p>
+          </div>
+
+          {/* joinOpensMinutesBeforeStart */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Otwórz zapisy przed startem (minuty)
+            </label>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Ile minut przed startem otworzyć zapisy. Puste = zapisy otwarte od
+              razu.
+            </p>
+            <input
+              type="number"
+              {...register('joinOpensMinutesBeforeStart', {
+                valueAsNumber: true,
+              })}
+              placeholder="np. 60 (1 godzina)"
+              min="0"
+              max="10080"
+              step="15"
+              className="w-full rounded-2xl border px-4 py-2.5 text-sm
+                      border-zinc-300 bg-white text-zinc-900
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
+                      dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100
+                      placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+            />
+            {errors.joinOpensMinutesBeforeStart && (
+              <div className="mt-1 text-xs text-red-500">
+                {errors.joinOpensMinutesBeforeStart.message as string}
+              </div>
+            )}
+          </div>
+
+          {/* joinCutoffMinutesBeforeStart */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Zamknij zapisy przed startem (minuty)
+            </label>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Ile minut przed startem zamknąć zapisy. Puste = zapisy otwarte do
+              startu.
+            </p>
+            <input
+              type="number"
+              {...register('joinCutoffMinutesBeforeStart', {
+                valueAsNumber: true,
+              })}
+              placeholder="np. 30 (30 minut)"
+              min="0"
+              max="10080"
+              step="15"
+              className="w-full rounded-2xl border px-4 py-2.5 text-sm
+                      border-zinc-300 bg-white text-zinc-900
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
+                      dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100
+                      placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+            />
+            {errors.joinCutoffMinutesBeforeStart && (
+              <div className="mt-1 text-xs text-red-500">
+                {errors.joinCutoffMinutesBeforeStart.message as string}
+              </div>
+            )}
+          </div>
+
+          {/* Allow join late */}
+          <div>
+            <label className="flex cursor-pointer items-center gap-3 select-none text-sm text-zinc-700 dark:text-zinc-300">
+              <input
+                type="checkbox"
+                {...register('allowJoinLate')}
+                className="sr-only peer"
+              />
+
+              {/* tor + thumb jako ::after */}
+              <div
+                className="
+        relative h-6 w-11 rounded-full
+        bg-zinc-300 dark:bg-zinc-700
+        transition-colors duration-300
+        shadow-inner
+        peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
+
+        after:content-[''] after:absolute after:left-1 after:top-1
+        after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-md
+        after:transition-all after:duration-300 after:ease-in-out
+        after:transform
+        peer-checked:after:translate-x-5
+        peer-checked:after:shadow-[0_0_6px_rgba(99,102,241,0.6)]
+      "
+              />
+
+              <span className="transition-colors duration-300 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">
+                Allow joining after start
+              </span>
+            </label>
+            <p className="mt-1 ml-14 text-xs text-zinc-500 dark:text-zinc-400">
+              Pozwól dołączyć po starcie — przydatne przy spotkaniach otwartych.
+            </p>
+          </div>
+
+          {/* lateJoinCutoffMinutesAfterStart */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Zamknij spóźnione zapisy po starcie (minuty)
+            </label>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Ile minut po starcie zamknąć możliwość dołączenia. Puste = do
+              końca wydarzenia.
+            </p>
+            <input
+              type="number"
+              {...register('lateJoinCutoffMinutesAfterStart', {
+                valueAsNumber: true,
+              })}
+              placeholder="np. 15 (15 minut)"
+              min="0"
+              max="10080"
+              step="5"
+              className="w-full rounded-2xl border px-4 py-2.5 text-sm
+                      border-zinc-300 bg-white text-zinc-900
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
+                      dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100
+                      placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+            />
+            {errors.lateJoinCutoffMinutesAfterStart && (
+              <div className="mt-1 text-xs text-red-500">
+                {errors.lateJoinCutoffMinutesAfterStart.message as string}
+              </div>
+            )}
+          </div>
+        </div>
+      </details>
 
       {/* TZ note */}
       <div

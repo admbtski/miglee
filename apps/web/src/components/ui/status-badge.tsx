@@ -14,7 +14,89 @@ export type JoinReason =
   | 'STARTED'
   | 'ONGOING'
   | 'DELETED'
-  | 'CANCELED';
+  | 'CANCELED'
+  | 'INVITE_ONLY'
+  | 'NOT_OPEN_YET'
+  | 'CUTOFF'
+  | 'NO_LATE_JOIN'
+  | 'LATE_CUTOFF'
+  | 'MANUAL'
+  | 'ENDED';
+
+// GraphQL JoinLockReason enum
+export type LockReason =
+  | 'FULL'
+  | 'INVITE_ONLY'
+  | 'NOT_OPEN_YET'
+  | 'CUTOFF'
+  | 'NO_LATE_JOIN'
+  | 'LATE_CUTOFF'
+  | 'MANUAL'
+  | 'ENDED'
+  | 'CANCELED'
+  | 'DELETED';
+
+// Map lockReason to user-friendly labels
+function getLockReasonLabel(
+  lockReason: LockReason | null | undefined,
+  startAt?: Date | null
+): string {
+  if (!lockReason) return 'Niedostępne';
+
+  switch (lockReason) {
+    case 'FULL':
+      return 'Brak miejsc';
+    case 'INVITE_ONLY':
+      return 'Tylko zaproszenia';
+    case 'NOT_OPEN_YET':
+      if (startAt) {
+        const hrs = Math.max(0, Math.ceil(hoursUntil(startAt)));
+        return `Otwarte za ${hrs} h.`;
+      }
+      return 'Jeszcze zamknięte';
+    case 'CUTOFF':
+      return 'Termin minął';
+    case 'NO_LATE_JOIN':
+      return 'Brak spóźnialskich';
+    case 'LATE_CUTOFF':
+      return 'Za późno';
+    case 'MANUAL':
+      return 'Zamknięte';
+    case 'ENDED':
+      return 'Zakończone';
+    case 'CANCELED':
+      return 'Odwołane';
+    case 'DELETED':
+      return 'Usunięte';
+    default:
+      return 'Niedostępne';
+  }
+}
+
+// Map lockReason to tone
+function getLockReasonTone(
+  lockReason: LockReason | null | undefined
+): JoinTone {
+  if (!lockReason) return 'warn';
+
+  switch (lockReason) {
+    case 'FULL':
+    case 'ENDED':
+    case 'DELETED':
+      return 'error';
+    case 'CANCELED':
+    case 'NOT_OPEN_YET':
+    case 'CUTOFF':
+    case 'NO_LATE_JOIN':
+    case 'LATE_CUTOFF':
+    case 'MANUAL':
+      return 'warn';
+    case 'INVITE_ONLY':
+      return 'info';
+    default:
+      return 'warn';
+  }
+}
 
 export function computeJoinState({
   hasStarted,
@@ -23,6 +105,7 @@ export function computeJoinState({
   isDeleted,
   isCanceled,
   withinLock,
+  lockReason,
   startAt,
 }: {
   isOngoing?: boolean | null;
@@ -31,6 +114,7 @@ export function computeJoinState({
   isDeleted?: boolean | null;
   isCanceled?: boolean | null;
   isFull?: boolean | null;
+  lockReason?: LockReason | null;
   startAt?: Date | null;
 }): {
   status: {
@@ -39,23 +123,37 @@ export function computeJoinState({
     reason: JoinReason;
   };
 } {
+  // Priority 1: Deleted
   if (isDeleted)
     return { status: { label: 'Usunięte', tone: 'error', reason: 'DELETED' } };
 
+  // Priority 2: Canceled
   if (isCanceled)
     return { status: { label: 'Odwołane', tone: 'warn', reason: 'CANCELED' } };
 
+  // Priority 3: Ongoing
   if (isOngoing)
     return { status: { label: 'Trwa teraz', tone: 'info', reason: 'ONGOING' } };
 
+  // Priority 4: Started (but not ongoing)
   if (hasStarted)
     return {
       status: { label: 'Rozpoczęte', tone: 'error', reason: 'STARTED' },
     };
 
+  // Priority 5: Use lockReason if available (more specific)
+  if (lockReason) {
+    const label = getLockReasonLabel(lockReason, startAt);
+    const tone = getLockReasonTone(lockReason);
+    const reason = lockReason as JoinReason;
+    return { status: { label, tone, reason } };
+  }
+
+  // Priority 6: Full (fallback if no lockReason)
   if (isFull)
     return { status: { label: 'Brak miejsc', tone: 'error', reason: 'FULL' } };
 
+  // Priority 7: Within lock (generic)
   if (withinLock && startAt) {
     const hrs = Math.max(0, Math.ceil(hoursUntil(startAt)));
     return {
@@ -63,6 +161,7 @@ export function computeJoinState({
     };
   }
 
+  // Default: Available
   return { status: { label: 'Dostępne', tone: 'ok', reason: 'OK' } };
 }
 

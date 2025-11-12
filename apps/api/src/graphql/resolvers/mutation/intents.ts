@@ -83,7 +83,129 @@ function assertStartEnd(startAt: Date, endAt: Date) {
   }
 }
 
-// todo: validation
+/**
+ * Validate join windows/cutoffs
+ */
+function assertJoinWindows(input: {
+  allowJoinLate?: boolean | null;
+  joinOpensMinutesBeforeStart?: number | null;
+  joinCutoffMinutesBeforeStart?: number | null;
+  lateJoinCutoffMinutesAfterStart?: number | null;
+}) {
+  // All minutes must be >= 0
+  if (
+    input.joinOpensMinutesBeforeStart != null &&
+    input.joinOpensMinutesBeforeStart < 0
+  ) {
+    throw new GraphQLError('`joinOpensMinutesBeforeStart` must be >= 0.', {
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        field: 'joinOpensMinutesBeforeStart',
+      },
+    });
+  }
+  if (
+    input.joinCutoffMinutesBeforeStart != null &&
+    input.joinCutoffMinutesBeforeStart < 0
+  ) {
+    throw new GraphQLError('`joinCutoffMinutesBeforeStart` must be >= 0.', {
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        field: 'joinCutoffMinutesBeforeStart',
+      },
+    });
+  }
+  if (
+    input.lateJoinCutoffMinutesAfterStart != null &&
+    input.lateJoinCutoffMinutesAfterStart < 0
+  ) {
+    throw new GraphQLError('`lateJoinCutoffMinutesAfterStart` must be >= 0.', {
+      extensions: {
+        code: 'BAD_USER_INPUT',
+        field: 'lateJoinCutoffMinutesAfterStart',
+      },
+    });
+  }
+
+  // If allowJoinLate=false => lateJoinCutoffMinutesAfterStart must be null
+  if (
+    input.allowJoinLate === false &&
+    input.lateJoinCutoffMinutesAfterStart != null
+  ) {
+    throw new GraphQLError(
+      'When `allowJoinLate` is false, `lateJoinCutoffMinutesAfterStart` must be null.',
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          field: 'lateJoinCutoffMinutesAfterStart',
+        },
+      }
+    );
+  }
+
+  // If both opens and cutoff are set => opens must be > cutoff (to have a real open window)
+  if (
+    input.joinOpensMinutesBeforeStart != null &&
+    input.joinCutoffMinutesBeforeStart != null &&
+    input.joinOpensMinutesBeforeStart <= input.joinCutoffMinutesBeforeStart
+  ) {
+    throw new GraphQLError(
+      '`joinOpensMinutesBeforeStart` must be greater than `joinCutoffMinutesBeforeStart` to have a valid open window.',
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          field: 'joinOpensMinutesBeforeStart',
+        },
+      }
+    );
+  }
+
+  // Sensible max limits (e.g., <= 500 minutes = ~8.3 hours)
+  const MAX_MINUTES = 500;
+  if (
+    input.joinOpensMinutesBeforeStart != null &&
+    input.joinOpensMinutesBeforeStart > MAX_MINUTES
+  ) {
+    throw new GraphQLError(
+      `\`joinOpensMinutesBeforeStart\` must be <= ${MAX_MINUTES}.`,
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          field: 'joinOpensMinutesBeforeStart',
+        },
+      }
+    );
+  }
+  if (
+    input.joinCutoffMinutesBeforeStart != null &&
+    input.joinCutoffMinutesBeforeStart > MAX_MINUTES
+  ) {
+    throw new GraphQLError(
+      `\`joinCutoffMinutesBeforeStart\` must be <= ${MAX_MINUTES}.`,
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          field: 'joinCutoffMinutesBeforeStart',
+        },
+      }
+    );
+  }
+  if (
+    input.lateJoinCutoffMinutesAfterStart != null &&
+    input.lateJoinCutoffMinutesAfterStart > MAX_MINUTES
+  ) {
+    throw new GraphQLError(
+      `\`lateJoinCutoffMinutesAfterStart\` must be <= ${MAX_MINUTES}.`,
+      {
+        extensions: {
+          code: 'BAD_USER_INPUT',
+          field: 'lateJoinCutoffMinutesAfterStart',
+        },
+      }
+    );
+  }
+}
+
 function assertCreateInput(input: CreateIntentInput) {
   if (!input.categorySlugs?.length || input.categorySlugs.length > 3) {
     throw new GraphQLError('You must select between 1 and 3 categories.', {
@@ -95,6 +217,9 @@ function assertCreateInput(input: CreateIntentInput) {
     input.startAt as unknown as Date,
     input.endAt as unknown as Date
   );
+
+  // join windows/cutoffs
+  assertJoinWindows(input);
 
   // capacity
   if (input.mode === PrismaMode.ONE_TO_ONE) {
@@ -147,7 +272,6 @@ function assertCreateInput(input: CreateIntentInput) {
   }
 }
 
-// todo: validation
 function assertUpdateInput(input: UpdateIntentInput) {
   // null-protection on immutable-ish scalars
   if (input.title === null)
@@ -222,6 +346,9 @@ function assertUpdateInput(input: UpdateIntentInput) {
   if (input.startAt !== undefined && input.endAt !== undefined) {
     assertStartEnd(input.startAt as Date, input.endAt as Date);
   }
+
+  // join windows/cutoffs validation
+  assertJoinWindows(input);
 }
 
 /* ───────────────────────────── Guards ───────────────────────────── */

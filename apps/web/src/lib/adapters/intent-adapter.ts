@@ -54,6 +54,7 @@ export function mapIntentToEventCardProps(
     isDeleted: item.isDeleted,
     hasStarted: item.hasStarted,
     withinLock: item.withinLock,
+    lockReason: item.lockReason ?? undefined,
     canJoin: item.canJoin,
     isFull: item.isFull,
 

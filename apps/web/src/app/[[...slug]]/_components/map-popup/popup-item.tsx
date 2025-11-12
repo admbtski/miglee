@@ -39,6 +39,7 @@ export type PopupIntent = {
   isOngoing: boolean;
   hasStarted: boolean;
   withinLock: boolean;
+  lockReason?: string | null;
   canJoin?: boolean | null;
   levels?: GqlLevel[] | null;
   plan?: Plan | null;
@@ -63,6 +64,7 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     joinedCount,
     max,
     withinLock,
+    lockReason,
     canJoin,
   } = intent;
 
@@ -90,8 +92,18 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         isOngoing,
         hasStarted,
         withinLock,
+        lockReason: lockReason as any,
       }),
-    [startAt, hasStarted, isCanceled, isDeleted, isFull, isOngoing, withinLock]
+    [
+      startAt,
+      hasStarted,
+      isCanceled,
+      isDeleted,
+      isFull,
+      isOngoing,
+      withinLock,
+      lockReason,
+    ]
   );
 
   return (

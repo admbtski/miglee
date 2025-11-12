@@ -14,6 +14,7 @@ import { mapFormToCreateInput, mapIntentToFormValues } from './mappers';
 import { SuccessIntentModal } from './success-intent-modal';
 import { TagSelectionProvider } from './tag-selection-provider';
 import { IntentFormValues } from './types';
+import { toast, devLogger } from '@/lib/utils';
 
 export function CreateEditIntentModalConnect({
   intentId,
@@ -63,17 +64,54 @@ export function CreateEditIntentModalConnect({
 
   const handleSubmit = useCallback(
     async (formValues: IntentFormValues) => {
+      const startTime = Date.now();
+      const action = intentId ? 'updateIntent' : 'createIntent';
+
       try {
+        devLogger.mutationStart(action, formValues);
+
         const input = mapFormToCreateInput(formValues);
+
+        let result;
         if (intentId) {
-          await updateAsync({ id: intentId, input });
+          result = await updateAsync({ id: intentId, input });
         } else {
-          await createAsync({ input });
+          result = await createAsync({ input });
         }
+
+        const duration = Date.now() - startTime;
+        devLogger.mutationSuccess(action, result, duration);
+
         onClose();
         setSuccessOpen(true);
-      } catch (err) {
-        console.error(err); // TODO: toast
+      } catch (err: any) {
+        const duration = Date.now() - startTime;
+        devLogger.mutationError(action, err, formValues, duration);
+
+        // Extract error message from GraphQL error
+        const errorMessage =
+          err?.response?.errors?.[0]?.message ||
+          err?.message ||
+          'Failed to save event';
+
+        // Extract field from extensions if available
+        const field = err?.response?.errors?.[0]?.extensions?.field;
+        const errorCode = err?.response?.errors?.[0]?.extensions?.code;
+
+        // Create user-friendly error message
+        let description = errorMessage;
+        if (field && errorCode === 'BAD_USER_INPUT') {
+          description = `Invalid ${field}: ${errorMessage}`;
+        }
+
+        // Show user-friendly error toast
+        toast.error(
+          intentId ? 'Failed to update event' : 'Failed to create event',
+          {
+            description,
+            duration: 5000,
+          }
+        );
       }
     },
     [createAsync, updateAsync, onClose, intentId]

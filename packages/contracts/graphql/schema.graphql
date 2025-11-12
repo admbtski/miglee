@@ -1144,14 +1144,14 @@ type Query {
     memberId: ID
     upcomingAfter: DateTime
     endingBefore: DateTime
-    categorySlugs: [ID!]
+    categorySlugs: [String!]
     tagSlugs: [String!]
     levels: [Level!]
     kinds: [MeetingKind!]
     keywords: [String!]
     status: IntentStatus
     verifiedOnly: Boolean
-    distanceKm: Int
+    distanceKm: Float
     near: LocationInput
     sortBy: IntentsSortBy = START_AT
     sortDir: SortDir = ASC

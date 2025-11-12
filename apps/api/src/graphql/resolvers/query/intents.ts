@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import {
@@ -253,6 +254,16 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
     const now = new Date();
+
+    // Validate near/distanceKm: if distanceKm is provided, near.lat and near.lng are required
+    if (args.distanceKm != null && (!args.near?.lat || !args.near?.lng)) {
+      throw new GraphQLError(
+        'When `distanceKm` is provided, `near.lat` and `near.lng` are required.',
+        {
+          extensions: { code: 'BAD_USER_INPUT', field: 'near' },
+        }
+      );
+    }
 
     // Bazowy where/sort
     const baseWhere = buildBaseWhere(args);

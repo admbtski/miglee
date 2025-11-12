@@ -32,6 +32,7 @@ export type IntentListItem = {
   hasStarted: boolean;
   isFull: boolean;
   withinLock: boolean;
+  lockReason?: string | null;
   canJoin: boolean;
 
   isHybrid: boolean;
