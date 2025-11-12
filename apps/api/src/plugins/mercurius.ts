@@ -33,9 +33,79 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   );
   const typeDefs = readFileSync(schemaPath, 'utf-8');
 
+  // Custom scalar resolvers
+  const scalarResolvers = {
+    DateTime: {
+      serialize: (value: Date | string | number) => {
+        // Convert Date to ISO string for response
+        if (value instanceof Date) {
+          return value.toISOString();
+        }
+        if (typeof value === 'string') {
+          return value;
+        }
+        if (typeof value === 'number') {
+          return new Date(value).toISOString();
+        }
+        throw new Error('Invalid DateTime value');
+      },
+      parseValue: (value: string | number) => {
+        // Convert input value (from variables) to Date
+        if (typeof value === 'string') {
+          const date = new Date(value);
+          if (isNaN(date.getTime())) {
+            throw new Error('Invalid DateTime string');
+          }
+          return date;
+        }
+        if (typeof value === 'number') {
+          return new Date(value);
+        }
+        throw new Error('DateTime must be a string or number');
+      },
+      parseLiteral: (ast: any) => {
+        // Convert literal value (from query string) to Date
+        if (ast.kind === 'StringValue') {
+          const date = new Date(ast.value);
+          if (isNaN(date.getTime())) {
+            throw new Error('Invalid DateTime string');
+          }
+          return date;
+        }
+        if (ast.kind === 'IntValue') {
+          return new Date(parseInt(ast.value, 10));
+        }
+        throw new Error('DateTime must be a string or integer');
+      },
+    },
+    JSON: {
+      serialize: (value: any) => value,
+      parseValue: (value: any) => value,
+      parseLiteral: (ast: any) => {
+        if (ast.kind === 'StringValue') {
+          return JSON.parse(ast.value);
+        }
+        return null;
+      },
+    },
+    JSONObject: {
+      serialize: (value: any) => value,
+      parseValue: (value: any) => value,
+      parseLiteral: (ast: any) => {
+        if (ast.kind === 'ObjectValue') {
+          return ast.value;
+        }
+        return null;
+      },
+    },
+  };
+
   const schema = makeExecutableSchema({
     typeDefs,
-    resolvers,
+    resolvers: {
+      ...resolvers,
+      ...scalarResolvers,
+    },
   });
 
   await fastify.register(mercurius, {
