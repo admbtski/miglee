@@ -9,6 +9,7 @@ import {
   UserIcon,
   ChevronDown,
   Bell,
+  Users2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -35,6 +36,7 @@ type Item = {
     | 'profile'
     | 'chats'
     | 'intents'
+    | 'memberships'
     | 'notifications'
     | 'plans-and-bills'
     | 'settings'
@@ -63,6 +65,12 @@ const NAV: Item[] = [
     label: 'Intents',
     href: '/account/intents',
     icon: Calendar1Icon,
+  },
+  {
+    key: 'memberships',
+    label: 'Memberships',
+    href: '/account/memberships',
+    icon: Users2,
   },
   {
     key: 'notifications',

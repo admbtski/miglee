@@ -25,6 +25,9 @@ import {
   LeaveIntentDocument,
   LeaveIntentMutation,
   LeaveIntentMutationVariables,
+  AcceptInviteDocument,
+  AcceptInviteMutation,
+  AcceptInviteMutationVariables,
   InviteMemberDocument,
   InviteMemberMutation,
   InviteMemberMutationVariables,
@@ -791,6 +794,59 @@ export function useLeaveIntentMutationMembers(
       ...(options ?? {}),
     })
   );
+}
+
+export function useAcceptInviteMutation(
+  options?: UseMutationOptions<
+    AcceptInviteMutation,
+    unknown,
+    AcceptInviteMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    AcceptInviteMutation,
+    unknown,
+    AcceptInviteMutationVariables
+  >({
+    mutationFn: (variables: AcceptInviteMutationVariables) =>
+      gqlClient.request<AcceptInviteMutation, AcceptInviteMutationVariables>(
+        AcceptInviteDocument,
+        variables
+      ),
+    mutationKey: ['AcceptInvite'],
+    meta: {
+      successMessage: 'Invitation accepted successfully',
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+      });
+      if (vars.intentId) {
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_ONE_KEY({
+            id: vars.intentId,
+          }) as QueryKey,
+        });
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_MEMBERS_KEY({
+            intentId: vars.intentId,
+          }) as QueryKey,
+        });
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_MEMBER_STATS_KEY({
+            intentId: vars.intentId,
+          }) as QueryKey,
+        });
+      }
+      qc.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) && q.queryKey[0] === 'GetMyMemberships',
+      });
+    },
+    ...(options ?? {}),
+  });
 }
 
 export function useInviteMemberMutation(

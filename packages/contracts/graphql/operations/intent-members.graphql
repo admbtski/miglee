@@ -21,6 +21,13 @@ mutation LeaveIntent($intentId: ID!) {
   }
 }
 
+# User accepts an invitation to join
+mutation AcceptInvite($intentId: ID!) {
+  acceptInvite(intentId: $intentId) {
+    ...IntentCore
+  }
+}
+
 # =============================================================================
 # Intent Membership Mutations (Owner/Moderator Actions)
 # =============================================================================
