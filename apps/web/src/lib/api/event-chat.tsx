@@ -15,10 +15,6 @@ import {
   type GetIntentUnreadCountQueryVariables,
   type SendIntentMessageMutation,
   type SendIntentMessageMutationVariables,
-  type EditIntentMessageMutation,
-  type EditIntentMessageMutationVariables,
-  type DeleteIntentMessageMutation,
-  type DeleteIntentMessageMutationVariables,
   type MarkIntentChatReadMutation,
   type MarkIntentChatReadMutationVariables,
   type MuteIntentMutation,
@@ -26,8 +22,6 @@ import {
   type PublishIntentTypingMutation,
   type PublishIntentTypingMutationVariables,
   SendIntentMessageDocument,
-  EditIntentMessageDocument,
-  DeleteIntentMessageDocument,
   MarkIntentChatReadDocument,
   MuteIntentDocument,
   PublishIntentTypingDocument,
@@ -169,81 +163,8 @@ export function useSendIntentMessage(
   });
 }
 
-/**
- * Edit a message
- */
-export function useEditIntentMessage(
-  options?: UseMutationOptions<
-    EditIntentMessageMutation,
-    Error,
-    EditIntentMessageMutationVariables
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    EditIntentMessageMutation,
-    Error,
-    EditIntentMessageMutationVariables
-  >({
-    mutationKey: ['EditIntentMessage'],
-    mutationFn: async (variables) => {
-      const res = await gqlClient.request<EditIntentMessageMutation>(
-        EditIntentMessageDocument,
-        variables
-      );
-      return res;
-    },
-    meta: {
-      successMessage: 'Message updated',
-    },
-    onSuccess: () => {
-      // Invalidate all messages (we don't know which intent)
-      queryClient.invalidateQueries({
-        queryKey: eventChatKeys.all,
-      });
-    },
-    ...options,
-  });
-}
-
-/**
- * Delete a message
- */
-export function useDeleteIntentMessage(
-  options?: UseMutationOptions<
-    DeleteIntentMessageMutation,
-    Error,
-    DeleteIntentMessageMutationVariables
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    DeleteIntentMessageMutation,
-    Error,
-    DeleteIntentMessageMutationVariables
-  >({
-    mutationKey: ['DeleteIntentMessage'],
-    mutationFn: async (variables) => {
-      const res = await gqlClient.request<DeleteIntentMessageMutation>(
-        DeleteIntentMessageDocument,
-        variables
-      );
-      return res;
-    },
-    meta: {
-      successMessage: 'Message deleted',
-    },
-    onSuccess: () => {
-      // Invalidate all messages
-      queryClient.invalidateQueries({
-        queryKey: eventChatKeys.all,
-      });
-    },
-    ...options,
-  });
-}
+// NOTE: useEditIntentMessage and useDeleteIntentMessage have been moved to message-actions.tsx
+// to avoid duplication and better organize message action hooks
 
 /**
  * Mark intent chat as read

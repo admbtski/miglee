@@ -195,26 +195,11 @@ export default function ChatsPageIntegrated() {
     threadId: activeDmId!,
     enabled: !!activeDmId && tab === 'dm',
     onMessage: (message) => {
+      console.dir({ message });
       // Skip dummy read-event messages to prevent infinite loop
       if (message.id === 'read-event') {
         console.log('[DM Sub] Skipping read-event (prevents loop)');
         return;
-      }
-
-      console.log('[DM Sub] New message received:', message.id);
-
-      // Invalidate queries to refetch messages
-      queryClient.invalidateQueries({
-        queryKey: ['dm', 'messages', activeDmId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: dmKeys.threads(),
-      });
-
-      // Auto-mark as read when new message arrives in active thread
-      if (activeDmId && message.senderId !== currentUserId) {
-        console.log('[DM Sub] Auto-marking as read:', message.id);
-        markDmRead.mutate({ threadId: activeDmId });
       }
     },
   });

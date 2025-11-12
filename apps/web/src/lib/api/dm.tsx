@@ -13,9 +13,6 @@ import {
   CreateOrGetDmThreadDocument,
   type CreateOrGetDmThreadMutation,
   type CreateOrGetDmThreadMutationVariables,
-  DeleteDmMessageDocument,
-  type DeleteDmMessageMutation,
-  type DeleteDmMessageMutationVariables,
   DeleteDmThreadDocument,
   type DeleteDmThreadMutation,
   type DeleteDmThreadMutationVariables,
@@ -40,9 +37,6 @@ import {
   SendDmMessageDocument,
   type SendDmMessageMutation,
   type SendDmMessageMutationVariables,
-  UpdateDmMessageDocument,
-  type UpdateDmMessageMutation,
-  type UpdateDmMessageMutationVariables,
   PublishDmTypingDocument,
   type PublishDmTypingMutation,
   type PublishDmTypingMutationVariables,
@@ -278,77 +272,8 @@ export function useSendDmMessage(
   });
 }
 
-/**
- * Update a DM message
- */
-export function useUpdateDmMessage(
-  options?: UseMutationOptions<
-    UpdateDmMessageMutation,
-    Error,
-    UpdateDmMessageMutationVariables
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    UpdateDmMessageMutation,
-    Error,
-    UpdateDmMessageMutationVariables
-  >({
-    mutationFn: async (variables) => {
-      const res = await gqlClient.request<UpdateDmMessageMutation>(
-        UpdateDmMessageDocument,
-        variables
-      );
-      return res;
-    },
-    onSuccess: (data) => {
-      const message = data.updateDmMessage;
-      if (message) {
-        queryClient.invalidateQueries({
-          queryKey: dmKeys.messages(message.threadId),
-        });
-      }
-    },
-    ...options,
-  });
-}
-
-/**
- * Delete a DM message
- */
-export function useDeleteDmMessage(
-  options?: UseMutationOptions<
-    DeleteDmMessageMutation,
-    Error,
-    DeleteDmMessageMutationVariables
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    DeleteDmMessageMutation,
-    Error,
-    DeleteDmMessageMutationVariables
-  >({
-    mutationKey: ['DeleteDmMessage'],
-    mutationFn: async (variables) => {
-      const res = await gqlClient.request<DeleteDmMessageMutation>(
-        DeleteDmMessageDocument,
-        variables
-      );
-      return res;
-    },
-    meta: {
-      successMessage: 'Message deleted',
-    },
-    onSuccess: () => {
-      // Invalidate all messages (we don't know which thread)
-      queryClient.invalidateQueries({ queryKey: dmKeys.all });
-    },
-    ...options,
-  });
-}
+// NOTE: useUpdateDmMessage and useDeleteDmMessage have been moved to message-actions.tsx
+// to avoid duplication and better organize message action hooks
 
 /**
  * Mark a message as read

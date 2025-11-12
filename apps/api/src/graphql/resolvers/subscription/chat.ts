@@ -170,6 +170,8 @@ export const dmMessageUpdatedSubscription: SubscriptionResolvers['dmMessageUpdat
 export const dmMessageDeletedSubscription: SubscriptionResolvers['dmMessageDeleted'] =
   {
     subscribe: async (_p, { threadId }, { user, pubsub }) => {
+      console.dir({ adam: '######################' });
+      console.dir({ adam: user });
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -183,6 +185,7 @@ export const dmMessageDeletedSubscription: SubscriptionResolvers['dmMessageDelet
       return pubsub.subscribe(`dmMessageDeleted:${threadId}`);
     },
     resolve: (payload: any) => {
+      console.dir({ adam: '######################' });
       return payload.dmMessageDeleted;
     },
   };

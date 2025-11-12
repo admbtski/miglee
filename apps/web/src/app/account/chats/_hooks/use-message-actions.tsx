@@ -90,9 +90,10 @@ export function useMessageActions({
     if (kind === 'dm' && threadId) {
       updateDmMessage.mutate(
         {
-          messageId: editingMessageId,
-          content: editingContent,
-          threadId,
+          id: editingMessageId,
+          input: {
+            content: editingContent,
+          },
         },
         {
           onSuccess: () => {
@@ -104,9 +105,10 @@ export function useMessageActions({
     } else if (kind === 'channel' && intentId) {
       editIntentMessage.mutate(
         {
-          messageId: editingMessageId,
-          content: editingContent,
-          intentId,
+          id: editingMessageId,
+          input: {
+            content: editingContent,
+          },
         },
         {
           onSuccess: () => {
@@ -133,7 +135,7 @@ export function useMessageActions({
 
     if (kind === 'dm' && threadId) {
       deleteDmMessage.mutate(
-        { messageId: deletingMessageId, threadId },
+        { id: deletingMessageId },
         {
           onSuccess: () => {
             setDeletingMessageId(null);
@@ -142,7 +144,7 @@ export function useMessageActions({
       );
     } else if (kind === 'channel' && intentId) {
       deleteIntentMessage.mutate(
-        { messageId: deletingMessageId, intentId },
+        { id: deletingMessageId },
         {
           onSuccess: () => {
             setDeletingMessageId(null);
