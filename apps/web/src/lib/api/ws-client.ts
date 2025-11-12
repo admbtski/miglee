@@ -23,8 +23,14 @@ const fmtErr = (err: unknown) => {
 };
 
 export function createWsClient(): Client {
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000/graphql';
+
+  if (!process.env.NEXT_PUBLIC_WS_URL) {
+    L.warn('NEXT_PUBLIC_WS_URL not set, using default:', { wsUrl });
+  }
+
   return createClient({
-    url: process.env.NEXT_PUBLIC_WS_URL!,
+    url: wsUrl,
     connectionParams: async () => {
       const accessToken = localStorage.getItem('accessToken');
       const masked = maskToken(accessToken);

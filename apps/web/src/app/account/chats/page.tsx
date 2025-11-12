@@ -195,7 +195,6 @@ export default function ChatsPageIntegrated() {
     threadId: activeDmId!,
     enabled: !!activeDmId && tab === 'dm',
     onMessage: (message) => {
-      console.dir({ message });
       // Skip dummy read-event messages to prevent infinite loop
       if (message.id === 'read-event') {
         console.log('[DM Sub] Skipping read-event (prevents loop)');
