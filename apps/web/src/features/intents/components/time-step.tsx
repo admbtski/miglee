@@ -1,9 +1,16 @@
 'use client';
 
 import { UseFormReturn, useWatch } from 'react-hook-form';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { IntentFormValues } from './types';
-import { Plus, Minus, Info } from 'lucide-react';
+import {
+  Plus,
+  Minus,
+  Info,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+} from 'lucide-react';
 
 export function TimeStep({
   form,
@@ -86,9 +93,22 @@ export function TimeStep({
   })();
 
   const durationOptions = useMemo(
-    () => [15, 30, 45, 60, 90, 120, 180, 240] as const,
+    () => [15, 30, 45, 60, 90, 120, 180, 240, 360, 480] as const,
     []
   );
+
+  // Watch mode and join settings for smart features
+  const mode = useWatch({ control, name: 'mode' });
+  const joinOpens = useWatch({ control, name: 'joinOpensMinutesBeforeStart' });
+  const joinCutoff = useWatch({
+    control,
+    name: 'joinCutoffMinutesBeforeStart',
+  });
+  const allowLate = useWatch({ control, name: 'allowJoinLate' });
+  const lateCutoff = useWatch({
+    control,
+    name: 'lateJoinCutoffMinutesAfterStart',
+  });
 
   // --- setters ---------------------------------------------------------------
   const setStart = useCallback(
@@ -231,6 +251,189 @@ export function TimeStep({
     [setValue]
   );
 
+  // --- Duration calculator presets -------------------------------------------
+  const durationPresets = useMemo(
+    () => [
+      { label: 'Coffee (30m)', minutes: 30, icon: '☕' },
+      { label: 'Lunch (1h)', minutes: 60, icon: '🍽️' },
+      { label: 'Workshop (2h)', minutes: 120, icon: '🎓' },
+      { label: 'Half day (4h)', minutes: 240, icon: '📅' },
+      { label: 'Full day (8h)', minutes: 480, icon: '🌅' },
+      { label: 'Hackathon (12h)', minutes: 720, icon: '💻' },
+    ],
+    []
+  );
+
+  // --- Join window presets ---------------------------------------------------
+  const joinWindowPresets = useMemo(
+    () => [
+      {
+        label: '🎉 Casual meetup',
+        desc: 'Flexible, can join late',
+        settings: {
+          joinOpensMinutesBeforeStart: null,
+          joinCutoffMinutesBeforeStart: null,
+          allowJoinLate: true,
+          lateJoinCutoffMinutesAfterStart: 30,
+        },
+      },
+      {
+        label: '📋 Structured event',
+        desc: 'Closes 1h before, no late join',
+        settings: {
+          joinOpensMinutesBeforeStart: null,
+          joinCutoffMinutesBeforeStart: 60,
+          allowJoinLate: false,
+          lateJoinCutoffMinutesAfterStart: null,
+        },
+      },
+      {
+        label: '🎓 Workshop',
+        desc: 'Opens 7 days before, closes 24h before',
+        settings: {
+          joinOpensMinutesBeforeStart: 10080, // 7 days
+          joinCutoffMinutesBeforeStart: 1440, // 24h
+          allowJoinLate: false,
+          lateJoinCutoffMinutesAfterStart: null,
+        },
+      },
+      {
+        label: '🚪 Drop-in session',
+        desc: 'Open anytime during event',
+        settings: {
+          joinOpensMinutesBeforeStart: null,
+          joinCutoffMinutesBeforeStart: null,
+          allowJoinLate: true,
+          lateJoinCutoffMinutesAfterStart: null,
+        },
+      },
+    ],
+    []
+  );
+
+  // --- Validation & warnings -------------------------------------------------
+  const validationIssues = useMemo(() => {
+    const issues: Array<{
+      type: 'error' | 'warning' | 'info';
+      message: string;
+    }> = [];
+
+    // Conflict: joinOpens > joinCutoff
+    if (joinOpens != null && joinCutoff != null && joinOpens <= joinCutoff) {
+      issues.push({
+        type: 'error',
+        message: 'Join opens time must be BEFORE cutoff time',
+      });
+    }
+
+    // Warning: late cutoff > duration
+    if (lateCutoff != null && lateCutoff > durationMinutes) {
+      issues.push({
+        type: 'warning',
+        message: 'Late cutoff is after event ends',
+      });
+    }
+
+    // Warning: very short join window for large events
+    if (mode === 'GROUP' && joinCutoff != null && joinCutoff < 60) {
+      issues.push({
+        type: 'warning',
+        message: 'Short join window (<1h) for group events',
+      });
+    }
+
+    // Info: late join enabled but no cutoff
+    if (allowLate && lateCutoff == null) {
+      issues.push({
+        type: 'info',
+        message: 'Late join enabled until event ends',
+      });
+    }
+
+    return issues;
+  }, [joinOpens, joinCutoff, lateCutoff, durationMinutes, mode, allowLate]);
+
+  // --- Timeline visualization data -------------------------------------------
+  const timelineData = useMemo(() => {
+    const points: Array<{
+      label: string;
+      offset: number;
+      type: 'start' | 'end' | 'cutoff' | 'open';
+    }> = [];
+
+    if (joinOpens != null) {
+      points.push({
+        label: `Opens (${joinOpens}m before)`,
+        offset: -joinOpens,
+        type: 'open',
+      });
+    }
+    if (joinCutoff != null) {
+      points.push({
+        label: `Cutoff (${joinCutoff}m before)`,
+        offset: -joinCutoff,
+        type: 'cutoff',
+      });
+    }
+    points.push({ label: 'START', offset: 0, type: 'start' });
+    if (allowLate && lateCutoff != null) {
+      points.push({
+        label: `Late cutoff (+${lateCutoff}m)`,
+        offset: lateCutoff,
+        type: 'cutoff',
+      });
+    }
+    points.push({ label: 'END', offset: durationMinutes, type: 'end' });
+
+    return points.sort((a, b) => a.offset - b.offset);
+  }, [joinOpens, joinCutoff, allowLate, lateCutoff, durationMinutes]);
+
+  // --- Handlers --------------------------------------------------------------
+  const applyJoinPreset = useCallback(
+    (preset: (typeof joinWindowPresets)[number]) => {
+      setValue(
+        'joinOpensMinutesBeforeStart',
+        preset.settings.joinOpensMinutesBeforeStart,
+        {
+          shouldValidate: true,
+          shouldDirty: true,
+        }
+      );
+      setValue(
+        'joinCutoffMinutesBeforeStart',
+        preset.settings.joinCutoffMinutesBeforeStart,
+        {
+          shouldValidate: true,
+          shouldDirty: true,
+        }
+      );
+      setValue('allowJoinLate', preset.settings.allowJoinLate, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      setValue(
+        'lateJoinCutoffMinutesAfterStart',
+        preset.settings.lateJoinCutoffMinutesAfterStart,
+        {
+          shouldValidate: true,
+          shouldDirty: true,
+        }
+      );
+    },
+    [setValue]
+  );
+
+  const setAllDay = useCallback(() => {
+    const base = clampStartToBuffer(new Date());
+    const s = new Date(base);
+    s.setHours(8, 0, 0, 0);
+    if (s.getTime() <= base.getTime()) s.setDate(s.getDate() + 1);
+    const e = new Date(s);
+    e.setHours(22, 0, 0, 0);
+    setValue('startAt', s, { shouldValidate: true, shouldDirty: true });
+    setValue('endAt', e, { shouldValidate: true, shouldDirty: true });
+  }, [setValue]);
+
   // --- UI limits -------------------------------------------------------------
   const minStartDate = useMemo(() => toDateInput(new Date()), []);
   const minEndDate = toDateInput(start);
@@ -275,6 +478,13 @@ export function TimeStep({
             className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             Weekend (Sat 10–12)
+          </button>
+          <button
+            type="button"
+            onClick={setAllDay}
+            className="rounded-xl border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/30"
+          >
+            🌅 All day (8–22)
           </button>
 
           <span className="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
@@ -352,6 +562,30 @@ export function TimeStep({
         </div>
       </div>
 
+      {/* Duration Calculator */}
+      <div>
+        <label className="mb-1 flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <Clock className="h-4 w-4" />
+          <span>Duration calculator</span>
+        </label>
+        <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+          Szybko ustaw czas trwania na podstawie typu wydarzenia
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {durationPresets.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => setDuration(preset.minutes)}
+              className="flex items-center gap-2 rounded-xl border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            >
+              <span className="text-base">{preset.icon}</span>
+              <span className="truncate">{preset.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* End + Duration */}
       <div>
         <div className="mb-1 flex items-center justify-between">
@@ -363,8 +597,7 @@ export function TimeStep({
           </div>
         </div>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Zakończenie musi być po starcie. Możesz szybko ustawić czas trwania
-          presetami niżej.
+          Zakończenie musi być po starcie. Możesz też użyć kalkulatora powyżej.
         </p>
 
         <div className="grid grid-cols-2 gap-3">
@@ -436,6 +669,92 @@ export function TimeStep({
               puste dla domyślnych ustawień.
             </p>
           </div>
+
+          {/* Quick presets for join windows */}
+          <div>
+            <label className="mb-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              Quick presets
+            </label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {joinWindowPresets.map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => applyJoinPreset(preset)}
+                  className="flex flex-col items-start gap-1 rounded-xl border border-zinc-300 px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                >
+                  <span className="font-medium">{preset.label}</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {preset.desc}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Validation hints */}
+          {validationIssues.length > 0 && (
+            <div className="space-y-2">
+              {validationIssues.map((issue, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-sm ${
+                    issue.type === 'error'
+                      ? 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'
+                      : issue.type === 'warning'
+                        ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+                        : 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
+                  }`}
+                >
+                  {issue.type === 'error' && (
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  )}
+                  {issue.type === 'warning' && (
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  )}
+                  {issue.type === 'info' && (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                  )}
+                  <span className="text-xs">{issue.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Timeline visualization */}
+          {timelineData.length > 2 && (
+            <div className="rounded-xl border border-zinc-300 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+              <label className="mb-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                Timeline preview
+              </label>
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-0 right-0 top-4 h-0.5 bg-zinc-300 dark:bg-zinc-600" />
+
+                {/* Timeline points */}
+                <div className="relative flex justify-between">
+                  {timelineData.map((point, idx) => (
+                    <div key={idx} className="flex flex-col items-center gap-1">
+                      <div
+                        className={`relative z-10 h-3 w-3 rounded-full ${
+                          point.type === 'start'
+                            ? 'bg-indigo-500 ring-2 ring-indigo-200 dark:ring-indigo-800'
+                            : point.type === 'end'
+                              ? 'bg-zinc-500 ring-2 ring-zinc-200 dark:ring-zinc-700'
+                              : point.type === 'open'
+                                ? 'bg-emerald-500 ring-2 ring-emerald-200 dark:ring-emerald-800'
+                                : 'bg-amber-500 ring-2 ring-amber-200 dark:ring-amber-800'
+                        }`}
+                      />
+                      <span className="mt-1 text-[10px] text-zinc-600 dark:text-zinc-400 max-w-[60px] text-center leading-tight">
+                        {point.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* joinOpensMinutesBeforeStart */}
           <div>
