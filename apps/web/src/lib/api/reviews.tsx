@@ -165,12 +165,16 @@ export function useCreateReview(
     Error,
     CreateReviewMutationVariables
   >({
+    mutationKey: ['CreateReview'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateReviewMutation>(
         CreateReviewDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Review submitted successfully',
     },
     onSuccess: (data, variables) => {
       // Invalidate reviews list for this intent
@@ -214,12 +218,16 @@ export function useUpdateReview(
     Error,
     UpdateReviewMutationVariables
   >({
+    mutationKey: ['UpdateReview'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UpdateReviewMutation>(
         UpdateReviewDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Review updated successfully',
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
@@ -254,12 +262,16 @@ export function useDeleteReview(
     Error,
     DeleteReviewMutationVariables
   >({
+    mutationKey: ['DeleteReview'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteReviewMutation>(
         DeleteReviewDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Review deleted successfully',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.all });

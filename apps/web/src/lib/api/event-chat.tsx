@@ -138,12 +138,16 @@ export function useSendIntentMessage(
     Error,
     SendIntentMessageMutationVariables
   >({
+    mutationKey: ['SendIntentMessage'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<SendIntentMessageMutation>(
         SendIntentMessageDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Message sent',
     },
     onSuccess: (_, variables) => {
       // Invalidate messages list
@@ -182,12 +186,16 @@ export function useEditIntentMessage(
     Error,
     EditIntentMessageMutationVariables
   >({
+    mutationKey: ['EditIntentMessage'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<EditIntentMessageMutation>(
         EditIntentMessageDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Message updated',
     },
     onSuccess: () => {
       // Invalidate all messages (we don't know which intent)
@@ -216,12 +224,16 @@ export function useDeleteIntentMessage(
     Error,
     DeleteIntentMessageMutationVariables
   >({
+    mutationKey: ['DeleteIntentMessage'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteIntentMessageMutation>(
         DeleteIntentMessageDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Message deleted',
     },
     onSuccess: () => {
       // Invalidate all messages
@@ -250,6 +262,7 @@ export function useMarkIntentChatRead(
     Error,
     MarkIntentChatReadMutationVariables
   >({
+    mutationKey: ['MarkIntentChatRead'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<MarkIntentChatReadMutation>(
         MarkIntentChatReadDocument,
@@ -257,6 +270,7 @@ export function useMarkIntentChatRead(
       );
       return res;
     },
+    // No toast for this - it's a background action
     onSuccess: (_, variables) => {
       // Invalidate unread count
       queryClient.invalidateQueries({
@@ -280,12 +294,16 @@ export function useMuteIntent(
   const queryClient = useQueryClient();
 
   return useMutation<MuteIntentMutation, Error, MuteIntentMutationVariables>({
+    mutationKey: ['MuteIntent'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<MuteIntentMutation>(
         MuteIntentDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Chat muted successfully',
     },
     onSuccess: (_, variables) => {
       // Invalidate intent query to update mute status
@@ -312,6 +330,7 @@ export function usePublishIntentTyping(
     Error,
     PublishIntentTypingMutationVariables
   >({
+    mutationKey: ['PublishIntentTyping'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<PublishIntentTypingMutation>(
         PublishIntentTypingDocument,
@@ -319,6 +338,7 @@ export function usePublishIntentTyping(
       );
       return res;
     },
+    // No toast for typing indicator - it's a background action
     ...options,
   });
 }

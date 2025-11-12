@@ -131,6 +131,9 @@ export function buildAdminUpdateUserOptions<TContext = unknown>(
         AdminUpdateUserMutation,
         AdminUpdateUserMutationVariables
       >(AdminUpdateUserDocument, variables),
+    meta: {
+      successMessage: 'User updated successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -155,6 +158,9 @@ export function buildAdminDeleteUserOptions<TContext = unknown>(
         AdminDeleteUserMutation,
         AdminDeleteUserMutationVariables
       >(AdminDeleteUserDocument, variables),
+    meta: {
+      successMessage: 'User deleted successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -179,6 +185,9 @@ export function buildAdminInviteUserOptions<TContext = unknown>(
         AdminInviteUserMutation,
         AdminInviteUserMutationVariables
       >(AdminInviteUserDocument, variables),
+    meta: {
+      successMessage: 'User invited successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -203,6 +212,9 @@ export function buildAdminCreateUserOptions<TContext = unknown>(
         AdminCreateUserMutation,
         AdminCreateUserMutationVariables
       >(AdminCreateUserDocument, variables),
+    meta: {
+      successMessage: 'User created successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -341,11 +353,15 @@ export function buildAdminSuspendUserOptions(
   AdminSuspendUserMutationVariables
 > {
   return {
+    mutationKey: ['AdminSuspendUser'],
     mutationFn: (variables: AdminSuspendUserMutationVariables) =>
       gqlClient.request<
         AdminSuspendUserMutation,
         AdminSuspendUserMutationVariables
       >(AdminSuspendUserDocument, variables),
+    meta: {
+      successMessage: 'User suspended successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -399,11 +415,15 @@ export function buildAdminUnsuspendUserOptions(
   AdminUnsuspendUserMutationVariables
 > {
   return {
+    mutationKey: ['AdminUnsuspendUser'],
     mutationFn: (variables: AdminUnsuspendUserMutationVariables) =>
       gqlClient.request<
         AdminUnsuspendUserMutation,
         AdminUnsuspendUserMutationVariables
       >(AdminUnsuspendUserDocument, variables),
+    meta: {
+      successMessage: 'User unsuspended successfully',
+    },
     ...(options ?? {}),
   };
 }

@@ -44,12 +44,16 @@ export function useAddDmReaction(
     Error,
     AddDmReactionMutationVariables
   >({
+    mutationKey: ['AddDmReaction'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<AddDmReactionMutation>(
         AddDmReactionDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Reaction added',
     },
     onSuccess: (_, variables) => {
       // Invalidate messages to refetch with new reactions
@@ -77,12 +81,16 @@ export function useRemoveDmReaction(
     Error,
     RemoveDmReactionMutationVariables
   >({
+    mutationKey: ['RemoveDmReaction'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<RemoveDmReactionMutation>(
         RemoveDmReactionDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Reaction removed',
     },
     onSuccess: () => {
       // Invalidate messages to refetch with updated reactions
@@ -113,12 +121,16 @@ export function useAddIntentReaction(
     Error,
     AddIntentReactionMutationVariables
   >({
+    mutationKey: ['AddIntentReaction'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<AddIntentReactionMutation>(
         AddIntentReactionDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Reaction added',
     },
     onSuccess: () => {
       // Invalidate messages to refetch with new reactions
@@ -145,12 +157,16 @@ export function useRemoveIntentReaction(
     Error,
     RemoveIntentReactionMutationVariables
   >({
+    mutationKey: ['RemoveIntentReaction'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<RemoveIntentReactionMutation>(
         RemoveIntentReactionDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Reaction removed',
     },
     onSuccess: () => {
       // Invalidate messages to refetch with updated reactions

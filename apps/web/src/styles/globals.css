@@ -135,6 +135,139 @@ body {
   scrollbar-width: none;
 }
 
+/* --- Sonner Toast Customization --- */
+[data-sonner-toaster] {
+  font-family: var(--font-poppins), sans-serif !important;
+}
+
+[data-sonner-toast] {
+  background: white !important;
+  border: 1px solid theme('colors.zinc.200') !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+}
+
+.dark [data-sonner-toast] {
+  background: theme('colors.zinc.900') !important;
+  border-color: theme('colors.zinc.700') !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Success toast */
+[data-sonner-toast][data-type='success'] {
+  border-left: 4px solid theme('colors.green.500') !important;
+}
+[data-sonner-toast][data-type='success'] [data-icon] {
+  color: theme('colors.green.500') !important;
+}
+
+/* Error toast */
+[data-sonner-toast][data-type='error'] {
+  border-left: 4px solid theme('colors.red.500') !important;
+}
+[data-sonner-toast][data-type='error'] [data-icon] {
+  color: theme('colors.red.500') !important;
+}
+
+/* Warning toast */
+[data-sonner-toast][data-type='warning'] {
+  border-left: 4px solid theme('colors.amber.500') !important;
+}
+[data-sonner-toast][data-type='warning'] [data-icon] {
+  color: theme('colors.amber.500') !important;
+}
+
+/* Info toast */
+[data-sonner-toast][data-type='info'] {
+  border-left: 4px solid theme('colors.blue.500') !important;
+}
+[data-sonner-toast][data-type='info'] [data-icon] {
+  color: theme('colors.blue.500') !important;
+}
+
+/* Loading toast */
+[data-sonner-toast][data-type='loading'] {
+  border-left: 4px solid theme('colors.zinc.400') !important;
+}
+
+/* Toast title */
+[data-sonner-toast] [data-title] {
+  color: theme('colors.zinc.900') !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+.dark [data-sonner-toast] [data-title] {
+  color: theme('colors.zinc.100') !important;
+}
+
+/* Toast description */
+[data-sonner-toast] [data-description] {
+  color: theme('colors.zinc.600') !important;
+  font-size: 13px !important;
+  margin-top: 4px !important;
+}
+.dark [data-sonner-toast] [data-description] {
+  color: theme('colors.zinc.400') !important;
+}
+
+/* Close button */
+[data-sonner-toast] [data-close-button] {
+  background: theme('colors.zinc.100') !important;
+  border: 1px solid theme('colors.zinc.200') !important;
+  color: theme('colors.zinc.600') !important;
+  border-radius: 6px !important;
+  transition: all 0.15s ease !important;
+}
+[data-sonner-toast] [data-close-button]:hover {
+  background: theme('colors.zinc.200') !important;
+  color: theme('colors.zinc.900') !important;
+}
+.dark [data-sonner-toast] [data-close-button] {
+  background: theme('colors.zinc.800') !important;
+  border-color: theme('colors.zinc.700') !important;
+  color: theme('colors.zinc.400') !important;
+}
+.dark [data-sonner-toast] [data-close-button]:hover {
+  background: theme('colors.zinc.700') !important;
+  color: theme('colors.zinc.100') !important;
+}
+
+/* Action button */
+[data-sonner-toast] [data-button] {
+  background: theme('colors.blue.500') !important;
+  color: white !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  transition: all 0.15s ease !important;
+}
+[data-sonner-toast] [data-button]:hover {
+  background: theme('colors.blue.600') !important;
+}
+
+/* Cancel button */
+[data-sonner-toast] [data-cancel] {
+  background: theme('colors.zinc.100') !important;
+  color: theme('colors.zinc.700') !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  transition: all 0.15s ease !important;
+}
+[data-sonner-toast] [data-cancel]:hover {
+  background: theme('colors.zinc.200') !important;
+}
+.dark [data-sonner-toast] [data-cancel] {
+  background: theme('colors.zinc.800') !important;
+  color: theme('colors.zinc.300') !important;
+}
+.dark [data-sonner-toast] [data-cancel]:hover {
+  background: theme('colors.zinc.700') !important;
+}
+
 @layer utilities {
   .tw-typing {
     @apply inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-zinc-200 dark:bg-zinc-800;

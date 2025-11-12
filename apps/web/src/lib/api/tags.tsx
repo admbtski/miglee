@@ -131,6 +131,9 @@ export function buildCreateTagOptions<TContext = unknown>(
         CreateTagDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Tag created successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -177,6 +180,9 @@ export function buildUpdateTagOptions<TContext = unknown>(
         UpdateTagDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Tag updated successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -237,6 +243,9 @@ export function buildDeleteTagOptions<TContext = unknown>(
         DeleteTagDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Tag deleted successfully',
+    },
     ...(options ?? {}),
   };
 }

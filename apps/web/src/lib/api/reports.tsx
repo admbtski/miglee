@@ -108,12 +108,16 @@ export function useCreateReport(
     Error,
     CreateReportMutationVariables
   >({
+    mutationKey: ['CreateReport'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateReportMutation>(
         CreateReportDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Report submitted successfully',
     },
     onSuccess: () => {
       // Invalidate reports list (for admins)
@@ -142,12 +146,16 @@ export function useUpdateReportStatus(
     Error,
     UpdateReportStatusMutationVariables
   >({
+    mutationKey: ['UpdateReportStatus'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UpdateReportStatusMutation>(
         UpdateReportStatusDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Report status updated',
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
@@ -178,12 +186,16 @@ export function useDeleteReport(
     Error,
     DeleteReportMutationVariables
   >({
+    mutationKey: ['DeleteReport'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteReportMutation>(
         DeleteReportDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Report deleted successfully',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reportKeys.all });

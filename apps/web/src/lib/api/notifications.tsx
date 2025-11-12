@@ -219,6 +219,9 @@ export function buildAddNotificationOptions<TContext = unknown>(
     mutationKey: ['AddNotification'] as QueryKey,
     mutationFn: (variables) =>
       gqlClient.request(AddNotificationDocument, variables),
+    meta: {
+      successMessage: 'Notification sent',
+    },
     ...(options ?? {}),
   };
 }
@@ -322,6 +325,7 @@ export function buildMarkNotificationReadOptions<TContext = unknown>(
         MarkNotificationReadMutation,
         MarkNotificationReadMutationVariables
       >(MarkNotificationReadDocument, variables),
+    // No toast - background action
     ...(options ?? {}),
   };
 }
@@ -403,6 +407,9 @@ export function buildDeleteNotificationOptions<TContext = unknown>(
         DeleteNotificationMutation,
         DeleteNotificationMutationVariables
       >(DeleteNotificationDocument, variables),
+    meta: {
+      successMessage: 'Notification deleted',
+    },
     ...(options ?? {}),
   };
 }
@@ -484,6 +491,9 @@ export function buildMarkAllNotificationsReadOptions<TContext = unknown>(
         MarkAllNotificationsReadMutation,
         MarkAllNotificationsReadMutationVariables
       >(MarkAllNotificationsReadDocument, variables),
+    meta: {
+      successMessage: 'All notifications marked as read',
+    },
     ...(options ?? {}),
   };
 }

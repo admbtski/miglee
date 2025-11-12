@@ -142,6 +142,9 @@ export function buildCreateCategoryOptions<TContext = unknown>(
         CreateCategoryMutation,
         CreateCategoryMutationVariables
       >(CreateCategoryDocument, variables),
+    meta: {
+      successMessage: 'Category created successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -192,6 +195,9 @@ export function buildUpdateCategoryOptions<TContext = unknown>(
         UpdateCategoryMutation,
         UpdateCategoryMutationVariables
       >(UpdateCategoryDocument, variables),
+    meta: {
+      successMessage: 'Category updated successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -256,6 +262,9 @@ export function buildDeleteCategoryOptions<TContext = unknown>(
         DeleteCategoryMutation,
         DeleteCategoryMutationVariables
       >(DeleteCategoryDocument, variables),
+    meta: {
+      successMessage: 'Category deleted successfully',
+    },
     ...(options ?? {}),
   };
 }

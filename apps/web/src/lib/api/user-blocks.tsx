@@ -101,12 +101,16 @@ export function useBlockUser(
   const queryClient = useQueryClient();
 
   return useMutation<BlockUserMutation, Error, BlockUserMutationVariables>({
+    mutationKey: ['BlockUser'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<BlockUserMutation>(
         BlockUserDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'User blocked successfully',
     },
     onSuccess: (data, variables) => {
       // Invalidate blocks list
@@ -133,12 +137,16 @@ export function useUnblockUser(
   const queryClient = useQueryClient();
 
   return useMutation<UnblockUserMutation, Error, UnblockUserMutationVariables>({
+    mutationKey: ['UnblockUser'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UnblockUserMutation>(
         UnblockUserDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'User unblocked successfully',
     },
     onSuccess: (data, variables) => {
       // Invalidate blocks list

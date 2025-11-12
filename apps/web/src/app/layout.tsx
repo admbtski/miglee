@@ -108,7 +108,17 @@ export default function RootLayout({
         <ThemeProvider>{children}</ThemeProvider>
 
         {/* Toast notifications */}
-        <Toaster position="top-right" richColors closeButton expand={false} />
+        <Toaster
+          position="top-right"
+          closeButton
+          expand={false}
+          duration={4000}
+          toastOptions={{
+            style: {
+              fontFamily: 'var(--font-poppins)',
+            },
+          }}
+        />
 
         {/* Portal root for modals, tooltips, etc. */}
         <div

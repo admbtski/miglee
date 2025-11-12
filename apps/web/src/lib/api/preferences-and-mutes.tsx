@@ -109,12 +109,16 @@ export function useCreateIntentInviteLink(
     Error,
     CreateIntentInviteLinkMutationVariables
   >({
+    mutationKey: ['CreateIntentInviteLink'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateIntentInviteLinkMutation>(
         CreateIntentInviteLinkDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Invite link created successfully',
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
@@ -139,12 +143,16 @@ export function useDeleteIntentInviteLink(
     Error,
     DeleteIntentInviteLinkMutationVariables
   >({
+    mutationKey: ['DeleteIntentInviteLink'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteIntentInviteLinkMutation>(
         DeleteIntentInviteLinkDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Invite link deleted successfully',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: inviteLinkKeys.all });
@@ -167,12 +175,16 @@ export function useUseIntentInviteLink(
     Error,
     UseIntentInviteLinkMutationVariables
   >({
+    mutationKey: ['UseIntentInviteLink'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UseIntentInviteLinkMutation>(
         UseIntentInviteLinkDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Joined event successfully',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['intents'] });
@@ -223,6 +235,7 @@ export function useUpdateNotificationPreferences(
     Error,
     UpdateNotificationPreferencesMutationVariables
   >({
+    mutationKey: ['UpdateNotificationPreferences'],
     mutationFn: async (variables) => {
       const res =
         await gqlClient.request<UpdateNotificationPreferencesMutation>(
@@ -230,6 +243,9 @@ export function useUpdateNotificationPreferences(
           variables
         );
       return res;
+    },
+    meta: {
+      successMessage: 'Preferences updated successfully',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: preferencesKeys.my() });
@@ -279,12 +295,16 @@ export function useMuteIntent(
   const queryClient = useQueryClient();
 
   return useMutation<MuteIntentMutation, Error, MuteIntentMutationVariables>({
+    mutationKey: ['MuteIntent'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<MuteIntentMutation>(
         MuteIntentDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Event muted successfully',
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
@@ -327,12 +347,16 @@ export function useMuteDmThread(
     Error,
     MuteDmThreadMutationVariables
   >({
+    mutationKey: ['MuteDmThread'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<MuteDmThreadMutation>(
         MuteDmThreadDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Conversation muted successfully',
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
