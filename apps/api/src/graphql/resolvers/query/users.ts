@@ -30,6 +30,14 @@ function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
     acceptedTermsAt: u.acceptedTermsAt,
     locale: u.locale,
     tz: u.tz,
+    // These fields are resolved by field resolvers
+    profile: undefined as any,
+    privacy: undefined as any,
+    stats: undefined as any,
+    socialLinks: undefined as any,
+    disciplines: undefined as any,
+    availability: undefined as any,
+    badges: undefined as any,
   };
 }
 
@@ -107,8 +115,19 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
 export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
   'Query',
   'user',
-  async (_p, { id }): Promise<GQLUser | null> => {
-    const u = await prisma.user.findUnique({ where: { id } });
+  async (_p, args): Promise<GQLUser | null> => {
+    const id = args.id;
+    const name = (args as any).name as string | undefined;
+
+    // Must provide at least one of id or name
+    if (!id && !name) {
+      return null;
+    }
+
+    // Build where clause based on provided parameters
+    const where: Prisma.UserWhereUniqueInput = id ? { id } : { name: name! };
+
+    const u = await prisma.user.findUnique({ where });
     return u ? mapUser(u) : null;
   }
 );

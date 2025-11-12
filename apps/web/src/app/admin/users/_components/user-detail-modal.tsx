@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Modal } from '@/components/feedback/modal';
 import { X } from 'lucide-react';
 import { AccountTab } from './tabs/account-tab';
+import { ProfileTab } from './tabs/profile-tab';
 import { CommunicationTab } from './tabs/communication-tab';
 import { SecurityTab } from './tabs/security-tab';
 import { ContentTab } from './tabs/content-tab';
@@ -22,6 +23,7 @@ type UserDetailModalProps = {
 
 type TabId =
   | 'account'
+  | 'profile'
   | 'communication'
   | 'security'
   | 'content'
@@ -32,6 +34,7 @@ type TabId =
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'account', label: 'Konto' },
+  { id: 'profile', label: 'Profil' },
   { id: 'communication', label: 'Komunikacja' },
   { id: 'security', label: 'Bezpieczeństwo' },
   { id: 'content', label: 'Treści' },
@@ -106,6 +109,9 @@ export function UserDetailModal({
           <div className="min-h-[400px]">
             {activeTab === 'account' && (
               <AccountTab userId={userId} onRefresh={onRefresh} />
+            )}
+            {activeTab === 'profile' && (
+              <ProfileTab userId={userId} onRefresh={onRefresh} />
             )}
             {activeTab === 'communication' && (
               <CommunicationTab userId={userId} />

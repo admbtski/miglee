@@ -15,6 +15,7 @@ export function LocationCombo({
   placeholder = 'Type an address or place…',
   className,
   loadingOverride,
+  includedPrimaryTypes,
 }: {
   value: string;
   onChangeText: (v: string) => void;
@@ -35,6 +36,7 @@ export function LocationCombo({
   placeholder?: string;
   className?: string;
   loadingOverride?: boolean;
+  includedPrimaryTypes?: string[];
 }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
@@ -45,7 +47,12 @@ export function LocationCombo({
   const { suggestions, loading } = usePlacesAutocomplete(trimmed, {
     location: bias?.location,
     radius: bias?.radius,
-    includedPrimaryTypes: ['street_address', 'premise', 'route', 'locality'],
+    includedPrimaryTypes: includedPrimaryTypes || [
+      'street_address',
+      'premise',
+      'route',
+      'locality',
+    ],
     language: 'pl',
     region: 'PL',
   });

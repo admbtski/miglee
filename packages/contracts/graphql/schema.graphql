@@ -58,6 +58,16 @@ type NotificationsResult {
   pageInfo: PageInfo!
 }
 
+type UserEventsResult {
+  items: [Intent!]!
+  total: Int!
+}
+
+type UserReviewsResult {
+  items: [Review!]!
+  total: Int!
+}
+
 input UsersSort {
   by: UsersSortBy! = CREATED_AT
   dir: SortDir! = DESC
@@ -280,6 +290,118 @@ type User {
   tz: String
   acceptedTermsAt: DateTime
   acceptedMarketingAt: DateTime
+
+  # Extended Profile (1:1 relations)
+  profile: UserProfile
+  privacy: UserPrivacy
+  stats: UserStats
+
+  # Collections
+  socialLinks: [UserSocialLink!]!
+  disciplines: [UserDiscipline!]!
+  availability: [UserAvailability!]!
+  badges: [UserBadge!]!
+}
+
+type UserProfile {
+  id: ID!
+  userId: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  displayName: String
+  bioShort: String
+  bioLong: String
+
+  city: String
+  country: String
+  homeLat: Float
+  homeLng: Float
+
+  coverUrl: String
+
+  speaks: [String!]!
+  interests: [String!]!
+  preferredMode: Mode
+  preferredMaxDistanceKm: Float
+}
+
+type UserPrivacy {
+  id: ID!
+  userId: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  dmPolicy: String!
+  showLastSeen: String!
+  showLocation: String!
+  showEvents: String!
+  showReviews: String!
+  showStats: String!
+
+  defaultAddressVisibility: AddressVisibility!
+  defaultMembersVisibility: MembersVisibility!
+}
+
+type UserStats {
+  id: ID!
+  userId: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  eventsCreated: Int!
+  eventsJoined: Int!
+  reviewsCount: Int!
+
+  hostRatingAvg: Float
+  attendeeRatingAvg: Float
+
+  lastActiveAt: DateTime
+}
+
+type UserSocialLink {
+  id: ID!
+  userId: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  provider: String!
+  url: String!
+  verified: Boolean!
+}
+
+type UserDiscipline {
+  id: ID!
+  userId: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  categoryId: ID!
+  category: Category!
+  level: Level!
+  notes: String
+}
+
+type UserAvailability {
+  id: ID!
+  userId: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  weekday: Int!
+  startMin: Int!
+  endMin: Int!
+  tzSnap: String
+}
+
+type UserBadge {
+  id: ID!
+  userId: ID!
+  createdAt: DateTime!
+
+  slug: String!
+  data: JSON
+  earnedAt: DateTime!
 }
 
 "Category with translated names in JSON, e.g. { pl,de,en }"
@@ -1078,7 +1200,7 @@ type Query {
     sortDir: SortDir = DESC
   ): UsersResult!
 
-  user(id: ID!): User
+  user(id: ID, name: String): User
 
   me: SessionUser
 
@@ -1191,6 +1313,9 @@ type Query {
     limit: Int
     offset: Int
   ): NotificationsResult!
+
+  userEvents(userId: ID!, limit: Int, offset: Int): UserEventsResult!
+  userReviews(userId: ID!, limit: Int, offset: Int): UserReviewsResult!
 
   # Admin Content Moderation Queries
   adminComments(
@@ -1406,6 +1531,22 @@ type Mutation {
   adminBanMember(input: BanMemberInput!): Intent!
   adminUnbanMember(input: UnbanMemberInput!): Intent!
 
+  # User Profile & Privacy
+  updateUserProfile(input: UpdateUserProfileInput!): UserProfile!
+  updateUserPrivacy(input: UpdateUserPrivacyInput!): UserPrivacy!
+
+  # User Disciplines
+  upsertUserDiscipline(input: UpsertUserDisciplineInput!): UserDiscipline!
+  removeUserDiscipline(id: ID!): Boolean!
+
+  # User Availability
+  upsertUserAvailability(input: UpsertUserAvailabilityInput!): UserAvailability!
+  removeUserAvailability(id: ID!): Boolean!
+
+  # User Social Links
+  addUserSocialLink(input: AddUserSocialLinkInput!): UserSocialLink!
+  removeUserSocialLink(id: ID!): Boolean!
+
   # dev only
   devLogin(name: String!): SessionUser
   devLogout: Boolean!
@@ -1553,4 +1694,54 @@ type DmMute {
 
   thread: DmThread!
   user: User!
+}
+
+# ------------------------------------------------------------------------------
+# User Profile & Privacy Inputs
+# ------------------------------------------------------------------------------
+
+input UpdateUserProfileInput {
+  displayName: String
+  bioShort: String
+  bioLong: String
+  city: String
+  country: String
+  homeLat: Float
+  homeLng: Float
+  coverUrl: String
+  speaks: [String!]
+  interests: [String!]
+  preferredMode: Mode
+  preferredMaxDistanceKm: Float
+}
+
+input UpdateUserPrivacyInput {
+  dmPolicy: String
+  showLastSeen: String
+  showLocation: String
+  showEvents: String
+  showReviews: String
+  showStats: String
+  defaultAddressVisibility: AddressVisibility
+  defaultMembersVisibility: MembersVisibility
+}
+
+input UpsertUserDisciplineInput {
+  id: ID
+  categoryId: ID!
+  level: Level!
+  notes: String
+}
+
+input UpsertUserAvailabilityInput {
+  id: ID
+  weekday: Int!
+  startMin: Int!
+  endMin: Int!
+  tzSnap: String
+}
+
+input AddUserSocialLinkInput {
+  provider: String!
+  url: String!
 }

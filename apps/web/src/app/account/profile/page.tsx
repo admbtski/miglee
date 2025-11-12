@@ -1,336 +1,121 @@
 'use client';
 
+import { useState } from 'react';
 import {
-  Image as ImageIcon,
+  User,
+  Shield,
   Link as LinkIcon,
-  Plus,
-  Trash2,
-  Upload,
+  Calendar,
+  Settings,
 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { useMeQuery } from '@/lib/api/auth';
+import { useMyFullProfileQuery } from '@/lib/api/user-profile';
+import { ProfileTab } from './_components/profile-tab';
+import { SportsTab } from './_components/sports-tab';
+import { SocialLinksTab } from './_components/social-links-tab';
+import { PrivacyTab } from './_components/privacy-tab';
 
-// Global components
-import { SectionCard } from '@/components/ui/section-card';
-import { TextField } from '@/components/forms/text-field';
-import { SelectField } from '@/components/forms/select-field';
-import { PasswordStrength } from '@/components/forms/password-strength';
+type TabId = 'profile' | 'sports' | 'social' | 'privacy';
 
-// Local hooks
-import { useFileUpload } from './_hooks/use-file-upload';
-import { usePasswordStrength } from './_hooks/use-password-strength';
-
-/* ───────────────────────── Profile Page ───────────────────────── */
+const tabs: { id: TabId; label: string; icon: typeof User }[] = [
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'sports', label: 'Sports & Availability', icon: Calendar },
+  { id: 'social', label: 'Social Links', icon: LinkIcon },
+  { id: 'privacy', label: 'Privacy', icon: Shield },
+];
 
 export default function ProfilePage() {
-  // Personal info
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [location, setLocation] = useState('');
+  const [activeTab, setActiveTab] = useState<TabId>('profile');
 
-  // Avatar
-  const {
-    url: avatarUrl,
-    handlePick: handleAvatarPick,
-    handleRemove: handleAvatarRemove,
-  } = useFileUpload();
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
+  const userId = authData?.me?.id;
 
-  // Cover photo
-  const {
-    url: coverUrl,
-    handlePick: handleCoverPick,
-    handleRemove: handleCoverRemove,
-  } = useFileUpload();
-  const [coverDragging, setCoverDragging] = useState(false);
-  const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const { data: profileData, isLoading: isLoadingProfile } =
+    useMyFullProfileQuery({ id: userId || '' }, { enabled: !!userId });
 
-  // Password
-  const [currentPass, setCurrentPass] = useState('');
-  const [newPass, setNewPass] = useState('');
-  const [repeatPass, setRepeatPass] = useState('');
-  const passScore = usePasswordStrength(newPass);
+  if (isLoadingAuth || isLoadingProfile) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            Loading profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  // Social links
-  const [links, setLinks] = useState<string[]>(['', '', '']);
+  if (!userId) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <Settings className="mx-auto h-12 w-12 text-zinc-400" />
+          <p className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            Not authenticated
+          </p>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Please log in to view your profile
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const onDropCover: React.DragEventHandler<HTMLDivElement> = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCoverDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleCoverPick(file);
-  };
+  const user = profileData?.user;
 
   return (
-    <>
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Profile</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Manage your name, password and account settings.
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          Profile Settings
+        </h1>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          Manage your public profile and privacy settings
         </p>
-      </header>
+      </div>
 
-      {/* Avatar + Cover photo */}
-      <section className="mb-6">
-        <div className="grid gap-6">
-          {/* Avatar row */}
-          <div className="flex items-center gap-5">
-            <div className="relative grid w-16 h-16 overflow-hidden rounded-full place-items-center ring-1 ring-zinc-200 dark:ring-zinc-700">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <ImageIcon className="w-6 h-6 opacity-50" />
-              )}
-            </div>
+      {/* Tabs */}
+      <div className="border-b border-zinc-200 dark:border-zinc-800">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
 
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleAvatarPick(e.target.files?.[0])}
-              />
+            return (
               <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-500"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`group inline-flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                    : 'border-transparent text-zinc-600 hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
+                }`}
               >
-                <Upload className="w-4 h-4" />
-                Upload photo
-              </button>
-              {avatarUrl && (
-                <button
-                  type="button"
-                  onClick={handleAvatarRemove}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-700 border rounded-xl border-red-300/40 bg-red-50 hover:bg-red-100 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              )}
-              <p className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
-                Pick a photo up to 10MB.
-              </p>
-            </div>
-          </div>
-
-          {/* Cover photo (dropzone) */}
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setCoverDragging(true);
-            }}
-            onDragLeave={() => setCoverDragging(false)}
-            onDrop={onDropCover}
-            className={[
-              'rounded-2xl border-2 border-dashed p-6 transition-colors',
-              coverDragging
-                ? 'border-indigo-400 bg-indigo-400/10'
-                : 'border-zinc-300 dark:border-zinc-700',
-            ].join(' ')}
-          >
-            <div className="flex flex-col items-center gap-3 text-center">
-              <div className="grid w-12 h-12 rounded-full place-items-center bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700">
-                <ImageIcon className="w-6 h-6" />
-              </div>
-              {coverUrl ? (
-                <img
-                  src={coverUrl}
-                  alt="Cover"
-                  className="object-cover w-full mt-2 max-h-48 rounded-xl ring-1 ring-zinc-200 dark:ring-zinc-700"
+                <Icon
+                  className={`h-5 w-5 ${
+                    isActive
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-400'
+                  }`}
                 />
-              ) : (
-                <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                  <b>Drop your file here</b> or{' '}
-                  <button
-                    className="text-indigo-600 underline decoration-dotted underline-offset-2 dark:text-indigo-400"
-                    onClick={() => coverInputRef.current?.click()}
-                  >
-                    browse
-                  </button>
-                  . Pick a photo up to 10MB.
-                </p>
-              )}
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleCoverPick(e.target.files?.[0])}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Personal info */}
-      <SectionCard title="Personal info">
-        <div className="grid gap-4 md:grid-cols-2">
-          <TextField
-            label="Name"
-            placeholder="Enter full name"
-            value={name}
-            onChange={setName}
-          />
-          <TextField
-            label="Username"
-            placeholder="Enter username"
-            value={username}
-            onChange={setUsername}
-            help="Enter your display name on public forums."
-          />
-          <TextField
-            label="Email"
-            placeholder="Enter email address"
-            value={email}
-            onChange={setEmail}
-            type="email"
-            help="Email used to log in."
-          />
-          <SelectField
-            label="Location"
-            value={location}
-            onChange={setLocation}
-            options={[
-              { value: '', label: 'Country' },
-              { value: 'PL', label: 'Poland' },
-              { value: 'DE', label: 'Germany' },
-              { value: 'UK', label: 'United Kingdom' },
-              { value: 'US', label: 'United States' },
-            ]}
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 mt-4">
-          <button
-            type="button"
-            className="px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-500"
-            onClick={() =>
-              console.log('save personal info', {
-                name,
-                username,
-                email,
-                location,
-              })
-            }
-          >
-            Save changes
-          </button>
-          <button
-            type="button"
-            className="px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900/60"
-            onClick={() => {
-              setName('');
-              setUsername('');
-              setEmail('');
-              setLocation('');
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </SectionCard>
-
-      {/* Password */}
-      <SectionCard title="Password">
-        <div className="grid gap-4 md:grid-cols-2">
-          <TextField
-            label="Current password"
-            type="password"
-            placeholder="Enter current password"
-            value={currentPass}
-            onChange={setCurrentPass}
-          />
-          <div className="grid gap-4">
-            <TextField
-              label="New password"
-              type="password"
-              placeholder="Enter new password"
-              value={newPass}
-              onChange={setNewPass}
-            />
-            <TextField
-              label="Repeat new password"
-              type="password"
-              placeholder="Repeat new password"
-              value={repeatPass}
-              onChange={setRepeatPass}
-            />
-            <PasswordStrength score={passScore} />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 mt-4">
-          <button
-            type="button"
-            className="px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900/60"
-            onClick={() => console.log('forgot password')}
-          >
-            I forgot my password
-          </button>
-          <button
-            type="button"
-            className="px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-500"
-            onClick={() =>
-              console.log('change password', {
-                currentPass,
-                newPass,
-                repeatPass,
-              })
-            }
-          >
-            Change
-          </button>
-        </div>
-      </SectionCard>
-
-      {/* Social accounts */}
-      <SectionCard title="Social accounts">
-        <div className="grid gap-3">
-          {links.map((v, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700">
-                <LinkIcon className="w-4 h-4" />
-              </div>
-              <input
-                value={v}
-                onChange={(e) =>
-                  setLinks((prev) =>
-                    prev.map((x, idx) => (idx === i ? e.target.value : x))
-                  )
-                }
-                placeholder="Link to social profile"
-                className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm outline-none placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900/60"
-              />
-              <button
-                type="button"
-                title="Remove"
-                aria-label="Remove"
-                onClick={() =>
-                  setLinks((prev) => prev.filter((_, idx) => idx !== i))
-                }
-                className="grid h-9 w-9 place-items-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              >
-                <Trash2 className="w-4 h-4" />
+                {tab.label}
               </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 px-3 py-2 mt-1 text-sm border border-dashed rounded-xl border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900/60"
-            onClick={() => setLinks((prev) => [...prev, ''])}
-          >
-            <Plus className="w-4 h-4" />
-            Add link
-          </button>
-        </div>
-      </SectionCard>
-    </>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        {activeTab === 'profile' && <ProfileTab user={user} userId={userId} />}
+        {activeTab === 'sports' && <SportsTab user={user} userId={userId} />}
+        {activeTab === 'social' && (
+          <SocialLinksTab user={user} userId={userId} />
+        )}
+        {activeTab === 'privacy' && <PrivacyTab user={user} userId={userId} />}
+      </div>
+    </div>
   );
 }

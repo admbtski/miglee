@@ -1,0 +1,264 @@
+# =============================================================================
+# User Profile Fragments
+# =============================================================================
+
+fragment UserProfileCore on UserProfile {
+  id
+  userId
+  createdAt
+  updatedAt
+  displayName
+  bioShort
+  bioLong
+  city
+  country
+  homeLat
+  homeLng
+  coverUrl
+  speaks
+  interests
+  preferredMode
+  preferredMaxDistanceKm
+}
+
+fragment UserPrivacyCore on UserPrivacy {
+  id
+  userId
+  createdAt
+  updatedAt
+  dmPolicy
+  showLastSeen
+  showLocation
+  showEvents
+  showReviews
+  showStats
+  defaultAddressVisibility
+  defaultMembersVisibility
+}
+
+fragment UserStatsCore on UserStats {
+  id
+  userId
+  createdAt
+  updatedAt
+  eventsCreated
+  eventsJoined
+  reviewsCount
+  hostRatingAvg
+  attendeeRatingAvg
+  lastActiveAt
+}
+
+fragment UserSocialLinkCore on UserSocialLink {
+  id
+  userId
+  createdAt
+  updatedAt
+  provider
+  url
+  verified
+}
+
+fragment UserDisciplineCore on UserDiscipline {
+  id
+  userId
+  createdAt
+  updatedAt
+  categoryId
+  category {
+    id
+    slug
+    names
+  }
+  level
+  notes
+}
+
+fragment UserAvailabilityCore on UserAvailability {
+  id
+  userId
+  createdAt
+  updatedAt
+  weekday
+  startMin
+  endMin
+  tzSnap
+}
+
+fragment UserBadgeCore on UserBadge {
+  id
+  userId
+  createdAt
+  slug
+  data
+  earnedAt
+}
+
+fragment UserWithProfile on User {
+  id
+  email
+  name
+  imageUrl
+  role
+  verifiedAt
+  suspendedAt
+  suspensionReason
+  createdAt
+  updatedAt
+  lastSeenAt
+  locale
+  tz
+  profile {
+    ...UserProfileCore
+  }
+  privacy {
+    ...UserPrivacyCore
+  }
+  stats {
+    ...UserStatsCore
+  }
+  socialLinks {
+    ...UserSocialLinkCore
+  }
+  disciplines {
+    ...UserDisciplineCore
+  }
+  availability {
+    ...UserAvailabilityCore
+  }
+  badges {
+    ...UserBadgeCore
+  }
+}
+
+# =============================================================================
+# Queries
+# =============================================================================
+
+query GetUserProfile($id: ID, $name: String) {
+  user(id: $id, name: $name) {
+    ...UserWithProfile
+  }
+}
+
+query GetMyProfile {
+  me {
+    id
+    email
+    name
+    imageUrl
+    role
+    verifiedAt
+  }
+}
+
+query GetMyFullProfile($id: ID!) {
+  user(id: $id) {
+    ...UserWithProfile
+  }
+}
+
+query GetUserEvents($userId: ID!, $limit: Int, $offset: Int) {
+  userEvents(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      title
+      description
+      startAt
+      endAt
+      visibility
+      meetingKind
+      mode
+      min
+      max
+      joinedCount
+      address
+      lat
+      lng
+      categories {
+        id
+        slug
+        names
+      }
+      owner {
+        id
+        name
+        imageUrl
+      }
+    }
+    total
+  }
+}
+
+query GetUserReviews($userId: ID!, $limit: Int, $offset: Int) {
+  userReviews(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      rating
+      content
+      createdAt
+      author {
+        id
+        name
+        imageUrl
+      }
+      intent {
+        id
+        title
+        startAt
+        categories {
+          id
+          slug
+          names
+        }
+      }
+    }
+    total
+  }
+}
+
+# =============================================================================
+# Mutations
+# =============================================================================
+
+mutation UpdateUserProfile($input: UpdateUserProfileInput!) {
+  updateUserProfile(input: $input) {
+    ...UserProfileCore
+  }
+}
+
+mutation UpdateUserPrivacy($input: UpdateUserPrivacyInput!) {
+  updateUserPrivacy(input: $input) {
+    ...UserPrivacyCore
+  }
+}
+
+mutation UpsertUserDiscipline($input: UpsertUserDisciplineInput!) {
+  upsertUserDiscipline(input: $input) {
+    ...UserDisciplineCore
+  }
+}
+
+mutation RemoveUserDiscipline($id: ID!) {
+  removeUserDiscipline(id: $id)
+}
+
+mutation UpsertUserAvailability($input: UpsertUserAvailabilityInput!) {
+  upsertUserAvailability(input: $input) {
+    ...UserAvailabilityCore
+  }
+}
+
+mutation RemoveUserAvailability($id: ID!) {
+  removeUserAvailability(id: $id)
+}
+
+mutation AddUserSocialLink($input: AddUserSocialLinkInput!) {
+  addUserSocialLink(input: $input) {
+    ...UserSocialLinkCore
+  }
+}
+
+mutation RemoveUserSocialLink($id: ID!) {
+  removeUserSocialLink(id: $id)
+}

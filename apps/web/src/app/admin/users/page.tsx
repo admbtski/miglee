@@ -13,6 +13,7 @@ import {
   Shield,
   CheckCircle,
   ShieldBan,
+  User,
 } from 'lucide-react';
 import { useUsersQuery } from '@/lib/api/users';
 import { format } from 'date-fns';
@@ -265,14 +266,26 @@ export default function UsersPage() {
                         : '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedUserId(user.id)}
-                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                      >
-                        <Eye className="h-4 w-4" />
-                        Szczegóły
-                      </button>
+                      <div className="flex items-center justify-end gap-3">
+                        <a
+                          href={`/u/${user.name}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                          title="Zobacz profil publiczny"
+                        >
+                          <User className="h-4 w-4" />
+                          Profil
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedUserId(user.id)}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Szczegóły
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

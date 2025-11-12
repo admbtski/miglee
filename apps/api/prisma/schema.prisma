@@ -232,6 +232,15 @@ model User {
   subscriptions     UserSubscription[]
   eventSponsorships EventSponsorship[] @relation("SponsorUser")
 
+  // Profile & Privacy
+  profile      UserProfile?
+  privacy      UserPrivacy?
+  stats        UserStats?
+  socialLinks  UserSocialLink[]
+  disciplines  UserDiscipline[]
+  availability UserAvailability[]
+  badges       UserBadge[]
+
   @@index([email])
   @@index([name])
   @@index([role])
@@ -246,7 +255,8 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intents Intent[]
+  intents         Intent[]
+  userDisciplines UserDiscipline[]
 
   @@index([slug])
   @@map("categories")
@@ -810,4 +820,158 @@ model IntentOwnershipTransfer {
 
   @@index([intentId, createdAt])
   @@map("intent_ownership_transfers")
+}
+
+// =============================================================================
+/**
+ * User Profile & Privacy Models
+ */
+// =============================================================================
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Public display
+  displayName String?
+  bioShort    String? // max 200 chars
+  bioLong     String? // max 1000 chars
+
+  // Location
+  city    String?
+  country String?
+  homeLat Float?
+  homeLng Float?
+
+  // Media
+  coverUrl String?
+
+  // Preferences
+  speaks                  String[] // ["pl", "en"]
+  interests               String[] // tags
+  preferredMode           Mode? // ONE_TO_ONE / GROUP
+  preferredMaxDistanceKm  Float?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserPrivacy {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // DM policy
+  dmPolicy String @default("ALL") // ALL / MEMBERS / INVITE_ONLY / NONE
+
+  // Visibility settings
+  showLastSeen   String @default("ALL") // ALL / MEMBERS / HIDDEN
+  showLocation   String @default("CITY") // CITY / APPROX / HIDDEN
+  showEvents     String @default("ALL") // ALL / MEMBERS / SELF
+  showReviews    String @default("ALL") // ALL / MEMBERS / SELF
+  showStats      String @default("ALL") // ALL / MEMBERS / SELF
+
+  // Default visibility for new intents
+  defaultAddressVisibility AddressVisibility @default(PUBLIC)
+  defaultMembersVisibility MembersVisibility @default(PUBLIC)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_privacy")
+}
+
+model UserStats {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Denormalized counters
+  eventsCreated Int @default(0)
+  eventsJoined  Int @default(0)
+  reviewsCount  Int @default(0)
+
+  // Ratings
+  hostRatingAvg     Float?
+  attendeeRatingAvg Float?
+
+  // Activity
+  lastActiveAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_stats")
+}
+
+model UserSocialLink {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider String // instagram / facebook / strava / x / discord / website
+  url      String
+  verified Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("user_social_links")
+}
+
+model UserDiscipline {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryId String
+  level      Level
+  notes      String?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+  @@index([userId])
+  @@index([categoryId])
+  @@map("user_disciplines")
+}
+
+model UserAvailability {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  weekday  Int // 0 = Monday, 6 = Sunday
+  startMin Int // 0-1440 (minutes from midnight)
+  endMin   Int // 0-1440
+  tzSnap   String? // Timezone snapshot
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, weekday])
+  @@map("user_availability")
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  slug     String // e.g. "first_event", "10_events", "verified"
+  data     Json? // Additional metadata
+  earnedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slug])
+  @@index([userId])
+  @@map("user_badges")
 }

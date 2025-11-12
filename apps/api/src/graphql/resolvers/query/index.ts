@@ -50,6 +50,8 @@ import {
   adminUserNotificationsQuery,
 } from './admin-users';
 import { adminCommentsQuery, adminReviewsQuery } from './admin-moderation';
+import { userEventsQuery } from './user-events';
+import { userReviewsQuery } from './user-reviews';
 
 export const Query: Resolvers['Query'] = {
   // Admin queries
@@ -104,4 +106,6 @@ export const Query: Resolvers['Query'] = {
   dmMute: dmMuteQuery,
   clusters: clustersQuery,
   regionIntents: regionIntentsQuery,
+  userEvents: userEventsQuery,
+  userReviews: userReviewsQuery,
 };

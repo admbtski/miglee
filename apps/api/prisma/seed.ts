@@ -113,6 +113,16 @@ async function clearDb() {
   await prisma.intent.deleteMany();
   await prisma.category.deleteMany();
   await prisma.tag.deleteMany();
+
+  // Clear user profile related tables
+  await prisma.userBadge.deleteMany();
+  await prisma.userAvailability.deleteMany();
+  await prisma.userDiscipline.deleteMany();
+  await prisma.userSocialLink.deleteMany();
+  await prisma.userStats.deleteMany();
+  await prisma.userPrivacy.deleteMany();
+  await prisma.userProfile.deleteMany();
+
   await prisma.user.deleteMany();
 }
 
@@ -1808,6 +1818,155 @@ async function seedMutes(
   return { intentMutes, dmMutes };
 }
 
+/** ---------- Seed: User Profiles ---------- */
+async function seedUserProfiles(users: User[], categories: Category[]) {
+  console.log(`   Creating profiles for ${users.length} users...`);
+
+  const LANGUAGES = ['pl', 'en', 'de', 'fr', 'es'];
+  const INTERESTS = [
+    'Fotografia',
+    'Podróże',
+    'Muzyka',
+    'Sport',
+    'Gotowanie',
+    'Czytanie',
+    'Technologia',
+    'Sztuka',
+    'Film',
+    'Taniec',
+  ];
+  const BIO_TEMPLATES = [
+    'Passionate about sports and outdoor activities. Always looking for new adventures!',
+    'Love meeting new people and trying new things. Life is an adventure!',
+    'Fitness enthusiast and nature lover. Lets explore together!',
+    'Avid runner and cyclist. Always up for a challenge!',
+    'Sports lover and team player. Looking forward to meeting like-minded people!',
+  ];
+
+  for (const user of users) {
+    // 80% of users have profiles
+    if (rand() > 0.2) {
+      const city = pick(CITIES);
+      const coords = randomWithinCity(city);
+      const hasFullBio = rand() > 0.5;
+
+      await prisma.userProfile.create({
+        data: {
+          userId: user.id,
+          displayName: user.name.split('+')[0] || user.name,
+          bioShort: hasFullBio ? pick(BIO_TEMPLATES) : null,
+          bioLong: hasFullBio
+            ? `${pick(BIO_TEMPLATES)}\n\nI enjoy various activities and I'm always excited to meet new people. Feel free to reach out if you'd like to join me for an event!`
+            : null,
+          city: city.name,
+          country: 'Poland',
+          homeLat: coords.lat,
+          homeLng: coords.lng,
+          speaks: pickMany(LANGUAGES, 1 + Math.floor(rand() * 3)),
+          interests: pickMany(INTERESTS, 2 + Math.floor(rand() * 4)),
+          preferredMode: rand() > 0.5 ? 'GROUP' : null,
+          preferredMaxDistanceKm:
+            rand() > 0.6 ? 5 + Math.floor(rand() * 20) : null,
+        },
+      });
+
+      // Privacy settings (default for most)
+      await prisma.userPrivacy.create({
+        data: {
+          userId: user.id,
+          dmPolicy: rand() > 0.7 ? 'MEMBERS' : 'ALL',
+          showLastSeen: rand() > 0.8 ? 'HIDDEN' : 'ALL',
+          showLocation: rand() > 0.7 ? 'CITY' : 'ALL',
+          showEvents: rand() > 0.9 ? 'MEMBERS' : 'ALL',
+          showReviews: rand() > 0.9 ? 'MEMBERS' : 'ALL',
+          showStats: rand() > 0.8 ? 'HIDDEN' : 'ALL',
+        },
+      });
+
+      // Stats (will be updated by actual activity, but seed some initial values)
+      await prisma.userStats.create({
+        data: {
+          userId: user.id,
+          eventsCreated: 0,
+          eventsJoined: 0,
+          reviewsCount: 0,
+          hostRatingAvg: null,
+          attendeeRatingAvg: null,
+          lastActiveAt: user.lastSeenAt || new Date(),
+        },
+      });
+
+      // Some users have social links (30%)
+      if (rand() > 0.7) {
+        const providers = ['INSTAGRAM', 'FACEBOOK', 'STRAVA', 'TWITTER'];
+        const selectedProviders = pickMany(
+          providers,
+          1 + Math.floor(rand() * 2)
+        );
+
+        for (const provider of selectedProviders) {
+          await prisma.userSocialLink.create({
+            data: {
+              userId: user.id,
+              provider,
+              url: `https://${provider.toLowerCase()}.com/${user.name.toLowerCase()}`,
+              verified: rand() > 0.5,
+            },
+          });
+        }
+      }
+
+      // Some users have disciplines (50%)
+      if (rand() > 0.5) {
+        const userCategories = pickMany(categories, 1 + Math.floor(rand() * 3));
+        const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'] as const;
+
+        for (const cat of userCategories) {
+          await prisma.userDiscipline.create({
+            data: {
+              userId: user.id,
+              categoryId: cat.id,
+              level: pick(levels),
+              notes:
+                rand() > 0.6
+                  ? pick([
+                      'Been doing this for years!',
+                      'Just starting out, looking to improve',
+                      'Love this activity!',
+                      null,
+                    ])
+                  : null,
+            },
+          });
+        }
+      }
+
+      // Some users have availability (40%)
+      if (rand() > 0.6) {
+        const weekdays = [1, 2, 3, 4, 5, 6, 0]; // Mon-Sun
+        const selectedDays = pickMany(weekdays, 2 + Math.floor(rand() * 3));
+
+        for (const day of selectedDays) {
+          const startHour = 9 + Math.floor(rand() * 8); // 9-16
+          const endHour = startHour + 2 + Math.floor(rand() * 4); // +2 to +5 hours
+
+          await prisma.userAvailability.create({
+            data: {
+              userId: user.id,
+              weekday: day,
+              startMin: startHour * 60,
+              endMin: Math.min(endHour * 60, 1380), // max 23:00
+              tzSnap: 'Europe/Warsaw',
+            },
+          });
+        }
+      }
+    }
+  }
+
+  console.log(`   ✅ Created profiles for users`);
+}
+
 /** ---------- Main ---------- */
 async function main() {
   console.log('🧹 Clearing DB…');
@@ -1821,6 +1980,9 @@ async function main() {
 
   console.log('🗂️  Seeding categories…');
   const categories = await seedCategories();
+
+  console.log('👤 Seeding user profiles…');
+  await seedUserProfiles(users, categories);
 
   console.log('📝 Seeding intents (500) with realistic members…');
   const intentsCreated = await seedIntents({ users, categories, tags });

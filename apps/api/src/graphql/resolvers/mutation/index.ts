@@ -147,6 +147,18 @@ import {
   adminDeleteReviewMutation,
 } from './admin-moderation';
 
+// User Profile & Privacy mutations
+import {
+  updateUserProfileMutation,
+  updateUserPrivacyMutation,
+  upsertUserDisciplineMutation,
+  removeUserDisciplineMutation,
+  upsertUserAvailabilityMutation,
+  removeUserAvailabilityMutation,
+  addUserSocialLinkMutation,
+  removeUserSocialLinkMutation,
+} from './user-profile';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -265,6 +277,16 @@ export const Mutation: Resolvers['Mutation'] = {
   removeDmReaction: removeDmReactionMutation,
   addIntentReaction: addIntentReactionMutation,
   removeIntentReaction: removeIntentReactionMutation,
+
+  // ---- User Profile & Privacy ----
+  updateUserProfile: updateUserProfileMutation,
+  updateUserPrivacy: updateUserPrivacyMutation,
+  upsertUserDiscipline: upsertUserDisciplineMutation,
+  removeUserDiscipline: removeUserDisciplineMutation,
+  upsertUserAvailability: upsertUserAvailabilityMutation,
+  removeUserAvailability: removeUserAvailabilityMutation,
+  addUserSocialLink: addUserSocialLinkMutation,
+  removeUserSocialLink: removeUserSocialLinkMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,
