@@ -60,7 +60,7 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
     const take = Math.max(1, Math.min(limit, 200));
     const skip = Math.max(0, offset);
 
-    // where: name/email ilike, role, verifiedAt presence
+    // where: name/email/displayName ilike, role, verifiedAt presence
     const where: Prisma.UserWhereInput = {
       AND: [
         q
@@ -68,6 +68,11 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
               OR: [
                 { name: { contains: q, mode: 'insensitive' as const } },
                 { email: { contains: q, mode: 'insensitive' as const } },
+                {
+                  profile: {
+                    displayName: { contains: q, mode: 'insensitive' as const },
+                  },
+                },
               ],
             }
           : {},

@@ -44,7 +44,7 @@ export function LocationCombo({
   const listRef = useRef<HTMLDivElement | null>(null);
 
   const trimmed = value.trim();
-  const { suggestions, loading } = usePlacesAutocomplete(trimmed, {
+  const { suggestions, loading, error } = usePlacesAutocomplete(trimmed, {
     location: bias?.location,
     radius: bias?.radius,
     includedPrimaryTypes: includedPrimaryTypes || [
@@ -56,6 +56,8 @@ export function LocationCombo({
     language: 'pl',
     region: 'PL',
   });
+
+  console.dir({ trimmed, suggestions, loading, error });
 
   const isLoading = loadingOverride ?? loading;
 
@@ -97,6 +99,7 @@ export function LocationCombo({
       'formattedAddress',
       'location',
     ]);
+
     if (!place) return;
 
     const predictionPlaceId = s.raw.placePrediction?.placeId;

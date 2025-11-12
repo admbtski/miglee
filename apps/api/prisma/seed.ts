@@ -1902,6 +1902,12 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
           .join(' ');
       }
 
+      // 60% of users have cover photos
+      const hasCover = rand() > 0.4;
+
+      // Generate unique seed for consistent images per user
+      const userSeed = user.id.slice(0, 8);
+
       await prisma.userProfile.create({
         data: {
           userId: user.id,
@@ -1919,6 +1925,10 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
           preferredMode: rand() > 0.5 ? 'GROUP' : null,
           preferredMaxDistanceKm:
             rand() > 0.6 ? 5 + Math.floor(rand() * 20) : null,
+          // Cover image: 1920x400 for 16:9 aspect ratio
+          coverUrl: hasCover
+            ? `https://picsum.photos/seed/${userSeed}-cover/1920/400`
+            : null,
         },
       });
 
