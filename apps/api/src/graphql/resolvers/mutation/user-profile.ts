@@ -47,12 +47,19 @@ export const updateUserProfileMutation: MutationResolvers['updateUserProfile'] =
         });
       }
 
+      // Fetch user data for fallback
+      const userData = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { name: true },
+      });
+
       // Upsert profile
       const profile = await prisma.userProfile.upsert({
         where: { userId: user.id },
         create: {
           userId: user.id,
-          displayName: input.displayName?.trim() || null,
+          // Initialize displayName = user.name if not provided
+          displayName: input.displayName?.trim() || userData?.name || null,
           bioShort: input.bioShort?.trim() || null,
           bioLong: input.bioLong?.trim() || null,
           city: input.city?.trim() || null,

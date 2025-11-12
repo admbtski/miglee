@@ -1,5 +1,6 @@
 import type { EventDetailsData } from '@/types/event-details';
 import { formatDate, formatTime } from '@/lib/utils/date-format';
+import Link from 'next/link';
 import {
   MapPin,
   Calendar,
@@ -71,27 +72,33 @@ export function EventHero({ event }: EventHeroProps) {
 
       {/* Organizer */}
       <div className="mt-3 flex items-center gap-3">
-        {event.organizer.avatarUrl ? (
-          <img
-            src={event.organizer.avatarUrl}
-            alt={event.organizer.name}
-            className="h-9 w-9 rounded-full border border-neutral-200 object-cover dark:border-neutral-700"
-          />
-        ) : (
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-700">
-            <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
-              {event.organizer.name[0]?.toUpperCase()}
-            </span>
-          </div>
-        )}
-        <div>
+        <Link href={`/u/${event.organizer.name}`} className="flex-shrink-0">
+          {event.organizer.avatarUrl ? (
+            <img
+              src={event.organizer.avatarUrl}
+              alt={event.organizer.displayName || event.organizer.name}
+              className="h-9 w-9 rounded-full border border-neutral-200 object-cover transition-opacity hover:opacity-80 dark:border-neutral-700"
+            />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700 dark:bg-neutral-700">
+              <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+                {(event.organizer.displayName ||
+                  event.organizer.name)[0]?.toUpperCase()}
+              </span>
+            </div>
+          )}
+        </Link>
+        <div className="min-w-0">
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Organizator
           </p>
           <div className="flex items-center gap-1.5">
-            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-              {event.organizer.name}
-            </p>
+            <Link
+              href={`/u/${event.organizer.name}`}
+              className="text-sm font-medium text-neutral-800 transition-colors hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400"
+            >
+              {event.organizer.displayName || event.organizer.name}
+            </Link>
             {event.organizer.verifiedAt && (
               <VerifiedBadge
                 title="Zweryfikowany"
@@ -101,6 +108,12 @@ export function EventHero({ event }: EventHeroProps) {
               />
             )}
           </div>
+          <Link
+            href={`/u/${event.organizer.name}`}
+            className="text-xs text-neutral-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+          >
+            @{event.organizer.name}
+          </Link>
         </div>
       </div>
 

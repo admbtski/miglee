@@ -1,5 +1,6 @@
 import type { EventDetailsData } from '@/types/event-details';
 import { ShieldCheck, Users as UserGroup } from 'lucide-react';
+import Link from 'next/link';
 
 type EventParticipantsProps = {
   event: EventDetailsData;
@@ -139,49 +140,65 @@ type MemberRowProps = {
 };
 
 function MemberRow({ member, compact = false }: MemberRowProps) {
+  const displayName = member.user.profile?.displayName || member.user.name;
+  const profileUrl = `/u/${member.user.name}`;
+
   return (
     <li className="flex items-center gap-3">
-      {member.user.imageUrl ? (
-        <img
-          src={member.user.imageUrl}
-          alt={member.user.name}
-          className={`rounded-full border border-neutral-200 object-cover dark:border-neutral-700 ${compact ? 'h-8 w-8' : 'h-11 w-11'}`}
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <div
-          className={`flex items-center justify-center rounded-full border border-neutral-200 bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-700 ${
-            compact ? 'h-8 w-8' : 'h-11 w-11'
-          }`}
-        >
-          <span
-            className={`font-semibold text-neutral-600 dark:text-neutral-300 ${
+      <Link href={profileUrl} className="flex-shrink-0">
+        {member.user.imageUrl ? (
+          <img
+            src={member.user.imageUrl}
+            alt={displayName}
+            className={`rounded-full border border-neutral-200 object-cover transition-opacity hover:opacity-80 dark:border-neutral-700 ${compact ? 'h-8 w-8' : 'h-11 w-11'}`}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div
+            className={`flex items-center justify-center rounded-full border border-neutral-200 bg-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700 dark:bg-neutral-700 ${
+              compact ? 'h-8 w-8' : 'h-11 w-11'
+            }`}
+          >
+            <span
+              className={`font-semibold text-neutral-600 dark:text-neutral-300 ${
+                compact ? 'text-xs' : 'text-sm'
+              }`}
+            >
+              {displayName[0]?.toUpperCase()}
+            </span>
+          </div>
+        )}
+      </Link>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <Link
+              href={profileUrl}
+              className={`truncate font-medium text-neutral-800 transition-colors hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 ${
+                compact ? 'text-sm' : 'text-base'
+              }`}
+            >
+              {displayName}
+            </Link>
+            {member.user.verifiedAt && (
+              <ShieldCheck
+                className="h-4 w-4 flex-shrink-0 text-blue-500"
+                aria-label="Zweryfikowany"
+              />
+            )}
+          </div>
+          <Link
+            href={profileUrl}
+            className={`truncate text-neutral-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400 ${
               compact ? 'text-xs' : 'text-sm'
             }`}
           >
-            {member.user.name[0]?.toUpperCase()}
-          </span>
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span
-            className={`truncate text-neutral-800 dark:text-neutral-200 ${
-              compact ? 'text-sm' : 'text-md'
-            }`}
-          >
-            {member.user.name}
-          </span>
-          {member.user.verifiedAt && (
-            <ShieldCheck
-              className="h-4 w-4 flex-shrink-0 text-blue-500"
-              aria-label="Zweryfikowany"
-            />
-          )}
+            @{member.user.name}
+          </Link>
         </div>
         {!compact && member.note && (
-          <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
             {member.note}
           </p>
         )}

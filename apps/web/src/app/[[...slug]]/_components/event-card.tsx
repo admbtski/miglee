@@ -1,6 +1,7 @@
 // EventCard.tsx
 'use client';
 
+import Link from 'next/link';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
@@ -345,17 +346,20 @@ export function EventCard({
           aria-label={`Szczegóły wydarzenia: ${organizerName}`}
           data-plan={plan}
         >
-          <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
+          <Link href={`/u/${organizerName}`} className="flex-shrink-0">
+            <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
+          </Link>
           <div className="flex-1 min-w-0">
-            <p
-              className="font-medium truncate text-neutral-900 dark:text-neutral-100"
+            <Link
+              href={`/u/${organizerName}`}
+              className="font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
               title={organizerName}
             >
               <span className="inline-flex items-center gap-1.5 max-w-full">
                 <span className="truncate">{organizerName}</span>
                 <VerifiedBadge verifiedAt={verifiedAt} />
               </span>
-            </p>
+            </Link>
             <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
               {title}
             </p>
@@ -434,10 +438,13 @@ export function EventCard({
 
         {/* Organizer & description + location */}
         <div className="flex items-start min-w-0 gap-3 mt-1">
-          <Avatar url={avatarUrl} alt="Organizer" size={48} />
+          <Link href={`/u/${organizerName}`} className="flex-shrink-0">
+            <Avatar url={avatarUrl} alt="Organizer" size={48} />
+          </Link>
           <div className="flex-1 min-w-0">
-            <p
-              className="text-sm font-medium truncate text-neutral-900 dark:text-neutral-100"
+            <Link
+              href={`/u/${organizerName}`}
+              className="text-sm font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
               title={organizerName}
             >
               <span className="inline-flex items-center max-w-full gap-1.5">
@@ -448,7 +455,7 @@ export function EventCard({
                 />
                 <span className="truncate">{organizerName}</span>
               </span>
-            </p>
+            </Link>
 
             <p
               className="text-xs leading-5 text-neutral-800 dark:text-neutral-200 line-clamp-2"

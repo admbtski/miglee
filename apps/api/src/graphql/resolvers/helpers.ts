@@ -43,17 +43,25 @@ const LEVEL_ORDER: Record<Level, number> = {
 };
 
 export type IntentMemberWithUsers = Prisma.IntentMemberGetPayload<{
-  include: { user: true; addedBy: true };
+  include: {
+    user: { include: { profile: true } };
+    addedBy: { include: { profile: true } };
+  };
 }>;
 
 export type IntentWithGraph = Prisma.IntentGetPayload<{
   include: {
     categories: true;
     tags: true;
-    members: { include: { user: true; addedBy: true } };
-    owner: true; // właściciel (ownerId)
-    canceledBy: true; // kto anulował
-    deletedBy: true; // kto usunął
+    members: {
+      include: {
+        user: { include: { profile: true } };
+        addedBy: { include: { profile: true } };
+      };
+    };
+    owner: { include: { profile: true } }; // właściciel (ownerId)
+    canceledBy: { include: { profile: true } }; // kto anulował
+    deletedBy: { include: { profile: true } }; // kto usunął
   };
 }>;
 

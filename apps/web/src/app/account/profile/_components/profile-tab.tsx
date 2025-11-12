@@ -89,7 +89,8 @@ export function ProfileTab({ user }: ProfileTabProps) {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      displayName: user?.profile?.displayName || '',
+      // Initialize displayName = user.name if profile doesn't exist
+      displayName: user?.profile?.displayName || user?.name || '',
       bioShort: user?.profile?.bioShort || '',
       bioLong: user?.profile?.bioLong || '',
       city: user?.profile?.city || '',

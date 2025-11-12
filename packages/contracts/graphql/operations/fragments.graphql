@@ -28,6 +28,9 @@ fragment UserCore on User {
   tz
   acceptedTermsAt
   acceptedMarketingAt
+  profile {
+    displayName
+  }
 }
 
 fragment CategoryCore on Category {

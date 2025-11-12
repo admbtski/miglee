@@ -1,6 +1,7 @@
 // EventDetailsModal.tsx
 'use client';
 
+import Link from 'next/link';
 import { Modal } from '@/components/feedback/modal';
 import {
   CapacityProgressBar,
@@ -339,17 +340,23 @@ function PeopleInline({
   const rest = Math.max(0, members.length - shown.length);
   return (
     <div className="flex items-center -space-x-2">
-      {shown.map((m) => (
-        <img
-          key={m.id}
-          src={m.user.imageUrl ?? '/avatar.svg'}
-          alt={m.user.name}
-          className="w-10 h-10 rounded-full border border-white dark:border-neutral-900 object-cover"
-          loading="lazy"
-          decoding="async"
-          title={m.user.name}
-        />
-      ))}
+      {shown.map((m) => {
+        const displayName = (m.user as any).profile?.displayName || m.user.name;
+        const profileUrl = `/u/${m.user.name}`;
+
+        return (
+          <Link key={m.id} href={profileUrl}>
+            <img
+              src={m.user.imageUrl ?? '/avatar.svg'}
+              alt={displayName}
+              className="w-10 h-10 rounded-full border border-white dark:border-neutral-900 object-cover transition-opacity hover:opacity-80"
+              loading="lazy"
+              decoding="async"
+              title={displayName}
+            />
+          </Link>
+        );
+      })}
       {rest > 0 && (
         <div
           title={`+${rest} więcej`}
@@ -440,6 +447,11 @@ export function EventDetailsModal({
   // Nagłówek — mocniejszy gradient per plan + subtelna siatka
   const header = (
     <div className="relative">
+      {/* Mock Cover Image Background */}
+      <div className="pointer-events-none absolute -inset-4.5 rounded-3xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 opacity-20" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-10" />
+      </div>
       <div
         className={twMerge(
           'pointer-events-none absolute -inset-4.5 rounded-3xl blur-[0.6px]',
@@ -459,12 +471,19 @@ export function EventDetailsModal({
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 text-md text-neutral-700 dark:text-neutral-300">
-              <img
-                src={avatarUrl}
-                alt={organizerName}
-                className="w-9 h-9 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
-              />
-              <span className="truncate">{organizerName}</span>
+              <Link href={`/u/${organizerName}`} className="flex-shrink-0">
+                <img
+                  src={avatarUrl}
+                  alt={organizerName}
+                  className="w-9 h-9 rounded-full object-cover border border-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700"
+                />
+              </Link>
+              <Link
+                href={`/u/${organizerName}`}
+                className="truncate transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                {organizerName}
+              </Link>
             </span>
 
             <VerifiedBadge
@@ -709,14 +728,17 @@ export function EventDetailsModal({
                 icon={<Shield className="w-5 h-5" />}
                 label="Organizator"
                 value={
-                  <span className="inline-flex items-center gap-2">
+                  <Link
+                    href={`/u/${organizerName}`}
+                    className="inline-flex items-center gap-2 transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+                  >
                     <img
                       src={avatarUrl}
                       alt={organizerName}
                       className="w-5 h-5 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
                     />
                     {organizerName}
-                  </span>
+                  </Link>
                 }
               />
             </dl>
@@ -884,23 +906,42 @@ function PeopleGroup({
         </div>
       ) : (
         <ul className="space-y-3">
-          {people.map((p) => (
-            <li key={p.id} className="flex items-center gap-3">
-              <img
-                src={p.user.imageUrl ?? '/avatar.svg'}
-                alt={p.user.name}
-                className="w-11 h-11 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
-                loading="lazy"
-                decoding="async"
-              />
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-md text-neutral-800 dark:text-neutral-200 truncate">
-                  {p.user.name}
-                </span>
-                <RoleBadge role={p.role} size="md" />
-              </div>
-            </li>
-          ))}
+          {people.map((p) => {
+            const displayName =
+              (p.user as any).profile?.displayName || p.user.name;
+            const profileUrl = `/u/${p.user.name}`;
+
+            return (
+              <li key={p.id} className="flex items-center gap-3">
+                <Link href={profileUrl} className="flex-shrink-0">
+                  <img
+                    src={p.user.imageUrl ?? '/avatar.svg'}
+                    alt={displayName}
+                    className="w-11 h-11 rounded-full object-cover border border-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </Link>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <Link
+                      href={profileUrl}
+                      className="text-md font-medium text-neutral-800 transition-colors hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 truncate"
+                    >
+                      {displayName}
+                    </Link>
+                    <Link
+                      href={profileUrl}
+                      className="text-xs text-neutral-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400 truncate"
+                    >
+                      @{p.user.name}
+                    </Link>
+                  </div>
+                  <RoleBadge role={p.role} size="md" />
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

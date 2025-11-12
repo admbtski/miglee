@@ -133,6 +133,40 @@ function emailFor(first: string, last: string, i?: number) {
   return `${base}${suffix}@example.com`;
 }
 
+/**
+ * Generate Instagram-style handle (username)
+ * - lowercase only
+ * - letters, numbers, dots, underscores
+ * - no spaces
+ * Examples: john.doe, anna_smith, mike.jones23
+ */
+function generateHandle(first: string, last: string, index?: number): string {
+  // Clean names: remove special chars, convert to lowercase
+  const cleanFirst = first.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const cleanLast = last.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Random style variations
+  const styles = [
+    `${cleanFirst}.${cleanLast}`, // john.doe
+    `${cleanFirst}_${cleanLast}`, // john_smith
+    `${cleanFirst}${cleanLast}`, // johndoe
+    `${cleanFirst}.${cleanLast[0]}`, // john.d
+    `${cleanFirst[0]}.${cleanLast}`, // j.doe
+    `${cleanFirst}_${cleanLast[0]}`, // john_d
+  ];
+
+  let handle = pick(styles);
+
+  // Add number suffix if index provided or randomly (30% chance)
+  if (index !== undefined) {
+    handle += index;
+  } else if (rand() > 0.7) {
+    handle += Math.floor(rand() * 100);
+  }
+
+  return handle;
+}
+
 async function seedUsers(): Promise<User[]> {
   const created: User[] = [];
 
@@ -141,7 +175,7 @@ async function seedUsers(): Promise<User[]> {
       data: {
         id: FIXED_IDS.ADMIN,
         email: 'admin@example.com',
-        name: 'Admin One',
+        name: 'admin.miglee',
         role: Role.ADMIN,
         imageUrl: `https://picsum.photos/id/10/200/200`,
         verifiedAt: new Date(),
@@ -153,7 +187,7 @@ async function seedUsers(): Promise<User[]> {
     data: {
       id: FIXED_IDS.MODERATOR,
       email: 'moderator.one@example.com',
-      name: 'Moderator One',
+      name: 'moderator.one',
       role: Role.MODERATOR,
       imageUrl: `https://picsum.photos/id/11/200/200`,
       verifiedAt: new Date(),
@@ -168,7 +202,7 @@ async function seedUsers(): Promise<User[]> {
       await prisma.user.create({
         data: {
           email: emailFor(first, last, m),
-          name: `${first} ${last}+${m}`,
+          name: generateHandle(first, last, m),
           role: Role.MODERATOR,
           imageUrl: `https://picsum.photos/id/${11 + m}/200/200`,
           ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
@@ -182,7 +216,7 @@ async function seedUsers(): Promise<User[]> {
       data: {
         id: FIXED_IDS.USER,
         email: 'user.fixed@example.com',
-        name: 'User Fixed',
+        name: 'user.fixed',
         role: Role.USER,
         imageUrl: `https://picsum.photos/id/19/200/200`,
         ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
@@ -201,7 +235,7 @@ async function seedUsers(): Promise<User[]> {
       await prisma.user.create({
         data: {
           email: emailFor(first, last, i),
-          name: `${first} ${last}+${i}`,
+          name: generateHandle(first, last, i),
           role: Role.USER,
           imageUrl: `https://picsum.photos/id/${pick(AVATAR_ID_POOL)}/200/200`,
           ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
@@ -1850,10 +1884,28 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
       const coords = randomWithinCity(city);
       const hasFullBio = rand() > 0.5;
 
+      // Generate display name (full name) from handle
+      // For fixed users, use their specific names
+      let displayName: string;
+      if (user.id === FIXED_IDS.ADMIN) {
+        displayName = 'Admin Miglee';
+      } else if (user.id === FIXED_IDS.MODERATOR) {
+        displayName = 'Moderator One';
+      } else if (user.id === FIXED_IDS.USER) {
+        displayName = 'User Fixed';
+      } else {
+        // Generate realistic display name from handle
+        // Convert handle like "john.doe23" to "John Doe"
+        const nameParts = user.name.replace(/[0-9]/g, '').split(/[._]/);
+        displayName = nameParts
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ');
+      }
+
       await prisma.userProfile.create({
         data: {
           userId: user.id,
-          displayName: user.name.split('+')[0] || user.name,
+          displayName, // Full name (e.g., "John Doe")
           bioShort: hasFullBio ? pick(BIO_TEMPLATES) : null,
           bioLong: hasFullBio
             ? `${pick(BIO_TEMPLATES)}\n\nI enjoy various activities and I'm always excited to meet new people. Feel free to reach out if you'd like to join me for an event!`
@@ -1919,7 +1971,11 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
       // Some users have disciplines (50%)
       if (rand() > 0.5) {
         const userCategories = pickMany(categories, 1 + Math.floor(rand() * 3));
-        const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'] as const;
+        const levels: Level[] = [
+          Level.BEGINNER,
+          Level.INTERMEDIATE,
+          Level.ADVANCED,
+        ];
 
         for (const cat of userCategories) {
           await prisma.userDiscipline.create({

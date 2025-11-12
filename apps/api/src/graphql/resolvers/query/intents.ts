@@ -15,10 +15,15 @@ const MINUTE_MS = 60 * 1000;
 const INTENT_INCLUDE = {
   categories: true,
   tags: true,
-  members: { include: { user: true, addedBy: true } },
-  owner: true,
-  canceledBy: true,
-  deletedBy: true,
+  members: {
+    include: {
+      user: { include: { profile: true } },
+      addedBy: { include: { profile: true } },
+    },
+  },
+  owner: { include: { profile: true } },
+  canceledBy: { include: { profile: true } },
+  deletedBy: { include: { profile: true } },
   // jeśli masz relację w Prisma:
   // joinManuallyClosedBy: true,
 } satisfies Prisma.IntentInclude;

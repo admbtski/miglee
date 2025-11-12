@@ -47,6 +47,9 @@ export type IntentListItem = {
     name?: string | null;
     email?: string | null;
     verifiedAt?: string | null;
+    profile?: {
+      displayName?: string | null;
+    };
   } | null;
 
   members?: IntentMember[] | null;

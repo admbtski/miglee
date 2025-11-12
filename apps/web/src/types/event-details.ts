@@ -13,6 +13,7 @@ export type EventDetailsData = {
   organizer: {
     id: string;
     name: string;
+    displayName?: string | null;
     avatarUrl?: string | null;
     verifiedAt?: string | null;
   };
@@ -84,6 +85,9 @@ export type EventDetailsData = {
       name: string;
       imageUrl?: string | null;
       verifiedAt?: string | null;
+      profile?: {
+        displayName?: string | null;
+      } | null;
     };
     note?: string | null;
     joinedAt?: string | null;

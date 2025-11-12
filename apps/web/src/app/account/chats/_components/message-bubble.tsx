@@ -4,6 +4,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import React, { useState, useRef } from 'react';
 import type { Message } from '../_types';
 import { MessageReactions } from '@/components/chat/MessageReactions';
@@ -58,9 +59,13 @@ export function Bubble({
                 : 'bg-zinc-200/50 dark:bg-zinc-700/50 border-zinc-400 dark:border-zinc-500'
             }`}
           >
-            <div className="text-xs font-medium opacity-80 mb-0.5">
-              {replyTo.author.name}
-            </div>
+            <Link
+              href={`/u/${replyTo.author.name}`}
+              className="text-xs font-medium opacity-80 mb-0.5 hover:opacity-100 transition-opacity"
+            >
+              {(replyTo.author as any).profile?.displayName ||
+                replyTo.author.name}
+            </Link>
             <div className="text-xs opacity-70 line-clamp-2">
               {replyTo.content}
             </div>

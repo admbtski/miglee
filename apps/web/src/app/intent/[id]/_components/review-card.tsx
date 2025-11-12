@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Star, Trash2, Edit2, Flag } from 'lucide-react';
@@ -36,26 +37,40 @@ export function ReviewCard({
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3 flex-1">
           {/* Avatar */}
-          {review.author.imageUrl ? (
-            <img
-              src={review.author.imageUrl}
-              alt={review.author.name}
-              className="h-10 w-10 rounded-full"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
-              <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-                {review.author.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
+          <Link href={`/u/${review.author.name}`} className="flex-shrink-0">
+            {review.author.imageUrl ? (
+              <img
+                src={review.author.imageUrl}
+                alt={
+                  (review.author as any).profile?.displayName ||
+                  review.author.name
+                }
+                className="h-10 w-10 rounded-full transition-opacity hover:opacity-80"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 transition-opacity hover:opacity-80 dark:bg-zinc-700">
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                  {(
+                    (review.author as any).profile?.displayName ||
+                    review.author.name
+                  )
+                    .charAt(0)
+                    .toUpperCase()}
+                </span>
+              </div>
+            )}
+          </Link>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {review.author.name}
-              </p>
+              <Link
+                href={`/u/${review.author.name}`}
+                className="text-sm font-medium text-zinc-900 transition-colors hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+              >
+                {(review.author as any).profile?.displayName ||
+                  review.author.name}
+              </Link>
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -69,6 +84,12 @@ export function ReviewCard({
                 ))}
               </div>
             </div>
+            <Link
+              href={`/u/${review.author.name}`}
+              className="text-xs text-zinc-600 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+            >
+              @{review.author.name}
+            </Link>
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {format(new Date(review.createdAt), 'dd MMM yyyy, HH:mm', {
                 locale: pl,

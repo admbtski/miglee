@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   useGetComments,
   useCreateComment,
@@ -126,16 +127,35 @@ function CommentItem({
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-3">
             {comment.author?.imageUrl && (
-              <img
-                src={comment.author.imageUrl}
-                alt={comment.author.name}
-                className="h-8 w-8 rounded-full"
-              />
+              <Link
+                href={`/u/${comment.author.name}`}
+                className="flex-shrink-0"
+              >
+                <img
+                  src={comment.author.imageUrl}
+                  alt={
+                    (comment.author as any).profile?.displayName ||
+                    comment.author.name
+                  }
+                  className="h-8 w-8 rounded-full transition-opacity hover:opacity-80"
+                />
+              </Link>
             )}
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {comment.author?.name || 'N/A'}
-              </p>
+            <div className="min-w-0">
+              <Link
+                href={`/u/${comment.author?.name}`}
+                className="text-sm font-medium text-zinc-900 transition-colors hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+              >
+                {(comment.author as any)?.profile?.displayName ||
+                  comment.author?.name ||
+                  'N/A'}
+              </Link>
+              <Link
+                href={`/u/${comment.author?.name}`}
+                className="block text-xs text-zinc-600 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+              >
+                @{comment.author?.name || 'N/A'}
+              </Link>
               <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 {format(new Date(comment.createdAt), 'dd MMM yyyy, HH:mm', {
                   locale: pl,

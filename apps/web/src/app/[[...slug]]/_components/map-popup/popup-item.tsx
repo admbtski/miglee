@@ -2,6 +2,7 @@
  * Individual intent item in map popup
  */
 
+import Link from 'next/link';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { PlanBadge } from '@/components/ui/plan-badge';
@@ -131,19 +132,35 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
 
       {intent.owner?.name ? (
         <div className="mt-2 flex items-center gap-2 min-w-0">
-          <Avatar url={intent.owner?.imageUrl} alt="Organizer" size={22} />
-          <p className="text-[12px] truncate text-neutral-900 dark:text-neutral-100">
-            <span className="inline-flex items-center gap-1.5 max-w-full">
-              <span className="truncate">{intent.owner?.name}</span>
-              {intent.owner?.verifiedAt && (
-                <VerifiedBadge
-                  size="sm"
-                  variant="icon"
-                  verifiedAt={intent.owner.verifiedAt}
-                />
-              )}
-            </span>
-          </p>
+          <Link href={`/u/${intent.owner.name}`} className="flex-shrink-0">
+            <Avatar url={intent.owner?.imageUrl} alt="Organizer" size={22} />
+          </Link>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <Link
+              href={`/u/${intent.owner.name}`}
+              className="text-[12px] font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
+            >
+              <span className="inline-flex items-center gap-1.5 max-w-full">
+                <span className="truncate">
+                  {(intent.owner as any)?.profile?.displayName ||
+                    intent.owner.name}
+                </span>
+                {intent.owner?.verifiedAt && (
+                  <VerifiedBadge
+                    size="sm"
+                    variant="icon"
+                    verifiedAt={intent.owner.verifiedAt}
+                  />
+                )}
+              </span>
+            </Link>
+            <Link
+              href={`/u/${intent.owner.name}`}
+              className="text-[11px] text-neutral-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400 truncate"
+            >
+              @{intent.owner.name}
+            </Link>
+          </div>
         </div>
       ) : null}
 
