@@ -105,15 +105,28 @@ export const createReviewMutation: MutationResolvers['createReview'] =
         });
       }
 
-      const review = await prisma.review.create({
-        data: {
-          intentId,
-          authorId: user.id,
-          rating,
-          content: content?.trim() || null,
-        },
-        include: REVIEW_INCLUDE,
-      });
+      // If a deleted review exists, restore it with new data
+      // Otherwise, create a new review
+      const review = existing
+        ? await prisma.review.update({
+            where: { id: existing.id },
+            data: {
+              rating,
+              content: content?.trim() || null,
+              deletedAt: null,
+              updatedAt: new Date(),
+            },
+            include: REVIEW_INCLUDE,
+          })
+        : await prisma.review.create({
+            data: {
+              intentId,
+              authorId: user.id,
+              rating,
+              content: content?.trim() || null,
+            },
+            include: REVIEW_INCLUDE,
+          });
 
       // Optionally notify intent owner about new review
       if (intent.ownerId && intent.ownerId !== user.id) {
