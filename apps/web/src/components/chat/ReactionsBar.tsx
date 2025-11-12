@@ -40,7 +40,7 @@ export function ReactionsBar({
     whileElementsMounted: autoUpdate,
     placement: 'top',
     strategy: 'absolute',
-    transform: true,
+    transform: false,
   });
 
   const dismiss = useDismiss(context);
@@ -48,23 +48,21 @@ export function ReactionsBar({
 
   const { getFloatingProps } = useInteractions([dismiss, role]);
 
+  // Update reference element when it changes or when opening
   useEffect(() => {
-    if (isOpen && referenceElement) {
+    if (referenceElement) {
       refs.setReference(referenceElement);
     }
-  }, [isOpen, referenceElement, refs]);
+  }, [referenceElement, refs, isOpen]);
 
   const handleEmojiClick = (emoji: string) => {
     onSelectEmoji(emoji);
     onClose();
   };
 
-  // Don't render if no reference element
-  if (!referenceElement) return null;
-
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && referenceElement && (
         <motion.div
           ref={refs.setFloating}
           style={floatingStyles}

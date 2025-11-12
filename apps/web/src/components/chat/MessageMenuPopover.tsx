@@ -46,7 +46,7 @@ export function MessageMenuPopover({
     whileElementsMounted: autoUpdate,
     placement: align === 'right' ? 'bottom-end' : 'bottom-start',
     strategy: 'absolute',
-    transform: true,
+    transform: false,
   });
 
   const dismiss = useDismiss(context);
@@ -54,11 +54,12 @@ export function MessageMenuPopover({
 
   const { getFloatingProps } = useInteractions([dismiss, role]);
 
+  // Update reference element when it changes or when opening
   useEffect(() => {
-    if (isOpen && referenceElement) {
+    if (referenceElement) {
       refs.setReference(referenceElement);
     }
-  }, [isOpen, referenceElement, refs]);
+  }, [referenceElement, refs, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -91,12 +92,9 @@ export function MessageMenuPopover({
     onClose();
   };
 
-  // Don't render if no reference element
-  if (!referenceElement) return null;
-
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && referenceElement && (
         <motion.div
           ref={refs.setFloating}
           style={floatingStyles}
