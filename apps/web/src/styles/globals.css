@@ -307,3 +307,38 @@ body {
     }
   }
 }
+
+/* ===== Virtuoso Notifications List Styles ===== */
+.virtuoso-notifications-list {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.zinc.400') transparent;
+}
+
+.virtuoso-notifications-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.virtuoso-notifications-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.virtuoso-notifications-list::-webkit-scrollbar-thumb {
+  background-color: theme('colors.zinc.400');
+  border-radius: 4px;
+}
+
+.virtuoso-notifications-list::-webkit-scrollbar-thumb:hover {
+  background-color: theme('colors.zinc.500');
+}
+
+.dark .virtuoso-notifications-list {
+  scrollbar-color: theme('colors.zinc.600') transparent;
+}
+
+.dark .virtuoso-notifications-list::-webkit-scrollbar-thumb {
+  background-color: theme('colors.zinc.600');
+}
+
+.dark .virtuoso-notifications-list::-webkit-scrollbar-thumb:hover {
+  background-color: theme('colors.zinc.500');
+}
