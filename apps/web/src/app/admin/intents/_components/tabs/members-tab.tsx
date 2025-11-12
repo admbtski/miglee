@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   useIntentMembersQuery,
   useIntentMemberStatsQuery,
@@ -62,6 +62,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
   const [newRole, setNewRole] = useState<IntentMemberRole>(
     IntentMemberRole.Participant
   );
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Queries
   const { data: statsData } = useIntentMemberStatsQuery({ intentId });
@@ -86,6 +87,21 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
 
   const stats = statsData?.intentMemberStats;
   const members = membersData?.intentMembers ?? [];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdownId) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.dropdown-container')) {
+          setOpenDropdownId(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openDropdownId]);
 
   const handleApprove = async () => {
     if (!selectedMember) return;
@@ -199,26 +215,31 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
   const openApproveModal = (userId: string, userName: string) => {
     setSelectedMember({ userId, userName });
     setApproveModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openRejectModal = (userId: string, userName: string) => {
     setSelectedMember({ userId, userName });
     setRejectModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openKickModal = (userId: string, userName: string) => {
     setSelectedMember({ userId, userName });
     setKickModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openBanModal = (userId: string, userName: string) => {
     setSelectedMember({ userId, userName });
     setBanModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openUnbanModal = (userId: string, userName: string) => {
     setSelectedMember({ userId, userName });
     setUnbanModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openRoleModal = (
@@ -229,6 +250,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
     setSelectedMember({ userId, userName, currentRole });
     setNewRole(currentRole);
     setRoleModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const getRoleIcon = (role: IntentMemberRole) => {
@@ -445,93 +467,105 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                         : '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      <div className="relative inline-block text-left group">
-                        <button className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">
+                      <div className="dropdown-container relative inline-block text-left">
+                        <button
+                          onClick={() =>
+                            setOpenDropdownId(
+                              openDropdownId === member.id ? null : member.id
+                            )
+                          }
+                          className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </button>
-                        <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right scale-0 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-transform group-hover:scale-100 dark:bg-gray-800">
-                          {member.status === IntentMemberStatus.Pending && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  openApproveModal(
-                                    member.userId,
-                                    member.user.name
-                                  )
-                                }
-                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                                Zaakceptuj
-                              </button>
-                              <button
-                                onClick={() =>
-                                  openRejectModal(
-                                    member.userId,
-                                    member.user.name
-                                  )
-                                }
-                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                              >
-                                <XCircle className="h-4 w-4" />
-                                Odrzuć
-                              </button>
-                            </>
-                          )}
-                          {member.status === IntentMemberStatus.Joined &&
-                            member.role !== IntentMemberRole.Owner && (
+                        {openDropdownId === member.id && (
+                          <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800">
+                            {member.status === IntentMemberStatus.Pending && (
                               <>
                                 <button
                                   onClick={() =>
-                                    openRoleModal(
-                                      member.userId,
-                                      member.user.name,
-                                      member.role
-                                    )
-                                  }
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                                >
-                                  <Shield className="h-4 w-4" />
-                                  Zmień rolę
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    openKickModal(
+                                    openApproveModal(
                                       member.userId,
                                       member.user.name
                                     )
                                   }
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-gray-100 dark:text-orange-400 dark:hover:bg-gray-700"
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                  Wyrzuć
+                                  <CheckCircle className="h-4 w-4" />
+                                  Zaakceptuj
                                 </button>
                                 <button
                                   onClick={() =>
-                                    openBanModal(
+                                    openRejectModal(
                                       member.userId,
                                       member.user.name
                                     )
                                   }
                                   className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                                 >
-                                  <Ban className="h-4 w-4" />
-                                  Zbanuj
+                                  <XCircle className="h-4 w-4" />
+                                  Odrzuć
                                 </button>
                               </>
                             )}
-                          {member.status === IntentMemberStatus.Banned && (
-                            <button
-                              onClick={() =>
-                                openUnbanModal(member.userId, member.user.name)
-                              }
-                              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                              Odbanuj
-                            </button>
-                          )}
-                        </div>
+                            {member.status === IntentMemberStatus.Joined &&
+                              member.role !== IntentMemberRole.Owner && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      openRoleModal(
+                                        member.userId,
+                                        member.user.name,
+                                        member.role
+                                      )
+                                    }
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  >
+                                    <Shield className="h-4 w-4" />
+                                    Zmień rolę
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      openKickModal(
+                                        member.userId,
+                                        member.user.name
+                                      )
+                                    }
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-gray-100 dark:text-orange-400 dark:hover:bg-gray-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Wyrzuć
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      openBanModal(
+                                        member.userId,
+                                        member.user.name
+                                      )
+                                    }
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                                  >
+                                    <Ban className="h-4 w-4" />
+                                    Zbanuj
+                                  </button>
+                                </>
+                              )}
+                            {member.status === IntentMemberStatus.Banned && (
+                              <button
+                                onClick={() =>
+                                  openUnbanModal(
+                                    member.userId,
+                                    member.user.name
+                                  )
+                                }
+                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                                Odbanuj
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -280,3 +280,63 @@ export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
       };
     }
   );
+
+/**
+ * Query: Admin User Notifications
+ */
+export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications'] =
+  resolverWithMetrics(
+    'Query',
+    'adminUserNotifications',
+    async (_p, { userId, limit = 50, offset = 0 }, { user }) => {
+      requireAdmin(user);
+
+      const take = Math.min(limit, 100);
+      const skip = offset;
+
+      const where = {
+        recipientId: userId,
+      };
+
+      const [notifications, total] = await Promise.all([
+        prisma.notification.findMany({
+          where,
+          include: {
+            recipient: true,
+            actor: true,
+            intent: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take,
+          skip,
+        }),
+        prisma.notification.count({ where }),
+      ]);
+
+      return {
+        items: notifications.map((n: any) => ({
+          id: n.id,
+          kind: n.kind,
+          title: n.title,
+          body: n.body,
+          data: n.data,
+          readAt: n.readAt,
+          createdAt: n.createdAt,
+          entityType: n.entityType,
+          entityId: n.entityId,
+          recipient: mapUser(n.recipient),
+          actor: n.actor ? mapUser(n.actor) : null,
+          intent: n.intent || null,
+        })),
+        pageInfo: {
+          total,
+          limit: take,
+          offset: skip,
+          hasNext: skip + take < total,
+          hasPrev: skip > 0,
+        },
+      };
+    }
+  );

@@ -181,3 +181,39 @@ query AdminUserDmThreads($userId: ID!, $limit: Int, $offset: Int) {
     }
   }
 }
+
+# ============================================
+# QUERIES - Notifications
+# ============================================
+
+query AdminUserNotifications($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserNotifications(userId: $userId, limit: $limit, offset: $offset) {
+    items {
+      id
+      kind
+      title
+      body
+      readAt
+      createdAt
+      entityType
+      entityId
+      recipient {
+        id
+        name
+        email
+      }
+      actor {
+        id
+        name
+        imageUrl
+      }
+    }
+    pageInfo {
+      total
+      hasNext
+      hasPrev
+      limit
+      offset
+    }
+  }
+}

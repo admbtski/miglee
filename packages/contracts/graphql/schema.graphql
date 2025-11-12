@@ -1186,6 +1186,11 @@ type Query {
     limit: Int
     offset: Int
   ): AdminDmThreadsResult!
+  adminUserNotifications(
+    userId: ID!
+    limit: Int
+    offset: Int
+  ): NotificationsResult!
 
   # Admin Content Moderation Queries
   adminComments(

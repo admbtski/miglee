@@ -1,26 +1,50 @@
 'use client';
 
 import { useState } from 'react';
-import { useGetReviews } from '@/lib/api/reviews';
+import {
+  useAdminReviews,
+  useAdminDeleteReview,
+} from '@/lib/api/admin-comments';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { Trash2, Star } from 'lucide-react';
+import { Trash2, Star, Eye } from 'lucide-react';
+import { NoticeModal } from '@/components/feedback/notice-modal';
 
 export default function ReviewsPage() {
   const [intentId, setIntentId] = useState('');
+  const [userId, setUserId] = useState('');
   const [minRating, setMinRating] = useState<number | undefined>();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
 
-  const { data, isLoading } = useGetReviews({
+  const { data, isLoading, refetch } = useAdminReviews({
     intentId: intentId || undefined,
-    limit: 50,
+    userId: userId || undefined,
+    rating: minRating,
+    limit: 100,
   });
 
-  const reviews = data?.reviews?.items ?? [];
-  const total = data?.reviews?.pageInfo?.total ?? 0;
+  const deleteMutation = useAdminDeleteReview();
 
-  const filteredReviews = minRating
-    ? reviews.filter((r) => r.rating >= minRating)
-    : reviews;
+  const reviews = data?.adminReviews?.items ?? [];
+  const total = data?.adminReviews?.pageInfo?.total ?? 0;
+
+  const handleDeleteReview = async () => {
+    if (!selectedReviewId) return;
+    try {
+      await deleteMutation.mutateAsync(selectedReviewId);
+      setDeleteModalOpen(false);
+      setSelectedReviewId(null);
+      refetch();
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+    }
+  };
+
+  const openDeleteModal = (id: string) => {
+    setSelectedReviewId(id);
+    setDeleteModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -38,7 +62,7 @@ export default function ReviewsPage() {
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
               ID wydarzenia (opcjonalnie)
@@ -48,6 +72,18 @@ export default function ReviewsPage() {
               value={intentId}
               onChange={(e) => setIntentId(e.target.value)}
               placeholder="Filtruj po ID wydarzenia..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              ID użytkownika (opcjonalnie)
+            </label>
+            <input
+              type="text"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="Filtruj po ID użytkownika..."
               className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </div>
@@ -75,9 +111,7 @@ export default function ReviewsPage() {
         </div>
 
         <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-          Znaleziono:{' '}
-          <span className="font-semibold">{filteredReviews.length}</span>{' '}
-          recenzji
+          Znaleziono: <span className="font-semibold">{total}</span> recenzji
         </div>
       </div>
 
@@ -89,7 +123,7 @@ export default function ReviewsPage() {
           </div>
         )}
 
-        {!isLoading && filteredReviews.length === 0 && (
+        {!isLoading && reviews.length === 0 && (
           <div className="p-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Brak recenzji
@@ -97,13 +131,16 @@ export default function ReviewsPage() {
           </div>
         )}
 
-        {!isLoading && filteredReviews.length > 0 && (
+        {!isLoading && reviews.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
                     Autor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                    Wydarzenie
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
                     Ocena
@@ -120,13 +157,16 @@ export default function ReviewsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-950">
-                {filteredReviews.map((review) => (
+                {reviews.map((review) => (
                   <tr
                     key={review.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-900"
                   >
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                      {review.reviewer?.name || 'N/A'}
+                      {review.author?.name || 'N/A'}
+                    </td>
+                    <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                      {review.intent?.title || 'N/A'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <div className="flex items-center gap-1">
@@ -137,7 +177,7 @@ export default function ReviewsPage() {
                       </div>
                     </td>
                     <td className="max-w-md truncate px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {review.body || '-'}
+                      {review.content || '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {format(
@@ -149,13 +189,25 @@ export default function ReviewsPage() {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Usuń
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {review.intent?.id && (
+                          <a
+                            href={`/intent/${review.intent.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => openDeleteModal(review.id)}
+                          className="inline-flex items-center gap-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -164,6 +216,22 @@ export default function ReviewsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Modal */}
+      <NoticeModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        variant="error"
+        size="sm"
+        title="Usuń recenzję"
+        subtitle="Czy na pewno chcesz usunąć tę recenzję? Ta akcja jest nieodwracalna."
+        primaryLabel={deleteMutation.isPending ? 'Usuwanie...' : 'Usuń'}
+        secondaryLabel="Anuluj"
+        onPrimary={handleDeleteReview}
+        onSecondary={() => setDeleteModalOpen(false)}
+      >
+        <></>
+      </NoticeModal>
     </div>
   );
 }

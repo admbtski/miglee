@@ -47,6 +47,7 @@ import {
   adminUserMembershipsQuery,
   adminUserIntentsQuery,
   adminUserDmThreadsQuery,
+  adminUserNotificationsQuery,
 } from './admin-users';
 import { adminCommentsQuery, adminReviewsQuery } from './admin-moderation';
 
@@ -57,6 +58,7 @@ export const Query: Resolvers['Query'] = {
   adminUserMemberships: adminUserMembershipsQuery,
   adminUserIntents: adminUserIntentsQuery,
   adminUserDmThreads: adminUserDmThreadsQuery,
+  adminUserNotifications: adminUserNotificationsQuery,
   adminComments: adminCommentsQuery,
   adminReviews: adminReviewsQuery,
 

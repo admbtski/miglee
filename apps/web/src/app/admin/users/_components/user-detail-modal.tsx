@@ -10,6 +10,7 @@ import { ContentTab } from './tabs/content-tab';
 import { IntentsTab } from './tabs/intents-tab';
 import { DiagnosticTools } from './tabs/diagnostic-tools';
 import { AuditLogTab } from './tabs/audit-log-tab';
+import { NotificationsTab } from './tabs/notifications-tab';
 import { useUserQuery } from '@/lib/api/users';
 
 type UserDetailModalProps = {
@@ -25,6 +26,7 @@ type TabId =
   | 'security'
   | 'content'
   | 'intents'
+  | 'notifications'
   | 'tools'
   | 'audit';
 
@@ -34,6 +36,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'security', label: 'Bezpieczeństwo' },
   { id: 'content', label: 'Treści' },
   { id: 'intents', label: 'Wydarzenia' },
+  { id: 'notifications', label: 'Powiadomienia' },
   { id: 'tools', label: 'Narzędzia' },
   { id: 'audit', label: 'Historia' },
 ];
@@ -112,6 +115,9 @@ export function UserDetailModal({
             )}
             {activeTab === 'content' && <ContentTab userId={userId} />}
             {activeTab === 'intents' && <IntentsTab userId={userId} />}
+            {activeTab === 'notifications' && (
+              <NotificationsTab userId={userId} />
+            )}
             {activeTab === 'tools' && user && (
               <DiagnosticTools userId={userId} userName={user.name} />
             )}

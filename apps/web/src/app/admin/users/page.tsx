@@ -6,7 +6,14 @@ import {
   UsersSortBy,
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
-import { Search, UserPlus, Eye, Shield, CheckCircle } from 'lucide-react';
+import {
+  Search,
+  UserPlus,
+  Eye,
+  Shield,
+  CheckCircle,
+  ShieldBan,
+} from 'lucide-react';
 import { useUsersQuery } from '@/lib/api/users';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -193,8 +200,14 @@ export default function UsersPage() {
                           </div>
                         )}
                         <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                             {user.name}
+                            {user.suspendedAt && (
+                              <ShieldBan
+                                className="h-4 w-4 text-red-600 dark:text-red-400"
+                                title={`Zawieszony: ${user.suspensionReason || 'Brak powodu'}`}
+                              />
+                            )}
                           </div>
                           {user.verifiedAt && (
                             <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">

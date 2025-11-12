@@ -1,20 +1,25 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { gqlClient } from "./client";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { gqlClient } from './client';
 import {
   AdminCommentsDocument,
   AdminDeleteCommentDocument,
   AdminReviewsDocument,
   AdminDeleteReviewDocument,
-} from "./__generated__/react-query-update";
+} from './__generated__/react-query-update';
 
 /**
  * Query: Get all comments (admin)
  */
-export function useAdminComments(params?: { limit?: number; offset?: number; intentId?: string; userId?: string }) {
+export function useAdminComments(params?: {
+  limit?: number;
+  offset?: number;
+  intentId?: string;
+  userId?: string;
+}) {
   return useQuery({
-    queryKey: ["adminComments", params],
+    queryKey: ['adminComments', params],
     queryFn: async () => {
       return gqlClient.request(AdminCommentsDocument, {
         limit: params?.limit,
@@ -33,15 +38,19 @@ export function useAdminDeleteComment() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ['AdminDeleteComment'],
     mutationFn: async (id: string) => {
       return gqlClient.request(AdminDeleteCommentDocument, { id });
     },
+    meta: {
+      successMessage: 'Comment deleted successfully',
+    },
     onSuccess: () => {
       // Invalidate all admin comments queries
-      queryClient.invalidateQueries({ queryKey: ["adminComments"] });
-      queryClient.invalidateQueries({ queryKey: ["adminUserComments"] });
+      queryClient.invalidateQueries({ queryKey: ['adminComments'] });
+      queryClient.invalidateQueries({ queryKey: ['adminUserComments'] });
       // Also invalidate regular comments queries
-      queryClient.invalidateQueries({ queryKey: ["comments"] });
+      queryClient.invalidateQueries({ queryKey: ['comments'] });
     },
   });
 }
@@ -57,7 +66,7 @@ export function useAdminReviews(params?: {
   rating?: number;
 }) {
   return useQuery({
-    queryKey: ["adminReviews", params],
+    queryKey: ['adminReviews', params],
     queryFn: async () => {
       return gqlClient.request(AdminReviewsDocument, {
         limit: params?.limit,
@@ -77,15 +86,19 @@ export function useAdminDeleteReview() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ['AdminDeleteReview'],
     mutationFn: async (id: string) => {
       return gqlClient.request(AdminDeleteReviewDocument, { id });
     },
+    meta: {
+      successMessage: 'Review deleted successfully',
+    },
     onSuccess: () => {
       // Invalidate all admin reviews queries
-      queryClient.invalidateQueries({ queryKey: ["adminReviews"] });
-      queryClient.invalidateQueries({ queryKey: ["adminUserReviews"] });
+      queryClient.invalidateQueries({ queryKey: ['adminReviews'] });
+      queryClient.invalidateQueries({ queryKey: ['adminUserReviews'] });
       // Also invalidate regular reviews queries
-      queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
     },
   });
 }

@@ -18,6 +18,9 @@ import {
   AdminUserDmThreadsDocument,
   AdminUserDmThreadsQuery,
   AdminUserDmThreadsQueryVariables,
+  AdminUserNotificationsDocument,
+  AdminUserNotificationsQuery,
+  AdminUserNotificationsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
@@ -43,6 +46,10 @@ export const ADMIN_USER_INTENTS_KEY = (
 export const ADMIN_USER_DM_THREADS_KEY = (
   variables: AdminUserDmThreadsQueryVariables
 ) => ['AdminUserDmThreads', variables] as const;
+
+export const ADMIN_USER_NOTIFICATIONS_KEY = (
+  variables: AdminUserNotificationsQueryVariables
+) => ['AdminUserNotifications', variables] as const;
 
 /* ===================== Query builders ===================== */
 
@@ -282,6 +289,54 @@ export function useAdminUserDmThreadsQuery(
 ) {
   return useQuery(
     buildAdminUserDmThreadsOptions(variables, {
+      enabled: !!variables.userId,
+      ...(options ?? {}),
+    })
+  );
+}
+
+export function buildAdminUserNotificationsOptions(
+  variables: AdminUserNotificationsQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      AdminUserNotificationsQuery,
+      unknown,
+      AdminUserNotificationsQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+): UseQueryOptions<
+  AdminUserNotificationsQuery,
+  unknown,
+  AdminUserNotificationsQuery,
+  QueryKey
+> {
+  return {
+    queryKey: ADMIN_USER_NOTIFICATIONS_KEY(variables) as unknown as QueryKey,
+    queryFn: () =>
+      gqlClient.request<
+        AdminUserNotificationsQuery,
+        AdminUserNotificationsQueryVariables
+      >(AdminUserNotificationsDocument, variables),
+    ...(options ?? {}),
+  };
+}
+
+export function useAdminUserNotificationsQuery(
+  variables: AdminUserNotificationsQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      AdminUserNotificationsQuery,
+      unknown,
+      AdminUserNotificationsQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery(
+    buildAdminUserNotificationsOptions(variables, {
       enabled: !!variables.userId,
       ...(options ?? {}),
     })

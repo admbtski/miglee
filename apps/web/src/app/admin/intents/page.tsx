@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useIntentsQuery } from '@/lib/api/intents';
 import {
   useAdminCancelIntentMutation,
@@ -41,6 +41,7 @@ export default function IntentsPage() {
 
   // Selected intents for bulk operations
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   // Modals
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -68,6 +69,21 @@ export default function IntentsPage() {
 
   const intents = data?.intents?.items ?? [];
   const total = data?.intents?.pageInfo?.total ?? 0;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdownId) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.dropdown-container')) {
+          setOpenDropdownId(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openDropdownId]);
 
   const handleSelectAll = () => {
     if (selectedIds.length === intents.length) {
@@ -132,16 +148,19 @@ export default function IntentsPage() {
   const openCancelModal = (id: string) => {
     setActionIntentId(id);
     setCancelModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openDeleteModal = (id: string) => {
     setActionIntentId(id);
     setDeleteModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openRestoreModal = (id: string) => {
     setActionIntentId(id);
     setRestoreModalOpen(true);
+    setOpenDropdownId(null);
   };
 
   const openDetailModal = (id: string) => {
@@ -416,39 +435,48 @@ export default function IntentsPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </a>
-                        <div className="relative group">
-                          <button className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">
+                        <div className="dropdown-container relative">
+                          <button
+                            onClick={() =>
+                              setOpenDropdownId(
+                                openDropdownId === intent.id ? null : intent.id
+                              )
+                            }
+                            className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                          >
                             <MoreVertical className="h-4 w-4" />
                           </button>
-                          <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right scale-0 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-transform group-hover:scale-100 dark:bg-gray-800">
-                            {!intent.canceledAt && !intent.deletedAt && (
-                              <button
-                                onClick={() => openCancelModal(intent.id)}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                              >
-                                <Ban className="h-4 w-4" />
-                                Anuluj
-                              </button>
-                            )}
-                            {!intent.deletedAt && (
-                              <button
-                                onClick={() => openDeleteModal(intent.id)}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Usuń
-                              </button>
-                            )}
-                            {(intent.canceledAt || intent.deletedAt) && (
-                              <button
-                                onClick={() => openRestoreModal(intent.id)}
-                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
-                              >
-                                <RotateCcw className="h-4 w-4" />
-                                Przywróć
-                              </button>
-                            )}
-                          </div>
+                          {openDropdownId === intent.id && (
+                            <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800">
+                              {!intent.canceledAt && !intent.deletedAt && (
+                                <button
+                                  onClick={() => openCancelModal(intent.id)}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                >
+                                  <Ban className="h-4 w-4" />
+                                  Anuluj
+                                </button>
+                              )}
+                              {!intent.deletedAt && (
+                                <button
+                                  onClick={() => openDeleteModal(intent.id)}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Usuń
+                                </button>
+                              )}
+                              {(intent.canceledAt || intent.deletedAt) && (
+                                <button
+                                  onClick={() => openRestoreModal(intent.id)}
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
+                                >
+                                  <RotateCcw className="h-4 w-4" />
+                                  Przywróć
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
