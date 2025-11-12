@@ -255,7 +255,7 @@ export function useUpsertUserDiscipline(
     },
     meta: {
       successMessage: (variables) =>
-        variables.input.id ? 'Discipline updated' : 'Discipline added',
+        variables?.input?.id ? 'Discipline updated' : 'Discipline added',
     },
     ...options,
   });
@@ -322,7 +322,7 @@ export function useUpsertUserAvailability(
     },
     meta: {
       successMessage: (variables) =>
-        variables.input.id ? 'Availability updated' : 'Availability added',
+        variables?.input?.id ? 'Availability updated' : 'Availability added',
     },
     ...options,
   });
