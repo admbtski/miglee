@@ -70,6 +70,9 @@ export function buildDevLoginOptions<TContext = unknown>(
         DevLoginDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Logged in successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -102,6 +105,9 @@ export function buildDevLogoutOptions<TContext = unknown>(
     mutationKey: ['DevLogout'] as QueryKey,
     mutationFn: async () =>
       gqlClient.request<DevLogoutMutation>(DevLogoutDocument),
+    meta: {
+      successMessage: 'Logged out successfully',
+    },
     ...(options ?? {}),
   };
 }

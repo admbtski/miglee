@@ -218,6 +218,9 @@ export function buildCreateIntentOptions<TContext = unknown>(
         CreateIntentDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Event created successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -242,6 +245,9 @@ export function buildUpdateIntentOptions<TContext = unknown>(
         UpdateIntentDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Event updated successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -266,6 +272,9 @@ export function buildDeleteIntentOptions<TContext = unknown>(
         DeleteIntentDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Event deleted successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -291,6 +300,9 @@ export function buildCancelIntentOptions<TContext = unknown>(
         CancelIntentDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Event cancelled successfully',
+    },
     ...(options ?? {}),
   };
 }

@@ -204,12 +204,16 @@ export function useCreateOrGetDmThread(
     Error,
     CreateOrGetDmThreadMutationVariables
   >({
+    mutationKey: ['CreateOrGetDmThread'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateOrGetDmThreadMutation>(
         CreateOrGetDmThreadDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Conversation started',
     },
     onSuccess: (data) => {
       // Invalidate threads list
@@ -244,12 +248,16 @@ export function useSendDmMessage(
     Error,
     SendDmMessageMutationVariables
   >({
+    mutationKey: ['SendDmMessage'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<SendDmMessageMutation>(
         SendDmMessageDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Message sent',
     },
     onSuccess: (data) => {
       // Invalidate threads list
@@ -323,12 +331,16 @@ export function useDeleteDmMessage(
     Error,
     DeleteDmMessageMutationVariables
   >({
+    mutationKey: ['DeleteDmMessage'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteDmMessageMutation>(
         DeleteDmMessageDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Message deleted',
     },
     onSuccess: () => {
       // Invalidate all messages (we don't know which thread)

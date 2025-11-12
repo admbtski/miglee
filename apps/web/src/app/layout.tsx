@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
+import { Toaster } from 'sonner';
 
 import OtelInit from '@/lib/config/otel-init';
 import { WebVitals } from '@/lib/config/web-vitals';
@@ -105,6 +106,9 @@ export default function RootLayout({
 
         {/* Theme provider for dark/light mode */}
         <ThemeProvider>{children}</ThemeProvider>
+
+        {/* Toast notifications */}
+        <Toaster position="top-right" richColors closeButton expand={false} />
 
         {/* Portal root for modals, tooltips, etc. */}
         <div

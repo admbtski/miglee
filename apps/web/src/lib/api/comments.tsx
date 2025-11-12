@@ -112,12 +112,16 @@ export function useCreateComment(
     Error,
     CreateCommentMutationVariables
   >({
+    mutationKey: ['CreateComment'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<CreateCommentMutation>(
         CreateCommentDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Comment added',
     },
     onSuccess: (data, variables) => {
       // Invalidate comments list for this intent
@@ -151,12 +155,16 @@ export function useUpdateComment(
     Error,
     UpdateCommentMutationVariables
   >({
+    mutationKey: ['UpdateComment'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<UpdateCommentMutation>(
         UpdateCommentDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Comment updated',
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
@@ -187,12 +195,16 @@ export function useDeleteComment(
     Error,
     DeleteCommentMutationVariables
   >({
+    mutationKey: ['DeleteComment'],
     mutationFn: async (variables) => {
       const res = await gqlClient.request<DeleteCommentMutation>(
         DeleteCommentDocument,
         variables
       );
       return res;
+    },
+    meta: {
+      successMessage: 'Comment deleted',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentKeys.all });

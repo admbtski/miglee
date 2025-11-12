@@ -130,6 +130,9 @@ export function buildBanMemberOptions<TContext = unknown>( // <-- NEW
         BanMemberDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Member banned successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -154,6 +157,9 @@ export function buildUnbanMemberOptions<TContext = unknown>( // <-- NEW
         UnbanMemberDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Member unbanned successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -180,6 +186,9 @@ export function buildCancelPendingOrInviteForUserOptions<TContext = unknown>( //
         CancelPendingOrInviteForUserMutation,
         CancelPendingOrInviteForUserMutationVariables
       >(CancelPendingOrInviteForUserDocument, variables),
+    meta: {
+      successMessage: 'Invitation cancelled',
+    },
     ...(options ?? {}),
   };
 }
@@ -461,6 +470,9 @@ export function buildRequestJoinIntentOptions<TContext = unknown>(
         RequestJoinIntentMutation,
         RequestJoinIntentMutationVariables
       >(RequestJoinIntentDocument, variables),
+    meta: {
+      successMessage: 'Join request sent successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -485,6 +497,9 @@ export function buildCancelJoinRequestOptions<TContext = unknown>(
         CancelJoinRequestMutation,
         CancelJoinRequestMutationVariables
       >(CancelJoinRequestDocument, variables),
+    meta: {
+      successMessage: 'Join request cancelled',
+    },
     ...(options ?? {}),
   };
 }
@@ -509,6 +524,9 @@ export function buildLeaveIntentOptions<TContext = unknown>(
         LeaveIntentDocument,
         variables
       ),
+    meta: {
+      successMessage: 'You left the event',
+    },
     ...(options ?? {}),
   };
 }
@@ -533,6 +551,9 @@ export function buildInviteMemberOptions<TContext = unknown>(
         InviteMemberDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Member invited successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -557,6 +578,9 @@ export function buildApproveMembershipOptions<TContext = unknown>(
         ApproveMembershipMutation,
         ApproveMembershipMutationVariables
       >(ApproveMembershipDocument, variables),
+    meta: {
+      successMessage: 'Membership approved',
+    },
     ...(options ?? {}),
   };
 }
@@ -581,6 +605,9 @@ export function buildRejectMembershipOptions<TContext = unknown>(
         RejectMembershipMutation,
         RejectMembershipMutationVariables
       >(RejectMembershipDocument, variables),
+    meta: {
+      successMessage: 'Membership rejected',
+    },
     ...(options ?? {}),
   };
 }
@@ -605,6 +632,9 @@ export function buildKickMemberOptions<TContext = unknown>(
         KickMemberDocument,
         variables
       ),
+    meta: {
+      successMessage: 'Member kicked successfully',
+    },
     ...(options ?? {}),
   };
 }
@@ -629,6 +659,9 @@ export function buildUpdateMemberRoleOptions<TContext = unknown>(
         UpdateMemberRoleMutation,
         UpdateMemberRoleMutationVariables
       >(UpdateMemberRoleDocument, variables),
+    meta: {
+      successMessage: 'Member role updated',
+    },
     ...(options ?? {}),
   };
 }

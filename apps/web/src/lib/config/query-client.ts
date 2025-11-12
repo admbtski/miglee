@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientConfig } from '@tanstack/react-query';
+import { createQueryClient as createQueryClientWithLogging } from '@/lib/utils/react-query-config';
 
 // Safe SSR environment detection
 const isServer = typeof window === 'undefined';
@@ -6,16 +7,8 @@ const isServer = typeof window === 'undefined';
 const DEFAULT_STALE_TIME = 60 * 1000;
 
 function createQueryClient(config?: QueryClientConfig): QueryClient {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: DEFAULT_STALE_TIME,
-        ...config?.defaultOptions?.queries,
-      },
-      ...config?.defaultOptions,
-    },
-    ...config,
-  });
+  // Use our enhanced query client with logging and toast
+  return createQueryClientWithLogging();
 }
 
 let browserQueryClient: QueryClient | undefined;
