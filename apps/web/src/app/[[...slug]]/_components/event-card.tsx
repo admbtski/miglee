@@ -7,6 +7,7 @@ import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { PlanBadge } from '@/components/ui/plan-badge';
 import { Plan, planTheme } from '@/components/ui/plan-theme';
+import { planAnimationConfig } from '@/components/ui/plan-animations';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
@@ -501,10 +502,19 @@ export function EventCard({
     <>
       <motion.div
         layout="size"
-        whileHover={{ y: canJoin ? -2 : 0, scale: canJoin ? 1.01 : 1 }}
-        transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+        whileHover={{
+          y: canJoin ? planAnimationConfig.cardHover.liftY : 0,
+          scale: canJoin ? planAnimationConfig.cardHover.scale : 1,
+        }}
+        transition={{
+          type: 'spring',
+          stiffness: planAnimationConfig.cardHover.spring.stiffness,
+          damping: planAnimationConfig.cardHover.spring.damping,
+          mass: planAnimationConfig.cardHover.spring.mass,
+        }}
         className={clsx(
-          'relative w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1',
+          'relative w-full rounded-2xl p-4 flex flex-col gap-2 ring-1',
+          'transition-shadow duration-300',
           planStyling.ring,
           planStyling.bg,
           planStyling?.ringExtra,
@@ -521,11 +531,91 @@ export function EventCard({
         aria-label={`Szczegóły wydarzenia: ${organizerName}`}
         data-plan={plan}
       >
-        {/* Plan Badge - Top Right Corner */}
-        {showSponsoredBadge && plan && plan !== 'default' && (
-          <div className="absolute -top-2 -right-1">
-            <PlanBadge plan={plan} size="sm" variant="iconText" />
+        {/* Animated gradient overlay for premium plans */}
+        {plan && plan !== 'default' && (
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <motion.div
+              className={clsx(
+                'absolute inset-0 opacity-0',
+                plan === 'basic' &&
+                  'bg-gradient-to-br from-emerald-400/10 via-transparent to-emerald-600/10',
+                plan === 'plus' &&
+                  'bg-gradient-to-br from-indigo-400/10 via-transparent to-indigo-600/10',
+                plan === 'premium' &&
+                  'bg-gradient-to-br from-amber-400/10 via-transparent to-amber-600/10'
+              )}
+              animate={{
+                opacity: planAnimationConfig.gradientPulse.opacityRange,
+                scale: planAnimationConfig.gradientPulse.scaleRange,
+              }}
+              transition={{
+                duration: planAnimationConfig.gradientPulse.duration,
+                repeat: Infinity,
+                ease: planAnimationConfig.gradientPulse.easing,
+              }}
+            />
           </div>
+        )}
+
+        {/* Shimmer effect for premium plans - continuous animation */}
+        {plan && plan !== 'default' && (
+          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+            <motion.div
+              className={clsx(
+                'absolute -inset-full',
+                'bg-gradient-to-r',
+                plan === 'basic' &&
+                  `from-transparent via-emerald-400/${Math.round(planAnimationConfig.shimmer.planOpacity.basic * 100)} to-transparent`,
+                plan === 'plus' &&
+                  `from-transparent via-indigo-400/${Math.round(planAnimationConfig.shimmer.planOpacity.plus * 100)} to-transparent`,
+                plan === 'premium' &&
+                  `from-transparent via-amber-400/${Math.round(planAnimationConfig.shimmer.planOpacity.premium * 100)} to-transparent`
+              )}
+              animate={{
+                x: ['-100%', '200%'],
+                opacity: [0, planAnimationConfig.shimmer.maxOpacity, 0],
+              }}
+              transition={{
+                duration: planAnimationConfig.shimmer.duration,
+                repeat: Infinity,
+                repeatDelay: planAnimationConfig.shimmer.repeatDelay,
+                ease: planAnimationConfig.shimmer.easing,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Plan Badge - Top Right Corner with continuous pulse animation */}
+        {showSponsoredBadge && plan && plan !== 'default' && (
+          <motion.div
+            className="absolute -top-2 -right-1 z-10"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{
+              scale: planAnimationConfig.badge.scaleRange,
+              rotate: planAnimationConfig.badge.rotateRange,
+            }}
+            transition={{
+              scale: {
+                duration: planAnimationConfig.badge.duration,
+                repeat: Infinity,
+                repeatDelay: planAnimationConfig.badge.repeatDelay,
+                ease: planAnimationConfig.badge.easing,
+              },
+              rotate: {
+                duration: planAnimationConfig.badge.duration,
+                repeat: Infinity,
+                repeatDelay: planAnimationConfig.badge.repeatDelay,
+                ease: planAnimationConfig.badge.easing,
+              },
+            }}
+            whileHover={{
+              scale: planAnimationConfig.badge.hoverScale,
+              rotate: planAnimationConfig.badge.hoverRotateRange,
+              transition: { duration: planAnimationConfig.badge.hoverDuration },
+            }}
+          >
+            <PlanBadge plan={plan} size="sm" variant="iconText" />
+          </motion.div>
         )}
 
         {/* Range + duration */}

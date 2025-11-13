@@ -1422,6 +1422,8 @@ type Mutation {
   updateIntent(id: ID!, input: UpdateIntentInput!): Intent!
   deleteIntent(id: ID!): Boolean!
   cancelIntent(id: ID!, reason: String): Intent!
+  closeIntentJoin(intentId: ID!, reason: String): Intent!
+  reopenIntentJoin(intentId: ID!): Intent!
 
   # memberships (user endpoints)
   requestJoinIntent(intentId: ID!): Intent!

@@ -127,3 +127,15 @@ mutation CancelIntent($id: ID!, $reason: String) {
     ...IntentCore
   }
 }
+
+mutation CloseIntentJoin($intentId: ID!, $reason: String) {
+  closeIntentJoin(intentId: $intentId, reason: $reason) {
+    ...IntentCore
+  }
+}
+
+mutation ReopenIntentJoin($intentId: ID!) {
+  reopenIntentJoin(intentId: $intentId) {
+    ...IntentCore
+  }
+}
