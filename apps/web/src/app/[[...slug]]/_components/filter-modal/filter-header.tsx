@@ -12,7 +12,7 @@ export interface FilterHeaderProps {
 
 export function FilterHeader({ onClose, onClear, isDirty }: FilterHeaderProps) {
   return (
-    <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/85 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85">
+    <div className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-t-3xl bg-white/85 backdrop-blur dark:bg-zinc-900/85">
       <button
         onClick={onClose}
         className="inline-flex items-center justify-center w-8 h-8 rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"

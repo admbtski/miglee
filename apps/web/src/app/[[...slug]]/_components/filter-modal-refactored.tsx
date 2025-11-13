@@ -15,6 +15,7 @@ import { useFilterState } from '../_hooks/use-filter-state';
 import { useFilterValidation } from '../_hooks/use-filter-validation';
 import { normalizeISO } from '@/lib/utils/date';
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
+import { Modal } from '@/components/feedback/modal';
 import { FilterHeader } from './filter-modal/filter-header';
 import { FilterActiveChips } from './filter-modal/filter-active-chips';
 import { FilterFooter } from './filter-modal/filter-footer';
@@ -187,10 +188,9 @@ function FilterModalRefactoredComponent({
     verifiedOnly,
   ]);
 
-  // Global shortcuts
+  // Cmd/Ctrl+Enter to apply
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'enter') {
         e.preventDefault();
         handleApply();
@@ -198,233 +198,247 @@ function FilterModalRefactoredComponent({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleApply, onClose]);
+  }, [handleApply]);
 
   const applyDisabled = !isDirty || !!dateError;
 
   return (
     <ErrorBoundary>
-      <div
-        className="fixed inset-0 z-[100]"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="filters-title"
-      >
-        <div
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          onClick={onClose}
-        />
+      <Modal
+        open={true}
+        onClose={onClose}
+        variant="default"
+        size="md"
+        density="compact"
+        closeOnEsc={true}
+        closeOnBackdrop={true}
+        labelledById="filters-title"
+        backdropClassName="bg-black/60 backdrop-blur-md"
+        header={
+          <FilterHeader
+            onClose={onClose}
+            onClear={clearAll}
+            isDirty={isDirty}
+          />
+        }
+        content={
+          <>
+            {/* Active Chips */}
+            <FilterActiveChips
+              q={q}
+              city={city}
+              distanceKm={distanceKm}
+              startISO={startISO}
+              endISO={endISO}
+              status={status}
+              kinds={kinds}
+              levels={levels}
+              verifiedOnly={verifiedOnly}
+              tags={tags}
+              keywords={keywords}
+              categories={categories}
+              onClearQ={() => setQ('')}
+              onClearCity={() => setCity(null)}
+              onClearDistance={() =>
+                setDistanceKm(INTENTS_CONFIG.DEFAULT_DISTANCE_KM)
+              }
+              onClearStart={() => setStartISO(null)}
+              onClearEnd={() => setEndISO(null)}
+              onClearStatus={() => setStatus(IntentStatus.Any)}
+              onClearKinds={() => setKinds([])}
+              onClearLevels={() => setLevels([])}
+              onClearVerified={() => setVerifiedOnly(false)}
+              onClearTags={() => setTags([])}
+              onClearKeywords={() => {}}
+              onClearCategories={() => setCategories([])}
+            />
 
-        <div className="absolute inset-0 overflow-y-auto">
-          <div className="mx-auto my-6 w-[min(780px,92vw)]">
-            <div className="bg-white border shadow-2xl rounded-3xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10">
-              {/* Header */}
-              <FilterHeader
-                onClose={onClose}
-                onClear={clearAll}
-                isDirty={isDirty}
+            {/* Body - filters */}
+            <div className="space-y-8">
+              {/* GROUPED SEARCH */}
+              <SearchCombo
+                value={q}
+                onChangeValue={setQ}
+                onSubmitFreeText={setQ}
+                loading={loading}
+                groups={[
+                  {
+                    id: 'TAG',
+                    label: 'Tagi',
+                    items: data.tags,
+                    selected: tags,
+                    onSelect: (c) =>
+                      setTags((xs) =>
+                        xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
+                      ),
+                  },
+                  {
+                    id: 'CATEGORY',
+                    label: 'Kategorie',
+                    items: data.categories,
+                    selected: categories,
+                    onSelect: (c) =>
+                      setCategories((xs) =>
+                        xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
+                      ),
+                  },
+                ]}
+                placeholder={
+                  loading
+                    ? 'Ładowanie podpowiedzi…'
+                    : 'Szukaj tagów lub kategorii…'
+                }
               />
 
-              {/* Active Chips */}
-              <FilterActiveChips
-                q={q}
+              {/* Location */}
+              <LocationSection
                 city={city}
                 distanceKm={distanceKm}
+                onCityChange={setCity}
+                onDistanceChange={setDistanceKm}
+              />
+
+              {/* Date range */}
+              <DateRangeSection
                 startISO={startISO}
                 endISO={endISO}
-                status={status}
-                kinds={kinds}
-                levels={levels}
-                verifiedOnly={verifiedOnly}
-                tags={tags}
-                keywords={keywords}
-                categories={categories}
-                onClearQ={() => setQ('')}
-                onClearCity={() => setCity(null)}
-                onClearDistance={() =>
-                  setDistanceKm(INTENTS_CONFIG.DEFAULT_DISTANCE_KM)
-                }
-                onClearStart={() => setStartISO(null)}
-                onClearEnd={() => setEndISO(null)}
-                onClearStatus={() => setStatus(IntentStatus.Any)}
-                onClearKinds={() => setKinds([])}
-                onClearLevels={() => setLevels([])}
-                onClearVerified={() => setVerifiedOnly(false)}
-                onClearTags={() => setTags([])}
-                onClearKeywords={() => setKeywords([])}
-                onClearCategories={() => setCategories([])}
+                onStartChange={setStartISO}
+                onEndChange={setEndISO}
               />
+              {dateError && (
+                <div className="text-sm text-red-600 dark:text-red-400 mt-2">
+                  {dateError}
+                </div>
+              )}
 
-              {/* Body */}
-              <div className="p-4 space-y-6">
-                {/* GROUPED SEARCH */}
-                <SearchCombo
-                  value={q}
-                  onChangeValue={setQ}
-                  onSubmitFreeText={setQ}
-                  loading={loading}
-                  groups={[
-                    {
-                      id: 'TAG',
-                      label: 'Tagi',
-                      items: data.tags,
-                      selected: tags,
-                      onSelect: (c) =>
-                        setTags((xs) =>
-                          xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
-                        ),
-                    },
-                    {
-                      id: 'CATEGORY',
-                      label: 'Kategorie',
-                      items: data.categories,
-                      selected: categories,
-                      onSelect: (c) =>
-                        setCategories((xs) =>
-                          xs.some((x) => x.slug === c.slug) ? xs : [...xs, c]
-                        ),
-                    },
-                  ]}
-                  placeholder={
-                    loading
-                      ? 'Ładowanie podpowiedzi…'
-                      : 'Szukaj tagów lub kategorii…'
-                  }
-                />
+              {/* Status */}
+              <FilterSection title="Status">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    IntentStatus.Any,
+                    IntentStatus.Available,
+                    IntentStatus.Ongoing,
+                    IntentStatus.Full,
+                    IntentStatus.Locked,
+                    IntentStatus.Past,
+                  ].map((val) => (
+                    <Pill
+                      key={val}
+                      active={status === val}
+                      onClick={() => setStatus(val)}
+                      title={`Filtruj: ${val}`}
+                    >
+                      {val}
+                    </Pill>
+                  ))}
+                </div>
+              </FilterSection>
 
-                {/* Location */}
-                <LocationSection
-                  city={city}
-                  distanceKm={distanceKm}
-                  onCityChange={setCity}
-                  onDistanceChange={setDistanceKm}
-                />
-
-                {/* Date range */}
-                <DateRangeSection
-                  startISO={startISO}
-                  endISO={endISO}
-                  onStartChange={setStartISO}
-                  onEndChange={setEndISO}
-                  dateError={dateError}
-                />
-
-                {/* Status */}
-                <FilterSection title="Status">
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      IntentStatus.Any,
-                      IntentStatus.Available,
-                      IntentStatus.Ongoing,
-                      IntentStatus.Full,
-                      IntentStatus.Locked,
-                      IntentStatus.Past,
-                    ].map((val) => (
+              {/* Kinds */}
+              <FilterSection title="Tryb spotkania">
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    MeetingKind.Onsite,
+                    MeetingKind.Online,
+                    MeetingKind.Hybrid,
+                  ].map((t) => {
+                    const active = kinds.includes(t);
+                    return (
                       <Pill
-                        key={val}
-                        active={status === val}
-                        onClick={() => setStatus(val)}
-                        title={`Filtruj: ${val}`}
+                        key={t}
+                        active={active}
+                        onClick={() =>
+                          setKinds((curr) =>
+                            active ? curr.filter((x) => x !== t) : [...curr, t]
+                          )
+                        }
+                        title={`Przełącz: ${t}`}
                       >
-                        {val}
+                        {t}
                       </Pill>
-                    ))}
-                  </div>
-                </FilterSection>
+                    );
+                  })}
+                </div>
+              </FilterSection>
 
-                {/* Kinds */}
-                <FilterSection title="Tryb spotkania">
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      MeetingKind.Onsite,
-                      MeetingKind.Online,
-                      MeetingKind.Hybrid,
-                    ].map((t) => {
-                      const active = kinds.includes(t);
+              {/* Level */}
+              <FilterSection title="Poziom">
+                <div className="grid grid-cols-3 gap-2">
+                  {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
+                    (lv) => {
+                      const active = levels.includes(lv);
                       return (
                         <Pill
-                          key={t}
+                          key={lv}
                           active={active}
                           onClick={() =>
-                            setKinds((curr) =>
+                            setLevels((curr) =>
                               active
-                                ? curr.filter((x) => x !== t)
-                                : [...curr, t]
+                                ? curr.filter((x) => x !== lv)
+                                : [...curr, lv]
                             )
                           }
-                          title={`Przełącz: ${t}`}
+                          title={`Przełącz: ${lv}`}
                         >
-                          {t}
+                          {lv}
                         </Pill>
                       );
-                    })}
-                  </div>
-                </FilterSection>
+                    }
+                  )}
+                </div>
+              </FilterSection>
 
-                {/* Level */}
-                <FilterSection title="Poziom">
-                  <div className="flex flex-wrap gap-2">
-                    {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
-                      (lv) => {
-                        const active = levels.includes(lv);
-                        return (
-                          <Pill
-                            key={lv}
-                            active={active}
-                            onClick={() =>
-                              setLevels((curr) =>
-                                active
-                                  ? curr.filter((x) => x !== lv)
-                                  : [...curr, lv]
-                              )
-                            }
-                            title={`Przełącz: ${lv}`}
-                          >
-                            {lv}
-                          </Pill>
-                        );
-                      }
-                    )}
-                  </div>
-                </FilterSection>
-
-                {/* Verified */}
-                <FilterSection
-                  title="Organizator"
-                  hint="Pokaż tylko zweryfikowanych organizatorów."
-                >
-                  <label className="inline-flex items-center gap-3 text-sm cursor-pointer select-none text-zinc-800 dark:text-zinc-200">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={verifiedOnly}
-                      onChange={(e) => setVerifiedOnly(e.target.checked)}
-                      aria-label="Tylko zweryfikowani organizatorzy"
-                    />
+              {/* Verified */}
+              <FilterSection
+                title="Organizator"
+                hint="Pokaż tylko zweryfikowanych organizatorów."
+              >
+                <label className="inline-flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 cursor-pointer select-none text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-colors">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={verifiedOnly}
+                    onChange={(e) => setVerifiedOnly(e.target.checked)}
+                    aria-label="Tylko zweryfikowani organizatorzy"
+                  />
+                  <span
+                    className={`inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-all duration-200 ${verifiedOnly ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                  >
                     <span
-                      className={`inline-flex h-5 w-9 items-center rounded-full p-0.5 transition-colors ${verifiedOnly ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
-                    >
-                      <span
-                        className={`h-4 w-4 rounded-full bg-white transition-transform ${verifiedOnly ? 'translate-x-4' : 'translate-x-0'}`}
-                      />
-                    </span>
+                      className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${verifiedOnly ? 'translate-x-5' : 'translate-x-0'}`}
+                    />
+                  </span>
+                  <span className="flex items-center gap-2 font-medium">
+                    {verifiedOnly && (
+                      <svg
+                        className="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
                     Tylko zweryfikowani
-                  </label>
-                </FilterSection>
-              </div>
-
-              {/* Footer */}
-              <FilterFooter
-                onClose={onClose}
-                onApply={handleApply}
-                resultsCount={resultsCount}
-                isApplyDisabled={applyDisabled}
-                applyDisabledReason={dateError || undefined}
-              />
+                  </span>
+                </label>
+              </FilterSection>
             </div>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+        footer={
+          <FilterFooter
+            onClose={onClose}
+            onApply={handleApply}
+            resultsCount={resultsCount}
+            isApplyDisabled={applyDisabled}
+            applyDisabledReason={dateError || undefined}
+          />
+        }
+      />
     </ErrorBoundary>
   );
 }
