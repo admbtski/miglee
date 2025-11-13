@@ -39,6 +39,7 @@ import {
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
 import { useIntentsInfiniteQuery } from '@/lib/api/intents';
+import { useMeQuery } from '@/lib/api/auth';
 import { appLanguage } from '@/lib/config/language';
 
 import {
@@ -47,6 +48,10 @@ import {
 } from '@/lib/constants/intents';
 import { buildGridCols } from '@/lib/utils/intents';
 import type { IntentListItem } from '@/types/intent';
+
+/* ───────────────────────────── Types ───────────────────────────── */
+
+type LocationMode = 'EXPLICIT' | 'PROFILE_DEFAULT' | 'NONE';
 
 /* ───────────────────────────── Page ───────────────────────────── */
 
@@ -71,11 +76,50 @@ export function IntentsPage() {
     apply,
   } = filters;
 
+  // Get user profile for PROFILE_DEFAULT mode
+  const { data: meData } = useMeQuery({ retry: false });
+  const userProfile = meData?.me?.profile;
+
   const { sort, setSort, sortVars } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
   const activeFilters = useActiveFiltersCount(filters);
   const [hoveredIntent, handleIntentHover] = useDebouncedHover();
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Determine location mode
+  const locationMode = useMemo<LocationMode>(() => {
+    // EXPLICIT: User has set location in filters
+    if (city && cityLat != null && cityLng != null) {
+      return 'EXPLICIT';
+    }
+    // PROFILE_DEFAULT: User has home location in profile
+    if (userProfile?.homeLat != null && userProfile?.homeLng != null) {
+      return 'PROFILE_DEFAULT';
+    }
+    // NONE: No location available
+    return 'NONE';
+  }, [city, cityLat, cityLng, userProfile?.homeLat, userProfile?.homeLng]);
+
+  // Map center based on location mode
+  const mapCenter = useMemo<{ lat: number; lng: number } | null>(() => {
+    if (locationMode === 'EXPLICIT' && cityLat != null && cityLng != null) {
+      return { lat: cityLat, lng: cityLng };
+    }
+    if (
+      locationMode === 'PROFILE_DEFAULT' &&
+      userProfile?.homeLat != null &&
+      userProfile?.homeLng != null
+    ) {
+      return { lat: userProfile.homeLat, lng: userProfile.homeLng };
+    }
+    return null; // NONE mode - map will handle fitBounds or default view
+  }, [
+    locationMode,
+    cityLat,
+    cityLng,
+    userProfile?.homeLat,
+    userProfile?.homeLng,
+  ]);
 
   // Memoize callbacks for better performance
   const handleOpenFilters = useCallback(() => setFiltersOpen(true), []);
@@ -122,9 +166,10 @@ export function IntentsPage() {
       verifiedOnly: !!verifiedOnly,
       ownerId: undefined,
       memberId: undefined,
-      distanceKm: city ? distanceKm : null,
+      // Only filter by distance in EXPLICIT mode
+      distanceKm: locationMode === 'EXPLICIT' ? distanceKm : null,
       near:
-        city && cityLat != null && cityLng != null
+        locationMode === 'EXPLICIT' && cityLat != null && cityLng != null
           ? {
               lat: cityLat,
               lng: cityLng,
@@ -148,6 +193,7 @@ export function IntentsPage() {
       cityLng,
       cityPlaceId,
       distanceKm,
+      locationMode,
       sortVars,
     ]
   );
@@ -289,6 +335,8 @@ export function IntentsPage() {
                         hoveredIntentId={hoveredIntent?.id ?? null}
                         hoveredLat={hoveredIntent?.lat ?? null}
                         hoveredLng={hoveredIntent?.lng ?? null}
+                        centerOn={mapCenter}
+                        locationMode={locationMode}
                       />
                     </Suspense>
                   </ErrorBoundary>

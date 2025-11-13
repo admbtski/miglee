@@ -6,6 +6,12 @@
 query GetMe {
   me {
     ...SessionUserCore
+    profile {
+      homeLat
+      homeLng
+      city
+      country
+    }
   }
 }
 

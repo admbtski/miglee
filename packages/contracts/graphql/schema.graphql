@@ -269,6 +269,7 @@ type SessionUser {
   role: Role!
   imageUrl: String
   verifiedAt: DateTime
+  profile: UserProfile
 }
 
 "User"
@@ -494,6 +495,10 @@ type Intent {
   address: String
   placeId: String
   radiusKm: Float
+
+  # City information for filtering and grouping
+  cityName: String
+  cityPlaceId: String
 
   # PostgreSQL enum[]
   levels: [Level!]!
@@ -897,6 +902,8 @@ input LocationInput {
   address: String
   placeId: String
   radiusKm: Float
+  cityName: String
+  cityPlaceId: String
 }
 
 input CreateIntentInput {

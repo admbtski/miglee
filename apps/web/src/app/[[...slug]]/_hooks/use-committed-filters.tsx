@@ -84,21 +84,23 @@ export function useCommittedFilters() {
       const curr = state;
 
       const merged: CommittedFilters = {
-        q: next.q ?? curr.q,
-        city: next.city ?? curr.city,
-        cityLat: next.cityLat ?? curr.cityLat,
-        cityLng: next.cityLng ?? curr.cityLng,
-        cityPlaceId: next.cityPlaceId ?? curr.cityPlaceId,
-        distanceKm: next.distanceKm ?? curr.distanceKm,
-        startISO: next.startISO ?? curr.startISO,
-        endISO: next.endISO ?? curr.endISO,
-        status: (next.status ?? curr.status) as IntentStatus,
-        kinds: (next.kinds ?? curr.kinds) as MeetingKind[],
-        levels: (next.levels ?? curr.levels) as Level[],
-        verifiedOnly: next.verifiedOnly ?? curr.verifiedOnly,
-        tags: next.tags ?? curr.tags,
-        keywords: next.keywords ?? curr.keywords,
-        categories: next.categories ?? curr.categories,
+        q: 'q' in next ? next.q : curr.q,
+        city: 'city' in next ? next.city : curr.city,
+        cityLat: 'cityLat' in next ? next.cityLat : curr.cityLat,
+        cityLng: 'cityLng' in next ? next.cityLng : curr.cityLng,
+        cityPlaceId:
+          'cityPlaceId' in next ? next.cityPlaceId : curr.cityPlaceId,
+        distanceKm: 'distanceKm' in next ? next.distanceKm : curr.distanceKm,
+        startISO: 'startISO' in next ? next.startISO : curr.startISO,
+        endISO: 'endISO' in next ? next.endISO : curr.endISO,
+        status: ('status' in next ? next.status : curr.status) as IntentStatus,
+        kinds: ('kinds' in next ? next.kinds : curr.kinds) as MeetingKind[],
+        levels: ('levels' in next ? next.levels : curr.levels) as Level[],
+        verifiedOnly:
+          'verifiedOnly' in next ? next.verifiedOnly : curr.verifiedOnly,
+        tags: 'tags' in next ? next.tags : curr.tags,
+        keywords: 'keywords' in next ? next.keywords : curr.keywords,
+        categories: 'categories' in next ? next.categories : curr.categories,
       };
 
       const params = new URLSearchParams(search);

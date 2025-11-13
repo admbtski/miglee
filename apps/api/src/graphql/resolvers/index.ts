@@ -13,6 +13,7 @@ import {
 } from './fields/intent';
 import { intentMemberIntentResolver } from './fields/intent-member';
 import { UserFieldResolvers } from './fields/user';
+import { SessionUserFieldResolvers } from './fields/session-user';
 
 export const resolvers: Pick<
   Resolvers,
@@ -26,6 +27,7 @@ export const resolvers: Pick<
   | 'Intent'
   | 'IntentMember'
   | 'User'
+  | 'SessionUser'
 > = {
   JSON: JSONScalar,
   JSONObject: JSONObjectScalar,
@@ -46,4 +48,5 @@ export const resolvers: Pick<
     intent: intentMemberIntentResolver,
   },
   User: UserFieldResolvers,
+  SessionUser: SessionUserFieldResolvers,
 };

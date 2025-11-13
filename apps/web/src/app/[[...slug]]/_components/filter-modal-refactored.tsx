@@ -176,6 +176,14 @@ function FilterModalRefactoredComponent({
   const handleApply = useCallback(() => {
     const startIsoNorm = normalizeISO(startISO);
     const endIsoNorm = normalizeISO(endISO);
+
+    console.log('[FilterModal] handleApply - location state:', {
+      city,
+      cityLat,
+      cityLng,
+      cityPlaceId,
+    });
+
     onApply({
       q,
       city,
@@ -262,7 +270,13 @@ function FilterModalRefactoredComponent({
               keywords={keywords}
               categories={categories}
               onClearQ={() => setQ('')}
-              onClearCity={() => setCity(null)}
+              onClearCity={() => {
+                console.log('[FilterModal] onClearCity - clearing location');
+                setCity(null);
+                setCityLat(null);
+                setCityLng(null);
+                setCityPlaceId(null);
+              }}
               onClearDistance={() =>
                 setDistanceKm(INTENTS_CONFIG.DEFAULT_DISTANCE_KM)
               }

@@ -29,6 +29,17 @@ export const LocationSection = memo(function LocationSection({
 }: LocationSectionProps) {
   const [locationText, setLocationText] = useState<string>(city ?? '');
 
+  const handleTextChange = (text: string) => {
+    setLocationText(text);
+    // If user clears the text, also clear coordinates
+    if (!text.trim()) {
+      onCityChange(null);
+      if (onCityLatChange) onCityLatChange(null);
+      if (onCityLngChange) onCityLngChange(null);
+      if (onCityPlaceIdChange) onCityPlaceIdChange(null);
+    }
+  };
+
   return (
     <FilterSection
       title="Lokalizacja"
@@ -36,7 +47,7 @@ export const LocationSection = memo(function LocationSection({
     >
       <LocationCombo
         value={locationText}
-        onChangeText={setLocationText}
+        onChangeText={handleTextChange}
         onPickPlace={({
           cityName,
           cityPlaceId: pickedCityPlaceId,
@@ -45,15 +56,6 @@ export const LocationSection = memo(function LocationSection({
           lat,
           lng,
         }) => {
-          console.dir({
-            cityName,
-            pickedCityPlaceId,
-            displayName,
-            address,
-            lat,
-            lng,
-          });
-
           // Prefer cityName, fallback to displayName or address
           const finalCityName = cityName || displayName || address || '';
           setLocationText(finalCityName);

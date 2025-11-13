@@ -39,6 +39,10 @@ export interface ServerClusteredMapProps {
   hoveredIntentId?: string | null;
   hoveredLat?: number | null;
   hoveredLng?: number | null;
+  // NEW: Center map on specific location (e.g., from filters or user profile)
+  centerOn?: { lat: number; lng: number } | null;
+  // NEW: Location mode to determine map behavior
+  locationMode?: 'EXPLICIT' | 'PROFILE_DEFAULT' | 'NONE';
 }
 
 type ClusterPoint = {
@@ -285,6 +289,8 @@ function ServerClusteredMapComponent({
   onIntentClick,
   hoveredLat,
   hoveredLng,
+  centerOn,
+  locationMode = 'NONE',
 }: ServerClusteredMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -472,11 +478,14 @@ function ServerClusteredMapComponent({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    // Use centerOn if provided, otherwise use defaultCenter
+    const initialCenter = centerOn || defaultCenter;
+
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: currentStyleUrl,
-      center: [defaultCenter.lng, defaultCenter.lat],
-      zoom: defaultZoom,
+      center: [initialCenter.lng, initialCenter.lat],
+      zoom: centerOn ? 8 : defaultZoom, // Zoom in more when centering on a specific location
       attributionControl: { compact: true },
       fadeDuration: 0,
       crossSourceCollisions: false,
@@ -603,6 +612,21 @@ function ServerClusteredMapComponent({
       },
     });
   }, [layers]);
+
+  /* ───────── Center map on location change ───────── */
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !centerOn) return;
+
+    // Fly to the new location with smooth animation
+    map.flyTo({
+      center: [centerOn.lng, centerOn.lat],
+      zoom: 12,
+      duration: 1500, // 1.5s animation
+      essential: true, // This animation is considered essential with respect to prefers-reduced-motion
+    });
+  }, [centerOn]);
 
   /* ───────── Popup React ───────── */
 
@@ -769,6 +793,15 @@ function ServerClusteredMapComponent({
         aria-label="Server-clustered intents map"
         style={{ backfaceVisibility: 'hidden' }}
       />
+
+      {/* Location mode indicator for PROFILE_DEFAULT */}
+      {locationMode === 'PROFILE_DEFAULT' && (
+        <div className="absolute top-4 left-4 z-10 bg-blue-50/95 dark:bg-blue-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-blue-200 dark:border-blue-700">
+          <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
+            📍 Pokazuję mapę wokół Twojej lokalizacji
+          </p>
+        </div>
+      )}
 
       {clustersLoading && (
         <div className="absolute top-4 right-4 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-zinc-200 dark:border-zinc-700">
