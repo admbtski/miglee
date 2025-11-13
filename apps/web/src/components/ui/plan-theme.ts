@@ -14,7 +14,6 @@ export type PlanTheme = {
   headerBg: string;
   sectionBg: string;
   glow?: string;
-  ringExtra?: string;
 };
 
 const DEFAULTS = {
@@ -53,7 +52,6 @@ export function planTheme(plan?: Plan): PlanTheme {
           'bg-[radial-gradient(1200px_360px_at_0%_-20%,rgba(16,185,129,0.18),transparent_62%),radial-gradient(1000px_300px_at_100%_0%,rgba(52,211,153,0.16),transparent_58%),linear-gradient(135deg,rgba(16,185,129,0.06),transparent_60%)]',
         sectionBg: 'bg-emerald-50/30 dark:bg-emerald-900/8',
         glow: 'shadow-[0_0_0_1px_rgba(16,185,129,0.25),0_10px_30px_-10px_rgba(16,185,129,0.35)]',
-        ringExtra: 'ring-3 ring-emerald-300/45 dark:ring-emerald-700/35',
       };
     case 'plus':
       return {
@@ -66,7 +64,6 @@ export function planTheme(plan?: Plan): PlanTheme {
           'bg-[radial-gradient(1200px_360px_at_0%_-20%,rgba(99,102,241,0.18),transparent_62%),radial-gradient(1000px_300px_at_100%_0%,rgba(165,180,252,0.16),transparent_58%),linear-gradient(135deg,rgba(99,102,241,0.06),transparent_60%)]',
         sectionBg: 'bg-indigo-50/30 dark:bg-indigo-900/8',
         glow: 'shadow-[0_0_0_1px_rgba(99,102,241,0.25),0_10px_30px_-10px_rgba(99,102,241,0.35)]',
-        ringExtra: 'ring-3 ring-indigo-300/45 dark:ring-indigo-700/35',
       };
     case 'premium':
       return {
@@ -79,7 +76,6 @@ export function planTheme(plan?: Plan): PlanTheme {
           'bg-[radial-gradient(1200px_360px_at_0%_-20%,rgba(245,158,11,0.22),transparent_62%),radial-gradient(1100px_320px_at_100%_0%,rgba(253,230,138,0.18),transparent_58%),linear-gradient(135deg,rgba(245,158,11,0.08),transparent_60%)]',
         sectionBg: 'bg-amber-50/30 dark:bg-amber-900/8',
         glow: 'shadow-[0_0_0_1px_rgba(245,158,11,0.28),0_12px_34px_-12px_rgba(245,158,11,0.38)]',
-        ringExtra: 'ring-3 ring-amber-400/50 dark:ring-amber-700/40',
       };
     default:
       return {
@@ -90,7 +86,6 @@ export function planTheme(plan?: Plan): PlanTheme {
         headerBg: DEFAULTS.header,
         sectionBg: DEFAULTS.section,
         glow: 'shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_10px_30px_-10px_rgba(0,0,0,0.12)]',
-        ringExtra: 'ring-1 ring-neutral-200/60 dark:ring-neutral-800',
       };
   }
 }

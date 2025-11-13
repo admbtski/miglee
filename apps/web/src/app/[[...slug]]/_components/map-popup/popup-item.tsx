@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { PlanBadge } from '@/components/ui/plan-badge';
-import { Plan } from '@/components/ui/plan-theme';
+import { Plan, planTheme } from '@/components/ui/plan-theme';
+import { planAnimationConfig } from '@/components/ui/plan-animations';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
@@ -16,6 +17,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import { formatDateRange } from '@/lib/utils/date';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 import { Calendar, MapPinIcon } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -191,14 +193,57 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     return { label: 'Dostępne', tone: 'ok' as const, reason: 'OK' as const };
   }, [isDeleted, isCanceled, isOngoing, hasStarted, joinState]);
 
+  const plan = (intent.plan as Plan) ?? 'default';
+  const planStyling = useMemo(() => planTheme(plan), [plan]);
+
   return (
-    <button
+    <motion.button
       onClick={() => onClick?.(intent.id)}
+      whileHover={{
+        y: -2,
+        scale: 1.01,
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 25,
+        mass: 0.5,
+        // BoxShadow animation - synchronized with shimmer (4s cycle)
+        boxShadow:
+          plan && plan !== 'default'
+            ? {
+                duration: planAnimationConfig.glowingShadow.duration,
+                repeat: Infinity,
+                ease: planAnimationConfig.glowingShadow.easing,
+                times: [0, 0.25, 0.5, 0.75, 1],
+              }
+            : undefined,
+      }}
+      style={
+        plan && plan !== 'default'
+          ? {
+              boxShadow: planAnimationConfig.glowingShadow.shadows[plan].min,
+            }
+          : undefined
+      }
+      animate={
+        plan && plan !== 'default'
+          ? {
+              boxShadow: [
+                planAnimationConfig.glowingShadow.shadows[plan].min,
+                planAnimationConfig.glowingShadow.shadows[plan].mid,
+                planAnimationConfig.glowingShadow.shadows[plan].max,
+                planAnimationConfig.glowingShadow.shadows[plan].mid,
+                planAnimationConfig.glowingShadow.shadows[plan].min,
+              ],
+            }
+          : undefined
+      }
       className={clsx(
-        'cursor-pointer group w-full text-left rounded-xl ring-1 px-3 py-2 transition-all',
-        'bg-white dark:bg-zinc-900',
-        'ring-zinc-200 dark:ring-zinc-800',
-        'hover:shadow-sm hover:-translate-y-[1px]',
+        'relative cursor-pointer group w-full text-left rounded-xl ring-1 px-3 py-2',
+        plan === 'default'
+          ? 'bg-white dark:bg-zinc-900 ring-zinc-200 dark:ring-zinc-800'
+          : clsx(planStyling.bg, planStyling.ring),
         'focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-indigo-500/50'
       )}
     >
@@ -302,6 +347,6 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
           isDeleted={isDeleted}
         />
       </div>
-    </button>
+    </motion.button>
   );
 }

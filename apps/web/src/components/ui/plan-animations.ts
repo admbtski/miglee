@@ -14,7 +14,7 @@ export const planAnimationConfig = {
     /** Duration of the shimmer animation in seconds */
     duration: 2,
     /** Delay between shimmer animations in seconds */
-    repeatDelay: 2,
+    repeatDelay: 1,
     /** Maximum opacity of the shimmer effect (0-1) */
     maxOpacity: 0.8,
     /** Opacity multipliers for each plan tier */
@@ -35,9 +35,9 @@ export const planAnimationConfig = {
     /** Duration of one pulse cycle in seconds */
     duration: 3,
     /** Opacity range for the pulse [min, max, min] */
-    opacityRange: [0, 0.3, 0] as [number, number, number],
+    opacityRange: [0.2, 0.6, 0.2] as [number, number, number],
     /** Scale range for the pulse [start, peak, end] */
-    scaleRange: [1, 1.05, 1] as [number, number, number],
+    scaleRange: [1, 1.02, 1] as [number, number, number],
     /** Easing function */
     easing: 'easeInOut' as const,
   },
@@ -80,6 +80,36 @@ export const planAnimationConfig = {
       damping: 25,
       mass: 0.5,
     },
+  },
+
+  /**
+   * Glowing Shadow Configuration
+   * Controls the animated shadow/glow effect for premium cards
+   * Synchronized with shimmer effect (4s total cycle: 2s animation + 2s delay)
+   */
+  glowingShadow: {
+    /** Duration of the glow pulse animation in seconds (matches shimmer cycle) */
+    duration: 3,
+    /** Shadow configurations for each plan tier */
+    shadows: {
+      basic: {
+        min: '0 0 0 1px rgba(16, 185, 129, 0.2), 0 8px 20px -8px rgba(16, 185, 129, 0.25)',
+        mid: '0 0 0 1px rgba(16, 185, 129, 0.35), 0 10px 30px -10px rgba(16, 185, 129, 0.45)',
+        max: '0 0 0 1px rgba(16, 185, 129, 0.4), 0 12px 35px -10px rgba(16, 185, 129, 0.5)',
+      },
+      plus: {
+        min: '0 0 0 1px rgba(99, 102, 241, 0.2), 0 8px 20px -8px rgba(99, 102, 241, 0.25)',
+        mid: '0 0 0 1px rgba(99, 102, 241, 0.35), 0 10px 30px -10px rgba(99, 102, 241, 0.45)',
+        max: '0 0 0 1px rgba(99, 102, 241, 0.4), 0 12px 35px -10px rgba(99, 102, 241, 0.5)',
+      },
+      premium: {
+        min: '0 0 0 1px rgba(245, 158, 11, 0.25), 0 10px 28px -10px rgba(245, 158, 11, 0.3)',
+        mid: '0 0 0 1px rgba(245, 158, 11, 0.4), 0 12px 34px -12px rgba(245, 158, 11, 0.5)',
+        max: '0 0 0 1px rgba(245, 158, 11, 0.45), 0 14px 38px -12px rgba(245, 158, 11, 0.55)',
+      },
+    },
+    /** Easing function */
+    easing: 'easeInOut' as const,
   },
 } as const;
 

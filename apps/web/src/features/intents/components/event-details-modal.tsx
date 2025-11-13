@@ -952,7 +952,7 @@ export function EventDetailsModal({
 
   return (
     <Modal
-      className={twMerge(theme.ringExtra, theme.glow, 'backdrop-blur-[2px]')}
+      className={twMerge(theme.glow, 'backdrop-blur-[2px]')}
       headerClassName={theme.headerBg}
       density="compact"
       size="lg"

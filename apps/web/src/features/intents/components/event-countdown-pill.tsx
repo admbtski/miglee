@@ -12,6 +12,8 @@ type CountdownPhase =
   | 'STARTED_NO_LATE_JOIN'
   | 'ENDED';
 
+type CountdownPillSize = 'xs' | 'sm' | 'md' | 'lg';
+
 type EventCountdownPillProps = {
   startAt: Date;
   endAt: Date;
@@ -22,7 +24,52 @@ type EventCountdownPillProps = {
   joinManuallyClosed?: boolean;
   isCanceled?: boolean;
   isDeleted?: boolean;
+  size?: CountdownPillSize;
 };
+
+/* ───────────────────────────── Sizing ───────────────────────────── */
+
+const SIZE_STYLES: Record<
+  CountdownPillSize,
+  {
+    container: string;
+    icon: string;
+    clockIcon: string;
+    text: string;
+    gap: string;
+  }
+> = {
+  xs: {
+    container: 'px-1.5 py-0.5 rounded-full',
+    icon: 'h-3 w-3',
+    clockIcon: 'h-2.5 w-2.5',
+    text: 'text-[10px]',
+    gap: 'gap-1',
+  },
+  sm: {
+    container: 'px-2 py-0.5 rounded-full',
+    icon: 'h-3.5 w-3.5',
+    clockIcon: 'h-3 w-3',
+    text: 'text-[11px]',
+    gap: 'gap-1.5',
+  },
+  md: {
+    container: 'px-2.5 py-1 rounded-full',
+    icon: 'h-3.5 w-3.5',
+    clockIcon: 'h-3 w-3',
+    text: 'text-[12px]',
+    gap: 'gap-1.5',
+  },
+  lg: {
+    container: 'px-3 py-1.5 rounded-full',
+    icon: 'h-4 w-4',
+    clockIcon: 'h-3.5 w-3.5',
+    text: 'text-sm',
+    gap: 'gap-2',
+  },
+};
+
+/* ───────────────────────────── Component ───────────────────────────── */
 
 export function EventCountdownPill({
   startAt,
@@ -34,6 +81,7 @@ export function EventCountdownPill({
   joinManuallyClosed,
   isCanceled,
   isDeleted,
+  size = 'md',
 }: EventCountdownPillProps) {
   const [now, setNow] = useState(new Date());
 
@@ -217,21 +265,24 @@ export function EventCountdownPill({
   };
 
   const colors = colorClasses[color];
+  const S = SIZE_STYLES[size];
 
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all',
+        'inline-flex items-center font-medium transition-all',
+        S.container,
+        S.gap,
         colors.bg,
         colors.text
       )}
       title={`${label} ${timeString}`}
     >
-      <Icon className={clsx('h-3.5 w-3.5', colors.icon)} />
-      <span className="whitespace-nowrap">
+      <Icon className={clsx(S.icon, colors.icon)} />
+      <span className={clsx('whitespace-nowrap', S.text)}>
         {label} <span className="tabular-nums font-semibold">{timeString}</span>
       </span>
-      <Clock className={clsx('h-3 w-3 animate-pulse', colors.icon)} />
+      <Clock className={clsx(S.clockIcon, 'animate-pulse', colors.icon)} />
     </span>
   );
 }

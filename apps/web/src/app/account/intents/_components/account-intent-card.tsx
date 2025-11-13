@@ -294,20 +294,50 @@ export function AccountIntentCard(props: {
         y: canJoin ? planAnimationConfig.cardHover.liftY / 2 : 0,
         scale: canJoin ? planAnimationConfig.cardHover.scale : 1,
       }}
-      transition={{
-        type: 'spring',
-        stiffness: planAnimationConfig.cardHover.spring.stiffness,
-        damping: planAnimationConfig.cardHover.spring.damping,
-        mass: planAnimationConfig.cardHover.spring.mass,
-      }}
       className={clsx(
         'relative w-full rounded-2xl p-4 flex flex-col gap-2 shadow-sm ring-1',
         planStyling.ring,
         planStyling.bg,
-        planStyling?.ringExtra,
-        planStyling?.glow,
+        plan === 'default' && planStyling?.glow,
         'cursor-pointer select-none'
       )}
+      style={
+        plan && plan !== 'default'
+          ? {
+              boxShadow: planAnimationConfig.glowingShadow.shadows[plan].min,
+            }
+          : undefined
+      }
+      animate={
+        plan && plan !== 'default'
+          ? {
+              boxShadow: [
+                planAnimationConfig.glowingShadow.shadows[plan].min,
+                planAnimationConfig.glowingShadow.shadows[plan].mid,
+                planAnimationConfig.glowingShadow.shadows[plan].max,
+                planAnimationConfig.glowingShadow.shadows[plan].mid,
+                planAnimationConfig.glowingShadow.shadows[plan].min,
+              ],
+            }
+          : undefined
+      }
+      transition={{
+        // Hover transition for y and scale
+        type: 'spring',
+        stiffness: planAnimationConfig.cardHover.spring.stiffness,
+        damping: planAnimationConfig.cardHover.spring.damping,
+        mass: planAnimationConfig.cardHover.spring.mass,
+        // BoxShadow animation - synchronized with shimmer (4s cycle)
+        boxShadow:
+          plan && plan !== 'default'
+            ? {
+                duration: planAnimationConfig.glowingShadow.duration,
+                repeat: Infinity,
+                ease: planAnimationConfig.glowingShadow.easing,
+                times: [0, 0.25, 0.5, 0.75, 1], // Smooth progression through keyframes
+              }
+            : undefined,
+      }}
       role="button"
       tabIndex={0}
       aria-label={`Szczegóły wydarzenia: ${title}`}
@@ -318,14 +348,15 @@ export function AccountIntentCard(props: {
         <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
           <motion.div
             className={clsx(
-              'absolute inset-0 opacity-0',
+              'absolute inset-0',
               plan === 'basic' &&
-                'bg-gradient-to-br from-emerald-400/10 via-transparent to-emerald-600/10',
+                'bg-gradient-to-br from-emerald-400/20 via-emerald-500/5 to-emerald-600/20',
               plan === 'plus' &&
-                'bg-gradient-to-br from-indigo-400/10 via-transparent to-indigo-600/10',
+                'bg-gradient-to-br from-indigo-400/20 via-indigo-500/5 to-indigo-600/20',
               plan === 'premium' &&
-                'bg-gradient-to-br from-amber-400/10 via-transparent to-amber-600/10'
+                'bg-gradient-to-br from-amber-400/25 via-amber-500/8 to-amber-600/25'
             )}
+            initial={{ opacity: 0.2, scale: 1 }}
             animate={{
               opacity: planAnimationConfig.gradientPulse.opacityRange,
               scale: planAnimationConfig.gradientPulse.scaleRange,
@@ -347,11 +378,11 @@ export function AccountIntentCard(props: {
               'absolute -inset-full',
               'bg-gradient-to-r',
               plan === 'basic' &&
-                `from-transparent via-emerald-400/${Math.round(planAnimationConfig.shimmer.planOpacity.basic * 100)} to-transparent`,
+                'from-transparent via-emerald-400/20 to-transparent',
               plan === 'plus' &&
-                `from-transparent via-indigo-400/${Math.round(planAnimationConfig.shimmer.planOpacity.plus * 100)} to-transparent`,
+                'from-transparent via-indigo-400/25 to-transparent',
               plan === 'premium' &&
-                `from-transparent via-amber-400/${Math.round(planAnimationConfig.shimmer.planOpacity.premium * 100)} to-transparent`
+                'from-transparent via-amber-400/30 to-transparent'
             )}
             animate={{
               x: ['-100%', '200%'],
