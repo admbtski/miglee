@@ -22,7 +22,6 @@ import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
 import { EventManagementModalConnect } from './_components/managemen/event-management-modal-connect';
-import { getLockHoursFallback } from '@/lib/adapters/plan-utils';
 
 // New components
 import { IntentsHeader } from './_components/intents-header';
@@ -344,7 +343,6 @@ export default function IntentsPage() {
             AddressVisibility.Public,
           plan: 'default',
           showSponsoredBadge: true,
-          lockHoursBeforeStart: Number(getLockHoursFallback(preview)),
         }}
       />
 

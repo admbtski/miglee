@@ -8,7 +8,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
 import { AccountIntentCard } from './account-intent-card';
-import { planForIndex, getLockHoursFallback } from '@/lib/adapters/plan-utils';
+import { planForIndex } from '@/lib/adapters/plan-utils';
 import type { IntentsResultCoreFragment_IntentsResult_items_Intent as IntentItem } from '@/lib/api/__generated__/react-query-update';
 
 type IntentsGridVirtualizedProps = {
@@ -72,7 +72,11 @@ export const IntentsGridVirtualized = memo(function IntentsGridVirtualized({
           isOnsite={it.isOnsite}
           isHybrid={it.isHybrid}
           plan={planForIndex(index)}
-          lockHoursBeforeStart={Number(getLockHoursFallback(it))}
+          joinOpensMinutesBeforeStart={it.joinOpensMinutesBeforeStart}
+          joinCutoffMinutesBeforeStart={it.joinCutoffMinutesBeforeStart}
+          allowJoinLate={it.allowJoinLate}
+          lateJoinCutoffMinutesAfterStart={it.lateJoinCutoffMinutesAfterStart}
+          joinManuallyClosed={it.joinManuallyClosed}
           onPreview={onPreview}
           onEdit={onEdit}
           onDelete={onDelete}

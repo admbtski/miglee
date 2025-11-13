@@ -8,8 +8,10 @@ import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { PlanBadge } from '@/components/ui/plan-badge';
 import { Plan, planTheme } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
-import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { computeJoinState } from '@/lib/utils/intent-join-state';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
+import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import { Avatar } from '@/components/ui/avatar';
 import {
   AddressVisibility,
@@ -66,7 +68,6 @@ export interface EventCardProps {
   max: number;
   tags?: string[];
   categories: string[];
-  lockHoursBeforeStart?: number;
   inline?: boolean;
   onJoin?: () => void | Promise<void>;
   className?: string;
@@ -80,6 +81,13 @@ export interface EventCardProps {
   lockReason?: string | null;
   canJoin: boolean;
   isFull: boolean;
+
+  // Join window settings
+  joinOpensMinutesBeforeStart?: number | null;
+  joinCutoffMinutesBeforeStart?: number | null;
+  allowJoinLate?: boolean;
+  lateJoinCutoffMinutesAfterStart?: number | null;
+  joinManuallyClosed?: boolean;
 
   isHybrid: boolean;
   isOnline: boolean;
@@ -174,6 +182,11 @@ export function EventCard({
   canJoin,
   withinLock,
   lockReason,
+  joinOpensMinutesBeforeStart,
+  joinCutoffMinutesBeforeStart,
+  allowJoinLate,
+  lateJoinCutoffMinutesAfterStart,
+  joinManuallyClosed,
   members = [],
   plan = 'default',
   addressVisibility,
@@ -190,29 +203,98 @@ export function EventCard({
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO), [endISO]);
 
-  const { status } = useMemo(
-    () =>
-      computeJoinState({
-        startAt: start,
-        isCanceled,
-        isDeleted,
-        isFull,
-        isOngoing,
-        hasStarted,
-        withinLock,
-        lockReason: lockReason as any,
-      }),
-    [
-      start,
-      hasStarted,
-      isCanceled,
-      isDeleted,
-      isFull,
-      isOngoing,
-      withinLock,
-      lockReason,
-    ]
-  );
+  // Compute join state using new logic with join window
+  const joinState = useMemo(() => {
+    // If canceled or deleted, skip computeJoinState
+    if (isDeleted || isCanceled) {
+      return null;
+    }
+
+    // Use new computeJoinState with join window logic
+    return computeJoinState(new Date(), {
+      startAt: start,
+      endAt: end,
+      joinOpensMinutesBeforeStart,
+      joinCutoffMinutesBeforeStart,
+      allowJoinLate: allowJoinLate ?? true,
+      lateJoinCutoffMinutesAfterStart,
+      joinManuallyClosed: joinManuallyClosed ?? false,
+      min,
+      max,
+      joinedCount,
+      joinMode: 'OPEN', // EventCard doesn't have joinMode, default to OPEN
+    });
+  }, [
+    start,
+    end,
+    isDeleted,
+    isCanceled,
+    joinOpensMinutesBeforeStart,
+    joinCutoffMinutesBeforeStart,
+    allowJoinLate,
+    lateJoinCutoffMinutesAfterStart,
+    joinManuallyClosed,
+    min,
+    max,
+    joinedCount,
+  ]);
+
+  // Map new joinState to old status format for StatusBadge
+  const status = useMemo(() => {
+    if (isDeleted)
+      return {
+        label: 'Usunięte',
+        tone: 'error' as const,
+        reason: 'DELETED' as const,
+      };
+    if (isCanceled)
+      return {
+        label: 'Odwołane',
+        tone: 'warn' as const,
+        reason: 'CANCELED' as const,
+      };
+    if (isOngoing)
+      return {
+        label: 'Trwa teraz',
+        tone: 'info' as const,
+        reason: 'ONGOING' as const,
+      };
+
+    if (joinState) {
+      if (joinState.isManuallyClosed)
+        return {
+          label: 'Zablokowane',
+          tone: 'error' as const,
+          reason: 'LOCK' as const,
+        };
+      if (joinState.isBeforeOpen)
+        return {
+          label: 'Wkrótce',
+          tone: 'warn' as const,
+          reason: 'LOCK' as const,
+        };
+      if (joinState.isPreCutoffClosed)
+        return {
+          label: 'Zablokowane',
+          tone: 'error' as const,
+          reason: 'LOCK' as const,
+        };
+      if (joinState.isFull)
+        return {
+          label: 'Brak miejsc',
+          tone: 'error' as const,
+          reason: 'FULL' as const,
+        };
+    }
+
+    if (hasStarted)
+      return {
+        label: 'Rozpoczęte',
+        tone: 'error' as const,
+        reason: 'STARTED' as const,
+      };
+    return { label: 'Dostępne', tone: 'ok' as const, reason: 'OK' as const };
+  }, [isDeleted, isCanceled, isOngoing, hasStarted, joinState]);
 
   const fill = useMemo(
     () => Math.min(100, Math.round((joinedCount / Math.max(1, max)) * 100)),
@@ -279,7 +361,13 @@ export function EventCard({
           addressVisibility,
           plan,
           showSponsoredBadge,
-          lockHoursBeforeStart: 6,
+          joinOpensMinutesBeforeStart,
+          joinCutoffMinutesBeforeStart,
+          allowJoinLate,
+          lateJoinCutoffMinutesAfterStart,
+          joinManuallyClosed,
+          isCanceled,
+          isDeleted,
         }}
       />
     </Suspense>
@@ -409,7 +497,6 @@ export function EventCard({
     );
   }
 
-  /* ───────── Tile wariant ───────── */
   return (
     <>
       <motion.div
@@ -434,6 +521,13 @@ export function EventCard({
         aria-label={`Szczegóły wydarzenia: ${organizerName}`}
         data-plan={plan}
       >
+        {/* Plan Badge - Top Right Corner */}
+        {showSponsoredBadge && plan && plan !== 'default' && (
+          <div className="absolute -top-2 -right-1">
+            <PlanBadge plan={plan} size="sm" variant="iconText" />
+          </div>
+        )}
+
         {/* Range + duration */}
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center min-w-0 gap-1.5 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
@@ -509,9 +603,6 @@ export function EventCard({
             statusReason={status.reason}
           />
           <div className="flex items-center gap-1.5 min-w-0">
-            {showSponsoredBadge && plan && plan !== 'default' && (
-              <PlanBadge plan={plan} size="xs" variant="icon" />
-            )}
             {status.reason !== 'FULL' && (
               <StatusBadge
                 size="xs"
@@ -522,6 +613,19 @@ export function EventCard({
             )}
           </div>
         </div>
+
+        {/* Countdown Timer Pill */}
+        <EventCountdownPill
+          startAt={start}
+          endAt={end}
+          joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+          joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+          allowJoinLate={allowJoinLate}
+          lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
+          joinManuallyClosed={joinManuallyClosed}
+          isCanceled={isCanceled}
+          isDeleted={isDeleted}
+        />
 
         {/* Progress */}
         <div className="mt-1.5">

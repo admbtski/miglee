@@ -6,6 +6,7 @@ import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { Plan, planTheme } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { StatusBadge, computeJoinState } from '@/components/ui/status-badge';
+import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import type {
   AddressVisibility,
   Level,
@@ -97,7 +98,6 @@ export function AccountIntentCard(props: {
   categories?: string[];
   tags?: string[];
   levels?: Level[];
-  lockHoursBeforeStart?: number;
   isCanceled?: boolean | null;
   isFull?: boolean | null;
   isOngoing?: boolean | null;
@@ -109,6 +109,13 @@ export function AccountIntentCard(props: {
   isHybrid: boolean;
   isOnline: boolean;
   isOnsite: boolean;
+
+  // Join window settings
+  joinOpensMinutesBeforeStart?: number | null;
+  joinCutoffMinutesBeforeStart?: number | null;
+  allowJoinLate?: boolean;
+  lateJoinCutoffMinutesAfterStart?: number | null;
+  joinManuallyClosed?: boolean;
 
   /** Czy to wydarzenie jest „moje” (owner); steruje menu akcji. */
   owned?: boolean;
@@ -146,6 +153,11 @@ export function AccountIntentCard(props: {
     withinLock,
     owned,
     plan,
+    joinOpensMinutesBeforeStart,
+    joinCutoffMinutesBeforeStart,
+    allowJoinLate,
+    lateJoinCutoffMinutesAfterStart,
+    joinManuallyClosed,
     onPreview,
     onEdit,
     onCancel,
@@ -374,6 +386,19 @@ export function AccountIntentCard(props: {
           label={status.label}
         />
       </div>
+
+      {/* Countdown Timer Pill */}
+      <EventCountdownPill
+        startAt={new Date(startAt)}
+        endAt={new Date(endAt ?? startAt)}
+        joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+        joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+        allowJoinLate={allowJoinLate}
+        lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
+        joinManuallyClosed={joinManuallyClosed}
+        isCanceled={!!isCanceled}
+        isDeleted={!!isDeleted}
+      />
 
       {/* Progress */}
       <div className="mt-1">

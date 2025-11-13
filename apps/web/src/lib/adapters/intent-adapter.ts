@@ -58,6 +58,14 @@ export function mapIntentToEventCardProps(
     canJoin: item.canJoin,
     isFull: item.isFull,
 
+    // Join window settings
+    joinOpensMinutesBeforeStart: item.joinOpensMinutesBeforeStart ?? null,
+    joinCutoffMinutesBeforeStart: item.joinCutoffMinutesBeforeStart ?? null,
+    allowJoinLate: item.allowJoinLate ?? true,
+    lateJoinCutoffMinutesAfterStart:
+      item.lateJoinCutoffMinutesAfterStart ?? null,
+    joinManuallyClosed: item.joinManuallyClosed ?? false,
+
     isHybrid: item.isHybrid,
     isOnline: item.isOnline,
     isOnsite: item.isOnsite,

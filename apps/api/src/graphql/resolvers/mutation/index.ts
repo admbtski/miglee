@@ -17,8 +17,10 @@ import {
 // Intent mutations (create/update/delete)
 import {
   cancelIntentMutation,
+  closeIntentJoinMutation,
   createIntentMutation,
   deleteIntentMutation,
+  reopenIntentJoinMutation,
   updateIntentMutation,
 } from './intents';
 
@@ -205,6 +207,8 @@ export const Mutation: Resolvers['Mutation'] = {
   updateIntent: updateIntentMutation,
   cancelIntent: cancelIntentMutation,
   deleteIntent: deleteIntentMutation,
+  closeIntentJoin: closeIntentJoinMutation,
+  reopenIntentJoin: reopenIntentJoinMutation,
 
   // ---- Intent Members / Moderation ----
   acceptInvite: acceptInviteMutation,

@@ -35,6 +35,13 @@ export type IntentListItem = {
   lockReason?: string | null;
   canJoin: boolean;
 
+  // Join window settings
+  joinOpensMinutesBeforeStart?: number | null;
+  joinCutoffMinutesBeforeStart?: number | null;
+  allowJoinLate?: boolean;
+  lateJoinCutoffMinutesAfterStart?: number | null;
+  joinManuallyClosed?: boolean;
+
   isHybrid: boolean;
   isOnline: boolean;
   isOnsite: boolean;

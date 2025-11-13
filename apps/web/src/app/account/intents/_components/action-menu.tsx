@@ -3,6 +3,8 @@
 import {
   Ban,
   Eye,
+  Lock,
+  LockOpen,
   MoreVertical,
   Pencil,
   Trash2,
@@ -31,6 +33,8 @@ type Props = {
   onEdit?: () => void | Promise<void>;
   onLeave?: () => void | Promise<void>;
   onManage?: () => void | Promise<void>;
+  onCloseJoin?: () => void | Promise<void>;
+  onReopenJoin?: () => void | Promise<void>;
   onCancel?: () => void | Promise<void>;
   onDelete?: () => void | Promise<void>;
 
@@ -38,8 +42,13 @@ type Props = {
   disableEdit?: boolean;
   disableLeave?: boolean;
   disableManage?: boolean;
+  disableCloseJoin?: boolean;
+  disableReopenJoin?: boolean;
   disableCancel?: boolean;
   disableDelete?: boolean;
+
+  // Additional props for conditional rendering
+  isJoinManuallyClosed?: boolean;
 
   label?: string;
   /** default: 'bottom-end' */
@@ -53,14 +62,19 @@ export function ActionMenu({
   onEdit,
   onLeave,
   onManage,
+  onCloseJoin,
+  onReopenJoin,
   onCancel,
   onDelete,
   disablePreview,
   disableEdit,
   disableLeave,
   disableManage,
+  disableCloseJoin,
+  disableReopenJoin,
   disableCancel,
   disableDelete,
+  isJoinManuallyClosed = false,
   label = 'Menu akcji',
   placement = 'bottom-end',
   strategy = 'fixed',
@@ -154,6 +168,28 @@ export function ActionMenu({
         tone: 'default' as const,
       },
       { divider: true },
+      // Conditionally show close or reopen join
+      ...(isJoinManuallyClosed
+        ? [
+            {
+              id: 'reopenJoin',
+              label: 'Otwórz zapisy',
+              Icon: LockOpen,
+              onClick: onReopenJoin,
+              disabled: !!disableReopenJoin,
+              tone: 'default' as const,
+            },
+          ]
+        : [
+            {
+              id: 'closeJoin',
+              label: 'Zamknij zapisy',
+              Icon: Lock,
+              onClick: onCloseJoin,
+              disabled: !!disableCloseJoin,
+              tone: 'default' as const,
+            },
+          ]),
       {
         id: 'leave',
         label: 'Opuść',
@@ -183,15 +219,20 @@ export function ActionMenu({
       onPreview,
       onEdit,
       onManage,
+      onCloseJoin,
+      onReopenJoin,
       onLeave,
       onCancel,
       onDelete,
       disablePreview,
       disableEdit,
       disableManage,
+      disableCloseJoin,
+      disableReopenJoin,
       disableLeave,
       disableCancel,
       disableDelete,
+      isJoinManuallyClosed,
     ]
   );
 

@@ -1,6 +1,16 @@
 import type { EventDetailsData } from '@/types/event-details';
 import { formatDuration } from '@/lib/utils/intent-join-state';
-import { Clock, MapPin, Globe, Info } from 'lucide-react';
+import {
+  Clock,
+  ClockFading,
+  Gauge,
+  Globe,
+  Info,
+  Lock,
+  MapPin,
+  Rocket,
+  Sprout,
+} from 'lucide-react';
 
 type EventDetailsProps = {
   event: EventDetailsData;
@@ -85,6 +95,91 @@ export function EventDetails({ event }: EventDetailsProps) {
             )}
         </div>
       </div>
+
+      {/* Join Window Settings */}
+      {(event.joinOpensMinutesBeforeStart ||
+        event.joinCutoffMinutesBeforeStart ||
+        event.allowJoinLate ||
+        event.lateJoinCutoffMinutesAfterStart ||
+        event.joinManuallyClosed) && (
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-6 dark:border-indigo-800 dark:bg-indigo-900/20">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+            <Gauge className="h-4 w-4" />
+            Ustawienia zapisów
+          </div>
+          <div className="space-y-3 text-sm text-indigo-900 dark:text-indigo-100">
+            {event.joinOpensMinutesBeforeStart && (
+              <div className="flex items-start gap-2">
+                <Sprout className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>
+                  Zapisy otwierają się{' '}
+                  <strong className="font-semibold tabular-nums">
+                    {event.joinOpensMinutesBeforeStart} min
+                  </strong>{' '}
+                  przed startem
+                </span>
+              </div>
+            )}
+            {event.joinCutoffMinutesBeforeStart && (
+              <div className="flex items-start gap-2">
+                <Rocket className="mt-0.5 h-4 w-4 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+                <span>
+                  Zapisy zamykają się{' '}
+                  <strong className="font-semibold tabular-nums">
+                    {event.joinCutoffMinutesBeforeStart} min
+                  </strong>{' '}
+                  przed startem
+                </span>
+              </div>
+            )}
+            {event.allowJoinLate ? (
+              <div className="flex items-start gap-2">
+                <ClockFading className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-600 dark:text-rose-400" />
+                <span>
+                  Można dołączyć po starcie
+                  {event.lateJoinCutoffMinutesAfterStart && (
+                    <>
+                      {' '}
+                      (do{' '}
+                      <strong className="font-semibold tabular-nums">
+                        {event.lateJoinCutoffMinutesAfterStart} min
+                      </strong>{' '}
+                      po starcie)
+                    </>
+                  )}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2">
+                <ClockFading className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
+                <span className="text-indigo-700 dark:text-indigo-300">
+                  Brak możliwości dołączenia po starcie
+                </span>
+              </div>
+            )}
+            {event.joinManuallyClosed && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-100/50 p-3 dark:border-amber-700 dark:bg-amber-900/30">
+                <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700 dark:text-amber-400" />
+                <div>
+                  <div className="font-semibold text-amber-900 dark:text-amber-200">
+                    Zapisy ręcznie zamknięte
+                  </div>
+                  {event.joinManualCloseReason && (
+                    <div className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                      {event.joinManualCloseReason}
+                    </div>
+                  )}
+                  {event.joinManuallyClosedAt && (
+                    <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                      {new Date(event.joinManuallyClosedAt).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Description Section */}
       {event.description && (

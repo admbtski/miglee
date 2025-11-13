@@ -18,6 +18,12 @@ import {
   CancelIntentDocument,
   CancelIntentMutation,
   CancelIntentMutationVariables,
+  CloseIntentJoinDocument,
+  CloseIntentJoinMutation,
+  CloseIntentJoinMutationVariables,
+  ReopenIntentJoinDocument,
+  ReopenIntentJoinMutation,
+  ReopenIntentJoinMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
@@ -307,6 +313,62 @@ export function buildCancelIntentOptions<TContext = unknown>(
   };
 }
 
+// NEW: closeIntentJoin builder
+export function buildCloseIntentJoinOptions<TContext = unknown>(
+  options?: UseMutationOptions<
+    CloseIntentJoinMutation,
+    unknown,
+    CloseIntentJoinMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  CloseIntentJoinMutation,
+  unknown,
+  CloseIntentJoinMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['CloseIntentJoin'] as QueryKey,
+    mutationFn: async (variables: CloseIntentJoinMutationVariables) =>
+      gqlClient.request<
+        CloseIntentJoinMutation,
+        CloseIntentJoinMutationVariables
+      >(CloseIntentJoinDocument, variables),
+    meta: {
+      successMessage: 'Zapisy zamknięte pomyślnie',
+    },
+    ...(options ?? {}),
+  };
+}
+
+// NEW: reopenIntentJoin builder
+export function buildReopenIntentJoinOptions<TContext = unknown>(
+  options?: UseMutationOptions<
+    ReopenIntentJoinMutation,
+    unknown,
+    ReopenIntentJoinMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  ReopenIntentJoinMutation,
+  unknown,
+  ReopenIntentJoinMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['ReopenIntentJoin'] as QueryKey,
+    mutationFn: async (variables: ReopenIntentJoinMutationVariables) =>
+      gqlClient.request<
+        ReopenIntentJoinMutation,
+        ReopenIntentJoinMutationVariables
+      >(ReopenIntentJoinDocument, variables),
+    meta: {
+      successMessage: 'Zapisy otwarte ponownie',
+    },
+    ...(options ?? {}),
+  };
+}
+
 /* -------------------------------- MUTATIONS ------------------------------- */
 export function useCreateIntentMutation(
   options?: UseMutationOptions<
@@ -422,6 +484,74 @@ export function useCancelIntentMutation(
           qc.invalidateQueries({
             queryKey: GET_INTENT_ONE_KEY({
               id: vars.id,
+            }) as unknown as QueryKey,
+          });
+        }
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+// NEW: closeIntentJoin hook
+export function useCloseIntentJoinMutation(
+  options?: UseMutationOptions<
+    CloseIntentJoinMutation,
+    unknown,
+    CloseIntentJoinMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    CloseIntentJoinMutation,
+    unknown,
+    CloseIntentJoinMutationVariables
+  >(
+    buildCloseIntentJoinOptions({
+      onSuccess: (_data, vars) => {
+        // odśwież listy i szczegół
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+        });
+        if (vars.intentId) {
+          qc.invalidateQueries({
+            queryKey: GET_INTENT_ONE_KEY({
+              id: vars.intentId,
+            }) as unknown as QueryKey,
+          });
+        }
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+// NEW: reopenIntentJoin hook
+export function useReopenIntentJoinMutation(
+  options?: UseMutationOptions<
+    ReopenIntentJoinMutation,
+    unknown,
+    ReopenIntentJoinMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    ReopenIntentJoinMutation,
+    unknown,
+    ReopenIntentJoinMutationVariables
+  >(
+    buildReopenIntentJoinOptions({
+      onSuccess: (_data, vars) => {
+        // odśwież listy i szczegół
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+        });
+        if (vars.intentId) {
+          qc.invalidateQueries({
+            queryKey: GET_INTENT_ONE_KEY({
+              id: vars.intentId,
             }) as unknown as QueryKey,
           });
         }

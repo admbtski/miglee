@@ -419,6 +419,12 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
             startAt: input.startAt as Date,
             endAt: input.endAt as Date,
             allowJoinLate: input.allowJoinLate,
+            joinOpensMinutesBeforeStart:
+              input.joinOpensMinutesBeforeStart ?? null,
+            joinCutoffMinutesBeforeStart:
+              input.joinCutoffMinutesBeforeStart ?? null,
+            lateJoinCutoffMinutesAfterStart:
+              input.lateJoinCutoffMinutesAfterStart ?? null,
 
             meetingKind: input.meetingKind as PrismaMeetingKind,
             onlineUrl: input.onlineUrl ?? null,
@@ -600,6 +606,18 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         ...(input.endAt !== undefined ? { endAt: input.endAt as Date } : {}),
         ...(typeof input.allowJoinLate === 'boolean'
           ? { allowJoinLate: input.allowJoinLate }
+          : {}),
+        ...(input.joinOpensMinutesBeforeStart !== undefined
+          ? { joinOpensMinutesBeforeStart: input.joinOpensMinutesBeforeStart }
+          : {}),
+        ...(input.joinCutoffMinutesBeforeStart !== undefined
+          ? { joinCutoffMinutesBeforeStart: input.joinCutoffMinutesBeforeStart }
+          : {}),
+        ...(input.lateJoinCutoffMinutesAfterStart !== undefined
+          ? {
+              lateJoinCutoffMinutesAfterStart:
+                input.lateJoinCutoffMinutesAfterStart,
+            }
           : {}),
 
         ...(input.meetingKind !== undefined
@@ -919,5 +937,141 @@ export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
       }
 
       return true;
+    }
+  );
+
+/** Close Intent Join — ręczne zamknięcie zapisów */
+export const closeIntentJoinMutation: MutationResolvers['closeIntentJoin'] =
+  resolverWithMetrics(
+    'Mutation',
+    'closeIntentJoin',
+    async (_p, { intentId, reason }, { user }) => {
+      const actorId = user?.id ?? null;
+      if (!actorId) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Sprawdź czy intent istnieje i czy user jest owner/moderator/admin
+      const intent = await prisma.intent.findUnique({
+        where: { id: intentId },
+        include: {
+          members: {
+            where: { userId: actorId },
+            select: { role: true },
+          },
+        },
+      });
+
+      if (!intent) {
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      if (intent.deletedAt) {
+        throw new GraphQLError('Intent is deleted.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+
+      // Sprawdź uprawnienia: owner, moderator lub admin
+      const isOwner = intent.ownerId === actorId;
+      const isModerator = intent.members.some(
+        (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
+      );
+      const isAdmin = user?.role === 'ADMIN';
+
+      if (!isOwner && !isModerator && !isAdmin) {
+        throw new GraphQLError(
+          'Only owner, moderator or admin can close join.',
+          {
+            extensions: { code: 'FORBIDDEN' },
+          }
+        );
+      }
+
+      // Zamknij zapisy
+      const updated = await prisma.intent.update({
+        where: { id: intentId },
+        data: {
+          joinManuallyClosed: true,
+          joinManuallyClosedAt: new Date(),
+          joinManuallyClosedById: actorId,
+          joinManualCloseReason: reason ?? null,
+        },
+        include: INTENT_INCLUDE,
+      });
+
+      return mapIntent(updated, actorId);
+    }
+  );
+
+/** Reopen Intent Join — ponowne otwarcie zapisów */
+export const reopenIntentJoinMutation: MutationResolvers['reopenIntentJoin'] =
+  resolverWithMetrics(
+    'Mutation',
+    'reopenIntentJoin',
+    async (_p, { intentId }, { user }) => {
+      const actorId = user?.id ?? null;
+      if (!actorId) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Sprawdź czy intent istnieje i czy user jest owner/moderator/admin
+      const intent = await prisma.intent.findUnique({
+        where: { id: intentId },
+        include: {
+          members: {
+            where: { userId: actorId },
+            select: { role: true },
+          },
+        },
+      });
+
+      if (!intent) {
+        throw new GraphQLError('Intent not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      if (intent.deletedAt) {
+        throw new GraphQLError('Intent is deleted.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+
+      // Sprawdź uprawnienia: owner, moderator lub admin
+      const isOwner = intent.ownerId === actorId;
+      const isModerator = intent.members.some(
+        (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
+      );
+      const isAdmin = user?.role === 'ADMIN';
+
+      if (!isOwner && !isModerator && !isAdmin) {
+        throw new GraphQLError(
+          'Only owner, moderator or admin can reopen join.',
+          {
+            extensions: { code: 'FORBIDDEN' },
+          }
+        );
+      }
+
+      // Otwórz zapisy ponownie
+      const updated = await prisma.intent.update({
+        where: { id: intentId },
+        data: {
+          joinManuallyClosed: false,
+          joinManuallyClosedAt: null,
+          joinManuallyClosedById: null,
+          joinManualCloseReason: null,
+        },
+        include: INTENT_INCLUDE,
+      });
+
+      return mapIntent(updated, actorId);
     }
   );

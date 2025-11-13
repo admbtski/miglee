@@ -7,7 +7,6 @@
 import { memo } from 'react';
 import { AccountIntentCard } from './account-intent-card';
 import { planForIndex } from '@/lib/adapters/plan-utils';
-import { getLockHoursFallback } from '@/lib/adapters/plan-utils';
 import type { IntentsResultCoreFragment_IntentsResult_items_Intent as IntentItem } from '@/lib/api/__generated__/react-query-update';
 
 type IntentsGridProps = {
@@ -61,7 +60,11 @@ export const IntentsGrid = memo(function IntentsGrid({
           isOnsite={it.isOnsite}
           isHybrid={it.isHybrid}
           plan={planForIndex(index)}
-          lockHoursBeforeStart={Number(getLockHoursFallback(it))}
+          joinOpensMinutesBeforeStart={it.joinOpensMinutesBeforeStart}
+          joinCutoffMinutesBeforeStart={it.joinCutoffMinutesBeforeStart}
+          allowJoinLate={it.allowJoinLate}
+          lateJoinCutoffMinutesAfterStart={it.lateJoinCutoffMinutesAfterStart}
+          joinManuallyClosed={it.joinManuallyClosed}
           onPreview={onPreview}
           onEdit={onEdit}
           onDelete={onDelete}

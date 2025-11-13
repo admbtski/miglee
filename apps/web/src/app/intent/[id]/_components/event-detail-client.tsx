@@ -10,6 +10,7 @@ import { EventActions } from './event-actions';
 import { EventAdminPanel } from './event-admin-panel';
 import { EventComments } from './event-comments';
 import { EventReviews } from './event-reviews';
+import { EventCountdownTimer } from './event-countdown-timer';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
 import { useMemo, useState } from 'react';
@@ -18,6 +19,10 @@ import { CreateEditIntentModalConnect } from '@/features/intents/components/crea
 import { EventManagementModalConnect } from '@/app/account/intents/_components/managemen/event-management-modal-connect';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
 import { DeleteIntentModals } from '@/app/account/intents/_components/delete-intent-modals';
+import {
+  CloseJoinModal,
+  ReopenJoinModal,
+} from '@/app/account/intents/_components/close-join-modals';
 
 type EventDetailClientProps = {
   intentId: string;
@@ -32,6 +37,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const [manageOpen, setManageOpen] = useState(false);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [closeJoinId, setCloseJoinId] = useState<string | null>(null);
+  const [reopenJoinId, setReopenJoinId] = useState<string | null>(null);
+  const [closeJoinReason, setCloseJoinReason] = useState('');
 
   if (isLoading) {
     return <EventDetailSkeleton />;
@@ -218,6 +226,21 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
+            {/* Countdown Timer */}
+            <EventCountdownTimer
+              startAt={new Date(intent.startAt)}
+              endAt={new Date(intent.endAt)}
+              joinOpensMinutesBeforeStart={intent.joinOpensMinutesBeforeStart}
+              joinCutoffMinutesBeforeStart={intent.joinCutoffMinutesBeforeStart}
+              allowJoinLate={intent.allowJoinLate}
+              lateJoinCutoffMinutesAfterStart={
+                intent.lateJoinCutoffMinutesAfterStart
+              }
+              joinManuallyClosed={intent.joinManuallyClosed}
+              isCanceled={!!intent.canceledAt}
+              isDeleted={!!intent.deletedAt}
+            />
+
             <EventJoinSection event={eventData} />
 
             {/* Admin Panel - tylko dla właściciela i moderatorów */}
@@ -227,6 +250,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               onManage={() => setManageOpen(true)}
               onCancel={() => setCancelId(intentId)}
               onDelete={() => setDeleteId(intentId)}
+              onCloseJoin={() => setCloseJoinId(intentId)}
+              onReopenJoin={() => setReopenJoinId(intentId)}
             />
 
             <EventActions event={eventData} />
@@ -277,6 +302,27 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         subtitle="Ta akcja jest nieodwracalna. Wszystkie dane zostaną trwale usunięte."
         successTitle="Wydarzenie usunięte"
         successSubtitle="Wydarzenie zostało trwale usunięte."
+      />
+
+      <CloseJoinModal
+        intentId={closeJoinId}
+        onClose={() => {
+          setCloseJoinId(null);
+          setCloseJoinReason('');
+        }}
+        onSuccess={() => {
+          refetch();
+        }}
+        reason={closeJoinReason}
+        onReasonChange={setCloseJoinReason}
+      />
+
+      <ReopenJoinModal
+        intentId={reopenJoinId}
+        onClose={() => setReopenJoinId(null)}
+        onSuccess={() => {
+          refetch();
+        }}
       />
     </div>
   );

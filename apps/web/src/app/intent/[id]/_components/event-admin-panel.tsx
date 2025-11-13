@@ -8,6 +8,8 @@ import {
   Trash2,
   Users,
   AlertTriangle,
+  Lock,
+  LockOpen,
 } from 'lucide-react';
 
 type EventAdminPanelProps = {
@@ -16,6 +18,8 @@ type EventAdminPanelProps = {
   onManage: () => void;
   onCancel: () => void;
   onDelete: () => void;
+  onCloseJoin?: () => void;
+  onReopenJoin?: () => void;
 };
 
 /**
@@ -28,6 +32,8 @@ export function EventAdminPanel({
   onManage,
   onCancel,
   onDelete,
+  onCloseJoin,
+  onReopenJoin,
 }: EventAdminPanelProps) {
   const { userMembership } = event;
 
@@ -78,6 +84,29 @@ export function EventAdminPanel({
             </span>
           )}
         </button>
+
+        {/* Zamknij/Otwórz zapisy */}
+        {!isCanceled && !isDeleted && (
+          <>
+            {event.joinManuallyClosed ? (
+              <button
+                onClick={onReopenJoin}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-emerald-700 transition-colors hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-950"
+              >
+                <LockOpen className="h-4 w-4" />
+                <span>Otwórz zapisy ponownie</span>
+              </button>
+            ) : (
+              <button
+                onClick={onCloseJoin}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-amber-700 transition-colors hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-950"
+              >
+                <Lock className="h-4 w-4" />
+                <span>Zamknij zapisy ręcznie</span>
+              </button>
+            )}
+          </>
+        )}
 
         {/* Anuluj wydarzenie */}
         {canCancel && !isCanceled && !isDeleted && (

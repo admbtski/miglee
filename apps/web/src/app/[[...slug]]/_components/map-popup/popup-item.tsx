@@ -8,8 +8,10 @@ import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { PlanBadge } from '@/components/ui/plan-badge';
 import { Plan } from '@/components/ui/plan-theme';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
-import { computeJoinState, StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { computeJoinState } from '@/lib/utils/intent-join-state';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
+import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import { Avatar } from '@/components/ui/avatar';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import { formatDateRange } from '@/lib/utils/date';
@@ -41,6 +43,14 @@ export type PopupIntent = {
   withinLock: boolean;
   lockReason?: string | null;
   canJoin?: boolean | null;
+
+  // Join window settings
+  joinOpensMinutesBeforeStart?: number | null;
+  joinCutoffMinutesBeforeStart?: number | null;
+  allowJoinLate?: boolean;
+  lateJoinCutoffMinutesAfterStart?: number | null;
+  joinManuallyClosed?: boolean;
+
   levels?: GqlLevel[] | null;
   plan?: Plan | null;
   meetingKind?: 'ONSITE' | 'ONLINE' | 'HYBRID' | null;
@@ -63,9 +73,15 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     hasStarted,
     joinedCount,
     max,
+    min,
     withinLock,
     lockReason,
     canJoin,
+    joinOpensMinutesBeforeStart,
+    joinCutoffMinutesBeforeStart,
+    allowJoinLate,
+    lateJoinCutoffMinutesAfterStart,
+    joinManuallyClosed,
   } = intent;
 
   const fill = useMemo(
@@ -82,29 +98,98 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     [intent.levels]
   );
 
-  const { status } = useMemo(
-    () =>
-      computeJoinState({
-        startAt: new Date(startAt),
-        isCanceled,
-        isDeleted,
-        isFull,
-        isOngoing,
-        hasStarted,
-        withinLock,
-        lockReason: lockReason as any,
-      }),
-    [
-      startAt,
-      hasStarted,
-      isCanceled,
-      isDeleted,
-      isFull,
-      isOngoing,
-      withinLock,
-      lockReason,
-    ]
-  );
+  // Compute join state using new logic with join window
+  const joinState = useMemo(() => {
+    // If canceled or deleted, skip computeJoinState
+    if (isDeleted || isCanceled) {
+      return null;
+    }
+
+    // Use new computeJoinState with join window logic
+    return computeJoinState(new Date(), {
+      startAt: new Date(startAt),
+      endAt: new Date(endAt),
+      joinOpensMinutesBeforeStart,
+      joinCutoffMinutesBeforeStart,
+      allowJoinLate: allowJoinLate ?? true,
+      lateJoinCutoffMinutesAfterStart,
+      joinManuallyClosed: joinManuallyClosed ?? false,
+      min: min ?? 2,
+      max: max ?? 2,
+      joinedCount: joinedCount ?? 0,
+      joinMode: 'OPEN', // PopupItem doesn't have joinMode, default to OPEN
+    });
+  }, [
+    startAt,
+    endAt,
+    isDeleted,
+    isCanceled,
+    joinOpensMinutesBeforeStart,
+    joinCutoffMinutesBeforeStart,
+    allowJoinLate,
+    lateJoinCutoffMinutesAfterStart,
+    joinManuallyClosed,
+    min,
+    max,
+    joinedCount,
+  ]);
+
+  // Map new joinState to old status format for StatusBadge
+  const status = useMemo(() => {
+    if (isDeleted)
+      return {
+        label: 'Usunięte',
+        tone: 'error' as const,
+        reason: 'DELETED' as const,
+      };
+    if (isCanceled)
+      return {
+        label: 'Odwołane',
+        tone: 'warn' as const,
+        reason: 'CANCELED' as const,
+      };
+    if (isOngoing)
+      return {
+        label: 'Trwa teraz',
+        tone: 'info' as const,
+        reason: 'ONGOING' as const,
+      };
+
+    if (joinState) {
+      if (joinState.isManuallyClosed)
+        return {
+          label: 'Zablokowane',
+          tone: 'error' as const,
+          reason: 'LOCK' as const,
+        };
+      if (joinState.isBeforeOpen)
+        return {
+          label: 'Wkrótce',
+          tone: 'warn' as const,
+          reason: 'LOCK' as const,
+        };
+      if (joinState.isPreCutoffClosed)
+        return {
+          label: 'Zablokowane',
+          tone: 'error' as const,
+          reason: 'LOCK' as const,
+        };
+      if (joinState.isFull)
+        return {
+          label: 'Brak miejsc',
+          tone: 'error' as const,
+          reason: 'FULL' as const,
+        };
+    }
+
+    if (hasStarted)
+      return {
+        label: 'Rozpoczęte',
+        tone: 'error' as const,
+        reason: 'STARTED' as const,
+      };
+    return { label: 'Dostępne', tone: 'ok' as const, reason: 'OK' as const };
+  }, [isDeleted, isCanceled, isOngoing, hasStarted, joinState]);
 
   return (
     <button
@@ -201,6 +286,21 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         {levelsSorted.map((lv) => (
           <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
         ))}
+      </div>
+
+      {/* Countdown Timer Pill */}
+      <div className="mt-2">
+        <EventCountdownPill
+          startAt={new Date(startAt)}
+          endAt={new Date(endAt)}
+          joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+          joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+          allowJoinLate={allowJoinLate}
+          lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
+          joinManuallyClosed={joinManuallyClosed}
+          isCanceled={isCanceled}
+          isDeleted={isDeleted}
+        />
       </div>
     </button>
   );

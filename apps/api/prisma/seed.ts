@@ -313,6 +313,38 @@ async function createIntentWithMembers(opts: {
   const mode = pick<Mode>([Mode.GROUP, Mode.ONE_TO_ONE]);
   const allowJoinLate = rand() > 0.3;
 
+  // Join window settings (realistic variations)
+  // 60% have some join window restrictions, 40% fully open
+  const hasJoinWindowRestrictions = rand() > 0.4;
+  const joinOpensMinutesBeforeStart = hasJoinWindowRestrictions
+    ? rand() > 0.5
+      ? pick([60, 120, 180, 240, 360, 720, 1440]) // 1h, 2h, 3h, 4h, 6h, 12h, 24h
+      : null
+    : null;
+  const joinCutoffMinutesBeforeStart = hasJoinWindowRestrictions
+    ? rand() > 0.6
+      ? pick([5, 10, 15, 30, 60]) // 5min, 10min, 15min, 30min, 1h
+      : null
+    : null;
+  const lateJoinCutoffMinutesAfterStart =
+    allowJoinLate && rand() > 0.5
+      ? pick([10, 15, 30, 45, 60]) // 10min, 15min, 30min, 45min, 1h
+      : null;
+
+  // 5% of intents are manually closed by owner/moderator
+  const joinManuallyClosed = rand() > 0.95;
+  const joinManuallyClosedAt = joinManuallyClosed ? new Date() : null;
+  const joinManuallyClosedById = joinManuallyClosed ? author.id : null;
+  const joinManualCloseReason = joinManuallyClosed
+    ? pick([
+        'Osiągnięto maksymalną liczbę uczestników (reason)',
+        'Wydarzenie zostało przeniesione (reason)',
+        'Zmiana planów organizatora (reason)',
+        'Problemy techniczne z lokalizacją (reason)',
+        null,
+      ])
+    : null;
+
   // Members visibility: mostly PUBLIC, sometimes AFTER_JOIN, rarely HIDDEN
   const membersVisibility = pick<MembersVisibility>([
     MembersVisibility.PUBLIC,
@@ -407,6 +439,13 @@ async function createIntentWithMembers(opts: {
         startAt,
         endAt,
         allowJoinLate,
+        joinOpensMinutesBeforeStart,
+        joinCutoffMinutesBeforeStart,
+        lateJoinCutoffMinutesAfterStart,
+        joinManuallyClosed,
+        joinManuallyClosedAt,
+        joinManuallyClosedById,
+        joinManualCloseReason,
         meetingKind,
         onlineUrl,
         lat: meetingKind !== MeetingKind.ONLINE ? coords.lat : null,
@@ -768,6 +807,36 @@ async function createPresetIntent(
           AddressVisibility.AFTER_JOIN,
         ]);
 
+  // Join window settings (similar to createIntentWithMembers)
+  const hasJoinWindowRestrictions = rand() > 0.4;
+  const joinOpensMinutesBeforeStart = hasJoinWindowRestrictions
+    ? rand() > 0.5
+      ? pick([60, 120, 180, 240, 360, 720, 1440])
+      : null
+    : null;
+  const joinCutoffMinutesBeforeStart = hasJoinWindowRestrictions
+    ? rand() > 0.6
+      ? pick([5, 10, 15, 30, 60])
+      : null
+    : null;
+  const allowJoinLate = s.allowJoinLate ?? rand() > 0.5;
+  const lateJoinCutoffMinutesAfterStart =
+    allowJoinLate && rand() > 0.5 ? pick([10, 15, 30, 45, 60]) : null;
+
+  // 5% manually closed
+  const joinManuallyClosed = rand() > 0.95;
+  const joinManuallyClosedAt = joinManuallyClosed ? new Date() : null;
+  const joinManuallyClosedById = joinManuallyClosed ? author.id : null;
+  const joinManualCloseReason = joinManuallyClosed
+    ? pick([
+        'Osiągnięto maksymalną liczbę uczestników',
+        'Wydarzenie zostało przeniesione',
+        'Zmiana planów organizatora',
+        'Problemy techniczne z lokalizacją',
+        null,
+      ])
+    : null;
+
   const intent = await tx.intent.create({
     data: {
       title,
@@ -788,7 +857,14 @@ async function createPresetIntent(
       max,
       startAt,
       endAt,
-      allowJoinLate: s.allowJoinLate ?? rand() > 0.5,
+      allowJoinLate,
+      joinOpensMinutesBeforeStart,
+      joinCutoffMinutesBeforeStart,
+      lateJoinCutoffMinutesAfterStart,
+      joinManuallyClosed,
+      joinManuallyClosedAt,
+      joinManuallyClosedById,
+      joinManualCloseReason,
       meetingKind: s.meetingKind,
       onlineUrl,
       lat: s.meetingKind !== MeetingKind.ONLINE ? coords.lat : null,

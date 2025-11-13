@@ -32,13 +32,17 @@ import {
   Calendar,
   CalendarDays,
   Clock,
+  ClockFading,
+  Gauge,
   Info,
   Link as LinkIcon,
   ListChecks,
   Lock,
   MapPin,
+  Rocket,
   Share2,
   Shield,
+  Sprout,
   UserPlus,
   Users,
   Video,
@@ -48,6 +52,7 @@ import { useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import { planTheme, type Plan } from '@/components/ui/plan-theme';
+import { EventCountdownPill } from './event-countdown-pill';
 
 /* ───────────────────────────── Typy ───────────────────────────── */
 
@@ -88,8 +93,17 @@ type Props = {
     addressVisibility: AddressVisibility;
     plan?: Plan;
     showSponsoredBadge?: boolean;
-    /** blokada dołączania X godzin przed startem (opcjonalna) */
-    lockHoursBeforeStart?: number;
+    // Join window settings
+    joinOpensMinutesBeforeStart?: number | null;
+    joinCutoffMinutesBeforeStart?: number | null;
+    allowJoinLate?: boolean;
+    lateJoinCutoffMinutesAfterStart?: number | null;
+    joinManuallyClosed?: boolean;
+    joinManuallyClosedAt?: string | null;
+    joinManualCloseReason?: string | null;
+    // Event status
+    isCanceled?: boolean;
+    isDeleted?: boolean;
   };
 };
 
@@ -404,7 +418,15 @@ export function EventDetailsModal({
     addressVisibility,
     plan = 'default',
     showSponsoredBadge = true,
-    lockHoursBeforeStart,
+    joinOpensMinutesBeforeStart,
+    joinCutoffMinutesBeforeStart,
+    allowJoinLate,
+    lateJoinCutoffMinutesAfterStart,
+    joinManuallyClosed,
+    joinManuallyClosedAt,
+    joinManualCloseReason,
+    isCanceled,
+    isDeleted,
   } = data;
 
   const theme = planTheme(plan);
@@ -412,14 +434,6 @@ export function EventDetailsModal({
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO, start), [endISO, start]);
   const sortedLevels = useMemo(() => sortLevels(levels), [levels]);
-
-  const now = new Date();
-  const msLeft = Math.max(0, start.getTime() - now.getTime());
-  const hoursLeft = msLeft / 36e5;
-  const isLockActive =
-    typeof lockHoursBeforeStart === 'number' &&
-    lockHoursBeforeStart > 0 &&
-    hoursLeft <= lockHoursBeforeStart;
 
   const mv = normalizeMembersVisibility(membersVisibility);
   const av = normalizeAddressVisibility(addressVisibility);
@@ -432,12 +446,8 @@ export function EventDetailsModal({
 
   const pct = getPct({ joinedCount, max });
 
-  const ctaDisabled = !canJoin || isLockActive;
-  const ctaLabel = ctaDisabled
-    ? isLockActive
-      ? 'Zablokowane'
-      : 'Niedostępne'
-    : 'Dołącz';
+  const ctaDisabled = !canJoin;
+  const ctaLabel = ctaDisabled ? 'Niedostępne' : 'Dołącz';
 
   // ⬇️ Nawigacja do detalu
   const computedHref =
@@ -502,18 +512,18 @@ export function EventDetailsModal({
               <PlanBadge plan={plan} variant="iconText" />
             )}
 
-            {isLockActive && (
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium text-amber-800 bg-amber-100 dark:text-amber-200 dark:bg-amber-900/40"
-                title={`Dołączanie zablokowane ${lockHoursBeforeStart} h przed startem`}
-              >
-                <Lock className="h-3.5 w-3.5" />
-                Zablokowane &nbsp;
-                <span className="opacity-80">
-                  {Math.max(0, Math.ceil(hoursLeft))}h
-                </span>
-              </span>
-            )}
+            {/* Countdown Timer Pill */}
+            <EventCountdownPill
+              startAt={start}
+              endAt={end}
+              joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+              joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+              allowJoinLate={allowJoinLate}
+              lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
+              joinManuallyClosed={joinManuallyClosed}
+              isCanceled={isCanceled}
+              isDeleted={isDeleted}
+            />
           </div>
         </div>
 
@@ -760,6 +770,91 @@ export function EventDetailsModal({
         </div>
       </Section>
 
+      {/* Join Window Settings */}
+      {(joinOpensMinutesBeforeStart ||
+        joinCutoffMinutesBeforeStart ||
+        allowJoinLate ||
+        lateJoinCutoffMinutesAfterStart ||
+        joinManuallyClosed) && (
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+            <Gauge className="h-4 w-4" />
+            Ustawienia zapisów
+          </div>
+          <div className="space-y-2 text-sm text-indigo-900 dark:text-indigo-100">
+            {joinOpensMinutesBeforeStart && (
+              <div className="flex items-start gap-2">
+                <Sprout className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>
+                  Zapisy otwierają się{' '}
+                  <strong className="font-semibold tabular-nums">
+                    {joinOpensMinutesBeforeStart} min
+                  </strong>{' '}
+                  przed startem
+                </span>
+              </div>
+            )}
+            {joinCutoffMinutesBeforeStart && (
+              <div className="flex items-start gap-2">
+                <Rocket className="mt-0.5 h-4 w-4 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+                <span>
+                  Zapisy zamykają się{' '}
+                  <strong className="font-semibold tabular-nums">
+                    {joinCutoffMinutesBeforeStart} min
+                  </strong>{' '}
+                  przed startem
+                </span>
+              </div>
+            )}
+            {allowJoinLate ? (
+              <div className="flex items-start gap-2">
+                <ClockFading className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-600 dark:text-rose-400" />
+                <span>
+                  Można dołączyć po starcie
+                  {lateJoinCutoffMinutesAfterStart && (
+                    <>
+                      {' '}
+                      (do{' '}
+                      <strong className="font-semibold tabular-nums">
+                        {lateJoinCutoffMinutesAfterStart} min
+                      </strong>{' '}
+                      po starcie)
+                    </>
+                  )}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2">
+                <ClockFading className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
+                <span className="text-indigo-700 dark:text-indigo-300">
+                  Brak możliwości dołączenia po starcie
+                </span>
+              </div>
+            )}
+            {joinManuallyClosed && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-100/50 p-2 dark:border-amber-700 dark:bg-amber-900/30">
+                <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700 dark:text-amber-400" />
+                <div>
+                  <div className="font-semibold text-amber-900 dark:text-amber-200">
+                    Zapisy ręcznie zamknięte
+                  </div>
+                  {joinManualCloseReason && (
+                    <div className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                      {joinManualCloseReason}
+                    </div>
+                  )}
+                  {joinManuallyClosedAt && (
+                    <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                      {new Date(joinManuallyClosedAt).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Uczestnicy */}
       <Section title="Uczestnicy">
         {mv === 'HIDDEN' && (
@@ -858,11 +953,6 @@ export function EventDetailsModal({
               : 'bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500 cursor-not-allowed'
           )}
           aria-disabled={ctaDisabled}
-          title={
-            isLockActive
-              ? `Dołączanie zablokowane ${lockHoursBeforeStart} h przed startem`
-              : undefined
-          }
         >
           <UserPlus className="w-4 h-4" />
           {ctaLabel}
