@@ -160,8 +160,8 @@ function assertJoinWindows(input: {
     );
   }
 
-  // Sensible max limits (e.g., <= 500 minutes = ~8.3 hours)
-  const MAX_MINUTES = 500;
+  // Sensible max limits (e.g., <= 10080 minutes = 168 hours)
+  const MAX_MINUTES = 10080;
   if (
     input.joinOpensMinutesBeforeStart != null &&
     input.joinOpensMinutesBeforeStart > MAX_MINUTES

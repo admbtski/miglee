@@ -25,21 +25,17 @@ import { CategoryOption, TagOption } from '@/types/types';
 import { PrivacyStep } from './privacy-step';
 
 const STEP_META = [
-  { key: 'basics', label: 'Basics', Icon: SquarePenIcon },
-  { key: 'capacity', label: 'Capacity', Icon: UsersIcon },
-  { key: 'time', label: 'Time', Icon: CalendarClockIcon },
-  { key: 'place', label: 'Place', Icon: MapPinnedIcon },
-  { key: 'privacy', label: 'Privacy', Icon: HatGlassesIcon },
-  { key: 'review', label: 'Review', Icon: HatGlassesIcon },
+  { key: 'basics', label: 'What & Who', Icon: SquarePenIcon },
+  { key: 'when-where', label: 'When & Where', Icon: CalendarClockIcon },
+  { key: 'settings', label: 'Settings', Icon: HatGlassesIcon },
+  { key: 'review', label: 'Review', Icon: BadgePlusIcon },
 ];
 
 const EDIT_STEP_META = [
-  { key: 'basics', label: 'Edit basics', Icon: SquarePenIcon },
-  { key: 'capacity', label: 'Edit capacity', Icon: UsersIcon },
-  { key: 'time', label: 'Edit time', Icon: CalendarClockIcon },
-  { key: 'place', label: 'Edit place', Icon: MapPinnedIcon },
-  { key: 'privacy', label: 'Edit privacy', Icon: HatGlassesIcon },
-  { key: 'review', label: 'Edit review', Icon: HatGlassesIcon },
+  { key: 'basics', label: 'What & Who', Icon: SquarePenIcon },
+  { key: 'when-where', label: 'When & Where', Icon: CalendarClockIcon },
+  { key: 'settings', label: 'Settings', Icon: HatGlassesIcon },
+  { key: 'review', label: 'Review', Icon: BadgePlusIcon },
 ];
 
 type CreateEditIntentModalProps = {
@@ -165,14 +161,19 @@ export function CreateEditIntentModal({
   const validateStep = useCallback(
     async (index: number) => {
       switch (index) {
-        case 0:
-          return await trigger(['title', 'categorySlugs']);
-        case 1:
-          return await trigger(['mode', 'min', 'max']);
-        case 2:
-          return await trigger(['startAt', 'endAt', 'allowJoinLate']);
-        case 3:
+        case 0: // What & Who (basics + capacity)
           return await trigger([
+            'title',
+            'categorySlugs',
+            'mode',
+            'min',
+            'max',
+          ]);
+        case 1: // When & Where (time + place)
+          return await trigger([
+            'startAt',
+            'endAt',
+            'allowJoinLate',
             'location.lat',
             'location.lng',
             'location.address',
@@ -182,7 +183,7 @@ export function CreateEditIntentModal({
             'meetingKind',
             'onlineUrl',
           ]);
-        case 4:
+        case 2: // Settings (privacy)
           return await trigger([
             'visibility',
             'joinMode',
@@ -230,135 +231,248 @@ export function CreateEditIntentModal({
       size="sm"
       onClose={onClose}
       header={
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
-            <button
-              onClick={() => {
-                setStep(0);
-                clearCategories();
-                clearTags();
-                reset(
-                  { ...makeFreshDefaults(), ...(initialValues ?? {}) },
-                  {
-                    keepDirty: false,
-                    keepErrors: false,
-                    keepTouched: false,
-                    keepIsSubmitted: false,
-                    keepSubmitCount: false,
-                  }
-                );
-                setCategories(initialCategories);
-                setTags(initialTags);
-                setFormKey((k) => k + 1); // ← hard reset UI
-              }}
-              className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 ring-1 ring-red-100 hover:bg-red-500/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
-            >
-              Clear
-            </button>
-
-            <div
-              id={titleId}
-              className="flex items-center gap-3 text-xl font-medium"
-            >
-              <StepIcon className="h-5 w-5" />
-              {stepLabel}
+            <div className="flex items-center gap-2">
+              <StepIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                  {isEdit ? 'Edit Event' : 'Create Event'}
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Step {step + 1} of {steps.length}: {stepLabel}
+                </p>
+              </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 ring-1 ring-transparent hover:bg-zinc-100 focus:outline-none focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setStep(0);
+                  clearCategories();
+                  clearTags();
+                  reset(
+                    { ...makeFreshDefaults(), ...(initialValues ?? {}) },
+                    {
+                      keepDirty: false,
+                      keepErrors: false,
+                      keepTouched: false,
+                      keepIsSubmitted: false,
+                      keepSubmitCount: false,
+                    }
+                  );
+                  setCategories(initialCategories);
+                  setTags(initialTags);
+                  setFormKey((k) => k + 1); // ← hard reset UI
+                }}
+                className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
+              >
+                Reset
+              </button>
+
+              <button
+                onClick={onClose}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
-          <div className="mt-3">
-            <Stepper
-              steps={STEP_META}
-              currentIndex={step}
-              layout="stacked"
-              size="md"
-              dotMode="icon"
+          {/* Progress bar */}
+          <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300 ease-out"
+              style={{ width: `${((step + 1) / steps.length) * 100}%` }}
             />
           </div>
+
+          {/* Stepper */}
+          {/* <Stepper
+            steps={STEP_META}
+            currentIndex={step}
+            layout="stacked"
+            size="sm"
+            dotMode="icon"
+          /> */}
         </div>
       }
       content={
-        // ← remount całej sekcji pól po „Clear” i przy otwarciu
+        // ← remount całej sekcji pól po „Clear" i przy otwarciu
         <div key={formKey} className="space-y-6">
-          {step === 0 && <BasicsStep form={form} />}
+          {/* Step 0: What & Who (Basics + Capacity) */}
+          {step === 0 && (
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                  Event details
+                </h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                  Tell us what your event is about and who can join
+                </p>
+                <BasicsStep form={form} />
+              </div>
 
-          {step === 1 && <CapacityStep form={form} />}
-
-          {step === 2 && (
-            <TimeStep
-              form={form}
-              userTzLabel={
-                userTzLabel ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-              }
-            />
+              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                  Capacity
+                </h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                  Set the size of your event
+                </p>
+                <CapacityStep form={form} />
+              </div>
+            </div>
           )}
 
-          {step === 3 && (
-            <PlaceStep
-              form={form}
-              onUseMyLocation={async () => {
-                return new Promise<{ lat: number; lng: number } | null>(
-                  (resolve) => {
-                    if (!navigator.geolocation) return resolve(null);
-                    navigator.geolocation.getCurrentPosition(
-                      (pos) =>
-                        resolve({
-                          lat: pos.coords.latitude,
-                          lng: pos.coords.longitude,
-                        }),
-                      () => resolve(null),
-                      { enableHighAccuracy: true, timeout: 8000 }
-                    );
+          {/* Step 1: When & Where (Time + Place) */}
+          {step === 1 && (
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                  When
+                </h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                  Choose date, time, and duration
+                </p>
+                <TimeStep
+                  form={form}
+                  userTzLabel={
+                    userTzLabel ??
+                    Intl.DateTimeFormat().resolvedOptions().timeZone
                   }
-                );
-              }}
-            />
+                />
+              </div>
+
+              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                  Where
+                </h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                  Set the location or online link
+                </p>
+                <PlaceStep
+                  form={form}
+                  onUseMyLocation={async () => {
+                    return new Promise<{ lat: number; lng: number } | null>(
+                      (resolve) => {
+                        if (!navigator.geolocation) return resolve(null);
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) =>
+                            resolve({
+                              lat: pos.coords.latitude,
+                              lng: pos.coords.longitude,
+                            }),
+                          () => resolve(null),
+                          { enableHighAccuracy: true, timeout: 8000 }
+                        );
+                      }
+                    );
+                  }}
+                />
+              </div>
+            </div>
           )}
 
-          {step === 4 && <PrivacyStep form={form} />}
+          {/* Step 2: Settings (Privacy) */}
+          {step === 2 && (
+            <div>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                Privacy & Access
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                Control who can see and join your event
+              </p>
+              <PrivacyStep form={form} />
+            </div>
+          )}
 
-          {step === 5 && (
-            <ReviewStep
-              values={form.getValues()} // po „next” już spłukane
-              showMapPreview
-            />
+          {/* Step 3: Review */}
+          {step === 3 && (
+            <div>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                Review & Create
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                Check everything looks good before creating
+              </p>
+              <ReviewStep
+                values={form.getValues()} // po „next" już spłukane
+                showMapPreview
+              />
+            </div>
           )}
         </div>
       }
       footer={
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={back}
             disabled={!(step > 0 && !isSubmitting)}
-            className="rounded-2xl border px-4 py-2 text-sm disabled:opacity-50
-                       border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50
-                       dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
+            className="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                       border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50
+                       dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
           >
-            Back
+            <span>←</span>
+            <span>Back</span>
           </button>
-          <button
-            type="button"
-            onClick={step < steps.length - 1 ? next : submit}
-            disabled={
-              isSubmitting ||
-              (step === steps.length - 1 && (!isValid || (isEdit && !isDirty)))
-            }
-            className="rounded-2xl px-4 py-2 text-sm font-medium disabled:opacity-50
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
-                       bg-indigo-600 text-white hover:bg-indigo-500"
-          >
-            {step < steps.length - 1 && 'Next'}
-            {!isEdit && step === steps.length - 1 && 'Create'}
-            {isEdit && step === steps.length - 1 && 'Save changes'}
-          </button>
+
+          <div className="flex items-center gap-2">
+            {step < steps.length - 1 && (
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                {steps.length - step - 1} step
+                {steps.length - step - 1 !== 1 ? 's' : ''} left
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={step < steps.length - 1 ? next : submit}
+              disabled={
+                isSubmitting ||
+                (step === steps.length - 1 &&
+                  (!isValid || (isEdit && !isDirty)))
+              }
+              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2
+                         bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500 shadow-md hover:shadow-lg"
+            >
+              {isSubmitting && (
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              )}
+              <span>
+                {step < steps.length - 1 && 'Continue'}
+                {!isEdit &&
+                  step === steps.length - 1 &&
+                  (isSubmitting ? 'Creating...' : 'Create Event')}
+                {isEdit &&
+                  step === steps.length - 1 &&
+                  (isSubmitting ? 'Saving...' : 'Save Changes')}
+              </span>
+              {step < steps.length - 1 && <span>→</span>}
+            </button>
+          </div>
         </div>
       }
     />

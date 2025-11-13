@@ -1,7 +1,7 @@
 'use client';
 
 import { UseFormReturn, useWatch } from 'react-hook-form';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { IntentFormValues } from './types';
 import {
   Plus,
@@ -110,6 +110,39 @@ export function TimeStep({
     name: 'lateJoinCutoffMinutesAfterStart',
   });
 
+  // Duration calculator presets (defined early for useEffect)
+  const durationPresets = useMemo(
+    () => [
+      { label: 'Coffee (30m)', minutes: 30, icon: '☕' },
+      { label: 'Lunch (1h)', minutes: 60, icon: '🍽️' },
+      { label: 'Workshop (2h)', minutes: 120, icon: '🎓' },
+      { label: 'Half day (4h)', minutes: 240, icon: '📅' },
+      { label: 'Full day (8h)', minutes: 480, icon: '🌅' },
+      { label: 'Hackathon (12h)', minutes: 720, icon: '💻' },
+    ],
+    []
+  );
+
+  // Track last selected preset for visual feedback
+  const [lastDurationPreset, setLastDurationPreset] = useState<number | null>(
+    null
+  );
+  const [lastQuickPreset, setLastQuickPreset] = useState<string | null>(null);
+
+  // Reset preset highlights when user manually changes time
+  useEffect(() => {
+    // When duration changes manually (not via preset), clear the highlight
+    if (lastDurationPreset !== null && durationMinutes !== lastDurationPreset) {
+      // Check if it's not one of our presets
+      const isPreset =
+        durationOptions.includes(durationMinutes as any) ||
+        durationPresets.some((p) => p.minutes === durationMinutes);
+      if (!isPreset) {
+        setLastDurationPreset(null);
+      }
+    }
+  }, [durationMinutes, lastDurationPreset, durationOptions, durationPresets]);
+
   // --- setters ---------------------------------------------------------------
   const setStart = useCallback(
     (nextStartIncoming: Date, keepDuration: boolean) => {
@@ -203,12 +236,16 @@ export function TimeStep({
   );
 
   const setDuration = useCallback(
-    (mins: number) => setEnd(addMinutes(start, Math.max(0, mins))),
+    (mins: number) => {
+      setLastDurationPreset(mins);
+      setEnd(addMinutes(start, Math.max(0, mins)));
+    },
     [setEnd, start]
   );
 
   const setPreset = useCallback(
     (key: 'now1h' | 'tonight' | 'tomorrow' | 'weekend') => {
+      setLastQuickPreset(key);
       const now = new Date();
       if (key === 'now1h') {
         const s = roundToNext(clampStartToBuffer(now), roundStep);
@@ -249,19 +286,6 @@ export function TimeStep({
       setValue('endAt', e, { shouldValidate: true, shouldDirty: true });
     },
     [setValue]
-  );
-
-  // --- Duration calculator presets -------------------------------------------
-  const durationPresets = useMemo(
-    () => [
-      { label: 'Coffee (30m)', minutes: 30, icon: '☕' },
-      { label: 'Lunch (1h)', minutes: 60, icon: '🍽️' },
-      { label: 'Workshop (2h)', minutes: 120, icon: '🎓' },
-      { label: 'Half day (4h)', minutes: 240, icon: '📅' },
-      { label: 'Full day (8h)', minutes: 480, icon: '🌅' },
-      { label: 'Hackathon (12h)', minutes: 720, icon: '💻' },
-    ],
-    []
   );
 
   // --- Join window presets ---------------------------------------------------
@@ -424,6 +448,7 @@ export function TimeStep({
   );
 
   const setAllDay = useCallback(() => {
+    setLastQuickPreset('allday');
     const base = clampStartToBuffer(new Date());
     const s = new Date(base);
     s.setHours(8, 0, 0, 0);
@@ -454,35 +479,55 @@ export function TimeStep({
           <button
             type="button"
             onClick={() => setPreset('now1h')}
-            className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className={`rounded-xl border px-3 py-1.5 text-sm transition-all ${
+              lastQuickPreset === 'now1h'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800'
+                : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
+            }`}
           >
             Now + 1h
           </button>
           <button
             type="button"
             onClick={() => setPreset('tonight')}
-            className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className={`rounded-xl border px-3 py-1.5 text-sm transition-all ${
+              lastQuickPreset === 'tonight'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800'
+                : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
+            }`}
           >
             Tonight (18–20)
           </button>
           <button
             type="button"
             onClick={() => setPreset('tomorrow')}
-            className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className={`rounded-xl border px-3 py-1.5 text-sm transition-all ${
+              lastQuickPreset === 'tomorrow'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800'
+                : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
+            }`}
           >
             Tomorrow evening
           </button>
           <button
             type="button"
             onClick={() => setPreset('weekend')}
-            className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className={`rounded-xl border px-3 py-1.5 text-sm transition-all ${
+              lastQuickPreset === 'weekend'
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800'
+                : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
+            }`}
           >
             Weekend (Sat 10–12)
           </button>
           <button
             type="button"
             onClick={setAllDay}
-            className="rounded-xl border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/30"
+            className={`rounded-xl border px-3 py-1.5 text-sm transition-all ${
+              lastQuickPreset === 'allday'
+                ? 'border-indigo-500 bg-indigo-100 text-indigo-700 ring-2 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300 dark:ring-indigo-800'
+                : 'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/30'
+            }`}
           >
             🌅 All day (8–22)
           </button>
@@ -577,7 +622,11 @@ export function TimeStep({
               key={preset.label}
               type="button"
               onClick={() => setDuration(preset.minutes)}
-              className="flex items-center gap-2 rounded-xl border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all ${
+                lastDurationPreset === preset.minutes
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800'
+                  : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
+              }`}
             >
               <span className="text-base">{preset.icon}</span>
               <span className="truncate">{preset.label}</span>
@@ -637,7 +686,11 @@ export function TimeStep({
               key={m}
               type="button"
               onClick={() => setDuration(m)}
-              className="rounded-full border border-zinc-300 px-2.5 py-1 text-xs hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className={`rounded-full border px-2.5 py-1 text-xs transition-all ${
+                lastDurationPreset === m
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800'
+                  : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
+              }`}
               title={`Set duration to ${m} min`}
             >
               {m}m
@@ -830,19 +883,19 @@ export function TimeStep({
               {/* tor + thumb jako ::after */}
               <div
                 className="
-        relative h-6 w-11 rounded-full
-        bg-zinc-300 dark:bg-zinc-700
-        transition-colors duration-300
-        shadow-inner
-        peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
+      relative h-6 w-11 rounded-full
+      bg-zinc-300 dark:bg-zinc-700
+      transition-colors duration-300
+      shadow-inner
+      peer-checked:bg-gradient-to-r peer-checked:from-indigo-500 peer-checked:to-violet-500
 
-        after:content-[''] after:absolute after:left-1 after:top-1
-        after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-md
-        after:transition-all after:duration-300 after:ease-in-out
-        after:transform
-        peer-checked:after:translate-x-5
-        peer-checked:after:shadow-[0_0_6px_rgba(99,102,241,0.6)]
-      "
+      after:content-[''] after:absolute after:left-1 after:top-1
+      after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-md
+      after:transition-all after:duration-300 after:ease-in-out
+      after:transform
+      peer-checked:after:translate-x-5
+      peer-checked:after:shadow-[0_0_6px_rgba(99,102,241,0.6)]
+    "
               />
 
               <span className="transition-colors duration-300 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400">

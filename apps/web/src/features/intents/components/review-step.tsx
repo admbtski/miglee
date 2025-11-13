@@ -452,15 +452,6 @@ export function ReviewStep({
 
                 {levelChips}
 
-                {values.allowJoinLate && (
-                  <Chip
-                    tone="rose"
-                    icon={<ClockFading className="h-3.5 w-3.5" />}
-                  >
-                    Allow late join
-                  </Chip>
-                )}
-
                 {addressVisChip}
                 {membersVisChip}
               </div>
@@ -507,6 +498,70 @@ export function ReviewStep({
               }
               mono
             />
+          )}
+
+          {/* Join window settings */}
+          {(values.joinOpensMinutesBeforeStart ||
+            values.joinCutoffMinutesBeforeStart ||
+            values.allowJoinLate ||
+            values.lateJoinCutoffMinutesAfterStart) && (
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 dark:border-indigo-800 dark:bg-indigo-900/20">
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+                <Gauge className="h-3.5 w-3.5" />
+                Join Window Settings
+              </div>
+              <div className="space-y-1.5 text-sm text-indigo-900 dark:text-indigo-100">
+                {values.joinOpensMinutesBeforeStart && (
+                  <div className="flex items-start gap-2">
+                    <Sprout className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      Zapisy otwierają się{' '}
+                      <strong className="font-semibold tabular-nums">
+                        {values.joinOpensMinutesBeforeStart} min
+                      </strong>{' '}
+                      przed startem
+                    </span>
+                  </div>
+                )}
+                {values.joinCutoffMinutesBeforeStart && (
+                  <div className="flex items-start gap-2">
+                    <Rocket className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+                    <span>
+                      Zapisy zamykają się{' '}
+                      <strong className="font-semibold tabular-nums">
+                        {values.joinCutoffMinutesBeforeStart} min
+                      </strong>{' '}
+                      przed startem
+                    </span>
+                  </div>
+                )}
+                {values.allowJoinLate ? (
+                  <div className="flex items-start gap-2">
+                    <ClockFading className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-rose-600 dark:text-rose-400" />
+                    <span>
+                      Można dołączyć po starcie
+                      {values.lateJoinCutoffMinutesAfterStart && (
+                        <>
+                          {' '}
+                          (do{' '}
+                          <strong className="font-semibold tabular-nums">
+                            {values.lateJoinCutoffMinutesAfterStart} min
+                          </strong>{' '}
+                          po starcie)
+                        </>
+                      )}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <ClockFading className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
+                    <span className="text-zinc-700 dark:text-zinc-300">
+                      Brak możliwości dołączenia po starcie
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Secondary explanations for visibilities */}
