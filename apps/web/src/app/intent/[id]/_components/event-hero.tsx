@@ -10,8 +10,11 @@ import {
   Trash2,
 } from 'lucide-react';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
+import { PlanBadge } from '@/components/ui/plan-badge';
+import { planAnimationConfig } from '@/components/ui/plan-animations';
 import { Level } from '@/lib/api/__generated__/react-query-update';
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 
 type EventHeroProps = {
@@ -24,6 +27,7 @@ export function EventHero({ event }: EventHeroProps) {
   const isDeleted = !!event.deletedAt;
   const isHighlighted =
     event.sponsorship?.highlightOn && event.sponsorship.status === 'ACTIVE';
+  const plan = event.sponsorship?.plan;
 
   const sortedLevels = useMemo(
     () => sortLevels(event.levels as Level[]),
@@ -32,9 +36,42 @@ export function EventHero({ event }: EventHeroProps) {
 
   return (
     <div className="relative rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40">
+      {/* Plan Badge - Top Right Corner with continuous pulse animation */}
+      {plan && plan !== 'default' && (
+        <motion.div
+          className="absolute -top-2 -right-2 z-10"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{
+            scale: planAnimationConfig.badge.scaleRange,
+            rotate: planAnimationConfig.badge.rotateRange,
+          }}
+          transition={{
+            scale: {
+              duration: planAnimationConfig.badge.duration,
+              repeat: Infinity,
+              repeatDelay: planAnimationConfig.badge.repeatDelay,
+              ease: planAnimationConfig.badge.easing,
+            },
+            rotate: {
+              duration: planAnimationConfig.badge.duration,
+              repeat: Infinity,
+              repeatDelay: planAnimationConfig.badge.repeatDelay,
+              ease: planAnimationConfig.badge.easing,
+            },
+          }}
+          whileHover={{
+            scale: planAnimationConfig.badge.hoverScale,
+            rotate: planAnimationConfig.badge.hoverRotateRange,
+            transition: { duration: planAnimationConfig.badge.hoverDuration },
+          }}
+        >
+          <PlanBadge plan={plan as any} size="md" variant="iconText" />
+        </motion.div>
+      )}
+
       {/* Highlight Ribbon */}
       {isHighlighted && (
-        <div className="absolute -right-2 -top-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
+        <div className="absolute -right-2 -top-14 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
           <Sparkles className="inline h-4 w-4 mr-1" />
           Wyróżnione
         </div>

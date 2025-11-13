@@ -565,11 +565,11 @@ export function EventCard({
                 'absolute -inset-full',
                 'bg-gradient-to-r',
                 plan === 'basic' &&
-                  `from-transparent via-emerald-400/${Math.round(planAnimationConfig.shimmer.planOpacity.basic * 100)} to-transparent`,
+                  'from-transparent via-emerald-400/20 to-transparent',
                 plan === 'plus' &&
-                  `from-transparent via-indigo-400/${Math.round(planAnimationConfig.shimmer.planOpacity.plus * 100)} to-transparent`,
+                  'from-transparent via-indigo-400/25 to-transparent',
                 plan === 'premium' &&
-                  `from-transparent via-amber-400/${Math.round(planAnimationConfig.shimmer.planOpacity.premium * 100)} to-transparent`
+                  'from-transparent via-amber-400/30 to-transparent'
               )}
               animate={{
                 x: ['-100%', '200%'],

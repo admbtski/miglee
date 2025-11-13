@@ -11,6 +11,7 @@ import React, {
   useRef,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { twMerge } from 'tailwind-merge';
 
 // ----- Types -----------------------------------------------------------------
 
@@ -40,6 +41,12 @@ type Props = {
 
   /** Extra class for the panel */
   className?: string;
+  /** Extra class for the header */
+  headerClassName?: string;
+  /** Extra class for the content */
+  contentClassName?: string;
+  /** Extra class for the footer */
+  footerClassName?: string;
   /** Extra class for the backdrop */
   backdropClassName?: string;
 
@@ -112,6 +119,9 @@ export function Modal({
   initialFocusRef,
 
   className,
+  headerClassName,
+  contentClassName,
+  footerClassName,
   backdropClassName,
   portalId = 'portal-root',
 }: Props) {
@@ -223,18 +233,30 @@ export function Modal({
                 {header && (
                   <div
                     id={titleId}
-                    className="sticky top-0 z-10 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/85 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/85"
+                    className={twMerge(
+                      'sticky top-0 z-10 px-4 py-4 border-b rounded-t-3xl border-zinc-200 bg-white/70 backdrop-blur-2xl dark:border-zinc-800 dark:bg-zinc-900/70',
+                      headerClassName
+                    )}
                   >
                     {header}
                   </div>
                 )}
 
                 {content && (
-                  <div className={DENSITY_CLASS[density]}>{content}</div>
+                  <div
+                    className={clsx(DENSITY_CLASS[density], contentClassName)}
+                  >
+                    {content}
+                  </div>
                 )}
 
                 {footer && (
-                  <div className="sticky bottom-0 z-10 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
+                  <div
+                    className={clsx(
+                      'sticky bottom-0 z-10 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white/75 via-white/70 backdrop-blur-2xl dark:border-zinc-800 dark:from-zinc-900/75 dark:via-zinc-900/70',
+                      footerClassName
+                    )}
+                  >
                     {footer}
                   </div>
                 )}
@@ -267,8 +289,8 @@ export function Modal({
                   {header}
                 </div>
               )}
-              {content && <div>{content}</div>}
-              {footer && <div className="mt-6">{footer}</div>}
+              {content && <div className={contentClassName}>{content}</div>}
+              {footer && <div className={footerClassName}>{footer}</div>}
             </motion.div>
           </div>
         )}

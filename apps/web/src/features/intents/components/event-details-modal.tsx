@@ -28,6 +28,7 @@ import {
   MembersVisibility,
 } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 import {
   Calendar,
   CalendarDays,
@@ -101,9 +102,8 @@ type Props = {
     joinManuallyClosed?: boolean;
     joinManuallyClosedAt?: string | null;
     joinManualCloseReason?: string | null;
-    // Event status
-    isCanceled?: boolean;
     isDeleted?: boolean;
+    isCanceled?: boolean;
   };
 };
 
@@ -199,22 +199,24 @@ function Stat({
   label,
   value,
   title,
+  plan,
 }: {
   icon: any;
   label: string;
   value: string;
   title?: string;
+  plan?: Plan;
 }) {
   return (
     <div
-      className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3 bg-white/70 dark:bg-neutral-900/40"
+      className="relative rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3 bg-white/70 dark:bg-neutral-900/40"
       title={title}
     >
-      <div className="flex items-center gap-2 text-md text-neutral-500 dark:text-neutral-400">
+      <div className="relative z-20 flex items-center gap-2 text-md text-neutral-500 dark:text-neutral-400">
         <Icon className="w-5 h-5" />
         {label}
       </div>
-      <div className="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+      <div className="relative z-20 mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
         {value}
       </div>
     </div>
@@ -256,6 +258,7 @@ function MetaInfoSection({
   av,
   mv,
   className,
+  plan,
 }: {
   statusLabel: string;
   joinedCount: number;
@@ -265,15 +268,16 @@ function MetaInfoSection({
   av: 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
   mv: 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
   className?: string;
+  plan?: Plan;
 }) {
   return (
     <section
       className={clsx(
-        'rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3',
+        'relative rounded-2xl border border-neutral-200 dark:border-neutral-800 p-3',
         className
       )}
     >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-[13px] text-neutral-700 dark:text-neutral-300 min-w-0">
+      <div className="relative z-20 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-[13px] text-neutral-700 dark:text-neutral-300 min-w-0">
         {/* ───────── Status + zajętość ───────── */}
         <span className="inline-flex items-center gap-1 truncate">
           <Info className="w-4 h-4 opacity-70" />
@@ -425,8 +429,8 @@ export function EventDetailsModal({
     joinManuallyClosed,
     joinManuallyClosedAt,
     joinManualCloseReason,
-    isCanceled,
     isDeleted,
+    isCanceled,
   } = data;
 
   const theme = planTheme(plan);
@@ -456,98 +460,79 @@ export function EventDetailsModal({
 
   // Nagłówek — mocniejszy gradient per plan + subtelna siatka
   const header = (
-    <div className="relative">
-      {/* Mock Cover Image Background */}
-      <div className="pointer-events-none absolute -inset-4.5 rounded-3xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 opacity-20" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-10" />
-      </div>
-      <div
-        className={twMerge(
-          'pointer-events-none absolute -inset-4.5 rounded-3xl blur-[0.6px]',
-          theme.headerBg
-        )}
-      />
+    <div className="relative z-40 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <h3
+          className={
+            'text-2xl font-bold text-neutral-900 dark:text-neutral-50 truncate'
+          }
+        >
+          {title}
+        </h3>
 
-      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h3
-            className={
-              'text-2xl font-bold text-neutral-900 dark:text-neutral-50 truncate'
-            }
-          >
-            {title}
-          </h3>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 text-md text-neutral-700 dark:text-neutral-300">
-              <Link href={`/u/${organizerName}`} className="flex-shrink-0">
-                <img
-                  src={avatarUrl}
-                  alt={organizerName}
-                  className="w-9 h-9 rounded-full object-cover border border-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700"
-                />
-              </Link>
-              <Link
-                href={`/u/${organizerName}`}
-                className="truncate transition-colors hover:text-blue-600 dark:hover:text-blue-400"
-              >
-                {organizerName}
-              </Link>
-            </span>
-
-            <VerifiedBadge
-              variant="iconText"
-              size="md"
-              verifiedAt={verifiedAt}
-            />
-
-            <StatusBadge
-              variant="iconText"
-              tone={status.tone}
-              label={status.label}
-            />
-
-            {showSponsoredBadge && plan && plan !== 'default' && (
-              <PlanBadge plan={plan} variant="iconText" />
-            )}
-
-            {/* Countdown Timer Pill */}
-            <EventCountdownPill
-              startAt={start}
-              endAt={end}
-              joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
-              joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
-              allowJoinLate={allowJoinLate}
-              lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
-              joinManuallyClosed={joinManuallyClosed}
-              isCanceled={isCanceled}
-              isDeleted={isDeleted}
-            />
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          {!!onlineUrl && (
-            <button
-              onClick={() => {
-                navigator.clipboard?.writeText(onlineUrl).catch(() => {});
-              }}
-              className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-              title="Skopiuj link do spotkania"
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-2 text-md text-neutral-700 dark:text-neutral-300">
+            <Link href={`/u/${organizerName}`} className="flex-shrink-0">
+              <img
+                src={avatarUrl}
+                alt={organizerName}
+                className="w-9 h-9 rounded-full object-cover border border-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700"
+              />
+            </Link>
+            <Link
+              href={`/u/${organizerName}`}
+              className="truncate transition-colors hover:text-blue-600 dark:hover:text-blue-400"
             >
-              <Share2 className="w-4 h-4" />
-              Kopiuj link
-            </button>
+              {organizerName}
+            </Link>
+          </span>
+
+          <VerifiedBadge variant="iconText" size="md" verifiedAt={verifiedAt} />
+
+          <StatusBadge
+            variant="iconText"
+            tone={status.tone}
+            label={status.label}
+          />
+
+          {showSponsoredBadge && plan && plan !== 'default' && (
+            <PlanBadge plan={plan} variant="iconText" />
           )}
-          <button
-            className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-            onClick={onClose}
-          >
-            <X className="w-4 h-4" />
-            Zamknij
-          </button>
+
+          {/* Countdown Timer Pill */}
+          <EventCountdownPill
+            isDeleted={isDeleted}
+            isCanceled={isCanceled}
+            startAt={start}
+            endAt={end}
+            joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+            joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+            allowJoinLate={allowJoinLate}
+            lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
+            joinManuallyClosed={joinManuallyClosed}
+          />
         </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        {!!onlineUrl && (
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(onlineUrl).catch(() => {});
+            }}
+            className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+            title="Skopiuj link do spotkania"
+          >
+            <Share2 className="w-4 h-4" />
+            Kopiuj link
+          </button>
+        )}
+        <button
+          className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+          onClick={onClose}
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
@@ -560,17 +545,17 @@ export function EventDetailsModal({
   }> = ({ title, className, children }) => (
     <section
       className={clsx(
-        'rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4',
         theme.sectionBg,
+        'relative rounded-2xl border border-neutral-200 dark:border-neutral-800 p-4',
         className
       )}
     >
       {title && (
-        <h3 className="text-md font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
+        <h3 className="relative z-20 text-md font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
           {title}
         </h3>
       )}
-      {children}
+      <div className="relative z-20">{children}</div>
     </section>
   );
 
@@ -589,11 +574,13 @@ export function EventDetailsModal({
             icon={Calendar}
             label="Termin"
             value={formatDateRange(start, end)}
+            plan={plan}
           />
           <Stat
             icon={Clock}
             label="Czas trwania"
             value={humanDuration(start, end)}
+            plan={plan}
           />
           <Stat
             icon={mk.icon}
@@ -607,6 +594,7 @@ export function EventDetailsModal({
                     : ' • adres ukryty')
             }
             title={address}
+            plan={plan}
           />
         </div>
       </div>
@@ -892,6 +880,7 @@ export function EventDetailsModal({
         mk={mk}
         av={av}
         mv={mv}
+        plan={plan}
       />
     </div>
   );
@@ -964,6 +953,7 @@ export function EventDetailsModal({
   return (
     <Modal
       className={twMerge(theme.ringExtra, theme.glow, 'backdrop-blur-[2px]')}
+      headerClassName={theme.headerBg}
       density="compact"
       size="lg"
       open={open}

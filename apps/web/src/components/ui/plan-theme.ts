@@ -6,7 +6,6 @@ export type Plan = 'default' | 'basic' | 'plus' | 'premium';
 
 export type PlanTheme = {
   ring: string;
-  cardBg: string;
   /** alias dla kompatybilności */
   bg: string;
   chipClass: string;
@@ -46,7 +45,6 @@ export function planTheme(plan?: Plan): PlanTheme {
     case 'basic':
       return {
         ring: 'ring-emerald-300/60 dark:ring-emerald-700/50',
-        cardBg: 'bg-emerald-50/40 dark:bg-emerald-900/10',
         bg: 'bg-emerald-50/40 dark:bg-emerald-900/10',
         chipClass: 'bg-emerald-600 text-white dark:bg-emerald-500',
         iconClass: 'text-emerald-50',
@@ -60,7 +58,6 @@ export function planTheme(plan?: Plan): PlanTheme {
     case 'plus':
       return {
         ring: 'ring-indigo-300/60 dark:ring-indigo-700/50',
-        cardBg: 'bg-indigo-50/40 dark:bg-indigo-900/10',
         bg: 'bg-indigo-50/40 dark:bg-indigo-900/10',
         chipClass: 'bg-indigo-600 text-white dark:bg-indigo-500',
         iconClass: 'text-indigo-50',
@@ -74,7 +71,6 @@ export function planTheme(plan?: Plan): PlanTheme {
     case 'premium':
       return {
         ring: 'ring-amber-400/70 dark:ring-amber-700/60',
-        cardBg: 'bg-amber-50/45 dark:bg-amber-900/10',
         bg: 'bg-amber-50/45 dark:bg-amber-900/10',
         chipClass: 'bg-amber-600 text-white dark:bg-amber-500',
         iconClass: 'text-amber-50',
@@ -88,7 +84,6 @@ export function planTheme(plan?: Plan): PlanTheme {
     default:
       return {
         ring: DEFAULTS.ring,
-        cardBg: DEFAULTS.card,
         bg: DEFAULTS.card,
         chipClass: DEFAULTS.chip,
         iconClass: DEFAULTS.icon,
