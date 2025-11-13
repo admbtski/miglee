@@ -371,6 +371,10 @@ async function createIntentWithMembers(opts: {
         ])
       : null;
 
+  // City information for filtering
+  const cityName = meetingKind !== MeetingKind.ONLINE ? city.name : null;
+  const cityPlaceId = meetingKind !== MeetingKind.ONLINE ? city.placeId : null;
+
   const title = titleFor(firstCategory.slug);
   const description =
     meetingKind === MeetingKind.ONSITE
@@ -410,6 +414,8 @@ async function createIntentWithMembers(opts: {
         address: address ?? null,
         placeId: meetingKind !== MeetingKind.ONLINE ? place.placeId : null,
         radiusKm: radiusKm ?? null,
+        cityName: cityName ?? null,
+        cityPlaceId: cityPlaceId ?? null,
         levels,
         membersVisibility,
         addressVisibility,
@@ -724,6 +730,11 @@ async function createPresetIntent(
         ])
       : null;
 
+  // City information for filtering
+  const cityName = s.meetingKind !== MeetingKind.ONLINE ? city.name : null;
+  const cityPlaceId =
+    s.meetingKind !== MeetingKind.ONLINE ? city.placeId : null;
+
   const desc =
     s.meetingKind === MeetingKind.ONSITE
       ? `${title} near ${place.name} in ${city.name}.`
@@ -788,6 +799,8 @@ async function createPresetIntent(
         s.meetingKind !== MeetingKind.ONLINE
           ? (s.radiusKm ?? (rand() > 0.7 ? Number((rnd() * 3).toFixed(1)) : 0))
           : null,
+      cityName: cityName ?? null,
+      cityPlaceId: cityPlaceId ?? null,
       levels: s.levels?.length
         ? s.levels
         : pickMany(

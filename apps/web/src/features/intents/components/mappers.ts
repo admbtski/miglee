@@ -45,6 +45,8 @@ export function mapIntentToFormValues(
       lng: intent.lng ?? undefined,
       address: intent.address ?? undefined,
       radiusKm: intent.radiusKm ?? undefined,
+      cityName: intent.cityName ?? undefined,
+      cityPlaceId: intent.cityPlaceId ?? undefined,
     },
     visibility: intent.visibility,
     addressVisibility: intent.addressVisibility,
@@ -97,6 +99,10 @@ export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
     input.location!.radiusKm = v.location.radiusKm;
   if (v.location.placeId?.trim())
     input.location!.placeId = v.location.placeId.trim();
+  if (v.location.cityName?.trim())
+    input.location!.cityName = v.location.cityName.trim();
+  if (v.location.cityPlaceId?.trim())
+    input.location!.cityPlaceId = v.location.cityPlaceId.trim();
 
   return input;
 }

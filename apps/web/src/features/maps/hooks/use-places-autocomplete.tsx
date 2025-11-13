@@ -183,16 +183,7 @@ export function usePlacesAutocomplete(query: string, bias?: Bias) {
   };
 }
 
-/**
- * Hydrates a Place from an AutocompleteSuggestion (Places API, New)
- * and returns a plain object with normalized fields.
- */
-export async function fetchPlaceDetailsFromSuggestion(
-  suggestion: google.maps.places.AutocompleteSuggestion,
-  fields: Array<
-    'id' | 'displayName' | 'formattedAddress' | 'location' | 'types'
-  > = ['id', 'displayName', 'formattedAddress', 'location']
-): Promise<{
+export type NormalizedPlace = {
   placeId?: string;
   id?: string; // alias for compatibility
   displayName?: string;
@@ -200,7 +191,24 @@ export async function fetchPlaceDetailsFromSuggestion(
   lat?: number;
   lng?: number;
   types?: string[];
-} | null> {
+  addressComponents?: google.maps.places.AddressComponent[];
+};
+
+/**
+ * Hydrates a Place from an AutocompleteSuggestion (Places API, New)
+ * and returns a plain object with normalized fields.
+ */
+export async function fetchPlaceDetailsFromSuggestion(
+  suggestion: google.maps.places.AutocompleteSuggestion,
+  fields: Array<
+    | 'id'
+    | 'displayName'
+    | 'formattedAddress'
+    | 'location'
+    | 'types'
+    | 'addressComponents'
+  > = ['id', 'displayName', 'formattedAddress', 'location']
+): Promise<NormalizedPlace | null> {
   const pred = suggestion?.placePrediction;
   if (!pred) return null;
 
@@ -228,5 +236,6 @@ export async function fetchPlaceDetailsFromSuggestion(
     lat: typeof lat === 'number' ? lat : undefined,
     lng: typeof lng === 'number' ? lng : undefined,
     types: place.types ?? undefined,
+    addressComponents: place.addressComponents ?? undefined,
   };
 }

@@ -11,6 +11,9 @@ import { useCallback, useMemo } from 'react';
 export type CommittedFilters = {
   q: string;
   city: string | null;
+  cityLat: number | null;
+  cityLng: number | null;
+  cityPlaceId: string | null;
   distanceKm: number;
   startISO: string | null;
   endISO: string | null;
@@ -49,6 +52,9 @@ export function useCommittedFilters() {
   const state = useMemo<CommittedFilters>(() => {
     const q = search.get('q') ?? '';
     const city = search.get('city');
+    const cityLat = Number(search.get('cityLat'));
+    const cityLng = Number(search.get('cityLng'));
+    const cityPlaceId = search.get('cityPlaceId');
     const dist = Number(search.get('distance'));
     const distanceKm =
       Number.isFinite(dist) && dist > 0 ? dist : DEFAULT_DISTANCE;
@@ -56,6 +62,9 @@ export function useCommittedFilters() {
     return {
       q,
       city: city || null,
+      cityLat: Number.isFinite(cityLat) ? cityLat : null,
+      cityLng: Number.isFinite(cityLng) ? cityLng : null,
+      cityPlaceId: cityPlaceId || null,
       distanceKm,
       startISO: search.get('start') ?? null,
       endISO: search.get('end') ?? null,
@@ -77,6 +86,9 @@ export function useCommittedFilters() {
       const merged: CommittedFilters = {
         q: next.q ?? curr.q,
         city: next.city ?? curr.city,
+        cityLat: next.cityLat ?? curr.cityLat,
+        cityLng: next.cityLng ?? curr.cityLng,
+        cityPlaceId: next.cityPlaceId ?? curr.cityPlaceId,
         distanceKm: next.distanceKm ?? curr.distanceKm,
         startISO: next.startISO ?? curr.startISO,
         endISO: next.endISO ?? curr.endISO,
@@ -95,6 +107,9 @@ export function useCommittedFilters() {
       for (const k of [
         'q',
         'city',
+        'cityLat',
+        'cityLng',
+        'cityPlaceId',
         'distance',
         'start',
         'end',
@@ -111,6 +126,11 @@ export function useCommittedFilters() {
 
       if (merged.q) params.set('q', merged.q);
       if (merged.city) params.set('city', merged.city);
+      if (merged.cityLat !== null)
+        params.set('cityLat', String(merged.cityLat));
+      if (merged.cityLng !== null)
+        params.set('cityLng', String(merged.cityLng));
+      if (merged.cityPlaceId) params.set('cityPlaceId', merged.cityPlaceId);
       if (merged.distanceKm !== DEFAULT_DISTANCE)
         params.set('distance', String(merged.distanceKm));
       if (merged.startISO) params.set('start', merged.startISO);
@@ -143,6 +163,9 @@ export function useCommittedFilters() {
         buildUrl({
           q: '',
           city: null,
+          cityLat: null,
+          cityLng: null,
+          cityPlaceId: null,
           distanceKm: DEFAULT_DISTANCE,
           startISO: null,
           endISO: null,

@@ -131,7 +131,7 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
   if (chips.length === 0) return null;
 
   return (
-    <div className="px-4 pt-3">
+    <div className="px-3 pt-3">
       <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
         {chips.map((c) => (
           <button

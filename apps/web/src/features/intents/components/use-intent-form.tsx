@@ -24,6 +24,8 @@ const LocationSchema = z.object({
   placeId: z.string().trim().max(240).optional(),
   address: z.string().trim().max(240).optional(),
   radiusKm: z.number().finite().min(0).max(20).optional(),
+  cityName: z.string().trim().max(240).optional(),
+  cityPlaceId: z.string().trim().max(240).optional(),
 });
 
 /** Core validation schema */
@@ -222,6 +224,8 @@ export const defaultIntentValues: IntentFormValues = {
     address: '',
     radiusKm: 1,
     placeId: '',
+    cityName: undefined,
+    cityPlaceId: undefined,
   },
   visibility: 'PUBLIC',
   joinMode: 'OPEN',

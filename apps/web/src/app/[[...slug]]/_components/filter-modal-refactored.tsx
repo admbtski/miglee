@@ -29,6 +29,9 @@ import { INTENTS_CONFIG } from '@/lib/constants/intents';
 export type NextFilters = {
   q: string;
   city: string | null;
+  cityLat?: number | null;
+  cityLng?: number | null;
+  cityPlaceId?: string | null;
   distanceKm: number;
   startISO?: string | null;
   endISO?: string | null;
@@ -44,6 +47,9 @@ export type NextFilters = {
 type Props = {
   initialQ: string;
   initialCity: string | null;
+  initialCityLat?: number | null;
+  initialCityLng?: number | null;
+  initialCityPlaceId?: string | null;
   initialDistanceKm: number;
   initialStartISO?: string | null;
   initialEndISO?: string | null;
@@ -62,6 +68,9 @@ type Props = {
 function FilterModalRefactoredComponent({
   initialQ,
   initialCity,
+  initialCityLat = null,
+  initialCityLng = null,
+  initialCityPlaceId = null,
   initialDistanceKm,
   initialStartISO = null,
   initialEndISO = null,
@@ -80,6 +89,9 @@ function FilterModalRefactoredComponent({
   const filterState = useFilterState({
     initialQ,
     initialCity,
+    initialCityLat,
+    initialCityLng,
+    initialCityPlaceId,
     initialDistanceKm,
     initialStartISO,
     initialEndISO,
@@ -95,6 +107,9 @@ function FilterModalRefactoredComponent({
   const {
     q,
     city,
+    cityLat,
+    cityLng,
+    cityPlaceId,
     distanceKm,
     startISO,
     endISO,
@@ -107,6 +122,9 @@ function FilterModalRefactoredComponent({
     tags,
     setQ,
     setCity,
+    setCityLat,
+    setCityLng,
+    setCityPlaceId,
     setDistanceKm,
     setStartISO,
     setEndISO,
@@ -161,6 +179,9 @@ function FilterModalRefactoredComponent({
     onApply({
       q,
       city,
+      cityLat,
+      cityLng,
+      cityPlaceId,
       distanceKm,
       startISO: startIsoNorm,
       endISO: endIsoNorm,
@@ -175,6 +196,9 @@ function FilterModalRefactoredComponent({
   }, [
     categories,
     city,
+    cityLat,
+    cityLng,
+    cityPlaceId,
     distanceKm,
     endISO,
     kinds,
@@ -293,8 +317,14 @@ function FilterModalRefactoredComponent({
               {/* Location */}
               <LocationSection
                 city={city}
+                cityLat={cityLat}
+                cityLng={cityLng}
+                cityPlaceId={cityPlaceId}
                 distanceKm={distanceKm}
                 onCityChange={setCity}
+                onCityLatChange={setCityLat}
+                onCityLngChange={setCityLng}
+                onCityPlaceIdChange={setCityPlaceId}
                 onDistanceChange={setDistanceKm}
               />
 

@@ -55,6 +55,9 @@ export function IntentsPage() {
   const {
     q,
     city,
+    cityLat,
+    cityLng,
+    cityPlaceId,
     distanceKm,
     startISO,
     endISO,
@@ -85,6 +88,9 @@ export function IntentsPage() {
       apply({
         q: next.q,
         city: next.city,
+        cityLat: next.cityLat ?? null,
+        cityLng: next.cityLng ?? null,
+        cityPlaceId: next.cityPlaceId ?? null,
         distanceKm: next.distanceKm,
         startISO: next.startISO ?? null,
         endISO: next.endISO ?? null,
@@ -117,7 +123,15 @@ export function IntentsPage() {
       ownerId: undefined,
       memberId: undefined,
       distanceKm: city ? distanceKm : null,
-      near: undefined,
+      near:
+        city && cityLat != null && cityLng != null
+          ? {
+              lat: cityLat,
+              lng: cityLng,
+              cityName: city,
+              cityPlaceId: cityPlaceId ?? undefined,
+            }
+          : undefined,
       ...sortVars,
     }),
     [
@@ -130,6 +144,9 @@ export function IntentsPage() {
       status,
       verifiedOnly,
       city,
+      cityLat,
+      cityLng,
+      cityPlaceId,
       distanceKm,
       sortVars,
     ]
@@ -296,6 +313,9 @@ export function IntentsPage() {
             <FilterModalRefactored
               initialQ={q}
               initialCity={city}
+              initialCityLat={cityLat}
+              initialCityLng={cityLng}
+              initialCityPlaceId={cityPlaceId}
               initialDistanceKm={distanceKm}
               initialStartISO={startISO}
               initialEndISO={endISO}

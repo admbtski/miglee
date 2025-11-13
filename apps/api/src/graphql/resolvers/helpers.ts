@@ -195,6 +195,8 @@ export type LocationInputShape = {
   address?: string | null;
   placeId?: string | null;
   radiusKm?: number | null;
+  cityName?: string | null;
+  cityPlaceId?: string | null;
 };
 
 /** Normalize LocationInput into prisma fields; preserves explicit nulls. */
@@ -208,6 +210,8 @@ export function pickLocation(
   if ('address' in input) out.address = input.address ?? null;
   if ('placeId' in input) out.placeId = input.placeId ?? null;
   if ('radiusKm' in input) out.radiusKm = input.radiusKm ?? null;
+  if ('cityName' in input) out.cityName = input.cityName ?? null;
+  if ('cityPlaceId' in input) out.cityPlaceId = input.cityPlaceId ?? null;
   return out;
 }
 

@@ -6,6 +6,7 @@ import {
   fetchPlaceDetailsFromSuggestion,
   usePlacesAutocomplete,
 } from '@/features/maps/hooks/use-places-autocomplete';
+import { resolveCityInfo } from '@/features/maps/utils/city-helpers';
 
 export function LocationCombo({
   value,
@@ -28,6 +29,10 @@ export function LocationCombo({
     lat?: number;
     lng?: number;
     displayName?: string;
+    /** City name extracted from place */
+    cityName?: string;
+    /** City Place ID (locality) */
+    cityPlaceId?: string;
   }) => void;
   bias?: {
     location?: google.maps.LatLngLiteral;
@@ -56,8 +61,6 @@ export function LocationCombo({
     language: 'pl',
     region: 'PL',
   });
-
-  console.dir({ trimmed, suggestions, loading, error });
 
   const isLoading = loadingOverride ?? loading;
 
@@ -93,17 +96,23 @@ export function LocationCombo({
     const s = suggestions[idx];
     if (!s) return;
 
+    // Fetch place details with extended fields
     const place = await fetchPlaceDetailsFromSuggestion(s.raw, [
       'id',
       'displayName',
       'formattedAddress',
       'location',
+      'types',
+      'addressComponents',
     ]);
 
     if (!place) return;
 
     const predictionPlaceId = s.raw.placePrediction?.placeId;
     const placeId = place.placeId || place.id || predictionPlaceId || undefined;
+
+    // Resolve city information
+    const { cityName, cityPlaceId } = await resolveCityInfo(place);
 
     onPickPlace({
       placeId,
@@ -112,6 +121,8 @@ export function LocationCombo({
       address: place.formattedAddress,
       lat: place.lat,
       lng: place.lng,
+      cityName,
+      cityPlaceId,
     });
 
     setOpen(false);

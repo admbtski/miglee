@@ -216,6 +216,8 @@ export function PlaceStep({
                     lng,
                     displayName,
                     placeId,
+                    cityName,
+                    cityPlaceId,
                   }) => {
                     const addr = address ?? displayName ?? '';
                     setValue('location.address', addr, { shouldDirty: true });
@@ -234,6 +236,18 @@ export function PlaceStep({
                     }
                     if (typeof lng === 'number') {
                       setValue('location.lng', lng, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                    if (typeof cityName === 'string') {
+                      setValue('location.cityName', cityName, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                    if (typeof cityPlaceId === 'string') {
+                      setValue('location.cityPlaceId', cityPlaceId, {
                         shouldValidate: true,
                         shouldDirty: true,
                       });

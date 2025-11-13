@@ -320,6 +320,10 @@ model Intent {
   placeId  String?
   radiusKm Float?
 
+  // City information for filtering and grouping
+  cityName    String? // e.g. "Warszawa", "Łódź"
+  cityPlaceId String? // Google Place ID for the city (locality)
+
   // Note: PostGIS 'geom' column (geography(Point, 4326)) is managed via SQL migration
   // and not directly in this schema. See migration: 20251104220540_add_postgis_geom
   // The 'geom' column is automatically populated from lat/lng and has a GIST index.

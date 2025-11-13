@@ -16,6 +16,9 @@ const DEFAULT_DISTANCE = INTENTS_CONFIG.DEFAULT_DISTANCE_KM;
 export interface FilterState {
   q: string;
   city: string | null;
+  cityLat: number | null;
+  cityLng: number | null;
+  cityPlaceId: string | null;
   distanceKm: number;
   startISO: string | null;
   endISO: string | null;
@@ -31,6 +34,9 @@ export interface FilterState {
 export interface UseFilterStateProps {
   initialQ: string;
   initialCity: string | null;
+  initialCityLat?: number | null;
+  initialCityLng?: number | null;
+  initialCityPlaceId?: string | null;
   initialDistanceKm: number;
   initialStartISO?: string | null;
   initialEndISO?: string | null;
@@ -47,6 +53,9 @@ export function useFilterState(props: UseFilterStateProps) {
   const {
     initialQ,
     initialCity,
+    initialCityLat = null,
+    initialCityLng = null,
+    initialCityPlaceId = null,
     initialDistanceKm,
     initialStartISO = null,
     initialEndISO = null,
@@ -60,6 +69,11 @@ export function useFilterState(props: UseFilterStateProps) {
   // State
   const [q, setQ] = useState<string>(initialQ ?? '');
   const [city, setCity] = useState<string | null>(initialCity ?? null);
+  const [cityLat, setCityLat] = useState<number | null>(initialCityLat);
+  const [cityLng, setCityLng] = useState<number | null>(initialCityLng);
+  const [cityPlaceId, setCityPlaceId] = useState<string | null>(
+    initialCityPlaceId
+  );
   const [distanceKm, setDistanceKm] = useState<number>(
     initialDistanceKm ?? DEFAULT_DISTANCE
   );
@@ -78,6 +92,9 @@ export function useFilterState(props: UseFilterStateProps) {
   const clearAll = useCallback(() => {
     setQ('');
     setCity(null);
+    setCityLat(null);
+    setCityLng(null);
+    setCityPlaceId(null);
     setDistanceKm(DEFAULT_DISTANCE);
     setStartISO(null);
     setEndISO(null);
@@ -95,6 +112,9 @@ export function useFilterState(props: UseFilterStateProps) {
     return {
       q,
       city,
+      cityLat,
+      cityLng,
+      cityPlaceId,
       distanceKm,
       startISO,
       endISO,
@@ -109,6 +129,9 @@ export function useFilterState(props: UseFilterStateProps) {
   }, [
     q,
     city,
+    cityLat,
+    cityLng,
+    cityPlaceId,
     distanceKm,
     startISO,
     endISO,
@@ -125,6 +148,9 @@ export function useFilterState(props: UseFilterStateProps) {
     // State
     q,
     city,
+    cityLat,
+    cityLng,
+    cityPlaceId,
     distanceKm,
     startISO,
     endISO,
@@ -138,6 +164,9 @@ export function useFilterState(props: UseFilterStateProps) {
     // Setters
     setQ,
     setCity,
+    setCityLat,
+    setCityLng,
+    setCityPlaceId,
     setDistanceKm,
     setStartISO,
     setEndISO,

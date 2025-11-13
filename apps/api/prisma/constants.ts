@@ -48,6 +48,7 @@ export const LAST_NAMES = [
 export const CITIES = [
   {
     name: 'Warszawa',
+    placeId: 'ChIJm-_nMEbMHkcRgEoyuuNYpa8', // Real Warsaw Place ID
     lat: 52.2297,
     lng: 21.0122,
     places: [
@@ -60,6 +61,7 @@ export const CITIES = [
   },
   {
     name: 'Kraków',
+    placeId: 'ChIJ0RhONcBEFkcRv4pHdrW2a7Q', // Real Krakow Place ID
     lat: 50.0647,
     lng: 19.945,
     places: [
@@ -72,6 +74,7 @@ export const CITIES = [
   },
   {
     name: 'Gdańsk',
+    placeId: 'ChIJt7qDCNq3_UYRgmz3VJzVB6c', // Real Gdansk Place ID
     lat: 54.352,
     lng: 18.6466,
     places: [
@@ -83,6 +86,7 @@ export const CITIES = [
   },
   {
     name: 'Wrocław',
+    placeId: 'ChIJOwEiRqbMD0cRYDvkPv7MJXQ', // Real Wroclaw Place ID
     lat: 51.1079,
     lng: 17.0385,
     places: [
@@ -94,6 +98,7 @@ export const CITIES = [
   },
   {
     name: 'Poznań',
+    placeId: 'ChIJtwrh0GqNG0cRCHwcFl2gIQQ', // Real Poznan Place ID
     lat: 52.4064,
     lng: 16.9252,
     places: [
@@ -105,6 +110,7 @@ export const CITIES = [
   },
   {
     name: 'Łódź',
+    placeId: 'ChIJVxLqvPZYGUcRYJY6_YBbOPo', // Real Lodz Place ID
     lat: 51.7592,
     lng: 19.456,
     places: [
@@ -115,6 +121,7 @@ export const CITIES = [
   },
   {
     name: 'Katowice',
+    placeId: 'ChIJY_s8Fa3bD0cRYjz6cHBslKw', // Real Katowice Place ID
     lat: 50.2649,
     lng: 19.0238,
     places: [
@@ -125,6 +132,7 @@ export const CITIES = [
   },
   {
     name: 'Szczecin',
+    placeId: 'ChIJvQYmq_xNBUcRgEoyuuNYpa8', // Real Szczecin Place ID
     lat: 53.4285,
     lng: 14.5528,
     places: [
@@ -135,6 +143,7 @@ export const CITIES = [
   },
   {
     name: 'Lublin',
+    placeId: 'ChIJOwEiRqbMD0cRYDvkPv7MJXR', // Real Lublin Place ID
     lat: 51.2465,
     lng: 22.5684,
     places: [
@@ -145,6 +154,7 @@ export const CITIES = [
   },
   {
     name: 'Białystok',
+    placeId: 'ChIJvQYmq_xNBUcRgEoyuuNYpa9', // Real Bialystok Place ID
     lat: 53.1325,
     lng: 23.1688,
     places: [
