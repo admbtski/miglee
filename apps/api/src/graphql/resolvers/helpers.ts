@@ -143,7 +143,7 @@ export type UserBlockWithGraph = Prisma.UserBlockGetPayload<{
 }>;
 
 export type IntentInviteLinkWithGraph = Prisma.IntentInviteLinkGetPayload<{
-  include: { intent: true };
+  include: { intent: true; createdBy: true; revokedBy: true };
 }>;
 
 export type NotificationPreferenceWithGraph =
@@ -850,7 +850,8 @@ export function mapIntentInviteLink(
   const now = new Date();
   const isExpired = link.expiresAt ? link.expiresAt < now : false;
   const isMaxedOut = link.maxUses ? link.usedCount >= link.maxUses : false;
-  const isValid = !isExpired && !isMaxedOut;
+  const isRevoked = !!link.revokedAt;
+  const isValid = !isExpired && !isMaxedOut && !isRevoked;
 
   return {
     id: link.id,
@@ -859,7 +860,18 @@ export function mapIntentInviteLink(
     maxUses: link.maxUses ?? null,
     usedCount: link.usedCount,
     expiresAt: link.expiresAt ?? null,
+    createdById: link.createdById ?? null,
+    createdBy: link.createdBy
+      ? (mapUser(link.createdBy, viewerId) as any)
+      : null,
+    label: link.label ?? null,
+    revokedAt: link.revokedAt ?? null,
+    revokedById: link.revokedById ?? null,
+    revokedBy: link.revokedBy
+      ? (mapUser(link.revokedBy, viewerId) as any)
+      : null,
     createdAt: link.createdAt,
+    updatedAt: link.updatedAt ?? null,
 
     intent: link.intent
       ? (mapIntent(link.intent as any, viewerId) as any)
@@ -867,6 +879,7 @@ export function mapIntentInviteLink(
 
     isExpired,
     isMaxedOut,
+    isRevoked,
     isValid,
   };
 }

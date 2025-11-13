@@ -17,6 +17,8 @@ import { nanoid } from 'nanoid';
 
 const INVITE_LINK_INCLUDE = {
   intent: true,
+  createdBy: true,
+  revokedBy: true,
 } satisfies Prisma.IntentInviteLinkInclude;
 
 /**
@@ -33,7 +35,7 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
         });
       }
 
-      const { intentId, maxUses, expiresAt } = input;
+      const { intentId, maxUses, expiresAt, label } = input;
 
       // Check ownership/moderator
       const intent = await prisma.intent.findUnique({
@@ -74,8 +76,10 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
         data: {
           intentId,
           code,
+          label: label ?? null,
           maxUses: maxUses ?? null,
           expiresAt: expiresAt ? new Date(expiresAt) : null,
+          createdById: user.id,
         },
         include: INVITE_LINK_INCLUDE,
       });
@@ -85,7 +89,134 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
   );
 
 /**
- * Mutation: Delete invite link
+ * Mutation: Update invite link
+ */
+export const updateIntentInviteLinkMutation: MutationResolvers['updateIntentInviteLink'] =
+  resolverWithMetrics(
+    'Mutation',
+    'updateIntentInviteLink',
+    async (_p, { id, input }, { user }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const link = await prisma.intentInviteLink.findUnique({
+        where: { id },
+        select: {
+          intentId: true,
+          intent: {
+            select: {
+              ownerId: true,
+              members: {
+                where: { userId: user.id, status: 'JOINED' },
+                select: { role: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!link) {
+        throw new GraphQLError('Invite link not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const isOwner = link.intent.ownerId === user.id;
+      const isModerator = link.intent.members.some(
+        (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
+      );
+
+      if (!isOwner && !isModerator) {
+        throw new GraphQLError(
+          'Only owner/moderators can update invite links.',
+          {
+            extensions: { code: 'FORBIDDEN' },
+          }
+        );
+      }
+
+      const updated = await prisma.intentInviteLink.update({
+        where: { id },
+        data: {
+          label: input.label ?? undefined,
+          maxUses: input.maxUses ?? undefined,
+          expiresAt: input.expiresAt ? new Date(input.expiresAt) : undefined,
+        },
+        include: INVITE_LINK_INCLUDE,
+      });
+
+      return mapIntentInviteLink(updated as IntentInviteLinkWithGraph);
+    }
+  );
+
+/**
+ * Mutation: Revoke invite link (soft delete)
+ */
+export const revokeIntentInviteLinkMutation: MutationResolvers['revokeIntentInviteLink'] =
+  resolverWithMetrics(
+    'Mutation',
+    'revokeIntentInviteLink',
+    async (_p, { id }, { user }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const link = await prisma.intentInviteLink.findUnique({
+        where: { id },
+        select: {
+          intentId: true,
+          intent: {
+            select: {
+              ownerId: true,
+              members: {
+                where: { userId: user.id, status: 'JOINED' },
+                select: { role: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!link) {
+        throw new GraphQLError('Invite link not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      const isOwner = link.intent.ownerId === user.id;
+      const isModerator = link.intent.members.some(
+        (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
+      );
+
+      if (!isOwner && !isModerator) {
+        throw new GraphQLError(
+          'Only owner/moderators can revoke invite links.',
+          {
+            extensions: { code: 'FORBIDDEN' },
+          }
+        );
+      }
+
+      const revoked = await prisma.intentInviteLink.update({
+        where: { id },
+        data: {
+          revokedAt: new Date(),
+          revokedById: user.id,
+        },
+        include: INVITE_LINK_INCLUDE,
+      });
+
+      return mapIntentInviteLink(revoked as IntentInviteLinkWithGraph);
+    }
+  );
+
+/**
+ * Mutation: Delete invite link (hard delete)
  */
 export const deleteIntentInviteLinkMutation: MutationResolvers['deleteIntentInviteLink'] =
   resolverWithMetrics(
@@ -138,12 +269,12 @@ export const deleteIntentInviteLinkMutation: MutationResolvers['deleteIntentInvi
   );
 
 /**
- * Mutation: Use invite link to join intent
+ * Mutation: Join intent using invite link
  */
-export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink'] =
+export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
   resolverWithMetrics(
     'Mutation',
-    'useIntentInviteLink',
+    'joinByInviteLink',
     async (_p, { code }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -173,6 +304,13 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
         });
       }
 
+      // Check if revoked
+      if (link.revokedAt) {
+        throw new GraphQLError('Invite link has been revoked.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+
       // Check if expired
       if (link.expiresAt && link.expiresAt < new Date()) {
         throw new GraphQLError('Invite link has expired.', {
@@ -183,6 +321,19 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
       // Check if maxed out
       if (link.maxUses && link.usedCount >= link.maxUses) {
         throw new GraphQLError('Invite link has reached maximum uses.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+
+      // Check if intent is deleted or canceled
+      if (link.intent.deletedAt) {
+        throw new GraphQLError('This event has been deleted.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+
+      if (link.intent.canceledAt) {
+        throw new GraphQLError('This event has been canceled.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
       }
@@ -199,7 +350,7 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
 
       if (existing && existing.status === 'JOINED') {
         // Already joined, just return intent
-        return mapIntent(link.intent);
+        return mapIntent(link.intent as IntentWithGraph);
       }
 
       // Create or update membership
@@ -215,10 +366,12 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
           userId: user.id,
           status: 'JOINED',
           role: 'PARTICIPANT',
+          joinedAt: new Date(),
         },
         update: {
           status: 'JOINED',
           role: 'PARTICIPANT',
+          joinedAt: new Date(),
         },
       });
 
@@ -234,6 +387,6 @@ export const useIntentInviteLinkMutation: MutationResolvers['useIntentInviteLink
         data: { joinedCount: { increment: 1 } },
       });
 
-      return mapIntent(link.intent);
+      return mapIntent(link.intent as IntentWithGraph);
     }
   );

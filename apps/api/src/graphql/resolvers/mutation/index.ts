@@ -96,8 +96,10 @@ import { blockUserMutation, unblockUserMutation } from './user-blocks';
 // Intent Invite Links mutations
 import {
   createIntentInviteLinkMutation,
+  updateIntentInviteLinkMutation,
+  revokeIntentInviteLinkMutation,
   deleteIntentInviteLinkMutation,
-  useIntentInviteLinkMutation,
+  joinByInviteLinkMutation,
 } from './invite-links';
 
 // Notification Preferences & Mutes mutations
@@ -268,8 +270,10 @@ export const Mutation: Resolvers['Mutation'] = {
 
   // ---- Intent Invite Links ----
   createIntentInviteLink: createIntentInviteLinkMutation,
+  updateIntentInviteLink: updateIntentInviteLinkMutation,
+  revokeIntentInviteLink: revokeIntentInviteLinkMutation,
   deleteIntentInviteLink: deleteIntentInviteLinkMutation,
-  useIntentInviteLink: useIntentInviteLinkMutation,
+  joinByInviteLink: joinByInviteLinkMutation,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,

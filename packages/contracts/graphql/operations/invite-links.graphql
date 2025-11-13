@@ -1,24 +1,163 @@
-# =============================================================================
 # Intent Invite Links Operations
-# =============================================================================
 
 # Queries
-query GetIntentInviteLinks($intentId: ID!) {
-  intentInviteLinks(intentId: $intentId) {
-    ...IntentInviteLinkCore
+query IntentInviteLinks($intentId: ID!, $includeRevoked: Boolean = false) {
+  intentInviteLinks(intentId: $intentId, includeRevoked: $includeRevoked) {
+    id
+    intentId
+    code
+    label
+    maxUses
+    usedCount
+    expiresAt
+    createdById
+    createdBy {
+      id
+      name
+      imageUrl
+    }
+    revokedAt
+    revokedById
+    revokedBy {
+      id
+      name
+      imageUrl
+    }
+    createdAt
+    updatedAt
+    isExpired
+    isMaxedOut
+    isRevoked
+    isValid
   }
 }
 
-query GetIntentInviteLink($code: String!) {
-  intentInviteLink(code: $code) {
-    ...IntentInviteLinkCore
+query IntentInviteLink($id: ID, $code: String) {
+  intentInviteLink(id: $id, code: $code) {
+    id
+    intentId
+    code
+    label
+    maxUses
+    usedCount
+    expiresAt
+    createdById
+    createdBy {
+      id
+      name
+      imageUrl
+    }
+    revokedAt
+    revokedById
+    revokedBy {
+      id
+      name
+      imageUrl
+    }
+    createdAt
+    updatedAt
+    isExpired
+    isMaxedOut
+    isRevoked
+    isValid
+  }
+}
+
+query ValidateInviteLink($code: String!) {
+  validateInviteLink(code: $code) {
+    valid
+    reason
+    link {
+      id
+      code
+      label
+      maxUses
+      usedCount
+      expiresAt
+      isExpired
+      isMaxedOut
+      isRevoked
+      isValid
+    }
+    intent {
+      id
+      title
+      description
+      startAt
+      endAt
+      lat
+      lng
+      address
+      joinedCount
+      max
+      isFull
+      owner {
+        id
+        name
+        imageUrl
+      }
+    }
   }
 }
 
 # Mutations
 mutation CreateIntentInviteLink($input: CreateIntentInviteLinkInput!) {
   createIntentInviteLink(input: $input) {
-    ...IntentInviteLinkCore
+    id
+    intentId
+    code
+    label
+    maxUses
+    usedCount
+    expiresAt
+    createdById
+    createdBy {
+      id
+      name
+      imageUrl
+    }
+    createdAt
+    updatedAt
+    isExpired
+    isMaxedOut
+    isRevoked
+    isValid
+  }
+}
+
+mutation UpdateIntentInviteLink(
+  $id: ID!
+  $input: UpdateIntentInviteLinkInput!
+) {
+  updateIntentInviteLink(id: $id, input: $input) {
+    id
+    intentId
+    code
+    label
+    maxUses
+    usedCount
+    expiresAt
+    updatedAt
+    isExpired
+    isMaxedOut
+    isRevoked
+    isValid
+  }
+}
+
+mutation RevokeIntentInviteLink($id: ID!) {
+  revokeIntentInviteLink(id: $id) {
+    id
+    intentId
+    revokedAt
+    revokedById
+    revokedBy {
+      id
+      name
+      imageUrl
+    }
+    isRevoked
+    isValid
   }
 }
 
@@ -26,10 +165,18 @@ mutation DeleteIntentInviteLink($id: ID!) {
   deleteIntentInviteLink(id: $id)
 }
 
-mutation UseIntentInviteLink($code: String!) {
-  useIntentInviteLink(code: $code) {
+mutation JoinByInviteLink($code: String!) {
+  joinByInviteLink(code: $code) {
     id
     title
-    # Add other intent fields as needed
+    description
+    startAt
+    endAt
+    lat
+    lng
+    address
+    joinedCount
+    max
+    isFull
   }
 }

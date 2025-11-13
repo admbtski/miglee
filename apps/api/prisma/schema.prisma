@@ -228,6 +228,10 @@ model User {
   ownershipTransfersTo    IntentOwnershipTransfer[] @relation("IotTo")
   ownershipTransfersActed IntentOwnershipTransfer[] @relation("IotActor")
 
+  // Invite Links
+  createdInviteLinks IntentInviteLink[] @relation("IntentInviteLinkCreatedBy")
+  revokedInviteLinks IntentInviteLink[] @relation("IntentInviteLinkRevokedBy")
+
   // Monetization
   subscriptions     UserSubscription[]
   eventSponsorships EventSponsorship[] @relation("SponsorUser")
@@ -295,16 +299,10 @@ model Intent {
   startAt DateTime
   endAt   DateTime
 
-  // ── Zapisy / okna / cutoffy ────────────────────────────────────────────────
-  /// Otwarcie zapisów X minut przed startem (null = bez ograniczeń, od publikacji).
   joinOpensMinutesBeforeStart     Int?
-  /// Zamknięcie zapisów przed startem: now >= startAt - X minut (null = brak pre-cutoffu).
   joinCutoffMinutesBeforeStart    Int?
-  /// Pozwól dołączać po starcie (late join).
   allowJoinLate                   Boolean   @default(true)
-  /// Zamknięcie late-join po starcie: now >= startAt + X minut (null = do endAt).
   lateJoinCutoffMinutesAfterStart Int?
-  /// Ręczne zamknięcie zapisów (nadpisuje powyższe).
   joinManuallyClosed              Boolean   @default(false)
   joinManuallyClosedAt            DateTime?
   joinManuallyClosedById          String?
@@ -748,15 +746,39 @@ model PaymentEvent {
 model IntentInviteLink {
   id        String    @id @default(cuid())
   intentId  String
-  code      String    @unique
+  code      String    @unique // Unique code used in URL (/i/:code)
+  
+  /// Maximum number of successful uses (null = unlimited)
   maxUses   Int?
+  
+  /// Count of successful uses (actual memberships created/updated)
   usedCount Int       @default(0)
+  
+  /// Expiration date (null = no expiration)
   expiresAt DateTime?
+  
+  /// Who created this invite link
+  createdById String?
+  createdBy   User?     @relation("IntentInviteLinkCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  
+  /// Optional label for the link (e.g. "Friends from work")
+  label       String?
+  
+  /// Soft deletion
+  revokedAt   DateTime?
+  revokedById String?
+  revokedBy   User?     @relation("IntentInviteLinkRevokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
+  
   createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
 
   intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
 
+  @@index([code])
+  @@index([intentId])
+  @@index([intentId, revokedAt])
   @@index([intentId, expiresAt])
+  @@index([expiresAt])
   @@map("intent_invite_links")
 }
 
@@ -825,6 +847,7 @@ model IntentOwnershipTransfer {
   @@index([intentId, createdAt])
   @@map("intent_ownership_transfers")
 }
+
 
 // =============================================================================
 /**

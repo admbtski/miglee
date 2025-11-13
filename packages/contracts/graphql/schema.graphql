@@ -1185,6 +1185,14 @@ type Query {
 
   intentMemberStats(intentId: ID!): IntentMemberStats!
 
+  # Intent Invite Links
+  intentInviteLinks(
+    intentId: ID!
+    includeRevoked: Boolean = false
+  ): [IntentInviteLink!]!
+  intentInviteLink(id: ID, code: String): IntentInviteLink
+  validateInviteLink(code: String!): IntentInviteLinkValidation!
+
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
   categories(query: String, limit: Int = 50): [Category!]!
   category(id: ID, slug: String): Category
@@ -1275,10 +1283,6 @@ type Query {
   # User Block Queries
   myBlocks(limit: Int = 50, offset: Int = 0): UserBlocksResult!
   isBlocked(userId: ID!): Boolean!
-
-  # Intent Invite Link Queries
-  intentInviteLinks(intentId: ID!): [IntentInviteLink!]!
-  intentInviteLink(code: String!): IntentInviteLink
 
   # Notification Preference Queries
   myNotificationPreferences: NotificationPreference!
@@ -1443,6 +1447,16 @@ type Mutation {
     input: CancelPendingOrInviteForUserInput!
   ): Boolean!
 
+  # Intent Invite Links
+  createIntentInviteLink(input: CreateIntentInviteLinkInput!): IntentInviteLink!
+  updateIntentInviteLink(
+    id: ID!
+    input: UpdateIntentInviteLinkInput!
+  ): IntentInviteLink!
+  revokeIntentInviteLink(id: ID!): IntentInviteLink!
+  deleteIntentInviteLink(id: ID!): Boolean!
+  joinByInviteLink(code: String!): Intent!
+
   # notifications
   addNotification(
     recipientId: ID!
@@ -1499,10 +1513,6 @@ type Mutation {
   # User Blocks
   blockUser(userId: ID!): UserBlock! # ← DODANE
   unblockUser(userId: ID!): Boolean! # ← DODANE
-  # Intent Invite Links
-  createIntentInviteLink(input: CreateIntentInviteLinkInput!): IntentInviteLink! # ← DODANE
-  deleteIntentInviteLink(id: ID!): Boolean! # ← DODANE
-  useIntentInviteLink(code: String!): Intent! # ← DODANE
   # Notification Preferences
   updateNotificationPreferences(
     input: UpdateNotificationPreferenceInput!
@@ -1642,7 +1652,14 @@ type IntentInviteLink {
   maxUses: Int
   usedCount: Int!
   expiresAt: DateTime
+  createdById: ID
+  createdBy: User
+  label: String
+  revokedAt: DateTime
+  revokedById: ID
+  revokedBy: User
   createdAt: DateTime!
+  updatedAt: DateTime
 
   intent: Intent!
 
@@ -1650,12 +1667,36 @@ type IntentInviteLink {
   isExpired: Boolean!
   isMaxedOut: Boolean!
   isValid: Boolean!
+  isRevoked: Boolean!
 }
 
 "Paginated invite links result"
 type IntentInviteLinksResult {
   items: [IntentInviteLink!]!
   pageInfo: PageInfo!
+}
+
+"Validation result for invite link"
+type IntentInviteLinkValidation {
+  valid: Boolean!
+  reason: String
+  link: IntentInviteLink
+  intent: Intent
+}
+
+"Input for creating invite link"
+input CreateIntentInviteLinkInput {
+  intentId: ID!
+  label: String
+  maxUses: Int
+  expiresAt: DateTime
+}
+
+"Input for updating invite link"
+input UpdateIntentInviteLinkInput {
+  label: String
+  maxUses: Int
+  expiresAt: DateTime
 }
 
 # ------------------------------------------------------------------------------

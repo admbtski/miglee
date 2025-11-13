@@ -34,7 +34,11 @@ import {
 import { reportsQuery, reportQuery } from './reports';
 import { intentMessagesQuery, intentUnreadCountQuery } from './event-chat';
 import { myBlocksQuery, isBlockedQuery } from './user-blocks';
-import { intentInviteLinksQuery, intentInviteLinkQuery } from './invite-links';
+import {
+  intentInviteLinksQuery,
+  intentInviteLinkQuery,
+  validateInviteLinkQuery,
+} from './invite-links';
 import {
   myNotificationPreferencesQuery,
   intentMuteQuery,
@@ -101,6 +105,7 @@ export const Query: Resolvers['Query'] = {
   isBlocked: isBlockedQuery,
   intentInviteLinks: intentInviteLinksQuery,
   intentInviteLink: intentInviteLinkQuery,
+  validateInviteLink: validateInviteLinkQuery,
   myNotificationPreferences: myNotificationPreferencesQuery,
   intentMute: intentMuteQuery,
   dmMute: dmMuteQuery,

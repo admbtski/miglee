@@ -6,6 +6,7 @@ import {
   BadgeDollarSign,
   Bell,
   CheckCircle2,
+  Link as LinkIcon,
   Loader2,
   Sparkles,
   Users,
@@ -16,10 +17,16 @@ import { MemberManageModal } from './panels/members/member-manage-modal';
 import { MembersPanel } from './panels/members/members-panel';
 import { PlansPanel } from './panels/plans/plans-panel';
 import { SubscriptionPanel } from './panels/subscription/subscription-panel';
+import { InviteLinksPanel } from './panels/invite-links/invite-links-panel';
 import { EventManagementModalProps, IntentMember } from './types';
 import clsx from 'clsx';
 
-type TabKey = 'MEMBERS' | 'PLANS' | 'NOTIFICATIONS' | 'SUBSCRIPTION';
+type TabKey =
+  | 'MEMBERS'
+  | 'PLANS'
+  | 'NOTIFICATIONS'
+  | 'SUBSCRIPTION'
+  | 'INVITE_LINKS';
 type SponsorPlan = 'Basic' | 'Plus' | 'Pro';
 
 type SponsorshipState = {
@@ -222,6 +229,7 @@ export function EventManagementModal({
       {(
         [
           { key: 'MEMBERS', label: 'Uczestnicy', Icon: Users },
+          { key: 'INVITE_LINKS', label: 'Linki zaproszeń', Icon: LinkIcon },
           { key: 'PLANS', label: 'Sponsorowanie', Icon: BadgeDollarSign },
           { key: 'SUBSCRIPTION', label: 'Pakiet (aktywny)', Icon: Sparkles },
           { key: 'NOTIFICATIONS', label: 'Powiadomienia', Icon: Bell },
@@ -355,6 +363,10 @@ export function EventManagementModal({
                   intentId={intentId}
                   onInvited={onInvited}
                 />
+              )}
+
+              {activeTab === 'INVITE_LINKS' && (
+                <InviteLinksPanel intentId={intentId} />
               )}
 
               {activeTab === 'PLANS' && (
