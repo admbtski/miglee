@@ -4,25 +4,23 @@ import {
   BadgePlusIcon,
   CalendarClockIcon,
   HatGlassesIcon,
-  MapPinnedIcon,
   SquarePenIcon,
-  UsersIcon,
   X,
 } from 'lucide-react';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal } from '@/components/feedback/modal';
 import { BasicsStep } from './basics-step';
 import { CapacityStep } from './capacity-step';
 import { useCategorySelection } from './category-selection-provider';
 import { PlaceStep } from './place-step';
 import { ReviewStep } from './review-step';
-import { Stepper } from './stepper';
 import { useTagSelection } from './tag-selection-provider';
 import { TimeStep } from './time-step';
 import { IntentFormValues } from './types';
 import { defaultIntentValues, useIntentForm } from './use-intent-form';
 import { CategoryOption, TagOption } from '@/types/types';
 import { PrivacyStep } from './privacy-step';
+import { useAutoSaveDraft } from '../hooks/use-auto-save-draft';
 
 const STEP_META = [
   { key: 'basics', label: 'What & Who', Icon: SquarePenIcon },
@@ -77,14 +75,27 @@ export function CreateEditIntentModal({
 
   const [step, setStep] = useState(0);
   const [formKey, setFormKey] = useState(0); // ← remount klucz
-  const titleId = useId();
 
   const {
     handleSubmit,
     trigger,
     reset,
+    watch,
     formState: { isValid, isSubmitting, isDirty },
   } = form;
+
+  // Get current categories and tags for auto-save
+  const { selected: currentCategories } = useCategorySelection();
+  const { selected: currentTags } = useTagSelection();
+
+  // Auto-save draft (only for create mode)
+  const { lastSaved, isSaving, loadDraft, clearDraft } = useAutoSaveDraft(
+    watch(),
+    isDirty,
+    !isEdit && open,
+    currentCategories,
+    currentTags
+  );
 
   // Świeże defaulty (żeby daty były „teraz + 5 min”, a nie z importu modułu)
   const makeFreshDefaults = useCallback((): IntentFormValues => {
@@ -102,6 +113,40 @@ export function CreateEditIntentModal({
   // Po otwarciu/zmianie initialValues – zasil form wartościami startowymi
   useEffect(() => {
     if (!open) return;
+
+    // Check for draft (only in create mode)
+    if (!isEdit) {
+      const draft = loadDraft();
+      if (draft) {
+        const shouldRestore = window.confirm(
+          `Found a draft saved at ${new Date(draft.savedAt).toLocaleString()}. Restore it?`
+        );
+        if (shouldRestore) {
+          reset(draft.values, {
+            keepDirty: true,
+            keepErrors: false,
+            keepTouched: false,
+            keepIsSubmitted: false,
+            keepSubmitCount: false,
+          });
+
+          // Restore categories and tags from draft
+          if (draft.categories && draft.categories.length > 0) {
+            setCategories(draft.categories, 3);
+          }
+          if (draft.tags && draft.tags.length > 0) {
+            setTags(draft.tags, 3);
+          }
+
+          setStep(0);
+          setFormKey((k) => k + 1);
+          return;
+        } else {
+          clearDraft();
+        }
+      }
+    }
+
     reset(
       { ...makeFreshDefaults(), ...(initialValues ?? {}) },
       {
@@ -113,7 +158,7 @@ export function CreateEditIntentModal({
       }
     );
     setCategories(initialCategories);
-    setTags(initialCategories);
+    setTags(initialTags);
     setStep(0);
     setFormKey((k) => k + 1); // wymuś remount drzewa pól
   }, [
@@ -135,21 +180,46 @@ export function CreateEditIntentModal({
     }
   }, [open, reset, clearTags, clearCategories]);
 
-  // Enter -> next/submit, Shift+Enter -> back (z pominięciem textarea)
+  // Keyboard shortcuts:
+  // - Enter: next/submit (skip in textarea)
+  // - Shift+Enter: back
+  // - Cmd/Ctrl+Enter: next/submit (works everywhere)
+  // - Cmd/Ctrl+Shift+Enter: back (works everywhere)
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
-      if (tag === 'textarea') return;
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
 
-      if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+      // Cmd/Ctrl+Enter -> next/submit (works everywhere, including textarea)
+      if (e.key === 'Enter' && isCmdOrCtrl && !e.shiftKey) {
         e.preventDefault();
         if (step < steps.length - 1) {
           void next();
         } else {
           submit();
         }
-      } else if (e.key === 'Enter' && e.shiftKey) {
+        return;
+      }
+
+      // Cmd/Ctrl+Shift+Enter -> back (works everywhere)
+      if (e.key === 'Enter' && isCmdOrCtrl && e.shiftKey) {
+        e.preventDefault();
+        if (step > 0) back();
+        return;
+      }
+
+      // Regular Enter (skip in textarea)
+      if (tag === 'textarea') return;
+
+      if (e.key === 'Enter' && !e.shiftKey && !isCmdOrCtrl) {
+        e.preventDefault();
+        if (step < steps.length - 1) {
+          void next();
+        } else {
+          submit();
+        }
+      } else if (e.key === 'Enter' && e.shiftKey && !isCmdOrCtrl) {
         e.preventDefault();
         if (step > 0) back();
       }
@@ -212,9 +282,13 @@ export function CreateEditIntentModal({
     useCallback(
       async (values) => {
         await onSubmit(values as IntentFormValues);
+        // Clear draft after successful submit
+        if (!isEdit) {
+          clearDraft();
+        }
         onClose();
       },
-      [onClose, onSubmit]
+      [onClose, onSubmit, isEdit, clearDraft]
     )
   );
 
@@ -239,9 +313,21 @@ export function CreateEditIntentModal({
                 <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
                   {isEdit ? 'Edit Event' : 'Create Event'}
                 </h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Step {step + 1} of {steps.length}: {stepLabel}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Step {step + 1} of {steps.length}: {stepLabel}
+                  </p>
+                  {!isEdit && lastSaved && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                      • Draft saved {lastSaved.toLocaleTimeString()}
+                    </span>
+                  )}
+                  {!isEdit && isSaving && (
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                      • Saving...
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -398,8 +484,10 @@ export function CreateEditIntentModal({
                 Check everything looks good before creating
               </p>
               <ReviewStep
-                values={form.getValues()} // po „next" już spłukane
+                values={form.getValues()}
                 showMapPreview
+                errors={form.formState.errors}
+                onEditStep={(stepIndex) => setStep(stepIndex)}
               />
             </div>
           )}

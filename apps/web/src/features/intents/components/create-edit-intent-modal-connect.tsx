@@ -16,19 +16,52 @@ import { TagSelectionProvider } from './tag-selection-provider';
 import { IntentFormValues } from './types';
 import { toast, devLogger } from '@/lib/utils';
 
+/**
+ * CreateEditIntentModalConnect - Modal for creating/editing intents with auto-save
+ *
+ * @param intentId - Optional ID for editing existing intent
+ * @param open - Controls modal visibility
+ * @param onClose - Called when modal is closed
+ * @param onSuccess - Optional callback with intentId called AFTER success modal is closed
+ *                    Use this to navigate to detail page after user sees success message
+ *
+ * @example
+ * // Without navigation (just shows success modal)
+ * <CreateEditIntentModalConnect
+ *   open={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ * />
+ *
+ * @example
+ * // With navigation to detail page after success modal
+ * const router = useRouter();
+ * <CreateEditIntentModalConnect
+ *   open={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   onSuccess={(intentId) => {
+ *     // This will be called AFTER user closes the success modal
+ *     router.push(`/intent/${intentId}`);
+ *   }}
+ * />
+ */
 export function CreateEditIntentModalConnect({
   intentId,
   open,
   onClose,
+  onSuccess,
 }: {
   intentId?: string;
   open: boolean;
   onClose: () => void;
+  onSuccess?: (intentId: string) => void;
 }) {
   const { mutateAsync: createAsync } = useCreateIntentMutation();
   const { mutateAsync: updateAsync } = useUpdateIntentMutation();
 
   const [successOpen, setSuccessOpen] = useState(false);
+  const [createdIntentId, setCreatedIntentId] = useState<string | undefined>(
+    undefined
+  );
 
   const { data } = useIntentQuery(
     { id: intentId! },
@@ -62,6 +95,16 @@ export function CreateEditIntentModalConnect({
     onClose();
   }, [onClose]);
 
+  const handleSuccessClose = useCallback(() => {
+    setSuccessOpen(false);
+
+    // Call onSuccess callback after success modal is closed
+    if (onSuccess && createdIntentId) {
+      onSuccess(createdIntentId);
+      setCreatedIntentId(undefined);
+    }
+  }, [onSuccess, createdIntentId]);
+
   const handleSubmit = useCallback(
     async (formValues: IntentFormValues) => {
       const startTime = Date.now();
@@ -82,7 +125,19 @@ export function CreateEditIntentModalConnect({
         const duration = Date.now() - startTime;
         devLogger.mutationSuccess(action, result, duration);
 
+        // Extract intent ID from result
+        let resultIntentId: string | undefined = intentId;
+        if (!resultIntentId && result && 'createIntent' in result) {
+          resultIntentId = result.createIntent?.id;
+        }
+
+        // Store intent ID for later use in handleSuccessClose
+        setCreatedIntentId(resultIntentId);
+
         onClose();
+
+        // Always show success modal
+        // onSuccess will be called in handleSuccessClose after user closes the modal
         setSuccessOpen(true);
       } catch (err: any) {
         const duration = Date.now() - startTime;
@@ -138,10 +193,7 @@ export function CreateEditIntentModalConnect({
         </CategorySelectionProvider>
       )}
 
-      <SuccessIntentModal
-        open={successOpen}
-        onClose={() => setSuccessOpen(false)}
-      />
+      <SuccessIntentModal open={successOpen} onClose={handleSuccessClose} />
     </>
   );
 }

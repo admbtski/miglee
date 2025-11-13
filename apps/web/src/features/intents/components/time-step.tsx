@@ -110,6 +110,30 @@ export function TimeStep({
     name: 'lateJoinCutoffMinutesAfterStart',
   });
 
+  const categorySlugs = useWatch({ control, name: 'categorySlugs' }) ?? [];
+
+  // Smart defaults - duration based on category
+  const CATEGORY_DURATION_DEFAULTS: Record<string, number> = useMemo(
+    () => ({
+      coffee: 30,
+      lunch: 60,
+      dinner: 120,
+      boardgames: 180,
+      coding: 120,
+      workshop: 120,
+      sports: 90,
+      hiking: 240,
+      running: 60,
+      cycling: 90,
+      yoga: 60,
+      meditation: 45,
+      networking: 120,
+      conference: 480,
+      meetup: 120,
+    }),
+    []
+  );
+
   // Duration calculator presets (defined early for useEffect)
   const durationPresets = useMemo(
     () => [
@@ -122,6 +146,36 @@ export function TimeStep({
     ],
     []
   );
+
+  // Suggested duration based on first category
+  const suggestedDuration = useMemo(() => {
+    if (categorySlugs.length === 0) return null;
+    const firstCategory = categorySlugs[0];
+    if (!firstCategory || typeof firstCategory !== 'string') return null;
+    return CATEGORY_DURATION_DEFAULTS[firstCategory] ?? null;
+  }, [categorySlugs, CATEGORY_DURATION_DEFAULTS]);
+
+  // Suggested join window based on mode
+  const suggestedJoinWindow = useMemo(() => {
+    if (mode === 'ONE_TO_ONE') {
+      return {
+        joinOpensMinutesBeforeStart: 60,
+        joinCutoffMinutesBeforeStart: 15,
+        allowJoinLate: true,
+        lateJoinCutoffMinutesAfterStart: 15,
+        label: '1:1 (flexible)',
+      };
+    } else if (mode === 'GROUP') {
+      return {
+        joinOpensMinutesBeforeStart: 1440, // 24h
+        joinCutoffMinutesBeforeStart: 60, // 1h
+        allowJoinLate: false,
+        lateJoinCutoffMinutesAfterStart: null,
+        label: 'Group (structured)',
+      };
+    }
+    return null;
+  }, [mode]);
 
   // Track last selected preset for visual feedback
   const [lastDurationPreset, setLastDurationPreset] = useState<number | null>(
@@ -609,10 +663,24 @@ export function TimeStep({
 
       {/* Duration Calculator */}
       <div>
-        <label className="mb-1 flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          <Clock className="h-4 w-4" />
-          <span>Duration calculator</span>
-        </label>
+        <div className="mb-1 flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <Clock className="h-4 w-4" />
+            <span>Duration calculator</span>
+          </label>
+          {suggestedDuration && (
+            <button
+              type="button"
+              onClick={() => {
+                setDuration(suggestedDuration);
+              }}
+              className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
+              title={`Apply suggested duration based on category`}
+            >
+              💡 Use {suggestedDuration}min
+            </button>
+          )}
+        </div>
         <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
           Szybko ustaw czas trwania na podstawie typu wydarzenia
         </p>
@@ -709,6 +777,38 @@ export function TimeStep({
           <span className="flex items-center gap-2">
             <span>⚙️</span>
             <span>Advanced join settings</span>
+            {suggestedJoinWindow && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setValue(
+                    'joinOpensMinutesBeforeStart',
+                    suggestedJoinWindow.joinOpensMinutesBeforeStart,
+                    { shouldDirty: true, shouldValidate: true }
+                  );
+                  setValue(
+                    'joinCutoffMinutesBeforeStart',
+                    suggestedJoinWindow.joinCutoffMinutesBeforeStart,
+                    { shouldDirty: true, shouldValidate: true }
+                  );
+                  setValue('allowJoinLate', suggestedJoinWindow.allowJoinLate, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                  setValue(
+                    'lateJoinCutoffMinutesAfterStart',
+                    suggestedJoinWindow.lateJoinCutoffMinutesAfterStart,
+                    { shouldDirty: true, shouldValidate: true }
+                  );
+                }}
+                className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline ml-2"
+                title={`Apply suggested join window for ${suggestedJoinWindow.label}`}
+              >
+                💡 {suggestedJoinWindow.label}
+              </button>
+            )}
           </span>
           <span className="text-xs text-zinc-500 dark:text-zinc-400 group-open:rotate-180 transition-transform">
             ▼

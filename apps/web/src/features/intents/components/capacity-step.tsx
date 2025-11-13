@@ -1,11 +1,33 @@
 'use client';
 
 import { Info, User, Users } from 'lucide-react';
-import { useEffect, useId, useMemo, useRef } from 'react';
-import { UseFormReturn, useController } from 'react-hook-form';
+import { useEffect, useId, useMemo } from 'react';
+import { UseFormReturn, useController, useWatch } from 'react-hook-form';
 import { IntentFormValues } from './types';
 import { RangeSlider } from './range-slider';
 import { SegmentedControl } from '@/components/ui/segment-control';
+
+// Smart defaults based on category
+const CATEGORY_CAPACITY_DEFAULTS: Record<
+  string,
+  { min: number; max: number; label: string }
+> = {
+  coffee: { min: 2, max: 4, label: 'Coffee chat (2-4)' },
+  lunch: { min: 2, max: 6, label: 'Lunch (2-6)' },
+  dinner: { min: 2, max: 8, label: 'Dinner (2-8)' },
+  boardgames: { min: 3, max: 6, label: 'Board games (3-6)' },
+  coding: { min: 4, max: 12, label: 'Coding session (4-12)' },
+  workshop: { min: 5, max: 20, label: 'Workshop (5-20)' },
+  sports: { min: 6, max: 20, label: 'Sports (6-20)' },
+  hiking: { min: 4, max: 15, label: 'Hiking (4-15)' },
+  running: { min: 3, max: 10, label: 'Running (3-10)' },
+  cycling: { min: 3, max: 15, label: 'Cycling (3-15)' },
+  yoga: { min: 5, max: 15, label: 'Yoga (5-15)' },
+  meditation: { min: 3, max: 20, label: 'Meditation (3-20)' },
+  networking: { min: 10, max: 50, label: 'Networking (10-50)' },
+  conference: { min: 20, max: 50, label: 'Conference (20-50)' },
+  meetup: { min: 5, max: 30, label: 'Meetup (5-30)' },
+};
 
 export function CapacityStep({
   form,
@@ -30,7 +52,16 @@ export function CapacityStep({
 
   const minVal = watch('min');
   const maxVal = watch('max');
+  const categorySlugs = useWatch({ control, name: 'categorySlugs' }) ?? [];
   const isGroup = modeField.value === 'GROUP';
+
+  // Smart defaults - suggest capacity based on first category
+  const suggestedCapacity = useMemo(() => {
+    if (!isGroup || categorySlugs.length === 0) return null;
+    const firstCategory = categorySlugs[0];
+    if (!firstCategory || typeof firstCategory !== 'string') return null;
+    return CATEGORY_CAPACITY_DEFAULTS[firstCategory] ?? null;
+  }, [isGroup, categorySlugs]);
 
   // Single source of truth for capacity sync
   useEffect(() => {
@@ -93,9 +124,30 @@ export function CapacityStep({
           ].join(' ')}
           aria-disabled={!isGroup}
         >
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Capacity
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Capacity
+            </label>
+            {suggestedCapacity && (
+              <button
+                type="button"
+                onClick={() => {
+                  setValue('min', suggestedCapacity.min, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                  setValue('max', suggestedCapacity.max, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+                className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
+                title={`Apply suggested capacity for ${suggestedCapacity.label}`}
+              >
+                💡 Use {suggestedCapacity.label}
+              </button>
+            )}
+          </div>
 
           <p
             id={capHelpId}
@@ -104,6 +156,41 @@ export function CapacityStep({
             Set the minimum and maximum number of participants (drag the
             handles).
           </p>
+
+          {/* Visual capacity preview */}
+          <div className="mt-3 mb-2 flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(minVal ?? 2, 10) }).map((_, i) => (
+                <User
+                  key={`min-${i}`}
+                  className="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                  aria-hidden="true"
+                />
+              ))}
+              {(minVal ?? 2) > 10 && (
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">
+                  +{(minVal ?? 2) - 10}
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">→</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(maxVal ?? 50, 10) }).map(
+                (_, i) => (
+                  <User
+                    key={`max-${i}`}
+                    className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                    aria-hidden="true"
+                  />
+                )
+              )}
+              {(maxVal ?? 50) > 10 && (
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">
+                  +{(maxVal ?? 50) - 10}
+                </span>
+              )}
+            </div>
+          </div>
 
           <RangeSlider
             value={[minVal ?? 2, maxVal ?? 50]}

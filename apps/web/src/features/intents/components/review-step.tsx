@@ -270,11 +270,15 @@ export function ReviewStep({
   showMapPreview = false,
   mapId,
   showSuggestion,
+  errors,
+  onEditStep,
 }: {
   values: IntentFormValues;
   showMapPreview?: boolean;
   mapId?: string;
   showSuggestion?: boolean;
+  errors?: Record<string, { message?: string }>;
+  onEditStep?: (stepIndex: number) => void;
 }) {
   const { dDate, startT, endT } = useFormattedTime(
     values.startAt,
@@ -413,8 +417,85 @@ export function ReviewStep({
       </div>
     ) : null;
 
+  // Map field names to step indices and labels
+  const fieldToStep: Record<string, { step: number; label: string }> = {
+    title: { step: 0, label: 'Event name' },
+    categorySlugs: { step: 0, label: 'Categories' },
+    description: { step: 0, label: 'Description' },
+    tagSlugs: { step: 0, label: 'Tags' },
+    mode: { step: 0, label: 'Mode' },
+    min: { step: 0, label: 'Minimum capacity' },
+    max: { step: 0, label: 'Maximum capacity' },
+    startAt: { step: 1, label: 'Start time' },
+    endAt: { step: 1, label: 'End time' },
+    meetingKind: { step: 1, label: 'Meeting type' },
+    onlineUrl: { step: 1, label: 'Online URL' },
+    location: { step: 1, label: 'Location' },
+    notes: { step: 1, label: 'Logistics note' },
+    joinMode: { step: 2, label: 'Join mode' },
+    visibility: { step: 2, label: 'Visibility' },
+    levels: { step: 2, label: 'Participant levels' },
+    addressVisibility: { step: 2, label: 'Address visibility' },
+    membersVisibility: { step: 2, label: 'Members visibility' },
+  };
+
+  const validationErrors = errors
+    ? Object.entries(errors)
+        .filter(([_, err]) => err?.message)
+        .map(([field, err]) => ({
+          field,
+          message: err.message as string,
+          step: fieldToStep[field]?.step ?? 0,
+          label: fieldToStep[field]?.label ?? field,
+        }))
+    : [];
+
   return (
     <div className={`grid gap-5 ${showSuggestion && 'md:grid-cols-2'}`}>
+      {/* Validation Summary */}
+      {validationErrors.length > 0 && (
+        <div className="col-span-full rounded-2xl border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-red-700 dark:text-red-300">
+            <svg
+              className="h-5 w-5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Please fix {validationErrors.length} issue
+            {validationErrors.length !== 1 ? 's' : ''} before creating
+          </div>
+          <ul className="space-y-1.5">
+            {validationErrors.map(({ field, message, step, label }) => (
+              <li
+                key={field}
+                className="text-sm text-red-800 dark:text-red-200"
+              >
+                {onEditStep ? (
+                  <button
+                    type="button"
+                    onClick={() => onEditStep(step)}
+                    className="hover:underline text-left"
+                  >
+                    <strong>{label}:</strong> {message}
+                  </button>
+                ) : (
+                  <>
+                    <strong>{label}:</strong> {message}
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* LEFT: Summary card */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
         {/* Header */}
