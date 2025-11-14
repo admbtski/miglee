@@ -102,6 +102,8 @@ export type EventDetailsData = {
     avg?: number;
     breakdown?: Record<1 | 2 | 3 | 4 | 5, number>;
   };
+  isFavourite?: boolean;
+  savedCount?: number;
 
   // Sponsoring
   sponsorship?: {

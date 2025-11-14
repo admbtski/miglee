@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Globe, Heart, Menu as MenuIcon } from 'lucide-react';
+import { Bell, Heart, Menu as MenuIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
 import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
@@ -9,6 +9,7 @@ import { CreateEditIntentModalConnect } from '@/features/intents/components/crea
 import { NavDrawer } from './nav-drawer';
 import { UserMenuControlled } from './user-menu-controlled';
 import { NotificationBell } from '@/features/notifications/components/notifications-bell';
+import { FavouritesBell } from '@/features/favourites/components/favourites-bell';
 
 export type NavbarProps = {
   searchBar?: React.ReactNode;
@@ -121,10 +122,18 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
               </button>
             )}
 
-            {[{ icon: Heart, label: 'Favourites' }].map(
-              ({ icon: Icon, label }) => (
-                <IconButton key={label} icon={Icon} label={label} />
-              )
+            {isAuthed ? (
+              <FavouritesBell />
+            ) : (
+              <button
+                type="button"
+                onClick={openAuthSignin}
+                className="cursor-pointer rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                title="Favourites"
+                aria-label="Favourites"
+              >
+                <Heart className="h-5 w-5" aria-hidden />
+              </button>
             )}
 
             <IconButton icon={MenuIcon} label="Menu" onClick={openDrawer} />
@@ -144,6 +153,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
               </button>
             ) : (
               <>
+                <FavouritesBell />
                 <NotificationBell recipientId={data.me?.id!} limit={8} />
                 <UserMenuControlled
                   onNavigate={(key) => console.log('navigate:', key)}

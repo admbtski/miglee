@@ -1,0 +1,348 @@
+import {
+  MyFavouritesDocument,
+  MyFavouritesQuery,
+  MyFavouritesQueryVariables,
+  IsFavouriteDocument,
+  IsFavouriteQuery,
+  IsFavouriteQueryVariables,
+  ToggleFavouriteDocument,
+  ToggleFavouriteMutation,
+  ToggleFavouriteMutationVariables,
+} from '@/lib/api/__generated__/react-query-update';
+import { gqlClient } from '@/lib/api/client';
+import { getQueryClient } from '@/lib/config/query-client';
+import {
+  InfiniteData,
+  QueryKey,
+  useMutation,
+  UseMutationOptions,
+  useQuery,
+  UseQueryOptions,
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
+} from '@tanstack/react-query';
+
+/* --------------------------------- KEYS ---------------------------------- */
+export const favouritesKeys = {
+  all: ['Favourites'] as const,
+  lists: () => [...favouritesKeys.all, 'list'] as const,
+  list: (variables?: Omit<MyFavouritesQueryVariables, 'offset'>) =>
+    [...favouritesKeys.lists(), variables] as const,
+  listInfinite: (variables?: Omit<MyFavouritesQueryVariables, 'offset'>) =>
+    [...favouritesKeys.lists(), 'infinite', variables] as const,
+  details: () => [...favouritesKeys.all, 'detail'] as const,
+  detail: (intentId: string) =>
+    [...favouritesKeys.details(), intentId] as const,
+};
+
+/* ----------------------------- QUERY BUILDERS ---------------------------- */
+
+/**
+ * Builder for infinite query (for popup/dropdown)
+ */
+export function buildMyFavouritesInfiniteOptions(
+  variables?: Omit<MyFavouritesQueryVariables, 'offset'>,
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      MyFavouritesQuery,
+      Error,
+      InfiniteData<MyFavouritesQuery>,
+      QueryKey,
+      number
+    >,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+): UseInfiniteQueryOptions<
+  MyFavouritesQuery,
+  Error,
+  InfiniteData<MyFavouritesQuery>,
+  QueryKey,
+  number
+> {
+  return {
+    queryKey: favouritesKeys.listInfinite(variables) as unknown as QueryKey,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const vars: MyFavouritesQueryVariables = {
+        ...(variables ?? {}),
+        offset: pageParam,
+        limit: variables?.limit ?? 20,
+      };
+      return gqlClient.request<MyFavouritesQuery, MyFavouritesQueryVariables>(
+        MyFavouritesDocument,
+        vars
+      );
+    },
+    getNextPageParam: (lastPage, _allPages, lastOffset) => {
+      const pageInfo = lastPage.myFavourites?.pageInfo;
+      if (!pageInfo?.hasNext) return undefined;
+      return (lastOffset ?? 0) + (pageInfo.limit ?? 20);
+    },
+    ...(options ?? {}),
+  };
+}
+
+/**
+ * Builder for regular query (for full page)
+ */
+export function buildMyFavouritesOptions(
+  variables?: MyFavouritesQueryVariables,
+  options?: Omit<
+    UseQueryOptions<MyFavouritesQuery, Error, MyFavouritesQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+): UseQueryOptions<MyFavouritesQuery, Error, MyFavouritesQuery, QueryKey> {
+  return {
+    queryKey: favouritesKeys.list(variables) as unknown as QueryKey,
+    queryFn: async () =>
+      gqlClient.request<MyFavouritesQuery, MyFavouritesQueryVariables>(
+        MyFavouritesDocument,
+        variables ?? {}
+      ),
+    ...(options ?? {}),
+  };
+}
+
+/**
+ * Builder for checking if intent is favourited
+ */
+export function buildIsFavouriteOptions(
+  variables: IsFavouriteQueryVariables,
+  options?: Omit<
+    UseQueryOptions<IsFavouriteQuery, Error, IsFavouriteQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+): UseQueryOptions<IsFavouriteQuery, Error, IsFavouriteQuery, QueryKey> {
+  return {
+    queryKey: favouritesKeys.detail(variables.intentId) as unknown as QueryKey,
+    queryFn: async () =>
+      gqlClient.request<IsFavouriteQuery, IsFavouriteQueryVariables>(
+        IsFavouriteDocument,
+        variables
+      ),
+    ...(options ?? {}),
+  };
+}
+
+/* --------------------------------- QUERIES -------------------------------- */
+
+/**
+ * Infinite query hook for favourites (for popup/dropdown)
+ */
+export function useMyFavouritesInfiniteQuery(
+  variables?: Omit<MyFavouritesQueryVariables, 'offset'>,
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      MyFavouritesQuery,
+      Error,
+      InfiniteData<MyFavouritesQuery>,
+      QueryKey,
+      number
+    >,
+    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
+  >
+) {
+  return useInfiniteQuery<
+    MyFavouritesQuery,
+    Error,
+    InfiniteData<MyFavouritesQuery>,
+    QueryKey,
+    number
+  >(buildMyFavouritesInfiniteOptions(variables, options));
+}
+
+/**
+ * Regular query hook for favourites (for full page)
+ */
+export function useMyFavouritesQuery(
+  variables?: MyFavouritesQueryVariables,
+  options?: Omit<
+    UseQueryOptions<MyFavouritesQuery, Error, MyFavouritesQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery(buildMyFavouritesOptions(variables, options));
+}
+
+/**
+ * Query hook to check if intent is favourited
+ */
+export function useIsFavouriteQuery(
+  variables: IsFavouriteQueryVariables,
+  options?: Omit<
+    UseQueryOptions<IsFavouriteQuery, Error, IsFavouriteQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery(
+    buildIsFavouriteOptions(variables, {
+      enabled: !!variables.intentId,
+      ...(options ?? {}),
+    })
+  );
+}
+
+/* --------------------------- MUTATION BUILDERS --------------------------- */
+
+export function buildToggleFavouriteOptions<TContext = unknown>(
+  options?: UseMutationOptions<
+    ToggleFavouriteMutation,
+    unknown,
+    ToggleFavouriteMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  ToggleFavouriteMutation,
+  unknown,
+  ToggleFavouriteMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['ToggleFavourite'] as QueryKey,
+    mutationFn: async (variables: ToggleFavouriteMutationVariables) =>
+      gqlClient.request<
+        ToggleFavouriteMutation,
+        ToggleFavouriteMutationVariables
+      >(ToggleFavouriteDocument, variables),
+    ...(options ?? {}),
+  };
+}
+
+/* -------------------------------- MUTATIONS ------------------------------- */
+
+type ToggleFavouriteContext = {
+  previousQueries: Array<{ key: readonly unknown[]; data: unknown }>;
+};
+
+export function useToggleFavouriteMutation(
+  options?: UseMutationOptions<
+    ToggleFavouriteMutation,
+    unknown,
+    ToggleFavouriteMutationVariables,
+    ToggleFavouriteContext
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    ToggleFavouriteMutation,
+    unknown,
+    ToggleFavouriteMutationVariables,
+    ToggleFavouriteContext
+  >(
+    buildToggleFavouriteOptions({
+      onMutate: async (vars) => {
+        // Cancel any outgoing refetches
+        await qc.cancelQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) &&
+            (q.queryKey[0] === 'GetIntent' ||
+              q.queryKey[0] === 'GetIntents' ||
+              q.queryKey[0] === 'GetIntentsLight'),
+        });
+
+        // Snapshot the previous value
+        const previousQueries = qc
+          .getQueryCache()
+          .findAll({
+            predicate: (q) =>
+              Array.isArray(q.queryKey) &&
+              (q.queryKey[0] === 'GetIntent' ||
+                q.queryKey[0] === 'GetIntents' ||
+                q.queryKey[0] === 'GetIntentsLight'),
+          })
+          .map((q) => ({ key: q.queryKey, data: q.state.data }));
+
+        // Optimistically update all intent queries
+        qc.setQueriesData(
+          {
+            predicate: (q) =>
+              Array.isArray(q.queryKey) &&
+              (q.queryKey[0] === 'GetIntent' ||
+                q.queryKey[0] === 'GetIntents' ||
+                q.queryKey[0] === 'GetIntentsLight'),
+          },
+          (old: any) => {
+            if (!old) return old;
+
+            // Handle single intent query (GetIntent)
+            if (old.intent) {
+              if (old.intent.id === vars.intentId) {
+                return {
+                  ...old,
+                  intent: {
+                    ...old.intent,
+                    isFavourite: !old.intent.isFavourite,
+                    savedCount: old.intent.isFavourite
+                      ? Math.max(0, (old.intent.savedCount ?? 0) - 1)
+                      : (old.intent.savedCount ?? 0) + 1,
+                  },
+                };
+              }
+            }
+
+            // Handle intents list query (GetIntents/GetIntentsLight)
+            if (old.intents?.items) {
+              return {
+                ...old,
+                intents: {
+                  ...old.intents,
+                  items: old.intents.items.map((intent: any) =>
+                    intent.id === vars.intentId
+                      ? {
+                          ...intent,
+                          isFavourite: !intent.isFavourite,
+                          savedCount: intent.isFavourite
+                            ? Math.max(0, (intent.savedCount ?? 0) - 1)
+                            : (intent.savedCount ?? 0) + 1,
+                        }
+                      : intent
+                  ),
+                },
+              };
+            }
+
+            return old;
+          }
+        );
+
+        return { previousQueries };
+      },
+      onError: (_err, _vars, context) => {
+        // Rollback on error
+        if (context?.previousQueries) {
+          context.previousQueries.forEach(({ key, data }) => {
+            qc.setQueryData(key, data);
+          });
+        }
+      },
+      onSuccess: (_data, vars) => {
+        // Invalidate favourites lists
+        qc.invalidateQueries({
+          queryKey: favouritesKeys.lists(),
+        });
+        // Invalidate specific intent favourite status
+        qc.invalidateQueries({
+          queryKey: favouritesKeys.detail(vars.intentId),
+        });
+        // Invalidate intent queries to update isFavourite field (refetch to ensure consistency)
+        qc.invalidateQueries({
+          predicate: (q) =>
+            Array.isArray(q.queryKey) &&
+            (q.queryKey[0] === 'GetIntent' ||
+              q.queryKey[0] === 'GetIntents' ||
+              q.queryKey[0] === 'GetIntentsLight'),
+        });
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+/* --------------------------------- HELPERS -------------------------------- */
+
+/**
+ * Flatten pages from infinite query
+ */
+export const flatFavouritesPages = (pages?: MyFavouritesQuery[]) => {
+  return pages?.flatMap((p) => p.myFavourites?.items ?? []) ?? [];
+};

@@ -50,6 +50,9 @@ export type IntentListItem = {
   addressVisibility: AddressVisibility;
   membersVisibility: MembersVisibility;
 
+  isFavourite?: boolean;
+  savedCount?: number;
+
   owner?: {
     imageUrl?: string | null;
     name?: string | null;

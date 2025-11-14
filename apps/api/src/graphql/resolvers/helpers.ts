@@ -606,6 +606,7 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     joinedCount,
     commentsCount: (i as any).commentsCount ?? 0,
     messagesCount: (i as any).messagesCount ?? 0,
+    savedCount: i.savedCount ?? 0,
 
     // Ownership
     ownerId: i.ownerId ?? null,

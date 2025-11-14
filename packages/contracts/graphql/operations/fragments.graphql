@@ -222,6 +222,8 @@ fragment IntentCore on Intent {
   isOnsite
   isOnline
   isHybrid
+  isFavourite
+  savedCount
 
   # Ownership
   ownerId

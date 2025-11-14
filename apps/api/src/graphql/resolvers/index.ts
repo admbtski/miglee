@@ -10,6 +10,7 @@ import {
 import {
   intentSponsorshipResolver,
   intentInviteLinksResolver,
+  intentIsFavouriteResolver,
 } from './fields/intent';
 import { intentMemberIntentResolver } from './fields/intent-member';
 import { UserFieldResolvers } from './fields/user';
@@ -45,6 +46,7 @@ export const resolvers: Pick<
   Intent: {
     sponsorship: intentSponsorshipResolver,
     inviteLinks: intentInviteLinksResolver,
+    isFavourite: intentIsFavouriteResolver,
   },
   IntentMember: {
     intent: intentMemberIntentResolver,

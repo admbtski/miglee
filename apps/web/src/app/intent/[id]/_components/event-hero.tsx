@@ -16,6 +16,7 @@ import { Level } from '@/lib/api/__generated__/react-query-update';
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
+import { FavouriteButton } from '@/components/ui/favourite-button';
 
 type EventHeroProps = {
   event: EventDetailsData;
@@ -36,38 +37,47 @@ export function EventHero({ event }: EventHeroProps) {
 
   return (
     <div className="relative rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40">
-      {/* Plan Badge - Top Right Corner with continuous pulse animation */}
-      {plan && plan !== 'default' && (
-        <motion.div
-          className="absolute -top-2 -right-2 z-10"
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{
-            scale: planAnimationConfig.badge.scaleRange,
-            rotate: planAnimationConfig.badge.rotateRange,
-          }}
-          transition={{
-            scale: {
-              duration: planAnimationConfig.badge.duration,
-              repeat: Infinity,
-              repeatDelay: planAnimationConfig.badge.repeatDelay,
-              ease: planAnimationConfig.badge.easing,
-            },
-            rotate: {
-              duration: planAnimationConfig.badge.duration,
-              repeat: Infinity,
-              repeatDelay: planAnimationConfig.badge.repeatDelay,
-              ease: planAnimationConfig.badge.easing,
-            },
-          }}
-          whileHover={{
-            scale: planAnimationConfig.badge.hoverScale,
-            rotate: planAnimationConfig.badge.hoverRotateRange,
-            transition: { duration: planAnimationConfig.badge.hoverDuration },
-          }}
-        >
-          <PlanBadge plan={plan as any} size="md" variant="iconText" />
-        </motion.div>
-      )}
+      {/* Top Right Corner - Favourite Button & Plan Badge */}
+      <div className="absolute -top-2 -right-2 z-10 flex items-start gap-1">
+        {/* Favourite Button */}
+        <FavouriteButton
+          intentId={event.id}
+          isFavourite={event.isFavourite ?? false}
+          size="md"
+        />
+
+        {/* Plan Badge with continuous pulse animation */}
+        {plan && plan !== 'default' && (
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{
+              scale: planAnimationConfig.badge.scaleRange,
+              rotate: planAnimationConfig.badge.rotateRange,
+            }}
+            transition={{
+              scale: {
+                duration: planAnimationConfig.badge.duration,
+                repeat: Infinity,
+                repeatDelay: planAnimationConfig.badge.repeatDelay,
+                ease: planAnimationConfig.badge.easing,
+              },
+              rotate: {
+                duration: planAnimationConfig.badge.duration,
+                repeat: Infinity,
+                repeatDelay: planAnimationConfig.badge.repeatDelay,
+                ease: planAnimationConfig.badge.easing,
+              },
+            }}
+            whileHover={{
+              scale: planAnimationConfig.badge.hoverScale,
+              rotate: planAnimationConfig.badge.hoverRotateRange,
+              transition: { duration: planAnimationConfig.badge.hoverDuration },
+            }}
+          >
+            <PlanBadge plan={plan as any} size="md" variant="iconText" />
+          </motion.div>
+        )}
+      </div>
 
       {/* Highlight Ribbon */}
       {isHighlighted && (

@@ -233,6 +233,9 @@ model User {
   revokedInviteLinks IntentInviteLink[]      @relation("IntentInviteLinkRevokedBy")
   inviteLinkUsages   IntentInviteLinkUsage[]
 
+  // Favourites
+  intentFavourites IntentFavourite[]
+
   // Monetization
   subscriptions     UserSubscription[]
   eventSponsorships EventSponsorship[] @relation("SponsorUser")
@@ -336,6 +339,7 @@ model Intent {
   joinedCount   Int @default(0)
   commentsCount Int @default(0)
   messagesCount Int @default(0)
+  savedCount    Int @default(0) // How many users saved/favourited this intent
 
   // Ownership
   ownerId            String?
@@ -362,6 +366,7 @@ model Intent {
   sponsorship   EventSponsorship?
   inviteLinks   IntentInviteLink[]
   mutes         IntentMute[]
+  favourites    IntentFavourite[]
 
   // Event Chat relations
   chatMessages IntentChatMessage[]
@@ -805,6 +810,22 @@ model IntentInviteLinkUsage {
   @@index([userId])
   @@index([usedAt])
   @@map("intent_invite_link_usages")
+}
+
+/// User's saved/favourite intents
+model IntentFavourite {
+  id        String   @id @default(cuid())
+  userId    String
+  intentId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, intentId]) // One user can only favourite an intent once
+  @@index([userId, createdAt]) // For user's favourites list sorted by when saved
+  @@index([intentId]) // For analytics: how many users saved this intent
+  @@map("intent_favourites")
 }
 
 // ========================== Preferences & Mutes ==========================

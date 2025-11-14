@@ -77,6 +77,7 @@ export function mapIntentToEventCardProps(
 
     plan: planForIndex(index),
     showSponsoredBadge: true,
+    isFavourite: item.isFavourite ?? false,
 
     onJoin: () => {
       console.log('join intent', item.id);

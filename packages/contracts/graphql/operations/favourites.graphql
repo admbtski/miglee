@@ -1,0 +1,77 @@
+# Intent Favourites Operations
+
+# Queries
+query MyFavourites($limit: Int = 20, $offset: Int = 0) {
+  myFavourites(limit: $limit, offset: $offset) {
+    items {
+      id
+      userId
+      intentId
+      createdAt
+      intent {
+        id
+        title
+        description
+        startAt
+        endAt
+        lat
+        lng
+        address
+        cityName
+        visibility
+        joinMode
+        mode
+        min
+        max
+        joinedCount
+        levels
+        meetingKind
+        status
+        isFull
+        canJoin
+        isFavourite
+        categories {
+          id
+          slug
+          names
+        }
+        tags {
+          id
+          slug
+          label
+        }
+        owner {
+          id
+          name
+          imageUrl
+        }
+        sponsorship {
+          id
+          plan
+          highlightOn
+        }
+      }
+    }
+    pageInfo {
+      hasNext
+      hasPrev
+      total
+      limit
+      offset
+    }
+  }
+}
+
+query IsFavourite($intentId: ID!) {
+  isFavourite(intentId: $intentId)
+}
+
+# Mutations
+mutation ToggleFavourite($intentId: ID!) {
+  toggleFavourite(intentId: $intentId) {
+    id
+    userId
+    intentId
+    createdAt
+  }
+}

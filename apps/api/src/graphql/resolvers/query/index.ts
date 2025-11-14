@@ -39,6 +39,7 @@ import {
   intentInviteLinkQuery,
   validateInviteLinkQuery,
 } from './invite-links';
+import { myFavouritesQuery, isFavouriteQuery } from './favourites';
 import {
   myNotificationPreferencesQuery,
   intentMuteQuery,
@@ -106,6 +107,8 @@ export const Query: Resolvers['Query'] = {
   intentInviteLinks: intentInviteLinksQuery,
   intentInviteLink: intentInviteLinkQuery,
   validateInviteLink: validateInviteLinkQuery,
+  myFavourites: myFavouritesQuery,
+  isFavourite: isFavouriteQuery,
   myNotificationPreferences: myNotificationPreferencesQuery,
   intentMute: intentMuteQuery,
   dmMute: dmMuteQuery,

@@ -148,6 +148,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     })),
     commentsCount: intent.commentsCount,
     messagesCount: intent.messagesCount,
+    isFavourite: intent.isFavourite,
+    savedCount: intent.savedCount,
     sponsorship: intent.sponsorship
       ? {
           plan: intent.sponsorship.plan as any,

@@ -110,3 +110,29 @@ export const intentInviteLinksResolver: IntentResolvers['inviteLinks'] =
       });
     }
   );
+
+/**
+ * Field resolver for Intent.isFavourite
+ * Returns true if the current user has favourited this intent
+ */
+export const intentIsFavouriteResolver: IntentResolvers['isFavourite'] =
+  resolverWithMetrics(
+    'Intent',
+    'isFavourite',
+    async (parent, _args, { user }) => {
+      if (!user?.id) {
+        return false; // Not authenticated = not favourited
+      }
+
+      const favourite = await prisma.intentFavourite.findUnique({
+        where: {
+          userId_intentId: {
+            userId: user.id,
+            intentId: parent.id,
+          },
+        },
+      });
+
+      return !!favourite;
+    }
+  );

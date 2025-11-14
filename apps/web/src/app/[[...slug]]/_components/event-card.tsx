@@ -14,6 +14,7 @@ import { computeJoinState } from '@/lib/utils/intent-join-state';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import { Avatar } from '@/components/ui/avatar';
+import { FavouriteButton } from '@/components/ui/favourite-button';
 import {
   AddressVisibility,
   IntentMember,
@@ -100,6 +101,7 @@ export interface EventCardProps {
   members?: IntentMember[];
   plan?: Plan;
   showSponsoredBadge?: boolean;
+  isFavourite?: boolean;
   onHover?: (
     intentId: string | null,
     lat?: number | null,
@@ -194,6 +196,7 @@ export function EventCard({
   levels,
   membersVisibility, // info: przekazywane do modala
   showSponsoredBadge = true,
+  isFavourite = false,
   isHybrid,
   isOnline,
   isOnsite,
@@ -369,6 +372,7 @@ export function EventCard({
           joinManuallyClosed,
           isCanceled,
           isDeleted,
+          isFavourite,
         }}
       />
     </Suspense>
@@ -615,38 +619,51 @@ export function EventCard({
           </div>
         )}
 
-        {/* Plan Badge - Top Right Corner with continuous pulse animation */}
-        {showSponsoredBadge && plan && plan !== 'default' && (
-          <motion.div
-            className="absolute -top-2 -right-1 z-10"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{
-              scale: planAnimationConfig.badge.scaleRange,
-              rotate: planAnimationConfig.badge.rotateRange,
-            }}
-            transition={{
-              scale: {
-                duration: planAnimationConfig.badge.duration,
-                repeat: Infinity,
-                repeatDelay: planAnimationConfig.badge.repeatDelay,
-                ease: planAnimationConfig.badge.easing,
-              },
-              rotate: {
-                duration: planAnimationConfig.badge.duration,
-                repeat: Infinity,
-                repeatDelay: planAnimationConfig.badge.repeatDelay,
-                ease: planAnimationConfig.badge.easing,
-              },
-            }}
-            whileHover={{
-              scale: planAnimationConfig.badge.hoverScale,
-              rotate: planAnimationConfig.badge.hoverRotateRange,
-              transition: { duration: planAnimationConfig.badge.hoverDuration },
-            }}
-          >
-            <PlanBadge plan={plan} size="sm" variant="iconText" />
-          </motion.div>
-        )}
+        {/* Top Right Corner - Plan Badge & Favourite Button */}
+        <div className="absolute -top-3 -right-1 z-10 flex items-center gap-1">
+          {/* Plan Badge with continuous pulse animation */}
+          {showSponsoredBadge && plan && plan !== 'default' && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{
+                scale: planAnimationConfig.badge.scaleRange,
+                rotate: planAnimationConfig.badge.rotateRange,
+              }}
+              transition={{
+                scale: {
+                  duration: planAnimationConfig.badge.duration,
+                  repeat: Infinity,
+                  repeatDelay: planAnimationConfig.badge.repeatDelay,
+                  ease: planAnimationConfig.badge.easing,
+                },
+                rotate: {
+                  duration: planAnimationConfig.badge.duration,
+                  repeat: Infinity,
+                  repeatDelay: planAnimationConfig.badge.repeatDelay,
+                  ease: planAnimationConfig.badge.easing,
+                },
+              }}
+              whileHover={{
+                scale: planAnimationConfig.badge.hoverScale,
+                rotate: planAnimationConfig.badge.hoverRotateRange,
+                transition: {
+                  duration: planAnimationConfig.badge.hoverDuration,
+                },
+              }}
+            >
+              <PlanBadge plan={plan} size="sm" variant="icon" />
+            </motion.div>
+          )}
+
+          {/* Favourite Button */}
+          {intentId && (
+            <FavouriteButton
+              intentId={intentId}
+              isFavourite={isFavourite}
+              size="sm"
+            />
+          )}
+        </div>
 
         {/* Range + duration */}
         <div className="flex items-center justify-between gap-1.5">

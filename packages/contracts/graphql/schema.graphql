@@ -510,7 +510,7 @@ type Intent {
   joinedCount: Int!
   commentsCount: Int!
   messagesCount: Int!
-
+  savedCount: Int! # How many users saved/favourited this intent (visible to owner/moderators)
   # Ownership
   ownerId: String
   owner: User
@@ -522,6 +522,7 @@ type Intent {
   status: IntentStatus! # single, high-level status
   isFull: Boolean!
   hasStarted: Boolean!
+  isFavourite: Boolean! # Whether the current user has favourited this intent
   hasEnded: Boolean!
   isOngoing: Boolean!
   canJoin: Boolean! # generic yes/no for primary CTA
@@ -1193,6 +1194,10 @@ type Query {
   intentInviteLink(id: ID, code: String): IntentInviteLink
   validateInviteLink(code: String!): IntentInviteLinkValidation!
 
+  # Intent Favourites
+  myFavourites(limit: Int = 20, offset: Int = 0): IntentFavouritesResult!
+  isFavourite(intentId: ID!): Boolean!
+
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
   categories(query: String, limit: Int = 50): [Category!]!
   category(id: ID, slug: String): Category
@@ -1457,6 +1462,9 @@ type Mutation {
   deleteIntentInviteLink(id: ID!): Boolean!
   joinByInviteLink(code: String!): Intent!
 
+  # Intent Favourites
+  toggleFavourite(intentId: ID!): IntentFavourite
+
   # notifications
   addNotification(
     recipientId: ID!
@@ -1707,6 +1715,27 @@ input UpdateIntentInviteLinkInput {
   label: String
   maxUses: Int
   expiresAt: DateTime
+}
+
+# ------------------------------------------------------------------------------
+# Intent Favourites
+# ------------------------------------------------------------------------------
+
+"User's saved/favourite intent"
+type IntentFavourite {
+  id: ID!
+  userId: ID!
+  intentId: ID!
+  createdAt: DateTime!
+
+  user: User!
+  intent: Intent!
+}
+
+"Paginated favourites result"
+type IntentFavouritesResult {
+  items: [IntentFavourite!]!
+  pageInfo: PageInfo!
 }
 
 # ------------------------------------------------------------------------------

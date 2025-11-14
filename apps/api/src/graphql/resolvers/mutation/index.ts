@@ -102,6 +102,9 @@ import {
   joinByInviteLinkMutation,
 } from './invite-links';
 
+// Favourites mutations
+import { toggleFavouriteMutation } from './favourites';
+
 // Notification Preferences & Mutes mutations
 import {
   updateNotificationPreferencesMutation,
@@ -274,6 +277,9 @@ export const Mutation: Resolvers['Mutation'] = {
   revokeIntentInviteLink: revokeIntentInviteLinkMutation,
   deleteIntentInviteLink: deleteIntentInviteLinkMutation,
   joinByInviteLink: joinByInviteLinkMutation,
+
+  // ---- Favourites ----
+  toggleFavourite: toggleFavouriteMutation,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,

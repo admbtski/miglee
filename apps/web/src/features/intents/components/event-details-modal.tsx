@@ -28,7 +28,6 @@ import {
   MembersVisibility,
 } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
-import { motion } from 'framer-motion';
 import {
   Calendar,
   CalendarDays,
@@ -54,6 +53,7 @@ import { twMerge } from 'tailwind-merge';
 
 import { planTheme, type Plan } from '@/components/ui/plan-theme';
 import { EventCountdownPill } from './event-countdown-pill';
+import { FavouriteButton } from '@/components/ui/favourite-button';
 
 /* ───────────────────────────── Typy ───────────────────────────── */
 
@@ -104,6 +104,7 @@ type Props = {
     joinManualCloseReason?: string | null;
     isDeleted?: boolean;
     isCanceled?: boolean;
+    isFavourite?: boolean;
   };
 };
 
@@ -199,13 +200,11 @@ function Stat({
   label,
   value,
   title,
-  plan,
 }: {
   icon: any;
   label: string;
   value: string;
   title?: string;
-  plan?: Plan;
 }) {
   return (
     <div
@@ -258,7 +257,6 @@ function MetaInfoSection({
   av,
   mv,
   className,
-  plan,
 }: {
   statusLabel: string;
   joinedCount: number;
@@ -268,7 +266,6 @@ function MetaInfoSection({
   av: 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
   mv: 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
   className?: string;
-  plan?: Plan;
 }) {
   return (
     <section
@@ -431,6 +428,7 @@ export function EventDetailsModal({
     joinManualCloseReason,
     isDeleted,
     isCanceled,
+    isFavourite = false,
   } = data;
 
   const theme = planTheme(plan);
@@ -515,6 +513,15 @@ export function EventDetailsModal({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        {/* Favourite Button */}
+        {eventId && (
+          <FavouriteButton
+            intentId={eventId}
+            isFavourite={isFavourite}
+            size="md"
+          />
+        )}
+
         {!!onlineUrl && (
           <button
             onClick={() => {
@@ -574,13 +581,11 @@ export function EventDetailsModal({
             icon={Calendar}
             label="Termin"
             value={formatDateRange(start, end)}
-            plan={plan}
           />
           <Stat
             icon={Clock}
             label="Czas trwania"
             value={humanDuration(start, end)}
-            plan={plan}
           />
           <Stat
             icon={mk.icon}
@@ -594,7 +599,6 @@ export function EventDetailsModal({
                     : ' • adres ukryty')
             }
             title={address}
-            plan={plan}
           />
         </div>
       </div>
@@ -880,7 +884,6 @@ export function EventDetailsModal({
         mk={mk}
         av={av}
         mv={mv}
-        plan={plan}
       />
     </div>
   );
