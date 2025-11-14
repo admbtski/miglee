@@ -229,8 +229,9 @@ model User {
   ownershipTransfersActed IntentOwnershipTransfer[] @relation("IotActor")
 
   // Invite Links
-  createdInviteLinks IntentInviteLink[] @relation("IntentInviteLinkCreatedBy")
-  revokedInviteLinks IntentInviteLink[] @relation("IntentInviteLinkRevokedBy")
+  createdInviteLinks IntentInviteLink[]      @relation("IntentInviteLinkCreatedBy")
+  revokedInviteLinks IntentInviteLink[]      @relation("IntentInviteLinkRevokedBy")
+  inviteLinkUsages   IntentInviteLinkUsage[]
 
   // Monetization
   subscriptions     UserSubscription[]
@@ -772,7 +773,8 @@ model IntentInviteLink {
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  intent Intent                  @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  uses   IntentInviteLinkUsage[]
 
   @@index([code])
   @@index([intentId])
@@ -780,6 +782,29 @@ model IntentInviteLink {
   @@index([intentId, expiresAt])
   @@index([expiresAt])
   @@map("intent_invite_links")
+}
+
+/// Track who used which invite link
+model IntentInviteLinkUsage {
+  id        String   @id @default(cuid())
+  linkId    String
+  userId    String
+  usedAt    DateTime @default(now())
+  
+  /// IP address (optional, for security/analytics)
+  ipAddress String?
+  
+  /// User agent (optional, for analytics)
+  userAgent String?
+
+  link IntentInviteLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([linkId, userId]) // One user can only use a link once
+  @@index([linkId])
+  @@index([userId])
+  @@index([usedAt])
+  @@map("intent_invite_link_usages")
 }
 
 // ========================== Preferences & Mutes ==========================

@@ -14,6 +14,7 @@ import {
 import { intentMemberIntentResolver } from './fields/intent-member';
 import { UserFieldResolvers } from './fields/user';
 import { SessionUserFieldResolvers } from './fields/session-user';
+import { IntentInviteLinkFieldResolvers } from './fields/invite-link';
 
 export const resolvers: Pick<
   Resolvers,
@@ -26,6 +27,7 @@ export const resolvers: Pick<
   | 'IntentChatMessage'
   | 'Intent'
   | 'IntentMember'
+  | 'IntentInviteLink'
   | 'User'
   | 'SessionUser'
 > = {
@@ -47,6 +49,7 @@ export const resolvers: Pick<
   IntentMember: {
     intent: intentMemberIntentResolver,
   },
+  IntentInviteLink: IntentInviteLinkFieldResolvers,
   User: UserFieldResolvers,
   SessionUser: SessionUserFieldResolvers,
 };

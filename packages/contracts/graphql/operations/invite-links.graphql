@@ -29,6 +29,16 @@ query IntentInviteLinks($intentId: ID!, $includeRevoked: Boolean = false) {
     isMaxedOut
     isRevoked
     isValid
+    uses {
+      id
+      userId
+      usedAt
+      user {
+        id
+        name
+        imageUrl
+      }
+    }
   }
 }
 

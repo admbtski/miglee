@@ -17,6 +17,8 @@ import {
   Users,
   Check,
   Edit,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
@@ -30,6 +32,9 @@ interface InviteLinksPanelProps {
 export function InviteLinksPanel({ intentId }: InviteLinksPanelProps) {
   const [showRevoked, setShowRevoked] = React.useState(false);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  const [expandedLinkId, setExpandedLinkId] = React.useState<string | null>(
+    null
+  );
   const [editingLink, setEditingLink] = React.useState<{
     id: string;
     label: string | null;
@@ -270,8 +275,8 @@ export function InviteLinksPanel({ intentId }: InviteLinksPanelProps) {
                         onClick={() =>
                           setEditingLink({
                             id: link.id,
-                            label: link.label,
-                            maxUses: link.maxUses,
+                            label: link.label ?? null,
+                            maxUses: link.maxUses ?? null,
                             code: link.code,
                           })
                         }
@@ -302,6 +307,65 @@ export function InviteLinksPanel({ intentId }: InviteLinksPanelProps) {
                   </button>
                 </div>
               </div>
+
+              {/* Expandable section for users who used this link */}
+              {link.usedCount > 0 && (
+                <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedLinkId(
+                        expandedLinkId === link.id ? null : link.id
+                      )
+                    }
+                    className="flex w-full items-center justify-between text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+                  >
+                    <span>Użytkownicy ({link.uses?.length || 0})</span>
+                    {expandedLinkId === link.id ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {expandedLinkId === link.id && link.uses && (
+                    <div className="mt-3 space-y-2">
+                      {link.uses.map((usage) => (
+                        <div
+                          key={usage.id}
+                          className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/50"
+                        >
+                          {usage.user.imageUrl && (
+                            <img
+                              src={usage.user.imageUrl}
+                              alt={usage.user.name}
+                              className="h-8 w-8 rounded-full"
+                            />
+                          )}
+                          {!usage.user.imageUrl && (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                              {usage.user.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                              {usage.user.name}
+                            </div>
+                            <div className="text-xs text-zinc-500 dark:text-zinc-500">
+                              Dołączył:{' '}
+                              {format(
+                                new Date(usage.usedAt),
+                                'dd MMM yyyy, HH:mm',
+                                { locale: pl }
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

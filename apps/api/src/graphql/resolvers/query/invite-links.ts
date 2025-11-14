@@ -59,10 +59,11 @@ export const intentInviteLinksQuery: QueryResolvers['intentInviteLinks'] =
       const isModerator = intent.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
+      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator) {
+      if (!isOwner && !isModerator && !isAdmin) {
         throw new GraphQLError(
-          'Only intent owner or moderators can view invite links.',
+          'Only intent owner, moderators, or admins can view invite links.',
           {
             extensions: { code: 'FORBIDDEN' },
           }

@@ -1662,12 +1662,22 @@ type IntentInviteLink {
   updatedAt: DateTime
 
   intent: Intent!
+  uses: [IntentInviteLinkUsage!]!
 
   # Computed
   isExpired: Boolean!
   isMaxedOut: Boolean!
   isValid: Boolean!
   isRevoked: Boolean!
+}
+
+"Usage record for invite link"
+type IntentInviteLinkUsage {
+  id: ID!
+  linkId: ID!
+  userId: ID!
+  usedAt: DateTime!
+  user: User!
 }
 
 "Paginated invite links result"

@@ -59,10 +59,11 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
       const isModerator = intent.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
+      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator) {
+      if (!isOwner && !isModerator && !isAdmin) {
         throw new GraphQLError(
-          'Only owner/moderators can create invite links.',
+          'Only owner, moderators, or admins can create invite links.',
           {
             extensions: { code: 'FORBIDDEN' },
           }
@@ -128,10 +129,11 @@ export const updateIntentInviteLinkMutation: MutationResolvers['updateIntentInvi
       const isModerator = link.intent.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
+      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator) {
+      if (!isOwner && !isModerator && !isAdmin) {
         throw new GraphQLError(
-          'Only owner/moderators can update invite links.',
+          'Only owner, moderators, or admins can update invite links.',
           {
             extensions: { code: 'FORBIDDEN' },
           }
@@ -192,10 +194,11 @@ export const revokeIntentInviteLinkMutation: MutationResolvers['revokeIntentInvi
       const isModerator = link.intent.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
+      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator) {
+      if (!isOwner && !isModerator && !isAdmin) {
         throw new GraphQLError(
-          'Only owner/moderators can revoke invite links.',
+          'Only owner, moderators, or admins can revoke invite links.',
           {
             extensions: { code: 'FORBIDDEN' },
           }
@@ -253,10 +256,11 @@ export const deleteIntentInviteLinkMutation: MutationResolvers['deleteIntentInvi
       const isModerator = link.intent.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
+      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator) {
+      if (!isOwner && !isModerator && !isAdmin) {
         throw new GraphQLError(
-          'Only owner/moderators can delete invite links.',
+          'Only owner, moderators, or admins can delete invite links.',
           {
             extensions: { code: 'FORBIDDEN' },
           }
@@ -372,6 +376,24 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
           status: 'JOINED',
           role: 'PARTICIPANT',
           joinedAt: new Date(),
+        },
+      });
+
+      // Record link usage (upsert to handle duplicate attempts)
+      await prisma.intentInviteLinkUsage.upsert({
+        where: {
+          linkId_userId: {
+            linkId: link.id,
+            userId: user.id,
+          },
+        },
+        create: {
+          linkId: link.id,
+          userId: user.id,
+          usedAt: new Date(),
+        },
+        update: {
+          usedAt: new Date(), // Update timestamp if already exists
         },
       });
 
