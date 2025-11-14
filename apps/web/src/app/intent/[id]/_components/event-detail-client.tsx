@@ -74,6 +74,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const isJoined = userMembership?.status === 'JOINED';
   const isPending = userMembership?.status === 'PENDING';
   const isInvited = userMembership?.status === 'INVITED';
+  const isRejected = userMembership?.status === 'REJECTED';
+  const isBanned = userMembership?.status === 'BANNED';
 
   // Determine if user can see members based on visibility settings
   const canSeeMembers = useMemo(() => {
@@ -189,7 +191,11 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           isJoined,
           isPending,
           isInvited,
+          isRejected,
+          isBanned,
           canSeeMembers,
+          rejectReason: isRejected ? userMembership?.note : undefined,
+          banReason: isBanned ? userMembership?.note : undefined,
         }
       : undefined,
     createdAt: intent.createdAt,

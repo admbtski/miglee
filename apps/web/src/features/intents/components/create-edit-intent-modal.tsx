@@ -3,6 +3,7 @@
 import {
   BadgePlusIcon,
   CalendarClockIcon,
+  FileQuestion,
   HatGlassesIcon,
   SquarePenIcon,
   X,
@@ -21,11 +22,13 @@ import { defaultIntentValues, useIntentForm } from './use-intent-form';
 import { CategoryOption, TagOption } from '@/types/types';
 import { PrivacyStep } from './privacy-step';
 import { useAutoSaveDraft } from '../hooks/use-auto-save-draft';
+import { JoinFormStep, JoinFormQuestion } from './join-form-step';
 
 const STEP_META = [
   { key: 'basics', label: 'What & Who', Icon: SquarePenIcon },
   { key: 'when-where', label: 'When & Where', Icon: CalendarClockIcon },
   { key: 'settings', label: 'Settings', Icon: HatGlassesIcon },
+  { key: 'join-form', label: 'Join Form', Icon: FileQuestion },
   { key: 'review', label: 'Review', Icon: BadgePlusIcon },
 ];
 
@@ -47,7 +50,10 @@ type CreateEditIntentModalProps = {
   initialTags?: TagOption[];
   onClose: () => void;
   /** Unified submit handler. Will be called for both create and edit. */
-  onSubmit: (values: IntentFormValues) => Promise<void> | void;
+  onSubmit: (
+    values: IntentFormValues,
+    joinFormQuestions?: JoinFormQuestion[]
+  ) => Promise<void> | void;
   /** Button label override */
   submitLabel?: string;
   /** Title override */
@@ -75,6 +81,9 @@ export function CreateEditIntentModal({
 
   const [step, setStep] = useState(0);
   const [formKey, setFormKey] = useState(0); // ← remount klucz
+  const [joinFormQuestions, setJoinFormQuestions] = useState<
+    JoinFormQuestion[]
+  >([]);
 
   const {
     handleSubmit,
@@ -177,6 +186,7 @@ export function CreateEditIntentModal({
       clearCategories();
       reset();
       setStep(0);
+      setJoinFormQuestions([]);
     }
   }, [open, reset, clearTags, clearCategories]);
 
@@ -261,6 +271,8 @@ export function CreateEditIntentModal({
             'addressVisibility',
             'membersVisibility',
           ]);
+        case 3: // Join Form (optional, always valid)
+          return true;
         default:
           return true;
       }
@@ -281,14 +293,17 @@ export function CreateEditIntentModal({
   const submit = handleSubmit(
     useCallback(
       async (values) => {
-        await onSubmit(values as IntentFormValues);
+        await onSubmit(
+          values as IntentFormValues,
+          isEdit ? undefined : joinFormQuestions
+        );
         // Clear draft after successful submit
         if (!isEdit) {
           clearDraft();
         }
         onClose();
       },
-      [onClose, onSubmit, isEdit, clearDraft]
+      [onClose, onSubmit, isEdit, clearDraft, joinFormQuestions]
     )
   );
 
@@ -337,6 +352,7 @@ export function CreateEditIntentModal({
                   setStep(0);
                   clearCategories();
                   clearTags();
+                  setJoinFormQuestions([]);
                   reset(
                     { ...makeFreshDefaults(), ...(initialValues ?? {}) },
                     {
@@ -474,8 +490,25 @@ export function CreateEditIntentModal({
             </div>
           )}
 
-          {/* Step 3: Review */}
-          {step === 3 && (
+          {/* Step 3: Join Form (only in create mode) */}
+          {!isEdit && step === 3 && (
+            <div>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                Join Form Questions
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                Add custom questions for users requesting to join (optional)
+              </p>
+              <JoinFormStep
+                questions={joinFormQuestions}
+                onChange={setJoinFormQuestions}
+                maxQuestions={5}
+              />
+            </div>
+          )}
+
+          {/* Step 4: Review */}
+          {step === (isEdit ? 3 : 4) && (
             <div>
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
                 Review & Create
@@ -488,6 +521,7 @@ export function CreateEditIntentModal({
                 showMapPreview
                 errors={form.formState.errors}
                 onEditStep={(stepIndex) => setStep(stepIndex)}
+                joinFormQuestions={isEdit ? undefined : joinFormQuestions}
               />
             </div>
           )}

@@ -79,6 +79,7 @@ export function MemberManageModal({
     | 'onCancelInvite'
     | 'onApprovePending'
     | 'onRejectPending'
+    | 'onUnreject'
     | 'onNotifyPremium'
   >;
 }) {
@@ -111,38 +112,41 @@ export function MemberManageModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose, callbacks, member]);
 
-  const Header = (
-    <div className="flex items-start gap-3">
-      <Avatar src={member.user.imageUrl} name={member.user.name} />
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">
-            {member.user.name}
-          </h3>
-          <Badge
-            className={clsx(
-              'ring-1 ring-inset ring-black/5 dark:ring-white/5',
-              ROLE_BADGE_CLASSES[member.role]
-            )}
-          >
-            {iconForRole(member.role)} {member.role}
-          </Badge>
-          <Badge
-            className={clsx(
-              'ring-1 ring-inset ring-black/5 dark:ring-white/5',
-              STATUS_BADGE_CLASSES[member.status]
-            )}
-          >
-            {member.status}
-          </Badge>
+  const Header = React.useMemo(
+    () => (
+      <div className="flex items-start gap-3">
+        <Avatar src={member.user.imageUrl} name={member.user.name} />
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              {member.user.name}
+            </h3>
+            <Badge
+              className={clsx(
+                'ring-1 ring-inset ring-black/5 dark:ring-white/5',
+                ROLE_BADGE_CLASSES[member.role]
+              )}
+            >
+              {iconForRole(member.role)} {member.role}
+            </Badge>
+            <Badge
+              className={clsx(
+                'ring-1 ring-inset ring-black/5 dark:ring-white/5',
+                STATUS_BADGE_CLASSES[member.status]
+              )}
+            >
+              {member.status}
+            </Badge>
+          </div>
+          {member.note && (
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              {member.note}
+            </p>
+          )}
         </div>
-        {member.note && (
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {member.note}
-          </p>
-        )}
       </div>
-    </div>
+    ),
+    [member]
   );
 
   const Section = ({
@@ -163,236 +167,253 @@ export function MemberManageModal({
     return window.confirm(message);
   };
 
-  const Content = (
-    <div className="grid gap-4">
-      {/* Quick actions (kontekstowe) */}
-      {member.status === 'PENDING' && (
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            className={btnClasses('success-soft')}
-            onClick={() => callbacks.onApprovePending?.(member)}
-            title="Ctrl/Cmd + Enter"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Zatwierdź
-          </button>
-          <button
-            className={btnClasses('warning-soft')}
-            onClick={() => callbacks.onRejectPending?.(member)}
-            title="Alt + Backspace"
-          >
-            <UserX className="h-4 w-4" />
-            Odrzuć
-          </button>
-        </div>
-      )}
-
-      {/* Role */}
-      <Section
-        title="Zarządzanie rolą"
-        icon={<Shield className="h-4 w-4 text-indigo-500" />}
-      >
-        <div className="flex flex-wrap gap-2">
-          <button
-            className={btnClasses('soft')}
-            disabled={!canManage || readOnly || member.role === 'MODERATOR'}
-            onClick={() => callbacks.onPromoteToModerator?.(member)}
-          >
-            <Shield className="h-4 w-4" />
-            Awansuj na MODERATOR
-          </button>
-
-          <button
-            className={btnClasses('outline')}
-            disabled={
-              !canManage ||
-              readOnly ||
-              member.role === 'PARTICIPANT' ||
-              member.status !== 'JOINED'
-            }
-            onClick={() => callbacks.onDemoteToParticipant?.(member)}
-          >
-            <UserIcon className="h-4 w-4" />
-            Zdegraduj do PARTICIPANT
-          </button>
-
-          <button
-            className={btnClasses('solid')}
-            disabled={
-              !canManage ||
-              readOnly ||
-              member.role === 'OWNER' ||
-              member.status !== 'JOINED'
-            }
-            onClick={async () => {
-              if (
-                await Confirm(
-                  'Na pewno przekazać OWNERSHIP temu użytkownikowi?'
-                )
-              ) {
-                callbacks.onMakeOwner?.(member);
-              }
-            }}
-          >
-            <Crown className="h-4 w-4" />
-            Przekaż OWNERSHIP
-          </button>
-        </div>
-      </Section>
-
-      {/* Membership */}
-      <Section
-        title="Zarządzanie członkostwem"
-        icon={<UserIcon className="h-4 w-4 text-indigo-500" />}
-      >
-        <div className="flex flex-wrap gap-2">
-          {member.status === 'JOINED' && (
-            <>
-              <button
-                className={btnClasses('outline')}
-                disabled={!canManage}
-                onClick={async () => {
-                  if (
-                    await Confirm(
-                      'Na pewno usunąć użytkownika z wydarzenia (kick)?'
-                    )
-                  ) {
-                    callbacks.onKick?.(member);
-                  }
-                }}
-              >
-                <UserMinus className="h-4 w-4" />
-                Kick
-              </button>
-
-              <button
-                className={btnClasses('danger')}
-                disabled={!canManage}
-                onClick={async () => {
-                  if (
-                    await Confirm(
-                      'Trwale zbanować użytkownika na tym wydarzeniu?'
-                    )
-                  ) {
-                    callbacks.onBan?.(member);
-                  }
-                }}
-              >
-                <Ban className="h-4 w-4" />
-                Ban (permanent)
-              </button>
-            </>
-          )}
-
-          {member.status === 'BANNED' && (
+  const Content = React.useMemo(
+    () => (
+      <div className="grid gap-4">
+        {/* Quick actions (kontekstowe) */}
+        {member.status === 'PENDING' && (
+          <div className="flex flex-wrap items-center gap-2">
             <button
               className={btnClasses('success-soft')}
-              disabled={!canManage}
-              onClick={() => callbacks.onUnban?.(member)}
+              onClick={() => callbacks.onApprovePending?.(member)}
+              title="Ctrl/Cmd + Enter"
             >
-              <RotateCcw className="h-4 w-4" />
-              Unban
+              <CheckCircle2 className="h-4 w-4" />
+              Zatwierdź
             </button>
-          )}
+            <button
+              className={btnClasses('warning-soft')}
+              onClick={() => callbacks.onRejectPending?.(member)}
+              title="Alt + Backspace"
+            >
+              <UserX className="h-4 w-4" />
+              Odrzuć
+            </button>
+          </div>
+        )}
 
-          {member.status === 'PENDING' && (
-            <>
+        {/* Role */}
+        <Section
+          title="Zarządzanie rolą"
+          icon={<Shield className="h-4 w-4 text-indigo-500" />}
+        >
+          <div className="flex flex-wrap gap-2">
+            <button
+              className={btnClasses('soft')}
+              disabled={!canManage || readOnly || member.role === 'MODERATOR'}
+              onClick={() => callbacks.onPromoteToModerator?.(member)}
+            >
+              <Shield className="h-4 w-4" />
+              Awansuj na MODERATOR
+            </button>
+
+            <button
+              className={btnClasses('outline')}
+              disabled={
+                !canManage ||
+                readOnly ||
+                member.role === 'PARTICIPANT' ||
+                member.status !== 'JOINED'
+              }
+              onClick={() => callbacks.onDemoteToParticipant?.(member)}
+            >
+              <UserIcon className="h-4 w-4" />
+              Zdegraduj do PARTICIPANT
+            </button>
+
+            <button
+              className={btnClasses('solid')}
+              disabled={
+                !canManage ||
+                readOnly ||
+                member.role === 'OWNER' ||
+                member.status !== 'JOINED'
+              }
+              onClick={async () => {
+                if (
+                  await Confirm(
+                    'Na pewno przekazać OWNERSHIP temu użytkownikowi?'
+                  )
+                ) {
+                  callbacks.onMakeOwner?.(member);
+                }
+              }}
+            >
+              <Crown className="h-4 w-4" />
+              Przekaż OWNERSHIP
+            </button>
+          </div>
+        </Section>
+
+        {/* Membership */}
+        <Section
+          title="Zarządzanie członkostwem"
+          icon={<UserIcon className="h-4 w-4 text-indigo-500" />}
+        >
+          <div className="flex flex-wrap gap-2">
+            {member.status === 'JOINED' && (
+              <>
+                <button
+                  className={btnClasses('outline')}
+                  disabled={!canManage}
+                  onClick={async () => {
+                    if (
+                      await Confirm(
+                        'Na pewno usunąć użytkownika z wydarzenia (kick)?'
+                      )
+                    ) {
+                      callbacks.onKick?.(member);
+                    }
+                  }}
+                >
+                  <UserMinus className="h-4 w-4" />
+                  Kick
+                </button>
+
+                <button
+                  className={btnClasses('danger')}
+                  disabled={!canManage}
+                  onClick={async () => {
+                    if (
+                      await Confirm(
+                        'Trwale zbanować użytkownika na tym wydarzeniu?'
+                      )
+                    ) {
+                      callbacks.onBan?.(member);
+                    }
+                  }}
+                >
+                  <Ban className="h-4 w-4" />
+                  Ban (permanent)
+                </button>
+              </>
+            )}
+
+            {member.status === 'BANNED' && (
               <button
                 className={btnClasses('success-soft')}
                 disabled={!canManage}
-                onClick={() => callbacks.onApprovePending?.(member)}
-                title="Ctrl/Cmd + Enter"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Zatwierdź
-              </button>
-              <button
-                className={btnClasses('warning-soft')}
-                disabled={!canManage}
-                onClick={() => callbacks.onRejectPending?.(member)}
-                title="Alt + Backspace"
-              >
-                <UserX className="h-4 w-4" />
-                Odrzuć
-              </button>
-              <button
-                className={btnClasses('outline')}
-                disabled={!canManage}
-                onClick={() => callbacks.onCancelInvite?.(member)}
-              >
-                <XCircle className="h-4 w-4" />
-                Anuluj prośbę
-              </button>
-            </>
-          )}
-
-          {member.status === 'INVITED' && (
-            <>
-              <button
-                className={btnClasses('outline')}
-                disabled={!canManage}
-                onClick={() => callbacks.onReinvite?.(member)}
+                onClick={() => callbacks.onUnban?.(member)}
               >
                 <RotateCcw className="h-4 w-4" />
-                Wyślij ponownie
+                Unban
               </button>
+            )}
+
+            {member.status === 'REJECTED' && (
               <button
-                className={btnClasses('outline')}
+                className={btnClasses('success-soft')}
                 disabled={!canManage}
-                onClick={() => callbacks.onCancelInvite?.(member)}
+                onClick={() => callbacks.onUnreject?.(member)}
               >
-                <XCircle className="h-4 w-4" />
-                Anuluj zaproszenie
+                <RotateCcw className="h-4 w-4" />
+                Cofnij odrzucenie
               </button>
+            )}
+
+            {member.status === 'PENDING' && (
+              <>
+                <button
+                  className={btnClasses('success-soft')}
+                  disabled={!canManage}
+                  onClick={() => callbacks.onApprovePending?.(member)}
+                  title="Ctrl/Cmd + Enter"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Zatwierdź
+                </button>
+                <button
+                  className={btnClasses('warning-soft')}
+                  disabled={!canManage}
+                  onClick={() => callbacks.onRejectPending?.(member)}
+                  title="Alt + Backspace"
+                >
+                  <UserX className="h-4 w-4" />
+                  Odrzuć
+                </button>
+                <button
+                  className={btnClasses('outline')}
+                  disabled={!canManage}
+                  onClick={() => callbacks.onCancelInvite?.(member)}
+                >
+                  <XCircle className="h-4 w-4" />
+                  Anuluj prośbę
+                </button>
+              </>
+            )}
+
+            {member.status === 'INVITED' && (
+              <>
+                <button
+                  className={btnClasses('outline')}
+                  disabled={!canManage}
+                  onClick={() => callbacks.onReinvite?.(member)}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Wyślij ponownie
+                </button>
+                <button
+                  className={btnClasses('outline')}
+                  disabled={!canManage}
+                  onClick={() => callbacks.onCancelInvite?.(member)}
+                >
+                  <XCircle className="h-4 w-4" />
+                  Anuluj zaproszenie
+                </button>
+              </>
+            )}
+          </div>
+
+          {readOnly && member.status !== 'BANNED' && (
+            <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300">
+              <Info className="mr-2 inline-block h-4 w-4" />
+              Ten członek ma status tylko do odczytu ({member.status}) — akcje
+              są niedostępne.
+            </div>
+          )}
+        </Section>
+      </div>
+    ),
+    [member, canManage, readOnly, callbacks, Confirm]
+  );
+
+  const Footer = React.useMemo(
+    () => (
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+          <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
+            Esc
+          </kbd>{' '}
+          zamknij
+          {member.status === 'PENDING' && (
+            <>
+              <span className="mx-2">•</span>
+              <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
+                Ctrl/Cmd
+              </kbd>{' '}
+              +{' '}
+              <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
+                Enter
+              </kbd>{' '}
+              zatwierdź
+              <span className="mx-2">•</span>
+              <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
+                Alt
+              </kbd>{' '}
+              +{' '}
+              <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
+                Backspace
+              </kbd>{' '}
+              odrzuć
             </>
           )}
         </div>
-
-        {readOnly && member.status !== 'BANNED' && (
-          <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300">
-            <Info className="mr-2 inline-block h-4 w-4" />
-            Ten członek ma status tylko do odczytu ({member.status}) — akcje są
-            niedostępne.
-          </div>
-        )}
-      </Section>
-    </div>
-  );
-
-  const Footer = (
-    <div className="flex items-center justify-between">
-      <div className="text-xs text-zinc-500 dark:text-zinc-400">
-        <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
-          Esc
-        </kbd>{' '}
-        zamknij
-        {member.status === 'PENDING' && (
-          <>
-            <span className="mx-2">•</span>
-            <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
-              Ctrl/Cmd
-            </kbd>{' '}
-            +{' '}
-            <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
-              Enter
-            </kbd>{' '}
-            zatwierdź
-            <span className="mx-2">•</span>
-            <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
-              Alt
-            </kbd>{' '}
-            +{' '}
-            <kbd className="rounded bg-zinc-100 px-1 py-0.5 dark:bg-zinc-800">
-              Backspace
-            </kbd>{' '}
-            odrzuć
-          </>
-        )}
+        <button onClick={onClose} className={btnClasses('soft')}>
+          Zamknij
+        </button>
       </div>
-      <button onClick={onClose} className={btnClasses('soft')}>
-        Zamknij
-      </button>
-    </div>
+    ),
+    [member, onClose]
   );
 
   return (

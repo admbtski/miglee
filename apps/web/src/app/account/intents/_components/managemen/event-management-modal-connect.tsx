@@ -148,6 +148,13 @@ export function EventManagementModalConnect({
     await refetch();
   };
 
+  const onUnreject = async (m: IntentMember) => {
+    await cancelPendingOrInvite.mutateAsync({
+      input: { intentId, userId: m.userId },
+    });
+    await refetch();
+  };
+
   // Skeleton / error placeholders rendered inside the modal frame for consistency
   if (!open) return null;
 
@@ -169,6 +176,7 @@ export function EventManagementModalConnect({
         onUnban={onUnban}
         onApprovePending={onApprovePending}
         onRejectPending={onRejectPending}
+        onUnreject={onUnreject}
         onReinvite={onReinvite}
         onCancelInvite={onCancelInvite}
         onNotifyPremium={async () => {}}
@@ -198,6 +206,7 @@ export function EventManagementModalConnect({
         onUnban={onUnban}
         onApprovePending={onApprovePending}
         onRejectPending={onRejectPending}
+        onUnreject={onUnreject}
         onReinvite={onReinvite}
         onCancelInvite={onCancelInvite}
         onNotifyPremium={async () => {}}

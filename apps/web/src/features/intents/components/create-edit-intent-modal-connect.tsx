@@ -15,6 +15,7 @@ import { SuccessIntentModal } from './success-intent-modal';
 import { TagSelectionProvider } from './tag-selection-provider';
 import { IntentFormValues } from './types';
 import { toast, devLogger } from '@/lib/utils';
+import type { JoinFormQuestion } from './join-form-step';
 
 /**
  * CreateEditIntentModalConnect - Modal for creating/editing intents with auto-save
@@ -106,7 +107,10 @@ export function CreateEditIntentModalConnect({
   }, [onSuccess, createdIntentId]);
 
   const handleSubmit = useCallback(
-    async (formValues: IntentFormValues) => {
+    async (
+      formValues: IntentFormValues,
+      joinFormQuestions?: JoinFormQuestion[]
+    ) => {
       const startTime = Date.now();
       const action = intentId ? 'updateIntent' : 'createIntent';
 
@@ -114,6 +118,18 @@ export function CreateEditIntentModalConnect({
         devLogger.mutationStart(action, formValues);
 
         const input = mapFormToCreateInput(formValues);
+
+        // Add join questions to input if provided (only for create)
+        if (!intentId && joinFormQuestions && joinFormQuestions.length > 0) {
+          (input as any).joinQuestions = joinFormQuestions.map((q) => ({
+            type: q.type,
+            label: q.label,
+            helpText: q.helpText || undefined,
+            required: q.required,
+            options: q.options?.map((opt) => ({ label: opt })),
+            maxLength: q.maxLength,
+          }));
+        }
 
         let result;
         if (intentId) {

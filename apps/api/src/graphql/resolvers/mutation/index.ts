@@ -105,6 +105,22 @@ import {
 // Favourites mutations
 import { toggleFavouriteMutation } from './favourites';
 
+// Join Form mutations
+import {
+  createJoinQuestionMutation,
+  updateJoinQuestionMutation,
+  deleteJoinQuestionMutation,
+  reorderJoinQuestionsMutation,
+} from './join-questions';
+
+// Join Requests mutations
+import {
+  requestJoinIntentWithAnswersMutation,
+  approveJoinRequestMutation,
+  rejectJoinRequestMutation,
+  cancelJoinRequestMutation as cancelJoinRequestMutationNew,
+} from './join-requests';
+
 // Notification Preferences & Mutes mutations
 import {
   updateNotificationPreferencesMutation,
@@ -218,11 +234,14 @@ export const Mutation: Resolvers['Mutation'] = {
   // ---- Intent Members / Moderation ----
   acceptInvite: acceptInviteMutation,
   requestJoinIntent: requestJoinIntentMutation,
-  cancelJoinRequest: cancelJoinRequestMutation,
+  requestJoinIntentWithAnswers: requestJoinIntentWithAnswersMutation,
+  cancelJoinRequest: cancelJoinRequestMutationNew, // Updated to handle CANCELLED status
   leaveIntent: leaveIntentMutation,
   inviteMember: inviteMemberMutation,
   approveMembership: approveMembershipMutation,
+  approveJoinRequest: approveJoinRequestMutation,
   rejectMembership: rejectMembershipMutation,
+  rejectJoinRequest: rejectJoinRequestMutation,
   kickMember: kickMemberMutation,
   updateMemberRole: updateMemberRoleMutation,
   banMember: banMemberMutation,
@@ -280,6 +299,12 @@ export const Mutation: Resolvers['Mutation'] = {
 
   // ---- Favourites ----
   toggleFavourite: toggleFavouriteMutation,
+
+  // ---- Join Form Management ----
+  createJoinQuestion: createJoinQuestionMutation,
+  updateJoinQuestion: updateJoinQuestionMutation,
+  deleteJoinQuestion: deleteJoinQuestionMutation,
+  reorderJoinQuestions: reorderJoinQuestionsMutation,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,

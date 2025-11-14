@@ -77,6 +77,7 @@ enum IntentMemberStatus {
   BANNED
   LEFT
   KICKED
+  CANCELLED // User cancelled their own pending request
 }
 
 enum NotificationKind {
@@ -148,6 +149,13 @@ enum MemberEvent {
   UNBAN
   INVITE
   ACCEPT_INVITE
+  CANCEL_REQUEST // User cancelled their own pending request
+}
+
+enum JoinQuestionType {
+  TEXT
+  SINGLE_CHOICE
+  MULTI_CHOICE
 }
 
 enum ReportEntity {
@@ -202,11 +210,11 @@ model User {
   reviewsWritten  Review[]  @relation("ReviewAuthor")
 
   // DM
-  dmThreadsA        DmThread[]          @relation("DmA")
-  dmThreadsB        DmThread[]          @relation("DmB")
-  dmMessages        DmMessage[]
-  dmMutes           DmMute[]
-  dmReads           DmRead[] // last read per thread
+  dmThreadsA         DmThread[]          @relation("DmA")
+  dmThreadsB         DmThread[]          @relation("DmB")
+  dmMessages         DmMessage[]
+  dmMutes            DmMute[]
+  dmReads            DmRead[] // last read per thread
   dmMessageReactions DmMessageReaction[] @relation("DmMessageReactions")
 
   // Event Chat
@@ -372,6 +380,10 @@ model Intent {
   chatMessages IntentChatMessage[]
   chatReads    IntentChatRead[]
 
+  // Join Form relations
+  joinQuestions IntentJoinQuestion[]
+  joinAnswers   IntentJoinAnswer[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -410,12 +422,16 @@ model IntentMember {
   addedById String?
   addedBy   User?   @relation("IntentMemberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
 
-  joinedAt DateTime?
-  leftAt   DateTime?
-  note     String?
+  joinedAt     DateTime?
+  leftAt       DateTime?
+  note         String?
+  rejectReason String? // Reason for rejection (max 500 chars, enforced in app)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations to join form answers
+  joinAnswers IntentJoinAnswer[]
 
   @@unique([intentId, userId])
   @@index([userId, status])
@@ -593,8 +609,8 @@ model IntentChatMessage {
   editedAt  DateTime?
   deletedAt DateTime?
 
-  intent    Intent                     @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  author    User                       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  intent    Intent                      @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  author    User                        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   reactions IntentChatMessageReaction[]
 
   replyTo IntentChatMessage?  @relation("IntentChatReply", fields: [replyToId], references: [id], onDelete: SetNull)
@@ -613,7 +629,7 @@ model IntentChatMessageReaction {
   createdAt DateTime @default(now())
 
   message IntentChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user    User               @relation("IntentChatMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+  user    User              @relation("IntentChatMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId, emoji])
   @@index([messageId])
@@ -750,31 +766,31 @@ model PaymentEvent {
 // ========================== Invites ==========================
 
 model IntentInviteLink {
-  id        String    @id @default(cuid())
-  intentId  String
-  code      String    @unique // Unique code used in URL (/i/:code)
-  
+  id       String @id @default(cuid())
+  intentId String
+  code     String @unique // Unique code used in URL (/i/:code)
+
   /// Maximum number of successful uses (null = unlimited)
-  maxUses   Int?
-  
+  maxUses Int?
+
   /// Count of successful uses (actual memberships created/updated)
-  usedCount Int       @default(0)
-  
+  usedCount Int @default(0)
+
   /// Expiration date (null = no expiration)
   expiresAt DateTime?
-  
+
   /// Who created this invite link
   createdById String?
-  createdBy   User?     @relation("IntentInviteLinkCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  
+  createdBy   User?   @relation("IntentInviteLinkCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
   /// Optional label for the link (e.g. "Friends from work")
-  label       String?
-  
+  label String?
+
   /// Soft deletion
   revokedAt   DateTime?
   revokedById String?
   revokedBy   User?     @relation("IntentInviteLinkRevokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
-  
+
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
 
@@ -791,14 +807,14 @@ model IntentInviteLink {
 
 /// Track who used which invite link
 model IntentInviteLinkUsage {
-  id        String   @id @default(cuid())
-  linkId    String
-  userId    String
-  usedAt    DateTime @default(now())
-  
+  id     String   @id @default(cuid())
+  linkId String
+  userId String
+  usedAt DateTime @default(now())
+
   /// IP address (optional, for security/analytics)
   ipAddress String?
-  
+
   /// User agent (optional, for analytics)
   userAgent String?
 
@@ -894,7 +910,6 @@ model IntentOwnershipTransfer {
   @@map("intent_ownership_transfers")
 }
 
-
 // =============================================================================
 /**
  * User Profile & Privacy Models
@@ -922,10 +937,10 @@ model UserProfile {
   coverUrl String?
 
   // Preferences
-  speaks                  String[] // ["pl", "en"]
-  interests               String[] // tags
-  preferredMode           Mode? // ONE_TO_ONE / GROUP
-  preferredMaxDistanceKm  Float?
+  speaks                 String[] // ["pl", "en"]
+  interests              String[] // tags
+  preferredMode          Mode? // ONE_TO_ONE / GROUP
+  preferredMaxDistanceKm Float?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -942,11 +957,11 @@ model UserPrivacy {
   dmPolicy String @default("ALL") // ALL / MEMBERS / INVITE_ONLY / NONE
 
   // Visibility settings
-  showLastSeen   String @default("ALL") // ALL / MEMBERS / HIDDEN
-  showLocation   String @default("CITY") // CITY / APPROX / HIDDEN
-  showEvents     String @default("ALL") // ALL / MEMBERS / SELF
-  showReviews    String @default("ALL") // ALL / MEMBERS / SELF
-  showStats      String @default("ALL") // ALL / MEMBERS / SELF
+  showLastSeen String @default("ALL") // ALL / MEMBERS / HIDDEN
+  showLocation String @default("CITY") // CITY / APPROX / HIDDEN
+  showEvents   String @default("ALL") // ALL / MEMBERS / SELF
+  showReviews  String @default("ALL") // ALL / MEMBERS / SELF
+  showStats    String @default("ALL") // ALL / MEMBERS / SELF
 
   // Default visibility for new intents
   defaultAddressVisibility AddressVisibility @default(PUBLIC)
@@ -1047,4 +1062,53 @@ model UserBadge {
   @@unique([userId, slug])
   @@index([userId])
   @@map("user_badges")
+}
+
+// =============================================================================
+/**
+ * Join Form Models - Questions and Answers for REQUEST mode
+ */
+// =============================================================================
+
+model IntentJoinQuestion {
+  id       String           @id @default(cuid())
+  intentId String
+  order    Int              @default(0) // Display order (0-based)
+  type     JoinQuestionType @default(TEXT)
+
+  label     String // Question text (max 200 chars, enforced in app)
+  helpText  String? // Optional help text (max 200 chars, enforced in app)
+  required  Boolean @default(true)
+  options   Json? // For CHOICE types: array of {label: string, value?: string}
+  maxLength Int? // For TEXT type: max answer length
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent  Intent             @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  answers IntentJoinAnswer[]
+
+  @@index([intentId, order])
+  @@map("intent_join_questions")
+}
+
+model IntentJoinAnswer {
+  id         String @id @default(cuid())
+  intentId   String
+  userId     String
+  questionId String
+
+  answer Json // TEXT: string, SINGLE_CHOICE: string, MULTI_CHOICE: string[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent   Intent             @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  question IntentJoinQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  member   IntentMember       @relation(fields: [intentId, userId], references: [intentId, userId], onDelete: Cascade)
+
+  @@unique([intentId, userId, questionId])
+  @@index([intentId, userId])
+  @@index([questionId])
+  @@map("intent_join_answers")
 }

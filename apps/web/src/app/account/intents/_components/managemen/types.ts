@@ -6,6 +6,7 @@ export type IntentMemberStatus =
   | 'INVITED'
   | 'PENDING'
   | 'REJECTED'
+  | 'CANCELLED'
   | 'BANNED'
   | 'LEFT'
   | 'KICKED';
@@ -37,6 +38,7 @@ export type ManageCallbacks = {
   onCancelInvite?: (member: IntentMember) => void | Promise<void>;
   onApprovePending?: (member: IntentMember) => void | Promise<void>;
   onRejectPending?: (member: IntentMember) => void | Promise<void>;
+  onUnreject?: (member: IntentMember) => void | Promise<void>;
   onNotifyPremium?: (intentId: string) => void | Promise<void>;
 };
 
@@ -56,6 +58,7 @@ export const STATUS_GROUP_ORDER: IntentMemberStatus[] = [
   'PENDING',
   'INVITED',
   'REJECTED',
+  'CANCELLED',
   'LEFT',
   'KICKED',
   'BANNED',
@@ -75,6 +78,8 @@ export const STATUS_BADGE_CLASSES: Record<IntentMemberStatus, string> = {
     'bg-yellow-100 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-200',
   REJECTED:
     'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-200',
+  CANCELLED:
+    'bg-slate-100 text-slate-900 dark:bg-slate-900/30 dark:text-slate-200',
   LEFT: 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-200',
   KICKED: 'bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-200',
   BANNED: 'bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200',
@@ -83,6 +88,7 @@ export const STATUS_BADGE_CLASSES: Record<IntentMemberStatus, string> = {
 export const READONLY_STATUSES: IntentMemberStatus[] = [
   'LEFT',
   'REJECTED',
+  'CANCELLED',
   'KICKED',
   'BANNED',
 ];
@@ -90,15 +96,27 @@ export const READONLY_STATUSES: IntentMemberStatus[] = [
 export function groupMembers(members: IntentMember[]) {
   const map = new Map<IntentMemberStatus, IntentMember[]>();
   for (const s of STATUS_GROUP_ORDER) map.set(s, []);
-  for (const m of members) map.get(m.status)!.push(m);
+  for (const m of members) {
+    const arr = map.get(m.status);
+    if (arr) {
+      arr.push(m);
+    } else {
+      // Handle unknown status by adding to map
+      console.warn(`Unknown member status: ${m.status}`);
+      map.set(m.status, [m]);
+    }
+  }
   const roleRank = (r: IntentMemberRole) =>
     r === 'OWNER' ? 0 : r === 'MODERATOR' ? 1 : 2;
   for (const s of STATUS_GROUP_ORDER) {
-    map.get(s)!.sort((a, b) => {
-      const rr = roleRank(a.role) - roleRank(b.role);
-      if (rr !== 0) return rr;
-      return a.user.name.localeCompare(b.user.name, 'pl');
-    });
+    const arr = map.get(s);
+    if (arr) {
+      arr.sort((a, b) => {
+        const rr = roleRank(a.role) - roleRank(b.role);
+        if (rr !== 0) return rr;
+        return a.user.name.localeCompare(b.user.name, 'pl');
+      });
+    }
   }
   return map;
 }

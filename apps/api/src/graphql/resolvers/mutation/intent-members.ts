@@ -1086,7 +1086,11 @@ export const cancelPendingOrInviteForUserMutation: MutationResolvers['cancelPend
           intentId,
           userId,
           status: {
-            in: [IntentMemberStatus.PENDING, IntentMemberStatus.INVITED],
+            in: [
+              IntentMemberStatus.PENDING,
+              IntentMemberStatus.INVITED,
+              IntentMemberStatus.REJECTED,
+            ],
           },
         },
       });

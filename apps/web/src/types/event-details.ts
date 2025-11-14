@@ -133,7 +133,11 @@ export type EventDetailsData = {
     isJoined: boolean;
     isPending: boolean;
     isInvited: boolean;
+    isRejected: boolean;
+    isBanned: boolean;
     canSeeMembers: boolean;
+    rejectReason?: string;
+    banReason?: string;
   };
 
   // Timestamps

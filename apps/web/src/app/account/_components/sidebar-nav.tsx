@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Bell,
   Users2,
+  FileQuestion,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -37,6 +38,7 @@ type Item = {
     | 'chats'
     | 'intents'
     | 'memberships'
+    | 'requests'
     | 'notifications'
     | 'plans-and-bills'
     | 'settings'
@@ -71,6 +73,12 @@ const NAV: Item[] = [
     label: 'Memberships',
     href: '/account/memberships',
     icon: Users2,
+  },
+  {
+    key: 'requests',
+    label: 'Join Requests',
+    href: '/account/requests',
+    icon: FileQuestion,
   },
   {
     key: 'notifications',

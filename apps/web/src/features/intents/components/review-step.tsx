@@ -8,6 +8,7 @@ import {
   ClockFading,
   Eye,
   EyeOff,
+  FileQuestion,
   FolderIcon,
   Gauge,
   Globe2,
@@ -33,6 +34,7 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { LevelBadge } from '@/components/ui/level-badge';
 import { twMerge } from 'tailwind-merge';
+import type { JoinFormQuestion } from './join-form-step';
 
 /* ---------- Section header ---------- */
 
@@ -272,6 +274,7 @@ export function ReviewStep({
   showSuggestion,
   errors,
   onEditStep,
+  joinFormQuestions,
 }: {
   values: IntentFormValues;
   showMapPreview?: boolean;
@@ -279,6 +282,7 @@ export function ReviewStep({
   showSuggestion?: boolean;
   errors?: Record<string, { message?: string }>;
   onEditStep?: (stepIndex: number) => void;
+  joinFormQuestions?: JoinFormQuestion[];
 }) {
   const { dDate, startT, endT } = useFormattedTime(
     values.startAt,
@@ -664,6 +668,64 @@ export function ReviewStep({
                   : 'lista ukryta dla gości i uczestników (widoczna tylko dla organizatorów).'}
             </div>
           </div>
+
+          {/* Join Form Questions */}
+          {joinFormQuestions && joinFormQuestions.length > 0 && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                <FileQuestion className="h-4 w-4" />
+                Join Form Questions ({joinFormQuestions.length})
+              </div>
+              <div className="space-y-3">
+                {joinFormQuestions.map((question, index) => (
+                  <div
+                    key={question.id}
+                    className="rounded-lg border border-blue-200 bg-white p-3 dark:border-blue-700 dark:bg-blue-950/30"
+                  >
+                    <div className="flex items-start gap-2 mb-1">
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                        {index + 1}.
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            {question.label}
+                          </span>
+                          {question.required && (
+                            <span className="text-xs text-red-500">*</span>
+                          )}
+                          <span className="text-xs text-blue-600 dark:text-blue-400">
+                            {question.type === 'TEXT' && '(Text)'}
+                            {question.type === 'SINGLE_CHOICE' &&
+                              '(Single Choice)'}
+                            {question.type === 'MULTI_CHOICE' &&
+                              '(Multiple Choice)'}
+                          </span>
+                        </div>
+                        {question.helpText && (
+                          <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                            {question.helpText}
+                          </p>
+                        )}
+                        {question.options && question.options.length > 0 && (
+                          <div className="mt-2 space-y-0.5">
+                            {question.options.map((option, i) => (
+                              <p
+                                key={i}
+                                className="text-xs text-blue-700 dark:text-blue-300"
+                              >
+                                • {option}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Mini map (optional) */}
           {showMapPreview && hasCoords && center && (

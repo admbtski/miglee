@@ -454,6 +454,59 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           },
         });
 
+        // Create join form questions if provided
+        const joinQuestions = (input as any).joinQuestions;
+        if (
+          joinQuestions &&
+          Array.isArray(joinQuestions) &&
+          joinQuestions.length > 0
+        ) {
+          // Validate max questions (5)
+          if (joinQuestions.length > 5) {
+            throw new GraphQLError('Maximum 5 join questions allowed', {
+              extensions: { code: 'BAD_USER_INPUT' },
+            });
+          }
+
+          // Create questions in order
+          for (let i = 0; i < joinQuestions.length; i++) {
+            const q = joinQuestions[i];
+
+            // Validate label length
+            if (q.label && q.label.length > 200) {
+              throw new GraphQLError(
+                'Question label must be at most 200 characters',
+                {
+                  extensions: { code: 'BAD_USER_INPUT' },
+                }
+              );
+            }
+
+            // Validate help text length
+            if (q.helpText && q.helpText.length > 200) {
+              throw new GraphQLError(
+                'Question help text must be at most 200 characters',
+                {
+                  extensions: { code: 'BAD_USER_INPUT' },
+                }
+              );
+            }
+
+            await tx.intentJoinQuestion.create({
+              data: {
+                intentId: intent.id,
+                order: i,
+                type: q.type,
+                label: q.label,
+                helpText: q.helpText || null,
+                required: q.required ?? true,
+                options: q.options || null,
+                maxLength: q.maxLength || null,
+              },
+            });
+          }
+        }
+
         const notification = await tx.notification.create({
           data: {
             kind: PrismaNotificationKind.INTENT_CREATED,

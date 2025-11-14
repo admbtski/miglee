@@ -1,6 +1,7 @@
 'use client';
 
 import { Modal } from '@/components/feedback/modal';
+import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
   BadgeDollarSign,
@@ -18,6 +19,7 @@ import { MembersPanel } from './panels/members/members-panel';
 import { PlansPanel } from './panels/plans/plans-panel';
 import { SubscriptionPanel } from './panels/subscription/subscription-panel';
 import { InviteLinksPanel } from './panels/invite-links/invite-links-panel';
+import { JoinFormPanel } from './panels/join-form/join-form-panel';
 import { EventManagementModalProps, IntentMember } from './types';
 import clsx from 'clsx';
 
@@ -26,7 +28,8 @@ type TabKey =
   | 'PLANS'
   | 'NOTIFICATIONS'
   | 'SUBSCRIPTION'
-  | 'INVITE_LINKS';
+  | 'INVITE_LINKS'
+  | 'JOIN_FORM';
 type SponsorPlan = 'Basic' | 'Plus' | 'Pro';
 
 type SponsorshipState = {
@@ -54,6 +57,7 @@ export function EventManagementModal({
   onCancelInvite,
   onApprovePending,
   onRejectPending,
+  onUnreject,
   onNotifyPremium,
   onInvited,
 
@@ -117,6 +121,7 @@ export function EventManagementModal({
       onCancelInvite,
       onApprovePending,
       onRejectPending,
+      onUnreject,
       onNotifyPremium,
     }),
     [
@@ -130,6 +135,7 @@ export function EventManagementModal({
       onCancelInvite,
       onApprovePending,
       onRejectPending,
+      onUnreject,
       onNotifyPremium,
     ]
   );
@@ -197,15 +203,17 @@ export function EventManagementModal({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {/* Przycisk zamykający modal */}
-          <button
+          <Button
             type="button"
             onClick={onClose}
-            className="inline-flex shrink-0 items-center justify-center rounded-full border border-zinc-700/30 bg-white/5 px-2.5 py-1.5 text-xs text-zinc-200 hover:bg-white/10 dark:bg-zinc-800/30"
+            variant="ghost"
+            size="icon-sm"
+            className="shrink-0 rounded-full border border-zinc-700/30 bg-white/5 text-zinc-200 hover:bg-white/10 dark:bg-zinc-800/30"
             aria-label="Zamknij"
             title="Zamknij (Esc)"
           >
             <ArrowLeft className="h-4 w-4" />
-          </button>
+          </Button>
 
           <h2 className="truncate text-xl font-semibold tracking-tight text-transparent bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text">
             Zarządzanie wydarzeniem
@@ -229,6 +237,7 @@ export function EventManagementModal({
       {(
         [
           { key: 'MEMBERS', label: 'Uczestnicy', Icon: Users },
+          { key: 'JOIN_FORM', label: 'Formularz', Icon: CheckCircle2 },
           { key: 'INVITE_LINKS', label: 'Linki zaproszeń', Icon: LinkIcon },
           { key: 'PLANS', label: 'Sponsorowanie', Icon: BadgeDollarSign },
           { key: 'SUBSCRIPTION', label: 'Pakiet (aktywny)', Icon: Sparkles },
@@ -313,14 +322,12 @@ export function EventManagementModal({
             placeholder="Treść komunikatu…"
           />
           <div className="mt-3 flex items-center justify-end">
-            <button
+            <Button
               type="button"
               disabled={sending}
               onClick={handleSendNotifications}
-              className={clsx(
-                'inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500',
-                sending && 'opacity-60'
-              )}
+              variant="default"
+              size="default"
             >
               {sending ? (
                 <>
@@ -331,7 +338,7 @@ export function EventManagementModal({
                   <CheckCircle2 className="h-4 w-4" /> Wyślij
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -367,6 +374,10 @@ export function EventManagementModal({
 
               {activeTab === 'INVITE_LINKS' && (
                 <InviteLinksPanel intentId={intentId} />
+              )}
+
+              {activeTab === 'JOIN_FORM' && (
+                <JoinFormPanel intentId={intentId} />
               )}
 
               {activeTab === 'PLANS' && (

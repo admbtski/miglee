@@ -141,6 +141,7 @@ enum IntentMemberStatus {
   BANNED
   LEFT
   KICKED
+  CANCELLED
 }
 
 "Member event type for audit log"
@@ -155,6 +156,14 @@ enum MemberEvent {
   UNBAN
   INVITE
   ACCEPT_INVITE
+  CANCEL_REQUEST
+}
+
+"Join form question type"
+enum JoinQuestionType {
+  TEXT
+  SINGLE_CHOICE
+  MULTI_CHOICE
 }
 
 "High-level notification category/kind"
@@ -435,9 +444,51 @@ type IntentMember {
   joinedAt: DateTime
   leftAt: DateTime
   note: String
+  rejectReason: String
 
   user: User!
   intent: Intent!
+  joinAnswers: [IntentJoinAnswer!]!
+}
+
+"Join form question for REQUEST mode"
+type IntentJoinQuestion {
+  id: ID!
+  intentId: ID!
+  order: Int!
+  type: JoinQuestionType!
+  label: String!
+  helpText: String
+  required: Boolean!
+  options: JSON
+  maxLength: Int
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"Join form answer from a user"
+type IntentJoinAnswer {
+  id: ID!
+  intentId: ID!
+  userId: ID!
+  questionId: ID!
+  answer: JSON!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  question: IntentJoinQuestion!
+  user: User!
+}
+
+"Join request with answers for host review"
+type IntentJoinRequest {
+  member: IntentMember!
+  answers: [IntentJoinAnswer!]!
+}
+
+"Result type for paginated join requests"
+type IntentJoinRequestsResult {
+  items: [IntentJoinRequest!]!
+  pageInfo: PageInfo!
 }
 
 "Intent"
@@ -907,6 +958,15 @@ input LocationInput {
   cityPlaceId: String
 }
 
+input JoinQuestionInputData {
+  type: JoinQuestionType!
+  label: String!
+  helpText: String
+  required: Boolean = true
+  options: JSON
+  maxLength: Int
+}
+
 input CreateIntentInput {
   title: String!
   description: String
@@ -938,6 +998,9 @@ input CreateIntentInput {
 
   # Privacy
   addressVisibility: AddressVisibility! = PUBLIC
+
+  # Join form questions (optional)
+  joinQuestions: [JoinQuestionInputData!]
   membersVisibility: MembersVisibility! = PUBLIC
 }
 
@@ -1083,6 +1146,48 @@ input CreateIntentInviteLinkInput {
   expiresAt: DateTime
 }
 
+# Join Form Inputs
+input CreateJoinQuestionInput {
+  intentId: ID!
+  order: Int!
+  type: JoinQuestionType!
+  label: String!
+  helpText: String
+  required: Boolean = true
+  options: JSON
+  maxLength: Int
+}
+
+input UpdateJoinQuestionInput {
+  order: Int
+  label: String
+  helpText: String
+  required: Boolean
+  options: JSON
+  maxLength: Int
+}
+
+input JoinAnswerInput {
+  questionId: ID!
+  answer: JSON!
+}
+
+input RequestJoinIntentInput {
+  intentId: ID!
+  answers: [JoinAnswerInput!]!
+}
+
+input ApproveJoinRequestInput {
+  intentId: ID!
+  userId: ID!
+}
+
+input RejectJoinRequestInput {
+  intentId: ID!
+  userId: ID!
+  reason: String
+}
+
 # Notification Preference Inputs
 input UpdateNotificationPreferenceInput {
   emailOnInvite: Boolean
@@ -1197,6 +1302,19 @@ type Query {
   # Intent Favourites
   myFavourites(limit: Int = 20, offset: Int = 0): IntentFavouritesResult!
   isFavourite(intentId: ID!): Boolean!
+
+  # Join Form
+  intentJoinQuestions(intentId: ID!): [IntentJoinQuestion!]!
+  intentJoinRequests(
+    intentId: ID!
+    limit: Int = 20
+    offset: Int = 0
+  ): IntentJoinRequestsResult!
+  myJoinRequests(
+    status: IntentMemberStatus
+    limit: Int = 20
+    offset: Int = 0
+  ): [IntentMember!]!
 
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
   categories(query: String, limit: Int = 50): [Category!]!
@@ -1435,15 +1553,18 @@ type Mutation {
   reopenIntentJoin(intentId: ID!): Intent!
 
   # memberships (user endpoints)
-  requestJoinIntent(intentId: ID!): Intent!
+  requestJoinIntent(intentId: ID!): Intent! # Deprecated: use requestJoinIntentWithAnswers
+  requestJoinIntentWithAnswers(input: RequestJoinIntentInput!): Intent!
   cancelJoinRequest(intentId: ID!): Boolean!
   leaveIntent(intentId: ID!): Intent!
   acceptInvite(intentId: ID!): Intent!
 
   # memberships (owner/mod endpoints)
   inviteMember(input: InviteMemberInput!): Intent!
-  approveMembership(input: ApproveMembershipInput!): Intent!
-  rejectMembership(input: RejectMembershipInput!): Intent!
+  approveMembership(input: ApproveMembershipInput!): Intent! # Deprecated: use approveJoinRequest
+  approveJoinRequest(input: ApproveJoinRequestInput!): Intent!
+  rejectMembership(input: RejectMembershipInput!): Intent! # Deprecated: use rejectJoinRequest
+  rejectJoinRequest(input: RejectJoinRequestInput!): Intent!
   kickMember(input: KickMemberInput!): Intent!
   updateMemberRole(input: UpdateMemberRoleInput!): Intent!
   banMember(input: BanMemberInput!): Intent!
@@ -1464,6 +1585,18 @@ type Mutation {
 
   # Intent Favourites
   toggleFavourite(intentId: ID!): IntentFavourite
+
+  # Join Form Management
+  createJoinQuestion(input: CreateJoinQuestionInput!): IntentJoinQuestion!
+  updateJoinQuestion(
+    id: ID!
+    input: UpdateJoinQuestionInput!
+  ): IntentJoinQuestion!
+  deleteJoinQuestion(id: ID!): Boolean!
+  reorderJoinQuestions(
+    intentId: ID!
+    questionIds: [ID!]!
+  ): [IntentJoinQuestion!]!
 
   # notifications
   addNotification(

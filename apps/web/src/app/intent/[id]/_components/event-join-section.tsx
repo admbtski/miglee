@@ -16,6 +16,11 @@ import {
 } from '@/lib/api/intent-members';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  useIntentJoinQuestionsQuery,
+  useRequestJoinIntentWithAnswersMutation,
+} from '@/lib/api/join-form';
+import { JoinRequestModal } from '@/features/intents/components/join-request-modal';
 
 type EventJoinSectionProps = {
   event: EventDetailsData;
@@ -24,37 +29,95 @@ type EventJoinSectionProps = {
 export function EventJoinSection({ event }: EventJoinSectionProps) {
   const { joinState, userMembership } = event;
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const queryClient = useQueryClient();
 
   const requestJoinMutation = useRequestJoinIntentMutation();
+  const requestJoinWithAnswersMutation =
+    useRequestJoinIntentWithAnswersMutation();
   const leaveIntentMutation = useLeaveIntentMutationMembers();
   const cancelRequestMutation = useCancelJoinRequestMutation();
+
+  // Fetch join questions for this event
+  const { data: questions = [], isLoading: questionsLoading } =
+    useIntentJoinQuestionsQuery({
+      intentId: event.id,
+    });
 
   const handleJoinAction = async () => {
     if (isProcessing) return;
 
-    setIsProcessing(true);
-    try {
-      if (userMembership?.isJoined) {
-        // Leave intent
+    // If user is already joined or pending, handle those actions directly
+    if (userMembership?.isJoined) {
+      setIsProcessing(true);
+      try {
         await leaveIntentMutation.mutateAsync({ intentId: event.id });
-      } else if (userMembership?.isPending) {
-        // Cancel pending request
-        await cancelRequestMutation.mutateAsync({ intentId: event.id });
-      } else {
-        // Request to join (works for both OPEN and REQUEST modes)
-        await requestJoinMutation.mutateAsync({ intentId: event.id });
+        await queryClient.invalidateQueries({
+          queryKey: ['intent-detail', event.id],
+        });
+      } catch (error) {
+        console.error('Leave action failed:', error);
+        alert('Wystąpił błąd. Spróbuj ponownie.');
+      } finally {
+        setIsProcessing(false);
       }
+      return;
+    }
 
-      // Invalidate intent detail query to refresh data
+    if (userMembership?.isPending) {
+      setIsProcessing(true);
+      try {
+        await cancelRequestMutation.mutateAsync({ intentId: event.id });
+        await queryClient.invalidateQueries({
+          queryKey: ['intent-detail', event.id],
+        });
+      } catch (error) {
+        console.error('Cancel request failed:', error);
+        alert('Wystąpił błąd. Spróbuj ponownie.');
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // For new join requests, check if there are questions
+    if (questions.length > 0) {
+      // Show modal with questions
+      setShowJoinModal(true);
+    } else {
+      // No questions, submit directly
+      setIsProcessing(true);
+      try {
+        await requestJoinMutation.mutateAsync({ intentId: event.id });
+        await queryClient.invalidateQueries({
+          queryKey: ['intent-detail', event.id],
+        });
+      } catch (error) {
+        console.error('Join action failed:', error);
+        alert('Wystąpił błąd. Spróbuj ponownie.');
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  const handleSubmitWithAnswers = async (
+    answers: Array<{ questionId: string; answer: any }>
+  ) => {
+    try {
+      await requestJoinWithAnswersMutation.mutateAsync({
+        input: {
+          intentId: event.id,
+          answers,
+        },
+      });
       await queryClient.invalidateQueries({
         queryKey: ['intent-detail', event.id],
       });
     } catch (error) {
-      console.error('Join action failed:', error);
+      console.error('Join with answers failed:', error);
       alert('Wystąpił błąd. Spróbuj ponownie.');
-    } finally {
-      setIsProcessing(false);
+      throw error;
     }
   };
 
@@ -84,6 +147,24 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
         icon: UserCheck,
         variant: 'primary' as const,
         disabled: false,
+      };
+    }
+
+    if (userMembership?.isRejected) {
+      return {
+        label: 'Prośba odrzucona',
+        icon: XCircle,
+        variant: 'disabled' as const,
+        disabled: true,
+      };
+    }
+
+    if (userMembership?.isBanned) {
+      return {
+        label: 'Zbanowany',
+        icon: Lock,
+        variant: 'disabled' as const,
+        disabled: true,
       };
     }
 
@@ -142,6 +223,38 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
             <p className="font-medium text-blue-900 dark:text-blue-100">
               Zostałeś zaproszony do tego wydarzenia
             </p>
+          </div>
+        </div>
+      )}
+
+      {userMembership?.isRejected && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 p-3 text-sm dark:bg-red-950">
+          <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" />
+          <div>
+            <p className="font-medium text-red-900 dark:text-red-100">
+              Twoja prośba została odrzucona
+            </p>
+            {userMembership.rejectReason && (
+              <p className="mt-1 text-red-700 dark:text-red-300">
+                Powód: {userMembership.rejectReason}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {userMembership?.isBanned && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-50 p-3 text-sm dark:bg-red-950">
+          <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600 dark:text-red-400" />
+          <div>
+            <p className="font-medium text-red-900 dark:text-red-100">
+              Zostałeś zbanowany w tym wydarzeniu
+            </p>
+            {userMembership.banReason && (
+              <p className="mt-1 text-red-700 dark:text-red-300">
+                Powód: {userMembership.banReason}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -289,6 +402,16 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
           )}
         </div>
       )}
+
+      {/* Join Request Modal with Questions */}
+      <JoinRequestModal
+        open={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        intentId={event.id}
+        questions={questions}
+        onSubmit={handleSubmitWithAnswers}
+        eventTitle={event.title}
+      />
     </div>
   );
 }
