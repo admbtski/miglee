@@ -186,13 +186,6 @@ function FilterModalRefactoredComponent({
     const startIsoNorm = normalizeISO(startISO);
     const endIsoNorm = normalizeISO(endISO);
 
-    console.log('[FilterModal] handleApply - location state:', {
-      city,
-      cityLat,
-      cityLng,
-      cityPlaceId,
-    });
-
     onApply({
       q,
       city,
@@ -280,6 +273,7 @@ function FilterModalRefactoredComponent({
               tags={tags}
               keywords={keywords}
               categories={categories}
+              joinModes={joinModes}
               onClearQ={() => setQ('')}
               onClearCity={() => {
                 console.log('[FilterModal] onClearCity - clearing location');
@@ -300,6 +294,7 @@ function FilterModalRefactoredComponent({
               onClearTags={() => setTags([])}
               onClearKeywords={() => {}}
               onClearCategories={() => setCategories([])}
+              onClearJoinModes={() => setJoinModes([])}
             />
 
             {/* Body - filters */}

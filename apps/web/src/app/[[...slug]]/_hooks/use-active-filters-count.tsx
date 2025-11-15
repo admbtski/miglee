@@ -28,6 +28,7 @@ export function useActiveFiltersCount(filters: CommittedFilters): number {
     if (filters.tags.length) count++;
     if (filters.keywords.length) count++;
     if (filters.categories.length) count++;
+    if (filters.joinModes.length) count++;
 
     return count;
   }, [
@@ -43,5 +44,6 @@ export function useActiveFiltersCount(filters: CommittedFilters): number {
     filters.tags,
     filters.keywords,
     filters.categories,
+    filters.joinModes,
   ]);
 }

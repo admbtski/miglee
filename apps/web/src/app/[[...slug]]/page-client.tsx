@@ -73,6 +73,7 @@ export function IntentsPage() {
     tags,
     keywords,
     categories,
+    joinModes,
     apply,
   } = filters;
 
@@ -145,6 +146,7 @@ export function IntentsPage() {
         tags: next.tags ?? [],
         keywords: next.keywords ?? [],
         categories: next.categories ?? [],
+        joinModes: next.joinModes ?? [],
       });
       setFiltersOpen(false);
     },
@@ -161,6 +163,7 @@ export function IntentsPage() {
       tagSlugs: tags,
       kinds: kinds.length ? kinds : [],
       levels: levels.length ? levels : [],
+      joinModes: joinModes.length ? joinModes : [],
       keywords: [],
       status: status !== IntentStatus.Any ? status : IntentStatus.Any,
       verifiedOnly: !!verifiedOnly,
@@ -186,6 +189,7 @@ export function IntentsPage() {
       tags,
       kinds,
       levels,
+      joinModes,
       status,
       verifiedOnly,
       city,
@@ -374,6 +378,7 @@ export function IntentsPage() {
               initialTags={tags}
               initialKeywords={keywords}
               initialCategories={categories}
+              initialJoinModes={joinModes}
               onApply={handleApplyFilters}
               onClose={handleCloseFilters}
             />

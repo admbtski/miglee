@@ -8,6 +8,9 @@ import {
   Sparkles,
   XCircle,
   Trash2,
+  Wifi,
+  Video,
+  MapPinned,
 } from 'lucide-react';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { PlanBadge } from '@/components/ui/plan-badge';
@@ -35,6 +38,44 @@ export function EventHero({ event }: EventHeroProps) {
     [event.levels]
   );
 
+  // Determine event size category
+  const eventSize = useMemo(() => {
+    if (event.mode === 'ONE_TO_ONE') {
+      return { label: 'Indywidualne', description: 'Spotkanie indywidualne' };
+    }
+    if (event.max <= 2) {
+      return { label: 'Indywidualne', description: 'Spotkanie indywidualne' };
+    }
+    if (event.max <= 10) {
+      return { label: 'Kameralne', description: 'Kameralne wydarzenie' };
+    }
+    if (event.max <= 50) {
+      return { label: 'Grupowe', description: 'Wydarzenie grupowe' };
+    }
+    return { label: 'Masowe', description: 'Masowe wydarzenie' };
+  }, [event.mode, event.max]);
+
+  // Check if location should be visible
+  const canSeeLocation = useMemo(() => {
+    if (event.meetingKind === 'ONLINE') return false;
+    if (!event.address) return false;
+
+    if (event.addressVisibility === 'PUBLIC') return true;
+    if (event.addressVisibility === 'AFTER_JOIN') {
+      return (
+        event.userMembership?.isJoined ||
+        event.userMembership?.isOwner ||
+        event.userMembership?.isModerator
+      );
+    }
+    return false; // HIDDEN
+  }, [
+    event.meetingKind,
+    event.address,
+    event.addressVisibility,
+    event.userMembership,
+  ]);
+
   return (
     <div className="relative rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40">
       {/* Top Right Corner - Favourite Button & Plan Badge */}
@@ -47,7 +88,7 @@ export function EventHero({ event }: EventHeroProps) {
         />
 
         {/* Plan Badge with continuous pulse animation */}
-        {plan && plan !== 'default' && (
+        {plan && (
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{
@@ -169,35 +210,81 @@ export function EventHero({ event }: EventHeroProps) {
       </div>
 
       {/* Meta Info */}
-      <div className="mt-4 flex flex-wrap gap-3 text-[13px] text-neutral-700 dark:text-neutral-300">
-        {/* Date */}
-        <span className="inline-flex items-center gap-1.5">
-          <Calendar className="h-4 w-4 opacity-70" />
-          {formatDate(startDate)} o {formatTime(startDate)}
-        </span>
+      <div className="mt-4 space-y-2">
+        {/* Primary Info Row */}
+        <div className="flex flex-wrap gap-3 text-[13px] text-neutral-700 dark:text-neutral-300">
+          {/* Date */}
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 opacity-70" />
+            {formatDate(startDate)} o {formatTime(startDate)}
+          </span>
 
-        <span className="opacity-30" aria-hidden>
-          •
-        </span>
+          <span className="opacity-30" aria-hidden>
+            •
+          </span>
 
-        {/* Location */}
-        {event.meetingKind !== 'ONLINE' && event.address && (
-          <>
-            <span className="inline-flex items-center gap-1.5 truncate">
-              <MapPin className="h-4 w-4 opacity-70" />
-              {event.address}
+          {/* Participants with size indicator */}
+          <span
+            className="inline-flex items-center gap-1.5"
+            title={eventSize.description}
+          >
+            <Users className="h-4 w-4 opacity-70" />
+            {event.joinedCount} / {event.max} uczestników
+            <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+              ({eventSize.label})
             </span>
-            <span className="opacity-30" aria-hidden>
-              •
-            </span>
-          </>
-        )}
+          </span>
+        </div>
 
-        {/* Participants */}
-        <span className="inline-flex items-center gap-1.5">
-          <Users className="h-4 w-4 opacity-70" />
-          {event.joinedCount} / {event.max} uczestników
-        </span>
+        {/* Location & Online Info Row */}
+        <div className="flex flex-wrap gap-3 text-[13px]">
+          {/* Physical Location - only if visible */}
+          {canSeeLocation && (
+            <span className="inline-flex items-center gap-1.5 text-neutral-700 dark:text-neutral-300">
+              <MapPinned className="h-4 w-4 opacity-70 text-blue-600 dark:text-blue-400" />
+              <span className="truncate max-w-[300px]">{event.address}</span>
+            </span>
+          )}
+
+          {/* Hidden location indicator */}
+          {!canSeeLocation &&
+            event.meetingKind !== 'ONLINE' &&
+            event.address && (
+              <span className="inline-flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+                <MapPin className="h-4 w-4 opacity-70" />
+                <span className="text-xs">
+                  Lokalizacja{' '}
+                  {event.addressVisibility === 'AFTER_JOIN'
+                    ? 'widoczna po dołączeniu'
+                    : 'ukryta'}
+                </span>
+              </span>
+            )}
+
+          {/* Online Meeting Info */}
+          {(event.meetingKind === 'ONLINE' ||
+            event.meetingKind === 'HYBRID') && (
+            <>
+              {canSeeLocation && event.meetingKind === 'HYBRID' && (
+                <span className="opacity-30" aria-hidden>
+                  •
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 text-green-700 dark:text-green-400">
+                {event.meetingKind === 'ONLINE' ? (
+                  <Video className="h-4 w-4" />
+                ) : (
+                  <Wifi className="h-4 w-4" />
+                )}
+                <span className="font-medium">
+                  {event.meetingKind === 'ONLINE'
+                    ? 'Spotkanie online'
+                    : 'Dostępne online'}
+                </span>
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Badges */}

@@ -167,6 +167,11 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
 
   // Determine button label and state
   const getButtonConfig = () => {
+    // Owner cannot leave their own event
+    if (userMembership?.isOwner) {
+      return null;
+    }
+
     if (userMembership?.isJoined) {
       return {
         label: 'Opuść wydarzenie',
@@ -257,7 +262,22 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
       </h2>
 
       {/* Membership Status */}
-      {userMembership?.isJoined && (
+      {userMembership?.isOwner && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-blue-50 p-3 text-sm dark:bg-blue-950">
+          <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+          <div>
+            <p className="font-medium text-blue-900 dark:text-blue-100">
+              Jesteś właścicielem tego wydarzenia
+            </p>
+            <p className="mt-1 text-blue-700 dark:text-blue-300">
+              Nie możesz opuścić własnego wydarzenia. Aby zakończyć wydarzenie,
+              możesz je anulować lub usunąć w panelu zarządzania.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {userMembership?.isJoined && !userMembership?.isOwner && (
         <div className="mb-4 flex items-start gap-2 rounded-xl bg-green-50 p-3 text-sm dark:bg-green-950">
           <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600 dark:text-green-400" />
           <div>
@@ -423,21 +443,23 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
         </div>
       )}
 
-      {/* CTA Button */}
-      <button
-        onClick={handleJoinAction}
-        disabled={buttonConfig.disabled || isProcessing}
-        className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-md font-medium transition outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
-          buttonConfig.variant === 'primary'
-            ? 'bg-neutral-900 text-white hover:opacity-90 active:opacity-80 dark:bg-white dark:text-neutral-900'
-            : buttonConfig.variant === 'secondary'
-              ? 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
-              : 'cursor-not-allowed bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500'
-        }`}
-      >
-        <buttonConfig.icon className="h-4 w-4" />
-        {isProcessing ? 'Przetwarzanie...' : buttonConfig.label}
-      </button>
+      {/* CTA Button - hidden for owners */}
+      {buttonConfig && (
+        <button
+          onClick={handleJoinAction}
+          disabled={buttonConfig.disabled || isProcessing}
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-md font-medium transition outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
+            buttonConfig.variant === 'primary'
+              ? 'bg-neutral-900 text-white hover:opacity-90 active:opacity-80 dark:bg-white dark:text-neutral-900'
+              : buttonConfig.variant === 'secondary'
+                ? 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
+                : 'cursor-not-allowed bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500'
+          }`}
+        >
+          <buttonConfig.icon className="h-4 w-4" />
+          {isProcessing ? 'Przetwarzanie...' : buttonConfig.label}
+        </button>
+      )}
 
       {/* Reason */}
       {joinState.reason && (

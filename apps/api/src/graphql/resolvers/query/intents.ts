@@ -129,9 +129,9 @@ function buildBaseWhere(args: Parameters<QueryResolvers['intents']>[1]) {
 
   // JoinMode filter - support multiple modes
   if (args.joinMode) {
-    where.joinMode = args.joinMode as any;
+    where.joinMode = args.joinMode;
   } else if (args.joinModes?.length) {
-    AND.push({ joinMode: { in: args.joinModes as any[] } });
+    AND.push({ joinMode: { in: args.joinModes } });
   }
 
   if (args.ownerId) AND.push({ ownerId: args.ownerId });

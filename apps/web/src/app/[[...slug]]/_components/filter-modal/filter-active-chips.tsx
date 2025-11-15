@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { useMemo } from 'react';
 import type {
   IntentStatus,
+  JoinMode,
   MeetingKind,
   Level,
 } from '@/lib/api/__generated__/react-query-update';
@@ -24,6 +25,7 @@ export interface FilterActiveChipsProps {
   tags: SearchMeta['tags'];
   keywords: string[];
   categories: SearchMeta['categories'];
+  joinModes: JoinMode[];
   onClearQ: () => void;
   onClearCity: () => void;
   onClearDistance: () => void;
@@ -36,6 +38,7 @@ export interface FilterActiveChipsProps {
   onClearTags: () => void;
   onClearKeywords: () => void;
   onClearCategories: () => void;
+  onClearJoinModes: () => void;
 }
 
 export function FilterActiveChips(props: FilterActiveChipsProps) {
@@ -52,6 +55,7 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
     tags,
     keywords,
     categories,
+    joinModes,
     onClearQ,
     onClearCity,
     onClearDistance,
@@ -64,6 +68,7 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
     onClearTags,
     onClearKeywords,
     onClearCategories,
+    onClearJoinModes,
   } = props;
 
   const DEFAULT_DISTANCE = 30;
@@ -99,6 +104,20 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
         `Kategorie: ${categories.map((c) => c.label).join(', ')}`,
         onClearCategories
       );
+    if (joinModes.length) {
+      const joinModeLabels = joinModes.map((jm) =>
+        jm === 'OPEN'
+          ? 'Otwarte'
+          : jm === 'REQUEST'
+            ? 'Na prośbę'
+            : 'Tylko zaproszenia'
+      );
+      push(
+        'joinModes',
+        `Tryb dołączania: ${joinModeLabels.join(', ')}`,
+        onClearJoinModes
+      );
+    }
 
     return arr;
   }, [
@@ -114,6 +133,7 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
     tags,
     keywords,
     categories,
+    joinModes,
     onClearQ,
     onClearCity,
     onClearDistance,
@@ -126,6 +146,7 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
     onClearTags,
     onClearKeywords,
     onClearCategories,
+    onClearJoinModes,
   ]);
 
   if (chips.length === 0) return null;

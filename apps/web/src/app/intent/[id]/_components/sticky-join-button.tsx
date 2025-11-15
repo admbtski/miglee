@@ -161,6 +161,11 @@ export function StickyJoinButton({ event }: StickyJoinButtonProps) {
 
   // Determine button label and state
   const getButtonConfig = () => {
+    // Owner cannot leave their own event - hide button
+    if (userMembership?.isOwner) {
+      return null;
+    }
+
     if (userMembership?.isJoined) {
       return {
         label: 'Opuść wydarzenie',
@@ -243,6 +248,11 @@ export function StickyJoinButton({ event }: StickyJoinButtonProps) {
   };
 
   const buttonConfig = getButtonConfig();
+
+  // Don't show sticky bar for owners
+  if (!buttonConfig) {
+    return null;
+  }
 
   return (
     <>

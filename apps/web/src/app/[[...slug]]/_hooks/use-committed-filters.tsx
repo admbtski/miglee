@@ -2,6 +2,7 @@
 
 import {
   IntentStatus,
+  JoinMode,
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
@@ -24,6 +25,7 @@ export type CommittedFilters = {
   tags: string[];
   keywords: string[];
   categories: string[];
+  joinModes: JoinMode[];
 };
 
 const DEFAULT_DISTANCE = 30;
@@ -76,6 +78,7 @@ export function useCommittedFilters() {
       tags: parseCsv(search, 'tags'),
       keywords: parseCsv(search, 'keywords'),
       categories: parseCsv(search, 'categories'),
+      joinModes: parseCsv(search, 'joinModes') as JoinMode[],
     };
   }, [search]);
 
@@ -101,6 +104,9 @@ export function useCommittedFilters() {
         tags: 'tags' in next ? next.tags : curr.tags,
         keywords: 'keywords' in next ? next.keywords : curr.keywords,
         categories: 'categories' in next ? next.categories : curr.categories,
+        joinModes: ('joinModes' in next
+          ? next.joinModes
+          : curr.joinModes) as JoinMode[],
       };
 
       const params = new URLSearchParams(search);
@@ -122,6 +128,7 @@ export function useCommittedFilters() {
         'tags',
         'keywords',
         'categories',
+        'joinModes',
       ]) {
         params.delete(k);
       }
@@ -146,6 +153,7 @@ export function useCommittedFilters() {
       setCsv(params, 'tags', merged.tags);
       setCsv(params, 'keywords', merged.keywords);
       setCsv(params, 'categories', merged.categories);
+      setCsv(params, 'joinModes', merged.joinModes);
 
       const qs = params.toString();
       return `${pathname}${qs ? `?${qs}` : ''}`;
@@ -178,6 +186,7 @@ export function useCommittedFilters() {
           tags: [],
           keywords: [],
           categories: [],
+          joinModes: [],
         }),
         { scroll: false }
       ),
