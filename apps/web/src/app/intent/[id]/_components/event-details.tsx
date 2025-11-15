@@ -221,33 +221,6 @@ export function EventDetails({ event }: EventDetailsProps) {
         </div>
       )}
 
-      {/* Activity Section */}
-      <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-          Aktywność
-        </h2>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Komentarze
-            </p>
-            <p className="mt-1 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-              {event.commentsCount}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Wiadomości w czacie
-            </p>
-            <p className="mt-1 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-              {event.messagesCount}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Notes (Owner/Mod only) */}
       {event.notes && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950">
