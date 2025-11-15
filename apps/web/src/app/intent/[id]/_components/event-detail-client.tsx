@@ -28,6 +28,7 @@ import {
   Wifi,
   MapPinned,
 } from 'lucide-react';
+import { FavouriteButton } from '@/components/ui/favourite-button';
 import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
 import { EventManagementModalConnect } from '@/app/account/intents/_components/managemen/event-management-modal-connect';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
@@ -268,34 +269,45 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         </div>
       </div>
 
+      {/* 
+        Event Hero Cover - Magazine Style
+        Refined layout with elegant gradient, proper spacing, and integrated metadata
+      */}
       <div className="container mx-auto max-w-6xl px-4 py-6">
-        {/* Cover Photo with dynamic category-based image */}
-        <div className="mb-6 -mt-6 -mx-4">
-          <div className="relative h-64 md:h-80 lg:h-96 overflow-hidden rounded-b-3xl bg-gradient-to-br from-blue-500 to-purple-600">
-            {/* Cover Image - dynamically based on category */}
+        <div className="mb-6">
+          <div className="relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+            {/* Background Image */}
             <img
               src={getCoverImageUrl(eventData.categories)}
               alt={eventData.title}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               onError={(e) => {
-                // Fallback to gradient background if image fails to load
                 e.currentTarget.style.display = 'none';
               }}
             />
 
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            {/* Gradient Overlay - Subtle, magazine-style */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/15 to-black/55" />
 
-            {/* Content Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
-              <div className="container mx-auto max-w-6xl">
-                {/* Categories Pills */}
+            {/* Favourite Button - Top Right Corner */}
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
+              <FavouriteButton
+                intentId={eventData.id}
+                isFavourite={eventData.isFavourite ?? false}
+                size="md"
+              />
+            </div>
+
+            {/* Bottom Content Container */}
+            <div className="absolute inset-x-0 bottom-0 px-4 pb-5 md:px-8 md:pb-7">
+              <div className="mx-auto max-w-6xl">
+                {/* Category Tags Row */}
                 {eventData.categories.length > 0 && (
                   <div className="mb-3 flex flex-wrap gap-2">
-                    {eventData.categories.slice(0, 3).map((cat) => (
+                    {eventData.categories.slice(0, 2).map((cat) => (
                       <span
                         key={cat.slug}
-                        className="inline-flex items-center rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-xs font-medium text-white border border-white/30"
+                        className="inline-flex items-center rounded-full bg-black/40 backdrop-blur-sm px-3 py-1 text-xs font-medium text-white"
                       >
                         {cat.name}
                       </span>
@@ -303,117 +315,126 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                   </div>
                 )}
 
-                {/* Title */}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl leading-tight">
+                {/* Event Title (H1) */}
+                <h1 className="text-2xl font-semibold leading-tight tracking-tight text-white md:text-[32px] md:leading-tight line-clamp-3">
                   {eventData.title}
                 </h1>
 
-                {/* Quick Info Bar */}
-                <div className="mt-4 space-y-2">
-                  {/* Primary Info Row */}
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-white/90">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {new Date(eventData.startISO).toLocaleDateString(
-                          'pl-PL',
-                          { day: 'numeric', month: 'long' }
-                        )}
-                      </span>
-                    </div>
-                    <span className="opacity-40">•</span>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {new Date(eventData.startISO).toLocaleTimeString(
-                          'pl-PL',
-                          { hour: '2-digit', minute: '2-digit' }
-                        )}
-                      </span>
-                    </div>
-                    <span className="opacity-40">•</span>
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {eventData.joinedCount} / {eventData.max}
-                        <span className="ml-1 text-xs opacity-75">
-                          (
-                          {eventData.mode === 'ONE_TO_ONE' || eventData.max <= 2
-                            ? 'Indywidualne'
-                            : eventData.max <= 10
-                              ? 'Kameralne'
-                              : eventData.max <= 50
-                                ? 'Grupowe'
-                                : 'Masowe'}
-                          )
-                        </span>
-                      </span>
-                    </div>
+                {/* Metadata Row - Date, Time, Participants */}
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/80">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 opacity-80" />
+                    <span>
+                      {new Date(eventData.startISO).toLocaleDateString(
+                        'pl-PL',
+                        {
+                          day: 'numeric',
+                          month: 'long',
+                        }
+                      )}
+                    </span>
                   </div>
-
-                  {/* Location & Online Info Row */}
-                  <div className="flex flex-wrap items-center gap-3 text-sm">
-                    {/* Physical Location - only if visible */}
-                    {eventData.meetingKind !== 'ONLINE' &&
-                      eventData.address &&
-                      (eventData.addressVisibility === 'PUBLIC' ||
-                        (eventData.addressVisibility === 'AFTER_JOIN' &&
-                          (isJoined || isOwner || isModerator))) && (
-                        <div className="flex items-center gap-1.5 text-blue-200">
-                          <MapPinned className="h-4 w-4" />
-                          <span className="truncate max-w-[300px]">
-                            {eventData.address.split(',')[0]}
-                          </span>
-                        </div>
+                  <span className="text-white/40">·</span>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 opacity-80" />
+                    <span>
+                      {new Date(eventData.startISO).toLocaleTimeString(
+                        'pl-PL',
+                        {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        }
                       )}
-
-                    {/* Hidden location indicator */}
-                    {eventData.meetingKind !== 'ONLINE' &&
-                      eventData.address &&
-                      !(
-                        eventData.addressVisibility === 'PUBLIC' ||
-                        (eventData.addressVisibility === 'AFTER_JOIN' &&
-                          (isJoined || isOwner || isModerator))
-                      ) && (
-                        <div className="flex items-center gap-1.5 text-white/60">
-                          <MapPin className="h-4 w-4" />
-                          <span className="text-xs">
-                            Lokalizacja{' '}
-                            {eventData.addressVisibility === 'AFTER_JOIN'
-                              ? 'widoczna po dołączeniu'
-                              : 'ukryta'}
-                          </span>
-                        </div>
-                      )}
-
-                    {/* Online Meeting Info */}
-                    {(eventData.meetingKind === 'ONLINE' ||
-                      eventData.meetingKind === 'HYBRID') && (
-                      <>
-                        {eventData.meetingKind === 'HYBRID' &&
-                          eventData.address &&
-                          (eventData.addressVisibility === 'PUBLIC' ||
-                            (eventData.addressVisibility === 'AFTER_JOIN' &&
-                              (isJoined || isOwner || isModerator))) && (
-                            <span className="opacity-40">•</span>
-                          )}
-                        <div className="flex items-center gap-1.5 text-green-300 font-medium">
-                          {eventData.meetingKind === 'ONLINE' ? (
-                            <Video className="h-4 w-4" />
-                          ) : (
-                            <Wifi className="h-4 w-4" />
-                          )}
-                          <span>
-                            {eventData.meetingKind === 'ONLINE'
-                              ? 'Spotkanie online'
-                              : 'Dostępne online'}
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    </span>
+                  </div>
+                  <span className="text-white/40">·</span>
+                  <div className="flex items-center gap-1.5">
+                    <Users className="h-4 w-4 opacity-80" />
+                    <span>
+                      {eventData.joinedCount} / {eventData.max}
+                    </span>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Extended Metadata Card - Integrated below hero */}
+        <div className="mb-6">
+          <div className="rounded-xl border border-neutral-200 bg-white/70 backdrop-blur-sm p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-700 dark:text-neutral-300">
+              {/* Event Size Category */}
+              <div className="flex items-center gap-1.5">
+                <Users className="h-4 w-4 opacity-70" />
+                <span className="font-medium">
+                  {eventData.mode === 'ONE_TO_ONE' || eventData.max <= 2
+                    ? 'Indywidualne'
+                    : eventData.max <= 10
+                      ? 'Kameralne'
+                      : eventData.max <= 50
+                        ? 'Grupowe'
+                        : 'Masowe'}
+                </span>
+              </div>
+
+              <span className="opacity-30">·</span>
+
+              {/* Physical Location - Conditional visibility */}
+              {eventData.meetingKind !== 'ONLINE' &&
+                eventData.address &&
+                (eventData.addressVisibility === 'PUBLIC' ||
+                  (eventData.addressVisibility === 'AFTER_JOIN' &&
+                    (isJoined || isOwner || isModerator))) && (
+                  <>
+                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                      <MapPinned className="h-4 w-4" />
+                      <span className="truncate max-w-[300px] font-medium">
+                        {eventData.address.split(',')[0]}
+                      </span>
+                    </div>
+                    <span className="opacity-30">·</span>
+                  </>
+                )}
+
+              {/* Hidden Location Indicator */}
+              {eventData.meetingKind !== 'ONLINE' &&
+                eventData.address &&
+                !(
+                  eventData.addressVisibility === 'PUBLIC' ||
+                  (eventData.addressVisibility === 'AFTER_JOIN' &&
+                    (isJoined || isOwner || isModerator))
+                ) && (
+                  <>
+                    <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-xs">
+                        Lokalizacja{' '}
+                        {eventData.addressVisibility === 'AFTER_JOIN'
+                          ? 'widoczna po dołączeniu'
+                          : 'ukryta'}
+                      </span>
+                    </div>
+                    <span className="opacity-30">·</span>
+                  </>
+                )}
+
+              {/* Online/Hybrid Meeting Badge */}
+              {(eventData.meetingKind === 'ONLINE' ||
+                eventData.meetingKind === 'HYBRID') && (
+                <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                  {eventData.meetingKind === 'ONLINE' ? (
+                    <Video className="h-4 w-4" />
+                  ) : (
+                    <Wifi className="h-4 w-4" />
+                  )}
+                  <span className="font-medium">
+                    {eventData.meetingKind === 'ONLINE'
+                      ? 'Spotkanie online'
+                      : 'Dostępne online'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

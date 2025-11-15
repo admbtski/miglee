@@ -80,13 +80,6 @@ export function EventHero({ event }: EventHeroProps) {
     <div className="relative rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40">
       {/* Top Right Corner - Favourite Button & Plan Badge */}
       <div className="absolute -top-2 -right-2 z-10 flex items-start gap-1">
-        {/* Favourite Button */}
-        <FavouriteButton
-          intentId={event.id}
-          isFavourite={event.isFavourite ?? false}
-          size="md"
-        />
-
         {/* Plan Badge with continuous pulse animation */}
         {plan && (
           <motion.div
