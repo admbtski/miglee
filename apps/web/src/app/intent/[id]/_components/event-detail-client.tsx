@@ -11,6 +11,7 @@ import { EventAdminPanel } from './event-admin-panel';
 import { EventComments } from './event-comments';
 import { EventReviews } from './event-reviews';
 import { EventCountdownTimer } from './event-countdown-timer';
+import { EventLocationMap } from './event-location-map';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
 import { useMemo, useState } from 'react';
@@ -196,8 +197,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           isBanned,
           isWaitlisted,
           canSeeMembers,
-          rejectReason: isRejected ? userMembership?.note : undefined,
-          banReason: isBanned ? userMembership?.note : undefined,
+          rejectReason: isRejected
+            ? (userMembership?.note ?? undefined)
+            : undefined,
+          banReason: isBanned ? (userMembership?.note ?? undefined) : undefined,
         }
       : undefined,
     createdAt: intent.createdAt,
@@ -229,6 +232,59 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           {/* Left Column - Main Content */}
           <div className="space-y-6 min-w-0">
             <EventDetails event={eventData} />
+
+            {/* Location Map - only show if coordinates are available and address visibility allows */}
+            {eventData.lat != null &&
+              eventData.lng != null &&
+              eventData.meetingKind !== 'ONLINE' &&
+              (eventData.addressVisibility === 'PUBLIC' ||
+                (eventData.addressVisibility === 'AFTER_JOIN' &&
+                  (isJoined || isOwner || isModerator))) && (
+                <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+                  <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                    📍 Lokalizacja
+                  </h2>
+                  <EventLocationMap
+                    lat={eventData.lat}
+                    lng={eventData.lng}
+                    title={eventData.title}
+                    address={eventData.address ?? undefined}
+                    height="h-[400px]"
+                  />
+                  {eventData.address && (
+                    <div className="mt-4 flex items-start gap-2 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
+                      <svg
+                        className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-600 dark:text-zinc-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          Adres
+                        </p>
+                        <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
+                          {eventData.address}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
             <EventParticipants event={eventData} />
             <EventReviews event={eventData} />
             <EventComments event={eventData} />
