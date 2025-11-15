@@ -88,17 +88,17 @@ export function AddReviewModal({
   const header = (
     <div className="flex items-center justify-between">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
           {isEditing ? 'Edytuj recenzję' : 'Dodaj recenzję'}
         </h3>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
           {intentTitle}
         </p>
       </div>
       <button
         onClick={handleClose}
         disabled={isPending}
-        className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+        className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 disabled:opacity-50 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
       >
         <X className="h-5 w-5" />
       </button>
@@ -109,7 +109,7 @@ export function AddReviewModal({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Rating */}
       <div>
-        <label className="mb-3 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="mb-3 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
           Twoja ocena <span className="text-red-500">*</span>
         </label>
         <div className="flex items-center gap-2">
@@ -126,19 +126,19 @@ export function AddReviewModal({
                 className={`h-10 w-10 transition-colors ${
                   star <= (hoveredRating || rating)
                     ? 'fill-yellow-400 text-yellow-400'
-                    : 'text-zinc-300 dark:text-zinc-600'
+                    : 'text-neutral-300 dark:text-neutral-600'
                 }`}
               />
             </button>
           ))}
           {rating > 0 && (
-            <span className="ml-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="ml-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
               {rating}/5
             </span>
           )}
         </div>
         {rating === 0 && (
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+          <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-500">
             Kliknij na gwiazdki, aby wybrać ocenę
           </p>
         )}
@@ -148,7 +148,7 @@ export function AddReviewModal({
       <div>
         <label
           htmlFor="review-content"
-          className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
           Twoja opinia (opcjonalnie)
         </label>
@@ -159,9 +159,9 @@ export function AddReviewModal({
           placeholder="Podziel się swoimi wrażeniami z wydarzenia..."
           maxLength={2000}
           rows={5}
-          className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
         />
-        <div className="mt-1 flex justify-between text-xs text-zinc-500 dark:text-zinc-500">
+        <div className="mt-1 flex justify-between text-xs text-neutral-500 dark:text-neutral-500">
           <span>Opcjonalne, ale pomocne dla innych</span>
           <span>{content.length}/2000</span>
         </div>
@@ -175,7 +175,7 @@ export function AddReviewModal({
         type="button"
         onClick={handleClose}
         disabled={isPending}
-        className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
       >
         Anuluj
       </button>

@@ -1,8 +1,8 @@
 export function EventDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 animate-pulse">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 animate-pulse">
       {/* Back Navigation Skeleton */}
-      <div className="border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+      <div className="border-b border-neutral-200 bg-neutral-50/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/80">
         <div className="container mx-auto max-w-6xl px-4 py-3">
           <div className="h-5 w-48 bg-neutral-200 rounded dark:bg-neutral-700" />
         </div>

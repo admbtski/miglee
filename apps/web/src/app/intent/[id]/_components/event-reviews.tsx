@@ -124,16 +124,16 @@ export function EventReviews({ event }: EventReviewsProps) {
   const hasEnded = endDate <= now;
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Star className="h-5 w-5 text-yellow-400" />
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
             Recenzje
           </h2>
           {stats && stats.totalCount > 0 && (
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
               {stats.totalCount}
             </span>
           )}
@@ -154,7 +154,7 @@ export function EventReviews({ event }: EventReviewsProps) {
         {myReview && (
           <button
             onClick={handleEditReview}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
             Edytuj swoją recenzję
           </button>
@@ -189,18 +189,18 @@ export function EventReviews({ event }: EventReviewsProps) {
       {/* Loading */}
       {isLoadingReviews && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
         </div>
       )}
 
       {/* Empty State */}
       {!isLoadingReviews && reviews.length === 0 && (
         <div className="py-12 text-center">
-          <Star className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
-          <p className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <Star className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700" />
+          <p className="mt-4 text-sm font-medium text-neutral-900 dark:text-neutral-100">
             Brak recenzji
           </p>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
             {hasEnded
               ? 'Bądź pierwszy, który doda recenzję tego wydarzenia!'
               : 'Recenzje będą dostępne po zakończeniu wydarzenia.'}

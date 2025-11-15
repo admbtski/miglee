@@ -12,6 +12,8 @@ import { EventComments } from './event-comments';
 import { EventReviews } from './event-reviews';
 import { EventCountdownTimer } from './event-countdown-timer';
 import { EventLocationMap } from './event-location-map';
+import { EventEngagementStats } from './event-engagement-stats';
+import { EventMetadata } from './event-metadata';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
 import { useMemo, useState } from 'react';
@@ -208,13 +210,13 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       {/* Back Navigation */}
-      <div className="border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+      <div className="border-b border-neutral-200 bg-neutral-50/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/80">
         <div className="container mx-auto max-w-6xl px-4 py-3">
           <a
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
           >
             ← Powrót do listy wydarzeń
           </a>
@@ -240,8 +242,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               (eventData.addressVisibility === 'PUBLIC' ||
                 (eventData.addressVisibility === 'AFTER_JOIN' &&
                   (isJoined || isOwner || isModerator))) && (
-                <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                  <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
+                  <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                     📍 Lokalizacja
                   </h2>
                   <EventLocationMap
@@ -249,12 +251,12 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                     lng={eventData.lng}
                     title={eventData.title}
                     address={eventData.address ?? undefined}
-                    height="h-[400px]"
+                    height="h-[260px]"
                   />
                   {eventData.address && (
-                    <div className="mt-4 flex items-start gap-2 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
+                    <div className="mt-4 flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition">
                       <svg
-                        className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-600 dark:text-zinc-400"
+                        className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-500 dark:text-neutral-400"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -273,10 +275,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                         />
                       </svg>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
                           Adres
                         </p>
-                        <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
+                        <p className="text-md text-neutral-800 dark:text-neutral-200 break-words">
                           {eventData.address}
                         </p>
                       </div>
@@ -288,6 +290,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
             <EventParticipants event={eventData} />
             <EventReviews event={eventData} />
             <EventComments event={eventData} />
+
+            {/* Metadata at the bottom */}
+            <EventMetadata event={eventData} />
           </div>
 
           {/* Right Column - Sidebar */}
@@ -308,6 +313,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
             />
 
             <EventJoinSection event={eventData} />
+
+            {/* Engagement Stats */}
+            <EventEngagementStats event={eventData} />
 
             {/* Admin Panel - tylko dla właściciela i moderatorów */}
             <EventAdminPanel

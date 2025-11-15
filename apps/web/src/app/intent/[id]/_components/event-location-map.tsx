@@ -1,12 +1,10 @@
 'use client';
 
 import { useTheme } from '@/features/theme/provider/theme-provider';
-import { MapboxOverlay } from '@deck.gl/mapbox';
-import { ScatterplotLayer } from 'deck.gl';
+import clsx from 'clsx';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useRef } from 'react';
-import clsx from 'clsx';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -38,7 +36,6 @@ export function EventLocationMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
-  const deckOverlayRef = useRef<MapboxOverlay | null>(null);
 
   const { resolvedTheme } = useTheme();
   const currentStyleUrl =
@@ -74,43 +71,66 @@ export function EventLocationMap({
     mapRef.current = map;
 
     const onLoad = () => {
-      // Add deck.gl overlay for animated marker
-      const overlay = new MapboxOverlay({ interleaved: false });
-      map.addControl(overlay as any);
-      deckOverlayRef.current = overlay;
+      // Create custom marker element
+      const markerEl = document.createElement('div');
+      markerEl.className = 'custom-marker';
+      markerEl.innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));">
+          <!-- Pin shadow -->
+          <ellipse cx="24" cy="44" rx="8" ry="3" fill="rgba(0, 0, 0, 0.2)" />
+          
+          <!-- Pin body -->
+          <path d="M24 4C16.268 4 10 10.268 10 18C10 28.5 24 44 24 44C24 44 38 28.5 38 18C38 10.268 31.732 4 24 4Z" 
+                fill="#EF4444" 
+                stroke="#DC2626" 
+                stroke-width="2"/>
+          
+          <!-- Inner circle -->
+          <circle cx="24" cy="18" r="6" fill="white" opacity="0.9"/>
+          
+          <!-- Center dot -->
+          <circle cx="24" cy="18" r="3" fill="#DC2626"/>
+        </svg>
+      `;
 
-      // Create pulsing marker layer
-      const markerLayer = new ScatterplotLayer({
-        id: 'event-marker',
-        data: [{ position: [lng, lat] }],
-        pickable: false,
-        radiusUnits: 'pixels',
-        lineWidthUnits: 'pixels',
-        getPosition: (d: any) => d.position,
-        getRadius: 20,
-        getFillColor: [239, 68, 68, 220], // red-500
-        getLineColor: [220, 38, 38, 255], // red-600
-        getLineWidth: 3,
-        stroked: true,
-        filled: true,
-      });
+      // Add CSS animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes marker-bounce {
+          0%, 100% { 
+            translate: 0 0;
+          }
+          50% { 
+            translate: 0 -10px;
+          }
+        }
+        .custom-marker {
+          cursor: pointer;
+          width: 48px;
+          height: 48px;
+          display: block;
+          animation: marker-bounce 2s ease-in-out infinite;
+        }
+        .custom-marker:hover {
+          animation: marker-bounce 0.5s ease-in-out infinite;
+        }
+        .custom-marker svg {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+      `;
+      document.head.appendChild(style);
 
-      // Pulsing ring
-      const pulseLayer = new ScatterplotLayer({
-        id: 'event-marker-pulse',
-        data: [{ position: [lng, lat] }],
-        pickable: false,
-        radiusUnits: 'pixels',
-        lineWidthUnits: 'pixels',
-        stroked: true,
-        filled: false,
-        getPosition: (d: any) => d.position,
-        getRadius: 24,
-        getLineColor: [239, 68, 68, 180],
-        getLineWidth: 2,
-      });
+      // Add marker to map
+      const marker = new maplibregl.Marker({
+        element: markerEl,
+        anchor: 'bottom',
+      })
+        .setLngLat([lng, lat])
+        .addTo(map);
 
-      overlay.setProps({ layers: [pulseLayer, markerLayer] });
+      markerRef.current = marker;
 
       // Add popup with event info if title or address provided
       if (title || address) {
@@ -123,7 +143,7 @@ export function EventLocationMap({
         const popupContent = `
           <div class="p-2">
             ${title ? `<div class="font-semibold text-sm mb-1">${title}</div>` : ''}
-            ${address ? `<div class="text-xs text-zinc-600 dark:text-zinc-400">${address}</div>` : ''}
+            ${address ? `<div class="text-xs text-neutral-600 dark:text-neutral-400">${address}</div>` : ''}
           </div>
         `;
 
@@ -140,11 +160,6 @@ export function EventLocationMap({
         markerRef.current = null;
       }
 
-      if (deckOverlayRef.current) {
-        deckOverlayRef.current.finalize();
-        deckOverlayRef.current = null;
-      }
-
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -159,49 +174,25 @@ export function EventLocationMap({
     map.setStyle(currentStyleUrl);
 
     const rewire = () => {
-      // Recreate deck.gl layers after style change
-      if (deckOverlayRef.current) {
-        const markerLayer = new ScatterplotLayer({
-          id: 'event-marker',
-          data: [{ position: [lng, lat] }],
-          pickable: false,
-          radiusUnits: 'pixels',
-          lineWidthUnits: 'pixels',
-          getPosition: (d: any) => d.position,
-          getRadius: 20,
-          getFillColor: [239, 68, 68, 220],
-          getLineColor: [220, 38, 38, 255],
-          getLineWidth: 3,
-          stroked: true,
-          filled: true,
-        });
-
-        const pulseLayer = new ScatterplotLayer({
-          id: 'event-marker-pulse',
-          data: [{ position: [lng, lat] }],
-          pickable: false,
-          radiusUnits: 'pixels',
-          lineWidthUnits: 'pixels',
-          stroked: true,
-          filled: false,
-          getPosition: (d: any) => d.position,
-          getRadius: 24,
-          getLineColor: [239, 68, 68, 180],
-          getLineWidth: 2,
-        });
-
-        deckOverlayRef.current.setProps({ layers: [pulseLayer, markerLayer] });
+      // Marker persists through style changes automatically
+      // Just ensure it's still visible
+      if (markerRef.current) {
+        markerRef.current.addTo(map);
       }
     };
 
     if (map.isStyleLoaded()) rewire();
     else map.once('load', rewire);
-  }, [currentStyleUrl, lat, lng]);
+  }, [currentStyleUrl]);
 
   // Update marker position when coordinates change
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    const marker = markerRef.current;
+    if (!map || !marker) return;
+
+    // Update marker position
+    marker.setLngLat([lng, lat]);
 
     // Fly to new location
     map.flyTo({
@@ -210,40 +201,6 @@ export function EventLocationMap({
       duration: 1000,
       essential: true,
     });
-
-    // Update deck.gl layers
-    if (deckOverlayRef.current) {
-      const markerLayer = new ScatterplotLayer({
-        id: 'event-marker',
-        data: [{ position: [lng, lat] }],
-        pickable: false,
-        radiusUnits: 'pixels',
-        lineWidthUnits: 'pixels',
-        getPosition: (d: any) => d.position,
-        getRadius: 20,
-        getFillColor: [239, 68, 68, 220],
-        getLineColor: [220, 38, 38, 255],
-        getLineWidth: 3,
-        stroked: true,
-        filled: true,
-      });
-
-      const pulseLayer = new ScatterplotLayer({
-        id: 'event-marker-pulse',
-        data: [{ position: [lng, lat] }],
-        pickable: false,
-        radiusUnits: 'pixels',
-        lineWidthUnits: 'pixels',
-        stroked: true,
-        filled: false,
-        getPosition: (d: any) => d.position,
-        getRadius: 24,
-        getLineColor: [239, 68, 68, 180],
-        getLineWidth: 2,
-      });
-
-      deckOverlayRef.current.setProps({ layers: [pulseLayer, markerLayer] });
-    }
   }, [lat, lng, zoom]);
 
   return (
@@ -253,8 +210,8 @@ export function EventLocationMap({
         className={clsx(
           'rounded-xl overflow-hidden',
           height,
-          'bg-white dark:bg-zinc-900',
-          'border border-zinc-200 dark:border-zinc-800'
+          'bg-white dark:bg-neutral-900',
+          'border border-neutral-200 dark:border-neutral-800'
         )}
         aria-label={`Mapa lokalizacji: ${address || 'Lokalizacja wydarzenia'}`}
       />

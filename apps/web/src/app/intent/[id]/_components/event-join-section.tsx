@@ -53,6 +53,14 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
 
     // If user is already joined or pending, handle those actions directly
     if (userMembership?.isJoined) {
+      // Owner cannot leave their own event - they must cancel or delete it
+      if (userMembership?.isOwner) {
+        alert(
+          'Jako właściciel nie możesz opuścić wydarzenia. Możesz je anulować lub usunąć w panelu zarządzania.'
+        );
+        return;
+      }
+
       setIsProcessing(true);
       try {
         await leaveIntentMutation.mutateAsync({ intentId: event.id });
