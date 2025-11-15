@@ -19,6 +19,7 @@ export interface UseFilterValidationProps {
   initialTags: string[];
   initialKeywords: string[];
   initialCategories: string[];
+  initialJoinModes?: string[];
   currentQ: string;
   currentCity: string | null;
   currentDistanceKm: number;
@@ -31,6 +32,7 @@ export interface UseFilterValidationProps {
   currentTags: Array<{ slug: string }>;
   currentKeywords: string[];
   currentCategories: Array<{ slug: string }>;
+  currentJoinModes: string[];
 }
 
 const arraysEq = <T,>(a?: readonly T[], b?: readonly T[]) => {
@@ -84,6 +86,10 @@ export function useFilterValidation(props: UseFilterValidationProps) {
       props.currentCategories.map((c) => c.slug),
       props.initialCategories ?? []
     );
+    const sameJoinModes = arraysEq(
+      props.currentJoinModes,
+      props.initialJoinModes ?? []
+    );
 
     return !(
       sameQ &&
@@ -97,7 +103,8 @@ export function useFilterValidation(props: UseFilterValidationProps) {
       sameVerified &&
       sameTags &&
       sameKeywords &&
-      sameCategories
+      sameCategories &&
+      sameJoinModes
     );
   }, [props]);
 

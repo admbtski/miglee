@@ -40,8 +40,11 @@ import {
   cancelJoinRequestMutation,
   cancelPendingOrInviteForUserMutation,
   inviteMemberMutation,
+  joinWaitlistOpenMutation,
   kickMemberMutation,
   leaveIntentMutation,
+  leaveWaitlistMutation,
+  promoteFromWaitlistMutation,
   rejectMembershipMutation,
   requestJoinIntentMutation,
   unbanMemberMutation,
@@ -247,6 +250,11 @@ export const Mutation: Resolvers['Mutation'] = {
   banMember: banMemberMutation,
   unbanMember: unbanMemberMutation,
   cancelPendingOrInviteForUser: cancelPendingOrInviteForUserMutation,
+
+  // ---- Waitlist ----
+  joinWaitlistOpen: joinWaitlistOpenMutation,
+  leaveWaitlist: leaveWaitlistMutation,
+  promoteFromWaitlist: promoteFromWaitlistMutation,
 
   // ---- Notifications ----
   addNotification: addNotificationMutation,

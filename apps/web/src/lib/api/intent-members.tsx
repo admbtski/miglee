@@ -52,6 +52,15 @@ import {
   UnbanMemberMutation,
   UnbanMemberMutationVariables,
   UnbanMemberDocument,
+  JoinWaitlistOpenDocument,
+  JoinWaitlistOpenMutation,
+  JoinWaitlistOpenMutationVariables,
+  LeaveWaitlistDocument,
+  LeaveWaitlistMutation,
+  LeaveWaitlistMutationVariables,
+  PromoteFromWaitlistDocument,
+  PromoteFromWaitlistMutation,
+  PromoteFromWaitlistMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
@@ -247,6 +256,150 @@ export function useCancelPendingOrInviteForUserMutation( // <-- NEW
     CancelPendingOrInviteForUserMutationVariables
   >(
     buildCancelPendingOrInviteForUserOptions({
+      onSuccess: (_data, vars) => {
+        invalidateMembers(vars.input.intentId);
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+export function buildJoinWaitlistOpenOptions<TContext = unknown>(
+  options?: UseMutationOptions<
+    JoinWaitlistOpenMutation,
+    unknown,
+    JoinWaitlistOpenMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  JoinWaitlistOpenMutation,
+  unknown,
+  JoinWaitlistOpenMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['JoinWaitlistOpen'] as QueryKey,
+    mutationFn: async (variables: JoinWaitlistOpenMutationVariables) =>
+      gqlClient.request<
+        JoinWaitlistOpenMutation,
+        JoinWaitlistOpenMutationVariables
+      >(JoinWaitlistOpenDocument, variables),
+    meta: {
+      successMessage: 'Joined waitlist successfully',
+    },
+    ...(options ?? {}),
+  };
+}
+
+export function useJoinWaitlistOpenMutation(
+  options?: UseMutationOptions<
+    JoinWaitlistOpenMutation,
+    unknown,
+    JoinWaitlistOpenMutationVariables
+  >
+) {
+  return useMutation<
+    JoinWaitlistOpenMutation,
+    unknown,
+    JoinWaitlistOpenMutationVariables
+  >(
+    buildJoinWaitlistOpenOptions({
+      onSuccess: (_data, vars) => {
+        invalidateMembers(vars.intentId);
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+export function buildLeaveWaitlistOptions<TContext = unknown>(
+  options?: UseMutationOptions<
+    LeaveWaitlistMutation,
+    unknown,
+    LeaveWaitlistMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  LeaveWaitlistMutation,
+  unknown,
+  LeaveWaitlistMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['LeaveWaitlist'] as QueryKey,
+    mutationFn: async (variables: LeaveWaitlistMutationVariables) =>
+      gqlClient.request<LeaveWaitlistMutation, LeaveWaitlistMutationVariables>(
+        LeaveWaitlistDocument,
+        variables
+      ),
+    meta: {
+      successMessage: 'Left waitlist successfully',
+    },
+    ...(options ?? {}),
+  };
+}
+
+export function useLeaveWaitlistMutation(
+  options?: UseMutationOptions<
+    LeaveWaitlistMutation,
+    unknown,
+    LeaveWaitlistMutationVariables
+  >
+) {
+  return useMutation<
+    LeaveWaitlistMutation,
+    unknown,
+    LeaveWaitlistMutationVariables
+  >(
+    buildLeaveWaitlistOptions({
+      onSuccess: (_data, vars) => {
+        invalidateMembers(vars.intentId);
+      },
+      ...(options ?? {}),
+    })
+  );
+}
+
+export function buildPromoteFromWaitlistOptions<TContext = unknown>(
+  options?: UseMutationOptions<
+    PromoteFromWaitlistMutation,
+    unknown,
+    PromoteFromWaitlistMutationVariables,
+    TContext
+  >
+): UseMutationOptions<
+  PromoteFromWaitlistMutation,
+  unknown,
+  PromoteFromWaitlistMutationVariables,
+  TContext
+> {
+  return {
+    mutationKey: ['PromoteFromWaitlist'] as QueryKey,
+    mutationFn: async (variables: PromoteFromWaitlistMutationVariables) =>
+      gqlClient.request<
+        PromoteFromWaitlistMutation,
+        PromoteFromWaitlistMutationVariables
+      >(PromoteFromWaitlistDocument, variables),
+    meta: {
+      successMessage: 'Member promoted from waitlist successfully',
+    },
+    ...(options ?? {}),
+  };
+}
+
+export function usePromoteFromWaitlistMutation(
+  options?: UseMutationOptions<
+    PromoteFromWaitlistMutation,
+    unknown,
+    PromoteFromWaitlistMutationVariables
+  >
+) {
+  return useMutation<
+    PromoteFromWaitlistMutation,
+    unknown,
+    PromoteFromWaitlistMutationVariables
+  >(
+    buildPromoteFromWaitlistOptions({
       onSuccess: (_data, vars) => {
         invalidateMembers(vars.input.intentId);
       },

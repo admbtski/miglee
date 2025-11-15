@@ -127,7 +127,12 @@ function buildBaseWhere(args: Parameters<QueryResolvers['intents']>[1]) {
     });
   }
 
-  if (args.joinMode) where.joinMode = args.joinMode as any;
+  // JoinMode filter - support multiple modes
+  if (args.joinMode) {
+    where.joinMode = args.joinMode as any;
+  } else if (args.joinModes?.length) {
+    AND.push({ joinMode: { in: args.joinModes as any[] } });
+  }
 
   if (args.ownerId) AND.push({ ownerId: args.ownerId });
   if (args.memberId && !args.visibility) {

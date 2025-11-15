@@ -6,6 +6,7 @@
 
 import {
   IntentStatus,
+  JoinMode,
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
@@ -42,6 +43,7 @@ export type NextFilters = {
   tags?: string[];
   keywords?: string[];
   categories?: string[];
+  joinModes?: JoinMode[];
 };
 
 type Props = {
@@ -60,6 +62,7 @@ type Props = {
   initialTags?: string[];
   initialKeywords?: string[];
   initialCategories?: string[];
+  initialJoinModes?: JoinMode[];
   resultsCount?: number;
   onApply: (next: NextFilters) => void;
   onClose: () => void;
@@ -81,6 +84,7 @@ function FilterModalRefactoredComponent({
   initialTags = [],
   initialKeywords = [],
   initialCategories = [],
+  initialJoinModes = [],
   resultsCount,
   onApply,
   onClose,
@@ -102,6 +106,7 @@ function FilterModalRefactoredComponent({
     initialTags,
     initialKeywords,
     initialCategories,
+    initialJoinModes,
   });
 
   const {
@@ -120,6 +125,7 @@ function FilterModalRefactoredComponent({
     keywords,
     categories,
     tags,
+    joinModes,
     setQ,
     setCity,
     setCityLat,
@@ -134,6 +140,7 @@ function FilterModalRefactoredComponent({
     setVerifiedOnly,
     setCategories,
     setTags,
+    setJoinModes,
     clearAll,
   } = filterState;
 
@@ -156,6 +163,7 @@ function FilterModalRefactoredComponent({
     initialTags,
     initialKeywords,
     initialCategories,
+    initialJoinModes,
     currentQ: q,
     currentCity: city,
     currentDistanceKm: distanceKm,
@@ -168,6 +176,7 @@ function FilterModalRefactoredComponent({
     currentTags: tags,
     currentKeywords: keywords,
     currentCategories: categories,
+    currentJoinModes: joinModes,
   });
 
   const { dateError, isDirty } = validation;
@@ -200,6 +209,7 @@ function FilterModalRefactoredComponent({
       tags: tags.map((t) => t.slug),
       keywords,
       categories: categories.map((c) => c.slug),
+      joinModes,
     });
   }, [
     categories,
@@ -218,6 +228,7 @@ function FilterModalRefactoredComponent({
     status,
     tags,
     verifiedOnly,
+    joinModes,
   ]);
 
   // Cmd/Ctrl+Enter to apply
@@ -425,6 +436,39 @@ function FilterModalRefactoredComponent({
                           title={`Przełącz: ${lv}`}
                         >
                           {lv}
+                        </Pill>
+                      );
+                    }
+                  )}
+                </div>
+              </FilterSection>
+
+              {/* Join Mode */}
+              <FilterSection title="Tryb dołączania">
+                <div className="grid grid-cols-3 gap-2">
+                  {[JoinMode.Open, JoinMode.Request, JoinMode.InviteOnly].map(
+                    (jm) => {
+                      const active = joinModes.includes(jm);
+                      const label =
+                        jm === JoinMode.Open
+                          ? 'Otwarte'
+                          : jm === JoinMode.Request
+                            ? 'Na prośbę'
+                            : 'Tylko zaproszenia';
+                      return (
+                        <Pill
+                          key={jm}
+                          active={active}
+                          onClick={() =>
+                            setJoinModes((curr) =>
+                              active
+                                ? curr.filter((x) => x !== jm)
+                                : [...curr, jm]
+                            )
+                          }
+                          title={`Przełącz: ${label}`}
+                        >
+                          {label}
                         </Pill>
                       );
                     }

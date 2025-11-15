@@ -13,6 +13,8 @@ import {
   useRequestJoinIntentMutation,
   useLeaveIntentMutationMembers,
   useCancelJoinRequestMutation,
+  useJoinWaitlistOpenMutation,
+  useLeaveWaitlistMutation,
 } from '@/lib/api/intent-members';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -37,6 +39,8 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
     useRequestJoinIntentWithAnswersMutation();
   const leaveIntentMutation = useLeaveIntentMutationMembers();
   const cancelRequestMutation = useCancelJoinRequestMutation();
+  const joinWaitlistMutation = useJoinWaitlistOpenMutation();
+  const leaveWaitlistMutation = useLeaveWaitlistMutation();
 
   // Fetch join questions for this event
   const { data: questions = [], isLoading: questionsLoading } =
@@ -73,6 +77,39 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
         });
       } catch (error) {
         console.error('Cancel request failed:', error);
+        alert('Wystąpił błąd. Spróbuj ponownie.');
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    if (userMembership?.isWaitlisted) {
+      setIsProcessing(true);
+      try {
+        await leaveWaitlistMutation.mutateAsync({ intentId: event.id });
+        await queryClient.invalidateQueries({
+          queryKey: ['intent-detail', event.id],
+        });
+      } catch (error) {
+        console.error('Leave waitlist failed:', error);
+        alert('Wystąpił błąd. Spróbuj ponownie.');
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // Check if event is full and OPEN mode -> join waitlist
+    if (joinState.isFull && event.joinMode === 'OPEN' && joinState.canJoin) {
+      setIsProcessing(true);
+      try {
+        await joinWaitlistMutation.mutateAsync({ intentId: event.id });
+        await queryClient.invalidateQueries({
+          queryKey: ['intent-detail', event.id],
+        });
+      } catch (error) {
+        console.error('Join waitlist failed:', error);
         alert('Wystąpił błąd. Spróbuj ponownie.');
       } finally {
         setIsProcessing(false);
@@ -132,6 +169,15 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
       };
     }
 
+    if (userMembership?.isWaitlisted) {
+      return {
+        label: 'Opuść listę oczekujących',
+        icon: XCircle,
+        variant: 'secondary' as const,
+        disabled: false,
+      };
+    }
+
     if (userMembership?.isPending) {
       return {
         label: 'Anuluj prośbę',
@@ -177,6 +223,16 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
       };
     }
 
+    // If event is full and OPEN mode, show waitlist CTA
+    if (joinState.isFull && event.joinMode === 'OPEN' && joinState.canJoin) {
+      return {
+        label: 'Dołącz do listy oczekujących',
+        icon: UserPlus,
+        variant: 'primary' as const,
+        disabled: false,
+      };
+    }
+
     return {
       label: joinState.ctaLabel,
       icon: UserPlus,
@@ -200,6 +256,20 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
           <div>
             <p className="font-medium text-green-900 dark:text-green-100">
               Jesteś uczestnikiem tego wydarzenia
+            </p>
+          </div>
+        </div>
+      )}
+
+      {userMembership?.isWaitlisted && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl bg-purple-50 p-3 text-sm dark:bg-purple-950">
+          <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-purple-600 dark:text-purple-400" />
+          <div>
+            <p className="font-medium text-purple-900 dark:text-purple-100">
+              Jesteś na liście oczekujących
+            </p>
+            <p className="mt-1 text-purple-700 dark:text-purple-300">
+              Zostaniesz automatycznie dodany gdy zwolni się miejsce
             </p>
           </div>
         </div>
@@ -304,13 +374,18 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
           )}
 
           {/* Full */}
-          {joinState.isFull && (
+          {joinState.isFull && !userMembership?.isWaitlisted && (
             <div className="flex items-start gap-2 rounded-xl bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
               <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-neutral-600 dark:text-neutral-400" />
               <div>
                 <p className="font-medium text-neutral-900 dark:text-neutral-100">
                   Brak wolnych miejsc
                 </p>
+                {event.joinMode === 'OPEN' && joinState.canJoin && (
+                  <p className="mt-1 text-neutral-700 dark:text-neutral-300">
+                    Możesz dołączyć do listy oczekujących
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -358,7 +433,7 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
       </button>
 
       {/* Reason */}
-      {joinState.reason && !joinState.canJoin && (
+      {joinState.reason && (
         <p className="mt-2 text-center text-xs text-neutral-600 dark:text-neutral-400">
           {joinState.reason}
         </p>

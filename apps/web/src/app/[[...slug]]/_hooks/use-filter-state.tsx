@@ -5,6 +5,7 @@
 import { useState, useCallback } from 'react';
 import {
   IntentStatus,
+  JoinMode,
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
@@ -29,6 +30,7 @@ export interface FilterState {
   keywords: string[];
   categories: SearchMeta['categories'];
   tags: SearchMeta['tags'];
+  joinModes: JoinMode[];
 }
 
 export interface UseFilterStateProps {
@@ -47,6 +49,7 @@ export interface UseFilterStateProps {
   initialTags?: string[];
   initialKeywords?: string[];
   initialCategories?: string[];
+  initialJoinModes?: JoinMode[];
 }
 
 export function useFilterState(props: UseFilterStateProps) {
@@ -64,6 +67,7 @@ export function useFilterState(props: UseFilterStateProps) {
     initialLevels = [],
     initialVerifiedOnly = false,
     initialKeywords = [],
+    initialJoinModes = [],
   } = props;
 
   // State
@@ -87,6 +91,7 @@ export function useFilterState(props: UseFilterStateProps) {
   const [keywords, setKeywords] = useState<string[]>(initialKeywords);
   const [categories, setCategories] = useState<SearchMeta['categories']>([]);
   const [tags, setTags] = useState<SearchMeta['tags']>([]);
+  const [joinModes, setJoinModes] = useState<JoinMode[]>(initialJoinModes);
 
   // Clear all filters
   const clearAll = useCallback(() => {
@@ -105,6 +110,7 @@ export function useFilterState(props: UseFilterStateProps) {
     setTags([]);
     setKeywords([]);
     setCategories([]);
+    setJoinModes([]);
   }, []);
 
   // Get current state
@@ -125,6 +131,7 @@ export function useFilterState(props: UseFilterStateProps) {
       keywords,
       categories,
       tags,
+      joinModes,
     };
   }, [
     q,
@@ -142,6 +149,7 @@ export function useFilterState(props: UseFilterStateProps) {
     keywords,
     categories,
     tags,
+    joinModes,
   ]);
 
   return {
@@ -161,6 +169,7 @@ export function useFilterState(props: UseFilterStateProps) {
     keywords,
     categories,
     tags,
+    joinModes,
     // Setters
     setQ,
     setCity,
@@ -177,6 +186,7 @@ export function useFilterState(props: UseFilterStateProps) {
     setKeywords,
     setCategories,
     setTags,
+    setJoinModes,
     // Actions
     clearAll,
     getCurrentState,

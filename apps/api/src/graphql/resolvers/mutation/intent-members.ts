@@ -10,6 +10,7 @@ import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
+import { canStillJoin, promoteFromWaitlist } from '../../../lib/waitlist';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification } from '../helpers';
 
@@ -171,6 +172,9 @@ function reloadFullIntent(tx: Tx, intentId: string) {
 /*                          Join window / capacity                             */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * @deprecated Use canStillJoin from lib/waitlist instead
+ */
 function evaluateJoinWindow(intent: {
   startAt: Date;
   endAt: Date;
@@ -180,56 +184,11 @@ function evaluateJoinWindow(intent: {
   lateJoinCutoffMinutesAfterStart: number | null;
   joinManuallyClosed: boolean;
 }) {
-  const now = new Date();
-  const start = new Date(intent.startAt);
-  const end = new Date(intent.endAt);
-
-  if (intent.joinManuallyClosed) {
-    return { open: false, reason: 'MANUALLY_CLOSED' as const };
-  }
-
-  // Pre-open window (optional)
-  if (
-    intent.joinOpensMinutesBeforeStart != null &&
-    now <
-      new Date(start.getTime() - intent.joinOpensMinutesBeforeStart * 60_000)
-  ) {
-    return { open: false, reason: 'NOT_OPEN_YET' as const };
-  }
-
-  // Cutoff before start (optional)
-  if (
-    intent.joinCutoffMinutesBeforeStart != null &&
-    now >=
-      new Date(
-        start.getTime() - intent.joinCutoffMinutesBeforeStart * 60_000
-      ) &&
-    now < start
-  ) {
-    return { open: false, reason: 'PRE_START_CUTOFF' as const };
-  }
-
-  // After start
-  if (now >= start) {
-    if (!intent.allowJoinLate) {
-      return { open: false, reason: 'LATE_JOIN_DISABLED' as const };
-    }
-    if (
-      intent.lateJoinCutoffMinutesAfterStart != null &&
-      now >=
-        new Date(
-          start.getTime() + intent.lateJoinCutoffMinutesAfterStart * 60_000
-        ) &&
-      now < end
-    ) {
-      return { open: false, reason: 'LATE_JOIN_CUTOFF' as const };
-    }
-    if (now >= end) {
-      return { open: false, reason: 'ENDED' as const };
-    }
-  }
-
-  return { open: true as const, reason: null };
+  return canStillJoin({
+    ...intent,
+    canceledAt: null,
+    deletedAt: null,
+  });
 }
 
 function assertCanJoinNow(intent: Parameters<typeof evaluateJoinWindow>[0]) {
@@ -700,6 +659,9 @@ export const leaveIntentMutation: MutationResolvers['leaveIntent'] =
           kind: MemberEvent.LEAVE,
         });
 
+        // Try to promote someone from waitlist
+        await promoteFromWaitlist(tx, intentId);
+
         return reloadFullIntent(tx, intentId);
       });
 
@@ -724,15 +686,6 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
           });
         }
 
-        assertCanJoinNow(intent);
-        const joined = await countJoined(tx, intentId);
-        if (isFull(joined, intent.max)) {
-          throw new GraphQLError(
-            'Capacity reached. Cannot approve more members.',
-            { extensions: { code: 'FAILED_PRECONDITION' } }
-          );
-        }
-
         const member = await tx.intentMember.findUnique({
           where: { intentId_userId: { intentId, userId } },
         });
@@ -742,6 +695,48 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
           });
         }
 
+        assertCanJoinNow(intent);
+        const joined = await countJoined(tx, intentId);
+        const full = isFull(joined, intent.max);
+
+        if (full) {
+          // Event is full - move to waitlist instead
+          await tx.intentMember.update({
+            where: { intentId_userId: { intentId, userId } },
+            data: {
+              status: IntentMemberStatus.WAITLIST,
+              addedById: actorId,
+            },
+          });
+
+          await emitMemberEvent(tx, {
+            intentId,
+            userId,
+            actorId,
+            kind: MemberEvent.APPROVE,
+          });
+
+          await emitMemberEvent(tx, {
+            intentId,
+            userId,
+            actorId: null, // System action
+            kind: MemberEvent.WAITLIST,
+            note: 'Moved to waitlist - event full',
+          });
+
+          await emitIntentNotification(tx, ctx.pubsub, {
+            kind: PrismaNotificationKind.INTENT_MEMBERSHIP_APPROVED,
+            recipientId: userId,
+            actorId,
+            intentId,
+            title: 'Prośba zaakceptowana - lista oczekujących',
+            body: `Twoja prośba została zaakceptowana, ale wydarzenie "${intent.title}" jest pełne. Zostałeś dodany do listy oczekujących.`,
+          });
+
+          return reloadFullIntent(tx, intentId);
+        }
+
+        // Space available - join directly
         await tx.intentMember.update({
           where: { intentId_userId: { intentId, userId } },
           data: {
@@ -876,6 +871,9 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
           note: note ?? null,
         });
 
+        // Try to promote someone from waitlist
+        await promoteFromWaitlist(tx, intentId);
+
         return reloadFullIntent(tx, intentId);
       });
 
@@ -952,6 +950,11 @@ export const banMemberMutation: MutationResolvers['banMember'] =
           title: 'You were banned',
           body: 'You have been banned from this intent.',
         });
+
+        // Try to promote someone from waitlist if user was joined
+        if (wasJoined) {
+          await promoteFromWaitlist(tx, intentId);
+        }
 
         return reloadFullIntent(tx, intentId);
       });
@@ -1101,11 +1104,228 @@ export const cancelPendingOrInviteForUserMutation: MutationResolvers['cancelPend
             intentId,
             userId,
             actorId,
-            kind: MemberEvent.REJECT, // „odwołanie zaproszenia/pendingu” – możesz dodać osobny enum CANCEL_PENDING
+            kind: MemberEvent.REJECT, // „odwołanie zaproszenia/pendingu" – możesz dodać osobny enum CANCEL_PENDING
           },
         });
       }
 
       return res.count > 0;
+    }
+  );
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*                            Waitlist Mutations                              */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Join waitlist for OPEN mode events when full.
+ * User explicitly requests to be added to the waiting list.
+ */
+export const joinWaitlistOpenMutation: MutationResolvers['joinWaitlistOpen'] =
+  resolverWithMetrics(
+    'Mutation',
+    'joinWaitlistOpen',
+    async (_p, { intentId }, ctx) => {
+      const userId = assertAuth(ctx);
+
+      const result = await prisma.$transaction(async (tx) => {
+        const intent = await loadIntentWithMembers(tx, intentId);
+
+        // Only OPEN mode supports direct waitlist join
+        if (intent.joinMode !== 'OPEN') {
+          throw new GraphQLError(
+            'Waitlist join is only available for OPEN events.',
+            { extensions: { code: 'FAILED_PRECONDITION' } }
+          );
+        }
+
+        // Check if banned
+        if (await isBanned(tx, intentId, userId)) {
+          throw new GraphQLError('You are banned from this intent.', {
+            extensions: { code: 'FORBIDDEN' },
+          });
+        }
+
+        // Check join window
+        assertCanJoinNow(intent);
+
+        const existing = await tx.intentMember.findUnique({
+          where: { intentId_userId: { intentId, userId } },
+        });
+
+        // Already joined
+        if (existing?.status === IntentMemberStatus.JOINED) {
+          throw new GraphQLError('You are already a participant.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          });
+        }
+
+        // Already on waitlist
+        if (existing?.status === IntentMemberStatus.WAITLIST) {
+          return reloadFullIntent(tx, intentId);
+        }
+
+        // Check if event is full
+        const joined = await countJoined(tx, intentId);
+        if (!isFull(joined, intent.max)) {
+          throw new GraphQLError('Event is not full. Use joinMember instead.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          });
+        }
+
+        // Create or update membership to WAITLIST
+        if (existing) {
+          await tx.intentMember.update({
+            where: { intentId_userId: { intentId, userId } },
+            data: {
+              status: IntentMemberStatus.WAITLIST,
+              createdAt: new Date(), // Reset to end of queue
+            },
+          });
+        } else {
+          await tx.intentMember.create({
+            data: {
+              intentId,
+              userId,
+              role: IntentMemberRole.PARTICIPANT,
+              status: IntentMemberStatus.WAITLIST,
+            },
+          });
+        }
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          kind: MemberEvent.WAITLIST,
+        });
+
+        await emitIntentNotification(tx, ctx.pubsub, {
+          kind: PrismaNotificationKind.WAITLIST_JOINED,
+          recipientId: userId,
+          actorId: null,
+          intentId,
+          title: 'Dołączyłeś do listy oczekujących',
+          body: `Wydarzenie "${intent.title}" jest pełne. Powiadomimy Cię, jeśli zwolni się miejsce.`,
+        });
+
+        return reloadFullIntent(tx, intentId);
+      });
+
+      return mapIntent(result);
+    }
+  );
+
+/**
+ * Leave waitlist - user removes themselves from waiting list
+ */
+export const leaveWaitlistMutation: MutationResolvers['leaveWaitlist'] =
+  resolverWithMetrics(
+    'Mutation',
+    'leaveWaitlist',
+    async (_p, { intentId }, ctx) => {
+      const userId = assertAuth(ctx);
+
+      await prisma.$transaction(async (tx) => {
+        const member = await tx.intentMember.findUnique({
+          where: { intentId_userId: { intentId, userId } },
+        });
+
+        if (!member || member.status !== IntentMemberStatus.WAITLIST) {
+          throw new GraphQLError('You are not on the waitlist.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          });
+        }
+
+        await tx.intentMember.update({
+          where: { intentId_userId: { intentId, userId } },
+          data: {
+            status: IntentMemberStatus.CANCELLED,
+          },
+        });
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          kind: MemberEvent.WAITLIST_LEAVE,
+        });
+      });
+
+      return true;
+    }
+  );
+
+/**
+ * Manually promote a user from waitlist to joined (host/mod action)
+ */
+export const promoteFromWaitlistMutation: MutationResolvers['promoteFromWaitlist'] =
+  resolverWithMetrics(
+    'Mutation',
+    'promoteFromWaitlist',
+    async (_p, { input: { intentId, userId } }, ctx) => {
+      const actorId = assertAuth(ctx);
+
+      const result = await prisma.$transaction(async (tx) => {
+        const intent = await loadIntentWithMembers(tx, intentId);
+        requireModOrOwner(intent, actorId);
+
+        const member = await tx.intentMember.findUnique({
+          where: { intentId_userId: { intentId, userId } },
+        });
+
+        if (!member || member.status !== IntentMemberStatus.WAITLIST) {
+          throw new GraphQLError('User is not on the waitlist.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          });
+        }
+
+        // Check join window
+        assertCanJoinNow(intent);
+
+        // Check capacity with optimistic locking
+        const updated = await tx.intent.updateMany({
+          where: {
+            id: intentId,
+            joinedCount: { lt: intent.max },
+          },
+          data: { joinedCount: { increment: 1 } },
+        });
+
+        if (updated.count === 0) {
+          throw new GraphQLError('Event is full. Cannot promote.', {
+            extensions: { code: 'FAILED_PRECONDITION' },
+          });
+        }
+
+        // Promote user
+        await tx.intentMember.update({
+          where: { intentId_userId: { intentId, userId } },
+          data: {
+            status: IntentMemberStatus.JOINED,
+            joinedAt: new Date(),
+            addedById: actorId,
+          },
+        });
+
+        await emitMemberEvent(tx, {
+          intentId,
+          userId,
+          actorId,
+          kind: MemberEvent.WAITLIST_PROMOTE,
+          note: 'Manually promoted by moderator',
+        });
+
+        await emitIntentNotification(tx, ctx.pubsub, {
+          kind: PrismaNotificationKind.WAITLIST_PROMOTED,
+          recipientId: userId,
+          actorId,
+          intentId,
+          title: 'Zostałeś dodany do wydarzenia!',
+          body: `Organizator dodał Cię do wydarzenia "${intent.title}" z listy oczekujących.`,
+        });
+
+        return reloadFullIntent(tx, intentId);
+      });
+
+      return mapIntent(result);
     }
   );

@@ -79,7 +79,8 @@ export type EventDetailsData = {
       | 'REJECTED'
       | 'BANNED'
       | 'LEFT'
-      | 'KICKED';
+      | 'KICKED'
+      | 'WAITLIST';
     user: {
       id: string;
       name: string;
@@ -135,6 +136,7 @@ export type EventDetailsData = {
     isInvited: boolean;
     isRejected: boolean;
     isBanned: boolean;
+    isWaitlisted: boolean;
     canSeeMembers: boolean;
     rejectReason?: string;
     banReason?: string;

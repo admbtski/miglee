@@ -16,6 +16,7 @@ import {
   useInviteMemberMutation,
   useCancelPendingOrInviteForUserMutation,
   useUnbanMemberMutation,
+  usePromoteFromWaitlistMutation,
 } from '@/lib/api/intent-members';
 import type { IntentMember } from './types';
 import { EventManagementModal } from './event-management-modal';
@@ -71,6 +72,7 @@ export function EventManagementModalConnect({
   const reject = useRejectMembershipMutation();
   const invite = useInviteMemberMutation();
   const cancelPendingOrInvite = useCancelPendingOrInviteForUserMutation();
+  const promoteFromWaitlist = usePromoteFromWaitlistMutation();
 
   const members: IntentMember[] = React.useMemo(
     () => (rawMembers?.intentMembers ?? []).map(mapGqlMember as any), // todo any
@@ -155,6 +157,20 @@ export function EventManagementModalConnect({
     await refetch();
   };
 
+  const onPromoteFromWaitlist = async (m: IntentMember) => {
+    await promoteFromWaitlist.mutateAsync({
+      input: { intentId, userId: m.userId },
+    });
+    await refetch();
+  };
+
+  const onRemoveFromWaitlist = async (m: IntentMember) => {
+    await kick.mutateAsync({
+      input: { intentId, userId: m.userId, note: 'Removed from waitlist' },
+    });
+    await refetch();
+  };
+
   // Skeleton / error placeholders rendered inside the modal frame for consistency
   if (!open) return null;
 
@@ -179,6 +195,8 @@ export function EventManagementModalConnect({
         onUnreject={onUnreject}
         onReinvite={onReinvite}
         onCancelInvite={onCancelInvite}
+        onPromoteFromWaitlist={onPromoteFromWaitlist}
+        onRemoveFromWaitlist={onRemoveFromWaitlist}
         onNotifyPremium={async () => {}}
         onInvited={async () => {
           await Promise.all([refetch()]);
@@ -209,6 +227,8 @@ export function EventManagementModalConnect({
         onUnreject={onUnreject}
         onReinvite={onReinvite}
         onCancelInvite={onCancelInvite}
+        onPromoteFromWaitlist={onPromoteFromWaitlist}
+        onRemoveFromWaitlist={onRemoveFromWaitlist}
         onNotifyPremium={async () => {}}
         onInvited={async () => {
           await Promise.all([refetch()]);
@@ -236,12 +256,15 @@ export function EventManagementModalConnect({
       onRejectPending={onRejectPending}
       onReinvite={onReinvite}
       onCancelInvite={onCancelInvite}
+      onPromoteFromWaitlist={onPromoteFromWaitlist}
+      onRemoveFromWaitlist={onRemoveFromWaitlist}
       onNotifyPremium={async () => {
         console.info('[Premium] notify organizers – TODO');
       }}
       onInvited={async () => {
         await Promise.all([refetch()]);
       }}
+      onUnreject={onUnreject}
     />
   );
 }

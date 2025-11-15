@@ -144,7 +144,7 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
   const profileUrl = `/u/${member.user.name}`;
 
   return (
-    <li className="flex items-center gap-3">
+    <li className="flex items-center gap-3" data-u-id={member.user.id}>
       <Link href={profileUrl} className="flex-shrink-0">
         {member.user.imageUrl ? (
           <img

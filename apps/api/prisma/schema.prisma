@@ -78,6 +78,7 @@ enum IntentMemberStatus {
   LEFT
   KICKED
   CANCELLED // User cancelled their own pending request
+  WAITLIST  // User is on the waiting list (event is full)
 }
 
 enum NotificationKind {
@@ -96,6 +97,8 @@ enum NotificationKind {
   BANNED
   UNBANNED
   SYSTEM
+  WAITLIST_JOINED      // User joined the waitlist
+  WAITLIST_PROMOTED    // User was promoted from waitlist to joined
 }
 
 enum NotificationEntity {
@@ -150,6 +153,9 @@ enum MemberEvent {
   INVITE
   ACCEPT_INVITE
   CANCEL_REQUEST // User cancelled their own pending request
+  WAITLIST       // User joined the waitlist
+  WAITLIST_LEAVE // User left the waitlist
+  WAITLIST_PROMOTE // User was promoted from waitlist
 }
 
 enum JoinQuestionType {

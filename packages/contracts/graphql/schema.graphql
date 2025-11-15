@@ -142,6 +142,7 @@ enum IntentMemberStatus {
   LEFT
   KICKED
   CANCELLED
+  WAITLIST
 }
 
 "Member event type for audit log"
@@ -157,6 +158,9 @@ enum MemberEvent {
   INVITE
   ACCEPT_INVITE
   CANCEL_REQUEST
+  WAITLIST
+  WAITLIST_LEAVE
+  WAITLIST_PROMOTE
 }
 
 "Join form question type"
@@ -183,6 +187,8 @@ enum NotificationKind {
   BANNED
   UNBANNED
   SYSTEM
+  WAITLIST_JOINED
+  WAITLIST_PROMOTED
 }
 
 "Polymorphic target for notifications (deep-link)"
@@ -1083,6 +1089,11 @@ input CancelPendingOrInviteForUserInput {
   userId: ID!
 }
 
+input PromoteFromWaitlistInput {
+  intentId: ID!
+  userId: ID!
+}
+
 # DM Inputs
 input SendDmMessageInput {
   recipientId: ID!
@@ -1253,6 +1264,7 @@ type Query {
     offset: Int = 0
     visibility: Visibility
     joinMode: JoinMode
+    joinModes: [JoinMode!]
     ownerId: ID
     memberId: ID
     upcomingAfter: DateTime
@@ -1559,6 +1571,10 @@ type Mutation {
   leaveIntent(intentId: ID!): Intent!
   acceptInvite(intentId: ID!): Intent!
 
+  # waitlist (user endpoints)
+  joinWaitlistOpen(intentId: ID!): Intent!
+  leaveWaitlist(intentId: ID!): Boolean!
+
   # memberships (owner/mod endpoints)
   inviteMember(input: InviteMemberInput!): Intent!
   approveMembership(input: ApproveMembershipInput!): Intent! # Deprecated: use approveJoinRequest
@@ -1569,6 +1585,7 @@ type Mutation {
   updateMemberRole(input: UpdateMemberRoleInput!): Intent!
   banMember(input: BanMemberInput!): Intent!
   unbanMember(input: UnbanMemberInput!): Intent!
+  promoteFromWaitlist(input: PromoteFromWaitlistInput!): Intent!
   cancelPendingOrInviteForUser(
     input: CancelPendingOrInviteForUserInput!
   ): Boolean!

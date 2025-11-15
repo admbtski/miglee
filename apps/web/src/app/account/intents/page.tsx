@@ -11,6 +11,7 @@ import { computeJoinState } from '@/components/ui/status-badge';
 
 import { Modal } from '@/components/feedback/modal';
 import { useIntentsInfiniteQuery } from '@/lib/api/intents';
+import { useMeQuery } from '@/lib/api/auth';
 import {
   AddressVisibility,
   MembersVisibility,
@@ -45,6 +46,10 @@ const DEFAULT_LIMIT = 12;
 
 export default function IntentsPage() {
   const searchParams = useSearchParams();
+
+  // Get current user
+  const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
+  const currentUserId = authData?.me?.id;
 
   // View mode (tab)
   const [mode, setMode] = useState<ViewMode>('owned');
@@ -98,8 +103,8 @@ export default function IntentsPage() {
     clearDrafts,
   } = useIntentsDraftFilters(status, kinds, sortBy, sortDir, filtersOpen);
 
-  // Temporary fallback for dev
-  const ownerId = searchParams.get('ownerId') ?? 'u_admin_00000000000000000001';
+  // Use current user ID or fallback to search params
+  const ownerId = currentUserId ?? searchParams.get('ownerId') ?? undefined;
 
   // Build variables for queries
   const ownedVars = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
@@ -203,6 +208,36 @@ export default function IntentsPage() {
     setSortDir,
     setStatus,
   ]);
+
+  // Loading authentication state
+  if (isLoadingAuth) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated
+  if (!currentUserId) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            Not authenticated
+          </p>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Please log in to view your intents
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -337,7 +372,7 @@ export default function IntentsPage() {
           membersVisibility:
             (preview?.membersVisibility as MembersVisibility) ??
             MembersVisibility.Public,
-          members: preview?.members ?? [],
+          members: (preview?.members ?? []) as any,
           addressVisibility:
             (preview?.addressVisibility as AddressVisibility) ??
             AddressVisibility.Public,

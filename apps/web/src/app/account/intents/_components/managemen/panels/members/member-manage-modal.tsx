@@ -3,6 +3,7 @@
 import { Modal } from '@/components/feedback/modal';
 import clsx from 'clsx';
 import {
+  ArrowUpCircle,
   Ban,
   CheckCircle2,
   Crown,
@@ -81,6 +82,8 @@ export function MemberManageModal({
     | 'onRejectPending'
     | 'onUnreject'
     | 'onNotifyPremium'
+    | 'onPromoteFromWaitlist'
+    | 'onRemoveFromWaitlist'
   >;
 }) {
   if (!member) return null;
@@ -188,6 +191,33 @@ export function MemberManageModal({
             >
               <UserX className="h-4 w-4" />
               Odrzuć
+            </button>
+          </div>
+        )}
+
+        {member.status === 'WAITLIST' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              className={btnClasses('success-soft')}
+              onClick={() => callbacks.onPromoteFromWaitlist?.(member)}
+            >
+              <ArrowUpCircle className="h-4 w-4" />
+              Promuj z listy oczekujących
+            </button>
+            <button
+              className={btnClasses('warning-soft')}
+              onClick={async () => {
+                if (
+                  await Confirm(
+                    'Na pewno usunąć użytkownika z listy oczekujących?'
+                  )
+                ) {
+                  callbacks.onRemoveFromWaitlist?.(member);
+                }
+              }}
+            >
+              <XCircle className="h-4 w-4" />
+              Usuń z listy
             </button>
           </div>
         )}

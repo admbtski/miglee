@@ -127,9 +127,16 @@ export function computeJoinState(
     reason = 'Zapisy zamknięte ręcznie.';
   }
   if (isFull) {
-    canJoin = false;
-    ctaLabel = 'Brak miejsc';
-    reason = 'Osiągnięto limit.';
+    // For OPEN mode, users can still join the waitlist
+    if (intent.joinMode === 'OPEN' && windowOpen) {
+      canJoin = true;
+      ctaLabel = 'Dołącz';
+      reason = 'Wydarzenie pełne - dołączysz do listy oczekujących.';
+    } else {
+      canJoin = false;
+      ctaLabel = 'Brak miejsc';
+      reason = 'Osiągnięto limit.';
+    }
   }
   if (now >= intent.endAt) {
     canJoin = false;

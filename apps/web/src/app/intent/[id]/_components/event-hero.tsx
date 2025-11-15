@@ -119,7 +119,11 @@ export function EventHero({ event }: EventHeroProps) {
 
       {/* Organizer */}
       <div className="mt-3 flex items-center gap-3">
-        <Link href={`/u/${event.organizer.name}`} className="flex-shrink-0">
+        <Link
+          href={`/u/${event.organizer.name}`}
+          className="flex-shrink-0"
+          data-u-id={event.organizer.id}
+        >
           {event.organizer.avatarUrl ? (
             <img
               src={event.organizer.avatarUrl}

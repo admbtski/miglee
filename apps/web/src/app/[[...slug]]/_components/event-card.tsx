@@ -2,6 +2,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
@@ -35,21 +36,7 @@ import {
   UserCheck,
   Wifi as WifiIcon,
 } from 'lucide-react';
-import {
-  KeyboardEvent,
-  lazy,
-  Suspense,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
-
-// Lazy load EventDetailsModal for better performance
-const EventDetailsModal = lazy(() =>
-  import('@/features/intents/components/event-details-modal').then((mod) => ({
-    default: mod.EventDetailsModal,
-  }))
-);
+import { KeyboardEvent, useCallback, useMemo } from 'react';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -202,7 +189,7 @@ export function EventCard({
   isOnsite,
   onHover,
 }: EventCardProps) {
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO), [endISO]);
@@ -305,14 +292,21 @@ export function EventCard({
     [joinedCount, max]
   );
 
-  const openModal = useCallback(() => setOpen(true), []);
-  const closeModal = useCallback(() => setOpen(false), []);
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setOpen(true);
+  const handleCardClick = useCallback(() => {
+    if (intentId) {
+      router.push(`/intent/${encodeURIComponent(intentId)}`);
     }
-  }, []);
+  }, [intentId, router]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleCardClick();
+      }
+    },
+    [handleCardClick]
+  );
 
   const handleMouseEnter = useCallback(() => {
     if (intentId && onHover) {
@@ -334,49 +328,6 @@ export function EventCard({
   );
 
   const sortedLevels = useMemo(() => sortLevels(levels), [levels]);
-
-  const details = open ? (
-    <Suspense fallback={null}>
-      <EventDetailsModal
-        open={open}
-        onClose={closeModal}
-        onJoin={onJoin}
-        data={{
-          eventId: intentId,
-          title,
-          startISO,
-          endISO,
-          description,
-          address,
-          onlineUrl,
-          categories,
-          tags,
-          levels,
-          min,
-          max,
-          joinedCount,
-          organizerName,
-          avatarUrl,
-          verifiedAt,
-          status,
-          canJoin,
-          members,
-          membersVisibility,
-          addressVisibility,
-          plan,
-          showSponsoredBadge,
-          joinOpensMinutesBeforeStart,
-          joinCutoffMinutesBeforeStart,
-          allowJoinLate,
-          lateJoinCutoffMinutesAfterStart,
-          joinManuallyClosed,
-          isCanceled,
-          isDeleted,
-          isFavourite,
-        }}
-      />
-    </Suspense>
-  ) : null;
 
   const renderLocationRow = () => {
     const base =
@@ -435,358 +386,358 @@ export function EventCard({
   /* ───────── Inline wariant ───────── */
   if (inline) {
     return (
-      <>
-        <div
-          className={clsx(
-            'relative flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm cursor-pointer select-none',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 rounded-lg',
-            className
-          )}
-          role="button"
-          tabIndex={0}
-          onClick={openModal}
-          onKeyDown={handleKeyDown}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          aria-label={`Szczegóły wydarzenia: ${organizerName}`}
-          data-plan={plan}
-        >
-          <Link href={`/u/${organizerName}`} className="flex-shrink-0">
-            <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <Link
-              href={`/u/${organizerName}`}
-              className="font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
-              title={organizerName}
-            >
-              <span className="inline-flex items-center gap-1.5 max-w-full">
-                <span className="truncate">{organizerName}</span>
-                <VerifiedBadge verifiedAt={verifiedAt} />
-              </span>
-            </Link>
-            <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
-              {title}
-            </p>
-
-            {/* zakres + lokalizacja */}
-            <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
-              {formatDateRange(startISO, endISO)} • {humanDuration(start, end)}
-            </p>
-            {renderLocationRow()}
-          </div>
-
-          <div className="flex items-center gap-3 min-w-0">
-            {showSponsoredBadge && plan && plan !== 'default' && (
-              <PlanBadge plan={plan} size="xs" variant="icon" />
-            )}
-            {status.reason !== 'FULL' && (
-              <StatusBadge
-                tone={status.tone}
-                reason={status.reason}
-                label={status.label}
-              />
-            )}
-            <CapacityBadge
-              joinedCount={joinedCount}
-              min={min}
-              max={max}
-              isFull={isFull}
-              canJoin={canJoin}
-              statusReason={status.reason}
-            />
-          </div>
-        </div>
-        {details}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <motion.div
-        layout="size"
-        whileHover={{
-          y: canJoin ? planAnimationConfig.cardHover.liftY : 0,
-          scale: canJoin ? planAnimationConfig.cardHover.scale : 1,
-        }}
+      <div
         className={clsx(
-          'relative w-full rounded-2xl p-4 flex flex-col gap-2 ring-1',
-          planStyling.ring,
-          planStyling.bg,
-          plan === 'default' && planStyling?.glow,
-          'cursor-pointer select-none',
+          'relative flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm cursor-pointer select-none',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 rounded-lg',
           className
         )}
-        style={
-          plan && plan !== 'default'
-            ? {
-                boxShadow: planAnimationConfig.glowingShadow.shadows[plan].min,
-              }
-            : undefined
-        }
-        animate={
-          plan && plan !== 'default'
-            ? {
-                boxShadow: [
-                  planAnimationConfig.glowingShadow.shadows[plan].min,
-                  planAnimationConfig.glowingShadow.shadows[plan].mid,
-                  planAnimationConfig.glowingShadow.shadows[plan].max,
-                  planAnimationConfig.glowingShadow.shadows[plan].mid,
-                  planAnimationConfig.glowingShadow.shadows[plan].min,
-                ],
-              }
-            : undefined
-        }
-        transition={{
-          // Hover transition for y and scale
-          type: 'spring',
-          stiffness: planAnimationConfig.cardHover.spring.stiffness,
-          damping: planAnimationConfig.cardHover.spring.damping,
-          mass: planAnimationConfig.cardHover.spring.mass,
-          // BoxShadow animation - synchronized with shimmer (4s cycle)
-          boxShadow:
-            plan && plan !== 'default'
-              ? {
-                  duration: planAnimationConfig.glowingShadow.duration,
-                  repeat: Infinity,
-                  ease: planAnimationConfig.glowingShadow.easing,
-                  times: [0, 0.25, 0.5, 0.75, 1], // Smooth progression through keyframes
-                }
-              : undefined,
-        }}
         role="button"
         tabIndex={0}
-        onClick={openModal}
+        onClick={handleCardClick}
         onKeyDown={handleKeyDown}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         aria-label={`Szczegóły wydarzenia: ${organizerName}`}
         data-plan={plan}
       >
-        {/* Animated gradient overlay for premium plans */}
-        {plan && plan !== 'default' && (
-          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-            <motion.div
-              className={clsx(
-                'absolute inset-0',
-                plan === 'basic' &&
-                  'bg-gradient-to-br from-emerald-400/20 via-emerald-500/5 to-emerald-600/20',
-                plan === 'plus' &&
-                  'bg-gradient-to-br from-indigo-400/20 via-indigo-500/5 to-indigo-600/20',
-                plan === 'premium' &&
-                  'bg-gradient-to-br from-amber-400/25 via-amber-500/8 to-amber-600/25'
-              )}
-              initial={{ opacity: 0.2, scale: 1 }}
-              animate={{
-                opacity: planAnimationConfig.gradientPulse.opacityRange,
-                scale: planAnimationConfig.gradientPulse.scaleRange,
-              }}
-              transition={{
-                duration: planAnimationConfig.gradientPulse.duration,
-                repeat: Infinity,
-                ease: planAnimationConfig.gradientPulse.easing,
-              }}
-            />
-          </div>
-        )}
-
-        {/* Shimmer effect for premium plans - continuous animation */}
-        {plan && plan !== 'default' && (
-          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-            <motion.div
-              className={clsx(
-                'absolute -inset-full',
-                'bg-gradient-to-r',
-                plan === 'basic' &&
-                  'from-transparent via-emerald-400/20 to-transparent',
-                plan === 'plus' &&
-                  'from-transparent via-indigo-400/25 to-transparent',
-                plan === 'premium' &&
-                  'from-transparent via-amber-400/30 to-transparent'
-              )}
-              animate={{
-                x: ['-100%', '200%'],
-                opacity: [0, planAnimationConfig.shimmer.maxOpacity, 0],
-              }}
-              transition={{
-                duration: planAnimationConfig.shimmer.duration,
-                repeat: Infinity,
-                repeatDelay: planAnimationConfig.shimmer.repeatDelay,
-                ease: planAnimationConfig.shimmer.easing,
-              }}
-            />
-          </div>
-        )}
-
-        {/* Top Right Corner - Plan Badge & Favourite Button */}
-        <div className="absolute -top-3 -right-1 z-10 flex items-center gap-1">
-          {/* Plan Badge with continuous pulse animation */}
-          {showSponsoredBadge && plan && plan !== 'default' && (
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{
-                scale: planAnimationConfig.badge.scaleRange,
-                rotate: planAnimationConfig.badge.rotateRange,
-              }}
-              transition={{
-                scale: {
-                  duration: planAnimationConfig.badge.duration,
-                  repeat: Infinity,
-                  repeatDelay: planAnimationConfig.badge.repeatDelay,
-                  ease: planAnimationConfig.badge.easing,
-                },
-                rotate: {
-                  duration: planAnimationConfig.badge.duration,
-                  repeat: Infinity,
-                  repeatDelay: planAnimationConfig.badge.repeatDelay,
-                  ease: planAnimationConfig.badge.easing,
-                },
-              }}
-              whileHover={{
-                scale: planAnimationConfig.badge.hoverScale,
-                rotate: planAnimationConfig.badge.hoverRotateRange,
-                transition: {
-                  duration: planAnimationConfig.badge.hoverDuration,
-                },
-              }}
-            >
-              <PlanBadge plan={plan} size="sm" variant="icon" />
-            </motion.div>
-          )}
-
-          {/* Favourite Button */}
-          {intentId && (
-            <FavouriteButton
-              intentId={intentId}
-              isFavourite={isFavourite}
-              size="sm"
-            />
-          )}
-        </div>
-
-        {/* Range + duration */}
-        <div className="flex items-center justify-between gap-1.5">
-          <div className="flex items-center min-w-0 gap-1.5 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
-            <Calendar className="w-4 h-4 shrink-0 align-middle" />
-            <span className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
-              {formatDateRange(startISO, endISO)}
+        <Link
+          href={`/u/${organizerName}`}
+          className="flex-shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
+        </Link>
+        <div className="flex-1 min-w-0">
+          <Link
+            href={`/u/${organizerName}`}
+            className="font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
+            title={organizerName}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="inline-flex items-center gap-1.5 max-w-full">
+              <span className="truncate">{organizerName}</span>
+              <VerifiedBadge verifiedAt={verifiedAt} />
             </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-            <Clock className="w-4 h-4 shrink-0 align-middle" />
-            <span>{humanDuration(start, end)}</span>
-          </div>
-        </div>
-
-        {/* Organizer & description + location */}
-        <div className="flex items-start min-w-0 gap-3 mt-1">
-          <Link href={`/u/${organizerName}`} className="flex-shrink-0">
-            <Avatar url={avatarUrl} alt="Organizer" size={48} />
           </Link>
-          <div className="flex-1 min-w-0">
-            <Link
-              href={`/u/${organizerName}`}
-              className="text-sm font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
-              title={organizerName}
-            >
-              <span className="inline-flex items-center max-w-full gap-1.5">
-                <VerifiedBadge
-                  size="sm"
-                  variant="icon"
-                  verifiedAt={verifiedAt}
-                />
-                <span className="truncate">{organizerName}</span>
-              </span>
-            </Link>
+          <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
+            {title}
+          </p>
 
-            <p
-              className="text-xs leading-5 text-neutral-800 dark:text-neutral-200 line-clamp-2"
-              title={description}
-            >
-              {description}
-            </p>
-
-            <div className="flex flex-row flex-nowrap gap-2">
-              {renderLocationRow()}
-
-              {!avMeta.canShow && (
-                <div
-                  className={clsx(
-                    'mt-1 inline-flex truncate text-nowrap items-center gap-1.5 rounded-full px-1 py-0.5 text-[11px] ring-1',
-                    avMeta.tone,
-                    avMeta.ring,
-                    'bg-white/80 dark:bg-neutral-900/60'
-                  )}
-                  title={avMeta.hint}
-                >
-                  <avMeta.Icon className="w-3.5 h-3.5 shrink-0 align-middle" />
-                  <span className="font-medium truncate">{avMeta.label}</span>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* zakres + lokalizacja */}
+          <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
+            {formatDateRange(startISO, endISO)} • {humanDuration(start, end)}
+          </p>
+          {renderLocationRow()}
         </div>
 
-        {/* Capacity + status */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {showSponsoredBadge && plan && plan !== 'default' && (
+            <PlanBadge plan={plan} size="xs" variant="icon" />
+          )}
+          {status.reason !== 'FULL' && (
+            <StatusBadge
+              tone={status.tone}
+              reason={status.reason}
+              label={status.label}
+            />
+          )}
           <CapacityBadge
             joinedCount={joinedCount}
-            size="sm"
             min={min}
             max={max}
             isFull={isFull}
             canJoin={canJoin}
             statusReason={status.reason}
           />
-          <div className="flex items-center gap-1.5 min-w-0">
-            {status.reason !== 'FULL' && (
-              <StatusBadge
-                size="xs"
-                tone={status.tone}
-                reason={status.reason}
-                label={status.label}
-              />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      layout="size"
+      whileHover={{
+        y: canJoin ? planAnimationConfig.cardHover.liftY : 0,
+        scale: canJoin ? planAnimationConfig.cardHover.scale : 1,
+      }}
+      className={clsx(
+        'relative w-full rounded-2xl p-4 flex flex-col gap-2 ring-1',
+        planStyling.ring,
+        planStyling.bg,
+        plan === 'default' && planStyling?.glow,
+        'cursor-pointer select-none',
+        className
+      )}
+      style={
+        plan && plan !== 'default'
+          ? {
+              boxShadow: planAnimationConfig.glowingShadow.shadows[plan].min,
+            }
+          : undefined
+      }
+      animate={
+        plan && plan !== 'default'
+          ? {
+              boxShadow: [
+                planAnimationConfig.glowingShadow.shadows[plan].min,
+                planAnimationConfig.glowingShadow.shadows[plan].mid,
+                planAnimationConfig.glowingShadow.shadows[plan].max,
+                planAnimationConfig.glowingShadow.shadows[plan].mid,
+                planAnimationConfig.glowingShadow.shadows[plan].min,
+              ],
+            }
+          : undefined
+      }
+      transition={{
+        // Hover transition for y and scale
+        type: 'spring',
+        stiffness: planAnimationConfig.cardHover.spring.stiffness,
+        damping: planAnimationConfig.cardHover.spring.damping,
+        mass: planAnimationConfig.cardHover.spring.mass,
+        // BoxShadow animation - synchronized with shimmer (4s cycle)
+        boxShadow:
+          plan && plan !== 'default'
+            ? {
+                duration: planAnimationConfig.glowingShadow.duration,
+                repeat: Infinity,
+                ease: planAnimationConfig.glowingShadow.easing,
+                times: [0, 0.25, 0.5, 0.75, 1], // Smooth progression through keyframes
+              }
+            : undefined,
+      }}
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      aria-label={`Szczegóły wydarzenia: ${organizerName}`}
+      data-plan={plan}
+    >
+      {/* Animated gradient overlay for premium plans */}
+      {plan && plan !== 'default' && (
+        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+          <motion.div
+            className={clsx(
+              'absolute inset-0',
+              plan === 'basic' &&
+                'bg-gradient-to-br from-emerald-400/20 via-emerald-500/5 to-emerald-600/20',
+              plan === 'plus' &&
+                'bg-gradient-to-br from-indigo-400/20 via-indigo-500/5 to-indigo-600/20',
+              plan === 'premium' &&
+                'bg-gradient-to-br from-amber-400/25 via-amber-500/8 to-amber-600/25'
+            )}
+            initial={{ opacity: 0.2, scale: 1 }}
+            animate={{
+              opacity: planAnimationConfig.gradientPulse.opacityRange,
+              scale: planAnimationConfig.gradientPulse.scaleRange,
+            }}
+            transition={{
+              duration: planAnimationConfig.gradientPulse.duration,
+              repeat: Infinity,
+              ease: planAnimationConfig.gradientPulse.easing,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Shimmer effect for premium plans - continuous animation */}
+      {plan && plan !== 'default' && (
+        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+          <motion.div
+            className={clsx(
+              'absolute -inset-full',
+              'bg-gradient-to-r',
+              plan === 'basic' &&
+                'from-transparent via-emerald-400/20 to-transparent',
+              plan === 'plus' &&
+                'from-transparent via-indigo-400/25 to-transparent',
+              plan === 'premium' &&
+                'from-transparent via-amber-400/30 to-transparent'
+            )}
+            animate={{
+              x: ['-100%', '200%'],
+              opacity: [0, planAnimationConfig.shimmer.maxOpacity, 0],
+            }}
+            transition={{
+              duration: planAnimationConfig.shimmer.duration,
+              repeat: Infinity,
+              repeatDelay: planAnimationConfig.shimmer.repeatDelay,
+              ease: planAnimationConfig.shimmer.easing,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Top Right Corner - Plan Badge & Favourite Button */}
+      <div className="absolute -top-3 -right-1 z-10 flex items-center gap-1">
+        {/* Plan Badge with continuous pulse animation */}
+        {showSponsoredBadge && plan && plan !== 'default' && (
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{
+              scale: planAnimationConfig.badge.scaleRange,
+              rotate: planAnimationConfig.badge.rotateRange,
+            }}
+            transition={{
+              scale: {
+                duration: planAnimationConfig.badge.duration,
+                repeat: Infinity,
+                repeatDelay: planAnimationConfig.badge.repeatDelay,
+                ease: planAnimationConfig.badge.easing,
+              },
+              rotate: {
+                duration: planAnimationConfig.badge.duration,
+                repeat: Infinity,
+                repeatDelay: planAnimationConfig.badge.repeatDelay,
+                ease: planAnimationConfig.badge.easing,
+              },
+            }}
+            whileHover={{
+              scale: planAnimationConfig.badge.hoverScale,
+              rotate: planAnimationConfig.badge.hoverRotateRange,
+              transition: {
+                duration: planAnimationConfig.badge.hoverDuration,
+              },
+            }}
+          >
+            <PlanBadge plan={plan} size="sm" variant="icon" />
+          </motion.div>
+        )}
+
+        {/* Favourite Button */}
+        {intentId && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <FavouriteButton
+              intentId={intentId}
+              isFavourite={isFavourite}
+              size="sm"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Range + duration */}
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center min-w-0 gap-1.5 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
+          <Calendar className="w-4 h-4 shrink-0 align-middle" />
+          <span className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
+            {formatDateRange(startISO, endISO)}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
+          <Clock className="w-4 h-4 shrink-0 align-middle" />
+          <span>{humanDuration(start, end)}</span>
+        </div>
+      </div>
+
+      {/* Organizer & description + location */}
+      <div className="flex items-start min-w-0 gap-3 mt-1">
+        <Link
+          href={`/u/${organizerName}`}
+          className="flex-shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Avatar url={avatarUrl} alt="Organizer" size={48} />
+        </Link>
+        <div className="flex-1 min-w-0">
+          <Link
+            href={`/u/${organizerName}`}
+            className="text-sm font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
+            title={organizerName}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="inline-flex items-center max-w-full gap-1.5">
+              <VerifiedBadge size="sm" variant="icon" verifiedAt={verifiedAt} />
+              <span className="truncate">{organizerName}</span>
+            </span>
+          </Link>
+
+          <p
+            className="text-xs leading-5 text-neutral-800 dark:text-neutral-200 line-clamp-2"
+            title={description}
+          >
+            {description}
+          </p>
+
+          <div className="flex flex-row flex-nowrap gap-2">
+            {renderLocationRow()}
+
+            {!avMeta.canShow && (
+              <div
+                className={clsx(
+                  'mt-1 inline-flex truncate text-nowrap items-center gap-1.5 rounded-full px-1 py-0.5 text-[11px] ring-1',
+                  avMeta.tone,
+                  avMeta.ring,
+                  'bg-white/80 dark:bg-neutral-900/60'
+                )}
+                title={avMeta.hint}
+              >
+                <avMeta.Icon className="w-3.5 h-3.5 shrink-0 align-middle" />
+                <span className="font-medium truncate">{avMeta.label}</span>
+              </div>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Countdown Timer Pill */}
-        <EventCountdownPill
-          startAt={start}
-          endAt={end}
+      {/* Capacity + status */}
+      <div className="flex items-center justify-between gap-3">
+        <CapacityBadge
+          joinedCount={joinedCount}
           size="sm"
-          joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
-          joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
-          allowJoinLate={allowJoinLate}
-          lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
-          joinManuallyClosed={joinManuallyClosed}
-          isCanceled={isCanceled}
-          isDeleted={isDeleted}
+          min={min}
+          max={max}
+          isFull={isFull}
+          canJoin={canJoin}
+          statusReason={status.reason}
         />
-
-        {/* Progress */}
-        <div className="mt-1.5">
-          <SimpleProgressBar value={fill} active />
-        </div>
-
-        {/* Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-1">
-          {sortedLevels.length > 0 && (
-            <div className="flex flex-nowrap items-center gap-1.5 min-w-0">
-              {sortedLevels.map((lv) => (
-                <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
-              ))}
-            </div>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {status.reason !== 'FULL' && (
+            <StatusBadge
+              size="xs"
+              tone={status.tone}
+              reason={status.reason}
+              label={status.label}
+            />
           )}
-
-          <CategoryPills categories={categories} size="sm" />
-          <TagPills tags={tags} size="sm" />
         </div>
-      </motion.div>
+      </div>
 
-      {/* Modal */}
-      {details}
-    </>
+      {/* Countdown Timer Pill */}
+      <EventCountdownPill
+        startAt={start}
+        endAt={end}
+        size="sm"
+        joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+        joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+        allowJoinLate={allowJoinLate}
+        lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
+        joinManuallyClosed={joinManuallyClosed}
+        isCanceled={isCanceled}
+        isDeleted={isDeleted}
+      />
+
+      {/* Progress */}
+      <div className="mt-1.5">
+        <SimpleProgressBar value={fill} active />
+      </div>
+
+      {/* Pills */}
+      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+        {sortedLevels.length > 0 && (
+          <div className="flex flex-nowrap items-center gap-1.5 min-w-0">
+            {sortedLevels.map((lv) => (
+              <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
+            ))}
+          </div>
+        )}
+
+        <CategoryPills categories={categories} size="sm" />
+        <TagPills tags={tags} size="sm" />
+      </div>
+    </motion.div>
   );
 }

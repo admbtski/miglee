@@ -9,7 +9,8 @@ export type IntentMemberStatus =
   | 'CANCELLED'
   | 'BANNED'
   | 'LEFT'
-  | 'KICKED';
+  | 'KICKED'
+  | 'WAITLIST';
 
 export type IntentMember = {
   id: string;
@@ -40,6 +41,8 @@ export type ManageCallbacks = {
   onRejectPending?: (member: IntentMember) => void | Promise<void>;
   onUnreject?: (member: IntentMember) => void | Promise<void>;
   onNotifyPremium?: (intentId: string) => void | Promise<void>;
+  onPromoteFromWaitlist?: (member: IntentMember) => void | Promise<void>;
+  onRemoveFromWaitlist?: (member: IntentMember) => void | Promise<void>;
 };
 
 export type EventManagementModalProps = ManageCallbacks & {
@@ -55,6 +58,7 @@ export type EventManagementModalProps = ManageCallbacks & {
 
 export const STATUS_GROUP_ORDER: IntentMemberStatus[] = [
   'JOINED',
+  'WAITLIST',
   'PENDING',
   'INVITED',
   'REJECTED',
@@ -73,6 +77,8 @@ export const ROLE_BADGE_CLASSES: Record<IntentMemberRole, string> = {
 export const STATUS_BADGE_CLASSES: Record<IntentMemberStatus, string> = {
   JOINED:
     'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-200',
+  WAITLIST:
+    'bg-purple-100 text-purple-900 dark:bg-purple-900/30 dark:text-purple-200',
   INVITED: 'bg-cyan-100 text-cyan-900 dark:bg-cyan-900/30 dark:text-cyan-200',
   PENDING:
     'bg-yellow-100 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-200',

@@ -14,6 +14,7 @@ import {
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
+import { promoteMultipleFromWaitlist } from '../../../lib/waitlist';
 import {
   clearReminders,
   enqueueReminders,
@@ -577,6 +578,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           deletedAt: true,
           startAt: true,
           mode: true,
+          max: true,
         },
       });
       if (!current) {
@@ -703,10 +705,26 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         ...(tagsUpdate ? { tags: tagsUpdate } : {}),
       };
 
-      const updated = await prisma.intent.update({
-        where: { id },
-        data,
-        include: INTENT_INCLUDE,
+      // Check if max is increasing
+      const maxIncreased =
+        typeof input.max === 'number' &&
+        current?.max &&
+        input.max > current.max;
+      const slotsAdded = maxIncreased ? input.max! - current!.max : 0;
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const intent = await tx.intent.update({
+          where: { id },
+          data,
+          include: INTENT_INCLUDE,
+        });
+
+        // If max increased, try to promote people from waitlist
+        if (maxIncreased && slotsAdded > 0) {
+          await promoteMultipleFromWaitlist(tx, id, slotsAdded);
+        }
+
+        return intent;
       });
 
       if (

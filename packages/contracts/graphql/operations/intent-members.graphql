@@ -29,6 +29,22 @@ mutation AcceptInvite($intentId: ID!) {
 }
 
 # =============================================================================
+# Waitlist Mutations (User Actions)
+# =============================================================================
+
+# User joins the waitlist for a full OPEN event
+mutation JoinWaitlistOpen($intentId: ID!) {
+  joinWaitlistOpen(intentId: $intentId) {
+    ...IntentCore
+  }
+}
+
+# User leaves the waitlist
+mutation LeaveWaitlist($intentId: ID!) {
+  leaveWaitlist(intentId: $intentId)
+}
+
+# =============================================================================
 # Intent Membership Mutations (Owner/Moderator Actions)
 # =============================================================================
 
@@ -83,6 +99,13 @@ mutation CancelPendingOrInviteForUser(
 # Owner/moderator updates a member's role (OWNER / MODERATOR / PARTICIPANT)
 mutation UpdateMemberRole($input: UpdateMemberRoleInput!) {
   updateMemberRole(input: $input) {
+    ...IntentCore
+  }
+}
+
+# Owner/moderator manually promotes a user from waitlist to joined
+mutation PromoteFromWaitlist($input: PromoteFromWaitlistInput!) {
+  promoteFromWaitlist(input: $input) {
     ...IntentCore
   }
 }
