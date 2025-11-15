@@ -14,6 +14,7 @@ import { EventCountdownTimer } from './event-countdown-timer';
 import { EventLocationMap } from './event-location-map';
 import { EventEngagementStats } from './event-engagement-stats';
 import { EventMetadata } from './event-metadata';
+import { StickyJoinButton } from './sticky-join-button';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
 import { useMemo, useState } from 'react';
@@ -210,7 +211,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 pb-20">
       {/* Back Navigation */}
       <div className="border-b border-neutral-200 bg-neutral-50/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/80">
         <div className="container mx-auto max-w-6xl px-4 py-3">
@@ -398,6 +399,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           refetch();
         }}
       />
+
+      {/* Sticky Join Button at Bottom */}
+      <StickyJoinButton event={eventData} />
     </div>
   );
 }

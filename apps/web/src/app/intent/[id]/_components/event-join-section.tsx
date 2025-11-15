@@ -43,10 +43,9 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
   const leaveWaitlistMutation = useLeaveWaitlistMutation();
 
   // Fetch join questions for this event
-  const { data: questions = [], isLoading: questionsLoading } =
-    useIntentJoinQuestionsQuery({
-      intentId: event.id,
-    });
+  const { data: questions = [] } = useIntentJoinQuestionsQuery({
+    intentId: event.id,
+  });
 
   const handleJoinAction = async () => {
     if (isProcessing) return;
@@ -252,7 +251,7 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
   const buttonConfig = getButtonConfig();
 
   return (
-    <div className="sticky top-4 rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
+    <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
       <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
         Zapisy
       </h2>
