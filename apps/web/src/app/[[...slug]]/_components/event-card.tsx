@@ -1,28 +1,18 @@
 // EventCard.tsx
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Avatar } from '@/components/ui/avatar';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
-import { CategoryPills, TagPills } from '@/components/ui/category-tag-pill';
-import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
-import { PlanBadge } from '@/components/ui/plan-badge';
-import { Plan, planTheme } from '@/components/ui/plan-theme';
+import { FavouriteButton } from '@/components/ui/favourite-button';
 import { planAnimationConfig } from '@/components/ui/plan-animations';
-import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
+import { PlanBadge } from '@/components/ui/plan-badge';
+import { Plan } from '@/components/ui/plan-theme';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { computeJoinState } from '@/lib/utils/intent-join-state';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
-import { Avatar } from '@/components/ui/avatar';
-import { FavouriteButton } from '@/components/ui/favourite-button';
-import {
-  AddressVisibility,
-  IntentMember,
-  Level,
-  MembersVisibility,
-} from '@/lib/api/__generated__/react-query-update';
+import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
+import { computeJoinState } from '@/lib/utils/intent-join-state';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import {
@@ -30,46 +20,49 @@ import {
   Clock,
   Eye,
   EyeOff,
-  Map as MapIcon,
   MapPin,
-  MapPinHouseIcon,
   UserCheck,
   Wifi as WifiIcon,
 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { KeyboardEvent, useCallback, useMemo } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
 export interface EventCardProps {
+  // Core identification
   intentId?: string;
   lat?: number | null;
   lng?: number | null;
+
+  // Event details
   startISO: string;
   endISO: string;
-  avatarUrl: string;
-  organizerName: string;
   title: string;
   description: string;
+  categories: string[];
   address?: string;
-  onlineUrl?: string;
+
+  // Organizer info
+  avatarUrl: string;
+  organizerName: string;
+  verifiedAt?: string;
+  plan?: Plan;
+
+  // Capacity & joining
   joinedCount: number;
   min: number;
   max: number;
-  tags?: string[];
-  categories: string[];
-  inline?: boolean;
-  onJoin?: () => void | Promise<void>;
-  className?: string;
-  verifiedAt?: string;
+  canJoin: boolean;
+  isFull: boolean;
 
+  // Event state
   isOngoing: boolean;
   isCanceled: boolean;
   isDeleted: boolean;
   hasStarted: boolean;
-  withinLock: boolean;
-  lockReason?: string | null;
-  canJoin: boolean;
-  isFull: boolean;
 
   // Join window settings
   joinOpensMinutesBeforeStart?: number | null;
@@ -78,17 +71,18 @@ export interface EventCardProps {
   lateJoinCutoffMinutesAfterStart?: number | null;
   joinManuallyClosed?: boolean;
 
+  // Location type
   isHybrid: boolean;
   isOnline: boolean;
   isOnsite: boolean;
-
-  levels: Level[];
   addressVisibility: AddressVisibility;
-  membersVisibility: MembersVisibility;
-  members?: IntentMember[];
-  plan?: Plan;
+
+  // UI options
   showSponsoredBadge?: boolean;
   isFavourite?: boolean;
+  className?: string;
+
+  // Callbacks
   onHover?: (
     intentId: string | null,
     lat?: number | null,
@@ -98,47 +92,30 @@ export interface EventCardProps {
 
 /* ───────────────────────────── Utils ───────────────────────────── */
 
-function normalizeAV(
-  av: AddressVisibility
-): 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN' {
-  const s = String(av).toUpperCase();
-  if (s.includes('PUBLIC')) return 'PUBLIC';
-  if (s.includes('AFTER_JOIN')) return 'AFTER_JOIN';
-  return 'HIDDEN';
-}
+function getAddressVisibilityMeta(av: AddressVisibility) {
+  const normalized = String(av).toUpperCase();
 
-function addressVisibilityMeta(av: AddressVisibility) {
-  const v = normalizeAV(av);
-  switch (v) {
-    case 'PUBLIC':
-      return {
-        label: 'Adres publiczny',
-        Icon: Eye,
-        tone: 'text-emerald-700 dark:text-emerald-300',
-        ring: 'ring-emerald-200 dark:ring-emerald-700/60',
-        canShow: true,
-        hint: 'Dokładny adres widoczny publicznie',
-      };
-    case 'AFTER_JOIN':
-      return {
-        label: 'Adres po dołączeniu',
-        Icon: UserCheck,
-        tone: 'text-indigo-700 dark:text-indigo-300',
-        ring: 'ring-indigo-200 dark:ring-indigo-700/60',
-        canShow: false,
-        hint: 'Dokładny adres dostępny po dołączeniu',
-      };
-    case 'HIDDEN':
-    default:
-      return {
-        label: 'Adres ukryty',
-        Icon: EyeOff,
-        tone: 'text-neutral-600 dark:text-neutral-300',
-        ring: 'ring-neutral-200 dark:ring-neutral-700',
-        canShow: false,
-        hint: 'Dokładny adres nie jest ujawniany',
-      };
+  if (normalized.includes('PUBLIC')) {
+    return {
+      label: 'Adres publiczny',
+      Icon: Eye,
+      canShow: true,
+    };
   }
+
+  if (normalized.includes('AFTER_JOIN')) {
+    return {
+      label: 'Adres po dołączeniu',
+      Icon: UserCheck,
+      canShow: false,
+    };
+  }
+
+  return {
+    label: 'Adres ukryty',
+    Icon: EyeOff,
+    canShow: false,
+  };
 }
 
 /* ─────────────────────────── Component ─────────────────────────── */
@@ -154,14 +131,10 @@ export function EventCard({
   title,
   description,
   address,
-  onlineUrl,
   joinedCount,
   min,
   max,
-  tags = [],
   categories = [],
-  inline = false,
-  onJoin,
   className,
   verifiedAt,
   hasStarted,
@@ -170,18 +143,13 @@ export function EventCard({
   isCanceled,
   isDeleted,
   canJoin,
-  withinLock,
-  lockReason,
   joinOpensMinutesBeforeStart,
   joinCutoffMinutesBeforeStart,
   allowJoinLate,
   lateJoinCutoffMinutesAfterStart,
   joinManuallyClosed,
-  members = [],
   plan = 'default',
   addressVisibility,
-  levels,
-  membersVisibility, // info: przekazywane do modala
   showSponsoredBadge = true,
   isFavourite = false,
   isHybrid,
@@ -284,13 +252,9 @@ export function EventCard({
         tone: 'error' as const,
         reason: 'STARTED' as const,
       };
+
     return { label: 'Dostępne', tone: 'ok' as const, reason: 'OK' as const };
   }, [isDeleted, isCanceled, isOngoing, hasStarted, joinState]);
-
-  const fill = useMemo(
-    () => Math.min(100, Math.round((joinedCount / Math.max(1, max)) * 100)),
-    [joinedCount, max]
-  );
 
   const handleCardClick = useCallback(() => {
     if (intentId) {
@@ -320,140 +284,10 @@ export function EventCard({
     }
   }, [onHover]);
 
-  // ✅ przekazujemy canJoin do planRingBg
-  const planStyling = useMemo(() => planTheme(plan), [plan, canJoin]);
   const avMeta = useMemo(
-    () => addressVisibilityMeta(addressVisibility),
+    () => getAddressVisibilityMeta(addressVisibility),
     [addressVisibility]
   );
-
-  const sortedLevels = useMemo(() => sortLevels(levels), [levels]);
-
-  const renderLocationRow = () => {
-    const base =
-      'flex items-center min-w-0 gap-1.5 mt-1 text-xs text-neutral-600 dark:text-neutral-400';
-
-    if (isOnsite && !isOnline) {
-      return avMeta.canShow ? (
-        <p className={base}>
-          <MapPin className="w-3.5 h-3.5 shrink-0 align-middle" />
-          <span className="truncate" title={address}>
-            {address}
-          </span>
-        </p>
-      ) : (
-        <p className={base}>
-          <MapIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
-          <span className="truncate" title={avMeta.hint}>
-            {avMeta.label}
-          </span>
-        </p>
-      );
-    }
-
-    if (isOnline && !isOnsite) {
-      return (
-        <p className={base}>
-          <WifiIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
-          <span className="truncate" title="Online">
-            Online
-          </span>
-        </p>
-      );
-    }
-
-    if (isHybrid || (address && onlineUrl)) {
-      return avMeta.canShow ? (
-        <p className={base}>
-          <MapPinHouseIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
-          <span className="truncate" title="Hybrid">
-            {address} • Hybrid
-          </span>
-        </p>
-      ) : (
-        <p className={base}>
-          <MapIcon className="w-3.5 h-3.5 shrink-0 align-middle" />
-          <span className="truncate" title={avMeta.hint}>
-            Hybrid • {avMeta.label}
-          </span>
-        </p>
-      );
-    }
-
-    return null;
-  };
-
-  /* ───────── Inline wariant ───────── */
-  if (inline) {
-    return (
-      <div
-        className={clsx(
-          'relative flex items-center gap-4 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 text-sm cursor-pointer select-none',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 rounded-lg',
-          className
-        )}
-        role="button"
-        tabIndex={0}
-        onClick={handleCardClick}
-        onKeyDown={handleKeyDown}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        aria-label={`Szczegóły wydarzenia: ${organizerName}`}
-        data-plan={plan}
-      >
-        <Link
-          href={`/u/${organizerName}`}
-          className="flex-shrink-0"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Avatar url={avatarUrl} alt={`Organizator: ${organizerName}`} />
-        </Link>
-        <div className="flex-1 min-w-0">
-          <Link
-            href={`/u/${organizerName}`}
-            className="font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
-            title={organizerName}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="inline-flex items-center gap-1.5 max-w-full">
-              <span className="truncate">{organizerName}</span>
-              <VerifiedBadge verifiedAt={verifiedAt} />
-            </span>
-          </Link>
-          <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
-            {title}
-          </p>
-
-          {/* zakres + lokalizacja */}
-          <p className="text-xs truncate text-neutral-600 dark:text-neutral-400">
-            {formatDateRange(startISO, endISO)} • {humanDuration(start, end)}
-          </p>
-          {renderLocationRow()}
-        </div>
-
-        <div className="flex items-center gap-3 min-w-0">
-          {showSponsoredBadge && plan && plan !== 'default' && (
-            <PlanBadge plan={plan} size="xs" variant="icon" />
-          )}
-          {status.reason !== 'FULL' && (
-            <StatusBadge
-              tone={status.tone}
-              reason={status.reason}
-              label={status.label}
-            />
-          )}
-          <CapacityBadge
-            joinedCount={joinedCount}
-            min={min}
-            max={max}
-            isFull={isFull}
-            canJoin={canJoin}
-            statusReason={status.reason}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <motion.div
@@ -462,50 +296,26 @@ export function EventCard({
         y: canJoin ? planAnimationConfig.cardHover.liftY : 0,
         scale: canJoin ? planAnimationConfig.cardHover.scale : 1,
       }}
-      className={clsx(
-        'relative w-full rounded-2xl p-4 flex flex-col gap-2 ring-1',
-        planStyling.ring,
-        planStyling.bg,
-        plan === 'default' && planStyling?.glow,
+      className={twMerge(
+        'relative w-full rounded-2xl p-4 flex flex-col gap-2',
+        // Unified border styling
+        'ring-1 ring-white/5 dark:ring-white/5',
+        // Subtle background
+        'bg-white dark:bg-neutral-900',
+        // Unified shadow
+        'shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]',
         'cursor-pointer select-none',
+        // Premium plan subtle highlight
+        plan !== 'default' && 'ring-2',
+        plan === 'basic' && 'ring-emerald-500/20',
+        plan === 'plus' && 'ring-indigo-500/20',
+        plan === 'premium' && 'ring-amber-500/20',
         className
       )}
-      style={
-        plan && plan !== 'default'
-          ? {
-              boxShadow: planAnimationConfig.glowingShadow.shadows[plan].min,
-            }
-          : undefined
-      }
-      animate={
-        plan && plan !== 'default'
-          ? {
-              boxShadow: [
-                planAnimationConfig.glowingShadow.shadows[plan].min,
-                planAnimationConfig.glowingShadow.shadows[plan].mid,
-                planAnimationConfig.glowingShadow.shadows[plan].max,
-                planAnimationConfig.glowingShadow.shadows[plan].mid,
-                planAnimationConfig.glowingShadow.shadows[plan].min,
-              ],
-            }
-          : undefined
-      }
       transition={{
-        // Hover transition for y and scale
         type: 'spring',
-        stiffness: planAnimationConfig.cardHover.spring.stiffness,
-        damping: planAnimationConfig.cardHover.spring.damping,
-        mass: planAnimationConfig.cardHover.spring.mass,
-        // BoxShadow animation - synchronized with shimmer (4s cycle)
-        boxShadow:
-          plan && plan !== 'default'
-            ? {
-                duration: planAnimationConfig.glowingShadow.duration,
-                repeat: Infinity,
-                ease: planAnimationConfig.glowingShadow.easing,
-                times: [0, 0.25, 0.5, 0.75, 1], // Smooth progression through keyframes
-              }
-            : undefined,
+        stiffness: 300,
+        damping: 20,
       }}
       role="button"
       tabIndex={0}
@@ -516,227 +326,220 @@ export function EventCard({
       aria-label={`Szczegóły wydarzenia: ${organizerName}`}
       data-plan={plan}
     >
-      {/* Animated gradient overlay for premium plans */}
-      {plan && plan !== 'default' && (
-        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-          <motion.div
-            className={clsx(
-              'absolute inset-0',
-              plan === 'basic' &&
-                'bg-gradient-to-br from-emerald-400/20 via-emerald-500/5 to-emerald-600/20',
-              plan === 'plus' &&
-                'bg-gradient-to-br from-indigo-400/20 via-indigo-500/5 to-indigo-600/20',
-              plan === 'premium' &&
-                'bg-gradient-to-br from-amber-400/25 via-amber-500/8 to-amber-600/25'
-            )}
-            initial={{ opacity: 0.2, scale: 1 }}
-            animate={{
-              opacity: planAnimationConfig.gradientPulse.opacityRange,
-              scale: planAnimationConfig.gradientPulse.scaleRange,
-            }}
-            transition={{
-              duration: planAnimationConfig.gradientPulse.duration,
-              repeat: Infinity,
-              ease: planAnimationConfig.gradientPulse.easing,
-            }}
-          />
-        </div>
-      )}
+      {/* Cover Image with overlay content - Clean Magazine style */}
+      <div className="relative -mx-4 -mt-4 mb-3 h-40 overflow-hidden rounded-t-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+        <img
+          src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=2070&auto=format&fit=crop"
+          alt={title}
+          className="h-full w-full object-cover brightness-90 contrast-90"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+        {/* Universal gradient overlay - consistent contrast for all images */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/30 to-black/70" />
 
-      {/* Shimmer effect for premium plans - continuous animation */}
-      {plan && plan !== 'default' && (
-        <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-          <motion.div
-            className={clsx(
-              'absolute -inset-full',
-              'bg-gradient-to-r',
-              plan === 'basic' &&
-                'from-transparent via-emerald-400/20 to-transparent',
-              plan === 'plus' &&
-                'from-transparent via-indigo-400/25 to-transparent',
-              plan === 'premium' &&
-                'from-transparent via-amber-400/30 to-transparent'
-            )}
-            animate={{
-              x: ['-100%', '200%'],
-              opacity: [0, planAnimationConfig.shimmer.maxOpacity, 0],
-            }}
-            transition={{
-              duration: planAnimationConfig.shimmer.duration,
-              repeat: Infinity,
-              repeatDelay: planAnimationConfig.shimmer.repeatDelay,
-              ease: planAnimationConfig.shimmer.easing,
-            }}
-          />
-        </div>
-      )}
-
-      {/* Top Right Corner - Plan Badge & Favourite Button */}
-      <div className="absolute -top-3 -right-1 z-10 flex items-center gap-1">
-        {/* Plan Badge with continuous pulse animation */}
-        {showSponsoredBadge && plan && plan !== 'default' && (
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{
-              scale: planAnimationConfig.badge.scaleRange,
-              rotate: planAnimationConfig.badge.rotateRange,
-            }}
-            transition={{
-              scale: {
-                duration: planAnimationConfig.badge.duration,
-                repeat: Infinity,
-                repeatDelay: planAnimationConfig.badge.repeatDelay,
-                ease: planAnimationConfig.badge.easing,
-              },
-              rotate: {
-                duration: planAnimationConfig.badge.duration,
-                repeat: Infinity,
-                repeatDelay: planAnimationConfig.badge.repeatDelay,
-                ease: planAnimationConfig.badge.easing,
-              },
-            }}
-            whileHover={{
-              scale: planAnimationConfig.badge.hoverScale,
-              rotate: planAnimationConfig.badge.hoverRotateRange,
-              transition: {
-                duration: planAnimationConfig.badge.hoverDuration,
-              },
-            }}
-          >
-            <PlanBadge plan={plan} size="sm" variant="icon" />
-          </motion.div>
-        )}
-
-        {/* Favourite Button */}
-        {intentId && (
-          <div onClick={(e) => e.stopPropagation()}>
-            <FavouriteButton
-              intentId={intentId}
-              isFavourite={isFavourite}
-              size="sm"
-            />
+        {/* Cancelled/Deleted Overlay */}
+        {(isCanceled || isDeleted) && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
+            <div className="text-center">
+              <p className="text-white font-semibold text-lg">
+                {isDeleted ? 'Usunięte' : 'Odwołane'}
+              </p>
+              <p className="text-white/60 text-xs mt-1">
+                {isDeleted
+                  ? 'To wydarzenie zostało usunięte'
+                  : 'To wydarzenie zostało odwołane'}
+              </p>
+            </div>
           </div>
         )}
+
+        {/* Cover content - Title & Key Info */}
+        <div className="absolute inset-x-0 bottom-0 p-3">
+          {/* Category Tags - MAX 2, elegant & subtle */}
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {categories.slice(0, 2).map((cat) => (
+                <span
+                  key={cat}
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-[2px] text-[11px] font-medium text-white shadow-lg"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
+                  {cat}
+                </span>
+              ))}
+              {categories.length > 2 && (
+                <span
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-[2px] text-[11px] font-medium text-white shadow-lg"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
+                  +{categories.length - 2}
+                </span>
+              )}
+            </div>
+          )}
+
+          <h3
+            className="text-base font-semibold leading-tight text-white line-clamp-2 mb-1.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+            style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}
+          >
+            {title}
+          </h3>
+
+          {/* Metadata Row: Date, Time & Location */}
+          <div
+            className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-white/60"
+            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}
+          >
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5" />
+              <span>{formatDateRange(startISO, endISO)}</span>
+            </div>
+            <span className="text-white/40">·</span>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{humanDuration(start, end)}</span>
+            </div>
+            {/* Location on cover */}
+            {(isOnsite || isHybrid) && (
+              <>
+                <span className="text-white/40">·</span>
+                {avMeta.canShow ? (
+                  <div className="flex items-center gap-1 truncate">
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{address?.split(',')[0]}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <avMeta.Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="text-[11px]">{avMeta.label}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {/* Online indicator */}
+            {isOnline && (
+              <>
+                <span className="text-white/40">·</span>
+                <div className="flex items-center gap-1">
+                  <WifiIcon className="h-3.5 w-3.5" />
+                  <span>Online</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Range + duration */}
-      <div className="flex items-center justify-between gap-1.5">
-        <div className="flex items-center min-w-0 gap-1.5 overflow-hidden text-sm text-neutral-600 dark:text-neutral-400">
-          <Calendar className="w-4 h-4 shrink-0 align-middle" />
-          <span className="font-medium truncate text-neutral-800 dark:text-neutral-200 whitespace-nowrap">
-            {formatDateRange(startISO, endISO)}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
-          <Clock className="w-4 h-4 shrink-0 align-middle" />
-          <span>{humanDuration(start, end)}</span>
-        </div>
-      </div>
-
-      {/* Organizer & description + location */}
-      <div className="flex items-start min-w-0 gap-3 mt-1">
-        <Link
-          href={`/u/${organizerName}`}
-          className="flex-shrink-0"
+      {/* Top Right Corner - Favourite Button */}
+      {intentId && (
+        <div
+          className="absolute top-2 right-2 z-20"
           onClick={(e) => e.stopPropagation()}
         >
-          <Avatar url={avatarUrl} alt="Organizer" size={48} />
-        </Link>
-        <div className="flex-1 min-w-0">
+          <FavouriteButton
+            intentId={intentId}
+            isFavourite={isFavourite}
+            size="sm"
+          />
+        </div>
+      )}
+
+      {/* Content Section - Clean & Structured */}
+      <div className="flex flex-col">
+        {/* Author Row - Subtle & Elegant */}
+        {organizerName && (
           <Link
             href={`/u/${organizerName}`}
-            className="text-sm font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
-            title={organizerName}
+            className="flex items-center gap-2 mb-2 group"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="inline-flex items-center max-w-full gap-1.5">
-              <VerifiedBadge size="sm" variant="icon" verifiedAt={verifiedAt} />
-              <span className="truncate">{organizerName}</span>
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <Avatar
+                url={avatarUrl}
+                alt={organizerName}
+                size={24}
+                className="ring-1 ring-white/10"
+              />
+            </div>
+
+            {/* Username */}
+            <span className="text-[13px] text-neutral-600 dark:text-white/70 leading-tight truncate group-hover:text-neutral-900 dark:group-hover:text-white transition-colors">
+              {organizerName}
             </span>
-          </Link>
 
-          <p
-            className="text-xs leading-5 text-neutral-800 dark:text-neutral-200 line-clamp-2"
-            title={description}
-          >
-            {description}
-          </p>
+            {/* Verified Badge */}
+            {verifiedAt && (
+              <VerifiedBadge size="xs" variant="icon" verifiedAt={verifiedAt} />
+            )}
 
-          <div className="flex flex-row flex-nowrap gap-2">
-            {renderLocationRow()}
-
-            {!avMeta.canShow && (
-              <div
-                className={clsx(
-                  'mt-1 inline-flex truncate text-nowrap items-center gap-1.5 rounded-full px-1 py-0.5 text-[11px] ring-1',
-                  avMeta.tone,
-                  avMeta.ring,
-                  'bg-white/80 dark:bg-neutral-900/60'
-                )}
-                title={avMeta.hint}
-              >
-                <avMeta.Icon className="w-3.5 h-3.5 shrink-0 align-middle" />
-                <span className="font-medium truncate">{avMeta.label}</span>
+            {/* Plan Badge - shown on md+ screens */}
+            {showSponsoredBadge && plan && plan !== 'default' && (
+              <div className="ml-auto hidden sm:block">
+                <PlanBadge plan={plan} size="xs" variant="iconText" />
               </div>
             )}
-          </div>
-        </div>
-      </div>
+          </Link>
+        )}
 
-      {/* Capacity + status */}
-      <div className="flex items-center justify-between gap-3">
-        <CapacityBadge
-          joinedCount={joinedCount}
-          size="sm"
-          min={min}
-          max={max}
-          isFull={isFull}
-          canJoin={canJoin}
-          statusReason={status.reason}
-        />
-        <div className="flex items-center gap-1.5 min-w-0">
-          {status.reason !== 'FULL' && (
-            <StatusBadge
-              size="xs"
-              tone={status.tone}
-              reason={status.reason}
-              label={status.label}
+        {/* Title */}
+        <h3 className="text-base font-semibold leading-tight text-neutral-900 dark:text-white line-clamp-2 mb-1.5">
+          {title}
+        </h3>
+
+        {/* Description */}
+        <p
+          className="text-xs leading-snug text-neutral-600 dark:text-neutral-400 line-clamp-1 mb-3"
+          title={description}
+        >
+          {description}
+        </p>
+
+        {/* Capacity & Status Row */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <CapacityBadge
+              joinedCount={joinedCount}
+              size="sm"
+              min={min}
+              max={max}
+              isFull={isFull}
+              canJoin={canJoin}
+              statusReason={status.reason}
+            />
+
+            {/* Status Badge */}
+            {!isCanceled &&
+              !isDeleted &&
+              status.reason !== 'FULL' &&
+              status.reason !== 'OK' && (
+                <StatusBadge
+                  size="sm"
+                  tone={status.tone}
+                  reason={status.reason}
+                  label={status.label}
+                />
+              )}
+          </div>
+
+          {/* Countdown */}
+          {!isCanceled && !isDeleted && (
+            <EventCountdownPill
+              startAt={start}
+              endAt={end}
+              size="sm"
+              joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+              joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+              allowJoinLate={allowJoinLate}
+              lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
+              joinManuallyClosed={joinManuallyClosed}
+              isCanceled={isCanceled}
+              isDeleted={isDeleted}
             />
           )}
         </div>
-      </div>
-
-      {/* Countdown Timer Pill */}
-      <EventCountdownPill
-        startAt={start}
-        endAt={end}
-        size="sm"
-        joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
-        joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
-        allowJoinLate={allowJoinLate}
-        lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
-        joinManuallyClosed={joinManuallyClosed}
-        isCanceled={isCanceled}
-        isDeleted={isDeleted}
-      />
-
-      {/* Progress */}
-      <div className="mt-1.5">
-        <SimpleProgressBar value={fill} active />
-      </div>
-
-      {/* Pills */}
-      <div className="flex flex-wrap items-center gap-1.5 mt-1">
-        {sortedLevels.length > 0 && (
-          <div className="flex flex-nowrap items-center gap-1.5 min-w-0">
-            {sortedLevels.map((lv) => (
-              <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
-            ))}
-          </div>
-        )}
-
-        <CategoryPills categories={categories} size="sm" />
-        <TagPills tags={tags} size="sm" />
       </div>
     </motion.div>
   );

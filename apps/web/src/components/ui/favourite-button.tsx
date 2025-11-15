@@ -67,12 +67,11 @@ export function FavouriteButton({
       whileTap={{ scale: 0.95 }}
       className={clsx(
         'inline-flex items-center justify-center rounded-full transition-all',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/60',
+        'bg-black/20 backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/30',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         sizeClasses[size],
-        isFavourite
-          ? 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:hover:bg-rose-900/50'
-          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700',
+        isFavourite && 'text-rose-400 hover:text-rose-300',
         className
       )}
       title={isFavourite ? 'Usuń z zapisanych' : 'Zapisz wydarzenie'}

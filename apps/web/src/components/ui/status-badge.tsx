@@ -1,5 +1,6 @@
 'use client';
 
+import { JoinLockReason } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, Lock, XCircle } from 'lucide-react';
 
@@ -24,21 +25,10 @@ export type JoinReason =
   | 'ENDED';
 
 // GraphQL JoinLockReason enum
-export type LockReason =
-  | 'FULL'
-  | 'INVITE_ONLY'
-  | 'NOT_OPEN_YET'
-  | 'CUTOFF'
-  | 'NO_LATE_JOIN'
-  | 'LATE_CUTOFF'
-  | 'MANUAL'
-  | 'ENDED'
-  | 'CANCELED'
-  | 'DELETED';
 
 // Map lockReason to user-friendly labels
 function getLockReasonLabel(
-  lockReason: LockReason | null | undefined,
+  lockReason: JoinLockReason | null | undefined,
   startAt?: Date | null
 ): string {
   if (!lockReason) return 'Niedostępne';
@@ -68,6 +58,7 @@ function getLockReasonLabel(
       return 'Odwołane';
     case 'DELETED':
       return 'Usunięte';
+    case 'OTHER':
     default:
       return 'Niedostępne';
   }
@@ -176,33 +167,33 @@ const SIZE_STYLES: Record<
 > = {
   xs: {
     container: 'px-1 py-0.5 rounded-full',
-    icon: 'w-3 h-3',
+    icon: 'w-3.5 h-3.5 opacity-80 mr-[3px]',
     text: 'text-[10px] leading-none',
-    gap: 'gap-1',
+    gap: 'gap-0',
   },
   sm: {
     container: 'px-1.5 py-0.5 rounded-full',
-    icon: 'w-3.5 h-3.5',
+    icon: 'w-3.5 h-3.5 opacity-80 mr-[3px]',
     text: 'text-[11px] leading-none',
-    gap: 'gap-1.5',
+    gap: 'gap-0',
   },
   md: {
     container: 'px-2 py-0.5 rounded-full',
-    icon: 'w-4 h-4',
+    icon: 'w-3.5 h-3.5 opacity-80 mr-[3px]',
     text: 'text-xs leading-none',
-    gap: 'gap-1.5',
+    gap: 'gap-0',
   },
   lg: {
     container: 'px-2.5 py-0.5 rounded-full',
-    icon: 'w-5 h-5',
+    icon: 'w-3.5 h-3.5 opacity-80 mr-[3px]',
     text: 'text-sm leading-none',
-    gap: 'gap-2',
+    gap: 'gap-0',
   },
   xl: {
     container: 'px-3 py-1 rounded-full',
-    icon: 'w-6 h-6',
+    icon: 'w-3.5 h-3.5 opacity-80 mr-[3px]',
     text: 'text-base leading-none',
-    gap: 'gap-2',
+    gap: 'gap-0',
   },
 };
 

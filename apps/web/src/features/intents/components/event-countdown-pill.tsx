@@ -40,32 +40,32 @@ const SIZE_STYLES: Record<
   }
 > = {
   xs: {
-    container: 'px-1.5 py-0.5 rounded-full',
+    container: 'px-1.5 py-[2px] rounded-full',
     icon: 'h-3 w-3',
     clockIcon: 'h-2.5 w-2.5',
     text: 'text-[10px]',
     gap: 'gap-1',
   },
   sm: {
-    container: 'px-2 py-0.5 rounded-full',
+    container: 'px-2 py-[2px] rounded-full',
     icon: 'h-3.5 w-3.5',
     clockIcon: 'h-3 w-3',
     text: 'text-[11px]',
-    gap: 'gap-1.5',
+    gap: 'gap-1',
   },
   md: {
-    container: 'px-2.5 py-1 rounded-full',
+    container: 'px-2.5 py-[2px] rounded-full',
     icon: 'h-3.5 w-3.5',
     clockIcon: 'h-3 w-3',
     text: 'text-[12px]',
     gap: 'gap-1.5',
   },
   lg: {
-    container: 'px-3 py-1.5 rounded-full',
+    container: 'px-3 py-[2px] rounded-full',
     icon: 'h-4 w-4',
     clockIcon: 'h-3.5 w-3.5',
     text: 'text-sm',
-    gap: 'gap-2',
+    gap: 'gap-1.5',
   },
 };
 
@@ -240,25 +240,25 @@ export function EventCountdownPill({
 
   const timeString = formatTime(msRemaining);
 
-  // Color classes for pill
+  // Color classes for pill - premium chip style with subtle backdrop blur
   const colorClasses = {
     blue: {
-      bg: 'bg-blue-100 dark:bg-blue-900/40',
+      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
       text: 'text-blue-800 dark:text-blue-200',
       icon: 'text-blue-600 dark:text-blue-400',
     },
     amber: {
-      bg: 'bg-amber-100 dark:bg-amber-900/40',
+      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
       text: 'text-amber-800 dark:text-amber-200',
       icon: 'text-amber-600 dark:text-amber-400',
     },
     green: {
-      bg: 'bg-green-100 dark:bg-green-900/40',
+      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
       text: 'text-green-800 dark:text-green-200',
       icon: 'text-green-600 dark:text-green-400',
     },
     red: {
-      bg: 'bg-red-100 dark:bg-red-900/40',
+      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
       text: 'text-red-800 dark:text-red-200',
       icon: 'text-red-600 dark:text-red-400',
     },
