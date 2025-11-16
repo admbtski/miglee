@@ -29,6 +29,7 @@ import {
 import { ReactNode, useMemo } from 'react';
 import { ActionMenu } from './action-menu';
 import { formatDateRange } from './formatters';
+import { useRouter } from 'next/navigation';
 
 /* ───────────────────────────── Utils ───────────────────────────── */
 
@@ -122,7 +123,6 @@ export function AccountIntentCard(props: {
   /** Czy to wydarzenie jest „moje” (owner); steruje menu akcji. */
   owned?: boolean;
 
-  onPreview?: (id: string) => void | Promise<void>;
   onEdit?: (id: string) => void | Promise<void>;
   onCancel?: (id: string) => void | Promise<void>;
   onDelete?: (id: string) => void | Promise<void>;
@@ -160,13 +160,14 @@ export function AccountIntentCard(props: {
     allowJoinLate,
     lateJoinCutoffMinutesAfterStart,
     joinManuallyClosed,
-    onPreview,
     onEdit,
     onCancel,
     onDelete,
     onLeave,
     onManage,
   } = props;
+
+  const router = useRouter();
 
   const when = formatDateRange(startAt, endAt);
 
@@ -444,7 +445,7 @@ export function AccountIntentCard(props: {
 
         <ActionMenu
           label="Menu akcji intentu"
-          onPreview={() => onPreview?.(id)}
+          onPreview={() => router.push(`/intent/${encodeURIComponent(id)}`)}
           onEdit={() => onEdit?.(id)}
           onCancel={() => onCancel?.(id)}
           onDelete={() => onDelete?.(id)}
@@ -461,7 +462,6 @@ export function AccountIntentCard(props: {
       {/* Title + description */}
       <button
         type="button"
-        onClick={() => onPreview?.(id)}
         className="group text-left"
         aria-label="Podgląd wydarzenia"
         title={title ?? ''}

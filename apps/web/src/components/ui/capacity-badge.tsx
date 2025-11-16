@@ -112,7 +112,7 @@ export function CapacityBadge({
       aria-label={aria}
     >
       <Users className={clsx(S.icon, 'shrink-0 align-middle')} aria-hidden />
-      <span className={clsx('font-medium truncate', S.text)}>{label}</span>
+      <span className={clsx('truncate', S.text)}>{label}</span>
     </span>
   );
 }

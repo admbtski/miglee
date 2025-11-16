@@ -1,8 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Clock, DoorOpen, DoorClosed, Play, Flag } from 'lucide-react';
 import clsx from 'clsx';
+import { Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+/* ───────────────────────────── Types ───────────────────────────── */
+
+export type CountdownPillSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type CountdownPillVariant = 'icon' | 'iconText' | 'text';
 
 type CountdownPhase =
   | 'BEFORE_OPEN'
@@ -11,8 +16,6 @@ type CountdownPhase =
   | 'STARTED_LATE_JOIN'
   | 'STARTED_NO_LATE_JOIN'
   | 'ENDED';
-
-type CountdownPillSize = 'xs' | 'sm' | 'md' | 'lg';
 
 type EventCountdownPillProps = {
   startAt: Date;
@@ -25,47 +28,46 @@ type EventCountdownPillProps = {
   isCanceled?: boolean;
   isDeleted?: boolean;
   size?: CountdownPillSize;
+  variant?: CountdownPillVariant;
+  className?: string;
+  title?: string;
 };
 
 /* ───────────────────────────── Sizing ───────────────────────────── */
 
 const SIZE_STYLES: Record<
   CountdownPillSize,
-  {
-    container: string;
-    icon: string;
-    clockIcon: string;
-    text: string;
-    gap: string;
-  }
+  { container: string; icon: string; text: string; gap: string }
 > = {
   xs: {
-    container: 'px-1.5 py-[2px] rounded-full',
-    icon: 'h-3 w-3',
-    clockIcon: 'h-2.5 w-2.5',
-    text: 'text-[10px]',
+    container: 'px-1.5 py-0.5 rounded-full',
+    icon: 'w-3 h-3',
+    text: 'text-[10px] leading-none',
     gap: 'gap-1',
   },
   sm: {
-    container: 'px-2 py-[2px] rounded-full',
-    icon: 'h-3.5 w-3.5',
-    clockIcon: 'h-3 w-3',
-    text: 'text-[11px]',
+    container: 'px-2 py-0.5 rounded-full',
+    icon: 'w-3.5 h-3.5',
+    text: 'text-[11px] leading-none',
     gap: 'gap-1',
   },
   md: {
-    container: 'px-2.5 py-[2px] rounded-full',
-    icon: 'h-3.5 w-3.5',
-    clockIcon: 'h-3 w-3',
-    text: 'text-[12px]',
+    container: 'px-2.5 py-0.5 rounded-full',
+    icon: 'w-3.5 h-3.5',
+    text: 'text-xs leading-none',
     gap: 'gap-1.5',
   },
   lg: {
-    container: 'px-3 py-[2px] rounded-full',
-    icon: 'h-4 w-4',
-    clockIcon: 'h-3.5 w-3.5',
-    text: 'text-sm',
+    container: 'px-3 py-0.5 rounded-full',
+    icon: 'w-4 h-4',
+    text: 'text-sm leading-none',
     gap: 'gap-1.5',
+  },
+  xl: {
+    container: 'px-3.5 py-1 rounded-full',
+    icon: 'w-4 h-4',
+    text: 'text-base leading-none',
+    gap: 'gap-2',
   },
 };
 
@@ -82,8 +84,12 @@ export function EventCountdownPill({
   isCanceled,
   isDeleted,
   size = 'md',
+  variant = 'iconText',
+  className,
+  title: customTitle,
 }: EventCountdownPillProps) {
   const [now, setNow] = useState(new Date());
+  const S = SIZE_STYLES[size];
 
   // Don't show countdown for canceled or deleted events
   if (isCanceled || isDeleted) {
@@ -132,7 +138,6 @@ export function EventCountdownPill({
   const getCountdownTarget = (): {
     target: Date;
     label: string;
-    icon: React.ComponentType<any>;
     color: 'blue' | 'amber' | 'green' | 'red';
   } | null => {
     switch (phase) {
@@ -141,7 +146,6 @@ export function EventCountdownPill({
           ? {
               target: opensAt,
               label: 'Otwarcie za',
-              icon: DoorOpen,
               color: 'blue',
             }
           : null;
@@ -151,14 +155,12 @@ export function EventCountdownPill({
           return {
             target: cutoffAt,
             label: 'Zamknięcie za',
-            icon: DoorClosed,
             color: 'amber',
           };
         }
         return {
           target: startAt,
           label: 'Start za',
-          icon: Play,
           color: 'green',
         };
 
@@ -166,7 +168,6 @@ export function EventCountdownPill({
         return {
           target: startAt,
           label: 'Start za',
-          icon: Play,
           color: 'green',
         };
 
@@ -175,14 +176,12 @@ export function EventCountdownPill({
           return {
             target: lateCutoffAt,
             label: 'Late join za',
-            icon: DoorClosed,
             color: 'amber',
           };
         }
         return {
           target: endAt,
           label: 'Koniec za',
-          icon: Flag,
           color: 'red',
         };
 
@@ -190,7 +189,6 @@ export function EventCountdownPill({
         return {
           target: endAt,
           label: 'Koniec za',
-          icon: Flag,
           color: 'red',
         };
 
@@ -205,84 +203,111 @@ export function EventCountdownPill({
     return null;
   }
 
-  const { target, label, icon: Icon, color } = countdown;
+  const { target, label: countdownLabel, color } = countdown;
   const msRemaining = target.getTime() - now.getTime();
 
   if (msRemaining <= 0) {
     return null;
   }
 
-  // Format time remaining (compact version for pill)
-  const formatTime = (ms: number): string => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) {
-      const remainingHours = hours % 24;
-      return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
-    }
-    if (hours > 0) {
-      const remainingMinutes = minutes % 60;
-      return remainingMinutes > 0
-        ? `${hours}h ${remainingMinutes}m`
-        : `${hours}h`;
-    }
-    if (minutes > 0) {
-      const remainingSeconds = seconds % 60;
-      return remainingSeconds > 0
-        ? `${minutes}m ${remainingSeconds}s`
-        : `${minutes}m`;
-    }
-    return `${seconds}s`;
-  };
-
   const timeString = formatTime(msRemaining);
+  const fullLabel = `${countdownLabel} ${timeString}`;
+  const toneClass = getToneClass(color);
+  const aria = `${countdownLabel} ${timeString}`;
 
-  // Color classes for pill - premium chip style with subtle backdrop blur
-  const colorClasses = {
-    blue: {
-      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
-      text: 'text-blue-800 dark:text-blue-200',
-      icon: 'text-blue-600 dark:text-blue-400',
-    },
-    amber: {
-      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
-      text: 'text-amber-800 dark:text-amber-200',
-      icon: 'text-amber-600 dark:text-amber-400',
-    },
-    green: {
-      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
-      text: 'text-green-800 dark:text-green-200',
-      icon: 'text-green-600 dark:text-green-400',
-    },
-    red: {
-      bg: 'bg-white/5 backdrop-blur-[2px] border border-white/10',
-      text: 'text-red-800 dark:text-red-200',
-      icon: 'text-red-600 dark:text-red-400',
-    },
-  };
+  // Variant: text only
+  if (variant === 'text') {
+    return (
+      <span
+        className={clsx(
+          'inline-flex items-center select-none',
+          S.text,
+          className
+        )}
+        title={customTitle ?? aria}
+        aria-label={aria}
+      >
+        {fullLabel}
+      </span>
+    );
+  }
 
-  const colors = colorClasses[color];
-  const S = SIZE_STYLES[size];
+  // Variant: icon only
+  if (variant === 'icon') {
+    return (
+      <span
+        className={clsx(
+          'inline-flex items-center justify-center rounded-full ring-1 shadow-sm select-none',
+          'bg-white/80 dark:bg-neutral-900/60',
+          toneClass,
+          S.container,
+          className
+        )}
+        title={customTitle ?? aria}
+        aria-label={aria}
+      >
+        <Clock className={clsx(S.icon, 'shrink-0 align-middle')} aria-hidden />
+      </span>
+    );
+  }
 
+  // Default: icon + text
   return (
     <span
       className={clsx(
-        'inline-flex items-center font-medium transition-all',
+        'inline-flex items-center rounded-full ring-1 shadow-sm select-none',
+        'bg-white/80 dark:bg-neutral-900/60',
+        toneClass,
         S.container,
         S.gap,
-        colors.bg,
-        colors.text
+        className
       )}
-      title={`${label} ${timeString}`}
+      title={customTitle ?? aria}
+      aria-label={aria}
     >
-      <Icon className={clsx(S.icon, colors.icon)} />
-      <span className={clsx('whitespace-nowrap', S.text)}>
-        {label} <span className="tabular-nums font-semibold">{timeString}</span>
-      </span>
-      <Clock className={clsx(S.clockIcon, 'animate-pulse', colors.icon)} />
+      <Clock className={clsx(S.icon, 'shrink-0 align-middle')} aria-hidden />
+      <span className={clsx('font-medium truncate', S.text)}>{fullLabel}</span>
     </span>
   );
+}
+
+/* ───────────────────────────── Utils ───────────────────────────── */
+
+// Format time remaining (compact version for pill)
+function formatTime(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    const remainingHours = hours % 24;
+    return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+  }
+  if (hours > 0) {
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0
+      ? `${hours}h ${remainingMinutes}m`
+      : `${hours}h`;
+  }
+  if (minutes > 0) {
+    const remainingSeconds = seconds % 60;
+    return remainingSeconds > 0
+      ? `${minutes}m ${remainingSeconds}s`
+      : `${minutes}m`;
+  }
+  return `${seconds}s`;
+}
+
+function getToneClass(color: 'blue' | 'amber' | 'green' | 'red'): string {
+  switch (color) {
+    case 'blue':
+      return 'text-blue-700 dark:text-blue-300 ring-blue-200 dark:ring-blue-800/50';
+    case 'amber':
+      return 'text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-800/50';
+    case 'green':
+      return 'text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800/50';
+    case 'red':
+      return 'text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-800/50';
+  }
 }

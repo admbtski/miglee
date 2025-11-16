@@ -43,10 +43,6 @@ export function computeJoinState(
   now: Date,
   intent: IntentJoinConfig
 ): JoinStateResult {
-  const msToStart = intent.startAt.getTime() - now.getTime();
-  const msSinceStart = now.getTime() - intent.startAt.getTime();
-  const msToEnd = intent.endAt.getTime() - now.getTime();
-
   // 1) Okno otwarcia zapisów (przed startem)
   const opensAt =
     intent.joinOpensMinutesBeforeStart != null

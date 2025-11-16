@@ -69,13 +69,13 @@ export function EventAdminPanel({
           </button>
         )}
 
-        {/* Zarządzaj uczestnikami */}
+        {/* Zarządzaj wydarzeniem */}
         <button
           onClick={onManage}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-blue-700 transition-colors hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
         >
           <Users className="h-4 w-4" />
-          <span>Zarządzaj uczestnikami</span>
+          <span>Zarządzaj wydarzeniem</span>
           {event.membersStats && (
             <span className="ml-auto text-xs opacity-70">
               {event.membersStats.PENDING

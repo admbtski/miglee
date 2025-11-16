@@ -512,6 +512,17 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
+            {/* Admin Panel - tylko dla właściciela i moderatorów */}
+            <EventAdminPanel
+              event={eventData}
+              onEdit={() => setEditOpen(true)}
+              onManage={() => setManageOpen(true)}
+              onCancel={() => setCancelId(intentId)}
+              onDelete={() => setDeleteId(intentId)}
+              onCloseJoin={() => setCloseJoinId(intentId)}
+              onReopenJoin={() => setReopenJoinId(intentId)}
+            />
+
             {/* Countdown Timer */}
             <EventCountdownTimer
               startAt={new Date(intent.startAt)}
@@ -531,17 +542,6 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
             {/* Engagement Stats */}
             <EventEngagementStats event={eventData} />
-
-            {/* Admin Panel - tylko dla właściciela i moderatorów */}
-            <EventAdminPanel
-              event={eventData}
-              onEdit={() => setEditOpen(true)}
-              onManage={() => setManageOpen(true)}
-              onCancel={() => setCancelId(intentId)}
-              onDelete={() => setDeleteId(intentId)}
-              onCloseJoin={() => setCloseJoinId(intentId)}
-              onReopenJoin={() => setReopenJoinId(intentId)}
-            />
 
             <EventActions event={eventData} />
           </div>

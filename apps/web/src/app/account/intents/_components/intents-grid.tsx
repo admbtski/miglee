@@ -12,7 +12,6 @@ import type { IntentsResultCoreFragment_IntentsResult_items_Intent as IntentItem
 type IntentsGridProps = {
   items: IntentItem[];
   mode: 'owned' | 'member';
-  onPreview: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onLeave: (id: string) => void;
@@ -23,7 +22,6 @@ type IntentsGridProps = {
 export const IntentsGrid = memo(function IntentsGrid({
   items,
   mode,
-  onPreview,
   onEdit,
   onDelete,
   onLeave,
@@ -65,7 +63,6 @@ export const IntentsGrid = memo(function IntentsGrid({
           allowJoinLate={it.allowJoinLate}
           lateJoinCutoffMinutesAfterStart={it.lateJoinCutoffMinutesAfterStart}
           joinManuallyClosed={it.joinManuallyClosed}
-          onPreview={onPreview}
           onEdit={onEdit}
           onDelete={onDelete}
           onLeave={onLeave}

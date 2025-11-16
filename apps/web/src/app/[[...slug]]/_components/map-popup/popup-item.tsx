@@ -10,7 +10,7 @@ import { Plan, planTheme } from '@/components/ui/plan-theme';
 import { planAnimationConfig } from '@/components/ui/plan-animations';
 import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { computeJoinState } from '@/lib/utils/intent-join-state';
+import { computeEventStateAndStatus } from '@/lib/utils/event-status';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import { Avatar } from '@/components/ui/avatar';
@@ -100,98 +100,44 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     [intent.levels]
   );
 
-  // Compute join state using new logic with join window
-  const joinState = useMemo(() => {
-    // If canceled or deleted, skip computeJoinState
-    if (isDeleted || isCanceled) {
-      return null;
-    }
-
-    // Use new computeJoinState with join window logic
-    return computeJoinState(new Date(), {
-      startAt: new Date(startAt),
-      endAt: new Date(endAt),
+  // Compute join state and status using shared utility
+  const { joinState, status } = useMemo(
+    () =>
+      computeEventStateAndStatus({
+        now: new Date(),
+        startAt: new Date(startAt),
+        endAt: new Date(endAt),
+        isDeleted,
+        isCanceled,
+        isOngoing,
+        hasStarted,
+        joinOpensMinutesBeforeStart,
+        joinCutoffMinutesBeforeStart,
+        allowJoinLate,
+        lateJoinCutoffMinutesAfterStart,
+        joinManuallyClosed,
+        min: min ?? 2,
+        max: max ?? 2,
+        joinedCount: joinedCount ?? 0,
+        joinMode: 'OPEN',
+      }),
+    [
+      startAt,
+      endAt,
+      isDeleted,
+      isCanceled,
+      isOngoing,
+      hasStarted,
       joinOpensMinutesBeforeStart,
       joinCutoffMinutesBeforeStart,
-      allowJoinLate: allowJoinLate ?? true,
+      allowJoinLate,
       lateJoinCutoffMinutesAfterStart,
-      joinManuallyClosed: joinManuallyClosed ?? false,
-      min: min ?? 2,
-      max: max ?? 2,
-      joinedCount: joinedCount ?? 0,
-      joinMode: 'OPEN', // PopupItem doesn't have joinMode, default to OPEN
-    });
-  }, [
-    startAt,
-    endAt,
-    isDeleted,
-    isCanceled,
-    joinOpensMinutesBeforeStart,
-    joinCutoffMinutesBeforeStart,
-    allowJoinLate,
-    lateJoinCutoffMinutesAfterStart,
-    joinManuallyClosed,
-    min,
-    max,
-    joinedCount,
-  ]);
-
-  // Map new joinState to old status format for StatusBadge
-  const status = useMemo(() => {
-    if (isDeleted)
-      return {
-        label: 'Usunięte',
-        tone: 'error' as const,
-        reason: 'DELETED' as const,
-      };
-    if (isCanceled)
-      return {
-        label: 'Odwołane',
-        tone: 'warn' as const,
-        reason: 'CANCELED' as const,
-      };
-    if (isOngoing)
-      return {
-        label: 'Trwa teraz',
-        tone: 'info' as const,
-        reason: 'ONGOING' as const,
-      };
-
-    if (joinState) {
-      if (joinState.isManuallyClosed)
-        return {
-          label: 'Zablokowane',
-          tone: 'error' as const,
-          reason: 'LOCK' as const,
-        };
-      if (joinState.isBeforeOpen)
-        return {
-          label: 'Wkrótce',
-          tone: 'warn' as const,
-          reason: 'LOCK' as const,
-        };
-      if (joinState.isPreCutoffClosed)
-        return {
-          label: 'Zablokowane',
-          tone: 'error' as const,
-          reason: 'LOCK' as const,
-        };
-      if (joinState.isFull)
-        return {
-          label: 'Brak miejsc',
-          tone: 'error' as const,
-          reason: 'FULL' as const,
-        };
-    }
-
-    if (hasStarted)
-      return {
-        label: 'Rozpoczęte',
-        tone: 'error' as const,
-        reason: 'STARTED' as const,
-      };
-    return { label: 'Dostępne', tone: 'ok' as const, reason: 'OK' as const };
-  }, [isDeleted, isCanceled, isOngoing, hasStarted, joinState]);
+      joinManuallyClosed,
+      min,
+      max,
+      joinedCount,
+    ]
+  );
 
   const plan = (intent.plan as Plan) ?? 'default';
   const planStyling = useMemo(() => planTheme(plan), [plan]);

@@ -71,7 +71,6 @@ export default function IntentsPage() {
 
   // Modals
   const {
-    preview,
     editId,
     leaveId,
     cancelId,
@@ -82,8 +81,6 @@ export default function IntentsPage() {
     setCancelId,
     setDeleteId,
     setManageId,
-    openPreview,
-    closePreview,
     closeEdit,
     closeLeave,
     closeCancel,
@@ -188,11 +185,6 @@ export default function IntentsPage() {
   const handleOpenFilters = useCallback(() => setFiltersOpen(true), []);
   const handleCloseFilters = useCallback(() => setFiltersOpen(false), []);
 
-  const handlePreview = useCallback(
-    (id: string) => openPreview(id, flatItems),
-    [openPreview, flatItems]
-  );
-
   const handleApplyDraft = useCallback(() => {
     setStatus(draftStatus);
     setKinds(draftKinds);
@@ -293,7 +285,6 @@ export default function IntentsPage() {
           <IntentsGrid
             items={flatItems}
             mode={mode}
-            onPreview={handlePreview}
             onEdit={setEditId}
             onDelete={setDeleteId}
             onLeave={setLeaveId}
@@ -330,55 +321,6 @@ export default function IntentsPage() {
         cancelId={cancelId}
         onClose={closeCancel}
         onSuccess={() => {}}
-      />
-
-      {/* Preview */}
-      <EventDetailsModal
-        open={!!preview}
-        onClose={closePreview}
-        onJoin={closePreview}
-        detailsHref={
-          preview?.id ? `/intent/${encodeURIComponent(preview.id)}` : undefined
-        }
-        data={{
-          eventId: preview?.id,
-          title: preview?.title ?? '—',
-          startISO: preview?.startAt!,
-          endISO: preview?.endAt ?? preview?.startAt!,
-          organizerName: preview?.owner?.name ?? '—',
-          avatarUrl: preview?.owner?.imageUrl ?? '/avatar.svg',
-          description: preview?.description ?? '',
-          address: preview?.address ?? undefined,
-          onlineUrl: preview?.onlineUrl ?? undefined,
-          categories:
-            preview?.categories?.map((c) => c.names?.[appLanguage] ?? c.slug) ??
-            [],
-          tags: preview?.tags?.map((t) => t.label) ?? [],
-          levels: preview?.levels ?? [],
-          min: preview?.min ?? 2,
-          max: preview?.max ?? Math.max(2, preview?.min ?? 2),
-          joinedCount: preview?.joinedCount ?? 0,
-          verifiedAt: preview?.owner?.verifiedAt ?? undefined,
-          status: computeJoinState({
-            hasStarted: preview?.hasStarted ?? false,
-            isFull: preview?.isFull ?? false,
-            isOngoing: preview?.isOngoing ?? false,
-            isDeleted: preview?.isDeleted ?? false,
-            isCanceled: preview?.isCanceled ?? false,
-            withinLock: preview?.withinLock ?? false,
-            startAt: new Date(preview?.startAt ?? Date.now()),
-          }).status,
-          canJoin: preview?.canJoin ?? false,
-          membersVisibility:
-            (preview?.membersVisibility as MembersVisibility) ??
-            MembersVisibility.Public,
-          members: (preview?.members ?? []) as any,
-          addressVisibility:
-            (preview?.addressVisibility as AddressVisibility) ??
-            AddressVisibility.Public,
-          plan: 'default',
-          showSponsoredBadge: true,
-        }}
       />
 
       {/* Edit */}
