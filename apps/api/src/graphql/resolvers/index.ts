@@ -11,9 +11,10 @@ import {
   intentSponsorshipResolver,
   intentInviteLinksResolver,
   intentIsFavouriteResolver,
+  intentCoverBlurhashResolver,
 } from './fields/intent';
 import { intentMemberIntentResolver } from './fields/intent-member';
-import { UserFieldResolvers } from './fields/user';
+import { UserFieldResolvers, UserProfileFieldResolvers } from './fields/user';
 import { SessionUserFieldResolvers } from './fields/session-user';
 import { IntentInviteLinkFieldResolvers } from './fields/invite-link';
 
@@ -47,11 +48,13 @@ export const resolvers: Pick<
     sponsorship: intentSponsorshipResolver,
     inviteLinks: intentInviteLinksResolver,
     isFavourite: intentIsFavouriteResolver,
+    coverBlurhash: intentCoverBlurhashResolver,
   },
   IntentMember: {
     intent: intentMemberIntentResolver,
   },
   IntentInviteLink: IntentInviteLinkFieldResolvers,
   User: UserFieldResolvers,
+  UserProfile: UserProfileFieldResolvers,
   SessionUser: SessionUserFieldResolvers,
 };

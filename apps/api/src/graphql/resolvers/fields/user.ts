@@ -41,6 +41,26 @@ function canViewField(
 }
 
 export const UserFieldResolvers: Resolvers['User'] = {
+  avatarBlurhash: async (parent) => {
+    // If already present in parent, return it
+    if ('avatarBlurhash' in parent && parent.avatarBlurhash !== undefined) {
+      return parent.avatarBlurhash;
+    }
+
+    // If no avatarKey, no blurhash
+    if (!parent.avatarKey) {
+      return null;
+    }
+
+    // Fetch blurhash from MediaAsset
+    const mediaAsset = await prisma.mediaAsset.findUnique({
+      where: { key: parent.avatarKey },
+      select: { blurhash: true },
+    });
+
+    return mediaAsset?.blurhash || null;
+  },
+
   profile: async (parent, _args, context) => {
     if ('profile' in parent && parent.profile !== undefined) {
       return parent.profile;
@@ -162,5 +182,27 @@ export const UserFieldResolvers: Resolvers['User'] = {
     });
 
     return badges;
+  },
+};
+
+export const UserProfileFieldResolvers: Resolvers['UserProfile'] = {
+  coverBlurhash: async (parent) => {
+    // If already present in parent, return it
+    if ('coverBlurhash' in parent && parent.coverBlurhash !== undefined) {
+      return parent.coverBlurhash;
+    }
+
+    // If no coverKey, no blurhash
+    if (!parent.coverKey) {
+      return null;
+    }
+
+    // Fetch blurhash from MediaAsset
+    const mediaAsset = await prisma.mediaAsset.findUnique({
+      where: { key: parent.coverKey },
+      select: { blurhash: true },
+    });
+
+    return mediaAsset?.blurhash || null;
   },
 };

@@ -2,6 +2,26 @@ import type { Resolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 
 export const SessionUserFieldResolvers: Resolvers['SessionUser'] = {
+  avatarBlurhash: async (parent) => {
+    // If already present in parent, return it
+    if ('avatarBlurhash' in parent && parent.avatarBlurhash !== undefined) {
+      return parent.avatarBlurhash;
+    }
+
+    // If no avatarKey, no blurhash
+    if (!parent.avatarKey) {
+      return null;
+    }
+
+    // Fetch blurhash from MediaAsset
+    const mediaAsset = await prisma.mediaAsset.findUnique({
+      where: { key: parent.avatarKey },
+      select: { blurhash: true },
+    });
+
+    return mediaAsset?.blurhash || null;
+  },
+
   profile: async (parent, _args, _context) => {
     // If profile is already included in parent, return it
     if ('profile' in parent && parent.profile !== undefined) {

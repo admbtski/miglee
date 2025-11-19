@@ -136,3 +136,28 @@ export const intentIsFavouriteResolver: IntentResolvers['isFavourite'] =
       return !!favourite;
     }
   );
+
+/**
+ * Field resolver for Intent.coverBlurhash
+ * Returns blurhash from MediaAsset if coverKey exists
+ */
+export const intentCoverBlurhashResolver: IntentResolvers['coverBlurhash'] =
+  resolverWithMetrics('Intent', 'coverBlurhash', async (parent) => {
+    // If already present in parent, return it
+    if ('coverBlurhash' in parent && parent.coverBlurhash !== undefined) {
+      return parent.coverBlurhash;
+    }
+
+    // If no coverKey, no blurhash
+    if (!parent.coverKey) {
+      return null;
+    }
+
+    // Fetch blurhash from MediaAsset
+    const mediaAsset = await prisma.mediaAsset.findUnique({
+      where: { key: parent.coverKey },
+      select: { blurhash: true },
+    });
+
+    return mediaAsset?.blurhash || null;
+  });

@@ -15,6 +15,7 @@ fragment UserProfileCore on UserProfile {
   homeLat
   homeLng
   coverKey
+  coverBlurhash
   speaks
   interests
   preferredMode
@@ -99,6 +100,7 @@ fragment UserWithProfile on User {
   email
   name
   avatarKey
+  avatarBlurhash
   role
   verifiedAt
   suspendedAt

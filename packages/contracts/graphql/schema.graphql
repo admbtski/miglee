@@ -291,6 +291,7 @@ type SessionUser {
   email: String!
   role: Role!
   avatarKey: String
+  avatarBlurhash: String
   verifiedAt: DateTime
   profile: UserProfile
 }
@@ -308,6 +309,7 @@ type User {
   email: String!
   name: String!
   avatarKey: String
+  avatarBlurhash: String
   role: Role!
   verifiedAt: DateTime
   suspendedAt: DateTime
@@ -350,6 +352,7 @@ type UserProfile {
   homeLng: Float
 
   coverKey: String
+  coverBlurhash: String
 
   speaks: [String!]!
   interests: [String!]!
@@ -577,6 +580,7 @@ type Intent {
 
   # Media
   coverKey: String
+  coverBlurhash: String
 
   addressVisibility: AddressVisibility!
   membersVisibility: MembersVisibility!

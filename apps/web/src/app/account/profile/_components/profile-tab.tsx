@@ -13,6 +13,7 @@ import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-
 import { useAvatarUpload, useCoverUpload } from '@/lib/media/use-media-upload';
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 import { useMeQuery } from '@/lib/api/auth';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 const profileSchema = z.object({
   displayName: z
@@ -332,11 +333,14 @@ export function ProfileTab({ user }: ProfileTabProps) {
             Recommended: Square image, at least 512x512px
           </p>
           <div className="mt-2 flex items-center gap-4">
-            {buildAvatarUrl(user?.avatarKey, 'lg') ? (
-              <img
-                src={buildAvatarUrl(user?.avatarKey, 'lg')!}
+            {user?.avatarKey ? (
+              <BlurHashImage
+                src={buildAvatarUrl(user.avatarKey, 'lg')}
+                blurhash={user.avatarBlurhash}
                 alt="Avatar"
                 className="h-20 w-20 rounded-full object-cover"
+                width={160}
+                height={160}
               />
             ) : (
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
@@ -373,12 +377,15 @@ export function ProfileTab({ user }: ProfileTabProps) {
             Recommended: 1920x1080px (16:9 aspect ratio)
           </p>
           <div className="mt-2">
-            {buildUserCoverUrl(user?.profile?.coverKey, 'card') ? (
+            {user?.profile?.coverKey ? (
               <div className="relative h-32 w-full overflow-hidden rounded-lg">
-                <img
-                  src={buildUserCoverUrl(user?.profile?.coverKey, 'card')!}
+                <BlurHashImage
+                  src={buildUserCoverUrl(user.profile.coverKey, 'card')}
+                  blurhash={user.profile.coverBlurhash}
                   alt="Cover"
                   className="h-full w-full object-cover"
+                  width={480}
+                  height={270}
                 />
               </div>
             ) : (

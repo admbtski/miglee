@@ -8,6 +8,7 @@ fragment SessionUserCore on SessionUser {
   email
   role
   avatarKey
+  avatarBlurhash
   verifiedAt
 }
 
@@ -17,6 +18,7 @@ fragment UserCore on User {
   name
   role
   avatarKey
+  avatarBlurhash
   verifiedAt
   suspendedAt
   suspensionReason
@@ -202,6 +204,7 @@ fragment IntentCore on Intent {
 
   # Media
   coverKey
+  coverBlurhash
 
   addressVisibility
   membersVisibility
