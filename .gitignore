@@ -99,9 +99,6 @@ temp/
 ehthumbs.db
 Thumbs.db
 
-# Prisma
-migrations/
-
 # GraphQL generated files
 **/__generated__/
 
