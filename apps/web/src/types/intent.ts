@@ -19,6 +19,10 @@ export type IntentListItem = {
   lat?: number | null;
   lng?: number | null;
 
+  // Cover image
+  coverKey?: string | null;
+  coverBlurhash?: string | null;
+
   joinedCount: number;
   min: number;
   max: number;

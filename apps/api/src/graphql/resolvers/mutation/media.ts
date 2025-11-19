@@ -229,7 +229,11 @@ export const confirmMediaUpload: MutationResolvers['confirmMediaUpload'] =
         }
       }
 
-      return true;
+      return {
+        success: true,
+        mediaKey: asset.key,
+        mediaAssetId: asset.mediaAssetId,
+      };
     }
   );
 
@@ -270,6 +274,17 @@ async function validateUploadPurpose(
         });
       }
 
+      // Check if user is global admin first
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+
+      if (user?.role === 'ADMIN') {
+        // Global admin can upload cover for any intent
+        return entityId;
+      }
+
       // Check if user is owner or moderator of the intent
       const intent = await prisma.intent.findUnique({
         where: { id: entityId },
@@ -296,7 +311,7 @@ async function validateUploadPurpose(
         intent.ownerId === userId || intent.members.length > 0;
       if (!isOwnerOrMod) {
         throw new GraphQLError(
-          'Only intent owner or moderator can upload cover',
+          'Only intent owner, moderator, or admin can upload cover',
           {
             extensions: { code: 'FORBIDDEN' },
           }

@@ -39,6 +39,10 @@ export function mapIntentToEventCardProps(
     title: item.title ?? '-',
     description: item.description ?? '-',
 
+    // Cover image
+    coverKey: item.coverKey ?? null,
+    coverBlurhash: item.coverBlurhash ?? null,
+
     address: item.address ?? undefined,
     onlineUrl: item.onlineUrl ?? undefined,
 

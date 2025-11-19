@@ -15,5 +15,9 @@ mutation ConfirmMediaUpload(
     purpose: $purpose
     entityId: $entityId
     uploadKey: $uploadKey
-  )
+  ) {
+    success
+    mediaKey
+    mediaAssetId
+  }
 }

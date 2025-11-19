@@ -25,12 +25,8 @@ import { useAutoSaveDraft } from '../hooks/use-auto-save-draft';
 import { JoinFormQuestion } from './join-form-step';
 import { toast } from '@/lib/utils';
 import { CoverStep } from './cover-step';
-import { gqlClient } from '@/lib/api/client';
-import {
-  GetUploadUrlDocument,
-  ConfirmMediaUploadDocument,
-  MediaPurpose,
-} from '@/lib/api/__generated__/react-query-update';
+import { uploadIntentCover } from '@/lib/media/upload-intent-cover';
+import { useQueryClient } from '@tanstack/react-query';
 
 const STEP_META = [
   { key: 'basics', label: 'What & Who', Icon: SquarePenIcon },
@@ -305,6 +301,8 @@ export function CreateEditIntentModal({
 
   const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
+  const queryClient = useQueryClient();
+
   // Cover image handlers
   const handleCoverImageSelected = (file: File) => {
     setCoverImageFile(file);
@@ -336,65 +334,36 @@ export function CreateEditIntentModal({
             console.log('[Submit] Intent created:', resultIntentId);
             console.log('[Submit] Uploading cover image...');
 
-            setIsCoverUploading(true);
-
             try {
-              // Step 1: Get upload URL
-              console.log('[Submit] Step 1: Getting upload URL');
-              const uploadUrlResponse = await gqlClient.request(
-                GetUploadUrlDocument,
-                {
-                  purpose: MediaPurpose.IntentCover,
-                  entityId: resultIntentId,
-                }
-              );
-
-              const { uploadUrl, uploadKey, provider } =
-                uploadUrlResponse.getUploadUrl;
-              console.log('[Submit] Got upload URL, provider:', provider);
-
-              // Step 2: Upload file
-              console.log('[Submit] Step 2: Uploading file');
-              if (provider === 'S3') {
-                const response = await fetch(uploadUrl, {
-                  method: 'PUT',
-                  body: coverImageFile,
-                  headers: { 'Content-Type': coverImageFile.type },
-                });
-                if (!response.ok)
-                  throw new Error(`Upload failed: ${response.statusText}`);
-              } else {
-                const formData = new FormData();
-                formData.append('file', coverImageFile);
-                const response = await fetch(uploadUrl, {
-                  method: 'POST',
-                  body: formData,
-                });
-                if (!response.ok)
-                  throw new Error(`Upload failed: ${response.statusText}`);
-              }
-
-              // Step 3: Confirm upload
-              console.log('[Submit] Step 3: Confirming upload');
-              await gqlClient.request(ConfirmMediaUploadDocument, {
-                purpose: MediaPurpose.IntentCover,
-                entityId: resultIntentId,
-                uploadKey,
+              await uploadIntentCover(resultIntentId, coverImageFile, {
+                onStart: () => setIsCoverUploading(true),
+                onSuccess: () => {
+                  console.log('[Submit] Cover upload completed successfully!');
+                  // Invalidate queries to refresh Intent data
+                  queryClient.invalidateQueries({
+                    queryKey: ['GetIntent', resultIntentId],
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['GetIntents'] });
+                  // Reset cover state
+                  setCoverImageFile(null);
+                  setCoverImagePreview(null);
+                  toast.success('Cover został dodany pomyślnie');
+                },
+                onError: (error) => {
+                  console.error('[Submit] Cover upload failed:', error);
+                  toast.error(
+                    'Event utworzony, ale nie udało się dodać covera',
+                    {
+                      description:
+                        'Możesz spróbować dodać cover później z ustawień eventu',
+                    }
+                  );
+                },
+                onFinally: () => setIsCoverUploading(false),
               });
-
-              console.log('[Submit] Cover upload completed successfully!');
-
-              // Reset cover state
-              setCoverImageFile(null);
-              setCoverImagePreview(null);
             } catch (uploadErr) {
-              console.error('[Submit] Cover upload failed:', uploadErr);
-              toast.error('Event created but cover upload failed', {
-                description:
-                  'You can add a cover image later from event settings',
-              });
-            } finally {
-              setIsCoverUploading(false);
+              // Error already handled in callbacks
+              console.error('[Submit] Cover upload error:', uploadErr);
             }
           }
 

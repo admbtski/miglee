@@ -303,6 +303,12 @@ type PresignedUpload {
   provider: String!
 }
 
+type ConfirmMediaUploadPayload {
+  success: Boolean!
+  mediaKey: String!
+  mediaAssetId: ID!
+}
+
 "User"
 type User {
   id: ID!
@@ -1752,7 +1758,7 @@ type Mutation {
     purpose: MediaPurpose!
     entityId: ID!
     uploadKey: String!
-  ): Boolean!
+  ): ConfirmMediaUploadPayload!
 
   # dev only
   devLogin(name: String!): SessionUser
