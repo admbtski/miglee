@@ -25,6 +25,8 @@ import {
 import Link from 'next/link';
 import { useCallback, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
+import { buildIntentCoverUrl } from '@/lib/media/url';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -47,6 +49,10 @@ export interface EventCardProps {
   organizerName: string;
   verifiedAt?: string;
   plan?: Plan;
+
+  // Cover image
+  coverKey?: string | null;
+  coverBlurhash?: string | null;
 
   // Capacity & joining
   joinedCount: number;
@@ -149,6 +155,8 @@ export function EventCard({
   isHybrid,
   isOnline,
   isOnsite,
+  coverKey,
+  coverBlurhash,
   onHover,
 }: EventCardProps) {
   const start = useMemo(() => parseISO(startISO), [startISO]);
@@ -263,14 +271,18 @@ export function EventCard({
       )}
       {/* Cover Image - Visual Only (no text info) */}
       <div className="relative -mx-4 -mt-4 mb-3 h-40 overflow-hidden rounded-t-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
-        <img
-          src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=2070&auto=format&fit=crop"
-          alt={title}
-          className="h-full w-full object-cover brightness-90 contrast-90"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
+        {coverKey ? (
+          <BlurHashImage
+            src={buildIntentCoverUrl(coverKey, 'card')}
+            blurhash={coverBlurhash}
+            alt={title}
+            className="h-full w-full object-cover brightness-90 contrast-90"
+            width={480}
+            height={270}
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+        )}
         {/* Subtle gradient for better visibility of category tags (top) and author (bottom) */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/0 to-black/40" />
 

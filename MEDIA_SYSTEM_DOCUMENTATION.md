@@ -697,14 +697,31 @@ miglee/
 │   └── web/
 │       └── src/
 │           ├── lib/
+│           │   ├── api/
+│           │   │   ├── client.ts               # GraphQL client
+│           │   │   └── __generated__/
+│           │   │       └── react-query-update.ts  # Wygenerowane typy
 │           │   └── media/
 │           │       ├── url.ts                   # Helpery buildAvatarUrl, etc.
 │           │       └── use-media-upload.tsx     # Hooki do uploadu
+│           ├── components/
+│           │   └── ui/
+│           │       ├── blurhash-image.tsx       # Komponent BlurHash
+│           │       └── image-crop-modal.tsx     # Modal do cropowania
+│           ├── features/
+│           │   └── intents/
+│           │       └── components/
+│           │           ├── cover-step.tsx       # Upload cover dla Intent
+│           │           ├── create-edit-intent-modal.tsx  # Modal Intent
+│           │           └── privacy-step.tsx     # Step z join form
 │           └── app/
-│               └── account/
-│                   └── profile/
-│                       └── _components/
-│                           └── profile-tab.tsx  # Integracja uploadu
+│               ├── account/
+│               │   └── profile/
+│               │       └── _components/
+│               │           └── profile-tab.tsx  # Integracja uploadu
+│               └── [[...slug]]/
+│                   └── _components/
+│                       └── event-card.tsx       # Wyświetlanie Intent cover
 │
 └── packages/
     └── contracts/
@@ -1153,12 +1170,805 @@ Dla produkcji wymagane jest skonfigurowanie S3 i opcjonalnie CDN.
 
 ---
 
+## 🎨 Intent Cover Upload - Wymagania i Implementacja
+
+### 📋 Wymagania biznesowe
+
+#### Rodzaj zdjęcia
+
+- **Na dziś:** Cover Intenta (jedno zdjęcie na Intent)
+- **Później:** Możliwość rozszerzenia na galerię (`GALLERY_IMAGE`)
+
+#### Gdzie działa
+
+- **Formularz Create Intent:** Użytkownik może od razu dodać cover
+- **Formularz Edit Intent:** Użytkownik może zmienić istniejący cover
+
+#### Zasady
+
+- ✅ Cover **nie jest obowiązkowy** - Intent może istnieć bez zdjęcia
+- ✅ Jeśli upload się nie uda, ale Intent został utworzony:
+  - Event nadal istnieje w bazie
+  - Użytkownik dostaje komunikat: _"Event utworzony, ale cover nie wszedł – możesz dodać później"_
+  - Nie blokuje to całego procesu tworzenia
+
+#### Bezpieczeństwo i uprawnienia
+
+Cover Intenta może zmienić:
+
+- ✅ **Owner** (twórca Intenta)
+- ✅ **Moderator** Intenta
+- ✅ **Global admin**
+- ❌ Zwykły uczestnik **nie może**
+
+---
+
+### 🔧 Implementacja Backend
+
+#### GraphQL Schema
+
+**Enum `MediaPurpose`** (już zaimplementowany):
+
+```graphql
+enum MediaPurpose {
+  USER_AVATAR
+  USER_COVER
+  INTENT_COVER
+  GALLERY_IMAGE
+}
+```
+
+**Typ `PresignedUpload`**:
+
+```graphql
+type PresignedUpload {
+  uploadUrl: String! # URL do uploadu (presigned S3 lub /api/upload/local)
+  uploadKey: String! # Klucz tymczasowy (tmp/uploads/...)
+  provider: String! # 'S3' lub 'LOCAL'
+}
+```
+
+**Typ `ConfirmMediaUploadPayload`**:
+
+```graphql
+type ConfirmMediaUploadPayload {
+  success: Boolean!
+  mediaKey: String! # Finalny MediaAsset.key
+  mediaAssetId: ID!
+}
+```
+
+**Mutacje**:
+
+```graphql
+type Mutation {
+  getUploadUrl(
+    purpose: MediaPurpose!
+    entityId: ID! # Dla INTENT_COVER → intentId
+  ): PresignedUpload!
+
+  confirmMediaUpload(
+    purpose: MediaPurpose!
+    entityId: ID! # Dla INTENT_COVER → intentId
+    uploadKey: String!
+  ): ConfirmMediaUploadPayload!
+}
+```
+
+**Typ `Intent`** (fragment):
+
+```graphql
+type Intent {
+  id: ID!
+  title: String!
+  coverKey: String # Klucz do MediaAsset
+  coverBlurhash: String # BlurHash dla placeholdera
+}
+```
+
+#### Resolver `getUploadUrl` dla `INTENT_COVER`
+
+**Cel:** Wygenerować tymczasowy `uploadKey` + link do uploadu surowego pliku.
+
+**Logika:**
+
+```typescript
+async function getUploadUrl(
+  parent: unknown,
+  args: { purpose: MediaPurpose; entityId: string },
+  ctx: MercuriusContext
+) {
+  const { purpose, entityId } = args;
+
+  if (purpose === 'INTENT_COVER') {
+    // 1. Sprawdź czy Intent istnieje
+    const intent = await prisma.intent.findUnique({
+      where: { id: entityId },
+      include: { members: true },
+    });
+
+    if (!intent) {
+      throw new Error('Intent not found');
+    }
+
+    // 2. Sprawdź uprawnienia (owner/moderator/admin)
+    const canManage = await validateIntentPermissions(ctx.user.id, intent, [
+      'OWNER',
+      'MODERATOR',
+      'ADMIN',
+    ]);
+
+    if (!canManage) {
+      throw new Error('Unauthorized: You cannot manage this Intent cover');
+    }
+
+    // 3. Wygeneruj uploadKey
+    const uploadKey = `tmp/uploads/intents/${entityId}/${createId()}`;
+
+    // 4. Zwróć URL w zależności od providera
+    if (MEDIA_STORAGE_PROVIDER === 'LOCAL') {
+      return {
+        uploadUrl: `${ASSETS_BASE_URL}/api/upload/local?uploadKey=${encodeURIComponent(uploadKey)}&mimeType=image/webp`,
+        uploadKey,
+        provider: 'LOCAL',
+      };
+    } else {
+      // S3: generuj presigned URL
+      const presignedUrl = await s3Storage.generatePresignedUploadUrl({
+        key: uploadKey,
+        mimeType: 'image/webp',
+        maxSizeBytes: 10 * 1024 * 1024, // 10MB
+      });
+
+      return {
+        uploadUrl: presignedUrl.uploadUrl,
+        uploadKey,
+        provider: 'S3',
+      };
+    }
+  }
+
+  // ... inne purpose
+}
+```
+
+#### Resolver `confirmMediaUpload` dla `INTENT_COVER`
+
+**Cel:** Wziąć surowy plik zza `uploadKey`, przetworzyć, zapisać jako `MediaAsset` i podpiąć do Intenta.
+
+**Logika:**
+
+```typescript
+async function confirmMediaUpload(
+  parent: unknown,
+  args: {
+    purpose: MediaPurpose;
+    entityId: string;
+    uploadKey: string;
+  },
+  ctx: MercuriusContext
+) {
+  const { purpose, entityId, uploadKey } = args;
+
+  if (purpose === 'INTENT_COVER') {
+    // 1. Walidacja uprawnień
+    const intent = await prisma.intent.findUnique({
+      where: { id: entityId },
+      include: { members: true },
+    });
+
+    if (!intent) {
+      throw new Error('Intent not found');
+    }
+
+    const canManage = await validateIntentPermissions(ctx.user.id, intent, [
+      'OWNER',
+      'MODERATOR',
+      'ADMIN',
+    ]);
+
+    if (!canManage) {
+      throw new Error('Unauthorized');
+    }
+
+    // 2. Odczyt surowego bufora z tymczasowego storage
+    let tempBuffer: Buffer;
+
+    if (MEDIA_STORAGE_PROVIDER === 'LOCAL') {
+      const tmpPath = path.join(UPLOADS_TMP_PATH, uploadKey);
+      tempBuffer = await fs.promises.readFile(tmpPath);
+      console.log('[confirmMediaUpload] Read from disk:', tmpPath);
+    } else {
+      // S3: pobierz z tmp/uploads/...
+      const stream = await s3Storage.getOriginalStream(uploadKey);
+      if (!stream) throw new Error('Temporary file not found in S3');
+      tempBuffer = await streamToBuffer(stream);
+      console.log('[confirmMediaUpload] Read from S3:', uploadKey);
+    }
+
+    // 3. Przetworzenie i zapis oryginału
+    const {
+      mediaAssetId,
+      key: mediaKey,
+      blurhash,
+    } = await createMediaAssetFromUpload({
+      ownerId: ctx.user.id,
+      purpose: 'INTENT_COVER',
+      tempBuffer,
+    });
+
+    console.log('[confirmMediaUpload] MediaAsset created:', {
+      mediaAssetId,
+      mediaKey,
+    });
+
+    // 4. Update Intenta + usunięcie starego covera
+    const oldCoverKey = intent.coverKey;
+
+    await prisma.intent.update({
+      where: { id: entityId },
+      data: { coverKey: mediaKey },
+    });
+
+    console.log('[confirmMediaUpload] Intent.coverKey updated:', mediaKey);
+
+    // 5. Usunięcie poprzedniego covera (opcjonalnie)
+    if (oldCoverKey && oldCoverKey !== mediaKey) {
+      console.log('[confirmMediaUpload] Deleting old cover:', oldCoverKey);
+      await deleteMediaAsset(oldCoverKey);
+    }
+
+    // 6. Usunięcie pliku tymczasowego
+    if (MEDIA_STORAGE_PROVIDER === 'LOCAL') {
+      const tmpPath = path.join(UPLOADS_TMP_PATH, uploadKey);
+      await fs.promises.unlink(tmpPath).catch(() => {});
+      console.log('[confirmMediaUpload] Deleted temp file:', tmpPath);
+    } else {
+      await s3Storage.deleteObject(uploadKey);
+      console.log('[confirmMediaUpload] Deleted temp S3 object:', uploadKey);
+    }
+
+    return {
+      success: true,
+      mediaKey,
+      mediaAssetId,
+    };
+  }
+
+  // ... inne purpose
+}
+```
+
+#### Helper: `validateIntentPermissions`
+
+```typescript
+async function validateIntentPermissions(
+  userId: string,
+  intent: Intent & { members: IntentMember[] },
+  allowedRoles: ('OWNER' | 'MODERATOR' | 'ADMIN')[]
+): Promise<boolean> {
+  // 1. Sprawdź czy user jest global admin
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (user?.role === 'ADMIN' && allowedRoles.includes('ADMIN')) {
+    return true;
+  }
+
+  // 2. Sprawdź czy user jest owner
+  if (intent.createdById === userId && allowedRoles.includes('OWNER')) {
+    return true;
+  }
+
+  // 3. Sprawdź czy user jest moderatorem
+  const member = intent.members.find((m) => m.userId === userId);
+  if (member?.role === 'MODERATOR' && allowedRoles.includes('MODERATOR')) {
+    return true;
+  }
+
+  return false;
+}
+```
+
+---
+
+### 🎨 Implementacja Frontend
+
+### Komponent `CoverStep`
+
+**Plik:** `apps/web/src/features/intents/components/cover-step.tsx`
+
+Dedykowany komponent do uploadu cover image dla Intentów z pełną funkcjonalnością crop.
+
+#### Funkcjonalności:
+
+- ✅ **Crop modal** z aspect ratio 16:9 (`ImageCropModal`)
+- ✅ **Walidacja plików** (typ: `image/*`, max: 10MB)
+- ✅ **Preview** z możliwością usunięcia
+- ✅ **Loading state** podczas uploadu
+- ✅ **Placeholder** gdy brak obrazka
+- ✅ **Responsywny UI** z Tailwind CSS
+
+#### Props:
+
+```typescript
+interface CoverStepProps {
+  coverPreview: string | null;
+  isUploading?: boolean;
+  onImageSelected: (file: File) => void;
+  onImageRemove: () => void;
+}
+```
+
+#### Przykład użycia:
+
+```typescript
+<CoverStep
+  coverPreview={coverImagePreview}
+  isUploading={isCoverUploading}
+  onImageSelected={handleCoverImageSelected}
+  onImageRemove={handleCoverImageRemove}
+/>
+```
+
+### Flow uploadu Intent Cover
+
+**Problem:** `intentId` jest znane dopiero **po** utworzeniu Intenta, więc nie można użyć `useIntentCoverUpload` z góry.
+
+**Rozwiązanie:** Upload odbywa się **synchronicznie** w funkcji `submit()` **przed** zamknięciem modala.
+
+#### Implementacja w `create-edit-intent-modal.tsx`:
+
+```typescript
+const submit = handleSubmit(
+  useCallback(async (values) => {
+    try {
+      // 1. Utwórz Intent
+      const resultIntentId = await onSubmit(
+        values as IntentFormValues,
+        isEdit ? undefined : joinFormQuestions,
+        coverImageFile
+      );
+
+      // 2. Jeśli jest cover image, uploaduj PRZED zamknięciem modala
+      if (resultIntentId && coverImageFile) {
+        console.log('[Submit] Intent created:', resultIntentId);
+        console.log('[Submit] Uploading cover image...');
+
+        setIsCoverUploading(true);
+
+        try {
+          // Step 1: Get upload URL
+          const uploadUrlResponse = await gqlClient.request(
+            GetUploadUrlDocument,
+            {
+              purpose: MediaPurpose.IntentCover,
+              entityId: resultIntentId, // ✅ Teraz mamy intentId!
+            }
+          );
+
+          const { uploadUrl, uploadKey, provider } =
+            uploadUrlResponse.getUploadUrl;
+
+          // Step 2: Upload file
+          if (provider === 'S3') {
+            const response = await fetch(uploadUrl, {
+              method: 'PUT',
+              body: coverImageFile,
+              headers: { 'Content-Type': coverImageFile.type },
+            });
+            if (!response.ok)
+              throw new Error(`Upload failed: ${response.statusText}`);
+          } else {
+            const formData = new FormData();
+            formData.append('file', coverImageFile);
+            const response = await fetch(uploadUrl, {
+              method: 'POST',
+              body: formData,
+            });
+            if (!response.ok)
+              throw new Error(`Upload failed: ${response.statusText}`);
+          }
+
+          // Step 3: Confirm upload
+          await gqlClient.request(ConfirmMediaUploadDocument, {
+            purpose: MediaPurpose.IntentCover,
+            entityId: resultIntentId,
+            uploadKey,
+          });
+
+          console.log('[Submit] Cover upload completed successfully!');
+
+          // Reset cover state
+          setCoverImageFile(null);
+          setCoverImagePreview(null);
+        } catch (uploadErr) {
+          console.error('[Submit] Cover upload failed:', uploadErr);
+          toast.error('Event created but cover upload failed', {
+            description: 'You can add a cover image later from event settings',
+          });
+        } finally {
+          setIsCoverUploading(false);
+        }
+      }
+
+      // 3. Dopiero teraz zamknij modal
+      onClose();
+    } catch (error) {
+      console.error('[Submit] Failed to create intent:', error);
+    }
+  }, [onSubmit, coverImageFile, ...])
+);
+```
+
+#### Kluczowe różnice vs User Avatar/Cover:
+
+| Aspekt       | User Avatar/Cover          | Intent Cover                    |
+| ------------ | -------------------------- | ------------------------------- |
+| **Hook**     | `useAvatarUpload(userId)`  | Bezpośrednie wywołanie GraphQL  |
+| **Timing**   | Upload w dowolnym momencie | Upload **po** utworzeniu Intent |
+| **entityId** | Znane z góry (`user.id`)   | Znane dopiero po `onSubmit()`   |
+| **Modal**    | Może zamknąć się od razu   | Czeka na zakończenie uploadu    |
+| **Loading**  | `hook.isUploading`         | `isCoverUploading` state        |
+
+#### Sekwencja kroków:
+
+```
+1. User wypełnia formularz Intent (steps 0-2)
+2. User wybiera cover image w step 3 (CoverStep)
+   → ImageCropModal (16:9)
+   → handleCoverImageSelected(file)
+   → setCoverImageFile(file)
+   → setCoverImagePreview(base64)
+3. User przechodzi do step 4 (Review)
+4. User klika "Create Event"
+5. submit() wywołuje onSubmit()
+   → Intent tworzy się w DB
+   → zwraca resultIntentId
+6. if (resultIntentId && coverImageFile):
+   → setIsCoverUploading(true)
+   → getUploadUrl(INTENT_COVER, resultIntentId)
+   → Upload file (PUT/POST)
+   → confirmMediaUpload(INTENT_COVER, resultIntentId, uploadKey)
+   → Intent.coverKey aktualizowany w DB
+   → setIsCoverUploading(false)
+7. onClose() → modal zamyka się
+8. event-card.tsx wyświetla cover z BlurHash
+```
+
+### Wyświetlanie Intent Cover w `event-card.tsx`
+
+```typescript
+<BlurHashImage
+  src={buildIntentCoverUrl(coverKey, 'card')}
+  blurhash={coverBlurhash}
+  alt={title}
+  className="h-full w-full object-cover"
+  width={480}
+  height={270}
+/>
+```
+
+**Fallback:** Jeśli `coverKey` jest `null`, wyświetlany jest gradient:
+
+```typescript
+{coverKey ? (
+  <BlurHashImage ... />
+) : (
+  <div className="h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+)}
+```
+
+### Privacy Step - Join Form Integration
+
+**Plik:** `apps/web/src/features/intents/components/privacy-step.tsx`
+
+Join Form został **zintegrowany** w Privacy Step i wyświetla się tylko gdy `joinMode === 'REQUEST'`:
+
+```typescript
+{joinMode === 'REQUEST' && onJoinFormQuestionsChange && (
+  <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
+    <label className="mb-1 block text-sm font-medium">
+      Pytania w formularzu prośby o dołączenie
+    </label>
+    <p className="mb-4 text-xs text-zinc-500">
+      Dodaj niestandardowe pytania (opcjonalne).
+    </p>
+    <JoinFormStep
+      questions={joinFormQuestions || []}
+      onChange={onJoinFormQuestionsChange}
+      maxQuestions={5}
+    />
+  </div>
+)}
+```
+
+**Zmiana:** Usunięto dedykowany step "Join Form" - teraz jest częścią step "Settings".
+
+---
+
+### 🔄 Helper Function: `uploadIntentCover`
+
+Rekomendowany helper do enkapsulacji logiki uploadu cover dla Intenta:
+
+```typescript
+/**
+ * Upload cover image dla Intenta
+ * @param intentId - ID Intenta
+ * @param file - Plik obrazu (po cropie)
+ * @returns Promise<void>
+ */
+async function uploadIntentCover(intentId: string, file: File): Promise<void> {
+  setIsCoverUploading(true);
+
+  try {
+    // 1. getUploadUrl
+    console.log('[uploadIntentCover] Step 1: Getting upload URL');
+    const uploadUrlResponse = await gqlClient.request(GetUploadUrlDocument, {
+      purpose: MediaPurpose.IntentCover,
+      entityId: intentId,
+    });
+
+    const { uploadUrl, uploadKey, provider } = uploadUrlResponse.getUploadUrl;
+
+    console.log('[uploadIntentCover] Got upload URL, provider:', provider);
+
+    // 2. Upload raw file
+    console.log('[uploadIntentCover] Step 2: Uploading file');
+    if (provider === 'S3') {
+      const res = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      });
+      if (!res.ok) {
+        throw new Error(`Upload failed: ${res.statusText}`);
+      }
+    } else {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        throw new Error(`Upload failed: ${res.statusText}`);
+      }
+    }
+
+    // 3. confirmMediaUpload
+    console.log('[uploadIntentCover] Step 3: Confirming upload');
+    await gqlClient.request(ConfirmMediaUploadDocument, {
+      purpose: MediaPurpose.IntentCover,
+      entityId: intentId,
+      uploadKey,
+    });
+
+    console.log('[uploadIntentCover] ✅ Cover uploaded successfully!');
+
+    // 4. Invalidate queries
+    await queryClient.invalidateQueries({ queryKey: ['GetIntent', intentId] });
+    await queryClient.invalidateQueries({ queryKey: ['GetIntents'] });
+
+    // 5. Wyczyść stan
+    setCoverImageFile(null);
+    setCoverImagePreview(null);
+
+    toast.success('Cover został dodany pomyślnie');
+  } catch (error) {
+    console.error('[uploadIntentCover] ❌ Upload failed:', error);
+    toast.error('Event utworzony, ale nie udało się dodać covera', {
+      description: 'Możesz spróbować dodać cover później z ustawień eventu',
+    });
+    throw error; // Re-throw jeśli chcesz obsłużyć wyżej
+  } finally {
+    setIsCoverUploading(false);
+  }
+}
+```
+
+### 📝 Flow dla Create Intent
+
+```typescript
+const submit = handleSubmit(
+  useCallback(
+    async (values: IntentFormValues) => {
+      try {
+        setIsSubmitting(true);
+
+        // 1. Utwórz Intent (bez covera)
+        console.log('[Submit] Creating Intent...');
+        const resultIntentId = await onSubmit(
+          values,
+          isEdit ? undefined : joinFormQuestions,
+          null // coverImageFile NIE jest przekazywany do onSubmit
+        );
+
+        if (!resultIntentId) {
+          throw new Error('Failed to create Intent');
+        }
+
+        console.log('[Submit] Intent created:', resultIntentId);
+
+        // 2. Jeśli jest cover, uploaduj go
+        if (coverImageFile) {
+          console.log('[Submit] Uploading cover...');
+          try {
+            await uploadIntentCover(resultIntentId, coverImageFile);
+          } catch (uploadErr) {
+            // Cover upload failed, ale Intent istnieje
+            // Error już obsłużony w uploadIntentCover (toast)
+            console.error('[Submit] Cover upload failed, but Intent created');
+          }
+        }
+
+        // 3. Wyczyść draft i zamknij modal
+        if (!isEdit) {
+          clearDraft();
+        }
+
+        onClose();
+
+        // 4. Success message
+        toast.success(
+          isEdit ? 'Event zaktualizowany' : 'Event utworzony pomyślnie'
+        );
+      } catch (error) {
+        console.error('[Submit] Failed to create/update Intent:', error);
+        toast.error('Nie udało się utworzyć eventu');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [onSubmit, isEdit, joinFormQuestions, coverImageFile, clearDraft, onClose]
+  )
+);
+```
+
+### 📝 Flow dla Edit Intent
+
+```typescript
+const handleEditSubmit = async (values: IntentFormValues) => {
+  try {
+    setIsSubmitting(true);
+
+    // 1. Update Intent (inne pola, nie rusza coverKey)
+    console.log('[EditSubmit] Updating Intent fields...');
+    await updateIntentMutation({
+      id: intentId,
+      ...values,
+    });
+
+    console.log('[EditSubmit] Intent updated');
+
+    // 2. Jeśli user wybrał nowy cover, uploaduj go
+    if (coverImageFile) {
+      console.log('[EditSubmit] Uploading new cover...');
+      try {
+        await uploadIntentCover(intentId, coverImageFile);
+      } catch (uploadErr) {
+        // Cover upload failed
+        console.error('[EditSubmit] Cover upload failed');
+      }
+    }
+
+    // 3. Zamknij modal
+    onClose();
+
+    toast.success('Event zaktualizowany pomyślnie');
+  } catch (error) {
+    console.error('[EditSubmit] Failed to update Intent:', error);
+    toast.error('Nie udało się zaktualizować eventu');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+```
+
+---
+
+## ✅ Checklist implementacji Intent Cover
+
+### Backend
+
+- [x] **Model `MediaAsset`** - już zaimplementowany
+- [x] **Pole `Intent.coverKey`** - już dodane do schema
+- [x] **Pole `Intent.coverBlurhash`** - już dodane (field resolver)
+- [x] **Interfejs `MediaStorage`** - już zaimplementowany
+- [x] **Staging w `UPLOADS_TMP_PATH`** - już działa
+- [ ] **`getUploadUrl` dla `INTENT_COVER`:**
+  - [ ] Walidacja `intentId` (czy Intent istnieje)
+  - [ ] Walidacja uprawnień (owner/moderator/admin)
+  - [ ] Generowanie `uploadKey` dla Intenta: `tmp/uploads/intents/${intentId}/${cuid()}`
+  - [ ] Zwracanie presigned URL (S3) lub local endpoint
+- [ ] **`confirmMediaUpload` dla `INTENT_COVER`:**
+  - [ ] Walidacja uprawnień
+  - [ ] Odczyt surowego pliku z `UPLOADS_TMP_PATH` (LOCAL) lub S3
+  - [ ] Wywołanie `createMediaAssetFromUpload({ purpose: 'INTENT_COVER' })`
+  - [ ] Update `Intent.coverKey` w bazie
+  - [ ] Usunięcie starego covera (jeśli istnieje)
+  - [ ] Usunięcie pliku tymczasowego
+  - [ ] Zwrócenie `{ success, mediaKey, mediaAssetId }`
+- [ ] **Helper `validateIntentPermissions`:**
+  - [ ] Sprawdzanie czy user jest global admin
+  - [ ] Sprawdzanie czy user jest owner Intenta
+  - [ ] Sprawdzanie czy user jest moderatorem Intenta
+- [ ] **Cleanup worker:**
+  - [ ] Usuwanie starych plików z `/tmp/uploads/intents/...` (starsze niż X godzin)
+
+### Frontend
+
+- [x] **Komponent `CoverStep`** - już zaimplementowany
+  - [x] Local preview
+  - [x] Crop modal (16:9)
+  - [x] Walidacja plików
+  - [x] Loading state
+- [x] **Integracja w `create-edit-intent-modal.tsx`:**
+  - [x] State: `coverImageFile`, `coverImagePreview`, `isCoverUploading`
+  - [x] Handlers: `handleCoverImageSelected`, `handleCoverImageRemove`
+  - [x] Step 3: Renderowanie `CoverStep`
+- [ ] **Helper `uploadIntentCover`:**
+  - [ ] Wywołanie `getUploadUrl`
+  - [ ] Upload pliku (PUT dla S3, POST dla LOCAL)
+  - [ ] Wywołanie `confirmMediaUpload`
+  - [ ] Invalidate queries
+  - [ ] Error handling z toast
+- [x] **Flow Create Intent:**
+  - [x] Najpierw `createIntent` → `intentId`
+  - [x] Potem `uploadIntentCover(intentId, file)` (jeśli `coverImageFile`)
+  - [x] Graceful degradation - jeśli upload fail, Intent nadal istnieje
+- [ ] **Flow Edit Intent:**
+  - [ ] Najpierw `updateIntent` (inne pola)
+  - [ ] Potem `uploadIntentCover(intentId, file)` (jeśli nowy cover)
+- [x] **Wyświetlanie covera:**
+  - [x] `buildIntentCoverUrl(intent.coverKey, 'card'/'detail')`
+  - [x] `BlurHashImage` z `coverBlurhash`
+  - [x] Fallback gradient gdy `coverKey` brak
+- [x] **Komponenty:**
+  - [x] `event-card.tsx` - wyświetlanie cover
+  - [x] `privacy-step.tsx` - integracja join form
+
+### Testy
+
+- [ ] **Backend:**
+  - [ ] Test `getUploadUrl` dla `INTENT_COVER` (happy path)
+  - [ ] Test `getUploadUrl` - unauthorized (nie owner/mod/admin)
+  - [ ] Test `confirmMediaUpload` - pełny flow
+  - [ ] Test `confirmMediaUpload` - usunięcie starego covera
+  - [ ] Test `validateIntentPermissions` - wszystkie role
+- [ ] **Frontend:**
+  - [ ] Test `CoverStep` - wybór pliku
+  - [ ] Test `CoverStep` - crop modal
+  - [ ] Test `uploadIntentCover` - mock GraphQL
+  - [ ] Test Create Intent z coverem
+  - [ ] Test Create Intent bez covera
+  - [ ] Test Edit Intent - zmiana covera
+
+---
+
 **Data utworzenia:** 2025-11-19  
 **Ostatnia aktualizacja:** 2025-11-19  
-**Wersja:** 2.0  
+**Wersja:** 2.1  
 **Autor:** AI Assistant + User (abartski)
 
-**Changelog v2.0:**
+**Changelog:**
+
+**v2.1 (2025-11-19):**
+
+- ✅ Dodano komponent `CoverStep` dla Intent cover upload
+- ✅ Zaimplementowano synchroniczny upload w `submit()` (Intent cover)
+- ✅ Zintegrowano Join Form w Privacy Step
+- ✅ Dodano `event-card.tsx` z BlurHash dla Intent covers
+- ✅ Dodano sekcję "Intent Cover Upload - Wymagania i Implementacja":
+  - Wymagania biznesowe (uprawnienia, zasady, graceful degradation)
+  - Pełna implementacja backend (resolvers, helpers, walidacja)
+  - Helper function `uploadIntentCover` (rekomendowany pattern)
+  - Flow dla Create Intent i Edit Intent
+  - Checklist implementacji (backend + frontend + testy)
+
+**v2.0 (2025-11-19):**
 
 - ✅ Usunięto stare pola `imageUrl`/`coverUrl` (brak backward compatibility)
 - ✅ Wprowadzono rozdział `uploadKey` (tymczasowy) vs `mediaKey` (finalny)

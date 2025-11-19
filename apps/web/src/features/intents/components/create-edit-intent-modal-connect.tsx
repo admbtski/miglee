@@ -16,6 +16,7 @@ import { TagSelectionProvider } from './tag-selection-provider';
 import { IntentFormValues } from './types';
 import { toast, devLogger } from '@/lib/utils';
 import type { JoinFormQuestion } from './join-form-step';
+import { useIntentCoverUpload } from '@/lib/media/use-media-upload';
 
 /**
  * CreateEditIntentModalConnect - Modal for creating/editing intents with auto-save
@@ -109,8 +110,9 @@ export function CreateEditIntentModalConnect({
   const handleSubmit = useCallback(
     async (
       formValues: IntentFormValues,
-      joinFormQuestions?: JoinFormQuestion[]
-    ) => {
+      joinFormQuestions?: JoinFormQuestion[],
+      coverImageFile?: File | null
+    ): Promise<string | undefined> => {
       const startTime = Date.now();
       const action = intentId ? 'updateIntent' : 'createIntent';
 
@@ -155,6 +157,9 @@ export function CreateEditIntentModalConnect({
         // Always show success modal
         // onSuccess will be called in handleSuccessClose after user closes the modal
         setSuccessOpen(true);
+
+        // Return intentId for cover upload
+        return resultIntentId;
       } catch (err: any) {
         const duration = Date.now() - startTime;
         devLogger.mutationError(action, err, formValues, duration);
@@ -183,6 +188,8 @@ export function CreateEditIntentModalConnect({
             duration: 5000,
           }
         );
+
+        return undefined;
       }
     },
     [createAsync, updateAsync, onClose, intentId]

@@ -21,6 +21,7 @@ import {
 import * as React from 'react';
 import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
 import { IntentFormValues } from './types';
+import { JoinFormStep, JoinFormQuestion } from './join-form-step';
 
 /** Segmented-like multi-select pill (kolorystyka spójna z SegmentedControl) */
 function TogglePill({
@@ -73,8 +74,12 @@ const LEVEL_OPTIONS: Array<{ value: LevelValue; label: string; Icon: any }> = [
 
 export function PrivacyStep({
   form,
+  joinFormQuestions,
+  onJoinFormQuestionsChange,
 }: {
   form: UseFormReturn<IntentFormValues>;
+  joinFormQuestions?: JoinFormQuestion[];
+  onJoinFormQuestionsChange?: (questions: JoinFormQuestion[]) => void;
 }) {
   const {
     register,
@@ -85,6 +90,7 @@ export function PrivacyStep({
 
   // re-render na zmiany:
   const levels = (useWatch({ control, name: 'levels' }) ?? []) as LevelValue[];
+  const joinMode = useWatch({ control, name: 'joinMode' }) as JoinMode;
   const radiusKm = useWatch({ control, name: 'location.radiusKm' }) as
     | number
     | undefined;
@@ -354,6 +360,24 @@ export function PrivacyStep({
           </p>
         )}
       </div>
+
+      {/* Join Form Questions - only shown when joinMode is REQUEST */}
+      {joinMode === 'REQUEST' && onJoinFormQuestionsChange && (
+        <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
+          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Pytania w formularzu prośby o dołączenie
+          </label>
+          <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
+            Dodaj niestandardowe pytania, które użytkownicy będą musieli
+            wypełnić przy prośbie o dołączenie (opcjonalne).
+          </p>
+          <JoinFormStep
+            questions={joinFormQuestions || []}
+            onChange={onJoinFormQuestionsChange}
+            maxQuestions={5}
+          />
+        </div>
+      )}
     </div>
   );
 }

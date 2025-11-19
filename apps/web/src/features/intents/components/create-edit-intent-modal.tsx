@@ -3,8 +3,8 @@
 import {
   BadgePlusIcon,
   CalendarClockIcon,
-  FileQuestion,
   HatGlassesIcon,
+  ImageIcon,
   SquarePenIcon,
   X,
 } from 'lucide-react';
@@ -22,13 +22,21 @@ import { defaultIntentValues, useIntentForm } from './use-intent-form';
 import { CategoryOption, TagOption } from '@/types/types';
 import { PrivacyStep } from './privacy-step';
 import { useAutoSaveDraft } from '../hooks/use-auto-save-draft';
-import { JoinFormStep, JoinFormQuestion } from './join-form-step';
+import { JoinFormQuestion } from './join-form-step';
+import { toast } from '@/lib/utils';
+import { CoverStep } from './cover-step';
+import { gqlClient } from '@/lib/api/client';
+import {
+  GetUploadUrlDocument,
+  ConfirmMediaUploadDocument,
+  MediaPurpose,
+} from '@/lib/api/__generated__/react-query-update';
 
 const STEP_META = [
   { key: 'basics', label: 'What & Who', Icon: SquarePenIcon },
   { key: 'when-where', label: 'When & Where', Icon: CalendarClockIcon },
   { key: 'settings', label: 'Settings', Icon: HatGlassesIcon },
-  { key: 'join-form', label: 'Join Form', Icon: FileQuestion },
+  { key: 'cover', label: 'Cover Image', Icon: ImageIcon },
   { key: 'review', label: 'Review', Icon: BadgePlusIcon },
 ];
 
@@ -36,6 +44,7 @@ const EDIT_STEP_META = [
   { key: 'basics', label: 'What & Who', Icon: SquarePenIcon },
   { key: 'when-where', label: 'When & Where', Icon: CalendarClockIcon },
   { key: 'settings', label: 'Settings', Icon: HatGlassesIcon },
+  { key: 'cover', label: 'Cover Image', Icon: ImageIcon },
   { key: 'review', label: 'Review', Icon: BadgePlusIcon },
 ];
 
@@ -49,11 +58,12 @@ type CreateEditIntentModalProps = {
   initialCategories?: CategoryOption[];
   initialTags?: TagOption[];
   onClose: () => void;
-  /** Unified submit handler. Will be called for both create and edit. */
+  /** Unified submit handler. Will be called for both create and edit. Returns intentId if created */
   onSubmit: (
     values: IntentFormValues,
-    joinFormQuestions?: JoinFormQuestion[]
-  ) => Promise<void> | void;
+    joinFormQuestions?: JoinFormQuestion[],
+    coverImageFile?: File | null
+  ) => Promise<string | undefined> | string | undefined;
   /** Button label override */
   submitLabel?: string;
   /** Title override */
@@ -84,6 +94,11 @@ export function CreateEditIntentModal({
   const [joinFormQuestions, setJoinFormQuestions] = useState<
     JoinFormQuestion[]
   >([]);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(
+    null
+  );
+  const [isCoverUploading, setIsCoverUploading] = useState(false);
 
   const {
     handleSubmit,
@@ -263,7 +278,7 @@ export function CreateEditIntentModal({
             'meetingKind',
             'onlineUrl',
           ]);
-        case 2: // Settings (privacy)
+        case 2: // Settings (privacy + join form)
           return await trigger([
             'visibility',
             'joinMode',
@@ -271,7 +286,7 @@ export function CreateEditIntentModal({
             'addressVisibility',
             'membersVisibility',
           ]);
-        case 3: // Join Form (optional, always valid)
+        case 3: // Cover Image (optional, always valid)
           return true;
         default:
           return true;
@@ -290,20 +305,111 @@ export function CreateEditIntentModal({
 
   const back = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
+  // Cover image handlers
+  const handleCoverImageSelected = (file: File) => {
+    setCoverImageFile(file);
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCoverImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCoverImageRemove = () => {
+    setCoverImageFile(null);
+    setCoverImagePreview(null);
+  };
+
   const submit = handleSubmit(
     useCallback(
       async (values) => {
-        await onSubmit(
-          values as IntentFormValues,
-          isEdit ? undefined : joinFormQuestions
-        );
-        // Clear draft after successful submit
-        if (!isEdit) {
-          clearDraft();
+        try {
+          const resultIntentId = await onSubmit(
+            values as IntentFormValues,
+            isEdit ? undefined : joinFormQuestions,
+            coverImageFile
+          );
+
+          // If we have a cover image, upload it before closing
+          if (resultIntentId && coverImageFile) {
+            console.log('[Submit] Intent created:', resultIntentId);
+            console.log('[Submit] Uploading cover image...');
+
+            setIsCoverUploading(true);
+
+            try {
+              // Step 1: Get upload URL
+              console.log('[Submit] Step 1: Getting upload URL');
+              const uploadUrlResponse = await gqlClient.request(
+                GetUploadUrlDocument,
+                {
+                  purpose: MediaPurpose.IntentCover,
+                  entityId: resultIntentId,
+                }
+              );
+
+              const { uploadUrl, uploadKey, provider } =
+                uploadUrlResponse.getUploadUrl;
+              console.log('[Submit] Got upload URL, provider:', provider);
+
+              // Step 2: Upload file
+              console.log('[Submit] Step 2: Uploading file');
+              if (provider === 'S3') {
+                const response = await fetch(uploadUrl, {
+                  method: 'PUT',
+                  body: coverImageFile,
+                  headers: { 'Content-Type': coverImageFile.type },
+                });
+                if (!response.ok)
+                  throw new Error(`Upload failed: ${response.statusText}`);
+              } else {
+                const formData = new FormData();
+                formData.append('file', coverImageFile);
+                const response = await fetch(uploadUrl, {
+                  method: 'POST',
+                  body: formData,
+                });
+                if (!response.ok)
+                  throw new Error(`Upload failed: ${response.statusText}`);
+              }
+
+              // Step 3: Confirm upload
+              console.log('[Submit] Step 3: Confirming upload');
+              await gqlClient.request(ConfirmMediaUploadDocument, {
+                purpose: MediaPurpose.IntentCover,
+                entityId: resultIntentId,
+                uploadKey,
+              });
+
+              console.log('[Submit] Cover upload completed successfully!');
+
+              // Reset cover state
+              setCoverImageFile(null);
+              setCoverImagePreview(null);
+            } catch (uploadErr) {
+              console.error('[Submit] Cover upload failed:', uploadErr);
+              toast.error('Event created but cover upload failed', {
+                description:
+                  'You can add a cover image later from event settings',
+              });
+            } finally {
+              setIsCoverUploading(false);
+            }
+          }
+
+          // Clear draft after successful submit
+          if (!isEdit) {
+            clearDraft();
+          }
+
+          onClose();
+        } catch (error) {
+          console.error('[Submit] Failed to create intent:', error);
+          // Error is already handled by onSubmit
         }
-        onClose();
       },
-      [onClose, onSubmit, isEdit, clearDraft, joinFormQuestions]
+      [onClose, onSubmit, isEdit, clearDraft, joinFormQuestions, coverImageFile]
     )
   );
 
@@ -477,7 +583,7 @@ export function CreateEditIntentModal({
             </div>
           )}
 
-          {/* Step 2: Settings (Privacy) */}
+          {/* Step 2: Settings (Privacy + Join Form) */}
           {step === 2 && (
             <div>
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
@@ -486,29 +592,36 @@ export function CreateEditIntentModal({
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
                 Control who can see and join your event
               </p>
-              <PrivacyStep form={form} />
+              <PrivacyStep
+                form={form}
+                joinFormQuestions={!isEdit ? joinFormQuestions : undefined}
+                onJoinFormQuestionsChange={
+                  !isEdit ? setJoinFormQuestions : undefined
+                }
+              />
             </div>
           )}
 
-          {/* Step 3: Join Form (only in create mode) */}
-          {!isEdit && step === 3 && (
+          {/* Step 3: Cover Image */}
+          {step === 3 && (
             <div>
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
-                Join Form Questions
+                Cover Image
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                Add custom questions for users requesting to join (optional)
+                Add a cover image for your event (optional but recommended)
               </p>
-              <JoinFormStep
-                questions={joinFormQuestions}
-                onChange={setJoinFormQuestions}
-                maxQuestions={5}
+              <CoverStep
+                coverPreview={coverImagePreview}
+                isUploading={isCoverUploading}
+                onImageSelected={handleCoverImageSelected}
+                onImageRemove={handleCoverImageRemove}
               />
             </div>
           )}
 
           {/* Step 4: Review */}
-          {step === (isEdit ? 3 : 4) && (
+          {step === 4 && (
             <div>
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
                 Review & Create
