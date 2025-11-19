@@ -108,22 +108,27 @@ function randomTimeWindow() {
 
 /** ---------- DB cleanup (respect FK order) ---------- */
 async function clearDb() {
-  await prisma.notification.deleteMany();
-  await prisma.intentMember.deleteMany();
-  await prisma.intent.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.tag.deleteMany();
+  try {
+    await prisma.notification.deleteMany();
+    await prisma.intentMember.deleteMany();
+    await prisma.intent.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.tag.deleteMany();
 
-  // Clear user profile related tables
-  await prisma.userBadge.deleteMany();
-  await prisma.userAvailability.deleteMany();
-  await prisma.userDiscipline.deleteMany();
-  await prisma.userSocialLink.deleteMany();
-  await prisma.userStats.deleteMany();
-  await prisma.userPrivacy.deleteMany();
-  await prisma.userProfile.deleteMany();
+    // Clear user profile related tables
+    await prisma.userBadge.deleteMany();
+    await prisma.userAvailability.deleteMany();
+    await prisma.userDiscipline.deleteMany();
+    await prisma.userSocialLink.deleteMany();
+    await prisma.userStats.deleteMany();
+    await prisma.userPrivacy.deleteMany();
+    await prisma.userProfile.deleteMany();
 
-  await prisma.user.deleteMany();
+    await prisma.user.deleteMany();
+  } catch (error) {
+    // If tables don't exist (e.g., after migrate reset), skip cleanup
+    console.log('   ℹ️  Skipping cleanup (tables may not exist yet)');
+  }
 }
 
 /** ---------- Seed: Users ---------- */
