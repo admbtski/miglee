@@ -10,6 +10,14 @@ import { config } from '../env';
  * Serves images with on-demand resizing and caching
  */
 const imageVariantsPlugin: FastifyPluginAsync = async (fastify) => {
+  // Handle OPTIONS preflight for CORS
+  fastify.options('/img/*', async (_request, reply) => {
+    reply.header('Access-Control-Allow-Origin', '*');
+    reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    reply.header('Access-Control-Allow-Headers', 'Content-Type');
+    reply.code(204).send();
+  });
+
   fastify.get<{
     Params: { '*': string };
     Querystring: {
@@ -70,6 +78,8 @@ const imageVariantsPlugin: FastifyPluginAsync = async (fastify) => {
       reply.header('Content-Type', mimeType);
       reply.header('Cache-Control', 'public, max-age=31536000, immutable');
       reply.header('ETag', `"${key}-${variantKey}"`);
+      reply.header('Access-Control-Allow-Origin', '*');
+      reply.header('Cross-Origin-Resource-Policy', 'cross-origin');
       return reply.send(stream);
     }
 
@@ -111,6 +121,8 @@ const imageVariantsPlugin: FastifyPluginAsync = async (fastify) => {
       reply.header('Content-Type', variant.mimeType);
       reply.header('Cache-Control', 'public, max-age=31536000, immutable');
       reply.header('ETag', `"${key}-${variantKey}"`);
+      reply.header('Access-Control-Allow-Origin', '*');
+      reply.header('Cross-Origin-Resource-Policy', 'cross-origin');
       return reply.send(variant.buffer);
     } catch (error) {
       fastify.log.error({ error, key }, 'Failed to generate image variant');
