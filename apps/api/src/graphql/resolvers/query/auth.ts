@@ -15,7 +15,7 @@ export const meQuery: QueryResolvers['me'] = resolverWithMetrics(
     const sessionUser: SessionUser = {
       email: user?.email,
       id: user?.id,
-      imageUrl: user?.imageUrl,
+      avatarKey: user?.avatarKey,
       name: user?.name,
       role: user?.role,
       verifiedAt: user?.verifiedAt,

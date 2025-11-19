@@ -18,7 +18,7 @@ function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
     id: u.id,
     email: u.email,
     name: u.name,
-    imageUrl: u.imageUrl,
+    avatarKey: u.avatarKey,
     role: mapRole(u.role),
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
@@ -132,7 +132,38 @@ export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
     // Build where clause based on provided parameters
     const where: Prisma.UserWhereUniqueInput = id ? { id } : { name: name! };
 
-    const u = await prisma.user.findUnique({ where });
-    return u ? mapUser(u) : null;
+    const u = await prisma.user.findUnique({
+      where,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarKey: true,
+        role: true,
+        verifiedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        lastSeenAt: true,
+        suspendedAt: true,
+        suspensionReason: true,
+        locale: true,
+        tz: true,
+        acceptedTermsAt: true,
+        acceptedMarketingAt: true,
+      },
+    });
+
+    console.log('[userQuery] Found user:', {
+      id: u?.id,
+      avatarKey: u?.avatarKey,
+    });
+
+    const mapped = u ? mapUser(u) : null;
+    console.log('[userQuery] Mapped user:', {
+      id: mapped?.id,
+      avatarKey: mapped?.avatarKey,
+    });
+
+    return mapped;
   }
 );

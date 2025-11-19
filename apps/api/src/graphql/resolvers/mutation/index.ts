@@ -185,6 +185,9 @@ import {
   removeUserSocialLinkMutation,
 } from './user-profile';
 
+// Media Upload mutations
+import { getUploadUrl, confirmMediaUpload } from './media';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -334,6 +337,10 @@ export const Mutation: Resolvers['Mutation'] = {
   removeUserAvailability: removeUserAvailabilityMutation,
   addUserSocialLink: addUserSocialLinkMutation,
   removeUserSocialLink: removeUserSocialLinkMutation,
+
+  // ---- Media Upload ----
+  getUploadUrl,
+  confirmMediaUpload,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

@@ -23,10 +23,13 @@
     "worker:reminders": "tsx src/workers/reminders/worker.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.934.0",
+    "@aws-sdk/s3-request-presigner": "^3.934.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.1",
     "@fastify/jwt": "^10.0.0",
+    "@fastify/multipart": "^9.3.0",
     "@fastify/otel": "^0.9.4",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/sensible": "^6.0.3",
@@ -44,8 +47,10 @@
     "@opentelemetry/sdk-node": "^0.205.0",
     "@opentelemetry/sdk-trace-base": "^2.1.0",
     "@opentelemetry/semantic-conventions": "^1.37.0",
+    "@paralleldrive/cuid2": "^3.0.4",
     "@prisma/client": "^6.16.2",
     "@prisma/instrumentation": "^6.16.2",
+    "blurhash": "^2.0.5",
     "bullmq": "^5.61.2",
     "dataloader": "^2.2.3",
     "dotenv": "^17.2.2",
@@ -59,6 +64,7 @@
     "mqemitter-redis": "^7.1.0",
     "nanoid": "^5.1.6",
     "pino": "^9.11.0",
+    "sharp": "^0.34.5",
     "zod": "^4.1.11"
   },
   "devDependencies": {

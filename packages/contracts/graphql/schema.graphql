@@ -125,6 +125,14 @@ enum Level {
   ADVANCED
 }
 
+"Media asset purpose"
+enum MediaPurpose {
+  USER_AVATAR
+  USER_COVER
+  INTENT_COVER
+  GALLERY_IMAGE
+}
+
 "Per-intent role"
 enum IntentMemberRole {
   OWNER
@@ -282,9 +290,16 @@ type SessionUser {
   name: String!
   email: String!
   role: Role!
-  imageUrl: String
+  avatarKey: String
   verifiedAt: DateTime
   profile: UserProfile
+}
+
+"Presigned upload URL response"
+type PresignedUpload {
+  uploadUrl: String!
+  uploadKey: String!
+  provider: String!
 }
 
 "User"
@@ -292,7 +307,7 @@ type User {
   id: ID!
   email: String!
   name: String!
-  imageUrl: String
+  avatarKey: String
   role: Role!
   verifiedAt: DateTime
   suspendedAt: DateTime
@@ -334,7 +349,7 @@ type UserProfile {
   homeLat: Float
   homeLng: Float
 
-  coverUrl: String
+  coverKey: String
 
   speaks: [String!]!
   interests: [String!]!
@@ -559,6 +574,9 @@ type Intent {
 
   # PostgreSQL enum[]
   levels: [Level!]!
+
+  # Media
+  coverKey: String
 
   addressVisibility: AddressVisibility!
   membersVisibility: MembersVisibility!
@@ -1723,6 +1741,14 @@ type Mutation {
   # User Social Links
   addUserSocialLink(input: AddUserSocialLinkInput!): UserSocialLink!
   removeUserSocialLink(id: ID!): Boolean!
+
+  # Media Upload
+  getUploadUrl(purpose: MediaPurpose!, entityId: ID!): PresignedUpload!
+  confirmMediaUpload(
+    purpose: MediaPurpose!
+    entityId: ID!
+    uploadKey: String!
+  ): Boolean!
 
   # dev only
   devLogin(name: String!): SessionUser

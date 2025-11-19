@@ -182,7 +182,7 @@ model User {
   id               String    @id @default(cuid())
   email            String    @unique
   name             String    @unique
-  imageUrl         String?
+  avatarKey        String? // Key to MediaAsset for avatar
   role             Role      @default(USER)
   verifiedAt       DateTime?
   suspendedAt      DateTime? // Admin suspension
@@ -345,6 +345,9 @@ model Intent {
   // The 'geom' column is automatically populated from lat/lng and has a GIST index.
 
   levels Level[] @default([])
+
+  // Media
+  coverKey String? // Key to MediaAsset for cover image
 
   addressVisibility AddressVisibility @default(PUBLIC)
   membersVisibility MembersVisibility @default(PUBLIC)
@@ -940,7 +943,7 @@ model UserProfile {
   homeLng Float?
 
   // Media
-  coverUrl String?
+  coverKey String? // Key to MediaAsset for cover image
 
   // Preferences
   speaks                 String[] // ["pl", "en"]
@@ -1117,4 +1120,35 @@ model IntentJoinAnswer {
   @@index([intentId, userId])
   @@index([questionId])
   @@map("intent_join_answers")
+}
+
+// =============================================================================
+/**
+ * Media Assets - Images with variants on-demand
+ */
+// =============================================================================
+
+model MediaAsset {
+  id       String   @id @default(cuid())
+  /// Key under which we store the original and variants (e.g. avatars/{userId}/{uuid}, covers/intents/{intentId}/{uuid})
+  key      String   @unique
+  
+  /// Optional metadata from upload/processing
+  blurhash String?
+  width    Int?
+  height   Int?
+  mimeType String?
+  
+  // Optional owner metadata - no FK to User/Intent (logical reference through key)
+  ownerId  String? // e.g. userId
+  /// USER_AVATAR, USER_COVER, INTENT_COVER, GALLERY_IMAGE, etc.
+  purpose  String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([ownerId])
+  @@index([purpose])
+  @@index([createdAt])
+  @@map("media_assets")
 }

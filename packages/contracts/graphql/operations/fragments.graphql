@@ -7,7 +7,7 @@ fragment SessionUserCore on SessionUser {
   name
   email
   role
-  imageUrl
+  avatarKey
   verifiedAt
 }
 
@@ -16,7 +16,7 @@ fragment UserCore on User {
   email
   name
   role
-  imageUrl
+  avatarKey
   verifiedAt
   suspendedAt
   suspensionReason
@@ -68,7 +68,6 @@ fragment IntentMemberCore on IntentMember {
   addedBy {
     id
     name
-    imageUrl
   }
   intent {
     ...IntentLight
@@ -84,7 +83,6 @@ fragment IntentMemberLight on IntentMember {
   user {
     id
     name
-    imageUrl
   }
 }
 
@@ -158,7 +156,6 @@ fragment IntentLight on Intent {
   owner {
     id
     name
-    imageUrl
   }
 }
 
@@ -188,7 +185,7 @@ fragment IntentCore on Intent {
   joinManuallyClosedBy {
     id
     name
-    imageUrl
+    avatarKey
   }
   joinManualCloseReason
 
@@ -202,6 +199,9 @@ fragment IntentCore on Intent {
   radiusKm
 
   levels
+
+  # Media
+  coverKey
 
   addressVisibility
   membersVisibility
@@ -296,7 +296,6 @@ fragment NotificationCore on Notification {
   actor {
     id
     name
-    imageUrl
   }
 
   # Convenience relation when entityType=INTENT
@@ -383,7 +382,6 @@ fragment DmMessageCore on DmMessage {
   sender {
     id
     name
-    imageUrl
   }
   reactions {
     ...MessageReactionCore
@@ -403,7 +401,6 @@ fragment MessageReactionCore on MessageReaction {
   users {
     id
     name
-    imageUrl
   }
   reacted
 }
@@ -421,13 +418,11 @@ fragment DmThreadCore on DmThread {
   aUser {
     id
     name
-    imageUrl
     lastSeenAt
   }
   bUser {
     id
     name
-    imageUrl
     lastSeenAt
   }
 
@@ -448,12 +443,10 @@ fragment DmThreadLight on DmThread {
   aUser {
     id
     name
-    imageUrl
   }
   bUser {
     id
     name
-    imageUrl
   }
 
   lastMessage {
@@ -500,7 +493,6 @@ fragment CommentCore on Comment {
   author {
     id
     name
-    imageUrl
   }
 }
 
@@ -537,7 +529,6 @@ fragment ReviewCore on Review {
   author {
     id
     name
-    imageUrl
   }
 }
 
@@ -576,7 +567,6 @@ fragment ReportCore on Report {
   reporter {
     id
     name
-    imageUrl
   }
 }
 
@@ -608,7 +598,6 @@ fragment IntentChatMessageCore on IntentChatMessage {
   author {
     id
     name
-    imageUrl
   }
   reactions {
     ...MessageReactionCore
@@ -645,12 +634,12 @@ fragment UserBlockCore on UserBlock {
   blocker {
     id
     name
-    imageUrl
+    avatarKey
   }
   blocked {
     id
     name
-    imageUrl
+    avatarKey
   }
 }
 
@@ -737,6 +726,5 @@ fragment EventSponsorshipCore on EventSponsorship {
   sponsor {
     id
     name
-    imageUrl
   }
 }

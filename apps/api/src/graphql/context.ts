@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest, FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { Role } from './__generated__/resolvers-types';
 
@@ -15,13 +15,14 @@ export async function createContext(
   return {
     request,
     reply,
+    fastify: request.server,
     user: user
       ? {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role as Role,
-          imageUrl: user.imageUrl,
+          avatarKey: user.avatarKey,
           verifiedAt: user.verifiedAt,
         }
       : null,

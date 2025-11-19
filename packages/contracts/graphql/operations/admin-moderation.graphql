@@ -20,7 +20,6 @@ query AdminComments($limit: Int, $offset: Int, $intentId: ID, $userId: ID) {
       author {
         id
         name
-        imageUrl
       }
       intent {
         id
@@ -59,7 +58,6 @@ query AdminReviews(
       author {
         id
         name
-        imageUrl
       }
       intent {
         id

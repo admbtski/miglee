@@ -38,14 +38,4 @@ subscription OnIntentReactionAdded($intentId: ID!) {
   }
 }
 
-# Fragments
-fragment MessageReactionCore on MessageReaction {
-  emoji
-  count
-  users {
-    id
-    name
-    imageUrl
-  }
-  reacted
-}
+# Fragments removed - using MessageReactionCore from fragments.graphql

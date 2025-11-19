@@ -60,7 +60,6 @@ query GetRegionIntents(
       owner {
         id
         name
-        imageUrl
         verifiedAt
       }
     }

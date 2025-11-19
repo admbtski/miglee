@@ -14,14 +14,12 @@ query IntentInviteLinks($intentId: ID!, $includeRevoked: Boolean = false) {
     createdBy {
       id
       name
-      imageUrl
     }
     revokedAt
     revokedById
     revokedBy {
       id
       name
-      imageUrl
     }
     createdAt
     updatedAt
@@ -36,7 +34,6 @@ query IntentInviteLinks($intentId: ID!, $includeRevoked: Boolean = false) {
       user {
         id
         name
-        imageUrl
       }
     }
   }
@@ -55,14 +52,12 @@ query IntentInviteLink($id: ID, $code: String) {
     createdBy {
       id
       name
-      imageUrl
     }
     revokedAt
     revokedById
     revokedBy {
       id
       name
-      imageUrl
     }
     createdAt
     updatedAt
@@ -104,7 +99,6 @@ query ValidateInviteLink($code: String!) {
       owner {
         id
         name
-        imageUrl
       }
     }
   }
@@ -124,7 +118,6 @@ mutation CreateIntentInviteLink($input: CreateIntentInviteLinkInput!) {
     createdBy {
       id
       name
-      imageUrl
     }
     createdAt
     updatedAt
@@ -164,7 +157,6 @@ mutation RevokeIntentInviteLink($id: ID!) {
     revokedBy {
       id
       name
-      imageUrl
     }
     isRevoked
     isValid

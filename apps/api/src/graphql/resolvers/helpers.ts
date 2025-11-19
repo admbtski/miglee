@@ -287,11 +287,12 @@ function canSeeWithRole(
  * ========================================================================== */
 
 export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
+  const avatarKey = (u as any).avatarKey ?? null;
   return {
     id: u.id,
     email: u.email,
     name: (u as any).name ?? null,
-    imageUrl: (u as any).imageUrl ?? null,
+    avatarKey,
     role: (u.role ?? 'USER') as any,
     verifiedAt: u.verifiedAt ?? null,
     createdAt: u.createdAt,
@@ -597,6 +598,9 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     levels: ((i.levels ?? []) as Level[]).sort(
       (a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]
     ),
+
+    // Media
+    coverKey: (i as any).coverKey ?? null,
 
     // Privacy toggles (zwracamy zawsze)
     addressVisibility: i.addressVisibility as AddressVisibility,

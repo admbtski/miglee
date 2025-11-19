@@ -77,8 +77,6 @@ const namesJson = (
   en,
 });
 
-const AVATAR_ID_POOL = Array.from({ length: 50 }, (_, i) => 100 + i); // picsum 100..149
-
 /** ---------- Utilities for geo/time ---------- */
 const jitterCoord = (base: number) => base + (rnd() - 0.5) * 0.18; // ~±0.09deg
 const randomWithinCity = (city: { lat: number; lng: number }) => ({
@@ -125,6 +123,9 @@ async function clearDb() {
     await prisma.userProfile.deleteMany();
 
     await prisma.user.deleteMany();
+
+    // Clear media assets
+    await prisma.mediaAsset.deleteMany();
   } catch (error) {
     // If tables don't exist (e.g., after migrate reset), skip cleanup
     console.log('   ℹ️  Skipping cleanup (tables may not exist yet)');
@@ -182,7 +183,7 @@ async function seedUsers(): Promise<User[]> {
         email: 'admin@example.com',
         name: 'admin.miglee',
         role: Role.ADMIN,
-        imageUrl: `https://picsum.photos/id/10/200/200`,
+        avatarKey: null, // In production, would be set via upload
         verifiedAt: new Date(),
       },
     })
@@ -194,7 +195,7 @@ async function seedUsers(): Promise<User[]> {
       email: 'moderator.one@example.com',
       name: 'moderator.one',
       role: Role.MODERATOR,
-      imageUrl: `https://picsum.photos/id/11/200/200`,
+      avatarKey: null, // In production, would be set via upload
       verifiedAt: new Date(),
     },
   });
@@ -209,7 +210,7 @@ async function seedUsers(): Promise<User[]> {
           email: emailFor(first, last, m),
           name: generateHandle(first, last, m),
           role: Role.MODERATOR,
-          imageUrl: `https://picsum.photos/id/${11 + m}/200/200`,
+          avatarKey: null, // In production, would be set via upload
           ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
         },
       })
@@ -223,7 +224,7 @@ async function seedUsers(): Promise<User[]> {
         email: 'user.fixed@example.com',
         name: 'user.fixed',
         role: Role.USER,
-        imageUrl: `https://picsum.photos/id/19/200/200`,
+        avatarKey: null, // In production, would be set via upload
         ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
       },
     })
@@ -242,7 +243,7 @@ async function seedUsers(): Promise<User[]> {
           email: emailFor(first, last, i),
           name: generateHandle(first, last, i),
           role: Role.USER,
-          imageUrl: `https://picsum.photos/id/${pick(AVATAR_ID_POOL)}/200/200`,
+          avatarKey: null, // In production, would be set via upload
           ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
           lastSeenAt:
             rand() > 0.5
@@ -1996,12 +1997,6 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
           .join(' ');
       }
 
-      // 60% of users have cover photos
-      const hasCover = rand() > 0.4;
-
-      // Generate unique seed for consistent images per user
-      const userSeed = user.id.slice(0, 8);
-
       await prisma.userProfile.create({
         data: {
           userId: user.id,
@@ -2019,10 +2014,8 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
           preferredMode: rand() > 0.5 ? 'GROUP' : null,
           preferredMaxDistanceKm:
             rand() > 0.6 ? 5 + Math.floor(rand() * 20) : null,
-          // Cover image: 1920x400 for 16:9 aspect ratio
-          coverUrl: hasCover
-            ? `https://picsum.photos/seed/${userSeed}-cover/1920/400`
-            : null,
+          // Cover image: In production, would be set via upload
+          coverKey: null,
         },
       });
 

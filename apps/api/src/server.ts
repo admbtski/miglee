@@ -16,6 +16,8 @@ import { config } from './env';
 // import { fastifyMetrics } from './plugins/metrics/fastify-metrics';
 import { rateLimitPlugin } from './plugins/rate-limit';
 import lastSeen from './plugins/last-seen';
+import imageVariantsPlugin from './plugins/image-variants';
+import { localUploadPlugin } from './plugins/local-upload';
 /**
  * Generate a stable request id.
  * - Reuse X-Request-Id from proxy if present.
@@ -107,6 +109,8 @@ export async function createServer() {
 
   // plugins
   await server.register(healthPlugin);
+  await server.register(localUploadPlugin);
+  await server.register(imageVariantsPlugin);
   await server.register(mercuriusPlugin);
 
   return server;

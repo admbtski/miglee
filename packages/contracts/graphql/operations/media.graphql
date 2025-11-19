@@ -1,0 +1,19 @@
+mutation GetUploadUrl($purpose: MediaPurpose!, $entityId: ID!) {
+  getUploadUrl(purpose: $purpose, entityId: $entityId) {
+    uploadUrl
+    uploadKey
+    provider
+  }
+}
+
+mutation ConfirmMediaUpload(
+  $purpose: MediaPurpose!
+  $entityId: ID!
+  $uploadKey: String!
+) {
+  confirmMediaUpload(
+    purpose: $purpose
+    entityId: $entityId
+    uploadKey: $uploadKey
+  )
+}

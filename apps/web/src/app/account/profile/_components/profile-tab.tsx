@@ -5,10 +5,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Save, Loader2, X, Camera, Image as ImageIcon } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUpdateUserProfile } from '@/lib/api/user-profile';
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
 import { LocationCombo } from '@/components/forms/location-combobox';
 import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-update';
+import { useAvatarUpload, useCoverUpload } from '@/lib/media/use-media-upload';
+import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
+import { useMeQuery } from '@/lib/api/auth';
 
 const profileSchema = z.object({
   displayName: z
@@ -71,13 +75,51 @@ export function ProfileTab({ user }: ProfileTabProps) {
     null
   );
   const [selectedCoverSrc, setSelectedCoverSrc] = useState<string | null>(null);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  const queryClient = useQueryClient();
   const updateMutation = useUpdateUserProfile();
+
+  const { data } = useMeQuery();
+
+  const userId = data?.me?.id;
+
+  // Media upload hooks
+  const avatarUpload = useAvatarUpload(userId!, {
+    onSuccess: () => {
+      setAvatarCropModalOpen(false);
+      setSelectedAvatarSrc(null);
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = '';
+      }
+      // Invalidate queries to refresh avatar
+      queryClient.invalidateQueries({ queryKey: ['MyFullProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['Me'] });
+    },
+    onError: (error) => {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to upload avatar: ' + error.message);
+    },
+  });
+
+  const coverUpload = useCoverUpload(userId, {
+    onSuccess: () => {
+      setCoverCropModalOpen(false);
+      setSelectedCoverSrc(null);
+      if (coverInputRef.current) {
+        coverInputRef.current.value = '';
+      }
+      // Invalidate queries to refresh cover
+      queryClient.invalidateQueries({ queryKey: ['MyFullProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['Me'] });
+    },
+    onError: (error) => {
+      console.error('Error uploading cover:', error);
+      alert('Failed to upload cover: ' + error.message);
+    },
+  });
 
   const {
     register,
@@ -244,58 +286,32 @@ export function ProfileTab({ user }: ProfileTabProps) {
   };
 
   const handleAvatarCropComplete = async (croppedBlob: Blob) => {
-    setIsUploadingAvatar(true);
-
     try {
-      // TODO: Upload to S3/Cloudflare R2 using presigned URL
-      // For now, we'll just create a local URL (placeholder)
-      const url = URL.createObjectURL(croppedBlob);
-
-      // Update profile with new avatar URL
-      await updateMutation.mutateAsync({
-        input: {
-          // In real implementation, this would be the S3/R2 URL
-          // For now, we'll skip the actual upload
-        },
+      // Convert blob to File
+      const file = new File([croppedBlob], 'avatar.webp', {
+        type: 'image/webp',
       });
 
-      console.log('Avatar uploaded:', url);
-      alert('Avatar upload placeholder - implement S3/R2 upload');
-
-      setAvatarCropModalOpen(false);
-      setSelectedAvatarSrc(null);
+      // Upload using the hook
+      await avatarUpload.uploadAsync(file);
     } catch (error) {
-      console.error('Error uploading avatar:', error);
-      alert('Failed to upload avatar');
-    } finally {
-      setIsUploadingAvatar(false);
+      // Error is already handled by the hook's onError callback
+      console.error('Avatar upload failed:', error);
     }
   };
 
   const handleCoverCropComplete = async (croppedBlob: Blob) => {
-    setIsUploadingCover(true);
-
     try {
-      // TODO: Upload to S3/Cloudflare R2 using presigned URL
-      // For now, we'll just create a local URL (placeholder)
-      const url = URL.createObjectURL(croppedBlob);
-
-      // Update profile with new cover URL
-      await updateMutation.mutateAsync({
-        input: {
-          coverUrl: url, // In real implementation, this would be the S3/R2 URL
-        },
+      // Convert blob to File
+      const file = new File([croppedBlob], 'cover.webp', {
+        type: 'image/webp',
       });
 
-      console.log('Cover uploaded:', url);
-
-      setCoverCropModalOpen(false);
-      setSelectedCoverSrc(null);
+      // Upload using the hook
+      await coverUpload.uploadAsync(file);
     } catch (error) {
-      console.error('Error uploading cover:', error);
-      alert('Failed to upload cover');
-    } finally {
-      setIsUploadingCover(false);
+      // Error is already handled by the hook's onError callback
+      console.error('Cover upload failed:', error);
     }
   };
 
@@ -316,9 +332,9 @@ export function ProfileTab({ user }: ProfileTabProps) {
             Recommended: Square image, at least 512x512px
           </p>
           <div className="mt-2 flex items-center gap-4">
-            {user?.imageUrl ? (
+            {buildAvatarUrl(user?.avatarKey, 'lg') ? (
               <img
-                src={user.imageUrl}
+                src={buildAvatarUrl(user?.avatarKey, 'lg')!}
                 alt="Avatar"
                 className="h-20 w-20 rounded-full object-cover"
               />
@@ -339,11 +355,11 @@ export function ProfileTab({ user }: ProfileTabProps) {
             <button
               type="button"
               onClick={() => avatarInputRef.current?.click()}
-              disabled={isUploadingAvatar}
+              disabled={avatarUpload.isUploading}
               className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               <Camera className="h-4 w-4" />
-              {isUploadingAvatar ? 'Uploading...' : 'Change Avatar'}
+              {avatarUpload.isUploading ? 'Uploading...' : 'Change Avatar'}
             </button>
           </div>
         </div>
@@ -357,10 +373,10 @@ export function ProfileTab({ user }: ProfileTabProps) {
             Recommended: 1920x1080px (16:9 aspect ratio)
           </p>
           <div className="mt-2">
-            {user?.profile?.coverUrl ? (
+            {buildUserCoverUrl(user?.profile?.coverKey, 'card') ? (
               <div className="relative h-32 w-full overflow-hidden rounded-lg">
                 <img
-                  src={user.profile.coverUrl}
+                  src={buildUserCoverUrl(user?.profile?.coverKey, 'card')!}
                   alt="Cover"
                   className="h-full w-full object-cover"
                 />
@@ -385,11 +401,11 @@ export function ProfileTab({ user }: ProfileTabProps) {
             <button
               type="button"
               onClick={() => coverInputRef.current?.click()}
-              disabled={isUploadingCover}
+              disabled={coverUpload.isUploading}
               className="mt-2 inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               <ImageIcon className="h-4 w-4" />
-              {isUploadingCover ? 'Uploading...' : 'Change Cover'}
+              {coverUpload.isUploading ? 'Uploading...' : 'Change Cover'}
             </button>
           </div>
         </div>
@@ -637,7 +653,7 @@ export function ProfileTab({ user }: ProfileTabProps) {
           aspect={1} // Square for avatar
           onCropComplete={handleAvatarCropComplete}
           title="Crop Avatar"
-          isUploading={isUploadingAvatar}
+          isUploading={avatarUpload.isUploading}
         />
       )}
 
@@ -655,7 +671,7 @@ export function ProfileTab({ user }: ProfileTabProps) {
           aspect={16 / 9} // 16:9 for cover
           onCropComplete={handleCoverCropComplete}
           title="Crop Cover Image"
-          isUploading={isUploadingCover}
+          isUploading={coverUpload.isUploading}
         />
       )}
     </form>

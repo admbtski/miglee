@@ -172,7 +172,6 @@ query AdminUserDmThreads($userId: ID!, $limit: Int, $offset: Int) {
       otherUser {
         id
         name
-        imageUrl
       }
     }
     pageInfo {
@@ -205,7 +204,6 @@ query AdminUserNotifications($userId: ID!, $limit: Int, $offset: Int) {
       actor {
         id
         name
-        imageUrl
       }
     }
     pageInfo {

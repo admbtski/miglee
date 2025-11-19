@@ -14,7 +14,7 @@ fragment UserProfileCore on UserProfile {
   country
   homeLat
   homeLng
-  coverUrl
+  coverKey
   speaks
   interests
   preferredMode
@@ -98,7 +98,7 @@ fragment UserWithProfile on User {
   id
   email
   name
-  imageUrl
+  avatarKey
   role
   verifiedAt
   suspendedAt
@@ -146,7 +146,6 @@ query GetMyProfile {
     id
     email
     name
-    imageUrl
     role
     verifiedAt
   }
@@ -183,7 +182,6 @@ query GetUserEvents($userId: ID!, $limit: Int, $offset: Int) {
       owner {
         id
         name
-        imageUrl
       }
     }
     total
@@ -200,7 +198,6 @@ query GetUserReviews($userId: ID!, $limit: Int, $offset: Int) {
       author {
         id
         name
-        imageUrl
       }
       intent {
         id

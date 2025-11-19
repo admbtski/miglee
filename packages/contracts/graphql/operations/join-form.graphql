@@ -31,7 +31,6 @@ query IntentJoinRequests($intentId: ID!, $limit: Int = 20, $offset: Int = 0) {
         user {
           id
           name
-          imageUrl
           verifiedAt
           profile {
             id
@@ -98,7 +97,6 @@ query MyJoinRequests(
       owner {
         id
         name
-        imageUrl
         verifiedAt
       }
     }

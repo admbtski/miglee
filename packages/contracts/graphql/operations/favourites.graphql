@@ -43,7 +43,6 @@ query MyFavourites($limit: Int = 20, $offset: Int = 0) {
         owner {
           id
           name
-          imageUrl
         }
         sponsorship {
           id

@@ -26,6 +26,29 @@ const envSchema = z.object({
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
   LOG_FILE_PATH: z.string().optional(),
+
+  // Media Storage
+  MEDIA_STORAGE_PROVIDER: z.enum(['LOCAL', 'S3']).default('LOCAL'),
+  UPLOADS_PATH: z.string().default('./uploads'),
+  UPLOADS_TMP_PATH: z.string().default('./tmp/uploads'),
+
+  // Image Processing
+  IMAGE_MAX_WIDTH: z.coerce.number().default(2560),
+  IMAGE_MAX_HEIGHT: z.coerce.number().default(2560),
+  IMAGE_FORMAT: z.enum(['webp', 'avif']).default('webp'),
+  IMAGE_QUALITY: z.coerce.number().min(1).max(100).default(85),
+
+  // S3 Configuration (optional, required if MEDIA_STORAGE_PROVIDER=S3)
+  S3_ENDPOINT: z.string().optional(),
+  S3_REGION: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+
+  // CDN/Assets URL
+  ASSETS_BASE_URL: z.string().optional(), // e.g. http://localhost:4000 or https://cdn.example.com
+  CDN_ENABLED: z.coerce.boolean().default(false),
+  CDN_BASE_URL: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
@@ -49,4 +72,25 @@ export const config = {
 
   logLevel: env.LOG_LEVEL,
   logFilePath: env.LOG_FILE_PATH,
+
+  // Media
+  mediaStorageProvider: env.MEDIA_STORAGE_PROVIDER,
+  uploadsPath: env.UPLOADS_PATH,
+  uploadsTmpPath: env.UPLOADS_TMP_PATH,
+  imageMaxWidth: env.IMAGE_MAX_WIDTH,
+  imageMaxHeight: env.IMAGE_MAX_HEIGHT,
+  imageFormat: env.IMAGE_FORMAT,
+  imageQuality: env.IMAGE_QUALITY,
+
+  // S3
+  s3Endpoint: env.S3_ENDPOINT,
+  s3Region: env.S3_REGION,
+  s3Bucket: env.S3_BUCKET,
+  s3AccessKeyId: env.S3_ACCESS_KEY_ID,
+  s3SecretAccessKey: env.S3_SECRET_ACCESS_KEY,
+
+  // CDN
+  assetsBaseUrl: env.ASSETS_BASE_URL,
+  cdnEnabled: env.CDN_ENABLED,
+  cdnBaseUrl: env.CDN_BASE_URL,
 };

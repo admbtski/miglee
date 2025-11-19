@@ -40,9 +40,7 @@ async function ensureDevUserByName(name: string) {
           email,
           name: trimmed,
           role: 'USER' as Role,
-          imageUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-            base
-          )}`,
+          avatarKey: null, // Will be set via media upload
           verifiedAt: new Date(),
         },
       });
@@ -64,7 +62,7 @@ export const devLoginMutation: MutationResolvers['devLogin'] =
     return {
       id: u.id!,
       name: u.name!,
-      imageUrl: u.imageUrl!,
+      avatarKey: u.avatarKey,
       role: (u.role ?? 'USER') as Role,
       verifiedAt: u.verifiedAt,
       email: u.email,
