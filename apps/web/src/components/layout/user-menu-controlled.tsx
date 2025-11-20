@@ -26,9 +26,9 @@ export function UserMenuControlled({
     if (!me) return null;
     return {
       name: me.name ?? me.email ?? 'User',
-      email: me.email,
-      avatarKey: me.avatarKey,
-      avatarBlurhash: me.avatarBlurhash,
+      email: me.email || undefined,
+      avatarKey: me.avatarKey || undefined,
+      avatarBlurhash: me.avatarBlurhash || undefined,
     };
   }, [data]);
 

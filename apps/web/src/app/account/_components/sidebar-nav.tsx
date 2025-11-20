@@ -94,7 +94,7 @@ const NAV_ITEMS: NavItem[] = [
 function getActiveNavItem(pathname: string): NavItem {
   return (
     NAV_ITEMS.find((item) => item.href && pathname.startsWith(item.href)) ||
-    NAV_ITEMS[0]
+    NAV_ITEMS[0]!
   );
 }
 

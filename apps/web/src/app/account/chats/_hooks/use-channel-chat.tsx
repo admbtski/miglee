@@ -32,14 +32,12 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetIntentMessages,
   useSendIntentMessage,
   useMarkIntentChatRead,
   useGetIntentUnreadCount,
   usePublishIntentTyping,
-  eventChatKeys,
 } from '@/lib/api/event-chat';
 import {
   useIntentMessageAdded,
@@ -70,18 +68,13 @@ export function useChannelChat({
   myUserId,
   activeIntentId,
 }: UseChannelChatProps) {
-  const queryClient = useQueryClient();
-
   // Fetch memberships (channels)
   const { data: membershipsData, isLoading: membershipsLoading } =
     useMyMembershipsQuery();
 
   // Fetch messages for active channel
   const { data: messagesData, isLoading: messagesLoading } =
-    useGetIntentMessages(
-      { intentId: activeIntentId ?? '' },
-      { enabled: !!activeIntentId }
-    );
+    useGetIntentMessages(activeIntentId ?? '', { enabled: !!activeIntentId });
 
   // Unread count
   const { data: unreadData } = useGetIntentUnreadCount(
@@ -95,19 +88,37 @@ export function useChannelChat({
   const publishTyping = usePublishIntentTyping();
 
   // Subscriptions
-  useIntentMessageAdded(activeIntentId, (message) => {
-    console.log('[Channel Hook] Message added:', message.id);
+  useIntentMessageAdded({
+    intentId: activeIntentId ?? '',
+    onMessage: (message) => {
+      console.log('[Channel Hook] Message added:', message.id);
+    },
+    enabled: !!activeIntentId,
   });
-  useIntentMessageUpdated(activeIntentId, (message) => {
-    console.log('[Channel Hook] Message updated:', message.id);
+  useIntentMessageUpdated({
+    intentId: activeIntentId ?? '',
+    onMessageUpdated: (message) => {
+      console.log('[Channel Hook] Message updated:', message.id);
+    },
+    enabled: !!activeIntentId,
   });
-  useIntentMessageDeleted(activeIntentId, (messageId) => {
-    console.log('[Channel Hook] Message deleted:', messageId);
+  useIntentMessageDeleted({
+    intentId: activeIntentId ?? '',
+    onMessageDeleted: (event) => {
+      console.log('[Channel Hook] Message deleted:', event.messageId);
+    },
+    enabled: !!activeIntentId,
   });
-  useIntentReactionAdded(activeIntentId);
+  useIntentReactionAdded({
+    intentId: activeIntentId ?? '',
+    enabled: !!activeIntentId,
+  });
 
   // Typing subscription
-  const typingUsers = useIntentTyping(activeIntentId);
+  const typingUsers = useIntentTyping({
+    intentId: activeIntentId ?? '',
+    enabled: !!activeIntentId,
+  });
 
   // Transform memberships to conversations
   const conversations = useMemo(() => {
@@ -119,20 +130,24 @@ export function useChannelChat({
         id: intent.id,
         kind: 'channel' as const,
         title: intent.title,
-        membersCount: intent.participantCount || 0,
+        membersCount: intent.joinedCount || 0,
         preview: intent.description || 'No description',
         lastMessageAt: '', // TODO: Add last message time from API
         unread: 0, // TODO: Add unread count from API
-        avatar: intent.avatarKey || undefined,
+        avatar: undefined, // TODO: Add coverKey to intent fragment
       };
     });
   }, [membershipsData]);
 
   // Transform messages
   const messages = useMemo(() => {
-    if (!messagesData?.intentMessages || !myUserId) return [];
+    if (!messagesData?.pages || !myUserId) return [];
 
-    return messagesData.intentMessages.map(
+    const allMessages = messagesData.pages.flatMap(
+      (page) => page.intentMessages?.edges?.map((edge) => edge.node) || []
+    );
+
+    return allMessages.map(
       (msg): Message => ({
         id: msg.id,
         text: msg.content,
@@ -153,8 +168,8 @@ export function useChannelChat({
           })),
           reacted: r.users.some((u) => u.id === myUserId),
         })),
-        readAt: msg.readAt,
-        editedAt: msg.updatedAt !== msg.createdAt ? msg.updatedAt : null,
+        readAt: undefined, // TODO: Add readAt to message fragment
+        editedAt: null, // TODO: Add updatedAt to message fragment
         deletedAt: msg.deletedAt,
         replyTo: msg.replyTo
           ? {
@@ -175,9 +190,11 @@ export function useChannelChat({
     if (!activeIntentId || !content.trim()) return;
 
     sendMessage.mutate({
-      intentId: activeIntentId,
-      content: content.trim(),
-      replyToId,
+      input: {
+        intentId: activeIntentId,
+        content: content.trim(),
+        replyToId,
+      },
     });
   };
 
@@ -206,8 +223,8 @@ export function useChannelChat({
     return {
       id: intent.id,
       title: intent.title,
-      avatar: intent.avatarKey || undefined,
-      members: intent.participantCount || 0,
+      avatar: undefined, // TODO: Add coverKey to intent fragment
+      members: intent.joinedCount || 0,
     };
   }, [activeIntentId, membershipsData]);
 
@@ -217,7 +234,7 @@ export function useChannelChat({
     messages,
     activeChannel,
     typingUsers,
-    unreadCount: unreadData?.unreadCount || 0,
+    unreadCount: (unreadData?.intentUnreadCount as any)?.unreadCount || 0,
 
     // Loading states
     isLoadingChannels: membershipsLoading,

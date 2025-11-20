@@ -47,10 +47,10 @@ export const GET_USER_ONE_KEY = (variables: GetUserQueryVariables) =>
 export function buildGetUsersOptions(
   variables?: GetUsersQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetUsersQuery, unknown, GetUsersQuery, QueryKey>,
+    UseQueryOptions<GetUsersQuery, Error, GetUsersQuery, QueryKey>,
     'queryKey' | 'queryFn'
   >
-): UseQueryOptions<GetUsersQuery, unknown, GetUsersQuery, QueryKey> {
+): UseQueryOptions<GetUsersQuery, Error, GetUsersQuery, QueryKey> {
   return {
     queryKey: GET_USERS_LIST_KEY(variables) as unknown as QueryKey,
     queryFn: () =>
@@ -87,7 +87,7 @@ export function buildGetUserOptions(
 export function useUsersQuery(
   variables?: GetUsersQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetUsersQuery, unknown, GetUsersQuery, QueryKey>,
+    UseQueryOptions<GetUsersQuery, Error, GetUsersQuery, QueryKey>,
     'queryKey' | 'queryFn'
   >
 ) {

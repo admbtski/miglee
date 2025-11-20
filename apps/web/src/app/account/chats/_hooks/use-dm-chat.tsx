@@ -33,14 +33,12 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetDmThreads,
   useGetDmMessagesInfinite,
   useSendDmMessage,
   useMarkDmThreadRead,
   usePublishDmTyping,
-  dmKeys,
 } from '@/lib/api/dm';
 import {
   useDmMessageAdded,
@@ -69,8 +67,6 @@ type UseDmChatProps = {
 // =============================================================================
 
 export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
-  const queryClient = useQueryClient();
-
   // Fetch threads
   const { data: threadsData, isLoading: threadsLoading } = useGetDmThreads();
 
@@ -81,10 +77,9 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetDmMessagesInfinite(
-    { threadId: activeThreadId ?? '' },
-    { enabled: !!activeThreadId }
-  );
+  } = useGetDmMessagesInfinite(activeThreadId ?? '', {
+    enabled: !!activeThreadId,
+  });
 
   // Mutations
   const sendMessage = useSendDmMessage();
@@ -92,32 +87,52 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   const publishTyping = usePublishDmTyping();
 
   // Subscriptions
-  useDmThreadsSubscriptions();
-  useDmMessageAdded(activeThreadId, (message) => {
-    console.log('[DM Hook] Message added:', message.id);
+  useDmThreadsSubscriptions({ enabled: true });
+  useDmMessageAdded({
+    threadId: activeThreadId ?? '',
+    onMessage: (message) => {
+      console.log('[DM Hook] Message added:', message.id);
+    },
+    enabled: !!activeThreadId,
   });
-  useDmMessageUpdated(activeThreadId, (message) => {
-    console.log('[DM Hook] Message updated:', message.id);
+  useDmMessageUpdated({
+    threadId: activeThreadId ?? '',
+    onMessageUpdated: (message) => {
+      console.log('[DM Hook] Message updated:', message.id);
+    },
+    enabled: !!activeThreadId,
   });
-  useDmMessageDeleted(activeThreadId, (messageId) => {
-    console.log('[DM Hook] Message deleted:', messageId);
+  useDmMessageDeleted({
+    threadId: activeThreadId ?? '',
+    onMessageDeleted: (event) => {
+      console.log('[DM Hook] Message deleted:', event.messageId);
+    },
+    enabled: !!activeThreadId,
   });
-  useDmReactionAdded(activeThreadId);
+  useDmReactionAdded({
+    threadId: activeThreadId ?? '',
+    enabled: !!activeThreadId,
+  });
 
   // Typing subscription
-  const typingUsers = useDmTyping(activeThreadId);
+  const typingUsers = useDmTyping({
+    threadId: activeThreadId ?? '',
+    enabled: !!activeThreadId,
+  });
 
   // Transform threads to conversations
   const conversations = useMemo(() => {
-    if (!threadsData?.dmThreads) return [];
+    if (!threadsData?.dmThreads?.items) return [];
 
-    return threadsData.dmThreads.map((thread) => {
-      const otherUser = thread.participants.find((p) => p.id !== myUserId);
+    return threadsData.dmThreads.items.map((thread) => {
+      const otherUser = (thread as any).participants?.find(
+        (p: any) => p.id !== myUserId
+      );
       return {
         id: thread.id,
         kind: 'dm' as const,
         title: otherUser?.name || 'Unknown',
-        membersCount: thread.participants.length,
+        membersCount: (thread as any).participants?.length || 0,
         preview: thread.lastMessage?.content || 'No messages yet',
         lastMessageAt: thread.lastMessage?.createdAt
           ? formatRelativeTime(thread.lastMessage.createdAt)
@@ -137,16 +152,18 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
 
     const allMessages: Message[] = [];
     for (const page of messagesData.pages) {
-      for (const msg of page.messages) {
+      const pageMessages =
+        page.dmMessages?.edges?.map((edge) => edge.node) || [];
+      for (const msg of pageMessages) {
         allMessages.push({
           id: msg.id,
           text: msg.content,
           at: new Date(msg.createdAt).getTime(),
-          side: msg.authorId === myUserId ? 'right' : 'left',
+          side: msg.senderId === myUserId ? 'right' : 'left',
           author: {
-            id: msg.author.id,
-            name: msg.author.name,
-            avatar: msg.author.avatarKey || undefined,
+            id: msg.sender.id,
+            name: msg.sender.name,
+            avatar: msg.sender.avatarKey || undefined,
           },
           reactions: msg.reactions?.map((r) => ({
             emoji: r.emoji,
@@ -165,8 +182,8 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
             ? {
                 id: msg.replyTo.id,
                 author: {
-                  id: msg.replyTo.author.id,
-                  name: msg.replyTo.author.name,
+                  id: msg.replyTo.sender.id,
+                  name: msg.replyTo.sender.name,
                 },
                 content: msg.replyTo.content,
               }

@@ -9,9 +9,8 @@
 
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useReverseInfiniteScroll } from '@/hooks/use-reverse-infinite-scroll';
 import type { GetDmMessagesQuery } from '@/lib/api/__generated__/react-query-update';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 type DmMessage = GetDmMessagesQuery['dmMessages']['edges'][number]['node'];
 
