@@ -86,7 +86,7 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
       <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
 
       {/* Content */}
-      <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="container mx-auto max-w-6xl px-4 py-6">
         {/* Tabs */}
         <div className="mb-6 overflow-x-auto">
           <nav

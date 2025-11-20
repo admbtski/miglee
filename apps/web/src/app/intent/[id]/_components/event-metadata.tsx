@@ -1,5 +1,5 @@
 import type { EventDetailsData } from '@/types/event-details';
-import { Calendar, Clock, FileText } from 'lucide-react';
+import { Calendar, Clock, FileText, InfoIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 
@@ -14,9 +14,13 @@ export function EventMetadata({ event }: EventMetadataProps) {
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-      <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-        ℹ️ Informacje o wydarzeniu
-      </h2>
+      {/* Header */}
+      <div className="mb-6 flex items-center gap-2">
+        <InfoIcon className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+          Informacje o wydarzeniu
+        </h2>
+      </div>
 
       <div className="space-y-3">
         {/* Created At */}

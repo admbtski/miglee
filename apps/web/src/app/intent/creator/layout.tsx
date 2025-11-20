@@ -24,7 +24,7 @@ export default function IntentCreatorLayout({
           <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
             <Navbar />
 
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+            <div className="container mx-auto max-w-6xl px-4 py-6">
               <main
                 className="rounded-3xl border border-zinc-200 bg-white/95 shadow-sm ring-1 ring-black/5 dark:border-zinc-700 dark:bg-[#141518]/80 backdrop-blur-[2px] p-4 sm:p-6 lg:p-8"
                 role="main"
