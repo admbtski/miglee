@@ -304,14 +304,14 @@ function FilterModalRefactoredComponent({
             />
 
             {/* Body - filters */}
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Search Section */}
               <div>
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
+                <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
                   <FilterIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   <span>Search & Categories</span>
                 </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
                   Find events by tags and categories
                 </p>
                 <SearchCombo
@@ -350,12 +350,12 @@ function FilterModalRefactoredComponent({
               </div>
 
               {/* Location Section */}
-              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
                   <MapPinIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   <span>Location & Distance</span>
                 </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
                   Set location and search radius
                 </p>
                 <LocationSection
@@ -373,12 +373,12 @@ function FilterModalRefactoredComponent({
               </div>
 
               {/* Date Range Section */}
-              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
                   <CalendarIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   <span>Date Range</span>
                 </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
                   Filter events by start and end date
                 </p>
                 <DateRangeSection
@@ -395,12 +395,12 @@ function FilterModalRefactoredComponent({
               </div>
 
               {/* Settings Section */}
-              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
                   <SettingsIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   <span>Event Settings</span>
                 </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5">
                   Filter by status, meeting type, level, and more
                 </p>
 
@@ -533,13 +533,13 @@ function FilterModalRefactoredComponent({
                         aria-label="Tylko zweryfikowani organizatorzy"
                       />
                       <span
-                        className={`inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-all duration-200 ${verifiedOnly ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                        className={`inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-all duration-200 ${verifiedOnly ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                       >
                         <span
-                          className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${verifiedOnly ? 'translate-x-5' : 'translate-x-0'}`}
+                          className={`h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${verifiedOnly ? 'translate-x-5' : 'translate-x-0'}`}
                         />
                       </span>
-                      <span className="flex items-center gap-2 font-medium">
+                      <span className="flex items-center gap-2 font-medium text-zinc-900 dark:text-zinc-100">
                         {verifiedOnly && (
                           <svg
                             className="h-4 w-4 text-indigo-600 dark:text-indigo-400"
@@ -563,21 +563,30 @@ function FilterModalRefactoredComponent({
               {/* Info note */}
               <div
                 role="note"
-                className="flex items-start gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
-                           text-blue-700 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+                className="flex items-start gap-3 rounded-2xl border border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-violet-50 p-4
+                           text-indigo-900 dark:border-indigo-500/20 dark:from-indigo-950/30 dark:to-violet-950/30 dark:text-indigo-100"
               >
                 <span
                   aria-hidden="true"
-                  className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full
-                             bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60
-                             dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
+                  className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0
+                             bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200/60
+                             dark:bg-indigo-500/20 dark:text-indigo-300 dark:ring-indigo-500/30"
                 >
-                  <Info className="h-3.5 w-3.5" />
+                  <Info className="h-4 w-4" />
                 </span>
-                <p className="text-sm leading-5">
-                  Use <b>Cmd/Ctrl+Enter</b> to quickly apply filters. Combine
-                  multiple filters to narrow down your search.
-                </p>
+                <div className="flex-1">
+                  <p className="text-sm leading-relaxed font-medium">
+                    <span className="text-indigo-700 dark:text-indigo-300">
+                      Pro Tip:
+                    </span>{' '}
+                    Use{' '}
+                    <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-white dark:bg-zinc-800 border border-indigo-200 dark:border-indigo-700 rounded shadow-sm">
+                      Cmd/Ctrl+Enter
+                    </kbd>{' '}
+                    to quickly apply filters. Combine multiple filters to narrow
+                    down your search.
+                  </p>
+                </div>
               </div>
             </div>
           </>

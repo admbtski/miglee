@@ -23,10 +23,11 @@ export const Pill = React.memo(function Pill({
       onClick={onClick}
       title={title}
       className={[
-        'cursor-pointer rounded-full px-3 py-1.5 text-sm ring-1 transition',
+        'cursor-pointer rounded-xl px-4 py-2.5 text-sm font-medium border transition-all duration-200',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40',
         active
-          ? 'bg-zinc-900 text-white ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:ring-white'
-          : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
+          ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-transparent shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-violet-500'
+          : 'bg-white text-zinc-700 border-white/20 hover:bg-zinc-50 dark:bg-zinc-900/40 dark:text-zinc-200 dark:border-zinc-700/50 dark:hover:bg-zinc-800/60',
       ].join(' ')}
     >
       <span className="inline-flex items-center gap-1">{children}</span>

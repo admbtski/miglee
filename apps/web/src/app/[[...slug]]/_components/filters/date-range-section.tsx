@@ -127,53 +127,74 @@ export const DateRangeSection = memo(function DateRangeSection({
       title="Zakres dat"
       hint="Skorzystaj z presetów lub ustaw własny zakres."
     >
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {[
-          { id: 'now1h', label: 'Teraz +1h' },
-          { id: 'tonight', label: 'Dziś wieczorem' },
-          { id: 'tomorrow', label: 'Jutro' },
-          { id: 'weekend', label: 'Weekend' },
-          { id: '7days', label: 'Najbliższe 7 dni' },
-        ].map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() =>
-              applyPreset(
-                p.id as 'now1h' | 'tonight' | 'tomorrow' | 'weekend' | '7days'
-              )
-            }
-            className="rounded-full px-2.5 py-1 text-xs ring-1 bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700"
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* Quick Presets */}
+      <div className="mb-4">
+        <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2.5">Quick Select</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'now1h', label: 'Now +1h' },
+            { id: 'tonight', label: 'Tonight' },
+            { id: 'tomorrow', label: 'Tomorrow' },
+            { id: 'weekend', label: 'Weekend' },
+            { id: '7days', label: 'Next 7 days' },
+          ].map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() =>
+                applyPreset(
+                  p.id as 'now1h' | 'tonight' | 'tomorrow' | 'weekend' | '7days'
+                )
+              }
+              className="rounded-xl px-3.5 py-2 text-xs font-medium border transition-all
+                         bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300
+                         dark:bg-zinc-900/40 dark:text-zinc-300 dark:border-zinc-700/50 dark:hover:bg-zinc-800/60
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-          <span className="w-20 shrink-0 text-zinc-500">Start</span>
-          <input
-            type="datetime-local"
-            value={startForInput}
-            onChange={(e) => onStartChange(localInputToISO(e.target.value))}
-            className="w-full bg-transparent outline-none"
-          />
-        </label>
-        <label className="flex items-center gap-2 px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900">
-          <span className="w-20 shrink-0 text-zinc-500">Koniec</span>
-          <input
-            type="datetime-local"
-            value={endForInput}
-            min={endMin}
-            onChange={(e) => onEndChange(localInputToISO(e.target.value))}
-            className="w-full bg-transparent outline-none"
-          />
-        </label>
+      {/* Custom Range */}
+      <div>
+        <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2.5">Custom Range</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="block">
+              <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Start Date & Time</span>
+              <div className="flex items-center gap-2 px-4 py-3 text-sm bg-white border rounded-xl border-zinc-200 
+                              dark:border-zinc-700 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-indigo-500/40 transition-shadow">
+                <input
+                  type="datetime-local"
+                  value={startForInput}
+                  onChange={(e) => onStartChange(localInputToISO(e.target.value))}
+                  className="w-full bg-transparent outline-none text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+            </label>
+          </div>
+          <div>
+            <label className="block">
+              <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">End Date & Time</span>
+              <div className="flex items-center gap-2 px-4 py-3 text-sm bg-white border rounded-xl border-zinc-200 
+                              dark:border-zinc-700 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-indigo-500/40 transition-shadow">
+                <input
+                  type="datetime-local"
+                  value={endForInput}
+                  min={endMin}
+                  onChange={(e) => onEndChange(localInputToISO(e.target.value))}
+                  className="w-full bg-transparent outline-none text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+            </label>
+          </div>
+        </div>
       </div>
 
       {dateError && (
-        <p className="inline-flex items-center gap-2 mt-2 text-sm text-red-600 dark:text-red-400">
+        <p className="inline-flex items-center gap-2 mt-3 text-sm text-red-600 dark:text-red-400">
           <AlertCircle className="w-4 h-4" />
           {dateError}
         </p>

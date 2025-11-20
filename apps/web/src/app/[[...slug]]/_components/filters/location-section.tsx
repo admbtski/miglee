@@ -90,14 +90,14 @@ export const LocationSection = memo(function LocationSection({
       <div
         aria-disabled={!city}
         className={[
-          'mt-3 px-3 py-2 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900',
+          'mt-4 px-4 py-3.5 bg-white border rounded-2xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900',
           !city ? 'opacity-50' : '',
         ].join(' ')}
       >
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-500">Odległość</span>
-          <span className="text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
-            {city ? `${distanceKm} km` : 'Globalnie'}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Distance</span>
+          <span className="text-sm tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
+            {city ? `${distanceKm} km` : 'Global'}
           </span>
         </div>
         <input
@@ -107,11 +107,21 @@ export const LocationSection = memo(function LocationSection({
           step={5}
           value={distanceKm}
           onChange={(e) => onDistanceChange(Number(e.target.value))}
-          className="w-full mt-2 accent-indigo-600 disabled:opacity-50"
-          aria-label="Odległość w kilometrach"
+          className="w-full h-2 bg-zinc-200 rounded-full appearance-none cursor-pointer dark:bg-zinc-700
+                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 
+                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r 
+                     [&::-webkit-slider-thumb]:from-indigo-600 [&::-webkit-slider-thumb]:to-violet-600 
+                     [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer
+                     [&::-webkit-slider-thumb]:hover:shadow-lg [&::-webkit-slider-thumb]:transition-shadow
+                     [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full 
+                     [&::-moz-range-thumb]:bg-gradient-to-r [&::-moz-range-thumb]:from-indigo-600 
+                     [&::-moz-range-thumb]:to-violet-600 [&::-moz-range-thumb]:border-0 
+                     [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:cursor-pointer
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Distance in kilometers"
           disabled={!city}
         />
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap gap-2">
           {[5, 10, 20, 30, 50, 100].map((km) => (
             <button
               key={km}
@@ -119,13 +129,13 @@ export const LocationSection = memo(function LocationSection({
               disabled={!city}
               onClick={() => onDistanceChange(km)}
               className={[
-                'rounded-full px-2 py-0.5 text-xs ring-1',
+                'rounded-lg px-3 py-1.5 text-xs font-medium border transition-all',
                 distanceKm === km
-                  ? 'bg-indigo-600 text-white ring-indigo-600'
-                  : 'bg-zinc-50 text-zinc-700 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700',
+                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-transparent shadow-sm'
+                  : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800/60 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-800',
                 !city ? 'opacity-60' : '',
               ].join(' ')}
-              aria-label={`Ustaw ${km} km`}
+              aria-label={`Set ${km} km`}
             >
               {km} km
             </button>
