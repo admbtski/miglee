@@ -25,6 +25,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { EditLinkModal } from './edit-link-modal';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 
 interface InviteLinksPanelProps {
   intentId: string;
@@ -336,20 +337,12 @@ export function InviteLinksPanel({ intentId }: InviteLinksPanelProps) {
                           key={usage.id}
                           className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/50"
                         >
-                          {usage.user.avatarKey && (
-                            <img
-                              src={
-                                buildAvatarUrl(usage.user.avatarKey, 'sm') || ''
-                              }
-                              alt={usage.user.name}
-                              className="h-8 w-8 rounded-full"
-                            />
-                          )}
-                          {!usage.user.avatarKey && (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
-                              {usage.user.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                          <Avatar
+                            url={buildAvatarUrl(usage.user.avatarKey, 'sm')}
+                            blurhash={usage.user.avatarBlurhash}
+                            alt={usage.user.name}
+                            size={32}
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                               {usage.user.name}

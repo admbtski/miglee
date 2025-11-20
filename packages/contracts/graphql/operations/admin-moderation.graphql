@@ -20,6 +20,8 @@ query AdminComments($limit: Int, $offset: Int, $intentId: ID, $userId: ID) {
       author {
         id
         name
+        avatarKey
+        avatarBlurhash
       }
       intent {
         id
@@ -58,6 +60,8 @@ query AdminReviews(
       author {
         id
         name
+        avatarKey
+        avatarBlurhash
       }
       intent {
         id

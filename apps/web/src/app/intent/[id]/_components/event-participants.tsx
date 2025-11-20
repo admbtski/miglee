@@ -2,6 +2,7 @@ import type { EventDetailsData } from '@/types/event-details';
 import { ShieldCheck, Users as UserGroup } from 'lucide-react';
 import Link from 'next/link';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 
 type EventParticipantsProps = {
   event: EventDetailsData;
@@ -148,14 +149,12 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
     <li className="flex items-center gap-3" data-u-id={member.user.id}>
       <Link href={profileUrl} className="flex-shrink-0">
         {member.user.avatarKey ? (
-          <img
-            src={
-              buildAvatarUrl(member.user.avatarKey, compact ? 'sm' : 'md') || ''
-            }
+          <Avatar
+            url={buildAvatarUrl(member.user.avatarKey, compact ? 'sm' : 'md')}
+            blurhash={member.user.avatarBlurhash}
             alt={displayName}
-            className={`rounded-full border border-neutral-200 object-cover transition-opacity hover:opacity-80 dark:border-neutral-700 ${compact ? 'h-8 w-8' : 'h-11 w-11'}`}
-            loading="lazy"
-            decoding="async"
+            size={compact ? 32 : 44}
+            className={`rounded-full border border-neutral-200 object-cover transition-opacity hover:opacity-80 dark:border-neutral-700 `}
           />
         ) : (
           <div

@@ -21,6 +21,7 @@ import { pl } from 'date-fns/locale';
 import { UserDetailModal } from './_components/user-detail-modal';
 import { AddUserModal } from './_components/add-user-modal';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -194,21 +195,13 @@ export default function UsersPage() {
                           rel="noopener noreferrer"
                           className="flex-shrink-0"
                         >
-                          {user.avatarKey ? (
-                            <img
-                              src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
-                              alt={user.profile?.displayName || user.name}
-                              className="h-8 w-8 rounded-full transition-opacity hover:opacity-80"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 transition-opacity hover:opacity-80 dark:bg-gray-700">
-                              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                {(user.profile?.displayName || user.name)
-                                  ?.charAt(0)
-                                  .toUpperCase()}
-                              </span>
-                            </div>
-                          )}
+                          <Avatar
+                            url={buildAvatarUrl(user.avatarKey, 'sm')}
+                            blurhash={user.avatarBlurhash}
+                            alt={user.profile?.displayName || user.name}
+                            size={32}
+                            className="transition-opacity hover:opacity-80"
+                          />
                         </a>
                         <div>
                           <div className="flex items-center gap-2">
@@ -221,10 +214,11 @@ export default function UsersPage() {
                               {user.profile?.displayName || user.name}
                             </a>
                             {user.suspendedAt && (
-                              <ShieldBan
-                                className="h-4 w-4 text-red-600 dark:text-red-400"
+                              <span
                                 title={`Zawieszony: ${user.suspensionReason || 'Brak powodu'}`}
-                              />
+                              >
+                                <ShieldBan className="h-4 w-4 text-red-600 dark:text-red-400" />
+                              </span>
                             )}
                             {user.verifiedAt && (
                               <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />

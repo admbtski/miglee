@@ -19,6 +19,7 @@ import {
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 import Link from 'next/link';
 
 type SecurityTabProps = {
@@ -323,15 +324,14 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         {thread.otherUser.avatarKey && (
-                          <img
-                            src={
-                              buildAvatarUrl(
-                                thread.otherUser.avatarKey,
-                                'md'
-                              ) || ''
-                            }
+                          <Avatar
+                            url={buildAvatarUrl(
+                              thread.otherUser.avatarKey,
+                              'md'
+                            )}
+                            blurhash={thread.otherUser.avatarBlurhash}
                             alt={thread.otherUser.name}
-                            className="h-10 w-10 rounded-full"
+                            size={40}
                           />
                         )}
                         <div>

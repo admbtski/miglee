@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 import { Search, Bell, BellOff, User } from 'lucide-react';
 import { useUsersQuery } from '@/lib/api/users';
 import { useAdminUserNotificationsQuery } from '@/lib/api/admin-users';
@@ -111,17 +112,12 @@ export default function NotificationsPage() {
                     onClick={() => handleSelectUser(user.id, user.name)}
                     className="flex w-full items-center gap-3 border-b border-gray-200 p-3 text-left transition-colors hover:bg-gray-100 last:border-b-0 dark:border-gray-700 dark:hover:bg-gray-800"
                   >
-                    {user.avatarKey ? (
-                      <img
-                        src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
-                        alt={user.name}
-                        className="h-8 w-8 rounded-full"
-                      />
-                    ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-                        <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                      </div>
-                    )}
+                    <Avatar
+                      url={buildAvatarUrl(user.avatarKey, 'sm')}
+                      blurhash={user.avatarBlurhash}
+                      alt={user.name}
+                      size={32}
+                    />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {user.name}
@@ -232,15 +228,14 @@ export default function NotificationsPage() {
                           {notification.actor && (
                             <div className="mt-2 flex items-center gap-2">
                               {notification.actor.avatarKey && (
-                                <img
-                                  src={
-                                    buildAvatarUrl(
-                                      notification.actor.avatarKey,
-                                      'sm'
-                                    ) || ''
-                                  }
+                                <Avatar
+                                  url={buildAvatarUrl(
+                                    notification.actor.avatarKey,
+                                    'sm'
+                                  )}
+                                  blurhash={notification.actor.avatarBlurhash}
                                   alt={notification.actor.name}
-                                  className="h-5 w-5 rounded-full"
+                                  size={20}
                                 />
                               )}
                               <span className="text-xs text-gray-500 dark:text-gray-500">

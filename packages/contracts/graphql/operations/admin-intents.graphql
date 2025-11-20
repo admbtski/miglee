@@ -44,6 +44,8 @@ mutation AdminChangeIntentOwner($intentId: ID!, $newOwnerId: ID!) {
     owner {
       id
       name
+      avatarKey
+      avatarBlurhash
     }
   }
 }

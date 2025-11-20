@@ -184,6 +184,8 @@ query GetUserEvents($userId: ID!, $limit: Int, $offset: Int) {
       owner {
         id
         name
+        avatarKey
+        avatarBlurhash
       }
     }
     total
@@ -200,6 +202,8 @@ query GetUserReviews($userId: ID!, $limit: Int, $offset: Int) {
       author {
         id
         name
+        avatarKey
+        avatarBlurhash
       }
       intent {
         id

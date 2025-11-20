@@ -15,6 +15,7 @@ import {
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 
 type ContentTabProps = {
   intentId: string;
@@ -73,10 +74,11 @@ export function ContentTab({ intentId }: ContentTabProps) {
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               {comment.author.avatarKey && (
-                <img
-                  src={buildAvatarUrl(comment.author.avatarKey, 'md') || ''}
+                <Avatar
+                  url={buildAvatarUrl(comment.author.avatarKey, 'md')}
+                  blurhash={comment.author.avatarBlurhash}
                   alt={comment.author.name}
-                  className="h-10 w-10 rounded-full"
+                  size={40}
                 />
               )}
               <div>
@@ -135,10 +137,11 @@ export function ContentTab({ intentId }: ContentTabProps) {
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               {review.author.avatarKey && (
-                <img
-                  src={buildAvatarUrl(review.author.avatarKey, 'md') || ''}
+                <Avatar
+                  url={buildAvatarUrl(review.author.avatarKey, 'md')}
+                  blurhash={review.author.avatarBlurhash}
                   alt={review.author.name}
-                  className="h-10 w-10 rounded-full"
+                  size={40}
                 />
               )}
               <div>
@@ -210,10 +213,11 @@ export function ContentTab({ intentId }: ContentTabProps) {
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
                 {message.author.avatarKey && (
-                  <img
-                    src={buildAvatarUrl(message.author.avatarKey, 'md') || ''}
+                  <Avatar
+                    url={buildAvatarUrl(message.author.avatarKey, 'md')}
+                    blurhash={message.author.avatarBlurhash}
                     alt={message.author.name}
-                    className="h-10 w-10 rounded-full"
+                    size={40}
                   />
                 )}
                 <div>

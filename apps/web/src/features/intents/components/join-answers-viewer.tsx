@@ -76,6 +76,7 @@ export function JoinAnswersViewer({
       <div className="flex items-start gap-3 pb-4 border-b border-neutral-200 dark:border-neutral-800">
         <Avatar
           url={buildAvatarUrl(user.avatarKey, 'md')}
+          blurhash={user.avatarBlurhash}
           alt={user.name}
           size={48}
         />

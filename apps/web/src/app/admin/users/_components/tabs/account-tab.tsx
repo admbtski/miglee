@@ -17,6 +17,7 @@ import {
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import { useMeQuery } from '@/lib/api/auth';
 import { useRouter } from 'next/navigation';
@@ -121,19 +122,12 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
       {/* User Info Card */}
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
         <div className="flex items-start gap-4">
-          {user.avatarKey ? (
-            <img
-              src={buildAvatarUrl(user.avatarKey, 'lg') || ''}
-              alt={user.name}
-              className="h-16 w-16 rounded-full"
-            />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-300 dark:bg-gray-600">
-              <span className="text-2xl font-medium text-gray-600 dark:text-gray-300">
-                {user.name?.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
+          <Avatar
+            url={buildAvatarUrl(user.avatarKey, 'lg')}
+            blurhash={user.avatarBlurhash}
+            alt={user.name}
+            size={64}
+          />
           <div className="flex-1">
             <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {user.name}

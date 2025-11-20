@@ -4,6 +4,7 @@ import { useAdminUserNotificationsQuery } from '@/lib/api/admin-users';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 
 type NotificationsTabProps = {
@@ -118,15 +119,14 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
                         {notification.actor && (
                           <div className="mt-2 flex items-center gap-2">
                             {notification.actor.avatarKey && (
-                              <img
-                                src={
-                                  buildAvatarUrl(
-                                    notification.actor.avatarKey,
-                                    'sm'
-                                  ) || ''
-                                }
+                              <Avatar
+                                url={buildAvatarUrl(
+                                  notification.actor.avatarKey,
+                                  'sm'
+                                )}
+                                blurhash={notification.actor.avatarBlurhash}
                                 alt={notification.actor.name}
-                                className="h-5 w-5 rounded-full"
+                                size={20}
                               />
                             )}
                             <span className="text-xs text-gray-500 dark:text-gray-500">

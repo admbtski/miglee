@@ -10,26 +10,11 @@ import { Navbar } from '@/components/layout/navbar';
 import { DesktopSearchBar } from './_components/desktop-search-bar';
 import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
 import { EventsHeader } from './_components/events-list/events-header';
-
-// Lazy load heavy components for better performance
-const ServerClusteredMap = lazy(
-  () =>
-    // @ts-expect-error - Dynamic import with moduleResolution node16
-    import('./_components/server-clustered-map')
-);
-
-const FilterModalRefactored = lazy(
-  () =>
-    // @ts-expect-error - Dynamic import with moduleResolution node16
-    import('./_components/filter-modal-refactored')
-);
-
 import { useActiveFiltersCount } from './_hooks/use-active-filters-count';
 import { useCommittedFilters } from './_hooks/use-committed-filters';
 import { useCommittedMapVisible } from './_hooks/use-committed-map-vision';
 import { useCommittedSort } from './_hooks/use-committed-sort';
 import { useDebouncedHover } from './_hooks/use-debounced-hover';
-
 import {
   GetIntentsQueryVariables,
   IntentStatus,
@@ -46,11 +31,20 @@ import {
 import { buildGridCols } from '@/lib/utils/intents';
 import type { IntentListItem } from '@/types/intent';
 
-/* ───────────────────────────── Types ───────────────────────────── */
+// Lazy load heavy components for better performance
+const ServerClusteredMap = lazy(
+  () =>
+    // @ts-expect-error - Dynamic import with moduleResolution node16
+    import('./_components/server-clustered-map')
+);
+
+const FilterModalRefactored = lazy(
+  () =>
+    // @ts-expect-error - Dynamic import with moduleResolution node16
+    import('./_components/filter-modal-refactored')
+);
 
 type LocationMode = 'EXPLICIT' | 'PROFILE_DEFAULT' | 'NONE';
-
-/* ───────────────────────────── Page ───────────────────────────── */
 
 export function IntentsPage() {
   const filters = useCommittedFilters();
@@ -74,15 +68,14 @@ export function IntentsPage() {
     apply,
   } = filters;
 
-  // Get user profile for PROFILE_DEFAULT mode
-  const { data: meData } = useMeQuery({ retry: false });
-  const userProfile = meData?.me?.profile;
-
   const { sort, setSort, sortVars } = useCommittedSort();
   const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
   const activeFilters = useActiveFiltersCount(filters);
   const [hoveredIntent, handleIntentHover] = useDebouncedHover();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { data: meData } = useMeQuery({ retry: false });
+
+  const userProfile = meData?.me?.profile;
 
   // Determine location mode
   const locationMode = useMemo<LocationMode>(() => {
@@ -264,7 +257,7 @@ export function IntentsPage() {
 
             <ErrorBoundary>
               <EventsGridVirtualized
-                items={flatItems as IntentListItem[]}
+                items={flatItems as unknown as IntentListItem[]}
                 isLoading={isLoading}
                 error={error}
                 hasNextPage={hasNextPage}

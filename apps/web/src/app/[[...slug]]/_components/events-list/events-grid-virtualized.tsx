@@ -14,7 +14,7 @@
 
 import { memo, useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { EventCard } from '../event-card';
+import { EventCard, type EventCardProps } from '../event-card';
 import type { IntentListItem, IntentHoverCallback } from '@/types/intent';
 import { mapIntentToEventCardProps } from '@/lib/adapters/intent-adapter';
 import { LoadingSkeleton } from './loading-skeleton';
@@ -47,23 +47,31 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
   const showSkeletons = isLoading && items.length === 0;
   const showItems = !showSkeletons && items.length > 0;
 
-  // Memoize mapped items to prevent unnecessary recalculations
-  const mappedItems = useMemo(
-    () =>
-      items.map((item, index) =>
-        mapIntentToEventCardProps(item, index, lang, onHover)
-      ),
-    [items, lang, onHover]
-  );
-
   // Group items into rows of 2 for stable rendering (2 columns on desktop, 1 on mobile)
+  // Map items directly when creating rows to avoid double iteration
   const itemRows = useMemo(() => {
-    const rows: Array<Array<(typeof mappedItems)[number]>> = [];
-    for (let i = 0; i < mappedItems.length; i += 2) {
-      rows.push(mappedItems.slice(i, i + 2));
+    const rows: Array<Array<EventCardProps>> = [];
+    for (let i = 0; i < items.length; i += 2) {
+      const row: EventCardProps[] = [];
+
+      // Map first item in row
+      const firstItem = items[i];
+      if (firstItem) {
+        row.push(mapIntentToEventCardProps(firstItem, i, lang, onHover));
+      }
+
+      // Map second item in row if exists
+      const secondItem = items[i + 1];
+      if (secondItem) {
+        row.push(mapIntentToEventCardProps(secondItem, i + 1, lang, onHover));
+      }
+
+      if (row.length > 0) {
+        rows.push(row);
+      }
     }
     return rows;
-  }, [mappedItems]);
+  }, [items, lang, onHover]);
 
   // Load more when reaching end
   const handleEndReached = useCallback(() => {

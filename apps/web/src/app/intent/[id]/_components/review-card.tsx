@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Star, Trash2, Edit2, Flag } from 'lucide-react';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 
 type ReviewCardProps = {
   review: {
@@ -16,6 +17,7 @@ type ReviewCardProps = {
       id: string;
       name: string;
       avatarKey?: string | null;
+      avatarBlurhash?: string | null;
     };
   };
   currentUserId?: string;
@@ -40,13 +42,12 @@ export function ReviewCard({
           {/* Avatar */}
           <Link href={`/u/${review.author.name}`} className="flex-shrink-0">
             {review.author.avatarKey ? (
-              <img
-                src={buildAvatarUrl(review.author.avatarKey, 'md') || ''}
-                alt={
-                  (review.author as any).profile?.displayName ||
-                  review.author.name
-                }
-                className="h-10 w-10 rounded-full transition-opacity hover:opacity-80"
+              <Avatar
+                url={buildAvatarUrl(review.author.avatarKey, 'md') || ''}
+                blurhash={review.author.avatarBlurhash}
+                alt={review.author.name}
+                size={48}
+                className="rounded-full transition-opacity hover:opacity-80"
               />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 transition-opacity hover:opacity-80 dark:bg-neutral-700">

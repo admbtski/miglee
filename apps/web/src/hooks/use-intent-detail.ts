@@ -73,6 +73,7 @@ const GetIntentDetailDocument = `
         id
         name
         avatarKey
+        avatarBlurhash
       }
       joinManualCloseReason
       
@@ -117,6 +118,7 @@ const GetIntentDetailDocument = `
         email
         name
         avatarKey
+        avatarBlurhash
         role
         verifiedAt
         createdAt
@@ -137,6 +139,7 @@ const GetIntentDetailDocument = `
         email
         name
         avatarKey
+        avatarBlurhash
         role
         verifiedAt
         createdAt
@@ -175,6 +178,7 @@ const GetIntentDetailDocument = `
         email
         name
         avatarKey
+        avatarBlurhash
         role
         verifiedAt
         createdAt
@@ -200,6 +204,7 @@ const GetIntentDetailDocument = `
           email
           name
           avatarKey
+          avatarBlurhash
           role
           verifiedAt
           createdAt
@@ -214,6 +219,7 @@ const GetIntentDetailDocument = `
           id
           name
           avatarKey
+          avatarBlurhash
         }
       }
       
@@ -236,6 +242,7 @@ const GetIntentDetailDocument = `
           email
           name
           avatarKey
+          avatarBlurhash
           role
           verifiedAt
           createdAt

@@ -34,6 +34,8 @@ query IntentInviteLinks($intentId: ID!, $includeRevoked: Boolean = false) {
       user {
         id
         name
+        avatarKey
+        avatarBlurhash
       }
     }
   }
@@ -52,12 +54,16 @@ query IntentInviteLink($id: ID, $code: String) {
     createdBy {
       id
       name
+      avatarKey
+      avatarBlurhash
     }
     revokedAt
     revokedById
     revokedBy {
       id
       name
+      avatarKey
+      avatarBlurhash
     }
     createdAt
     updatedAt
@@ -99,6 +105,8 @@ query ValidateInviteLink($code: String!) {
       owner {
         id
         name
+        avatarKey
+        avatarBlurhash
       }
     }
   }
@@ -118,6 +126,8 @@ mutation CreateIntentInviteLink($input: CreateIntentInviteLinkInput!) {
     createdBy {
       id
       name
+      avatarKey
+      avatarBlurhash
     }
     createdAt
     updatedAt
@@ -157,6 +167,8 @@ mutation RevokeIntentInviteLink($id: ID!) {
     revokedBy {
       id
       name
+      avatarKey
+      avatarBlurhash
     }
     isRevoked
     isValid

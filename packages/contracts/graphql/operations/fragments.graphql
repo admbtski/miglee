@@ -70,6 +70,8 @@ fragment IntentMemberCore on IntentMember {
   addedBy {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
   intent {
     ...IntentLight
@@ -85,6 +87,8 @@ fragment IntentMemberLight on IntentMember {
   user {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 }
 
@@ -158,6 +162,8 @@ fragment IntentLight on Intent {
   owner {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 }
 
@@ -188,6 +194,7 @@ fragment IntentCore on Intent {
     id
     name
     avatarKey
+    avatarBlurhash
   }
   joinManualCloseReason
 
@@ -299,6 +306,8 @@ fragment NotificationCore on Notification {
   actor {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 
   # Convenience relation when entityType=INTENT
@@ -385,6 +394,8 @@ fragment DmMessageCore on DmMessage {
   sender {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
   reactions {
     ...MessageReactionCore
@@ -404,6 +415,8 @@ fragment MessageReactionCore on MessageReaction {
   users {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
   reacted
 }
@@ -422,11 +435,15 @@ fragment DmThreadCore on DmThread {
     id
     name
     lastSeenAt
+    avatarKey
+    avatarBlurhash
   }
   bUser {
     id
     name
     lastSeenAt
+    avatarKey
+    avatarBlurhash
   }
 
   lastMessage {
@@ -446,10 +463,14 @@ fragment DmThreadLight on DmThread {
   aUser {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
   bUser {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 
   lastMessage {
@@ -496,6 +517,8 @@ fragment CommentCore on Comment {
   author {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 }
 
@@ -532,6 +555,8 @@ fragment ReviewCore on Review {
   author {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 }
 
@@ -570,6 +595,8 @@ fragment ReportCore on Report {
   reporter {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 }
 
@@ -601,6 +628,8 @@ fragment IntentChatMessageCore on IntentChatMessage {
   author {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
   reactions {
     ...MessageReactionCore
@@ -638,11 +667,13 @@ fragment UserBlockCore on UserBlock {
     id
     name
     avatarKey
+    avatarBlurhash
   }
   blocked {
     id
     name
     avatarKey
+    avatarBlurhash
   }
 }
 
@@ -729,5 +760,7 @@ fragment EventSponsorshipCore on EventSponsorship {
   sponsor {
     id
     name
+    avatarKey
+    avatarBlurhash
   }
 }

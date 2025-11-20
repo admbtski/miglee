@@ -26,6 +26,7 @@ import { pl } from 'date-fns/locale';
 import { ReportCommentModal } from './report-comment-modal';
 import type { EventDetailsData } from '@/types/event-details';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 
 type EventCommentsProps = {
   event: EventDetailsData;
@@ -132,13 +133,15 @@ function CommentItem({
                 href={`/u/${comment.author.name}`}
                 className="flex-shrink-0"
               >
-                <img
-                  src={buildAvatarUrl(comment.author.avatarKey, 'sm') || ''}
+                <Avatar
+                  url={buildAvatarUrl(comment.author.avatarKey, 'sm')}
+                  blurhash={comment.author.avatarBlurhash}
                   alt={
                     (comment.author as any).profile?.displayName ||
                     comment.author.name
                   }
-                  className="h-8 w-8 rounded-full transition-opacity hover:opacity-80"
+                  size={32}
+                  className="rounded-full transition-opacity hover:opacity-80"
                 />
               </Link>
             )}

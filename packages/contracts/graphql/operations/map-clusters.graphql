@@ -61,6 +61,8 @@ query GetRegionIntents(
         id
         name
         verifiedAt
+        avatarKey
+        avatarBlurhash
       }
     }
     meta {

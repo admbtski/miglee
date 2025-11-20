@@ -32,6 +32,8 @@ query IntentJoinRequests($intentId: ID!, $limit: Int = 20, $offset: Int = 0) {
           id
           name
           verifiedAt
+          avatarKey
+          avatarBlurhash
           profile {
             id
             bioShort
@@ -98,6 +100,8 @@ query MyJoinRequests(
         id
         name
         verifiedAt
+        avatarKey
+        avatarBlurhash
       }
     }
     joinAnswers {

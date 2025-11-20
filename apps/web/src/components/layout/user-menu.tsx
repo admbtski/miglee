@@ -1,6 +1,7 @@
 'use client';
 
 import { ThemeSwitchConnected } from '@/components/ui/theme-switch-connect';
+import { buildAvatarUrl } from '@/lib/media/url';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   CalendarIcon,
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '../ui/avatar';
 
 export type NavigateKey =
   | 'billing'
@@ -80,11 +81,14 @@ export function UserMenu({ user }: UserMenuProps) {
           aria-label={avatarBtnLabel}
           className="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white p-1 pr-2 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
-          <img
-            src={buildAvatarUrl(user.avatarKey, 'sm') || AVATAR_FALLBACK}
+          <Avatar
+            url={buildAvatarUrl(user.avatarKey, 'sm')}
+            blurhash={user.avatarBlurhash}
             alt={user.name}
-            className="h-6 w-6 rounded-full object-cover"
+            size={24}
+            className="opacity-90 group-hover:opacity-100 transition-opacity"
           />
+
           <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
         </button>
 
@@ -101,11 +105,14 @@ export function UserMenu({ user }: UserMenuProps) {
               className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-0.5 shadow-2xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900"
             >
               <div className="flex items-center gap-3 rounded-xl px-3 py-3">
-                <img
-                  src={buildAvatarUrl(user.avatarKey, 'md') || AVATAR_FALLBACK}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover"
+                <Avatar
+                  url={buildAvatarUrl(user.avatarKey, 'md')}
+                  blurhash={user.avatarBlurhash}
+                  alt={user.name}
+                  size={48}
+                  className="opacity-90 group-hover:opacity-100 transition-opacity"
                 />
+
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
                     {user.name}

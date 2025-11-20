@@ -1,9 +1,7 @@
 import type { IntentListItem, IntentHoverCallback } from '@/types/intent';
-import type { EventCardProps } from '@/app/[[...slug]]/_components/event-card/index';
-import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import type { EventCardProps } from '@/app/[[...slug]]/_components/event-card';
 import { notEmptyString } from '@/lib/utils/intents';
 import { planForIndex } from './plan-utils';
-import { buildAvatarUrl } from '@/lib/media/url';
 
 /**
  * Maps raw intent data from API to EventCard component props
@@ -20,50 +18,47 @@ export function mapIntentToEventCardProps(
   lang: string,
   onHover?: IntentHoverCallback
 ): EventCardProps {
-  const tags = (item.tags ?? []).map((t) => t.label).filter(notEmptyString);
-
   const categories = (item.categories ?? [])
     .map((c) => c.names?.[lang] ?? Object.values(c.names ?? {})[0])
     .filter(notEmptyString);
 
   return {
+    // Core identification
     intentId: item.id,
     lat: item.lat,
     lng: item.lng,
+
+    // Event details
     startISO: item.startAt,
     endISO: item.endAt,
+    title: item.title ?? '-',
+    description: item.description ?? '-',
+    categories,
+    address: item.address ?? undefined,
 
-    // Pass raw avatarKey - EventCard will process it with buildAvatarUrl
-    avatarKey: item.owner?.avatarKey ?? INTENTS_CONFIG.FALLBACK_AVATAR,
+    // Organizer info
+    avatarKey: item.owner?.avatarKey ?? null,
     avatarBlurhash: item.owner?.avatarBlurhash ?? null,
     organizerName: item.owner?.name ?? item.owner?.email ?? 'Unknown organizer',
     verifiedAt: item.owner?.verifiedAt ?? undefined,
-
-    title: item.title ?? '-',
-    description: item.description ?? '-',
+    plan: planForIndex(index),
 
     // Cover image
     coverKey: item.coverKey ?? null,
     coverBlurhash: item.coverBlurhash ?? null,
 
-    address: item.address ?? undefined,
-    onlineUrl: item.onlineUrl ?? undefined,
-
+    // Capacity & joining
     joinedCount: item.joinedCount,
     min: item.min,
     max: item.max,
+    canJoin: item.canJoin,
+    isFull: item.isFull,
 
-    tags,
-    categories,
-
+    // Event state
     isOngoing: item.isOngoing,
     isCanceled: item.isCanceled,
     isDeleted: item.isDeleted,
     hasStarted: item.hasStarted,
-    withinLock: item.withinLock,
-    lockReason: item.lockReason ?? undefined,
-    canJoin: item.canJoin,
-    isFull: item.isFull,
 
     // Join window settings
     joinOpensMinutesBeforeStart: item.joinOpensMinutesBeforeStart ?? null,
@@ -73,22 +68,16 @@ export function mapIntentToEventCardProps(
       item.lateJoinCutoffMinutesAfterStart ?? null,
     joinManuallyClosed: item.joinManuallyClosed ?? false,
 
+    // Location type
     isHybrid: item.isHybrid,
     isOnline: item.isOnline,
     isOnsite: item.isOnsite,
-
-    levels: item.levels ?? [],
     addressVisibility: item.addressVisibility,
-    membersVisibility: item.membersVisibility,
-    members: (item.members ?? undefined) as any,
 
-    plan: planForIndex(index),
-    showSponsoredBadge: true,
+    // UI options
     isFavourite: item.isFavourite ?? false,
 
-    onJoin: () => {
-      console.log('join intent', item.id);
-    },
+    // Callbacks
     onHover,
   };
 }

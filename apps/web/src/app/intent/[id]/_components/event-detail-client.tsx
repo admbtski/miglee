@@ -170,6 +170,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         id: m.user.id,
         name: m.user.name,
         avatarKey: m.user.avatarKey,
+        avatarBlurhash: m.user.avatarBlurhash,
         verifiedAt: m.user.verifiedAt,
       },
       note: m.note,

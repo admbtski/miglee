@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import clsx from 'clsx';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar } from '@/components/ui/avatar';
 
 interface InviteLinkPageProps {
   code: string;
@@ -198,10 +199,12 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
               {intent.owner && (
                 <div className="flex items-center gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
                   {intent.owner.avatarKey && (
-                    <img
-                      src={buildAvatarUrl(intent.owner.avatarKey, 'md') || ''}
+                    <Avatar
+                      url={buildAvatarUrl(intent.owner.avatarKey, 'md')}
+                      blurhash={intent.owner.avatarBlurhash}
                       alt={intent.owner.name}
-                      className="h-10 w-10 rounded-full"
+                      size={40}
+                      className="opacity-90 group-hover:opacity-100 transition-opacity"
                     />
                   )}
                   <div className="text-sm">

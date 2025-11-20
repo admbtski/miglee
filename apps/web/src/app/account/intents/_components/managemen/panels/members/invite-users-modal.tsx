@@ -6,17 +6,25 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/feedback/modal';
 import { useInviteMemberMutation } from '@/lib/api/intent-members';
 import { useUsersQuery } from '@/lib/api/users';
-import { IntentMemberCoreFragment_IntentMember_user_User as GqlUser } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { Avatar as AvatarComponent } from '@/components/ui/avatar';
 
 /* ---------------------------------- TYPES ---------------------------------- */
+
+type UserItem = {
+  id: string;
+  name: string;
+  avatarKey?: string | null;
+  avatarBlurhash?: string | null;
+  email?: string | null;
+};
 
 export type InviteUsersModalProps = {
   open: boolean;
   onClose: () => void;
   intentId: string;
-  suggestions?: Array<Pick<GqlUser, 'id' | 'name' | 'avatarKey' | 'email'>>;
+  suggestions?: Array<UserItem>;
   onInvited?: (invitedUserIds: string[]) => void;
 };
 
@@ -25,37 +33,21 @@ export type InviteUsersModalProps = {
 function Avatar({
   user,
   size = 32,
-  rounded = 'rounded-full',
 }: {
-  user: Pick<GqlUser, 'name' | 'avatarKey'>;
+  user: {
+    name: string;
+    avatarKey?: string | null;
+    avatarBlurhash?: string | null;
+  };
   size?: number;
-  rounded?: string;
 }) {
-  const initials = (user.name ?? '')
-    .split(' ')
-    .map((x) => x?.[0] ?? '')
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
-  return user.avatarKey ? (
-    <img
-      src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
-      alt=""
-      className={`${rounded} object-cover ring-1 ring-zinc-200 dark:ring-zinc-700`}
-      style={{ width: size, height: size }}
+  return (
+    <AvatarComponent
+      url={buildAvatarUrl(user.avatarKey, 'sm')}
+      blurhash={user.avatarBlurhash}
+      alt={user.name}
+      size={size}
     />
-  ) : (
-    <div
-      className={clsx(
-        'grid place-items-center bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300 dark:ring-zinc-700',
-        rounded
-      )}
-      style={{ width: size, height: size }}
-      aria-hidden
-    >
-      <span className="text-xs">{initials || 'U'}</span>
-    </div>
   );
 }
 
@@ -63,7 +55,12 @@ function Chip({
   user,
   onRemove,
 }: {
-  user: Pick<GqlUser, 'id' | 'name' | 'avatarKey'>;
+  user: {
+    id: string;
+    name: string;
+    avatarKey?: string | null;
+    avatarBlurhash?: string | null;
+  };
   onRemove: (id: string) => void;
 }) {
   return (
@@ -116,10 +113,10 @@ export function InviteUsersModal({
   const canPrev = offset > 0;
   const canNext = offset + limit < total;
 
-  const [selected, setSelected] = useState<Record<string, GqlUser>>({});
+  const [selected, setSelected] = useState<Record<string, UserItem>>({});
   const selectedList = useMemo(() => Object.values(selected), [selected]);
 
-  const togglePick = (u: GqlUser) =>
+  const togglePick = (u: UserItem) =>
     setSelected((prev) => {
       const next = { ...prev };
       if (next[u.id]) delete next[u.id];
@@ -168,6 +165,7 @@ export function InviteUsersModal({
 
     results.forEach((r, i) => {
       const id = ids[i];
+      if (!id) return;
       if (r.status === 'fulfilled') okIds.push(id);
       else failed.push({ id, reason: r.reason });
     });
@@ -242,14 +240,14 @@ export function InviteUsersModal({
                     <li key={u.id}>
                       <button
                         type="button"
-                        onClick={() => togglePick(u as GqlUser)}
+                        onClick={() => togglePick(u as UserItem)}
                         className={clsx(
                           'flex w-full items-center gap-3 px-3 py-3 text-left transition-colors',
                           'hover:bg-zinc-50 dark:hover:bg-zinc-900/50',
                           picked && 'bg-indigo-50/60 dark:bg-indigo-900/20'
                         )}
                       >
-                        <Avatar user={u} size={40} rounded="rounded-full" />
+                        <Avatar user={u} size={40} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-sm font-medium">
                             {u.name || '—'}
@@ -352,7 +350,7 @@ export function InviteUsersModal({
                 <button
                   key={u.id}
                   type="button"
-                  onClick={() => togglePick(u as GqlUser)}
+                  onClick={() => togglePick(u as UserItem)}
                   className={clsx(
                     'relative grid place-items-center rounded-full p-0.5 ring-1 ring-zinc-200 hover:ring-indigo-400 dark:ring-zinc-700'
                   )}

@@ -23,7 +23,7 @@ import {
   Wifi as WifiIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
@@ -45,7 +45,7 @@ export interface EventCardProps {
   address?: string;
 
   // Organizer info
-  avatarKey: string;
+  avatarKey: string | null;
   avatarBlurhash?: string | null;
   organizerName: string;
   verifiedAt?: string;
@@ -123,7 +123,7 @@ function getAddressVisibilityMeta(av: AddressVisibility) {
 
 /* ─────────────────────────── Component ─────────────────────────── */
 
-export function EventCard({
+export const EventCard = memo(function EventCard({
   intentId,
   lat,
   lng,
@@ -501,4 +501,4 @@ export function EventCard({
       </div>
     </motion.div>
   );
-}
+});
