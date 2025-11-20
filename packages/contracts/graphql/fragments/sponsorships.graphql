@@ -1,0 +1,25 @@
+# =============================================================================
+# Event Sponsorship Fragments
+# =============================================================================
+# Fragments for premium event sponsorships and promotions.
+
+#import "./_core.graphql"
+
+fragment EventSponsorshipCore on EventSponsorship {
+  id
+  intentId
+  sponsorId
+  plan
+  status
+  highlightOn
+  startedAt
+  endsAt
+  boostsUsed
+  localPushes
+  createdAt
+  updatedAt
+
+  sponsor {
+    ...UserLight
+  }
+}

@@ -1,0 +1,70 @@
+# =============================================================================
+# Core/Base Fragments
+# =============================================================================
+# These are the most primitive entity fragments used across the application.
+# They contain only essential fields without heavy relations.
+
+# -----------------------------------------------------------------------------
+# User Fragments
+# -----------------------------------------------------------------------------
+
+fragment SessionUserCore on SessionUser {
+  id
+  name
+  email
+  role
+  avatarKey
+  avatarBlurhash
+  verifiedAt
+}
+
+fragment UserCore on User {
+  id
+  email
+  name
+  role
+  avatarKey
+  avatarBlurhash
+  verifiedAt
+  suspendedAt
+  suspensionReason
+  createdAt
+  updatedAt
+  lastSeenAt
+  locale
+  tz
+  acceptedTermsAt
+  acceptedMarketingAt
+  profile {
+    displayName
+  }
+}
+
+# Minimal user info for avatars/mentions
+fragment UserLight on User {
+  id
+  name
+  avatarKey
+  avatarBlurhash
+  verifiedAt
+}
+
+# -----------------------------------------------------------------------------
+# Category & Tag Fragments
+# -----------------------------------------------------------------------------
+
+fragment CategoryCore on Category {
+  id
+  slug
+  names # JSONObject with translated labels by locale
+  createdAt
+  updatedAt
+}
+
+fragment TagCore on Tag {
+  id
+  label
+  slug
+  createdAt
+  updatedAt
+}

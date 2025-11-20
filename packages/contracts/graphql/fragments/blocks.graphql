@@ -1,0 +1,30 @@
+# =============================================================================
+# User Block Fragments
+# =============================================================================
+# Fragments for user blocking functionality.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+fragment UserBlockCore on UserBlock {
+  id
+  blockerId
+  blockedId
+  createdAt
+
+  blocker {
+    ...UserLight
+  }
+  blocked {
+    ...UserLight
+  }
+}
+
+fragment UserBlocksResultCore on UserBlocksResult {
+  items {
+    ...UserBlockCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}

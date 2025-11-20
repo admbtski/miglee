@@ -1,0 +1,16 @@
+# =============================================================================
+# User Result Fragments
+# =============================================================================
+# Result wrappers for user queries.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+fragment UsersResultCore on UsersResult {
+  items {
+    ...UserCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}

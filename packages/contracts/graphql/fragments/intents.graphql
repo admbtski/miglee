@@ -1,0 +1,220 @@
+# =============================================================================
+# Intent Fragments
+# =============================================================================
+# Fragments for event/intent entities at different levels of detail.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+# -----------------------------------------------------------------------------
+# Intent Fragments
+# -----------------------------------------------------------------------------
+
+# Lightweight intent fragment (for lists/cards)
+fragment IntentLight on Intent {
+  id
+  title
+  description
+
+  visibility
+  joinMode
+  mode
+  min
+  max
+
+  startAt
+  endAt
+
+  # Join windows / status
+  status
+  allowJoinLate
+  joinOpensMinutesBeforeStart
+  joinCutoffMinutesBeforeStart
+  lateJoinCutoffMinutesAfterStart
+  joinManuallyClosed
+  joinOpen
+  lockReason
+
+  meetingKind
+  onlineUrl
+
+  lat
+  lng
+  address
+  placeId
+  radiusKm
+
+  levels
+
+  addressVisibility
+  membersVisibility
+
+  # Derived / computed
+  joinedCount
+  commentsCount
+  messagesCount
+  isFull
+  hasStarted
+  hasEnded
+  isCanceled
+  isDeleted
+  canJoin
+  isOngoing
+
+  ownerId
+
+  createdAt
+  updatedAt
+
+  categories {
+    ...CategoryCore
+  }
+  tags {
+    ...TagCore
+  }
+
+  owner {
+    ...UserLight
+  }
+}
+
+# Full intent fragment (for detail views)
+fragment IntentCore on Intent {
+  id
+  title
+  description
+  notes
+
+  visibility
+  joinMode
+  mode
+  min
+  max
+
+  startAt
+  endAt
+
+  # Join windows / cutoffs / manual lock
+  allowJoinLate
+  joinOpensMinutesBeforeStart
+  joinCutoffMinutesBeforeStart
+  lateJoinCutoffMinutesAfterStart
+  joinManuallyClosed
+  joinManuallyClosedAt
+  joinManuallyClosedBy {
+    ...UserLight
+  }
+  joinManualCloseReason
+
+  meetingKind
+  onlineUrl
+
+  lat
+  lng
+  address
+  placeId
+  radiusKm
+
+  levels
+
+  # Media
+  coverKey
+  coverBlurhash
+
+  addressVisibility
+  membersVisibility
+
+  # Computed helpers (resolver-calculated)
+  status
+  joinedCount
+  commentsCount
+  messagesCount
+  isFull
+  hasStarted
+  hasEnded
+  canJoin
+  joinOpen
+  lockReason
+  isOngoing
+  withinLock
+  isOnsite
+  isOnline
+  isHybrid
+  isFavourite
+  savedCount
+
+  # Ownership
+  ownerId
+
+  # Cancellation (read-only)
+  canceledAt
+  canceledBy {
+    ...UserCore
+  }
+  cancelReason
+  isCanceled
+
+  # Soft-delete (read-only)
+  deletedAt
+  deletedBy {
+    ...UserCore
+  }
+  deleteReason
+  isDeleted
+
+  createdAt
+  updatedAt
+
+  categories {
+    ...CategoryCore
+  }
+  tags {
+    ...TagCore
+  }
+
+  # Convenience relations (access-controlled)
+  owner {
+    ...UserCore
+  }
+}
+
+# Extended intent fragment for detail page (includes sponsorship, inviteLinks, members)
+fragment IntentDetail on Intent {
+  ...IntentCore
+  members {
+    id
+    role
+    status
+    joinedAt
+    leftAt
+    note
+    user {
+      ...UserCore
+    }
+    addedBy {
+      ...UserLight
+    }
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Result Wrappers
+# -----------------------------------------------------------------------------
+
+fragment IntentsResultLight on IntentsResult {
+  items {
+    ...IntentLight
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+fragment IntentsResultCore on IntentsResult {
+  items {
+    ...IntentCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}

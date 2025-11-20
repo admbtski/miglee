@@ -546,8 +546,13 @@ function ServerClusteredMapComponent({
     popupRootRef.current = createRoot(popupContainerRef.current);
 
     return () => {
+      // Defer unmount to avoid React 18 race condition warning
+      // React cannot finish unmounting during render, so we queue it
       if (popupRootRef.current) {
-        popupRootRef.current.unmount();
+        const rootToUnmount = popupRootRef.current;
+        queueMicrotask(() => {
+          rootToUnmount.unmount();
+        });
         popupRootRef.current = null;
       }
       popupContainerRef.current = null;

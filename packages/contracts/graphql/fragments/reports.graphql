@@ -1,0 +1,31 @@
+# =============================================================================
+# Report Fragments
+# =============================================================================
+# Fragments for user reports and moderation.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+fragment ReportCore on Report {
+  id
+  reporterId
+  entity
+  entityId
+  reason
+  status
+  createdAt
+  resolvedAt
+
+  reporter {
+    ...UserLight
+  }
+}
+
+fragment ReportsResultCore on ReportsResult {
+  items {
+    ...ReportCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}

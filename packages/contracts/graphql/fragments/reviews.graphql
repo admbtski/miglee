@@ -1,0 +1,40 @@
+# =============================================================================
+# Review Fragments
+# =============================================================================
+# Fragments for event reviews and ratings.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+fragment ReviewCore on Review {
+  id
+  intentId
+  authorId
+  rating
+  content
+  createdAt
+  updatedAt
+  deletedAt
+
+  author {
+    ...UserLight
+  }
+}
+
+fragment ReviewStatsCore on ReviewStats {
+  totalCount
+  averageRating
+  ratingDistribution {
+    rating
+    count
+  }
+}
+
+fragment ReviewsResultCore on ReviewsResult {
+  items {
+    ...ReviewCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}

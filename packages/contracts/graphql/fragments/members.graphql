@@ -1,0 +1,37 @@
+# =============================================================================
+# Intent Member Fragments
+# =============================================================================
+# Fragments for intent membership/participation entities.
+
+#import "./_core.graphql"
+#import "./intents.graphql"
+
+fragment IntentMemberLight on IntentMember {
+  id
+  role
+  status
+  joinedAt
+  user {
+    ...UserLight
+  }
+}
+
+fragment IntentMemberCore on IntentMember {
+  id
+  intentId
+  userId
+  role
+  status
+  joinedAt
+  leftAt
+  note
+  user {
+    ...UserCore
+  }
+  addedBy {
+    ...UserLight
+  }
+  intent {
+    ...IntentLight
+  }
+}

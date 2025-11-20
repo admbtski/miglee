@@ -6,10 +6,16 @@ const config: CodegenConfig = {
     process.cwd(),
     '../../packages/contracts/graphql/schema.graphql'
   ),
-  documents: join(
-    process.cwd(),
-    '../../packages/contracts/graphql/operations/**/*.graphql'
-  ),
+  documents: [
+    join(
+      process.cwd(),
+      '../../packages/contracts/graphql/fragments/**/*.graphql'
+    ),
+    join(
+      process.cwd(),
+      '../../packages/contracts/graphql/operations/**/*.graphql'
+    ),
+  ],
   generates: {
     './src/lib/api/__generated__/react-query-update.ts': {
       plugins: ['typescript', 'typescript-operations', 'typed-document-node'],

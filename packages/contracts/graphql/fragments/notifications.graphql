@@ -1,0 +1,48 @@
+# =============================================================================
+# Notification Fragments
+# =============================================================================
+# Fragments for user notifications and notification preferences.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+fragment NotificationCore on Notification {
+  id
+  kind
+  title
+  body
+  data
+  dedupeKey
+  entityType
+  entityId
+  readAt
+  createdAt
+
+  recipient {
+    ...UserCore
+  }
+  actor {
+    ...UserLight
+  }
+
+  # Convenience relation when entityType=INTENT
+  intent {
+    id
+    title
+    startAt
+    status
+  }
+}
+
+fragment NotificationBadgeChangedCore on NotificationBadgeChanged {
+  recipientId
+}
+
+fragment NotificationsResultCore on NotificationsResult {
+  items {
+    ...NotificationCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}

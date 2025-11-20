@@ -1,0 +1,161 @@
+# =============================================================================
+# Message Fragments (DM & Event Chat)
+# =============================================================================
+# Fragments for direct messages and event chat messages.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+# -----------------------------------------------------------------------------
+# Shared Message Components
+# -----------------------------------------------------------------------------
+
+fragment MessageReactionCore on MessageReaction {
+  emoji
+  count
+  users {
+    ...UserLight
+  }
+  reacted
+}
+
+# -----------------------------------------------------------------------------
+# Direct Message Fragments
+# -----------------------------------------------------------------------------
+
+fragment DmMessageCore on DmMessage {
+  id
+  threadId
+  senderId
+  content
+  replyToId
+  createdAt
+  readAt
+  editedAt
+  deletedAt
+  sender {
+    ...UserLight
+  }
+  reactions {
+    ...MessageReactionCore
+  }
+}
+
+fragment DmMessageWithReply on DmMessage {
+  ...DmMessageCore
+  replyTo {
+    ...DmMessageCore
+  }
+}
+
+fragment DmThreadLight on DmThread {
+  id
+  aUserId
+  bUserId
+  createdAt
+  updatedAt
+  lastMessageAt
+  unreadCount
+
+  aUser {
+    ...UserLight
+    lastSeenAt
+  }
+  bUser {
+    ...UserLight
+    lastSeenAt
+  }
+
+  lastMessage {
+    id
+    content
+    createdAt
+    senderId
+  }
+}
+
+fragment DmThreadCore on DmThread {
+  id
+  aUserId
+  bUserId
+  pairKey
+  createdAt
+  updatedAt
+  lastMessageAt
+  unreadCount
+
+  aUser {
+    ...UserLight
+    lastSeenAt
+  }
+  bUser {
+    ...UserLight
+    lastSeenAt
+  }
+
+  lastMessage {
+    ...DmMessageCore
+  }
+}
+
+fragment DmMuteCore on DmMute {
+  id
+  threadId
+  userId
+  muted
+  createdAt
+}
+
+# -----------------------------------------------------------------------------
+# Event Chat Fragments
+# -----------------------------------------------------------------------------
+
+fragment IntentChatMessageCore on IntentChatMessage {
+  id
+  intentId
+  authorId
+  content
+  replyToId
+  createdAt
+  editedAt
+  deletedAt
+  isEdited
+  isDeleted
+
+  author {
+    ...UserLight
+  }
+  reactions {
+    ...MessageReactionCore
+  }
+}
+
+fragment IntentChatMessageWithReply on IntentChatMessage {
+  ...IntentChatMessageCore
+  replyTo {
+    ...IntentChatMessageCore
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Result Wrappers
+# -----------------------------------------------------------------------------
+
+fragment DmThreadsResultCore on DmThreadsResult {
+  items {
+    ...DmThreadCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+fragment IntentChatMessagesResultCore on IntentChatMessagesResult {
+  items {
+    ...IntentChatMessageWithReply
+  }
+  pageInfo {
+    ...CursorPageInfoCore
+  }
+  hasMore
+}

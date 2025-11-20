@@ -1,0 +1,17 @@
+# =============================================================================
+# Intent Invite Link Fragments
+# =============================================================================
+# Fragments for event invitation links.
+
+fragment IntentInviteLinkCore on IntentInviteLink {
+  id
+  intentId
+  code
+  maxUses
+  usedCount
+  expiresAt
+  createdAt
+  isExpired
+  isMaxedOut
+  isValid
+}

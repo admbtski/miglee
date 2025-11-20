@@ -1,0 +1,24 @@
+# =============================================================================
+# User Preference Fragments
+# =============================================================================
+# Fragments for user notification preferences and mutes.
+
+fragment NotificationPreferenceCore on NotificationPreference {
+  id
+  userId
+  emailOnInvite
+  emailOnJoinRequest
+  emailOnMessage
+  pushOnReminder
+  inAppOnEverything
+  createdAt
+  updatedAt
+}
+
+fragment IntentMuteCore on IntentMute {
+  id
+  intentId
+  userId
+  muted
+  createdAt
+}

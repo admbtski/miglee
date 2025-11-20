@@ -1,0 +1,17 @@
+# =============================================================================
+# Pagination Fragments
+# =============================================================================
+# Reusable pagination info fragments for offset and cursor-based pagination.
+
+fragment PageInfoCore on PageInfo {
+  total
+  limit
+  offset
+  hasNext
+  hasPrev
+}
+
+fragment CursorPageInfoCore on CursorPageInfo {
+  hasNextPage
+  endCursor
+}

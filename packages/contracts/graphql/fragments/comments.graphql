@@ -1,0 +1,40 @@
+# =============================================================================
+# Comment Fragments
+# =============================================================================
+# Fragments for intent comments and replies.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+fragment CommentCore on Comment {
+  id
+  intentId
+  authorId
+  threadId
+  parentId
+  content
+  createdAt
+  updatedAt
+  deletedAt
+  repliesCount
+
+  author {
+    ...UserLight
+  }
+}
+
+fragment CommentWithReplies on Comment {
+  ...CommentCore
+  replies {
+    ...CommentCore
+  }
+}
+
+fragment CommentsResultCore on CommentsResult {
+  items {
+    ...CommentCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
