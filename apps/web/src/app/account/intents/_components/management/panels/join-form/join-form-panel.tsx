@@ -73,8 +73,8 @@ export function JoinFormPanel({ intentId }: JoinFormPanelProps) {
 
   // Flatten paginated requests
   const allRequests =
-    requestsData?.pages?.flatMap(
-      (page) =>
+    (requestsData as any)?.pages?.flatMap(
+      (page: any) =>
         (page as IntentJoinRequestsQuery).intentJoinRequests?.items ?? []
     ) ?? [];
 

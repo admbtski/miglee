@@ -157,7 +157,7 @@ export function useUpdateReportStatus(
     meta: {
       successMessage: 'Report status updated',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: reportKeys.detail(variables.id),
       });

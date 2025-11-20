@@ -25,33 +25,11 @@ import {
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
-import { EventManagementModalConnect } from './_components/managemen/event-management-modal-connect';
+import { EventManagementModalConnect } from './_components/management';
 import { useMyIntentsFilters } from './_hooks/use-my-intents-filters';
 import { useIntentsModals } from './_hooks/use-intents-modals';
 
-type MembershipData = {
-  id: string;
-  status: string;
-  role: string;
-  joinedAt: string;
-  rejectReason?: string | null;
-  intent: {
-    id: string;
-    title: string;
-    description?: string | null;
-    startAt: string;
-    endAt?: string | null;
-    address?: string | null;
-    joinedCount: number;
-    max?: number | null;
-    coverKey?: string | null;
-    coverBlurhash?: string | null;
-    canceledAt?: string | null;
-    deletedAt?: string | null;
-  };
-};
-
-function mapToCardData(membership: MembershipData): MyIntentCardData {
+function mapToCardData(membership: any): MyIntentCardData {
   return {
     intent: {
       id: membership.intent.id,
@@ -69,8 +47,8 @@ function mapToCardData(membership: MembershipData): MyIntentCardData {
     },
     membership: {
       id: membership.id,
-      status: membership.status,
-      role: membership.role,
+      status: membership.status as IntentMemberStatus,
+      role: membership.role as IntentMemberRole,
       joinedAt: membership.joinedAt,
       rejectReason: membership.rejectReason,
     },
@@ -82,11 +60,11 @@ function mapRoleFilterToBackend(
 ): IntentMemberRole | undefined {
   switch (roleFilter) {
     case 'owner':
-      return 'OWNER';
+      return 'OWNER' as IntentMemberRole;
     case 'moderator':
-      return 'MODERATOR';
+      return 'MODERATOR' as IntentMemberRole;
     case 'member':
-      return 'PARTICIPANT';
+      return 'PARTICIPANT' as IntentMemberRole;
     default:
       return undefined;
   }
@@ -97,15 +75,15 @@ function mapRoleFilterToMembershipStatus(
 ): IntentMemberStatus | undefined {
   switch (roleFilter) {
     case 'pending':
-      return 'PENDING';
+      return 'PENDING' as IntentMemberStatus;
     case 'invited':
-      return 'INVITED';
+      return 'INVITED' as IntentMemberStatus;
     case 'rejected':
-      return 'REJECTED';
+      return 'REJECTED' as IntentMemberStatus;
     case 'banned':
-      return 'BANNED';
+      return 'BANNED' as IntentMemberStatus;
     case 'waitlist':
-      return 'WAITLIST';
+      return 'WAITLIST' as IntentMemberStatus;
     default:
       return undefined;
   }
@@ -290,7 +268,7 @@ export default function MyIntentsPage() {
           </div>
         )}
 
-        {error && <ErrorState error={error} />}
+        {(error as any) && <ErrorState error={error as any} />}
 
         {!isLoading && !error && cardData.length === 0 && (
           <EmptyState hasActiveFilters={hasActiveFilters} />

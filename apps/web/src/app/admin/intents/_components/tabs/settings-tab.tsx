@@ -1,10 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  useAdminUpdateIntentMutation,
-  useAdminChangeIntentOwnerMutation,
-} from '@/lib/api/admin-intents';
+import { useAdminUpdateIntentMutation } from '@/lib/api/admin-intents';
 import { Eye, EyeOff, Lock, Unlock, Save } from 'lucide-react';
 import { Visibility } from '@/lib/api/__generated__/react-query-update';
 

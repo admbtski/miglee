@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "description": "MVP monorepo with React, Next.js, Fastify, and GraphQL",
+  "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=22.18.0",
+    "pnpm": ">=10.14.0"
+  },
   "scripts": {
-    "dev": "clear & turbo run dev",
+    "dev": "clear && turbo run dev",
     "build": "turbo run build",
     "start": "turbo run start",
     "typecheck": "turbo run typecheck",
@@ -26,15 +31,10 @@
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.13",
     "turbo": "^2.5.8",
-    "typescript": "5.9.2"
-  },
-  "engines": {
-    "node": ">=22.18.0",
-    "pnpm": ">=10.14.0"
+    "typescript": "^5.9.2"
   },
   "volta": {
     "node": "22.18.0",
     "pnpm": "10.14.0"
-  },
-  "packageManager": "pnpm@10.14.0"
+  }
 }

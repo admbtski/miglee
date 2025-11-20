@@ -102,7 +102,6 @@ export function buildGetIntentJoinRequestsOptions(
       IntentJoinRequestsQuery,
       Error,
       IntentJoinRequestsQuery,
-      IntentJoinRequestsQuery,
       QueryKey,
       number
     >,
@@ -111,7 +110,6 @@ export function buildGetIntentJoinRequestsOptions(
 ): UseInfiniteQueryOptions<
   IntentJoinRequestsQuery,
   Error,
-  IntentJoinRequestsQuery,
   IntentJoinRequestsQuery,
   QueryKey,
   number
@@ -127,10 +125,10 @@ export function buildGetIntentJoinRequestsOptions(
         offset: pageParam,
       }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      const { items, total } = lastPage.intentJoinRequests;
+    getNextPageParam: (lastPage: any, allPages: any[]) => {
+      const { total } = lastPage.intentJoinRequests;
       const loadedCount = allPages.reduce(
-        (sum, page) => sum + page.intentJoinRequests.items.length,
+        (sum: number, page: any) => sum + page.intentJoinRequests.items.length,
         0
       );
       return loadedCount < total ? loadedCount : undefined;
@@ -194,7 +192,6 @@ export function useIntentJoinRequestsQuery(
       IntentJoinRequestsQuery,
       Error,
       IntentJoinRequestsQuery,
-      IntentJoinRequestsQuery,
       QueryKey,
       number
     >,
@@ -242,7 +239,7 @@ export function useCreateJoinQuestionMutation(
         CreateJoinQuestionMutation,
         CreateJoinQuestionMutationVariables
       >(CreateJoinQuestionDocument, variables),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate questions list
       queryClient.invalidateQueries({
         queryKey: [
@@ -332,7 +329,7 @@ export function useReorderJoinQuestionsMutation(
         ReorderJoinQuestionsMutation,
         ReorderJoinQuestionsMutationVariables
       >(ReorderJoinQuestionsDocument, variables),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate questions list
       queryClient.invalidateQueries({
         queryKey: ['GetIntentJoinQuestions', { intentId: variables.intentId }],
@@ -361,7 +358,7 @@ export function useRequestJoinIntentWithAnswersMutation(
         RequestJoinIntentWithAnswersMutation,
         RequestJoinIntentWithAnswersMutationVariables
       >(RequestJoinIntentWithAnswersDocument, variables),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate intent queries
       queryClient.invalidateQueries({
         queryKey: ['GetIntent', { id: variables.input.intentId }],
@@ -401,7 +398,7 @@ export function useApproveJoinRequestMutation(
         ApproveJoinRequestMutation,
         ApproveJoinRequestMutationVariables
       >(ApproveJoinRequestDocument, variables),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate join requests
       queryClient.invalidateQueries({
         queryKey: [
@@ -441,7 +438,7 @@ export function useRejectJoinRequestMutation(
         RejectJoinRequestMutation,
         RejectJoinRequestMutationVariables
       >(RejectJoinRequestDocument, variables),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate join requests
       queryClient.invalidateQueries({
         queryKey: [
@@ -477,7 +474,7 @@ export function useCancelJoinRequestMutation(
         CancelJoinRequestMutation,
         CancelJoinRequestMutationVariables
       >(CancelJoinRequestDocument, variables),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate my join requests
       queryClient.invalidateQueries({
         queryKey: ['GetMyJoinRequests'],

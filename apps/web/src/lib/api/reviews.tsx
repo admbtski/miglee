@@ -176,7 +176,7 @@ export function useCreateReview(
     meta: {
       successMessage: 'Review submitted successfully',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate reviews list for this intent
       queryClient.invalidateQueries({
         queryKey: reviewKeys.lists(),
@@ -229,7 +229,7 @@ export function useUpdateReview(
     meta: {
       successMessage: 'Review updated successfully',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: reviewKeys.detail(variables.id),
       });

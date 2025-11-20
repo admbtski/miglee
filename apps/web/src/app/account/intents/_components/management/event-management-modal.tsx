@@ -15,11 +15,13 @@ import {
 import * as React from 'react';
 import { InviteUsersModal } from './panels/members/invite-users-modal';
 import { MemberManageModal } from './panels/members/member-manage-modal';
-import { MembersPanel } from './panels/members/members-panel';
-import { PlansPanel } from './panels/plans/plans-panel';
-import { SubscriptionPanel } from './panels/subscription/subscription-panel';
-import { InviteLinksPanel } from './panels/invite-links/invite-links-panel';
-import { JoinFormPanel } from './panels/join-form/join-form-panel';
+import {
+  MembersPanel,
+  PlansPanel,
+  SubscriptionPanel,
+  InviteLinksPanel,
+  JoinFormPanel,
+} from './panels';
 import { EventManagementModalProps, IntentMember } from './types';
 import clsx from 'clsx';
 
@@ -390,7 +392,7 @@ export function EventManagementModal({
               {activeTab === 'SUBSCRIPTION' && currentSponsorship && (
                 <SubscriptionPanel
                   intentId={intentId}
-                  sponsorship={currentSponsorship}
+                  sponsorship={currentSponsorship as any}
                   onBoostEvent={onBoostEvent}
                   onSendLocalPush={onSendLocalPush}
                   onToggleSponsoredBadge={onToggleSponsoredBadge}

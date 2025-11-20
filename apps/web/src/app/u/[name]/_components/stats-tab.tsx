@@ -114,7 +114,7 @@ export function StatsTab({ user }: StatsTabProps) {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-zinc-900 dark:text-zinc-100">
-                    {stats.hostRatingAvg.toFixed(1)}
+                    {stats.hostRatingAvg?.toFixed(1) ?? '0.0'}
                   </span>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -146,7 +146,7 @@ export function StatsTab({ user }: StatsTabProps) {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-zinc-900 dark:text-zinc-100">
-                    {stats.attendeeRatingAvg.toFixed(1)}
+                    {stats.attendeeRatingAvg?.toFixed(1) ?? '0.0'}
                   </span>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">

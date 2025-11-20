@@ -36,7 +36,7 @@ export function SuggestionCard({
 
   const fullness = `${s.taken}/${s.max}`;
   const distance = Number.isFinite(s.distanceKm)
-    ? `${s.distanceKm.toFixed(1)} km`
+    ? `${s.distanceKm?.toFixed(1)} km`
     : '';
 
   return (

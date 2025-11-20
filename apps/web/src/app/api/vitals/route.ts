@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const items = Array.isArray(body) ? body : [body];
 
     // tu możesz zaimplementować sampling, np. 10%:
-    const shouldSample = () => Math.random() < 0.1;
+    // const shouldSample = () => Math.random() < 0.1;
 
     for (const m of items) {
       if (!m?.name || typeof m.value !== 'number') continue;

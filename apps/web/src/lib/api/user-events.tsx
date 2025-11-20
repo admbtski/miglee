@@ -11,7 +11,7 @@ export const USER_EVENTS_KEY = 'userEvents';
 export function buildUserEventsOptions(
   variables: GetUserEventsQueryVariables,
   options?: Partial<UseQueryOptions<GetUserEventsQuery>>
-) {
+): any {
   return {
     queryKey: [USER_EVENTS_KEY, variables],
     queryFn: async () => {

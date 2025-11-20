@@ -33,7 +33,7 @@ export interface IntentStatusFilterProps {
 export function IntentStatusFilter({
   values,
   onChange,
-}: IntentStatusFilterProps): JSX.Element {
+}: IntentStatusFilterProps) {
   const toggleStatus = (status: IntentStatusFilterValue) => {
     if (values.includes(status)) {
       // Remove if already selected

@@ -90,7 +90,7 @@ export function InviteUsersModal({
 }: InviteUsersModalProps) {
   /* ------------------------------ STATE ------------------------------ */
   const [q, setQ] = useState('');
-  const [limit, setLimit] = useState(10);
+  const limit = 10; // TODO: make this configurable
   const [offset, setOffset] = useState(0);
 
   const [debounced, setDebounced] = useState(q);

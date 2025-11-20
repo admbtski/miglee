@@ -19,7 +19,7 @@ import {
 import type {
   IntentMemberStatus,
   IntentMemberRole,
-} from '@/lib/api/__generated__/react-query';
+} from '@/lib/api/__generated__/react-query-update';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildIntentCoverUrl } from '@/lib/media/url';
 

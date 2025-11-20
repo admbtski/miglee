@@ -126,17 +126,6 @@ export default function BillingPage() {
     setCards((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
-  const handleManageOpen = useCallback(() => setManageOpen(true), []);
-  const handleManageClose = useCallback(() => setManageOpen(false), []);
-  const handleAddOpen = useCallback(() => setAddOpen(true), []);
-  const handleAddClose = useCallback(() => setAddOpen(false), []);
-  const handleEditClose = useCallback(() => setEditOpen(null), []);
-  const handleConfirmDeleteClose = useCallback(
-    () => setConfirmDelete(null),
-    []
-  );
-  const handleInvoiceViewClose = useCallback(() => setInvoiceView(null), []);
-
   return (
     <>
       {/* Header */}

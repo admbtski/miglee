@@ -11,24 +11,24 @@ import {
   CreateIntentInviteLinkDocument,
   DeleteIntentInviteLinkDocument,
   GetDmMuteDocument,
-  GetIntentInviteLinkDocument,
-  GetIntentInviteLinksDocument,
+  IntentInviteLinkDocument,
+  IntentInviteLinksDocument,
   GetIntentMuteDocument,
   GetMyNotificationPreferencesDocument,
   MuteDmThreadDocument,
   MuteIntentDocument,
   UpdateNotificationPreferencesDocument,
-  UseIntentInviteLinkDocument,
+  UpdateIntentInviteLinkDocument,
   type CreateIntentInviteLinkMutation,
   type CreateIntentInviteLinkMutationVariables,
   type DeleteIntentInviteLinkMutation,
   type DeleteIntentInviteLinkMutationVariables,
   type GetDmMuteQuery,
   type GetDmMuteQueryVariables,
-  type GetIntentInviteLinkQuery,
-  type GetIntentInviteLinkQueryVariables,
-  type GetIntentInviteLinksQuery,
-  type GetIntentInviteLinksQueryVariables,
+  type IntentInviteLinkQuery,
+  type IntentInviteLinkQueryVariables,
+  type IntentInviteLinksQuery,
+  type IntentInviteLinksQueryVariables,
   type GetIntentMuteQuery,
   type GetIntentMuteQueryVariables,
   type GetMyNotificationPreferencesQuery,
@@ -38,8 +38,8 @@ import {
   type MuteIntentMutationVariables,
   type UpdateNotificationPreferencesMutation,
   type UpdateNotificationPreferencesMutationVariables,
-  type UseIntentInviteLinkMutation,
-  type UseIntentInviteLinkMutationVariables,
+  type UpdateIntentInviteLinkMutation,
+  type UpdateIntentInviteLinkMutationVariables,
 } from './__generated__/react-query-update';
 import { gqlClient } from './client';
 
@@ -54,17 +54,17 @@ export const inviteLinkKeys = {
 };
 
 export function useGetIntentInviteLinks(
-  variables: GetIntentInviteLinksQueryVariables,
+  variables: IntentInviteLinksQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetIntentInviteLinksQuery, Error>,
+    UseQueryOptions<IntentInviteLinksQuery, Error>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery<GetIntentInviteLinksQuery, Error>({
+  return useQuery<IntentInviteLinksQuery, Error>({
     queryKey: inviteLinkKeys.byIntent(variables.intentId),
     queryFn: async () => {
-      const res = await gqlClient.request<GetIntentInviteLinksQuery>(
-        GetIntentInviteLinksDocument,
+      const res = await gqlClient.request<IntentInviteLinksQuery>(
+        IntentInviteLinksDocument,
         variables
       );
       return res;
@@ -75,17 +75,17 @@ export function useGetIntentInviteLinks(
 }
 
 export function useGetIntentInviteLink(
-  variables: GetIntentInviteLinkQueryVariables,
+  variables: IntentInviteLinkQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetIntentInviteLinkQuery, Error>,
+    UseQueryOptions<IntentInviteLinkQuery, Error>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery<GetIntentInviteLinkQuery, Error>({
-    queryKey: inviteLinkKeys.byCode(variables.code),
+  return useQuery<IntentInviteLinkQuery, Error>({
+    queryKey: inviteLinkKeys.byCode(variables.code!),
     queryFn: async () => {
-      const res = await gqlClient.request<GetIntentInviteLinkQuery>(
-        GetIntentInviteLinkDocument,
+      const res = await gqlClient.request<IntentInviteLinkQuery>(
+        IntentInviteLinkDocument,
         variables
       );
       return res;
@@ -120,7 +120,7 @@ export function useCreateIntentInviteLink(
     meta: {
       successMessage: 'Invite link created successfully',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: inviteLinkKeys.byIntent(variables.input.intentId),
       });
@@ -163,22 +163,22 @@ export function useDeleteIntentInviteLink(
 
 export function useUseIntentInviteLink(
   options?: UseMutationOptions<
-    UseIntentInviteLinkMutation,
+    UpdateIntentInviteLinkMutation,
     Error,
-    UseIntentInviteLinkMutationVariables
+    UpdateIntentInviteLinkMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    UseIntentInviteLinkMutation,
+    UpdateIntentInviteLinkMutation,
     Error,
-    UseIntentInviteLinkMutationVariables
+    UpdateIntentInviteLinkMutationVariables
   >({
     mutationKey: ['UseIntentInviteLink'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<UseIntentInviteLinkMutation>(
-        UseIntentInviteLinkDocument,
+      const res = await gqlClient.request<UpdateIntentInviteLinkMutation>(
+        UpdateIntentInviteLinkDocument,
         variables
       );
       return res;
@@ -306,7 +306,7 @@ export function useMuteIntent(
     meta: {
       successMessage: 'Event muted successfully',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: muteKeys.intent(variables.intentId),
       });
@@ -358,7 +358,7 @@ export function useMuteDmThread(
     meta: {
       successMessage: 'Conversation muted successfully',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: muteKeys.dm(variables.threadId),
       });

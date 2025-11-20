@@ -1,7 +1,7 @@
 'use client';
 
-import { memo } from 'react';
 import { SearchX } from 'lucide-react';
+import { memo } from 'react';
 
 export const EmptyState = memo(function EmptyState() {
   return (

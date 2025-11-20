@@ -40,6 +40,7 @@ import {
   useMarkDmThreadRead,
   usePublishDmTyping,
 } from '@/lib/api/dm';
+import type { GetDmMessagesQuery } from '@/lib/api/__generated__/react-query-update';
 import {
   useDmMessageAdded,
   useDmMessageUpdated,
@@ -86,8 +87,12 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   const markAsRead = useMarkDmThreadRead();
   const publishTyping = usePublishDmTyping();
 
-  // Subscriptions
-  useDmThreadsSubscriptions({ enabled: true });
+  // Subscriptions - subscribe to all threads for badge updates
+  const allThreadIds = useMemo(
+    () => threadsData?.dmThreads?.items?.map((t) => t.id).filter(Boolean) ?? [],
+    [threadsData]
+  );
+  useDmThreadsSubscriptions({ threadIds: allThreadIds, enabled: true });
   useDmMessageAdded({
     threadId: activeThreadId ?? '',
     onMessage: (message) => {
@@ -139,21 +144,20 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
           : '',
         unread: thread.unreadCount || 0,
         avatar: otherUser?.avatarKey || undefined,
-        lastReadAt: thread.lastReadAt
-          ? new Date(thread.lastReadAt).getTime()
-          : undefined,
       };
     });
   }, [threadsData, myUserId]);
 
   // Transform messages
   const messages = useMemo(() => {
-    if (!messagesData?.pages || !myUserId) return [];
+    if (!(messagesData as any)?.pages || !myUserId) return [];
 
     const allMessages: Message[] = [];
-    for (const page of messagesData.pages) {
-      const pageMessages =
-        page.dmMessages?.edges?.map((edge) => edge.node) || [];
+    for (const page of (messagesData as any).pages as GetDmMessagesQuery[]) {
+      if (!page.dmMessages) continue;
+      const pageMessages = page.dmMessages.edges.map(
+        (edge: { node: any }) => edge.node
+      );
       for (const msg of pageMessages) {
         allMessages.push({
           id: msg.id,
@@ -165,19 +169,19 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
             name: msg.sender.name,
             avatar: msg.sender.avatarKey || undefined,
           },
-          reactions: msg.reactions?.map((r) => ({
+          reactions: msg.reactions.map((r: any) => ({
             emoji: r.emoji,
-            count: r.users.length,
-            users: r.users.map((u) => ({
+            count: r.count,
+            users: r.users.map((u: any) => ({
               id: u.id,
               name: u.name,
               avatarKey: u.avatarKey,
             })),
-            reacted: r.users.some((u) => u.id === myUserId),
+            reacted: r.reacted,
           })),
-          readAt: msg.readAt,
-          editedAt: msg.updatedAt !== msg.createdAt ? msg.updatedAt : null,
-          deletedAt: msg.deletedAt,
+          readAt: msg.readAt ?? undefined,
+          editedAt: msg.editedAt ?? undefined,
+          deletedAt: msg.deletedAt ?? undefined,
           replyTo: msg.replyTo
             ? {
                 id: msg.replyTo.id,
@@ -196,12 +200,15 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
 
   // Send message handler
   const handleSendMessage = (content: string, replyToId?: string) => {
-    if (!activeThreadId || !content.trim()) return;
+    if (!activeThreadId || !activeThread?.recipientId || !content.trim())
+      return;
 
     sendMessage.mutate({
-      threadId: activeThreadId,
-      content: content.trim(),
-      replyToId,
+      input: {
+        recipientId: activeThread.recipientId,
+        content: content.trim(),
+        replyToId,
+      },
     });
   };
 
@@ -221,15 +228,18 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   // Get active thread info
   const activeThread = useMemo(() => {
     if (!activeThreadId || !threadsData?.dmThreads) return null;
-    const thread = threadsData.dmThreads.find((t) => t.id === activeThreadId);
+    const thread = threadsData.dmThreads.items.find(
+      (t) => t.id === activeThreadId
+    );
     if (!thread) return null;
 
-    const otherUser = thread.participants.find((p) => p.id !== myUserId);
+    const otherUser = thread.aUserId === myUserId ? thread.bUser : thread.aUser;
     return {
       id: thread.id,
       title: otherUser?.name || 'Unknown',
       avatar: otherUser?.avatarKey || undefined,
-      members: thread.participants.length,
+      recipientId: otherUser?.id || '',
+      members: 2, // DM always has 2 participants
     };
   }, [activeThreadId, threadsData, myUserId]);
 

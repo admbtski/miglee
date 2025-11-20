@@ -55,7 +55,7 @@ export function useAddDmReaction(
     meta: {
       successMessage: 'Reaction added',
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       // Invalidate messages to refetch with new reactions
       // We don't know threadId from messageId, so invalidate all DM queries
       queryClient.invalidateQueries({ queryKey: dmKeys.all });

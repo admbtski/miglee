@@ -123,7 +123,7 @@ export function useCreateComment(
     meta: {
       successMessage: 'Comment added',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate comments list for this intent
       queryClient.invalidateQueries({
         queryKey: commentKeys.lists(),
@@ -166,7 +166,7 @@ export function useUpdateComment(
     meta: {
       successMessage: 'Comment updated',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: commentKeys.detail(variables.id),
       });

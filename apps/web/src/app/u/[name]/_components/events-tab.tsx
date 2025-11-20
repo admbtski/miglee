@@ -29,8 +29,8 @@ export function EventsTab({ user }: EventsTabProps) {
     offset: page * limit,
   });
 
-  const events = data?.userEvents?.items || [];
-  const total = data?.userEvents?.total || 0;
+  const events = (data as any)?.userEvents?.items || [];
+  const total = (data as any)?.userEvents?.total || 0;
   const totalPages = Math.ceil(total / limit);
 
   if (isLoading) {
@@ -69,7 +69,7 @@ export function EventsTab({ user }: EventsTabProps) {
     <div className="space-y-4">
       {/* Events List */}
       <div className="space-y-3">
-        {events.map((event) => {
+        {events.map((event: any) => {
           const startDate = new Date(event.startAt);
           const categoryNames = event.categories?.[0]?.names as any;
           const categoryName =

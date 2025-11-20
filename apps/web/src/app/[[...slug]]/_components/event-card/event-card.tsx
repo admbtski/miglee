@@ -1,6 +1,7 @@
 'use client';
 
 import { Avatar } from '@/components/ui/avatar';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { HybridLocationIcon } from '@/components/ui/icons/hybrid-location-icon';
@@ -9,6 +10,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
+import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import { computeEventStateAndStatus } from '@/lib/utils/event-status';
 import { motion } from 'framer-motion';
@@ -24,8 +26,6 @@ import {
 import Link from 'next/link';
 import { memo, useCallback, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
-import { BlurHashImage } from '@/components/ui/blurhash-image';
-import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 
 export interface EventCardProps {
   intentId?: string;

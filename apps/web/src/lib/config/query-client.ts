@@ -4,9 +4,9 @@ import { createQueryClient as createQueryClientWithLogging } from '@/lib/utils/r
 // Safe SSR environment detection
 const isServer = typeof window === 'undefined';
 
-const DEFAULT_STALE_TIME = 60 * 1000;
+// const _DEFAULT_STALE_TIME = 60 * 1000;
 
-function createQueryClient(config?: QueryClientConfig): QueryClient {
+function createQueryClient(_config?: QueryClientConfig): QueryClient {
   // Use our enhanced query client with logging and toast
   return createQueryClientWithLogging();
 }

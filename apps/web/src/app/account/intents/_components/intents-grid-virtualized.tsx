@@ -44,8 +44,9 @@ export const IntentsGridVirtualized = memo(function IntentsGridVirtualized({
       const it = items[index];
       if (!it) return null;
 
+      const CardComponent = AccountIntentCard as any;
       return (
-        <AccountIntentCard
+        <CardComponent
           key={it.id}
           id={it.id}
           owned={mode === 'owned'}

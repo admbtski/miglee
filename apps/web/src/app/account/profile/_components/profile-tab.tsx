@@ -110,7 +110,7 @@ export function ProfileTab({ user }: TabProps) {
     },
   });
 
-  const coverUpload = useCoverUpload(userId, {
+  const coverUpload = useCoverUpload(userId!, {
     onSuccess: () => {
       setCoverCropModalOpen(false);
       setSelectedCoverSrc(null);

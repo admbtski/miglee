@@ -48,7 +48,7 @@ export interface RoleFilterProps {
 
 /* ───────────────────────────── Component ───────────────────────────── */
 
-export function RoleFilter({ value, onChange }: RoleFilterProps): JSX.Element {
+export function RoleFilter({ value, onChange }: RoleFilterProps) {
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">

@@ -851,7 +851,7 @@ export default function ChatsPageIntegrated() {
 
     if (active.kind === 'dm') {
       // dmMessages now uses infinite query with pages
-      const pages = dmMessagesData?.pages;
+      const pages = (dmMessagesData as any)?.pages;
       if (!pages) return [];
 
       // Flatten all pages - pages are loaded newest first, so reverse them
@@ -1314,11 +1314,7 @@ export { EmptyThread } from './_components/empty-thread';
 const EmptyThread = EmptyThreadComponent;
 
 /* ───────────────────────────── Details (kind-aware) ───────────────────────────── */
-// ChatDetails moved to _components/chat-details.tsx
-import { ChatDetails as ChatDetailsComponent } from './_components/chat-details';
-export { ChatDetails } from './_components/chat-details';
-const ChatDetails = ChatDetailsComponent;
-
+// ChatDetails moved to _components/chat-details.tsx (imported where needed)
 // Section and Row moved to _components/chat-details-section.tsx (already exported)
 export { Section, Row } from './_components/chat-details-section';
 

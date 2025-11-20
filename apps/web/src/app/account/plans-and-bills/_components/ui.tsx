@@ -178,6 +178,8 @@ export function Input({
   maxLength,
   leftIcon,
   rightAddon,
+  inputMode,
+  autoComplete,
 }: {
   label: string;
   value?: string;
@@ -187,6 +189,16 @@ export function Input({
   maxLength?: number;
   leftIcon?: React.ReactNode;
   rightAddon?: React.ReactNode;
+  inputMode?:
+    | 'text'
+    | 'numeric'
+    | 'tel'
+    | 'email'
+    | 'url'
+    | 'search'
+    | 'none'
+    | 'decimal';
+  autoComplete?: string;
 }) {
   return (
     <label className="block">
@@ -201,6 +213,8 @@ export function Input({
           onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
           maxLength={maxLength}
+          inputMode={inputMode}
+          autoComplete={autoComplete}
           className="w-full bg-transparent outline-none"
         />
         {rightAddon}

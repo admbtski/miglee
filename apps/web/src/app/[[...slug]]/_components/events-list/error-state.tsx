@@ -1,7 +1,7 @@
 'use client';
 
-import { memo } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { memo } from 'react';
 
 type ErrorStateProps = {
   message?: string;

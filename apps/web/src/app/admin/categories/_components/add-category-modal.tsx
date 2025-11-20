@@ -67,7 +67,7 @@ export function AddCategoryModal({ open, onClose }: AddCategoryModalProps) {
         ...prev,
         slug: 'Nieprawidłowy format slug (tylko małe litery, cyfry i myślniki)',
       }));
-    } else if (slug && slugAvailable === false) {
+    } else if (slug && slugAvailable?.checkCategorySlugAvailable === false) {
       setErrors((prev) => ({ ...prev, slug: 'Slug zajęty' }));
     }
   };
@@ -76,8 +76,8 @@ export function AddCategoryModal({ open, onClose }: AddCategoryModalProps) {
     if (names.pl) {
       setNames((prev) => ({
         ...prev,
-        en: prev.en || prev.pl,
-        de: prev.de || prev.pl,
+        en: prev.en || prev.pl || '',
+        de: prev.de || prev.pl || '',
       }));
     }
   };
@@ -105,7 +105,7 @@ export function AddCategoryModal({ open, onClose }: AddCategoryModalProps) {
       newErrors.slug = 'Slug jest wymagany';
     } else if (!isValidSlug(slug)) {
       newErrors.slug = 'Nieprawidłowy format slug';
-    } else if (slugAvailable === false) {
+    } else if (slugAvailable?.checkCategorySlugAvailable === false) {
       newErrors.slug = 'Slug zajęty';
     }
 
@@ -119,9 +119,9 @@ export function AddCategoryModal({ open, onClose }: AddCategoryModalProps) {
     try {
       // Build names object (only include non-empty values)
       const namesPayload: Record<string, string> = {};
-      if (names.pl.trim()) namesPayload.pl = names.pl.trim();
-      if (names.en.trim()) namesPayload.en = names.en.trim();
-      if (names.de.trim()) namesPayload.de = names.de.trim();
+      if (names.pl?.trim()) namesPayload.pl = names.pl.trim();
+      if (names.en?.trim()) namesPayload.en = names.en.trim();
+      if (names.de?.trim()) namesPayload.de = names.de.trim();
 
       await createMutation.mutateAsync({
         input: {
@@ -158,7 +158,7 @@ export function AddCategoryModal({ open, onClose }: AddCategoryModalProps) {
   };
 
   const translationCount = [names.pl, names.en, names.de].filter(
-    (n) => n.trim().length > 0
+    (n) => n && n.trim().length > 0
   ).length;
 
   return (

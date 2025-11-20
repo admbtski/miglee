@@ -11,7 +11,7 @@ export const USER_REVIEWS_KEY = 'userReviews';
 export function buildUserReviewsOptions(
   variables: GetUserReviewsQueryVariables,
   options?: Partial<UseQueryOptions<GetUserReviewsQuery>>
-) {
+): any {
   return {
     queryKey: [USER_REVIEWS_KEY, variables],
     queryFn: async () => {

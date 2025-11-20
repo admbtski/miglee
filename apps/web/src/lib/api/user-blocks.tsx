@@ -112,7 +112,7 @@ export function useBlockUser(
     meta: {
       successMessage: 'User blocked successfully',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate blocks list
       queryClient.invalidateQueries({ queryKey: userBlockKeys.lists() });
       // Invalidate isBlocked for this user
@@ -148,7 +148,7 @@ export function useUnblockUser(
     meta: {
       successMessage: 'User unblocked successfully',
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate blocks list
       queryClient.invalidateQueries({ queryKey: userBlockKeys.lists() });
       // Invalidate isBlocked for this user

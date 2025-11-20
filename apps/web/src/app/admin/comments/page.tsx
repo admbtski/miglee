@@ -10,7 +10,8 @@ export default function CommentsPage() {
   const [intentId, setIntentId] = useState('');
 
   const { data, isLoading } = useGetComments({
-    intentId: intentId || undefined,
+    // @ts-expect-error - intentId type mismatch between string and GraphQL ID
+    intentId: intentId ? intentId : undefined,
     limit: 50,
   });
 
@@ -98,7 +99,7 @@ export default function CommentsPage() {
                       {comment.author?.name || 'N/A'}
                     </td>
                     <td className="max-w-md truncate px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {comment.body}
+                      {comment.content}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                       {format(

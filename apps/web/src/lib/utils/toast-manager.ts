@@ -6,13 +6,13 @@
 import { toast as sonnerToast } from 'sonner';
 import { devLogger } from './dev-logger';
 
-type ToastType =
-  | 'success'
-  | 'error'
-  | 'info'
-  | 'warning'
-  | 'loading'
-  | 'promise';
+// type _ToastType =
+//   | 'success'
+//   | 'error'
+//   | 'info'
+//   | 'warning'
+//   | 'loading'
+//   | 'promise';
 
 interface ToastOptions {
   description?: string;
@@ -67,8 +67,9 @@ class ToastManager {
 
     // Show toast
     if (!silent) {
-      return sonnerToast.success(message, toastOptions);
+      return sonnerToast.success(message, toastOptions as any);
     }
+    return undefined;
   }
 
   error(message: string, options: ToastOptions = {}) {
@@ -88,8 +89,9 @@ class ToastManager {
 
     // Show toast
     if (!silent) {
-      return sonnerToast.error(message, toastOptions);
+      return sonnerToast.error(message, toastOptions as any);
     }
+    return undefined;
   }
 
   info(message: string, options: ToastOptions = {}) {
@@ -108,8 +110,9 @@ class ToastManager {
 
     // Show toast
     if (!silent) {
-      return sonnerToast.info(message, toastOptions);
+      return sonnerToast.info(message, toastOptions as any);
     }
+    return undefined;
   }
 
   warning(message: string, options: ToastOptions = {}) {
@@ -128,8 +131,9 @@ class ToastManager {
 
     // Show toast
     if (!silent) {
-      return sonnerToast.warning(message, toastOptions);
+      return sonnerToast.warning(message, toastOptions as any);
     }
+    return undefined;
   }
 
   loading(message: string, options: Omit<ToastOptions, 'silent'> = {}) {
@@ -142,7 +146,7 @@ class ToastManager {
     });
 
     // Show loading toast
-    return sonnerToast.loading(message, toastOptions);
+    return sonnerToast.loading(message, toastOptions as any);
   }
 
   // Promise toast - automatically handles loading, success, and error states

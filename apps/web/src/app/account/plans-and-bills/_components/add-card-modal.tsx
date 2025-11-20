@@ -31,10 +31,11 @@ const normalizeExp = (raw: string) => {
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 };
 
-const isValidExp = (exp: string) => {
+const isValidExp = (exp: string | undefined): exp is string => {
+  if (!exp) return false;
   const m = exp.match(/^(\d{2})\/(\d{2})$/);
   if (!m) return false;
-  const mm = parseInt(m[1], 10);
+  const mm = parseInt(m[1]!, 10);
   return mm >= 1 && mm <= 12;
 };
 
@@ -86,7 +87,7 @@ export function AddCardModal({
       : cvv.replace(/\D/g, '').length >= 3);
 
   const submit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !exp) return;
     const [, mm, yy] = exp.match(/^(\d{2})\/(\d{2})$/) || [];
     onAdd({
       brand,

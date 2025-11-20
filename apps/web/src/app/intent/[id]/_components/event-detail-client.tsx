@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
-import { EventManagementModalConnect } from '@/app/account/intents/_components/managemen/event-management-modal-connect';
+import { EventManagementModalConnect } from '@/app/account/intents/_components/management';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
 import { DeleteIntentModals } from '@/app/account/intents/_components/delete-intent-modals';
 import {
@@ -65,7 +65,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   // Check user membership status - must be declared before early returns
   const userMembership = useMemo(() => {
     if (!currentUserId || !intent?.members) return null;
-    return intent.members.find((m) => m.userId === currentUserId);
+    return intent.members.find((m) => m.user?.id === currentUserId);
   }, [currentUserId, intent?.members]);
 
   const isOwner = userMembership?.role === 'OWNER';
@@ -180,25 +180,27 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     messagesCount: intent.messagesCount,
     isFavourite: intent.isFavourite,
     savedCount: intent.savedCount,
-    sponsorship: intent.sponsorship
-      ? {
-          plan: intent.sponsorship.plan as any,
-          status: intent.sponsorship.status as any,
-          highlightOn: intent.sponsorship.highlightOn,
-          sponsor: {
-            id: intent.sponsorship.sponsor.id,
-            name: intent.sponsorship.sponsor.name,
-          },
-          startedAt: intent.sponsorship.startedAt ?? null,
-          endsAt: intent.sponsorship.endsAt ?? null,
-        }
-      : undefined,
-    inviteLinks: intent.inviteLinks?.map((link: any) => ({
-      code: link.code,
-      maxUses: link.maxUses ?? null,
-      usedCount: link.usedCount,
-      expiresAt: link.expiresAt ?? null,
-    })),
+    // TODO: sponsorship field not in GraphQL fragment yet
+    // sponsorship: intent.sponsorship
+    //   ? {
+    //       plan: intent.sponsorship.plan as any,
+    //       status: intent.sponsorship.status as any,
+    //       highlightOn: intent.sponsorship.highlightOn,
+    //       sponsor: {
+    //         id: intent.sponsorship.sponsor.id,
+    //         name: intent.sponsorship.sponsor.name,
+    //       },
+    //       startedAt: intent.sponsorship.startedAt ?? null,
+    //       endsAt: intent.sponsorship.endsAt ?? null,
+    //     }
+    //   : undefined,
+    // TODO: inviteLinks field not in GraphQL fragment yet
+    // inviteLinks: intent.inviteLinks?.map((link: any) => ({
+    //   code: link.code,
+    //   maxUses: link.maxUses ?? null,
+    //   usedCount: link.usedCount,
+    //   expiresAt: link.expiresAt ?? null,
+    // })),
     joinState: computeJoinState(new Date(), {
       startAt: new Date(intent.startAt),
       endAt: new Date(intent.endAt),

@@ -2,14 +2,14 @@
  * Active filters chips component
  */
 
-import { X } from 'lucide-react';
-import { useMemo } from 'react';
 import type {
   IntentStatus,
   JoinMode,
-  MeetingKind,
   Level,
+  MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
+import { X } from 'lucide-react';
+import { useMemo } from 'react';
 import type { SearchMeta } from '../../_hooks/use-search-meta';
 
 export interface FilterActiveChipsProps {

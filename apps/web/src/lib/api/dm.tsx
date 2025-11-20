@@ -151,8 +151,8 @@ export function useGetDmMessagesInfinite(
     'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
   >
 ) {
-  return useInfiniteQuery<GetDmMessagesQuery, Error>({
-    queryKey: dmKeys.messages(threadId, { infinite: true }),
+  return useInfiniteQuery({
+    queryKey: dmKeys.messages(threadId),
     queryFn: async ({ pageParam }) => {
       const res = await gqlClient.request<GetDmMessagesQuery>(
         GetDmMessagesDocument,
@@ -172,8 +172,8 @@ export function useGetDmMessagesInfinite(
       }
       return undefined;
     },
-    enabled: !!threadId,
     ...options,
+    enabled: !!threadId,
   });
 }
 

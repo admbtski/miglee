@@ -21,7 +21,7 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
   const notifications = data?.adminUserNotifications?.items ?? [];
   const total = data?.adminUserNotifications?.pageInfo?.total ?? 0;
 
-  const getNotificationIcon = (kind: string) => {
+  const getNotificationIcon = (_kind: string) => {
     return <Bell className="h-4 w-4" />;
   };
 

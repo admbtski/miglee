@@ -75,7 +75,11 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
         ...prev,
         slug: 'Nieprawidłowy format slug',
       }));
-    } else if (slug && slug !== tag.slug && slugAvailable === false) {
+    } else if (
+      slug &&
+      slug !== tag.slug &&
+      slugAvailable?.checkTagSlugAvailable === false
+    ) {
       setErrors((prev) => ({ ...prev, slug: 'Slug zajęty' }));
     }
   };
@@ -94,7 +98,7 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
         newErrors.slug = 'Slug jest wymagany';
       } else if (!isValidSlug(slug)) {
         newErrors.slug = 'Nieprawidłowy format slug';
-      } else if (slugAvailable === false) {
+      } else if (slugAvailable?.checkTagSlugAvailable === false) {
         newErrors.slug = 'Slug zajęty';
       }
     }

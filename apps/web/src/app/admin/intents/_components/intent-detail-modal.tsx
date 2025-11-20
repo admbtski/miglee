@@ -9,7 +9,6 @@ import {
   MapPin,
   Users,
   MessageSquare,
-  Star,
   Settings,
   Link as LinkIcon,
 } from 'lucide-react';

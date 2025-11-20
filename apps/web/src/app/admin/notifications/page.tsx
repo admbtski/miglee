@@ -9,7 +9,6 @@ import { Search, Bell, BellOff, User } from 'lucide-react';
 import { useUsersQuery } from '@/lib/api/users';
 import { useAdminUserNotificationsQuery } from '@/lib/api/admin-users';
 import {
-  Role,
   UsersSortBy,
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
@@ -20,7 +19,7 @@ export default function NotificationsPage() {
   const [selectedUserName, setSelectedUserName] = useState<string>('');
 
   // Search users
-  const { data: usersData, isLoading: isLoadingUsers } = useUsersQuery({
+  const { data: usersData } = useUsersQuery({
     q: searchUser || undefined,
     sortBy: UsersSortBy.CreatedAt,
     sortDir: SortDir.Desc,

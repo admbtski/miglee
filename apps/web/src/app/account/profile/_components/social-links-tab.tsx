@@ -122,8 +122,11 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
     setLinkToDelete(null);
   };
 
-  const getProviderConfig = (provider: string) =>
-    PROVIDERS.find((p) => p.id === provider) || PROVIDERS[PROVIDERS.length - 1];
+  const getProviderConfig = (provider: string): (typeof PROVIDERS)[number] => {
+    const found = PROVIDERS.find((p) => p.id === provider);
+    // @ts-expect-error - TypeScript doesn't infer that PROVIDERS is non-empty
+    return found || PROVIDERS[PROVIDERS.length - 1];
+  };
 
   const availableProviders = PROVIDERS.filter(
     (p) => !socialLinks.some((link) => link.provider === p.id)
@@ -189,7 +192,8 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={
                   selectedProvider
-                    ? getProviderConfig(selectedProvider).placeholder
+                    ? getProviderConfig(selectedProvider)?.placeholder ||
+                      'https://...'
                     : 'https://...'
                 }
                 className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
@@ -310,7 +314,7 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
         variant="error"
         size="sm"
         title="Delete Social Link"
-        subtitle={`Are you sure you want to remove your ${linkToDelete ? getProviderConfig(linkToDelete.provider).label : ''} link? This action cannot be undone.`}
+        subtitle={`Are you sure you want to remove your ${linkToDelete ? getProviderConfig(linkToDelete.provider)?.label || 'social' : ''} link? This action cannot be undone.`}
         primaryLabel={removeMutation.isPending ? 'Deleting...' : 'Delete'}
         secondaryLabel="Cancel"
         onPrimary={handleDeleteConfirm}

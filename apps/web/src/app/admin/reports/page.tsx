@@ -79,7 +79,7 @@ export default function ReportsPage() {
 
         {!isLoading && !error && reports.length > 0 && (
           <ReportsTable
-            reports={reports}
+            reports={reports as any}
             onSelectReport={setSelectedReportId}
           />
         )}

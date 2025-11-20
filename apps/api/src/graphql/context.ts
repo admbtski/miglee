@@ -1,4 +1,4 @@
-import type { FastifyReply, FastifyRequest, FastifyInstance } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { Role } from './__generated__/resolvers-types';
 

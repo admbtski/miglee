@@ -1,12 +1,12 @@
 'use client';
 
-import { trace } from '@opentelemetry/api';
+// import { trace } from '@opentelemetry/api';
 import { useEffect } from 'react';
 import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
 
 function send(metric: Metric) {
-  const span = trace.getActiveSpan();
-  const traceId = span?.spanContext().traceId;
+  // const span = trace.getActiveSpan();
+  const traceId = undefined; // span?.spanContext().traceId;
 
   const payload = JSON.stringify({
     id: metric.id,

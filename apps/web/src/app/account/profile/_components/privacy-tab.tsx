@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -74,7 +73,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { isDirty },
     reset,
     watch,
     setValue,
@@ -96,7 +95,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
 
   const onSubmit = async (data: PrivacyFormData) => {
     await updateMutation.mutateAsync({
-      input: data,
+      input: data as any, // GraphQL expects string enums
     });
 
     reset(data);

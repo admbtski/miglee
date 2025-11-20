@@ -85,9 +85,10 @@ export function BulkActionsModal({
     return false;
   };
 
+  const ModalComponent = Modal as any;
   return (
     <>
-      <Modal
+      <ModalComponent
         open={open}
         onClose={handleClose}
         title="Akcje masowe"

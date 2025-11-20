@@ -173,7 +173,7 @@ export function useUpdateUserProfile(
         UpdateUserProfileMutation,
         UpdateUserProfileMutationVariables
       >(UpdateUserProfileDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       // Invalidate all user profile queries
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
@@ -185,7 +185,10 @@ export function useUpdateUserProfile(
         queryKey: ['Me'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
       successMessage: 'Profile updated successfully',
@@ -210,7 +213,7 @@ export function useUpdateUserPrivacy(
         UpdateUserPrivacyMutation,
         UpdateUserPrivacyMutationVariables
       >(UpdateUserPrivacyDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
       });
@@ -218,7 +221,10 @@ export function useUpdateUserPrivacy(
         queryKey: ['MyFullProfile'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
       successMessage: 'Privacy settings updated',
@@ -243,7 +249,7 @@ export function useUpsertUserDiscipline(
         UpsertUserDisciplineMutation,
         UpsertUserDisciplineMutationVariables
       >(UpsertUserDisciplineDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
       });
@@ -251,10 +257,13 @@ export function useUpsertUserDiscipline(
         queryKey: ['MyFullProfile'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
-      successMessage: (variables) =>
+      successMessage: (variables: any) =>
         variables?.input?.id ? 'Discipline updated' : 'Discipline added',
     },
     ...options,
@@ -277,7 +286,7 @@ export function useRemoveUserDiscipline(
         RemoveUserDisciplineMutation,
         RemoveUserDisciplineMutationVariables
       >(RemoveUserDisciplineDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
       });
@@ -285,7 +294,10 @@ export function useRemoveUserDiscipline(
         queryKey: ['MyFullProfile'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
       successMessage: 'Discipline removed',
@@ -310,7 +322,7 @@ export function useUpsertUserAvailability(
         UpsertUserAvailabilityMutation,
         UpsertUserAvailabilityMutationVariables
       >(UpsertUserAvailabilityDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
       });
@@ -318,10 +330,13 @@ export function useUpsertUserAvailability(
         queryKey: ['MyFullProfile'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
-      successMessage: (variables) =>
+      successMessage: (variables: any) =>
         variables?.input?.id ? 'Availability updated' : 'Availability added',
     },
     ...options,
@@ -344,7 +359,7 @@ export function useRemoveUserAvailability(
         RemoveUserAvailabilityMutation,
         RemoveUserAvailabilityMutationVariables
       >(RemoveUserAvailabilityDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
       });
@@ -352,7 +367,10 @@ export function useRemoveUserAvailability(
         queryKey: ['MyFullProfile'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
       successMessage: 'Availability removed',
@@ -377,7 +395,7 @@ export function useAddUserSocialLink(
         AddUserSocialLinkMutation,
         AddUserSocialLinkMutationVariables
       >(AddUserSocialLinkDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
       });
@@ -385,7 +403,10 @@ export function useAddUserSocialLink(
         queryKey: ['MyFullProfile'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
       successMessage: 'Social link added',
@@ -410,7 +431,7 @@ export function useRemoveUserSocialLink(
         RemoveUserSocialLinkMutation,
         RemoveUserSocialLinkMutationVariables
       >(RemoveUserSocialLinkDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
       });
@@ -418,7 +439,10 @@ export function useRemoveUserSocialLink(
         queryKey: ['MyFullProfile'],
       });
 
-      options?.onSuccess?.(data, variables, context);
+      // Call parent onSuccess if provided
+      if (options?.onSuccess) {
+        (options.onSuccess as any)(data, variables, undefined, undefined);
+      }
     },
     meta: {
       successMessage: 'Social link removed',

@@ -512,7 +512,7 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
         open={showJoinModal}
         onClose={() => setShowJoinModal(false)}
         intentId={event.id}
-        questions={questions}
+        questions={questions as any}
         onSubmit={handleSubmitWithAnswers}
         eventTitle={event.title}
       />

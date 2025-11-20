@@ -86,7 +86,11 @@ export function EditCategoryModal({
         ...prev,
         slug: 'Nieprawidłowy format slug',
       }));
-    } else if (slug && slug !== category.slug && slugAvailable === false) {
+    } else if (
+      slug &&
+      slug !== category.slug &&
+      slugAvailable?.checkCategorySlugAvailable === false
+    ) {
       setErrors((prev) => ({ ...prev, slug: 'Slug zajęty' }));
     }
   };
@@ -95,8 +99,8 @@ export function EditCategoryModal({
     if (names.pl) {
       setNames((prev) => ({
         ...prev,
-        en: prev.en || prev.pl,
-        de: prev.de || prev.pl,
+        en: prev.en || prev.pl || '',
+        de: prev.de || prev.pl || '',
       }));
     }
   };
@@ -125,7 +129,7 @@ export function EditCategoryModal({
         newErrors.slug = 'Slug jest wymagany';
       } else if (!isValidSlug(slug)) {
         newErrors.slug = 'Nieprawidłowy format slug';
-      } else if (slugAvailable === false) {
+      } else if (slugAvailable?.checkCategorySlugAvailable === false) {
         newErrors.slug = 'Slug zajęty';
       }
     }

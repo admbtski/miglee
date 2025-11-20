@@ -11,14 +11,14 @@
 
 'use client';
 
+import { mapIntentToEventCardProps } from '@/lib/adapters/intent-adapter';
+import type { IntentHoverCallback, IntentListItem } from '@/types/intent';
 import { memo, useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { EventCard, type EventCardProps } from '../event-card';
-import type { IntentListItem, IntentHoverCallback } from '@/types/intent';
-import { mapIntentToEventCardProps } from '@/lib/adapters/intent-adapter';
-import { LoadingSkeleton } from './loading-skeleton';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
+import { LoadingSkeleton } from './loading-skeleton';
 
 const ITEMS_PER_ROW = 2;
 const VIRTUOSO_OVERSCAN = 5;

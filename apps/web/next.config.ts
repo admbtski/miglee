@@ -4,10 +4,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     reactCompiler: true,
-    serverComponentsExternalPackages: [
-      '@opentelemetry/instrumentation',
-      'require-in-the-middle',
-    ],
+    serverComponentsExternalPackages: ['require-in-the-middle'],
   },
   webpack: (config, { isServer }) => {
     if (isServer) {

@@ -58,7 +58,7 @@ export function AddTagModal({ open, onClose }: AddTagModalProps) {
         ...prev,
         slug: 'Nieprawidłowy format slug (tylko małe litery, cyfry i myślniki)',
       }));
-    } else if (slug && slugAvailable === false) {
+    } else if (slug && slugAvailable?.checkTagSlugAvailable === false) {
       setErrors((prev) => ({ ...prev, slug: 'Slug zajęty' }));
     }
   };
@@ -78,7 +78,7 @@ export function AddTagModal({ open, onClose }: AddTagModalProps) {
       newErrors.slug = 'Slug jest wymagany';
     } else if (!isValidSlug(slug)) {
       newErrors.slug = 'Nieprawidłowy format slug';
-    } else if (slugAvailable === false) {
+    } else if (slugAvailable?.checkTagSlugAvailable === false) {
       newErrors.slug = 'Slug zajęty';
     }
 

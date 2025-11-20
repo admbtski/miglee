@@ -322,7 +322,7 @@ export function StickyJoinButton({ event }: StickyJoinButtonProps) {
         open={showJoinModal}
         onClose={() => setShowJoinModal(false)}
         intentId={event.id}
-        questions={questions}
+        questions={questions as any}
         onSubmit={handleSubmitWithAnswers}
         eventTitle={event.title}
       />

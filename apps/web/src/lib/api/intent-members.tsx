@@ -605,7 +605,10 @@ function buildGetMyIntentsOptions(
   return {
     queryKey: GET_MY_INTENTS_KEY(variables),
     queryFn: async () => {
-      const data = await gqlClient.request(GetMyIntentsDocument, variables);
+      const data = await gqlClient.request(
+        GetMyIntentsDocument,
+        variables || {}
+      );
       return data;
     },
     ...options,

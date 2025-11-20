@@ -135,7 +135,7 @@ export function useMessageActions({
 
     if (kind === 'dm' && threadId) {
       deleteDmMessage.mutate(
-        { id: deletingMessageId },
+        { id: deletingMessageId, threadId },
         {
           onSuccess: () => {
             setDeletingMessageId(null);
@@ -144,7 +144,7 @@ export function useMessageActions({
       );
     } else if (kind === 'channel' && intentId) {
       deleteIntentMessage.mutate(
-        { id: deletingMessageId },
+        { id: deletingMessageId, intentId },
         {
           onSuccess: () => {
             setDeletingMessageId(null);
@@ -156,18 +156,18 @@ export function useMessageActions({
 
   // Reaction handlers
   const handleAddReaction = (messageId: string, emoji: string) => {
-    if (kind === 'dm' && threadId) {
-      addDmReaction.mutate({ messageId, emoji, threadId });
-    } else if (kind === 'channel' && intentId) {
-      addIntentReaction.mutate({ messageId, emoji, intentId });
+    if (kind === 'dm') {
+      addDmReaction.mutate({ messageId, emoji });
+    } else if (kind === 'channel') {
+      addIntentReaction.mutate({ messageId, emoji });
     }
   };
 
   const handleRemoveReaction = (messageId: string, emoji: string) => {
-    if (kind === 'dm' && threadId) {
-      removeDmReaction.mutate({ messageId, emoji, threadId });
-    } else if (kind === 'channel' && intentId) {
-      removeIntentReaction.mutate({ messageId, emoji, intentId });
+    if (kind === 'dm') {
+      removeDmReaction.mutate({ messageId, emoji });
+    } else if (kind === 'channel') {
+      removeIntentReaction.mutate({ messageId, emoji });
     }
   };
 

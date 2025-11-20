@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import { Toaster } from 'sonner';
 
-import OtelInit from '@/lib/config/otel-init';
 import { WebVitals } from '@/lib/config/web-vitals';
 import { ThemeProvider } from '@/features/theme/provider/theme-provider';
 import { InlineThemeScript } from './scripts/inline/inline-theme-script';
@@ -100,9 +99,6 @@ export default function RootLayout({
       >
         {/* Performance monitoring */}
         <WebVitals />
-
-        {/* OpenTelemetry instrumentation */}
-        <OtelInit />
 
         {/* Theme provider for dark/light mode */}
         <ThemeProvider>{children}</ThemeProvider>

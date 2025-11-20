@@ -214,7 +214,7 @@ export function ReportDetailModal({
                   {report.reporter.name}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {report.reporter.email}
+                  {(report.reporter as any).email || 'N/A'}
                 </p>
               </div>
             </div>

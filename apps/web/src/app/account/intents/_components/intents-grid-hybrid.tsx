@@ -59,8 +59,9 @@ export const IntentsGridHybrid = memo(function IntentsGridHybrid({
     );
   }
 
+  const GridComponent = IntentsGrid as any;
   return (
-    <IntentsGrid
+    <GridComponent
       items={items}
       mode={mode}
       onPreview={onPreview}
