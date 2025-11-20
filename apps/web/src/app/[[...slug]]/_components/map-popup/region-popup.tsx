@@ -90,7 +90,7 @@ export const RegionPopup = memo(function RegionPopup({
   const virtuosoComponents = useMemo(
     () => ({
       List: ({ children, ...props }: any) => (
-        <div {...props} className="p-2 flex flex-col">
+        <div {...props} className="px-3 py-4 flex flex-col">
           {children}
         </div>
       ),
@@ -123,22 +123,69 @@ export const RegionPopup = memo(function RegionPopup({
         className={clsx(
           'w-[280px] h-[420px] font-sans relative',
           'bg-white dark:bg-zinc-900',
-          'rounded-2xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800'
+          'rounded-3xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800',
+          'overflow-hidden'
         )}
       >
-        <Virtuoso
-          style={{ height: '420px', width: '100%' }}
-          data={itemsWithPlan}
-          totalCount={itemsWithPlan.length}
-          endReached={handleEndReached}
-          overscan={5}
-          atBottomThreshold={400}
-          itemContent={renderItem}
-          computeItemKey={computeItemKey}
-          components={virtuosoComponents}
-          increaseViewportBy={{ top: 200, bottom: 400 }}
-          followOutput={false}
+        {/* Subtelna ramka świetlna */}
+        <div className="absolute inset-0 rounded-3xl ring-1 ring-white/10 pointer-events-none z-20" />
+
+        {/* Header fade overlay - mocniejszy, z większym obszarem */}
+        <div
+          className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 40%, transparent 100%)',
+          }}
         />
+        <div
+          className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10 dark:block hidden"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(24,24,27,0.95) 0%, rgba(24,24,27,0.8) 40%, transparent 100%)',
+          }}
+        />
+
+        {/* Footer fade overlay - mocniejszy, z większym obszarem */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none z-10"
+          style={{
+            background:
+              'linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 40%, transparent 100%)',
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none z-10 dark:block hidden"
+          style={{
+            background:
+              'linear-gradient(to top, rgba(24,24,27,0.95) 0%, rgba(24,24,27,0.8) 40%, transparent 100%)',
+          }}
+        />
+
+        {/* Scrollable content with mask */}
+        <div
+          className="h-full w-full"
+          style={{
+            maskImage:
+              'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
+            WebkitMaskImage:
+              'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
+          }}
+        >
+          <Virtuoso
+            style={{ height: '420px', width: '100%' }}
+            data={itemsWithPlan}
+            totalCount={itemsWithPlan.length}
+            endReached={handleEndReached}
+            overscan={5}
+            atBottomThreshold={400}
+            itemContent={renderItem}
+            computeItemKey={computeItemKey}
+            components={virtuosoComponents}
+            increaseViewportBy={{ top: 200, bottom: 400 }}
+            followOutput={false}
+          />
+        </div>
       </div>
     );
   }
