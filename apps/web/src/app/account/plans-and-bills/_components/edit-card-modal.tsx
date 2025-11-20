@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { CreditCard, Hash, Shield, ChevronDown } from 'lucide-react';
+import { CreditCard, Hash, Shield } from 'lucide-react';
 import type { CardItem } from '../types';
-import { Input, Select, SecureNote } from './ui';
+import { Input, SecureNote } from './ui';
 import { ModalShell } from './modal-shell';
 import { CountryCombo } from './country-combo';
 

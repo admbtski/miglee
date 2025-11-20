@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { JoinQuestionForm } from './join-question-form';
-import type { IntentJoinQuestion } from '@/lib/api/join-form';
+
+type IntentJoinQuestion = {
+  id: string;
+  type: string;
+  label: string;
+  required?: boolean;
+  options?: string[];
+};
 
 interface JoinRequestModalProps {
   open: boolean;
@@ -22,7 +29,6 @@ interface JoinRequestModalProps {
 export function JoinRequestModal({
   open,
   onClose,
-  intentId,
   questions,
   onSubmit,
   eventTitle,
@@ -84,7 +90,7 @@ export function JoinRequestModal({
           </p>
 
           <JoinQuestionForm
-            questions={questions}
+            questions={questions as any}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             submitLabel="Wyślij prośbę"

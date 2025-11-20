@@ -5,7 +5,7 @@ import {
   useAdminUpdateIntentMutation,
   useAdminChangeIntentOwnerMutation,
 } from '@/lib/api/admin-intents';
-import { Eye, EyeOff, Lock, Unlock, UserCog, Save } from 'lucide-react';
+import { Eye, EyeOff, Lock, Unlock, Save } from 'lucide-react';
 import { Visibility } from '@/lib/api/__generated__/react-query-update';
 
 type SettingsTabProps = {

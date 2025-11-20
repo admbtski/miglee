@@ -66,12 +66,9 @@ const MAX_OPTIONS = 10;
  * Editor for managing join questions (owner/mod only)
  */
 export function JoinQuestionEditor({
-  intentId,
   questions,
   onCreateQuestion,
-  onUpdateQuestion,
   onDeleteQuestion,
-  onReorderQuestions,
   isLocked = false,
   lockReason,
   maxQuestions = 5,
@@ -85,7 +82,6 @@ export function JoinQuestionEditor({
     options: [''],
     maxLength: 500,
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   const canAddMore = questions.length < maxQuestions && !isLocked;
 
@@ -352,8 +348,11 @@ export function JoinQuestionEditor({
               <Label>Typ pytania</Label>
               <Select
                 value={newQuestion.type}
-                onValueChange={(value: QuestionType) =>
-                  setNewQuestion({ ...newQuestion, type: value })
+                onValueChange={(value) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    type: value as QuestionType,
+                  })
                 }
               >
                 <SelectTrigger>

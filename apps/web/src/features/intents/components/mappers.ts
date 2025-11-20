@@ -45,8 +45,8 @@ export function mapIntentToFormValues(
       lng: intent.lng ?? undefined,
       address: intent.address ?? undefined,
       radiusKm: intent.radiusKm ?? undefined,
-      cityName: intent.cityName ?? undefined,
-      cityPlaceId: intent.cityPlaceId ?? undefined,
+      cityName: (intent as any).cityName ?? undefined,
+      cityPlaceId: (intent as any).cityPlaceId ?? undefined,
     },
     visibility: intent.visibility,
     addressVisibility: intent.addressVisibility,
@@ -60,7 +60,7 @@ export function mapIntentToFormValues(
 export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
   const input: CreateIntentInput = {
     title: v.title,
-    levels: v.levels ?? [],
+    levels: (v.levels ?? []) as any,
     categorySlugs: v.categorySlugs,
     tagSlugs: v.tagSlugs,
     startAt: v.startAt.toISOString(),

@@ -1,7 +1,18 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { IntentSuggestion } from './types';
+
+type IntentSuggestion = {
+  id: string;
+  title: string;
+  description?: string;
+  startAt: string;
+  endAt: string;
+  taken: number;
+  max: number;
+  distanceKm?: number;
+  author: string;
+};
 
 export function SuggestionCard({
   s,

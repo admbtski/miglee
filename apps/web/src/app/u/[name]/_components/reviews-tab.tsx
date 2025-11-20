@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, Calendar, Loader2, ChevronRight } from 'lucide-react';
+import { Star, Calendar, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import { useUserReviewsQuery } from '@/lib/api/user-reviews';

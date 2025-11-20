@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
 import {
-  Calendar,
   Users,
   MapPin,
   Clock,
@@ -10,14 +9,12 @@ import {
   XCircle,
   UserPlus,
   MessageSquare,
-  Eye,
   LogOut,
   Check,
   X,
   Shield,
   AlertCircle,
   Ban,
-  ListOrdered,
 } from 'lucide-react';
 import type {
   IntentMemberStatus,

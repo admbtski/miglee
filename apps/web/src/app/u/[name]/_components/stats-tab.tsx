@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Award,
-  TrendingUp,
-  Users,
-  Calendar,
-  Star,
-  Sparkles,
-} from 'lucide-react';
+import { Award, Users, Calendar, Star } from 'lucide-react';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 
 type StatsTabProps = {

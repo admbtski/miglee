@@ -36,9 +36,6 @@ type UserMenuProps = {
   onSignOut?: () => void;
 };
 
-const AVATAR_FALLBACK =
-  'https://api.dicebear.com/7.x/thumbs/svg?seed=user&radius=50';
-
 export function UserMenu({ user }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);

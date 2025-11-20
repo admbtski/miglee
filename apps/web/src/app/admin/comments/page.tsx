@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { useGetComments } from '@/lib/api/comments';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { Trash2, Search } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 export default function CommentsPage() {
-  const [search, setSearch] = useState('');
   const [intentId, setIntentId] = useState('');
 
   const { data, isLoading } = useGetComments({

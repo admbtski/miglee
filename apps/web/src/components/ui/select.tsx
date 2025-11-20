@@ -114,7 +114,7 @@ SelectTrigger.displayName = 'SelectTrigger';
 export const SelectContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => {
+>(({ className, children, ...props }) => {
   const { open, setOpen } = useSelectContext();
   const contentRef = React.useRef<HTMLDivElement>(null);
 
@@ -133,6 +133,7 @@ export const SelectContent = React.forwardRef<
       return () =>
         document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [open, setOpen]);
 
   if (!open) return null;

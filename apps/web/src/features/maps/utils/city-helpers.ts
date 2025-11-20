@@ -1,6 +1,6 @@
 'use client';
 
-import { importPlaces, loadGoogleMaps } from './googleMaps';
+import { loadGoogleMaps } from './googleMaps';
 import type { NormalizedPlace } from '../hooks/use-places-autocomplete';
 
 export type CityInfo = {

@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   Gauge,
-  Info,
   Lock,
   Mail,
   Rocket,
@@ -82,7 +81,6 @@ export function PrivacyStep({
   onJoinFormQuestionsChange?: (questions: JoinFormQuestion[]) => void;
 }) {
   const {
-    register,
     control,
     setValue,
     formState: { errors },
@@ -91,14 +89,6 @@ export function PrivacyStep({
   // re-render na zmiany:
   const levels = (useWatch({ control, name: 'levels' }) ?? []) as LevelValue[];
   const joinMode = useWatch({ control, name: 'joinMode' }) as JoinMode;
-  const radiusKm = useWatch({ control, name: 'location.radiusKm' }) as
-    | number
-    | undefined;
-
-  const radiusMetersText =
-    typeof radiusKm === 'number' && radiusKm > 0
-      ? ` (${Math.round(radiusKm * 1000)} m)`
-      : '';
 
   const joinModeHintId = 'join-mode-hint';
   const visibilityHintId = 'visibility-hint';

@@ -44,7 +44,6 @@ export function PlaceStep({
   } = form;
 
   const meetingKind = useWatch({ control, name: 'meetingKind' }) as MK;
-  const onlineUrl = useWatch({ control, name: 'onlineUrl' }) ?? '';
   const loc = watch('location');
 
   const [locating, setLocating] = useState(false);
