@@ -90,7 +90,7 @@ export const RegionPopup = memo(function RegionPopup({
   const virtuosoComponents = useMemo(
     () => ({
       List: ({ children, ...props }: any) => (
-        <div {...props} className="p-2 flex flex-col gap-2">
+        <div {...props} className="p-2 flex flex-col">
           {children}
         </div>
       ),

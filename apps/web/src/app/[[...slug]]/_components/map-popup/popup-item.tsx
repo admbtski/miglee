@@ -1,26 +1,23 @@
 /**
- * Individual intent item in map popup
+ * Individual intent item in map popup - styled to match EventCard
  */
 
-import Link from 'next/link';
+import { Avatar } from '@/components/ui/avatar';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
-import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
-import { PlanBadge } from '@/components/ui/plan-badge';
-import { Plan, planTheme } from '@/components/ui/plan-theme';
-import { planAnimationConfig } from '@/components/ui/plan-animations';
-import { SimpleProgressBar } from '@/components/ui/simple-progress-bar';
+import { Plan } from '@/components/ui/plan-theme';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { computeEventStateAndStatus } from '@/lib/utils/event-status';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
-import { Avatar } from '@/components/ui/avatar';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
-import { formatDateRange } from '@/lib/utils/date';
-import { buildAvatarUrl } from '@/lib/media/url';
-import clsx from 'clsx';
+import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
+import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
+import { computeEventStateAndStatus } from '@/lib/utils/event-status';
 import { motion } from 'framer-motion';
-import { Calendar, MapPinIcon } from 'lucide-react';
+import { Calendar, MapPin, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 export type PopupIntent = {
   id: string;
@@ -34,6 +31,7 @@ export type PopupIntent = {
   owner?: {
     name?: string | null;
     avatarKey?: string | null;
+    avatarBlurhash?: string | null;
     verifiedAt?: string | null;
   } | null;
   lat?: number | null;
@@ -58,11 +56,25 @@ export type PopupIntent = {
   plan?: Plan | null;
   meetingKind?: 'ONSITE' | 'ONLINE' | 'HYBRID' | null;
   categorySlugs?: string[] | null;
+  coverKey?: string | null;
+  coverBlurhash?: string | null;
 };
 
 export interface PopupItemProps {
   intent: PopupIntent;
   onClick?: (id: string) => void;
+}
+
+function getPlanRingClasses(
+  plan: Plan,
+  isCanceled: boolean,
+  isDeleted: boolean
+): string {
+  if (isCanceled || isDeleted || plan === 'default') {
+    return '';
+  }
+
+  return 'ring-2 ring-amber-500/30 shadow-[0_0_16px_rgba(245,158,11,0.35),0_0_48px_rgba(245,158,11,0.2)]';
 }
 
 export function PopupItem({ intent, onClick }: PopupItemProps) {
@@ -77,9 +89,6 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     joinedCount,
     max,
     min,
-    withinLock,
-    lockReason,
-    canJoin,
     joinOpensMinutesBeforeStart,
     joinCutoffMinutesBeforeStart,
     allowJoinLate,
@@ -87,27 +96,15 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     joinManuallyClosed,
   } = intent;
 
-  const fill = useMemo(
-    () =>
-      Math.min(
-        100,
-        Math.round(((joinedCount ?? 0) / Math.max(1, max ?? 1)) * 100)
-      ),
-    [joinedCount, max]
-  );
+  const start = useMemo(() => parseISO(startAt), [startAt]);
+  const end = useMemo(() => parseISO(endAt), [endAt]);
 
-  const levelsSorted = useMemo(
-    () => sortLevels((intent.levels ?? []) as GqlLevel[]),
-    [intent.levels]
-  );
-
-  // Compute join state and status using shared utility
-  const { joinState, status } = useMemo(
+  const { status } = useMemo(
     () =>
       computeEventStateAndStatus({
         now: new Date(),
-        startAt: new Date(startAt),
-        endAt: new Date(endAt),
+        startAt: start,
+        endAt: end,
         isDeleted,
         isCanceled,
         isOngoing,
@@ -123,8 +120,8 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         joinMode: 'OPEN',
       }),
     [
-      startAt,
-      endAt,
+      start,
+      end,
       isDeleted,
       isCanceled,
       isOngoing,
@@ -141,162 +138,204 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
   );
 
   const plan = (intent.plan as Plan) ?? 'default';
-  const planStyling = useMemo(() => planTheme(plan), [plan]);
+  const isInactive = isCanceled || isDeleted;
+  const isPremium = plan !== 'default';
+  const categories = intent.categorySlugs ?? [];
+  const maxCategoriesToShow = isPremium ? 1 : 2;
+  const remainingCategoriesCount = categories.length - maxCategoriesToShow;
 
   return (
     <motion.button
       onClick={() => onClick?.(intent.id)}
       whileHover={{
-        y: -2,
-        scale: 1.01,
+        y: isInactive ? 0 : -2,
+        scale: isInactive ? 1 : 1.01,
       }}
-      transition={{
-        type: 'spring',
-        stiffness: 400,
-        damping: 25,
-        mass: 0.5,
-        // BoxShadow animation - synchronized with shimmer (4s cycle)
-        boxShadow:
-          plan && plan !== 'default'
-            ? {
-                duration: planAnimationConfig.glowingShadow.duration,
-                repeat: Infinity,
-                ease: planAnimationConfig.glowingShadow.easing,
-                times: [0, 0.25, 0.5, 0.75, 1],
-              }
-            : undefined,
-      }}
-      style={
-        plan && plan !== 'default'
-          ? {
-              boxShadow: planAnimationConfig.glowingShadow.shadows[plan].min,
-            }
-          : undefined
-      }
-      animate={
-        plan && plan !== 'default'
-          ? {
-              boxShadow: [
-                planAnimationConfig.glowingShadow.shadows[plan].min,
-                planAnimationConfig.glowingShadow.shadows[plan].mid,
-                planAnimationConfig.glowingShadow.shadows[plan].max,
-                planAnimationConfig.glowingShadow.shadows[plan].mid,
-                planAnimationConfig.glowingShadow.shadows[plan].min,
-              ],
-            }
-          : undefined
-      }
-      className={clsx(
-        'relative cursor-pointer group w-full text-left rounded-xl ring-1 px-3 py-2',
-        plan === 'default'
-          ? 'bg-white dark:bg-zinc-900 ring-zinc-200 dark:ring-zinc-800'
-          : clsx(planStyling.bg, planStyling.ring),
+      className={twMerge(
+        'my-2',
+        'relative w-full rounded-xl p-3 flex flex-col gap-2',
+        'ring-1 ring-white/5 dark:ring-white/5',
+        'bg-white dark:bg-neutral-900',
+        'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
+        'select-none cursor-pointer text-left',
+        isInactive && 'saturate-0',
+        getPlanRingClasses(plan, isCanceled, isDeleted),
         'focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-indigo-500/50'
       )}
+      transition={{
+        type: 'spring',
+        stiffness: 300,
+        damping: 20,
+      }}
+      data-plan={plan}
     >
-      <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="m-0 text-[15px] font-semibold leading-5 text-zinc-900 dark:text-zinc-100 truncate">
-              {intent.title}
-            </h4>
-            {intent.plan && intent.plan !== 'default' && (
-              <PlanBadge plan={intent.plan as Plan} size="xs" variant="icon" />
-            )}
-          </div>
+      {/* Cover Image */}
+      <div className="relative -mx-3 -mt-3 h-32 overflow-hidden rounded-t-xl bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+        {intent.coverKey ? (
+          <BlurHashImage
+            src={buildIntentCoverUrl(intent.coverKey, 'card')}
+            blurhash={intent.coverBlurhash}
+            alt={intent.title}
+            className="h-full w-full object-cover brightness-90 contrast-90"
+            width={480}
+            height={270}
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+        )}
 
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-            <Calendar className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{formatDateRange(startAt, endAt)}</span>
-          </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/0 to-black/40" />
 
-          {intent.address ? (
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-              <MapPinIcon className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{intent.address}</span>
+        {/* Inactive Overlay */}
+        {isInactive && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
+            <div className="text-center">
+              <p className="text-white font-semibold text-sm">
+                {isDeleted ? 'Usunięte' : 'Odwołane'}
+              </p>
+              <p className="text-white/60 text-xs mt-0.5">
+                {isDeleted
+                  ? 'To wydarzenie zostało usunięte'
+                  : 'To wydarzenie zostało odwołane'}
+              </p>
             </div>
-          ) : null}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {intent.owner?.name ? (
-        <div className="mt-2 flex items-center gap-2 min-w-0">
-          <Link href={`/u/${intent.owner.name}`} className="flex-shrink-0">
-            <Avatar
-              url={buildAvatarUrl(intent.owner?.avatarKey, 'xs')}
-              alt="Organizer"
-              size={36}
-            />
-          </Link>
-          <div className="flex flex-col gap-0.5 min-w-0">
+        {/* Badges - Top Left */}
+        {(isPremium || categories.length > 0) && (
+          <div className="absolute top-2 left-2 right-2 z-10">
+            <div className="flex flex-wrap gap-1">
+              {!isInactive && (
+                <EventCountdownPill
+                  startAt={start}
+                  endAt={end}
+                  size="xs"
+                  joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+                  joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+                  allowJoinLate={allowJoinLate}
+                  lateJoinCutoffMinutesAfterStart={
+                    lateJoinCutoffMinutesAfterStart
+                  }
+                  joinManuallyClosed={joinManuallyClosed}
+                  isCanceled={isCanceled}
+                  isDeleted={isDeleted}
+                />
+              )}
+
+              {isPremium && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white shadow-lg"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
+                  <Sparkles className="w-2.5 h-2.5" />
+                  Promowane
+                </span>
+              )}
+
+              {categories.slice(0, maxCategoriesToShow).map((cat) => (
+                <span
+                  key={cat}
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white shadow-lg"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
+                  {cat}
+                </span>
+              ))}
+
+              {remainingCategoriesCount > 0 && (
+                <span
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white shadow-lg"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
+                  +{remainingCategoriesCount}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Organizer - Bottom Left */}
+        {intent.owner?.name && (
+          <div className="absolute bottom-2 left-2 z-10">
             <Link
               href={`/u/${intent.owner.name}`}
-              className="text-[12px] font-medium truncate text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
+              className="flex items-center gap-1 group relative z-[2]"
+              onClick={(e) => e.stopPropagation()}
             >
-              <span className="inline-flex items-center gap-1.5 max-w-full">
-                <span className="truncate">
-                  {(intent.owner as any)?.profile?.displayName ||
-                    intent.owner.name}
+              <Avatar
+                url={buildAvatarUrl(intent.owner?.avatarKey, 'xs')}
+                blurhash={intent.owner?.avatarBlurhash}
+                alt={intent.owner.name}
+                size={20}
+                className="opacity-90 group-hover:opacity-100 transition-opacity"
+              />
+              <div className="flex items-center gap-1">
+                <span
+                  className="text-[10px] font-normal text-white/80 leading-tight truncate group-hover:text-white transition-colors"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
+                  {intent.owner.name}
                 </span>
                 {intent.owner?.verifiedAt && (
-                  <VerifiedBadge
-                    size="sm"
-                    variant="icon"
-                    verifiedAt={intent.owner.verifiedAt}
-                  />
+                  <div className="opacity-70 group-hover:opacity-100 transition-opacity">
+                    <VerifiedBadge
+                      size="xs"
+                      variant="icon"
+                      verifiedAt={intent.owner.verifiedAt}
+                    />
+                  </div>
                 )}
-              </span>
-            </Link>
-            <Link
-              href={`/u/${intent.owner.name}`}
-              className="text-[11px] text-neutral-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400 truncate"
-            >
-              @{intent.owner.name}
+              </div>
             </Link>
           </div>
-        </div>
-      ) : null}
-
-      <div className="mt-1.5">
-        <SimpleProgressBar value={fill} active />
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <CapacityBadge
-          size="sm"
-          statusReason={status.reason}
-          joinedCount={intent.joinedCount ?? 0}
-          min={intent.min ?? 0}
-          max={intent.max ?? 0}
-          isFull={isFull}
-          canJoin={!!canJoin}
-        />
-        {status.reason !== 'FULL' && (
-          <StatusBadge
-            size="sm"
-            tone={status.tone}
-            reason={status.reason}
-            label={status.label}
-          />
         )}
-        {levelsSorted.map((lv) => (
-          <LevelBadge key={lv} level={lv} size="sm" variant="iconText" />
-        ))}
       </div>
 
-      {/* Countdown Timer Pill */}
-      <div className="mt-2">
-        <EventCountdownPill
-          startAt={new Date(startAt)}
-          endAt={new Date(endAt)}
-          joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
-          joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
-          allowJoinLate={allowJoinLate}
-          lateJoinCutoffMinutesAfterStart={lateJoinCutoffMinutesAfterStart}
-          joinManuallyClosed={joinManuallyClosed}
-          isCanceled={isCanceled}
-          isDeleted={isDeleted}
-        />
+      {/* Content */}
+      <div className="flex flex-col gap-1">
+        <h4 className="text-sm font-semibold leading-tight text-neutral-900 dark:text-white line-clamp-2">
+          {intent.title}
+        </h4>
+
+        <div className="flex flex-col gap-0.5 text-xs text-neutral-600 dark:text-neutral-400">
+          {intent.address && (
+            <div className="flex items-center gap-1 min-w-0">
+              <MapPin className="h-3 w-3 flex-shrink-0" />
+              <span className="text-xs truncate">{intent.address}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1 truncate">
+            <Calendar className="h-3 w-3 flex-shrink-0" />
+            <span className="text-xs truncate">
+              {formatDateRange(startAt, endAt)} • {humanDuration(start, end)}
+            </span>
+          </div>
+        </div>
+
+        {/* Badges */}
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <CapacityBadge
+            size="xs"
+            statusReason={status.reason}
+            joinedCount={intent.joinedCount ?? 0}
+            min={intent.min ?? 0}
+            max={intent.max ?? 0}
+            isFull={isFull}
+            canJoin={Boolean(intent.canJoin)}
+          />
+          {!isInactive &&
+            status.reason !== 'FULL' &&
+            status.reason !== 'OK' && (
+              <StatusBadge
+                size="xs"
+                tone={status.tone}
+                reason={status.reason}
+                label={status.label}
+              />
+            )}
+        </div>
       </div>
     </motion.button>
   );
