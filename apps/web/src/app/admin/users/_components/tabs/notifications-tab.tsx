@@ -122,7 +122,7 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
                               <Avatar
                                 url={buildAvatarUrl(
                                   notification.actor.avatarKey,
-                                  'sm'
+                                  'xs'
                                 )}
                                 blurhash={notification.actor.avatarBlurhash}
                                 alt={notification.actor.name}

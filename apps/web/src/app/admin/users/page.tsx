@@ -196,7 +196,7 @@ export default function UsersPage() {
                           className="flex-shrink-0"
                         >
                           <Avatar
-                            url={buildAvatarUrl(user.avatarKey, 'sm')}
+                            url={buildAvatarUrl(user.avatarKey, 'xs')}
                             blurhash={user.avatarBlurhash}
                             alt={user.profile?.displayName || user.name}
                             size={32}

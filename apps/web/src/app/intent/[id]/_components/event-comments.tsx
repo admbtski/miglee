@@ -134,7 +134,7 @@ function CommentItem({
                 className="flex-shrink-0"
               >
                 <Avatar
-                  url={buildAvatarUrl(comment.author.avatarKey, 'sm')}
+                  url={buildAvatarUrl(comment.author.avatarKey, 'xs')}
                   blurhash={comment.author.avatarBlurhash}
                   alt={
                     (comment.author as any).profile?.displayName ||

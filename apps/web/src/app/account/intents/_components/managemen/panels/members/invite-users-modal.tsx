@@ -43,7 +43,7 @@ function Avatar({
 }) {
   return (
     <AvatarComponent
-      url={buildAvatarUrl(user.avatarKey, 'sm')}
+      url={buildAvatarUrl(user.avatarKey, 'xs')}
       blurhash={user.avatarBlurhash}
       alt={user.name}
       size={size}

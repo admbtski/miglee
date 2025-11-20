@@ -113,7 +113,7 @@ export default function NotificationsPage() {
                     className="flex w-full items-center gap-3 border-b border-gray-200 p-3 text-left transition-colors hover:bg-gray-100 last:border-b-0 dark:border-gray-700 dark:hover:bg-gray-800"
                   >
                     <Avatar
-                      url={buildAvatarUrl(user.avatarKey, 'sm')}
+                      url={buildAvatarUrl(user.avatarKey, 'xs')}
                       blurhash={user.avatarBlurhash}
                       alt={user.name}
                       size={32}
@@ -231,7 +231,7 @@ export default function NotificationsPage() {
                                 <Avatar
                                   url={buildAvatarUrl(
                                     notification.actor.avatarKey,
-                                    'sm'
+                                    'xs'
                                   )}
                                   blurhash={notification.actor.avatarBlurhash}
                                   alt={notification.actor.name}

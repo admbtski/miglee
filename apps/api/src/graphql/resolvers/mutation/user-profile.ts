@@ -66,7 +66,7 @@ export const updateUserProfileMutation: MutationResolvers['updateUserProfile'] =
           country: input.country?.trim() || null,
           homeLat: input.homeLat ?? null,
           homeLng: input.homeLng ?? null,
-          coverUrl: input.coverUrl?.trim() || null,
+          coverKey: input.coverKey?.trim() || null,
           speaks: input.speaks ?? [],
           interests: input.interests ?? [],
           preferredMode: input.preferredMode ?? null,
@@ -88,8 +88,8 @@ export const updateUserProfileMutation: MutationResolvers['updateUserProfile'] =
           }),
           ...(input.homeLat !== undefined && { homeLat: input.homeLat }),
           ...(input.homeLng !== undefined && { homeLng: input.homeLng }),
-          ...(input.coverUrl !== undefined && {
-            coverUrl: input.coverUrl.trim() || null,
+          ...(input.coverKey !== undefined && {
+            coverKey: input.coverKey.trim() || null,
           }),
           ...(input.speaks !== undefined && { speaks: input.speaks }),
           ...(input.interests !== undefined && { interests: input.interests }),

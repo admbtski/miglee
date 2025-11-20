@@ -1,50 +1,57 @@
+/**
+ * Hook for managing filter state from URL search params
+ */
+
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
 import {
   IntentStatus,
   JoinMode,
-  Level,
-  MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import type { CommittedFilters } from '../_types';
+import { DEFAULT_DISTANCE_KM, FILTER_PARAM_KEYS } from '../_constants';
 
-export type CommittedFilters = {
-  q: string;
-  city: string | null;
-  cityLat: number | null;
-  cityLng: number | null;
-  cityPlaceId: string | null;
-  distanceKm: number;
-  startISO: string | null;
-  endISO: string | null;
-  status: IntentStatus;
-  kinds: MeetingKind[];
-  levels: Level[];
-  verifiedOnly: boolean;
-  tags: string[];
-  keywords: string[];
-  categories: string[];
-  joinModes: JoinMode[];
-};
-
-const DEFAULT_DISTANCE = 30;
-
-const parseCsv = (sp: URLSearchParams, key: string) =>
-  (sp
+/**
+ * Parse comma-separated values from URL search params
+ */
+const parseCsv = (sp: URLSearchParams, key: string): string[] =>
+  sp
     .get(key)
     ?.split(',')
     .map((s) => s.trim())
-    .filter(Boolean) ?? []) as string[];
-const setCsv = (sp: URLSearchParams, key: string, v: string[]) =>
-  v.length ? sp.set(key, v.join(',')) : sp.delete(key);
+    .filter(Boolean) ?? [];
 
-const parseBool = (sp: URLSearchParams, key: string) => {
+/**
+ * Set comma-separated values in URL search params
+ */
+const setCsv = (sp: URLSearchParams, key: string, v: string[]): void => {
+  if (v.length) {
+    sp.set(key, v.join(','));
+  } else {
+    sp.delete(key);
+  }
+};
+
+/**
+ * Parse boolean value from URL search params
+ */
+const parseBool = (sp: URLSearchParams, key: string): boolean => {
   const v = sp.get(key);
   return v === '1' || v === 'true';
 };
-const setBool = (sp: URLSearchParams, key: string, val: boolean) =>
-  val ? sp.set(key, '1') : sp.delete(key);
+
+/**
+ * Set boolean value in URL search params
+ */
+const setBool = (sp: URLSearchParams, key: string, val: boolean): void => {
+  if (val) {
+    sp.set(key, '1');
+  } else {
+    sp.delete(key);
+  }
+};
 
 export function useCommittedFilters() {
   const search = useSearchParams();
@@ -59,7 +66,7 @@ export function useCommittedFilters() {
     const cityPlaceId = search.get('cityPlaceId');
     const dist = Number(search.get('distance'));
     const distanceKm =
-      Number.isFinite(dist) && dist > 0 ? dist : DEFAULT_DISTANCE;
+      Number.isFinite(dist) && dist > 0 ? dist : DEFAULT_DISTANCE_KM;
 
     return {
       q,
@@ -70,10 +77,9 @@ export function useCommittedFilters() {
       distanceKm,
       startISO: search.get('start') ?? null,
       endISO: search.get('end') ?? null,
-      status: ((search.get('status') as IntentStatus) ??
-        IntentStatus.Any) as IntentStatus,
-      kinds: parseCsv(search, 'kinds') as MeetingKind[],
-      levels: parseCsv(search, 'levels') as Level[],
+      status: (search.get('status') as IntentStatus) ?? IntentStatus.Any,
+      kinds: parseCsv(search, 'kinds') as any,
+      levels: parseCsv(search, 'levels') as any,
       verifiedOnly: parseBool(search, 'verified'),
       tags: parseCsv(search, 'tags'),
       keywords: parseCsv(search, 'keywords'),
@@ -87,49 +93,35 @@ export function useCommittedFilters() {
       const curr = state;
 
       const merged: CommittedFilters = {
-        q: 'q' in next ? next.q : curr.q,
-        city: 'city' in next ? next.city : curr.city,
-        cityLat: 'cityLat' in next ? next.cityLat : curr.cityLat,
-        cityLng: 'cityLng' in next ? next.cityLng : curr.cityLng,
+        q: next.q !== undefined ? next.q : curr.q,
+        city: next.city !== undefined ? next.city : curr.city,
+        cityLat: next.cityLat !== undefined ? next.cityLat : curr.cityLat,
+        cityLng: next.cityLng !== undefined ? next.cityLng : curr.cityLng,
         cityPlaceId:
-          'cityPlaceId' in next ? next.cityPlaceId : curr.cityPlaceId,
-        distanceKm: 'distanceKm' in next ? next.distanceKm : curr.distanceKm,
-        startISO: 'startISO' in next ? next.startISO : curr.startISO,
-        endISO: 'endISO' in next ? next.endISO : curr.endISO,
-        status: ('status' in next ? next.status : curr.status) as IntentStatus,
-        kinds: ('kinds' in next ? next.kinds : curr.kinds) as MeetingKind[],
-        levels: ('levels' in next ? next.levels : curr.levels) as Level[],
+          next.cityPlaceId !== undefined ? next.cityPlaceId : curr.cityPlaceId,
+        distanceKm:
+          next.distanceKm !== undefined ? next.distanceKm : curr.distanceKm,
+        startISO: next.startISO !== undefined ? next.startISO : curr.startISO,
+        endISO: next.endISO !== undefined ? next.endISO : curr.endISO,
+        status: next.status !== undefined ? next.status : curr.status,
+        kinds: next.kinds !== undefined ? next.kinds : curr.kinds,
+        levels: next.levels !== undefined ? next.levels : curr.levels,
         verifiedOnly:
-          'verifiedOnly' in next ? next.verifiedOnly : curr.verifiedOnly,
-        tags: 'tags' in next ? next.tags : curr.tags,
-        keywords: 'keywords' in next ? next.keywords : curr.keywords,
-        categories: 'categories' in next ? next.categories : curr.categories,
-        joinModes: ('joinModes' in next
-          ? next.joinModes
-          : curr.joinModes) as JoinMode[],
+          next.verifiedOnly !== undefined
+            ? next.verifiedOnly
+            : curr.verifiedOnly,
+        tags: next.tags !== undefined ? next.tags : curr.tags,
+        keywords: next.keywords !== undefined ? next.keywords : curr.keywords,
+        categories:
+          next.categories !== undefined ? next.categories : curr.categories,
+        joinModes:
+          next.joinModes !== undefined ? next.joinModes : curr.joinModes,
       };
 
       const params = new URLSearchParams(search);
 
-      // Wyczyść tylko te klucze, które obsługujemy (poprawka: 'kinds' zamiast 'types')
-      for (const k of [
-        'q',
-        'city',
-        'cityLat',
-        'cityLng',
-        'cityPlaceId',
-        'distance',
-        'start',
-        'end',
-        'status',
-        'kinds',
-        'levels',
-        'verified',
-        'tags',
-        'keywords',
-        'categories',
-        'joinModes',
-      ]) {
+      // Clear only the keys we manage
+      for (const k of FILTER_PARAM_KEYS) {
         params.delete(k);
       }
 
@@ -140,7 +132,7 @@ export function useCommittedFilters() {
       if (merged.cityLng !== null)
         params.set('cityLng', String(merged.cityLng));
       if (merged.cityPlaceId) params.set('cityPlaceId', merged.cityPlaceId);
-      if (merged.distanceKm !== DEFAULT_DISTANCE)
+      if (merged.distanceKm !== DEFAULT_DISTANCE_KM)
         params.set('distance', String(merged.distanceKm));
       if (merged.startISO) params.set('start', merged.startISO);
       if (merged.endISO) params.set('end', merged.endISO);
@@ -176,7 +168,7 @@ export function useCommittedFilters() {
           cityLat: null,
           cityLng: null,
           cityPlaceId: null,
-          distanceKm: DEFAULT_DISTANCE,
+          distanceKm: DEFAULT_DISTANCE_KM,
           startISO: null,
           endISO: null,
           status: IntentStatus.Any,

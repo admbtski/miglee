@@ -569,14 +569,9 @@ function ServerClusteredMapComponent({
     map.setStyle(currentStyleUrl);
 
     const rewire = () => {
-      console.log('[THEME] Rewiring after style change');
       throttledBoundsUpdate();
       map.on('moveend', throttledBoundsUpdate);
       if (deckOverlayRef.current && lastLayersRef.current.length) {
-        console.log(
-          '[THEME] Reapplying deck.gl layers:',
-          lastLayersRef.current.length
-        );
         deckOverlayRef.current.setProps({ layers: lastLayersRef.current });
       }
     };
@@ -702,18 +697,13 @@ function ServerClusteredMapComponent({
       categorySlugs: intent.categories?.map((c: any) => c.slug) ?? null,
     }));
 
-    // Nie zamykaj popup jeśli brak danych - może to być błąd sieciowy
+    // Don't close popup if no data - might be a network error
     if (!intents.length) {
-      console.warn('No intents found for region:', selectedRegion);
       return;
     }
 
     const valid = intents.filter((i) => i.lat != null && i.lng != null);
     if (!valid.length) {
-      console.warn(
-        'No valid intents with coordinates for region:',
-        selectedRegion
-      );
       return;
     }
 

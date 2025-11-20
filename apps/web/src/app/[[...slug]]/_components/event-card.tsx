@@ -370,7 +370,7 @@ export const EventCard = memo(function EventCard({
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar
-                url={buildAvatarUrl(avatarKey, 'sm')}
+                url={buildAvatarUrl(avatarKey, 'xs')}
                 blurhash={avatarBlurhash}
                 alt={organizerName}
                 size={24}

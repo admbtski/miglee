@@ -1,3 +1,8 @@
+/**
+ * Main client component for the intents search page
+ * Handles filters, sorting, map visibility, and infinite scroll
+ */
+
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -7,6 +12,14 @@ import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
+import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
+import { useMeQuery } from '@/lib/api/auth';
+import { useIntentsInfiniteQuery } from '@/lib/api/intents';
+import { appLanguage } from '@/lib/config/language';
+import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import { buildGridCols } from '@/lib/utils/intents';
+import type { IntentListItem } from '@/types/intent';
+
 import { DesktopSearchBar } from './_components/desktop-search-bar';
 import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
 import { EventsHeader } from './_components/events-list/events-header';
@@ -15,21 +28,8 @@ import { useCommittedFilters } from './_hooks/use-committed-filters';
 import { useCommittedMapVisible } from './_hooks/use-committed-map-vision';
 import { useCommittedSort } from './_hooks/use-committed-sort';
 import { useDebouncedHover } from './_hooks/use-debounced-hover';
-import {
-  GetIntentsQueryVariables,
-  IntentStatus,
-  Visibility,
-} from '@/lib/api/__generated__/react-query-update';
-import { useMeQuery } from '@/lib/api/auth';
-import { useIntentsInfiniteQuery } from '@/lib/api/intents';
-import { appLanguage } from '@/lib/config/language';
-
-import {
-  getUpcomingAfterDefault,
-  INTENTS_CONFIG,
-} from '@/lib/constants/intents';
-import { buildGridCols } from '@/lib/utils/intents';
-import type { IntentListItem } from '@/types/intent';
+import { useIntentsQueryVariables } from './_hooks/use-intents-query-variables';
+import { useLocationMode } from './_hooks/use-location-mode';
 
 // Lazy load heavy components for better performance
 const ServerClusteredMap = lazy(
@@ -44,79 +44,75 @@ const FilterModalRefactored = lazy(
     import('./_components/filter-modal-refactored')
 );
 
-type LocationMode = 'EXPLICIT' | 'PROFILE_DEFAULT' | 'NONE';
-
+/**
+ * Main page component for browsing intents
+ */
 export function IntentsPage() {
+  // Get filter state from URL
   const filters = useCommittedFilters();
-  const {
-    q,
-    city,
-    cityLat,
-    cityLng,
-    cityPlaceId,
-    distanceKm,
-    startISO,
-    endISO,
-    status,
-    kinds,
-    levels,
-    verifiedOnly,
-    tags,
-    keywords,
-    categories,
-    joinModes,
-    apply,
-  } = filters;
+  const { q, city, distanceKm, apply } = filters;
 
+  // Get sort state from URL
   const { sort, setSort, sortVars } = useCommittedSort();
-  const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
-  const activeFilters = useActiveFiltersCount(filters);
-  const [hoveredIntent, handleIntentHover] = useDebouncedHover();
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const { data: meData } = useMeQuery({ retry: false });
 
+  // Get map visibility state from URL
+  const { mapVisible, toggle: toggleMap } = useCommittedMapVisible();
+
+  // Calculate active filters count for UI
+  const activeFilters = useActiveFiltersCount(filters);
+
+  // Track hovered intent for map highlighting
+  const [hoveredIntent, handleIntentHover] = useDebouncedHover();
+
+  // Filter modal state
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Get current user data
+  const { data: meData } = useMeQuery({ retry: false });
   const userProfile = meData?.me?.profile;
 
-  // Determine location mode
-  const locationMode = useMemo<LocationMode>(() => {
-    // EXPLICIT: User has set location in filters
-    if (city && cityLat != null && cityLng != null) {
-      return 'EXPLICIT';
-    }
-    // PROFILE_DEFAULT: User has home location in profile
-    if (userProfile?.homeLat != null && userProfile?.homeLng != null) {
-      return 'PROFILE_DEFAULT';
-    }
-    // NONE: No location available
-    return 'NONE';
-  }, [city, cityLat, cityLng, userProfile?.homeLat, userProfile?.homeLng]);
+  // Determine location mode and map center
+  const { locationMode, mapCenter } = useLocationMode({
+    city: filters.city,
+    cityLat: filters.cityLat,
+    cityLng: filters.cityLng,
+    userHomeLat: userProfile?.homeLat,
+    userHomeLng: userProfile?.homeLng,
+  });
 
-  // Map center based on location mode
-  const mapCenter = useMemo<{ lat: number; lng: number } | null>(() => {
-    if (locationMode === 'EXPLICIT' && cityLat != null && cityLng != null) {
-      return { lat: cityLat, lng: cityLng };
-    }
-    if (
-      locationMode === 'PROFILE_DEFAULT' &&
-      userProfile?.homeLat != null &&
-      userProfile?.homeLng != null
-    ) {
-      return { lat: userProfile.homeLat, lng: userProfile.homeLng };
-    }
-    return null; // NONE mode - map will handle fitBounds or default view
-  }, [
+  // Build GraphQL query variables
+  const variables = useIntentsQueryVariables({
+    filters,
     locationMode,
-    cityLat,
-    cityLng,
-    userProfile?.homeLat,
-    userProfile?.homeLng,
-  ]);
+    sortVars,
+  });
+
+  // Fetch intents with infinite scroll
+  const {
+    data,
+    error,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useIntentsInfiniteQuery(variables, { enabled: true });
+
+  // Process data for display
+  const pages = data?.pages ?? [];
+  const flatItems = useMemo(
+    () => pages?.flatMap((p) => p.intents.items) ?? [],
+    [pages]
+  );
+  const total = pages[0]?.intents.pageInfo.total || flatItems.length;
+  const loadedCount = flatItems.length;
+
+  // Calculate grid columns based on map visibility
+  const gridCols = buildGridCols(mapVisible);
 
   // Memoize callbacks for better performance
   const handleOpenFilters = useCallback(() => setFiltersOpen(true), []);
   const handleCloseFilters = useCallback(() => setFiltersOpen(false), []);
-  const handleToggleMap = useCallback(toggleMap, [toggleMap]);
-  const handleSortChange = useCallback(setSort, [setSort]);
 
   const handleApplyFilters = useCallback(
     (next: any) => {
@@ -142,75 +138,6 @@ export function IntentsPage() {
     },
     [apply]
   );
-
-  const variables = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
-    () => ({
-      limit: INTENTS_CONFIG.DEFAULT_LIMIT,
-      visibility: Visibility.Public,
-      upcomingAfter: startISO ?? getUpcomingAfterDefault(),
-      endingBefore: endISO,
-      categorySlugs: categories ?? [],
-      tagSlugs: tags,
-      kinds: kinds.length ? kinds : [],
-      levels: levels.length ? levels : [],
-      joinModes: joinModes.length ? joinModes : [],
-      keywords: [],
-      status: status !== IntentStatus.Any ? status : IntentStatus.Any,
-      verifiedOnly: !!verifiedOnly,
-      ownerId: undefined,
-      memberId: undefined,
-      // Only filter by distance in EXPLICIT mode
-      distanceKm: locationMode === 'EXPLICIT' ? distanceKm : null,
-      near:
-        locationMode === 'EXPLICIT' && cityLat != null && cityLng != null
-          ? {
-              lat: cityLat,
-              lng: cityLng,
-              cityName: city,
-              cityPlaceId: cityPlaceId ?? undefined,
-            }
-          : undefined,
-      ...sortVars,
-    }),
-    [
-      startISO,
-      endISO,
-      categories,
-      tags,
-      kinds,
-      levels,
-      joinModes,
-      status,
-      verifiedOnly,
-      city,
-      cityLat,
-      cityLng,
-      cityPlaceId,
-      distanceKm,
-      locationMode,
-      sortVars,
-    ]
-  );
-
-  const {
-    data,
-    error,
-    isLoading,
-    isFetching,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-  } = useIntentsInfiniteQuery(variables, { enabled: true });
-
-  const pages = data?.pages ?? [];
-  const flatItems = useMemo(
-    () => pages?.flatMap((p) => p.intents.items) ?? [],
-    [pages]
-  );
-  const total = pages[0]?.intents.pageInfo.total || flatItems.length;
-  const loadedCount = flatItems.length;
-
-  const gridCols = buildGridCols(mapVisible);
 
   return (
     <ErrorBoundary>
@@ -251,8 +178,8 @@ export function IntentsPage() {
               isFetching={isFetching}
               mapVisible={mapVisible}
               sort={sort}
-              onToggleMap={handleToggleMap}
-              onSortChange={handleSortChange}
+              onToggleMap={toggleMap}
+              onSortChange={setSort}
             />
 
             <ErrorBoundary>
@@ -293,9 +220,9 @@ export function IntentsPage() {
                         fullHeight
                         lang={appLanguage}
                         filters={{
-                          categorySlugs: categories,
-                          levels: levels as any,
-                          verifiedOnly: verifiedOnly,
+                          categorySlugs: filters.categories,
+                          levels: filters.levels as any,
+                          verifiedOnly: filters.verifiedOnly,
                         }}
                         onIntentClick={(intentId: string) => {
                           // Navigate to intent details or open modal
@@ -328,22 +255,22 @@ export function IntentsPage() {
             }
           >
             <FilterModalRefactored
-              initialQ={q}
-              initialCity={city}
-              initialCityLat={cityLat}
-              initialCityLng={cityLng}
-              initialCityPlaceId={cityPlaceId}
-              initialDistanceKm={distanceKm}
-              initialStartISO={startISO}
-              initialEndISO={endISO}
-              initialStatus={status}
-              initialKinds={kinds}
-              initialLevels={levels}
-              initialVerifiedOnly={verifiedOnly}
-              initialTags={tags}
-              initialKeywords={keywords}
-              initialCategories={categories}
-              initialJoinModes={joinModes}
+              initialQ={filters.q}
+              initialCity={filters.city}
+              initialCityLat={filters.cityLat}
+              initialCityLng={filters.cityLng}
+              initialCityPlaceId={filters.cityPlaceId}
+              initialDistanceKm={filters.distanceKm}
+              initialStartISO={filters.startISO}
+              initialEndISO={filters.endISO}
+              initialStatus={filters.status}
+              initialKinds={filters.kinds}
+              initialLevels={filters.levels}
+              initialVerifiedOnly={filters.verifiedOnly}
+              initialTags={filters.tags}
+              initialKeywords={filters.keywords}
+              initialCategories={filters.categories}
+              initialJoinModes={filters.joinModes}
               onApply={handleApplyFilters}
               onClose={handleCloseFilters}
             />

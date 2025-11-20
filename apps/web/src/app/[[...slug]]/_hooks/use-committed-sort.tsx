@@ -1,3 +1,7 @@
+/**
+ * Hook for managing sort state from URL search params
+ */
+
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -7,32 +11,18 @@ import {
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
 import type { GetIntentsQueryVariables } from '@/lib/api/__generated__/react-query-update';
+import type { SortKey } from '../_types';
+import { VALID_SORT_KEYS } from '../_constants';
 
-export type SortKey =
-  | 'default'
-  | 'start_asc'
-  | 'start_desc'
-  | 'created_desc'
-  | 'created_asc'
-  | 'updated_desc'
-  | 'members_desc'
-  | 'members_asc';
-
-const VALID_SORTS = new Set<SortKey>([
-  'default',
-  'start_asc',
-  'start_desc',
-  'created_desc',
-  'created_asc',
-  'updated_desc',
-  'members_desc',
-  'members_asc',
-]);
-
-const buildUrl = (pathname: string, params: URLSearchParams) =>
+const buildUrl = (pathname: string, params: URLSearchParams): string =>
   `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
 
-/** Mapowanie klucza UI -> GQL {sortBy, sortDir} */
+/**
+ * Maps UI sort key to GraphQL sort variables
+ *
+ * @param key - Sort key from UI
+ * @returns GraphQL sort variables or empty object for default sort
+ */
 export function mapSortKeyToGql(
   key: SortKey
 ): Pick<GetIntentsQueryVariables, 'sortBy' | 'sortDir'> | {} {
@@ -53,11 +43,23 @@ export function mapSortKeyToGql(
       return { sortBy: IntentsSortBy.MembersCount, sortDir: SortDir.Asc };
     case 'default':
     default:
-      // Brak wymuszonego sortowania – backendowy default
+      // No forced sorting – backend default
       return {};
   }
 }
 
+/**
+ * Hook for managing sort state from URL search params
+ *
+ * @returns Current sort key, setter function, and GraphQL variables
+ *
+ * @example
+ * ```tsx
+ * const { sort, setSort, sortVars } = useCommittedSort();
+ * // sort: 'start_asc'
+ * // sortVars: { sortBy: 'START_AT', sortDir: 'ASC' }
+ * ```
+ */
 export function useCommittedSort() {
   const search = useSearchParams();
   const router = useRouter();
@@ -65,7 +67,7 @@ export function useCommittedSort() {
 
   const sort = useMemo<SortKey>(() => {
     const raw = (search.get('sort') ?? 'default') as SortKey;
-    return VALID_SORTS.has(raw) ? raw : 'default';
+    return VALID_SORT_KEYS.has(raw) ? raw : 'default';
   }, [search]);
 
   const setSort = useCallback(

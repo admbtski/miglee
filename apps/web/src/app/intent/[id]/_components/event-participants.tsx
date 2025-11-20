@@ -150,7 +150,7 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
       <Link href={profileUrl} className="flex-shrink-0">
         {member.user.avatarKey ? (
           <Avatar
-            url={buildAvatarUrl(member.user.avatarKey, compact ? 'sm' : 'md')}
+            url={buildAvatarUrl(member.user.avatarKey, compact ? 'xs' : 'xs')}
             blurhash={member.user.avatarBlurhash}
             alt={displayName}
             size={compact ? 32 : 44}

@@ -431,7 +431,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                       <div className="flex items-center gap-3">
                         {member.user.avatarKey && (
                           <Avatar
-                            url={buildAvatarUrl(member.user.avatarKey, 'sm')}
+                            url={buildAvatarUrl(member.user.avatarKey, 'xs')}
                             blurhash={member.user.avatarBlurhash}
                             alt={member.user.name}
                             size={32}

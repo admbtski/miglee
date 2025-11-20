@@ -2009,7 +2009,7 @@ input UpdateUserProfileInput {
   country: String
   homeLat: Float
   homeLng: Float
-  coverUrl: String
+  coverKey: String
   speaks: [String!]
   interests: [String!]
   preferredMode: Mode

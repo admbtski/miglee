@@ -338,7 +338,7 @@ export function InviteLinksPanel({ intentId }: InviteLinksPanelProps) {
                           className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/50"
                         >
                           <Avatar
-                            url={buildAvatarUrl(usage.user.avatarKey, 'sm')}
+                            url={buildAvatarUrl(usage.user.avatarKey, 'xs')}
                             blurhash={usage.user.avatarBlurhash}
                             alt={usage.user.name}
                             size={32}

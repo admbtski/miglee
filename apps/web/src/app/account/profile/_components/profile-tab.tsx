@@ -1,3 +1,8 @@
+/**
+ * Profile Tab Component
+ * Allows users to edit their profile information, avatar, and cover image
+ */
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -9,65 +14,65 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useUpdateUserProfile } from '@/lib/api/user-profile';
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
 import { LocationCombo } from '@/components/forms/location-combobox';
-import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import { useAvatarUpload, useCoverUpload } from '@/lib/media/use-media-upload';
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 import { useMeQuery } from '@/lib/api/auth';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
+import type { TabProps, LocationData } from '../_types';
+import { COMMON_LANGUAGES, VALIDATION_LIMITS } from '../_constants';
 
 const profileSchema = z.object({
   displayName: z
     .string()
-    .min(3, 'Display name must be at least 3 characters')
-    .max(40, 'Display name must be at most 40 characters')
+    .min(
+      VALIDATION_LIMITS.displayName.min,
+      `Display name must be at least ${VALIDATION_LIMITS.displayName.min} characters`
+    )
+    .max(
+      VALIDATION_LIMITS.displayName.max,
+      `Display name must be at most ${VALIDATION_LIMITS.displayName.max} characters`
+    )
     .optional()
     .or(z.literal('')),
   bioShort: z
     .string()
-    .max(200, 'Short bio must be at most 200 characters')
+    .max(
+      VALIDATION_LIMITS.bioShort.max,
+      `Short bio must be at most ${VALIDATION_LIMITS.bioShort.max} characters`
+    )
     .optional()
     .or(z.literal('')),
   bioLong: z
     .string()
-    .max(1000, 'Long bio must be at most 1000 characters')
+    .max(
+      VALIDATION_LIMITS.bioLong.max,
+      `Long bio must be at most ${VALIDATION_LIMITS.bioLong.max} characters`
+    )
     .optional()
     .or(z.literal('')),
   city: z.string().optional().or(z.literal('')),
   country: z.string().optional().or(z.literal('')),
   speaks: z.array(z.string()).optional(),
-  interests: z.array(z.string()).max(20, 'Maximum 20 interests').optional(),
+  interests: z
+    .array(z.string())
+    .max(
+      VALIDATION_LIMITS.interests.max,
+      `Maximum ${VALIDATION_LIMITS.interests.max} interests`
+    )
+    .optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-type ProfileTabProps = {
-  user: GetMyFullProfileQuery['user'] | null | undefined;
-  userId: string;
-};
-
-const COMMON_LANGUAGES = [
-  { code: 'pl', label: 'Polish' },
-  { code: 'en', label: 'English' },
-  { code: 'de', label: 'German' },
-  { code: 'fr', label: 'French' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'it', label: 'Italian' },
-  { code: 'uk', label: 'Ukrainian' },
-  { code: 'ru', label: 'Russian' },
-];
-
-export function ProfileTab({ user }: ProfileTabProps) {
+export function ProfileTab({ user }: TabProps) {
   const [newInterest, setNewInterest] = useState('');
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
 
   // Location state
   const [locationText, setLocationText] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<{
-    city?: string;
-    country?: string;
-    lat?: number;
-    lng?: number;
-  } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
+    null
+  );
 
   // Image upload states
   const [avatarCropModalOpen, setAvatarCropModalOpen] = useState(false);

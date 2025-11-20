@@ -2,7 +2,7 @@
  * Media URL helpers for building image variant URLs
  */
 
-export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
+export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type CoverVariant = 'card' | 'detail';
 
 // Get API base URL (without /graphql)
@@ -11,10 +11,11 @@ const API_BASE_URL = (
 ).replace(/\/graphql$/, '');
 
 const AVATAR_PRESETS: Record<AvatarSize, { w: number; h: number }> = {
-  sm: { w: 64, h: 64 },
-  md: { w: 96, h: 96 },
-  lg: { w: 160, h: 160 },
-  xl: { w: 256, h: 256 },
+  xs: { w: 48, h: 48 }, // For small UI elements (24-36px display)
+  sm: { w: 64, h: 64 }, // For compact lists (48-64px display)
+  md: { w: 96, h: 96 }, // For standard avatars (64-96px display)
+  lg: { w: 160, h: 160 }, // For profile headers (128-160px display)
+  xl: { w: 256, h: 256 }, // For large displays (200-256px display)
 };
 
 const COVER_PRESETS: Record<CoverVariant, { w: number; h: number }> = {

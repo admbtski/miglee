@@ -1,3 +1,8 @@
+/**
+ * Hook for searching categories and tags metadata
+ * Provides debounced search results for filter autocomplete
+ */
+
 'use client';
 
 import { appLanguage, appLanguageFallback } from '@/lib/config/language';
@@ -26,6 +31,23 @@ export type SearchMeta = {
   }[];
 };
 
+/**
+ * Searches for categories and tags based on query string
+ * Results are debounced (500ms) and only search when query >= 3 characters
+ *
+ * @param query - Search query string
+ * @returns Object with:
+ * - data: SearchMeta with tags, categories, and keywords arrays
+ * - loading: True while fetching data
+ * - error: Error object if request failed
+ *
+ * @example
+ * ```tsx
+ * const { data, loading, error } = useSearchMeta('yoga');
+ * // data.categories: [{ id, slug, label }, ...]
+ * // data.tags: [{ id, slug, label }, ...]
+ * ```
+ */
 export function useSearchMeta(query: string) {
   const [debounced, setDebounced] = useState(query);
 

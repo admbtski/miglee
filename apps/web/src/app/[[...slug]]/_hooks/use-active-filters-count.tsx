@@ -1,9 +1,13 @@
+/**
+ * Hook for calculating the number of active filters
+ */
+
 'use client';
 
 import { useMemo } from 'react';
-import type { CommittedFilters } from './use-committed-filters';
 import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
-import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import type { CommittedFilters } from '../_types';
+import { DEFAULT_DISTANCE_KM } from '../_constants';
 
 /**
  * Calculates the number of active filters
@@ -18,7 +22,7 @@ export function useActiveFiltersCount(filters: CommittedFilters): number {
 
     if (filters.q) count++;
     if (filters.city) count++;
-    if (filters.distanceKm !== INTENTS_CONFIG.DEFAULT_DISTANCE_KM) count++;
+    if (filters.distanceKm !== DEFAULT_DISTANCE_KM) count++;
     if (filters.startISO) count++;
     if (filters.endISO) count++;
     if (filters.status && filters.status !== IntentStatus.Any) count++;

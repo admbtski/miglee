@@ -276,7 +276,6 @@ function FilterModalRefactoredComponent({
               joinModes={joinModes}
               onClearQ={() => setQ('')}
               onClearCity={() => {
-                console.log('[FilterModal] onClearCity - clearing location');
                 setCity(null);
                 setCityLat(null);
                 setCityLng(null);

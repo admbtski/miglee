@@ -1,3 +1,8 @@
+/**
+ * Profile Settings Page
+ * Allows users to manage their profile, sports, social links, and privacy settings
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -14,10 +19,9 @@ import { ProfileTab } from './_components/profile-tab';
 import { SportsTab } from './_components/sports-tab';
 import { SocialLinksTab } from './_components/social-links-tab';
 import { PrivacyTab } from './_components/privacy-tab';
+import type { TabId, TabConfig } from './_types';
 
-type TabId = 'profile' | 'sports' | 'social' | 'privacy';
-
-const tabs: { id: TabId; label: string; icon: typeof User }[] = [
+const tabs: TabConfig[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'sports', label: 'Sports & Availability', icon: Calendar },
   { id: 'social', label: 'Social Links', icon: LinkIcon },

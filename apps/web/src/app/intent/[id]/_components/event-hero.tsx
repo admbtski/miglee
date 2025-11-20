@@ -19,7 +19,6 @@ import { Level } from '@/lib/api/__generated__/react-query-update';
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
-import { FavouriteButton } from '@/components/ui/favourite-button';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 

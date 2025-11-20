@@ -1,6 +1,9 @@
 /**
- * Custom hook for managing filter modal state
+ * Hook for managing filter modal state
+ * Provides state management for all filter fields with setters and utility functions
  */
+
+'use client';
 
 import { useState, useCallback } from 'react';
 import {
@@ -52,6 +55,22 @@ export interface UseFilterStateProps {
   initialJoinModes?: JoinMode[];
 }
 
+/**
+ * Manages all filter state for the search modal
+ *
+ * @param props - Initial values for all filter fields
+ * @returns Object with state values, setters, and utility functions (clearAll, getCurrentState)
+ *
+ * @example
+ * ```tsx
+ * const {
+ *   q, setQ,
+ *   city, setCity,
+ *   clearAll,
+ *   getCurrentState
+ * } = useFilterState({ initialQ: '', initialCity: null, ... });
+ * ```
+ */
 export function useFilterState(props: UseFilterStateProps) {
   const {
     initialQ,

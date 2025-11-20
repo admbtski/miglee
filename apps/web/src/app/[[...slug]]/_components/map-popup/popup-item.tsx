@@ -223,9 +223,9 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         <div className="mt-2 flex items-center gap-2 min-w-0">
           <Link href={`/u/${intent.owner.name}`} className="flex-shrink-0">
             <Avatar
-              url={buildAvatarUrl(intent.owner?.avatarKey, 'sm')}
+              url={buildAvatarUrl(intent.owner?.avatarKey, 'xs')}
               alt="Organizer"
-              size={22}
+              size={36}
             />
           </Link>
           <div className="flex flex-col gap-0.5 min-w-0">

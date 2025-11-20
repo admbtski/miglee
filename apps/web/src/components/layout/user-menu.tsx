@@ -82,7 +82,7 @@ export function UserMenu({ user }: UserMenuProps) {
           className="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white p-1 pr-2 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           <Avatar
-            url={buildAvatarUrl(user.avatarKey, 'sm')}
+            url={buildAvatarUrl(user.avatarKey, 'xs')}
             blurhash={user.avatarBlurhash}
             alt={user.name}
             size={24}
