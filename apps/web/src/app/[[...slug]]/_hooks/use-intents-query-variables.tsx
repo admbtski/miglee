@@ -22,7 +22,7 @@ import type {
 type UseIntentsQueryVariablesParams = {
   filters: CommittedFilters;
   locationMode: LocationMode;
-  sortVars: Record<string, any>;
+  sortVars: Partial<Pick<IntentsQueryVariables, 'sortBy' | 'sortDir'>>;
 };
 
 /**
@@ -62,33 +62,34 @@ export function useIntentsQueryVariables({
     distanceKm,
   } = filters;
 
+  const isExplicitLocation =
+    locationMode === 'EXPLICIT' && cityLat != null && cityLng != null;
+
   return useMemo<IntentsQueryVariables>(
     () => ({
       limit: INTENTS_CONFIG.DEFAULT_LIMIT,
       visibility: Visibility.Public,
       upcomingAfter: startISO ?? getUpcomingAfterDefault(),
-      endingBefore: endISO,
-      categorySlugs: categories ?? [],
+      endingBefore: endISO ?? undefined,
+      categorySlugs: categories,
       tagSlugs: tags,
-      kinds: kinds.length ? kinds : [],
-      levels: levels.length ? levels : [],
-      joinModes: joinModes.length ? joinModes : [],
+      kinds: kinds.length > 0 ? kinds : undefined,
+      levels: levels.length > 0 ? levels : undefined,
+      joinModes: joinModes.length > 0 ? joinModes : undefined,
       keywords: [],
       status: status !== IntentStatus.Any ? status : IntentStatus.Any,
-      verifiedOnly: !!verifiedOnly,
+      verifiedOnly,
       ownerId: undefined,
       memberId: undefined,
-      // Only filter by distance in EXPLICIT mode
-      distanceKm: locationMode === 'EXPLICIT' ? distanceKm : null,
-      near:
-        locationMode === 'EXPLICIT' && cityLat != null && cityLng != null
-          ? {
-              lat: cityLat,
-              lng: cityLng,
-              cityName: city,
-              cityPlaceId: cityPlaceId ?? undefined,
-            }
-          : undefined,
+      distanceKm: isExplicitLocation ? distanceKm : null,
+      near: isExplicitLocation
+        ? {
+            lat: cityLat,
+            lng: cityLng,
+            cityName: city ?? undefined,
+            cityPlaceId: cityPlaceId ?? undefined,
+          }
+        : undefined,
       ...sortVars,
     }),
     [
@@ -106,7 +107,7 @@ export function useIntentsQueryVariables({
       cityLng,
       cityPlaceId,
       distanceKm,
-      locationMode,
+      isExplicitLocation,
       sortVars,
     ]
   );

@@ -46,7 +46,7 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
   const params: any[] = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
   let paramIndex = 5;
 
-  if (filters?.verifiedOnly) whereConditions.push(`u.verifiedAt IS NOT NULL`);
+  if (filters?.verifiedOnly) whereConditions.push(`u."verifiedAt" IS NOT NULL`);
   if (filters?.categorySlugs?.length) {
     whereConditions.push(
       `EXISTS (
@@ -189,7 +189,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
 
   // Filter by verified owners
   if (filters?.verifiedOnly) {
-    whereConditions.push(`u.verifiedAt IS NOT NULL`);
+    whereConditions.push(`u."verifiedAt" IS NOT NULL`);
   }
 
   // Filter by categories

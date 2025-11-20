@@ -8,9 +8,10 @@ const tracer = trace.getTracer('react-components');
 
 export default async function Page() {
   const client = getQueryClient();
-  const span = tracer.startSpan('prefetchQuery.Promise.all[...]');
-  // fetch ssr
-  await Promise.all([await client.prefetchQuery(buildGetCategoriesOptions())]);
+  const span = tracer.startSpan('prefetchQuery.categories');
+
+  await client.prefetchQuery(buildGetCategoriesOptions());
+
   span.end();
 
   return (

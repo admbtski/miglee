@@ -17,15 +17,15 @@ import { VALID_SORT_KEYS } from '../_constants';
 const buildUrl = (pathname: string, params: URLSearchParams): string =>
   `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
 
+type SortVariables = Pick<GetIntentsQueryVariables, 'sortBy' | 'sortDir'>;
+
 /**
  * Maps UI sort key to GraphQL sort variables
  *
  * @param key - Sort key from UI
- * @returns GraphQL sort variables or empty object for default sort
+ * @returns GraphQL sort variables or undefined for default sort
  */
-export function mapSortKeyToGql(
-  key: SortKey
-): Pick<GetIntentsQueryVariables, 'sortBy' | 'sortDir'> | {} {
+export function mapSortKeyToGql(key: SortKey): SortVariables | undefined {
   switch (key) {
     case 'start_asc':
       return { sortBy: IntentsSortBy.StartAt, sortDir: SortDir.Asc };
@@ -43,8 +43,7 @@ export function mapSortKeyToGql(
       return { sortBy: IntentsSortBy.MembersCount, sortDir: SortDir.Asc };
     case 'default':
     default:
-      // No forced sorting – backend default
-      return {};
+      return undefined;
   }
 }
 
@@ -66,26 +65,26 @@ export function useCommittedSort() {
   const pathname = usePathname();
 
   const sort = useMemo<SortKey>(() => {
-    const raw = (search.get('sort') ?? 'default') as SortKey;
-    return VALID_SORT_KEYS.has(raw) ? raw : 'default';
+    const rawSort = search.get('sort') ?? 'default';
+    return VALID_SORT_KEYS.has(rawSort as SortKey)
+      ? (rawSort as SortKey)
+      : 'default';
   }, [search]);
 
   const setSort = useCallback(
-    (next: SortKey) => {
+    (nextSort: SortKey) => {
       const params = new URLSearchParams(search);
-      if (next === 'default') params.delete('sort');
-      else params.set('sort', next);
+      if (nextSort === 'default') {
+        params.delete('sort');
+      } else {
+        params.set('sort', nextSort);
+      }
       router.replace(buildUrl(pathname, params), { scroll: false });
     },
     [pathname, router, search]
   );
 
-  const sortVars = useMemo(() => mapSortKeyToGql(sort), [sort]) as
-    | Pick<GetIntentsQueryVariables, 'sortBy' | 'sortDir'>
-    | {};
+  const sortVars = useMemo(() => mapSortKeyToGql(sort) ?? {}, [sort]);
 
-  return useMemo(
-    () => ({ sort, setSort, sortVars }),
-    [sort, setSort, sortVars]
-  );
+  return { sort, setSort, sortVars };
 }
