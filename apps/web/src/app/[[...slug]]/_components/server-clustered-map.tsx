@@ -122,7 +122,7 @@ function buildLayers(
   };
 
   const jumpOffsetLat = getJumpOffsetLatDegrees(pulse, zoom);
-  const getBaseRadius = (d: ClusterPoint) => clamp(16, 16 + d.count * 0.05, 20);
+  const getBaseRadius = (d: ClusterPoint) => clamp(18, 18 + d.count * 0.08, 28);
 
   // Wszystkie normalne markery (bez highlighted i bez mouse-hovered)
   const normalPoints = new ScatterplotLayer<ClusterPoint>({
@@ -135,8 +135,11 @@ function buildLayers(
     lineWidthUnits: 'pixels',
     getPosition: (d) => [d.longitude, d.latitude, 0],
     getRadius: getBaseRadius,
-    getFillColor: [99, 102, 241, 220],
-    getLineColor: [59, 130, 246, 255], // intensywniejszy niebieski border
+    getFillColor: [99, 102, 241, 255], // Indigo-600 - pełna nieprzezroczystość
+    getLineColor: [255, 255, 255, 255], // Biały border dla kontrastu
+    getLineWidth: 3,
+    stroked: true,
+    filled: true,
   });
 
   // Marker po którym najechano myszką (nie skacze, ale ma większy border)
@@ -149,10 +152,10 @@ function buildLayers(
           radiusUnits: 'pixels',
           lineWidthUnits: 'pixels',
           getPosition: (d) => [d.longitude, d.latitude, 0],
-          getRadius: getBaseRadius,
-          getFillColor: [120, 130, 255, 240],
-          getLineColor: [59, 130, 246, 255], // intensywniejszy niebieski border
-          getLineWidth: 4, // stały border 6px - zawsze widoczny
+          getRadius: (d) => getBaseRadius(d) * 1.15,
+          getFillColor: [79, 70, 229, 255], // Indigo-700 - ciemniejszy przy hover
+          getLineColor: [255, 255, 255, 255],
+          getLineWidth: 4,
           stroked: true,
           filled: true,
         })
@@ -167,10 +170,12 @@ function buildLayers(
         radiusUnits: 'pixels',
         lineWidthUnits: 'pixels',
         getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
-        getRadius: getBaseRadius,
-        getFillColor: [120, 130, 255, 240],
-        getLineColor: [0, 0, 0, 80],
-        getLineWidth: 2, // stały border 2px
+        getRadius: (d) => getBaseRadius(d) * 1.2,
+        getFillColor: [124, 58, 237, 255], // Violet-600 - wyróżniony kolor
+        getLineColor: [255, 255, 255, 255],
+        getLineWidth: 4,
+        stroked: true,
+        filled: true,
         updateTriggers: {
           getPosition: pulse,
         },
@@ -191,16 +196,16 @@ function buildLayers(
         getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
         getRadius: (d) => {
           const bRadius = getBaseRadius(d);
-          const pulseScale = 1 + 0.15 * Math.sin(pulse * Math.PI * 2);
-          return (bRadius + 4) * pulseScale;
+          const pulseScale = 1 + 0.3 * Math.sin(pulse * Math.PI * 2);
+          return (bRadius * 1.2 + 6) * pulseScale;
         },
         getLineColor: [
-          120,
-          130,
-          255,
-          Math.round(180 - 100 * Math.abs(Math.sin(pulse * Math.PI * 2))),
+          167,
+          139,
+          250,
+          Math.round(200 - 150 * Math.abs(Math.sin(pulse * Math.PI * 2))),
         ],
-        getLineWidth: 3, // stały border 3px dla pulse ring
+        getLineWidth: 2.5,
         updateTriggers: {
           getPosition: pulse,
           getRadius: pulse,
@@ -217,12 +222,13 @@ function buildLayers(
     ),
     getPosition: (d) => [d.longitude, d.latitude, 0],
     getText: (d) => String(d.count),
-    getSize: 12,
+    getSize: 13,
     sizeUnits: 'pixels',
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',
     getColor: [255, 255, 255, 255],
-    background: true,
+    fontWeight: 600,
+    background: false,
     getBackgroundColor: [0, 0, 0, 0],
     backgroundPadding: [0, 0],
   });
@@ -235,14 +241,15 @@ function buildLayers(
           data: clusters.filter((c) => c.region === hoveredRegion),
           getPosition: (d) => [d.longitude, d.latitude, 0],
           getText: (d) => String(d.count),
-          getSize: 12,
+          getSize: 14,
           sizeUnits: 'pixels',
           getTextAnchor: 'middle',
           getAlignmentBaseline: 'center',
           getColor: [255, 255, 255, 255],
-          background: true,
+          fontWeight: 700,
+          background: false,
           getBackgroundColor: [0, 0, 0, 0],
-          backgroundPadding: [2, 2],
+          backgroundPadding: [0, 0],
         })
       : null;
 
@@ -253,14 +260,15 @@ function buildLayers(
         data: clusters.filter((c) => c.region === highlightedRegion),
         getPosition: (d) => [d.longitude, d.latitude + jumpOffsetLat, 0],
         getText: (d) => String(d.count),
-        getSize: 12,
+        getSize: 15,
         sizeUnits: 'pixels',
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
         getColor: [255, 255, 255, 255],
-        background: true,
+        fontWeight: 700,
+        background: false,
         getBackgroundColor: [0, 0, 0, 0],
-        backgroundPadding: [2, 2],
+        backgroundPadding: [0, 0],
         updateTriggers: {
           getPosition: pulse,
         },
