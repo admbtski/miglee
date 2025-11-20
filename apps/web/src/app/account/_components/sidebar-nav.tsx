@@ -13,7 +13,6 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
-
 import {
   useFloating,
   offset,
@@ -30,22 +29,24 @@ import {
   type Placement,
 } from '@floating-ui/react';
 
-type Item = {
-  key:
-    | 'profile'
-    | 'chats'
-    | 'intents'
-    | 'notifications'
-    | 'plans-and-bills'
-    | 'settings'
-    | 'logout';
+type NavItemKey =
+  | 'profile'
+  | 'chats'
+  | 'intents'
+  | 'notifications'
+  | 'plans-and-bills'
+  | 'settings'
+  | 'logout';
+
+type NavItem = {
+  key: NavItemKey;
   label: string;
   href?: string;
   tone?: 'danger';
   icon: React.ComponentType<{ className?: string }>;
 };
 
-const NAV: Item[] = [
+const NAV_ITEMS: NavItem[] = [
   {
     key: 'profile',
     label: 'Profile',
@@ -82,42 +83,76 @@ const NAV: Item[] = [
     href: '/account/settings',
     icon: SettingsIcon,
   },
-  { key: 'logout', label: 'Sign out', icon: LogOut, tone: 'danger' },
+  {
+    key: 'logout',
+    label: 'Sign out',
+    icon: LogOut,
+    tone: 'danger',
+  },
 ];
+
+function getActiveNavItem(pathname: string): NavItem {
+  return (
+    NAV_ITEMS.find((item) => item.href && pathname.startsWith(item.href)) ||
+    NAV_ITEMS[0]
+  );
+}
+
+function getNavItemClasses(isActive: boolean, isDanger: boolean): string {
+  const base =
+    'flex items-center gap-3 cursor-pointer rounded-xl px-3 py-2 text-sm transition-colors';
+
+  if (isActive) {
+    return `${base} bg-pink-200/60 text-pink-800 dark:bg-pink-800/25 dark:text-pink-200`;
+  }
+
+  if (isDanger) {
+    return `${base} text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20`;
+  }
+
+  return `${base} text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800/60`;
+}
+
+function getIconWrapperClasses(isActive: boolean): string {
+  const base = 'grid h-8 w-8 place-items-center rounded-lg';
+
+  if (isActive) {
+    return `${base} bg-pink-200/70 text-pink-900 dark:bg-pink-800/30 dark:text-pink-100`;
+  }
+
+  return `${base} bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200`;
+}
+
+type AccountSidebarMobileProps = {
+  placement?: Placement;
+  strategy?: 'absolute' | 'fixed';
+};
 
 export const AccountSidebarMobile = memo(function AccountSidebarMobile({
   placement = 'bottom-start',
   strategy = 'fixed',
-}: {
-  placement?: Placement;
-  strategy?: 'absolute' | 'fixed';
-}) {
+}: AccountSidebarMobileProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const active = useMemo<Item>(
-    () =>
-      NAV.find((i) => i.href && pathname.startsWith(i.href)) ??
-      NAV.find((i) => i.key === 'profile')!,
-    [pathname]
-  );
+  const activeItem = useMemo(() => getActiveNavItem(pathname), [pathname]);
 
-  const onLogout = useCallback(() => {
+  const handleLogout = useCallback(() => {
     // TODO: podłącz realny logout (np. next-auth signOut)
     router.push('/');
   }, [router]);
 
-  const [open, setOpen] = useState(false);
-
-  // Roving focus
+  const [isOpen, setIsOpen] = useState(false);
   const listRef = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const { refs, floatingStyles, context } = useFloating({
-    open,
+    open: isOpen,
     onOpenChange: (next) => {
-      setOpen(next);
-      if (!next) setActiveIndex(null);
+      setIsOpen(next);
+      if (!next) {
+        setActiveIndex(null);
+      }
     },
     placement,
     strategy,
@@ -147,112 +182,97 @@ export const AccountSidebarMobile = memo(function AccountSidebarMobile({
   const listNav = useListNavigation(context, {
     listRef,
     activeIndex: activeIndex ?? -1,
-    onNavigate: (i) => setActiveIndex(i),
+    onNavigate: setActiveIndex,
     loop: true,
   });
+
   const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions(
     [click, dismiss, role, listNav]
   );
 
   useEffect(() => {
-    if (open && activeIndex == null) {
-      const first = listRef.current.findIndex((n) => n && !n.disabled);
-      if (first >= 0) setActiveIndex(first);
+    if (isOpen && activeIndex === null) {
+      const firstEnabledIndex = listRef.current.findIndex(
+        (node) => node && !node.disabled
+      );
+      if (firstEnabledIndex >= 0) {
+        setActiveIndex(firstEnabledIndex);
+      }
     }
-  }, [open, activeIndex]);
+  }, [isOpen, activeIndex]);
 
-  const handleSelect = (key: Item['key']) => {
-    const item = NAV.find((i) => i.key === key);
-    if (!item) return;
-    if (item.key === 'logout') return onLogout();
-    if (item.href) router.push(item.href);
-  };
+  const handleSelect = useCallback(
+    (key: NavItemKey) => {
+      const item = NAV_ITEMS.find((i) => i.key === key);
+      if (!item) {
+        return;
+      }
 
-  const items = NAV;
+      if (item.key === 'logout') {
+        handleLogout();
+        return;
+      }
+
+      if (item.href) {
+        router.push(item.href);
+      }
+    },
+    [router, handleLogout]
+  );
 
   return (
     <div className="relative inline-block w-full">
-      {/* Trigger */}
       <button
         ref={refs.setReference}
         {...getReferenceProps()}
-        className={[
-          'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-4 py-2.5',
-          'border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50',
-          'dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800',
-          'text-base font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/30',
-        ].join(' ')}
+        className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-4 py-2.5 border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 text-base font-medium transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/30"
         aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={active?.label ?? 'Menu'}
+        aria-expanded={isOpen}
+        aria-label={activeItem.label}
       >
-        <span className="truncate">{active?.label}</span>
+        <span className="truncate">{activeItem.label}</span>
         <ChevronDown
-          className={`h-5 w-5 shrink-0 transition-transform duration-150 ${open ? 'rotate-180 text-pink-500' : 'opacity-70'}`}
+          className={`h-5 w-5 shrink-0 transition-transform duration-150 ${isOpen ? 'rotate-180 text-pink-500' : 'opacity-70'}`}
         />
       </button>
 
-      {open && (
+      {isOpen && (
         <FloatingFocusManager context={context} modal={false}>
           <div
             ref={refs.setFloating}
             style={floatingStyles}
             {...getFloatingProps()}
             role="menu"
-            className={[
-              // LIGHT (jak desktop)
-              'z-40 w-56 overflow-auto rounded-2xl border bg-white p-1 shadow-2xl',
-              'border-zinc-200 ring-1 ring-black/5',
-              // DARK
-              'dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10',
-            ].join(' ')}
+            className="z-40 w-56 overflow-auto rounded-2xl border bg-white p-1 shadow-2xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/10"
           >
-            {items.map((it, i) => {
-              const isActive = it.key === active.key;
-              const isDanger = it.tone === 'danger';
-
-              const baseItem =
-                'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors focus:outline-none';
-              const cls = isActive
-                ? // ACTIVE — jak w desktop
-                  'bg-pink-200/60 text-pink-800 dark:bg-pink-800/25 dark:text-pink-200'
-                : isDanger
-                  ? 'text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20'
-                  : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800/60';
-
-              const iconWrap = isActive
-                ? 'bg-pink-200/70 text-pink-900 dark:bg-pink-800/30 dark:text-pink-100'
-                : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200';
+            {NAV_ITEMS.map((item, index) => {
+              const isActive = item.key === activeItem.key;
+              const isDanger = item.tone === 'danger';
+              const Icon = item.icon;
 
               return (
                 <button
-                  key={it.key}
+                  key={item.key}
                   ref={(node) => {
-                    listRef.current[i] = node;
+                    listRef.current[index] = node;
                   }}
                   role="menuitemradio"
                   aria-checked={isActive}
-                  className={`${baseItem} ${cls}`}
+                  className={getNavItemClasses(isActive, isDanger)}
                   {...getItemProps({
-                    tabIndex: (activeIndex ?? -1) === i ? 0 : -1,
-                    onMouseMove: () => setActiveIndex(i),
-                    onFocus: () => setActiveIndex(i),
+                    tabIndex: (activeIndex ?? -1) === index ? 0 : -1,
+                    onMouseMove: () => setActiveIndex(index),
+                    onFocus: () => setActiveIndex(index),
                     onClick: () => {
-                      setOpen(false);
-                      handleSelect(it.key);
+                      setIsOpen(false);
+                      handleSelect(item.key);
                     },
                   })}
                 >
-                  <span
-                    className={`grid h-8 w-8 place-items-center rounded-lg ${iconWrap}`}
-                  >
-                    {it.key === 'logout' ? (
-                      <LogOut className="h-4 w-4" />
-                    ) : (
-                      <it.icon className="h-4 w-4" />
-                    )}
+                  <span className={getIconWrapperClasses(isActive)}>
+                    <Icon className="h-4 w-4" />
                   </span>
-                  <span className="font-medium">{it.label}</span>
+                  <span className="font-medium">{item.label}</span>
                 </button>
               );
             })}
@@ -263,68 +283,60 @@ export const AccountSidebarMobile = memo(function AccountSidebarMobile({
   );
 });
 
+type AccountSidebarDesktopProps = {
+  className?: string;
+};
+
 export const AccountSidebarDesktop = memo(function AccountSidebarDesktop({
   className = '',
-}: {
-  className?: string;
-}) {
+}: AccountSidebarDesktopProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const onLogout = useCallback(() => {
+  const handleLogout = useCallback(() => {
     // TODO: podłącz realny logout (np. next-auth signOut)
     router.push('/');
   }, [router]);
 
   return (
     <nav className={`grid gap-1 ${className}`}>
-      {NAV.map(({ key, label, href, icon: Icon, tone }) => {
-        const isActive = href ? pathname.startsWith(href) : false;
+      {NAV_ITEMS.map((item) => {
+        const isActive = item.href ? pathname.startsWith(item.href) : false;
+        const isDanger = item.tone === 'danger';
+        const Icon = item.icon;
 
-        const base =
-          'flex items-center gap-3 cursor-pointer rounded-xl px-3 py-2 text-sm transition-colors';
-        const cls = isActive
-          ? 'bg-pink-200/60 text-pink-800 dark:bg-pink-800/25 dark:text-pink-200'
-          : tone === 'danger'
-            ? 'text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-900/20'
-            : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800/60';
-
-        const iconWrap = isActive
-          ? 'bg-pink-200/70 text-pink-900 dark:bg-pink-800/30 dark:text-pink-100'
-          : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200';
-
-        if (key === 'logout') {
+        if (item.key === 'logout') {
           return (
             <button
-              key={key}
+              key={item.key}
               type="button"
-              onClick={onLogout}
-              className={`${base} ${cls}`}
-              aria-label={label}
+              onClick={handleLogout}
+              className={getNavItemClasses(isActive, isDanger)}
+              aria-label={item.label}
             >
-              <span
-                className={`grid h-8 w-8 place-items-center rounded-lg ${iconWrap}`}
-              >
-                <LogOut className="h-4 w-4" />
+              <span className={getIconWrapperClasses(isActive)}>
+                <Icon className="h-4 w-4" />
               </span>
-              <span className="font-medium">{label}</span>
+              <span className="font-medium">{item.label}</span>
             </button>
           );
         }
 
+        if (!item.href) {
+          return null;
+        }
+
         return (
           <Link
-            key={key}
-            href={href!}
-            className={`${base} ${cls}`}
+            key={item.key}
+            href={item.href}
+            className={getNavItemClasses(isActive, isDanger)}
             aria-current={isActive ? 'page' : undefined}
           >
-            <span
-              className={`grid h-8 w-8 place-items-center rounded-lg ${iconWrap}`}
-            >
+            <span className={getIconWrapperClasses(isActive)}>
               <Icon className="h-4 w-4" />
             </span>
-            <span className="font-medium">{label}</span>
+            <span className="font-medium">{item.label}</span>
           </Link>
         );
       })}

@@ -527,6 +527,3 @@ function FilterModalRefactoredComponent({
 
 // Export as default for lazy loading
 export default FilterModalRefactoredComponent;
-
-// Named export for backward compatibility
-export { FilterModalRefactoredComponent as FilterModalRefactored };

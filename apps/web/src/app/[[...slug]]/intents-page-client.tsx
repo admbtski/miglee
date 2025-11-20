@@ -38,10 +38,10 @@ const ServerClusteredMap = lazy(
     import('./_components/server-clustered-map')
 );
 
-const FilterModalRefactored = lazy(
+const FilterModal = lazy(
   () =>
     // @ts-expect-error - Dynamic import with moduleResolution node16
-    import('./_components/filter-modal-refactored')
+    import('./_components/filter-modal')
 );
 
 /**
@@ -285,7 +285,7 @@ function FilterModalSuspense({
 }: FilterModalSuspenseProps) {
   return (
     <Suspense fallback={<FilterModalLoadingFallback />}>
-      <FilterModalRefactored
+      <FilterModal
         initialQ={filters.q}
         initialCity={filters.city}
         initialCityLat={filters.cityLat}

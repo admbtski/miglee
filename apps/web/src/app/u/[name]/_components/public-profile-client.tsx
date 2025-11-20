@@ -13,7 +13,14 @@ import { StatsTab } from './stats-tab';
 
 type TabId = 'about' | 'events' | 'reviews' | 'stats';
 
-const tabs: { id: TabId; label: string; icon: typeof User; emoji: string }[] = [
+interface TabConfig {
+  id: TabId;
+  label: string;
+  icon: typeof User;
+  emoji: string;
+}
+
+const TABS: TabConfig[] = [
   { id: 'about', label: 'O mnie', icon: User, emoji: '👤' },
   { id: 'events', label: 'Wydarzenia', icon: Calendar, emoji: '📅' },
   { id: 'reviews', label: 'Recenzje', icon: Star, emoji: '⭐' },
@@ -66,17 +73,11 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
   const user = data.user;
   const isOwnProfile = currentUserId === user.id;
 
-  // Calculate counts for tabs
-  const eventsCount =
-    (user.stats?.eventsCreated ?? 0) + (user.stats?.eventsJoined ?? 0);
-  const reviewsCount = user.stats?.reviewsCount ?? 0;
-  const statsCount = 3; // Always 3 main stats
-
   const tabCounts: Record<TabId, number | null> = {
     about: null,
-    events: eventsCount,
-    reviews: reviewsCount,
-    stats: statsCount,
+    events: (user.stats?.eventsCreated ?? 0) + (user.stats?.eventsJoined ?? 0),
+    reviews: user.stats?.reviewsCount ?? 0,
+    stats: 3,
   };
 
   return (
@@ -92,7 +93,7 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
             className="flex min-w-max gap-2 border-b border-zinc-200 dark:border-zinc-800"
             aria-label="Tabs"
           >
-            {tabs.map((tab, index) => {
+            {TABS.map((tab, index) => {
               const isActive = activeTab === tab.id;
               const count = tabCounts[tab.id];
 

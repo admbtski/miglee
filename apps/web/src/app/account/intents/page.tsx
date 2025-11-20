@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Calendar } from 'lucide-react';
 
 import { useMeQuery } from '@/lib/api/auth';
@@ -9,10 +9,13 @@ import {
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
 } from '@/lib/api/intent-members';
-import type { IntentLifecycleStatus } from '@/lib/api/__generated__/react-query-update';
+import type {
+  IntentLifecycleStatus,
+  IntentMemberRole,
+  IntentMemberStatus,
+} from '@/lib/api/__generated__/react-query-update';
 import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
 
-// Components
 import { RoleFilter } from './_components/role-filter';
 import { IntentStatusFilter } from './_components/intent-status-filter';
 import {
@@ -23,14 +26,32 @@ import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
 import { EventManagementModalConnect } from './_components/managemen/event-management-modal-connect';
-
-// Hooks
 import { useMyIntentsFilters } from './_hooks/use-my-intents-filters';
 import { useIntentsModals } from './_hooks/use-intents-modals';
 
-/* ───────────────────────────── Helpers ───────────────────────────── */
+type MembershipData = {
+  id: string;
+  status: string;
+  role: string;
+  joinedAt: string;
+  rejectReason?: string | null;
+  intent: {
+    id: string;
+    title: string;
+    description?: string | null;
+    startAt: string;
+    endAt?: string | null;
+    address?: string | null;
+    joinedCount: number;
+    max?: number | null;
+    coverKey?: string | null;
+    coverBlurhash?: string | null;
+    canceledAt?: string | null;
+    deletedAt?: string | null;
+  };
+};
 
-function mapToCardData(membership: any): MyIntentCardData {
+function mapToCardData(membership: MembershipData): MyIntentCardData {
   return {
     intent: {
       id: membership.intent.id,
@@ -56,14 +77,105 @@ function mapToCardData(membership: any): MyIntentCardData {
   };
 }
 
-/* ───────────────────────────── Component ───────────────────────────── */
+function mapRoleFilterToBackend(
+  roleFilter: string
+): IntentMemberRole | undefined {
+  switch (roleFilter) {
+    case 'owner':
+      return 'OWNER';
+    case 'moderator':
+      return 'MODERATOR';
+    case 'member':
+      return 'PARTICIPANT';
+    default:
+      return undefined;
+  }
+}
+
+function mapRoleFilterToMembershipStatus(
+  roleFilter: string
+): IntentMemberStatus | undefined {
+  switch (roleFilter) {
+    case 'pending':
+      return 'PENDING';
+    case 'invited':
+      return 'INVITED';
+    case 'rejected':
+      return 'REJECTED';
+    case 'banned':
+      return 'BANNED';
+    case 'waitlist':
+      return 'WAITLIST';
+    default:
+      return undefined;
+  }
+}
+
+function LoadingState() {
+  return (
+    <div className="flex min-h-[400px] items-center justify-center">
+      <div className="text-center">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Loading...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function UnauthenticatedState() {
+  return (
+    <div className="flex min-h-[400px] items-center justify-center">
+      <div className="text-center">
+        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          Not authenticated
+        </p>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          Please log in to view your events
+        </p>
+      </div>
+    </div>
+  );
+}
+
+type ErrorStateProps = {
+  error: Error;
+};
+
+function ErrorState({ error }: ErrorStateProps) {
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
+      <p className="font-medium">Error loading events</p>
+      <p className="mt-1 text-sm">{error.message}</p>
+    </div>
+  );
+}
+
+type EmptyStateProps = {
+  hasActiveFilters: boolean;
+};
+
+function EmptyState({ hasActiveFilters }: EmptyStateProps) {
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
+      <Calendar className="mx-auto h-12 w-12 text-zinc-400" />
+      <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-100">
+        Brak wydarzeń
+      </h3>
+      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        {hasActiveFilters
+          ? 'Spróbuj zmienić filtry'
+          : 'Nie masz jeszcze żadnych wydarzeń'}
+      </p>
+    </div>
+  );
+}
 
 export default function MyIntentsPage() {
-  // Get current user
   const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
   const currentUserId = authData?.me?.id;
 
-  // Filters
   const {
     roleFilter,
     statusFilters,
@@ -73,7 +185,6 @@ export default function MyIntentsPage() {
     hasActiveFilters,
   } = useMyIntentsFilters();
 
-  // Modals
   const {
     editId,
     leaveId,
@@ -91,80 +202,60 @@ export default function MyIntentsPage() {
     closeManage,
   } = useIntentsModals();
 
-  // Convert frontend filters to backend format
-  const backendRole = useMemo(() => {
-    if (roleFilter === 'all') return undefined;
-    if (roleFilter === 'owner') return 'OWNER';
-    if (roleFilter === 'moderator') return 'MODERATOR';
-    if (roleFilter === 'member') return 'PARTICIPANT';
-    return undefined;
-  }, [roleFilter]);
+  const backendRole = useMemo(
+    () => mapRoleFilterToBackend(roleFilter),
+    [roleFilter]
+  );
 
-  const backendMembershipStatus = useMemo(() => {
-    if (roleFilter === 'pending') return 'PENDING';
-    if (roleFilter === 'invited') return 'INVITED';
-    if (roleFilter === 'rejected') return 'REJECTED';
-    if (roleFilter === 'banned') return 'BANNED';
-    if (roleFilter === 'waitlist') return 'WAITLIST';
-    return undefined;
-  }, [roleFilter]);
+  const backendMembershipStatus = useMemo(
+    () => mapRoleFilterToMembershipStatus(roleFilter),
+    [roleFilter]
+  );
 
-  const backendIntentStatuses = useMemo(() => {
-    return statusFilters.map((s) => s.toUpperCase()) as IntentLifecycleStatus[];
-  }, [statusFilters]);
+  const backendIntentStatuses = useMemo(
+    () => statusFilters.map((s) => s.toUpperCase()) as IntentLifecycleStatus[],
+    [statusFilters]
+  );
 
-  // Query with backend filters
   const { data, isLoading, error } = useMyIntentsQuery({
-    role: backendRole as any,
-    membershipStatus: backendMembershipStatus as any,
+    role: backendRole,
+    membershipStatus: backendMembershipStatus,
     intentStatuses: backendIntentStatuses,
     limit: 200,
   });
 
-  // Mutations
   const acceptInvite = useAcceptInviteMutation();
   const cancelRequest = useCancelJoinRequestMutation();
 
-  // Map to card data
   const cardData = useMemo(() => {
     const memberships = data?.myIntents ?? [];
     return memberships.map(mapToCardData);
   }, [data?.myIntents]);
 
-  // Loading authentication state
   if (isLoadingAuth) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-            Loading...
-          </p>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
-  // Not authenticated
   if (!currentUserId) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            Not authenticated
-          </p>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Please log in to view your events
-          </p>
-        </div>
-      </div>
-    );
+    return <UnauthenticatedState />;
   }
+
+  const handleWithdraw = (intentId: string) => {
+    cancelRequest.mutate({ intentId });
+  };
+
+  const handleAcceptInvite = (intentId: string) => {
+    acceptInvite.mutate({ intentId });
+  };
+
+  const handleDeclineInvite = (intentId: string) => {
+    // TODO: implement decline invite mutation
+    console.log('Decline invite:', intentId);
+  };
 
   return (
     <>
       <div className="mx-auto max-w-5xl">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
             Moje Intenty
@@ -174,7 +265,6 @@ export default function MyIntentsPage() {
           </p>
         </div>
 
-        {/* Filters */}
         <div className="mb-8 space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <RoleFilter value={roleFilter} onChange={setRoleFilter} />
           <IntentStatusFilter
@@ -182,7 +272,7 @@ export default function MyIntentsPage() {
             onChange={setStatusFilters}
           />
 
-          {hasActiveFilters ? (
+          {hasActiveFilters && (
             <div className="flex justify-end">
               <button
                 onClick={clearFilters}
@@ -191,66 +281,39 @@ export default function MyIntentsPage() {
                 Clear all filters
               </button>
             </div>
-          ) : null}
+          )}
         </div>
 
-        {/* Loading */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-pink-500 border-t-transparent" />
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
-            <p className="font-medium">Error loading events</p>
-            <p className="mt-1 text-sm">{String(error)}</p>
-          </div>
-        )}
+        {error && <ErrorState error={error} />}
 
-        {/* Empty state */}
         {!isLoading && !error && cardData.length === 0 && (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
-            <Calendar className="mx-auto h-12 w-12 text-zinc-400" />
-            <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-100">
-              Brak wydarzeń
-            </h3>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              {hasActiveFilters
-                ? 'Spróbuj zmienić filtry'
-                : 'Nie masz jeszcze żadnych wydarzeń'}
-            </p>
-          </div>
+          <EmptyState hasActiveFilters={hasActiveFilters} />
         )}
 
-        {/* List */}
         {!isLoading && !error && cardData.length > 0 && (
           <div className="space-y-4">
-            {cardData.map((item) => {
-              return (
-                <MyIntentCard
-                  key={item.membership.id}
-                  data={item}
-                  actions={{
-                    onManage: setManageId,
-                    onEdit: setEditId,
-                    onCancel: setCancelId,
-                    onLeave: setLeaveId,
-                    onWithdraw: (intentId) =>
-                      cancelRequest.mutate({ intentId }),
-                    onAcceptInvite: (intentId) =>
-                      acceptInvite.mutate({ intentId }),
-                    onDeclineInvite: (intentId) => {
-                      // TODO: implement decline invite mutation
-                      console.log('Decline invite:', intentId);
-                    },
-                  }}
-                />
-              );
-            })}
+            {cardData.map((item) => (
+              <MyIntentCard
+                key={item.membership.id}
+                data={item}
+                actions={{
+                  onManage: setManageId,
+                  onEdit: setEditId,
+                  onCancel: setCancelId,
+                  onLeave: setLeaveId,
+                  onWithdraw: handleWithdraw,
+                  onAcceptInvite: handleAcceptInvite,
+                  onDeclineInvite: handleDeclineInvite,
+                }}
+              />
+            ))}
 
-            {/* Results count */}
             <div className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
               Showing {cardData.length} event{cardData.length !== 1 ? 's' : ''}
             </div>
@@ -258,7 +321,6 @@ export default function MyIntentsPage() {
         )}
       </div>
 
-      {/* Modals */}
       <DeleteIntentModals
         deleteId={deleteId}
         onClose={closeDelete}
@@ -278,10 +340,9 @@ export default function MyIntentsPage() {
         onSuccess={() => {}}
       />
 
-      {/* Edit */}
       <CreateEditIntentModalConnect
         intentId={editId ?? undefined}
-        open={!!editId}
+        open={Boolean(editId)}
         onClose={closeEdit}
       />
 
@@ -289,7 +350,7 @@ export default function MyIntentsPage() {
         intentId={manageId ?? ''}
         canManage={true}
         isPremium={true}
-        open={!!manageId}
+        open={Boolean(manageId)}
         onClose={closeManage}
       />
     </>
