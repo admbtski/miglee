@@ -152,6 +152,28 @@ query GetMyMemberships(
   }
 }
 
+# Get current user's intents with flexible filtering (membership + intent lifecycle status)
+query GetMyIntents(
+  $role: IntentMemberRole
+  $membershipStatus: IntentMemberStatus
+  $intentStatuses: [IntentLifecycleStatus!]
+  $limit: Int = 50
+  $offset: Int = 0
+) {
+  myIntents(
+    role: $role
+    membershipStatus: $membershipStatus
+    intentStatuses: $intentStatuses
+    limit: $limit
+    offset: $offset
+  ) {
+    ...IntentMemberCore
+    intent {
+      ...IntentCore
+    }
+  }
+}
+
 # Get membership statistics for an intent
 query GetIntentMemberStats($intentId: ID!) {
   intentMemberStats(intentId: $intentId) {

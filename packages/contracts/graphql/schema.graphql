@@ -265,6 +265,15 @@ enum IntentStatus {
   DELETED
 }
 
+"Intent lifecycle status filter for myIntents query"
+enum IntentLifecycleStatus {
+  UPCOMING
+  ONGOING
+  FINISHED
+  CANCELED
+  DELETED
+}
+
 "Why joining is locked (computed)"
 enum JoinLockReason {
   FULL
@@ -1326,6 +1335,23 @@ type Query {
     status: IntentMemberStatus
     role: IntentMemberRole
     limit: Int = 50
+    offset: Int = 0
+  ): [IntentMember!]!
+
+  """
+  Get all intents where current user has membership, with flexible filtering.
+  Supports filtering by membership role/status AND intent lifecycle status.
+  """
+  myIntents(
+    "Filter by membership role (OWNER, MODERATOR, MEMBER)"
+    role: IntentMemberRole
+    "Filter by membership status (JOINED, PENDING, INVITED, etc.)"
+    membershipStatus: IntentMemberStatus
+    "Filter by intent lifecycle status (UPCOMING, ONGOING, FINISHED, etc.) - supports multiple"
+    intentStatuses: [IntentLifecycleStatus!]
+    "Pagination limit"
+    limit: Int = 50
+    "Pagination offset"
     offset: Int = 0
   ): [IntentMember!]!
 

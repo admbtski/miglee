@@ -27,14 +27,18 @@ function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
     joinedAt: m.joinedAt ?? null,
     leftAt: m.leftAt ?? null,
     note: m.note ?? null,
+    rejectReason: m.rejectReason ?? null,
     user: mapUser(m.user),
     addedBy: m.addedBy ? mapUser(m.addedBy) : null,
+    // intent and joinAnswers will be resolved by field resolvers
+    intent: null as any,
+    joinAnswers: [],
   };
 }
 
 const MEMBER_INCLUDE = {
-  user: true,
-  addedBy: true,
+  user: { include: { profile: true } },
+  addedBy: { include: { profile: true } },
 } satisfies Prisma.IntentMemberInclude;
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -205,6 +209,100 @@ export const myMembershipsQuery: QueryResolvers['myMemberships'] =
       return list.map((m) => mapIntentMember(m as IntentMemberWithUsers));
     }
   );
+
+export const myIntentsQuery: QueryResolvers['myIntents'] = resolverWithMetrics(
+  'Query',
+  'myIntents',
+  async (
+    _p,
+    { role, membershipStatus, intentStatuses, limit, offset },
+    ctx
+  ) => {
+    const me = await authUser(ctx);
+
+    const take = Math.max(1, Math.min(limit ?? 50, 200));
+    const skip = Math.max(0, offset ?? 0);
+
+    // Build membership filters
+    const memberWhere: Prisma.IntentMemberWhereInput = {
+      userId: me,
+      ...(membershipStatus
+        ? { status: membershipStatus as unknown as IntentMemberStatus }
+        : {}),
+      ...(role ? { role: role as unknown as IntentMemberRole } : {}),
+    };
+
+    // Build intent lifecycle status filters
+    const intentWhere: Prisma.IntentWhereInput = {};
+
+    if (intentStatuses && intentStatuses.length > 0) {
+      const now = new Date();
+      const conditions: Prisma.IntentWhereInput[] = [];
+
+      for (const status of intentStatuses) {
+        switch (status) {
+          case 'DELETED':
+            conditions.push({ deletedAt: { not: null } });
+            break;
+          case 'CANCELED':
+            conditions.push({
+              deletedAt: { equals: null },
+              canceledAt: { not: null },
+            });
+            break;
+          case 'FINISHED':
+            conditions.push({
+              deletedAt: { equals: null },
+              canceledAt: { equals: null },
+              endAt: { lte: now },
+            });
+            break;
+          case 'ONGOING':
+            // Ongoing: started but not ended (endAt is null OR endAt > now)
+            conditions.push({
+              deletedAt: { equals: null },
+              canceledAt: { equals: null },
+              startAt: { lte: now },
+              NOT: {
+                endAt: { lte: now },
+              },
+            });
+            break;
+          case 'UPCOMING':
+            conditions.push({
+              deletedAt: { equals: null },
+              canceledAt: { equals: null },
+              startAt: { gt: now },
+            });
+            break;
+        }
+      }
+
+      if (conditions.length > 0) {
+        intentWhere.OR = conditions;
+      }
+    }
+
+    // Combine filters
+    const where: Prisma.IntentMemberWhereInput = {
+      ...memberWhere,
+      ...(Object.keys(intentWhere).length > 0 ? { intent: intentWhere } : {}),
+    };
+
+    const list = await prisma.intentMember.findMany({
+      where,
+      take,
+      skip,
+      orderBy: [{ createdAt: 'desc' }],
+      include: {
+        ...MEMBER_INCLUDE,
+        intent: true, // Include full intent data
+      },
+    });
+
+    return list.map((m) => mapIntentMember(m as IntentMemberWithUsers));
+  }
+);
 
 export const intentMemberStatsQuery: QueryResolvers['intentMemberStats'] =
   resolverWithMetrics(

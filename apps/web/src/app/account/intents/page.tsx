@@ -1,73 +1,77 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { Calendar } from 'lucide-react';
 
-import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
-import { EventDetailsModal } from '@/features/intents/components/event-details-modal';
-
-import { appLanguage } from '@/lib/config/language';
-import { computeJoinState } from '@/components/ui/status-badge';
-
-import { Modal } from '@/components/feedback/modal';
-import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 import { useMeQuery } from '@/lib/api/auth';
 import {
-  AddressVisibility,
-  MembersVisibility,
-  IntentsResultCoreFragment_IntentsResult_items_Intent as IntentItem,
-  Visibility,
-  type GetIntentsQueryVariables,
-} from '@/lib/api/__generated__/react-query-update';
+  useMyIntentsQuery,
+  useAcceptInviteMutation,
+  useCancelJoinRequestMutation,
+} from '@/lib/api/intent-members';
+import type { IntentLifecycleStatus } from '@/lib/api/__generated__/react-query-update';
+import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
+
+// Components
+import { RoleFilter } from './_components/role-filter';
+import { IntentStatusFilter } from './_components/intent-status-filter';
+import {
+  MyIntentCard,
+  type MyIntentCardData,
+} from './_components/my-intent-card';
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
 import { EventManagementModalConnect } from './_components/managemen/event-management-modal-connect';
 
-// New components
-import { IntentsHeader } from './_components/intents-header';
-import { IntentsGrid } from './_components/intents-grid';
-import { IntentsLoadMore } from './_components/intents-load-more';
-import { StatusFilter } from './_components/status-filter';
-import { KindFilter } from './_components/kind-filter';
-import { SortFilter } from './_components/sort-filter';
-
-// New hooks
-import { useIntentsFilters } from './_hooks/use-intents-filters';
+// Hooks
+import { useMyIntentsFilters } from './_hooks/use-my-intents-filters';
 import { useIntentsModals } from './_hooks/use-intents-modals';
-import { useIntentsDraftFilters } from './_hooks/use-intents-draft-filters';
 
-/* ───────────────────────────── Constants ───────────────────────────── */
+/* ───────────────────────────── Helpers ───────────────────────────── */
 
-type ViewMode = 'owned' | 'member';
-const DEFAULT_LIMIT = 12;
+function mapToCardData(membership: any): MyIntentCardData {
+  return {
+    intent: {
+      id: membership.intent.id,
+      title: membership.intent.title,
+      description: membership.intent.description,
+      startAt: membership.intent.startAt,
+      endAt: membership.intent.endAt,
+      address: membership.intent.address,
+      joinedCount: membership.intent.joinedCount,
+      max: membership.intent.max,
+      coverKey: membership.intent.coverKey,
+      coverBlurhash: membership.intent.coverBlurhash,
+      canceledAt: membership.intent.canceledAt,
+      deletedAt: membership.intent.deletedAt,
+    },
+    membership: {
+      id: membership.id,
+      status: membership.status,
+      role: membership.role,
+      joinedAt: membership.joinedAt,
+      rejectReason: membership.rejectReason,
+    },
+  };
+}
 
-/* ───────────────────────────── Page ───────────────────────────── */
+/* ───────────────────────────── Component ───────────────────────────── */
 
-export default function IntentsPage() {
-  const searchParams = useSearchParams();
-
+export default function MyIntentsPage() {
   // Get current user
   const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
   const currentUserId = authData?.me?.id;
 
-  // View mode (tab)
-  const [mode, setMode] = useState<ViewMode>('owned');
-
   // Filters
   const {
-    status,
-    kinds,
-    sortBy,
-    sortDir,
-    setStatus,
-    setKinds,
-    setSortBy,
-    setSortDir,
-    anyFilterActive,
-    activeFiltersCount,
+    roleFilter,
+    statusFilters,
+    setRoleFilter,
+    setStatusFilters,
     clearFilters,
-  } = useIntentsFilters();
+    hasActiveFilters,
+  } = useMyIntentsFilters();
 
   // Modals
   const {
@@ -79,7 +83,6 @@ export default function IntentsPage() {
     setEditId,
     setLeaveId,
     setCancelId,
-    setDeleteId,
     setManageId,
     closeEdit,
     closeLeave,
@@ -88,118 +91,45 @@ export default function IntentsPage() {
     closeManage,
   } = useIntentsModals();
 
-  // Mobile filters modal
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const {
-    draftStatus,
-    draftKinds,
-    draftSort,
-    setDraftStatus,
-    setDraftKinds,
-    setDraftSort,
-    clearDrafts,
-  } = useIntentsDraftFilters(status, kinds, sortBy, sortDir, filtersOpen);
+  // Convert frontend filters to backend format
+  const backendRole = useMemo(() => {
+    if (roleFilter === 'all') return undefined;
+    if (roleFilter === 'owner') return 'OWNER';
+    if (roleFilter === 'moderator') return 'MODERATOR';
+    if (roleFilter === 'member') return 'PARTICIPANT';
+    return undefined;
+  }, [roleFilter]);
 
-  // Use current user ID or fallback to search params
-  const ownerId = currentUserId ?? searchParams.get('ownerId') ?? undefined;
+  const backendMembershipStatus = useMemo(() => {
+    if (roleFilter === 'pending') return 'PENDING';
+    if (roleFilter === 'invited') return 'INVITED';
+    if (roleFilter === 'rejected') return 'REJECTED';
+    if (roleFilter === 'banned') return 'BANNED';
+    if (roleFilter === 'waitlist') return 'WAITLIST';
+    return undefined;
+  }, [roleFilter]);
 
-  // Build variables for queries
-  const ownedVars = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
-    () => ({
-      limit: DEFAULT_LIMIT,
-      ownerId,
-      status,
-      visibility: undefined as unknown as Visibility | undefined,
-      upcomingAfter: undefined,
-      endingBefore: undefined,
-      categorySlugs: [],
-      tagSlugs: [],
-      kinds,
-      levels: [],
-      keywords: [],
-      verifiedOnly: false,
-      memberId: undefined,
-      distanceKm: null,
-      near: undefined,
-      sortBy,
-      sortDir,
-    }),
-    [ownerId, status, kinds, sortBy, sortDir]
-  );
+  const backendIntentStatuses = useMemo(() => {
+    return statusFilters.map((s) => s.toUpperCase()) as IntentLifecycleStatus[];
+  }, [statusFilters]);
 
-  const memberVars = useMemo<Omit<GetIntentsQueryVariables, 'offset'>>(
-    () => ({
-      limit: DEFAULT_LIMIT,
-      status,
-      visibility: Visibility.Public,
-      upcomingAfter: undefined,
-      endingBefore: undefined,
-      categorySlugs: [],
-      tagSlugs: [],
-      kinds,
-      levels: [],
-      keywords: [],
-      verifiedOnly: false,
-      ownerId: undefined,
-      memberId: undefined,
-      distanceKm: null,
-      near: undefined,
-      sortBy,
-      sortDir,
-    }),
-    [status, kinds, sortBy, sortDir]
-  );
-
-  // Two independent infinite queries
-  const owned = useIntentsInfiniteQuery(ownedVars, {
-    enabled: Boolean(ownerId) && mode === 'owned',
-  });
-  const member = useIntentsInfiniteQuery(memberVars, {
-    enabled: mode === 'member',
+  // Query with backend filters
+  const { data, isLoading, error } = useMyIntentsQuery({
+    role: backendRole as any,
+    membershipStatus: backendMembershipStatus as any,
+    intentStatuses: backendIntentStatuses,
+    limit: 200,
   });
 
-  // Currently active query
-  const active = mode === 'owned' ? owned : member;
+  // Mutations
+  const acceptInvite = useAcceptInviteMutation();
+  const cancelRequest = useCancelJoinRequestMutation();
 
-  // Flat items and meta
-  const pages = active.data?.pages ?? [];
-  const flatItems = useMemo(
-    () => pages.flatMap((p) => p.intents.items) ?? [],
-    [pages]
-  );
-  const total = pages[0]?.intents.pageInfo.total ?? 0;
-
-  // Callbacks
-  const handleModeChange = useCallback((newMode: ViewMode) => {
-    setMode(newMode);
-  }, []);
-
-  const handleSortChange = useCallback(
-    (next: { by: any; dir: any }) => {
-      setSortBy(next.by);
-      setSortDir(next.dir);
-    },
-    [setSortBy, setSortDir]
-  );
-
-  const handleOpenFilters = useCallback(() => setFiltersOpen(true), []);
-  const handleCloseFilters = useCallback(() => setFiltersOpen(false), []);
-
-  const handleApplyDraft = useCallback(() => {
-    setStatus(draftStatus);
-    setKinds(draftKinds);
-    setSortBy(draftSort.by);
-    setSortDir(draftSort.dir);
-    setFiltersOpen(false);
-  }, [
-    draftKinds,
-    draftSort,
-    draftStatus,
-    setKinds,
-    setSortBy,
-    setSortDir,
-    setStatus,
-  ]);
+  // Map to card data
+  const cardData = useMemo(() => {
+    const memberships = data?.myIntents ?? [];
+    return memberships.map(mapToCardData);
+  }, [data?.myIntents]);
 
   // Loading authentication state
   if (isLoadingAuth) {
@@ -224,7 +154,7 @@ export default function IntentsPage() {
             Not authenticated
           </p>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Please log in to view your intents
+            Please log in to view your events
           </p>
         </div>
       </div>
@@ -233,75 +163,100 @@ export default function IntentsPage() {
 
   return (
     <>
-      <IntentsHeader
-        mode={mode}
-        onModeChange={handleModeChange}
-        status={status}
-        kinds={kinds}
-        sortBy={sortBy}
-        sortDir={sortDir}
-        onStatusChange={setStatus}
-        onKindsChange={setKinds}
-        onSortChange={handleSortChange}
-        anyFilterActive={anyFilterActive}
-        activeFiltersCount={activeFiltersCount}
-        onClearFilters={clearFilters}
-        onOpenFilters={handleOpenFilters}
-        isLoading={active.isLoading}
-        hasError={!!active.error}
-        loadedCount={flatItems.length}
-        total={total}
-        isFetching={active.isFetching}
-      />
-
-      {/* List / skeleton / error states */}
-      {active.isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={`sk-${i}`}
-              className="h-40 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-900"
-            />
-          ))}
+      <div className="mx-auto max-w-5xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            Moje Intenty
+          </h1>
+          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            Zarządzaj wszystkimi swoimi wydarzeniami w jednym miejscu
+          </p>
         </div>
-      )}
 
-      {active.error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
-          {active.error?.message ?? 'Unknown error'}
-        </div>
-      )}
-
-      {!active.isLoading && !active.error && flatItems.length === 0 && (
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-          {mode === 'owned'
-            ? 'Nie masz jeszcze żadnych intentów.'
-            : 'Brak wyników (tymczasowy widok członka).'}
-        </div>
-      )}
-
-      {!active.isLoading && !active.error && flatItems.length > 0 && (
-        <>
-          <IntentsGrid
-            items={flatItems}
-            mode={mode}
-            onEdit={setEditId}
-            onDelete={setDeleteId}
-            onLeave={setLeaveId}
-            onCancel={setCancelId}
-            onManage={setManageId}
+        {/* Filters */}
+        <div className="mb-8 space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <RoleFilter value={roleFilter} onChange={setRoleFilter} />
+          <IntentStatusFilter
+            values={statusFilters}
+            onChange={setStatusFilters}
           />
 
-          <div className="mt-6 flex justify-center">
-            <IntentsLoadMore
-              hasNextPage={!!active.hasNextPage}
-              isFetchingNextPage={active.isFetchingNextPage}
-              loadedCount={flatItems.length}
-              onLoadMore={active.fetchNextPage}
-            />
+          {hasActiveFilters ? (
+            <div className="flex justify-end">
+              <button
+                onClick={clearFilters}
+                className="text-sm text-pink-600 transition-colors hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-pink-500 border-t-transparent" />
           </div>
-        </>
-      )}
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
+            <p className="font-medium">Error loading events</p>
+            <p className="mt-1 text-sm">{String(error)}</p>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && !error && cardData.length === 0 && (
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
+            <Calendar className="mx-auto h-12 w-12 text-zinc-400" />
+            <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-100">
+              Brak wydarzeń
+            </h3>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              {hasActiveFilters
+                ? 'Spróbuj zmienić filtry'
+                : 'Nie masz jeszcze żadnych wydarzeń'}
+            </p>
+          </div>
+        )}
+
+        {/* List */}
+        {!isLoading && !error && cardData.length > 0 && (
+          <div className="space-y-4">
+            {cardData.map((item) => {
+              return (
+                <MyIntentCard
+                  key={item.membership.id}
+                  data={item}
+                  actions={{
+                    onManage: setManageId,
+                    onEdit: setEditId,
+                    onCancel: setCancelId,
+                    onLeave: setLeaveId,
+                    onWithdraw: (intentId) =>
+                      cancelRequest.mutate({ intentId }),
+                    onAcceptInvite: (intentId) =>
+                      acceptInvite.mutate({ intentId }),
+                    onDeclineInvite: (intentId) => {
+                      // TODO: implement decline invite mutation
+                      console.log('Decline invite:', intentId);
+                    },
+                  }}
+                />
+              );
+            })}
+
+            {/* Results count */}
+            <div className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+              Showing {cardData.length} event{cardData.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Modals */}
       <DeleteIntentModals
@@ -336,70 +291,6 @@ export default function IntentsPage() {
         isPremium={true}
         open={!!manageId}
         onClose={closeManage}
-      />
-
-      {/* Mobile Filters Modal */}
-      <Modal
-        open={filtersOpen}
-        onClose={handleCloseFilters}
-        variant="centered"
-        labelledById="filters-title"
-        ariaLabel="Filtry i sortowanie"
-        className="px-0 py-0"
-        header={
-          <h3 className="text-base font-semibold">Filtry i sortowanie</h3>
-        }
-        content={
-          <div className="space-y-6">
-            <section>
-              <h4 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                Status
-              </h4>
-              <StatusFilter value={draftStatus} onChange={setDraftStatus} />
-            </section>
-
-            <section>
-              <h4 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                Rodzaj
-              </h4>
-              <KindFilter values={draftKinds} onChange={setDraftKinds} />
-            </section>
-
-            <section>
-              <h4 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-200">
-                Sortowanie
-              </h4>
-              <SortFilter value={draftSort} onChange={setDraftSort} />
-            </section>
-          </div>
-        }
-        footer={
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={clearDrafts}
-              className="rounded-md px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Wyczyść
-            </button>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleCloseFilters}
-                className="rounded-md border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-              >
-                Anuluj
-              </button>
-              <button
-                type="button"
-                onClick={handleApplyDraft}
-                className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                Zastosuj
-              </button>
-            </div>
-          </div>
-        }
       />
     </>
   );

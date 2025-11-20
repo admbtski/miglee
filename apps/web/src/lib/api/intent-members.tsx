@@ -12,6 +12,9 @@ import {
   GetMyMembershipsDocument,
   GetMyMembershipsQuery,
   GetMyMembershipsQueryVariables,
+  GetMyIntentsDocument,
+  GetMyIntentsQuery,
+  GetMyIntentsQueryVariables,
   GetIntentMemberStatsDocument,
   GetIntentMemberStatsQuery,
   GetIntentMemberStatsQueryVariables,
@@ -581,6 +584,42 @@ export function useMyMembershipsQuery(
   >
 ) {
   return useQuery(buildGetMyMembershipsOptions(variables, options));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// My Intents Query (with intent lifecycle status filtering)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const GET_MY_INTENTS_KEY = (variables?: GetMyIntentsQueryVariables) =>
+  variables
+    ? (['GetMyIntents', variables] as const)
+    : (['GetMyIntents'] as const);
+
+function buildGetMyIntentsOptions(
+  variables?: GetMyIntentsQueryVariables,
+  options?: Omit<
+    UseQueryOptions<GetMyIntentsQuery, unknown, GetMyIntentsQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+): UseQueryOptions<GetMyIntentsQuery, unknown, GetMyIntentsQuery, QueryKey> {
+  return {
+    queryKey: GET_MY_INTENTS_KEY(variables),
+    queryFn: async () => {
+      const data = await gqlClient.request(GetMyIntentsDocument, variables);
+      return data;
+    },
+    ...options,
+  };
+}
+
+export function useMyIntentsQuery(
+  variables?: GetMyIntentsQueryVariables,
+  options?: Omit<
+    UseQueryOptions<GetMyIntentsQuery, unknown, GetMyIntentsQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery(buildGetMyIntentsOptions(variables, options));
 }
 
 export function useIntentMemberStatsQuery(
