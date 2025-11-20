@@ -129,7 +129,9 @@ export const DateRangeSection = memo(function DateRangeSection({
     >
       {/* Quick Presets */}
       <div className="mb-4">
-        <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2.5">Quick Select</p>
+        <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2.5">
+          Quick Select
+        </p>
         <div className="flex flex-wrap gap-2">
           {[
             { id: 'now1h', label: 'Now +1h' },
@@ -159,17 +161,25 @@ export const DateRangeSection = memo(function DateRangeSection({
 
       {/* Custom Range */}
       <div>
-        <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2.5">Custom Range</p>
+        <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-2.5">
+          Custom Range
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="block">
-              <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">Start Date & Time</span>
-              <div className="flex items-center gap-2 px-4 py-3 text-sm bg-white border rounded-xl border-zinc-200 
-                              dark:border-zinc-700 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-indigo-500/40 transition-shadow">
+              <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                Start Date & Time
+              </span>
+              <div
+                className="flex items-center gap-2 px-4 py-3 text-sm bg-white border rounded-xl border-zinc-200 
+                              dark:border-zinc-700 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-indigo-500/40 transition-shadow"
+              >
                 <input
                   type="datetime-local"
                   value={startForInput}
-                  onChange={(e) => onStartChange(localInputToISO(e.target.value))}
+                  onChange={(e) =>
+                    onStartChange(localInputToISO(e.target.value))
+                  }
                   className="w-full bg-transparent outline-none text-zinc-900 dark:text-zinc-100"
                 />
               </div>
@@ -177,9 +187,13 @@ export const DateRangeSection = memo(function DateRangeSection({
           </div>
           <div>
             <label className="block">
-              <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">End Date & Time</span>
-              <div className="flex items-center gap-2 px-4 py-3 text-sm bg-white border rounded-xl border-zinc-200 
-                              dark:border-zinc-700 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-indigo-500/40 transition-shadow">
+              <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                End Date & Time
+              </span>
+              <div
+                className="flex items-center gap-2 px-4 py-3 text-sm bg-white border rounded-xl border-zinc-200 
+                              dark:border-zinc-700 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-indigo-500/40 transition-shadow"
+              >
                 <input
                   type="datetime-local"
                   value={endForInput}

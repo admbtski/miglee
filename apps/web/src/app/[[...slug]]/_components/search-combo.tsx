@@ -9,6 +9,15 @@ import React, {
   useState,
   useId,
 } from 'react';
+import {
+  autoUpdate,
+  flip,
+  FloatingFocusManager,
+  offset,
+  shift,
+  size as floatingSize,
+  useFloating,
+} from '@floating-ui/react';
 import { Search, Tag as TagIcon, Hash, Folder, X } from 'lucide-react';
 import type { SearchOption } from '@/types/types';
 import clsx from 'clsx';
@@ -93,8 +102,8 @@ function _SearchCombo({
   className,
   loading = false,
 }: SearchComboProps) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
   const listboxId = useId();
 
   // local input state so we can gate requests by MIN_CHARS
@@ -116,6 +125,32 @@ function _SearchCombo({
   const [hi, setHi] = useState<number>(-1);
 
   const canSearch = inner.trim().length >= MIN_CHARS;
+
+  // Floating UI setup
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: setOpen,
+    placement: 'bottom-start',
+    strategy: 'fixed', // Use fixed to escape parent stacking context
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(8),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      floatingSize({
+        apply({ rects, elements }) {
+          const floating = elements.floating as HTMLElement;
+          floating.style.maxHeight = '288px'; // max-h-72 = 18rem = 288px
+          floating.style.width = `${rects.reference.width}px`;
+        },
+      }),
+    ],
+  });
+
+  // Set reference element
+  useEffect(() => {
+    refs.setReference(wrapperRef.current);
+  }, [refs]);
 
   // Render rows: headers + items (filtered: hide already selected)
   const { rows, itemRowIdx } = useMemo(() => {
@@ -155,7 +190,10 @@ function _SearchCombo({
       }
       const pos = hi < 0 ? -1 : itemRowIdx.indexOf(hi);
       const next = Math.max(0, Math.min(itemRowIdx.length - 1, pos + delta));
-      setHi(itemRowIdx[next]);
+      const nextIdx = itemRowIdx[next];
+      if (nextIdx !== undefined) {
+        setHi(nextIdx);
+      }
     },
     [hi, itemRowIdx]
   );
@@ -165,6 +203,7 @@ function _SearchCombo({
       const row = rows[idx];
       if (!row || row.type !== 'item') return;
       const g = groups[row.gi];
+      if (!g) return;
       g.onSelect?.(row.option);
       setOpen(false);
       setHi(-1);
@@ -173,17 +212,7 @@ function _SearchCombo({
     [rows, groups]
   );
 
-  // outside click -> close
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (!inputRef.current?.contains(t) && !listRef.current?.contains(t)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
+  // outside click -> close (handled by FloatingFocusManager)
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -196,10 +225,12 @@ function _SearchCombo({
         move(-1);
       } else if (e.key === 'Home') {
         e.preventDefault();
-        if (itemRowIdx.length) setHi(itemRowIdx[0]);
+        const firstIdx = itemRowIdx[0];
+        if (firstIdx !== undefined) setHi(firstIdx);
       } else if (e.key === 'End') {
         e.preventDefault();
-        if (itemRowIdx.length) setHi(itemRowIdx[itemRowIdx.length - 1]);
+        const lastIdx = itemRowIdx[itemRowIdx.length - 1];
+        if (lastIdx !== undefined) setHi(lastIdx);
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (hi >= 0) {
@@ -225,6 +256,7 @@ function _SearchCombo({
 
   return (
     <div
+      ref={wrapperRef}
       className={clsx(
         'relative rounded-2xl border border-zinc-200 bg-white p-2 dark:border-zinc-700 dark:bg-zinc-900',
         className
@@ -271,59 +303,63 @@ function _SearchCombo({
       </label>
 
       {open && (
-        <div
-          ref={listRef}
-          id={listboxId}
-          className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
-          role="listbox"
-        >
-          {!canSearch ? (
-            <div className="px-3 py-3 text-sm text-zinc-500">
-              Type at least {MIN_CHARS} characters
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="px-3 py-3 text-sm text-zinc-500">
-              No suggestions
-            </div>
-          ) : (
-            rows.map((row, idx) =>
-              row.type === 'header' ? (
-                <div
-                  key={`hdr-${idx}`}
-                  className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-400"
-                >
-                  {groups[row.gi].label}
-                </div>
-              ) : (
-                <button
-                  key={`it-${row.gi}-${optKey(row.option)}`}
-                  id={`opt-${row.gi}-${optKey(row.option)}`}
-                  role="option"
-                  aria-selected={hi === idx}
-                  onMouseEnter={() => setHi(idx)}
-                  onClick={() => pickAt(idx)}
-                  className={clsx(
-                    'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
-                    hi === idx
-                      ? 'bg-zinc-100 dark:bg-zinc-800'
-                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
-                  )}
-                >
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
-                    {(() => {
-                      const G = groups[row.gi];
-                      const Icon = G.icon ?? defaultIconFor(G.kind ?? G.id);
-                      return <Icon className="h-3.5 w-3.5 opacity-80" />;
-                    })()}
-                  </span>
-                  <span className="text-zinc-800 dark:text-zinc-100">
-                    {optLabel(row.option)}
-                  </span>
-                </button>
+        <FloatingFocusManager context={context} modal={false}>
+          <div
+            ref={refs.setFloating}
+            id={listboxId}
+            style={floatingStyles}
+            className="z-[150] overflow-auto rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+            role="listbox"
+          >
+            {!canSearch ? (
+              <div className="px-3 py-3 text-sm text-zinc-500">
+                Type at least {MIN_CHARS} characters
+              </div>
+            ) : rows.length === 0 ? (
+              <div className="px-3 py-3 text-sm text-zinc-500">
+                No suggestions
+              </div>
+            ) : (
+              rows.map((row, idx) =>
+                row.type === 'header' ? (
+                  <div
+                    key={`hdr-${idx}`}
+                    className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                  >
+                    {groups[row.gi]?.label}
+                  </div>
+                ) : (
+                  <button
+                    key={`it-${row.gi}-${optKey(row.option)}`}
+                    id={`opt-${row.gi}-${optKey(row.option)}`}
+                    role="option"
+                    aria-selected={hi === idx}
+                    onMouseEnter={() => setHi(idx)}
+                    onClick={() => pickAt(idx)}
+                    className={clsx(
+                      'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
+                      hi === idx
+                        ? 'bg-zinc-100 dark:bg-zinc-800'
+                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                    )}
+                  >
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full ring-1 ring-zinc-200 dark:ring-zinc-700">
+                      {(() => {
+                        const G = groups[row.gi];
+                        if (!G) return null;
+                        const Icon = G.icon ?? defaultIconFor(G.kind ?? G.id);
+                        return <Icon className="h-3.5 w-3.5 opacity-80" />;
+                      })()}
+                    </span>
+                    <span className="text-zinc-800 dark:text-zinc-100">
+                      {optLabel(row.option)}
+                    </span>
+                  </button>
+                )
               )
-            )
-          )}
-        </div>
+            )}
+          </div>
+        </FloatingFocusManager>
       )}
     </div>
   );

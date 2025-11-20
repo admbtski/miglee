@@ -3,14 +3,21 @@
  */
 
 import { SlidersHorizontal, X } from 'lucide-react';
+import type { FilterModalTranslations } from './translations';
 
 export interface FilterHeaderProps {
   onClose: () => void;
   onClear: () => void;
   isDirty: boolean;
+  translations: FilterModalTranslations;
 }
 
-export function FilterHeader({ onClose, onClear, isDirty }: FilterHeaderProps) {
+export function FilterHeader({
+  onClose,
+  onClear,
+  isDirty,
+  translations: t,
+}: FilterHeaderProps) {
   return (
     <div className="flex items-center justify-between gap-4">
       <button
@@ -29,7 +36,7 @@ export function FilterHeader({ onClose, onClear, isDirty }: FilterHeaderProps) {
         <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-md">
           <SlidersHorizontal className="w-4 h-4 text-white" />
         </div>
-        <span>Search Filters</span>
+        <span>{t.title}</span>
       </div>
       <button
         onClick={onClear}
@@ -39,9 +46,9 @@ export function FilterHeader({ onClose, onClear, isDirty }: FilterHeaderProps) {
                    bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:border-red-300
                    dark:bg-red-950/30 dark:text-red-300 dark:border-red-800/50 dark:hover:bg-red-950/50
                    focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
-        title={isDirty ? 'Clear all filters' : 'No changes to clear'}
+        title={isDirty ? t.clearAllHint : t.noChangesToClear}
       >
-        Clear All
+        {t.clearAll}
       </button>
     </div>
   );

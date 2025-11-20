@@ -95,7 +95,9 @@ export const LocationSection = memo(function LocationSection({
         ].join(' ')}
       >
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Distance</span>
+          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+            Distance
+          </span>
           <span className="text-sm tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
             {city ? `${distanceKm} km` : 'Global'}
           </span>
