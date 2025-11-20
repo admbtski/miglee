@@ -18,36 +18,45 @@ export function FilterFooter({
   applyDisabledReason,
 }: FilterFooterProps) {
   return (
-    <div className="sticky bottom-0 p-4 border-t rounded-b-3xl border-zinc-200 bg-gradient-to-t from-white via-white/95 backdrop-blur dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900/95">
-      <div className="flex items-center justify-between gap-3">
-        <div
-          className="text-sm text-zinc-600 dark:text-zinc-400"
-          aria-live="polite"
+    <div className="flex items-center justify-between gap-3">
+      <div
+        className="text-sm text-zinc-600 dark:text-zinc-400"
+        aria-live="polite"
+      >
+        {resultsCount != null
+          ? `${resultsCount} result${resultsCount === 1 ? '' : 's'}`
+          : '—'}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors
+                     border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50
+                     dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
-          {resultsCount != null
-            ? `${resultsCount} wynik${resultsCount === 1 ? '' : 'ów'}`
-            : '—'}
-        </div>
-        <div className="flex items-center gap-2 ml-auto">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm border rounded-xl border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-          >
-            Anuluj
-          </button>
-          <button
-            onClick={onApply}
-            disabled={isApplyDisabled}
-            className="px-5 py-2 text-sm font-medium text-white shadow-sm rounded-xl bg-zinc-900 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600"
-            title={
-              isApplyDisabled ? applyDisabledReason || 'Brak zmian' : 'Zastosuj'
-            }
-          >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={onApply}
+          disabled={isApplyDisabled}
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2
+                     bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500 shadow-md hover:shadow-lg"
+          title={
+            isApplyDisabled
+              ? applyDisabledReason || 'No changes'
+              : 'Apply filters'
+          }
+        >
+          <span>
             {resultsCount != null
-              ? `Pokaż wyniki (${resultsCount})`
-              : 'Pokaż wyniki'}
-          </button>
-        </div>
+              ? `Show results (${resultsCount})`
+              : 'Show results'}
+          </span>
+        </button>
       </div>
     </div>
   );

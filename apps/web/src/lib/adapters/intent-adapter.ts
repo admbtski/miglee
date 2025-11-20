@@ -32,7 +32,6 @@ export function mapIntentToEventCardProps(
     startISO: item.startAt,
     endISO: item.endAt,
     title: item.title ?? '-',
-    description: item.description ?? '-',
     categories,
     address: item.address ?? undefined,
 

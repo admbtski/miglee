@@ -34,7 +34,6 @@ export interface EventCardProps {
   startISO: string;
   endISO: string;
   title: string;
-  description: string;
   categories: string[];
   address?: string;
   avatarKey: string | null;
