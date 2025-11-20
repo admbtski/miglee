@@ -8,6 +8,7 @@ import { useInviteMemberMutation } from '@/lib/api/intent-members';
 import { useUsersQuery } from '@/lib/api/users';
 import { IntentMemberCoreFragment_IntentMember_user_User as GqlUser } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 /* ---------------------------------- TYPES ---------------------------------- */
 
@@ -15,7 +16,7 @@ export type InviteUsersModalProps = {
   open: boolean;
   onClose: () => void;
   intentId: string;
-  suggestions?: Array<Pick<GqlUser, 'id' | 'name' | 'imageUrl' | 'email'>>;
+  suggestions?: Array<Pick<GqlUser, 'id' | 'name' | 'avatarKey' | 'email'>>;
   onInvited?: (invitedUserIds: string[]) => void;
 };
 
@@ -26,7 +27,7 @@ function Avatar({
   size = 32,
   rounded = 'rounded-full',
 }: {
-  user: Pick<GqlUser, 'name' | 'imageUrl'>;
+  user: Pick<GqlUser, 'name' | 'avatarKey'>;
   size?: number;
   rounded?: string;
 }) {
@@ -37,9 +38,9 @@ function Avatar({
     .slice(0, 2)
     .toUpperCase();
 
-  return user.imageUrl ? (
+  return user.avatarKey ? (
     <img
-      src={user.imageUrl}
+      src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
       alt=""
       className={`${rounded} object-cover ring-1 ring-zinc-200 dark:ring-zinc-700`}
       style={{ width: size, height: size }}
@@ -62,7 +63,7 @@ function Chip({
   user,
   onRemove,
 }: {
-  user: Pick<GqlUser, 'id' | 'name' | 'imageUrl'>;
+  user: Pick<GqlUser, 'id' | 'name' | 'avatarKey'>;
   onRemove: (id: string) => void;
 }) {
   return (

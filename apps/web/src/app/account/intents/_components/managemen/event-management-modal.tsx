@@ -192,7 +192,7 @@ export function EventManagementModal({
         .map((m) => ({
           id: m.user.id,
           name: m.user.name,
-          imageUrl: m.user.imageUrl ?? undefined,
+          avatarKey: m.user.avatarKey ?? undefined,
           email: undefined as string | undefined,
         })),
     [members]

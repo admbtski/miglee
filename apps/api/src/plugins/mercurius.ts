@@ -141,7 +141,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
                 name: user.name,
                 email: user.email,
                 role: user.role as any,
-                imageUrl: user.imageUrl,
+                avatarKey: user.avatarKey,
                 verifiedAt: user.verifiedAt,
               }
             : null,

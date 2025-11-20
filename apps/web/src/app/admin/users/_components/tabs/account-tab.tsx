@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { buildAvatarUrl } from '@/lib/media/url';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import { useMeQuery } from '@/lib/api/auth';
 import { useRouter } from 'next/navigation';
@@ -120,9 +121,9 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
       {/* User Info Card */}
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
         <div className="flex items-start gap-4">
-          {user.imageUrl ? (
+          {user.avatarKey ? (
             <img
-              src={user.imageUrl}
+              src={buildAvatarUrl(user.avatarKey, 'lg') || ''}
               alt={user.name}
               className="h-16 w-16 rounded-full"
             />

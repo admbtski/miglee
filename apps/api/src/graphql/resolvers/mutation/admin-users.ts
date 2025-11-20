@@ -109,7 +109,7 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
           data: {
             email: `deleted_${id}@anonymized.local`,
             name: 'Deleted User',
-            imageUrl: null,
+            avatarKey: null,
             verifiedAt: null,
             acceptedMarketingAt: null,
             acceptedTermsAt: null,

@@ -73,7 +73,7 @@ export function MembersPanel({
     const out: Array<{
       id: string;
       name: string;
-      imageUrl?: string | null;
+      avatarKey?: string | null;
       email?: string | null;
     }> = [];
     for (const m of members) {
@@ -84,7 +84,7 @@ export function MembersPanel({
       out.push({
         id: u.id,
         name: u.name,
-        imageUrl: (u as any).imageUrl ?? null,
+        avatarKey: (u as any).avatarKey ?? null,
         email: (u as any).email ?? null,
       });
       if (out.length >= 12) break;

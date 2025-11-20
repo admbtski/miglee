@@ -520,7 +520,7 @@ export const markDmThreadReadMutation: MutationResolvers['markDmThreadRead'] =
             createdAt: now,
             readAt: now,
             deletedAt: null,
-            sender: { id: user.id, name: '', imageUrl: null },
+            sender: { id: user.id, name: '', avatarKey: null },
             thread: {} as any,
             reactions: [],
           },

@@ -13,6 +13,8 @@ import {
 import Link from 'next/link';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import { ReportUserModal } from './report-user-modal';
+import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 type ProfileHeaderProps = {
   user: NonNullable<GetUserProfileQuery['user']>;
@@ -30,11 +32,14 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
     <div className="relative">
       {/* Cover Image */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 sm:h-64">
-        {user.profile?.coverUrl ? (
+        {user.profile?.coverKey ? (
           <>
-            <img
-              src={user.profile.coverUrl}
+            <BlurHashImage
+              src={buildUserCoverUrl(user.profile.coverKey, 'detail') || ''}
+              blurhash={user.profile.coverBlurhash}
               alt="Cover"
+              width={1280}
+              height={720}
               className="h-full w-full object-cover"
             />
             {/* Gradient Overlay */}
@@ -68,12 +73,15 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
             <div className="flex items-end gap-4">
               {/* Avatar */}
               <div className="relative">
-                {user.imageUrl ? (
+                {user.avatarKey ? (
                   <div className="relative">
                     <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 opacity-75 blur-sm"></div>
-                    <img
-                      src={user.imageUrl}
+                    <BlurHashImage
+                      src={buildAvatarUrl(user.avatarKey, 'xl') || ''}
+                      blurhash={user.avatarBlurhash}
                       alt={displayName}
+                      width={256}
+                      height={256}
                       className="relative h-32 w-32 rounded-2xl border-4 border-white object-cover shadow-xl dark:border-zinc-900"
                     />
                   </div>

@@ -37,34 +37,8 @@ import {
   CloseJoinModal,
   ReopenJoinModal,
 } from '@/app/account/intents/_components/close-join-modals';
-
-// Helper function to get cover image based on categories
-// Moved outside component to avoid React Hooks order issues
-function getCoverImageUrl(categories: Array<{ slug: string; name: string }>) {
-  // Map category slugs to Unsplash search terms
-  const categoryImageMap: Record<string, string> = {
-    sport: 'photo-1461896836934-ffe607ba8211', // Sports/fitness
-    outdoor: 'photo-1551632811-561732d1e306', // Hiking/outdoor
-    music: 'photo-1514320291840-2e0a9bf2a9ae', // Music/concert
-    food: 'photo-1414235077428-338989a2e8c0', // Food/dining
-    tech: 'photo-1519389950473-47ba0277781c', // Technology
-    art: 'photo-1460661419201-fd4cecdf8a8b', // Art/creative
-    education: 'photo-1523580494863-6f3031224c94', // Education/learning
-    gaming: 'photo-1511512578047-dfb367046420', // Gaming
-    social: 'photo-1511795409834-ef04bbd61622', // Social gathering
-    wellness: 'photo-1545205597-3d9d02c29597', // Wellness/yoga
-    business: 'photo-1557804506-669a67965ba0', // Business/networking
-    travel: 'photo-1488646953014-85cb44e25828', // Travel/adventure
-  };
-
-  // Get the first category's image or use default
-  const firstCategory = categories[0]?.slug;
-  const imageId = firstCategory
-    ? categoryImageMap[firstCategory] || 'photo-1540575467063-178a50c2df87'
-    : 'photo-1540575467063-178a50c2df87'; // Default: team/group
-
-  return `https://images.unsplash.com/${imageId}?w=1200&h=400&fit=crop&auto=format`;
-}
+import { buildIntentCoverUrl } from '@/lib/media/url';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 type EventDetailClientProps = {
   intentId: string;
@@ -142,9 +116,12 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     organizer: {
       id: intent.owner?.id ?? '',
       name: intent.owner?.name ?? 'Nieznany',
-      avatarUrl: intent.owner?.imageUrl,
+      avatarKey: intent.owner?.avatarKey,
+      avatarBlurhash: intent.owner?.avatarBlurhash,
       verifiedAt: intent.owner?.verifiedAt,
     },
+    coverKey: intent.coverKey,
+    coverBlurhash: intent.coverBlurhash,
     startISO: intent.startAt,
     endISO: intent.endAt,
     tz: intent.owner?.tz,
@@ -192,7 +169,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       user: {
         id: m.user.id,
         name: m.user.name,
-        imageUrl: m.user.imageUrl,
+        avatarKey: m.user.avatarKey,
         verifiedAt: m.user.verifiedAt,
       },
       note: m.note,
@@ -277,14 +254,18 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         <div className="mb-6">
           <div className="relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
             {/* Background Image */}
-            <img
-              src={getCoverImageUrl(eventData.categories)}
-              alt={eventData.title}
-              className="absolute inset-0 h-full w-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            {eventData.coverKey ? (
+              <BlurHashImage
+                src={buildIntentCoverUrl(eventData.coverKey, 'detail') || ''}
+                blurhash={eventData.coverBlurhash}
+                alt={eventData.title}
+                className="absolute inset-0 h-full w-full object-cover"
+                width={1280}
+                height={720}
+              />
+            ) : (
+              <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+            )}
 
             {/* Gradient Overlay - Subtle, magazine-style */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/15 to-black/55" />

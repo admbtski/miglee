@@ -25,6 +25,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { ReportCommentModal } from './report-comment-modal';
 import type { EventDetailsData } from '@/types/event-details';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 type EventCommentsProps = {
   event: EventDetailsData;
@@ -126,13 +127,13 @@ function CommentItem({
         {/* Author & Actions */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            {comment.author?.imageUrl && (
+            {comment.author?.avatarKey && (
               <Link
                 href={`/u/${comment.author.name}`}
                 className="flex-shrink-0"
               >
                 <img
-                  src={comment.author.imageUrl}
+                  src={buildAvatarUrl(comment.author.avatarKey, 'sm') || ''}
                   alt={
                     (comment.author as any).profile?.displayName ||
                     comment.author.name

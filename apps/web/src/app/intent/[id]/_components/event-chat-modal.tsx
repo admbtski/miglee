@@ -234,7 +234,7 @@ export function EventChatModal({
       author: {
         id: msg.author.id,
         name: msg.author.name || 'Unknown',
-        avatar: msg.author.imageUrl || undefined,
+        avatar: msg.author.avatarKey || undefined,
       },
       block: !!msg.deletedAt,
       reactions: msg.reactions || [],

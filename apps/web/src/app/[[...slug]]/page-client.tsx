@@ -7,10 +7,7 @@ import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
-import { FEATURES } from '@/lib/constants/features';
 import { DesktopSearchBar } from './_components/desktop-search-bar';
-import { EventsGrid } from './_components/events-list/events-grid';
-import { EventsGridHybrid } from './_components/events-list/events-grid-hybrid';
 import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
 import { EventsHeader } from './_components/events-list/events-header';
 
@@ -38,8 +35,8 @@ import {
   IntentStatus,
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
-import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 import { useMeQuery } from '@/lib/api/auth';
+import { useIntentsInfiniteQuery } from '@/lib/api/intents';
 import { appLanguage } from '@/lib/config/language';
 
 import {
@@ -266,41 +263,16 @@ export function IntentsPage() {
             />
 
             <ErrorBoundary>
-              {FEATURES.VIRTUALIZATION_MODE === 'always' ? (
-                <EventsGridVirtualized
-                  items={flatItems as unknown as IntentListItem[]}
-                  isLoading={isLoading}
-                  error={error}
-                  hasNextPage={hasNextPage}
-                  isFetchingNextPage={isFetchingNextPage}
-                  lang={appLanguage}
-                  onLoadMore={fetchNextPage}
-                  onHover={handleIntentHover}
-                />
-              ) : FEATURES.VIRTUALIZATION_MODE === 'hybrid' ? (
-                <EventsGridHybrid
-                  items={flatItems as unknown as IntentListItem[]}
-                  isLoading={isLoading}
-                  error={error}
-                  hasNextPage={hasNextPage}
-                  isFetchingNextPage={isFetchingNextPage}
-                  lang={appLanguage}
-                  onLoadMore={fetchNextPage}
-                  onHover={handleIntentHover}
-                  virtualizationThreshold={FEATURES.VIRTUALIZATION_THRESHOLD}
-                />
-              ) : (
-                <EventsGrid
-                  items={flatItems as unknown as IntentListItem[]}
-                  isLoading={isLoading}
-                  error={error}
-                  hasNextPage={hasNextPage}
-                  isFetchingNextPage={isFetchingNextPage}
-                  lang={appLanguage}
-                  onLoadMore={fetchNextPage}
-                  onHover={handleIntentHover}
-                />
-              )}
+              <EventsGridVirtualized
+                items={flatItems as IntentListItem[]}
+                isLoading={isLoading}
+                error={error}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                lang={appLanguage}
+                onLoadMore={fetchNextPage}
+                onHover={handleIntentHover}
+              />
             </ErrorBoundary>
           </motion.section>
 

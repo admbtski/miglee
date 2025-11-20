@@ -43,7 +43,7 @@ function aggregateReactions(
   reactions: Array<{
     emoji: string;
     userId: string;
-    user: { id: string; name: string; imageUrl: string | null };
+    user: { id: string; name: string; avatarKey: string | null };
   }>,
   currentUserId?: string
 ): MessageReaction[] {

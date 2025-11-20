@@ -20,6 +20,8 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { FavouriteButton } from '@/components/ui/favourite-button';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 type EventHeroProps = {
   event: EventDetailsData;
@@ -158,10 +160,13 @@ export function EventHero({ event }: EventHeroProps) {
           className="flex-shrink-0"
           data-u-id={event.organizer.id}
         >
-          {event.organizer.avatarUrl ? (
-            <img
-              src={event.organizer.avatarUrl}
+          {event.organizer.avatarKey ? (
+            <BlurHashImage
+              src={buildAvatarUrl(event.organizer.avatarKey, 'sm') || ''}
+              blurhash={event.organizer.avatarBlurhash}
               alt={event.organizer.displayName || event.organizer.name}
+              width={36}
+              height={36}
               className="h-9 w-9 rounded-full border border-neutral-200 object-cover transition-opacity hover:opacity-80 dark:border-neutral-700"
             />
           ) : (

@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { PublicProfileClient } from './_components/public-profile-client';
 import { gqlClient } from '@/lib/api/client';
 import { GetUserProfileDocument } from '@/lib/api/__generated__/react-query-update';
+import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 
 type Props = {
   params: { name: string };
@@ -29,8 +30,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const city = user.profile?.city;
     const country = user.profile?.country;
     const location = [city, country].filter(Boolean).join(', ');
-    const imageUrl = user.imageUrl || '/default-avatar.png';
-    const coverUrl = user.profile?.coverUrl;
+    const avatarUrl =
+      buildAvatarUrl(user.avatarKey, 'xl') || '/default-avatar.png';
+    const coverUrl =
+      buildUserCoverUrl(user.profile?.coverKey, 'detail') || avatarUrl;
 
     const title = `${displayName} (@${user.name}) - Miglee`;
     const description =
@@ -47,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: `https://miglee.com/u/${user.name}`,
         images: [
           {
-            url: coverUrl || imageUrl,
+            url: coverUrl,
             width: 1200,
             height: 630,
             alt: `${displayName}'s profile`,
@@ -58,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         card: 'summary_large_image',
         title,
         description,
-        images: [coverUrl || imageUrl],
+        images: [coverUrl],
       },
       alternates: {
         canonical: `https://miglee.com/u/${user.name}`,

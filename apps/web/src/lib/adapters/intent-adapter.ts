@@ -3,6 +3,7 @@ import type { EventCardProps } from '@/app/[[...slug]]/_components/event-card/in
 import { INTENTS_CONFIG } from '@/lib/constants/intents';
 import { notEmptyString } from '@/lib/utils/intents';
 import { planForIndex } from './plan-utils';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 /**
  * Maps raw intent data from API to EventCard component props
@@ -32,7 +33,9 @@ export function mapIntentToEventCardProps(
     startISO: item.startAt,
     endISO: item.endAt,
 
-    avatarUrl: item.owner?.imageUrl ?? INTENTS_CONFIG.FALLBACK_AVATAR,
+    // Pass raw avatarKey - EventCard will process it with buildAvatarUrl
+    avatarKey: item.owner?.avatarKey ?? INTENTS_CONFIG.FALLBACK_AVATAR,
+    avatarBlurhash: item.owner?.avatarBlurhash ?? null,
     organizerName: item.owner?.name ?? item.owner?.email ?? 'Unknown organizer',
     verifiedAt: item.owner?.verifiedAt ?? undefined,
 

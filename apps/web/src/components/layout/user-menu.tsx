@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 export type NavigateKey =
   | 'billing'
@@ -25,7 +26,8 @@ type UserMenuProps = {
   user: {
     name: string;
     email?: string;
-    avatarUrl?: string;
+    avatarKey?: string;
+    avatarBlurhash?: string;
   };
 
   /** opcjonalne callbacki – obecnie nie są używane do nawigacji ani logoutu */
@@ -79,7 +81,7 @@ export function UserMenu({ user }: UserMenuProps) {
           className="flex cursor-pointer items-center gap-2 rounded-full border border-zinc-200 bg-white p-1 pr-2 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           <img
-            src={user.avatarUrl || AVATAR_FALLBACK}
+            src={buildAvatarUrl(user.avatarKey, 'sm') || AVATAR_FALLBACK}
             alt={user.name}
             className="h-6 w-6 rounded-full object-cover"
           />
@@ -100,7 +102,7 @@ export function UserMenu({ user }: UserMenuProps) {
             >
               <div className="flex items-center gap-3 rounded-xl px-3 py-3">
                 <img
-                  src={user.avatarUrl || AVATAR_FALLBACK}
+                  src={buildAvatarUrl(user.avatarKey, 'md') || AVATAR_FALLBACK}
                   alt=""
                   className="h-10 w-10 rounded-full object-cover"
                 />

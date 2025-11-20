@@ -123,7 +123,7 @@ export function useChannelChat({
         preview: intent.description || 'No description',
         lastMessageAt: '', // TODO: Add last message time from API
         unread: 0, // TODO: Add unread count from API
-        avatar: intent.imageUrl || undefined,
+        avatar: intent.avatarKey || undefined,
       };
     });
   }, [membershipsData]);
@@ -141,7 +141,7 @@ export function useChannelChat({
         author: {
           id: msg.author.id,
           name: msg.author.name,
-          avatar: msg.author.imageUrl || undefined,
+          avatar: msg.author.avatarKey || undefined,
         },
         reactions: msg.reactions?.map((r) => ({
           emoji: r.emoji,
@@ -149,7 +149,7 @@ export function useChannelChat({
           users: r.users.map((u) => ({
             id: u.id,
             name: u.name,
-            imageUrl: u.imageUrl,
+            avatarKey: u.avatarKey,
           })),
           reacted: r.users.some((u) => u.id === myUserId),
         })),
@@ -206,7 +206,7 @@ export function useChannelChat({
     return {
       id: intent.id,
       title: intent.title,
-      avatar: intent.imageUrl || undefined,
+      avatar: intent.avatarKey || undefined,
       members: intent.participantCount || 0,
     };
   }, [activeIntentId, membershipsData]);

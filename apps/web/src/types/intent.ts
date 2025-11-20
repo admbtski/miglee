@@ -58,7 +58,8 @@ export type IntentListItem = {
   savedCount?: number;
 
   owner?: {
-    imageUrl?: string | null;
+    avatarKey?: string | null;
+    avatarBlurhash?: string | null;
     name?: string | null;
     email?: string | null;
     verifiedAt?: string | null;

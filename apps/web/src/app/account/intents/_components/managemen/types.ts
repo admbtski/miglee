@@ -24,7 +24,7 @@ export type IntentMember = {
   user: {
     id: string;
     name: string;
-    imageUrl?: string | null;
+    avatarKey?: string | null;
   };
 };
 

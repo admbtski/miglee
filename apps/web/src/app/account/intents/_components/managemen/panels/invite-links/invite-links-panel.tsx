@@ -24,6 +24,7 @@ import clsx from 'clsx';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { EditLinkModal } from './edit-link-modal';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 interface InviteLinksPanelProps {
   intentId: string;
@@ -335,14 +336,16 @@ export function InviteLinksPanel({ intentId }: InviteLinksPanelProps) {
                           key={usage.id}
                           className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900/50"
                         >
-                          {usage.user.imageUrl && (
+                          {usage.user.avatarKey && (
                             <img
-                              src={usage.user.imageUrl}
+                              src={
+                                buildAvatarUrl(usage.user.avatarKey, 'sm') || ''
+                              }
                               alt={usage.user.name}
                               className="h-8 w-8 rounded-full"
                             />
                           )}
-                          {!usage.user.imageUrl && (
+                          {!usage.user.avatarKey && (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
                               {usage.user.name.charAt(0).toUpperCase()}
                             </div>

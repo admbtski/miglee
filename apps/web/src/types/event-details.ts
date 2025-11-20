@@ -14,9 +14,14 @@ export type EventDetailsData = {
     id: string;
     name: string;
     displayName?: string | null;
-    avatarUrl?: string | null;
+    avatarKey?: string | null;
+    avatarBlurhash?: string | null;
     verifiedAt?: string | null;
   };
+
+  // Media
+  coverKey?: string | null;
+  coverBlurhash?: string | null;
 
   // Terminy
   startISO: string; // startAt
@@ -84,7 +89,8 @@ export type EventDetailsData = {
     user: {
       id: string;
       name: string;
-      imageUrl?: string | null;
+      avatarKey?: string | null;
+      avatarBlurhash?: string | null;
       verifiedAt?: string | null;
       profile?: {
         displayName?: string | null;

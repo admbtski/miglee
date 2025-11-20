@@ -123,7 +123,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
           ? formatRelativeTime(thread.lastMessage.createdAt)
           : '',
         unread: thread.unreadCount || 0,
-        avatar: otherUser?.imageUrl || undefined,
+        avatar: otherUser?.avatarKey || undefined,
         lastReadAt: thread.lastReadAt
           ? new Date(thread.lastReadAt).getTime()
           : undefined,
@@ -146,7 +146,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
           author: {
             id: msg.author.id,
             name: msg.author.name,
-            avatar: msg.author.imageUrl || undefined,
+            avatar: msg.author.avatarKey || undefined,
           },
           reactions: msg.reactions?.map((r) => ({
             emoji: r.emoji,
@@ -154,7 +154,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
             users: r.users.map((u) => ({
               id: u.id,
               name: u.name,
-              imageUrl: u.imageUrl,
+              avatarKey: u.avatarKey,
             })),
             reacted: r.users.some((u) => u.id === myUserId),
           })),
@@ -211,7 +211,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
     return {
       id: thread.id,
       title: otherUser?.name || 'Unknown',
-      avatar: otherUser?.imageUrl || undefined,
+      avatar: otherUser?.avatarKey || undefined,
       members: thread.participants.length,
     };
   }, [activeThreadId, threadsData, myUserId]);

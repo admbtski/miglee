@@ -36,7 +36,7 @@ export const intentSponsorshipResolver: IntentResolvers['sponsorship'] =
           id: sponsorship.sponsor.id,
           email: sponsorship.sponsor.email,
           name: sponsorship.sponsor.name,
-          imageUrl: sponsorship.sponsor.imageUrl ?? null,
+          avatarKey: sponsorship.sponsor.avatarKey ?? null,
           role: sponsorship.sponsor.role as any,
           verifiedAt: sponsorship.sponsor.verifiedAt ?? null,
           createdAt: sponsorship.sponsor.createdAt,

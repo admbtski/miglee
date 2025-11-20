@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 type ContentTabProps = {
   intentId: string;
@@ -71,9 +72,9 @@ export function ContentTab({ intentId }: ContentTabProps) {
         >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
-              {comment.author.imageUrl && (
+              {comment.author.avatarKey && (
                 <img
-                  src={comment.author.imageUrl}
+                  src={buildAvatarUrl(comment.author.avatarKey, 'md') || ''}
                   alt={comment.author.name}
                   className="h-10 w-10 rounded-full"
                 />
@@ -133,9 +134,9 @@ export function ContentTab({ intentId }: ContentTabProps) {
         >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
-              {review.author.imageUrl && (
+              {review.author.avatarKey && (
                 <img
-                  src={review.author.imageUrl}
+                  src={buildAvatarUrl(review.author.avatarKey, 'md') || ''}
                   alt={review.author.name}
                   className="h-10 w-10 rounded-full"
                 />
@@ -208,9 +209,9 @@ export function ContentTab({ intentId }: ContentTabProps) {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                {message.author.imageUrl && (
+                {message.author.avatarKey && (
                   <img
-                    src={message.author.imageUrl}
+                    src={buildAvatarUrl(message.author.avatarKey, 'md') || ''}
                     alt={message.author.name}
                     className="h-10 w-10 rounded-full"
                   />

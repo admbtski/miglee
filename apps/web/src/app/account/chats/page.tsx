@@ -82,7 +82,7 @@ export type Message = {
   reactions?: Array<{
     emoji: string;
     count: number;
-    users: Array<{ id: string; name: string; imageUrl?: string | null }>;
+    users: Array<{ id: string; name: string; avatarKey?: string | null }>;
     reacted: boolean;
   }>;
   readAt?: string | null;
@@ -618,7 +618,7 @@ export default function ChatsPageIntegrated() {
           thread.lastMessageAt || thread.createdAt
         ),
         unread: thread.unreadCount || 0,
-        avatar: otherUser.imageUrl || undefined,
+        avatar: otherUser.avatarKey || undefined,
       };
     });
   }, [dmThreadsData, currentUserId]);
@@ -655,7 +655,7 @@ export default function ChatsPageIntegrated() {
             preview: lastMessage,
             lastMessageAt: formatRelativeTime(intent.updatedAt),
             unread: unreadCount,
-            avatar: intent.owner?.imageUrl || undefined,
+            avatar: intent.owner?.avatarKey || undefined,
           },
         ];
       });
@@ -721,7 +721,7 @@ export default function ChatsPageIntegrated() {
       setDraftConversation({
         userId: user.id,
         userName: user.name,
-        userAvatar: user.imageUrl,
+        userAvatar: user.avatarKey,
       });
       setActiveDmId(undefined); // Clear active thread
     }
@@ -892,7 +892,7 @@ export default function ChatsPageIntegrated() {
           author: {
             id: msg.sender.id,
             name: msg.sender.name || 'Unknown',
-            avatar: msg.sender.imageUrl || undefined,
+            avatar: msg.sender.avatarKey || undefined,
           },
           block: !!msg.deletedAt,
           reactions: msg.reactions || [],
@@ -930,7 +930,7 @@ export default function ChatsPageIntegrated() {
           author: {
             id: msg.author.id,
             name: msg.author.name || 'Unknown',
-            avatar: msg.author.imageUrl || undefined,
+            avatar: msg.author.avatarKey || undefined,
           },
           block: !!msg.deletedAt,
           reactions: msg.reactions || [],
@@ -1005,7 +1005,7 @@ export default function ChatsPageIntegrated() {
           kind: 'dm' as const,
           title: otherUser.name || 'Unknown',
           members: 2,
-          avatar: otherUser.imageUrl || undefined,
+          avatar: otherUser.avatarKey || undefined,
           lastReadAt: undefined,
         };
       }

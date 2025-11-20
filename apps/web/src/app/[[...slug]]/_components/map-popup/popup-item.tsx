@@ -16,6 +16,7 @@ import { EventCountdownPill } from '@/features/intents/components/event-countdow
 import { Avatar } from '@/components/ui/avatar';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import { formatDateRange } from '@/lib/utils/date';
+import { buildAvatarUrl } from '@/lib/media/url';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { Calendar, MapPinIcon } from 'lucide-react';
@@ -32,7 +33,7 @@ export type PopupIntent = {
   max?: number | null;
   owner?: {
     name?: string | null;
-    imageUrl?: string | null;
+    avatarKey?: string | null;
     verifiedAt?: string | null;
   } | null;
   lat?: number | null;
@@ -221,7 +222,11 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
       {intent.owner?.name ? (
         <div className="mt-2 flex items-center gap-2 min-w-0">
           <Link href={`/u/${intent.owner.name}`} className="flex-shrink-0">
-            <Avatar url={intent.owner?.imageUrl} alt="Organizer" size={22} />
+            <Avatar
+              url={buildAvatarUrl(intent.owner?.avatarKey, 'sm')}
+              alt="Organizer"
+              size={22}
+            />
           </Link>
           <div className="flex flex-col gap-0.5 min-w-0">
             <Link

@@ -1,30 +1,39 @@
 /**
- * Reusable Avatar component
+ * Reusable Avatar component with BlurHash support
  */
 
 import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import { BlurHashImage } from './blurhash-image';
 
 export interface AvatarProps {
   url?: string | null;
+  blurhash?: string | null;
   alt: string;
   size?: number;
   className?: string;
 }
 
 /**
- * Avatar component with fallback image
+ * Avatar component with fallback image and BlurHash placeholder
  */
-export function Avatar({ url, alt, size = 48, className = '' }: AvatarProps) {
+export function Avatar({
+  url,
+  blurhash,
+  alt,
+  size = 48,
+  className = '',
+}: AvatarProps) {
   const sizeClass = `w-${Math.floor(size / 4)} h-${Math.floor(size / 4)}`;
+  const finalUrl = url || INTENTS_CONFIG.FALLBACK_AVATAR;
 
   return (
-    <img
-      src={url || INTENTS_CONFIG.FALLBACK_AVATAR}
+    <BlurHashImage
+      src={finalUrl}
+      blurhash={blurhash}
       alt={alt}
+      width={size}
+      height={size}
       className={`object-cover rounded-full border border-neutral-200 dark:border-neutral-700 ${sizeClass} ${className}`}
-      style={{ width: `${size}px`, height: `${size}px` }}
-      loading="lazy"
-      decoding="async"
     />
   );
 }

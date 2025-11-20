@@ -5,11 +5,14 @@ import { Search, X, Loader2, User2, AlertCircle } from 'lucide-react';
 import { useUsersQuery } from '@/lib/api/users';
 import { useMeQuery } from '@/lib/api/auth';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 export type PickedUser = {
   id: string;
   name: string;
-  imageUrl?: string | null;
+  avatarKey?: string | null;
+  avatarBlurhash?: string | null;
 };
 
 type UserPickerProps = {
@@ -173,16 +176,20 @@ export function UserPicker({
                       handleSelectUser({
                         id: user.id,
                         name: user.name,
-                        imageUrl: user.imageUrl,
+                        avatarKey: user.avatarKey,
+                        avatarBlurhash: user.avatarBlurhash,
                       })
                     }
                     className="flex items-center w-full gap-3 p-3 text-left transition-colors rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
                     {/* Avatar */}
-                    {user.imageUrl ? (
-                      <img
-                        src={user.imageUrl}
+                    {user.avatarKey ? (
+                      <BlurHashImage
+                        src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
+                        blurhash={user.avatarBlurhash}
                         alt={user.name}
+                        width={40}
+                        height={40}
                         className="object-cover w-10 h-10 rounded-full"
                       />
                     ) : (

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import type { IntentJoinRequestsQuery } from '@/lib/api/__generated__/react-query-update';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 type JoinRequest = IntentJoinRequestsQuery['intentJoinRequests']['items'][0];
 
@@ -73,7 +74,11 @@ export function JoinAnswersViewer({
     <div className="space-y-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
       {/* User info header */}
       <div className="flex items-start gap-3 pb-4 border-b border-neutral-200 dark:border-neutral-800">
-        <Avatar url={user.imageUrl || ''} alt={user.name} size={48} />
+        <Avatar
+          url={buildAvatarUrl(user.avatarKey, 'md')}
+          alt={user.name}
+          size={48}
+        />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h4 className="font-semibold text-neutral-900 dark:text-neutral-100">

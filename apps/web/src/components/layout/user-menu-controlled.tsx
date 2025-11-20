@@ -3,11 +3,7 @@
 import { useCallback, useMemo } from 'react';
 import { NavigateKey, UserMenu } from './user-menu';
 
-import {
-  GET_ME_KEY,
-  useDevLogoutMutation,
-  useMeQuery,
-} from '@/lib/api/auth';
+import { GET_ME_KEY, useDevLogoutMutation, useMeQuery } from '@/lib/api/auth';
 import { getQueryClient } from '@/lib/config/query-client';
 
 export function UserMenuControlled({
@@ -31,9 +27,8 @@ export function UserMenuControlled({
     return {
       name: me.name ?? me.email ?? 'User',
       email: me.email,
-      avatarUrl:
-        me.imageUrl ??
-        'https://api.dicebear.com/7.x/thumbs/svg?seed=user&radius=50',
+      avatarKey: me.avatarKey,
+      avatarBlurhash: me.avatarBlurhash,
     };
   }, [data]);
 

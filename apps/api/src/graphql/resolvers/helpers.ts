@@ -287,7 +287,7 @@ function canSeeWithRole(
  * ========================================================================== */
 
 export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
-  const avatarKey = (u as any).avatarKey ?? null;
+  const avatarKey = u.avatarKey ?? null;
   return {
     id: u.id,
     email: u.email,
@@ -507,8 +507,8 @@ function computeJoinOpenAndReason(i: IntentWithGraph): {
 }
 
 function resolveOwnerFromMembers(i: IntentWithGraph | any): GQLUser | null {
-  if ((i as any).owner) {
-    return mapUser((i as any).owner);
+  if (i.owner) {
+    return mapUser(i.owner);
   }
   // Safe access to members - may be undefined if not included
   const owner = (i.members ?? []).find(

@@ -24,6 +24,7 @@ import {
   STATUS_BADGE_CLASSES,
 } from '../../types';
 import { Avatar, Badge, iconForRole } from '../../ui';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 type BtnVariant =
   | 'solid'
@@ -118,7 +119,10 @@ export function MemberManageModal({
   const Header = React.useMemo(
     () => (
       <div className="flex items-start gap-3">
-        <Avatar src={member.user.imageUrl} name={member.user.name} />
+        <Avatar
+          src={buildAvatarUrl(member.user.avatarKey, 'sm')}
+          name={member.user.name}
+        />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">

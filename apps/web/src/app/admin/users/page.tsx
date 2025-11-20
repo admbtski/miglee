@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { UserDetailModal } from './_components/user-detail-modal';
 import { AddUserModal } from './_components/add-user-modal';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -193,9 +194,9 @@ export default function UsersPage() {
                           rel="noopener noreferrer"
                           className="flex-shrink-0"
                         >
-                          {user.imageUrl ? (
+                          {user.avatarKey ? (
                             <img
-                              src={user.imageUrl}
+                              src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
                               alt={user.profile?.displayName || user.name}
                               className="h-8 w-8 rounded-full transition-opacity hover:opacity-80"
                             />

@@ -9,6 +9,7 @@ import {
   STATUS_BADGE_CLASSES,
 } from '../../types';
 import { Avatar, Badge, iconForRole } from '../../ui';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 export function MemberRow({
   member,
@@ -28,7 +29,10 @@ export function MemberRow({
       )}
     >
       <div className="flex min-w-0 items-start gap-3">
-        <Avatar src={member.user.imageUrl} name={member.user.name} />
+        <Avatar
+          src={buildAvatarUrl(member.user.avatarKey, 'sm')}
+          name={member.user.name}
+        />
         <div className="min-w-0 flex-1 items-center self-center">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">

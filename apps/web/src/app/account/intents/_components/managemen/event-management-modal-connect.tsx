@@ -34,7 +34,7 @@ function mapGqlMember(m: GQLIntentMember): IntentMember {
     user: {
       id: m.user.id,
       name: m.user.name ?? 'Użytkownik',
-      imageUrl: m.user.imageUrl ?? undefined,
+      avatarKeyy: m.useravatarKeyey ?? undefined,
     },
   };
 }

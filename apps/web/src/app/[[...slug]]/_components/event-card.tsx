@@ -26,7 +26,7 @@ import Link from 'next/link';
 import { useCallback, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
-import { buildIntentCoverUrl } from '@/lib/media/url';
+import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -45,7 +45,8 @@ export interface EventCardProps {
   address?: string;
 
   // Organizer info
-  avatarUrl: string;
+  avatarKey: string;
+  avatarBlurhash?: string | null;
   organizerName: string;
   verifiedAt?: string;
   plan?: Plan;
@@ -128,7 +129,8 @@ export function EventCard({
   lng,
   startISO,
   endISO,
-  avatarUrl,
+  avatarKey,
+  avatarBlurhash,
   organizerName,
   title,
   address,
@@ -368,7 +370,8 @@ export function EventCard({
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar
-                url={avatarUrl}
+                url={buildAvatarUrl(avatarKey, 'sm')}
+                blurhash={avatarBlurhash}
                 alt={organizerName}
                 size={24}
                 className="opacity-90 group-hover:opacity-100 transition-opacity"

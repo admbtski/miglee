@@ -26,7 +26,7 @@ export type Message = {
   reactions?: Array<{
     emoji: string;
     count: number;
-    users: Array<{ id: string; name: string; imageUrl?: string | null }>;
+    users: Array<{ id: string; name: string; avatarKey?: string | null }>;
     reacted: boolean;
   }>;
   readAt?: string | null;

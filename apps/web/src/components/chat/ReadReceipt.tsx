@@ -1,6 +1,8 @@
 'use client';
 
 import { Check, CheckCheck } from 'lucide-react';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 interface ReadReceiptProps {
   readAt?: string | null;
@@ -64,7 +66,8 @@ interface ReadByAvatarsProps {
   users: Array<{
     id: string;
     name: string;
-    imageUrl?: string | null;
+    avatarKey?: string | null;
+    avatarBlurhash?: string | null;
   }>;
   maxShow?: number;
 }
@@ -84,10 +87,13 @@ export function ReadByAvatars({ users, maxShow = 3 }: ReadByAvatarsProps) {
             className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 ring-2 ring-white dark:ring-zinc-900"
             title={user.name}
           >
-            {user.imageUrl ? (
-              <img
-                src={user.imageUrl}
+            {user.avatarKey ? (
+              <BlurHashImage
+                src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
+                blurhash={user.avatarBlurhash}
                 alt={user.name}
+                width={20}
+                height={20}
                 className="h-full w-full rounded-full object-cover"
               />
             ) : (

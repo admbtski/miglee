@@ -58,6 +58,10 @@ const GetIntentDetailDocument = `
       startAt
       endAt
       
+      # Media
+      coverKey
+      coverBlurhash
+      
       # Join windows / cutoffs / manual lock
       allowJoinLate
       joinOpensMinutesBeforeStart
@@ -68,7 +72,7 @@ const GetIntentDetailDocument = `
       joinManuallyClosedBy {
         id
         name
-        imageUrl
+        avatarKey
       }
       joinManualCloseReason
       
@@ -112,7 +116,7 @@ const GetIntentDetailDocument = `
         id
         email
         name
-        imageUrl
+        avatarKey
         role
         verifiedAt
         createdAt
@@ -132,7 +136,7 @@ const GetIntentDetailDocument = `
         id
         email
         name
-        imageUrl
+        avatarKey
         role
         verifiedAt
         createdAt
@@ -170,7 +174,7 @@ const GetIntentDetailDocument = `
         id
         email
         name
-        imageUrl
+        avatarKey
         role
         verifiedAt
         createdAt
@@ -195,7 +199,7 @@ const GetIntentDetailDocument = `
           id
           email
           name
-          imageUrl
+          avatarKey
           role
           verifiedAt
           createdAt
@@ -209,7 +213,7 @@ const GetIntentDetailDocument = `
         addedBy {
           id
           name
-          imageUrl
+          avatarKey
         }
       }
       
@@ -231,7 +235,7 @@ const GetIntentDetailDocument = `
           id
           email
           name
-          imageUrl
+          avatarKey
           role
           verifiedAt
           createdAt

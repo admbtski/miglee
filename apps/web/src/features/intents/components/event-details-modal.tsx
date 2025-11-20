@@ -54,6 +54,8 @@ import { twMerge } from 'tailwind-merge';
 import { planTheme, type Plan } from '@/components/ui/plan-theme';
 import { EventCountdownPill } from './event-countdown-pill';
 import { FavouriteButton } from '@/components/ui/favourite-button';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 /* ───────────────────────────── Typy ───────────────────────────── */
 
@@ -76,7 +78,8 @@ type Props = {
     startISO: string;
     endISO: string;
     organizerName: string;
-    avatarUrl: string;
+    avatarKey?: string | null;
+    avatarBlurhash?: string | null;
     description: string;
     address?: string;
     onlineUrl?: string;
@@ -362,7 +365,7 @@ function PeopleInline({
         return (
           <Link key={m.id} href={profileUrl}>
             <img
-              src={m.user.imageUrl ?? '/avatar.svg'}
+              src={buildAvatarUrl(m.user.avatarKey, 'md') ?? '/avatar.svg'}
               alt={displayName}
               className="w-10 h-10 rounded-full border border-white dark:border-neutral-900 object-cover transition-opacity hover:opacity-80"
               loading="lazy"
@@ -401,7 +404,8 @@ export function EventDetailsModal({
     startISO,
     endISO,
     organizerName,
-    avatarUrl,
+    avatarKey,
+    avatarBlurhash,
     description,
     address,
     onlineUrl,
@@ -471,9 +475,12 @@ export function EventDetailsModal({
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 text-md text-neutral-700 dark:text-neutral-300">
             <Link href={`/u/${organizerName}`} className="flex-shrink-0">
-              <img
-                src={avatarUrl}
+              <BlurHashImage
+                src={buildAvatarUrl(avatarKey, 'sm') || ''}
+                blurhash={avatarBlurhash}
                 alt={organizerName}
+                width={36}
+                height={36}
                 className="w-9 h-9 rounded-full object-cover border border-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700"
               />
             </Link>
@@ -734,9 +741,12 @@ export function EventDetailsModal({
                     href={`/u/${organizerName}`}
                     className="inline-flex items-center gap-2 transition-colors hover:text-blue-600 dark:hover:text-blue-400"
                   >
-                    <img
-                      src={avatarUrl}
+                    <BlurHashImage
+                      src={buildAvatarUrl(avatarKey, 'sm') || ''}
+                      blurhash={avatarBlurhash}
                       alt={organizerName}
+                      width={20}
+                      height={20}
                       className="w-5 h-5 rounded-full object-cover border border-neutral-200 dark:border-neutral-700"
                     />
                     {organizerName}
@@ -998,7 +1008,9 @@ function PeopleGroup({
               <li key={p.id} className="flex items-center gap-3">
                 <Link href={profileUrl} className="flex-shrink-0">
                   <img
-                    src={p.user.imageUrl ?? '/avatar.svg'}
+                    src={
+                      buildAvatarUrl(p.user.avatarKey, 'md') ?? '/avatar.svg'
+                    }
                     alt={displayName}
                     className="w-11 h-11 rounded-full object-cover border border-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700"
                     loading="lazy"

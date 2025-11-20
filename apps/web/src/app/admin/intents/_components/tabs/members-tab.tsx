@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { buildAvatarUrl } from '@/lib/media/url';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 
 type MembersTabProps = {
@@ -427,9 +428,11 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {member.user.imageUrl && (
+                        {member.user.avatarKey && (
                           <img
-                            src={member.user.imageUrl}
+                            src={
+                              buildAvatarUrl(member.user.avatarKey, 'sm') || ''
+                            }
                             alt={member.user.name}
                             className="h-8 w-8 rounded-full"
                           />

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { buildAvatarUrl } from '@/lib/media/url';
 import { Search, Bell, BellOff, User } from 'lucide-react';
 import { useUsersQuery } from '@/lib/api/users';
 import { useAdminUserNotificationsQuery } from '@/lib/api/admin-users';
@@ -110,9 +111,9 @@ export default function NotificationsPage() {
                     onClick={() => handleSelectUser(user.id, user.name)}
                     className="flex w-full items-center gap-3 border-b border-gray-200 p-3 text-left transition-colors hover:bg-gray-100 last:border-b-0 dark:border-gray-700 dark:hover:bg-gray-800"
                   >
-                    {user.imageUrl ? (
+                    {user.avatarKey ? (
                       <img
-                        src={user.imageUrl}
+                        src={buildAvatarUrl(user.avatarKey, 'sm') || ''}
                         alt={user.name}
                         className="h-8 w-8 rounded-full"
                       />
@@ -230,9 +231,14 @@ export default function NotificationsPage() {
                           {/* Actor */}
                           {notification.actor && (
                             <div className="mt-2 flex items-center gap-2">
-                              {notification.actor.imageUrl && (
+                              {notification.actor.avatarKey && (
                                 <img
-                                  src={notification.actor.imageUrl}
+                                  src={
+                                    buildAvatarUrl(
+                                      notification.actor.avatarKey,
+                                      'sm'
+                                    ) || ''
+                                  }
                                   alt={notification.actor.name}
                                   className="h-5 w-5 rounded-full"
                                 />

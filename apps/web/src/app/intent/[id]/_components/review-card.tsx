@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Star, Trash2, Edit2, Flag } from 'lucide-react';
+import { buildAvatarUrl } from '@/lib/media/url';
 
 type ReviewCardProps = {
   review: {
@@ -14,7 +15,7 @@ type ReviewCardProps = {
     author: {
       id: string;
       name: string;
-      imageUrl?: string | null;
+      avatarKey?: string | null;
     };
   };
   currentUserId?: string;
@@ -38,9 +39,9 @@ export function ReviewCard({
         <div className="flex items-start gap-3 flex-1">
           {/* Avatar */}
           <Link href={`/u/${review.author.name}`} className="flex-shrink-0">
-            {review.author.imageUrl ? (
+            {review.author.avatarKey ? (
               <img
-                src={review.author.imageUrl}
+                src={buildAvatarUrl(review.author.avatarKey, 'md') || ''}
                 alt={
                   (review.author as any).profile?.displayName ||
                   review.author.name
