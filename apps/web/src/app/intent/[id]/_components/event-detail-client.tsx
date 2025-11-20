@@ -29,7 +29,7 @@ import {
   MapPinned,
 } from 'lucide-react';
 import { FavouriteButton } from '@/components/ui/favourite-button';
-import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
+// import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
 import { EventManagementModalConnect } from '@/app/account/intents/_components/management';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
 import { DeleteIntentModals } from '@/app/account/intents/_components/delete-intent-modals';
@@ -533,6 +533,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       </div>
 
       {/* Modals */}
+      {/*
       <CreateEditIntentModalConnect
         intentId={editOpen ? intentId : undefined}
         open={editOpen}
@@ -541,7 +542,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           refetch();
         }}
       />
-
+*/}
       <EventManagementModalConnect
         intentId={intentId}
         canManage={isOwner || isModerator}

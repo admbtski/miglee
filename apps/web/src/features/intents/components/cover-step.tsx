@@ -87,7 +87,7 @@ export function CoverStep({
           <img
             src={coverPreview}
             alt="Cover preview"
-            className="w-full h-48 object-cover rounded-lg border border-zinc-200 dark:border-zinc-800"
+            className="w-full h-64 object-cover rounded-lg border border-zinc-200 dark:border-zinc-800"
           />
           {!isUploading && (
             <button

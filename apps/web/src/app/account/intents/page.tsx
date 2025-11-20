@@ -14,7 +14,6 @@ import type {
   IntentMemberRole,
   IntentMemberStatus,
 } from '@/lib/api/__generated__/react-query-update';
-import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
 
 import { RoleFilter } from './_components/role-filter';
 import { IntentStatusFilter } from './_components/intent-status-filter';
@@ -317,13 +316,13 @@ export default function MyIntentsPage() {
         onClose={closeCancel}
         onSuccess={() => {}}
       />
-
+      {/*
       <CreateEditIntentModalConnect
         intentId={editId ?? undefined}
         open={Boolean(editId)}
         onClose={closeEdit}
       />
-
+*/}
       <EventManagementModalConnect
         intentId={manageId ?? ''}
         canManage={true}

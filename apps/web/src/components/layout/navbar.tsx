@@ -2,10 +2,10 @@
 
 import { Bell, Heart, Menu as MenuIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
 import { useMeQuery } from '@/lib/api/auth';
-import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
 import { NavDrawer } from './nav-drawer';
 import { UserMenuControlled } from './user-menu-controlled';
 import { NotificationBell } from '@/features/notifications/components/notifications-bell';
@@ -43,9 +43,9 @@ function IconButton({
 }
 
 export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
+  const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [newOpen, setNewOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<'signin' | 'signup'>(
     'signin'
   );
@@ -53,7 +53,9 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
   const { data } = useMeQuery();
   const isAuthed = !!data?.me;
 
-  const openPost = useCallback(() => setNewOpen(true), []);
+  const openPost = useCallback(() => {
+    router.push('/intent/creator');
+  }, [router]);
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const openAuthSignin = useCallback(() => {
     setAuthDefaultTab('signin');
@@ -184,10 +186,6 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
         open={authOpen}
         onClose={() => setAuthOpen(false)}
         defaultTab={authDefaultTab}
-      />
-      <CreateEditIntentModalConnect
-        open={newOpen}
-        onClose={() => setNewOpen(false)}
       />
     </>
   );

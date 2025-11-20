@@ -1,61 +1,59 @@
 'use client';
 
+import {
+  BadgePlusIcon,
+  CalendarClockIcon,
+  HatGlassesIcon,
+  ImageIcon,
+  SquarePenIcon,
+} from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { CategoryOption } from '@/types/types';
 import { appLanguage, appLanguageFallback } from '@/lib/config/language';
 import {
   useCreateIntentMutation,
   useIntentQuery,
   useUpdateIntentMutation,
 } from '@/lib/api/intents';
-import { CategoryOption } from '@/types/types';
-import { useCallback, useMemo, useState } from 'react';
-import { CategorySelectionProvider } from './category-selection-provider';
-import { CreateEditIntentModal } from './create-edit-intent-modal';
-import { mapFormToCreateInput, mapIntentToFormValues } from './mappers';
-import { SuccessIntentModal } from './success-intent-modal';
-import { TagSelectionProvider } from './tag-selection-provider';
-import { IntentFormValues } from './types';
+import { CategorySelectionProvider } from '@/features/intents/components/category-selection-provider';
+import { TagSelectionProvider } from '@/features/intents/components/tag-selection-provider';
+import { IntentFormValues } from '@/features/intents/components/types';
+import {
+  mapFormToCreateInput,
+  mapIntentToFormValues,
+} from '@/features/intents/components/mappers';
 import { toast, devLogger } from '@/lib/utils';
-import type { JoinFormQuestion } from './join-form-step';
+import type { JoinFormQuestion } from '@/features/intents/components/join-form-step';
+import { IntentCreatorForm } from './intent-creator-form';
+import { SuccessIntentModal } from '@/features/intents/components/success-intent-modal';
+
+const STEP_META = [
+  { key: 'basics', label: 'Event Details', Icon: SquarePenIcon },
+  { key: 'capacity', label: 'Capacity', Icon: HatGlassesIcon },
+  { key: 'when', label: 'When', Icon: CalendarClockIcon },
+  { key: 'where', label: 'Where', Icon: CalendarClockIcon },
+  { key: 'settings', label: 'Privacy & Access', Icon: HatGlassesIcon },
+  { key: 'cover', label: 'Cover Image', Icon: ImageIcon },
+  { key: 'review', label: 'Review', Icon: BadgePlusIcon },
+];
+
+type IntentCreatorPageClientProps = {
+  intentId?: string;
+};
 
 /**
- * CreateEditIntentModalConnect - Modal for creating/editing intents with auto-save
+ * IntentCreatorPageClient - Full-page intent creator/editor
  *
- * @param intentId - Optional ID for editing existing intent
- * @param open - Controls modal visibility
- * @param onClose - Called when modal is closed
- * @param onSuccess - Optional callback with intentId called AFTER success modal is closed
- *                    Use this to navigate to detail page after user sees success message
+ * This is the page equivalent of CreateEditIntentModalConnect
+ * Provides the same functionality but as a standalone page instead of a modal
  *
- * @example
- * // Without navigation (just shows success modal)
- * <CreateEditIntentModalConnect
- *   open={isOpen}
- *   onClose={() => setIsOpen(false)}
- * />
- *
- * @example
- * // With navigation to detail page after success modal
- * const router = useRouter();
- * <CreateEditIntentModalConnect
- *   open={isOpen}
- *   onClose={() => setIsOpen(false)}
- *   onSuccess={(intentId) => {
- *     // This will be called AFTER user closes the success modal
- *     router.push(`/intent/${intentId}`);
- *   }}
- * />
+ * @param intentId - Optional ID for editing existing intent (via query param)
  */
-export function CreateEditIntentModalConnect({
+export function IntentCreatorPageClient({
   intentId,
-  open,
-  onClose,
-  onSuccess,
-}: {
-  intentId?: string;
-  open: boolean;
-  onClose: () => void;
-  onSuccess?: (intentId: string) => void;
-}) {
+}: IntentCreatorPageClientProps) {
+  const router = useRouter();
   const { mutateAsync: createAsync } = useCreateIntentMutation();
   const { mutateAsync: updateAsync } = useUpdateIntentMutation();
 
@@ -64,10 +62,13 @@ export function CreateEditIntentModalConnect({
     undefined
   );
 
-  const { data } = useIntentQuery(
+  const { data, isLoading } = useIntentQuery(
     { id: intentId! },
-    { enabled: !!intentId && open }
+    { enabled: !!intentId }
   );
+
+  const isEdit = !!intentId;
+  const steps = STEP_META;
 
   const initialValues: Partial<IntentFormValues> | undefined = useMemo(() => {
     if (!intentId || !data?.intent) return undefined;
@@ -92,19 +93,15 @@ export function CreateEditIntentModalConnect({
     }));
   }, [intentId, data?.intent]);
 
-  const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
   const handleSuccessClose = useCallback(() => {
     setSuccessOpen(false);
 
-    // Call onSuccess callback after success modal is closed
-    if (onSuccess && createdIntentId) {
-      onSuccess(createdIntentId);
+    // Navigate to intent detail page after success modal is closed
+    if (createdIntentId) {
+      router.push(`/intent/${createdIntentId}`);
       setCreatedIntentId(undefined);
     }
-  }, [onSuccess, createdIntentId]);
+  }, [createdIntentId, router]);
 
   const handleSubmit = useCallback(
     async (
@@ -150,10 +147,7 @@ export function CreateEditIntentModalConnect({
         // Store intent ID for later use in handleSuccessClose
         setCreatedIntentId(resultIntentId);
 
-        onClose();
-
-        // Always show success modal
-        // onSuccess will be called in handleSuccessClose after user closes the modal
+        // Show success modal
         setSuccessOpen(true);
 
         // Return intentId for cover upload
@@ -190,31 +184,75 @@ export function CreateEditIntentModalConnect({
         return undefined;
       }
     },
-    [createAsync, updateAsync, onClose, intentId]
+    [createAsync, updateAsync, intentId]
   );
 
-  // Render nothing only when both are closed
-  if (!open && !successOpen) return null;
+  // Show loading skeleton while fetching intent data for edit mode
+  if (isEdit && isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+          <div className="h-4 w-full max-w-md rounded bg-zinc-200 dark:bg-zinc-800" />
+        </div>
+        <div className="animate-pulse space-y-4">
+          <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800" />
+          <div className="space-y-3">
+            <div className="h-10 w-full rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-10 w-full rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-32 w-full rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      {open && (
+      <div className="space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            {isEdit ? 'Edit Event' : 'Create New Event'}
+          </h1>
+          <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400 max-w-2xl">
+            {isEdit
+              ? 'Update your event details and settings'
+              : 'Fill in the details below to create your event. All fields marked with * are required.'}
+          </p>
+        </div>
+
+        {/* Form */}
         <CategorySelectionProvider initial={initialCategoryOptions}>
           <TagSelectionProvider initial={initialTagOptions}>
-            <CreateEditIntentModal
+            <IntentCreatorForm
               initialCategories={initialCategoryOptions}
               initialTags={initialTagOptions}
               initialValues={initialValues}
-              open={open}
-              mode={intentId ? 'edit' : 'create'}
-              onClose={handleClose}
+              mode={isEdit ? 'edit' : 'create'}
               onSubmit={handleSubmit}
+              steps={steps}
             />
           </TagSelectionProvider>
         </CategorySelectionProvider>
-      )}
+      </div>
 
-      <SuccessIntentModal open={successOpen} onClose={handleSuccessClose} />
+      {/* Success Modal */}
+      <SuccessIntentModal
+        open={successOpen}
+        onClose={handleSuccessClose}
+        title={isEdit ? 'Event Updated!' : 'Event Created!'}
+        subtitle={
+          isEdit
+            ? 'Your changes have been saved successfully.'
+            : 'Your event is now live — share it or jump in to manage details.'
+        }
+        onViewIntent={
+          createdIntentId
+            ? () => router.push(`/intent/${createdIntentId}`)
+            : undefined
+        }
+      />
     </>
   );
 }
