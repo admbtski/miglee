@@ -60,7 +60,7 @@ import { useMessageActions } from './_hooks/use-message-actions';
 
 type ChatKind = 'dm' | 'channel';
 
-export type Conversation = {
+type Conversation = {
   id: string;
   kind: ChatKind;
   title: string;
@@ -72,7 +72,7 @@ export type Conversation = {
   lastReadAt?: number; // epoch ms
 };
 
-export type Message = {
+type Message = {
   id: string;
   text: string;
   at: number; // epoch ms
@@ -1174,7 +1174,7 @@ export default function ChatsPageIntegrated() {
 
 /* ───────────────────────────── Shell & panes ───────────────────────────── */
 
-export function ChatShell({
+function ChatShell({
   children,
   listVisible,
 }: {
@@ -1280,25 +1280,23 @@ function ChatTabs({
 /* ───────────────────────────── List ───────────────────────────── */
 // ChatList moved to _components/chat-list.tsx
 import { ChatList as ChatListComponent } from './_components/chat-list';
-export { ChatList } from './_components/chat-list';
 const ChatList = ChatListComponent;
 
 /* ───────────────────────────── Thread ───────────────────────────── */
 // ChatThread moved to _components/chat-thread.tsx
 import { ChatThread as ChatThreadComponent } from './_components/chat-thread';
-export { ChatThread } from './_components/chat-thread';
 const ChatThread = ChatThreadComponent;
 
 // Helper functions for time formatting
 
-export function fmtTime(epoch: number) {
+function fmtTime(epoch: number) {
   const d = new Date(epoch);
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
   return `${hh}:${mm}`;
 }
 
-export function formatRelativeTime(isoString: string): string {
+function formatRelativeTime(isoString: string): string {
   const now = Date.now();
   const then = new Date(isoString).getTime();
   const diffMs = now - then;
@@ -1313,20 +1311,19 @@ export function formatRelativeTime(isoString: string): string {
 }
 
 // Message components moved to _components/message-bubble.tsx
-export { Bubble, MsgIn, MsgOut } from './_components/message-bubble';
+import { Bubble, MsgIn, MsgOut } from './_components/message-bubble';
 
 // TypingIndicator moved to _components/typing-indicator.tsx
-export { TypingIndicator } from './_components/typing-indicator';
+import { TypingIndicator } from './_components/typing-indicator';
 
 // EmptyThread moved to _components/empty-thread.tsx
 import { EmptyThread as EmptyThreadComponent } from './_components/empty-thread';
-export { EmptyThread } from './_components/empty-thread';
 const EmptyThread = EmptyThreadComponent;
 
 /* ───────────────────────────── Details (kind-aware) ───────────────────────────── */
 // ChatDetails moved to _components/chat-details.tsx (imported where needed)
 // Section and Row moved to _components/chat-details-section.tsx (already exported)
-export { Section, Row } from './_components/chat-details-section';
+import { Section, Row } from './_components/chat-details-section';
 
 // ============================================================================
 // END OF FILE - All components imported from _components/

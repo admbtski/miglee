@@ -15,6 +15,11 @@ import {
   Calendar,
   Home,
   X,
+  Link as LinkIcon,
+  CheckCircle2,
+  BadgeDollarSign,
+  Sparkles,
+  Bell,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -86,6 +91,36 @@ export function IntentManagementMobileSidebar({
       label: 'Members',
       href: `/intent/${intentId}/manage/members`,
       icon: Users,
+    },
+    {
+      id: 'join-form',
+      label: 'Join Form',
+      href: `/intent/${intentId}/manage/join-form`,
+      icon: CheckCircle2,
+    },
+    {
+      id: 'invite-links',
+      label: 'Invite Links',
+      href: `/intent/${intentId}/manage/invite-links`,
+      icon: LinkIcon,
+    },
+    {
+      id: 'plans',
+      label: 'Sponsorship',
+      href: `/intent/${intentId}/manage/plans`,
+      icon: BadgeDollarSign,
+    },
+    {
+      id: 'subscription',
+      label: 'Active Plan',
+      href: `/intent/${intentId}/manage/subscription`,
+      icon: Sparkles,
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      href: `/intent/${intentId}/manage/notifications`,
+      icon: Bell,
     },
     {
       id: 'chat',

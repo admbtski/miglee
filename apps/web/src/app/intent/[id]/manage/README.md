@@ -1,195 +1,254 @@
-# Intent Management System
+# Event Management System
 
-System zarządzania wydarzeniami (intent management) z dedykowanym interfejsem dla uprawnionych użytkowników.
+This directory contains the complete event management system for Miglee. The management interface is accessible only to event owners, moderators, and application admins/moderators.
 
-## Struktura
+## Structure
 
 ```
 /intent/[id]/manage/
-├── layout.tsx                    # Layout z sidebarem i topbarem
-├── page.tsx                      # Dashboard (główna strona)
-├── view/                         # Podgląd wydarzenia
-├── members/                      # Zarządzanie członkami
-├── chat/                         # Zarządzanie czatem
-├── analytics/                    # Analityka wydarzenia
-├── moderation/                   # Moderacja treści
-├── settings/                     # Ustawienia wydarzenia
-└── _components/                  # Komponenty zarządzania
-    ├── intent-management-sidebar.tsx
-    ├── intent-management-navbar.tsx
-    ├── intent-management-mobile-sidebar.tsx
-    ├── intent-management-guard.tsx
-    ├── intent-management-provider.tsx
-    └── intent-management-dashboard.tsx
+├── layout.tsx                    # Main layout with sidebar and navbar
+├── page.tsx                      # Dashboard (overview, stats, quick actions)
+├── _components/                  # Shared management components
+│   ├── intent-management-sidebar.tsx
+│   ├── intent-management-navbar.tsx
+│   ├── intent-management-mobile-sidebar.tsx
+│   ├── intent-management-guard.tsx
+│   ├── intent-management-provider.tsx
+│   └── intent-management-dashboard.tsx
+├── view/                         # View event in standard mode
+│   └── page.tsx
+├── members/                      # Member management
+│   ├── page.tsx
+│   └── _components/
+│       ├── intent-members-management-connect.tsx
+│       ├── members-panel.tsx
+│       ├── member-section.tsx
+│       ├── member-row.tsx
+│       ├── member-manage-modal.tsx
+│       ├── invite-users-modal.tsx
+│       └── types.ts
+├── join-form/                    # Join form questions and requests
+│   ├── page.tsx
+│   └── _components/
+│       ├── join-form-panel.tsx
+│       └── join-requests-list.tsx
+├── invite-links/                 # Invite link management
+│   ├── page.tsx
+│   └── _components/
+│       ├── invite-links-panel.tsx
+│       └── edit-link-modal.tsx
+├── plans/                        # Sponsorship plans purchase
+│   ├── page.tsx
+│   └── _components/
+│       └── plans-panel.tsx
+├── subscription/                 # Active sponsorship management
+│   ├── page.tsx
+│   └── _components/
+│       ├── subscription-panel.tsx
+│       └── subscription-panel-types.ts
+├── notifications/                # Send notifications to members
+│   ├── page.tsx
+│   └── _components/
+│       └── notifications-panel.tsx
+├── chat/                         # Chat management (placeholder)
+│   └── page.tsx
+├── analytics/                    # Event analytics (placeholder)
+│   └── page.tsx
+├── moderation/                   # Content moderation (placeholder)
+│   └── page.tsx
+└── settings/                     # Event settings
+    ├── page.tsx
+    └── _components/
+        └── intent-settings-management.tsx
 ```
 
-## Uprawnienia dostępu
+## Features
 
-Interfejs zarządzania jest dostępny dla:
+### Access Control
 
-1. **Owner wydarzenia** - pełny dostęp
-2. **Moderator wydarzenia** - pełny dostęp
-3. **Admin aplikacji** - pełny dostęp (globalny)
-4. **Moderator aplikacji** - pełny dostęp (globalny)
+- **Owner**: Full access to all management features
+- **Moderator**: Access to member management, moderation, and chat
+- **App Admin/Moderator**: Full access to all events
+- **Regular Users**: Redirected to standard event view
 
-Zwykli użytkownicy i uczestnicy widzą standardowy widok wydarzenia.
+### Pages
 
-## Komponenty
+#### Dashboard (`/manage`)
 
-### IntentManagementGuard
+- Event statistics overview
+- Quick actions (edit, delete, share)
+- Member count and activity
+- Recent activity feed
 
-Komponent sprawdzający uprawnienia użytkownika. Automatycznie przekierowuje nieuprawnionych użytkowników na stronę wydarzenia.
+#### View Event (`/manage/view`)
 
-```tsx
-<IntentManagementGuard intentId={id}>{children}</IntentManagementGuard>
-```
+- Preview the event as regular users see it
+- Embedded within management interface
+- Quick link to open in new tab
 
-### IntentManagementProvider
+#### Members (`/manage/members`)
 
-Kontekst dostarczający dane wydarzenia do komponentów zarządzania.
+- View all members by status (JOINED, PENDING, INVITED, etc.)
+- Search and filter members
+- Manage roles (Owner, Moderator, Participant)
+- Approve/reject join requests
+- Kick, ban, or unban members
+- Invite new members
+- View member statistics
 
-```tsx
-const { intent, isLoading } = useIntentManagement();
-```
+#### Join Form (`/manage/join-form`)
+
+- Create and edit join questions
+- View and manage join requests
+- Approve or reject requests with answers
+- Reorder questions (drag & drop)
+- Lock/unlock editing based on existing members
+
+#### Invite Links (`/manage/invite-links`)
+
+- Create custom invite links
+- Set expiration dates and usage limits
+- Track link usage and statistics
+- Revoke or delete links
+- View users who joined via each link
+
+#### Sponsorship Plans (`/manage/plans`)
+
+- Purchase sponsorship packages (Basic, Plus, Pro)
+- View plan features and pricing
+- Subscription integration (auto-unlock plans)
+
+#### Active Subscription (`/manage/subscription`)
+
+- Manage active sponsorship features
+- Boost event visibility
+- Send local push notifications
+- Toggle sponsored badge
+- Toggle event highlighting
+- View usage statistics
+- Top-up actions (buy more boosts/pushes)
+
+#### Notifications (`/manage/notifications`)
+
+- Send quick notifications to members
+- Target specific groups (JOINED, INVITED, PENDING)
+- Custom message composition
+- View member counts per group
+
+#### Chat Management (`/manage/chat`)
+
+- Placeholder for chat moderation features
+- Message filtering and moderation
+- User muting and blocking
+
+#### Analytics (`/manage/analytics`)
+
+- Placeholder for event analytics
+- View counts, engagement metrics
+- Member growth over time
+- Geographic distribution
+
+#### Moderation (`/manage/moderation`)
+
+- Placeholder for content moderation
+- Review reported content
+- Manage user reports
+
+#### Settings (`/manage/settings`)
+
+- Edit event details
+- Configure privacy settings
+- Manage event visibility
+- Delete event
+
+## Layout Components
 
 ### IntentManagementSidebar
 
-Zwijany sidebar z nawigacją dla zarządzania wydarzeniem.
-
-Funkcje:
-
-- Zwijanie/rozwijanie (280px ↔ 80px)
-- Nawigacja między sekcjami
-- Wyświetlanie tytułu wydarzenia
-- Link powrotu do wydarzenia
+- Desktop sidebar navigation
+- Collapsible with animations
+- Active route highlighting
+- Logo and branding
+- Sticky positioning
 
 ### IntentManagementNavbar
 
-Górny pasek nawigacyjny (podobny do `/account/`).
-
-Funkcje:
-
-- Powiadomienia i akcje użytkownika (NavbarActions)
-- Przycisk menu mobilnego
-- Sticky positioning
-- Backdrop blur effect
+- Top navigation bar
+- Mobile menu toggle
+- User actions (profile, notifications)
+- Breadcrumb navigation
 
 ### IntentManagementMobileSidebar
 
-Mobilny drawer z nawigacją.
-
-Funkcje:
-
+- Mobile drawer navigation
 - Slide-in animation
-- Pełna lista nawigacji
-- Automatyczne zamykanie przy zmianie trasy
+- Touch-friendly interface
 - Backdrop overlay
 
-## Hook: useIntentPermissions
+### IntentManagementGuard
 
-Hook sprawdzający uprawnienia użytkownika dla wydarzenia.
+- Access control wrapper
+- Permission checking
+- Redirect unauthorized users
+- Loading states
 
-```tsx
-const permissions = useIntentPermissions(intent);
+### IntentManagementProvider
 
-// Dostępne pola:
-permissions.canManage; // Czy może zarządzać
-permissions.isOwner; // Czy jest właścicielem
-permissions.isModerator; // Czy jest moderatorem
-permissions.isParticipant; // Czy jest uczestnikiem
-permissions.isAppAdmin; // Czy jest adminem aplikacji
-permissions.isAppModerator; // Czy jest moderatorem aplikacji
-permissions.isLoading; // Stan ładowania
-```
+- Context provider for event data
+- Shared state management
+- Data fetching and caching
 
-## Strony zarządzania
+## Permissions
 
-### Dashboard (`/manage`)
+The management interface uses `useIntentPermissions` hook to check:
 
-- Przegląd statystyk wydarzenia
-- Szybkie akcje
-- Informacje o wydarzeniu
+- Is user the event owner?
+- Is user an event moderator?
+- Is user an app admin?
+- Is user an app moderator?
 
-### View Event (`/manage/view`)
+Access is granted if any of these conditions are true.
 
-- Podgląd publicznego widoku wydarzenia
-- Widok taki sam jak dla zwykłych użytkowników
-- Link do otwarcia w nowej karcie
+## Navigation
 
-### Members (`/manage/members`)
+The sidebar includes:
 
-- Lista członków
-- Filtrowanie po rolach
-- Zarządzanie rolami i uprawnieniami
+1. **Dashboard** - Overview and quick actions
+2. **View Event** - Preview standard view
+3. **Members** - Member management
+4. **Join Form** - Form configuration
+5. **Invite Links** - Link management
+6. **Sponsorship** - Purchase plans
+7. **Active Plan** - Manage subscription (conditional)
+8. **Notifications** - Send messages
+9. **Chat** - Chat moderation
+10. **Analytics** - Event metrics
+11. **Moderation** - Content moderation
+12. **Settings** - Event configuration
 
-### Settings (`/manage/settings`)
+## Styling
 
-- Ustawienia ogólne
-- Prywatność
-- Ustawienia członków
-- Ustawienia czatu
-- Strefa niebezpieczna (cancel/delete)
-
-### Analytics (`/manage/analytics`)
-
-- Statystyki wydarzenia
-- Wykresy i metryki
-
-### Chat (`/manage/chat`)
-
-- Zarządzanie czatem wydarzenia
-- Moderacja wiadomości
-
-### Moderation (`/manage/moderation`)
-
-- Moderacja treści
-- Raporty
-- Akcje moderacyjne
-
-## Routing
-
-```
-/intent/[id]                    # Standardowy widok wydarzenia
-/intent/[id]/manage             # Dashboard zarządzania (wymaga uprawnień)
-/intent/[id]/manage/view        # Podgląd wydarzenia
-/intent/[id]/manage/members     # Zarządzanie członkami
-/intent/[id]/manage/chat        # Zarządzanie czatem
-/intent/[id]/manage/analytics   # Analityka
-/intent/[id]/manage/moderation  # Moderacja
-/intent/[id]/manage/settings    # Ustawienia
-```
-
-## Bezpieczeństwo
-
-1. **Guard na poziomie layoutu** - sprawdza uprawnienia przed renderowaniem
-2. **Automatyczne przekierowanie** - nieuprawnionych użytkowników przekierowuje na stronę wydarzenia
-3. **Weryfikacja po stronie API** - wszystkie mutacje są dodatkowo weryfikowane na backendzie
-
-## Przykład użycia
-
-```tsx
-// Strona zarządzania
-export default async function ManagePage({ params }: PageProps) {
-  const { id } = await params;
-
-  return <IntentManagementDashboard intentId={id} />;
-}
-```
-
-## Stylowanie
-
-Komponenty używają:
-
-- Tailwind CSS
+- Consistent with `/account/` section design
 - Dark mode support
-- Responsywny design
-- Animacje przejść
+- Responsive layout (mobile, tablet, desktop)
+- Smooth animations and transitions
+- Tailwind CSS utility classes
 
-## Rozwój
+## Data Fetching
 
-Aby dodać nową sekcję zarządzania:
+- React Query for server state
+- Optimistic updates
+- Automatic refetching
+- Error handling
+- Loading states
 
-1. Utwórz folder w `/manage/[nazwa]/`
-2. Dodaj `page.tsx` z komponentem
-3. Dodaj link w `intent-management-sidebar.tsx`
-4. Dodaj metadata w `generateMetadata`
+## Future Enhancements
+
+- Real-time updates via WebSockets
+- Advanced analytics dashboard
+- Automated moderation tools
+- Bulk member actions
+- Export member data
+- Event templates
+- Recurring events
+- Multi-language support

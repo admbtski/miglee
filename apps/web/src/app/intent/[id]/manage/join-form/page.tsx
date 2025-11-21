@@ -1,17 +1,17 @@
 /**
- * Intent Members Management Page
- * Manage event members, roles, and permissions
+ * Intent Join Form Management Page
+ * Manage event join form and questions
  */
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { IntentMembersManagementConnect } from './_components/intent-members-management-connect';
+import { JoinFormPanel } from './_components/join-form-panel';
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function IntentMembersPage({ params }: PageProps) {
+export default async function IntentJoinFormPage({ params }: PageProps) {
   const { id } = await params;
 
   if (!id) {
@@ -25,13 +25,13 @@ export default async function IntentMembersPage({ params }: PageProps) {
           <div className="text-center">
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-              Loading members...
+              Loading join form...
             </p>
           </div>
         </div>
       }
     >
-      <IntentMembersManagementConnect intentId={id} />
+      <JoinFormPanel intentId={id} />
     </Suspense>
   );
 }
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps) {
   await params;
 
   return {
-    title: 'Manage Members | Miglee',
-    description: 'Manage event members',
+    title: 'Join Form | Miglee',
+    description: 'Manage event join form',
   };
 }

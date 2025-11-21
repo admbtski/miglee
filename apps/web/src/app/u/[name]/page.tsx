@@ -5,11 +5,12 @@ import { GetUserProfileDocument } from '@/lib/api/__generated__/react-query-upda
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 
 type Props = {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const username = decodeURIComponent(params.name);
+  const { name } = await params;
+  const username = decodeURIComponent(name);
 
   try {
     // Fetch user data for metadata
@@ -76,8 +77,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function PublicProfilePage({ params }: Props) {
-  const username = decodeURIComponent(params.name);
+export default async function PublicProfilePage({ params }: Props) {
+  const { name } = await params;
+  const username = decodeURIComponent(name);
 
   return <PublicProfileClient username={username} />;
 }

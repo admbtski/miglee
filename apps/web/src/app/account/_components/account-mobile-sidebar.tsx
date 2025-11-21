@@ -9,7 +9,6 @@ import {
   UserIcon,
   Bell,
   Heart,
-  X,
   ListCollapseIcon,
 } from 'lucide-react';
 import Link from 'next/link';

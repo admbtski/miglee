@@ -27,7 +27,30 @@ import {
 } from '@/lib/api/message-actions';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMeQuery } from '@/lib/api/auth';
-import { ChatThread, type Message } from '@/app/account/chats/page';
+import { ChatThread } from '@/app/account/chats/_components/chat-thread';
+
+type Message = {
+  id: string;
+  text: string;
+  createdAt: string;
+  updatedAt?: string | null;
+  deletedAt?: string | null;
+  senderId: string;
+  sender: {
+    id: string;
+    name: string;
+    avatarKey?: string | null;
+  };
+  reactions?: Array<{
+    id: string;
+    emoji: string;
+    userId: string;
+    user: {
+      id: string;
+      name: string;
+    };
+  }>;
+};
 import { EditMessageModal } from '@/components/chat/EditMessageModal';
 import { DeleteConfirmModal } from '@/components/chat/DeleteConfirmModal';
 

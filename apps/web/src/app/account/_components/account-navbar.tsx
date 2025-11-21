@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Menu, ListCollapseIcon } from 'lucide-react';
+import { ListCollapseIcon } from 'lucide-react';
 import { useState } from 'react';
 import { AccountMobileSidebar } from './account-mobile-sidebar';
 import { NavbarActions } from '@/components/layout/navbar-actions';
