@@ -262,11 +262,11 @@ export function StickyJoinButton({ event }: StickyJoinButtonProps) {
           {/* Match the grid layout from event-detail-client */}
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
             {/* Left column - sticky bar */}
-            <div className="pointer-events-auto rounded-t-2xl border border-b-0 border-neutral-200 bg-white/95 backdrop-blur-lg shadow-lg dark:border-neutral-800 dark:bg-neutral-900/95 p-3">
+            <div className="pointer-events-auto rounded-t-2xl border border-b-0 border-zinc-200 bg-white/95 backdrop-blur-lg shadow-lg dark:border-zinc-800 dark:bg-zinc-900/95 p-3">
               <div className="flex items-center gap-3">
                 {/* Event Title - Left */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                  <h3 className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {event.title}
                   </h3>
                 </div>
@@ -286,10 +286,10 @@ export function StickyJoinButton({ event }: StickyJoinButtonProps) {
                   disabled={buttonConfig.disabled || isProcessing}
                   className={`flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
                     buttonConfig.variant === 'primary'
-                      ? 'bg-neutral-900 text-white hover:opacity-90 active:opacity-80 dark:bg-white dark:text-neutral-900'
+                      ? 'bg-zinc-900 text-white hover:opacity-90 active:opacity-80 dark:bg-white dark:text-zinc-900'
                       : buttonConfig.variant === 'secondary'
-                        ? 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
-                        : 'cursor-not-allowed bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500'
+                        ? 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                        : 'cursor-not-allowed bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500'
                   }`}
                 >
                   <buttonConfig.icon className="h-4 w-4" />

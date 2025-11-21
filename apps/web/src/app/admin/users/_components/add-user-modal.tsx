@@ -90,7 +90,7 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
         header={
           <h3
             id="add-user-title"
-            className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+            className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
           >
             Dodaj użytkownika
           </h3>
@@ -104,16 +104,16 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
                 className={`rounded-lg border p-3 text-left transition-colors ${
                   mode === 'invite'
                     ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950/30'
-                    : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                    : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       Zaproś
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
                       Wyślij email
                     </p>
                   </div>
@@ -124,16 +124,16 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
                 className={`rounded-lg border p-3 text-left transition-colors ${
                   mode === 'create'
                     ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950/30'
-                    : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                    : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       Utwórz
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
                       Ręcznie
                     </p>
                   </div>
@@ -144,7 +144,7 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
             {/* Form */}
             <div className="space-y-3">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -152,12 +152,12 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="user@example.com"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Imię i nazwisko
                 </label>
                 <input
@@ -165,18 +165,18 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Jan Kowalski"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Rola
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as Role)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 >
                   <option value={Role.User}>User</option>
                   <option value={Role.Moderator}>Moderator</option>
@@ -190,9 +190,9 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
                     type="checkbox"
                     checked={verified}
                     onChange={(e) => setVerified(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">
                     Oznacz jako zweryfikowany
                   </span>
                 </label>
@@ -235,7 +235,7 @@ export function AddUserModal({ open, onClose, onSuccess }: AddUserModalProps) {
           <div className="flex justify-end gap-2">
             <button
               onClick={handleClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Anuluj
             </button>

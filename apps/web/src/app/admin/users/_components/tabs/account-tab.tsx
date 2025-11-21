@@ -46,14 +46,14 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="py-12 text-center text-sm text-gray-600 dark:text-gray-400">
+      <div className="py-12 text-center text-sm text-zinc-600 dark:text-zinc-400">
         Nie znaleziono użytkownika
       </div>
     );
@@ -120,7 +120,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   return (
     <div className="space-y-6">
       {/* User Info Card */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex items-start gap-4">
           <Avatar
             url={buildAvatarUrl(user.avatarKey, 'lg')}
@@ -129,10 +129,10 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
             size={64}
           />
           <div className="flex-1">
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h4 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {user.name}
             </h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               {user.email}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -142,7 +142,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
                     ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                     : user.role === Role.Moderator
                       ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+                      : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-300'
                 }`}
               >
                 {user.role === Role.Admin && <Shield className="h-3 w-3" />}
@@ -166,7 +166,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
 
       {/* Role Management */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Zarządzanie rolą
         </h5>
         {isSelf && (
@@ -182,7 +182,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
             <button
               onClick={() => handleRoleChange(Role.User)}
               disabled={user.role === Role.User}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Ustaw jako User
             </button>
@@ -206,7 +206,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
 
       {/* Verification */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Weryfikacja konta
         </h5>
         <button
@@ -220,7 +220,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
           {user.verifiedAt ? 'Cofnij weryfikację' : 'Zweryfikuj konto'}
         </button>
         {user.verifiedAt && (
-          <p className="text-xs text-gray-600 dark:text-gray-400">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
             Zweryfikowano:{' '}
             {format(new Date(user.verifiedAt), 'dd MMMM yyyy, HH:mm', {
               locale: pl,
@@ -232,22 +232,22 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
       {/* Account Details */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Dane konta
           </h5>
         </div>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">ID:</span>
-            <span className="font-mono text-gray-900 dark:text-gray-100">
+            <span className="text-zinc-600 dark:text-zinc-400">ID:</span>
+            <span className="font-mono text-zinc-900 dark:text-zinc-100">
               {user.id}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Data rejestracji:
             </span>
-            <span className="text-gray-900 dark:text-gray-100">
+            <span className="text-zinc-900 dark:text-zinc-100">
               {format(new Date(user.createdAt), 'dd MMMM yyyy, HH:mm', {
                 locale: pl,
               })}
@@ -255,10 +255,10 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
           </div>
           {user.lastSeenAt && (
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-zinc-600 dark:text-zinc-400">
                 Ostatnia aktywność:
               </span>
-              <span className="text-gray-900 dark:text-gray-100">
+              <span className="text-zinc-900 dark:text-zinc-100">
                 {format(new Date(user.lastSeenAt), 'dd MMMM yyyy, HH:mm', {
                   locale: pl,
                 })}

@@ -44,7 +44,7 @@ const SIZE_STYLES: Record<
 };
 
 const BASE_TONE =
-  'bg-white/80 text-neutral-800 ring-neutral-200 dark:bg-neutral-900/60 dark:text-neutral-200 dark:ring-neutral-700';
+  'bg-white/80 text-zinc-800 ring-zinc-200 dark:bg-zinc-900/60 dark:text-zinc-200 dark:ring-zinc-700';
 
 /* ───────────────────────────── Reusable Pill ───────────────────────────── */
 

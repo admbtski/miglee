@@ -97,7 +97,7 @@ export function BulkActionsModal({
           <div className="space-y-6">
             {/* Action Selection */}
             <div className="space-y-3">
-              <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 Wybierz akcję
               </h5>
               <div className="grid gap-3 md:grid-cols-2">
@@ -106,15 +106,15 @@ export function BulkActionsModal({
                   className={`flex items-center gap-3 rounded-lg border p-4 text-left transition-colors ${
                     action === 'visibility'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
-                      : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                      : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                   }`}
                 >
-                  <Eye className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <Eye className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       Zmień widoczność
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
                       Publiczne / Ukryte
                     </p>
                   </div>
@@ -125,15 +125,15 @@ export function BulkActionsModal({
                   className={`flex items-center gap-3 rounded-lg border p-4 text-left transition-colors ${
                     action === 'joinLock'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
-                      : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                      : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                   }`}
                 >
-                  <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <Lock className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       Zamknij/otwórz zapisy
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
                       Ręczne zarządzanie
                     </p>
                   </div>
@@ -144,7 +144,7 @@ export function BulkActionsModal({
             {/* Visibility Options */}
             {action === 'visibility' && (
               <div className="space-y-3">
-                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                   Widoczność
                 </h5>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -153,7 +153,7 @@ export function BulkActionsModal({
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                       visibility === Visibility.Public
                         ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
-                        : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                        : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                     }`}
                   >
                     <Eye className="h-4 w-4" />
@@ -164,7 +164,7 @@ export function BulkActionsModal({
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                       visibility === Visibility.Hidden
                         ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/30'
-                        : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                        : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                     }`}
                   >
                     <EyeOff className="h-4 w-4" />
@@ -177,7 +177,7 @@ export function BulkActionsModal({
             {/* Join Lock Options */}
             {action === 'joinLock' && (
               <div className="space-y-3">
-                <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                   Zapisy
                 </h5>
                 <div className="grid gap-3 md:grid-cols-2">
@@ -186,7 +186,7 @@ export function BulkActionsModal({
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                       joinManuallyClosed === true
                         ? 'border-red-500 bg-red-50 dark:bg-red-950/30'
-                        : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                        : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                     }`}
                   >
                     <Lock className="h-4 w-4" />
@@ -197,7 +197,7 @@ export function BulkActionsModal({
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                       joinManuallyClosed === false
                         ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
-                        : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                        : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
                     }`}
                   >
                     <Unlock className="h-4 w-4" />
@@ -207,7 +207,7 @@ export function BulkActionsModal({
 
                 {joinManuallyClosed === true && (
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                       Powód zamknięcia (opcjonalnie)
                     </label>
                     <textarea
@@ -215,7 +215,7 @@ export function BulkActionsModal({
                       onChange={(e) => setJoinManualCloseReason(e.target.value)}
                       placeholder="Wpisz powód zamknięcia zapisów..."
                       rows={3}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                      className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                     />
                   </div>
                 )}
@@ -238,7 +238,7 @@ export function BulkActionsModal({
           <div className="flex justify-end gap-2">
             <button
               onClick={handleClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Anuluj
             </button>

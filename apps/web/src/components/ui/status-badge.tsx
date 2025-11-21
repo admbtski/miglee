@@ -259,7 +259,7 @@ export function StatusBadge({
       <span
         className={clsx(
           'inline-flex items-center justify-center rounded-full ring-1 shadow-sm select-none',
-          'bg-white/80 dark:bg-neutral-900/60',
+          'bg-white/80 dark:bg-zinc-900/60',
           toneClass,
           S.container,
           className
@@ -278,7 +278,7 @@ export function StatusBadge({
     <span
       className={clsx(
         'inline-flex items-center rounded-full ring-1 shadow-sm select-none',
-        'bg-white/80 dark:bg-neutral-900/60',
+        'bg-white/80 dark:bg-zinc-900/60',
         toneClass,
         S.container,
         S.gap,

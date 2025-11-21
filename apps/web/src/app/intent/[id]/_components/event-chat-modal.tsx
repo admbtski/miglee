@@ -377,16 +377,16 @@ export function EventChatModal({
   const header = (
     <div className="flex items-center justify-between">
       <div>
-        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Czat wydarzenia
         </h2>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {intentTitle}
         </p>
       </div>
       <button
         onClick={onClose}
-        className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+        className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
       >
         <X className="h-5 w-5" />
       </button>

@@ -78,7 +78,7 @@ export function EventHero({ event }: EventHeroProps) {
   ]);
 
   return (
-    <div className="relative rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40">
+    <div className="relative rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/40">
       {/* Top Right Corner - Favourite Button & Plan Badge */}
       <div className="absolute -top-2 -right-2 z-10 flex items-start gap-1">
         {/* Plan Badge with continuous pulse animation */}
@@ -136,7 +136,7 @@ export function EventHero({ event }: EventHeroProps) {
       )}
 
       {isDeleted && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl bg-neutral-100 p-3 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+        <div className="mb-4 flex items-center gap-2 rounded-xl bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
           <Trash2 className="h-5 w-5 flex-shrink-0" />
           <div>
             <p className="font-semibold">Wydarzenie usunięte</p>
@@ -148,7 +148,7 @@ export function EventHero({ event }: EventHeroProps) {
       )}
 
       {/* Title */}
-      <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
         {event.title}
       </h1>
 
@@ -166,11 +166,11 @@ export function EventHero({ event }: EventHeroProps) {
               alt={event.organizer.displayName || event.organizer.name}
               width={36}
               height={36}
-              className="h-9 w-9 rounded-full border border-neutral-200 object-cover transition-opacity hover:opacity-80 dark:border-neutral-700"
+              className="h-9 w-9 rounded-full border border-zinc-200 object-cover transition-opacity hover:opacity-80 dark:border-zinc-700"
             />
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700 dark:bg-neutral-700">
-              <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-zinc-200 transition-opacity hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700">
+              <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
                 {(event.organizer.displayName ||
                   event.organizer.name)[0]?.toUpperCase()}
               </span>
@@ -178,13 +178,13 @@ export function EventHero({ event }: EventHeroProps) {
           )}
         </Link>
         <div className="min-w-0">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Organizator
           </p>
           <div className="flex items-center gap-1.5">
             <Link
               href={`/u/${event.organizer.name}`}
-              className="text-sm font-medium text-neutral-800 transition-colors hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400"
+              className="text-sm font-medium text-zinc-800 transition-colors hover:text-blue-600 dark:text-zinc-200 dark:hover:text-blue-400"
             >
               {event.organizer.displayName || event.organizer.name}
             </Link>
@@ -199,7 +199,7 @@ export function EventHero({ event }: EventHeroProps) {
           </div>
           <Link
             href={`/u/${event.organizer.name}`}
-            className="text-xs text-neutral-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+            className="text-xs text-zinc-500 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
           >
             @{event.organizer.name}
           </Link>
@@ -209,7 +209,7 @@ export function EventHero({ event }: EventHeroProps) {
       {/* Meta Info */}
       <div className="mt-4 space-y-2">
         {/* Primary Info Row */}
-        <div className="flex flex-wrap gap-3 text-[13px] text-neutral-700 dark:text-neutral-300">
+        <div className="flex flex-wrap gap-3 text-[13px] text-zinc-700 dark:text-zinc-300">
           {/* Date */}
           <span className="inline-flex items-center gap-1.5">
             <Calendar className="h-4 w-4 opacity-70" />
@@ -227,7 +227,7 @@ export function EventHero({ event }: EventHeroProps) {
           >
             <Users className="h-4 w-4 opacity-70" />
             {event.joinedCount} / {event.max} uczestników
-            <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               ({eventSize.label})
             </span>
           </span>
@@ -237,7 +237,7 @@ export function EventHero({ event }: EventHeroProps) {
         <div className="flex flex-wrap gap-3 text-[13px]">
           {/* Physical Location - only if visible */}
           {canSeeLocation && (
-            <span className="inline-flex items-center gap-1.5 text-neutral-700 dark:text-neutral-300">
+            <span className="inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
               <MapPinned className="h-4 w-4 opacity-70 text-blue-600 dark:text-blue-400" />
               <span className="truncate max-w-[300px]">{event.address}</span>
             </span>
@@ -247,7 +247,7 @@ export function EventHero({ event }: EventHeroProps) {
           {!canSeeLocation &&
             event.meetingKind !== 'ONLINE' &&
             event.address && (
-              <span className="inline-flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+              <span className="inline-flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
                 <MapPin className="h-4 w-4 opacity-70" />
                 <span className="text-xs">
                   Lokalizacja{' '}

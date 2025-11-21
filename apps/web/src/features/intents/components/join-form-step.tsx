@@ -127,21 +127,21 @@ export function JoinFormStep({
       {/* Existing questions */}
       {questions.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
             Questions ({questions.length}/{maxQuestions})
           </h4>
           {questions.map((question, index) => (
             <div
               key={question.id}
-              className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-4"
+              className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       {index + 1}.
                     </span>
-                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       {question.type === 'TEXT' && 'Text'}
                       {question.type === 'SINGLE_CHOICE' && 'Single Choice'}
                       {question.type === 'MULTI_CHOICE' && 'Multiple Choice'}
@@ -150,11 +150,11 @@ export function JoinFormStep({
                       <span className="text-xs text-red-500">*</span>
                     )}
                   </div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {question.label}
                   </p>
                   {question.helpText && (
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
                       {question.helpText}
                     </p>
                   )}
@@ -163,7 +163,7 @@ export function JoinFormStep({
                       {question.options.map((option, i) => (
                         <p
                           key={i}
-                          className="text-xs text-neutral-600 dark:text-neutral-400"
+                          className="text-xs text-zinc-600 dark:text-zinc-400"
                         >
                           • {option}
                         </p>
@@ -187,9 +187,9 @@ export function JoinFormStep({
 
       {/* Add question form */}
       {isAdding ? (
-        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 space-y-4">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+            <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
               New Question
             </h4>
           </div>
@@ -315,7 +315,7 @@ export function JoinFormStep({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               variant="outline"
               onClick={() => {
@@ -355,12 +355,12 @@ export function JoinFormStep({
 
       {/* Empty state */}
       {questions.length === 0 && !isAdding && (
-        <div className="rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50 p-8 text-center">
-          <FileQuestion className="h-12 w-12 text-neutral-400 mx-auto mb-3" />
-          <h4 className="font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+        <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 p-8 text-center">
+          <FileQuestion className="h-12 w-12 text-zinc-400 mx-auto mb-3" />
+          <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
             No questions yet
           </h4>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
             Add custom questions for users to answer when requesting to join
           </p>
         </div>

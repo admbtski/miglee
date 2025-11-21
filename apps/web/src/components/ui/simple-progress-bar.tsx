@@ -3,8 +3,8 @@ import { twMerge } from 'tailwind-merge';
 
 const progressColorClass = (active: boolean) =>
   active
-    ? 'bg-neutral-900 dark:bg-white/80'
-    : 'bg-neutral-400 dark:bg-neutral-600';
+    ? 'bg-zinc-900 dark:bg-white/80'
+    : 'bg-zinc-400 dark:bg-zinc-600';
 
 export function SimpleProgressBar({
   value,
@@ -22,7 +22,7 @@ export function SimpleProgressBar({
   return (
     <div
       className={twMerge(
-        'h-1.5 w-full bg-neutral-100 dark:bg-white/10 rounded-full overflow-hidden',
+        'h-1.5 w-full bg-zinc-100 dark:bg-white/10 rounded-full overflow-hidden',
         className
       )}
       role="progressbar"

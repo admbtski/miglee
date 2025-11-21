@@ -76,9 +76,9 @@ const actionColors: Record<
     border: 'border-orange-200 dark:border-orange-800',
   },
   CONTENT_DELETED: {
-    bg: 'bg-gray-50 dark:bg-gray-950/30',
-    text: 'text-gray-700 dark:text-gray-300',
-    border: 'border-gray-200 dark:border-gray-800',
+    bg: 'bg-zinc-50 dark:bg-zinc-950/30',
+    text: 'text-zinc-700 dark:text-zinc-300',
+    border: 'border-zinc-200 dark:border-zinc-800',
   },
 };
 
@@ -97,10 +97,10 @@ export function AuditLogTab({ userId: _userId }: AuditLogTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Historia akcji administracyjnych
           </h4>
-          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
             Wszystkie akcje wykonane przez administratorów na tym koncie
           </p>
         </div>
@@ -108,13 +108,13 @@ export function AuditLogTab({ userId: _userId }: AuditLogTabProps) {
 
       {/* Filters */}
       <div className="flex items-center gap-2">
-        <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+        <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
           Filtruj:
         </label>
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
         >
           <option value="all">Wszystkie</option>
           <option value="ROLE_CHANGED">Zmiana roli</option>
@@ -129,7 +129,7 @@ export function AuditLogTab({ userId: _userId }: AuditLogTabProps) {
       {/* Audit Log List */}
       <div className="space-y-3">
         {filteredLogs.length === 0 ? (
-          <div className="py-12 text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="py-12 text-center text-sm text-zinc-600 dark:text-zinc-400">
             Brak wpisów w historii akcji
           </div>
         ) : (
@@ -154,7 +154,7 @@ export function AuditLogTab({ userId: _userId }: AuditLogTabProps) {
                         >
                           {log.description}
                         </p>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="mt-1 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                           <span>Wykonano przez: {log.performedBy.name}</span>
                           <span>•</span>
                           <span>
@@ -168,11 +168,11 @@ export function AuditLogTab({ userId: _userId }: AuditLogTabProps) {
                       </div>
                     </div>
                     {Object.keys(log.metadata).length > 0 && (
-                      <div className="mt-2 rounded border border-gray-200 bg-white/50 p-2 dark:border-gray-700 dark:bg-gray-900/50">
-                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      <div className="mt-2 rounded border border-zinc-200 bg-white/50 p-2 dark:border-zinc-700 dark:bg-zinc-900/50">
+                        <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                           Szczegóły:
                         </p>
-                        <pre className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <pre className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                           {JSON.stringify(log.metadata, null, 2)}
                         </pre>
                       </div>

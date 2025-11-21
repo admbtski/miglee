@@ -42,8 +42,8 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
   return (
     <div className="space-y-6">
       {/* Visibility */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Widoczność
         </h3>
         <div className="grid gap-3 md:grid-cols-2">
@@ -52,7 +52,7 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
             className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
               visibility === Visibility.Public
                 ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
-                : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
             }`}
           >
             <Eye className="h-4 w-4" />
@@ -63,7 +63,7 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
             className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
               visibility === Visibility.Hidden
                 ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/30'
-                : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
             }`}
           >
             <EyeOff className="h-4 w-4" />
@@ -73,8 +73,8 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
       </div>
 
       {/* Join Lock */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Ręczne zarządzanie zapisami
         </h3>
         <div className="space-y-3">
@@ -84,7 +84,7 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
               className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                 !joinManuallyClosed
                   ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
-                  : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                  : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
               }`}
             >
               <Unlock className="h-4 w-4" />
@@ -95,7 +95,7 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
               className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                 joinManuallyClosed
                   ? 'border-red-500 bg-red-50 dark:bg-red-950/30'
-                  : 'border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800'
+                  : 'border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800'
               }`}
             >
               <Lock className="h-4 w-4" />
@@ -105,7 +105,7 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
 
           {joinManuallyClosed && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Powód zamknięcia
               </label>
               <textarea
@@ -113,7 +113,7 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
                 onChange={(e) => setJoinManualCloseReason(e.target.value)}
                 placeholder="Wpisz powód zamknięcia zapisów..."
                 rows={3}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             </div>
           )}
@@ -133,8 +133,8 @@ export function SettingsTab({ intent, onRefresh }: SettingsTabProps) {
       </div>
 
       {/* Owner Change (placeholder) */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Zmiana właściciela
         </h3>
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">

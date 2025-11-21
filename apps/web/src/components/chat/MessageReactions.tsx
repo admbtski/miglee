@@ -49,14 +49,14 @@ export function MessageReactions({
           className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs transition-all duration-200 transform hover:scale-110 active:scale-95 ${
             reaction.reacted
               ? 'bg-[#4A45FF]/10 ring-1 ring-[#4A45FF]/30'
-              : 'bg-white/90 dark:bg-neutral-800/90 hover:bg-white dark:hover:bg-neutral-700'
+              : 'bg-white/90 dark:bg-zinc-800/90 hover:bg-white dark:hover:bg-zinc-700'
           } shadow-sm`}
           title={getTooltip(reaction)}
           aria-label={`${reaction.emoji} ${reaction.count}`}
         >
           <span className="text-sm leading-none">{reaction.emoji}</span>
           {reaction.count > 1 && (
-            <span className="font-medium text-[10px] leading-none text-neutral-700 dark:text-neutral-300">
+            <span className="font-medium text-[10px] leading-none text-zinc-700 dark:text-zinc-300">
               {reaction.count}
             </span>
           )}

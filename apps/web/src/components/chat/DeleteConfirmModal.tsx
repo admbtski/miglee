@@ -36,7 +36,7 @@ export function DeleteConfirmModal({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl max-w-md w-full"
+              className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Content */}
@@ -46,16 +46,16 @@ export function DeleteConfirmModal({
                     <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                    <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                       Delete Message
                     </h2>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
                       This action cannot be undone
                     </p>
                   </div>
                 </div>
 
-                <p className="text-sm text-neutral-700 dark:text-neutral-300 mb-6">
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-6">
                   Are you sure you want to delete this message? It will be
                   removed for everyone in the conversation.
                 </p>
@@ -64,7 +64,7 @@ export function DeleteConfirmModal({
                 <div className="flex items-center justify-end gap-3">
                   <button
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                     disabled={isLoading}
                   >
                     Cancel

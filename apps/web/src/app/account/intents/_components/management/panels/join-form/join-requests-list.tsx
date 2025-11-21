@@ -76,7 +76,7 @@ export function JoinRequestsList({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
       </div>
     );
   }
@@ -101,12 +101,12 @@ export function JoinRequestsList({
 
   if (requests.length === 0) {
     return (
-      <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-6 text-center">
-        <UserPlus className="h-12 w-12 text-neutral-400 mx-auto mb-3" />
-        <h4 className="font-medium text-neutral-900 dark:text-neutral-100 mb-2">
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-6 text-center">
+        <UserPlus className="h-12 w-12 text-zinc-400 mx-auto mb-3" />
+        <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
           Brak oczekujących próśb
         </h4>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Gdy ktoś wyśle prośbę o dołączenie, zobaczysz ją tutaj.
         </p>
       </div>

@@ -115,10 +115,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Profil użytkownika
           </h3>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             Przeglądaj i edytuj informacje profilowe użytkownika
           </p>
         </div>
@@ -134,7 +134,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             <button
               onClick={handleCancel}
               disabled={updateMutation.isPending}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Anuluj
             </button>
@@ -160,14 +160,14 @@ export function ProfileTab({ userId }: ProfileTabProps) {
       </div>
 
       {/* Basic Info */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h4 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h4 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Podstawowe informacje
         </h4>
         <div className="space-y-3">
           {/* Display Name */}
           <div>
-            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Display Name
             </label>
             {isEditing ? (
@@ -177,10 +177,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
                 onChange={(e) =>
                   setEditedData({ ...editedData, displayName: e.target.value })
                 }
-                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             ) : (
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                 {profile?.displayName || user.name || '-'}
               </p>
             )}
@@ -188,7 +188,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
 
           {/* Bio Short */}
           <div>
-            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Krótki opis
             </label>
             {isEditing ? (
@@ -198,10 +198,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
                   setEditedData({ ...editedData, bioShort: e.target.value })
                 }
                 rows={2}
-                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             ) : (
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                 {profile?.bioShort || '-'}
               </p>
             )}
@@ -209,7 +209,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
 
           {/* Bio Long */}
           <div>
-            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Pełny opis
             </label>
             {isEditing ? (
@@ -219,10 +219,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
                   setEditedData({ ...editedData, bioLong: e.target.value })
                 }
                 rows={4}
-                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             ) : (
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                 {profile?.bioLong || '-'}
               </p>
             )}
@@ -231,7 +231,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
           {/* Location */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 <MapPin className="inline h-3 w-3" /> Miasto
               </label>
               {isEditing ? (
@@ -241,16 +241,16 @@ export function ProfileTab({ userId }: ProfileTabProps) {
                   onChange={(e) =>
                     setEditedData({ ...editedData, city: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               ) : (
-                <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                   {profile?.city || '-'}
                 </p>
               )}
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 <Globe className="inline h-3 w-3" /> Kraj
               </label>
               {isEditing ? (
@@ -260,10 +260,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
                   onChange={(e) =>
                     setEditedData({ ...editedData, country: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               ) : (
-                <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                   {profile?.country || '-'}
                 </p>
               )}
@@ -273,8 +273,8 @@ export function ProfileTab({ userId }: ProfileTabProps) {
       </div>
 
       {/* Languages */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           <Languages className="h-4 w-4" />
           Języki
         </h4>
@@ -290,15 +290,15 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Brak informacji o językach
           </p>
         )}
       </div>
 
       {/* Interests */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           <Tag className="h-4 w-4" />
           Zainteresowania
         </h4>
@@ -307,22 +307,22 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             {profile.interests.map((interest: string) => (
               <span
                 key={interest}
-                className="rounded-lg bg-gray-100 px-3 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                className="rounded-lg bg-zinc-100 px-3 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
               >
                 {interest}
               </span>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Brak zainteresowań
           </p>
         )}
       </div>
 
       {/* Disciplines */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           <Award className="h-4 w-4" />
           Dyscypliny sportowe
         </h4>
@@ -331,14 +331,14 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             {disciplines.map((discipline: any) => (
               <div
                 key={discipline.id}
-                className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+                className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {getCategoryName(discipline.categoryId)}
                   </p>
                   {discipline.notes && (
-                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                       {discipline.notes}
                     </p>
                   )}
@@ -358,15 +358,15 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Brak dyscyplin sportowych
           </p>
         )}
       </div>
 
       {/* Social Links */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           <Globe className="h-4 w-4" />
           Linki społecznościowe
         </h4>
@@ -375,10 +375,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             {socialLinks.map((link: any) => (
               <div
                 key={link.id}
-                className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+                className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium uppercase text-gray-600 dark:text-gray-400">
+                  <span className="text-xs font-medium uppercase text-zinc-600 dark:text-zinc-400">
                     {link.provider}
                   </span>
                   <a
@@ -394,61 +394,61 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Brak linków społecznościowych
           </p>
         )}
       </div>
 
       {/* Privacy Settings */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h4 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Ustawienia prywatności
         </h4>
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
-            <span className="text-gray-600 dark:text-gray-400">DM Policy:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-zinc-600 dark:text-zinc-400">DM Policy:</span>
+            <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-100">
               {privacy?.dmPolicy || 'EVERYONE'}
             </span>
           </div>
           <div>
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Show Last Seen:
             </span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
+            <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-100">
               {privacy?.showLastSeen || 'ALL'}
             </span>
           </div>
           <div>
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Show Location:
             </span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
+            <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-100">
               {privacy?.showLocation || 'ALL'}
             </span>
           </div>
           <div>
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Show Events:
             </span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
+            <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-100">
               {privacy?.showEvents || 'ALL'}
             </span>
           </div>
           <div>
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Show Reviews:
             </span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
+            <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-100">
               {privacy?.showReviews || 'ALL'}
             </span>
           </div>
           <div>
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Show Stats:
             </span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
+            <span className="ml-2 font-medium text-zinc-900 dark:text-zinc-100">
               {privacy?.showStats || 'ALL'}
             </span>
           </div>
@@ -456,50 +456,50 @@ export function ProfileTab({ userId }: ProfileTabProps) {
       </div>
 
       {/* Stats */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           <Calendar className="h-4 w-4" />
           Statystyki
         </h4>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               {stats?.eventsCreated || 0}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               Utworzonych wydarzeń
             </p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               {stats?.eventsJoined || 0}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               Dołączonych wydarzeń
             </p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               {stats?.reviewsCount || 0}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">Recenzji</p>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">Recenzji</p>
           </div>
         </div>
         {(stats?.hostRatingAvg || stats?.attendeeRatingAvg) && (
-          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-gray-200 pt-4 text-center dark:border-gray-700">
+          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-zinc-200 pt-4 text-center dark:border-zinc-700">
             <div>
-              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                 {stats.hostRatingAvg?.toFixed(1) || '-'}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 Ocena jako organizator
               </p>
             </div>
             <div>
-              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
                 {stats.attendeeRatingAvg?.toFixed(1) || '-'}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 Ocena jako uczestnik
               </p>
             </div>

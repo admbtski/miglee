@@ -44,7 +44,7 @@ const SIZE_STYLES: Record<
 };
 
 const BASE_TONE =
-  'bg-white/80 text-neutral-800 ring-neutral-200 dark:bg-neutral-900/60 dark:text-neutral-200 dark:ring-neutral-700';
+  'bg-white/80 text-zinc-800 ring-zinc-200 dark:bg-zinc-900/60 dark:text-zinc-200 dark:ring-zinc-700';
 
 /* ───────────────────────────── Reusable Pill (z istniejącego pliku) ───────────────────────────── */
 
@@ -190,7 +190,7 @@ export function InlinePillsList({
           className={clsx(
             'tabular-nums',
             pillClassName,
-            'bg-neutral-50 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300'
+            'bg-zinc-50 dark:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300'
           )}
           title={items.slice(visible.length).join(', ')}
           as="span"

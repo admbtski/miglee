@@ -48,7 +48,7 @@ const statusConfig = {
   [ReportStatus.Dismissed]: {
     label: 'Odrzucone',
     className:
-      'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+      'bg-zinc-100 text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-300',
   },
 };
 
@@ -64,33 +64,33 @@ export function ReportsTable({ reports, onSelectReport }: ReportsTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
-        <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+        <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
               Status
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
               Typ
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
               Powód
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
               Zgłaszający
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
               Data
             </th>
-            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
               Akcje
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-950">
+        <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
           {reports.map((report) => (
             <tr
               key={report.id}
-              className="hover:bg-gray-50 dark:hover:bg-gray-900"
+              className="hover:bg-zinc-50 dark:hover:bg-zinc-900"
             >
               <td className="whitespace-nowrap px-6 py-4">
                 <span
@@ -102,16 +102,16 @@ export function ReportsTable({ reports, onSelectReport }: ReportsTableProps) {
                   {statusConfig[report.status].label}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+              <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                 {entityLabels[report.entity]}
               </td>
-              <td className="max-w-xs truncate px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+              <td className="max-w-xs truncate px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                 {report.reason}
               </td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+              <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                 {report.reporter.name}
               </td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+              <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                 {format(new Date(report.createdAt), 'dd MMM yyyy, HH:mm', {
                   locale: pl,
                 })}

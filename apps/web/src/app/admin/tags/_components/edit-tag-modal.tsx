@@ -151,7 +151,7 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
       variant="centered"
       size="md"
       header={
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           <Edit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           <span>Edytuj tag</span>
         </h3>
@@ -175,7 +175,7 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
           )}
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Nazwa <span className="text-red-500">*</span>
             </label>
             <input
@@ -186,8 +186,8 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
               className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
                 errors.label
                   ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-              } dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100`}
+                  : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500'
+              } dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100`}
             />
             {errors.label && (
               <p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -197,7 +197,7 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Slug <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -210,17 +210,17 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
                 className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
                   errors.slug
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                } disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900`}
+                    : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500'
+                } disabled:cursor-not-allowed disabled:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:disabled:bg-zinc-900`}
               />
               {isUsed && (
                 <div className="absolute right-3 top-2.5">
-                  <Lock className="h-4 w-4 text-gray-400" />
+                  <Lock className="h-4 w-4 text-zinc-400" />
                 </div>
               )}
               {!isUsed && checkingSlug && (
                 <div className="absolute right-3 top-2.5">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
                 </div>
               )}
               {!isUsed &&
@@ -240,7 +240,7 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
               </p>
             )}
             {isUsed && (
-              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                 Slug zablokowany (tag używany)
               </p>
             )}
@@ -262,7 +262,7 @@ export function EditTagModal({ open, onClose, tag }: EditTagModalProps) {
             type="button"
             onClick={handleClose}
             disabled={updateMutation.isPending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             Anuluj
           </button>

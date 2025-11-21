@@ -47,7 +47,7 @@ export function CapacityBadge({
         ? fillPct >= 80
           ? 'text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-800/50'
           : 'text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800/50'
-        : 'text-neutral-700 dark:text-neutral-300 ring-neutral-200 dark:ring-neutral-700';
+        : 'text-zinc-700 dark:text-zinc-300 ring-zinc-200 dark:ring-zinc-700';
 
   const label =
     isFull || statusReason === 'FULL'
@@ -84,7 +84,7 @@ export function CapacityBadge({
       <span
         className={clsx(
           'inline-flex items-center justify-center rounded-full ring-1 shadow-sm select-none',
-          'bg-white/80 dark:bg-neutral-900/60',
+          'bg-white/80 dark:bg-zinc-900/60',
           toneClass,
           S.container,
           className
@@ -102,7 +102,7 @@ export function CapacityBadge({
     <span
       className={clsx(
         'inline-flex items-center rounded-full ring-1 shadow-sm select-none',
-        'bg-white/80 dark:bg-neutral-900/60',
+        'bg-white/80 dark:bg-zinc-900/60',
         toneClass,
         S.container,
         S.gap,

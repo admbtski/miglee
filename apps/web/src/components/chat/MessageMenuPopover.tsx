@@ -107,16 +107,16 @@ export function MessageMenuPopover({
             stiffness: 400,
             damping: 25,
           }}
-          className="z-50 bg-white dark:bg-neutral-900 shadow-xl rounded-xl overflow-hidden min-w-[180px] border border-neutral-200 dark:border-neutral-800"
+          className="z-50 bg-white dark:bg-zinc-900 shadow-xl rounded-xl overflow-hidden min-w-[180px] border border-zinc-200 dark:border-zinc-800"
           role="menu"
           aria-label="Message actions"
           {...getFloatingProps()}
         >
-          <div className="relative bg-white dark:bg-neutral-900">
+          <div className="relative bg-white dark:bg-zinc-900">
             {canEdit && (
               <button
                 onClick={handleEdit}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:bg-neutral-100 dark:focus:bg-neutral-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
                 role="menuitem"
                 style={{ minHeight: '48px' }}
               >
@@ -128,7 +128,7 @@ export function MessageMenuPopover({
             {canDelete && (
               <button
                 onClick={handleDelete}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:bg-neutral-100 dark:focus:bg-neutral-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
                 role="menuitem"
                 style={{ minHeight: '48px' }}
               >
@@ -138,12 +138,12 @@ export function MessageMenuPopover({
             )}
 
             {(canEdit || canDelete) && (
-              <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
+              <div className="h-px bg-zinc-200 dark:bg-zinc-800" />
             )}
 
             <button
               onClick={handleReport}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:bg-neutral-100 dark:focus:bg-neutral-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:ring-2 focus:ring-inset focus:ring-indigo-500"
               role="menuitem"
               style={{ minHeight: '48px' }}
             >

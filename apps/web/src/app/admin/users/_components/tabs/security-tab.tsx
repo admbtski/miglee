@@ -95,10 +95,10 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
     <div className="space-y-6">
       {/* User Block */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Blokada użytkownika
         </h5>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
           Blokada użytkownika uniemożliwia mu interakcje z innymi użytkownikami
         </p>
         {isBlocked ? (
@@ -130,10 +130,10 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
 
       {/* Account Suspension */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Zawieszenie konta (Global Ban)
         </h5>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
           Zawieszenie konta uniemożliwia użytkownikowi jakiekolwiek działania na
           platformie
         </p>
@@ -190,13 +190,13 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
 
       {/* DM Threads */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Wątki wiadomości prywatnych
         </h5>
         <button
           onClick={() => setDmThreadsOpen(true)}
           disabled={dmThreadsLoading}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           {dmThreadsLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,13 +220,13 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
       {/* Block Modal */}
       {blockOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Zablokuj użytkownika
             </h4>
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Powód blokady (opcjonalnie)
                 </label>
                 <textarea
@@ -234,14 +234,14 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
                   onChange={(e) => setBlockReason(e.target.value)}
                   placeholder="Wpisz powód blokady..."
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => setBlockOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Anuluj
               </button>
@@ -260,8 +260,8 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
       {/* Suspend Modal */}
       {suspendOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Zawieś konto użytkownika
             </h4>
             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
@@ -272,7 +272,7 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Powód zawieszenia (opcjonalnie)
                 </label>
                 <textarea
@@ -280,14 +280,14 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
                   onChange={(e) => setSuspendReason(e.target.value)}
                   placeholder="Wpisz powód zawieszenia..."
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => setSuspendOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Anuluj
               </button>
@@ -306,20 +306,20 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
       {/* DM Threads Modal */}
       {dmThreadsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Wątki wiadomości prywatnych ({dmThreads.length})
             </h4>
             <div className="max-h-[60vh] space-y-3 overflow-y-auto">
               {dmThreads.length === 0 ? (
-                <div className="py-12 text-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="py-12 text-center text-sm text-zinc-600 dark:text-zinc-400">
                   Użytkownik nie ma żadnych wątków DM
                 </div>
               ) : (
                 dmThreads.map((thread: any) => (
                   <div
                     key={thread.id}
-                    className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                    className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -335,10 +335,10 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
                           />
                         )}
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                             {thread.otherUser.name}
                           </p>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="mt-1 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                             <span>{thread.messageCount} wiadomości</span>
                             {thread.lastMessageAt && (
                               <>
@@ -371,7 +371,7 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setDmThreadsOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Zamknij
               </button>

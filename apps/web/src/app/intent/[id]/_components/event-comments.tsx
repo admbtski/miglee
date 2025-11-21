@@ -122,9 +122,9 @@ function CommentItem({
   return (
     <div
       key={comment.id}
-      className={`${isReply ? 'ml-8 border-l-2 border-neutral-200 pl-4 dark:border-neutral-800' : ''}`}
+      className={`${isReply ? 'ml-8 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800' : ''}`}
     >
-      <div className="group rounded-lg bg-white p-4 shadow-sm dark:bg-neutral-900">
+      <div className="group rounded-lg bg-white p-4 shadow-sm dark:bg-zinc-900">
         {/* Author & Actions */}
         <div className="mb-2 flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -148,7 +148,7 @@ function CommentItem({
             <div className="min-w-0">
               <Link
                 href={`/u/${comment.author?.name}`}
-                className="text-sm font-medium text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
+                className="text-sm font-medium text-zinc-900 transition-colors hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
               >
                 {(comment.author as any)?.profile?.displayName ||
                   comment.author?.name ||
@@ -156,11 +156,11 @@ function CommentItem({
               </Link>
               <Link
                 href={`/u/${comment.author?.name}`}
-                className="block text-xs text-neutral-600 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                className="block text-xs text-zinc-600 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
               >
                 @{comment.author?.name || 'N/A'}
               </Link>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 {format(new Date(comment.createdAt), 'dd MMM yyyy, HH:mm', {
                   locale: pl,
                 })}
@@ -174,22 +174,22 @@ function CommentItem({
           {currentUserId && !isEditing && (
             <div className="relative opacity-0 transition-opacity group-hover:opacity-100">
               <div className="group/menu relative">
-                <button className="rounded p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                  <MoreVertical className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
+                <button className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                  <MoreVertical className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                 </button>
-                <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right scale-0 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-transform group-hover/menu:scale-100 dark:bg-neutral-800">
+                <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right scale-0 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-transform group-hover/menu:scale-100 dark:bg-zinc-800">
                   {isAuthor ? (
                     <>
                       <button
                         onClick={() => onEdit(comment.id, comment.content)}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                       >
                         <Edit2 className="h-4 w-4" />
                         Edytuj
                       </button>
                       <button
                         onClick={() => onDelete(comment.id)}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-neutral-100 dark:text-red-400 dark:hover:bg-neutral-700"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
                       >
                         <Trash2 className="h-4 w-4" />
                         Usuń
@@ -200,7 +200,7 @@ function CommentItem({
                       onClick={() =>
                         onReport(comment.id, comment.author?.name || 'N/A')
                       }
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                     >
                       <Flag className="h-4 w-4" />
                       Zgłoś
@@ -218,7 +218,7 @@ function CommentItem({
             <textarea
               value={editingContent}
               onChange={(e) => setEditingContent(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               rows={3}
               autoFocus
             />
@@ -238,7 +238,7 @@ function CommentItem({
               </button>
               <button
                 onClick={() => onEdit('', '')}
-                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Anuluj
               </button>
@@ -246,7 +246,7 @@ function CommentItem({
           </div>
         ) : (
           <>
-            <p className="text-sm text-neutral-700 dark:text-neutral-300">
+            <p className="text-sm text-zinc-700 dark:text-zinc-300">
               {comment.content}
             </p>
 
@@ -255,7 +255,7 @@ function CommentItem({
               {currentUserId && !isReply && (
                 <button
                   onClick={() => onReply(comment.id)}
-                  className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                  className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                 >
                   <Reply className="h-3 w-3" />
                   Odpowiedz
@@ -265,7 +265,7 @@ function CommentItem({
                 <button
                   onClick={() => onToggleThread(comment.id)}
                   disabled={isLoadingReplies}
-                  className="flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900 disabled:opacity-50 dark:text-neutral-400 dark:hover:text-neutral-100"
+                  className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100"
                 >
                   {isLoadingReplies ? (
                     <>
@@ -293,12 +293,12 @@ function CommentItem({
       {/* Reply Form */}
       {replyingTo === comment.id && (
         <div className="ml-8 mt-3">
-          <div className="rounded-lg border border-neutral-300 bg-white p-3 dark:border-neutral-700 dark:bg-neutral-900">
+          <div className="rounded-lg border border-zinc-300 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder="Napisz odpowiedź..."
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               rows={3}
               autoFocus
             />
@@ -315,7 +315,7 @@ function CommentItem({
                   onReply('');
                   setReplyContent('');
                 }}
-                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Anuluj
               </button>
@@ -455,14 +455,14 @@ export function EventComments({ event }: EventCommentsProps) {
   };
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
+    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
       {/* Header */}
       <div className="mb-6 flex items-center gap-2">
-        <MessageSquare className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
-        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <MessageSquare className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Komentarze
         </h2>
-        <span className="text-sm text-neutral-600 dark:text-neutral-400">
+        <span className="text-sm text-zinc-600 dark:text-zinc-400">
           ({event.commentsCount})
         </span>
       </div>
@@ -474,7 +474,7 @@ export function EventComments({ event }: EventCommentsProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Dodaj komentarz..."
-            className="w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+            className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             rows={3}
           />
           <div className="mt-2 flex justify-end">
@@ -498,8 +498,8 @@ export function EventComments({ event }: EventCommentsProps) {
           </div>
         </form>
       ) : (
-        <div className="mb-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-center dark:border-neutral-800 dark:bg-neutral-950">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        <div className="mb-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Zaloguj się, aby dodać komentarz
           </p>
         </div>
@@ -512,8 +512,8 @@ export function EventComments({ event }: EventCommentsProps) {
         </div>
       ) : topLevelComments.length === 0 ? (
         <div className="py-12 text-center">
-          <MessageSquare className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700" />
-          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+          <MessageSquare className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             Brak komentarzy. Bądź pierwszy!
           </p>
         </div>

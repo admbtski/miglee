@@ -15,14 +15,18 @@ export default async function AdminLayout({
 
   return (
     <QueryClientProvider>
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950">
         {/* Sidebar */}
         <AdminSidebar />
 
         {/* Main content */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <AdminHeader />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto">
+            <div className="container mx-auto max-w-6xl px-4 py-6">
+              {children}
+            </div>
+          </main>
         </div>
       </div>
     </QueryClientProvider>

@@ -61,7 +61,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
     <div className="space-y-4">
       {comments.length === 0 && (
         <div className="py-12 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Brak komentarzy
           </p>
         </div>
@@ -69,7 +69,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
       {comments.map((comment) => (
         <div
           key={comment.id}
-          className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+          className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
@@ -82,19 +82,19 @@ export function ContentTab({ intentId }: ContentTabProps) {
                 />
               )}
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   {comment.author.name}
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   {format(new Date(comment.createdAt), 'dd MMM yyyy, HH:mm', {
                     locale: pl,
                   })}
                 </p>
-                <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
                   {comment.content}
                 </p>
                 {comment.repliesCount > 0 && (
-                  <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                  <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
                     {comment.repliesCount} odpowiedzi
                   </p>
                 )}
@@ -102,7 +102,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-300"
                 title="Zobacz komentarz"
               >
                 <Eye className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
     <div className="space-y-4">
       {reviews.length === 0 && (
         <div className="py-12 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Brak recenzji
           </p>
         </div>
@@ -132,7 +132,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
       {reviews.map((review) => (
         <div
           key={review.id}
-          className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+          className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
@@ -146,7 +146,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
               )}
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {review.author.name}
                   </p>
                   <div className="flex items-center">
@@ -156,19 +156,19 @@ export function ContentTab({ intentId }: ContentTabProps) {
                         className={`h-4 w-4 ${
                           i < review.rating
                             ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-gray-300 dark:text-gray-600'
+                            : 'text-zinc-300 dark:text-zinc-600'
                         }`}
                       />
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   {format(new Date(review.createdAt), 'dd MMM yyyy, HH:mm', {
                     locale: pl,
                   })}
                 </p>
                 {review.content && (
-                  <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
                     {review.content}
                   </p>
                 )}
@@ -176,7 +176,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
             </div>
             <div className="flex items-center gap-2">
               <button
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-300"
                 title="Zobacz recenzję"
               >
                 <Eye className="h-4 w-4" />
@@ -198,7 +198,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
     <div className="space-y-4">
       {messages.length === 0 && (
         <div className="py-12 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Brak wiadomości
           </p>
         </div>
@@ -208,7 +208,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
         return (
           <div
             key={message.id}
-            className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+            className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
@@ -221,10 +221,10 @@ export function ContentTab({ intentId }: ContentTabProps) {
                   />
                 )}
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {message.author.name}
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
                     {format(new Date(message.createdAt), 'dd MMM yyyy, HH:mm', {
                       locale: pl,
                     })}
@@ -232,7 +232,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
                       <span className="ml-1">(edytowano)</span>
                     )}
                   </p>
-                  <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
                     {message.content}
                   </p>
                   {message.reactions && message.reactions.length > 0 && (
@@ -240,7 +240,7 @@ export function ContentTab({ intentId }: ContentTabProps) {
                       {message.reactions.map((reaction, idx) => (
                         <span
                           key={idx}
-                          className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs dark:bg-gray-800"
+                          className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-xs dark:bg-zinc-800"
                         >
                           {reaction.emoji} {reaction.count}
                         </span>
@@ -271,16 +271,16 @@ export function ContentTab({ intentId }: ContentTabProps) {
           className={`rounded-lg border p-4 text-left transition-colors ${
             activeContent === 'comments'
               ? 'border-blue-500 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30'
-              : 'border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800'
+              : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800'
           }`}
         >
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Komentarze
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {commentsCount}
           </p>
         </button>
@@ -289,16 +289,16 @@ export function ContentTab({ intentId }: ContentTabProps) {
           className={`rounded-lg border p-4 text-left transition-colors ${
             activeContent === 'reviews'
               ? 'border-yellow-500 bg-yellow-50 dark:border-yellow-700 dark:bg-yellow-950/30'
-              : 'border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800'
+              : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800'
           }`}
         >
           <div className="flex items-center gap-2">
             <Star className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Recenzje
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {reviewsCount}
           </p>
         </button>
@@ -307,23 +307,23 @@ export function ContentTab({ intentId }: ContentTabProps) {
           className={`rounded-lg border p-4 text-left transition-colors ${
             activeContent === 'messages'
               ? 'border-green-500 bg-green-50 dark:border-green-700 dark:bg-green-950/30'
-              : 'border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800'
+              : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800'
           }`}
         >
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Wiadomości
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {messagesCount}
           </p>
         </button>
       </div>
 
       {/* Content */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />

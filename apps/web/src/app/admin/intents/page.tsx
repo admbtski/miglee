@@ -173,10 +173,10 @@ export default function IntentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             Wydarzenia
           </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             Zarządzanie wydarzeniami platformy
           </p>
         </div>
@@ -192,28 +192,28 @@ export default function IntentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="grid gap-4 md:grid-cols-5">
           {/* Search */}
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Wyszukaj
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               <input
                 type="search"
                 value={keywords}
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="Szukaj po tytule..."
-                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                className="w-full rounded-lg border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               />
             </div>
           </div>
 
           {/* Visibility */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Widoczność
             </label>
             <select
@@ -221,7 +221,7 @@ export default function IntentsPage() {
               onChange={(e) =>
                 setVisibility((e.target.value as Visibility) || undefined)
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="">Wszystkie</option>
               <option value={Visibility.Public}>Publiczne</option>
@@ -231,7 +231,7 @@ export default function IntentsPage() {
 
           {/* Status */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Status
             </label>
             <select
@@ -239,7 +239,7 @@ export default function IntentsPage() {
               onChange={(e) =>
                 setStatus((e.target.value as IntentStatus) || undefined)
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="">Wszystkie</option>
               <option value={IntentStatus.Available}>Dostępne</option>
@@ -251,7 +251,7 @@ export default function IntentsPage() {
 
           {/* Kind */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Typ
             </label>
             <select
@@ -259,7 +259,7 @@ export default function IntentsPage() {
               onChange={(e) =>
                 setKind((e.target.value as MeetingKind) || undefined)
               }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="">Wszystkie</option>
               <option value={MeetingKind.Onsite}>Stacjonarne</option>
@@ -272,13 +272,13 @@ export default function IntentsPage() {
         {/* Sort */}
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Sortuj według
             </label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as IntentsSortBy)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value={IntentsSortBy.StartAt}>Data rozpoczęcia</option>
               <option value={IntentsSortBy.CreatedAt}>Data utworzenia</option>
@@ -289,13 +289,13 @@ export default function IntentsPage() {
             </select>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Kierunek
             </label>
             <select
               value={sortDir}
               onChange={(e) => setSortDir(e.target.value as SortDir)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value={SortDir.Asc}>Rosnąco</option>
               <option value={SortDir.Desc}>Malejąco</option>
@@ -303,22 +303,22 @@ export default function IntentsPage() {
           </div>
         </div>
 
-        <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+        <div className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
           Znaleziono: <span className="font-semibold">{total}</span> wydarzeń
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
           </div>
         )}
 
         {!isLoading && intents.length === 0 && (
           <div className="p-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Brak wydarzeń
             </p>
           </div>
@@ -327,7 +327,7 @@ export default function IntentsPage() {
         {!isLoading && intents.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+              <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
                 <tr>
                   <th className="px-6 py-3 text-left">
                     <input
@@ -337,44 +337,44 @@ export default function IntentsPage() {
                         intents.length > 0
                       }
                       onChange={handleSelectAll}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Tytuł
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Organizator
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Typ
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Członkowie
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Akcje
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-950">
+              <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
                 {intents.map((intent) => (
                   <tr
                     key={intent.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-900"
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-900"
                   >
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(intent.id)}
                         onChange={() => handleSelectIntent(intent.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                        className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                       />
                     </td>
                     <td className="max-w-xs px-6 py-4">
@@ -386,22 +386,22 @@ export default function IntentsPage() {
                           {intent.title}
                         </button>
                         {intent.visibility === Visibility.Hidden && (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
+                          <EyeOff className="h-4 w-4 text-zinc-400" />
                         )}
                         {intent.joinManuallyClosed && (
                           <Lock className="h-4 w-4 text-orange-500" />
                         )}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {intent.owner?.name || 'N/A'}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {format(new Date(intent.startAt), 'dd MMM yyyy', {
                         locale: pl,
                       })}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {intent.meetingKind || '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
@@ -412,14 +412,14 @@ export default function IntentsPage() {
                             : intent.status === IntentStatus.Ongoing
                               ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                               : intent.status === IntentStatus.Past
-                                ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+                                ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-300'
                                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                         }`}
                       >
                         {intent.status}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {intent.joinedCount || 0}
                       {intent.min &&
                         intent.max &&
@@ -442,16 +442,16 @@ export default function IntentsPage() {
                                 openDropdownId === intent.id ? null : intent.id
                               )
                             }
-                            className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                            className="inline-flex items-center gap-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-300"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
                           {openDropdownId === intent.id && (
-                            <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800">
+                            <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-zinc-800">
                               {!intent.canceledAt && !intent.deletedAt && (
                                 <button
                                   onClick={() => openCancelModal(intent.id)}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                                 >
                                   <Ban className="h-4 w-4" />
                                   Anuluj
@@ -460,7 +460,7 @@ export default function IntentsPage() {
                               {!intent.deletedAt && (
                                 <button
                                   onClick={() => openDeleteModal(intent.id)}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                   Usuń
@@ -469,7 +469,7 @@ export default function IntentsPage() {
                               {(intent.canceledAt || intent.deletedAt) && (
                                 <button
                                   onClick={() => openRestoreModal(intent.id)}
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-zinc-100 dark:text-green-400 dark:hover:bg-zinc-700"
                                 >
                                   <RotateCcw className="h-4 w-4" />
                                   Przywróć
@@ -528,7 +528,7 @@ export default function IntentsPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Powód anulowania (opcjonalnie)
             </label>
             <textarea
@@ -536,7 +536,7 @@ export default function IntentsPage() {
               onChange={(e) => setCancelReason(e.target.value)}
               placeholder="Wpisz powód anulowania..."
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
         </div>

@@ -71,9 +71,9 @@ export function JoinAnswersViewer({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+    <div className="space-y-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
       {/* User info header */}
-      <div className="flex items-start gap-3 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex items-start gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
         <Avatar
           url={buildAvatarUrl(user.avatarKey, 'md')}
           blurhash={user.avatarBlurhash}
@@ -82,7 +82,7 @@ export function JoinAnswersViewer({
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-neutral-900 dark:text-neutral-100">
+            <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">
               {user.name}
             </h4>
             {user.verifiedAt && (
@@ -93,7 +93,7 @@ export function JoinAnswersViewer({
           </div>
 
           {user.profile?.city && (
-            <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+            <div className="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400 mt-1">
               <MapPin className="h-3.5 w-3.5" />
               <span>
                 {user.profile.city}
@@ -103,12 +103,12 @@ export function JoinAnswersViewer({
           )}
 
           {user.profile?.bioShort && (
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 line-clamp-2">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2 line-clamp-2">
               {user.profile.bioShort}
             </p>
           )}
 
-          <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mt-2">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 mt-2">
             <Calendar className="h-3.5 w-3.5" />
             <span>
               Wysłano{' '}
@@ -124,25 +124,25 @@ export function JoinAnswersViewer({
       {/* Answers */}
       {answers.length > 0 ? (
         <div className="space-y-4">
-          <h5 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          <h5 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
             Odpowiedzi na pytania:
           </h5>
           {answers.map((answer, index) => (
             <div
               key={answer.id}
-              className="space-y-1.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 p-3"
+              className="space-y-1.5 rounded-md bg-zinc-50 dark:bg-zinc-800/50 p-3"
             >
-              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 {index + 1}. {answer.question.label}
               </p>
-              <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
                 {formatAnswer(answer.answer, answer.question.type)}
               </p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 italic">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
           Brak odpowiedzi (formularz nie był wymagany)
         </p>
       )}
@@ -161,7 +161,7 @@ export function JoinAnswersViewer({
             maxLength={500}
             rows={3}
           />
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
             {rejectReason.length} / 500 znaków
           </p>
         </div>

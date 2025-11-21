@@ -36,7 +36,7 @@ export function ReviewCard({
   const isAuthor = currentUserId === review.author.id;
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
+    <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3 flex-1">
           {/* Avatar */}
@@ -50,8 +50,8 @@ export function ReviewCard({
                 className="rounded-full transition-opacity hover:opacity-80"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 transition-opacity hover:opacity-80 dark:bg-neutral-700">
-                <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 transition-opacity hover:opacity-80 dark:bg-zinc-700">
+                <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
                   {(
                     (review.author as any).profile?.displayName ||
                     review.author.name
@@ -68,7 +68,7 @@ export function ReviewCard({
             <div className="flex items-center gap-2 flex-wrap">
               <Link
                 href={`/u/${review.author.name}`}
-                className="text-sm font-medium text-neutral-900 transition-colors hover:text-blue-600 dark:text-neutral-100 dark:hover:text-blue-400"
+                className="text-sm font-medium text-zinc-900 transition-colors hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
               >
                 {(review.author as any).profile?.displayName ||
                   review.author.name}
@@ -80,7 +80,7 @@ export function ReviewCard({
                     className={`h-4 w-4 ${
                       i < review.rating
                         ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-neutral-300 dark:text-neutral-600'
+                        : 'text-zinc-300 dark:text-zinc-600'
                     }`}
                   />
                 ))}
@@ -88,17 +88,17 @@ export function ReviewCard({
             </div>
             <Link
               href={`/u/${review.author.name}`}
-              className="text-xs text-neutral-600 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+              className="text-xs text-zinc-600 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
             >
               @{review.author.name}
             </Link>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               {format(new Date(review.createdAt), 'dd MMM yyyy, HH:mm', {
                 locale: pl,
               })}
             </p>
             {review.content && (
-              <p className="mt-2 text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
+              <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
                 {review.content}
               </p>
             )}
@@ -113,7 +113,7 @@ export function ReviewCard({
                 {onEdit && (
                   <button
                     onClick={() => onEdit(review.id)}
-                    className="rounded-lg p-1.5 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                    className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                     title="Edytuj recenzję"
                   >
                     <Edit2 className="h-4 w-4" />
@@ -134,7 +134,7 @@ export function ReviewCard({
                 {onReport && (
                   <button
                     onClick={() => onReport(review.id, review.author.name)}
-                    className="rounded-lg p-1.5 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                    className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                     title="Zgłoś recenzję"
                   >
                     <Flag className="h-4 w-4" />

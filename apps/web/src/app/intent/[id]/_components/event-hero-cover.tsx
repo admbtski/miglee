@@ -31,7 +31,7 @@ export function EventHeroCover({
   const startDate = new Date(startISO);
 
   return (
-    <div className="relative h-[220px] overflow-hidden rounded-[20px] bg-gradient-to-br from-neutral-100 to-neutral-200 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:from-neutral-800 dark:to-neutral-900 dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)] md:h-[340px]">
+    <div className="relative h-[220px] overflow-hidden rounded-[20px] bg-gradient-to-br from-zinc-100 to-zinc-200 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:from-zinc-800 dark:to-zinc-900 dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)] md:h-[340px]">
       {coverKey ? (
         <BlurHashImage
           src={buildIntentCoverUrl(coverKey, 'detail') || ''}

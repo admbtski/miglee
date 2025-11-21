@@ -109,7 +109,7 @@ export function LevelBadge({
     <meta.Icon className={clsx(S.icon, 'align-middle')} aria-hidden />
   );
   const baseClasses = clsx(
-    'inline-flex items-center ring-1 shadow-sm select-none bg-white/80 dark:bg-neutral-900/60 truncate',
+    'inline-flex items-center ring-1 shadow-sm select-none bg-white/80 dark:bg-zinc-900/60 truncate',
     meta.tone,
     meta.ring,
     S.container,

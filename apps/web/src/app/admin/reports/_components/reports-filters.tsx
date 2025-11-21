@@ -42,7 +42,7 @@ export function ReportsFilters({
     <div className="space-y-4">
       {/* Status filters */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Status
         </label>
         <div className="flex flex-wrap gap-2">
@@ -54,7 +54,7 @@ export function ReportsFilters({
                 'rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
                 status === option.value
                   ? 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-950 dark:text-blue-300'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+                  : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
               )}
             >
               {option.label}
@@ -65,7 +65,7 @@ export function ReportsFilters({
 
       {/* Entity filters */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Typ zgłoszenia
         </label>
         <div className="flex flex-wrap gap-2">
@@ -77,7 +77,7 @@ export function ReportsFilters({
                 'rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
                 entity === option.value
                   ? 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-950 dark:text-blue-300'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+                  : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
               )}
             >
               {option.label}
@@ -87,7 +87,7 @@ export function ReportsFilters({
       </div>
 
       {/* Count */}
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="text-sm text-zinc-600 dark:text-zinc-400">
         Znaleziono: <span className="font-semibold">{totalCount}</span> raportów
       </div>
     </div>

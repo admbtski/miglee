@@ -41,8 +41,8 @@ export function EventActions({ event }: EventActionsProps) {
   return (
     <div className="space-y-4">
       {/* Quick Actions */}
-      <div className="rounded-2xl border border-neutral-200 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
-        <h3 className="mb-3 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+      <div className="rounded-2xl border border-zinc-200 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Akcje
         </h3>
 
@@ -50,7 +50,7 @@ export function EventActions({ event }: EventActionsProps) {
           {/* Share */}
           <button
             onClick={handleShare}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             <Share2 className="h-4 w-4" />
             <span>Udostępnij</span>
@@ -59,7 +59,7 @@ export function EventActions({ event }: EventActionsProps) {
           {/* Copy Link */}
           <button
             onClick={handleCopyLink}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             <LinkIcon className="h-4 w-4" />
             <span>Kopiuj link</span>
@@ -69,7 +69,7 @@ export function EventActions({ event }: EventActionsProps) {
           <button
             onClick={() => setChatOpen(true)}
             disabled={!event.userMembership?.isJoined}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             <MessageCircle className="h-4 w-4" />
             <span>Otwórz czat</span>
@@ -83,7 +83,7 @@ export function EventActions({ event }: EventActionsProps) {
           {/* Mute */}
           <button
             disabled
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             <BellOff className="h-4 w-4" />
             <span>Wycisz powiadomienia</span>
@@ -102,8 +102,8 @@ export function EventActions({ event }: EventActionsProps) {
 
       {/* Invite Links (Owner/Mod only) */}
       {event.inviteLinks && event.inviteLinks.length > 0 && (
-        <div className="rounded-2xl border border-neutral-200 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
-          <h3 className="mb-3 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+        <div className="rounded-2xl border border-zinc-200 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Linki zaproszeń
           </h3>
 
@@ -111,10 +111,10 @@ export function EventActions({ event }: EventActionsProps) {
             {event.inviteLinks.map((link) => (
               <div
                 key={link.code}
-                className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-900"
+                className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900"
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <code className="text-xs font-mono text-neutral-900 dark:text-neutral-100">
+                  <code className="text-xs font-mono text-zinc-900 dark:text-zinc-100">
                     {link.code}
                   </code>
                   <button
@@ -129,7 +129,7 @@ export function EventActions({ event }: EventActionsProps) {
                     Kopiuj
                   </button>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                   <span>
                     {link.usedCount}
                     {link.maxUses ? ` / ${link.maxUses}` : ''} użyć

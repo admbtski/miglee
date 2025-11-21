@@ -143,7 +143,7 @@ export function EventLocationMap({
         const popupContent = `
           <div class="p-2">
             ${title ? `<div class="font-semibold text-sm mb-1">${title}</div>` : ''}
-            ${address ? `<div class="text-xs text-neutral-600 dark:text-neutral-400">${address}</div>` : ''}
+            ${address ? `<div class="text-xs text-zinc-600 dark:text-zinc-400">${address}</div>` : ''}
           </div>
         `;
 
@@ -210,8 +210,8 @@ export function EventLocationMap({
         className={clsx(
           'rounded-xl overflow-hidden',
           height,
-          'bg-white dark:bg-neutral-900',
-          'border border-neutral-200 dark:border-neutral-800'
+          'bg-white dark:bg-zinc-900',
+          'border border-zinc-200 dark:border-zinc-800'
         )}
         aria-label={`Mapa lokalizacji: ${address || 'Lokalizacja wydarzenia'}`}
       />

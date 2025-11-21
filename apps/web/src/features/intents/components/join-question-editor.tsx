@@ -181,18 +181,18 @@ export function JoinQuestionEditor({
             {questions.map((q, index) => (
               <div
                 key={q.id}
-                className="rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-3"
+                className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3"
               >
                 <div className="flex items-start gap-2">
-                  <span className="text-sm font-medium text-neutral-500">
+                  <span className="text-sm font-medium text-zinc-500">
                     {index + 1}.
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {q.label}
                     </p>
                     {q.helpText && (
-                      <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
                         {q.helpText}
                       </p>
                     )}
@@ -228,11 +228,11 @@ export function JoinQuestionEditor({
           {questions.map((question, index) => (
             <div
               key={question.id}
-              className="flex items-start gap-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4"
+              className="flex items-start gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4"
             >
               <div className="flex items-center gap-2">
-                <GripVertical className="h-5 w-5 text-neutral-400 cursor-move" />
-                <span className="text-sm font-medium text-neutral-500">
+                <GripVertical className="h-5 w-5 text-zinc-400 cursor-move" />
+                <span className="text-sm font-medium text-zinc-500">
                   {index + 1}.
                 </span>
               </div>
@@ -240,11 +240,11 @@ export function JoinQuestionEditor({
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <p className="font-medium text-neutral-900 dark:text-neutral-100">
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
                       {question.label}
                     </p>
                     {question.helpText && (
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
                         {question.helpText}
                       </p>
                     )}
@@ -280,7 +280,7 @@ export function JoinQuestionEditor({
                           ).map((opt, i) => (
                             <p
                               key={i}
-                              className="text-sm text-neutral-600 dark:text-neutral-400"
+                              className="text-sm text-zinc-600 dark:text-zinc-400"
                             >
                               • {opt.label}
                             </p>
@@ -317,8 +317,8 @@ export function JoinQuestionEditor({
       )}
 
       {!canAddMore && !isLocked && (
-        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 p-3">
-          <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
+          <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
             <AlertCircle className="h-4 w-4" />
             <span>Osiągnięto maksymalną liczbę pytań ({maxQuestions})</span>
           </div>
@@ -327,9 +327,9 @@ export function JoinQuestionEditor({
 
       {/* New question form */}
       {isAdding && (
-        <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 space-y-4">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-neutral-900 dark:text-neutral-100">
+            <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
               Nowe pytanie
             </h4>
             <Button
@@ -383,7 +383,7 @@ export function JoinQuestionEditor({
                 maxLength={MAX_LABEL_LENGTH}
                 placeholder="Np. Jakie masz doświadczenie w tym sporcie?"
               />
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-zinc-500">
                 {newQuestion.label.length} / {MAX_LABEL_LENGTH}
               </p>
             </div>
@@ -400,7 +400,7 @@ export function JoinQuestionEditor({
                 rows={2}
                 placeholder="Dodatkowe informacje dla użytkownika..."
               />
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-zinc-500">
                 {newQuestion.helpText.length} / {MAX_HELP_TEXT_LENGTH}
               </p>
             </div>
@@ -484,7 +484,7 @@ export function JoinQuestionEditor({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button variant="outline" onClick={handleCancelAdding}>
               Anuluj
             </Button>

@@ -42,10 +42,10 @@ export function DiagnosticTools({ userId, userName }: DiagnosticToolsProps) {
     <div className="space-y-6">
       {/* Password Reset */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Reset hasła
         </h5>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
           Wyślij użytkownikowi email z linkiem do resetowania hasła
         </p>
         <button
@@ -59,10 +59,10 @@ export function DiagnosticTools({ userId, userName }: DiagnosticToolsProps) {
 
       {/* Impersonation */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Impersonacja użytkownika
         </h5>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
           Zaloguj się jako ten użytkownik (tylko dla ADMIN, dev-only)
         </p>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">

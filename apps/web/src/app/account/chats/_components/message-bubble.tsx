@@ -75,7 +75,7 @@ export function Bubble({
         {/* Main Content */}
         <div className="flex items-end gap-2 w-full">
           {deletedAt ? (
-            <span className="leading-5 italic text-neutral-400">
+            <span className="leading-5 italic text-zinc-400">
               Usunięta wiadomość
             </span>
           ) : (
@@ -84,7 +84,7 @@ export function Bubble({
                 {children}
               </span>
               {editedAt && (
-                <span className="text-xs text-neutral-400 ml-1 flex-shrink-0">
+                <span className="text-xs text-zinc-400 ml-1 flex-shrink-0">
                   (edited)
                 </span>
               )}

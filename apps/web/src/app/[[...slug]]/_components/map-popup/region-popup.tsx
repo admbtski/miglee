@@ -54,8 +54,8 @@ export const RegionPopup = memo(function RegionPopup({
   const Footer = useCallback(() => {
     if (!hasNextPage && intents.length > 0) {
       return (
-        <div className="py-2 text-center">
-          <span className="text-[10px] opacity-60">
+        <div className="py-3 text-center">
+          <span className="text-xs text-zinc-500">
             Wszystko załadowane ({intents.length})
           </span>
         </div>
@@ -63,7 +63,7 @@ export const RegionPopup = memo(function RegionPopup({
     }
     if (isFetchingNextPage) {
       return (
-        <div className="p-2">
+        <div className="px-4 pb-4">
           <PopupItemSkeleton />
         </div>
       );
@@ -90,7 +90,7 @@ export const RegionPopup = memo(function RegionPopup({
   const virtuosoComponents = useMemo(
     () => ({
       List: ({ children, ...props }: any) => (
-        <div {...props} className="px-3 py-4 flex flex-col">
+        <div {...props} className="px-4 py-4 flex flex-col gap-4">
           {children}
         </div>
       ),
@@ -104,11 +104,11 @@ export const RegionPopup = memo(function RegionPopup({
       <div
         className={clsx(
           'max-w-[280px] max-h-[420px] font-sans relative',
-          'bg-white dark:bg-zinc-900',
-          'rounded-2xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800'
+          'bg-zinc-900/95 backdrop-blur-xl',
+          'rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)] ring-1 ring-white/10'
         )}
       >
-        <div className="p-2 grid gap-2">
+        <div className="p-4 flex flex-col gap-4">
           <PopupItemSkeleton />
           <PopupItemSkeleton />
           <PopupItemSkeleton />
@@ -122,70 +122,31 @@ export const RegionPopup = memo(function RegionPopup({
       <div
         className={clsx(
           'w-[280px] h-[420px] font-sans relative',
-          'bg-white dark:bg-zinc-900',
-          'rounded-3xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800',
+          'bg-zinc-900/95 backdrop-blur-xl',
+          'rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)] ring-1 ring-white/10',
           'overflow-hidden'
         )}
       >
-        {/* Subtelna ramka świetlna */}
-        <div className="absolute inset-0 rounded-3xl ring-1 ring-white/10 pointer-events-none z-20" />
+        {/* Subtle top fade for scroll indication */}
+        <div className="absolute top-0 left-0 right-0 h-8 pointer-events-none z-10 bg-gradient-to-b from-zinc-900/50 to-transparent" />
 
-        {/* Header fade overlay - mocniejszy, z większym obszarem */}
-        <div
-          className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10"
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 40%, transparent 100%)',
-          }}
-        />
-        <div
-          className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10 dark:block hidden"
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(24,24,27,0.95) 0%, rgba(24,24,27,0.8) 40%, transparent 100%)',
-          }}
-        />
+        {/* Subtle bottom fade for scroll indication */}
+        <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none z-10 bg-gradient-to-t from-zinc-900/50 to-transparent" />
 
-        {/* Footer fade overlay - mocniejszy, z większym obszarem */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none z-10"
-          style={{
-            background:
-              'linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 40%, transparent 100%)',
-          }}
+        {/* Scrollable content */}
+        <Virtuoso
+          style={{ height: '420px', width: '100%' }}
+          data={itemsWithPlan}
+          totalCount={itemsWithPlan.length}
+          endReached={handleEndReached}
+          overscan={5}
+          atBottomThreshold={400}
+          itemContent={renderItem}
+          computeItemKey={computeItemKey}
+          components={virtuosoComponents}
+          increaseViewportBy={{ top: 200, bottom: 400 }}
+          followOutput={false}
         />
-        <div
-          className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none z-10 dark:block hidden"
-          style={{
-            background:
-              'linear-gradient(to top, rgba(24,24,27,0.95) 0%, rgba(24,24,27,0.8) 40%, transparent 100%)',
-          }}
-        />
-
-        {/* Scrollable content with mask */}
-        <div
-          className="h-full w-full"
-          style={{
-            maskImage:
-              'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
-            WebkitMaskImage:
-              'linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%)',
-          }}
-        >
-          <Virtuoso
-            style={{ height: '420px', width: '100%' }}
-            data={itemsWithPlan}
-            totalCount={itemsWithPlan.length}
-            endReached={handleEndReached}
-            overscan={5}
-            atBottomThreshold={400}
-            itemContent={renderItem}
-            computeItemKey={computeItemKey}
-            components={virtuosoComponents}
-            increaseViewportBy={{ top: 200, bottom: 400 }}
-            followOutput={false}
-          />
-        </div>
       </div>
     );
   }
@@ -194,12 +155,12 @@ export const RegionPopup = memo(function RegionPopup({
     <div
       className={clsx(
         'max-w-[280px] font-sans relative',
-        'bg-white dark:bg-zinc-900',
-        'rounded-2xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-800',
-        'p-4'
+        'bg-zinc-900/95 backdrop-blur-xl',
+        'rounded-2xl shadow-[0_8px_32px_-4px_rgba(0,0,0,0.5)] ring-1 ring-white/10',
+        'p-6'
       )}
     >
-      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+      <p className="text-sm text-zinc-400 text-center">
         Brak wydarzeń w tym regionie
       </p>
     </div>

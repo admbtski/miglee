@@ -31,10 +31,10 @@ export default function ReportsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           Raporty
         </h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Kolejka moderacyjna zgłoszeń użytkowników
         </p>
       </div>
@@ -49,12 +49,12 @@ export default function ReportsPage() {
       />
 
       {/* Table */}
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 dark:border-gray-700 dark:border-t-blue-400" />
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                 Ładowanie raportów...
               </p>
             </div>
@@ -71,7 +71,7 @@ export default function ReportsPage() {
 
         {!isLoading && !error && reports.length === 0 && (
           <div className="p-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Brak raportów do wyświetlenia
             </p>
           </div>

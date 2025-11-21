@@ -74,8 +74,8 @@ const CHIP_META: Record<AVNorm, AvChipMeta> = {
   HIDDEN: {
     label: 'Ukryte',
     Icon: EyeOff,
-    tone: 'text-neutral-600 dark:text-neutral-300',
-    ring: 'ring-neutral-200 dark:ring-neutral-700/60',
+    tone: 'text-zinc-600 dark:text-zinc-300',
+    ring: 'ring-zinc-200 dark:ring-zinc-700/60',
     hint: 'Adres/Link ukryty',
     visibility: 'HIDDEN',
   },
@@ -214,7 +214,7 @@ export function AccountIntentCard(props: {
 
   const LocationRows = () => {
     const rowBase =
-      'flex items-center min-w-0 gap-1.5 text-xs text-neutral-600 dark:text-neutral-400';
+      'flex items-center min-w-0 gap-1.5 text-xs text-zinc-600 dark:text-zinc-400';
     const rows: ReactNode[] = [];
 
     if (isHybrid) {
@@ -487,7 +487,7 @@ export function AccountIntentCard(props: {
             'inline-flex shrink-0 items-center gap-1.5 truncate text-nowrap rounded-full px-1.5 py-0.5 text-[11px] ring-1',
             avChip.tone,
             avChip.ring,
-            'bg-white/80 dark:bg-neutral-900/60'
+            'bg-white/80 dark:bg-zinc-900/60'
           )}
           title={avChip.hint}
         >

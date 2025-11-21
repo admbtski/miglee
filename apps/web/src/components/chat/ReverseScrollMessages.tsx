@@ -130,7 +130,7 @@ export function ReverseScrollMessages({
       {isFetchingNextPage && (
         <div className="flex justify-center py-4">
           {loadingIndicator || (
-            <div className="text-sm text-neutral-400">
+            <div className="text-sm text-zinc-400">
               Loading older messages...
             </div>
           )}
@@ -140,7 +140,7 @@ export function ReverseScrollMessages({
       {/* No more messages indicator */}
       {!hasNextPage && allMessages.length > 0 && (
         <div className="flex justify-center py-4">
-          <div className="text-sm text-neutral-400">
+          <div className="text-sm text-zinc-400">
             Beginning of conversation
           </div>
         </div>
@@ -156,7 +156,7 @@ export function ReverseScrollMessages({
       {/* Empty state */}
       {allMessages.length === 0 && !isFetchingNextPage && (
         <div className="flex items-center justify-center h-full">
-          <div className="text-center text-neutral-400">
+          <div className="text-center text-zinc-400">
             <p>No messages yet</p>
             <p className="text-sm mt-2">Start the conversation!</p>
           </div>

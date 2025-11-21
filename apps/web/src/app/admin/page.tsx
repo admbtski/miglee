@@ -55,10 +55,10 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           Dashboard
         </h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Przegląd aktywności platformy
         </p>
       </div>
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
       {/* Alerts */}
       {alerts.length > 0 && (
         <div>
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Alerty
           </h2>
           <div className="space-y-4">
@@ -131,11 +131,11 @@ export default function AdminDashboard() {
       )}
 
       {/* TODO: Add charts section */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Wykresy i statystyki
         </h2>
-        <div className="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-center py-12 text-zinc-500 dark:text-zinc-400">
           <div className="text-center">
             <BarChart3 className="mx-auto h-12 w-12 opacity-50" />
             <p className="mt-2 text-sm">Wykresy będą dostępne wkrótce</p>

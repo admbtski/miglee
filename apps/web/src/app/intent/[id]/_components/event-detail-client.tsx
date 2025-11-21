@@ -29,6 +29,8 @@ import {
   MapPinned,
 } from 'lucide-react';
 import { FavouriteButton } from '@/components/ui/favourite-button';
+import { ShareButton } from '@/components/ui/share-button';
+import { ShareModal } from '@/components/ui/share-modal';
 // import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
 import { EventManagementModalConnect } from '@/app/account/intents/_components/management';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
@@ -57,6 +59,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const [closeJoinId, setCloseJoinId] = useState<string | null>(null);
   const [reopenJoinId, setReopenJoinId] = useState<string | null>(null);
   const [closeJoinReason, setCloseJoinReason] = useState('');
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Get intent and user data (safe to access after hooks)
   const intent = data?.intent;
@@ -236,13 +239,13 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 pb-20">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 pb-20">
       {/* Back Navigation */}
-      <div className="border-b border-neutral-200 bg-neutral-50/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/80">
+      <div className="border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
         <div className="container mx-auto max-w-6xl px-4 py-3">
           <a
             href="/"
-            className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            className="inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
           >
             ← Powrót do listy wydarzeń
           </a>
@@ -255,7 +258,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       */}
       <div className="container mx-auto max-w-6xl px-4 py-6">
         <div className="mb-6">
-          <div className="relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+          <div className="relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
             {/* Background Image */}
             {eventData.coverKey ? (
               <BlurHashImage
@@ -273,8 +276,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
             {/* Gradient Overlay - Subtle, magazine-style */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/15 to-black/55" />
 
-            {/* Favourite Button - Top Right Corner */}
-            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
+            {/* Action Buttons - Top Right Corner */}
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center gap-2">
+              <ShareButton onClick={() => setShareOpen(true)} size="md" />
               <FavouriteButton
                 intentId={eventData.id}
                 isFavourite={eventData.isFavourite ?? false}
@@ -346,8 +350,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
         {/* Extended Metadata Card - Integrated below hero */}
         <div className="mb-6">
-          <div className="rounded-xl border border-neutral-200 bg-white/70 backdrop-blur-sm p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
-            <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-700 dark:text-neutral-300">
+          <div className="rounded-xl border border-zinc-200 bg-white/70 backdrop-blur-sm p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300">
               {/* Event Size Category */}
               <div className="flex items-center gap-1.5">
                 <Users className="h-4 w-4 opacity-70" />
@@ -390,7 +394,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                     (isJoined || isOwner || isModerator))
                 ) && (
                   <>
-                    <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
+                    <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
                       <MapPin className="h-4 w-4" />
                       <span className="text-xs">
                         Lokalizacja{' '}
@@ -441,8 +445,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               (eventData.addressVisibility === 'PUBLIC' ||
                 (eventData.addressVisibility === 'AFTER_JOIN' &&
                   (isJoined || isOwner || isModerator))) && (
-                <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-                  <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+                  <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                     📍 Lokalizacja
                   </h2>
                   <EventLocationMap
@@ -453,9 +457,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                     height="h-[260px]"
                   />
                   {eventData.address && (
-                    <div className="mt-4 flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition">
+                    <div className="mt-4 flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
                       <svg
-                        className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-500 dark:text-neutral-400"
+                        className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -474,10 +478,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                         />
                       </svg>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                           Adres
                         </p>
-                        <p className="text-md text-neutral-800 dark:text-neutral-200 break-words">
+                        <p className="text-md text-zinc-800 dark:text-zinc-200 break-words">
                           {eventData.address}
                         </p>
                       </div>
@@ -597,6 +601,15 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         onSuccess={() => {
           refetch();
         }}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        url={typeof window !== 'undefined' ? window.location.href : ''}
+        title={eventData.title}
+        description={eventData.description || undefined}
       />
 
       {/* Sticky Join Button at Bottom */}

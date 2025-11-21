@@ -114,11 +114,11 @@ export function ReportCommentModal({
             <div>
               <h3
                 id="report-comment-modal-title"
-                className="text-lg font-semibold text-neutral-900 dark:text-neutral-100"
+                className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
               >
                 Zgłoś komentarz
               </h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
                 Komentarz od: {commentAuthor}
               </p>
             </div>
@@ -126,7 +126,7 @@ export function ReportCommentModal({
         }
         content={
           <div className="space-y-4">
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Jeśli ten komentarz narusza regulamin lub zawiera nieodpowiednie
               treści, możesz go zgłosić. Twoje zgłoszenie zostanie sprawdzone
               przez moderatorów.
@@ -135,7 +135,7 @@ export function ReportCommentModal({
             <div>
               <label
                 htmlFor="report-reason"
-                className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+                className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
                 Powód zgłoszenia *
               </label>
@@ -143,7 +143,7 @@ export function ReportCommentModal({
                 {REPORT_REASONS.map((reason) => (
                   <label
                     key={reason.value}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 p-3 transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
                   >
                     <input
                       type="radio"
@@ -154,7 +154,7 @@ export function ReportCommentModal({
                       className="h-4 w-4 text-red-600 focus:ring-2 focus:ring-red-500"
                       disabled={loading}
                     />
-                    <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">
                       {reason.label}
                     </span>
                   </label>
@@ -166,7 +166,7 @@ export function ReportCommentModal({
               <div>
                 <label
                   htmlFor="custom-reason"
-                  className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+                  className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
                   Opisz problem *
                 </label>
@@ -175,12 +175,12 @@ export function ReportCommentModal({
                   value={customReason}
                   onChange={(e) => setCustomReason(e.target.value)}
                   placeholder="Opisz szczegółowo, dlaczego zgłaszasz ten komentarz..."
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
                   rows={4}
                   maxLength={1000}
                   disabled={loading}
                 />
-                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                   {customReason.length}/1000 znaków
                 </p>
               </div>
@@ -201,7 +201,7 @@ export function ReportCommentModal({
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Anuluj
             </button>

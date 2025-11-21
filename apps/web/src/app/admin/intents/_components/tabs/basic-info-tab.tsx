@@ -47,7 +47,7 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
         {!editing ? (
           <button
             onClick={() => setEditing(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             <Edit2 className="h-4 w-4" />
             Edytuj
@@ -56,7 +56,7 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
           <>
             <button
               onClick={handleCancel}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               <X className="h-4 w-4" />
               Anuluj
@@ -74,14 +74,14 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
       </div>
 
       {/* Basic Information */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Podstawowe informacje
         </h3>
         <div className="space-y-4">
           {/* Title */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Tytuł
             </label>
             {editing ? (
@@ -89,10 +89,10 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             ) : (
-              <p className="text-sm text-gray-900 dark:text-gray-100">
+              <p className="text-sm text-zinc-900 dark:text-zinc-100">
                 {intent.title}
               </p>
             )}
@@ -100,7 +100,7 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
 
           {/* Description */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Opis
             </label>
             {editing ? (
@@ -108,10 +108,10 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
             ) : (
-              <p className="text-sm text-gray-900 dark:text-gray-100">
+              <p className="text-sm text-zinc-900 dark:text-zinc-100">
                 {intent.description || 'Brak opisu'}
               </p>
             )}
@@ -119,15 +119,15 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
 
           {/* Owner */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Organizator
             </label>
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-900 dark:text-gray-100">
+              <User className="h-4 w-4 text-zinc-400" />
+              <span className="text-sm text-zinc-900 dark:text-zinc-100">
                 {intent.owner?.name || 'N/A'}
               </span>
-              <span className="text-xs text-gray-600 dark:text-gray-400">
+              <span className="text-xs text-zinc-600 dark:text-zinc-400">
                 ({intent.owner?.email})
               </span>
             </div>
@@ -136,7 +136,7 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
           {/* Categories */}
           {intent.categorySlugs && intent.categorySlugs.length > 0 && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Kategorie
               </label>
               <div className="flex flex-wrap gap-2">
@@ -155,7 +155,7 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
           {/* Levels */}
           {intent.levels && intent.levels.length > 0 && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Poziomy
               </label>
               <div className="flex flex-wrap gap-2">
@@ -174,33 +174,33 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
       </div>
 
       {/* Statistics */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Statystyki
         </h3>
         <div className="grid gap-4 md:grid-cols-3">
           <div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               Członkowie
             </p>
-            <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {intent.joinedCount || 0}
               {intent.min && intent.max && ` / ${intent.min}-${intent.max}`}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               Komentarze
             </p>
-            <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {intent.commentsCount || 0}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               Wiadomości
             </p>
-            <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {intent.messagesCount || 0}
             </p>
           </div>
@@ -208,26 +208,26 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
       </div>
 
       {/* Metadata */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Metadata
         </h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Data utworzenia:
             </span>
-            <span className="text-gray-900 dark:text-gray-100">
+            <span className="text-zinc-900 dark:text-zinc-100">
               {format(new Date(intent.createdAt), 'dd MMM yyyy, HH:mm', {
                 locale: pl,
               })}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Ostatnia aktualizacja:
             </span>
-            <span className="text-gray-900 dark:text-gray-100">
+            <span className="text-zinc-900 dark:text-zinc-100">
               {format(new Date(intent.updatedAt), 'dd MMM yyyy, HH:mm', {
                 locale: pl,
               })}
@@ -235,7 +235,7 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
           </div>
           {intent.canceledAt && (
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-zinc-600 dark:text-zinc-400">
                 Anulowano:
               </span>
               <span className="text-red-600 dark:text-red-400">
@@ -247,7 +247,7 @@ export function BasicInfoTab({ intent, onRefresh }: BasicInfoTabProps) {
           )}
           {intent.deletedAt && (
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-zinc-600 dark:text-zinc-400">
                 Usunięto:
               </span>
               <span className="text-red-600 dark:text-red-400">

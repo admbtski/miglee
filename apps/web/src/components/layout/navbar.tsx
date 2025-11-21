@@ -72,9 +72,11 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
             className="flex shrink-0 items-center gap-2"
             aria-label="Go to homepage"
           >
-            <div className="h-6 w-6 rounded-md bg-gradient-to-tr from-indigo-500 to-cyan-500" />
-            <span className="text-lg font-semibold tracking-tight">
-              miglee.pl
+            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+              miglee
+            </span>
+            <span className="text-sm font-medium text-zinc-400 dark:text-zinc-500">
+              .pl
             </span>
           </a>
 

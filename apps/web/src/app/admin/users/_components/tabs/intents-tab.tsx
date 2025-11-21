@@ -162,13 +162,13 @@ export function IntentsTab({ userId }: IntentsTabProps) {
     <div className="space-y-6">
       {/* Memberships */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Członkostwa w wydarzeniach
         </h5>
         <button
           onClick={() => setMembershipsOpen(true)}
           disabled={membershipsLoading}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           {membershipsLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -181,13 +181,13 @@ export function IntentsTab({ userId }: IntentsTabProps) {
 
       {/* Created Intents */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Utworzone wydarzenia
         </h5>
         <button
           onClick={() => setIntentsOpen(true)}
           disabled={intentsLoading}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           {intentsLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -201,13 +201,13 @@ export function IntentsTab({ userId }: IntentsTabProps) {
       {/* Memberships Modal */}
       {membershipsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Członkostwa w wydarzeniach
             </h4>
 
             {memberships.length === 0 ? (
-              <div className="py-12 text-center text-sm text-gray-600 dark:text-gray-400">
+              <div className="py-12 text-center text-sm text-zinc-600 dark:text-zinc-400">
                 Użytkownik nie jest członkiem żadnego wydarzenia
               </div>
             ) : (
@@ -215,7 +215,7 @@ export function IntentsTab({ userId }: IntentsTabProps) {
                 {memberships.map((membership: any) => (
                   <div
                     key={membership.id}
-                    className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                    className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -228,7 +228,7 @@ export function IntentsTab({ userId }: IntentsTabProps) {
                             <ExternalLink className="h-3 w-3" />
                           </Link>
                         </div>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="mt-2 flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400">
                           <span>
                             {format(
                               new Date(membership.intent.startAt),
@@ -337,7 +337,7 @@ export function IntentsTab({ userId }: IntentsTabProps) {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setMembershipsOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Zamknij
               </button>
@@ -349,13 +349,13 @@ export function IntentsTab({ userId }: IntentsTabProps) {
       {/* Intents Modal */}
       {intentsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Utworzone wydarzenia
             </h4>
 
             {intents.length === 0 ? (
-              <div className="py-12 text-center text-sm text-gray-600 dark:text-gray-400">
+              <div className="py-12 text-center text-sm text-zinc-600 dark:text-zinc-400">
                 Użytkownik nie utworzył jeszcze żadnych wydarzeń
               </div>
             ) : (
@@ -363,7 +363,7 @@ export function IntentsTab({ userId }: IntentsTabProps) {
                 {intents.map((intent: any) => (
                   <div
                     key={intent.id}
-                    className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                    className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-700"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -374,7 +374,7 @@ export function IntentsTab({ userId }: IntentsTabProps) {
                           {intent.title}
                           <ExternalLink className="h-3 w-3" />
                         </Link>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="mt-2 flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-400">
                           <span>
                             {format(
                               new Date(intent.startAt),
@@ -399,7 +399,7 @@ export function IntentsTab({ userId }: IntentsTabProps) {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setIntentsOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Zamknij
               </button>

@@ -75,7 +75,7 @@ export function ReactionsBar({
             stiffness: 400,
             damping: 25,
           }}
-          className="z-50 bg-white dark:bg-neutral-900 shadow-xl rounded-full px-2 py-2 flex items-center gap-1"
+          className="z-50 bg-white dark:bg-zinc-900 shadow-xl rounded-full px-2 py-2 flex items-center gap-1"
           role="toolbar"
           aria-label="Quick reactions"
           {...getFloatingProps()}
@@ -86,7 +86,7 @@ export function ReactionsBar({
               onClick={() => handleEmojiClick(emoji)}
               whileHover={{ scale: 1.2 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               aria-label={`React with ${emoji}`}
               title={emoji}
             >
@@ -94,7 +94,7 @@ export function ReactionsBar({
             </motion.button>
           ))}
 
-          <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+          <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-700 mx-1" />
 
           <motion.button
             onClick={() => {
@@ -103,11 +103,11 @@ export function ReactionsBar({
             }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             aria-label="More reactions"
             title="More reactions"
           >
-            <Plus className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
+            <Plus className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
           </motion.button>
         </motion.div>
       )}

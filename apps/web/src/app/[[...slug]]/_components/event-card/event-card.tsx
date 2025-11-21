@@ -284,7 +284,7 @@ export const EventCard = memo(function EventCard({
       className={twMerge(
         'relative w-full rounded-2xl p-4 flex flex-col gap-2',
         'ring-1 ring-white/5 dark:ring-white/5',
-        'bg-white dark:bg-neutral-900',
+        'bg-white dark:bg-zinc-900',
         'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
         'select-none',
         isInactive && 'saturate-0',
@@ -308,7 +308,7 @@ export const EventCard = memo(function EventCard({
         />
       )}
 
-      <div className="relative -mx-4 -mt-4 mb-3 h-40 overflow-hidden rounded-t-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+      <div className="relative -mx-4 -mt-4 mb-3 h-40 overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
         {coverKey ? (
           <BlurHashImage
             src={buildIntentCoverUrl(coverKey, 'card')}
@@ -441,11 +441,11 @@ export const EventCard = memo(function EventCard({
       )}
 
       <div className="flex flex-col gap-1.5">
-        <h3 className="text-base font-semibold leading-tight text-neutral-900 dark:text-white line-clamp-2">
+        <h3 className="text-base font-semibold leading-tight text-zinc-900 dark:text-white line-clamp-2">
           {title}
         </h3>
 
-        <div className="flex flex-col gap-1 text-xs text-neutral-600 dark:text-neutral-400">
+        <div className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
           {locationDisplay && (
             <div className="flex items-center gap-1 min-w-0">
               <locationDisplay.Icon className="h-3.5 w-3.5 flex-shrink-0" />

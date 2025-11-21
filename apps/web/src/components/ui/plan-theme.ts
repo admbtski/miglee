@@ -17,13 +17,13 @@ export type PlanTheme = {
 };
 
 const DEFAULTS = {
-  chip: 'bg-neutral-600 text-white dark:bg-neutral-500',
-  icon: 'text-neutral-50',
-  card: 'bg-white dark:bg-neutral-900',
-  ring: 'ring-neutral-200/70 dark:ring-neutral-800',
+  chip: 'bg-zinc-600 text-white dark:bg-zinc-500',
+  icon: 'text-zinc-50',
+  card: 'bg-white dark:bg-zinc-900',
+  ring: 'ring-zinc-200/70 dark:ring-zinc-800',
   header:
     'bg-[radial-gradient(1200px_320px_at_0%_-15%,rgba(14,165,233,0.10),transparent_60%),radial-gradient(900px_260px_at_100%_0%,rgba(250,204,21,0.08),transparent_55%)]',
-  section: 'bg-white/70 dark:bg-neutral-900/50',
+  section: 'bg-white/70 dark:bg-zinc-900/50',
 };
 
 export function planText(plan?: Plan) {

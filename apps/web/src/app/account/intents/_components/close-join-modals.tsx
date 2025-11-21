@@ -91,7 +91,7 @@ export function CloseJoinModal({
         <div className="mt-4">
           <label
             htmlFor="close-reason"
-            className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+            className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
           >
             Powód zamknięcia (opcjonalnie)
           </label>
@@ -101,7 +101,7 @@ export function CloseJoinModal({
             onChange={(e) => onReasonChange?.(e.target.value)}
             placeholder="np. Osiągnięto maksymalną liczbę uczestników"
             rows={3}
-            className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:border-blue-400"
+            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-blue-400"
           />
         </div>
       </NoticeModal>

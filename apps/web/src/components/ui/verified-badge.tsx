@@ -47,7 +47,7 @@ const SIZE_STYLES: Record<
 // Delikatny „verified” ton (sky)
 const VERIFIED_TONE =
   'text-sky-700 ring-sky-200 bg-white/80 ' +
-  'dark:text-sky-300 dark:ring-sky-800/50 dark:bg-neutral-900/60';
+  'dark:text-sky-300 dark:ring-sky-800/50 dark:bg-zinc-900/60';
 
 export function VerifiedBadge({
   verifiedAt,

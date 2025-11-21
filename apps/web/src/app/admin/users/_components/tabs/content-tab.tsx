@@ -78,13 +78,13 @@ export function ContentTab({ userId }: ContentTabProps) {
     <div className="space-y-6">
       {/* Comments */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Komentarze użytkownika
         </h5>
         <button
           onClick={() => setCommentsOpen(true)}
           disabled={commentsLoading}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           {commentsLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -97,13 +97,13 @@ export function ContentTab({ userId }: ContentTabProps) {
 
       {/* Reviews */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Recenzje użytkownika
         </h5>
         <button
           onClick={() => setReviewsOpen(true)}
           disabled={reviewsLoading}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           {reviewsLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -117,13 +117,13 @@ export function ContentTab({ userId }: ContentTabProps) {
       {/* Comments Modal */}
       {commentsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Komentarze użytkownika ({comments.length})
             </h4>
             <div className="max-h-[60vh] space-y-3 overflow-y-auto">
               {comments.length === 0 ? (
-                <div className="py-12 text-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="py-12 text-center text-sm text-zinc-600 dark:text-zinc-400">
                   Użytkownik nie ma jeszcze żadnych komentarzy
                 </div>
               ) : (
@@ -133,15 +133,15 @@ export function ContentTab({ userId }: ContentTabProps) {
                     className={`rounded-lg border p-4 ${
                       comment.deletedAt
                         ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30'
-                        : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800'
+                        : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="text-sm text-gray-900 dark:text-gray-100">
+                        <p className="text-sm text-zinc-900 dark:text-zinc-100">
                           {comment.content}
                         </p>
-                        <div className="mt-2 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="mt-2 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                           <span>
                             {format(
                               new Date(comment.createdAt),
@@ -193,7 +193,7 @@ export function ContentTab({ userId }: ContentTabProps) {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setCommentsOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Zamknij
               </button>
@@ -205,13 +205,13 @@ export function ContentTab({ userId }: ContentTabProps) {
       {/* Reviews Modal */}
       {reviewsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-4xl rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Recenzje użytkownika ({reviews.length})
             </h4>
             <div className="max-h-[60vh] space-y-3 overflow-y-auto">
               {reviews.length === 0 ? (
-                <div className="py-12 text-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="py-12 text-center text-sm text-zinc-600 dark:text-zinc-400">
                   Użytkownik nie ma jeszcze żadnych recenzji
                 </div>
               ) : (
@@ -221,7 +221,7 @@ export function ContentTab({ userId }: ContentTabProps) {
                     className={`rounded-lg border p-4 ${
                       review.deletedAt
                         ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30'
-                        : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800'
+                        : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -233,20 +233,20 @@ export function ContentTab({ userId }: ContentTabProps) {
                               className={`h-4 w-4 ${
                                 i < review.rating
                                   ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300 dark:text-gray-600'
+                                  : 'text-zinc-300 dark:text-zinc-600'
                               }`}
                             />
                           ))}
-                          <span className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <span className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
                             {review.rating}/5
                           </span>
                         </div>
                         {review.content && (
-                          <p className="text-sm text-gray-900 dark:text-gray-100">
+                          <p className="text-sm text-zinc-900 dark:text-zinc-100">
                             {review.content}
                           </p>
                         )}
-                        <div className="mt-2 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="mt-2 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
                           <span>
                             {format(
                               new Date(review.createdAt),
@@ -298,7 +298,7 @@ export function ContentTab({ userId }: ContentTabProps) {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setReviewsOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Zamknij
               </button>

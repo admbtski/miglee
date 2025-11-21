@@ -147,11 +147,11 @@ export function ReportDetailModal({
           <div>
             <h3
               id="report-detail-title"
-              className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
             >
               Szczegóły zgłoszenia
             </h3>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               ID: {report.id}
             </p>
           </div>
@@ -161,26 +161,26 @@ export function ReportDetailModal({
             {/* Basic info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Typ zgłoszenia
                 </label>
-                <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                   {entityLabels[report.entity]}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Status
                 </label>
-                <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                   {report.status}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Data zgłoszenia
                 </label>
-                <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                   {format(new Date(report.createdAt), 'dd MMMM yyyy, HH:mm', {
                     locale: pl,
                   })}
@@ -188,10 +188,10 @@ export function ReportDetailModal({
               </div>
               {report.resolvedAt && (
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     Data rozwiązania
                   </label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                  <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
                     {format(
                       new Date(report.resolvedAt),
                       'dd MMMM yyyy, HH:mm',
@@ -206,14 +206,14 @@ export function ReportDetailModal({
 
             {/* Reporter */}
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Zgłaszający
               </label>
-              <div className="mt-1 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <div className="mt-1 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   {report.reporter.name}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
                   {(report.reporter as any).email || 'N/A'}
                 </p>
               </div>
@@ -221,11 +221,11 @@ export function ReportDetailModal({
 
             {/* Reason */}
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Powód zgłoszenia
               </label>
-              <div className="mt-1 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
-                <p className="text-sm text-gray-900 dark:text-gray-100">
+              <div className="mt-1 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900">
+                <p className="text-sm text-zinc-900 dark:text-zinc-100">
                   {report.reason}
                 </p>
               </div>
@@ -250,7 +250,7 @@ export function ReportDetailModal({
             {report.status !== ReportStatus.Resolved &&
               report.status !== ReportStatus.Dismissed && (
                 <div>
-                  <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="mb-3 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     Akcje moderacyjne
                   </label>
                   <div className="space-y-2">
@@ -268,7 +268,7 @@ export function ReportDetailModal({
                             action.color === 'amber' &&
                               'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50',
                             action.color === 'gray' &&
-                              'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800'
+                              'border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
                           )}
                         >
                           <Icon className="h-5 w-5" />
@@ -293,7 +293,7 @@ export function ReportDetailModal({
             </button>
             <button
               onClick={onClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Zamknij
             </button>

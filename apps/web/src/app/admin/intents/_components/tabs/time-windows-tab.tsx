@@ -13,19 +13,19 @@ export function TimeWindowsTab({ intent }: TimeWindowsTabProps) {
   return (
     <div className="space-y-6">
       {/* Main Dates */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Daty wydarzenia
         </h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <Calendar className="h-4 w-4 text-zinc-400" />
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">
                 Rozpoczęcie:
               </span>
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
               {format(new Date(intent.startAt), 'dd MMM yyyy, HH:mm', {
                 locale: pl,
               })}
@@ -34,12 +34,12 @@ export function TimeWindowsTab({ intent }: TimeWindowsTabProps) {
           {intent.endAt && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <Calendar className="h-4 w-4 text-zinc-400" />
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   Zakończenie:
                 </span>
               </div>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 {format(new Date(intent.endAt), 'dd MMM yyyy, HH:mm', {
                   locale: pl,
                 })}
@@ -50,20 +50,20 @@ export function TimeWindowsTab({ intent }: TimeWindowsTabProps) {
       </div>
 
       {/* Join Windows */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Okna zapisów
         </h3>
         <div className="space-y-3">
           {intent.joinOpensMinutesBeforeStart !== null && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <Clock className="h-4 w-4 text-zinc-400" />
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   Otwarcie zapisów:
                 </span>
               </div>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 {intent.joinOpensMinutesBeforeStart} min przed startem
               </span>
             </div>
@@ -71,12 +71,12 @@ export function TimeWindowsTab({ intent }: TimeWindowsTabProps) {
           {intent.joinCutoffMinutesBeforeStart !== null && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <Clock className="h-4 w-4 text-zinc-400" />
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   Zamknięcie zapisów:
                 </span>
               </div>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 {intent.joinCutoffMinutesBeforeStart} min przed startem
               </span>
             </div>
@@ -84,8 +84,8 @@ export function TimeWindowsTab({ intent }: TimeWindowsTabProps) {
           {intent.allowJoinLate && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Unlock className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <Unlock className="h-4 w-4 text-zinc-400" />
+                <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   Dołączenie po starcie:
                 </span>
               </div>
@@ -119,36 +119,36 @@ export function TimeWindowsTab({ intent }: TimeWindowsTabProps) {
       )}
 
       {/* Status Info */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Status
         </h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Status wydarzenia:
             </span>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
               {intent.status}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">W trakcie:</span>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-zinc-600 dark:text-zinc-400">W trakcie:</span>
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
               {intent.isOngoing ? 'Tak' : 'Nie'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-zinc-600 dark:text-zinc-400">
               Zapisy otwarte:
             </span>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
               {intent.joinOpen ? 'Tak' : 'Nie'}
             </span>
           </div>
           {intent.lockReason && (
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-zinc-600 dark:text-zinc-400">
                 Powód blokady:
               </span>
               <span className="font-medium text-orange-600 dark:text-orange-400">

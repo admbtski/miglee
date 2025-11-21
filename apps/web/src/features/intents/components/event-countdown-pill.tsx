@@ -3,6 +3,7 @@
 import clsx from 'clsx';
 import { Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -219,7 +220,7 @@ export function EventCountdownPill({
   if (variant === 'text') {
     return (
       <span
-        className={clsx(
+        className={twMerge(
           'inline-flex items-center select-none',
           S.text,
           className
@@ -238,7 +239,7 @@ export function EventCountdownPill({
       <span
         className={clsx(
           'inline-flex items-center justify-center rounded-full ring-1 shadow-sm select-none',
-          'bg-white/80 dark:bg-neutral-900/60',
+          'bg-white/80 dark:bg-zinc-900/60',
           toneClass,
           S.container,
           className
@@ -254,9 +255,9 @@ export function EventCountdownPill({
   // Default: icon + text
   return (
     <span
-      className={clsx(
+      className={twMerge(
         'inline-flex items-center rounded-full ring-1 shadow-sm select-none',
-        'bg-white/80 dark:bg-neutral-900/60',
+        'bg-white/80 dark:bg-zinc-900/60',
         toneClass,
         S.container,
         S.gap,

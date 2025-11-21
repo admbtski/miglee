@@ -25,7 +25,7 @@ export function CapacityProgressBar({
   return (
     <div
       className={twMerge(
-        'mt-1 h-2 w-full rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden',
+        'mt-1 h-2 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden',
         className
       )}
     >

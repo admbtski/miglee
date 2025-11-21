@@ -148,52 +148,52 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     <motion.button
       onClick={() => onClick?.(intent.id)}
       whileHover={{
-        y: isInactive ? 0 : -2,
-        scale: isInactive ? 1 : 1.01,
+        y: isInactive ? 0 : -1,
+        scale: isInactive ? 1 : 1.005,
       }}
       className={twMerge(
-        'my-2',
-        'relative w-full rounded-xl p-3 flex flex-col gap-2',
-        'ring-1 ring-white/5 dark:ring-white/5',
-        'bg-white dark:bg-neutral-900',
-        'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
+        'relative w-full rounded-2xl overflow-hidden',
+        'bg-zinc-900/70 border border-white/5',
+        'shadow-[0_6px_24px_-4px_rgba(0,0,0,0.4)]',
         'select-none cursor-pointer text-left',
-        isInactive && 'saturate-0',
+        'transition-all duration-200',
+        isInactive && 'saturate-0 opacity-60',
         getPlanRingClasses(plan, isCanceled, isDeleted),
-        'focus:outline-none focus:ring-2 focus:ring-indigo-400/50 dark:focus:ring-indigo-500/50'
+        'focus:outline-none focus:ring-2 focus:ring-indigo-400/30'
       )}
       transition={{
         type: 'spring',
-        stiffness: 300,
-        damping: 20,
+        stiffness: 400,
+        damping: 25,
       }}
       data-plan={plan}
     >
       {/* Cover Image */}
-      <div className="relative -mx-3 -mt-3 h-32 overflow-hidden rounded-t-xl bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+      <div className="relative h-32 overflow-hidden bg-zinc-800">
         {intent.coverKey ? (
           <BlurHashImage
             src={buildIntentCoverUrl(intent.coverKey, 'card')}
             blurhash={intent.coverBlurhash}
             alt={intent.title}
-            className="h-full w-full object-cover brightness-90 contrast-90"
+            className="h-full w-full object-cover"
             width={480}
             height={270}
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+          <div className="h-full w-full bg-gradient-to-br from-indigo-900/30 to-violet-900/30" />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/0 to-black/40" />
+        {/* Subtle overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
 
         {/* Inactive Overlay */}
         {isInactive && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
-            <div className="text-center">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-20">
+            <div className="text-center px-4">
               <p className="text-white font-semibold text-sm">
                 {isDeleted ? 'Usunięte' : 'Odwołane'}
               </p>
-              <p className="text-white/60 text-xs mt-0.5">
+              <p className="text-white/60 text-xs mt-1">
                 {isDeleted
                   ? 'To wydarzenie zostało usunięte'
                   : 'To wydarzenie zostało odwołane'}
@@ -202,10 +202,10 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
           </div>
         )}
 
-        {/* Badges - Top Left */}
-        {(isPremium || categories.length > 0) && (
-          <div className="absolute top-2 left-2 right-2 z-10">
-            <div className="flex flex-wrap gap-1">
+        {/* Badges - Top */}
+        {(isPremium || categories.length > 0 || !isInactive) && (
+          <div className="absolute top-3 left-3 right-3 z-10">
+            <div className="flex flex-wrap gap-1.5">
               {!isInactive && (
                 <EventCountdownPill
                   startAt={start}
@@ -224,11 +224,8 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
               )}
 
               {isPremium && (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white shadow-lg"
-                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
-                >
-                  <Sparkles className="w-2.5 h-2.5" />
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-600/20 text-violet-300 border border-violet-600/30 px-2 py-0.5 text-xs font-medium backdrop-blur-sm">
+                  <Sparkles className="w-3 h-3" />
                   Promowane
                 </span>
               )}
@@ -236,18 +233,14 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
               {categories.slice(0, maxCategoriesToShow).map((cat) => (
                 <span
                   key={cat}
-                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white shadow-lg"
-                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                  className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-2 py-0.5 text-xs font-medium text-white/90"
                 >
                   {cat}
                 </span>
               ))}
 
               {remainingCategoriesCount > 0 && (
-                <span
-                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white shadow-lg"
-                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
-                >
+                <span className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-2 py-0.5 text-xs font-medium text-white/90">
                   +{remainingCategoriesCount}
                 </span>
               )}
@@ -255,12 +248,12 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
           </div>
         )}
 
-        {/* Organizer - Bottom Left */}
+        {/* Organizer - Bottom */}
         {intent.owner?.name && (
-          <div className="absolute bottom-2 left-2 z-10">
+          <div className="absolute bottom-3 left-3 z-10">
             <Link
               href={`/u/${intent.owner.name}`}
-              className="flex items-center gap-1 group relative z-[2]"
+              className="flex items-center gap-1.5 group"
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar
@@ -268,23 +261,18 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
                 blurhash={intent.owner?.avatarBlurhash}
                 alt={intent.owner.name}
                 size={20}
-                className="opacity-90 group-hover:opacity-100 transition-opacity"
+                className="ring-1 ring-white/20 group-hover:ring-white/40 transition-all"
               />
               <div className="flex items-center gap-1">
-                <span
-                  className="text-[10px] font-normal text-white/80 leading-tight truncate group-hover:text-white transition-colors"
-                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
-                >
+                <span className="text-xs font-medium text-white/70 group-hover:text-white/90 transition-colors">
                   {intent.owner.name}
                 </span>
                 {intent.owner?.verifiedAt && (
-                  <div className="opacity-70 group-hover:opacity-100 transition-opacity">
-                    <VerifiedBadge
-                      size="xs"
-                      variant="icon"
-                      verifiedAt={intent.owner.verifiedAt}
-                    />
-                  </div>
+                  <VerifiedBadge
+                    size="xs"
+                    variant="icon"
+                    verifiedAt={intent.owner.verifiedAt}
+                  />
                 )}
               </div>
             </Link>
@@ -293,29 +281,31 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
       </div>
 
       {/* Content */}
-      <div className="flex flex-col gap-1">
-        <h4 className="text-sm font-semibold leading-tight text-neutral-900 dark:text-white line-clamp-2">
+      <div className="p-4 flex flex-col gap-3">
+        {/* Title */}
+        <h4 className="text-base font-semibold leading-snug text-white line-clamp-2">
           {intent.title}
         </h4>
 
-        <div className="flex flex-col gap-0.5 text-xs text-neutral-600 dark:text-neutral-400">
+        {/* Info Grid */}
+        <div className="flex flex-col gap-2 text-xs text-zinc-400">
           {intent.address && (
-            <div className="flex items-center gap-1 min-w-0">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
-              <span className="text-xs truncate">{intent.address}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-zinc-500" />
+              <span className="truncate">{intent.address}</span>
             </div>
           )}
 
-          <div className="flex items-center gap-1 truncate">
-            <Calendar className="h-3 w-3 flex-shrink-0" />
-            <span className="text-xs truncate">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-zinc-500" />
+            <span className="truncate">
               {formatDateRange(startAt, endAt)} • {humanDuration(start, end)}
             </span>
           </div>
         </div>
 
-        {/* Badges */}
-        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+        {/* Status Badges */}
+        <div className="flex items-center gap-2 flex-wrap pt-1">
           <CapacityBadge
             size="xs"
             statusReason={status.reason}

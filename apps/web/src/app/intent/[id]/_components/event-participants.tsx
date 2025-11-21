@@ -14,11 +14,11 @@ export function EventParticipants({ event }: EventParticipantsProps) {
 
   if (!canSeeMembers) {
     return (
-      <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+      <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Uczestnicy
         </h2>
-        <p className="text-md text-neutral-600 dark:text-neutral-400">
+        <p className="text-md text-zinc-600 dark:text-zinc-400">
           {event.membersVisibility === 'AFTER_JOIN'
             ? 'Lista uczestników będzie widoczna po dołączeniu.'
             : 'Lista uczestników jest ukryta przez organizatora.'}
@@ -39,12 +39,12 @@ export function EventParticipants({ event }: EventParticipantsProps) {
   );
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
+    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Uczestnicy
         </h2>
-        <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+        <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
           <UserGroup className="h-5 w-5" />
           <span>
             {event.joinedCount} / {event.max}
@@ -56,7 +56,7 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         {/* Owners */}
         {owners.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+            <h3 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
               Owner {owners.length > 1 ? `(${owners.length})` : ''}
             </h3>
             <ul className="space-y-3">
@@ -70,7 +70,7 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         {/* Moderators */}
         {moderators.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+            <h3 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
               Moderatorzy ({moderators.length})
             </h3>
             <ul className="space-y-3">
@@ -84,7 +84,7 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         {/* Participants */}
         {participants.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+            <h3 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
               Uczestnicy ({participants.length})
             </h3>
             <ul className="space-y-3">
@@ -93,7 +93,7 @@ export function EventParticipants({ event }: EventParticipantsProps) {
               ))}
             </ul>
             {participants.length > 10 && (
-              <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
                 + {participants.length - 10} więcej
               </p>
             )}
@@ -102,7 +102,7 @@ export function EventParticipants({ event }: EventParticipantsProps) {
 
         {/* Empty State */}
         {members.length === 0 && (
-          <div className="text-sm text-neutral-400 dark:text-neutral-600">
+          <div className="text-sm text-zinc-400 dark:text-zinc-600">
             Brak uczestników
           </div>
         )}
@@ -111,14 +111,14 @@ export function EventParticipants({ event }: EventParticipantsProps) {
       {/* Capacity Progress */}
       <div className="mt-6">
         <div className="mb-2 flex justify-between text-sm">
-          <span className="text-neutral-600 dark:text-neutral-400">
+          <span className="text-zinc-600 dark:text-zinc-400">
             Zapełnienie
           </span>
-          <span className="font-medium text-neutral-900 dark:text-neutral-100">
+          <span className="font-medium text-zinc-900 dark:text-zinc-100">
             {Math.round((event.joinedCount / event.max) * 100)}%
           </span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+        <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
           <div
             className="h-full rounded-full bg-blue-600 transition-all dark:bg-blue-500"
             style={{
@@ -154,16 +154,16 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
             blurhash={member.user.avatarBlurhash}
             alt={displayName}
             size={compact ? 32 : 44}
-            className={`rounded-full border border-neutral-200 object-cover transition-opacity hover:opacity-80 dark:border-neutral-700 `}
+            className={`rounded-full border border-zinc-200 object-cover transition-opacity hover:opacity-80 dark:border-zinc-700 `}
           />
         ) : (
           <div
-            className={`flex items-center justify-center rounded-full border border-neutral-200 bg-neutral-200 transition-opacity hover:opacity-80 dark:border-neutral-700 dark:bg-neutral-700 ${
+            className={`flex items-center justify-center rounded-full border border-zinc-200 bg-zinc-200 transition-opacity hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700 ${
               compact ? 'h-8 w-8' : 'h-11 w-11'
             }`}
           >
             <span
-              className={`font-semibold text-neutral-600 dark:text-neutral-300 ${
+              className={`font-semibold text-zinc-600 dark:text-zinc-300 ${
                 compact ? 'text-xs' : 'text-sm'
               }`}
             >
@@ -177,7 +177,7 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
           <div className="flex items-center gap-2">
             <Link
               href={profileUrl}
-              className={`truncate font-medium text-neutral-800 transition-colors hover:text-blue-600 dark:text-neutral-200 dark:hover:text-blue-400 ${
+              className={`truncate font-medium text-zinc-800 transition-colors hover:text-blue-600 dark:text-zinc-200 dark:hover:text-blue-400 ${
                 compact ? 'text-sm' : 'text-base'
               }`}
             >
@@ -192,7 +192,7 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
           </div>
           <Link
             href={profileUrl}
-            className={`truncate text-neutral-500 transition-colors hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400 ${
+            className={`truncate text-zinc-500 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 ${
               compact ? 'text-xs' : 'text-sm'
             }`}
           >
@@ -200,7 +200,7 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
           </Link>
         </div>
         {!compact && member.note && (
-          <p className="mt-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
             {member.note}
           </p>
         )}

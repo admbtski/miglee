@@ -33,7 +33,7 @@ export function Avatar({
       alt={alt}
       width={size}
       height={size}
-      className={`object-cover rounded-full border border-neutral-200 dark:border-neutral-700 ${sizeClass} ${className}`}
+      className={`object-cover rounded-full border border-zinc-200 dark:border-zinc-700 ${sizeClass} ${className}`}
     />
   );
 }

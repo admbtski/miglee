@@ -22,6 +22,7 @@ import { toast } from '@/lib/utils';
 import { CoverStep } from '@/features/intents/components/cover-step';
 import { uploadIntentCover } from '@/lib/media/upload-intent-cover';
 import { useQueryClient } from '@tanstack/react-query';
+import { DraftRestoreModal } from '@/components/ui/draft-restore-modal';
 
 type StepMeta = {
   key: string;
@@ -75,6 +76,13 @@ export function IntentCreatorForm({
     null
   );
   const [isCoverUploading, setIsCoverUploading] = useState(false);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [draftData, setDraftData] = useState<{
+    savedAt: Date;
+    values: IntentFormValues;
+    categories?: CategoryOption[];
+    tags?: TagOption[];
+  } | null>(null);
 
   const {
     handleSubmit,
@@ -118,32 +126,15 @@ export function IntentCreatorForm({
     if (!isEdit) {
       const draft = loadDraft();
       if (draft) {
-        const shouldRestore = window.confirm(
-          `Found a draft saved at ${new Date(draft.savedAt).toLocaleString()}. Restore it?`
-        );
-        if (shouldRestore) {
-          reset(draft.values, {
-            keepDirty: true,
-            keepErrors: false,
-            keepTouched: false,
-            keepIsSubmitted: false,
-            keepSubmitCount: false,
-          });
-
-          // Restore categories and tags from draft
-          if (draft.categories && draft.categories.length > 0) {
-            setCategories(draft.categories, 3);
-          }
-          if (draft.tags && draft.tags.length > 0) {
-            setTags(draft.tags, 3);
-          }
-
-          setStep(0);
-          setFormKey((k) => k + 1);
-          return;
-        } else {
-          clearDraft();
-        }
+        // Show draft restore modal
+        setDraftData({
+          savedAt: new Date(draft.savedAt),
+          values: draft.values,
+          categories: draft.categories,
+          tags: draft.tags,
+        });
+        setShowDraftModal(true);
+        return;
       }
     }
 
@@ -276,6 +267,55 @@ export function IntentCreatorForm({
   const handleCoverImageRemove = () => {
     setCoverImageFile(null);
     setCoverImagePreview(null);
+  };
+
+  // Draft modal handlers
+  const handleRestoreDraft = () => {
+    if (!draftData) return;
+
+    reset(draftData.values, {
+      keepDirty: true,
+      keepErrors: false,
+      keepTouched: false,
+      keepIsSubmitted: false,
+      keepSubmitCount: false,
+    });
+
+    // Restore categories and tags from draft
+    if (draftData.categories && draftData.categories.length > 0) {
+      setCategories(draftData.categories, 3);
+    }
+    if (draftData.tags && draftData.tags.length > 0) {
+      setTags(draftData.tags, 3);
+    }
+
+    setStep(0);
+    setFormKey((k) => k + 1);
+    setShowDraftModal(false);
+    setDraftData(null);
+  };
+
+  const handleDiscardDraft = () => {
+    clearDraft();
+    setShowDraftModal(false);
+    setDraftData(null);
+
+    // Initialize with fresh defaults
+    const initialFormValues = initialValues
+      ? { ...makeFreshDefaults(), ...initialValues }
+      : makeFreshDefaults();
+
+    reset(initialFormValues, {
+      keepDirty: false,
+      keepErrors: false,
+      keepTouched: false,
+      keepIsSubmitted: false,
+      keepSubmitCount: false,
+    });
+    setCategories(initialCategories);
+    setTags(initialTags);
+    setStep(0);
+    setFormKey((k) => k + 1);
   };
 
   const submit = handleSubmit(
@@ -613,6 +653,21 @@ export function IntentCreatorForm({
           </button>
         </div>
       </div>
+
+      {/* Draft Restore Modal */}
+      {draftData && (
+        <DraftRestoreModal
+          open={showDraftModal}
+          onClose={() => setShowDraftModal(false)}
+          onRestore={handleRestoreDraft}
+          onDiscard={handleDiscardDraft}
+          draftDate={draftData.savedAt}
+          draftPreview={{
+            title: draftData.values.title,
+            description: draftData.values.description,
+          }}
+        />
+      )}
     </div>
   );
 }

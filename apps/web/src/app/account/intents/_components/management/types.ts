@@ -85,7 +85,7 @@ export const STATUS_BADGE_CLASSES: Record<IntentMemberStatus, string> = {
   REJECTED:
     'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-200',
   CANCELLED:
-    'bg-slate-100 text-slate-900 dark:bg-slate-900/30 dark:text-slate-200',
+    'bg-zinc-100 text-zinc-900 dark:bg-zinc-900/30 dark:text-zinc-200',
   LEFT: 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-200',
   KICKED: 'bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-200',
   BANNED: 'bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200',

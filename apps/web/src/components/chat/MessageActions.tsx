@@ -38,7 +38,7 @@ export function MessageActions({
             <button
               ref={menuButtonRef}
               onClick={onOpenMenu}
-              className="flex items-center justify-center h-8 w-8 rounded-full text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="flex items-center justify-center h-8 w-8 rounded-full text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               aria-label="More actions"
               title="More actions"
             >
@@ -47,7 +47,7 @@ export function MessageActions({
 
             <button
               onClick={onReply}
-              className="flex items-center justify-center h-8 w-8 rounded-full text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="flex items-center justify-center h-8 w-8 rounded-full text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               aria-label="Reply"
               title="Reply"
             >
@@ -57,7 +57,7 @@ export function MessageActions({
             <button
               ref={reactionsButtonRef}
               onClick={onOpenReactions}
-              className="flex items-center justify-center h-8 w-8 rounded-full text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="flex items-center justify-center h-8 w-8 rounded-full text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               aria-label="Add reaction"
               title="Add reaction"
             >

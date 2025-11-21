@@ -106,7 +106,7 @@ export function JoinQuestionForm({
           <div key={question.id} className="space-y-2">
             <Label
               htmlFor={`question-${question.id}`}
-              className="text-sm font-medium text-neutral-900 dark:text-neutral-100"
+              className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
             >
               {index + 1}. {question.label}
               {question.required && (
@@ -115,7 +115,7 @@ export function JoinQuestionForm({
             </Label>
 
             {question.helpText && (
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 {question.helpText}
               </p>
             )}
@@ -156,7 +156,7 @@ export function JoinQuestionForm({
                   />
                 )}
                 {question.maxLength && (
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     {answers[question.id]?.length || 0} / {question.maxLength}
                   </p>
                 )}
@@ -254,8 +254,8 @@ export function JoinQuestionForm({
         ))}
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
-        <p className="text-xs text-neutral-600 dark:text-neutral-400 mr-auto">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400 mr-auto">
           <span className="text-red-500">*</span> Pola wymagane
         </p>
         <Button type="submit" disabled={isSubmitting}>

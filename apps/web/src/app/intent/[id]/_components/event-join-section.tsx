@@ -256,8 +256,8 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
   const buttonConfig = getButtonConfig();
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-      <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
         Zapisy
       </h2>
 
@@ -402,14 +402,14 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
 
           {/* Full */}
           {joinState.isFull && !userMembership?.isWaitlisted && (
-            <div className="flex items-start gap-2 rounded-xl bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
-              <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-neutral-600 dark:text-neutral-400" />
+            <div className="flex items-start gap-2 rounded-xl bg-zinc-50 p-3 text-sm dark:bg-zinc-900">
+              <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
               <div>
-                <p className="font-medium text-neutral-900 dark:text-neutral-100">
+                <p className="font-medium text-zinc-900 dark:text-zinc-100">
                   Brak wolnych miejsc
                 </p>
                 {event.joinMode === 'OPEN' && joinState.canJoin && (
-                  <p className="mt-1 text-neutral-700 dark:text-neutral-300">
+                  <p className="mt-1 text-zinc-700 dark:text-zinc-300">
                     Możesz dołączyć do listy oczekujących
                   </p>
                 )}
@@ -450,10 +450,10 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
           disabled={buttonConfig.disabled || isProcessing}
           className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-md font-medium transition outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
             buttonConfig.variant === 'primary'
-              ? 'bg-neutral-900 text-white hover:opacity-90 active:opacity-80 dark:bg-white dark:text-neutral-900'
+              ? 'bg-zinc-900 text-white hover:opacity-90 active:opacity-80 dark:bg-white dark:text-zinc-900'
               : buttonConfig.variant === 'secondary'
-                ? 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
-                : 'cursor-not-allowed bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-500'
+                ? 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                : 'cursor-not-allowed bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500'
           }`}
         >
           <buttonConfig.icon className="h-4 w-4" />
@@ -463,7 +463,7 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
 
       {/* Reason */}
       {joinState.reason && (
-        <p className="mt-2 text-center text-xs text-neutral-600 dark:text-neutral-400">
+        <p className="mt-2 text-center text-xs text-zinc-600 dark:text-zinc-400">
           {joinState.reason}
         </p>
       )}
@@ -472,27 +472,27 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
       {(event.joinOpensMinutesBeforeStart != null ||
         event.joinCutoffMinutesBeforeStart != null ||
         event.allowJoinLate) && (
-        <div className="mt-6 space-y-2 border-t border-neutral-200 pt-4 dark:border-neutral-800">
-          <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+        <div className="mt-6 space-y-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+          <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
             Okna zapisów
           </h3>
 
           {event.joinOpensMinutesBeforeStart != null && (
-            <div className="text-xs text-neutral-600 dark:text-neutral-400">
+            <div className="text-xs text-zinc-600 dark:text-zinc-400">
               <span className="font-medium">Otwarcie:</span>{' '}
               {event.joinOpensMinutesBeforeStart} min przed startem
             </div>
           )}
 
           {event.joinCutoffMinutesBeforeStart != null && (
-            <div className="text-xs text-neutral-600 dark:text-neutral-400">
+            <div className="text-xs text-zinc-600 dark:text-zinc-400">
               <span className="font-medium">Zamknięcie:</span>{' '}
               {event.joinCutoffMinutesBeforeStart} min przed startem
             </div>
           )}
 
           {event.allowJoinLate && (
-            <div className="text-xs text-neutral-600 dark:text-neutral-400">
+            <div className="text-xs text-zinc-600 dark:text-zinc-400">
               <span className="font-medium">Dołączenie po starcie:</span> Tak
               {event.lateJoinCutoffMinutesAfterStart != null &&
                 ` (do ${event.lateJoinCutoffMinutesAfterStart} min po starcie)`}
@@ -500,7 +500,7 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
           )}
 
           {!event.allowJoinLate && (
-            <div className="text-xs text-neutral-600 dark:text-neutral-400">
+            <div className="text-xs text-zinc-600 dark:text-zinc-400">
               <span className="font-medium">Dołączenie po starcie:</span> Nie
             </div>
           )}

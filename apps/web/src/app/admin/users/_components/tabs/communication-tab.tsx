@@ -46,7 +46,7 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
     <div className="space-y-6">
       {/* Send Notification */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Powiadomienia systemowe
         </h5>
         <button
@@ -60,18 +60,18 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
 
       {/* Notification Preferences */}
       <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Preferencje powiadomień
         </h5>
         <div className="space-y-2">
-          <label className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+          <label className="flex items-center justify-between rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
             <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <Bell className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   Email
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   Powiadomienia na adres email
                 </p>
               </div>
@@ -79,18 +79,18 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
             <input
               type="checkbox"
               defaultChecked
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
           </label>
 
-          <label className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+          <label className="flex items-center justify-between rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
             <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <Bell className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   Push
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   Powiadomienia push w aplikacji
                 </p>
               </div>
@@ -98,18 +98,18 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
             <input
               type="checkbox"
               defaultChecked
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
           </label>
 
-          <label className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+          <label className="flex items-center justify-between rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
             <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <Bell className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   In-app
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   Powiadomienia w aplikacji
                 </p>
               </div>
@@ -117,11 +117,11 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
             <input
               type="checkbox"
               defaultChecked
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
           </label>
         </div>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
           Uwaga: Zmiany preferencji powiadomień będą dostępne wkrótce
         </p>
       </div>
@@ -129,13 +129,13 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
       {/* Send Notification Modal */}
       {notificationOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Wyślij powiadomienie systemowe
             </h4>
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Tytuł
                 </label>
                 <input
@@ -143,11 +143,11 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
                   value={notificationTitle}
                   onChange={(e) => setNotificationTitle(e.target.value)}
                   placeholder="Wpisz tytuł powiadomienia..."
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Treść
                 </label>
                 <textarea
@@ -155,23 +155,23 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
                   onChange={(e) => setNotificationBody(e.target.value)}
                   placeholder="Wpisz treść powiadomienia..."
                   rows={4}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </div>
               {/* Preview */}
               {(notificationTitle || notificationBody) && (
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
-                  <p className="mb-1 text-xs text-gray-600 dark:text-gray-400">
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                  <p className="mb-1 text-xs text-zinc-600 dark:text-zinc-400">
                     Podgląd:
                   </p>
-                  <div className="rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-gray-900">
+                  <div className="rounded-lg border border-zinc-300 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-900">
                     {notificationTitle && (
-                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
                         {notificationTitle}
                       </p>
                     )}
                     {notificationBody && (
-                      <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                      <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
                         {notificationBody}
                       </p>
                     )}
@@ -194,7 +194,7 @@ export function CommunicationTab({ userId }: CommunicationTabProps) {
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => setNotificationOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Anuluj
               </button>

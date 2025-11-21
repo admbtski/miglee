@@ -194,7 +194,7 @@ export function EditCategoryModal({
       variant="centered"
       size="lg"
       header={
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           <Edit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           <span>Edytuj kategorię</span>
         </h3>
@@ -220,7 +220,7 @@ export function EditCategoryModal({
 
           {/* Slug */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Slug <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -234,17 +234,17 @@ export function EditCategoryModal({
                 className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
                   errors.slug
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                } disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:disabled:bg-gray-900`}
+                    : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500'
+                } disabled:cursor-not-allowed disabled:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:disabled:bg-zinc-900`}
               />
               {isUsed && (
                 <div className="absolute right-3 top-2.5">
-                  <Lock className="h-4 w-4 text-gray-400" />
+                  <Lock className="h-4 w-4 text-zinc-400" />
                 </div>
               )}
               {!isUsed && checkingSlug && (
                 <div className="absolute right-3 top-2.5">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
                 </div>
               )}
               {!isUsed &&
@@ -264,7 +264,7 @@ export function EditCategoryModal({
               </p>
             )}
             {isUsed && (
-              <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                 Slug zablokowany (kategoria używana)
               </p>
             )}
@@ -273,11 +273,11 @@ export function EditCategoryModal({
           {/* Language Tabs */}
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Nazwy (wielojęzyczne)
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="text-xs text-zinc-600 dark:text-zinc-400">
                   {translationCount}/3 tłumaczeń
                 </span>
                 <button
@@ -292,7 +292,7 @@ export function EditCategoryModal({
             </div>
 
             {/* Tabs */}
-            <div className="mb-3 flex gap-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="mb-3 flex gap-2 border-b border-zinc-200 dark:border-zinc-700">
               {(['pl', 'en', 'de'] as LanguageTab[]).map((lang) => (
                 <button
                   key={lang}
@@ -301,7 +301,7 @@ export function EditCategoryModal({
                   className={`px-4 py-2 text-sm font-medium transition-colors ${
                     activeTab === lang
                       ? 'border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                      : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
                   {lang.toUpperCase()}
@@ -332,8 +332,8 @@ export function EditCategoryModal({
                 className={`w-full rounded-lg border px-4 py-2 text-sm focus:outline-none focus:ring-2 ${
                   errors[activeTab]
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                } dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100`}
+                    : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500'
+                } dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100`}
               />
               {errors[activeTab] && (
                 <p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -341,12 +341,12 @@ export function EditCategoryModal({
                 </p>
               )}
               {activeTab === 'pl' && (
-                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                   Wymagane (2-50 znaków)
                 </p>
               )}
               {activeTab !== 'pl' && (
-                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                   Opcjonalne (max. 50 znaków)
                 </p>
               )}
@@ -355,10 +355,10 @@ export function EditCategoryModal({
 
           {/* JSON Preview */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Podgląd JSON (readonly)
             </label>
-            <pre className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <pre className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
               {JSON.stringify(
                 Object.fromEntries(
                   Object.entries(names).filter(([_, v]) => v && v.trim())
@@ -386,7 +386,7 @@ export function EditCategoryModal({
             type="button"
             onClick={handleClose}
             disabled={updateMutation.isPending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             Anuluj
           </button>

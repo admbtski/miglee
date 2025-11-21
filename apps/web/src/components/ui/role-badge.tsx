@@ -61,7 +61,7 @@ const ROLE_STYLES: Record<
   },
   PARTICIPANT: {
     container:
-      'bg-neutral-100 text-neutral-700 ring-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-700',
+      'bg-zinc-100 text-zinc-700 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
     defaultLabel: 'Uczestnik',
     Icon: UserIcon,
   },

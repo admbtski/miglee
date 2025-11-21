@@ -40,29 +40,29 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
       case 'DM_MESSAGE':
         return 'text-pink-600 dark:text-pink-400';
       default:
-        return 'text-gray-600 dark:text-gray-400';
+        return 'text-zinc-600 dark:text-zinc-400';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Wszystkie powiadomienia
             </span>
           </div>
-          <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {total}
           </span>
         </div>
       </div>
 
       {/* Notifications List */}
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
@@ -71,19 +71,19 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
 
         {!isLoading && notifications.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12">
-            <BellOff className="h-12 w-12 text-gray-400" />
-            <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <BellOff className="h-12 w-12 text-zinc-400" />
+            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
               Brak powiadomień
             </p>
           </div>
         )}
 
         {!isLoading && notifications.length > 0 && (
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
+          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900 ${
+                className={`p-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
                   !notification.readAt
                     ? 'bg-blue-50/50 dark:bg-blue-950/20'
                     : ''
@@ -103,14 +103,14 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
                       <div className="flex-1">
                         {/* Title */}
                         {notification.title && (
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                             {notification.title}
                           </p>
                         )}
 
                         {/* Body */}
                         {notification.body && (
-                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                             {notification.body}
                           </p>
                         )}
@@ -129,14 +129,14 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
                                 size={20}
                               />
                             )}
-                            <span className="text-xs text-gray-500 dark:text-gray-500">
+                            <span className="text-xs text-zinc-500 dark:text-zinc-500">
                               Od: {notification.actor.name}
                             </span>
                           </div>
                         )}
 
                         {/* Metadata */}
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-zinc-500 dark:text-zinc-500">
                           <span>Typ: {notification.kind}</span>
                           {notification.entityType && (
                             <span>Entity: {notification.entityType}</span>
@@ -154,7 +154,7 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
                       {/* Read Status */}
                       <div className="flex-shrink-0">
                         {notification.readAt ? (
-                          <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">
+                          <span className="inline-flex rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-300">
                             Przeczytane
                           </span>
                         ) : (

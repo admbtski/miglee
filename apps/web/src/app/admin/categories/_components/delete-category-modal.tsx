@@ -75,7 +75,7 @@ export function DeleteCategoryModal({
       variant="centered"
       size="md"
       header={
-        <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
           <span>Usuń kategorię</span>
         </h3>
@@ -84,7 +84,7 @@ export function DeleteCategoryModal({
         <div className="space-y-4">
           {loadingUsage && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
             </div>
           )}
 
@@ -148,11 +148,11 @@ export function DeleteCategoryModal({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
+              <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900">
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">
                   <strong>Slug:</strong> {category.slug}
                 </p>
-                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
                   <strong>Nazwa (PL):</strong> {categoryName}
                 </p>
               </div>
@@ -175,7 +175,7 @@ export function DeleteCategoryModal({
             type="button"
             onClick={handleClose}
             disabled={deleteMutation.isPending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             {isUsed ? 'Zamknij' : 'Anuluj'}
           </button>

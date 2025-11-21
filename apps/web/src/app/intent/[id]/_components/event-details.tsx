@@ -24,20 +24,20 @@ export function EventDetails({ event }: EventDetailsProps) {
   return (
     <div className="space-y-6">
       {/* When and Where Section */}
-      <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+      <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Kiedy i gdzie
         </h2>
 
         <div className="space-y-4">
           {/* Duration */}
-          <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition">
-            <Clock className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
+          <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
+            <Clock className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
             <div className="min-w-0">
-              <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                 Czas trwania
               </p>
-              <p className="text-md text-neutral-800 dark:text-neutral-200">
+              <p className="text-md text-zinc-800 dark:text-zinc-200">
                 {duration}
               </p>
             </div>
@@ -45,27 +45,27 @@ export function EventDetails({ event }: EventDetailsProps) {
 
           {/* Location */}
           {event.meetingKind !== 'ONLINE' && (
-            <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition">
-              <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
+            <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
+              <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                   Lokalizacja
                 </p>
                 {event.addressVisibility === 'PUBLIC' && event.address ? (
-                  <p className="text-md text-neutral-800 dark:text-neutral-200 break-words">
+                  <p className="text-md text-zinc-800 dark:text-zinc-200 break-words">
                     {event.address}
                     {event.radiusKm && event.radiusKm > 0 && (
-                      <span className="ml-2 text-xs text-neutral-500">
+                      <span className="ml-2 text-xs text-zinc-500">
                         (obszar w promieniu {event.radiusKm} km)
                       </span>
                     )}
                   </p>
                 ) : event.addressVisibility === 'AFTER_JOIN' ? (
-                  <p className="text-md text-neutral-800 dark:text-neutral-200">
+                  <p className="text-md text-zinc-800 dark:text-zinc-200">
                     Adres widoczny po dołączeniu
                   </p>
                 ) : (
-                  <p className="text-md text-neutral-800 dark:text-neutral-200">
+                  <p className="text-md text-zinc-800 dark:text-zinc-200">
                     Adres ukryty
                   </p>
                 )}
@@ -76,10 +76,10 @@ export function EventDetails({ event }: EventDetailsProps) {
           {/* Online URL */}
           {(event.meetingKind === 'ONLINE' || event.meetingKind === 'HYBRID') &&
             event.onlineUrl && (
-              <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 transition">
-                <Globe className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
+              <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
+                <Globe className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                  <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                     Link online
                   </p>
                   <a
@@ -183,11 +183,11 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       {/* Description Section */}
       {event.description && (
-        <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Opis
           </h2>
-          <p className="text-md text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-6">
+          <p className="text-md text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-6">
             {event.description}
           </p>
         </div>
@@ -195,8 +195,8 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       {/* Categories and Tags */}
       {(event.categories.length > 0 || event.tags.length > 0) && (
-        <div className="rounded-2xl border border-neutral-200 bg-white/70 p-6 dark:border-neutral-800 dark:bg-neutral-900/40">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Kontekst
           </h2>
 
@@ -212,7 +212,7 @@ export function EventDetails({ event }: EventDetailsProps) {
             {event.tags.map((tag) => (
               <span
                 key={tag.slug}
-                className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
               >
                 #{tag.label}
               </span>

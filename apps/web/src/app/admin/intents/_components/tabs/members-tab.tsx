@@ -264,7 +264,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
       case IntentMemberRole.Moderator:
         return <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       default:
-        return <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />;
+        return <User className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />;
     }
   };
 
@@ -296,7 +296,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
         );
       default:
         return (
-          <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">
+          <span className="inline-flex rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-300">
             {status}
           </span>
         );
@@ -307,36 +307,36 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center gap-2">
             <UserCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Zaakceptowani
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {stats?.joined ?? 0}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Oczekujący
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {stats?.pending ?? 0}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center gap-2">
             <UserX className="h-5 w-5 text-red-600 dark:text-red-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Zablokowani
             </span>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             {stats?.banned ?? 0}
           </p>
         </div>
@@ -345,7 +345,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
       {/* Filters */}
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Status
           </label>
           <select
@@ -355,7 +355,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                 (e.target.value as IntentMemberStatus) || undefined
               )
             }
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           >
             <option value="">Wszystkie</option>
             <option value={IntentMemberStatus.Joined}>Zaakceptowani</option>
@@ -365,7 +365,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
           </select>
         </div>
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Rola
           </label>
           <select
@@ -373,7 +373,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
             onChange={(e) =>
               setRoleFilter((e.target.value as IntentMemberRole) || undefined)
             }
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           >
             <option value="">Wszystkie</option>
             <option value={IntentMemberRole.Owner}>Właściciel</option>
@@ -384,7 +384,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
       </div>
 
       {/* Members Table */}
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
@@ -393,7 +393,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
 
         {!isLoading && members.length === 0 && (
           <div className="p-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
               Brak członków spełniających kryteria
             </p>
           </div>
@@ -402,30 +402,30 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
         {!isLoading && members.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900">
+              <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Użytkownik
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Rola
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Data dołączenia
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Akcje
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-950">
+              <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
                 {members.map((member) => (
                   <tr
                     key={member.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-900"
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-900"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -438,10 +438,10 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                           />
                         )}
                         <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                             {member.user.name}
                           </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400">
                             {member.user.email}
                           </p>
                         </div>
@@ -450,7 +450,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center gap-2">
                         {getRoleIcon(member.role)}
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">
                           {member.role === IntentMemberRole.Owner
                             ? 'Właściciel'
                             : member.role === IntentMemberRole.Moderator
@@ -462,7 +462,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                     <td className="whitespace-nowrap px-6 py-4">
                       {getStatusBadge(member.status)}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {member.joinedAt
                         ? format(new Date(member.joinedAt), 'dd MMM yyyy', {
                             locale: pl,
@@ -477,12 +477,12 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                               openDropdownId === member.id ? null : member.id
                             )
                           }
-                          className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                          className="inline-flex items-center gap-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-300"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>
                         {openDropdownId === member.id && (
-                          <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800">
+                          <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-zinc-800">
                             {member.status === IntentMemberStatus.Pending && (
                               <>
                                 <button
@@ -492,7 +492,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                                       member.user.name
                                     )
                                   }
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-zinc-100 dark:text-green-400 dark:hover:bg-zinc-700"
                                 >
                                   <CheckCircle className="h-4 w-4" />
                                   Zaakceptuj
@@ -504,7 +504,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                                       member.user.name
                                     )
                                   }
-                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
                                 >
                                   <XCircle className="h-4 w-4" />
                                   Odrzuć
@@ -522,7 +522,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                                         member.role
                                       )
                                     }
-                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                                   >
                                     <Shield className="h-4 w-4" />
                                     Zmień rolę
@@ -534,7 +534,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                                         member.user.name
                                       )
                                     }
-                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-gray-100 dark:text-orange-400 dark:hover:bg-gray-700"
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-orange-600 hover:bg-zinc-100 dark:text-orange-400 dark:hover:bg-zinc-700"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                     Wyrzuć
@@ -546,7 +546,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                                         member.user.name
                                       )
                                     }
-                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
                                   >
                                     <Ban className="h-4 w-4" />
                                     Zbanuj
@@ -561,7 +561,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                                     member.user.name
                                   )
                                 }
-                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:text-green-400 dark:hover:bg-gray-700"
+                                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-zinc-100 dark:text-green-400 dark:hover:bg-zinc-700"
                               >
                                 <RotateCcw className="h-4 w-4" />
                                 Odbanuj
@@ -660,16 +660,16 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
       {/* Role Change Modal */}
       {roleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-gray-900">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-zinc-900">
+            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Zmień rolę użytkownika
             </h4>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
               Użytkownik: <strong>{selectedMember?.userName}</strong>
             </p>
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   Nowa rola
                 </label>
                 <select
@@ -677,7 +677,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
                   onChange={(e) =>
                     setNewRole(e.target.value as IntentMemberRole)
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 >
                   <option value={IntentMemberRole.Participant}>
                     Uczestnik
@@ -689,7 +689,7 @@ export function MembersTab({ intentId, onRefresh }: MembersTabProps) {
             <div className="mt-6 flex justify-end gap-2">
               <button
                 onClick={() => setRoleModalOpen(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Anuluj
               </button>

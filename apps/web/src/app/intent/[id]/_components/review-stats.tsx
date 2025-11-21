@@ -21,11 +21,11 @@ export function ReviewStats({ stats }: ReviewStatsProps) {
   }
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-start gap-6">
         {/* Average Rating */}
         <div className="flex flex-col items-center">
-          <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-100">
+          <div className="text-4xl font-bold text-zinc-900 dark:text-zinc-100">
             {averageRating.toFixed(1)}
           </div>
           <div className="mt-1 flex items-center">
@@ -35,12 +35,12 @@ export function ReviewStats({ stats }: ReviewStatsProps) {
                 className={`h-5 w-5 ${
                   i < Math.round(averageRating)
                     ? 'fill-yellow-400 text-yellow-400'
-                    : 'text-neutral-300 dark:text-neutral-600'
+                    : 'text-zinc-300 dark:text-zinc-600'
                 }`}
               />
             ))}
           </div>
-          <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
             {totalCount} {totalCount === 1 ? 'recenzja' : 'recenzji'}
           </p>
         </div>
@@ -55,18 +55,18 @@ export function ReviewStats({ stats }: ReviewStatsProps) {
             return (
               <div key={rating} className="flex items-center gap-2">
                 <div className="flex items-center gap-1 w-12">
-                  <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+                  <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     {rating}
                   </span>
                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                 </div>
-                <div className="flex-1 h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
+                <div className="flex-1 h-2 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
                   <div
                     className="h-full bg-yellow-400 transition-all duration-300"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <span className="text-xs text-neutral-600 dark:text-neutral-400 w-8 text-right">
+                <span className="text-xs text-zinc-600 dark:text-zinc-400 w-8 text-right">
                   {count}
                 </span>
               </div>
