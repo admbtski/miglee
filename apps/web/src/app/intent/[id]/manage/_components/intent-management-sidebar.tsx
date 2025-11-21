@@ -14,7 +14,6 @@ import {
   Settings,
   MessageSquare,
   BarChart3,
-  Shield,
   Calendar,
   Home,
   ListCollapseIcon,
@@ -23,7 +22,11 @@ import {
   BadgeDollarSign,
   Sparkles,
   Bell,
-  Edit3,
+  FileText,
+  UsersIcon,
+  Clock,
+  MapPin,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,10 +72,34 @@ export function IntentManagementSidebar({
       icon: Calendar,
     },
     {
-      id: 'edit',
-      label: 'Edit Event',
-      href: `/intent/${intentId}/manage/edit`,
-      icon: Edit3,
+      id: 'edit-basics',
+      label: 'Edit: Basics',
+      href: `/intent/${intentId}/manage/edit/basics`,
+      icon: FileText,
+    },
+    {
+      id: 'edit-capacity',
+      label: 'Edit: Capacity',
+      href: `/intent/${intentId}/manage/edit/capacity`,
+      icon: UsersIcon,
+    },
+    {
+      id: 'edit-when',
+      label: 'Edit: When',
+      href: `/intent/${intentId}/manage/edit/when`,
+      icon: Clock,
+    },
+    {
+      id: 'edit-where',
+      label: 'Edit: Where',
+      href: `/intent/${intentId}/manage/edit/where`,
+      icon: MapPin,
+    },
+    {
+      id: 'edit-settings',
+      label: 'Edit: Settings',
+      href: `/intent/${intentId}/manage/edit/settings`,
+      icon: Lock,
     },
     {
       id: 'members',

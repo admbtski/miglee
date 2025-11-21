@@ -10,7 +10,6 @@ import {
   Users,
   MessageSquare,
   BarChart3,
-  Shield,
   Settings,
   Calendar,
   Home,
@@ -20,7 +19,11 @@ import {
   BadgeDollarSign,
   Sparkles,
   Bell,
-  Edit3,
+  FileText,
+  UsersIcon,
+  Clock,
+  MapPin,
+  Lock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -88,10 +91,34 @@ export function IntentManagementMobileSidebar({
       icon: Calendar,
     },
     {
-      id: 'edit',
-      label: 'Edit Event',
-      href: `/intent/${intentId}/manage/edit`,
-      icon: Edit3,
+      id: 'edit-basics',
+      label: 'Edit: Basics',
+      href: `/intent/${intentId}/manage/edit/basics`,
+      icon: FileText,
+    },
+    {
+      id: 'edit-capacity',
+      label: 'Edit: Capacity',
+      href: `/intent/${intentId}/manage/edit/capacity`,
+      icon: UsersIcon,
+    },
+    {
+      id: 'edit-when',
+      label: 'Edit: When',
+      href: `/intent/${intentId}/manage/edit/when`,
+      icon: Clock,
+    },
+    {
+      id: 'edit-where',
+      label: 'Edit: Where',
+      href: `/intent/${intentId}/manage/edit/where`,
+      icon: MapPin,
+    },
+    {
+      id: 'edit-settings',
+      label: 'Edit: Settings',
+      href: `/intent/${intentId}/manage/edit/settings`,
+      icon: Lock,
     },
     {
       id: 'members',
@@ -140,12 +167,6 @@ export function IntentManagementMobileSidebar({
       label: 'Analytics',
       href: `/intent/${intentId}/manage/analytics`,
       icon: BarChart3,
-    },
-    {
-      id: 'moderation',
-      label: 'Moderation',
-      href: `/intent/${intentId}/manage/moderation`,
-      icon: Shield,
     },
     {
       id: 'settings',

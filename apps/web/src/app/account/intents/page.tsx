@@ -24,7 +24,6 @@ import {
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
 import { LeaveIntentModals } from './_components/leave-intent-modals';
-import { EventManagementModalConnect } from './_components/management';
 import { useMyIntentsFilters } from './_hooks/use-my-intents-filters';
 import { useIntentsModals } from './_hooks/use-intents-modals';
 
@@ -163,20 +162,15 @@ export default function MyIntentsPage() {
   } = useMyIntentsFilters();
 
   const {
-    editId,
     leaveId,
     cancelId,
     deleteId,
-    manageId,
-    setEditId,
     setLeaveId,
     setCancelId,
     setManageId,
-    closeEdit,
     closeLeave,
     closeCancel,
     closeDelete,
-    closeManage,
   } = useIntentsModals();
 
   const backendRole = useMemo(
@@ -280,7 +274,6 @@ export default function MyIntentsPage() {
               data={item}
               actions={{
                 onManage: setManageId,
-                onEdit: setEditId,
                 onCancel: setCancelId,
                 onLeave: setLeaveId,
                 onWithdraw: handleWithdraw,
