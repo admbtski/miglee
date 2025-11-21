@@ -2,6 +2,7 @@
  * Utility exports - centralized access to all utilities
  */
 
+export { cn } from './cn';
 export { devLogger } from './dev-logger';
 export { toast, toastManager } from './toast-manager';
 export {

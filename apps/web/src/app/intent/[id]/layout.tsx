@@ -1,5 +1,5 @@
-// app/account/layout.tsx
-import { Navbar } from '@/components/layout/navbar';
+// app/intent/[id]/layout.tsx
+import { ConditionalNavbar } from './_components/conditional-navbar';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
@@ -15,11 +15,10 @@ export default function IntentDetailLayout({
   return (
     <QueryClientProvider>
       <HydrationBoundary state={dehydrate(client)}>
-        <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-          <Navbar />
-
+        <>
+          <ConditionalNavbar />
           {children}
-        </div>
+        </>
       </HydrationBoundary>
     </QueryClientProvider>
   );

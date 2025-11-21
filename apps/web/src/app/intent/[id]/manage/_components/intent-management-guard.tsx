@@ -1,0 +1,99 @@
+/**
+ * Intent Management Guard
+ * Checks if user has permission to access management interface
+ * Redirects to event page if not authorized
+ */
+
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2, ShieldAlert } from 'lucide-react';
+
+import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentPermissions } from '@/hooks/use-intent-permissions';
+
+interface IntentManagementGuardProps {
+  intentId: string;
+  children: React.ReactNode;
+}
+
+/**
+ * Loading state component
+ */
+function LoadingState() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+      <div className="text-center">
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Checking permissions...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Unauthorized state component
+ */
+function UnauthorizedState() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+      <div className="text-center">
+        <ShieldAlert className="mx-auto h-12 w-12 text-red-500" />
+        <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          Access Denied
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          You don't have permission to manage this event.
+        </p>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+          Redirecting to event page...
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Intent Management Guard Component
+ * Checks user permissions and redirects if not authorized
+ */
+export function IntentManagementGuard({
+  intentId,
+  children,
+}: IntentManagementGuardProps) {
+  const router = useRouter();
+  const { data, isLoading: isLoadingIntent } = useIntentQuery({
+    id: intentId,
+  });
+
+  const intent = data?.intent;
+  const permissions = useIntentPermissions(intent);
+
+  // Redirect if user doesn't have management permissions
+  useEffect(() => {
+    if (!permissions.isLoading && !permissions.canManage) {
+      // Redirect to event page after a short delay
+      const timer = setTimeout(() => {
+        router.push(`/intent/${intentId}`);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [permissions.isLoading, permissions.canManage, intentId, router]);
+
+  // Show loading state while checking permissions
+  if (isLoadingIntent || permissions.isLoading) {
+    return <LoadingState />;
+  }
+
+  // Show unauthorized state if user doesn't have permission
+  if (!permissions.canManage) {
+    return <UnauthorizedState />;
+  }
+
+  // User has permission, render children
+  return <>{children}</>;
+}
