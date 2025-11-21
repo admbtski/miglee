@@ -9,6 +9,8 @@ import {
   UserIcon,
   Bell,
   Heart,
+  ChevronLeft,
+  Menu,
   HelpCircle,
   BarChart3,
   ListCollapseIcon,
@@ -139,13 +141,13 @@ export function AccountSidebarEnhanced() {
 
   return (
     <motion.aside
-      initial={{ width: 280 }}
+      initial={false}
       animate={{ width: isCollapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="hidden lg:flex lg:flex-col sticky top-0 h-screen border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden"
+      className="hidden h-screen overflow-hidden bg-white border-r lg:flex lg:flex-col border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900"
     >
       {/* Top Section: Logo + Toggle (always visible, not scrollable) */}
-      <div className="flex h-16 items-center justify-center px-4 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
+      <div className="flex items-center justify-center flex-shrink-0 h-16 px-4 border-b border-zinc-200 dark:border-zinc-800">
         <AnimatePresence mode="wait">
           {!isCollapsed ? (
             <motion.div
@@ -157,7 +159,7 @@ export function AccountSidebarEnhanced() {
               className="flex items-center justify-between w-full"
             >
               <Link href="/" className="flex items-center gap-2">
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-xl font-bold tracking-tight text-transparent">
+                <span className="text-xl font-bold tracking-tight text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text">
                   miglee
                 </span>
                 <span className="text-sm font-medium text-zinc-400 dark:text-zinc-500">
@@ -171,7 +173,7 @@ export function AccountSidebarEnhanced() {
                 className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-colors"
                 aria-label="Collapse sidebar"
               >
-                <ListCollapseIcon className="h-5 w-5 rotate-180" />
+                <ListCollapseIcon className="w-5 h-5 rotate-180" />
               </button>
             </motion.div>
           ) : (
@@ -183,26 +185,19 @@ export function AccountSidebarEnhanced() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center justify-center w-full rounded-lg p-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+              className="flex items-center justify-center w-full p-2 transition-colors rounded-lg text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
               aria-label="Expand sidebar"
             >
-              <ListCollapseIcon className="h-5 w-5" />
+              <ListCollapseIcon className="w-5 h-5" />
             </motion.button>
           )}
         </AnimatePresence>
       </div>
 
       {/* Middle Section: Navigation (scrollable, flex-grow) */}
-      <nav className="flex-1 overflow-y-auto px-2 py-4">
-        <div className="space-y-1">
+      <nav className="flex-1 px-2 py-4 overflow-y-auto">
+        <div className="space-y-6">
           {/* Primary Navigation Group */}
-          {!isCollapsed && (
-            <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Main
-              </p>
-            </div>
-          )}
           <div className="space-y-1">
             {primaryItems.map((item) => {
               const isActive = item.href
@@ -227,7 +222,7 @@ export function AccountSidebarEnhanced() {
                     } ${isCollapsed ? 'justify-center' : ''}`}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <Icon className="flex-shrink-0 w-5 h-5" />
                     <AnimatePresence>
                       {!isCollapsed && (
                         <motion.span
@@ -252,7 +247,7 @@ export function AccountSidebarEnhanced() {
                       className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 bg-zinc-900 text-white text-sm rounded-lg shadow-lg whitespace-nowrap dark:bg-zinc-100 dark:text-zinc-900"
                     >
                       {item.label}
-                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-zinc-900 dark:border-r-zinc-100" />
+                      <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
                     </motion.div>
                   )}
                 </div>
@@ -260,17 +255,7 @@ export function AccountSidebarEnhanced() {
             })}
           </div>
 
-          {/* Separator */}
-          <div className="my-4 border-t border-zinc-200 dark:border-zinc-800" />
-
           {/* Secondary Navigation Group */}
-          {!isCollapsed && (
-            <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Communication
-              </p>
-            </div>
-          )}
           <div className="space-y-1">
             {secondaryItems.map((item) => {
               const isActive = item.href
@@ -295,7 +280,7 @@ export function AccountSidebarEnhanced() {
                     } ${isCollapsed ? 'justify-center' : ''}`}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <Icon className="flex-shrink-0 w-5 h-5" />
                     <AnimatePresence>
                       {!isCollapsed && (
                         <motion.span
@@ -319,7 +304,7 @@ export function AccountSidebarEnhanced() {
                       className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 bg-zinc-900 text-white text-sm rounded-lg shadow-lg whitespace-nowrap dark:bg-zinc-100 dark:text-zinc-900"
                     >
                       {item.label}
-                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-zinc-900 dark:border-r-zinc-100" />
+                      <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
                     </motion.div>
                   )}
                 </div>
@@ -327,17 +312,7 @@ export function AccountSidebarEnhanced() {
             })}
           </div>
 
-          {/* Separator */}
-          <div className="my-4 border-t border-zinc-200 dark:border-zinc-800" />
-
           {/* Tools Group */}
-          {!isCollapsed && (
-            <div className="px-3 py-2">
-              <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Tools
-              </p>
-            </div>
-          )}
           <div className="space-y-1">
             {toolsItems.map((item) => {
               const isActive = item.href
@@ -362,7 +337,7 @@ export function AccountSidebarEnhanced() {
                     } ${isCollapsed ? 'justify-center' : ''}`}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <Icon className="flex-shrink-0 w-5 h-5" />
                     <AnimatePresence>
                       {!isCollapsed && (
                         <motion.span
@@ -386,7 +361,7 @@ export function AccountSidebarEnhanced() {
                       className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-3 py-1.5 bg-zinc-900 text-white text-sm rounded-lg shadow-lg whitespace-nowrap dark:bg-zinc-100 dark:text-zinc-900"
                     >
                       {item.label}
-                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-zinc-900 dark:border-r-zinc-100" />
+                      <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
                     </motion.div>
                   )}
                 </div>
@@ -397,7 +372,7 @@ export function AccountSidebarEnhanced() {
       </nav>
 
       {/* Bottom Section: User Zone (always visible, not scrollable) */}
-      <div className="border-t border-zinc-200 p-3 flex-shrink-0 dark:border-zinc-800">
+      <div className="flex-shrink-0 p-3 border-t border-zinc-200 dark:border-zinc-800">
         <AnimatePresence mode="wait">
           {!isCollapsed ? (
             <motion.div
@@ -408,7 +383,7 @@ export function AccountSidebarEnhanced() {
               transition={{ duration: 0.2 }}
               className="space-y-2"
             >
-              <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3 p-2 transition-colors rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800">
                 <Avatar
                   url={buildAvatarUrl(user?.avatarKey, 'sm')}
                   blurhash={user?.avatarBlurhash}
@@ -417,10 +392,10 @@ export function AccountSidebarEnhanced() {
                   className="ring-2 ring-zinc-200 dark:ring-zinc-700"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                  <p className="text-sm font-semibold truncate text-zinc-900 dark:text-zinc-100">
                     {user?.name || 'User'}
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                  <p className="text-xs truncate text-zinc-500 dark:text-zinc-400">
                     {user?.email || 'user@example.com'}
                   </p>
                 </div>
@@ -431,7 +406,7 @@ export function AccountSidebarEnhanced() {
                 onClick={handleLogout}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all"
               >
-                <LogOut className="h-5 w-5 flex-shrink-0" />
+                <LogOut className="flex-shrink-0 w-5 h-5" />
                 <span>Sign out</span>
               </button>
             </motion.div>
@@ -442,23 +417,23 @@ export function AccountSidebarEnhanced() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="space-y-2 flex flex-col items-center"
+              className="flex flex-col items-center space-y-2"
             >
               <Avatar
                 url={buildAvatarUrl(user?.avatarKey, 'sm')}
                 blurhash={user?.avatarBlurhash}
                 alt={user?.name || 'User'}
                 size={40}
-                className="ring-2 ring-zinc-200 dark:ring-zinc-700 cursor-pointer hover:ring-indigo-400 transition-all"
+                className="transition-all cursor-pointer ring-2 ring-zinc-200 dark:ring-zinc-700 hover:ring-indigo-400"
               />
 
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all"
+                className="p-2 text-red-600 transition-all rounded-lg hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                 aria-label="Sign out"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="w-5 h-5" />
               </button>
             </motion.div>
           )}

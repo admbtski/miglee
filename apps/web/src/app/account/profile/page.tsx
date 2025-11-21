@@ -16,12 +16,11 @@ import {
 
 import { useMeQuery } from '@/lib/api/auth';
 import { useMyFullProfileQuery } from '@/lib/api/user-profile';
-
+import type { TabId, TabConfig } from './_types';
 import { ProfileTab } from './_components/profile-tab';
 import { SportsTab } from './_components/sports-tab';
 import { SocialLinksTab } from './_components/social-links-tab';
 import { PrivacyTab } from './_components/privacy-tab';
-import type { TabId, TabConfig } from './_types';
 
 const TABS: TabConfig[] = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -55,7 +54,7 @@ function LoadingState() {
   return (
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+        <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
           Loading profile...
         </p>
@@ -68,7 +67,7 @@ function UnauthenticatedState() {
   return (
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
-        <Settings className="mx-auto h-12 w-12 text-zinc-400" />
+        <Settings className="w-12 h-12 mx-auto text-zinc-400" />
         <p className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Not authenticated
         </p>
@@ -114,7 +113,7 @@ export default function ProfilePage() {
 
       <div className="border-b border-zinc-200 dark:border-zinc-800">
         <nav
-          className="-mb-px flex space-x-8"
+          className="flex -mb-px space-x-8"
           aria-label="Profile settings tabs"
         >
           {TABS.map((tab) => {
@@ -136,7 +135,7 @@ export default function ProfilePage() {
         </nav>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="p-6 bg-white border shadow-sm rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
         {activeTab === 'profile' && <ProfileTab user={user} userId={userId} />}
         {activeTab === 'sports' && <SportsTab user={user} userId={userId} />}
         {activeTab === 'social' && (

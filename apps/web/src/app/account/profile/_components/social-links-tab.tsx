@@ -147,9 +147,9 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
         {!isAdding && socialLinks.length < 10 && (
           <button
             onClick={handleAdd}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="w-4 h-4" />
             Add Link
           </button>
         )}
@@ -157,7 +157,7 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
 
       {/* Add Form */}
       {isAdding && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
+        <div className="p-4 border border-blue-200 rounded-lg bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20">
           <h4 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Add Social Link
           </h4>
@@ -170,7 +170,7 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
               <select
                 value={selectedProvider}
                 onChange={(e) => setSelectedProvider(e.target.value)}
-                className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="block w-full px-3 py-2 mt-2 text-sm bg-white border rounded-lg border-zinc-300 text-zinc-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               >
                 <option value="">Select a platform...</option>
                 {availableProviders.map((provider) => (
@@ -196,7 +196,7 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
                       'https://...'
                     : 'https://...'
                 }
-                className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+                className="block w-full px-3 py-2 mt-2 text-sm bg-white border rounded-lg border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
               />
               <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                 You can paste the full URL or just the username/path
@@ -209,7 +209,7 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
                 type="button"
                 onClick={resetForm}
                 disabled={addMutation.isPending}
-                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="px-4 py-2 text-sm font-medium border rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Cancel
               </button>
@@ -219,16 +219,16 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
                 disabled={
                   !selectedProvider || !url.trim() || addMutation.isPending
                 }
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {addMutation.isPending ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Adding...
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4" />
+                    <Plus className="w-4 h-4" />
                     Add Link
                   </>
                 )}
@@ -240,7 +240,7 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
 
       {/* Links List */}
       {socialLinks.length === 0 ? (
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
+        <div className="p-12 text-center border rounded-lg border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             No social links added yet. Click "Add Link" to connect your
             accounts.
@@ -255,13 +255,13 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
             return (
               <div
                 key={link.id}
-                className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex items-center justify-between p-4 bg-white border rounded-lg border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 ${providerConfig.color}`}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -286,10 +286,10 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
                 <button
                   onClick={() => handleDeleteClick(link)}
                   disabled={isAdding}
-                  className="rounded-lg p-2 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                  className="p-2 text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
                   title="Delete"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             );
@@ -299,7 +299,7 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
 
       {/* Max Links Warning */}
       {socialLinks.length >= 10 && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950/30">
+        <div className="p-4 border border-yellow-200 rounded-lg bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30">
           <p className="text-sm text-yellow-800 dark:text-yellow-300">
             You've reached the maximum of 10 social links. Remove a link to add
             a new one.
@@ -325,3 +325,5 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
     </div>
   );
 }
+
+export default SocialLinksTab;

@@ -337,18 +337,18 @@ export function ProfileTab({ user }: TabProps) {
           <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
             Recommended: Square image, at least 512x512px
           </p>
-          <div className="mt-2 flex items-center gap-4">
+          <div className="flex items-center gap-4 mt-2">
             {user?.avatarKey ? (
               <BlurHashImage
                 src={buildAvatarUrl(user.avatarKey, 'lg')}
                 blurhash={user.avatarBlurhash}
                 alt="Avatar"
-                className="h-20 w-20 rounded-full object-cover"
+                className="object-cover w-20 h-20 rounded-full"
                 width={160}
                 height={160}
               />
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-zinc-200 dark:bg-zinc-700">
                 <span className="text-2xl font-bold text-zinc-600 dark:text-zinc-300">
                   {user?.name?.charAt(0).toUpperCase() || '?'}
                 </span>
@@ -365,9 +365,9 @@ export function ProfileTab({ user }: TabProps) {
               type="button"
               onClick={() => avatarInputRef.current?.click()}
               disabled={avatarUpload.isUploading}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white border rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              <Camera className="h-4 w-4" />
+              <Camera className="w-4 h-4" />
               {avatarUpload.isUploading ? 'Uploading...' : 'Change Avatar'}
             </button>
           </div>
@@ -383,20 +383,20 @@ export function ProfileTab({ user }: TabProps) {
           </p>
           <div className="mt-2">
             {user?.profile?.coverKey ? (
-              <div className="relative h-32 w-full overflow-hidden rounded-lg">
+              <div className="relative w-full h-32 overflow-hidden rounded-lg">
                 <BlurHashImage
                   src={buildUserCoverUrl(user.profile.coverKey, 'card')}
                   blurhash={user.profile.coverBlurhash}
                   alt="Cover"
-                  className="h-full w-full object-cover"
+                  className="object-cover w-full h-full"
                   width={480}
                   height={270}
                 />
               </div>
             ) : (
-              <div className="flex h-32 w-full items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/50">
+              <div className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/50">
                 <div className="text-center">
-                  <ImageIcon className="mx-auto h-8 w-8 text-zinc-400" />
+                  <ImageIcon className="w-8 h-8 mx-auto text-zinc-400" />
                   <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                     No cover image
                   </p>
@@ -414,9 +414,9 @@ export function ProfileTab({ user }: TabProps) {
               type="button"
               onClick={() => coverInputRef.current?.click()}
               disabled={coverUpload.isUploading}
-              className="mt-2 inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 px-4 py-2 mt-2 text-sm font-medium bg-white border rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              <ImageIcon className="h-4 w-4" />
+              <ImageIcon className="w-4 h-4" />
               {coverUpload.isUploading ? 'Uploading...' : 'Change Cover'}
             </button>
           </div>
@@ -439,7 +439,7 @@ export function ProfileTab({ user }: TabProps) {
           type="text"
           id="displayName"
           placeholder={user?.name || 'Your display name'}
-          className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+          className="block w-full px-3 py-2 mt-2 text-sm bg-white border rounded-lg border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
         {errors.displayName && (
           <p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -464,9 +464,9 @@ export function ProfileTab({ user }: TabProps) {
           id="bioShort"
           rows={2}
           placeholder="Tell us about yourself in a few words..."
-          className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+          className="block w-full px-3 py-2 mt-2 text-sm bg-white border rounded-lg border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
-        <div className="mt-1 flex items-center justify-between">
+        <div className="flex items-center justify-between mt-1">
           <div>
             {errors.bioShort && (
               <p className="text-xs text-red-600 dark:text-red-400">
@@ -496,9 +496,9 @@ export function ProfileTab({ user }: TabProps) {
           id="bioLong"
           rows={6}
           placeholder="Share more about your interests, experience, and what you're looking for..."
-          className="mt-2 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+          className="block w-full px-3 py-2 mt-2 text-sm bg-white border rounded-lg border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
         />
-        <div className="mt-1 flex items-center justify-between">
+        <div className="flex items-center justify-between mt-1">
           <div>
             {errors.bioLong && (
               <p className="text-xs text-red-600 dark:text-red-400">
@@ -545,7 +545,7 @@ export function ProfileTab({ user }: TabProps) {
         <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
           Select the languages you speak
         </p>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           {COMMON_LANGUAGES.map((lang) => (
             <button
               key={lang.code}
@@ -571,7 +571,7 @@ export function ProfileTab({ user }: TabProps) {
         <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
           Add up to 20 interests or hobbies
         </p>
-        <div className="mt-2 flex gap-2">
+        <div className="flex gap-2 mt-2">
           <input
             type="text"
             value={newInterest}
@@ -584,13 +584,13 @@ export function ProfileTab({ user }: TabProps) {
             }}
             placeholder="e.g., Cycling, Photography"
             disabled={interests.length >= 20}
-            className="block flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+            className="flex-1 block px-3 py-2 text-sm bg-white border rounded-lg border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
           />
           <button
             type="button"
             onClick={handleAddInterest}
             disabled={!newInterest.trim() || interests.length >= 20}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
             Add
           </button>
@@ -601,11 +601,11 @@ export function ProfileTab({ user }: TabProps) {
           </p>
         )}
         {interests.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {interests.map((interest) => (
               <span
                 key={interest}
-                className="inline-flex items-center gap-1 rounded-lg bg-zinc-100 px-3 py-1 text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                className="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
               >
                 {interest}
                 <button
@@ -613,7 +613,7 @@ export function ProfileTab({ user }: TabProps) {
                   onClick={() => handleRemoveInterest(interest)}
                   className="rounded hover:bg-zinc-200 dark:hover:bg-zinc-700"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
@@ -622,28 +622,28 @@ export function ProfileTab({ user }: TabProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="flex items-center justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
         <button
           type="button"
           onClick={() => reset()}
           disabled={!isDirty || updateMutation.isPending}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="px-4 py-2 text-sm font-medium border rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!isDirty || updateMutation.isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           {updateMutation.isPending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
               Saving...
             </>
           ) : (
             <>
-              <Save className="h-4 w-4" />
+              <Save className="w-4 h-4" />
               Save Changes
             </>
           )}
@@ -689,3 +689,4 @@ export function ProfileTab({ user }: TabProps) {
     </form>
   );
 }
+export default ProfileTab;

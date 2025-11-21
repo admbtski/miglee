@@ -1,12 +1,12 @@
-import type { ReactNode } from 'react';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 
-import { AccountSidebarEnhanced } from './_components/account-sidebar-enhanced';
 import { AccountNavbar } from './_components/account-navbar';
+import { AccountSidebarEnhanced } from './_components/account-sidebar-enhanced';
 
 /**
  * Account Layout - Clean Architecture with Enhanced Sidebar
@@ -34,19 +34,18 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <QueryClientProvider>
       <HydrationBoundary state={dehydrate(client)}>
         <ErrorBoundary>
-          {/* Root: Horizontal flex container */}
           <div className="flex min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-1000">
             {/* Enhanced Sidebar: Collapsible, full height, grouped navigation */}
             <AccountSidebarEnhanced />
 
             {/* Content area: Flex-1, contains navbar + main content */}
-            <div className="flex flex-1 flex-col">
+            <div className="flex flex-col flex-1">
               {/* Navbar: Top bar (only for content area, not sidebar) */}
               <AccountNavbar />
 
               {/* Main scrollable wrapper */}
               <main className="flex-1 overflow-y-auto">
-                <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                <div className="px-6 py-8 mx-auto max-w-7xl lg:px-8">
                   <ErrorBoundary>{children}</ErrorBoundary>
                 </div>
               </main>

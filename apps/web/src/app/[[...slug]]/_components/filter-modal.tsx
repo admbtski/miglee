@@ -391,7 +391,7 @@ function FilterModalRefactoredComponent({
               <CollapsibleSection
                 title={t.sections.search.title}
                 description={t.sections.search.description}
-                icon={<FilterIcon className="h-5 w-5" />}
+                icon={<FilterIcon className="w-5 h-5" />}
                 isExpanded={expandedSections.search}
                 onToggle={() => toggleSection('search')}
                 activeCount={tags.length + categories.length + (q ? 1 : 0)}
@@ -436,7 +436,7 @@ function FilterModalRefactoredComponent({
                 divider={true}
                 title={t.sections.location.title}
                 description={t.sections.location.description}
-                icon={<MapPinIcon className="h-5 w-5" />}
+                icon={<MapPinIcon className="w-5 h-5" />}
                 isExpanded={expandedSections.location}
                 onToggle={() => toggleSection('location')}
                 activeCount={
@@ -463,7 +463,7 @@ function FilterModalRefactoredComponent({
                 divider={true}
                 title={t.sections.dateRange.title}
                 description={t.sections.dateRange.description}
-                icon={<CalendarIcon className="h-5 w-5" />}
+                icon={<CalendarIcon className="w-5 h-5" />}
                 isExpanded={expandedSections.dateRange}
                 onToggle={() => toggleSection('dateRange')}
                 activeCount={(startISO ? 1 : 0) + (endISO ? 1 : 0)}
@@ -475,7 +475,7 @@ function FilterModalRefactoredComponent({
                   onEndChange={setEndISO}
                 />
                 {dateError && (
-                  <div className="text-sm text-red-600 dark:text-red-400 mt-2">
+                  <div className="mt-2 text-sm text-red-600 dark:text-red-400">
                     {dateError}
                   </div>
                 )}
@@ -486,7 +486,7 @@ function FilterModalRefactoredComponent({
                 divider={true}
                 title={t.sections.settings.title}
                 description={t.sections.settings.description}
-                icon={<SettingsIcon className="h-5 w-5" />}
+                icon={<SettingsIcon className="w-5 h-5" />}
                 isExpanded={expandedSections.settings}
                 onToggle={() => toggleSection('settings')}
                 activeCount={
@@ -500,7 +500,7 @@ function FilterModalRefactoredComponent({
                 <div className="space-y-6">
                   {/* Status */}
                   <FilterSection title={t.sections.settings.status.title}>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {[
                         IntentStatus.Any,
                         IntentStatus.Available,
@@ -614,7 +614,7 @@ function FilterModalRefactoredComponent({
                     title={t.sections.settings.organizer.title}
                     hint={t.sections.settings.organizer.hint}
                   >
-                    <label className="inline-flex items-center gap-3 px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 cursor-pointer select-none text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <label className="inline-flex items-center gap-3 px-4 py-3 transition-colors border cursor-pointer select-none rounded-xl border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50">
                       <input
                         type="checkbox"
                         className="sr-only peer"
@@ -632,7 +632,7 @@ function FilterModalRefactoredComponent({
                       <span className="flex items-center gap-2 font-medium text-zinc-900 dark:text-zinc-100">
                         {verifiedOnly && (
                           <svg
-                            className="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                            className="w-4 h-4 text-indigo-600 dark:text-indigo-400"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -652,11 +652,10 @@ function FilterModalRefactoredComponent({
 
               {/* Info note */}
               <div className="pt-6">
-                <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 mb-6" />
+                <div className="h-px mb-6 bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800" />
                 <div
                   role="note"
-                  className="flex items-start gap-3 rounded-2xl border border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-violet-50 p-4
-                             text-indigo-900 dark:border-indigo-500/20 dark:from-indigo-950/30 dark:to-violet-950/30 dark:text-indigo-100"
+                  className="flex items-start gap-3 p-4 text-indigo-900 border rounded-2xl border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-violet-50 dark:border-indigo-500/20 dark:from-indigo-950/30 dark:to-violet-950/30 dark:text-indigo-100"
                 >
                   <span
                     aria-hidden="true"
@@ -664,10 +663,10 @@ function FilterModalRefactoredComponent({
                              bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200/60
                              dark:bg-indigo-500/20 dark:text-indigo-300 dark:ring-indigo-500/30"
                   >
-                    <Info className="h-4 w-4" />
+                    <Info className="w-4 h-4" />
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm leading-relaxed font-medium">
+                    <p className="text-sm font-medium leading-relaxed">
                       <span className="text-indigo-700 dark:text-indigo-300">
                         {t.proTip.title}
                       </span>{' '}

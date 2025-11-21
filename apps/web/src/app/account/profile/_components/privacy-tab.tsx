@@ -134,7 +134,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                 {...register('dmPolicy')}
                 type="radio"
                 value={option.value}
-                className="mt-1 h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                className="w-4 h-4 mt-1 text-blue-600 focus:ring-2 focus:ring-blue-500"
               />
               <div className="flex-1">
                 <div className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -164,7 +164,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
             <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
               Last Seen
             </label>
-            <div className="mt-2 flex gap-2">
+            <div className="flex gap-2 mt-2">
               {VISIBILITY_OPTIONS.filter((o) => o.value !== 'SELF').map(
                 (option) => {
                   const Icon = option.icon;
@@ -183,7 +183,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                           : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="w-4 h-4" />
                       {option.label}
                     </button>
                   );
@@ -197,7 +197,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
             <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
               Location
             </label>
-            <div className="mt-2 flex gap-2">
+            <div className="flex gap-2 mt-2">
               {LOCATION_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
@@ -215,7 +215,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                         : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="w-4 h-4" />
                     {option.label}
                   </button>
                 );
@@ -228,7 +228,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
             <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
               Events
             </label>
-            <div className="mt-2 flex gap-2">
+            <div className="flex gap-2 mt-2">
               {VISIBILITY_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
@@ -246,7 +246,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                         : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="w-4 h-4" />
                     {option.label}
                   </button>
                 );
@@ -259,7 +259,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
             <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
               Reviews
             </label>
-            <div className="mt-2 flex gap-2">
+            <div className="flex gap-2 mt-2">
               {VISIBILITY_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
@@ -277,7 +277,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                         : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="w-4 h-4" />
                     {option.label}
                   </button>
                 );
@@ -290,7 +290,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
             <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
               Statistics
             </label>
-            <div className="mt-2 flex gap-2">
+            <div className="flex gap-2 mt-2">
               {VISIBILITY_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
@@ -308,7 +308,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                         : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="w-4 h-4" />
                     {option.label}
                   </button>
                 );
@@ -399,28 +399,28 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+      <div className="flex items-center justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
         <button
           type="button"
           onClick={() => reset()}
           disabled={!isDirty || updateMutation.isPending}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="px-4 py-2 text-sm font-medium border rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!isDirty || updateMutation.isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           {updateMutation.isPending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
               Saving...
             </>
           ) : (
             <>
-              <Save className="h-4 w-4" />
+              <Save className="w-4 h-4" />
               Save Changes
             </>
           )}
@@ -429,3 +429,5 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
     </form>
   );
 }
+
+export default PrivacyTab;
