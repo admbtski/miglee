@@ -203,27 +203,27 @@ export function EventManagementModal({
   const Header = (
     <div className="flex flex-col gap-2 backdrop-blur-sm">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center min-w-0 gap-2">
           {/* Przycisk zamykający modal */}
           <Button
             type="button"
             onClick={onClose}
             variant="ghost"
             size="icon-sm"
-            className="shrink-0 rounded-full border border-zinc-700/30 bg-white/5 text-zinc-200 hover:bg-white/10 dark:bg-zinc-800/30"
+            className="border rounded-full shrink-0 border-zinc-700/30 bg-white/5 text-zinc-200 hover:bg-white/10 dark:bg-zinc-800/30"
             aria-label="Zamknij"
             title="Zamknij (Esc)"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="w-4 h-4" />
           </Button>
 
-          <h2 className="truncate text-xl font-semibold tracking-tight text-transparent bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text">
+          <h2 className="text-xl font-semibold tracking-tight text-transparent truncate bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text">
             Zarządzanie wydarzeniem
           </h2>
         </div>
 
         {isPremium && (
-          <span className="shrink-0 w-min h-min inline-flex items-center text-nowrap gap-1 rounded-full bg-gradient-to-r from-fuchsia-500 to-indigo-600 px-3 py-1 text-xs font-medium text-white shadow-sm">
+          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-white rounded-full shadow-sm shrink-0 w-min h-min text-nowrap bg-gradient-to-r from-fuchsia-500 to-indigo-600">
             🌟 Premium
           </span>
         )}
@@ -235,7 +235,7 @@ export function EventManagementModal({
   );
 
   const Tabs = (
-    <div className="mb-5 flex flex-nowrap justify-center gap-1 sm:gap-3">
+    <div className="flex justify-center gap-1 mb-5 flex-nowrap sm:gap-3">
       {(
         [
           { key: 'MEMBERS', label: 'Uczestnicy', Icon: Users },
@@ -259,8 +259,8 @@ export function EventManagementModal({
                 : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 dark:bg-zinc-800/30'
             )}
           >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span className="truncate text-xs sm:text-md">{label}</span>
+            <Icon className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate sm:text-md">{label}</span>
           </button>
         );
       })}
@@ -269,7 +269,7 @@ export function EventManagementModal({
 
   const NotificationsContent = (
     <div className="grid gap-4">
-      <div className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+      <div className="p-4 border rounded-2xl border-zinc-200 dark:border-zinc-800">
         <h3 className="text-base font-semibold">Szybkie powiadomienie</h3>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Wyślij krótką wiadomość do wybranych grup. (Wpięte pod{' '}
@@ -278,12 +278,12 @@ export function EventManagementModal({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="p-4 border rounded-2xl border-zinc-200 dark:border-zinc-800">
           <div className="mb-3 text-sm font-medium">Odbiorcy</div>
-          <label className="mb-2 flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 mb-2 text-sm">
             <input
               type="checkbox"
-              className="h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
+              className="w-4 h-4 accent-zinc-900 dark:accent-zinc-100"
               checked={notifyTargets.JOINED}
               onChange={(e) =>
                 setNotifyTargets((s) => ({ ...s, JOINED: e.target.checked }))
@@ -291,10 +291,10 @@ export function EventManagementModal({
             />
             JOINED ({counts.JOINED})
           </label>
-          <label className="mb-2 flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 mb-2 text-sm">
             <input
               type="checkbox"
-              className="h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
+              className="w-4 h-4 accent-zinc-900 dark:accent-zinc-100"
               checked={notifyTargets.INVITED}
               onChange={(e) =>
                 setNotifyTargets((s) => ({ ...s, INVITED: e.target.checked }))
@@ -305,7 +305,7 @@ export function EventManagementModal({
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              className="h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
+              className="w-4 h-4 accent-zinc-900 dark:accent-zinc-100"
               checked={notifyTargets.PENDING}
               onChange={(e) =>
                 setNotifyTargets((s) => ({ ...s, PENDING: e.target.checked }))
@@ -315,15 +315,15 @@ export function EventManagementModal({
           </label>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="p-4 border rounded-2xl border-zinc-200 dark:border-zinc-800">
           <div className="mb-2 text-sm font-medium">Wiadomość</div>
           <textarea
-            className="h-28 w-full resize-none rounded-xl border border-zinc-300 bg-white p-3 text-sm outline-none ring-0 placeholder:text-zinc-400 focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500"
+            className="w-full p-3 text-sm bg-white border outline-none resize-none h-28 rounded-xl border-zinc-300 ring-0 placeholder:text-zinc-400 focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500"
             value={notifyMsg}
             onChange={(e) => setNotifyMsg(e.target.value)}
             placeholder="Treść komunikatu…"
           />
-          <div className="mt-3 flex items-center justify-end">
+          <div className="flex items-center justify-end mt-3">
             <Button
               type="button"
               disabled={sending}
@@ -333,11 +333,11 @@ export function EventManagementModal({
             >
               {sending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Wysyłanie…
+                  <Loader2 className="w-4 h-4 animate-spin" /> Wysyłanie…
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="h-4 w-4" /> Wyślij
+                  <CheckCircle2 className="w-4 h-4" /> Wyślij
                 </>
               )}
             </Button>
@@ -361,7 +361,7 @@ export function EventManagementModal({
         content={
           <>
             {Tabs}
-            <div className="rounded-2xl border border-white/10 bg-white/1 p-4 backdrop-blur-sm dark:border-zinc-800/40">
+            <div className="p-4 border rounded-2xl border-white/10 bg-white/1 backdrop-blur-sm dark:border-zinc-800/40">
               {activeTab === 'MEMBERS' && (
                 <MembersPanel
                   members={members}

@@ -23,9 +23,9 @@ import {
   BadgeDollarSign,
   Sparkles,
   Bell,
+  Edit3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useIntentManagement } from './intent-management-provider';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface IntentManagementSidebarProps {
@@ -67,6 +67,12 @@ export function IntentManagementSidebar({
       label: 'View Event',
       href: `/intent/${intentId}/manage/view`,
       icon: Calendar,
+    },
+    {
+      id: 'edit',
+      label: 'Edit Event',
+      href: `/intent/${intentId}/manage/edit`,
+      icon: Edit3,
     },
     {
       id: 'members',
@@ -117,12 +123,6 @@ export function IntentManagementSidebar({
       icon: BarChart3,
     },
     {
-      id: 'moderation',
-      label: 'Moderation',
-      href: `/intent/${intentId}/manage/moderation`,
-      icon: Shield,
-    },
-    {
       id: 'settings',
       label: 'Settings',
       href: `/intent/${intentId}/manage/settings`,
@@ -142,10 +142,10 @@ export function IntentManagementSidebar({
       initial={false}
       animate={{ width: isCollapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="hidden h-screen flex-col overflow-hidden border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex"
+      className="flex-col hidden h-screen overflow-hidden bg-white border-r border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900 lg:flex"
     >
       {/* Top Section: Logo + Toggle (always visible, not scrollable) */}
-      <div className="flex h-16 flex-shrink-0 items-center justify-center border-b border-zinc-200 px-4 dark:border-zinc-800">
+      <div className="flex items-center justify-center flex-shrink-0 h-16 px-4 border-b border-zinc-200 dark:border-zinc-800">
         <AnimatePresence mode="wait">
           {!isCollapsed ? (
             <motion.div
@@ -154,10 +154,10 @@ export function IntentManagementSidebar({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="flex w-full items-center justify-between"
+              className="flex items-center justify-between w-full"
             >
               <Link href="/" className="flex items-center gap-2">
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-xl font-bold tracking-tight text-transparent">
+                <span className="text-xl font-bold tracking-tight text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text">
                   miglee
                 </span>
                 <span className="text-sm font-medium text-zinc-400 dark:text-zinc-500">
@@ -171,7 +171,7 @@ export function IntentManagementSidebar({
                 className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                 aria-label="Collapse sidebar"
               >
-                <ListCollapseIcon className="h-5 w-5 rotate-180" />
+                <ListCollapseIcon className="w-5 h-5 rotate-180" />
               </button>
             </motion.div>
           ) : (
@@ -183,17 +183,17 @@ export function IntentManagementSidebar({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
-              className="flex w-full items-center justify-center rounded-lg p-2 text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="flex items-center justify-center w-full p-2 transition-colors rounded-lg text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
               aria-label="Expand sidebar"
             >
-              <ListCollapseIcon className="h-5 w-5" />
+              <ListCollapseIcon className="w-5 h-5" />
             </motion.button>
           )}
         </AnimatePresence>
       </div>
 
       {/* Middle Section: Navigation (scrollable, flex-grow) */}
-      <nav className="flex-1 overflow-y-auto px-2 py-4">
+      <nav className="flex-1 px-2 py-4 overflow-y-auto">
         <div className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -218,7 +218,7 @@ export function IntentManagementSidebar({
                   )}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <Icon className="flex-shrink-0 w-5 h-5" />
                   <AnimatePresence>
                     {!isCollapsed && (
                       <motion.span
@@ -243,7 +243,7 @@ export function IntentManagementSidebar({
                     className="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-1.5 text-sm text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
                   >
                     {item.label}
-                    <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-zinc-900 dark:border-r-zinc-100" />
+                    <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
                   </motion.div>
                 )}
               </div>
@@ -253,7 +253,7 @@ export function IntentManagementSidebar({
       </nav>
 
       {/* Bottom Section: Back to Event (always visible, not scrollable) */}
-      <div className="flex-shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
+      <div className="flex-shrink-0 p-3 border-t border-zinc-200 dark:border-zinc-800">
         <AnimatePresence mode="wait">
           {!isCollapsed ? (
             <motion.div
@@ -267,7 +267,7 @@ export function IntentManagementSidebar({
                 href={`/intent/${intentId}`}
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               >
-                <Home className="h-5 w-5 flex-shrink-0" />
+                <Home className="flex-shrink-0 w-5 h-5" />
                 <span>Back to Event</span>
               </Link>
             </motion.div>
@@ -282,11 +282,11 @@ export function IntentManagementSidebar({
             >
               <Link
                 href={`/intent/${intentId}`}
-                className="rounded-lg p-2 text-zinc-700 transition-all hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="p-2 transition-all rounded-lg text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 aria-label="Back to Event"
                 title="Back to Event"
               >
-                <Home className="h-5 w-5" />
+                <Home className="w-5 h-5" />
               </Link>
             </motion.div>
           )}

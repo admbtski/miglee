@@ -9,8 +9,6 @@ import {
   UserIcon,
   Bell,
   Heart,
-  ChevronLeft,
-  Menu,
   HelpCircle,
   BarChart3,
   ListCollapseIcon,

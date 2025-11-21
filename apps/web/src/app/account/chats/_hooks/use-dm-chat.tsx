@@ -50,7 +50,20 @@ import {
 } from '@/lib/api/dm-subscriptions';
 import { useDmReactionAdded } from '@/lib/api/reactions-subscriptions';
 import type { Message } from '../_types';
-import { formatRelativeTime } from '../page';
+// Utility function for time formatting
+function formatRelativeTime(isoString: string): string {
+  const now = Date.now();
+  const then = new Date(isoString).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins}m`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d`;
+}
 
 // =============================================================================
 // Types

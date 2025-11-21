@@ -99,8 +99,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
   if (error || !intent) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950">
+      <div className="container px-4 py-8 mx-auto">
+        <div className="p-6 text-center border border-red-200 rounded-lg bg-red-50 dark:border-red-800 dark:bg-red-950">
           <h2 className="text-xl font-semibold text-red-900 dark:text-red-100">
             Nie znaleziono wydarzenia
           </h2>
@@ -239,10 +239,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 pb-20">
+    <div className="min-h-screen pb-20 bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       {/* Back Navigation */}
       <div className="border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-        <div className="container mx-auto max-w-6xl px-4 py-3">
+        <div className="container max-w-6xl px-4 py-3 mx-auto">
           <a
             href="/"
             className="inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -256,7 +256,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         Event Hero Cover - Magazine Style
         Refined layout with elegant gradient, proper spacing, and integrated metadata
       */}
-      <div className="container mx-auto max-w-6xl px-4 py-6">
+      <div className="container max-w-6xl px-4 py-6 mx-auto">
         <div className="mb-6">
           <div className="relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
             {/* Background Image */}
@@ -265,19 +265,19 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                 src={buildIntentCoverUrl(eventData.coverKey, 'detail') || ''}
                 blurhash={eventData.coverBlurhash}
                 alt={eventData.title}
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 object-cover w-full h-full"
                 width={1280}
                 height={720}
               />
             ) : (
-              <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
             )}
 
             {/* Gradient Overlay - Subtle, magazine-style */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/15 to-black/55" />
 
             {/* Action Buttons - Top Right Corner */}
-            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center gap-2">
+            <div className="absolute z-10 flex items-center gap-2 top-4 right-4 md:top-6 md:right-6">
               <ShareButton onClick={() => setShareOpen(true)} size="md" />
               <FavouriteButton
                 intentId={eventData.id}
@@ -288,14 +288,14 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
             {/* Bottom Content Container */}
             <div className="absolute inset-x-0 bottom-0 px-4 pb-5 md:px-8 md:pb-7">
-              <div className="mx-auto max-w-6xl">
+              <div className="max-w-6xl mx-auto">
                 {/* Category Tags Row */}
                 {eventData.categories.length > 0 && (
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     {eventData.categories.slice(0, 2).map((cat) => (
                       <span
                         key={cat.slug}
-                        className="inline-flex items-center rounded-full bg-black/40 backdrop-blur-sm px-3 py-1 text-xs font-medium text-white"
+                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-white rounded-full bg-black/40 backdrop-blur-sm"
                       >
                         {cat.name}
                       </span>
@@ -309,9 +309,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                 </h1>
 
                 {/* Metadata Row - Date, Time, Participants */}
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-white/80">
+                <div className="flex flex-wrap items-center mt-2 text-sm gap-x-4 gap-y-2 text-white/80">
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4 opacity-80" />
+                    <Calendar className="w-4 h-4 opacity-80" />
                     <span>
                       {new Date(eventData.startISO).toLocaleDateString(
                         'pl-PL',
@@ -324,7 +324,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                   </div>
                   <span className="text-white/40">·</span>
                   <div className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4 opacity-80" />
+                    <Clock className="w-4 h-4 opacity-80" />
                     <span>
                       {new Date(eventData.startISO).toLocaleTimeString(
                         'pl-PL',
@@ -337,7 +337,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                   </div>
                   <span className="text-white/40">·</span>
                   <div className="flex items-center gap-1.5">
-                    <Users className="h-4 w-4 opacity-80" />
+                    <Users className="w-4 h-4 opacity-80" />
                     <span>
                       {eventData.joinedCount} / {eventData.max}
                     </span>
@@ -350,11 +350,11 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
         {/* Extended Metadata Card - Integrated below hero */}
         <div className="mb-6">
-          <div className="rounded-xl border border-zinc-200 bg-white/70 backdrop-blur-sm p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="p-4 border rounded-xl border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40">
             <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300">
               {/* Event Size Category */}
               <div className="flex items-center gap-1.5">
-                <Users className="h-4 w-4 opacity-70" />
+                <Users className="w-4 h-4 opacity-70" />
                 <span className="font-medium">
                   {eventData.mode === 'ONE_TO_ONE' || eventData.max <= 2
                     ? 'Indywidualne'
@@ -376,7 +376,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                     (isJoined || isOwner || isModerator))) && (
                   <>
                     <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
-                      <MapPinned className="h-4 w-4" />
+                      <MapPinned className="w-4 h-4" />
                       <span className="truncate max-w-[300px] font-medium">
                         {eventData.address.split(',')[0]}
                       </span>
@@ -395,7 +395,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                 ) && (
                   <>
                     <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
-                      <MapPin className="h-4 w-4" />
+                      <MapPin className="w-4 h-4" />
                       <span className="text-xs">
                         Lokalizacja{' '}
                         {eventData.addressVisibility === 'AFTER_JOIN'
@@ -412,9 +412,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                 eventData.meetingKind === 'HYBRID') && (
                 <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
                   {eventData.meetingKind === 'ONLINE' ? (
-                    <Video className="h-4 w-4" />
+                    <Video className="w-4 h-4" />
                   ) : (
-                    <Wifi className="h-4 w-4" />
+                    <Wifi className="w-4 h-4" />
                   )}
                   <span className="font-medium">
                     {eventData.meetingKind === 'ONLINE'
@@ -435,7 +435,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           {/* Left Column - Main Content */}
-          <div className="space-y-6 min-w-0">
+          <div className="min-w-0 space-y-6">
             <EventDetails event={eventData} />
 
             {/* Location Map - only show if coordinates are available and address visibility allows */}
@@ -445,7 +445,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               (eventData.addressVisibility === 'PUBLIC' ||
                 (eventData.addressVisibility === 'AFTER_JOIN' &&
                   (isJoined || isOwner || isModerator))) && (
-                <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
                   <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                     📍 Lokalizacja
                   </h2>
@@ -457,7 +457,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                     height="h-[260px]"
                   />
                   {eventData.address && (
-                    <div className="mt-4 flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
+                    <div className="flex items-start gap-3 px-2 py-2 mt-4 transition rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
                       <svg
                         className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400"
                         fill="none"
@@ -481,7 +481,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                         <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                           Adres
                         </p>
-                        <p className="text-md text-zinc-800 dark:text-zinc-200 break-words">
+                        <p className="break-words text-md text-zinc-800 dark:text-zinc-200">
                           {eventData.address}
                         </p>
                       </div>
@@ -547,7 +547,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         }}
       />
 */}
-      <EventManagementModalConnect
+      {/*     <EventManagementModalConnect
         intentId={intentId}
         canManage={isOwner || isModerator}
         isPremium={!!eventData.sponsorship}
@@ -556,7 +556,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           setManageOpen(false);
           refetch();
         }}
-      />
+      />  */}
 
       <CancelIntentModals
         cancelId={cancelId}

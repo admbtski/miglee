@@ -20,6 +20,7 @@ import {
   BadgeDollarSign,
   Sparkles,
   Bell,
+  Edit3,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -85,6 +86,12 @@ export function IntentManagementMobileSidebar({
       label: 'View Event',
       href: `/intent/${intentId}/manage/view`,
       icon: Calendar,
+    },
+    {
+      id: 'edit',
+      label: 'Edit Event',
+      href: `/intent/${intentId}/manage/edit`,
+      icon: Edit3,
     },
     {
       id: 'members',

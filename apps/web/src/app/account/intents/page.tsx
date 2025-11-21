@@ -92,7 +92,7 @@ function LoadingState() {
   return (
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+        <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
           Loading...
         </p>
@@ -122,7 +122,7 @@ type ErrorStateProps = {
 
 function ErrorState({ error }: ErrorStateProps) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
+    <div className="p-4 text-red-800 border border-red-200 rounded-lg bg-red-50 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
       <p className="font-medium">Error loading events</p>
       <p className="mt-1 text-sm">{error.message}</p>
     </div>
@@ -135,8 +135,8 @@ type EmptyStateProps = {
 
 function EmptyState({ hasActiveFilters }: EmptyStateProps) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
-      <Calendar className="mx-auto h-12 w-12 text-zinc-400" />
+    <div className="p-12 text-center border rounded-lg border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+      <Calendar className="w-12 h-12 mx-auto text-zinc-400" />
       <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-100">
         Brak wydarzeń
       </h3>
@@ -241,7 +241,7 @@ export default function MyIntentsPage() {
         </p>
       </div>
 
-      <div className="mb-8 space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="p-6 mb-8 space-y-6 bg-white border rounded-lg border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
         <RoleFilter value={roleFilter} onChange={setRoleFilter} />
         <IntentStatusFilter
           values={statusFilters}
@@ -262,7 +262,7 @@ export default function MyIntentsPage() {
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          <div className="w-8 h-8 border-4 border-indigo-500 rounded-full animate-spin border-t-transparent" />
         </div>
       )}
 
@@ -290,7 +290,7 @@ export default function MyIntentsPage() {
             />
           ))}
 
-          <div className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="mt-6 text-sm text-center text-zinc-600 dark:text-zinc-400">
             Showing {cardData.length} event{cardData.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -321,6 +321,7 @@ export default function MyIntentsPage() {
         onClose={closeEdit}
       />
 */}
+      {/*
       <EventManagementModalConnect
         intentId={manageId ?? ''}
         canManage={true}
@@ -328,6 +329,7 @@ export default function MyIntentsPage() {
         open={Boolean(manageId)}
         onClose={closeManage}
       />
+*/}
     </div>
   );
 }

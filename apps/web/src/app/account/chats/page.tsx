@@ -72,29 +72,6 @@ type Conversation = {
   lastReadAt?: number; // epoch ms
 };
 
-type Message = {
-  id: string;
-  text: string;
-  at: number; // epoch ms
-  side: 'left' | 'right';
-  author: { id: string; name: string; avatar?: string };
-  block?: boolean;
-  reactions?: Array<{
-    emoji: string;
-    count: number;
-    users: Array<{ id: string; name: string; avatarKey?: string | null }>;
-    reacted: boolean;
-  }>;
-  readAt?: string | null;
-  editedAt?: string | null;
-  deletedAt?: string | null;
-  replyTo?: {
-    id: string;
-    author: { id: string; name: string };
-    content: string;
-  } | null;
-};
-
 /* ───────────────────────────── Page ───────────────────────────── */
 
 export default function ChatsPageIntegrated() {
@@ -1015,8 +992,8 @@ export default function ChatsPageIntegrated() {
 
   if (!currentUserId) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
       </div>
     );
   }
@@ -1044,8 +1021,8 @@ export default function ChatsPageIntegrated() {
           <ChatTabs tab={tab} setTab={setTab} />
           {(dmThreadsLoading && tab === 'dm') ||
           (membershipsLoading && tab === 'channel') ? (
-            <div className="flex h-full items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
             </div>
           ) : (
             <ChatList
@@ -1232,7 +1209,7 @@ ChatShell.ThreadPane = function ThreadPane({
   children: React.ReactNode;
 }) {
   return (
-    <PaneBase as="section" className="bg-white dark:bg-zinc-900 h-full">
+    <PaneBase as="section" className="h-full bg-white dark:bg-zinc-900">
       {children}
     </PaneBase>
   );
@@ -1248,7 +1225,7 @@ function ChatTabs({
   setTab: (t: ChatKind) => void;
 }) {
   return (
-    <div className="mb-2 grid grid-cols-2 gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1 text-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="grid grid-cols-2 gap-2 p-1 mb-2 text-sm border rounded-2xl border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
       <button
         className={[
           'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors',
@@ -1287,15 +1264,7 @@ const ChatList = ChatListComponent;
 import { ChatThread as ChatThreadComponent } from './_components/chat-thread';
 const ChatThread = ChatThreadComponent;
 
-// Helper functions for time formatting
-
-function fmtTime(epoch: number) {
-  const d = new Date(epoch);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
-}
-
+// Helper functions for time formatting (internal use only)
 function formatRelativeTime(isoString: string): string {
   const now = Date.now();
   const then = new Date(isoString).getTime();
@@ -1310,20 +1279,9 @@ function formatRelativeTime(isoString: string): string {
   return `${diffDays}d`;
 }
 
-// Message components moved to _components/message-bubble.tsx
-import { Bubble, MsgIn, MsgOut } from './_components/message-bubble';
-
-// TypingIndicator moved to _components/typing-indicator.tsx
-import { TypingIndicator } from './_components/typing-indicator';
-
-// EmptyThread moved to _components/empty-thread.tsx
+// Components moved to _components/ - imported where needed
 import { EmptyThread as EmptyThreadComponent } from './_components/empty-thread';
 const EmptyThread = EmptyThreadComponent;
-
-/* ───────────────────────────── Details (kind-aware) ───────────────────────────── */
-// ChatDetails moved to _components/chat-details.tsx (imported where needed)
-// Section and Row moved to _components/chat-details-section.tsx (already exported)
-import { Section, Row } from './_components/chat-details-section';
 
 // ============================================================================
 // END OF FILE - All components imported from _components/
