@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, Loader2, FileQuestion } from 'lucide-react';
+import { AlertCircle, Loader2, FileQuestion, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { JoinQuestionEditor } from '@/features/intents/components/join-question-editor';
 import { JoinRequestsList } from './join-requests-list';
+import { cn } from '@/lib/utils';
 import {
   useIntentJoinQuestionsQuery,
   useCreateJoinQuestionMutation,
@@ -152,38 +153,53 @@ export function JoinFormPanel({ intentId }: JoinFormPanelProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header with info */}
-      <div className="space-y-3">
-        <div className="flex items-start gap-3">
-          <FileQuestion className="h-5 w-5 text-zinc-600 dark:text-zinc-400 mt-0.5" />
+      <div className="space-y-4">
+        <div className="flex items-baseline gap-2.5">
+          <HelpCircle className="h-5 w-5 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-[22px] font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               Formularz dołączania
             </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2 max-w-[70ch]">
               Skonfiguruj pytania, które użytkownicy muszą wypełnić przed
               wysłaniem prośby o dołączenie (tylko dla trybu REQUEST).
             </p>
           </div>
         </div>
 
-        {/* View toggle */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant={activeView === 'questions' ? 'default' : 'outline'}
-            size="sm"
+        {/* View toggle - Tabs */}
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 w-fit">
+          <button
             onClick={() => setActiveView('questions')}
+            className={cn(
+              'h-9 px-4 rounded-md text-sm font-medium transition-all',
+              activeView === 'questions'
+                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100'
+                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800'
+            )}
           >
+            <FileQuestion className="inline-block w-4 h-4 mr-1.5 -mt-0.5" />
             Pytania ({questions.length})
-          </Button>
-          <Button
-            variant={activeView === 'requests' ? 'default' : 'outline'}
-            size="sm"
+          </button>
+          <button
             onClick={() => setActiveView('requests')}
+            className={cn(
+              'h-9 px-4 rounded-md text-sm font-medium transition-all relative',
+              activeView === 'requests'
+                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-100'
+                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800'
+            )}
           >
-            Prośby ({totalRequests})
-          </Button>
+            <AlertCircle className="inline-block w-4 h-4 mr-1.5 -mt-0.5" />
+            Prośby
+            {totalRequests > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold leading-none rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                {totalRequests}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -203,15 +219,30 @@ export function JoinFormPanel({ intentId }: JoinFormPanelProps) {
           />
 
           {questions.length === 0 && !isLocked && (
-            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-6 text-center">
-              <FileQuestion className="h-12 w-12 text-zinc-400 mx-auto mb-3" />
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+            <div className="rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-8 text-center shadow-sm">
+              <FileQuestion className="h-10 w-10 text-zinc-400 mx-auto mb-4" />
+              <h4 className="font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Brak pytań
               </h4>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5 max-w-[50ch] mx-auto">
                 Dodaj pytania, aby użytkownicy musieli wypełnić formularz przed
                 wysłaniem prośby o dołączenie.
               </p>
+              <Button
+                onClick={() => {
+                  // This will be handled by the JoinQuestionEditor
+                  const addButton = document.querySelector(
+                    '[data-add-question-trigger]'
+                  ) as HTMLButtonElement;
+                  if (addButton) addButton.click();
+                }}
+                variant="outline"
+                size="sm"
+                className="mx-auto"
+              >
+                <FileQuestion className="h-4 w-4 mr-2" />
+                Dodaj pierwsze pytanie
+              </Button>
             </div>
           )}
         </div>

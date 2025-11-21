@@ -10,7 +10,6 @@ import {
   Users,
   MessageSquare,
   BarChart3,
-  Settings,
   Calendar,
   Home,
   X,
@@ -26,6 +25,9 @@ import {
   Lock,
   Eye,
   Image,
+  Star,
+  AlertTriangle,
+  MessagesSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -168,7 +170,7 @@ export function IntentManagementMobileSidebar({
       id: 'chat',
       label: 'Chat',
       href: `/intent/${intentId}/manage/chat`,
-      icon: MessageSquare,
+      icon: MessagesSquare,
     },
     {
       id: 'analytics',
@@ -177,10 +179,22 @@ export function IntentManagementMobileSidebar({
       icon: BarChart3,
     },
     {
-      id: 'settings',
-      label: 'Settings',
-      href: `/intent/${intentId}/manage/settings`,
-      icon: Settings,
+      id: 'reviews',
+      label: 'Reviews',
+      href: `/intent/${intentId}/manage/reviews`,
+      icon: Star,
+    },
+    {
+      id: 'comments',
+      label: 'Comments',
+      href: `/intent/${intentId}/manage/comments`,
+      icon: MessageSquare,
+    },
+    {
+      id: 'danger',
+      label: 'Danger Zone',
+      href: `/intent/${intentId}/manage/danger`,
+      icon: AlertTriangle,
     },
   ];
 

@@ -5,10 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Check, X, Calendar, MapPin } from 'lucide-react';
+import { Check, X, Clock, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { motion } from 'framer-motion';
 import type { IntentJoinRequestsQuery } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl } from '@/lib/media/url';
 
@@ -71,9 +72,14 @@ export function JoinAnswersViewer({
   };
 
   return (
-    <div className="space-y-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all hover:shadow-md"
+    >
       {/* User info header */}
-      <div className="flex items-start gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-start gap-4 p-5 border-b border-zinc-200 dark:border-zinc-800">
         <Avatar
           url={buildAvatarUrl(user.avatarKey, 'md')}
           blurhash={user.avatarBlurhash}
@@ -82,7 +88,7 @@ export function JoinAnswersViewer({
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">
+            <h4 className="font-semibold text-base text-zinc-900 dark:text-zinc-100">
               {user.name}
             </h4>
             {user.verifiedAt && (
@@ -93,8 +99,8 @@ export function JoinAnswersViewer({
           </div>
 
           {user.profile?.city && (
-            <div className="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              <MapPin className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400 mt-1.5">
+              <MapPin className="h-4 w-4 text-zinc-500" />
               <span>
                 {user.profile.city}
                 {user.profile.country && `, ${user.profile.country}`}
@@ -108,8 +114,8 @@ export function JoinAnswersViewer({
             </p>
           )}
 
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-            <Calendar className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 mt-2.5">
+            <Clock className="h-3.5 w-3.5 text-zinc-400" />
             <span>
               Wysłano{' '}
               {formatDistanceToNow(new Date(member.joinedAt || Date.now()), {
@@ -122,35 +128,37 @@ export function JoinAnswersViewer({
       </div>
 
       {/* Answers */}
-      {answers.length > 0 ? (
-        <div className="space-y-4">
-          <h5 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            Odpowiedzi na pytania:
-          </h5>
-          {answers.map((answer, index) => (
-            <div
-              key={answer.id}
-              className="space-y-1.5 rounded-md bg-zinc-50 dark:bg-zinc-800/50 p-3"
-            >
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {index + 1}. {answer.question.label}
-              </p>
-              <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
-                {formatAnswer(answer.answer, answer.question.type)}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
-          Brak odpowiedzi (formularz nie był wymagany)
-        </p>
-      )}
+      <div className="pt-4 pb-2 px-5">
+        {answers.length > 0 ? (
+          <div className="space-y-4">
+            <h5 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              Odpowiedzi na pytania:
+            </h5>
+            {answers.map((answer, index) => (
+              <div
+                key={answer.id}
+                className="space-y-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-4"
+              >
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {index + 1}. {answer.question.label}
+                </p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
+                  {formatAnswer(answer.answer, answer.question.type)}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 italic">
+            Brak odpowiedzi (formularz nie był wymagany)
+          </p>
+        )}
+      </div>
 
       {/* Reject reason input */}
       {showRejectReason && (
-        <div className="space-y-2 pt-2">
-          <Label htmlFor="reject-reason" className="text-sm">
+        <div className="space-y-2 px-5 pb-4">
+          <Label htmlFor="reject-reason" className="text-sm font-medium">
             Powód odrzucenia (opcjonalnie)
           </Label>
           <Textarea
@@ -161,34 +169,46 @@ export function JoinAnswersViewer({
             maxLength={500}
             rows={3}
           />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-right">
             {rejectReason.length} / 500 znaków
           </p>
         </div>
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-2">
+      <div className="flex items-center gap-4 p-5 border-t border-zinc-200 dark:border-zinc-800">
         {!showRejectReason ? (
           <>
-            <Button
-              onClick={handleApprove}
-              disabled={isProcessing}
+            <motion.div
               className="flex-1"
-              variant="default"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Check className="h-4 w-4 mr-2" />
-              Zatwierdź
-            </Button>
-            <Button
-              onClick={handleReject}
-              disabled={isProcessing}
+              <Button
+                onClick={handleApprove}
+                disabled={isProcessing}
+                className="w-full h-12"
+                variant="default"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Zatwierdź
+              </Button>
+            </motion.div>
+            <motion.div
               className="flex-1"
-              variant="destructive"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <X className="h-4 w-4 mr-2" />
-              Odrzuć
-            </Button>
+              <Button
+                onClick={handleReject}
+                disabled={isProcessing}
+                className="w-full h-12"
+                variant="destructive"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Odrzuć
+              </Button>
+            </motion.div>
           </>
         ) : (
           <>
@@ -196,7 +216,7 @@ export function JoinAnswersViewer({
               onClick={handleCancelReject}
               disabled={isProcessing}
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-12"
             >
               Anuluj
             </Button>
@@ -204,7 +224,7 @@ export function JoinAnswersViewer({
               onClick={handleReject}
               disabled={isProcessing}
               variant="destructive"
-              className="flex-1"
+              className="flex-1 h-12"
             >
               <X className="h-4 w-4 mr-2" />
               Potwierdź odrzucenie
@@ -212,6 +232,6 @@ export function JoinAnswersViewer({
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

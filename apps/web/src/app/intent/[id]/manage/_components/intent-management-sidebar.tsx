@@ -29,6 +29,7 @@ import {
   Image,
   Star,
   AlertTriangle,
+  MessagesSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -149,7 +150,7 @@ export function IntentManagementSidebar({
       id: 'chat',
       label: 'Chat',
       href: `/intent/${intentId}/manage/chat`,
-      icon: MessageSquare,
+      icon: MessagesSquare,
     },
     {
       id: 'analytics',
@@ -159,9 +160,15 @@ export function IntentManagementSidebar({
     },
     {
       id: 'reviews',
-      label: 'Reviews & Comments',
+      label: 'Reviews',
       href: `/intent/${intentId}/manage/reviews`,
       icon: Star,
+    },
+    {
+      id: 'comments',
+      label: 'Comments',
+      href: `/intent/${intentId}/manage/comments`,
+      icon: MessageSquare,
     },
     {
       id: 'danger',

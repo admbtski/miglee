@@ -1,24 +1,24 @@
 /**
- * Intent Reviews Management Component
- * View and moderate reviews
+ * Intent Comments Management Component
+ * View and moderate comments
  */
 
 'use client';
 
 import { EyeOff } from 'lucide-react';
 import { useIntentQuery } from '@/lib/api/intents';
-import { EventReviews } from '../../../_components/event-reviews';
+import { EventComments } from '../../../_components/event-comments';
 
-interface IntentReviewsManagementProps {
+interface IntentCommentsManagementProps {
   intentId: string;
 }
 
 /**
- * Intent Reviews Management Component
+ * Intent Comments Management Component
  */
-export function IntentReviewsManagement({
+export function IntentCommentsManagement({
   intentId,
-}: IntentReviewsManagementProps) {
+}: IntentCommentsManagementProps) {
   const { data, isLoading } = useIntentQuery({ id: intentId });
   const intent = data?.intent;
 
@@ -28,7 +28,7 @@ export function IntentReviewsManagement({
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
           <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-            Loading reviews...
+            Loading comments...
           </p>
         </div>
       </div>
@@ -47,8 +47,7 @@ export function IntentReviewsManagement({
     id: intent.id,
     title: intent.title,
     status: intent.status,
-    reviewsCount: intent.reviewsCount || 0,
-    averageRating: intent.averageRating || 0,
+    commentsCount: intent.commentsCount || 0,
   };
 
   return (
@@ -56,10 +55,10 @@ export function IntentReviewsManagement({
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Reviews
+          Comments
         </h1>
         <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-          Manage reviews for your event
+          Manage comments for your event
         </p>
       </div>
 
@@ -69,7 +68,7 @@ export function IntentReviewsManagement({
         <div className="text-sm text-blue-900 dark:text-blue-100">
           <p className="font-medium">Moderation Tools Coming Soon</p>
           <p className="mt-1 text-blue-700 dark:text-blue-300">
-            The ability to hide inappropriate reviews will be available in a
+            The ability to hide inappropriate comments will be available in a
             future update.
           </p>
         </div>
@@ -77,7 +76,7 @@ export function IntentReviewsManagement({
 
       {/* Content */}
       <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <EventReviews event={eventData} />
+        <EventComments event={eventData} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 /**
  * Intent Management Dashboard Component
  * Shows overview, stats, and quick actions
+ * Enterprise-grade design with Linear-inspired aesthetics
  */
 
 'use client';
@@ -75,17 +76,18 @@ function StatCard({
   const content = (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 transition-all dark:border-zinc-800 dark:bg-zinc-900',
+        'group relative overflow-hidden rounded-xl border-[0.5px] border-zinc-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.05)] transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none',
+        'p-5',
         href &&
-          'cursor-pointer hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700'
+          'cursor-pointer hover:shadow-md hover:border-indigo-300 hover:scale-[1.02] dark:hover:border-indigo-700'
       )}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
             {title}
           </p>
-          <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+          <p className="mt-2 text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             {value}
           </p>
           {description && (
@@ -103,19 +105,25 @@ function StatCard({
               )}
             >
               <TrendingUp
+                strokeWidth={2}
                 className={cn('h-4 w-4', !trend.positive && 'rotate-180')}
               />
               {trend.value}
             </p>
           )}
         </div>
-        <div className={cn('rounded-lg p-3', colorClasses[color])}>
-          <Icon className="w-6 h-6" />
+        <div
+          className={cn(
+            'absolute right-5 top-5 rounded-lg p-2',
+            colorClasses[color]
+          )}
+        >
+          <Icon className="w-5 h-5" />
         </div>
       </div>
       {href && (
-        <div className="absolute bottom-0 right-0 p-4 transition-opacity opacity-0 group-hover:opacity-100">
-          <ArrowRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="absolute bottom-3 right-3 transition-opacity opacity-0 group-hover:opacity-100">
+          <ArrowRight className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
         </div>
       )}
     </div>
@@ -202,10 +210,23 @@ export function IntentManagementDashboard({
       color: 'green' as const,
     },
     {
-      title: 'Engagement',
-      value: totalEngagement,
-      icon: Activity,
-      description: `${engagementPerMember} per member`,
+      title: 'Reviews',
+      value: (intent as any).reviewsCount || 0,
+      icon: Star,
+      description: (intent as any).averageRating
+        ? `★ ${(intent as any).averageRating.toFixed(1)} average`
+        : 'No reviews yet',
+      href: `/intent/${intentId}/manage/reviews`,
+      color: 'orange' as const,
+    },
+    {
+      title: 'Comments',
+      value: intent.commentsCount || 0,
+      icon: MessageSquare,
+      description: intent.joinedCount
+        ? `${((intent.commentsCount || 0) / (intent.joinedCount || 1)).toFixed(1)} per member`
+        : 'No comments yet',
+      href: `/intent/${intentId}/manage/comments`,
       color: 'purple' as const,
     },
     {
@@ -226,25 +247,15 @@ export function IntentManagementDashboard({
           : undefined,
       color: 'pink' as const,
     },
-    {
-      title: 'Reviews',
-      value: (intent as any).reviewsCount || 0,
-      icon: Star,
-      description: (intent as any).averageRating
-        ? `★ ${(intent as any).averageRating.toFixed(1)} average`
-        : 'No reviews yet',
-      href: `/intent/${intentId}/manage/reviews`,
-      color: 'orange' as const,
-    },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-[1360px] space-y-10">
       {/* Header with Status Badge */}
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
               Dashboard
             </h1>
             <span
@@ -274,15 +285,15 @@ export function IntentManagementDashboard({
               {(intent as any).status}
             </span>
           </div>
-          <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 max-w-[70ch]">
             Overview of your event management
           </p>
         </div>
         <Link
           href={`/intent/${intentId}`}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-indigo-600 rounded-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+          className="inline-flex items-center gap-2 h-11 px-5 text-sm font-semibold text-white transition-all bg-indigo-600 rounded-lg hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
         >
-          <Eye className="w-4 h-4" />
+          <Eye className="w-[18px] h-[18px]" />
           View Event
         </Link>
       </div>
@@ -301,30 +312,30 @@ export function IntentManagementDashboard({
       />
 
       {/* Quick Metrics Banner */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-5 xl:gap-6">
         {/* Capacity Status */}
-        <div className="p-4 bg-white border rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               Capacity
             </span>
             <Users className="w-4 h-4 text-zinc-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <span className="text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               {intent.joinedCount}
             </span>
             <span className="text-sm text-zinc-500">/ {intent.max}</span>
           </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
             <div
               className={cn(
-                'h-full rounded-full transition-all',
+                'h-full rounded-full bg-gradient-to-r transition-all',
                 capacityPercentage >= 90
-                  ? 'bg-red-500'
+                  ? 'from-red-500 to-red-400'
                   : capacityPercentage >= 70
-                    ? 'bg-orange-500'
-                    : 'bg-green-500'
+                    ? 'from-orange-500 to-orange-400'
+                    : 'from-green-500 to-green-400'
               )}
               style={{ width: `${capacityPercentage}%` }}
             />
@@ -332,14 +343,14 @@ export function IntentManagementDashboard({
         </div>
 
         {/* Time Until Event */}
-        <div className="p-4 bg-white border rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               {isUpcoming ? 'Starts In' : isOngoing ? 'Ends In' : 'Completed'}
             </span>
             <Calendar className="w-4 h-4 text-zinc-400" />
           </div>
-          <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <div className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             {isUpcoming &&
               formatDistanceToNow(startDate, { addSuffix: false, locale: pl })}
             {isOngoing &&
@@ -350,15 +361,15 @@ export function IntentManagementDashboard({
         </div>
 
         {/* Engagement Rate */}
-        <div className="p-4 bg-white border rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               Engagement
             </span>
             <Activity className="w-4 h-4 text-zinc-400" />
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <span className="text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               {engagementPerMember}
             </span>
             <span className="text-sm text-zinc-500">per member</span>
@@ -366,15 +377,15 @@ export function IntentManagementDashboard({
         </div>
 
         {/* Conversion Rate */}
-        <div className="p-4 bg-white border rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               Conversion
             </span>
             <TrendingUp className="w-4 h-4 text-zinc-400" />
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <span className="text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               {(intent as any).viewCount && (intent as any).viewCount > 0
                 ? Math.round(
                     ((intent.joinedCount || 0) / (intent as any).viewCount) *
@@ -389,16 +400,16 @@ export function IntentManagementDashboard({
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5 xl:gap-6">
         {stats.map((stat) => (
           <StatCard key={stat.title} {...stat} />
         ))}
       </div>
 
       {/* Event Info Card */}
-      <div className="p-6 bg-white border rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="p-6 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
+        <div className="flex items-center justify-between pb-6 mb-8 border-b border-zinc-200 dark:border-zinc-800">
+          <h2 className="text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
             Event Information
           </h2>
           <Link
@@ -409,38 +420,38 @@ export function IntentManagementDashboard({
             Edit
           </Link>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-8">
           <div>
-            <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h3 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
               {intent.title}
             </h3>
             {intent.description && (
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 text-sm leading-relaxed max-w-[70ch] text-zinc-500 dark:text-zinc-400">
                 {intent.description}
               </p>
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2 row-gap-5">
             <div className="flex items-start gap-3">
-              <Calendar className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+              <Calendar className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   Start Date
                 </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                   {format(startDate, 'PPP p', { locale: pl })}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <Clock className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+              <Clock className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   End Date
                 </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                   {format(endDate, 'PPP p', { locale: pl })}
                 </p>
               </div>
@@ -448,12 +459,12 @@ export function IntentManagementDashboard({
 
             {intent.address && (
               <div className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                <MapPin className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Location
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                     {intent.address}
                   </p>
                 </div>
@@ -461,23 +472,23 @@ export function IntentManagementDashboard({
             )}
 
             <div className="flex items-start gap-3">
-              <Users className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
-              <div>
+              <Users className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+              <div className="flex-1">
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   Capacity
                 </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                   {intent.joinedCount} / {intent.max} members
                 </p>
-                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
                   <div
                     className={cn(
-                      'h-full rounded-full transition-all',
+                      'h-full rounded-full bg-gradient-to-r transition-all',
                       capacityPercentage >= 90
-                        ? 'bg-red-500'
+                        ? 'from-red-500 to-red-400'
                         : capacityPercentage >= 70
-                          ? 'bg-orange-500'
-                          : 'bg-green-500'
+                          ? 'from-orange-500 to-orange-400'
+                          : 'from-green-500 to-green-400'
                     )}
                     style={{ width: `${capacityPercentage}%` }}
                   />
@@ -487,12 +498,12 @@ export function IntentManagementDashboard({
 
             {intent.mode && (
               <div className="flex items-start gap-3">
-                <UserPlus className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                <UserPlus className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Mode
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                     {intent.mode === 'ONE_TO_ONE' ? '1:1' : 'Group'}
                   </p>
                 </div>
@@ -501,12 +512,12 @@ export function IntentManagementDashboard({
 
             {intent.visibility && (
               <div className="flex items-start gap-3">
-                <Eye className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                <Eye className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Visibility
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                     {intent.visibility}
                   </p>
                 </div>
@@ -515,12 +526,12 @@ export function IntentManagementDashboard({
 
             {intent.joinMode && (
               <div className="flex items-start gap-3">
-                <UserCheck className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                <UserCheck className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Join Mode
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                     {intent.joinMode === 'OPEN'
                       ? 'Open'
                       : intent.joinMode === 'REQUEST'
@@ -533,12 +544,12 @@ export function IntentManagementDashboard({
 
             {intent.meetingKind && (
               <div className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                <MapPin className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Meeting Type
                   </p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                     {intent.meetingKind === 'ONSITE'
                       ? 'In Person'
                       : intent.meetingKind === 'ONLINE'
@@ -553,17 +564,17 @@ export function IntentManagementDashboard({
           {/* Categories & Tags */}
           {(intent.categories && intent.categories.length > 0) ||
           (intent.tags && intent.tags.length > 0) ? (
-            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
               {intent.categories && intent.categories.length > 0 && (
-                <div className="mb-3">
-                  <p className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                <div className="mb-4">
+                  <p className="mb-2.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
                     Categories
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {intent.categories.map((cat: any) => (
                       <span
                         key={cat.id}
-                        className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
                       >
                         {cat.names?.en || cat.slug}
                       </span>
@@ -574,14 +585,14 @@ export function IntentManagementDashboard({
 
               {intent.tags && intent.tags.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  <p className="mb-2.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
                     Tags
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {intent.tags.map((tag: any) => (
                       <span
                         key={tag.id}
-                        className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
                       >
                         {tag.label}
                       </span>
@@ -595,9 +606,9 @@ export function IntentManagementDashboard({
       </div>
 
       {/* Quick Actions */}
-      <div className="p-6 bg-white border rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      <div className="p-6 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
             Quick Actions
           </h2>
           <Link
@@ -609,89 +620,84 @@ export function IntentManagementDashboard({
           </Link>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Primary Actions */}
+          {/* Members */}
           <Link
             href={`/intent/${intentId}/manage/members`}
-            className="relative flex flex-col gap-2 p-4 overflow-hidden transition-all border group rounded-xl border-zinc-200 hover:border-indigo-300 hover:shadow-md dark:border-zinc-800 dark:hover:border-indigo-700 dark:bg-zinc-900/50"
+            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-sky-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-sky-700 dark:bg-zinc-900/50"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-lg dark:bg-indigo-900/30">
-                <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              {intent.joinedCount && intent.joinedCount > 0 && (
-                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                  {intent.joinedCount}
-                </span>
-              )}
+            {intent.joinedCount && intent.joinedCount > 0 && (
+              <span className="absolute top-3 right-3 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
+                {intent.joinedCount}
+              </span>
+            )}
+            <div className="flex items-center justify-center w-10 h-10 bg-sky-500/10 rounded-lg dark:bg-sky-500/10">
+              <Users className="w-6 h-6 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 Members
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 Manage participants
               </p>
             </div>
           </Link>
 
+          {/* Chat */}
           <Link
             href={`/intent/${intentId}/manage/chat`}
-            className="relative flex flex-col gap-2 p-4 overflow-hidden transition-all border group rounded-xl border-zinc-200 hover:border-green-300 hover:shadow-md dark:border-zinc-800 dark:hover:border-green-700 dark:bg-zinc-900/50"
+            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-green-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-green-700 dark:bg-zinc-900/50"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-lg dark:bg-green-900/30">
-                <MessageSquare className="w-5 h-5 text-green-600 dark:text-green-400" />
-              </div>
-              {(intent as any).messagesCount &&
-                (intent as any).messagesCount > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                    {(intent as any).messagesCount}
-                  </span>
-                )}
+            {(intent as any).messagesCount &&
+              (intent as any).messagesCount > 0 && (
+                <span className="absolute top-3 right-3 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                  {(intent as any).messagesCount}
+                </span>
+              )}
+            <div className="flex items-center justify-center w-10 h-10 bg-green-500/10 rounded-lg dark:bg-green-500/10">
+              <MessageSquare className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 Chat
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 View messages
               </p>
             </div>
           </Link>
 
+          {/* Analytics */}
           <Link
             href={`/intent/${intentId}/manage/analytics`}
-            className="relative flex flex-col gap-2 p-4 overflow-hidden transition-all border group rounded-xl border-zinc-200 hover:border-purple-300 hover:shadow-md dark:border-zinc-800 dark:hover:border-purple-700 dark:bg-zinc-900/50"
+            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-purple-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-purple-700 dark:bg-zinc-900/50"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-lg dark:bg-purple-900/30">
-                <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              </div>
+            <div className="flex items-center justify-center w-10 h-10 bg-purple-500/10 rounded-lg dark:bg-purple-500/10">
+              <BarChart3 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 Analytics
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 View insights
               </p>
             </div>
           </Link>
 
+          {/* Invite Links */}
           <Link
             href={`/intent/${intentId}/manage/invite-links`}
-            className="relative flex flex-col gap-2 p-4 overflow-hidden transition-all border group rounded-xl border-zinc-200 hover:border-orange-300 hover:shadow-md dark:border-zinc-800 dark:hover:border-orange-700 dark:bg-zinc-900/50"
+            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-orange-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-orange-700 dark:bg-zinc-900/50"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center justify-center w-10 h-10 bg-orange-100 rounded-lg dark:bg-orange-900/30">
-                <LinkIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              </div>
+            <div className="flex items-center justify-center w-10 h-10 bg-orange-500/10 rounded-lg dark:bg-orange-500/10">
+              <LinkIcon className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                 Invite Links
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 Share event
               </p>
             </div>

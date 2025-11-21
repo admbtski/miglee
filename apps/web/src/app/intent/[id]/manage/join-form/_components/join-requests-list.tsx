@@ -101,12 +101,12 @@ export function JoinRequestsList({
 
   if (requests.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-6 text-center">
-        <UserPlus className="h-12 w-12 text-zinc-400 mx-auto mb-3" />
-        <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+      <div className="rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-8 text-center shadow-sm">
+        <UserPlus className="h-10 w-10 text-zinc-400 mx-auto mb-4" />
+        <h4 className="font-medium text-zinc-700 dark:text-zinc-300 mb-2">
           Brak oczekujących próśb
         </h4>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-[50ch] mx-auto">
           Gdy ktoś wyśle prośbę o dołączenie, zobaczysz ją tutaj.
         </p>
       </div>

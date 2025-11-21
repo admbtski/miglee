@@ -159,9 +159,9 @@ export function JoinQuestionEditor({
 
   if (isLocked) {
     return (
-      <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+      <div className="rounded-2xl border border-amber-200/80 dark:border-amber-800 bg-[#FFF9E6] dark:bg-amber-900/20 p-4 shadow-sm">
         <div className="flex items-start gap-3">
-          <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+          <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
           <div className="flex-1">
             <h4 className="font-medium text-amber-900 dark:text-amber-100">
               Edycja pytań zablokowana
@@ -181,9 +181,9 @@ export function JoinQuestionEditor({
             {questions.map((q, index) => (
               <div
                 key={q.id}
-                className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3"
+                className="rounded-xl bg-white dark:bg-zinc-900 border-[0.5px] border-zinc-200 dark:border-zinc-800 p-4 shadow-sm"
               >
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-3">
                   <span className="text-sm font-medium text-zinc-500">
                     {index + 1}.
                   </span>
@@ -192,11 +192,11 @@ export function JoinQuestionEditor({
                       {q.label}
                     </p>
                     {q.helpText && (
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5">
                         {q.helpText}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2.5">
                       <Badge variant="outline" className="text-xs">
                         {q.type === 'TEXT'
                           ? 'Tekst'
@@ -228,9 +228,9 @@ export function JoinQuestionEditor({
           {questions.map((question, index) => (
             <div
               key={question.id}
-              className="flex items-start gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4"
+              className="flex items-start gap-3 rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm transition-all hover:shadow-md"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <GripVertical className="h-5 w-5 text-zinc-400 cursor-move" />
                 <span className="text-sm font-medium text-zinc-500">
                   {index + 1}.
@@ -238,17 +238,17 @@ export function JoinQuestionEditor({
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                    <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">
                       {question.label}
                     </p>
                     {question.helpText && (
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1.5">
                         {question.helpText}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-3">
                       <Badge variant="outline" className="text-xs">
                         {question.type === 'TEXT'
                           ? 'Tekst'
@@ -271,7 +271,7 @@ export function JoinQuestionEditor({
                     {(question.type === 'SINGLE_CHOICE' ||
                       question.type === 'MULTI_CHOICE') &&
                       question.options && (
-                        <div className="mt-2 space-y-1">
+                        <div className="mt-3 space-y-1.5">
                           {(
                             question.options as Array<{
                               label: string;
@@ -310,6 +310,7 @@ export function JoinQuestionEditor({
           onClick={handleStartAdding}
           variant="outline"
           className="w-full"
+          data-add-question-trigger
         >
           <Plus className="h-4 w-4 mr-2" />
           Dodaj pytanie ({questions.length}/{maxQuestions})
@@ -317,7 +318,7 @@ export function JoinQuestionEditor({
       )}
 
       {!canAddMore && !isLocked && (
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3">
+        <div className="rounded-xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
             <AlertCircle className="h-4 w-4" />
             <span>Osiągnięto maksymalną liczbę pytań ({maxQuestions})</span>
@@ -327,9 +328,9 @@ export function JoinQuestionEditor({
 
       {/* New question form */}
       {isAdding && (
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
+        <div className="rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm max-w-[720px] mx-auto">
+          <div className="flex items-center justify-between p-5 border-b border-zinc-200 dark:border-zinc-800">
+            <h4 className="text-[18px] font-semibold text-zinc-900 dark:text-zinc-100">
               Nowe pytanie
             </h4>
             <Button
@@ -342,10 +343,10 @@ export function JoinQuestionEditor({
             </Button>
           </div>
 
-          <div className="space-y-4">
+          <div className="p-5 space-y-5">
             {/* Question type */}
-            <div className="space-y-2">
-              <Label>Typ pytania</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Typ pytania</Label>
               <Select
                 value={newQuestion.type}
                 onValueChange={(value) =>
@@ -355,7 +356,7 @@ export function JoinQuestionEditor({
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,8 +372,8 @@ export function JoinQuestionEditor({
             </div>
 
             {/* Question label */}
-            <div className="space-y-2">
-              <Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">
                 Pytanie <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -382,15 +383,18 @@ export function JoinQuestionEditor({
                 }
                 maxLength={MAX_LABEL_LENGTH}
                 placeholder="Np. Jakie masz doświadczenie w tym sporcie?"
+                className="h-11"
               />
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 text-right">
                 {newQuestion.label.length} / {MAX_LABEL_LENGTH}
               </p>
             </div>
 
             {/* Help text */}
-            <div className="space-y-2">
-              <Label>Tekst pomocniczy (opcjonalnie)</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">
+                Tekst pomocniczy (opcjonalnie)
+              </Label>
               <Textarea
                 value={newQuestion.helpText}
                 onChange={(e) =>
@@ -400,7 +404,7 @@ export function JoinQuestionEditor({
                 rows={2}
                 placeholder="Dodatkowe informacje dla użytkownika..."
               />
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 text-right">
                 {newQuestion.helpText.length} / {MAX_HELP_TEXT_LENGTH}
               </p>
             </div>
@@ -408,49 +412,54 @@ export function JoinQuestionEditor({
             {/* Options for CHOICE types */}
             {(newQuestion.type === 'SINGLE_CHOICE' ||
               newQuestion.type === 'MULTI_CHOICE') && (
-              <div className="space-y-2">
-                <Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">
                   Opcje <span className="text-red-500">*</span>
                 </Label>
-                {newQuestion.options.map((option, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      value={option}
-                      onChange={(e) =>
-                        handleOptionChange(index, e.target.value)
-                      }
-                      placeholder={`Opcja ${index + 1}`}
-                    />
-                    {newQuestion.options.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveOption(index)}
-                        className="h-9 w-9 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                {newQuestion.options.length < MAX_OPTIONS && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddOption}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Dodaj opcję
-                  </Button>
-                )}
+                <div className="space-y-2">
+                  {newQuestion.options.map((option, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={option}
+                        onChange={(e) =>
+                          handleOptionChange(index, e.target.value)
+                        }
+                        placeholder={`Opcja ${index + 1}`}
+                        className="h-11"
+                      />
+                      {newQuestion.options.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveOption(index)}
+                          className="h-11 w-11 p-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  {newQuestion.options.length < MAX_OPTIONS && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddOption}
+                      className="w-full h-10"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Dodaj opcję
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Max length for TEXT */}
             {newQuestion.type === 'TEXT' && (
-              <div className="space-y-2">
-                <Label>Maksymalna długość odpowiedzi</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">
+                  Maksymalna długość odpowiedzi
+                </Label>
                 <Input
                   type="number"
                   value={newQuestion.maxLength}
@@ -462,6 +471,7 @@ export function JoinQuestionEditor({
                   }
                   min={10}
                   max={2000}
+                  className="h-11"
                 />
               </div>
             )}
@@ -478,19 +488,24 @@ export function JoinQuestionEditor({
                   })
                 }
               />
-              <Label htmlFor="required" className="cursor-pointer">
+              <Label htmlFor="required" className="cursor-pointer text-sm">
                 Pytanie wymagane
               </Label>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button variant="outline" onClick={handleCancelAdding}>
+          <div className="flex items-center justify-end gap-3 p-5 border-t border-zinc-200 dark:border-zinc-800">
+            <Button
+              variant="outline"
+              onClick={handleCancelAdding}
+              className="h-11 px-6"
+            >
               Anuluj
             </Button>
             <Button
               onClick={handleAddQuestion}
               disabled={!newQuestion.label.trim()}
+              className="h-11 px-6"
             >
               Dodaj pytanie
             </Button>
