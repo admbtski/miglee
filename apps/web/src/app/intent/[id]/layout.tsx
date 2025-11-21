@@ -15,10 +15,8 @@ export default function IntentDetailLayout({
   return (
     <QueryClientProvider>
       <HydrationBoundary state={dehydrate(client)}>
-        <>
-          <ConditionalNavbar />
-          {children}
-        </>
+        <ConditionalNavbar />
+        {children}
       </HydrationBoundary>
     </QueryClientProvider>
   );

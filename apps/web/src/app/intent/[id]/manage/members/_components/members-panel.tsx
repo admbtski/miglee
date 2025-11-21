@@ -101,10 +101,10 @@ export function MembersPanel({
           Szukaj po nazwie
         </label>
         <div className="relative w-full">
-          <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Filter className="absolute w-4 h-4 text-zinc-400 pointer-events-none left-3 top-1/2 -translate-y-1/2" />
           <input
             id="members-search"
-            className="w-full rounded-xl border border-zinc-300 bg-white py-2 pl-10 pr-9 text-sm outline-none transition placeholder:text-zinc-400 hover:border-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 dark:focus:border-indigo-500/70"
+            className="w-full py-2 pl-10 pr-9 text-sm text-white transition bg-white border outline-none rounded-xl border-zinc-300 placeholder:text-zinc-400 hover:border-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 dark:focus:border-indigo-500/70"
             placeholder="Szukaj po nazwie…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -113,11 +113,11 @@ export function MembersPanel({
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+              className="absolute p-1 text-zinc-400 rounded-full right-2 top-1/2 -translate-y-1/2 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
               aria-label="Wyczyść filtr"
               title="Wyczyść"
             >
-              <X className="h-4 w-4" />
+              <X className="w-4 h-4" />
             </button>
           )}
           <div className="pointer-events-none absolute -bottom-5 left-0 text-xs text-zinc-500 dark:text-zinc-400">
@@ -136,16 +136,16 @@ export function MembersPanel({
             aria-label="Szybkie statystyki statusów"
             onClick={() => setStatsOpen((s) => !s)}
             className={clsx(
-              'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition',
+              'inline-flex items-center gap-2 px-3 py-2 text-sm font-medium transition border rounded-xl',
               'border-zinc-300 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800',
               'focus:outline-none focus:ring-2 focus:ring-indigo-400/50'
             )}
           >
-            <BarChart2 className="h-5 w-5" />
+            <BarChart2 className="w-5 h-5" />
             <span className="hidden sm:block">Statystyki</span>
             <ChevronDown
               className={clsx(
-                'h-4 w-4 transition-transform',
+                'w-4 h-4 transition-transform',
                 statsOpen && 'rotate-180'
               )}
               aria-hidden
@@ -155,20 +155,20 @@ export function MembersPanel({
             type="button"
             onClick={() => setOpenInvite(true)}
             className={clsx(
-              'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition',
-              'border-indigo-300 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-300',
+              'inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white transition border rounded-xl',
+              'border-indigo-300 bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-300',
               'dark:border-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500'
             )}
             aria-haspopup="dialog"
             aria-expanded={openInvite}
           >
-            <UserPlus className="h-5 w-5" />
+            <UserPlus className="w-5 h-5" />
             <span className="hidden sm:block">Zaproś</span>
           </button>
 
           {statsOpen && (
             <div
-              className="absolute right-0 top-[110%] z-20 w-72 rounded-2xl border border-zinc-200 bg-white p-3 shadow-xl ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900"
+              className="absolute right-0 top-[110%] z-20 w-72 p-3 bg-white border shadow-xl rounded-2xl border-zinc-200 ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900"
               role="menu"
             >
               <div className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -181,15 +181,15 @@ export function MembersPanel({
                   return (
                     <div
                       key={s}
-                      className="rounded-xl p-2 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                      className="p-2 transition rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
                       role="menuitem"
                       aria-label={`${s}: ${count} (${pct}%)`}
                     >
-                      <div className="mb-1 flex items-center justify-between text-xs">
+                      <div className="flex items-center justify-between mb-1 text-xs">
                         <div className="flex items-center gap-2">
                           <span
                             className={clsx(
-                              'h-1.5 w-1.5 shrink-0 rounded-full',
+                              'w-1.5 h-1.5 shrink-0 rounded-full',
                               s === 'JOINED'
                                 ? 'bg-emerald-500'
                                 : s === 'PENDING'
@@ -211,7 +211,7 @@ export function MembersPanel({
                           {count}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                      <div className="overflow-hidden rounded-full h-1.5 bg-zinc-100 dark:bg-zinc-800">
                         <div
                           className={clsx(
                             'h-full rounded-full',

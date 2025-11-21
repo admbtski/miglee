@@ -11,7 +11,6 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
-  Settings,
   MessageSquare,
   BarChart3,
   Home,
@@ -28,6 +27,8 @@ import {
   Lock,
   Eye,
   Image,
+  Star,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -157,10 +158,16 @@ export function IntentManagementSidebar({
       icon: BarChart3,
     },
     {
-      id: 'settings',
-      label: 'Settings',
-      href: `/intent/${intentId}/manage/settings`,
-      icon: Settings,
+      id: 'reviews',
+      label: 'Reviews & Comments',
+      href: `/intent/${intentId}/manage/reviews`,
+      icon: Star,
+    },
+    {
+      id: 'danger',
+      label: 'Danger Zone',
+      href: `/intent/${intentId}/manage/danger`,
+      icon: AlertTriangle,
     },
   ];
 

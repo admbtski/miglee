@@ -24,7 +24,7 @@ export function MemberRow({
     <div
       role="listitem"
       className={clsx(
-        'grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-zinc-200/70 bg-white/60 p-3 shadow-sm transition',
+        'grid grid-cols-[1fr_auto] items-center gap-3 p-3 transition border shadow-sm rounded-2xl border-zinc-200/70 bg-white/60',
         'hover:border-zinc-300 hover:shadow-md dark:border-zinc-800/70 dark:bg-zinc-900/60 dark:hover:border-zinc-700'
       )}
     >
@@ -75,14 +75,14 @@ export function MemberRow({
           type="button"
           onClick={() => onOpenManage(member)}
           className={clsx(
-            'inline-flex items-center gap-1.5 rounded-lg border border-zinc-300/80 bg-white px-3 py-1.5 text-xs text-zinc-700 shadow-sm transition',
+            'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-700 transition bg-white border shadow-sm rounded-lg border-zinc-300/80',
             'hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-300',
             'dark:border-zinc-700/80 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800'
           )}
           title="Szczegóły członka"
           aria-label={`Zarządzaj: ${member.user.name}`}
         >
-          <SettingsIcon className="h-3.5 w-3.5" />
+          <SettingsIcon className="w-3.5 h-3.5" />
           <span className="hidden sm:block">Zarządzaj</span>
         </button>
       </div>

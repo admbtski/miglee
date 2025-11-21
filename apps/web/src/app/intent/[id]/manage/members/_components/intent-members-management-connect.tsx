@@ -194,14 +194,14 @@ export function IntentMembersManagementConnect({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        <div className="w-8 h-8 border-4 rounded-full animate-spin border-indigo-500 border-t-transparent" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4">
+      <div className="p-4 border rounded-lg border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
         <p className="text-sm text-red-800 dark:text-red-200">
           Nie udało się załadować członków. Spróbuj ponownie.
         </p>

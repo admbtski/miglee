@@ -24,7 +24,7 @@ export function MembersSection({
 }) {
   const [open, setOpen] = React.useState(defaultOpen);
 
-  const dotClass = clsx('inline-block h-2 w-2 rounded-full', {
+  const dotClass = clsx('inline-block w-2 h-2 rounded-full', {
     'bg-emerald-500': status === 'JOINED',
     'bg-yellow-500': status === 'PENDING',
     'bg-cyan-500': status === 'INVITED',
@@ -40,8 +40,7 @@ export function MembersSection({
         id={`group-${status}`}
         onClick={() => setOpen((s) => !s)}
         className={clsx(
-          'group mb-2 inline-flex w-full items-center justify-between rounded-xl px-2 py-2 text-left',
-          'ring-1 ring-transparent transition focus:outline-none focus:ring-2 focus:ring-indigo-300/50',
+          'group inline-flex items-center justify-between w-full px-2 py-2 mb-2 text-left transition rounded-xl ring-1 ring-transparent focus:outline-none focus:ring-2 focus:ring-indigo-300/50',
           'hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
         )}
         aria-expanded={open}
@@ -49,13 +48,13 @@ export function MembersSection({
         <span className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
           <span className={dotClass} />
           {status}
-          <span className="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+          <span className="ml-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
             {items.length}
           </span>
         </span>
         <ChevronDown
           className={clsx(
-            'h-4 w-4 shrink-0 text-zinc-500 transition-transform group-hover:text-zinc-700 dark:group-hover:text-zinc-300',
+            'w-4 h-4 text-zinc-500 transition-transform shrink-0 group-hover:text-zinc-700 dark:group-hover:text-zinc-300',
             open ? 'rotate-180' : 'rotate-0'
           )}
           aria-hidden
