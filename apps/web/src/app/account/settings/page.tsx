@@ -62,13 +62,15 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <>
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Preferences</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Customize your workspace personal preferences.
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          Settings
+        </h1>
+        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+          Customize your workspace and personal preferences
         </p>
-      </header>
+      </div>
 
       <SectionCard title="Language">
         <Row
@@ -168,23 +170,23 @@ export default function SettingsPage() {
         </div>
       </SectionCard>
 
-      <div className="flex flex-wrap items-center gap-2 mt-6">
+      <div className="flex flex-wrap items-center gap-3 pt-6 mt-6 border-t border-zinc-200 dark:border-zinc-800">
         <button
           type="button"
           onClick={handleSave}
-          className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-500"
+          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
         >
           Save changes
         </button>
         <button
           type="button"
-          className="px-4 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900/60"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-6 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
           onClick={handleReset}
         >
-          Cancel
+          Reset
         </button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -234,9 +236,9 @@ const Select = memo(function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={[
-          'w-full appearance-none rounded-2xl border px-4 py-2.5 text-sm outline-none',
+          'w-full appearance-none rounded-xl border px-4 py-2.5 text-sm outline-none',
           'border-zinc-200 bg-white placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-500/30',
-          'dark:border-zinc-700 dark:bg-zinc-900/60',
+          'dark:border-zinc-800 dark:bg-zinc-900',
           disabled ? 'opacity-60' : '',
         ].join(' ')}
       >
@@ -309,7 +311,7 @@ const RadioGroup = memo(function RadioGroup({
               'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm',
               active
                 ? 'border-indigo-400 bg-indigo-600/10 text-indigo-600 dark:text-indigo-300'
-                : 'border-zinc-300 bg-transparent text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900/60',
+                : 'border-zinc-300 bg-transparent text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900',
             ].join(' ')}
           >
             <span
@@ -355,10 +357,10 @@ const ThemeCard = memo(function ThemeCard({
       type="button"
       onClick={onClick}
       className={[
-        'group w-full rounded-2xl border p-2 text-left transition-colors',
+        'group w-full rounded-xl border p-2 text-left transition-colors',
         active
           ? 'border-indigo-400 ring-2 ring-indigo-400/40'
-          : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900/60',
+          : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900',
       ].join(' ')}
     >
       <div className="overflow-hidden rounded-xl">

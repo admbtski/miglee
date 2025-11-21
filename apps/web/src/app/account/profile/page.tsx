@@ -35,7 +35,7 @@ function getTabClasses(isActive: boolean): string {
     'group inline-flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors';
 
   if (isActive) {
-    return `${base} border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400`;
+    return `${base} border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400`;
   }
 
   return `${base} border-transparent text-zinc-600 hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100`;
@@ -45,7 +45,7 @@ function getTabIconClasses(isActive: boolean): string {
   const base = 'h-5 w-5';
 
   if (isActive) {
-    return `${base} text-blue-600 dark:text-blue-400`;
+    return `${base} text-indigo-600 dark:text-indigo-400`;
   }
 
   return `${base} text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-400`;
@@ -55,7 +55,7 @@ function LoadingState() {
   return (
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
           Loading profile...
         </p>
@@ -102,12 +102,12 @@ export default function ProfilePage() {
   const user = profileData?.user;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-          Profile Settings
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          Profile
         </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
           Manage your public profile and privacy settings
         </p>
       </div>
@@ -136,7 +136,7 @@ export default function ProfilePage() {
         </nav>
       </div>
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {activeTab === 'profile' && <ProfileTab user={user} userId={userId} />}
         {activeTab === 'sports' && <SportsTab user={user} userId={userId} />}
         {activeTab === 'social' && (

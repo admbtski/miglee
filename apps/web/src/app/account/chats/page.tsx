@@ -1028,7 +1028,17 @@ export default function ChatsPageIntegrated() {
     (active || activeDmId || activeChId) && !showDraftConversation;
 
   return (
-    <>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          Chats
+        </h1>
+        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+          Manage your direct messages and event conversations
+        </p>
+      </div>
+
       <ChatShell listVisible>
         <ChatShell.ListPane>
           <ChatTabs tab={tab} setTab={setTab} />
@@ -1158,7 +1168,7 @@ export default function ChatsPageIntegrated() {
         onClose={() => setShowUserPicker(false)}
         onSelectUser={handleSelectUser}
       />
-    </>
+    </div>
   );
 }
 
@@ -1195,8 +1205,8 @@ function PaneBase({
   return (
     <Tag
       className={[
-        'rounded-3xl border border-zinc-200 shadow-sm ring-1 ring-black/5 min-w-0 backdrop-blur-[2px]',
-        'dark:border-zinc-700',
+        'rounded-xl border border-zinc-200 shadow-sm min-w-0',
+        'dark:border-zinc-800',
         className,
       ].join(' ')}
     >
@@ -1211,7 +1221,7 @@ ChatShell.ListPane = function ListPane({
   children: React.ReactNode;
 }) {
   return (
-    <PaneBase as="aside" className="h-full p-2 bg-white/90 dark:bg-zinc-900/70">
+    <PaneBase as="aside" className="h-full p-2 bg-white dark:bg-zinc-900">
       {children}
     </PaneBase>
   );
@@ -1222,7 +1232,7 @@ ChatShell.ThreadPane = function ThreadPane({
   children: React.ReactNode;
 }) {
   return (
-    <PaneBase as="section" className="bg-white/95 dark:bg-[#141518]/80 h-full">
+    <PaneBase as="section" className="bg-white dark:bg-zinc-900 h-full">
       {children}
     </PaneBase>
   );

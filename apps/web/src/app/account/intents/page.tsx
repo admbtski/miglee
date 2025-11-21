@@ -92,7 +92,7 @@ function LoadingState() {
   return (
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-600 dark:border-zinc-700 dark:border-t-blue-400" />
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
           Loading...
         </p>
@@ -231,72 +231,70 @@ export default function MyIntentsPage() {
   };
 
   return (
-    <>
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-            Moje Intenty
-          </h1>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Zarządzaj wszystkimi swoimi wydarzeniami w jednym miejscu
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          My Events
+        </h1>
+        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+          Manage all your events in one place
+        </p>
+      </div>
 
-        <div className="mb-8 space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <RoleFilter value={roleFilter} onChange={setRoleFilter} />
-          <IntentStatusFilter
-            values={statusFilters}
-            onChange={setStatusFilters}
-          />
+      <div className="mb-8 space-y-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <RoleFilter value={roleFilter} onChange={setRoleFilter} />
+        <IntentStatusFilter
+          values={statusFilters}
+          onChange={setStatusFilters}
+        />
 
-          {hasActiveFilters && (
-            <div className="flex justify-end">
-              <button
-                onClick={clearFilters}
-                className="text-sm text-pink-600 transition-colors hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300"
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
-        </div>
-
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-pink-500 border-t-transparent" />
-          </div>
-        )}
-
-        {(error as any) && <ErrorState error={error as any} />}
-
-        {!isLoading && !error && cardData.length === 0 && (
-          <EmptyState hasActiveFilters={hasActiveFilters} />
-        )}
-
-        {!isLoading && !error && cardData.length > 0 && (
-          <div className="space-y-4">
-            {cardData.map((item) => (
-              <MyIntentCard
-                key={item.membership.id}
-                data={item}
-                actions={{
-                  onManage: setManageId,
-                  onEdit: setEditId,
-                  onCancel: setCancelId,
-                  onLeave: setLeaveId,
-                  onWithdraw: handleWithdraw,
-                  onAcceptInvite: handleAcceptInvite,
-                  onDeclineInvite: handleDeclineInvite,
-                }}
-              />
-            ))}
-
-            <div className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
-              Showing {cardData.length} event{cardData.length !== 1 ? 's' : ''}
-            </div>
+        {hasActiveFilters && (
+          <div className="flex justify-end">
+            <button
+              onClick={clearFilters}
+              className="text-sm text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              Clear all filters
+            </button>
           </div>
         )}
       </div>
+
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        </div>
+      )}
+
+      {(error as any) && <ErrorState error={error as any} />}
+
+      {!isLoading && !error && cardData.length === 0 && (
+        <EmptyState hasActiveFilters={hasActiveFilters} />
+      )}
+
+      {!isLoading && !error && cardData.length > 0 && (
+        <div className="space-y-4">
+          {cardData.map((item) => (
+            <MyIntentCard
+              key={item.membership.id}
+              data={item}
+              actions={{
+                onManage: setManageId,
+                onEdit: setEditId,
+                onCancel: setCancelId,
+                onLeave: setLeaveId,
+                onWithdraw: handleWithdraw,
+                onAcceptInvite: handleAcceptInvite,
+                onDeclineInvite: handleDeclineInvite,
+              }}
+            />
+          ))}
+
+          <div className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+            Showing {cardData.length} event{cardData.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+      )}
 
       <DeleteIntentModals
         deleteId={deleteId}
@@ -330,6 +328,6 @@ export default function MyIntentsPage() {
         open={Boolean(manageId)}
         onClose={closeManage}
       />
-    </>
+    </div>
   );
 }

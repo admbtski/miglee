@@ -2,15 +2,31 @@ import type { ReactNode } from 'react';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
-import { Navbar } from '@/components/layout/navbar';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 
-import {
-  AccountSidebarDesktop,
-  AccountSidebarMobile,
-} from './_components/sidebar-nav';
+import { AccountSidebarEnhanced } from './_components/account-sidebar-enhanced';
+import { AccountNavbar } from './_components/account-navbar';
 
+/**
+ * Account Layout - Clean Architecture with Enhanced Sidebar
+ *
+ * Structure:
+ * 1. Root: Flex container (horizontal)
+ *    - Sidebar (collapsible: 280px ↔ 80px)
+ *    - Content area (flex: 1)
+ *
+ * 2. Sidebar (left column)
+ *    - Full height (100vh) vertical bar
+ *    - Collapsible with toggle button
+ *    - Grouped navigation (primary, secondary, tools)
+ *    - Divided into: top (logo + toggle), middle (nav items - scrollable), bottom (user zone)
+ *
+ * 3. Content area (right column)
+ *    - Navbar (top bar with right-aligned elements)
+ *    - Main scrollable wrapper with padding
+ *    - Contains: Header section (title + tabs) + Body section
+ */
 export default function AccountLayout({ children }: { children: ReactNode }) {
   const client = getQueryClient();
 
@@ -18,26 +34,21 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <QueryClientProvider>
       <HydrationBoundary state={dehydrate(client)}>
         <ErrorBoundary>
-          <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-            <Navbar />
+          {/* Root: Horizontal flex container */}
+          <div className="flex min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-1000">
+            {/* Enhanced Sidebar: Collapsible, full height, grouped navigation */}
+            <AccountSidebarEnhanced />
 
-            <div className="container mx-auto max-w-6xl px-4 py-6 grid gap-4 md:gap-6 md:grid-cols-[minmax(220px,240px)_1fr] isolate">
-              <div className="md:hidden p-2">
-                <AccountSidebarMobile />
-              </div>
+            {/* Content area: Flex-1, contains navbar + main content */}
+            <div className="flex flex-1 flex-col">
+              {/* Navbar: Top bar (only for content area, not sidebar) */}
+              <AccountNavbar />
 
-              <aside
-                className="rounded-3xl border border-zinc-200 bg-white/90 shadow-sm ring-1 ring-black/5 dark:border-zinc-700 dark:bg-zinc-900/70 backdrop-blur-[2px] md:sticky md:top-6 p-2 sm:p-3 hidden md:block"
-                aria-label="Account navigation"
-              >
-                <AccountSidebarDesktop />
-              </aside>
-
-              <main
-                className="rounded-3xl border border-zinc-200 bg-white/95 shadow-sm ring-1 ring-black/5 dark:border-zinc-700 dark:bg-[#141518]/80 backdrop-blur-[2px] p-4 sm:p-6 lg:p-8"
-                role="main"
-              >
-                <ErrorBoundary>{children}</ErrorBoundary>
+              {/* Main scrollable wrapper */}
+              <main className="flex-1 overflow-y-auto">
+                <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                  <ErrorBoundary>{children}</ErrorBoundary>
+                </div>
               </main>
             </div>
           </div>

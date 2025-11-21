@@ -225,7 +225,7 @@ export default function NotificationsPage() {
         <div
           className={`group relative overflow-hidden rounded-xl border transition-all ${
             unread
-              ? 'border-blue-200 bg-blue-50/50 shadow-sm dark:border-blue-900/40 dark:bg-blue-950/20'
+              ? 'border-indigo-200 bg-indigo-50/50 shadow-sm dark:border-indigo-900/40 dark:bg-indigo-950/20'
               : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
           } hover:shadow-md`}
         >
@@ -244,8 +244,8 @@ export default function NotificationsPage() {
                 <div className="flex items-center gap-2">
                   {unread && (
                     <span className="relative inline-flex h-2.5 w-2.5">
-                      <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-blue-500 opacity-70" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500" />
+                      <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-indigo-500 opacity-70" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-indigo-500" />
                     </span>
                   )}
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -311,7 +311,7 @@ export default function NotificationsPage() {
     if (isFetchingNextPage) {
       return (
         <div className="flex justify-center py-6">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
         </div>
       );
     }
@@ -344,15 +344,15 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8">
+      {/* Header with Actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            Powiadomienia
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Notifications
           </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Zarządzaj swoimi powiadomieniami
+          <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+            Manage your notifications and stay updated
           </p>
         </div>
 
@@ -360,22 +360,22 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            title="Odśwież"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            title="Refresh"
           >
             <RefreshCcw className="h-4 w-4" />
-            Odśwież
+            Refresh
           </button>
           {unreadCount > 0 && (
             <button
               type="button"
               onClick={handleMarkAll}
               disabled={markingAll}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
-              title="Oznacz wszystkie jako przeczytane"
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
+              title="Mark all as read"
             >
               <CheckCheck className="h-4 w-4" />
-              Oznacz wszystkie
+              Mark all read
             </button>
           )}
         </div>
@@ -391,7 +391,7 @@ export default function NotificationsPage() {
           <span className="text-zinc-300 dark:text-zinc-700">•</span>
           <span>
             Nieprzeczytane:{' '}
-            <strong className="text-blue-600 dark:text-blue-400">
+            <strong className="text-indigo-600 dark:text-indigo-400">
               {unreadCount}
             </strong>
           </span>
@@ -403,7 +403,7 @@ export default function NotificationsPage() {
             onClick={() => setFilter('all')}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               filter === 'all'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-indigo-600 text-white'
                 : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
             }`}
           >
@@ -413,7 +413,7 @@ export default function NotificationsPage() {
             onClick={() => setFilter('unread')}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               filter === 'unread'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-indigo-600 text-white'
                 : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
             }`}
           >
@@ -423,7 +423,7 @@ export default function NotificationsPage() {
             onClick={() => setFilter('read')}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               filter === 'read'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-indigo-600 text-white'
                 : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
             }`}
           >
@@ -435,7 +435,7 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       {isLoading ? (
         <div className="flex min-h-[400px] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
       ) : filteredNotifications.length === 0 ? (
         <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">

@@ -7,7 +7,7 @@ import { CheckCircle2, CreditCard, Lock } from 'lucide-react';
 
 export function Card({ children }: { children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white/95 p-4 shadow-sm ring-1 ring-black/5 dark:border-zinc-700 dark:bg-[#171a1f]/80 sm:p-5">
+    <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
       {children}
     </section>
   );
@@ -65,8 +65,8 @@ export function GhostButton({
       className={[
         'inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm',
         primary
-          ? 'border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:hover:bg-zinc-900'
-          : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900',
+          ? 'border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800'
+          : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900',
       ].join(' ')}
     >
       {children}
@@ -88,7 +88,7 @@ export function PaymentRow({
   onEdit?: () => void;
 }) {
   return (
-    <div className="items-center justify-between p-3 border rounded-xl border-zinc-200 dark:border-zinc-700 sm:flex">
+    <div className="items-center justify-between p-3 border rounded-xl border-zinc-200 dark:border-zinc-800 sm:flex">
       <div className="flex items-center gap-3">
         <span className="grid rounded-lg h-9 w-9 place-items-center bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
           <CreditCard className="w-5 h-5" />
@@ -113,7 +113,7 @@ export function PaymentRow({
         <button
           type="button"
           onClick={onEdit}
-          className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
         >
           Edit
         </button>
@@ -160,7 +160,7 @@ export function SmallButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+      className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
     >
       {children}
     </button>
@@ -205,7 +205,7 @@ export function Input({
       <div className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
         {label}
       </div>
-      <div className="flex items-center gap-2 px-3 py-2 text-sm bg-white border outline-none rounded-xl placeholder:text-zinc-400 focus-within:ring-2 focus-within:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900/60">
+      <div className="flex items-center gap-2 px-3 py-2 text-sm bg-white border outline-none rounded-xl placeholder:text-zinc-400 focus-within:ring-2 focus-within:ring-indigo-500/30 dark:border-zinc-800 dark:bg-zinc-900">
         {leftIcon && <span className="text-zinc-500">{leftIcon}</span>}
         <input
           disabled={disabled}
@@ -245,7 +245,7 @@ export function Select({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 text-sm bg-white border outline-none appearance-none rounded-xl focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-900/60"
+          className="w-full px-3 py-2 text-sm bg-white border outline-none appearance-none rounded-xl focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-800 dark:bg-zinc-900"
         >
           {options.map((o) => (
             <option key={o} value={o}>

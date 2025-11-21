@@ -127,18 +127,20 @@ export default function BillingPage() {
   }, []);
 
   return (
-    <>
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-6">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Plan &amp; Billing</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            View your plan information or switch plans according to your needs.
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Plans & Billing
+          </h1>
+          <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+            Manage your subscription and billing information
           </p>
         </div>
         <button
           type="button"
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white border shadow-sm rounded-xl border-zinc-200 ring-1 ring-black/5 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:hover:bg-zinc-900"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
         >
           <Gift className="w-4 h-4" />
           Gift PRO
@@ -239,8 +241,8 @@ export default function BillingPage() {
       </div>
 
       {/* Invoices */}
-      <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white/95 shadow-sm ring-1 ring-black/5 dark:border-zinc-700 dark:bg-[#171a1f]/80">
-        <div className="px-4 py-3 text-sm font-semibold border-b border-zinc-200 dark:border-zinc-700">
+      <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="px-4 py-3 text-sm font-semibold border-b border-zinc-200 dark:border-zinc-800">
           Invoices
         </div>
         <div className="-mx-4 overflow-x-auto sm:mx-0">
@@ -348,6 +350,6 @@ export default function BillingPage() {
         invoice={invoiceView}
         onClose={() => setInvoiceView(null)}
       />
-    </>
+    </div>
   );
 }

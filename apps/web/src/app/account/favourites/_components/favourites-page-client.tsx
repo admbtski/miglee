@@ -23,20 +23,15 @@ export function FavouritesPageClient() {
   }, [data?.pages]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-900/30">
-          <Heart className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            Zapisane wydarzenia
-          </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {items.length} {items.length === 1 ? 'wydarzenie' : 'wydarzeń'}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          Favourites
+        </h1>
+        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+          {items.length} saved {items.length === 1 ? 'event' : 'events'}
+        </p>
       </div>
 
       {/* Loading */}
@@ -82,7 +77,7 @@ export function FavouritesPageClient() {
             type="button"
             disabled={isFetchingNextPage}
             onClick={() => fetchNextPage()}
-            className="rounded-lg border border-zinc-200 bg-white px-6 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-zinc-200 bg-white px-6 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             {isFetchingNextPage ? (
               <span className="flex items-center gap-2">
