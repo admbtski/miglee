@@ -238,15 +238,10 @@ export const defaultIntentValues: IntentFormValues = {
 export function useIntentForm(
   initial?: Partial<IntentFormValues>
 ): UseFormReturn<IntentFormValues> {
-  const values = useMemo(
-    () => ({ ...defaultIntentValues, ...initial }),
-    [initial]
-  );
-
   return useForm<IntentFormValues>({
     mode: 'onChange',
     resolver: zodResolver(IntentSchema),
-    defaultValues: values,
+    defaultValues: { ...defaultIntentValues, ...initial },
     shouldUnregister: false,
   });
 }

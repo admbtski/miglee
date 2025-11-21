@@ -1,12 +1,7 @@
 'use client';
 
 import { useEffect, useId } from 'react';
-import {
-  Controller,
-  UseFormReturn,
-  useController,
-  useWatch,
-} from 'react-hook-form';
+import { Controller, UseFormReturn, useController } from 'react-hook-form';
 import { useCategorySelection } from './category-selection-provider';
 import { IntentFormValues } from './types';
 import { getUseCategoriesLimitData } from '@/features/intents/hooks/use-categories';
@@ -22,7 +17,6 @@ export function BasicsStep({
   form: UseFormReturn<IntentFormValues>;
 }) {
   const {
-    register,
     trigger,
     control,
     formState: { errors },
@@ -41,8 +35,6 @@ export function BasicsStep({
     useCategorySelection();
   const { selected: selectedTags, set: setTags } = useTagSelection();
 
-  const title = useWatch({ control, name: 'title' }) ?? '';
-  const description = useWatch({ control, name: 'description' }) ?? '';
   const titleMax = 60;
   const descMax = 500;
 
@@ -54,60 +46,66 @@ export function BasicsStep({
   return (
     <div className="space-y-8">
       {/* Name */}
-      <div className="group">
-        <label
-          htmlFor={titleId}
-          className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Name
-        </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Max 60 characters. Keep it clear and specific.
-        </p>
+      <Controller
+        name="title"
+        control={control}
+        render={({ field }) => (
+          <div className="group">
+            <label
+              htmlFor={titleId}
+              className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Name
+            </label>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Max 60 characters. Keep it clear and specific.
+            </p>
 
-        <div className="relative">
-          <input
-            {...register('title')}
-            id={titleId}
-            maxLength={titleMax}
-            placeholder="Short, catchy title"
-            aria-invalid={!!errors.title}
-            aria-describedby={errors.title ? titleErrId : undefined}
-            autoComplete="off"
-            spellCheck={false}
-            className={[
-              'w-full rounded-2xl border px-4 pr-14 py-3.5 text-base shadow-inner focus:outline-none focus:ring-2',
-              errors.title
-                ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
-                : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
-              'bg-white text-zinc-900 placeholder:text-zinc-400',
-              'dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:border-zinc-800 dark:focus:border-zinc-700',
-            ].join(' ')}
-          />
-          <span
-            className={[
-              'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 select-none text-xs',
-              titleMax - title.length === 0
-                ? 'text-red-500'
-                : titleMax - title.length <= 12
-                  ? 'text-amber-500'
-                  : 'text-zinc-500 dark:text-zinc-400',
-            ].join(' ')}
-            aria-hidden="true"
-          >
-            {Math.max(0, titleMax - title.length)} left
-          </span>
-        </div>
+            <div className="relative">
+              <input
+                {...field}
+                id={titleId}
+                maxLength={titleMax}
+                placeholder="Short, catchy title"
+                aria-invalid={!!errors.title}
+                aria-describedby={errors.title ? titleErrId : undefined}
+                autoComplete="off"
+                spellCheck={false}
+                className={[
+                  'w-full rounded-2xl border px-4 pr-14 py-3.5 text-base shadow-inner focus:outline-none focus:ring-2',
+                  errors.title
+                    ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
+                    : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
+                  'bg-white text-zinc-900 placeholder:text-zinc-400',
+                  'dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:border-zinc-800 dark:focus:border-zinc-700',
+                ].join(' ')}
+              />
+              <span
+                className={[
+                  'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 select-none text-xs',
+                  titleMax - (field.value?.length || 0) === 0
+                    ? 'text-red-500'
+                    : titleMax - (field.value?.length || 0) <= 12
+                      ? 'text-amber-500'
+                      : 'text-zinc-500 dark:text-zinc-400',
+                ].join(' ')}
+                aria-hidden="true"
+              >
+                {Math.max(0, titleMax - (field.value?.length || 0))} left
+              </span>
+            </div>
 
-        <div
-          className="mt-1 text-xs absolute text-red-500"
-          id={titleErrId}
-          role="alert"
-          aria-live="polite"
-        >
-          {errors.title?.message as string}
-        </div>
-      </div>
+            <div
+              className="absolute mt-1 text-xs text-red-500"
+              id={titleErrId}
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.title?.message as string}
+            </div>
+          </div>
+        )}
+      />
 
       {/* Categories (multi 1–3) */}
       <Controller
@@ -123,7 +121,7 @@ export function BasicsStep({
           };
           return (
             <div className="group">
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Categories
               </label>
               <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -143,7 +141,7 @@ export function BasicsStep({
                 id={catErrId}
                 role="alert"
                 aria-live="polite"
-                className="mt-1 text-xs absolute text-red-500"
+                className="absolute mt-1 text-xs text-red-500"
               >
                 {errors.categorySlugs?.message as string}
               </div>
@@ -153,60 +151,67 @@ export function BasicsStep({
       />
 
       {/* Description */}
-      <div className="group">
-        <label
-          htmlFor={descId}
-          className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Description (optional)
-        </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Add details like pace, difficulty, or required gear.
-        </p>
+      <Controller
+        name="description"
+        control={control}
+        render={({ field }) => (
+          <div className="group">
+            <label
+              htmlFor={descId}
+              className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            >
+              Description (optional)
+            </label>
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Add details like pace, difficulty, or required gear.
+            </p>
 
-        <div className="relative">
-          <textarea
-            {...register('description')}
-            id={descId}
-            rows={4}
-            maxLength={descMax}
-            placeholder="Example: Easy 5k run around the park. Pace 6:00/km."
-            aria-invalid={!!errors.description}
-            aria-describedby={errors.description ? descErrId : undefined}
-            spellCheck={true}
-            className={[
-              'w-full rounded-2xl border px-4 pr-14 py-3.5 text-zinc-900 shadow-inner focus:outline-none focus:ring-2',
-              errors.description
-                ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
-                : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
-              'bg-white placeholder:text-zinc-400',
-              'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-400',
-            ].join(' ')}
-          />
-          <span
-            className={[
-              'pointer-events-none absolute bottom-2.5 right-3 select-none text-xs',
-              descMax - description.length === 0
-                ? 'text-red-500'
-                : descMax - description.length <= 100
-                  ? 'text-amber-500'
-                  : 'text-zinc-500 dark:text-zinc-400',
-            ].join(' ')}
-            aria-hidden="true"
-          >
-            {Math.max(0, descMax - description.length)} left
-          </span>
-        </div>
+            <div className="relative">
+              <textarea
+                {...field}
+                value={field.value || ''}
+                id={descId}
+                rows={4}
+                maxLength={descMax}
+                placeholder="Example: Easy 5k run around the park. Pace 6:00/km."
+                aria-invalid={!!errors.description}
+                aria-describedby={errors.description ? descErrId : undefined}
+                spellCheck={true}
+                className={[
+                  'w-full rounded-2xl border px-4 pr-14 py-3.5 text-zinc-900 shadow-inner focus:outline-none focus:ring-2',
+                  errors.description
+                    ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
+                    : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
+                  'bg-white placeholder:text-zinc-400',
+                  'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-400',
+                ].join(' ')}
+              />
+              <span
+                className={[
+                  'pointer-events-none absolute bottom-2.5 right-3 select-none text-xs',
+                  descMax - (field.value?.length || 0) === 0
+                    ? 'text-red-500'
+                    : descMax - (field.value?.length || 0) <= 100
+                      ? 'text-amber-500'
+                      : 'text-zinc-500 dark:text-zinc-400',
+                ].join(' ')}
+                aria-hidden="true"
+              >
+                {Math.max(0, descMax - (field.value?.length || 0))} left
+              </span>
+            </div>
 
-        <div
-          className="mt-1 text-xs absolute text-red-500"
-          id={descErrId}
-          role="alert"
-          aria-live="polite"
-        >
-          {errors.description?.message as string}
-        </div>
-      </div>
+            <div
+              className="absolute mt-1 text-xs text-red-500"
+              id={descErrId}
+              role="alert"
+              aria-live="polite"
+            >
+              {errors.description?.message as string}
+            </div>
+          </div>
+        )}
+      />
 
       {/* Tags (multi 0–3) */}
       <Controller
@@ -221,7 +226,7 @@ export function BasicsStep({
           };
           return (
             <div className="group">
-              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Tags (optional)
               </label>
               <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -241,7 +246,7 @@ export function BasicsStep({
                 id={catErrId}
                 role="alert"
                 aria-live="polite"
-                className="mt-1 text-xs absolute text-red-500"
+                className="absolute mt-1 text-xs text-red-500"
               >
                 {errors.categorySlugs?.message as string}
               </div> */}
@@ -253,18 +258,15 @@ export function BasicsStep({
       {/* Info note */}
       <div
         role="note"
-        className="flex items-center gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
-               text-blue-700 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+        className="flex items-center gap-2 p-3 text-blue-700 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
       >
         <span
           aria-hidden="true"
-          className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full
-                 bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60
-                 dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
+          className="inline-flex items-center justify-center text-blue-700 rounded-full shrink-0 h-7 w-7 bg-blue-100/70 ring-1 ring-blue-300/60 dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
         >
           <svg
             viewBox="0 0 24 24"
-            className="h-5 w-5"
+            className="w-5 h-5"
             fill="currentColor"
             aria-hidden
           >

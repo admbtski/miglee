@@ -12,3 +12,5 @@ export {
   IntentManagementProvider,
   useIntentManagement,
 } from './intent-management-provider';
+export { ManagementPageLayout } from './management-page-layout';
+export { SaveButton } from './save-button';

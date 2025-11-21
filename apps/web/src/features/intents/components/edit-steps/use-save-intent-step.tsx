@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useUpdateIntentMutation } from '@/lib/api/intents';
 import { toast } from '@/lib/utils';
 import { useIntentEdit } from './intent-edit-provider';
+import { useQueryClient } from '@tanstack/react-query';
 
 /**
  * Hook for saving individual intent edit steps
@@ -13,6 +14,7 @@ export function useSaveIntentStep() {
   const { form, intentId, categories, tags } = useIntentEdit();
   const [isSaving, setIsSaving] = useState(false);
   const updateIntentMutation = useUpdateIntentMutation();
+  const queryClient = useQueryClient();
 
   const saveBasics = async () => {
     const isValid = await form.trigger([
@@ -36,9 +38,22 @@ export function useSaveIntentStep() {
           categorySlugs: categories.map((c) => c.slug),
           tagSlugs: tags.map((t) => t.slug),
           description: values.description || undefined,
-          mode: values.mode,
+          mode: values.mode as any,
         },
       });
+
+      // Invalidate query to refetch fresh data
+      await queryClient.invalidateQueries({
+        queryKey: ['GetIntent', { id: intentId }],
+      });
+
+      // Reset form dirty state with current values
+      form.reset(values, {
+        keepValues: true,
+        keepDirty: false,
+        keepTouched: false,
+      });
+
       toast.success('Event basics updated successfully!');
     } catch (error) {
       console.error('Failed to update event basics:', error);
@@ -65,6 +80,19 @@ export function useSaveIntentStep() {
           max: values.max,
         },
       });
+
+      // Invalidate query to refetch fresh data
+      await queryClient.invalidateQueries({
+        queryKey: ['GetIntent', { id: intentId }],
+      });
+
+      // Reset form dirty state with current values
+      form.reset(values, {
+        keepValues: true,
+        keepDirty: false,
+        keepTouched: false,
+      });
+
       toast.success('Capacity updated successfully!');
     } catch (error) {
       console.error('Failed to update capacity:', error);
@@ -96,6 +124,19 @@ export function useSaveIntentStep() {
             values.lateJoinCutoffMinutesAfterStart,
         },
       });
+
+      // Invalidate query to refetch fresh data
+      await queryClient.invalidateQueries({
+        queryKey: ['GetIntent', { id: intentId }],
+      });
+
+      // Reset form dirty state with current values
+      form.reset(values, {
+        keepValues: true,
+        keepDirty: false,
+        keepTouched: false,
+      });
+
       toast.success('Time settings updated successfully!');
     } catch (error) {
       console.error('Failed to update time settings:', error);
@@ -127,7 +168,7 @@ export function useSaveIntentStep() {
       await updateIntentMutation.mutateAsync({
         id: intentId,
         input: {
-          meetingKind: values.meetingKind,
+          meetingKind: values.meetingKind as any,
           onlineUrl: values.onlineUrl || undefined,
           location: {
             placeId: values.location.placeId,
@@ -139,6 +180,19 @@ export function useSaveIntentStep() {
           notes: values.notes || undefined,
         },
       });
+
+      // Invalidate query to refetch fresh data
+      await queryClient.invalidateQueries({
+        queryKey: ['GetIntent', { id: intentId }],
+      });
+
+      // Reset form dirty state with current values
+      form.reset(values, {
+        keepValues: true,
+        keepDirty: false,
+        keepTouched: false,
+      });
+
       toast.success('Location updated successfully!');
     } catch (error) {
       console.error('Failed to update location:', error);
@@ -167,13 +221,26 @@ export function useSaveIntentStep() {
       await updateIntentMutation.mutateAsync({
         id: intentId,
         input: {
-          visibility: values.visibility,
-          joinMode: values.joinMode,
-          levels: values.levels,
-          addressVisibility: values.addressVisibility,
-          membersVisibility: values.membersVisibility,
+          visibility: values.visibility as any,
+          joinMode: values.joinMode as any,
+          levels: values.levels as any,
+          addressVisibility: values.addressVisibility as any,
+          membersVisibility: values.membersVisibility as any,
         },
       });
+
+      // Invalidate query to refetch fresh data
+      await queryClient.invalidateQueries({
+        queryKey: ['GetIntent', { id: intentId }],
+      });
+
+      // Reset form dirty state with current values
+      form.reset(values, {
+        keepValues: true,
+        keepDirty: false,
+        keepTouched: false,
+      });
+
       toast.success('Privacy settings updated successfully!');
     } catch (error) {
       console.error('Failed to update privacy settings:', error);

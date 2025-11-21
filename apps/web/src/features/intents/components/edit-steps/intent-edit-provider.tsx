@@ -48,6 +48,8 @@ export function IntentEditProvider({
   // Initialize form with empty values first
   const form = useIntentForm();
 
+  console.dir({ form });
+
   // Update form when intent data is loaded
   useEffect(() => {
     if (!intent?.intent) return;
@@ -83,10 +85,19 @@ export function IntentEditProvider({
       addressVisibility: i.addressVisibility || 'PUBLIC',
       membersVisibility: i.membersVisibility || 'PUBLIC',
       notes: i.notes || '',
+      joinOpensMinutesBeforeStart: i.joinOpensMinutesBeforeStart || null,
+      joinCutoffMinutesBeforeStart: i.joinCutoffMinutesBeforeStart || null,
+      lateJoinCutoffMinutesAfterStart:
+        i.lateJoinCutoffMinutesAfterStart || null,
     };
 
-    // Reset form with intent data
-    form.reset(formValues);
+    // Reset form with intent data - this marks form as clean
+    form.reset(formValues, {
+      keepDirty: false,
+      keepTouched: false,
+      keepErrors: false,
+      keepDefaultValues: false,
+    });
 
     // Set categories and tags
     if (i.categories) {
@@ -112,7 +123,8 @@ export function IntentEditProvider({
         3
       );
     }
-  }, [intent, form, setCategories, setTags]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intent?.intent?.id]);
 
   const value = useMemo<IntentEditContextValue>(
     () => ({
@@ -129,9 +141,9 @@ export function IntentEditProvider({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="w-8 h-8 border-4 rounded-full animate-spin border-primary border-t-transparent" />
           <p className="mt-4 text-sm text-muted-foreground">Loading event...</p>
         </div>
       </div>
