@@ -48,17 +48,17 @@ export function SidebarLayout({
   const client = getQueryClient();
 
   const layoutContent = (
-    <div className="flex min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      {/* Sidebar: Collapsible, full height, navigation */}
-      {sidebar}
+    <div className="flex bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+      {/* Sidebar: Sticky, full height, navigation */}
+      <div className="sticky top-0 h-screen">{sidebar}</div>
 
       {/* Content area: Flex-1, contains navbar + main content */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-h-screen flex-1 flex-col">
         {/* Navbar: Top bar (only for content area, not sidebar) */}
         {navbar}
 
         {/* Main scrollable wrapper */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1">
           <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
             <ErrorBoundary>{children}</ErrorBoundary>
           </div>
