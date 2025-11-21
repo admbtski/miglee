@@ -1,46 +1,45 @@
 'use client';
 
+import { FavouriteButton } from '@/components/ui/favourite-button';
+import { ShareButton } from '@/components/ui/share-button';
+import { ShareModal } from '@/components/ui/share-modal';
 import { useIntentDetail } from '@/hooks/use-intent-detail';
-import { EventDetailSkeleton } from './event-detail-skeleton';
-import { EventHero } from './event-hero';
-import { EventDetails } from './event-details';
-import { EventParticipants } from './event-participants';
-import { EventJoinSection } from './event-join-section';
-import { EventActions } from './event-actions';
-import { EventAdminPanel } from './event-admin-panel';
-import { EventComments } from './event-comments';
-import { EventReviews } from './event-reviews';
-import { EventCountdownTimer } from './event-countdown-timer';
-import { EventLocationMap } from './event-location-map';
-import { EventEngagementStats } from './event-engagement-stats';
-import { EventMetadata } from './event-metadata';
-import { StickyJoinButton } from './sticky-join-button';
+import { useMeQuery } from '@/lib/api/auth';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
-import { useMemo, useState } from 'react';
-import { useMeQuery } from '@/lib/api/auth';
 import {
   Calendar,
   Clock,
   MapPin,
+  MapPinned,
   Users,
   Video,
   Wifi,
-  MapPinned,
 } from 'lucide-react';
-import { FavouriteButton } from '@/components/ui/favourite-button';
-import { ShareButton } from '@/components/ui/share-button';
-import { ShareModal } from '@/components/ui/share-modal';
+import { useMemo, useState } from 'react';
+import { EventActions } from './event-actions';
+import { EventAdminPanel } from './event-admin-panel';
+import { EventComments } from './event-comments';
+import { EventCountdownTimer } from './event-countdown-timer';
+import { EventDetailSkeleton } from './event-detail-skeleton';
+import { EventDetails } from './event-details';
+import { EventEngagementStats } from './event-engagement-stats';
+import { EventHero } from './event-hero';
+import { EventJoinSection } from './event-join-section';
+import { EventLocationMap } from './event-location-map';
+import { EventMetadata } from './event-metadata';
+import { EventParticipants } from './event-participants';
+import { EventReviews } from './event-reviews';
+import { StickyJoinButton } from './sticky-join-button';
 // import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
-import { EventManagementModalConnect } from '@/app/account/intents/_components/management';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
-import { DeleteIntentModals } from '@/app/account/intents/_components/delete-intent-modals';
 import {
   CloseJoinModal,
   ReopenJoinModal,
 } from '@/app/account/intents/_components/close-join-modals';
-import { buildIntentCoverUrl } from '@/lib/media/url';
+import { DeleteIntentModals } from '@/app/account/intents/_components/delete-intent-modals';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
+import { buildIntentCoverUrl } from '@/lib/media/url';
 
 type EventDetailClientProps = {
   intentId: string;
@@ -52,8 +51,6 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const { data: authData } = useMeQuery();
 
   // Modal states
-  const [editOpen, setEditOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [closeJoinId, setCloseJoinId] = useState<string | null>(null);

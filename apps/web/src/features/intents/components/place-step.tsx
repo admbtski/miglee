@@ -157,36 +157,47 @@ export function PlaceStep({
       {/* Online link */}
       {showOnline && (
         <div>
-          <label
-            htmlFor="onlineUrl"
-            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Online meeting link
-          </label>
-          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            We accept <b>http/https</b> (Zoom, Meet, Teams, Discord).
-          </p>
+          <Controller
+            name="onlineUrl"
+            control={control}
+            render={({ field }) => (
+              <>
+                <label
+                  htmlFor="onlineUrl"
+                  className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
+                  Online meeting link
+                </label>
+                <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  We accept <b>http/https</b> (Zoom, Meet, Teams, Discord).
+                </p>
 
-          <input
-            id="onlineUrl"
-            type="url"
-            inputMode="url"
-            placeholder="https://…"
-            {...register('onlineUrl')}
-            aria-invalid={!!errors.onlineUrl}
-            aria-describedby={errors.onlineUrl ? 'onlineUrl-err' : undefined}
-            className={[
-              'w-full rounded-2xl border px-4 py-3 text-zinc-900 shadow-inner focus:outline-none focus:ring-2',
-              errors.onlineUrl
-                ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
-                : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
-              'bg-white placeholder:text-zinc-400',
-              'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500',
-            ].join(' ')}
+                <input
+                  {...field}
+                  value={field.value || ''}
+                  id="onlineUrl"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://…"
+                  aria-invalid={!!errors.onlineUrl}
+                  aria-describedby={
+                    errors.onlineUrl ? 'onlineUrl-err' : undefined
+                  }
+                  className={[
+                    'w-full rounded-2xl border px-4 py-3 text-zinc-900 shadow-inner focus:outline-none focus:ring-2',
+                    errors.onlineUrl
+                      ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
+                      : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
+                    'bg-white placeholder:text-zinc-400',
+                    'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500',
+                  ].join(' ')}
+                />
+                <div id="onlineUrl-err" className="mt-1 text-xs text-red-500">
+                  {errors.onlineUrl?.message as string}
+                </div>
+              </>
+            )}
           />
-          <div id="onlineUrl-err" className="mt-1 text-xs text-red-500">
-            {errors.onlineUrl?.message as string}
-          </div>
         </div>
       )}
 
@@ -407,28 +418,37 @@ export function PlaceStep({
 
       {/* Logistics note */}
       <div>
-        <label
-          htmlFor="notes"
-          className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Logistics note (optional)
-        </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          A short hint to help people arrive or join.
-        </p>
+        <Controller
+          name="notes"
+          control={control}
+          render={({ field }) => (
+            <>
+              <label
+                htmlFor="notes"
+                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              >
+                Logistics note (optional)
+              </label>
+              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+                A short hint to help people arrive or join.
+              </p>
 
-        <input
-          id="notes"
-          {...register('notes')}
-          placeholder={
-            meetingKind === 'ONLINE'
-              ? 'e.g., “Camera optional.”'
-              : 'We meet at entrance A'
-          }
-          className="w-full rounded-2xl border px-4 py-3
-                     border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400
-                     focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
-                     dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+              <input
+                {...field}
+                value={field.value || ''}
+                id="notes"
+                placeholder={
+                  meetingKind === 'ONLINE'
+                    ? 'e.g., "Camera optional."'
+                    : 'We meet at entrance A'
+                }
+                className="w-full rounded-2xl border px-4 py-3
+                           border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
+                           dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+              />
+            </>
+          )}
         />
       </div>
 

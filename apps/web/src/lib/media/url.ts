@@ -19,8 +19,8 @@ const AVATAR_PRESETS: Record<AvatarSize, { w: number; h: number }> = {
 };
 
 const COVER_PRESETS: Record<CoverVariant, { w: number; h: number }> = {
-  card: { w: 480, h: 270 }, // ~16:9
-  detail: { w: 1280, h: 720 },
+  card: { w: 480, h: 206 }, // ~21:9
+  detail: { w: 1280, h: 549 }, // ~21:9
 };
 
 /**

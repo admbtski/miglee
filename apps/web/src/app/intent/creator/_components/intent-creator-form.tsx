@@ -396,9 +396,9 @@ export function IntentCreatorForm({
       {/* Progress indicator */}
       <div className="space-y-4">
         {/* Progress bar */}
-        <div className="relative h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+        <div className="relative w-full h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 transition-all duration-500 ease-out shadow-sm"
+            className="h-full transition-all duration-500 ease-out shadow-sm bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600"
             style={{ width: `${((step + 1) / steps.length) * 100}%` }}
           />
         </div>
@@ -406,8 +406,8 @@ export function IntentCreatorForm({
         {/* Step indicator */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
-              <StepIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <div className="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-full dark:bg-indigo-900/30">
+              <StepIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -420,7 +420,7 @@ export function IntentCreatorForm({
           </div>
 
           {!isEdit && lastSaved && (
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
               ✓ Draft saved {lastSaved.toLocaleTimeString()}
             </span>
           )}
@@ -587,10 +587,7 @@ export function IntentCreatorForm({
           type="button"
           onClick={back}
           disabled={!(step > 0 && !isSubmitting)}
-          className="flex items-center gap-2 rounded-xl border px-6 py-3 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40
-                     border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-400
-                     dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:hover:border-zinc-600
-                     shadow-sm hover:shadow"
+          className="flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all bg-white border shadow-sm rounded-xl disabled:cursor-not-allowed disabled:opacity-40 border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:hover:border-zinc-600 hover:shadow"
         >
           <span>←</span>
           <span>Back</span>
@@ -620,7 +617,7 @@ export function IntentCreatorForm({
           >
             {isSubmitting && (
               <svg
-                className="h-4 w-4 animate-spin"
+                className="w-4 h-4 animate-spin"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"

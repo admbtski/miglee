@@ -64,7 +64,7 @@ export function useSaveIntentStep() {
   };
 
   const saveCapacity = async () => {
-    const isValid = await form.trigger(['min', 'max']);
+    const isValid = await form.trigger(['mode', 'min', 'max']);
     if (!isValid) {
       toast.error('Please fix validation errors');
       return;
@@ -76,6 +76,7 @@ export function useSaveIntentStep() {
       await updateIntentMutation.mutateAsync({
         id: intentId,
         input: {
+          mode: values.mode as any,
           min: values.min,
           max: values.max,
         },

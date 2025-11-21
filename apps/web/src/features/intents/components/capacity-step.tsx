@@ -35,11 +35,10 @@ export function CapacityStep({
   form: UseFormReturn<IntentFormValues>;
 }) {
   const {
-    watch,
     setValue,
     trigger,
     control,
-    formState: { errors },
+    formState: { errors, defaultValues },
   } = form;
 
   // a11y ids (FIX: avoid duplicating IDs with the bottom note)
@@ -50,8 +49,8 @@ export function CapacityStep({
 
   const { field: modeField } = useController({ name: 'mode', control });
 
-  const minVal = watch('min');
-  const maxVal = watch('max');
+  const minVal = useWatch({ control, name: 'min' });
+  const maxVal = useWatch({ control, name: 'max' });
   const categorySlugs = useWatch({ control, name: 'categorySlugs' }) ?? [];
   const isGroup = modeField.value === 'GROUP';
 
@@ -64,18 +63,33 @@ export function CapacityStep({
   }, [isGroup, categorySlugs]);
 
   // Single source of truth for capacity sync
+  // Only update when mode changes AND values don't match expected values
   useEffect(() => {
     if (modeField.value === 'ONE_TO_ONE') {
-      setValue('min', 2, { shouldDirty: true, shouldValidate: true });
-      setValue('max', 2, { shouldDirty: true, shouldValidate: true });
+      // Only update if values are not already 2,2
+      if (minVal !== 2 || maxVal !== 2) {
+        setValue('min', 2, { shouldDirty: true, shouldValidate: true });
+        setValue('max', 2, { shouldDirty: true, shouldValidate: true });
+        void trigger(['min', 'max']);
+      }
     } else if (modeField.value === 'GROUP') {
-      setValue('min', 2, { shouldDirty: true, shouldValidate: true });
-      setValue('max', 50, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+      // Only update if switching FROM one_to_one (both values are 2)
+      if (minVal === 2 && maxVal === 2) {
+        // Reset to initial values from form defaults (from database)
+        const initialMin = defaultValues?.min ?? 2;
+        const initialMax = defaultValues?.max ?? 50;
+
+        setValue('min', initialMin, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        setValue('max', initialMax, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        void trigger(['min', 'max']);
+      }
     }
-    void trigger(['min', 'max']);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeField.value]);
 
@@ -89,7 +103,7 @@ export function CapacityStep({
     <div className="space-y-8">
       {/* Mode */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Mode
         </label>
         <p
@@ -158,17 +172,17 @@ export function CapacityStep({
           </p>
 
           {/* Visual capacity preview */}
-          <div className="mt-3 mb-2 flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-3 mb-2">
             <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(minVal ?? 2, 10) }).map((_, i) => (
                 <User
                   key={`min-${i}`}
-                  className="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                  className="w-4 h-4 text-indigo-600 dark:text-indigo-400"
                   aria-hidden="true"
                 />
               ))}
               {(minVal ?? 2) > 10 && (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">
+                <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
                   +{(minVal ?? 2) - 10}
                 </span>
               )}
@@ -179,13 +193,13 @@ export function CapacityStep({
                 (_, i) => (
                   <User
                     key={`max-${i}`}
-                    className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
                     aria-hidden="true"
                   />
                 )
               )}
               {(maxVal ?? 50) > 10 && (
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-1">
+                <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
                   +{(maxVal ?? 50) - 10}
                 </span>
               )}
@@ -229,8 +243,7 @@ export function CapacityStep({
       <div
         id={capNoteId}
         role="note"
-        className="flex items-center gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
-                   text-blue-700 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+        className="flex items-center gap-2 p-3 text-blue-700 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
       >
         <span
           aria-hidden="true"
@@ -238,7 +251,7 @@ export function CapacityStep({
                      bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60
                      dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
         >
-          <Info className="h-5 w-5" />
+          <Info className="w-5 h-5" />
         </span>
 
         <p className="text-sm leading-[1.25]">
