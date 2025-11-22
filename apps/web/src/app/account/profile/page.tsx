@@ -31,7 +31,7 @@ const TABS: TabConfig[] = [
 
 function getTabClasses(isActive: boolean): string {
   const base =
-    'group inline-flex items-center gap-2 border-b-2 px-1 py-4 text-sm font-medium transition-colors';
+    'group inline-flex items-center gap-2.5 border-b-2 px-1 py-4 text-sm font-semibold transition-all';
 
   if (isActive) {
     return `${base} border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400`;
@@ -102,20 +102,17 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Profile
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
+          Profile Settings
         </h1>
-        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-          Manage your public profile and privacy settings
+        <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
+          Manage your public profile, sports preferences, and privacy settings
         </p>
       </div>
 
       <div className="border-b border-zinc-200 dark:border-zinc-800">
-        <nav
-          className="flex -mb-px space-x-8"
-          aria-label="Profile settings tabs"
-        >
+        <nav className="flex -mb-px gap-6" aria-label="Profile settings tabs">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -127,7 +124,7 @@ export default function ProfilePage() {
                 className={getTabClasses(isActive)}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <Icon className={getTabIconClasses(isActive)} />
+                <Icon className={getTabIconClasses(isActive)} strokeWidth={2} />
                 {tab.label}
               </button>
             );
@@ -135,7 +132,7 @@ export default function ProfilePage() {
         </nav>
       </div>
 
-      <div className="p-6 bg-white border shadow-sm rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="p-8 bg-white dark:bg-[#10121a] border border-zinc-200/80 dark:border-white/5 shadow-sm rounded-[24px]">
         {activeTab === 'profile' && <ProfileTab user={user} userId={userId} />}
         {activeTab === 'sports' && <SportsTab user={user} userId={userId} />}
         {activeTab === 'social' && (

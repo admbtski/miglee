@@ -1,26 +1,22 @@
 'use client';
 
+import { ThemeSwitchConnected } from '@/components/ui/theme-switch-connect';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Briefcase,
-  Building2,
-  Calculator,
-  CircleDollarSign,
   Cookie,
   Facebook,
   HelpCircle,
   Info,
   Instagram,
   Linkedin,
-  Monitor,
-  Rocket,
+  PanelsTopLeftIcon,
   Scale,
   Shield,
+  User,
   UserRound,
   X,
   Youtube,
 } from 'lucide-react';
-import { ThemeSwitchConnected } from '@/components/ui/theme-switch-connect';
 import { ComponentType } from 'react';
 
 type IconT = ComponentType<{ className?: string }>;
@@ -56,14 +52,14 @@ export function NavDrawer({
             aria-label="Main menu"
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/70">
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close menu"
-                className="cursor-pointer rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="p-2 rounded-lg cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
-                <X className="h-5 w-5" />
+                <X className="w-5 h-5" />
               </button>
               <div className="text-base font-semibold">Menu</div>
               <ThemeSwitchConnected />
@@ -73,13 +69,9 @@ export function NavDrawer({
             <nav className="px-2 py-2" aria-label="Menu links">
               {(
                 [
-                  [Briefcase, 'Job offers'],
-                  [Calculator, 'Salary calculator'],
-                  [Building2, 'Company Profiles'],
-                  [Rocket, 'RocketSpace.pl'],
+                  [PanelsTopLeftIcon, 'Wydarzenia'],
+                  [User, 'Konto'],
                   [Info, 'About us'],
-                  [CircleDollarSign, 'Pricing'],
-                  [Scale, 'Career'],
                   [HelpCircle, 'Help'],
                   [Scale, 'Terms'],
                   [Shield, 'Privacy policy'],
@@ -91,17 +83,13 @@ export function NavDrawer({
             </nav>
 
             {/* CTAs */}
-            <div className="space-y-3 px-4 py-3">
-              <CardButton
-                icon={UserRound}
-                title="Sign in to Candidate profile"
-              />
-              <CardButton icon={Monitor} title="Sign in to Employer panel" />
+            <div className="px-4 py-3 space-y-3">
+              <CardButton icon={UserRound} title="Sign in to your account" />
             </div>
 
             {/* Socials */}
-            <div className="px-4 pb-6 pt-3">
-              <div className="mb-2 text-center text-sm text-zinc-600 dark:text-zinc-400">
+            <div className="px-4 pt-3 pb-6">
+              <div className="mb-2 text-sm text-center text-zinc-600 dark:text-zinc-400">
                 Follow us on social media
               </div>
               <div className="flex justify-center gap-4">
@@ -124,7 +112,7 @@ function MenuItem({ icon: Icon, label }: { icon: IconT; label: string }) {
       type="button"
       className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] hover:bg-zinc-50 dark:hover:bg-zinc-800"
     >
-      <Icon className="h-5 w-5 opacity-70" aria-hidden />
+      <Icon className="w-5 h-5 opacity-70" aria-hidden />
       <span>{label}</span>
     </button>
   );
@@ -134,10 +122,10 @@ function CardButton({ icon: Icon, title }: { icon: IconT; title: string }) {
   return (
     <button
       type="button"
-      className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-left shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+      className="flex items-center w-full gap-3 px-3 py-3 text-left bg-white border shadow-sm cursor-pointer rounded-2xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
     >
-      <div className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-        <Icon className="h-5 w-5" aria-hidden />
+      <div className="grid w-10 h-10 place-items-center rounded-xl bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+        <Icon className="w-5 h-5" aria-hidden />
       </div>
       <div className="text-sm font-medium">{title}</div>
     </button>
@@ -148,11 +136,11 @@ function IconButton({ icon: Icon }: { icon: IconT }) {
   return (
     <button
       type="button"
-      className="cursor-pointer rounded-xl border border-zinc-200 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+      className="p-2 border cursor-pointer rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
       aria-label="Open social link"
       title="Open social link"
     >
-      <Icon className="h-5 w-5" aria-hidden />
+      <Icon className="w-5 h-5" aria-hidden />
     </button>
   );
 }

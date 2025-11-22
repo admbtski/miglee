@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import type { EventDetailsData } from '@/types/event-details';
+import { useMeQuery } from '@/lib/api/auth';
 import {
   Settings,
   Edit3,
@@ -14,8 +16,6 @@ import {
 
 type EventAdminPanelProps = {
   event: EventDetailsData;
-  onEdit: () => void;
-  onManage: () => void;
   onCancel: () => void;
   onDelete: () => void;
   onCloseJoin?: () => void;
@@ -24,29 +24,49 @@ type EventAdminPanelProps = {
 
 /**
  * Panel zarządzania wydarzeniem dla administratorów i moderatorów
- * Wyświetla się tylko dla właściciela i moderatorów
+ * Wyświetla się dla:
+ * - Właściciela wydarzenia
+ * - Moderatorów wydarzenia
+ * - Adminów aplikacji
+ * - Moderatorów aplikacji
  */
 export function EventAdminPanel({
   event,
-  onEdit,
-  onManage,
   onCancel,
   onDelete,
   onCloseJoin,
   onReopenJoin,
 }: EventAdminPanelProps) {
   const { userMembership } = event;
+  const { data: authData } = useMeQuery();
+  const user = authData?.me;
 
-  // Panel widoczny tylko dla właściciela lub moderatora
-  if (!userMembership?.isOwner && !userMembership?.isModerator) {
+  // Check if user is app-level admin or moderator
+  const isAppAdmin = user?.role === 'ADMIN';
+  const isAppModerator = user?.role === 'MODERATOR';
+
+  // Panel widoczny dla właściciela, moderatora wydarzenia, lub admina/moderatora aplikacji
+  const canAccessPanel =
+    userMembership?.isOwner ||
+    userMembership?.isModerator ||
+    isAppAdmin ||
+    isAppModerator;
+
+  if (!canAccessPanel) {
     return null;
   }
 
   const isCanceled = !!event.canceledAt;
   const isDeleted = !!event.deletedAt;
-  const canEdit = userMembership.isOwner;
-  const canDelete = userMembership.isOwner;
-  const canCancel = userMembership.isOwner || userMembership.isModerator;
+
+  // Permission levels
+  const canEdit = userMembership?.isOwner || isAppAdmin || isAppModerator;
+  const canDelete = userMembership?.isOwner || isAppAdmin;
+  const canCancel =
+    userMembership?.isOwner ||
+    userMembership?.isModerator ||
+    isAppAdmin ||
+    isAppModerator;
 
   return (
     <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
@@ -60,18 +80,18 @@ export function EventAdminPanel({
       <div className="space-y-1">
         {/* Edytuj wydarzenie */}
         {canEdit && !isDeleted && (
-          <button
-            onClick={onEdit}
+          <Link
+            href={`/intent/${event.id}/manage/edit`}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-blue-700 transition-colors hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
           >
             <Edit3 className="h-4 w-4" />
             <span>Edytuj wydarzenie</span>
-          </button>
+          </Link>
         )}
 
         {/* Zarządzaj wydarzeniem */}
-        <button
-          onClick={onManage}
+        <Link
+          href={`/intent/${event.id}/manage`}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-blue-700 transition-colors hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
         >
           <Users className="h-4 w-4" />
@@ -83,7 +103,7 @@ export function EventAdminPanel({
                 : ''}
             </span>
           )}
-        </button>
+        </Link>
 
         {/* Zamknij/Otwórz zapisy */}
         {!isCanceled && !isDeleted && (

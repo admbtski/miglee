@@ -34,13 +34,16 @@ import {
   UseMutationOptions,
   useQuery,
   UseQueryOptions,
-} from '@tanstack/react-query';
-
-// hooks/intents.ts (dopisz obok istniejących)
-import {
   useInfiniteQuery,
   UseInfiniteQueryOptions,
 } from '@tanstack/react-query';
+
+/* -------------------------------- TYPES ---------------------------------- */
+/**
+ * Intent Detail Query Response Type
+ * Extends GetIntentQuery with full detail fields
+ */
+export type GetIntentDetailQuery = GetIntentQuery;
 
 /** Klucz cache dla infinite */
 export const GET_INTENTS_INFINITE_KEY = (
@@ -138,6 +141,245 @@ export const GET_INTENTS_LIST_KEY = (variables?: GetIntentsQueryVariables) =>
 export const GET_INTENT_ONE_KEY = (variables: GetIntentQueryVariables) =>
   ['GetIntent', variables] as const;
 
+export const GET_INTENT_DETAIL_KEY = (variables: GetIntentQueryVariables) =>
+  ['GetIntentDetail', variables] as const;
+
+/* --------------------------- GRAPHQL DOCUMENTS --------------------------- */
+/**
+ * Complete intent detail query with all fields
+ * Includes sponsorship, inviteLinks, and computed helpers
+ */
+const GetIntentDetailDocument = `
+  query GetIntentDetail($id: ID!) {
+    intent(id: $id) {
+      id
+      title
+      description
+      notes
+      
+      visibility
+      joinMode
+      mode
+      min
+      max
+      
+      startAt
+      endAt
+      
+      # Media
+      coverKey
+      coverBlurhash
+      
+      # Join windows / cutoffs / manual lock
+      allowJoinLate
+      joinOpensMinutesBeforeStart
+      joinCutoffMinutesBeforeStart
+      lateJoinCutoffMinutesAfterStart
+      joinManuallyClosed
+      joinManuallyClosedAt
+      joinManuallyClosedBy {
+        id
+        name
+        avatarKey
+        avatarBlurhash
+      }
+      joinManualCloseReason
+      
+      meetingKind
+      onlineUrl
+      
+      lat
+      lng
+      address
+      placeId
+      radiusKm
+      
+      levels
+      
+      addressVisibility
+      membersVisibility
+      
+      # Computed helpers
+      status
+      joinedCount
+      commentsCount
+      messagesCount
+      isFull
+      hasStarted
+      hasEnded
+      canJoin
+      joinOpen
+      lockReason
+      isOngoing
+      withinLock
+      isOnsite
+      isOnline
+      isHybrid
+      
+      # Ownership
+      ownerId
+      
+      # Cancellation
+      canceledAt
+      canceledBy {
+        id
+        email
+        name
+        avatarKey
+        avatarBlurhash
+        role
+        verifiedAt
+        createdAt
+        updatedAt
+        lastSeenAt
+        locale
+        tz
+        acceptedTermsAt
+        acceptedMarketingAt
+      }
+      cancelReason
+      isCanceled
+      
+      # Soft-delete
+      deletedAt
+      deletedBy {
+        id
+        email
+        name
+        avatarKey
+        avatarBlurhash
+        role
+        verifiedAt
+        createdAt
+        updatedAt
+        lastSeenAt
+        locale
+        tz
+        acceptedTermsAt
+        acceptedMarketingAt
+      }
+      deleteReason
+      isDeleted
+      
+      createdAt
+      updatedAt
+      
+      categories {
+        id
+        slug
+        names
+        createdAt
+        updatedAt
+      }
+      
+      tags {
+        id
+        label
+        slug
+        createdAt
+        updatedAt
+      }
+      
+      # Convenience relations
+      owner {
+        id
+        email
+        name
+        avatarKey
+        avatarBlurhash
+        role
+        verifiedAt
+        createdAt
+        updatedAt
+        lastSeenAt
+        locale
+        tz
+        acceptedTermsAt
+        acceptedMarketingAt
+      }
+      
+      members {
+        id
+        intentId
+        userId
+        role
+        status
+        joinedAt
+        leftAt
+        note
+        user {
+          id
+          email
+          name
+          avatarKey
+          avatarBlurhash
+          role
+          verifiedAt
+          createdAt
+          updatedAt
+          lastSeenAt
+          locale
+          tz
+          acceptedTermsAt
+          acceptedMarketingAt
+        }
+        addedBy {
+          id
+          name
+          avatarKey
+          avatarBlurhash
+        }
+      }
+      
+      # Sponsorship (może być null)
+      sponsorship {
+        id
+        intentId
+        sponsorId
+        plan
+        status
+        highlightOn
+        startedAt
+        endsAt
+        boostsUsed
+        localPushes
+        createdAt
+        updatedAt
+        sponsor {
+          id
+          email
+          name
+          avatarKey
+          avatarBlurhash
+          role
+          verifiedAt
+          createdAt
+          updatedAt
+          lastSeenAt
+          locale
+          tz
+          acceptedTermsAt
+          acceptedMarketingAt
+        }
+      }
+      
+      # Invite Links (tylko dla owner/mod)
+      inviteLinks {
+        id
+        intentId
+        code
+        maxUses
+        usedCount
+        expiresAt
+        createdAt
+        isExpired
+        isMaxedOut
+        isValid
+      }
+    }
+  }
+`;
+
 /* ----------------------------- QUERY BUILDERS ---------------------------- */
 export function buildGetIntentsOptions(
   variables?: GetIntentsQueryVariables,
@@ -177,6 +419,34 @@ export function buildGetIntentOptions(
   };
 }
 
+export function buildGetIntentDetailOptions(
+  variables: GetIntentQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      GetIntentDetailQuery,
+      unknown,
+      GetIntentDetailQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+): UseQueryOptions<
+  GetIntentDetailQuery,
+  unknown,
+  GetIntentDetailQuery,
+  QueryKey
+> {
+  return {
+    queryKey: GET_INTENT_DETAIL_KEY(variables) as unknown as QueryKey,
+    queryFn: async () =>
+      gqlClient.request<GetIntentDetailQuery, GetIntentQueryVariables>(
+        GetIntentDetailDocument,
+        variables
+      ),
+    ...(options ?? {}),
+  };
+}
+
 /* --------------------------------- QUERIES -------------------------------- */
 export function useIntentsQuery(
   variables?: GetIntentsQueryVariables,
@@ -197,7 +467,37 @@ export function useIntentQuery(
 ) {
   return useQuery(
     buildGetIntentOptions(variables, {
-      enabled: !!variables.id, // schema wymaga id; jeśli dodasz lookup po slug, dostosuj
+      enabled: !!variables.id,
+      ...(options ?? {}),
+    })
+  );
+}
+
+/**
+ * Fetch complete intent details by ID
+ * Includes sponsorship, inviteLinks, members, and all computed helpers
+ *
+ * @example
+ * ```tsx
+ * const { data, isLoading, error } = useIntentDetailQuery({ id: 'intent-123' });
+ * const intent = data?.intent;
+ * ```
+ */
+export function useIntentDetailQuery(
+  variables: GetIntentQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      GetIntentDetailQuery,
+      unknown,
+      GetIntentDetailQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery(
+    buildGetIntentDetailOptions(variables, {
+      enabled: !!variables.id,
       ...(options ?? {}),
     })
   );

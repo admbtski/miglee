@@ -5,16 +5,17 @@ import {
   MapPin,
   Clock,
   Settings,
-  Edit,
   XCircle,
   UserPlus,
-  MessageSquare,
   LogOut,
   Check,
   X,
   Shield,
   AlertCircle,
   Ban,
+  Crown,
+  UserCog,
+  Eye,
 } from 'lucide-react';
 import type {
   IntentMemberStatus,
@@ -22,6 +23,8 @@ import type {
 } from '@/lib/api/__generated__/react-query-update';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildIntentCoverUrl } from '@/lib/media/url';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -74,6 +77,90 @@ export interface MyIntentCardProps {
 }
 
 /* ───────────────────────────── Helpers ───────────────────────────── */
+
+function getRoleBadge(role: IntentMemberRole) {
+  switch (role) {
+    case 'OWNER':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 ring-1 ring-purple-200 dark:ring-purple-800">
+          <Crown className="h-3 w-3" />
+          OWNER
+        </span>
+      );
+    case 'MODERATOR':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-800">
+          <Shield className="h-3 w-3" />
+          MODERATOR
+        </span>
+      );
+    case 'PARTICIPANT':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+          <UserCog className="h-3 w-3" />
+          MEMBER
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
+function getMemberStatusBadge(status: IntentMemberStatus) {
+  switch (status) {
+    case 'JOINED':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+          <Check className="h-3 w-3" />
+          JOINED
+        </span>
+      );
+    case 'PENDING':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+          <Clock className="h-3 w-3" />
+          PENDING
+        </span>
+      );
+    case 'INVITED':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+          <UserPlus className="h-3 w-3" />
+          INVITED
+        </span>
+      );
+    case 'REJECTED':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+          <X className="h-3 w-3" />
+          REJECTED
+        </span>
+      );
+    case 'BANNED':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
+          <Ban className="h-3 w-3" />
+          BANNED
+        </span>
+      );
+    case 'LEFT':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+          <LogOut className="h-3 w-3" />
+          LEFT
+        </span>
+      );
+    case 'WAITLIST':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+          <Clock className="h-3 w-3" />
+          WAITLIST
+        </span>
+      );
+    default:
+      return null;
+  }
+}
 
 function getIntentStatus(
   intent: MyIntentCardIntent
@@ -173,16 +260,6 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
   const showManage = membership.role === 'OWNER' && !isDisabled;
   const showEdit = membership.role === 'OWNER' && !isDisabled;
   const showCancel = membership.role === 'OWNER' && !isDisabled && !isCanceled;
-  const showInvite =
-    (membership.role === 'OWNER' || membership.role === 'MODERATOR') &&
-    !isDisabled;
-  const showViewMembers =
-    (membership.role === 'OWNER' ||
-      membership.role === 'MODERATOR' ||
-      membership.status === 'JOINED') &&
-    !isDeleted;
-  const showOpenChat = membership.status === 'JOINED' && !isDeleted;
-  const showModerate = membership.role === 'MODERATOR' && !isDisabled;
   const showLeave =
     membership.status === 'JOINED' &&
     membership.role === 'PARTICIPANT' &&
@@ -192,49 +269,57 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
   const showDeclineInvite = membership.status === 'INVITED' && !isDisabled;
 
   return (
-    <div
-      className={`rounded-lg border bg-white p-6 transition-all dark:bg-zinc-900 ${
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      whileHover={{ y: -2, transition: { duration: 0.2 } }}
+      className={cn(
+        'rounded-[24px] border bg-white p-6 transition-all dark:bg-[#10121a] shadow-sm',
         isDeleted
           ? 'border-zinc-300 opacity-60 dark:border-zinc-700'
-          : 'border-zinc-200 dark:border-zinc-800'
-      }`}
+          : 'border-zinc-200/80 dark:border-white/5 hover:shadow-md'
+      )}
     >
       {/* Banner for special statuses */}
       {getMembershipBanner(membership)}
 
-      <div className="flex items-start gap-4">
+      <div className="flex gap-6">
         {/* Cover Image */}
         {coverUrl && (
           <Link
             href={`/intent/${intent.id}`}
-            className="shrink-0 overflow-hidden rounded-lg transition-opacity hover:opacity-80"
+            className="shrink-0 overflow-hidden rounded-2xl transition-all hover:scale-[1.02]"
           >
             <BlurHashImage
               src={coverUrl}
               blurhash={intent.coverBlurhash}
               alt={intent.title}
-              className="h-24 w-32 object-cover"
-              width={128}
-              height={96}
+              className="h-32 w-48 object-cover"
+              width={192}
+              height={128}
             />
           </Link>
         )}
 
         {/* Content */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Link
             href={`/intent/${intent.id}`}
-            className="block transition-opacity hover:opacity-80"
+            className="block transition-opacity hover:opacity-90"
           >
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            {/* Title + Event Status + Role */}
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <h3 className="text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
                 {intent.title}
               </h3>
               {getStatusBadge(intentStatus)}
+              {getRoleBadge(membership.role)}
+              {getMemberStatusBadge(membership.status)}
             </div>
 
             {intent.description && (
-              <p className="mb-3 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                 {intent.description}
               </p>
             )}
@@ -243,23 +328,25 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
             <div className="flex flex-wrap gap-4 text-sm text-zinc-600 dark:text-zinc-400">
               {intent.startAt && (
                 <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  <span>
+                  <Clock className="h-4 w-4" strokeWidth={2} />
+                  <span className="font-medium">
                     {format(new Date(intent.startAt), 'MMM d, yyyy HH:mm')}
                   </span>
                 </div>
               )}
 
               {intent.address && (
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
-                  <span className="line-clamp-1">{intent.address}</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="h-4 w-4 shrink-0" strokeWidth={2} />
+                  <span className="truncate">
+                    {intent.address.split(',')[0]}
+                  </span>
                 </div>
               )}
 
               <div className="flex items-center gap-1.5">
-                <Users className="h-4 w-4" />
-                <span>
+                <Users className="h-4 w-4" strokeWidth={2} />
+                <span className="font-medium">
                   {intent.joinedCount ?? 0} / {intent.max ?? '∞'}
                 </span>
               </div>
@@ -268,73 +355,35 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
 
           {/* Actions */}
           {!isDisabled && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 pt-4 border-t border-zinc-200 dark:border-white/5 flex flex-wrap gap-2">
               {/* Owner actions */}
               {showManage && actions.onManage && (
                 <button
                   onClick={() => actions.onManage!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg bg-pink-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-pink-700"
+                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Settings className="h-4 w-4" strokeWidth={2} />
                   Manage
                 </button>
               )}
+
               {showEdit && actions.onEdit && (
-                <button
-                  onClick={() => actions.onEdit!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                <Link
+                  href={`/intent/${intent.id}/manage`}
+                  className="flex items-center gap-1.5 rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
                 >
-                  <Edit className="h-4 w-4" />
-                  Edit
-                </button>
+                  <Eye className="h-4 w-4" strokeWidth={2} />
+                  View
+                </Link>
               )}
+
               {showCancel && actions.onCancel && (
                 <button
                   onClick={() => actions.onCancel!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                  className="flex items-center gap-1.5 rounded-xl border-2 border-red-300 dark:border-red-800 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  <XCircle className="h-4 w-4" />
+                  <XCircle className="h-4 w-4" strokeWidth={2} />
                   Cancel
-                </button>
-              )}
-              {showInvite && actions.onInvite && (
-                <button
-                  onClick={() => actions.onInvite!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Invite
-                </button>
-              )}
-
-              {/* Moderator actions */}
-              {showModerate && actions.onModerate && (
-                <button
-                  onClick={() => actions.onModerate!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                >
-                  <Shield className="h-4 w-4" />
-                  Moderate
-                </button>
-              )}
-
-              {/* Common actions */}
-              {showViewMembers && actions.onViewMembers && (
-                <button
-                  onClick={() => actions.onViewMembers!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                >
-                  <Users className="h-4 w-4" />
-                  Members
-                </button>
-              )}
-              {showOpenChat && actions.onOpenChat && (
-                <button
-                  onClick={() => actions.onOpenChat!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Chat
                 </button>
               )}
 
@@ -342,9 +391,9 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
               {showLeave && actions.onLeave && (
                 <button
                   onClick={() => actions.onLeave!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                  className="flex items-center gap-1.5 rounded-xl border-2 border-red-300 dark:border-red-800 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-4 w-4" strokeWidth={2} />
                   Leave
                 </button>
               )}
@@ -353,9 +402,9 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
               {showWithdraw && actions.onWithdraw && (
                 <button
                   onClick={() => actions.onWithdraw!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-zinc-800 dark:text-red-300 dark:hover:bg-red-900/20"
+                  className="flex items-center gap-1.5 rounded-xl border-2 border-red-300 dark:border-red-800 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" strokeWidth={2} />
                   Withdraw
                 </button>
               )}
@@ -364,18 +413,18 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
               {showAcceptInvite && actions.onAcceptInvite && (
                 <button
                   onClick={() => actions.onAcceptInvite!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700 shadow-md"
                 >
-                  <Check className="h-4 w-4" />
+                  <Check className="h-4 w-4" strokeWidth={2} />
                   Accept
                 </button>
               )}
               {showDeclineInvite && actions.onDeclineInvite && (
                 <button
                   onClick={() => actions.onDeclineInvite!(intent.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  className="flex items-center gap-1.5 rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" strokeWidth={2} />
                   Decline
                 </button>
               )}
@@ -383,6 +432,6 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

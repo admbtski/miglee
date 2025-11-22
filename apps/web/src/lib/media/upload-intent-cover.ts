@@ -25,7 +25,6 @@ export async function uploadIntentCover(
   try {
     callbacks?.onStart?.();
 
-    console.log('[uploadIntentCover] Step 1: Getting upload URL');
     const uploadUrlResponse = await gqlClient.request(GetUploadUrlDocument, {
       purpose: MediaPurpose.IntentCover,
       entityId: intentId,
@@ -33,10 +32,6 @@ export async function uploadIntentCover(
 
     const { uploadUrl, uploadKey, provider } = uploadUrlResponse.getUploadUrl;
 
-    console.log('[uploadIntentCover] Got upload URL, provider:', provider);
-
-    // Step 2: Upload raw file
-    console.log('[uploadIntentCover] Step 2: Uploading file');
     if (provider === 'S3') {
       const res = await fetch(uploadUrl, {
         method: 'PUT',
@@ -58,8 +53,6 @@ export async function uploadIntentCover(
       }
     }
 
-    // Step 3: Confirm upload
-    console.log('[uploadIntentCover] Step 3: Confirming upload');
     const confirmResponse = await gqlClient.request(
       ConfirmMediaUploadDocument,
       {
@@ -68,8 +61,6 @@ export async function uploadIntentCover(
         uploadKey,
       }
     );
-
-    console.log('[uploadIntentCover] ✅ Cover uploaded successfully!');
 
     const result = {
       mediaKey: confirmResponse.confirmMediaUpload.mediaKey,
@@ -80,7 +71,6 @@ export async function uploadIntentCover(
 
     return result;
   } catch (error) {
-    console.error('[uploadIntentCover] ❌ Upload failed:', error);
     const err =
       error instanceof Error ? error : new Error('Unknown upload error');
     callbacks?.onError?.(err);

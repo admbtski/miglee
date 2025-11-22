@@ -3,7 +3,7 @@
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { ShareButton } from '@/components/ui/share-button';
 import { ShareModal } from '@/components/ui/share-modal';
-import { useIntentDetail } from '@/hooks/use-intent-detail';
+import { useIntentDetailQuery } from '@/lib/api/intents';
 import { useMeQuery } from '@/lib/api/auth';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
@@ -47,7 +47,9 @@ type EventDetailClientProps = {
 
 export function EventDetailClient({ intentId }: EventDetailClientProps) {
   // ALL HOOKS MUST BE AT THE TOP - before any conditional returns
-  const { data, isLoading, error, refetch } = useIntentDetail(intentId);
+  const { data, isLoading, error, refetch } = useIntentDetailQuery({
+    id: intentId,
+  });
   const { data: authData } = useMeQuery();
 
   // Modal states
@@ -59,13 +61,13 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const [shareOpen, setShareOpen] = useState(false);
 
   // Get intent and user data (safe to access after hooks)
-  const intent = data?.intent;
+  const intent = data?.intent as any; // Extended intent with members, sponsorship, inviteLinks
   const currentUserId = authData?.me?.id;
 
   // Check user membership status - must be declared before early returns
   const userMembership = useMemo(() => {
     if (!currentUserId || !intent?.members) return null;
-    return intent.members.find((m) => m.user?.id === currentUserId);
+    return intent.members.find((m: any) => m.user?.id === currentUserId);
   }, [currentUserId, intent?.members]);
 
   const isOwner = userMembership?.role === 'OWNER';
@@ -500,8 +502,6 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
             {/* Admin Panel - tylko dla właściciela i moderatorów */}
             <EventAdminPanel
               event={eventData}
-              onEdit={() => setEditOpen(true)}
-              onManage={() => setManageOpen(true)}
               onCancel={() => setCancelId(intentId)}
               onDelete={() => setDeleteId(intentId)}
               onCloseJoin={() => setCloseJoinId(intentId)}

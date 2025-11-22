@@ -1,16 +1,16 @@
 'use client';
 
-import { UseFormReturn, useWatch, Controller } from 'react-hook-form';
-import { useCallback, useMemo, useState, useEffect } from 'react';
-import { IntentFormValues } from './types';
 import {
-  Plus,
-  Minus,
-  Info,
-  Clock,
   AlertTriangle,
   CheckCircle2,
+  Clock,
+  Info,
+  Minus,
+  Plus,
 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { UseFormReturn, useWatch } from 'react-hook-form';
+import { IntentFormValues } from './types';
 
 export function TimeStep({
   form,
@@ -521,7 +521,7 @@ export function TimeStep({
     <div className="space-y-8">
       {/* Quick actions */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Quick picks
         </label>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -586,7 +586,7 @@ export function TimeStep({
             🌅 All day (8–22)
           </button>
 
-          <span className="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-700" />
+          <span className="w-px h-5 mx-1 bg-zinc-300 dark:bg-zinc-700" />
 
           <button
             type="button"
@@ -604,7 +604,7 @@ export function TimeStep({
               className="inline-flex items-center gap-1 rounded-xl border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
               title={`Start -${roundStep} min`}
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="w-4 h-4" />
               {roundStep}m
             </button>
             <button
@@ -613,7 +613,7 @@ export function TimeStep({
               className="inline-flex items-center gap-1 rounded-xl border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
               title={`Start +${roundStep} min`}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="w-4 h-4" />
               {roundStep}m
             </button>
           </div>
@@ -622,7 +622,7 @@ export function TimeStep({
 
       {/* Start */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Start
         </label>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -637,10 +637,7 @@ export function TimeStep({
               value={toDateInput(start)}
               min={minStartDate}
               onChange={(e) => onStartDate(e.target.value)}
-              className="mt-1 w-full rounded-2xl border px-4 py-3
-                        border-zinc-300 bg-white text-zinc-900
-                        focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
-                        dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
+              className="w-full px-4 py-3 mt-1 bg-white border rounded-2xl border-zinc-300 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
             />
           </div>
           <div>
@@ -649,10 +646,7 @@ export function TimeStep({
               step={300}
               value={toTimeInput(start)}
               onChange={(e) => onStartTime(e.target.value)}
-              className="mt-1 w-full rounded-2xl border px-4 py-3
-                        border-zinc-300 bg-white text-zinc-900
-                        focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
-                        dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
+              className="w-full px-4 py-3 mt-1 bg-white border rounded-2xl border-zinc-300 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
             />
           </div>
         </div>
@@ -663,9 +657,9 @@ export function TimeStep({
 
       {/* Duration Calculator */}
       <div>
-        <div className="mb-1 flex items-center justify-between">
+        <div className="flex items-center justify-between mb-1">
           <label className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            <Clock className="h-4 w-4" />
+            <Clock className="w-4 h-4" />
             <span>Duration calculator</span>
           </label>
           {suggestedDuration && (
@@ -705,7 +699,7 @@ export function TimeStep({
 
       {/* End + Duration */}
       <div>
-        <div className="mb-1 flex items-center justify-between">
+        <div className="flex items-center justify-between mb-1">
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             End
           </label>
@@ -724,10 +718,7 @@ export function TimeStep({
               value={toDateInput(end)}
               min={minEndDate}
               onChange={(e) => onEndDate(e.target.value)}
-              className="mt-1 w-full rounded-2xl border px-4 py-3
-                        border-zinc-300 bg-white text-zinc-900
-                        focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
-                        dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
+              className="w-full px-4 py-3 mt-1 bg-white border rounded-2xl border-zinc-300 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
             />
           </div>
           <div>
@@ -736,16 +727,13 @@ export function TimeStep({
               step={300}
               value={toTimeInput(end)}
               onChange={(e) => onEndTime(e.target.value)}
-              className="mt-1 w-full rounded-2xl border px-4 py-3
-                        border-zinc-300 bg-white text-zinc-900
-                        focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
-                        dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
+              className="w-full px-4 py-3 mt-1 bg-white border rounded-2xl border-zinc-300 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100"
             />
           </div>
         </div>
 
         {/* duration presets */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 mt-3">
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
             Quick duration:
           </span>
@@ -772,8 +760,8 @@ export function TimeStep({
       </div>
 
       {/* Join windows / cutoffs - Advanced options */}
-      <details className="group rounded-2xl border border-zinc-300 dark:border-zinc-700">
-        <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50 rounded-2xl transition-colors select-none">
+      <details className="border group rounded-2xl border-zinc-300 dark:border-zinc-700">
+        <summary className="flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors cursor-pointer select-none text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50 rounded-2xl">
           <span className="flex items-center gap-2">
             <span>⚙️</span>
             <span>Advanced join settings</span>
@@ -803,19 +791,19 @@ export function TimeStep({
                     { shouldDirty: true, shouldValidate: true }
                   );
                 }}
-                className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline ml-2"
+                className="ml-2 text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
                 title={`Apply suggested join window for ${suggestedJoinWindow.label}`}
               >
                 💡 {suggestedJoinWindow.label}
               </button>
             )}
           </span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 group-open:rotate-180 transition-transform">
+          <span className="text-xs transition-transform text-zinc-500 dark:text-zinc-400 group-open:rotate-180">
             ▼
           </span>
         </summary>
 
-        <div className="space-y-4 px-4 pb-4 pt-2">
+        <div className="px-4 pt-2 pb-4 space-y-4">
           <div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Kontroluj kiedy użytkownicy mogą dołączyć do wydarzenia. Pozostaw
@@ -825,7 +813,7 @@ export function TimeStep({
 
           {/* Quick presets for join windows */}
           <div>
-            <label className="mb-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <label className="block mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Quick presets
             </label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -834,7 +822,7 @@ export function TimeStep({
                   key={preset.label}
                   type="button"
                   onClick={() => applyJoinPreset(preset)}
-                  className="flex flex-col items-start gap-1 rounded-xl border border-zinc-300 px-3 py-2 text-left text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  className="flex flex-col items-start gap-1 px-3 py-2 text-sm text-left border rounded-xl border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
                 >
                   <span className="font-medium">{preset.label}</span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -876,8 +864,8 @@ export function TimeStep({
 
           {/* Timeline visualization */}
           {timelineData.length > 2 && (
-            <div className="rounded-xl border border-zinc-300 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
-              <label className="mb-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <div className="p-3 border rounded-xl border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+              <label className="block mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 Timeline preview
               </label>
               <div className="relative">
@@ -911,7 +899,7 @@ export function TimeStep({
 
           {/* joinOpensMinutesBeforeStart */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <label className="block mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Otwórz zapisy przed startem (minuty)
             </label>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -942,7 +930,7 @@ export function TimeStep({
 
           {/* joinCutoffMinutesBeforeStart */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <label className="block mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Zamknij zapisy przed startem (minuty)
             </label>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -973,7 +961,7 @@ export function TimeStep({
 
           {/* Allow join late */}
           <div>
-            <label className="flex cursor-pointer items-center gap-3 select-none text-sm text-zinc-700 dark:text-zinc-300">
+            <label className="flex items-center gap-3 text-sm cursor-pointer select-none text-zinc-700 dark:text-zinc-300">
               <input
                 type="checkbox"
                 {...register('allowJoinLate')}
@@ -1002,14 +990,14 @@ export function TimeStep({
                 Allow joining after start
               </span>
             </label>
-            <p className="mt-1 ml-14 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-xs ml-14 text-zinc-500 dark:text-zinc-400">
               Pozwól dołączyć po starcie — przydatne przy spotkaniach otwartych.
             </p>
           </div>
 
           {/* lateJoinCutoffMinutesAfterStart */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <label className="block mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Zamknij spóźnione zapisy po starcie (minuty)
             </label>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -1043,8 +1031,7 @@ export function TimeStep({
       {/* TZ note */}
       <div
         role="note"
-        className="flex items-start gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
-                   text-blue-700 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+        className="flex items-start gap-2 p-3 text-blue-700 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
       >
         <span
           aria-hidden="true"
@@ -1062,7 +1049,7 @@ export function TimeStep({
       </div>
 
       {/* Collision tip (opcjonalnie) */}
-      <div className="rounded-2xl border border-amber-300/50 bg-amber-50 p-3 text-amber-700 dark:border-amber-500/30 dark:bg-amber-900/20 dark:text-amber-200 text-sm">
+      <div className="p-3 text-sm border rounded-2xl border-amber-300/50 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-900/20 dark:text-amber-200">
         Heads up: jeśli masz już nakładające się wydarzenia, dołączenie gdzie
         indziej może automatycznie zamknąć to ogłoszenie.
       </div>

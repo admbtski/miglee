@@ -10,6 +10,7 @@ import { AboutTab } from './about-tab';
 import { EventsTab } from './events-tab';
 import { ReviewsTab } from './reviews-tab';
 import { StatsTab } from './stats-tab';
+import { cn } from '@/lib/utils';
 
 type TabId = 'about' | 'events' | 'reviews' | 'stats';
 
@@ -17,14 +18,13 @@ interface TabConfig {
   id: TabId;
   label: string;
   icon: typeof User;
-  emoji: string;
 }
 
 const TABS: TabConfig[] = [
-  { id: 'about', label: 'O mnie', icon: User, emoji: '👤' },
-  { id: 'events', label: 'Wydarzenia', icon: Calendar, emoji: '📅' },
-  { id: 'reviews', label: 'Recenzje', icon: Star, emoji: '⭐' },
-  { id: 'stats', label: 'Statystyki', icon: BarChart3, emoji: '📊' },
+  { id: 'about', label: 'About', icon: User },
+  { id: 'events', label: 'Events', icon: Calendar },
+  { id: 'reviews', label: 'Reviews', icon: Star },
+  { id: 'stats', label: 'Stats', icon: BarChart3 },
 ];
 
 type PublicProfileClientProps = {
@@ -43,9 +43,12 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-600" />
+          <Loader2
+            className="w-8 h-8 mx-auto text-indigo-600 dark:text-indigo-400 animate-spin"
+            strokeWidth={2}
+          />
           <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
             Loading profile...
           </p>
@@ -56,10 +59,13 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
 
   if (error || !data?.user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <User className="mx-auto h-12 w-12 text-zinc-400" />
-          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <User
+            className="w-12 h-12 mx-auto text-zinc-400 dark:text-zinc-600"
+            strokeWidth={2}
+          />
+          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
             User not found
           </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
@@ -77,76 +83,58 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
     about: null,
     events: (user.stats?.eventsCreated ?? 0) + (user.stats?.eventsJoined ?? 0),
     reviews: user.stats?.reviewsCount ?? 0,
-    stats: 3,
+    stats: null,
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-zinc-900">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       {/* Header */}
       <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
 
       {/* Content */}
-      <div className="container mx-auto max-w-6xl px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Tabs */}
-        <div className="mb-6 overflow-x-auto">
-          <nav
-            className="flex min-w-max gap-2 border-b border-zinc-200 dark:border-zinc-800"
-            aria-label="Tabs"
-          >
-            {TABS.map((tab, index) => {
-              const isActive = activeTab === tab.id;
-              const count = tabCounts[tab.id];
+        <div className="mb-6">
+          {/* Tabs Card */}
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-zinc-200/80 dark:border-white/5 p-2">
+            <nav className="flex gap-1" aria-label="Profile tabs">
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.id;
+                const Icon = tab.icon;
+                const count = tabCounts[tab.id];
 
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  style={{ transitionDelay: `${index * 50}ms` }}
-                  className={`group relative inline-flex items-center gap-2 border-b-2 px-4 py-3 text-base font-semibold transition-all duration-200 ${
-                    isActive
-                      ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-                      : 'border-transparent text-zinc-600 hover:border-blue-300 hover:text-blue-600 dark:text-zinc-400 dark:hover:border-blue-700 dark:hover:text-blue-400'
-                  }`}
-                >
-                  {/* Emoji */}
-                  <span
-                    className={`text-lg transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      'group relative inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all flex-1',
+                      isActive
+                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 dark:from-indigo-500 dark:to-indigo-400 text-white shadow-lg shadow-indigo-500/25 dark:shadow-indigo-400/20'
+                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50'
+                    )}
                   >
-                    {tab.emoji}
-                  </span>
+                    <Icon className="h-4 w-4" strokeWidth={2} />
+                    <span>{tab.label}</span>
 
-                  {/* Label */}
-                  <span>{tab.label}</span>
-
-                  {/* Count Badge */}
-                  {count !== null && count > 0 && (
-                    <span
-                      className={`ml-1 rounded-full px-2 py-0.5 text-xs font-bold transition-colors ${
-                        isActive
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                          : 'bg-zinc-100 text-zinc-600 group-hover:bg-blue-100 group-hover:text-blue-700 dark:bg-zinc-800 dark:text-zinc-400 dark:group-hover:bg-blue-900/30 dark:group-hover:text-blue-300'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-
-                  {/* Active indicator */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-x-0 -bottom-0.5 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600"
-                      transition={{
-                        type: 'spring',
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+                    {/* Count Badge */}
+                    {count !== null && count > 0 && (
+                      <span
+                        className={cn(
+                          'ml-1 rounded-full px-2 py-0.5 text-xs font-bold transition-colors',
+                          isActive
+                            ? 'bg-white/20 text-white'
+                            : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                        )}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
 
         {/* Tab Content with Animation */}
@@ -156,7 +144,7 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
           >
             {activeTab === 'about' && <AboutTab user={user} />}
             {activeTab === 'events' && <EventsTab user={user} />}

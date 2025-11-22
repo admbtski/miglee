@@ -27,14 +27,15 @@ import { EditCardModal } from './_components/edit-card-modal';
 import { AddCardModal } from './_components/add-card-modal';
 import { ConfirmDeleteModal } from './_components/confirm-delete-modal';
 import { InvoiceViewModal } from './_components/invoice-view-modal';
+import { SubscriptionPlans } from './_components/subscription-plans';
 import { CardItem } from './types';
 
 export default function BillingPage() {
   // Demo plan
   const plan = {
-    name: 'Startup',
+    name: 'Free',
     status: 'Active',
-    price: 39,
+    price: 0,
     cycle: 'monthly',
     renewsOn: 'March 25th, 2023',
     seatsUsed: 5,
@@ -127,25 +128,28 @@ export default function BillingPage() {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
             Plans & Billing
           </h1>
-          <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+          <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
             Manage your subscription and billing information
           </p>
         </div>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+          className="inline-flex items-center gap-2 rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 px-5 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all"
         >
-          <Gift className="w-4 h-4" />
+          <Gift className="w-4 h-4" strokeWidth={2} />
           Gift PRO
         </button>
       </div>
+
+      {/* Subscription Plans */}
+      <SubscriptionPlans />
 
       {/* Top grid */}
       <div className="grid gap-5 md:grid-cols-2">

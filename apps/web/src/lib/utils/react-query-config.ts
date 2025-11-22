@@ -39,7 +39,7 @@ export function createQueryClient() {
     queryCache: new QueryCache({
       onError: (error, query) => {
         const queryKey = Array.from(query.queryKey);
-        const startTime = (query.state as any).dataUpdatedAt || Date.now();
+        const startTime = query.state.dataUpdatedAt || Date.now();
         const duration = Date.now() - startTime;
 
         // Log error

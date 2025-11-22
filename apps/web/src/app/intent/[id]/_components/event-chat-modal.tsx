@@ -409,9 +409,9 @@ export function EventChatModal({
       </div>
       <button
         onClick={onClose}
-        className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+        className="p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
       >
-        <X className="h-5 w-5" />
+        <X className="w-5 h-5" />
       </button>
     </div>
   );

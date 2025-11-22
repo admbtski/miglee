@@ -69,7 +69,7 @@ export function IntentManagementSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(
-    new Set(['overview', 'edit', 'members', 'engagement'])
+    new Set(['overview'])
   );
 
   const toggleCollapse = () => {
