@@ -30,6 +30,10 @@ import {
   Star,
   AlertTriangle,
   MessagesSquare,
+  Edit3,
+  UserCog,
+  DollarSign,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,6 +50,14 @@ interface NavItem {
   badge?: string | number;
 }
 
+interface NavGroup {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: NavItem[];
+  defaultOpen?: boolean;
+}
+
 /**
  * Intent Management Sidebar Component
  * Collapsible sidebar with navigation for intent management
@@ -56,125 +68,188 @@ export function IntentManagementSidebar({
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    new Set(['overview', 'edit', 'members', 'engagement'])
+  );
 
   const toggleCollapse = () => {
     setIsCollapsed((prev) => !prev);
   };
 
-  const navItems: NavItem[] = [
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
+  const navGroups: NavGroup[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      href: `/intent/${intentId}/manage`,
+      id: 'overview',
+      label: 'Overview',
       icon: LayoutDashboard,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'dashboard',
+          label: 'Dashboard',
+          href: `/intent/${intentId}/manage`,
+          icon: LayoutDashboard,
+        },
+        {
+          id: 'view',
+          label: 'View Event',
+          href: `/intent/${intentId}/manage/view`,
+          icon: Eye,
+        },
+        {
+          id: 'analytics',
+          label: 'Analytics',
+          href: `/intent/${intentId}/manage/analytics`,
+          icon: BarChart3,
+        },
+      ],
     },
     {
-      id: 'view',
-      label: 'View Event',
-      href: `/intent/${intentId}/manage/view`,
-      icon: Eye,
-    },
-    {
-      id: 'basics',
-      label: 'Basics',
-      href: `/intent/${intentId}/manage/edit/basics`,
-      icon: FileText,
-    },
-    {
-      id: 'cover',
-      label: 'Cover Image',
-      href: `/intent/${intentId}/manage/edit/cover`,
-      icon: Image,
-    },
-    {
-      id: 'capacity',
-      label: 'Capacity',
-      href: `/intent/${intentId}/manage/edit/capacity`,
-      icon: UsersIcon,
-    },
-    {
-      id: 'schedule',
-      label: 'Schedule',
-      href: `/intent/${intentId}/manage/edit/when`,
-      icon: Clock,
-    },
-    {
-      id: 'location',
-      label: 'Location',
-      href: `/intent/${intentId}/manage/edit/where`,
-      icon: MapPin,
-    },
-    {
-      id: 'privacy',
-      label: 'Privacy',
-      href: `/intent/${intentId}/manage/edit/settings`,
-      icon: Lock,
+      id: 'edit',
+      label: 'Event Settings',
+      icon: Edit3,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'basics',
+          label: 'Basics',
+          href: `/intent/${intentId}/manage/edit/basics`,
+          icon: FileText,
+        },
+        {
+          id: 'cover',
+          label: 'Cover Image',
+          href: `/intent/${intentId}/manage/edit/cover`,
+          icon: Image,
+        },
+        {
+          id: 'schedule',
+          label: 'Schedule',
+          href: `/intent/${intentId}/manage/edit/when`,
+          icon: Clock,
+        },
+        {
+          id: 'location',
+          label: 'Location',
+          href: `/intent/${intentId}/manage/edit/where`,
+          icon: MapPin,
+        },
+        {
+          id: 'capacity',
+          label: 'Capacity',
+          href: `/intent/${intentId}/manage/edit/capacity`,
+          icon: UsersIcon,
+        },
+        {
+          id: 'privacy',
+          label: 'Privacy',
+          href: `/intent/${intentId}/manage/edit/settings`,
+          icon: Lock,
+        },
+      ],
     },
     {
       id: 'members',
-      label: 'Members',
-      href: `/intent/${intentId}/manage/members`,
-      icon: Users,
+      label: 'Members & Access',
+      icon: UserCog,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'members',
+          label: 'Members',
+          href: `/intent/${intentId}/manage/members`,
+          icon: Users,
+        },
+        {
+          id: 'join-form',
+          label: 'Join Form',
+          href: `/intent/${intentId}/manage/join-form`,
+          icon: CheckCircle2,
+        },
+        {
+          id: 'invite-links',
+          label: 'Invite Links',
+          href: `/intent/${intentId}/manage/invite-links`,
+          icon: LinkIcon,
+        },
+      ],
     },
     {
-      id: 'join-form',
-      label: 'Join Form',
-      href: `/intent/${intentId}/manage/join-form`,
-      icon: CheckCircle2,
-    },
-    {
-      id: 'invite-links',
-      label: 'Invite Links',
-      href: `/intent/${intentId}/manage/invite-links`,
-      icon: LinkIcon,
-    },
-    {
-      id: 'plans',
-      label: 'Sponsorship',
-      href: `/intent/${intentId}/manage/plans`,
-      icon: BadgeDollarSign,
-    },
-    {
-      id: 'subscription',
-      label: 'Active Plan',
-      href: `/intent/${intentId}/manage/subscription`,
-      icon: Sparkles,
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      href: `/intent/${intentId}/manage/notifications`,
-      icon: Bell,
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      href: `/intent/${intentId}/manage/chat`,
+      id: 'engagement',
+      label: 'Engagement',
       icon: MessagesSquare,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'chat',
+          label: 'Chat',
+          href: `/intent/${intentId}/manage/chat`,
+          icon: MessagesSquare,
+        },
+        {
+          id: 'comments',
+          label: 'Comments',
+          href: `/intent/${intentId}/manage/comments`,
+          icon: MessageSquare,
+        },
+        {
+          id: 'reviews',
+          label: 'Reviews',
+          href: `/intent/${intentId}/manage/reviews`,
+          icon: Star,
+        },
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          href: `/intent/${intentId}/manage/notifications`,
+          icon: Bell,
+        },
+      ],
     },
     {
-      id: 'analytics',
-      label: 'Analytics',
-      href: `/intent/${intentId}/manage/analytics`,
-      icon: BarChart3,
-    },
-    {
-      id: 'reviews',
-      label: 'Reviews',
-      href: `/intent/${intentId}/manage/reviews`,
-      icon: Star,
-    },
-    {
-      id: 'comments',
-      label: 'Comments',
-      href: `/intent/${intentId}/manage/comments`,
-      icon: MessageSquare,
+      id: 'monetization',
+      label: 'Monetization',
+      icon: DollarSign,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'plans',
+          label: 'Sponsorship',
+          href: `/intent/${intentId}/manage/plans`,
+          icon: BadgeDollarSign,
+        },
+        {
+          id: 'subscription',
+          label: 'Active Plan',
+          href: `/intent/${intentId}/manage/subscription`,
+          icon: Sparkles,
+        },
+      ],
     },
     {
       id: 'danger',
       label: 'Danger Zone',
-      href: `/intent/${intentId}/manage/danger`,
       icon: AlertTriangle,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'danger',
+          label: 'Cancel & Delete',
+          href: `/intent/${intentId}/manage/danger`,
+          icon: AlertTriangle,
+        },
+      ],
     },
   ];
 
@@ -242,58 +317,121 @@ export function IntentManagementSidebar({
 
       {/* Middle Section: Navigation (scrollable, flex-grow) */}
       <nav className="flex-1 px-2 py-4 overflow-y-auto">
-        <div className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            const showTooltip = isCollapsed && hoveredItem === item.id;
+        <div className="space-y-2">
+          {navGroups.map((group) => {
+            const GroupIcon = group.icon;
+            const isGroupOpen = openGroups.has(group.id);
+            const hasActiveItem = group.items.some((item) =>
+              isActive(item.href)
+            );
 
             return (
-              <div
-                key={item.id}
-                className="relative"
-                onMouseEnter={() => setHoveredItem(item.id)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                <Link
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                    active
-                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300'
-                      : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
-                    isCollapsed && 'justify-center'
-                  )}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <Icon className="flex-shrink-0 w-5 h-5" />
-                  <AnimatePresence>
-                    {!isCollapsed && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden whitespace-nowrap"
-                      >
-                        {item.label}
-                      </motion.span>
+              <div key={group.id} className="space-y-1">
+                {/* Group Header */}
+                {!isCollapsed ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    className={cn(
+                      'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors',
+                      hasActiveItem
+                        ? 'text-indigo-700 dark:text-indigo-400'
+                        : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
                     )}
-                  </AnimatePresence>
-                </Link>
-
-                {/* Tooltip for collapsed mode */}
-                {showTooltip && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-1.5 text-sm text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
                   >
-                    {item.label}
-                    <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
-                  </motion.div>
+                    <div className="flex items-center gap-2">
+                      <GroupIcon className="w-4 h-4" />
+                      <span>{group.label}</span>
+                    </div>
+                    <motion.div
+                      animate={{ rotate: isGroupOpen ? 0 : -90 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </motion.div>
+                  </button>
+                ) : (
+                  <div className="flex justify-center py-2">
+                    <div
+                      className={cn(
+                        'h-px w-8',
+                        hasActiveItem
+                          ? 'bg-indigo-300 dark:bg-indigo-700'
+                          : 'bg-zinc-200 dark:bg-zinc-700'
+                      )}
+                    />
+                  </div>
                 )}
+
+                {/* Group Items */}
+                <AnimatePresence initial={false}>
+                  {(isGroupOpen || isCollapsed) && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden space-y-1"
+                    >
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const active = isActive(item.href);
+                        const showTooltip =
+                          isCollapsed && hoveredItem === item.id;
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="relative"
+                            onMouseEnter={() => setHoveredItem(item.id)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                          >
+                            <Link
+                              href={item.href}
+                              className={cn(
+                                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                                active
+                                  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300'
+                                  : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
+                                isCollapsed && 'justify-center',
+                                !isCollapsed && 'ml-2'
+                              )}
+                              aria-current={active ? 'page' : undefined}
+                            >
+                              <Icon className="flex-shrink-0 w-4 h-4" />
+                              <AnimatePresence>
+                                {!isCollapsed && (
+                                  <motion.span
+                                    initial={{ opacity: 0, width: 0 }}
+                                    animate={{ opacity: 1, width: 'auto' }}
+                                    exit={{ opacity: 0, width: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden whitespace-nowrap"
+                                  >
+                                    {item.label}
+                                  </motion.span>
+                                )}
+                              </AnimatePresence>
+                            </Link>
+
+                            {/* Tooltip for collapsed mode */}
+                            {showTooltip && (
+                              <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-1.5 text-sm text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
+                              >
+                                {item.label}
+                                <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
+                              </motion.div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
