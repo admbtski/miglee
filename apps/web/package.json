@@ -4,7 +4,8 @@
   "private": true,
   "description": "Next.js frontend with React Query and Tailwind CSS",
   "scripts": {
-    "dev": "next dev",
+    "_dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
