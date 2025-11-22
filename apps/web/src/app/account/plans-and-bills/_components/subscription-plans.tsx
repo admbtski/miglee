@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Sparkles, Zap, Crown } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, Rocket } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -32,7 +32,6 @@ const PLANS = [
     annualPrice: 12, // -20% annually (15 * 12 = 180, 12 * 12 = 144)
     icon: Zap,
     color: 'indigo',
-    popular: true,
     features: [
       'Unlimited events',
       'Advanced analytics',
@@ -51,6 +50,7 @@ const PLANS = [
     annualPrice: 31.2, // -20% annually (39 * 12 = 468, 31.2 * 12 = 374.4)
     icon: Crown,
     color: 'amber',
+    popular: true,
     features: [
       'Everything in Plus',
       'Unlimited participants',
@@ -60,6 +60,26 @@ const PLANS = [
       'Dedicated account manager',
       'Custom domain',
       'Advanced reporting',
+    ],
+  },
+  {
+    id: 'ultra',
+    name: 'Ultra',
+    description: 'For enterprise organizations',
+    monthlyPrice: 99,
+    annualPrice: 79.2, // -20% annually (99 * 12 = 1188, 79.2 * 12 = 950.4)
+    icon: Rocket,
+    color: 'violet',
+    features: [
+      'Everything in Pro',
+      'Unlimited everything',
+      'Custom infrastructure',
+      'SLA guarantee (99.9%)',
+      'Dedicated server resources',
+      'Advanced security features',
+      'Custom integrations',
+      'White-glove onboarding',
+      '24/7 phone support',
     ],
   },
 ];
@@ -124,7 +144,7 @@ export function SubscriptionPlans() {
       </div>
 
       {/* Plans Grid */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {PLANS.map((plan, index) => {
           const Icon = plan.icon;
           const price = getPrice(plan);
@@ -163,7 +183,9 @@ export function SubscriptionPlans() {
                   plan.color === 'indigo' &&
                     'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
                   plan.color === 'amber' &&
-                    'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                    'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+                  plan.color === 'violet' &&
+                    'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
                 )}
               >
                 <Icon className="h-7 w-7" strokeWidth={2} />

@@ -35,31 +35,29 @@ export function EventsTab({ user }: EventsTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-12 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+      <div className="flex items-center justify-center rounded-3xl border border-slate-100 bg-white p-12 shadow-sm">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-950/30">
-        <p className="text-sm text-red-600 dark:text-red-400">
-          Nie udało się załadować wydarzeń
-        </p>
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
+        <p className="text-sm text-slate-600">Failed to load events</p>
       </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <Calendar className="mx-auto h-12 w-12 text-zinc-400" />
-        <h3 className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-          Brak wydarzeń
+      <div className="rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm">
+        <Calendar className="mx-auto h-12 w-12 text-slate-400" />
+        <h3 className="mt-4 text-sm font-semibold text-slate-900">
+          No events yet
         </h3>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Ten użytkownik nie ma jeszcze żadnych wydarzeń
+        <p className="mt-1 text-sm text-slate-600">
+          This user has no events yet
         </p>
       </div>
     );
@@ -73,35 +71,35 @@ export function EventsTab({ user }: EventsTabProps) {
           const startDate = new Date(event.startAt);
           const categoryNames = event.categories?.[0]?.names as any;
           const categoryName =
-            categoryNames?.pl || categoryNames?.en || 'Wydarzenie';
+            categoryNames?.pl || categoryNames?.en || 'Event';
 
           return (
             <Link
               key={event.id}
               href={`/intent/${event.id}`}
-              className="block rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-700"
+              className="block rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm transition-all hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-2">
                   {/* Title & Category */}
                   <div>
-                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                       {event.title}
                     </h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-500">
                       {categoryName}
                     </p>
                   </div>
 
                   {/* Description */}
                   {event.description && (
-                    <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
                       {event.description}
                     </p>
                   )}
 
                   {/* Meta Info */}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-500">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {format(startDate, 'PPP, HH:mm', { locale: pl })}
@@ -120,7 +118,7 @@ export function EventsTab({ user }: EventsTabProps) {
                 </div>
 
                 {/* Arrow */}
-                <ChevronRight className="h-5 w-5 flex-shrink-0 text-zinc-400" />
+                <ChevronRight className="h-5 w-5 flex-shrink-0 text-slate-400 dark:text-slate-600" />
               </div>
             </Link>
           );
@@ -129,26 +127,26 @@ export function EventsTab({ user }: EventsTabProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="text-sm text-zinc-600 dark:text-zinc-400">
-            Strona {page + 1} z {totalPages} ({total} wydarzeń)
+        <div className="flex items-center justify-between rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-sm">
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            Page {page + 1} of {totalPages} ({total} events)
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="rounded-lg border border-zinc-300 px-3 py-1 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-slate-300 dark:border-zinc-700 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Poprzednia
+              Previous
             </button>
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="rounded-lg border border-zinc-300 px-3 py-1 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-slate-300 dark:border-zinc-700 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Następna
+              Next
             </button>
           </div>
         </div>

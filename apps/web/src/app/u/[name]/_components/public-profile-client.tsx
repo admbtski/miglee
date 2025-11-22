@@ -43,13 +43,13 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-zinc-950">
         <div className="text-center">
           <Loader2
             className="w-8 h-8 mx-auto text-indigo-600 dark:text-indigo-400 animate-spin"
             strokeWidth={2}
           />
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
             Loading profile...
           </p>
         </div>
@@ -59,16 +59,16 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
 
   if (error || !data?.user) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px] bg-gray-50 dark:bg-zinc-950">
         <div className="text-center">
           <User
-            className="w-12 h-12 mx-auto text-zinc-400 dark:text-zinc-600"
+            className="w-12 h-12 mx-auto text-slate-400 dark:text-slate-600"
             strokeWidth={2}
           />
-          <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <h1 className="mt-4 text-xl font-semibold text-slate-900 dark:text-slate-100">
             User not found
           </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             The user @{username} doesn't exist or has been removed.
           </p>
         </div>
@@ -87,17 +87,19 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950">
       {/* Header */}
       <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Tabs */}
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* Tabs - Light Pill Style */}
         <div className="mb-6">
-          {/* Tabs Card */}
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-zinc-200/80 dark:border-white/5 p-2">
-            <nav className="flex gap-1" aria-label="Profile tabs">
+          <div className="max-w-xl mx-auto">
+            <nav
+              className="flex gap-2 justify-center"
+              aria-label="Profile tabs"
+            >
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.id;
                 const Icon = tab.icon;
@@ -108,10 +110,10 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'group relative inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all flex-1',
+                      'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all',
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 dark:from-indigo-500 dark:to-indigo-400 text-white shadow-lg shadow-indigo-500/25 dark:shadow-indigo-400/20'
-                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-50'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-zinc-900 hover:shadow-sm'
                     )}
                   >
                     <Icon className="h-4 w-4" strokeWidth={2} />
@@ -121,10 +123,10 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
                     {count !== null && count > 0 && (
                       <span
                         className={cn(
-                          'ml-1 rounded-full px-2 py-0.5 text-xs font-bold transition-colors',
+                          'rounded-full px-2 py-0.5 text-xs font-semibold',
                           isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300'
                         )}
                       >
                         {count}
@@ -137,13 +139,13 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
           </div>
         </div>
 
-        {/* Tab Content with Animation */}
+        {/* Tab Content */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
           >
             {activeTab === 'about' && <AboutTab user={user} />}
