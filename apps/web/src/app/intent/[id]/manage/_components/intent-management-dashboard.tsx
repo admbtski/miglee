@@ -7,34 +7,35 @@
 'use client';
 
 import {
-  Users,
-  MessageSquare,
-  Calendar,
-  TrendingUp,
-  Clock,
-  MapPin,
-  Edit,
-  Star,
-  Eye,
-  Heart,
-  UserPlus,
   Activity,
-  CheckCircle2,
-  XCircle,
   AlertCircle,
   ArrowRight,
-  Link as LinkIcon,
-  UserCheck,
-  Sparkles,
   BarChart3,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Edit,
+  Eye,
+  Heart,
+  Link as LinkIcon,
+  MapPin,
+  MessageSquare,
+  Sparkles,
+  Star,
+  TrendingUp,
+  UserCheck,
+  UserPlus,
+  Users,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
 import { useIntentQuery } from '@/lib/api/intents';
 import { cn } from '@/lib/utils';
-import { format, formatDistanceToNow, isPast, isFuture } from 'date-fns';
+import { format, formatDistanceToNow, isFuture, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { EventCountdownTimer } from '../../_components/event-countdown-timer';
+import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
 
 interface IntentManagementDashboardProps {
   intentId: string;
@@ -122,7 +123,7 @@ function StatCard({
         </div>
       </div>
       {href && (
-        <div className="absolute bottom-3 right-3 transition-opacity opacity-0 group-hover:opacity-100">
+        <div className="absolute transition-opacity opacity-0 bottom-3 right-3 group-hover:opacity-100">
           <ArrowRight className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
         </div>
       )}
@@ -178,9 +179,9 @@ export function IntentManagementDashboard({
 
   // Calculate engagement metrics
   const totalEngagement =
-    ((intent as any).messagesCount || 0) +
+    (intent.messagesCount || 0) +
     (intent.commentsCount || 0) +
-    ((intent as any).favouritesCount || 0);
+    (intent.savedCount || 0);
   const engagementPerMember =
     intent.joinedCount && intent.joinedCount > 0
       ? (totalEngagement / intent.joinedCount).toFixed(1)
@@ -201,10 +202,10 @@ export function IntentManagementDashboard({
     },
     {
       title: 'Messages',
-      value: (intent as any).messagesCount || 0,
+      value: intent.messagesCount || 0,
       icon: MessageSquare,
       description: intent.joinedCount
-        ? `${(((intent as any).messagesCount || 0) / (intent.joinedCount || 1)).toFixed(1)} per member`
+        ? `${((intent.messagesCount || 0) / (intent.joinedCount || 1)).toFixed(1)} per member`
         : undefined,
       href: `/intent/${intentId}/manage/chat`,
       color: 'green' as const,
@@ -239,12 +240,14 @@ export function IntentManagementDashboard({
     },
     {
       title: 'Favourites',
-      value: (intent as any).favouritesCount || 0,
+      value: intent.savedCount || 0,
       icon: Heart,
       description:
         (intent as any).viewCount && (intent as any).viewCount > 0
-          ? `${Math.round((((intent as any).favouritesCount || 0) / (intent as any).viewCount) * 100)}% conversion`
-          : undefined,
+          ? `${Math.round(((intent.savedCount || 0) / (intent as any).viewCount) * 100)}% saved`
+          : intent.savedCount === 1
+            ? '1 person saved'
+            : `${intent.savedCount || 0} people saved`,
       color: 'pink' as const,
     },
   ];
@@ -270,19 +273,19 @@ export function IntentManagementDashboard({
                       : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400'
               )}
             >
-              {(intent as any).status === 'ACTIVE' && (
+              {intent.status === IntentStatus.Available && (
                 <Activity className="w-3 h-3" />
               )}
-              {(intent as any).status === 'CANCELLED' && (
+              {intent.status === IntentStatus.Canceled && (
                 <XCircle className="w-3 h-3" />
               )}
-              {(intent as any).status === 'COMPLETED' && (
+              {intent.status === IntentStatus.Past && (
                 <CheckCircle2 className="w-3 h-3" />
               )}
-              {(intent as any).status === 'DRAFT' && (
+              {intent.status === IntentStatus.Locked && (
                 <AlertCircle className="w-3 h-3" />
               )}
-              {(intent as any).status}
+              {intent.status}
             </span>
           </div>
           <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 max-w-[70ch]">
@@ -291,7 +294,7 @@ export function IntentManagementDashboard({
         </div>
         <Link
           href={`/intent/${intentId}`}
-          className="inline-flex items-center gap-2 h-11 px-5 text-sm font-semibold text-white transition-all bg-indigo-600 rounded-lg hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
+          className="inline-flex items-center gap-2 px-5 text-sm font-semibold text-white transition-all bg-indigo-600 rounded-lg h-11 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
         >
           <Eye className="w-[18px] h-[18px]" />
           View Event
@@ -327,7 +330,7 @@ export function IntentManagementDashboard({
             </span>
             <span className="text-sm text-zinc-500">/ {intent.max}</span>
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+          <div className="h-2 mt-3 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
             <div
               className={cn(
                 'h-full rounded-full bg-gradient-to-r transition-all',
@@ -432,9 +435,9 @@ export function IntentManagementDashboard({
             )}
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 row-gap-5">
+          <div className="grid gap-5 row-gap-5 sm:grid-cols-2">
             <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+              <Calendar className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   Start Date
@@ -446,7 +449,7 @@ export function IntentManagementDashboard({
             </div>
 
             <div className="flex items-start gap-3">
-              <Clock className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+              <Clock className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   End Date
@@ -459,7 +462,7 @@ export function IntentManagementDashboard({
 
             {intent.address && (
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+                <MapPin className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Location
@@ -472,7 +475,7 @@ export function IntentManagementDashboard({
             )}
 
             <div className="flex items-start gap-3">
-              <Users className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+              <Users className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                   Capacity
@@ -480,7 +483,7 @@ export function IntentManagementDashboard({
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                   {intent.joinedCount} / {intent.max} members
                 </p>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                <div className="w-full h-2 mt-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
                   <div
                     className={cn(
                       'h-full rounded-full bg-gradient-to-r transition-all',
@@ -498,7 +501,7 @@ export function IntentManagementDashboard({
 
             {intent.mode && (
               <div className="flex items-start gap-3">
-                <UserPlus className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+                <UserPlus className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Mode
@@ -512,7 +515,7 @@ export function IntentManagementDashboard({
 
             {intent.visibility && (
               <div className="flex items-start gap-3">
-                <Eye className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+                <Eye className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Visibility
@@ -526,7 +529,7 @@ export function IntentManagementDashboard({
 
             {intent.joinMode && (
               <div className="flex items-start gap-3">
-                <UserCheck className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+                <UserCheck className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Join Mode
@@ -544,7 +547,7 @@ export function IntentManagementDashboard({
 
             {intent.meetingKind && (
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
+                <MapPin className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     Meeting Type
@@ -630,7 +633,7 @@ export function IntentManagementDashboard({
                 {intent.joinedCount}
               </span>
             )}
-            <div className="flex items-center justify-center w-10 h-10 bg-sky-500/10 rounded-lg dark:bg-sky-500/10">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-sky-500/10 dark:bg-sky-500/10">
               <Users className="w-6 h-6 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
@@ -654,7 +657,7 @@ export function IntentManagementDashboard({
                   {(intent as any).messagesCount}
                 </span>
               )}
-            <div className="flex items-center justify-center w-10 h-10 bg-green-500/10 rounded-lg dark:bg-green-500/10">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/10 dark:bg-green-500/10">
               <MessageSquare className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
@@ -672,7 +675,7 @@ export function IntentManagementDashboard({
             href={`/intent/${intentId}/manage/analytics`}
             className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-purple-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-purple-700 dark:bg-zinc-900/50"
           >
-            <div className="flex items-center justify-center w-10 h-10 bg-purple-500/10 rounded-lg dark:bg-purple-500/10">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-500/10 dark:bg-purple-500/10">
               <BarChart3 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
@@ -690,7 +693,7 @@ export function IntentManagementDashboard({
             href={`/intent/${intentId}/manage/invite-links`}
             className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-orange-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-orange-700 dark:bg-zinc-900/50"
           >
-            <div className="flex items-center justify-center w-10 h-10 bg-orange-500/10 rounded-lg dark:bg-orange-500/10">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/10 dark:bg-orange-500/10">
               <LinkIcon className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
