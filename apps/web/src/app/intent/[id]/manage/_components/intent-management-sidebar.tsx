@@ -116,7 +116,7 @@ export function IntentManagementSidebar({
       ],
     },
     {
-      id: 'edit',
+      id: 'settings',
       label: 'Event Settings',
       icon: Edit3,
       defaultOpen: true,
@@ -160,7 +160,7 @@ export function IntentManagementSidebar({
       ],
     },
     {
-      id: 'members',
+      id: 'access',
       label: 'Members & Access',
       icon: UserCog,
       defaultOpen: true,
@@ -225,13 +225,13 @@ export function IntentManagementSidebar({
       items: [
         {
           id: 'plans',
-          label: 'Sponsorship',
+          label: 'Sponsorship Plans',
           href: `/intent/${intentId}/manage/plans`,
           icon: BadgeDollarSign,
         },
         {
           id: 'subscription',
-          label: 'Active Plan',
+          label: 'Active Subscription',
           href: `/intent/${intentId}/manage/subscription`,
           icon: Sparkles,
         },

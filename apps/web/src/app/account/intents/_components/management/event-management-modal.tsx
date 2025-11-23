@@ -27,11 +27,11 @@ import clsx from 'clsx';
 
 type TabKey =
   | 'MEMBERS'
-  | 'PLANS'
-  | 'NOTIFICATIONS'
-  | 'SUBSCRIPTION'
+  | 'JOIN_FORM'
   | 'INVITE_LINKS'
-  | 'JOIN_FORM';
+  | 'NOTIFICATIONS'
+  | 'PLANS'
+  | 'SUBSCRIPTION';
 type SponsorPlan = 'Basic' | 'Plus' | 'Pro';
 
 type SponsorshipState = {
@@ -167,7 +167,7 @@ export function EventManagementModal({
     PENDING: boolean;
   }>({ JOINED: true, INVITED: false, PENDING: false });
   const [notifyMsg, setNotifyMsg] = React.useState(
-    'Hej! Mamy aktualizację dot. wydarzenia…'
+    'Hey! We have an update about the event…'
   );
   const [sending, setSending] = React.useState(false);
 
@@ -211,14 +211,14 @@ export function EventManagementModal({
             variant="ghost"
             size="icon-sm"
             className="border rounded-full shrink-0 border-zinc-700/30 bg-white/5 text-zinc-200 hover:bg-white/10 dark:bg-zinc-800/30"
-            aria-label="Zamknij"
-            title="Zamknij (Esc)"
+            aria-label="Close"
+            title="Close (Esc)"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
 
           <h2 className="text-xl font-semibold tracking-tight text-transparent truncate bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text">
-            Zarządzanie wydarzeniem
+            Event Management
           </h2>
         </div>
 
@@ -229,7 +229,7 @@ export function EventManagementModal({
         )}
       </div>
       <p className="text-xs text-zinc-400">
-        Panel dostępny dla właściciela i moderatorów.
+        Management panel for event owners and moderators.
       </p>
     </div>
   );
@@ -238,12 +238,12 @@ export function EventManagementModal({
     <div className="flex justify-center gap-1 mb-5 flex-nowrap sm:gap-3">
       {(
         [
-          { key: 'MEMBERS', label: 'Uczestnicy', Icon: Users },
-          { key: 'JOIN_FORM', label: 'Formularz', Icon: CheckCircle2 },
-          { key: 'INVITE_LINKS', label: 'Linki zaproszeń', Icon: LinkIcon },
-          { key: 'PLANS', label: 'Sponsorowanie', Icon: BadgeDollarSign },
-          { key: 'SUBSCRIPTION', label: 'Pakiet (aktywny)', Icon: Sparkles },
-          { key: 'NOTIFICATIONS', label: 'Powiadomienia', Icon: Bell },
+          { key: 'MEMBERS', label: 'Members', Icon: Users },
+          { key: 'JOIN_FORM', label: 'Join Form', Icon: CheckCircle2 },
+          { key: 'INVITE_LINKS', label: 'Invite Links', Icon: LinkIcon },
+          { key: 'NOTIFICATIONS', label: 'Notifications', Icon: Bell },
+          { key: 'PLANS', label: 'Sponsorship Plans', Icon: BadgeDollarSign },
+          { key: 'SUBSCRIPTION', label: 'Active Subscription', Icon: Sparkles },
         ] as const
       ).map(({ key, label, Icon }) => {
         if (key === 'SUBSCRIPTION' && !currentSponsorship) return null;
@@ -270,16 +270,16 @@ export function EventManagementModal({
   const NotificationsContent = (
     <div className="grid gap-4">
       <div className="p-4 border rounded-2xl border-zinc-200 dark:border-zinc-800">
-        <h3 className="text-base font-semibold">Szybkie powiadomienie</h3>
+        <h3 className="text-base font-semibold">Quick Notification</h3>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Wyślij krótką wiadomość do wybranych grup. (Wpięte pod{' '}
-          <code>onNotifyPremium</code> jako placeholder).
+          Send a short message to selected groups. (Connected to{' '}
+          <code>onNotifyPremium</code> as placeholder).
         </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="p-4 border rounded-2xl border-zinc-200 dark:border-zinc-800">
-          <div className="mb-3 text-sm font-medium">Odbiorcy</div>
+          <div className="mb-3 text-sm font-medium">Recipients</div>
           <label className="flex items-center gap-2 mb-2 text-sm">
             <input
               type="checkbox"
@@ -316,12 +316,12 @@ export function EventManagementModal({
         </div>
 
         <div className="p-4 border rounded-2xl border-zinc-200 dark:border-zinc-800">
-          <div className="mb-2 text-sm font-medium">Wiadomość</div>
+          <div className="mb-2 text-sm font-medium">Message</div>
           <textarea
             className="w-full p-3 text-sm bg-white border outline-none resize-none h-28 rounded-xl border-zinc-300 ring-0 placeholder:text-zinc-400 focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500"
             value={notifyMsg}
             onChange={(e) => setNotifyMsg(e.target.value)}
-            placeholder="Treść komunikatu…"
+            placeholder="Message content…"
           />
           <div className="flex items-center justify-end mt-3">
             <Button
@@ -333,11 +333,11 @@ export function EventManagementModal({
             >
               {sending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Wysyłanie…
+                  <Loader2 className="w-4 h-4 animate-spin" /> Sending…
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4" /> Wyślij
+                  <CheckCircle2 className="w-4 h-4" /> Send
                 </>
               )}
             </Button>
@@ -355,7 +355,7 @@ export function EventManagementModal({
         variant="default"
         density="compact"
         labelledById="members-title"
-        ariaLabel="Zarządzanie uczestnikami"
+        ariaLabel="Event Management"
         className="max-w-4xl"
         header={<>{Header}</>}
         content={

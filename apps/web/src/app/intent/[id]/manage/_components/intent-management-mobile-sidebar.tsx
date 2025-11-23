@@ -95,6 +95,12 @@ export function IntentManagementMobileSidebar({
       icon: Eye,
     },
     {
+      id: 'analytics',
+      label: 'Analytics',
+      href: `/intent/${intentId}/manage/analytics`,
+      icon: BarChart3,
+    },
+    {
       id: 'basics',
       label: 'Basics',
       href: `/intent/${intentId}/manage/edit/basics`,
@@ -107,12 +113,6 @@ export function IntentManagementMobileSidebar({
       icon: Image,
     },
     {
-      id: 'capacity',
-      label: 'Capacity',
-      href: `/intent/${intentId}/manage/edit/capacity`,
-      icon: UsersIcon,
-    },
-    {
       id: 'schedule',
       label: 'Schedule',
       href: `/intent/${intentId}/manage/edit/when`,
@@ -123,6 +123,12 @@ export function IntentManagementMobileSidebar({
       label: 'Location',
       href: `/intent/${intentId}/manage/edit/where`,
       icon: MapPin,
+    },
+    {
+      id: 'capacity',
+      label: 'Capacity',
+      href: `/intent/${intentId}/manage/edit/capacity`,
+      icon: UsersIcon,
     },
     {
       id: 'privacy',
@@ -149,40 +155,10 @@ export function IntentManagementMobileSidebar({
       icon: LinkIcon,
     },
     {
-      id: 'plans',
-      label: 'Sponsorship',
-      href: `/intent/${intentId}/manage/plans`,
-      icon: BadgeDollarSign,
-    },
-    {
-      id: 'subscription',
-      label: 'Active Plan',
-      href: `/intent/${intentId}/manage/subscription`,
-      icon: Sparkles,
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      href: `/intent/${intentId}/manage/notifications`,
-      icon: Bell,
-    },
-    {
       id: 'chat',
       label: 'Chat',
       href: `/intent/${intentId}/manage/chat`,
       icon: MessagesSquare,
-    },
-    {
-      id: 'analytics',
-      label: 'Analytics',
-      href: `/intent/${intentId}/manage/analytics`,
-      icon: BarChart3,
-    },
-    {
-      id: 'reviews',
-      label: 'Reviews',
-      href: `/intent/${intentId}/manage/reviews`,
-      icon: Star,
     },
     {
       id: 'comments',
@@ -191,8 +167,32 @@ export function IntentManagementMobileSidebar({
       icon: MessageSquare,
     },
     {
+      id: 'reviews',
+      label: 'Reviews',
+      href: `/intent/${intentId}/manage/reviews`,
+      icon: Star,
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      href: `/intent/${intentId}/manage/notifications`,
+      icon: Bell,
+    },
+    {
+      id: 'plans',
+      label: 'Sponsorship Plans',
+      href: `/intent/${intentId}/manage/plans`,
+      icon: BadgeDollarSign,
+    },
+    {
+      id: 'subscription',
+      label: 'Active Subscription',
+      href: `/intent/${intentId}/manage/subscription`,
+      icon: Sparkles,
+    },
+    {
       id: 'danger',
-      label: 'Danger Zone',
+      label: 'Cancel & Delete',
       href: `/intent/${intentId}/manage/danger`,
       icon: AlertTriangle,
     },
