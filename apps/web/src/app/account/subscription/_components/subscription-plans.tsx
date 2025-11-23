@@ -37,9 +37,9 @@ const PLANS = [
     id: 'plus',
     name: 'Plus',
     description: 'For active organizers',
-    priceMonthlySubscription: 15,
-    priceMonthlyOnetime: 19,
-    priceAnnualOnetime: 144,
+    priceMonthlySubscription: 29.99, // STRIPE_PRICE_USER_PLUS_MONTHLY_SUB
+    priceMonthlyOnetime: 35.99, // STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF
+    priceAnnualOnetime: 359.99, // STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF (29.99 * 12 = 359.88)
     icon: Zap,
     color: 'indigo',
     popular: true,
@@ -57,9 +57,9 @@ const PLANS = [
     id: 'pro',
     name: 'Pro',
     description: 'For professional organizers',
-    priceMonthlySubscription: 39,
-    priceMonthlyOnetime: 49,
-    priceAnnualOnetime: 374,
+    priceMonthlySubscription: 69.99, // STRIPE_PRICE_USER_PRO_MONTHLY_SUB
+    priceMonthlyOnetime: 83.99, // STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF
+    priceAnnualOnetime: 839.99, // STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF (69.99 * 12 = 839.88)
     icon: Crown,
     color: 'amber',
     popular: false,
@@ -270,7 +270,7 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-                    ${price}
+                    zł{price}
                   </span>
                   <span className="text-base text-zinc-600 dark:text-zinc-400">
                     {getPriceLabel()}
@@ -280,7 +280,7 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
                 {/* Savings */}
                 {savings > 0 ? (
                   <p className="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    Save ${savings} vs monthly
+                    Save zł{savings.toFixed(2)} vs monthly
                   </p>
                 ) : (
                   <p className="mt-2 text-sm font-medium text-transparent">

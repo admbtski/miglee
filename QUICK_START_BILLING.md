@@ -1,5 +1,59 @@
 # 🚀 Quick Start Guide - Billing System
 
+## ✅ System Gotowy!
+
+Cały system billingowy jest w pełni zaimplementowany i gotowy do użycia:
+
+- ✅ Backend API (GraphQL resolvers + serwisy)
+- ✅ Webhook handler (Stripe)
+- ✅ Frontend hooks (React Query)
+- ✅ Frontend UI (bez mocków, tylko prawdziwe dane z API)
+- ✅ Seed data (4 użytkowników z aktywnymi planami)
+- ✅ Produkty Stripe skonfigurowane (ceny w PLN)
+
+## 🆔 Testowi użytkownicy z aktywnymi planami
+
+W seed.ts zostali dodani użytkownicy do testowania:
+
+| Email                      | Username       | Plan | Okres                |
+| -------------------------- | -------------- | ---- | -------------------- |
+| `plus.monthly@example.com` | `plus.monthly` | PLUS | Miesięczny (one-off) |
+| `pro.monthly@example.com`  | `pro.monthly`  | PRO  | Miesięczny (one-off) |
+| `plus.yearly@example.com`  | `plus.yearly`  | PLUS | Roczny (one-off)     |
+| `pro.yearly@example.com`   | `pro.yearly`   | PRO  | Roczny (one-off)     |
+
+**Aby zalogować się jako testowy użytkownik:**
+
+```graphql
+mutation {
+  devLogin(name: "plus.monthly") {
+    id
+    name
+    email
+  }
+}
+```
+
+## 💰 Konfiguracja cen Stripe (PLN)
+
+W twoim Stripe Dashboard masz już skonfigurowane następujące ceny:
+
+### User Plans (Subskrypcje użytkownika)
+
+- `STRIPE_PRICE_USER_PLUS_MONTHLY_SUB` - zł29.99 PLN / miesiąc (auto-renewal)
+- `STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF` - zł35.99 PLN (jednorazowa, 30 dni)
+- `STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF` - zł359.99 PLN (jednorazowa, 365 dni)
+- `STRIPE_PRICE_USER_PRO_MONTHLY_SUB` - zł69.99 PLN / miesiąc (auto-renewal)
+- `STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF` - zł83.99 PLN (jednorazowa, 30 dni)
+- `STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF` - zł839.99 PLN (jednorazowa, 365 dni)
+
+### Event Sponsorship (Sponsoring eventów)
+
+- `STRIPE_PRICE_EVENT_PLUS` - zł14.99 PLN (jednorazowa)
+- `STRIPE_PRICE_EVENT_PRO` - zł29.99 PLN (jednorazowa)
+
+**Wszystkie ceny są już w .env i gotowe do użycia!**
+
 ## Szybki start bez Stripe CLI
 
 ### 1. Uruchom API
@@ -139,6 +193,46 @@ pnpm dev
 
 ## Użycie API
 
+### Frontend (React Query hooks)
+
+System udostępnia gotowe hooki w `apps/web/src/lib/api/billing.tsx`:
+
+```typescript
+import {
+  useMyPlan,
+  useMySubscription,
+  useCreateSubscriptionCheckout,
+  useCreateOneOffCheckout,
+  useCancelSubscription,
+} from '@/lib/api/billing';
+
+// W komponencie
+function MyComponent() {
+  // Pobierz aktualny plan użytkownika
+  const { data: planInfo } = useMyPlan();
+
+  // Utwórz checkout dla subskrypcji
+  const createCheckout = useCreateSubscriptionCheckout({
+    onSuccess: (data) => {
+      // Przekieruj na Stripe Checkout
+      window.location.href = data.createSubscriptionCheckout.checkoutUrl;
+    },
+  });
+
+  const handleUpgrade = () => {
+    createCheckout.mutate({
+      input: {
+        plan: 'PLUS',
+        billingPeriod: 'MONTHLY',
+        withTrial: true,
+      },
+    });
+  };
+}
+```
+
+### Backend (GraphQL)
+
 ### Przykład 1: Sprawdź plan użytkownika
 
 ```typescript
@@ -255,6 +349,33 @@ ORDER BY upp."endsAt" DESC;
 3. Sprawdź tabelę `payment_events`
 
 ---
+
+## Pliki w projekcie
+
+### Backend (API)
+
+- `apps/api/src/lib/billing/` - serwisy billingowe
+  - `stripe.service.ts` - klient Stripe + helpery
+  - `user-plan.service.ts` - logika planów użytkownika
+  - `event-sponsorship.service.ts` - logika sponsoringu eventów
+  - `webhook-handler.service.ts` - obsługa webhooków
+  - `constants.ts` - konfiguracja planów i cen
+- `apps/api/src/graphql/resolvers/query/billing.ts` - query resolvers
+- `apps/api/src/graphql/resolvers/mutation/billing.ts` - mutation resolvers
+- `apps/api/src/plugins/stripe-webhook.ts` - endpoint webhooków
+
+### Frontend (Web)
+
+- `apps/web/src/lib/api/billing.tsx` - React Query hooks
+- `apps/web/src/app/account/plans-and-bills/` - strona zarządzania planem użytkownika
+- `apps/web/src/app/account/subscription/` - strona wyboru planu
+- `apps/web/src/app/intent/[id]/manage/plans/` - strona sponsoringu eventu
+
+### Contracts (Shared)
+
+- `packages/contracts/graphql/schema.graphql` - schema GraphQL
+- `packages/contracts/graphql/fragments/billing.graphql` - fragmenty
+- `packages/contracts/graphql/operations/billing.graphql` - operacje
 
 ## Co dalej?
 

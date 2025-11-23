@@ -122,6 +122,12 @@ async function clearDb() {
     await prisma.userPrivacy.deleteMany();
     await prisma.userProfile.deleteMany();
 
+    // Clear billing tables
+    await prisma.userPlanPeriod.deleteMany();
+    await prisma.userSubscription.deleteMany();
+    await prisma.eventSponsorship.deleteMany();
+    await prisma.paymentEvent.deleteMany();
+
     await prisma.user.deleteMany();
 
     // Clear media assets
@@ -226,6 +232,59 @@ async function seedUsers(): Promise<User[]> {
         role: Role.USER,
         avatarKey: null, // In production, would be set via upload
         ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
+      },
+    })
+  );
+
+  // Create users with active plans for testing billing
+  created.push(
+    await prisma.user.create({
+      data: {
+        id: FIXED_IDS.USER_PLUS_MONTHLY,
+        email: 'plus.monthly@example.com',
+        name: 'plus.monthly',
+        role: Role.USER,
+        avatarKey: null,
+        verifiedAt: new Date(),
+      },
+    })
+  );
+
+  created.push(
+    await prisma.user.create({
+      data: {
+        id: FIXED_IDS.USER_PRO_MONTHLY,
+        email: 'pro.monthly@example.com',
+        name: 'pro.monthly',
+        role: Role.USER,
+        avatarKey: null,
+        verifiedAt: new Date(),
+      },
+    })
+  );
+
+  created.push(
+    await prisma.user.create({
+      data: {
+        id: FIXED_IDS.USER_PLUS_YEARLY,
+        email: 'plus.yearly@example.com',
+        name: 'plus.yearly',
+        role: Role.USER,
+        avatarKey: null,
+        verifiedAt: new Date(),
+      },
+    })
+  );
+
+  created.push(
+    await prisma.user.create({
+      data: {
+        id: FIXED_IDS.USER_PRO_YEARLY,
+        email: 'pro.yearly@example.com',
+        name: 'pro.yearly',
+        role: Role.USER,
+        avatarKey: null,
+        verifiedAt: new Date(),
       },
     })
   );
@@ -1988,6 +2047,14 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
         displayName = 'Moderator One';
       } else if (user.id === FIXED_IDS.USER) {
         displayName = 'User Fixed';
+      } else if (user.id === FIXED_IDS.USER_PLUS_MONTHLY) {
+        displayName = 'Plus Monthly User';
+      } else if (user.id === FIXED_IDS.USER_PRO_MONTHLY) {
+        displayName = 'Pro Monthly User';
+      } else if (user.id === FIXED_IDS.USER_PLUS_YEARLY) {
+        displayName = 'Plus Yearly User';
+      } else if (user.id === FIXED_IDS.USER_PRO_YEARLY) {
+        displayName = 'Pro Yearly User';
       } else {
         // Generate realistic display name from handle
         // Convert handle like "john.doe23" to "John Doe"
@@ -2120,6 +2187,80 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
   console.log(`   ✅ Created profiles for users`);
 }
 
+/** ---------- Seed: User Plans (for testing) ---------- */
+async function seedUserPlans() {
+  console.log('💳 Seeding user plans for testing...');
+
+  const now = new Date();
+  const oneMonthFromNow = new Date(now);
+  oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+
+  const oneYearFromNow = new Date(now);
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+  // Plus Monthly - One-off payment (29.99 PLN)
+  await prisma.userPlanPeriod.create({
+    data: {
+      userId: FIXED_IDS.USER_PLUS_MONTHLY,
+      plan: 'PLUS',
+      source: 'ONE_OFF',
+      billingPeriod: 'MONTHLY',
+      stripeCustomerId: `cus_seed_plus_monthly_${Date.now()}`,
+      stripePaymentIntentId: `pi_seed_plus_monthly_${Date.now()}`,
+      stripeCheckoutSessionId: `cs_seed_plus_monthly_${Date.now()}`,
+      startsAt: now,
+      endsAt: oneMonthFromNow,
+    },
+  });
+
+  // Pro Monthly - One-off payment (83.99 PLN)
+  await prisma.userPlanPeriod.create({
+    data: {
+      userId: FIXED_IDS.USER_PRO_MONTHLY,
+      plan: 'PRO',
+      source: 'ONE_OFF',
+      billingPeriod: 'MONTHLY',
+      stripeCustomerId: `cus_seed_pro_monthly_${Date.now()}`,
+      stripePaymentIntentId: `pi_seed_pro_monthly_${Date.now()}`,
+      stripeCheckoutSessionId: `cs_seed_pro_monthly_${Date.now()}`,
+      startsAt: now,
+      endsAt: oneMonthFromNow,
+    },
+  });
+
+  // Plus Yearly - One-off payment (359.99 PLN = 29.99 * 12)
+  await prisma.userPlanPeriod.create({
+    data: {
+      userId: FIXED_IDS.USER_PLUS_YEARLY,
+      plan: 'PLUS',
+      source: 'ONE_OFF',
+      billingPeriod: 'YEARLY',
+      stripeCustomerId: `cus_seed_plus_yearly_${Date.now()}`,
+      stripePaymentIntentId: `pi_seed_plus_yearly_${Date.now()}`,
+      stripeCheckoutSessionId: `cs_seed_plus_yearly_${Date.now()}`,
+      startsAt: now,
+      endsAt: oneYearFromNow,
+    },
+  });
+
+  // Pro Yearly - One-off payment (839.99 PLN = 69.99 * 12)
+  await prisma.userPlanPeriod.create({
+    data: {
+      userId: FIXED_IDS.USER_PRO_YEARLY,
+      plan: 'PRO',
+      source: 'ONE_OFF',
+      billingPeriod: 'YEARLY',
+      stripeCustomerId: `cus_seed_pro_yearly_${Date.now()}`,
+      stripePaymentIntentId: `pi_seed_pro_yearly_${Date.now()}`,
+      stripeCheckoutSessionId: `cs_seed_pro_yearly_${Date.now()}`,
+      startsAt: now,
+      endsAt: oneYearFromNow,
+    },
+  });
+
+  console.log('   ✅ Created 4 user plan periods with realistic Stripe data');
+}
+
 /** ---------- Main ---------- */
 async function main() {
   console.log('🧹 Clearing DB…');
@@ -2136,6 +2277,9 @@ async function main() {
 
   console.log('👤 Seeding user profiles…');
   await seedUserProfiles(users, categories);
+
+  console.log('💳 Seeding user plans…');
+  await seedUserPlans();
 
   console.log('📝 Seeding intents (500) with realistic members…');
   const intentsCreated = await seedIntents({ users, categories, tags });

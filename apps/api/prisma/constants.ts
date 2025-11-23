@@ -4,6 +4,11 @@ export const FIXED_IDS = {
   ADMIN: 'u_admin_00000000000000000001',
   MODERATOR: 'u_moderator_00000000000000000001',
   USER: 'u_user_00000000000000000001',
+  // Users with active plans for testing
+  USER_PLUS_MONTHLY: 'u_plus_monthly_000000000001',
+  USER_PRO_MONTHLY: 'u_pro_monthly_0000000000001',
+  USER_PLUS_YEARLY: 'u_plus_yearly_00000000000001',
+  USER_PRO_YEARLY: 'u_pro_yearly_000000000000001',
 } as const;
 
 /** ---------- Realistic-ish data pools ---------- */

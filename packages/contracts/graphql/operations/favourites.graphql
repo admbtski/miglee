@@ -49,7 +49,7 @@ query MyFavourites($limit: Int = 20, $offset: Int = 0) {
         sponsorship {
           id
           plan
-          highlightOn
+          status
         }
       }
     }

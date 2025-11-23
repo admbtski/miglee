@@ -1,0 +1,301 @@
+'use client';
+
+import {
+  useMutation,
+  type UseMutationOptions,
+  useQuery,
+  useQueryClient,
+  type UseQueryOptions,
+} from '@tanstack/react-query';
+import {
+  // Queries
+  MyPlanDocument,
+  type MyPlanQuery,
+  MySubscriptionDocument,
+  type MySubscriptionQuery,
+  MyPlanPeriodsDocument,
+  type MyPlanPeriodsQuery,
+  type MyPlanPeriodsQueryVariables,
+  EventSponsorshipDocument,
+  type EventSponsorshipQuery,
+  type EventSponsorshipQueryVariables,
+  // Mutations
+  CreateSubscriptionCheckoutDocument,
+  type CreateSubscriptionCheckoutMutation,
+  type CreateSubscriptionCheckoutMutationVariables,
+  CreateOneOffCheckoutDocument,
+  type CreateOneOffCheckoutMutation,
+  type CreateOneOffCheckoutMutationVariables,
+  CreateEventSponsorshipCheckoutDocument,
+  type CreateEventSponsorshipCheckoutMutation,
+  type CreateEventSponsorshipCheckoutMutationVariables,
+  CancelSubscriptionDocument,
+  type CancelSubscriptionMutation,
+  type CancelSubscriptionMutationVariables,
+  ReactivateSubscriptionDocument,
+  type ReactivateSubscriptionMutation,
+  UseBoostDocument,
+  type UseBoostMutation,
+  type UseBoostMutationVariables,
+  UseLocalPushDocument,
+  type UseLocalPushMutation,
+  type UseLocalPushMutationVariables,
+} from './__generated__/react-query-update';
+import { gqlClient } from './client';
+
+// =============================================================================
+// Query Keys
+// =============================================================================
+
+export const billingKeys = {
+  all: ['billing'] as const,
+  myPlan: () => [...billingKeys.all, 'myPlan'] as const,
+  mySubscription: () => [...billingKeys.all, 'mySubscription'] as const,
+  myPlanPeriods: (limit?: number) =>
+    [...billingKeys.all, 'myPlanPeriods', limit] as const,
+  eventSponsorship: (intentId: string) =>
+    [...billingKeys.all, 'eventSponsorship', intentId] as const,
+};
+
+// =============================================================================
+// Queries
+// =============================================================================
+
+/**
+ * Get current user's effective plan
+ */
+export function useMyPlan(
+  options?: Omit<
+    UseQueryOptions<MyPlanQuery, unknown, MyPlanQuery>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: billingKeys.myPlan(),
+    queryFn: async () => gqlClient.request(MyPlanDocument),
+    ...options,
+  });
+}
+
+/**
+ * Get current user's active subscription (if any)
+ */
+export function useMySubscription(
+  options?: Omit<
+    UseQueryOptions<MySubscriptionQuery, unknown, MySubscriptionQuery>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: billingKeys.mySubscription(),
+    queryFn: async () => gqlClient.request(MySubscriptionDocument),
+    ...options,
+  });
+}
+
+/**
+ * Get current user's active plan periods
+ */
+export function useMyPlanPeriods(
+  variables?: MyPlanPeriodsQueryVariables,
+  options?: Omit<
+    UseQueryOptions<MyPlanPeriodsQuery, unknown, MyPlanPeriodsQuery>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: billingKeys.myPlanPeriods(variables?.limit),
+    queryFn: async () => gqlClient.request(MyPlanPeriodsDocument, variables),
+    ...options,
+  });
+}
+
+/**
+ * Get event sponsorship for an intent
+ */
+export function useEventSponsorship(
+  variables: EventSponsorshipQueryVariables,
+  options?: Omit<
+    UseQueryOptions<EventSponsorshipQuery, unknown, EventSponsorshipQuery>,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: billingKeys.eventSponsorship(variables.intentId),
+    queryFn: async () => gqlClient.request(EventSponsorshipDocument, variables),
+    ...options,
+  });
+}
+
+// =============================================================================
+// Mutations
+// =============================================================================
+
+/**
+ * Create checkout session for user subscription (auto-renewable)
+ */
+export function useCreateSubscriptionCheckout(
+  options?: UseMutationOptions<
+    CreateSubscriptionCheckoutMutation,
+    unknown,
+    CreateSubscriptionCheckoutMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(CreateSubscriptionCheckoutDocument, variables),
+    onSuccess: (data, variables, context) => {
+      // Invalidate billing queries after successful checkout creation
+      queryClient.invalidateQueries({ queryKey: billingKeys.myPlan() });
+      queryClient.invalidateQueries({ queryKey: billingKeys.mySubscription() });
+      queryClient.invalidateQueries({ queryKey: billingKeys.myPlanPeriods() });
+      options?.onSuccess?.(data, variables, context);
+    },
+    ...options,
+  });
+}
+
+/**
+ * Create checkout session for one-off payment (month or year)
+ */
+export function useCreateOneOffCheckout(
+  options?: UseMutationOptions<
+    CreateOneOffCheckoutMutation,
+    unknown,
+    CreateOneOffCheckoutMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(CreateOneOffCheckoutDocument, variables),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.myPlan() });
+      queryClient.invalidateQueries({ queryKey: billingKeys.myPlanPeriods() });
+      options?.onSuccess?.(data, variables, context);
+    },
+    ...options,
+  });
+}
+
+/**
+ * Create checkout session for event sponsorship
+ */
+export function useCreateEventSponsorshipCheckout(
+  options?: UseMutationOptions<
+    CreateEventSponsorshipCheckoutMutation,
+    unknown,
+    CreateEventSponsorshipCheckoutMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(CreateEventSponsorshipCheckoutDocument, variables),
+    onSuccess: (data, variables, context) => {
+      // Invalidate event sponsorship query
+      if (variables.input.intentId) {
+        queryClient.invalidateQueries({
+          queryKey: billingKeys.eventSponsorship(variables.input.intentId),
+        });
+      }
+      options?.onSuccess?.(data, variables, context);
+    },
+    ...options,
+  });
+}
+
+/**
+ * Cancel user subscription (at period end or immediately)
+ */
+export function useCancelSubscription(
+  options?: UseMutationOptions<
+    CancelSubscriptionMutation,
+    unknown,
+    CancelSubscriptionMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(CancelSubscriptionDocument, variables),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.mySubscription() });
+      options?.onSuccess?.(data, variables, context);
+    },
+    ...options,
+  });
+}
+
+/**
+ * Reactivate a subscription that was set to cancel at period end
+ */
+export function useReactivateSubscription(
+  options?: UseMutationOptions<ReactivateSubscriptionMutation, unknown, void>
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => gqlClient.request(ReactivateSubscriptionDocument),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.mySubscription() });
+      options?.onSuccess?.(data, variables, context);
+    },
+    ...options,
+  });
+}
+
+/**
+ * Use a boost for event sponsorship
+ */
+export function useBoost(
+  options?: UseMutationOptions<
+    UseBoostMutation,
+    unknown,
+    UseBoostMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(UseBoostDocument, variables),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: billingKeys.eventSponsorship(variables.intentId),
+      });
+      options?.onSuccess?.(data, variables, context);
+    },
+    ...options,
+  });
+}
+
+/**
+ * Use a local push notification for event sponsorship
+ */
+export function useLocalPush(
+  options?: UseMutationOptions<
+    UseLocalPushMutation,
+    unknown,
+    UseLocalPushMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(UseLocalPushDocument, variables),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: billingKeys.eventSponsorship(variables.intentId),
+      });
+      options?.onSuccess?.(data, variables, context);
+    },
+    ...options,
+  });
+}
