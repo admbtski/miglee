@@ -100,3 +100,9 @@ export function buildLogger({
   // Production/Test: pure JSON; optionally write to file (async for performance)
   return filePath ? { ...baseOptions, file: filePath } : baseOptions;
 }
+
+/**
+ * Shared logger instance for use outside Fastify context
+ * (e.g., in services, utilities, workers)
+ */
+export const logger = pino(buildLogger());

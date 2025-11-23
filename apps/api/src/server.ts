@@ -18,6 +18,8 @@ import { rateLimitPlugin } from './plugins/rate-limit';
 import lastSeen from './plugins/last-seen';
 import imageVariantsPlugin from './plugins/image-variants';
 import { localUploadPlugin } from './plugins/local-upload';
+import { stripeWebhookPlugin } from './plugins/stripe-webhook';
+import rawBody from 'fastify-raw-body';
 /**
  * Generate a stable request id.
  * - Reuse X-Request-Id from proxy if present.
@@ -50,6 +52,15 @@ export async function createServer() {
   await server.register(cookiePlugin);
   await server.register(jwtPlugin);
   await server.register(lastSeen);
+
+  // Raw body plugin - needed for Stripe webhooks
+  await server.register(rawBody, {
+    field: 'rawBody', // adds request.rawBody
+    global: false, // don't add to all routes
+    encoding: 'utf8',
+    runFirst: true,
+    routes: ['/webhooks/stripe'], // only for this route
+  });
   // await server.register(fastifyMetrics);
 
   // lifecycle
@@ -107,11 +118,12 @@ export async function createServer() {
     });
   });
 
-  // plugins
+  // plugins - order matters!
   await server.register(healthPlugin);
+  await server.register(stripeWebhookPlugin); // MUST be before mercurius (body parsing)
   await server.register(localUploadPlugin);
   await server.register(imageVariantsPlugin);
-  await server.register(mercuriusPlugin);
+  await server.register(mercuriusPlugin); // This adds body parsing
 
   return server;
 }

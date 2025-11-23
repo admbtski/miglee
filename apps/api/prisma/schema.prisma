@@ -78,7 +78,7 @@ enum IntentMemberStatus {
   LEFT
   KICKED
   CANCELLED // User cancelled their own pending request
-  WAITLIST  // User is on the waiting list (event is full)
+  WAITLIST // User is on the waiting list (event is full)
 }
 
 enum NotificationKind {
@@ -97,8 +97,8 @@ enum NotificationKind {
   BANNED
   UNBANNED
   SYSTEM
-  WAITLIST_JOINED      // User joined the waitlist
-  WAITLIST_PROMOTED    // User was promoted from waitlist to joined
+  WAITLIST_JOINED // User joined the waitlist
+  WAITLIST_PROMOTED // User was promoted from waitlist to joined
 }
 
 enum NotificationEntity {
@@ -112,12 +112,6 @@ enum NotificationEntity {
   OTHER
 }
 
-enum SponsorPlan {
-  BASIC
-  PLUS
-  PRO
-}
-
 enum SponsorshipStatus {
   PENDING
   ACTIVE
@@ -126,9 +120,18 @@ enum SponsorshipStatus {
 }
 
 enum SubscriptionPlan {
-  BASIC
   PLUS
   PRO
+}
+
+enum UserPlanSource {
+  SUBSCRIPTION // auto-renewable subscription
+  ONE_OFF // one-time payment (month / year)
+}
+
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
 }
 
 enum SubscriptionStatus {
@@ -139,6 +142,12 @@ enum SubscriptionStatus {
   CANCELED
   UNPAID
   PAUSED
+}
+
+enum IntentPlan {
+  FREE
+  PLUS
+  PRO
 }
 
 enum MemberEvent {
@@ -153,7 +162,7 @@ enum MemberEvent {
   INVITE
   ACCEPT_INVITE
   CANCEL_REQUEST // User cancelled their own pending request
-  WAITLIST       // User joined the waitlist
+  WAITLIST // User joined the waitlist
   WAITLIST_LEAVE // User left the waitlist
   WAITLIST_PROMOTE // User was promoted from waitlist
 }
@@ -252,6 +261,7 @@ model User {
 
   // Monetization
   subscriptions     UserSubscription[]
+  planPeriods       UserPlanPeriod[]
   eventSponsorships EventSponsorship[] @relation("SponsorUser")
 
   // Profile & Privacy
@@ -357,6 +367,9 @@ model Intent {
   commentsCount Int @default(0)
   messagesCount Int @default(0)
   savedCount    Int @default(0) // How many users saved/favourited this intent
+
+  // Sponsorship / Plan
+  sponsorshipPlan IntentPlan @default(FREE) // Effective plan of the event (Free/Plus/Pro)
 
   // Ownership
   ownerId            String?
@@ -712,19 +725,26 @@ model Report {
 // ========================== Monetization ==========================
 
 model UserSubscription {
-  id                   String             @id @default(cuid())
-  userId               String
-  plan                 SubscriptionPlan   @default(BASIC)
-  status               SubscriptionStatus @default(INCOMPLETE)
-  stripeCustomerId     String?
+  id     String @id @default(cuid())
+  userId String
+
+  plan          SubscriptionPlan
+  billingPeriod BillingPeriod      @default(MONTHLY)
+  status        SubscriptionStatus @default(INCOMPLETE)
+
+  stripeCustomerId     String
   stripeSubscriptionId String?
   stripePriceId        String?
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean            @default(false)
-  canceledAt           DateTime?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  trialEndsAt        DateTime?
+
+  cancelAtPeriodEnd Boolean   @default(false)
+  canceledAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -734,19 +754,55 @@ model UserSubscription {
   @@map("user_subscriptions")
 }
 
+model UserPlanPeriod {
+  id     String @id @default(cuid())
+  userId String
+
+  plan   SubscriptionPlan // PLUS / PRO
+  source UserPlanSource // SUBSCRIPTION / ONE_OFF
+
+  billingPeriod BillingPeriod // MONTHLY / YEARLY
+
+  // Links to Stripe – depends on source
+  stripeCustomerId        String?
+  stripeSubscriptionId    String? // for SUBSCRIPTION
+  stripePaymentIntentId   String? // for ONE_OFF
+  stripeCheckoutSessionId String? // optional for debug/trace
+
+  startsAt DateTime
+  endsAt   DateTime
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, endsAt])
+  @@index([stripeSubscriptionId])
+  @@index([stripePaymentIntentId])
+  @@map("user_plan_periods")
+}
+
 model EventSponsorship {
-  id          String            @id @default(cuid())
-  intentId    String            @unique
-  sponsorId   String
-  plan        SponsorPlan       @default(BASIC)
-  status      SponsorshipStatus @default(PENDING)
-  highlightOn Boolean           @default(false)
-  startedAt   DateTime?
-  endsAt      DateTime?
-  boostsUsed  Int               @default(0)
-  localPushes Int               @default(0)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id        String @id @default(cuid())
+  intentId  String @unique // 1:1 with Intent
+  sponsorId String // sponsoring user (usually owner)
+
+  plan   IntentPlan // PLUS / PRO (FREE doesn't make sense but enum is shared)
+  status SponsorshipStatus @default(PENDING)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  boostsTotal      Int @default(0)
+  boostsUsed       Int @default(0)
+  localPushesTotal Int @default(0)
+  localPushesUsed  Int @default(0)
+
+  stripePaymentIntentId   String?
+  stripeCheckoutSessionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   intent  Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
   sponsor User   @relation("SponsorUser", fields: [sponsorId], references: [id], onDelete: Cascade)
@@ -1129,24 +1185,24 @@ model IntentJoinAnswer {
 // =============================================================================
 
 model MediaAsset {
-  id       String   @id @default(cuid())
+  id  String @id @default(cuid())
   /// Key under which we store the original and variants (e.g. avatars/{userId}/{uuid}, covers/intents/{intentId}/{uuid})
-  key      String   @unique
-  
+  key String @unique
+
   /// Optional metadata from upload/processing
   blurhash String?
   width    Int?
   height   Int?
   mimeType String?
-  
+
   // Optional owner metadata - no FK to User/Intent (logical reference through key)
-  ownerId  String? // e.g. userId
+  ownerId String? // e.g. userId
   /// USER_AVATAR, USER_COVER, INTENT_COVER, GALLERY_IMAGE, etc.
-  purpose  String?
-  
+  purpose String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([ownerId])
   @@index([purpose])
   @@index([createdAt])

@@ -49,6 +49,27 @@ const envSchema = z.object({
   ASSETS_BASE_URL: z.string().optional(), // e.g. http://localhost:4000 or https://cdn.example.com
   CDN_ENABLED: z.coerce.boolean().default(false),
   CDN_BASE_URL: z.string().optional(),
+
+  // Stripe Configuration
+  STRIPE_SECRET_KEY: z.string().optional(), // Required for production
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(), // Required for webhook signature verification
+
+  // Stripe Price IDs (set these in your .env for your Stripe account)
+  // User Plans
+  STRIPE_PRICE_USER_PLUS_MONTHLY_SUB: z.string().optional(),
+  STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF: z.string().optional(),
+  STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF: z.string().optional(),
+  STRIPE_PRICE_USER_PRO_MONTHLY_SUB: z.string().optional(),
+  STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF: z.string().optional(),
+  STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF: z.string().optional(),
+  // Event Plans
+  STRIPE_PRICE_EVENT_PLUS: z.string().optional(),
+  STRIPE_PRICE_EVENT_PRO: z.string().optional(),
+
+  // App URLs
+  APP_URL: z.string().default('http://localhost:3000'),
+  API_URL: z.string().default('http://localhost:4000'),
 });
 
 export const env = envSchema.parse(process.env);
@@ -93,4 +114,33 @@ export const config = {
   assetsBaseUrl: env.ASSETS_BASE_URL,
   cdnEnabled: env.CDN_ENABLED,
   cdnBaseUrl: env.CDN_BASE_URL,
+
+  // Stripe
+  stripeSecretKey: env.STRIPE_SECRET_KEY,
+  stripePublishableKey: env.STRIPE_PUBLISHABLE_KEY,
+  stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+
+  // Stripe Price IDs
+  stripePrices: {
+    user: {
+      plus: {
+        monthlySub: env.STRIPE_PRICE_USER_PLUS_MONTHLY_SUB,
+        monthlyOneOff: env.STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF,
+        yearlyOneOff: env.STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF,
+      },
+      pro: {
+        monthlySub: env.STRIPE_PRICE_USER_PRO_MONTHLY_SUB,
+        monthlyOneOff: env.STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF,
+        yearlyOneOff: env.STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF,
+      },
+    },
+    event: {
+      plus: env.STRIPE_PRICE_EVENT_PLUS,
+      pro: env.STRIPE_PRICE_EVENT_PRO,
+    },
+  },
+
+  // URLs
+  appUrl: env.APP_URL,
+  apiUrl: env.API_URL,
 };
