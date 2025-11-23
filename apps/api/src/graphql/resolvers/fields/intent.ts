@@ -3,6 +3,29 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { IntentResolvers } from '../../__generated__/resolvers-types';
 
 /**
+ * Field resolver for Intent.sponsorshipPlan
+ * Returns the effective sponsorship plan for this intent (FREE, PLUS, PRO)
+ */
+export const intentSponsorshipPlanResolver: IntentResolvers['sponsorshipPlan'] =
+  resolverWithMetrics('Intent', 'sponsorshipPlan', async (parent, _args) => {
+    // If already present in parent, return it
+    if ('sponsorshipPlan' in parent && parent.sponsorshipPlan !== undefined) {
+      return parent.sponsorshipPlan as any;
+    }
+
+    // Check for active sponsorship
+    const sponsorship = await prisma.eventSponsorship.findUnique({
+      where: { intentId: parent.id },
+    });
+
+    if (!sponsorship || sponsorship.status !== 'ACTIVE') {
+      return 'FREE';
+    }
+
+    return sponsorship.plan as any;
+  });
+
+/**
  * Field resolver for Intent.sponsorship
  * Returns EventSponsorship if exists for this intent
  */
@@ -13,7 +36,7 @@ export const intentSponsorshipResolver: IntentResolvers['sponsorship'] =
     async (parent, _args, { user }) => {
       const sponsorship = await prisma.eventSponsorship.findUnique({
         where: { intentId: parent.id },
-        include: { sponsor: true },
+        include: { sponsor: true, intent: true },
       });
 
       if (!sponsorship) return null;
@@ -24,11 +47,14 @@ export const intentSponsorshipResolver: IntentResolvers['sponsorship'] =
         sponsorId: sponsorship.sponsorId,
         plan: sponsorship.plan as any,
         status: sponsorship.status as any,
-        highlightOn: sponsorship.highlightOn,
-        startedAt: sponsorship.startedAt ?? null,
+        startsAt: sponsorship.startsAt ?? null,
         endsAt: sponsorship.endsAt ?? null,
+        boostsTotal: sponsorship.boostsTotal,
         boostsUsed: sponsorship.boostsUsed,
-        localPushes: sponsorship.localPushes,
+        localPushesTotal: sponsorship.localPushesTotal,
+        localPushesUsed: sponsorship.localPushesUsed,
+        stripePaymentIntentId: sponsorship.stripePaymentIntentId ?? null,
+        stripeCheckoutSessionId: sponsorship.stripeCheckoutSessionId ?? null,
         createdAt: sponsorship.createdAt,
         updatedAt: sponsorship.updatedAt,
         intent: parent as any, // Avoid circular fetch

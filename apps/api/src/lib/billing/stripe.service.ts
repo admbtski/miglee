@@ -22,7 +22,7 @@ export function getStripe(): Stripe {
 
   if (!stripeInstance) {
     stripeInstance = new Stripe(config.stripeSecretKey, {
-      apiVersion: '2024-12-18.acacia', // Use latest API version
+      apiVersion: '2025-11-17.clover', // Use latest API version
       typescript: true,
       appInfo: {
         name: 'Miglee',

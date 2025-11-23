@@ -1,5 +1,6 @@
-import type { Resolvers } from '../__generated__/resolvers-types';
+import type { Resolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
+import { getUserEffectivePlan } from '../../../lib/billing';
 
 /**
  * Helper to check if viewer can see a field based on privacy settings
@@ -182,6 +183,43 @@ export const UserFieldResolvers: Resolvers['User'] = {
     });
 
     return badges;
+  },
+
+  // Billing fields
+  effectivePlan: async (parent) => {
+    const planInfo = await getUserEffectivePlan(parent.id);
+    return planInfo.plan;
+  },
+
+  planEndsAt: async (parent) => {
+    const planInfo = await getUserEffectivePlan(parent.id);
+    return planInfo.planEndsAt;
+  },
+
+  activeSubscription: async (parent) => {
+    const subscription = await prisma.userSubscription.findFirst({
+      where: {
+        userId: parent.id,
+        status: { in: ['ACTIVE', 'TRIALING'] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return subscription;
+  },
+
+  activePlanPeriods: async (parent) => {
+    const now = new Date();
+    const periods = await prisma.userPlanPeriod.findMany({
+      where: {
+        userId: parent.id,
+        startsAt: { lte: now },
+        endsAt: { gt: now },
+      },
+      orderBy: { endsAt: 'desc' },
+    });
+
+    return periods;
   },
 };
 

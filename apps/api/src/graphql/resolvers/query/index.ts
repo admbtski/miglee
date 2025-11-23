@@ -63,6 +63,12 @@ import {
 import { adminCommentsQuery, adminReviewsQuery } from './admin-moderation';
 import { userEventsQuery } from './user-events';
 import { userReviewsQuery } from './user-reviews';
+import {
+  myPlanQuery,
+  mySubscriptionQuery,
+  myPlanPeriodsQuery,
+  eventSponsorshipQuery,
+} from './billing';
 
 export const Query: Resolvers['Query'] = {
   // Admin queries
@@ -126,4 +132,10 @@ export const Query: Resolvers['Query'] = {
   regionIntents: regionIntentsQuery,
   userEvents: userEventsQuery,
   userReviews: userReviewsQuery,
+
+  // Billing queries
+  myPlan: myPlanQuery,
+  mySubscription: mySubscriptionQuery,
+  myPlanPeriods: myPlanPeriodsQuery,
+  eventSponsorship: eventSponsorshipQuery,
 };

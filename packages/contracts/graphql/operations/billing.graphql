@@ -1,0 +1,79 @@
+# =============================================================================
+# Billing Operations
+# =============================================================================
+# GraphQL operations for billing, subscriptions, and event sponsorships.
+
+#import "../fragments/billing.graphql"
+#import "../fragments/sponsorships.graphql"
+
+# =============================================================================
+# Queries
+# =============================================================================
+
+query MyPlan {
+  myPlan {
+    ...UserPlanInfoCore
+  }
+}
+
+query MySubscription {
+  mySubscription {
+    ...UserSubscriptionCore
+  }
+}
+
+query MyPlanPeriods($limit: Int = 10) {
+  myPlanPeriods(limit: $limit) {
+    ...UserPlanPeriodCore
+  }
+}
+
+query EventSponsorship($intentId: ID!) {
+  eventSponsorship(intentId: $intentId) {
+    ...EventSponsorshipFull
+  }
+}
+
+# =============================================================================
+# Mutations - User Subscriptions
+# =============================================================================
+
+mutation CreateSubscriptionCheckout($input: CreateSubscriptionCheckoutInput!) {
+  createSubscriptionCheckout(input: $input) {
+    ...CheckoutSessionCore
+  }
+}
+
+mutation CreateOneOffCheckout($input: CreateOneOffCheckoutInput!) {
+  createOneOffCheckout(input: $input) {
+    ...CheckoutSessionCore
+  }
+}
+
+mutation CancelSubscription($immediately: Boolean = false) {
+  cancelSubscription(immediately: $immediately)
+}
+
+mutation ReactivateSubscription {
+  reactivateSubscription
+}
+
+# =============================================================================
+# Mutations - Event Sponsorships
+# =============================================================================
+
+mutation CreateEventSponsorshipCheckout(
+  $input: CreateEventSponsorshipCheckoutInput!
+) {
+  createEventSponsorshipCheckout(input: $input) {
+    ...EventSponsorshipCheckoutCore
+  }
+}
+
+mutation UseBoost($intentId: ID!) {
+  useBoost(intentId: $intentId)
+}
+
+mutation UseLocalPush($intentId: ID!) {
+  useLocalPush(intentId: $intentId)
+}

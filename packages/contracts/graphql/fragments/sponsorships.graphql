@@ -11,15 +11,27 @@ fragment EventSponsorshipCore on EventSponsorship {
   sponsorId
   plan
   status
-  highlightOn
-  startedAt
+  startsAt
   endsAt
+  boostsTotal
   boostsUsed
-  localPushes
+  localPushesTotal
+  localPushesUsed
+  stripePaymentIntentId
+  stripeCheckoutSessionId
   createdAt
   updatedAt
+}
+
+fragment EventSponsorshipFull on EventSponsorship {
+  ...EventSponsorshipCore
 
   sponsor {
     ...UserLight
+  }
+
+  intent {
+    id
+    title
   }
 }

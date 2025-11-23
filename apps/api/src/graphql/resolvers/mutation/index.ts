@@ -188,6 +188,17 @@ import {
 // Media Upload mutations
 import { getUploadUrl, confirmMediaUpload } from './media';
 
+// Billing mutations
+import {
+  createSubscriptionCheckoutMutation,
+  createOneOffCheckoutMutation,
+  createEventSponsorshipCheckoutMutation,
+  cancelSubscriptionMutation,
+  reactivateSubscriptionMutation,
+  useBoostMutation,
+  useLocalPushMutation,
+} from './billing';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -341,6 +352,15 @@ export const Mutation: Resolvers['Mutation'] = {
   // ---- Media Upload ----
   getUploadUrl,
   confirmMediaUpload,
+
+  // ---- Billing & Subscriptions ----
+  createSubscriptionCheckout: createSubscriptionCheckoutMutation,
+  createOneOffCheckout: createOneOffCheckoutMutation,
+  createEventSponsorshipCheckout: createEventSponsorshipCheckoutMutation,
+  cancelSubscription: cancelSubscriptionMutation,
+  reactivateSubscription: reactivateSubscriptionMutation,
+  useBoost: useBoostMutation,
+  useLocalPush: useLocalPushMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

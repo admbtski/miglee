@@ -222,9 +222,20 @@ enum ReportEntity {
 
 "Subscription plan tiers"
 enum SubscriptionPlan {
-  BASIC
   PLUS
   PRO
+}
+
+"User plan source"
+enum UserPlanSource {
+  SUBSCRIPTION
+  ONE_OFF
+}
+
+"Billing period"
+enum BillingPeriod {
+  MONTHLY
+  YEARLY
 }
 
 "Subscription status"
@@ -238,9 +249,9 @@ enum SubscriptionStatus {
   PAUSED
 }
 
-"Event sponsorship plan tiers"
-enum SponsorPlan {
-  BASIC
+"Intent/Event plan tiers"
+enum IntentPlan {
+  FREE
   PLUS
   PRO
 }
@@ -251,6 +262,13 @@ enum SponsorshipStatus {
   ACTIVE
   EXPIRED
   CANCELED
+}
+
+"User effective plan (computed from active periods)"
+enum UserEffectivePlan {
+  FREE
+  PLUS
+  PRO
 }
 
 "Intent dynamic status (computed on read)"
@@ -349,6 +367,12 @@ type User {
   disciplines: [UserDiscipline!]!
   availability: [UserAvailability!]!
   badges: [UserBadge!]!
+
+  # Billing & Subscriptions
+  effectivePlan: UserEffectivePlan!
+  planEndsAt: DateTime
+  activeSubscription: UserSubscription
+  activePlanPeriods: [UserPlanPeriod!]!
 }
 
 type UserProfile {
@@ -451,6 +475,103 @@ type UserBadge {
   slug: String!
   data: JSON
   earnedAt: DateTime!
+}
+
+# ==============================================================================
+# Billing Types
+# ==============================================================================
+
+"User subscription (auto-renewable)"
+type UserSubscription {
+  id: ID!
+  userId: ID!
+  user: User!
+
+  plan: SubscriptionPlan!
+  billingPeriod: BillingPeriod!
+  status: SubscriptionStatus!
+
+  stripeCustomerId: String!
+  stripeSubscriptionId: String
+  stripePriceId: String
+
+  currentPeriodStart: DateTime
+  currentPeriodEnd: DateTime
+  trialEndsAt: DateTime
+
+  cancelAtPeriodEnd: Boolean!
+  canceledAt: DateTime
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"User plan period (subscription or one-off)"
+type UserPlanPeriod {
+  id: ID!
+  userId: ID!
+  user: User!
+
+  plan: SubscriptionPlan!
+  source: UserPlanSource!
+  billingPeriod: BillingPeriod!
+
+  stripeCustomerId: String
+  stripeSubscriptionId: String
+  stripePaymentIntentId: String
+  stripeCheckoutSessionId: String
+
+  startsAt: DateTime!
+  endsAt: DateTime!
+
+  createdAt: DateTime!
+}
+
+"Event/Intent sponsorship"
+type EventSponsorship {
+  id: ID!
+  intentId: ID!
+  sponsorId: ID!
+  intent: Intent!
+  sponsor: User!
+
+  plan: IntentPlan!
+  status: SponsorshipStatus!
+
+  startsAt: DateTime
+  endsAt: DateTime
+
+  boostsTotal: Int!
+  boostsUsed: Int!
+  localPushesTotal: Int!
+  localPushesUsed: Int!
+
+  stripePaymentIntentId: String
+  stripeCheckoutSessionId: String
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"Checkout session response"
+type CheckoutSession {
+  checkoutUrl: String!
+  sessionId: String!
+}
+
+"Event sponsorship checkout response"
+type EventSponsorshipCheckout {
+  checkoutUrl: String!
+  sessionId: String!
+  sponsorshipId: ID!
+}
+
+"User plan info (computed)"
+type UserPlanInfo {
+  plan: UserEffectivePlan!
+  planEndsAt: DateTime
+  source: UserPlanSource
+  billingPeriod: BillingPeriod
 }
 
 "Category with translated names in JSON, e.g. { pl,de,en }"
@@ -638,31 +759,15 @@ type Intent {
   deleteReason: String
   isDeleted: Boolean!
 
-  # Relations
+  # Billing & Sponsorship
+  sponsorshipPlan: IntentPlan!
   sponsorship: EventSponsorship
+
+  # Relations
   inviteLinks: [IntentInviteLink!]!
 
   createdAt: DateTime!
   updatedAt: DateTime!
-}
-
-"Event sponsorship for highlighted/boosted intents"
-type EventSponsorship {
-  id: ID!
-  intentId: ID!
-  sponsorId: ID!
-  plan: SponsorPlan!
-  status: SponsorshipStatus!
-  highlightOn: Boolean!
-  startedAt: DateTime
-  endsAt: DateTime
-  boostsUsed: Int!
-  localPushes: Int!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-
-  intent: Intent!
-  sponsor: User!
 }
 
 "Notification stored in DB; polymorphic target"
@@ -1284,6 +1389,26 @@ type AdminBulkUpdateResult {
 }
 
 # ------------------------------------------------------------------------------
+# Billing Inputs
+# ------------------------------------------------------------------------------
+
+input CreateSubscriptionCheckoutInput {
+  plan: SubscriptionPlan!
+  billingPeriod: BillingPeriod!
+  withTrial: Boolean = true
+}
+
+input CreateOneOffCheckoutInput {
+  plan: SubscriptionPlan!
+  billingPeriod: BillingPeriod!
+}
+
+input CreateEventSponsorshipCheckoutInput {
+  intentId: ID!
+  plan: IntentPlan!
+}
+
+# ------------------------------------------------------------------------------
 # Queries
 # ------------------------------------------------------------------------------
 
@@ -1381,6 +1506,22 @@ type Query {
     limit: Int = 20
     offset: Int = 0
   ): [IntentMember!]!
+
+  # ==============================================================================
+  # Billing & Subscriptions
+  # ==============================================================================
+
+  "Get user's current effective plan"
+  myPlan: UserPlanInfo!
+
+  "Get user's active subscription (if any)"
+  mySubscription: UserSubscription
+
+  "Get user's active plan periods"
+  myPlanPeriods(limit: Int = 10): [UserPlanPeriod!]!
+
+  "Get event sponsorship for an intent"
+  eventSponsorship(intentId: ID!): EventSponsorship
 
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
   categories(query: String, limit: Int = 50): [Category!]!
@@ -1785,6 +1926,35 @@ type Mutation {
     entityId: ID!
     uploadKey: String!
   ): ConfirmMediaUploadPayload!
+
+  # ==============================================================================
+  # Billing & Subscriptions
+  # ==============================================================================
+
+  "Create checkout session for user subscription (auto-renewable)"
+  createSubscriptionCheckout(
+    input: CreateSubscriptionCheckoutInput!
+  ): CheckoutSession!
+
+  "Create checkout session for one-off payment (month or year)"
+  createOneOffCheckout(input: CreateOneOffCheckoutInput!): CheckoutSession!
+
+  "Create checkout session for event sponsorship"
+  createEventSponsorshipCheckout(
+    input: CreateEventSponsorshipCheckoutInput!
+  ): EventSponsorshipCheckout!
+
+  "Cancel user subscription (at period end or immediately)"
+  cancelSubscription(immediately: Boolean = false): Boolean!
+
+  "Reactivate a subscription that was set to cancel at period end"
+  reactivateSubscription: Boolean!
+
+  "Use a boost for event sponsorship"
+  useBoost(intentId: ID!): Boolean!
+
+  "Use a local push notification for event sponsorship"
+  useLocalPush(intentId: ID!): Boolean!
 
   # dev only
   devLogin(name: String!): SessionUser

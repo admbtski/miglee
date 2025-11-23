@@ -1,0 +1,87 @@
+# =============================================================================
+# Billing & Subscription Fragments
+# =============================================================================
+# Fragments for user subscriptions, plan periods, and billing.
+
+#import "./_core.graphql"
+
+# =============================================================================
+# User Subscription
+# =============================================================================
+
+fragment UserSubscriptionCore on UserSubscription {
+  id
+  userId
+  plan
+  billingPeriod
+  status
+  stripeCustomerId
+  stripeSubscriptionId
+  stripePriceId
+  currentPeriodStart
+  currentPeriodEnd
+  trialEndsAt
+  cancelAtPeriodEnd
+  canceledAt
+  createdAt
+  updatedAt
+}
+
+fragment UserSubscriptionFull on UserSubscription {
+  ...UserSubscriptionCore
+  user {
+    ...UserLight
+  }
+}
+
+# =============================================================================
+# User Plan Period
+# =============================================================================
+
+fragment UserPlanPeriodCore on UserPlanPeriod {
+  id
+  userId
+  plan
+  source
+  billingPeriod
+  stripeCustomerId
+  stripeSubscriptionId
+  stripePaymentIntentId
+  stripeCheckoutSessionId
+  startsAt
+  endsAt
+  createdAt
+}
+
+fragment UserPlanPeriodFull on UserPlanPeriod {
+  ...UserPlanPeriodCore
+  user {
+    ...UserLight
+  }
+}
+
+# =============================================================================
+# User Plan Info (Computed)
+# =============================================================================
+
+fragment UserPlanInfoCore on UserPlanInfo {
+  plan
+  planEndsAt
+  source
+  billingPeriod
+}
+
+# =============================================================================
+# Checkout Sessions
+# =============================================================================
+
+fragment CheckoutSessionCore on CheckoutSession {
+  checkoutUrl
+  sessionId
+}
+
+fragment EventSponsorshipCheckoutCore on EventSponsorshipCheckout {
+  checkoutUrl
+  sessionId
+  sponsorshipId
+}

@@ -9,6 +9,7 @@ import {
 } from './fields/message-reactions';
 import {
   intentSponsorshipResolver,
+  intentSponsorshipPlanResolver,
   intentInviteLinksResolver,
   intentIsFavouriteResolver,
   intentCoverBlurhashResolver,
@@ -20,19 +21,17 @@ import { IntentInviteLinkFieldResolvers } from './fields/invite-link';
 
 export const resolvers: Pick<
   Resolvers,
-  | 'Query'
-  | 'Mutation'
-  | 'Subscription'
-  | 'JSON'
-  | 'JSONObject'
-  | 'DmMessage'
-  | 'IntentChatMessage'
-  | 'Intent'
-  | 'IntentMember'
-  | 'IntentInviteLink'
-  | 'User'
-  | 'SessionUser'
-> = {
+  'Query' | 'Mutation' | 'Subscription' | 'JSON' | 'JSONObject'
+> & {
+  DmMessage?: Partial<Resolvers['DmMessage']>;
+  IntentChatMessage?: Partial<Resolvers['IntentChatMessage']>;
+  Intent?: Partial<Resolvers['Intent']>;
+  IntentMember?: Partial<Resolvers['IntentMember']>;
+  IntentInviteLink?: Partial<Resolvers['IntentInviteLink']>;
+  User?: Partial<Resolvers['User']>;
+  UserProfile?: Partial<Resolvers['UserProfile']>;
+  SessionUser?: Partial<Resolvers['SessionUser']>;
+} = {
   JSON: JSONScalar,
   JSONObject: JSONObjectScalar,
   Query,
@@ -45,6 +44,7 @@ export const resolvers: Pick<
     reactions: intentChatMessageReactionsResolver,
   },
   Intent: {
+    sponsorshipPlan: intentSponsorshipPlanResolver,
     sponsorship: intentSponsorshipResolver,
     inviteLinks: intentInviteLinksResolver,
     isFavourite: intentIsFavouriteResolver,
