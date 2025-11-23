@@ -3,10 +3,10 @@
  * Purchase and manage sponsorship plans
  */
 
-import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { PlansPanelWrapper } from './_components/plans-panel-wrapper';
+import { Suspense } from 'react';
 import { ManagementPageLayout } from '../_components/management-page-layout';
+import { PlansPanelWrapper } from './_components/plans-panel-wrapper';
 
 type PageProps = {
   params: Promise<{ id: string }>;

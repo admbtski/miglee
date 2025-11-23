@@ -3,7 +3,7 @@
  * Dedicated page for choosing and purchasing subscription plans
  */
 
-import { SubscriptionPlansWrapper } from '../plans-and-bills/_components/subscription-plans-wrapper';
+import { SubscriptionPlansWrapper } from './_components/subscription-plans-wrapper';
 
 export default function SubscriptionPage() {
   return (

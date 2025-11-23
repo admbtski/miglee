@@ -25,6 +25,7 @@ import { EditCardModal } from './_components/edit-card-modal';
 import { AddCardModal } from './_components/add-card-modal';
 import { ConfirmDeleteModal } from './_components/confirm-delete-modal';
 import { InvoiceViewModal } from './_components/invoice-view-modal';
+import { CancelSubscriptionModal } from './_components/cancel-subscription-modal';
 import { CardItem } from './types';
 import Link from 'next/link';
 
@@ -80,6 +81,7 @@ export default function BillingPage() {
   const [editOpen, setEditOpen] = useState<null | CardItem>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<null | CardItem>(null);
+  const [cancelSubOpen, setCancelSubOpen] = useState(false);
   const [invoiceView, setInvoiceView] = useState<null | {
     id: string;
     amount: number;
@@ -123,6 +125,11 @@ export default function BillingPage() {
 
   const deleteCard = useCallback((id: string) => {
     setCards((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
+  const handleCancelSubscription = useCallback(() => {
+    // TODO: Implement actual subscription cancellation logic
+    console.log('Subscription cancelled');
   }, []);
 
   return (
@@ -205,6 +212,7 @@ export default function BillingPage() {
           </button>
           <button
             type="button"
+            onClick={() => setCancelSubOpen(true)}
             className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-2xl border-2 border-red-300 dark:border-red-800 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-auto"
           >
             Cancel subscription
@@ -384,6 +392,13 @@ export default function BillingPage() {
         open={!!invoiceView}
         invoice={invoiceView}
         onClose={() => setInvoiceView(null)}
+      />
+
+      <CancelSubscriptionModal
+        open={cancelSubOpen}
+        renewDate={plan.renewsOn}
+        onClose={() => setCancelSubOpen(false)}
+        onConfirm={handleCancelSubscription}
       />
     </div>
   );

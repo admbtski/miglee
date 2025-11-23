@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { X } from 'lucide-react';
 import type { CardItem, CardBrand } from '../types';
 import { Input } from './ui';
-import { ModalShell } from './modal-shell';
+import { Modal } from '@/components/feedback/modal';
 import { CountryCombo } from './country-combo';
 
 /* ───────── helpers ───────── */
@@ -105,7 +106,7 @@ export function AddCardModal({
       },
     });
     onClose();
-    // (opcjonalnie) wyczyść stan
+    // Clear state
     setNumber('');
     setExp('');
     setCvv('');
@@ -119,133 +120,158 @@ export function AddCardModal({
   };
 
   return (
-    <ModalShell open={open} onClose={onClose} title="Add card details">
-      <div className="grid gap-4">
-        {/* Card details */}
-        <div className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
-          Card details
+    <Modal
+      open={open}
+      onClose={onClose}
+      variant="default"
+      density="comfortable"
+      header={
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            Add card details
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
+      }
+      content={
+        <div className="grid gap-4">
+          {/* Card details */}
+          <div className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+            Card details
+          </div>
 
-        <div className="grid gap-3">
-          <Input
-            label={`Card number • ${brand}`}
-            value={number}
-            onChange={(v) => setNumber(formatCardNumber(v))}
-            placeholder="1234 5678 9012 3456"
-            leftIcon={
-              <span className="text-[10px] font-bold opacity-70">
-                {brand === 'Visa'
-                  ? 'VISA'
-                  : brand === 'MasterCard'
-                    ? 'MC'
-                    : brand === 'AmEx'
-                      ? 'AMX'
-                      : 'DISC'}
-              </span>
-            }
-            inputMode="numeric"
-            autoComplete="cc-number"
-          />
-
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3">
             <Input
-              label="Expiration"
-              value={exp}
-              onChange={(v) => setExp(normalizeExp(v))}
-              placeholder="MM/YY"
-              inputMode="numeric"
-              autoComplete="cc-exp"
-            />
-            <Input
-              label="CVV"
-              value={cvv}
-              onChange={(v) =>
-                setCvv(v.replace(/\D/g, '').slice(0, brand === 'AmEx' ? 4 : 3))
+              label={`Card number • ${brand}`}
+              value={number}
+              onChange={(v) => setNumber(formatCardNumber(v))}
+              placeholder="1234 5678 9012 3456"
+              leftIcon={
+                <span className="text-[10px] font-bold opacity-70">
+                  {brand === 'Visa'
+                    ? 'VISA'
+                    : brand === 'MasterCard'
+                      ? 'MC'
+                      : brand === 'AmEx'
+                        ? 'AMX'
+                        : 'DISC'}
+                </span>
               }
-              placeholder={brand === 'AmEx' ? '••••' : '•••'}
               inputMode="numeric"
-              autoComplete="cc-csc"
+              autoComplete="cc-number"
             />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Expiration"
+                value={exp}
+                onChange={(v) => setExp(normalizeExp(v))}
+                placeholder="MM/YY"
+                inputMode="numeric"
+                autoComplete="cc-exp"
+              />
+              <Input
+                label="CVV"
+                value={cvv}
+                onChange={(v) =>
+                  setCvv(
+                    v.replace(/\D/g, '').slice(0, brand === 'AmEx' ? 4 : 3)
+                  )
+                }
+                placeholder={brand === 'AmEx' ? '••••' : '•••'}
+                inputMode="numeric"
+                autoComplete="cc-csc"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="inline-block w-3 h-3 border rounded-sm border-zinc-400" />
+              This is a secure form
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="inline-block w-3 h-3 border rounded-sm border-zinc-400" />
-            This is a secure form
+          {/* Billing address */}
+          <div className="mt-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">
+            Billing address
           </div>
-        </div>
 
-        {/* Billing address */}
-        <div className="mt-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">
-          Billing address
-        </div>
-
-        <div className="grid gap-3">
-          <Input
-            label="Street address"
-            value={street}
-            onChange={setStreet}
-            placeholder="Street address"
-            autoComplete="address-line1"
-          />
-          <Input
-            label="Apt or suite number"
-            value={line2}
-            onChange={setLine2}
-            placeholder="Apt, suite, etc."
-            autoComplete="address-line2"
-          />
-          <Input
-            label="City"
-            value={city}
-            onChange={setCity}
-            placeholder="City"
-            autoComplete="address-level2"
-          />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3">
             <Input
-              label="State"
-              value={state}
-              onChange={setState}
-              placeholder="State"
-              autoComplete="address-level1"
+              label="Street address"
+              value={street}
+              onChange={setStreet}
+              placeholder="Street address"
+              autoComplete="address-line1"
             />
             <Input
-              label="ZIP code"
-              value={zip}
-              onChange={(v) => setZip(v.replace(/[^\w- ]/g, '').slice(0, 10))}
-              placeholder="ZIP"
-              autoComplete="postal-code"
+              label="Apt or suite number"
+              value={line2}
+              onChange={setLine2}
+              placeholder="Apt, suite, etc."
+              autoComplete="address-line2"
+            />
+            <Input
+              label="City"
+              value={city}
+              onChange={setCity}
+              placeholder="City"
+              autoComplete="address-level2"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="State"
+                value={state}
+                onChange={setState}
+                placeholder="State"
+                autoComplete="address-level1"
+              />
+              <Input
+                label="ZIP code"
+                value={zip}
+                onChange={(v) => setZip(v.replace(/[^\w- ]/g, '').slice(0, 10))}
+                placeholder="ZIP"
+                autoComplete="postal-code"
+              />
+            </div>
+            <CountryCombo
+              label="Country"
+              value={country}
+              onChange={setCountry}
             />
           </div>
-          <CountryCombo label="Country" value={country} onChange={setCountry} />
+
+          <label className="flex items-center gap-2 mt-1 text-sm text-zinc-700 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              className="w-4 h-4 rounded accent-indigo-600 dark:accent-indigo-500"
+              checked={isDefault}
+              onChange={(e) => setIsDefault(e.target.checked)}
+            />
+            Set as default payment method
+          </label>
+
+          <div className="flex items-center justify-end gap-2 mt-5">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium rounded-xl border-2 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={submit}
+              disabled={!canSubmit}
+              className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Add card
+            </button>
+          </div>
         </div>
-
-        <label className="flex items-center gap-2 mt-1 text-sm">
-          <input
-            type="checkbox"
-            className="accent-indigo-500"
-            checked={isDefault}
-            onChange={(e) => setIsDefault(e.target.checked)}
-          />
-          Set as default payment method
-        </label>
-      </div>
-
-      <div className="flex items-center justify-end gap-2 mt-5">
-        <button
-          onClick={onClose}
-          className="px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={submit}
-          disabled={!canSubmit}
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-500 disabled:opacity-50"
-        >
-          Add card
-        </button>
-      </div>
-    </ModalShell>
+      }
+    />
   );
 }
