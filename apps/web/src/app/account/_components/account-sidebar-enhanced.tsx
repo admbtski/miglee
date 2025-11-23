@@ -19,6 +19,7 @@ import {
   MessagesSquareIcon,
   SettingsIcon,
   UserIcon,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -48,16 +49,16 @@ const NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     items: [
       {
-        id: 'profile-settings',
-        label: 'Edit Profile',
-        href: '/account/profile',
-        icon: UserIcon,
-      },
-      {
         id: 'view',
         label: 'View Profile',
         href: '/account/view',
         icon: Eye,
+      },
+      {
+        id: 'profile-settings',
+        label: 'Edit Profile',
+        href: '/account/profile',
+        icon: UserIcon,
       },
     ],
   },
@@ -107,6 +108,12 @@ const NAV_GROUPS: NavGroup[] = [
     icon: SettingsIcon,
     defaultOpen: false,
     items: [
+      {
+        id: 'subscription',
+        label: 'Subscription',
+        href: '/account/subscription',
+        icon: Sparkles,
+      },
       {
         id: 'analytics',
         label: 'Analytics',

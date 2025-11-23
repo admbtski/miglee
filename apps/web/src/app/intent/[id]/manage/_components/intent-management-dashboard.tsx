@@ -18,6 +18,8 @@ import {
   Eye,
   Heart,
   Link as LinkIcon,
+  Lock,
+  LockOpen,
   MapPin,
   MessageSquare,
   Sparkles,
@@ -36,6 +38,11 @@ import { format, formatDistanceToNow, isFuture, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { EventCountdownTimer } from '../../_components/event-countdown-timer';
 import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
+import { useState } from 'react';
+import {
+  CloseJoinModal,
+  ReopenJoinModal,
+} from '@/app/account/intents/_components/close-join-modals';
 
 interface IntentManagementDashboardProps {
   intentId: string;
@@ -143,8 +150,13 @@ function StatCard({
 export function IntentManagementDashboard({
   intentId,
 }: IntentManagementDashboardProps) {
-  const { data, isLoading } = useIntentQuery({ id: intentId });
+  const { data, isLoading, refetch } = useIntentQuery({ id: intentId });
   const intent = data?.intent;
+
+  // Modal states
+  const [closeJoinId, setCloseJoinId] = useState<string | null>(null);
+  const [reopenJoinId, setReopenJoinId] = useState<string | null>(null);
+  const [closeJoinReason, setCloseJoinReason] = useState('');
 
   if (isLoading) {
     return (
@@ -300,6 +312,44 @@ export function IntentManagementDashboard({
           View Event
         </Link>
       </div>
+
+      {/* Registration Controls */}
+      {intent.status !== IntentStatus.Canceled &&
+        intent.status !== IntentStatus.Past && (
+          <div className="p-6 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100 mb-1">
+                  Registration Status
+                </h3>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {intent.joinManuallyClosed
+                    ? 'Registrations are currently closed. Users cannot join this event.'
+                    : 'Registrations are open. Users can join this event.'}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                {intent.joinManuallyClosed ? (
+                  <button
+                    onClick={() => setReopenJoinId(intentId)}
+                    className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-all bg-emerald-600 rounded-xl hover:bg-emerald-700 hover:shadow-md dark:bg-emerald-500 dark:hover:bg-emerald-600"
+                  >
+                    <LockOpen className="w-[18px] h-[18px]" />
+                    Otwórz zapisy
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setCloseJoinId(intentId)}
+                    className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-all bg-amber-600 rounded-xl hover:bg-amber-700 hover:shadow-md dark:bg-amber-500 dark:hover:bg-amber-600"
+                  >
+                    <Lock className="w-[18px] h-[18px]" />
+                    Zamknij zapisy
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* Countdown Timer */}
       <EventCountdownTimer
@@ -707,6 +757,28 @@ export function IntentManagementDashboard({
           </Link>
         </div>
       </div>
+
+      {/* Modals */}
+      <CloseJoinModal
+        intentId={closeJoinId}
+        onClose={() => {
+          setCloseJoinId(null);
+          setCloseJoinReason('');
+        }}
+        onSuccess={() => {
+          refetch();
+        }}
+        reason={closeJoinReason}
+        onReasonChange={setCloseJoinReason}
+      />
+
+      <ReopenJoinModal
+        intentId={reopenJoinId}
+        onClose={() => setReopenJoinId(null)}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 }

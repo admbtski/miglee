@@ -13,8 +13,6 @@ import {
 
 import {
   Badge,
-  Card,
-  GhostButton,
   PaymentRow,
   Progress,
   SmallButton,
@@ -27,8 +25,8 @@ import { EditCardModal } from './_components/edit-card-modal';
 import { AddCardModal } from './_components/add-card-modal';
 import { ConfirmDeleteModal } from './_components/confirm-delete-modal';
 import { InvoiceViewModal } from './_components/invoice-view-modal';
-import { SubscriptionPlans } from './_components/subscription-plans';
 import { CardItem } from './types';
+import Link from 'next/link';
 
 export default function BillingPage() {
   // Demo plan
@@ -128,7 +126,7 @@ export default function BillingPage() {
   }, []);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
@@ -139,144 +137,177 @@ export default function BillingPage() {
             Manage your subscription and billing information
           </p>
         </div>
+      </div>
+
+      {/* Current Plan Card */}
+      <div className="rounded-[32px] border-2 border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center ring-1 ring-black/5 shadow-lg">
+              <Users className="w-7 h-7 text-white" strokeWidth={2} />
+            </div>
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h3 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
+                  {plan.name}
+                </h3>
+                <Badge tone="indigo">{plan.status}</Badge>
+              </div>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Renews on {plan.renewsOn}
+              </p>
+            </div>
+          </div>
+          <div className="text-left md:text-right">
+            <div className="text-4xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
+              ${plan.price}
+            </div>
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              {plan.cycle}
+            </div>
+          </div>
+        </div>
+
+        {/* Seats Progress */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              Team Seats
+            </span>
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              {plan.seatsUsed} of {plan.seatsTotal} used
+            </span>
+          </div>
+          <Progress value={seatsPct} />
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/account/subscription"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors"
+          >
+            Upgrade plan <ArrowRight className="w-4 h-4" />
+          </Link>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+            Manage seats
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <Gift className="w-4 h-4" />
+            Gift PRO
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-2xl border-2 border-red-300 dark:border-red-800 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-auto"
+          >
+            Cancel subscription
+          </button>
+        </div>
+      </div>
+
+      {/* Payment methods */}
+      <div className="rounded-[32px] border-2 border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50 mb-1">
+              Payment Methods
+            </h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Manage your payment methods securely
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setManageOpen(true)}
+            className="px-4 py-2 text-sm font-medium rounded-xl border-2 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors self-start sm:self-auto"
+          >
+            Manage cards
+          </button>
+        </div>
+
+        <div className="space-y-3 mb-6">
+          {cards.slice(0, 2).map((pm) => (
+            <PaymentRow
+              key={pm.id}
+              brand={pm.brand}
+              last4={pm.last4}
+              expires={`${pm.expMonth}/${pm.expYear}`}
+              isDefault={!!pm.isDefault}
+              onEdit={() => setEditOpen(pm)}
+            />
+          ))}
+        </div>
+
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 px-5 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all"
+          onClick={() => setAddOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors w-full justify-center"
         >
-          <Gift className="w-4 h-4" strokeWidth={2} />
-          Gift PRO
+          <Plus className="w-4 h-4" />
+          Add new card
         </button>
       </div>
 
-      {/* Subscription Plans */}
-      <SubscriptionPlans />
-
-      {/* Top grid */}
-      <div className="grid gap-5 md:grid-cols-2">
-        {/* Plan */}
-        <Card>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="grid text-white h-9 w-9 place-items-center rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 ring-1 ring-black/5">
-                <Users className="w-5 h-5" />
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">{plan.name}</h3>
-                  <Badge tone="indigo">{plan.status}</Badge>
-                </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Renews on {plan.renewsOn}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-semibold">${plan.price}</div>
-              <div className="text-xs opacity-70">{plan.cycle}</div>
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <div className="mb-2 text-sm font-semibold">Seats</div>
-            <Progress value={seatsPct} />
-            <div className="mt-1 text-xs text-right opacity-70">
-              {plan.seatsUsed} of {plan.seatsTotal} used
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-              >
-                <MoreHorizontal className="w-4 h-4" />
-                Manage seats
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2 mt-5 sm:grid-cols-2">
-            <GhostButton>Cancel subscription</GhostButton>
-            <GhostButton primary>
-              Upgrade plan <ArrowRight className="w-4 h-4" />
-            </GhostButton>
-          </div>
-        </Card>
-
-        {/* Payment methods */}
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold">Payment methods</h3>
-            <button
-              type="button"
-              onClick={() => setManageOpen(true)}
-              className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            >
-              Manage cards
-            </button>
-          </div>
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-            Add and manage your payment methods using our secure payment system.
-          </p>
-
-          <div className="space-y-3">
-            {cards.slice(0, 2).map((pm) => (
-              <PaymentRow
-                key={pm.id}
-                brand={pm.brand}
-                last4={pm.last4}
-                expires={`${pm.expMonth}/${pm.expYear}`}
-                isDefault={!!pm.isDefault}
-                onEdit={() => setEditOpen(pm)}
-              />
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-xl border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            >
-              <Plus className="w-4 h-4" />
-              Add new card
-            </button>
-          </div>
-        </Card>
-      </div>
-
       {/* Invoices */}
-      <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="px-4 py-3 text-sm font-semibold border-b border-zinc-200 dark:border-zinc-800">
-          Invoices
+      <div className="rounded-[32px] border-2 border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] shadow-sm overflow-hidden">
+        <div className="px-6 md:px-8 py-6 border-b border-zinc-200 dark:border-white/5">
+          <h3 className="text-xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50 mb-1">
+            Invoices
+          </h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            View and download your billing history
+          </p>
         </div>
-        <div className="-mx-4 overflow-x-auto sm:mx-0">
-          <table className="min-w-full divide-y table-fixed divide-zinc-200 dark:divide-zinc-800">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-zinc-200 dark:divide-white/5">
             <thead>
-              <tr className="text-sm text-left">
+              <tr className="text-sm text-left bg-zinc-50 dark:bg-[#0a0b12]">
                 <Th>Invoice</Th>
                 <Th>Billing date</Th>
                 <Th>Amount</Th>
                 <Th>Plan</Th>
-                <Th className="text-right">Actions</Th>
+                <Th className="text-right pr-6 md:pr-8">Actions</Th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
               {invoices.map((inv) => (
-                <tr key={inv.id} className="text-sm">
+                <tr
+                  key={inv.id}
+                  className="text-sm hover:bg-zinc-50 dark:hover:bg-[#0a0b12] transition-colors"
+                >
                   <Td>
-                    <span className="inline-flex items-center gap-2">
-                      <span className="grid text-white bg-pink-600 rounded-lg h-7 w-7 place-items-center ring-1 ring-black/5">
+                    <span className="inline-flex items-center gap-3">
+                      <span className="flex items-center justify-center w-8 h-8 text-white text-xs font-bold bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg ring-1 ring-black/5 shadow-sm">
                         PDF
                       </span>
-                      <span className="font-medium">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-50">
                         {inv.id.toUpperCase()}
                       </span>
                     </span>
                   </Td>
-                  <Td>{inv.date}</Td>
-                  <Td>${inv.amount}</Td>
-                  <Td>{inv.plan}</Td>
-                  <Td className="text-right">
+                  <Td>
+                    <span className="text-zinc-600 dark:text-zinc-400">
+                      {inv.date}
+                    </span>
+                  </Td>
+                  <Td>
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                      ${inv.amount}
+                    </span>
+                  </Td>
+                  <Td>
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                      {inv.plan}
+                    </span>
+                  </Td>
+                  <Td className="text-right pr-6 md:pr-8">
                     <div className="flex justify-end gap-2">
                       <SmallButton
                         onClick={() =>
@@ -293,11 +324,11 @@ export default function BillingPage() {
                         }
                       >
                         <Eye className="w-4 h-4" />
-                        View
+                        <span className="hidden sm:inline">View</span>
                       </SmallButton>
                       <SmallButton>
                         <Download className="w-4 h-4" />
-                        Download
+                        <span className="hidden sm:inline">Download</span>
                       </SmallButton>
                     </div>
                   </Td>

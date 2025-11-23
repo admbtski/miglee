@@ -31,7 +31,6 @@ import { EventMetadata } from './event-metadata';
 import { EventParticipants } from './event-participants';
 import { EventReviews } from './event-reviews';
 import { StickyJoinButton } from './sticky-join-button';
-// import { CreateEditIntentModalConnect } from '@/features/intents/components/create-edit-intent-modal-connect';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
 import {
   CloseJoinModal,
@@ -534,27 +533,6 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       </div>
 
       {/* Modals */}
-      {/*
-      <CreateEditIntentModalConnect
-        intentId={editOpen ? intentId : undefined}
-        open={editOpen}
-        onClose={() => {
-          setEditOpen(false);
-          refetch();
-        }}
-      />
-*/}
-      {/*     <EventManagementModalConnect
-        intentId={intentId}
-        canManage={isOwner || isModerator}
-        isPremium={!!eventData.sponsorship}
-        open={manageOpen}
-        onClose={() => {
-          setManageOpen(false);
-          refetch();
-        }}
-      />  */}
-
       <CancelIntentModals
         cancelId={cancelId}
         onClose={() => setCancelId(null)}

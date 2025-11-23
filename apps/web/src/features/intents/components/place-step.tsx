@@ -124,7 +124,7 @@ export function PlaceStep({
     <div className="space-y-8">
       {/* Meeting type */}
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
           Meeting type
         </label>
         <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -164,7 +164,7 @@ export function PlaceStep({
               <>
                 <label
                   htmlFor="onlineUrl"
-                  className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
                 >
                   Online meeting link
                 </label>
@@ -205,7 +205,7 @@ export function PlaceStep({
       {showOnsite && (
         <>
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Location (address or POI)
             </label>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -275,10 +275,7 @@ export function PlaceStep({
                 type="button"
                 onClick={handleUseMyLocation}
                 disabled={locating}
-                className="shrink-0 rounded-2xl border px-4 py-3
-                           border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50
-                           disabled:cursor-not-allowed disabled:opacity-60
-                           dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                className="px-4 py-3 bg-white border shrink-0 rounded-2xl border-zinc-300 text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
               >
                 {locating ? 'Locating…' : 'Use my location'}
               </button>
@@ -305,7 +302,7 @@ export function PlaceStep({
               radiusMeters={radiusMeters}
               draggableMarker
               clickToPlace
-              className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800"
+              className="w-full border rounded-2xl border-zinc-200 dark:border-zinc-800"
               onUserSetPosition={(pos) => {
                 setValue('location.placeId', pos.placeId, {
                   shouldValidate: true,
@@ -330,7 +327,7 @@ export function PlaceStep({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Radius (km, optional)
             </label>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -338,7 +335,7 @@ export function PlaceStep({
             </p>
 
             {/* quick presets */}
-            <div className="mb-2 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-2">
               {([0, 0.5, 1, 2, 5, 10] as const).map((r) => (
                 <button
                   key={r}
@@ -385,37 +382,6 @@ export function PlaceStep({
         </>
       )}
 
-      {/* Visibility */}
-      <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Visibility
-        </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          <b>Public</b> — discoverable by anyone. <b>Hidden</b> — only via link
-          or invite.
-        </p>
-
-        <Controller
-          control={control}
-          name="visibility"
-          render={({ field }) => (
-            <SegmentedControl<Visibility>
-              aria-label="Visibility"
-              value={field.value}
-              size="md"
-              fullWidth
-              withPill
-              animated
-              onChange={(v) => field.onChange(v)}
-              options={[
-                { value: 'PUBLIC', label: 'Public', Icon: Eye },
-                { value: 'HIDDEN', label: 'Hidden', Icon: EyeOff },
-              ]}
-            />
-          )}
-        />
-      </div>
-
       {/* Logistics note */}
       <div>
         <Controller
@@ -425,7 +391,7 @@ export function PlaceStep({
             <>
               <label
                 htmlFor="notes"
-                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
               >
                 Logistics note (optional)
               </label>
@@ -442,10 +408,7 @@ export function PlaceStep({
                     ? 'e.g., "Camera optional."'
                     : 'We meet at entrance A'
                 }
-                className="w-full rounded-2xl border px-4 py-3
-                           border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400
-                           focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400
-                           dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                className="w-full px-4 py-3 bg-white border rounded-2xl border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500"
               />
             </>
           )}
@@ -455,8 +418,7 @@ export function PlaceStep({
       {/* Info note */}
       <div
         role="note"
-        className="flex items-start gap-2 rounded-2xl border border-blue-300/50 bg-blue-50 p-3
-                   text-blue-700 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+        className="flex items-start gap-2 p-3 text-blue-700 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
       >
         <span
           aria-hidden="true"

@@ -1,19 +1,28 @@
 'use client';
 
-import { Check, Sparkles, Zap, Crown, Rocket } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { PlanType, BillingType } from './subscription-plans-wrapper';
 
-type BillingCycle = 'monthly' | 'annual';
+interface SubscriptionPlansProps {
+  onPlanSelect?: (plan: {
+    id: PlanType;
+    name: string;
+    billingType: BillingType;
+    price: number;
+  }) => void;
+}
 
 const PLANS = [
   {
     id: 'free',
     name: 'Free',
     description: 'Perfect for trying out miglee',
-    monthlyPrice: 0,
-    annualPrice: 0,
+    priceMonthlySubscription: 0,
+    priceMonthlyOnetime: 0,
+    priceAnnualOnetime: 0,
     icon: Sparkles,
     color: 'zinc',
     features: [
@@ -28,10 +37,12 @@ const PLANS = [
     id: 'plus',
     name: 'Plus',
     description: 'For active organizers',
-    monthlyPrice: 15,
-    annualPrice: 12, // -20% annually (15 * 12 = 180, 12 * 12 = 144)
+    priceMonthlySubscription: 15,
+    priceMonthlyOnetime: 19,
+    priceAnnualOnetime: 144,
     icon: Zap,
     color: 'indigo',
+    popular: true,
     features: [
       'Unlimited events',
       'Advanced analytics',
@@ -46,11 +57,12 @@ const PLANS = [
     id: 'pro',
     name: 'Pro',
     description: 'For professional organizers',
-    monthlyPrice: 39,
-    annualPrice: 31.2, // -20% annually (39 * 12 = 468, 31.2 * 12 = 374.4)
+    priceMonthlySubscription: 39,
+    priceMonthlyOnetime: 49,
+    priceAnnualOnetime: 374,
     icon: Crown,
     color: 'amber',
-    popular: true,
+    popular: false,
     features: [
       'Everything in Plus',
       'Unlimited participants',
@@ -62,48 +74,64 @@ const PLANS = [
       'Advanced reporting',
     ],
   },
-  {
-    id: 'ultra',
-    name: 'Ultra',
-    description: 'For enterprise organizations',
-    monthlyPrice: 99,
-    annualPrice: 79.2, // -20% annually (99 * 12 = 1188, 79.2 * 12 = 950.4)
-    icon: Rocket,
-    color: 'violet',
-    features: [
-      'Everything in Pro',
-      'Unlimited everything',
-      'Custom infrastructure',
-      'SLA guarantee (99.9%)',
-      'Dedicated server resources',
-      'Advanced security features',
-      'Custom integrations',
-      'White-glove onboarding',
-      '24/7 phone support',
-    ],
-  },
 ];
 
-export function SubscriptionPlans() {
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
+  const [billingType, setBillingType] = useState<BillingType>(
+    'monthly-subscription'
+  );
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
   const getPrice = (plan: (typeof PLANS)[0]) => {
-    return billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
+    if (billingType === 'monthly-subscription')
+      return plan.priceMonthlySubscription;
+    if (billingType === 'monthly-onetime') return plan.priceMonthlyOnetime;
+    return plan.priceAnnualOnetime;
+  };
+
+  const getPriceLabel = () => {
+    if (billingType === 'monthly-subscription') return '/ month';
+    if (billingType === 'monthly-onetime') return '/ month';
+    return '/ year';
+  };
+
+  const getBadgeConfig = () => {
+    if (billingType === 'monthly-subscription') {
+      return {
+        tooltipText:
+          'Subskrypcja: Odnawia się automatycznie co 30 dni. Anuluj kiedy chcesz.',
+        paymentType: 'Auto-renewal',
+      };
+    }
+    if (billingType === 'monthly-onetime') {
+      return {
+        tooltipText:
+          'Miesięczna: Płatność jednorazowa. Dostęp na 30 dni bez auto-odnowienia.',
+        paymentType: 'No subscription',
+      };
+    }
+    return {
+      tooltipText:
+        'Roczna: Płatność jednorazowa. Dostęp na 12 miesięcy. Oszczędzasz 20%!',
+      paymentType: 'One-time charge',
+    };
   };
 
   const getSavings = (plan: (typeof PLANS)[0]) => {
-    if (billingCycle === 'annual' && plan.monthlyPrice > 0) {
-      const monthlyCost = plan.monthlyPrice * 12;
-      const annualCost = plan.annualPrice * 12;
+    if (billingType === 'annual-onetime' && plan.priceMonthlySubscription > 0) {
+      const monthlyCost = plan.priceMonthlySubscription * 12;
+      const annualCost = plan.priceAnnualOnetime;
       return monthlyCost - annualCost;
     }
     return 0;
   };
 
+  const badgeConfig = getBadgeConfig();
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="text-center space-y-4">
+      <div className="space-y-4 text-center">
         <h2 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
           Choose Your Plan
         </h2>
@@ -111,45 +139,60 @@ export function SubscriptionPlans() {
           Upgrade your account to unlock more features and grow your events
         </p>
 
-        {/* Billing Cycle Toggle */}
-        <div className="inline-flex items-center gap-3 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-1.5">
-          <button
-            type="button"
-            onClick={() => setBillingCycle('monthly')}
-            className={cn(
-              'relative px-6 py-2.5 text-sm font-semibold rounded-xl transition-all',
-              billingCycle === 'monthly'
-                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-md'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
-            )}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            onClick={() => setBillingCycle('annual')}
-            className={cn(
-              'relative px-6 py-2.5 text-sm font-semibold rounded-xl transition-all',
-              billingCycle === 'annual'
-                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-md'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
-            )}
-          >
-            <span>Annual</span>
-            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-              -20%
-            </span>
-          </button>
+        {/* Billing Type Selection */}
+        <div className="inline-flex flex-col gap-3">
+          <div className="inline-flex items-center gap-2 rounded-2xl border-2 border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-1.5">
+            <button
+              type="button"
+              onClick={() => setBillingType('monthly-subscription')}
+              className={cn(
+                'relative px-5 py-2.5 text-sm font-semibold rounded-xl transition-all whitespace-nowrap',
+                billingType === 'monthly-subscription'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-md'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
+              )}
+            >
+              Subskrypcja
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingType('monthly-onetime')}
+              className={cn(
+                'relative px-5 py-2.5 text-sm font-semibold rounded-xl transition-all whitespace-nowrap',
+                billingType === 'monthly-onetime'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-md'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
+              )}
+            >
+              Miesięczna
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingType('annual-onetime')}
+              className={cn(
+                'relative px-5 py-2.5 text-sm font-semibold rounded-xl transition-all whitespace-nowrap',
+                billingType === 'annual-onetime'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-md'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
+              )}
+            >
+              <span>Roczna</span>
+              <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                Save 20%
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Plans Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-3">
         {PLANS.map((plan, index) => {
           const Icon = plan.icon;
           const price = getPrice(plan);
           const savings = getSavings(plan);
           const isPopular = plan.popular;
+          const isFree = plan.id === 'free';
 
           return (
             <motion.div
@@ -158,7 +201,7 @@ export function SubscriptionPlans() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                'relative overflow-hidden rounded-[32px] border-2 bg-white dark:bg-[#10121a] p-8 shadow-sm transition-all hover:shadow-lg',
+                'relative rounded-[32px] border-2 bg-white dark:bg-[#10121a] p-8 shadow-sm transition-all hover:shadow-lg flex flex-col',
                 isPopular
                   ? 'border-indigo-200 dark:border-indigo-800 ring-2 ring-indigo-200 dark:ring-indigo-800 shadow-xl'
                   : 'border-zinc-200/80 dark:border-white/5'
@@ -166,32 +209,54 @@ export function SubscriptionPlans() {
             >
               {/* Popular Badge */}
               {isPopular && (
-                <div className="absolute top-0 right-8 -translate-y-1/2">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg">
-                    <Sparkles className="h-3 w-3" />
+                <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap">
+                    <Sparkles className="w-3 h-3" />
                     MOST POPULAR
                   </div>
                 </div>
               )}
 
-              {/* Icon */}
-              <div
-                className={cn(
-                  'mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl',
-                  plan.color === 'zinc' &&
-                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400',
-                  plan.color === 'indigo' &&
-                    'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
-                  plan.color === 'amber' &&
-                    'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-                  plan.color === 'violet' &&
-                    'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
-                )}
-              >
-                <Icon className="h-7 w-7" strokeWidth={2} />
+              {/* Tooltip in top right corner */}
+              <div className="absolute z-20 top-4 right-4">
+                <div className="relative group">
+                  <button
+                    type="button"
+                    onMouseEnter={() => setShowTooltip(plan.id)}
+                    onMouseLeave={() => setShowTooltip(null)}
+                    className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 transition-colors"
+                  >
+                    <Info className="w-4 h-4" />
+                  </button>
+                  {showTooltip === plan.id && (
+                    <div className="absolute right-0 z-50 w-64 px-3 py-2 mt-2 text-xs leading-relaxed text-white rounded-lg shadow-lg pointer-events-none top-full bg-zinc-900 dark:bg-zinc-800">
+                      <div className="absolute top-0 -mt-2 border-4 border-transparent right-4 border-b-zinc-900 dark:border-b-zinc-800"></div>
+                      {badgeConfig.tooltipText}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Name & Description */}
+              {/* Icon - Fixed height */}
+              <div className="mb-6">
+                <div
+                  className={cn(
+                    'inline-flex h-14 w-14 items-center justify-center rounded-2xl',
+                    plan.color === 'zinc' &&
+                      'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400',
+                    plan.color === 'indigo' &&
+                      'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+                    plan.color === 'amber' &&
+                      'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+                    plan.color === 'violet' &&
+                      'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                  )}
+                >
+                  <Icon className="h-7 w-7" strokeWidth={2} />
+                </div>
+              </div>
+
+              {/* Name & Description - Fixed height */}
               <div className="mb-6">
                 <h3 className="mb-2 text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
                   {plan.name}
@@ -201,31 +266,49 @@ export function SubscriptionPlans() {
                 </p>
               </div>
 
-              {/* Price */}
+              {/* Price - Fixed height */}
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-5xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
                     ${price}
                   </span>
                   <span className="text-base text-zinc-600 dark:text-zinc-400">
-                    /month
+                    {getPriceLabel()}
                   </span>
                 </div>
-                {savings > 0 && (
+
+                {/* Savings */}
+                {savings > 0 ? (
                   <p className="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    Save ${savings.toFixed(0)}/year
+                    Save ${savings} vs monthly
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm font-medium text-transparent">
+                    &nbsp;
                   </p>
                 )}
-                {billingCycle === 'annual' && plan.monthlyPrice > 0 && (
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    ${(price * 12).toFixed(0)} billed annually
-                  </p>
-                )}
+
+                {/* Payment type label */}
+                <div className="mt-2">
+                  <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                    {badgeConfig.paymentType}
+                  </span>
+                </div>
               </div>
 
               {/* CTA Button */}
               <button
                 type="button"
+                onClick={() => {
+                  if (!isFree && onPlanSelect) {
+                    onPlanSelect({
+                      id: plan.id as PlanType,
+                      name: plan.name,
+                      billingType: billingType,
+                      price: price,
+                    });
+                  }
+                }}
                 className={cn(
                   'mb-8 w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all',
                   isPopular
@@ -233,12 +316,12 @@ export function SubscriptionPlans() {
                     : 'border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 )}
               >
-                {plan.id === 'free' ? 'Current Plan' : 'Upgrade Now'}
+                {isFree ? 'Current Plan' : 'Upgrade Now'}
               </button>
 
               {/* Features */}
               <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400">
                   What's Included
                 </p>
                 <ul className="space-y-3">
@@ -269,8 +352,9 @@ export function SubscriptionPlans() {
       {/* Info Banner */}
       <div className="rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-zinc-50 dark:bg-zinc-900/50 p-6 text-center">
         <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          All plans include a 14-day money-back guarantee. Cancel anytime, no
-          questions asked.
+          {billingType === 'monthly-subscription'
+            ? 'All subscription plans include a 14-day money-back guarantee. Cancel anytime, no questions asked.'
+            : 'All one-time payments are final. Choose the plan that fits your needs best.'}
         </p>
       </div>
     </div>

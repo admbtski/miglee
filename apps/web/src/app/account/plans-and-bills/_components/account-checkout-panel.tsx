@@ -11,12 +11,15 @@ import {
   X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
+import { PlanType, BillingType } from './subscription-plans-wrapper';
 
-interface CheckoutPanelProps {
-  intentId: string;
-  selectedPlan: SponsorPlan;
+interface AccountCheckoutPanelProps {
+  selectedPlan: {
+    id: PlanType;
+    name: string;
+    billingType: BillingType;
+    price: number;
+  };
   onBack: () => void;
 }
 
@@ -32,17 +35,10 @@ interface BillingDetails {
 
 type PaymentMethod = 'blik' | 'card' | 'transfer' | 'wallet';
 
-const PLAN_PRICES = {
-  Basic: { net: 4.07, vat: 0.93, gross: 5.0 },
-  Plus: { net: 8.13, vat: 1.87, gross: 10.0 },
-  Pro: { net: 12.2, vat: 2.8, gross: 15.0 },
-};
-
-export function CheckoutPanel({
-  intentId,
+export function AccountCheckoutPanel({
   selectedPlan,
   onBack,
-}: CheckoutPanelProps) {
+}: AccountCheckoutPanelProps) {
   const [billingModalOpen, setBillingModalOpen] = React.useState(false);
   const [selectedPayment, setSelectedPayment] =
     React.useState<PaymentMethod | null>(null);
@@ -60,7 +56,28 @@ export function CheckoutPanel({
     postalCode: '00-001',
   });
 
-  const pricing = PLAN_PRICES[selectedPlan];
+  // Calculate pricing with VAT (23% in Poland)
+  const net = selectedPlan.price / 1.23;
+  const vat = selectedPlan.price - net;
+  const gross = selectedPlan.price;
+
+  const getBillingTypeLabel = () => {
+    switch (selectedPlan.billingType) {
+      case 'monthly-subscription':
+        return 'Subskrypcja miesięczna';
+      case 'monthly-onetime':
+        return 'Płatność miesięczna (jednorazowa)';
+      case 'annual-onetime':
+        return 'Płatność roczna (jednorazowa)';
+    }
+  };
+
+  const getActiveUntilDate = () => {
+    const days = selectedPlan.billingType === 'annual-onetime' ? 365 : 30;
+    return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString(
+      'pl-PL'
+    );
+  };
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#05060a]">
@@ -96,27 +113,27 @@ export function CheckoutPanel({
                 <div className="grid items-center gap-4 md:grid-cols-6">
                   <div className="col-span-2">
                     <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-                      Plan sponsorowania – {selectedPlan}
+                      Plan {selectedPlan.name}
                     </p>
                     <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      Jednorazowa płatność
+                      {getBillingTypeLabel()}
                     </p>
                   </div>
                   <div>
                     <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full dark:bg-indigo-900/30 dark:text-indigo-300">
-                      {selectedPlan}
+                      {selectedPlan.name}
                     </span>
                   </div>
                   <div className="text-zinc-900 dark:text-zinc-50">1</div>
                   <div className="text-zinc-900 dark:text-zinc-50">
-                    {pricing.net.toFixed(2)} zł
+                    ${net.toFixed(2)}
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                      {pricing.gross.toFixed(2)} zł
+                      ${gross.toFixed(2)}
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      VAT: {pricing.vat.toFixed(2)} zł
+                      VAT: ${vat.toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -129,9 +146,7 @@ export function CheckoutPanel({
                   <span>
                     Twój plan będzie aktywny do:{' '}
                     <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                      {new Date(
-                        Date.now() + 365 * 24 * 60 * 60 * 1000
-                      ).toLocaleDateString('pl-PL')}
+                      {getActiveUntilDate()}
                     </span>
                   </span>
                 </div>
@@ -510,7 +525,7 @@ export function CheckoutPanel({
                   Suma całkowita
                 </p>
                 <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-                  {pricing.gross.toFixed(2)} PLN
+                  ${gross.toFixed(2)}
                 </p>
               </div>
               <button
@@ -518,7 +533,7 @@ export function CheckoutPanel({
                 disabled={!agreeToTerms || !selectedPayment}
                 className="px-8 py-4 text-lg font-bold text-white transition-colors rounded-2xl bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Zamów i zapłać {pricing.gross.toFixed(2)} PLN
+                Zamów i zapłać ${gross.toFixed(2)}
               </button>
             </div>
 
