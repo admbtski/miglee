@@ -24,6 +24,7 @@ import {
   myMembershipsQuery,
   myIntentsQuery,
 } from './intent-members';
+import { intentPermissionsQuery } from './intent-permissions';
 import { dmThreadsQuery, dmThreadQuery, dmMessagesQuery } from './dm';
 import { commentsQuery, commentQuery } from './comments';
 import {
@@ -101,6 +102,7 @@ export const Query: Resolvers['Query'] = {
   intentMember: intentMemberQuery,
   intentMembers: intentMembersQuery,
   intentMemberStats: intentMemberStatsQuery,
+  intentPermissions: intentPermissionsQuery,
   myMemberships: myMembershipsQuery,
   myIntents: myIntentsQuery,
   dmThreads: dmThreadsQuery,

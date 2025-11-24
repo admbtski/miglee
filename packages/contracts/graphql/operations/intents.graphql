@@ -102,6 +102,17 @@ query GetIntentDetail($id: ID!) {
   }
 }
 
+query GetIntentPermissions($intentId: ID!) {
+  intentPermissions(intentId: $intentId) {
+    isOwner
+    isModerator
+    isParticipant
+    isAppAdmin
+    isAppModerator
+    canManage
+  }
+}
+
 # =============================================================================
 # Intent Mutations
 # =============================================================================

@@ -1,12 +1,9 @@
 /**
  * Hook to check user permissions for intent management
- * Determines if user can access management interface
+ * Uses the intentPermissions GraphQL query to get permission flags
  */
 
-import { useMeQuery } from '@/lib/api/auth';
-import type { GetIntentQuery } from '@/lib/api/__generated__/react-query-update';
-
-type IntentData = GetIntentQuery['intent'];
+import { useIntentPermissionsQuery } from '@/lib/api/intent-permissions';
 
 export interface IntentPermissions {
   /** User can access management interface */
@@ -34,12 +31,13 @@ export interface IntentPermissions {
  * - App moderators
  */
 export function useIntentPermissions(
-  intent: IntentData | null | undefined
+  intentId: string | null | undefined
 ): IntentPermissions {
-  const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
-  const user = authData?.me;
+  const { data, isLoading } = useIntentPermissionsQuery(intentId ?? '', {
+    enabled: !!intentId,
+  });
 
-  if (isLoadingAuth || !intent) {
+  if (isLoading || !intentId) {
     return {
       canManage: false,
       isOwner: false,
@@ -47,11 +45,13 @@ export function useIntentPermissions(
       isParticipant: false,
       isAppAdmin: false,
       isAppModerator: false,
-      isLoading: isLoadingAuth,
+      isLoading: isLoading,
     };
   }
 
-  if (!user) {
+  const permissions = data?.intentPermissions;
+
+  if (!permissions) {
     return {
       canManage: false,
       isOwner: false,
@@ -63,27 +63,13 @@ export function useIntentPermissions(
     };
   }
 
-  const membership = intent.userMembership;
-  const isOwner = membership?.isOwner ?? false;
-  const isModerator = membership?.isModerator ?? false;
-  const isParticipant = membership?.isParticipant ?? false;
-
-  // Check app-level permissions
-  const isAppAdmin = user.role === 'ADMIN';
-  const isAppModerator = user.role === 'MODERATOR';
-
-  // User can manage if they are:
-  // - Owner or moderator of the intent
-  // - App admin or moderator
-  const canManage = isOwner || isModerator || isAppAdmin || isAppModerator;
-
   return {
-    canManage,
-    isOwner,
-    isModerator,
-    isParticipant,
-    isAppAdmin,
-    isAppModerator,
+    canManage: permissions.canManage,
+    isOwner: permissions.isOwner,
+    isModerator: permissions.isModerator,
+    isParticipant: permissions.isParticipant,
+    isAppAdmin: permissions.isAppAdmin,
+    isAppModerator: permissions.isAppModerator,
     isLoading: false,
   };
 }

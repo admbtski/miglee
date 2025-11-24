@@ -10,7 +10,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
-import { useIntentQuery } from '@/lib/api/intents';
 import { useIntentPermissions } from '@/hooks/use-intent-permissions';
 
 interface IntentManagementGuardProps {
@@ -23,9 +22,9 @@ interface IntentManagementGuardProps {
  */
 function LoadingState() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <div className="text-center">
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-8 h-8 mx-auto text-indigo-600 animate-spin dark:text-indigo-400" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
           Checking permissions...
         </p>
@@ -39,9 +38,9 @@ function LoadingState() {
  */
 function UnauthorizedState() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <div className="text-center">
-        <ShieldAlert className="mx-auto h-12 w-12 text-red-500" />
+        <ShieldAlert className="w-12 h-12 mx-auto text-red-500" />
         <h1 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
           Access Denied
         </h1>
@@ -65,12 +64,7 @@ export function IntentManagementGuard({
   children,
 }: IntentManagementGuardProps) {
   const router = useRouter();
-  const { data, isLoading: isLoadingIntent } = useIntentQuery({
-    id: intentId,
-  });
-
-  const intent = data?.intent;
-  const permissions = useIntentPermissions(intent);
+  const permissions = useIntentPermissions(intentId);
 
   // Redirect if user doesn't have management permissions
   useEffect(() => {
@@ -82,10 +76,11 @@ export function IntentManagementGuard({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [permissions.isLoading, permissions.canManage, intentId, router]);
 
   // Show loading state while checking permissions
-  if (isLoadingIntent || permissions.isLoading) {
+  if (permissions.isLoading) {
     return <LoadingState />;
   }
 

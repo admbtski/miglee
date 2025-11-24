@@ -806,6 +806,25 @@ type IntentMemberStats {
   kicked: Int!
 }
 
+"""
+User permissions for a specific intent.
+Indicates what actions the current user can perform.
+"""
+type IntentPermissions {
+  "User is the owner of the intent"
+  isOwner: Boolean!
+  "User is a moderator of the intent"
+  isModerator: Boolean!
+  "User is a participant (joined member)"
+  isParticipant: Boolean!
+  "User is an app-level admin"
+  isAppAdmin: Boolean!
+  "User is an app-level moderator"
+  isAppModerator: Boolean!
+  "User can access management interface"
+  canManage: Boolean!
+}
+
 # ------------------------------------------------------------------------------
 # Direct Messages (DM)
 # ------------------------------------------------------------------------------
@@ -1481,6 +1500,12 @@ type Query {
   ): [IntentMember!]!
 
   intentMemberStats(intentId: ID!): IntentMemberStats!
+
+  """
+  Check user's permissions for a specific intent.
+  Returns permission flags for the current authenticated user.
+  """
+  intentPermissions(intentId: ID!): IntentPermissions!
 
   # Intent Invite Links
   intentInviteLinks(
