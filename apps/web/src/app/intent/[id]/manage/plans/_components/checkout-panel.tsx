@@ -1,18 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import {
-  ArrowLeft,
-  Clock,
-  Info,
-  Lock,
-  CreditCard,
-  Building2,
-  X,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Clock, Lock, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
+import { useCreateEventSponsorshipCheckout } from '@/lib/api/billing';
+import { IntentPlan } from '@/lib/api/__generated__/react-query-update';
+import { toast } from 'sonner';
 
 interface CheckoutPanelProps {
   intentId: string;
@@ -20,22 +14,11 @@ interface CheckoutPanelProps {
   onBack: () => void;
 }
 
-interface BillingDetails {
-  companyName: string;
-  country: string;
-  vatId: string;
-  city: string;
-  street: string;
-  building: string;
-  postalCode: string;
-}
-
-type PaymentMethod = 'blik' | 'card' | 'transfer' | 'wallet';
-
-const PLAN_PRICES = {
-  Basic: { net: 4.07, vat: 0.93, gross: 5.0 },
-  Plus: { net: 8.13, vat: 1.87, gross: 10.0 },
-  Pro: { net: 12.2, vat: 2.8, gross: 15.0 },
+// Real prices from Stripe product catalog (from .env)
+const PLAN_PRICES: Record<SponsorPlan, number> = {
+  Basic: 0, // Free tier
+  Plus: 14.99, // zł14.99 PLN - STRIPE_PRICE_EVENT_PLUS
+  Pro: 29.99, // zł29.99 PLN - STRIPE_PRICE_EVENT_PRO
 };
 
 export function CheckoutPanel({
@@ -43,32 +26,48 @@ export function CheckoutPanel({
   selectedPlan,
   onBack,
 }: CheckoutPanelProps) {
-  const [billingModalOpen, setBillingModalOpen] = React.useState(false);
-  const [selectedPayment, setSelectedPayment] =
-    React.useState<PaymentMethod | null>(null);
-  const [discountCode, setDiscountCode] = React.useState('');
-  const [blikCode, setBlikCode] = React.useState('');
   const [agreeToTerms, setAgreeToTerms] = React.useState(false);
+  const createCheckout = useCreateEventSponsorshipCheckout();
 
-  const [billingDetails, setBillingDetails] = React.useState<BillingDetails>({
-    companyName: 'Przykładowa Firma Sp. z o.o.',
-    country: 'Polska',
-    vatId: '1234567890',
-    city: 'Warszawa',
-    street: 'ul. Marszałkowska',
-    building: '1/23',
-    postalCode: '00-001',
-  });
+  const price = PLAN_PRICES[selectedPlan];
 
-  const pricing = PLAN_PRICES[selectedPlan];
+  const handleProceedToPayment = async () => {
+    if (!agreeToTerms) {
+      toast.error('Musisz zaakceptować regulamin i politykę prywatności.');
+      return;
+    }
+
+    try {
+      // Convert plan to GraphQL enum: Basic, Plus, Pro -> FREE, PLUS, PRO
+      const planMap: Record<SponsorPlan, IntentPlan> = {
+        Basic: IntentPlan.Free,
+        Plus: IntentPlan.Plus,
+        Pro: IntentPlan.Pro,
+      };
+
+      const result = await createCheckout.mutateAsync({
+        input: {
+          intentId,
+          plan: planMap[selectedPlan],
+        },
+      });
+
+      // Redirect to Stripe Checkout
+      window.location.href = result.createEventSponsorshipCheckout.checkoutUrl;
+    } catch (error: any) {
+      console.error('Failed to create event sponsorship checkout:', error);
+      toast.error(error.message || 'Nie udało się utworzyć sesji płatności.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#05060a]">
-      <div className="max-w-5xl px-6 py-10 mx-auto">
+      <div className="max-w-4xl px-6 py-10 mx-auto">
         {/* Back button */}
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 mb-6 text-sm font-medium transition-colors text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+          disabled={createCheckout.isPending}
+          className="inline-flex items-center gap-2 mb-6 text-sm font-medium transition-colors text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 disabled:opacity-50"
         >
           <ArrowLeft className="w-4 h-4" />
           Powrót do planów
@@ -79,386 +78,166 @@ export function CheckoutPanel({
           {/* SUMMARY SECTION */}
           <section>
             <h2 className="text-xs font-bold tracking-[0.2em] text-zinc-500 dark:text-zinc-400 uppercase mb-4">
-              Podsumowanie
+              Podsumowanie zamówienia
             </h2>
             <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0a0b12] overflow-hidden">
-              {/* Table header */}
-              <div className="hidden md:grid md:grid-cols-6 gap-4 px-6 py-3 bg-zinc-50 dark:bg-[#050608] border-b border-zinc-200 dark:border-white/5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                <div className="col-span-2">Produkt</div>
-                <div>Typ</div>
-                <div>Ilość</div>
-                <div>Netto</div>
-                <div className="text-right">Brutto</div>
-              </div>
-
               {/* Table row */}
-              <div className="px-6 py-4">
-                <div className="grid items-center gap-4 md:grid-cols-6">
-                  <div className="col-span-2">
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-                      Plan sponsorowania – {selectedPlan}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      Jednorazowa płatność
-                    </p>
-                  </div>
+              <div className="px-6 py-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <span className="inline-flex items-center px-3 py-1 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full dark:bg-indigo-900/30 dark:text-indigo-300">
-                      {selectedPlan}
-                    </span>
-                  </div>
-                  <div className="text-zinc-900 dark:text-zinc-50">1</div>
-                  <div className="text-zinc-900 dark:text-zinc-50">
-                    {pricing.net.toFixed(2)} zł
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
+                        <Sparkles
+                          className="w-6 h-6 text-white"
+                          strokeWidth={2}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                          Plan sponsorowania – {selectedPlan}
+                        </p>
+                        <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                          Jednorazowa płatność za wyróżnienie wydarzenia
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                      {pricing.gross.toFixed(2)} zł
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      VAT: {pricing.vat.toFixed(2)} zł
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                      {price.toFixed(2)} zł
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Active until */}
+              {/* Active period */}
               <div className="px-6 py-4 border-t border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#050608]">
                 <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
                   <Clock className="w-4 h-4" />
                   <span>
-                    Twój plan będzie aktywny do:{' '}
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                      {new Date(
-                        Date.now() + 365 * 24 * 60 * 60 * 1000
-                      ).toLocaleDateString('pl-PL')}
-                    </span>
+                    Twój pakiet sponsorowania będzie aktywny przez{' '}
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                      30 dni
+                    </span>{' '}
+                    od momentu zakupu
                   </span>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* DISCOUNT CODE SECTION */}
+          {/* PLAN FEATURES */}
           <section>
             <h2 className="text-xs font-bold tracking-[0.2em] text-zinc-500 dark:text-zinc-400 uppercase mb-4">
-              Kod rabatowy
+              Co otrzymujesz
             </h2>
             <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0a0b12] p-6">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={discountCode}
-                  onChange={(e) => setDiscountCode(e.target.value)}
-                  placeholder="Wpisz kod rabatowy"
-                  className="flex-1 px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#050608] text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                />
-                <button
-                  type="button"
-                  className="px-6 py-3 font-medium text-white transition-colors rounded-2xl bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
-                >
-                  Zastosuj
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* VAT INVOICE DETAILS SECTION */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-bold tracking-[0.2em] text-zinc-500 dark:text-zinc-400 uppercase">
-                Dane do faktury VAT
-              </h2>
-              <button
-                onClick={() => setBillingModalOpen(true)}
-                className="text-sm font-medium text-indigo-600 transition-colors dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
-              >
-                Aktualizuj dane
-              </button>
-            </div>
-
-            <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0a0b12] p-6 space-y-4">
-              {/* Warning banner */}
-              <div className="p-4 border border-red-200 rounded-2xl bg-red-50 dark:bg-red-900/20 dark:border-red-800/30">
-                <div className="flex items-start gap-3">
-                  <div className="flex items-center justify-center flex-shrink-0 w-6 h-6 bg-red-100 rounded-full dark:bg-red-900/40">
-                    <Info className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="mb-1 font-semibold text-red-900 dark:text-red-100">
-                      Zweryfikuj swoje dane rozliczeniowe
-                    </h3>
-                    <p className="text-sm text-red-800 dark:text-red-200">
-                      Upewnij się, że dane do faktury są poprawne. Błędne dane
-                      mogą opóźnić proces realizacji zamówienia.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setBillingModalOpen(true)}
-                    className="flex-shrink-0 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                  >
-                    Zweryfikuj
-                  </button>
-                </div>
-              </div>
-
-              {/* Billing details grid */}
-              <div className="grid grid-cols-2 gap-4 pt-2 md:grid-cols-3">
-                <div>
-                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    Nazwa firmy
-                  </p>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {billingDetails.companyName}
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    Miasto
-                  </p>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {billingDetails.city}
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    Kod pocztowy
-                  </p>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {billingDetails.postalCode}
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    Ulica
-                  </p>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {billingDetails.street} {billingDetails.building}
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    Kraj
-                  </p>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {billingDetails.country}
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    NIP
-                  </p>
-                  <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                    {billingDetails.vatId}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* PAYMENT METHODS SECTION */}
-          <section>
-            <h2 className="text-xs font-bold tracking-[0.2em] text-zinc-500 dark:text-zinc-400 uppercase mb-4">
-              Wybierz metodę płatności i dokończ zamówienie
-            </h2>
-
-            <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0a0b12] divide-y divide-zinc-200 dark:divide-white/5">
-              {/* BLIK */}
-              <div className="p-6">
-                <label className="flex items-center gap-4 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={selectedPayment === 'blik'}
-                    onChange={() => setSelectedPayment('blik')}
-                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <div className="flex items-center justify-between flex-1">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                      Płatność BLIK
-                    </span>
-                    <div className="px-3 py-1 text-xs font-bold rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50">
-                      BLIK
-                    </div>
-                  </div>
-                </label>
-
-                <AnimatePresence>
-                  {selectedPayment === 'blik' && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-4 p-4 rounded-2xl bg-zinc-50 dark:bg-[#050608]">
-                        <input
-                          type="text"
-                          value={blikCode}
-                          onChange={(e) =>
-                            setBlikCode(
-                              e.target.value.replace(/\D/g, '').slice(0, 6)
-                            )
-                          }
-                          placeholder="000-000"
-                          maxLength={7}
-                          className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-center text-2xl font-mono tracking-widest text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <p className="mt-2 text-xs text-center text-zinc-500 dark:text-zinc-400">
-                          Wpisz 6-cyfrowy kod z aplikacji bankowej
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Card */}
-              <div className="p-6">
-                <label className="flex items-center gap-4 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={selectedPayment === 'card'}
-                    onChange={() => setSelectedPayment('card')}
-                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <div className="flex items-center justify-between flex-1">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                      Płatność kartą
-                    </span>
-                    <div className="flex gap-2">
-                      <CreditCard className="w-8 h-5 text-zinc-400" />
-                    </div>
-                  </div>
-                </label>
-
-                <AnimatePresence>
-                  {selectedPayment === 'card' && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-4 p-6 rounded-2xl bg-zinc-50 dark:bg-[#050608] border-2 border-dashed border-zinc-300 dark:border-white/10 text-center">
-                        <Building2 className="w-12 h-12 mx-auto mb-3 text-zinc-400" />
-                        <p className="mb-1 font-medium text-zinc-900 dark:text-zinc-50">
-                          Dodaj nową kartę
-                        </p>
-                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                          Zostaniesz przekierowany do bezpiecznej strony
-                          płatności
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Online transfer */}
-              <div className="p-6">
-                <label className="flex items-center gap-4 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={selectedPayment === 'transfer'}
-                    onChange={() => setSelectedPayment('transfer')}
-                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <div className="flex items-center justify-between flex-1">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                      Przelew online
-                    </span>
-                    <div className="px-3 py-1 text-xs font-bold rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50">
-                      Paynow
-                    </div>
-                  </div>
-                </label>
-
-                <AnimatePresence>
-                  {selectedPayment === 'transfer' && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-4 p-4 rounded-2xl bg-zinc-50 dark:bg-[#050608]">
-                        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
-                          Wybierz swój bank:
-                        </p>
-                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                          {[
-                            'mBank',
-                            'ING',
-                            'PKO BP',
-                            'Santander',
-                            'Pekao',
-                            'Millennium',
-                            'Alior',
-                            'BNP',
-                          ].map((bank) => (
-                            <button
-                              key={bank}
-                              type="button"
-                              className="p-4 rounded-xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors"
-                            >
-                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                                {bank}
-                              </p>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Digital wallet */}
-              <div className="p-6">
-                <label className="flex items-center gap-4 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={selectedPayment === 'wallet'}
-                    onChange={() => setSelectedPayment('wallet')}
-                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <div className="flex items-center justify-between flex-1">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-50">
-                      Portfele cyfrowe
-                    </span>
-                    <div className="px-3 py-1 text-xs font-bold rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50">
-                      GPay
-                    </div>
-                  </div>
-                </label>
-
-                <AnimatePresence>
-                  {selectedPayment === 'wallet' && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-4 p-6 rounded-2xl bg-zinc-50 dark:bg-[#050608] text-center">
-                        <button
-                          type="button"
-                          className="w-full max-w-xs px-6 py-4 mx-auto font-bold text-white transition-colors rounded-2xl bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
-                        >
-                          Zapłać z Google Pay
-                        </button>
-                        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-                          Zostaniesz przekierowany do Google Pay
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <ul className="space-y-3">
+                {selectedPlan === 'Plus' && (
+                  <>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Wszystko z planu Free</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Brak limitu uczestników + chat grupowy</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Wydarzenia hybrydowe (onsite + online)</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Badge „Promowane" + wyróżniony kafelek</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>3 podbicia wydarzenia</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>3 lokalne powiadomienia push</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Formularze dołączenia + check-in</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Współorganizatorzy + podstawowa analityka</span>
+                    </li>
+                  </>
+                )}
+                {selectedPlan === 'Pro' && (
+                  <>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Wszystko z planu Plus</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Zaawansowana analityka (trendy, źródła ruchu)</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Narzędzia komunikacji masowej (broadcasty)</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>5 podbić wydarzenia</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>5 lokalnych powiadomień push</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Opłaty za bilety (ticketing)</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Priorytetowa widoczność w listingu</span>
+                    </li>
+                    <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        ✓
+                      </span>
+                      <span>Eksperckie wsparcie premium</span>
+                    </li>
+                  </>
+                )}
+              </ul>
             </div>
           </section>
 
@@ -468,7 +247,7 @@ export function CheckoutPanel({
             <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
               <Lock className="w-4 h-4" />
               <span className="font-medium">
-                Wszystkie transakcje są bezpieczne i szyfrowane
+                Wszystkie transakcje są bezpieczne i szyfrowane przez Stripe
               </span>
             </div>
 
@@ -510,25 +289,38 @@ export function CheckoutPanel({
                   Suma całkowita
                 </p>
                 <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-                  {pricing.gross.toFixed(2)} PLN
+                  {price.toFixed(2)} PLN
                 </p>
               </div>
               <button
                 type="button"
-                disabled={!agreeToTerms || !selectedPayment}
-                className="px-8 py-4 text-lg font-bold text-white transition-colors rounded-2xl bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleProceedToPayment}
+                disabled={!agreeToTerms || createCheckout.isPending}
+                className={cn(
+                  'inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-bold transition-colors rounded-2xl',
+                  'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900',
+                  'hover:bg-zinc-800 dark:hover:bg-zinc-100',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
               >
-                Zamów i zapłać {pricing.gross.toFixed(2)} PLN
+                {createCheckout.isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Przekierowywanie...
+                  </>
+                ) : (
+                  <>Przejdź do płatności</>
+                )}
               </button>
             </div>
 
             {/* Payment logos */}
             <div className="flex flex-wrap items-center gap-4 pt-6 mt-6 border-t border-zinc-200 dark:border-white/5">
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Akceptowane metody płatności:
+                Obsługiwane metody płatności:
               </p>
               <div className="flex flex-wrap gap-3">
-                {['BLIK', 'Visa', 'Mastercard', 'GPay', 'Paynow'].map(
+                {['BLIK', 'Visa', 'Mastercard', 'Google Pay', 'Apple Pay'].map(
                   (logo) => (
                     <div
                       key={logo}
@@ -543,201 +335,6 @@ export function CheckoutPanel({
           </section>
         </div>
       </div>
-
-      {/* Billing Details Modal */}
-      <BillingDetailsModal
-        isOpen={billingModalOpen}
-        onClose={() => setBillingModalOpen(false)}
-        billingDetails={billingDetails}
-        onSave={setBillingDetails}
-      />
     </div>
-  );
-}
-
-interface BillingDetailsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  billingDetails: BillingDetails;
-  onSave: (details: BillingDetails) => void;
-}
-
-function BillingDetailsModal({
-  isOpen,
-  onClose,
-  billingDetails,
-  onSave,
-}: BillingDetailsModalProps) {
-  const [formData, setFormData] = React.useState(billingDetails);
-
-  React.useEffect(() => {
-    setFormData(billingDetails);
-  }, [billingDetails]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    onClose();
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl rounded-[32px] bg-white dark:bg-[#10121a] border border-zinc-200 dark:border-white/5 shadow-2xl overflow-hidden"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-200 dark:border-white/5">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-            Dane rozliczeniowe
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <X className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Company name */}
-            <div className="md:col-span-2">
-              <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Nazwa firmy <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.companyName}
-                onChange={(e) =>
-                  setFormData({ ...formData, companyName: e.target.value })
-                }
-                className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Country */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Kraj <span className="text-red-500">*</span>
-              </label>
-              <select
-                required
-                value={formData.country}
-                onChange={(e) =>
-                  setFormData({ ...formData, country: e.target.value })
-                }
-                className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option>Polska</option>
-                <option>Niemcy</option>
-                <option>Wielka Brytania</option>
-              </select>
-            </div>
-
-            {/* VAT ID */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                NIP <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.vatId}
-                onChange={(e) =>
-                  setFormData({ ...formData, vatId: e.target.value })
-                }
-                className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* City */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Miasto <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.city}
-                onChange={(e) =>
-                  setFormData({ ...formData, city: e.target.value })
-                }
-                className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Postal code */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Kod pocztowy <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.postalCode}
-                onChange={(e) =>
-                  setFormData({ ...formData, postalCode: e.target.value })
-                }
-                className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Street */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Ulica <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.street}
-                onChange={(e) =>
-                  setFormData({ ...formData, street: e.target.value })
-                }
-                className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Building */}
-            <div>
-              <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Nr budynku/lokalu <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.building}
-                onChange={(e) =>
-                  setFormData({ ...formData, building: e.target.value })
-                }
-                className="w-full px-6 py-3 rounded-2xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-[#0a0b12] text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          {/* Submit button */}
-          <button
-            type="submit"
-            className="w-full px-8 py-4 font-bold text-white transition-colors rounded-2xl bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
-          >
-            Zapisz dane
-          </button>
-        </form>
-      </motion.div>
-    </motion.div>
   );
 }

@@ -104,8 +104,9 @@ export function useMyPlanPeriods(
   >
 ) {
   return useQuery({
-    queryKey: billingKeys.myPlanPeriods(variables?.limit),
-    queryFn: async () => gqlClient.request(MyPlanPeriodsDocument, variables),
+    queryKey: billingKeys.myPlanPeriods(variables?.limit ?? undefined),
+    queryFn: async () =>
+      gqlClient.request(MyPlanPeriodsDocument, variables ?? {}),
     ...options,
   });
 }
@@ -146,12 +147,11 @@ export function useCreateSubscriptionCheckout(
   return useMutation({
     mutationFn: async (variables) =>
       gqlClient.request(CreateSubscriptionCheckoutDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: () => {
       // Invalidate billing queries after successful checkout creation
       queryClient.invalidateQueries({ queryKey: billingKeys.myPlan() });
       queryClient.invalidateQueries({ queryKey: billingKeys.mySubscription() });
       queryClient.invalidateQueries({ queryKey: billingKeys.myPlanPeriods() });
-      options?.onSuccess?.(data, variables, context);
     },
     ...options,
   });
@@ -172,10 +172,9 @@ export function useCreateOneOffCheckout(
   return useMutation({
     mutationFn: async (variables) =>
       gqlClient.request(CreateOneOffCheckoutDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingKeys.myPlan() });
       queryClient.invalidateQueries({ queryKey: billingKeys.myPlanPeriods() });
-      options?.onSuccess?.(data, variables, context);
     },
     ...options,
   });
@@ -196,14 +195,13 @@ export function useCreateEventSponsorshipCheckout(
   return useMutation({
     mutationFn: async (variables) =>
       gqlClient.request(CreateEventSponsorshipCheckoutDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (_data, variables) => {
       // Invalidate event sponsorship query
       if (variables.input.intentId) {
         queryClient.invalidateQueries({
           queryKey: billingKeys.eventSponsorship(variables.input.intentId),
         });
       }
-      options?.onSuccess?.(data, variables, context);
     },
     ...options,
   });
@@ -224,9 +222,8 @@ export function useCancelSubscription(
   return useMutation({
     mutationFn: async (variables) =>
       gqlClient.request(CancelSubscriptionDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingKeys.mySubscription() });
-      options?.onSuccess?.(data, variables, context);
     },
     ...options,
   });
@@ -242,9 +239,8 @@ export function useReactivateSubscription(
 
   return useMutation({
     mutationFn: async () => gqlClient.request(ReactivateSubscriptionDocument),
-    onSuccess: (data, variables, context) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingKeys.mySubscription() });
-      options?.onSuccess?.(data, variables, context);
     },
     ...options,
   });
@@ -265,11 +261,10 @@ export function useBoost(
   return useMutation({
     mutationFn: async (variables) =>
       gqlClient.request(UseBoostDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: billingKeys.eventSponsorship(variables.intentId),
       });
-      options?.onSuccess?.(data, variables, context);
     },
     ...options,
   });
@@ -290,11 +285,10 @@ export function useLocalPush(
   return useMutation({
     mutationFn: async (variables) =>
       gqlClient.request(UseLocalPushDocument, variables),
-    onSuccess: (data, variables, context) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: billingKeys.eventSponsorship(variables.intentId),
       });
-      options?.onSuccess?.(data, variables, context);
     },
     ...options,
   });
