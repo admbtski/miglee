@@ -3,49 +3,83 @@
 import * as React from 'react';
 import { PlansPanel } from './plans-panel';
 import { CheckoutPanel } from './checkout-panel';
+import { ReloadActionsModal } from './reload-actions-modal';
 import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
-import { useMyPlan } from '@/lib/api/billing';
+import { useEventSponsorship } from '@/lib/api/billing';
 
 interface PlansPanelWrapperProps {
   intentId: string;
 }
 
-type View = 'plans' | 'checkout';
+type View = 'plans' | 'checkout' | 'reload';
+type ActionType = 'new' | 'upgrade' | 'reload';
 
 export function PlansPanelWrapper({ intentId }: PlansPanelWrapperProps) {
   const [view, setView] = React.useState<View>('plans');
   const [selectedPlan, setSelectedPlan] = React.useState<SponsorPlan | null>(
     null
   );
+  const [actionType, setActionType] = React.useState<ActionType>('new');
 
-  // Fetch user's current plan to check if they have access via subscription
-  const { data: myPlanData } = useMyPlan();
+  // Fetch active sponsorship for this intent (if any)
+  const { data: sponsorshipData } = useEventSponsorship(
+    { intentId },
+    { enabled: !!intentId }
+  );
 
-  const handlePurchase = async (_intentId: string, plan: SponsorPlan) => {
+  const handlePurchase = async (
+    _intentId: string,
+    plan: SponsorPlan,
+    action: ActionType
+  ) => {
     setSelectedPlan(plan);
+    setActionType(action);
     setView('checkout');
+  };
+
+  const handleReload = async (_intentId: string, currentPlan: SponsorPlan) => {
+    setSelectedPlan(currentPlan);
+    setActionType('reload');
+    setView('reload');
   };
 
   const handleBackToPlans = () => {
     setView('plans');
     setSelectedPlan(null);
+    setActionType('new');
   };
 
-  // Map user's subscription plan to sponsor plan
-  const userSubscriptionPlan = myPlanData?.myPlan?.plan;
-  const subscriptionSponsorPlan: SponsorPlan | 'None' =
-    userSubscriptionPlan === 'PRO'
-      ? 'Pro'
-      : userSubscriptionPlan === 'PLUS'
-        ? 'Plus'
-        : 'None';
+  // Determine current sponsorship plan
+  const currentSponsorshipPlan = sponsorshipData?.eventSponsorship?.plan;
+  const currentPlanId =
+    currentSponsorshipPlan === 'PRO'
+      ? ('pro' as const)
+      : currentSponsorshipPlan === 'PLUS'
+        ? ('plus' as const)
+        : currentSponsorshipPlan === 'FREE'
+          ? ('free' as const)
+          : null;
 
   if (view === 'checkout' && selectedPlan) {
     return (
       <CheckoutPanel
         intentId={intentId}
         selectedPlan={selectedPlan}
+        actionType={actionType}
         onBack={handleBackToPlans}
+      />
+    );
+  }
+
+  if (view === 'reload' && selectedPlan) {
+    return (
+      <ReloadActionsModal
+        intentId={intentId}
+        currentPlan={selectedPlan}
+        onBack={handleBackToPlans}
+        onProceedToCheckout={() => {
+          setView('checkout');
+        }}
       />
     );
   }
@@ -54,7 +88,8 @@ export function PlansPanelWrapper({ intentId }: PlansPanelWrapperProps) {
     <PlansPanel
       intentId={intentId}
       onPurchase={handlePurchase}
-      subscriptionPlan={subscriptionSponsorPlan}
+      onReload={handleReload}
+      currentPlan={currentPlanId}
     />
   );
 }

@@ -74,15 +74,6 @@ export function SubscriptionPanelWrapper({
     toast.info('Funkcja wkrótce dostępna');
   };
 
-  const handleUpgradeSponsorshipPlan = async (
-    intentId: string,
-    newPlan: any
-  ) => {
-    console.info('[upgrade]', { intentId, newPlan });
-    // TODO: Implement additional action packs purchase
-    toast.info('Funkcja wkrótce dostępna');
-  };
-
   // Loading state
   if (isLoading) {
     return (
@@ -146,7 +137,6 @@ export function SubscriptionPanelWrapper({
       onSendLocalPush={handleSendLocalPush}
       onToggleSponsoredBadge={handleToggleSponsoredBadge}
       onToggleHighlight={handleToggleHighlight}
-      onUpgradeSponsorshipPlan={handleUpgradeSponsorshipPlan}
     />
   );
 }

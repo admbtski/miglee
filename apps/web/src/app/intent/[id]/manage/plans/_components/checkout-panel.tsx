@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 interface CheckoutPanelProps {
   intentId: string;
   selectedPlan: SponsorPlan;
+  actionType?: 'new' | 'upgrade' | 'reload';
   onBack: () => void;
 }
 
@@ -24,12 +25,31 @@ const PLAN_PRICES: Record<SponsorPlan, number> = {
 export function CheckoutPanel({
   intentId,
   selectedPlan,
+  actionType = 'new',
   onBack,
 }: CheckoutPanelProps) {
   const [agreeToTerms, setAgreeToTerms] = React.useState(false);
   const createCheckout = useCreateEventSponsorshipCheckout();
 
   const price = PLAN_PRICES[selectedPlan];
+
+  const getActionTitle = () => {
+    if (actionType === 'upgrade') {
+      return `Upgrade do planu ${selectedPlan}`;
+    } else if (actionType === 'reload') {
+      return `Doładowanie akcji ${selectedPlan}`;
+    }
+    return `Wykup planu ${selectedPlan}`;
+  };
+
+  const getActionDescription = () => {
+    if (actionType === 'upgrade') {
+      return 'Ulepsz swoje wydarzenie do wyższego planu';
+    } else if (actionType === 'reload') {
+      return 'Dokup dodatkowe podbicia i powiadomienia push';
+    }
+    return 'Jednorazowa płatność za wyróżnienie wydarzenia';
+  };
 
   const handleProceedToPayment = async () => {
     if (!agreeToTerms) {
@@ -94,10 +114,10 @@ export function CheckoutPanel({
                       </div>
                       <div>
                         <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                          Plan sponsorowania – {selectedPlan}
+                          {getActionTitle()}
                         </p>
                         <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-                          Jednorazowa płatność za wyróżnienie wydarzenia
+                          {getActionDescription()}
                         </p>
                       </div>
                     </div>
@@ -163,13 +183,16 @@ export function CheckoutPanel({
                       <span className="text-emerald-600 dark:text-emerald-400">
                         ✓
                       </span>
-                      <span>3 podbicia wydarzenia</span>
+                      <span>
+                        1 podbicie wydarzenia (stackuje się po zakupie kolejnych
+                        pakietów)
+                      </span>
                     </li>
                     <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
                       <span className="text-emerald-600 dark:text-emerald-400">
                         ✓
                       </span>
-                      <span>3 lokalne powiadomienia push</span>
+                      <span>1 lokalne powiadomienie push (stackuje się)</span>
                     </li>
                     <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
                       <span className="text-emerald-600 dark:text-emerald-400">
@@ -209,13 +232,16 @@ export function CheckoutPanel({
                       <span className="text-emerald-600 dark:text-emerald-400">
                         ✓
                       </span>
-                      <span>5 podbić wydarzenia</span>
+                      <span>
+                        3 podbicia wydarzenia (stackują się po zakupie kolejnych
+                        pakietów)
+                      </span>
                     </li>
                     <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
                       <span className="text-emerald-600 dark:text-emerald-400">
                         ✓
                       </span>
-                      <span>5 lokalnych powiadomień push</span>
+                      <span>3 lokalne powiadomienia push (stackują się)</span>
                     </li>
                     <li className="flex items-start gap-3 text-sm text-zinc-700 dark:text-zinc-300">
                       <span className="text-emerald-600 dark:text-emerald-400">

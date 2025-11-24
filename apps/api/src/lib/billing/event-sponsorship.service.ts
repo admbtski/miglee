@@ -13,7 +13,6 @@ import {
   getCheckoutSuccessUrl,
   getCheckoutCancelUrl,
   CHECKOUT_SESSION_CONFIG,
-  type EventSponsorshipMetadata,
 } from './constants';
 import { config } from '../../env';
 
@@ -67,8 +66,34 @@ export async function createEventSponsorshipCheckout(
     where: { intentId },
   });
 
+  // Determine action type: new, upgrade, or reload
+  let actionType: 'new' | 'upgrade' | 'reload' = 'new';
+
   if (existing && existing.status === 'ACTIVE') {
-    throw new Error('Event already has an active sponsorship');
+    // Check if it's an upgrade (PLUS -> PRO)
+    if (existing.plan === 'PLUS' && plan === 'PRO') {
+      actionType = 'upgrade';
+      logger.info(
+        { intentId, from: existing.plan, to: plan },
+        'Upgrading event sponsorship plan'
+      );
+    }
+    // Check if it's a reload (buying same plan again to stack actions)
+    else if (existing.plan === plan) {
+      actionType = 'reload';
+      logger.info(
+        { intentId, plan },
+        'Reloading event sponsorship actions (stacking)'
+      );
+    }
+    // Downgrade is not allowed
+    else if (existing.plan === 'PRO' && plan === 'PLUS') {
+      throw new Error('Downgrade from PRO to PLUS is not allowed');
+    }
+    // Any other case with active sponsorship
+    else {
+      throw new Error('Event already has an active sponsorship');
+    }
   }
 
   // Get or create Stripe customer
@@ -99,21 +124,47 @@ export async function createEventSponsorshipCheckout(
       boostsTotal: EVENT_PLAN_LIMITS[plan].boostsTotal,
       localPushesTotal: EVENT_PLAN_LIMITS[plan].localPushesTotal,
     },
-    update: {
-      plan,
-      status: 'PENDING',
-      boostsTotal: EVENT_PLAN_LIMITS[plan].boostsTotal,
-      localPushesTotal: EVENT_PLAN_LIMITS[plan].localPushesTotal,
-    },
+    update:
+      actionType === 'reload'
+        ? {
+            // For reload: add new actions to existing totals (stacking)
+            status: 'PENDING', // Will be set back to ACTIVE after payment
+            boostsTotal: {
+              increment: EVENT_PLAN_LIMITS[plan].boostsTotal,
+            },
+            localPushesTotal: {
+              increment: EVENT_PLAN_LIMITS[plan].localPushesTotal,
+            },
+          }
+        : actionType === 'upgrade'
+          ? {
+              // For upgrade: change plan AND add new actions to existing totals (stacking)
+              plan,
+              status: 'PENDING',
+              boostsTotal: {
+                increment: EVENT_PLAN_LIMITS[plan].boostsTotal,
+              },
+              localPushesTotal: {
+                increment: EVENT_PLAN_LIMITS[plan].localPushesTotal,
+              },
+            }
+          : {
+              // For new or reactivation: reset everything
+              plan,
+              status: 'PENDING',
+              boostsTotal: EVENT_PLAN_LIMITS[plan].boostsTotal,
+              localPushesTotal: EVENT_PLAN_LIMITS[plan].localPushesTotal,
+            },
   });
 
   // Prepare metadata
-  const metadata: EventSponsorshipMetadata = {
+  const metadata = {
     type: METADATA_TYPE.EVENT_SPONSORSHIP,
     eventSponsorshipId: sponsorship.id,
     intentId,
     userId,
     plan,
+    actionType, // Add action type to metadata for webhook processing
   };
 
   // Create checkout session
@@ -126,9 +177,9 @@ export async function createEventSponsorshipCheckout(
         quantity: 1,
       },
     ],
-    metadata,
+    metadata: metadata as Record<string, string>,
     payment_intent_data: {
-      metadata,
+      metadata: metadata as Record<string, string>,
     },
     success_url: getCheckoutSuccessUrl(
       config.appUrl,
@@ -193,26 +244,38 @@ export async function activateEventSponsorship(
   }
 
   const now = new Date();
-  const endsAt = new Date(now);
-  endsAt.setMonth(endsAt.getMonth() + 1); // 1 month from now
+
+  // Check if this is a reload (sponsorship was already active)
+  const isReload =
+    sponsorship.status === 'ACTIVE' ||
+    (sponsorship.startsAt && sponsorship.endsAt);
+
+  let updateData: any = {
+    status: 'ACTIVE',
+    stripePaymentIntentId,
+    stripeCheckoutSessionId,
+  };
+
+  // Only update dates for new sponsorships or upgrades, not for reloads
+  if (!isReload) {
+    const endsAt = new Date(now);
+    endsAt.setMonth(endsAt.getMonth() + 1); // 1 month from now
+
+    updateData.startsAt = now;
+    updateData.endsAt = endsAt;
+  }
 
   // Update sponsorship
-  await prisma.eventSponsorship.update({
+  const updated = await prisma.eventSponsorship.update({
     where: { id: sponsorshipId },
-    data: {
-      status: 'ACTIVE',
-      startsAt: now,
-      endsAt,
-      stripePaymentIntentId,
-      stripeCheckoutSessionId,
-    },
+    data: updateData,
   });
 
   // Update intent sponsorshipPlan
   await prisma.intent.update({
     where: { id: sponsorship.intentId },
     data: {
-      sponsorshipPlan: sponsorship.plan,
+      sponsorshipPlan: updated.plan,
     },
   });
 
@@ -220,8 +283,10 @@ export async function activateEventSponsorship(
     {
       sponsorshipId,
       intentId: sponsorship.intentId,
-      plan: sponsorship.plan,
-      endsAt,
+      plan: updated.plan,
+      startsAt: updated.startsAt,
+      endsAt: updated.endsAt,
+      isReload,
     },
     'Event sponsorship activated'
   );

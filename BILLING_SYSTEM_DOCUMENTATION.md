@@ -237,10 +237,10 @@ model PaymentEvent {
 
 ### User Plans
 
-| Plan | Monthly Sub | Monthly One-Off | Yearly One-Off   |
-| ---- | ----------- | --------------- | ---------------- |
-| PLUS | 29 PLN      | 39 PLN          | 299 PLN (~25/mo) |
-| PRO  | 59 PLN      | 69 PLN          | 599 PLN (~50/mo) |
+| Plan | Monthly Sub | Monthly One-Off | Yearly One-Off      |
+| ---- | ----------- | --------------- | ------------------- |
+| PLUS | 29.99 PLN   | 35.99 PLN       | 359.99 PLN (~30/mo) |
+| PRO  | 69.99 PLN   | 83.99 PLN       | 839.99 PLN (~70/mo) |
 
 **Trial**: 7 days for both PLUS and PRO (subscriptions only)
 
@@ -248,8 +248,8 @@ model PaymentEvent {
 
 | Plan | Price (1 month) |
 | ---- | --------------- |
-| PLUS | 49 PLN          |
-| PRO  | 99 PLN          |
+| PLUS | 14.99 PLN       |
+| PRO  | 29.99 PLN       |
 
 **Features**:
 
@@ -278,6 +278,41 @@ const EVENT_PLAN_LIMITS = {
   },
 };
 ```
+
+#### Action Stacking System
+
+**CRITICAL FEATURE**: Event sponsorship actions (boosts and pushes) **stack** when:
+
+- User reloads the same plan (buys it again)
+- User upgrades from PLUS to PRO
+
+**Examples**:
+
+1. **First Purchase - PLUS**
+   - Initial: 0 boosts, 0 pushes
+   - After purchase: **1 boost, 1 push**
+
+2. **Reload - Buy PLUS again**
+   - Before: 1 boost, 1 push (PLUS active)
+   - After: **2 boosts, 2 pushes** (1+1 stacked)
+
+3. **Upgrade - PLUS to PRO**
+   - Before: 1 boost, 1 push (PLUS active)
+   - After: **4 boosts, 4 pushes** (1+3 stacked)
+   - Plan changes to PRO
+
+4. **Reload - Buy PRO again**
+   - Before: 4 boosts, 4 pushes (PRO active)
+   - After: **7 boosts, 7 pushes** (4+3 stacked)
+
+**Important Rules**:
+
+- ✅ Upgrade: PLUS → PRO (allowed, actions stack)
+- ✅ Reload: Same plan purchase (allowed, actions stack)
+- ❌ Downgrade: PRO → PLUS (not allowed)
+- ❌ Downgrade: Any paid → FREE (not allowed)
+- 🔒 Actions never expire (persist for event lifecycle)
+- 📅 Plan duration does NOT reset on reload (only on new purchase)
 
 ---
 

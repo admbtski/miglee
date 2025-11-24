@@ -50,15 +50,15 @@ export const EVENT_PLAN_LIMITS = {
     analytics: 'basic' as const,
   },
   PLUS: {
-    boostsTotal: 1,
-    localPushesTotal: 1,
+    boostsTotal: 3,
+    localPushesTotal: 3,
     maxCapacity: 150,
     featuredInListing: true,
     analytics: 'standard' as const,
   },
   PRO: {
-    boostsTotal: 3,
-    localPushesTotal: 3,
+    boostsTotal: 5,
+    localPushesTotal: 5,
     maxCapacity: 500, // Or unlimited (null)
     featuredInListing: true,
     analytics: 'advanced' as const,

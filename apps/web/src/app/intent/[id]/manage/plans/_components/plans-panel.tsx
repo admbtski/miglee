@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, Sparkles, Zap, Crown } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
 import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -18,12 +18,18 @@ interface PlanCardProps {
   features: string[];
   highlighted?: boolean;
   popular?: boolean;
-  isCurrent?: boolean;
-  covered?: boolean;
-  onPurchase?: () => void;
+  currentPlan?: PlanId | null;
+  onAction?: () => void;
+  actionLabel?: string;
+  disabled?: boolean;
+  badge?: string;
+  badgeColor?: string;
+  subtext?: string;
+  tooltip?: string;
 }
 
 function PlanCard({
+  id,
   name,
   description,
   price,
@@ -32,24 +38,37 @@ function PlanCard({
   features,
   highlighted = false,
   popular = false,
-  isCurrent = false,
-  covered = false,
-  onPurchase,
+  currentPlan,
+  onAction,
+  actionLabel,
+  disabled = false,
+  badge,
+  badgeColor,
+  subtext,
+  tooltip,
 }: PlanCardProps) {
+  const isCurrent = currentPlan === id;
+  const isDowngrade = currentPlan === 'pro' && id === 'plus';
+  const isDisabled =
+    disabled ||
+    (currentPlan && currentPlan !== 'free' && id === 'free') ||
+    isDowngrade;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
       className={cn(
-        'relative rounded-[32px] border-2 bg-white dark:bg-[#10121a] p-8 shadow-sm transition-all hover:shadow-lg flex flex-col',
-        highlighted
+        'relative rounded-[32px] border-2 bg-white dark:bg-[#10121a] p-8 shadow-sm transition-all flex flex-col',
+        highlighted && !isDisabled
           ? 'border-indigo-200 dark:border-indigo-800 ring-2 ring-indigo-200 dark:ring-indigo-800 shadow-xl'
-          : 'border-zinc-200/80 dark:border-white/5'
+          : 'border-zinc-200/80 dark:border-white/5',
+        isDisabled && 'opacity-60'
       )}
     >
       {/* Popular Badge */}
-      {popular && (
+      {popular && !isDisabled && (
         <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap">
             <Sparkles className="w-3 h-3" />
@@ -58,11 +77,20 @@ function PlanCard({
         </div>
       )}
 
-      {/* Subscription badge */}
-      {covered && (
+      {/* Status Badge */}
+      {badge && (
         <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap dark:bg-emerald-500">
-            ✓ W SUBSKRYPCJI
+          <div
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold shadow-lg whitespace-nowrap',
+              badgeColor === 'green' &&
+                'bg-emerald-600 text-white dark:bg-emerald-500',
+              badgeColor === 'gold' &&
+                'bg-gradient-to-r from-amber-500 to-amber-600 text-white',
+              badgeColor === 'gray' && 'bg-zinc-600 text-white dark:bg-zinc-500'
+            )}
+          >
+            {badge}
           </div>
         </div>
       )}
@@ -89,7 +117,7 @@ function PlanCard({
         <h3 className="mb-2 text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
           {name}
         </h3>
-        <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm leading-relaxed truncate text-zinc-600 dark:text-zinc-400">
           {description}
         </p>
       </div>
@@ -98,35 +126,46 @@ function PlanCard({
       <div className="mb-6">
         <div className="flex items-baseline gap-2">
           <span className="text-5xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-            {price}
+            {price.toFixed(2)}
           </span>
           <span className="text-base text-zinc-600 dark:text-zinc-400">zł</span>
         </div>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Jednorazowa opłata
         </p>
+        {subtext && (
+          <p className="mt-2 text-sm font-medium line-clamp-2 text-zinc-700 dark:text-zinc-300">
+            {subtext}
+          </p>
+        )}
       </div>
 
       {/* CTA Button */}
-      <button
-        type="button"
-        onClick={onPurchase}
-        disabled={isCurrent || covered}
-        className={cn(
-          'mb-8 w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all',
-          isCurrent || covered
-            ? 'cursor-not-allowed border-2 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500'
-            : highlighted
-              ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md hover:from-indigo-500 hover:to-indigo-400 hover:shadow-lg'
-              : 'border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+      <div className="mb-8">
+        <button
+          type="button"
+          onClick={onAction}
+          disabled={isDisabled}
+          title={tooltip}
+          className={cn(
+            'w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all',
+            isDisabled
+              ? 'cursor-not-allowed border-2 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500'
+              : isCurrent
+                ? 'border-2 border-emerald-500 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                : highlighted
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md hover:from-indigo-500 hover:to-indigo-400 hover:shadow-lg'
+                  : 'border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+          )}
+        >
+          {actionLabel || 'Wykup teraz'}
+        </button>
+        {isDisabled && tooltip && (
+          <p className="mt-2 text-xs text-center text-zinc-500 dark:text-zinc-400">
+            {tooltip}
+          </p>
         )}
-      >
-        {isCurrent
-          ? 'Current Plan'
-          : covered
-            ? 'W ramach subskrypcji'
-            : 'Wykup teraz'}
-      </button>
+      </div>
 
       {/* Features */}
       <div className="space-y-3">
@@ -142,7 +181,7 @@ function PlanCard({
               <Check
                 className={cn(
                   'h-5 w-5 shrink-0 mt-0.5',
-                  highlighted
+                  highlighted && !isDisabled
                     ? 'text-indigo-600 dark:text-indigo-400'
                     : 'text-emerald-600 dark:text-emerald-400'
                 )}
@@ -157,30 +196,23 @@ function PlanCard({
   );
 }
 
-/** hierarchia dostępu subskrypcji -> pakiety sponsorowania */
-function hasAccessBySubscription(
-  subscription: SponsorPlan | 'None' | undefined,
-  target: PlanId
-) {
-  if (!subscription || subscription === 'None') return false;
-  const subscriptionWeight: Record<SponsorPlan, number> = {
-    Basic: 1,
-    Plus: 2,
-    Pro: 3,
-  };
-  const targetWeight: Record<PlanId, number> = { free: 0, plus: 2, pro: 3 };
-  return subscriptionWeight[subscription] >= targetWeight[target];
-}
-
 export function PlansPanel({
   intentId,
   onPurchase,
-  subscriptionPlan = 'None',
+  currentPlan = null,
+  onReload,
 }: {
   intentId: string;
-  onPurchase?: (intentId: string, plan: SponsorPlan) => Promise<void> | void;
-  /** aktywny plan subskrypcyjny użytkownika (nie dot. jednorazowych pakietów sponsorowania) */
-  subscriptionPlan?: SponsorPlan | 'None';
+  onPurchase?: (
+    intentId: string,
+    plan: SponsorPlan,
+    action: 'new' | 'upgrade' | 'reload'
+  ) => Promise<void> | void;
+  currentPlan?: 'free' | 'plus' | 'pro' | null;
+  onReload?: (
+    intentId: string,
+    currentPlan: SponsorPlan
+  ) => Promise<void> | void;
 }) {
   // Real prices from Stripe product catalog
   const PLANS = [
@@ -211,7 +243,7 @@ export function PlansPanel({
       price: 14.99, // zł14.99 PLN - STRIPE_PRICE_EVENT_PLUS
       icon: Zap,
       color: 'indigo',
-      popular: true,
+      popular: !currentPlan || currentPlan === 'free',
       highlighted: true,
       features: [
         'Wszystko z Free',
@@ -220,8 +252,8 @@ export function PlansPanel({
         'Wydarzenia hybrydowe (onsite + online)',
         'Badge „Promowane"',
         'Wyróżniony kafelek na stronie głównej',
-        '3 podbicia wydarzenia',
-        '3 lokalne powiadomienia push',
+        '1 podbicie wydarzenia (stackuje się)',
+        '1 lokalne powiadomienie push (stackuje się)',
         'Formularze dołączenia (Join Forms)',
         'Formularze obecności / Check-in',
         'Narzędzia zarządzania grupą',
@@ -242,8 +274,8 @@ export function PlansPanel({
         'Wszystko z Plus',
         'Zaawansowana analityka (trendy, źródła ruchu)',
         'Narzędzia komunikacji masowej (broadcasty)',
-        '5 podbić wydarzenia',
-        '5 lokalnych powiadomień push',
+        '3 podbicia wydarzenia (stackują się)',
+        '3 lokalne powiadomienia push (stackują się)',
         'Opłaty za bilety (ticketing)',
         'Zaawansowane narzędzia organizatora',
         'Priorytetowa widoczność w listingu',
@@ -254,68 +286,120 @@ export function PlansPanel({
     },
   ];
 
+  const getPlanCardProps = (plan: (typeof PLANS)[number]) => {
+    const isCurrent = currentPlan === plan.id;
+    const canUpgrade = currentPlan === 'plus' && plan.id === 'pro';
+    const canReload = isCurrent && plan.id !== 'free';
+    const isLocked =
+      currentPlan && currentPlan !== 'free' && plan.id === 'free';
+    const isDowngrade = currentPlan === 'pro' && plan.id === 'plus';
+
+    let badge = '';
+    let badgeColor = '';
+    let actionLabel = '';
+    let subtext = '';
+    let tooltip = '';
+
+    if (isCurrent) {
+      badge = '✓ Aktywny plan';
+      badgeColor = 'green';
+      if (plan.id !== 'free') {
+        actionLabel = 'Doładuj akcje';
+        subtext = 'Ten plan został już zakupiony dla tego wydarzenia.';
+      }
+    } else if (canUpgrade) {
+      badge = '⬆ Upgrade dostępny';
+      badgeColor = 'gold';
+      actionLabel = 'Ulepsz do Pro';
+      subtext = 'Zyskaj 5 podbić, 5 pushy, analitykę i masowe wiadomości.';
+    } else if (isLocked) {
+      badge = 'Plan nieaktywny';
+      badgeColor = 'gray';
+      actionLabel = 'Niedostępny';
+      subtext =
+        'Ten event posiada aktywny płatny plan. Downgrade nie jest możliwy.';
+    } else if (isDowngrade) {
+      actionLabel = 'Niedostępny';
+      tooltip = 'Nie możesz cofnąć planu. Downgrade nie jest możliwy.';
+    } else {
+      actionLabel = 'Wykup teraz';
+    }
+
+    const handleAction = async () => {
+      if (canReload && onReload) {
+        await onReload(intentId, plan.id === 'plus' ? 'Plus' : 'Pro');
+      } else if (canUpgrade && onPurchase) {
+        await onPurchase(intentId, 'Pro', 'upgrade');
+      } else if (!isCurrent && !isLocked && !isDowngrade && onPurchase) {
+        const sponsorPlan =
+          plan.id === 'plus' ? 'Plus' : plan.id === 'pro' ? 'Pro' : null;
+        if (sponsorPlan) {
+          await onPurchase(intentId, sponsorPlan, 'new');
+        }
+      }
+    };
+
+    return {
+      ...plan,
+      currentPlan,
+      onAction: handleAction,
+      actionLabel,
+      badge,
+      badgeColor,
+      subtext,
+      tooltip,
+      disabled: isLocked || isDowngrade,
+    };
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-4 text-center">
         <h2 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-          Wyróżnij wydarzenie
+          Plany sponsorowania wydarzenia
         </h2>
         <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-[60ch] mx-auto leading-relaxed">
-          Wybierz pakiet sponsorowania, aby zwiększyć widoczność swojego
-          wydarzenia
+          Plan sponsorowania jest aktywny przez cały cykl życia wydarzenia.
+          Upgrade jest możliwy. Downgrade nie jest możliwy.
         </p>
       </div>
 
       {/* Plans Grid */}
       <div className="grid gap-6 md:grid-cols-3">
-        {PLANS.map((plan) => {
-          const isCurrent = plan.id === 'free';
-          const covered = hasAccessBySubscription(subscriptionPlan, plan.id);
-          const sponsorPlanMap: Record<PlanId, SponsorPlan | null> = {
-            free: null,
-            plus: 'Plus',
-            pro: 'Pro',
-          };
-
-          return (
-            <PlanCard
-              key={plan.id}
-              id={plan.id}
-              name={plan.name}
-              description={plan.description}
-              price={plan.price}
-              icon={plan.icon}
-              color={plan.color}
-              features={plan.features}
-              highlighted={plan.highlighted}
-              popular={plan.popular}
-              isCurrent={isCurrent}
-              covered={covered}
-              onPurchase={async () => {
-                if (isCurrent || covered) return;
-                const sponsorPlan = sponsorPlanMap[plan.id];
-                if (sponsorPlan && onPurchase) {
-                  await onPurchase(intentId, sponsorPlan);
-                } else {
-                  console.info('[sponsor] purchase', {
-                    intentId,
-                    plan: sponsorPlan,
-                  });
-                }
-              }}
-            />
-          );
-        })}
+        {PLANS.map((plan) => (
+          <PlanCard key={plan.id} {...getPlanCardProps(plan)} />
+        ))}
       </div>
 
-      {/* Info Banner */}
-      <div className="rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-zinc-50 dark:bg-zinc-900/50 p-6 text-center">
-        <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          {subscriptionPlan && subscriptionPlan !== 'None'
-            ? '✓ Posiadasz aktywną subskrypcję. Niektóre pakiety są już dla Ciebie dostępne automatycznie.'
-            : 'Po zakupie pakietu pojawi się zakładka „Pakiet (aktywny)" z dodatkowymi akcjami.'}
-        </p>
+      {/* Info Banners */}
+      <div className="space-y-4">
+        {/* Stackowanie akcji */}
+        <div className="rounded-[24px] border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 p-6">
+          <div className="flex items-start gap-3">
+            <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="mb-1 text-sm font-semibold text-indigo-900 dark:text-indigo-100">
+                Akcje się stackują i nigdy nie wygasają
+              </p>
+              <p className="text-sm leading-relaxed text-indigo-800 dark:text-indigo-200">
+                Dokupując kolejny pakiet Plus lub Pro, dodasz kolejny zestaw
+                podbić i powiadomień push. Wszystkie akcje pozostają aktywne do
+                końca życia wydarzenia.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Social proof */}
+        {currentPlan && currentPlan !== 'free' && (
+          <div className="rounded-[24px] border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-6 text-center">
+            <p className="text-sm leading-relaxed text-emerald-800 dark:text-emerald-200">
+              💡 <strong>Najczęściej kupowane:</strong> doładowanie akcji po
+              pierwszym tygodniu wydarzenia
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

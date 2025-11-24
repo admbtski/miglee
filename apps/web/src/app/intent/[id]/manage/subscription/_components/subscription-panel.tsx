@@ -133,13 +133,12 @@ export function SubscriptionPanel({
   onBoostEvent,
   onSendLocalPush,
   onToggleSponsoredBadge,
-  onToggleHighlight, // (intentId, enabled, tone?) — dodałem opcjonalny 3. argument
-  onUpgradeSponsorshipPlan, // wykorzystane do "dokupienia" akcji
+  onToggleHighlight,
 }: {
   intentId: string;
   sponsorship: SponsorshipState & {
     highlighted?: boolean;
-    highlightTone?: HighlightTone; // <- nowy opcjonalny kolor wyróżnienia (jeśli już masz z backendu)
+    highlightTone?: HighlightTone;
     subscriptionPlan?: SponsorPlan | 'None';
   };
   onBoostEvent?: (intentId: string) => Promise<void> | void;
@@ -152,10 +151,6 @@ export function SubscriptionPanel({
     intentId: string,
     enabled: boolean,
     tone?: HighlightTone
-  ) => Promise<void> | void;
-  onUpgradeSponsorshipPlan?: (
-    intentId: string,
-    newPlan: SponsorPlan
   ) => Promise<void> | void;
 }) {
   const [busy, setBusy] = React.useState<
@@ -243,70 +238,24 @@ export function SubscriptionPanel({
     }
   };
 
-  /** ---------------- PAKIETY DOKUPIENIA ---------------- */
-  const PACKS: Record<
-    SponsorPlan,
-    { boosts: number; pushes: number; price: string; tone: string }
-  > = {
-    Basic: { boosts: 1, pushes: 1, price: '5 zł', tone: 'emerald' },
-    Plus: { boosts: 3, pushes: 3, price: '10 zł', tone: 'indigo' },
-    Pro: { boosts: 5, pushes: 5, price: '15 zł', tone: 'amber' },
-  };
-
-  const toneToClasses = (tone: string) => {
-    switch (tone) {
-      case 'emerald':
-        return {
-          card: 'border-emerald-300/60 bg-emerald-50/40 dark:border-emerald-700/50 dark:bg-emerald-900/10',
-          title: 'text-emerald-900 dark:text-emerald-200',
-          price: 'text-emerald-800 dark:text-emerald-200',
-          button: 'bg-emerald-600 hover:bg-emerald-500 text-white',
-        };
-      case 'indigo':
-        return {
-          card: 'border-indigo-300/60 bg-indigo-50/40 dark:border-indigo-700/50 dark:bg-indigo-900/10',
-          title: 'text-indigo-900 dark:text-indigo-200',
-          price: 'text-indigo-800 dark:text-indigo-200',
-          button: 'bg-indigo-600 hover:bg-indigo-500 text-white',
-        };
-      case 'amber':
-        return {
-          card: 'border-amber-400/70 bg-amber-50/45 dark:border-amber-700/60 dark:bg-amber-900/10',
-          title: 'text-amber-900 dark:text-amber-200',
-          price: 'text-amber-800 dark:text-amber-200',
-          button: 'bg-amber-600 hover:bg-amber-500 text-white',
-        };
-      default:
-        return { card: '', title: '', price: '', button: '' };
-    }
-  };
-
-  const handleBuyPack = async (plan: SponsorPlan) => {
-    const inc = PACKS[plan];
-    try {
-      setBusy('upgrade');
-      await onUpgradeSponsorshipPlan?.(intentId, plan);
-      setLocal((s) => ({
-        ...s,
-        usedBoosts: Math.max(0, s.usedBoosts - inc.boosts),
-        usedPushes: Math.max(0, s.usedPushes - inc.pushes),
-      }));
-      setUpgradeOpen(false);
-    } finally {
-      setBusy(null);
-    }
-  };
-
   return (
     <>
       {/* --- główny layout --- */}
       <div className="space-y-6">
         {/* Header Card */}
         <div className="rounded-[32px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] shadow-sm p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4">
+            {/* Title and badge */}
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-fuchsia-500 to-indigo-600 px-3 py-1 text-xs font-bold text-white shadow-md">
+                <span
+                  className={clsx(
+                    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold text-white shadow-md',
+                    local.plan === 'Pro'
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-600'
+                      : 'bg-gradient-to-r from-indigo-500 to-indigo-600'
+                  )}
+                >
                   <Sparkles className="h-4 w-4" strokeWidth={2} />
                   {local.plan}
                 </span>
@@ -315,20 +264,43 @@ export function SubscriptionPanel({
                 </h3>
               </div>
               <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400 max-w-[70ch]">
-                Zwiększ widoczność wydarzenia, podbijaj w listingu, wysyłaj
-                powiadomienia do lokalnych użytkowników i zarządzaj odznaką
-                sponsorowania.
+                Ten plan obowiązuje do końca cyklu życia wydarzenia.
+                {local.plan === 'Plus' &&
+                  ' Możesz dokupić akcje lub ulepszyć do Pro.'}
+                {local.plan === 'Pro' && ' Możesz dokupić dodatkowe akcje.'}
               </p>
             </div>
 
-            <button
-              type="button"
-              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 px-5 py-2.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
-              onClick={() => setUpgradeOpen(true)}
-            >
-              <CircleFadingArrowUpIcon className="h-4 w-4" strokeWidth={2} />
-              Doładuj akcje
-            </button>
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-3">
+              {/* Upgrade button (only for Plus users) */}
+              {local.plan === 'Plus' && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 whitespace-nowrap rounded-2xl px-5 py-2.5 text-sm font-semibold transition-colors bg-gradient-to-r from-amber-600 to-amber-500 text-white hover:from-amber-500 hover:to-amber-400 shadow-md"
+                  onClick={() => {
+                    // TODO: Navigate to upgrade flow
+                    window.location.href = `/intent/${intentId}/manage/plans`;
+                  }}
+                >
+                  <CircleFadingArrowUpIcon
+                    className="h-4 w-4"
+                    strokeWidth={2}
+                  />
+                  Ulepsz do Pro
+                </button>
+              )}
+
+              {/* Reload actions button */}
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 px-5 py-2.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+                onClick={() => setUpgradeOpen(true)}
+              >
+                <CircleFadingArrowUpIcon className="h-4 w-4" strokeWidth={2} />
+                Doładuj akcje
+              </button>
+            </div>
           </div>
         </div>
 
@@ -604,90 +576,79 @@ export function SubscriptionPanel({
               id="topup-modal-title"
               className="text-xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50"
             >
-              Doładuj akcje dla wydarzenia
+              Doładuj akcje dla wydarzenia {local.plan === 'Pro' ? '(Pro)' : ''}
             </h3>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[60ch]">
-              Wybierz pakiet, aby zwiększyć liczbę{' '}
-              <span className="font-semibold">podbić</span> i{' '}
-              <span className="font-semibold">powiadomień lokalnych</span>.
+              Każdy dodatkowy pakiet {local.plan} dla tego wydarzenia doda
+              kolejny zestaw podbić i powiadomień push.{' '}
+              <span className="font-semibold">
+                Akcje się sumują i nigdy nie wygasają.
+              </span>
             </p>
           </div>
         }
         content={
-          <div className="grid gap-5 sm:grid-cols-3">
-            {(Object.keys(PACKS) as SponsorPlan[]).map((plan) => {
-              const { boosts, pushes, price, tone } = PACKS[plan];
-              const t = toneToClasses(tone);
-
-              const titles: Record<SponsorPlan, string> = {
-                Basic: 'Dodatkowy impuls 🚀',
-                Plus: 'Większy zasięg 🔊',
-                Pro: 'Mocna promocja 💥',
-              };
-
-              const subtitles: Record<SponsorPlan, string> = {
-                Basic:
-                  'Szybkie podbicie i jeden lokalny push, idealne na start.',
-                Plus: 'Więcej akcji dla aktywnych — podbij i przypomnij się częściej.',
-                Pro: 'Największa moc widoczności: pięć podbić i pięć powiadomień.',
-              };
-
-              return (
-                <div
-                  key={plan}
-                  className={clsx(
-                    'flex flex-col rounded-[24px] border-2 p-5 transition-all hover:shadow-lg',
-                    t.card
-                  )}
-                >
-                  <div className={clsx('text-base font-bold mb-1', t.title)}>
-                    {titles[plan]}
+          <div className="space-y-6">
+            {/* Current plan info */}
+            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                    <span className="text-2xl">🚀</span>
                   </div>
-                  <div className={clsx('mb-3 text-3xl font-bold', t.price)}>
-                    {price}
+                  <div className="flex-1">
+                    <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
+                      +{caps.boosts} podbić
+                    </p>
+                    <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                      Wyniesienie wydarzenia w górę listingu
+                    </p>
                   </div>
-
-                  <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    {subtitles[plan]}
-                  </p>
-
-                  <ul className="mb-5 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-                    <li className="flex items-center gap-2">
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                        Podbicia:
-                      </span>
-                      <span className="ml-auto font-bold">+{boosts}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                        Push lokalne:
-                      </span>
-                      <span className="ml-auto font-bold">+{pushes}</span>
-                    </li>
-                  </ul>
-
-                  <button
-                    type="button"
-                    className={clsx(
-                      'mt-auto inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-bold transition-all',
-                      t.button,
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
-                    )}
-                    disabled={busy === 'upgrade'}
-                    onClick={() => handleBuyPack(plan)}
-                  >
-                    {busy === 'upgrade' ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Przetwarzanie…
-                      </>
-                    ) : (
-                      <>Dokup pakiet</>
-                    )}
-                  </button>
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                    <span className="text-2xl">📢</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
+                      +{caps.pushes} lokalnych powiadomień push
+                    </p>
+                    <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                      Powiadomienia dla użytkowników w okolicy
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Price and CTA */}
+            <div className="flex items-center justify-between p-6 rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#0a0b12]">
+              <div>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+                  Cena pakietu {local.plan}
+                </p>
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                  {local.plan === 'Pro' ? '29.99' : '14.99'}{' '}
+                  <span className="text-xl">PLN</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setUpgradeOpen(false);
+                  window.location.href = `/intent/${intentId}/manage/plans`;
+                }}
+                className={clsx(
+                  'inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-colors rounded-2xl shadow-md hover:shadow-lg',
+                  'bg-gradient-to-r text-white',
+                  local.plan === 'Pro'
+                    ? 'from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400'
+                    : 'from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400'
+                )}
+              >
+                Kup pakiet {local.plan}
+              </button>
+            </div>
           </div>
         }
         footer={

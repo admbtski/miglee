@@ -50,7 +50,33 @@ W twoim Stripe Dashboard masz już skonfigurowane następujące ceny:
 ### Event Sponsorship (Sponsoring eventów)
 
 - `STRIPE_PRICE_EVENT_PLUS` - zł14.99 PLN (jednorazowa)
+  - **1 podbicie wydarzenia** (stackuje się)
+  - **1 lokalne powiadomienie push** (stackuje się)
 - `STRIPE_PRICE_EVENT_PRO` - zł29.99 PLN (jednorazowa)
+  - **3 podbicia wydarzenia** (stackują się)
+  - **3 lokalne powiadomienia push** (stackują się)
+
+#### 🔥 System Stackowania Akcji
+
+**Kluczowa funkcja**: Akcje (boosts i pushes) **stackują się** przy:
+
+- **Reload** - kupno tego samego planu ponownie
+- **Upgrade** - zmiana z Plus na Pro
+
+**Przykłady**:
+
+1. Kupno Plus: 0 → **1 boost, 1 push**
+2. Reload Plus: 1 → **2 boosts, 2 pushes** (1+1)
+3. Upgrade Plus→Pro: 1 → **4 boosts, 4 pushes** (1+3)
+4. Reload Pro: 4 → **7 boosts, 7 pushes** (4+3)
+
+**Zasady**:
+
+- ✅ Upgrade: PLUS → PRO (akcje się stackują)
+- ✅ Reload: Ten sam plan (akcje się stackują)
+- ❌ Downgrade: PRO → PLUS (niedozwolony)
+- ❌ Downgrade: Płatny → FREE (niedozwolony)
+- 🔒 Akcje nigdy nie wygasają (ważne przez cały cykl życia wydarzenia)
 
 **Wszystkie ceny są już w .env i gotowe do użycia!**
 
