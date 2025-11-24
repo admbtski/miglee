@@ -82,6 +82,32 @@ export const myPlanPeriodsQuery: QueryResolvers['myPlanPeriods'] = async (
 };
 
 /**
+ * Get all event sponsorships for the current user
+ */
+export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
+  async (_parent, args, { user }) => {
+    const userId = user?.id;
+
+    const { limit = 50 } = args;
+
+    if (!userId) {
+      throw new Error('Authentication required');
+    }
+
+    const sponsorships = await prisma.eventSponsorship.findMany({
+      where: { sponsorId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        intent: true,
+        sponsor: true,
+      },
+    });
+
+    return sponsorships;
+  };
+
+/**
  * Get event sponsorship for a specific intent
  */
 export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (

@@ -7,6 +7,7 @@ import {
   useMyPlan,
   useMySubscription,
   useMyPlanPeriods,
+  useMyEventSponsorships,
   useCancelSubscription,
 } from '@/lib/api/billing';
 import { Badge, Progress, Th, Td, SmallButton } from './ui';
@@ -17,6 +18,9 @@ export function BillingPageWrapper() {
   const { data: planData, isLoading: planLoading } = useMyPlan();
   const { data: subData, isLoading: subLoading } = useMySubscription();
   const { data: periodsData, isLoading: periodsLoading } = useMyPlanPeriods({
+    limit: 50,
+  });
+  const { data: sponsorshipsData, isLoading: sponsorshipsLoading } = useMyEventSponsorships({
     limit: 50,
   });
   const cancelSubscription = useCancelSubscription();
@@ -45,7 +49,7 @@ export function BillingPageWrapper() {
     toast.success('Pobieranie faktury - funkcja wkrótce dostępna');
   };
 
-  if (planLoading || subLoading || periodsLoading) {
+  if (planLoading || subLoading || periodsLoading || sponsorshipsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="space-y-4 text-center">
@@ -60,9 +64,34 @@ export function BillingPageWrapper() {
 
   const plan = planData?.myPlan;
   const subscription = subData?.mySubscription;
-  // Sort periods by start date (newest first)
-  const periods = (periodsData?.myPlanPeriods || []).sort(
-    (a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime()
+  
+  // Combine user plan periods and event sponsorships into unified payment history
+  const userPeriods = (periodsData?.myPlanPeriods || []).map(period => ({
+    type: 'user-plan' as const,
+    id: period.id,
+    date: new Date(period.startsAt),
+    plan: period.plan,
+    source: period.source,
+    billingPeriod: period.billingPeriod,
+    startsAt: period.startsAt,
+    endsAt: period.endsAt,
+  }));
+
+  const eventSponsorships = (sponsorshipsData?.myEventSponsorships || []).map(sponsorship => ({
+    type: 'event-sponsorship' as const,
+    id: sponsorship.id,
+    date: new Date(sponsorship.createdAt),
+    plan: sponsorship.plan,
+    intentId: sponsorship.intentId,
+    intentTitle: sponsorship.intent?.title,
+    startsAt: sponsorship.startsAt,
+    endsAt: sponsorship.endsAt,
+    status: sponsorship.status,
+  }));
+
+  // Combine and sort by date (newest first)
+  const paymentHistory = [...userPeriods, ...eventSponsorships].sort(
+    (a, b) => b.date.getTime() - a.date.getTime()
   );
 
   // Determine plan details
@@ -303,103 +332,170 @@ export function BillingPageWrapper() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
-              {periods.length > 0 ? (
-                periods.map((period) => {
-                  const periodPlan = period.plan;
-                  const periodSource = period.source;
-                  const periodBillingPeriod = period.billingPeriod;
-                  const isActivePeriod =
-                    period.endsAt && new Date(period.endsAt) > new Date();
+              {paymentHistory.length > 0 ? (
+                paymentHistory.map((item) => {
+                  if (item.type === 'user-plan') {
+                    const periodPlan = item.plan;
+                    const periodSource = item.source;
+                    const periodBillingPeriod = item.billingPeriod;
+                    const isActivePeriod =
+                      item.endsAt && new Date(item.endsAt) > new Date();
 
-                  // Calculate price based on period
-                  const periodPrice =
-                    periodPlan === 'PRO'
-                      ? periodSource === 'SUBSCRIPTION'
-                        ? 69.99
-                        : periodBillingPeriod === 'YEARLY'
-                          ? 839.99
-                          : 83.99
-                      : periodPlan === 'PLUS'
+                    // Calculate price based on period
+                    const periodPrice =
+                      periodPlan === 'PRO'
                         ? periodSource === 'SUBSCRIPTION'
-                          ? 29.99
+                          ? 69.99
                           : periodBillingPeriod === 'YEARLY'
-                            ? 359.99
-                            : 35.99
-                        : 0;
+                            ? 839.99
+                            : 83.99
+                        : periodPlan === 'PLUS'
+                          ? periodSource === 'SUBSCRIPTION'
+                            ? 29.99
+                            : periodBillingPeriod === 'YEARLY'
+                              ? 359.99
+                              : 35.99
+                          : 0;
 
-                  const periodCycle =
-                    periodSource === 'SUBSCRIPTION'
-                      ? 'subskrypcja miesięczna'
-                      : periodBillingPeriod === 'YEARLY'
-                        ? 'roczny'
-                        : 'miesięczny';
+                    const periodCycle =
+                      periodSource === 'SUBSCRIPTION'
+                        ? 'subskrypcja miesięczna'
+                        : periodBillingPeriod === 'YEARLY'
+                          ? 'roczny'
+                          : 'miesięczny';
 
-                  return (
-                    <tr
-                      key={period.id}
-                      className="text-sm hover:bg-zinc-50 dark:hover:bg-[#0a0b12] transition-colors"
-                    >
-                      <Td>
-                        <div className="space-y-1">
-                          <span className="text-zinc-600 dark:text-zinc-400">
-                            {new Date(period.startsAt).toLocaleDateString(
-                              'pl-PL',
-                              {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              }
-                            )}
-                          </span>
-                          <div className="text-xs text-zinc-500 dark:text-zinc-500">
-                            do{' '}
-                            {new Date(period.endsAt).toLocaleDateString(
-                              'pl-PL',
-                              {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              }
+                    return (
+                      <tr
+                        key={`user-${item.id}`}
+                        className="text-sm hover:bg-zinc-50 dark:hover:bg-[#0a0b12] transition-colors"
+                      >
+                        <Td>
+                          <div className="space-y-1">
+                            <span className="text-zinc-600 dark:text-zinc-400">
+                              {new Date(item.startsAt).toLocaleDateString(
+                                'pl-PL',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                }
+                              )}
+                            </span>
+                            <div className="text-xs text-zinc-500 dark:text-zinc-500">
+                              do{' '}
+                              {new Date(item.endsAt).toLocaleDateString(
+                                'pl-PL',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                }
+                              )}
+                            </div>
+                          </div>
+                        </Td>
+                        <Td>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                              Plan {periodPlan} - {periodCycle}
+                            </span>
+                            {isActivePeriod && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                                Aktywny
+                              </span>
                             )}
                           </div>
-                        </div>
-                      </Td>
-                      <Td>
-                        <div className="flex items-center gap-2">
+                        </Td>
+                        <Td>
                           <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                            Plan {periodPlan} - {periodCycle}
+                            zł{periodPrice.toFixed(2)}
                           </span>
-                          {isActivePeriod && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                              Aktywny
+                        </Td>
+                        <Td>
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                            Opłacono
+                          </span>
+                        </Td>
+                        <Td className="pr-6 text-right md:pr-8">
+                          <div className="flex justify-end gap-2">
+                            <SmallButton onClick={handleViewReceipt}>
+                              <Eye className="w-4 h-4" />
+                              <span className="hidden sm:inline">Podgląd</span>
+                            </SmallButton>
+                            <SmallButton onClick={handleDownloadReceipt}>
+                              <Download className="w-4 h-4" />
+                              <span className="hidden sm:inline">Faktura</span>
+                            </SmallButton>
+                          </div>
+                        </Td>
+                      </tr>
+                    );
+                  } else {
+                    // Event sponsorship
+                    const sponsorshipPlan = item.plan;
+                    const isActive = item.status === 'ACTIVE';
+
+                    const sponsorshipPrice =
+                      sponsorshipPlan === 'PRO' ? 29.99 : sponsorshipPlan === 'PLUS' ? 14.99 : 0;
+
+                    return (
+                      <tr
+                        key={`event-${item.id}`}
+                        className="text-sm hover:bg-zinc-50 dark:hover:bg-[#0a0b12] transition-colors"
+                      >
+                        <Td>
+                          <div className="space-y-1">
+                            <span className="text-zinc-600 dark:text-zinc-400">
+                              {item.date.toLocaleDateString('pl-PL', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
                             </span>
-                          )}
-                        </div>
-                      </Td>
-                      <Td>
-                        <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                          zł{periodPrice.toFixed(2)}
-                        </span>
-                      </Td>
-                      <Td>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                          Opłacono
-                        </span>
-                      </Td>
-                      <Td className="pr-6 text-right md:pr-8">
-                        <div className="flex justify-end gap-2">
-                          <SmallButton onClick={handleViewReceipt}>
-                            <Eye className="w-4 h-4" />
-                            <span className="hidden sm:inline">Podgląd</span>
-                          </SmallButton>
-                          <SmallButton onClick={handleDownloadReceipt}>
-                            <Download className="w-4 h-4" />
-                            <span className="hidden sm:inline">Faktura</span>
-                          </SmallButton>
-                        </div>
-                      </Td>
-                    </tr>
-                  );
+                          </div>
+                        </Td>
+                        <Td>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                                Event {sponsorshipPlan}
+                              </span>
+                              {isActive && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                                  Aktywny
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {item.intentTitle || 'Wydarzenie'}
+                            </div>
+                          </div>
+                        </Td>
+                        <Td>
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                            zł{sponsorshipPrice.toFixed(2)}
+                          </span>
+                        </Td>
+                        <Td>
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                            Opłacono
+                          </span>
+                        </Td>
+                        <Td className="pr-6 text-right md:pr-8">
+                          <div className="flex justify-end gap-2">
+                            <SmallButton onClick={handleViewReceipt}>
+                              <Eye className="w-4 h-4" />
+                              <span className="hidden sm:inline">Podgląd</span>
+                            </SmallButton>
+                            <SmallButton onClick={handleDownloadReceipt}>
+                              <Download className="w-4 h-4" />
+                              <span className="hidden sm:inline">Faktura</span>
+                            </SmallButton>
+                          </div>
+                        </Td>
+                      </tr>
+                    );
+                  }
                 })
               ) : (
                 <tr>

@@ -67,6 +67,7 @@ import {
   myPlanQuery,
   mySubscriptionQuery,
   myPlanPeriodsQuery,
+  myEventSponsorshipsQuery,
   eventSponsorshipQuery,
 } from './billing';
 
@@ -137,5 +138,6 @@ export const Query: Resolvers['Query'] = {
   myPlan: myPlanQuery,
   mySubscription: mySubscriptionQuery,
   myPlanPeriods: myPlanPeriodsQuery,
+  myEventSponsorships: myEventSponsorshipsQuery,
   eventSponsorship: eventSponsorshipQuery,
 };

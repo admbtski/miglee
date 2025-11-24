@@ -16,6 +16,9 @@ import {
   MyPlanPeriodsDocument,
   type MyPlanPeriodsQuery,
   type MyPlanPeriodsQueryVariables,
+  MyEventSponsorshipsDocument,
+  type MyEventSponsorshipsQuery,
+  type MyEventSponsorshipsQueryVariables,
   EventSponsorshipDocument,
   type EventSponsorshipQuery,
   type EventSponsorshipQueryVariables,
@@ -53,6 +56,8 @@ export const billingKeys = {
   mySubscription: () => [...billingKeys.all, 'mySubscription'] as const,
   myPlanPeriods: (limit?: number) =>
     [...billingKeys.all, 'myPlanPeriods', limit] as const,
+  myEventSponsorships: (limit?: number) =>
+    [...billingKeys.all, 'myEventSponsorships', limit] as const,
   eventSponsorship: (intentId: string) =>
     [...billingKeys.all, 'eventSponsorship', intentId] as const,
 };
@@ -107,6 +112,28 @@ export function useMyPlanPeriods(
     queryKey: billingKeys.myPlanPeriods(variables?.limit ?? undefined),
     queryFn: async () =>
       gqlClient.request(MyPlanPeriodsDocument, variables ?? {}),
+    ...options,
+  });
+}
+
+/**
+ * Get all event sponsorships for the current user
+ */
+export function useMyEventSponsorships(
+  variables?: MyEventSponsorshipsQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      MyEventSponsorshipsQuery,
+      unknown,
+      MyEventSponsorshipsQuery
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery({
+    queryKey: billingKeys.myEventSponsorships(variables?.limit ?? undefined),
+    queryFn: async () =>
+      gqlClient.request(MyEventSponsorshipsDocument, variables ?? {}),
     ...options,
   });
 }

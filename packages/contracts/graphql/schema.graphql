@@ -1520,6 +1520,9 @@ type Query {
   "Get user's active plan periods"
   myPlanPeriods(limit: Int = 10): [UserPlanPeriod!]!
 
+  "Get all event sponsorships for the current user"
+  myEventSponsorships(limit: Int = 50): [EventSponsorship!]!
+
   "Get event sponsorship for an intent"
   eventSponsorship(intentId: ID!): EventSponsorship
 
