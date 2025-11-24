@@ -47,6 +47,8 @@ W twoim Stripe Dashboard masz już skonfigurowane następujące ceny:
 - `STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF` - zł83.99 PLN (jednorazowa, 30 dni)
 - `STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF` - zł839.99 PLN (jednorazowa, 365 dni)
 
+**💡 Ważne**: Plan użytkownika określa funkcje dostępne dla **nowo tworzonych wydarzeń**. Istniejące wydarzenia zachowują swoje obecne ustawienia. Aby ulepszyć konkretne wydarzenie, użyj Event Sponsorship.
+
 ### Event Sponsorship (Sponsoring eventów)
 
 - `STRIPE_PRICE_EVENT_PLUS` - zł14.99 PLN (jednorazowa)

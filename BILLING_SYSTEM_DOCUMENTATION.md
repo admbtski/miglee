@@ -244,6 +244,8 @@ model PaymentEvent {
 
 **Trial**: 7 days for both PLUS and PRO (subscriptions only)
 
+**Important**: User plan changes apply **only to newly created events**. Existing events retain their current features and limits. To upgrade a specific event, use Event Sponsorship plans.
+
 ### Event Plans
 
 | Plan | Price (1 month) |

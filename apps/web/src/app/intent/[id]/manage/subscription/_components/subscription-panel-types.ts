@@ -4,9 +4,9 @@ export const PLAN_CAPS: Record<
   SponsorPlan,
   { boosts: number; pushes: number }
 > = {
-  Basic: { boosts: 1, pushes: 1 },
-  Plus: { boosts: 3, pushes: 3 },
-  Pro: { boosts: 5, pushes: 5 },
+  Basic: { boosts: 0, pushes: 0 }, // FREE plan
+  Plus: { boosts: 3, pushes: 3 }, // PLUS: 3 boosts, 3 pushes (stackują się)
+  Pro: { boosts: 5, pushes: 5 }, // PRO: 5 boosts, 5 pushes (stackują się)
 };
 
 export type SponsorshipState = {

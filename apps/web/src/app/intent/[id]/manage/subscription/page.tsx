@@ -21,8 +21,8 @@ export default async function IntentSubscriptionPage({ params }: PageProps) {
 
   return (
     <ManagementPageLayout
-      title="Active Subscription"
-      description="Manage your active sponsorship plan and boost your event"
+      title="Aktywny plan sponsorowania"
+      description="Zarządzaj aktywnym planem sponsorowania i promuj swoje wydarzenie"
     >
       <Suspense
         fallback={
@@ -30,7 +30,7 @@ export default async function IntentSubscriptionPage({ params }: PageProps) {
             <div className="text-center">
               <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
               <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                Loading subscription...
+                Ładowanie planu...
               </p>
             </div>
           </div>
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: PageProps) {
   await params;
 
   return {
-    title: 'Active Subscription | Miglee',
-    description: 'Manage active sponsorship subscription',
+    title: 'Aktywny plan sponsorowania | Miglee',
+    description: 'Zarządzaj aktywnym planem sponsorowania wydarzenia',
   };
 }

@@ -5,6 +5,10 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PlanType, BillingType } from './subscription-plans-wrapper';
+import {
+  USER_PLAN_FEATURES,
+  PLAN_SCOPE_NOTICE_EXTENDED,
+} from './user-plans-constants';
 
 interface SubscriptionPlansProps {
   onPlanSelect?: (plan: {
@@ -19,60 +23,37 @@ const PLANS = [
   {
     id: 'free',
     name: 'Free',
-    description: 'Perfect for trying out miglee',
+    description: 'Darmowy plan użytkownika',
     priceMonthlySubscription: 0,
     priceMonthlyOnetime: 0,
     priceAnnualOnetime: 0,
     icon: Sparkles,
     color: 'zinc',
-    features: [
-      'Create up to 3 events per month',
-      'Basic event management',
-      'Up to 20 participants per event',
-      'Community support',
-      'Mobile app access',
-    ],
+    features: USER_PLAN_FEATURES.FREE,
   },
   {
     id: 'plus',
     name: 'Plus',
-    description: 'For active organizers',
+    description: 'Więcej możliwości, zero limitów',
     priceMonthlySubscription: 29.99, // STRIPE_PRICE_USER_PLUS_MONTHLY_SUB
     priceMonthlyOnetime: 35.99, // STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF
-    priceAnnualOnetime: 359.99, // STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF (29.99 * 12 = 359.88)
+    priceAnnualOnetime: 359.99, // STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF
     icon: Zap,
     color: 'indigo',
     popular: true,
-    features: [
-      'Unlimited events',
-      'Advanced analytics',
-      'Up to 100 participants per event',
-      'Priority support',
-      'Custom branding',
-      'Email notifications',
-      'Event templates',
-    ],
+    features: USER_PLAN_FEATURES.PLUS,
   },
   {
     id: 'pro',
     name: 'Pro',
-    description: 'For professional organizers',
+    description: 'Profesjonalne narzędzia dla dużych społeczności',
     priceMonthlySubscription: 69.99, // STRIPE_PRICE_USER_PRO_MONTHLY_SUB
     priceMonthlyOnetime: 83.99, // STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF
-    priceAnnualOnetime: 839.99, // STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF (69.99 * 12 = 839.88)
+    priceAnnualOnetime: 839.99, // STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF
     icon: Crown,
     color: 'amber',
     popular: false,
-    features: [
-      'Everything in Plus',
-      'Unlimited participants',
-      'Advanced integrations',
-      'API access',
-      'White-label solution',
-      'Dedicated account manager',
-      'Custom domain',
-      'Advanced reporting',
-    ],
+    features: USER_PLAN_FEATURES.PRO,
   },
 ];
 
@@ -133,10 +114,11 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
       {/* Header */}
       <div className="space-y-4 text-center">
         <h2 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-          Choose Your Plan
+          Wybierz swój plan użytkownika
         </h2>
         <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-[60ch] mx-auto leading-relaxed">
-          Upgrade your account to unlock more features and grow your events
+          Ulepsz swoje konto, aby odblokować więcej funkcji i rozwijać swoje
+          wydarzenia
         </p>
 
         {/* Billing Type Selection */}
@@ -178,7 +160,7 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
             >
               <span>Roczna</span>
               <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                Save 20%
+                Oszczędzaj 20%
               </span>
             </button>
           </div>
@@ -212,7 +194,7 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
                 <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap">
                     <Sparkles className="w-3 h-3" />
-                    MOST POPULAR
+                    NAJPOPULARNIEJSZY
                   </div>
                 </div>
               )}
@@ -280,7 +262,7 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
                 {/* Savings */}
                 {savings > 0 ? (
                   <p className="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    Save zł{savings.toFixed(2)} vs monthly
+                    Oszczędzasz zł{savings.toFixed(2)} rocznie
                   </p>
                 ) : (
                   <p className="mt-2 text-sm font-medium text-transparent">
@@ -309,20 +291,23 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
                     });
                   }
                 }}
+                disabled={isFree}
                 className={cn(
                   'mb-8 w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all',
-                  isPopular
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md hover:from-indigo-500 hover:to-indigo-400 hover:shadow-lg'
-                    : 'border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                  isFree
+                    ? 'border-2 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
+                    : isPopular
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md hover:from-indigo-500 hover:to-indigo-400 hover:shadow-lg'
+                      : 'border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 )}
               >
-                {isFree ? 'Current Plan' : 'Upgrade Now'}
+                {isFree ? 'Aktualny plan' : 'Ulepsz teraz'}
               </button>
 
               {/* Features */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400">
-                  What's Included
+                  Co zawiera
                 </p>
                 <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
@@ -350,12 +335,17 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
       </div>
 
       {/* Info Banner */}
-      <div className="rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-zinc-50 dark:bg-zinc-900/50 p-6 text-center">
-        <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+      <div className="rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-zinc-50 dark:bg-zinc-900/50 p-6 space-y-3">
+        <p className="text-sm leading-relaxed text-center text-zinc-600 dark:text-zinc-400">
           {billingType === 'monthly-subscription'
-            ? 'All subscription plans include a 14-day money-back guarantee. Cancel anytime, no questions asked.'
-            : 'All one-time payments are final. Choose the plan that fits your needs best.'}
+            ? 'Wszystkie plany subskrypcyjne można anulować w dowolnym momencie.'
+            : 'Wszystkie płatności jednorazowe są ostateczne. Wybierz plan najlepiej dopasowany do Twoich potrzeb.'}
         </p>
+        <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700">
+          <p className="text-xs leading-relaxed text-center text-zinc-500 dark:text-zinc-400">
+            💡 <strong>Ważne:</strong> {PLAN_SCOPE_NOTICE_EXTENDED}
+          </p>
+        </div>
       </div>
     </div>
   );
