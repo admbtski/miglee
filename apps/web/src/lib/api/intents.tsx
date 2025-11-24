@@ -338,11 +338,12 @@ const GetIntentDetailDocument = `
         sponsorId
         plan
         status
-        highlightOn
-        startedAt
+        startsAt
         endsAt
+        boostsTotal
         boostsUsed
-        localPushes
+        localPushesTotal
+        localPushesUsed
         createdAt
         updatedAt
         sponsor {

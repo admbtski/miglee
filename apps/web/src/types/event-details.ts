@@ -114,12 +114,15 @@ export type EventDetailsData = {
 
   // Sponsoring
   sponsorship?: {
-    plan: 'BASIC' | 'PLUS' | 'PRO';
+    plan: 'FREE' | 'PLUS' | 'PRO';
     status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELED';
-    highlightOn: boolean;
     sponsor: { id: string; name: string };
-    startedAt?: string | null;
+    startsAt?: string | null;
     endsAt?: string | null;
+    boostsTotal?: number;
+    boostsUsed?: number;
+    localPushesTotal?: number;
+    localPushesUsed?: number;
   };
 
   // Linki zaproszeń (owner/mod only)

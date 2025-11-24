@@ -148,8 +148,9 @@ export function EventActions({ event }: EventActionsProps) {
       )}
 
       {/* Sponsorship Info (if highlighted) */}
-      {event.sponsorship?.highlightOn &&
-        event.sponsorship.status === 'ACTIVE' && (
+      {event.sponsorship?.status === 'ACTIVE' &&
+        (event.sponsorship.plan === 'PLUS' ||
+          event.sponsorship.plan === 'PRO') && (
           <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950">
             <div className="mb-2 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />

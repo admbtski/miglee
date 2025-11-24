@@ -31,7 +31,8 @@ export function EventHero({ event }: EventHeroProps) {
   const isCanceled = !!event.canceledAt;
   const isDeleted = !!event.deletedAt;
   const isHighlighted =
-    event.sponsorship?.highlightOn && event.sponsorship.status === 'ACTIVE';
+    event.sponsorship?.status === 'ACTIVE' &&
+    (event.sponsorship?.plan === 'PLUS' || event.sponsorship?.plan === 'PRO');
   const plan = event.sponsorship?.plan;
 
   const sortedLevels = useMemo(

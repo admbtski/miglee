@@ -181,20 +181,25 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
     messagesCount: intent.messagesCount,
     isFavourite: intent.isFavourite,
     savedCount: intent.savedCount,
-    // TODO: sponsorship field not in GraphQL fragment yet
-    // sponsorship: intent.sponsorship
-    //   ? {
-    //       plan: intent.sponsorship.plan as any,
-    //       status: intent.sponsorship.status as any,
-    //       highlightOn: intent.sponsorship.highlightOn,
-    //       sponsor: {
-    //         id: intent.sponsorship.sponsor.id,
-    //         name: intent.sponsorship.sponsor.name,
-    //       },
-    //       startedAt: intent.sponsorship.startedAt ?? null,
-    //       endsAt: intent.sponsorship.endsAt ?? null,
-    //     }
-    //   : undefined,
+    // Sponsorship (now available in GraphQL)
+    sponsorship: intent.sponsorship
+      ? {
+          plan: intent.sponsorship.plan as any,
+          status: intent.sponsorship.status as any,
+          sponsor: intent.sponsorship.sponsor
+            ? {
+                id: intent.sponsorship.sponsor.id,
+                name: intent.sponsorship.sponsor.name || 'Unknown',
+              }
+            : { id: '', name: 'Unknown' },
+          startsAt: intent.sponsorship.startsAt,
+          endsAt: intent.sponsorship.endsAt,
+          boostsTotal: intent.sponsorship.boostsTotal,
+          boostsUsed: intent.sponsorship.boostsUsed,
+          localPushesTotal: intent.sponsorship.localPushesTotal,
+          localPushesUsed: intent.sponsorship.localPushesUsed,
+        }
+      : undefined,
     // TODO: inviteLinks field not in GraphQL fragment yet
     // inviteLinks: intent.inviteLinks?.map((link: any) => ({
     //   code: link.code,
