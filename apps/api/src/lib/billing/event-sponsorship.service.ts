@@ -114,7 +114,7 @@ export async function createEventSponsorshipCheckout(
   }
 
   // Create or update sponsorship record
-  const sponsorship = await prisma.eventSponsorship.upsert({
+  await prisma.eventSponsorship.upsert({
     where: { intentId },
     create: {
       intentId,
@@ -156,6 +156,27 @@ export async function createEventSponsorshipCheckout(
               localPushesTotal: EVENT_PLAN_LIMITS[plan].localPushesTotal,
             },
   });
+
+  // Fetch the updated sponsorship to get the correct values after increment
+  const sponsorship = await prisma.eventSponsorship.findUnique({
+    where: { intentId },
+  });
+
+  if (!sponsorship) {
+    throw new Error('Failed to create/update sponsorship');
+  }
+
+  logger.info(
+    {
+      intentId,
+      actionType,
+      plan,
+      boostsTotal: sponsorship.boostsTotal,
+      localPushesTotal: sponsorship.localPushesTotal,
+      status: sponsorship.status,
+    },
+    'Event sponsorship upserted after checkout'
+  );
 
   // Prepare metadata
   const metadata = {
@@ -226,13 +247,18 @@ export interface ActivateEventSponsorshipParams {
   sponsorshipId: string;
   stripePaymentIntentId: string;
   stripeCheckoutSessionId: string;
+  actionType?: 'new' | 'upgrade' | 'reload';
 }
 
 export async function activateEventSponsorship(
   params: ActivateEventSponsorshipParams
 ): Promise<void> {
-  const { sponsorshipId, stripePaymentIntentId, stripeCheckoutSessionId } =
-    params;
+  const {
+    sponsorshipId,
+    stripePaymentIntentId,
+    stripeCheckoutSessionId,
+    actionType,
+  } = params;
 
   const sponsorship = await prisma.eventSponsorship.findUnique({
     where: { id: sponsorshipId },
@@ -245,27 +271,33 @@ export async function activateEventSponsorship(
 
   const now = new Date();
 
-  // Check if this is a reload (sponsorship was already active)
-  const isReload =
-    sponsorship.status === 'ACTIVE' ||
-    (sponsorship.startsAt && sponsorship.endsAt);
-
   let updateData: any = {
     status: 'ACTIVE',
     stripePaymentIntentId,
     stripeCheckoutSessionId,
   };
 
-  // Only update dates for new sponsorships or upgrades, not for reloads
-  if (!isReload) {
+  // Only update dates for new sponsorships, not for reloads or upgrades
+  if (actionType === 'new' || !sponsorship.startsAt) {
     const endsAt = new Date(now);
     endsAt.setMonth(endsAt.getMonth() + 1); // 1 month from now
 
     updateData.startsAt = now;
     updateData.endsAt = endsAt;
+
+    logger.info(
+      { sponsorshipId, startsAt: now, endsAt },
+      'Setting sponsorship dates for new purchase'
+    );
+  } else {
+    logger.info(
+      { sponsorshipId, actionType },
+      'Keeping existing sponsorship dates (reload or upgrade)'
+    );
   }
 
   // Update sponsorship
+  // Note: boostsTotal and localPushesTotal were already incremented in createEventSponsorshipCheckout
   const updated = await prisma.eventSponsorship.update({
     where: { id: sponsorshipId },
     data: updateData,
@@ -279,16 +311,37 @@ export async function activateEventSponsorship(
     },
   });
 
+  // Create EventSponsorshipPeriod record for this transaction
+  const planLimits = EVENT_PLAN_LIMITS[updated.plan];
+  const amount = updated.plan === 'PRO' ? 29.99 : 14.99; // Price in PLN
+
+  await prisma.eventSponsorshipPeriod.create({
+    data: {
+      intentId: sponsorship.intentId,
+      sponsorId: sponsorship.sponsorId,
+      plan: updated.plan,
+      actionType: actionType || 'new',
+      boostsAdded: planLimits.boostsTotal,
+      localPushesAdded: planLimits.localPushesTotal,
+      amount,
+      currency: 'pln',
+      stripePaymentIntentId,
+      stripeCheckoutSessionId,
+    },
+  });
+
   logger.info(
     {
       sponsorshipId,
       intentId: sponsorship.intentId,
       plan: updated.plan,
+      actionType: actionType || 'unknown',
+      boostsTotal: updated.boostsTotal,
+      localPushesTotal: updated.localPushesTotal,
       startsAt: updated.startsAt,
       endsAt: updated.endsAt,
-      isReload,
     },
-    'Event sponsorship activated'
+    'Event sponsorship activated and period created'
   );
 }
 

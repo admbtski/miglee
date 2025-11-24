@@ -20,11 +20,7 @@ import { ClickBurst } from '@/components/ui/click-burst';
 import { ClickParticle } from '@/components/ui/click-particle';
 import { Modal } from '@/components/feedback/modal';
 import { useCooldown } from '@/hooks/use-cooldown';
-import {
-  PLAN_CAPS,
-  SponsorPlan,
-  SponsorshipState,
-} from './subscription-panel-types';
+import { SponsorPlan, SponsorshipState } from './subscription-panel-types';
 import clsx from 'clsx';
 
 /** ---------- Unified ActionButton ---------- */
@@ -178,9 +174,8 @@ export function SubscriptionPanel({
     sponsorship.highlightTone,
   ]);
 
-  const caps = PLAN_CAPS[local.plan];
-  const boostsLeft = Math.max(0, caps.boosts - local.usedBoosts);
-  const pushesLeft = Math.max(0, caps.pushes - local.usedPushes);
+  const boostsLeft = Math.max(0, local.totalBoosts - local.usedBoosts);
+  const pushesLeft = Math.max(0, local.totalPushes - local.usedPushes);
 
   const startActionCooldown = (
     key: 'boost' | 'push' | 'badge' | 'highlight'
@@ -324,15 +319,15 @@ export function SubscriptionPanel({
                 </div>
               </div>
               <div className="shrink-0 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                {local.usedBoosts}/{caps.boosts}
+                {local.usedBoosts}/{local.totalBoosts}
               </div>
             </div>
 
-            <QuotaBar used={local.usedBoosts} total={caps.boosts} />
+            <QuotaBar used={local.usedBoosts} total={local.totalBoosts} />
             <div className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
               Pozostało:{' '}
               <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                {Math.max(0, caps.boosts - local.usedBoosts)}
+                {boostsLeft}
               </span>
             </div>
 
@@ -371,15 +366,15 @@ export function SubscriptionPanel({
                 </div>
               </div>
               <div className="shrink-0 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                {local.usedPushes}/{caps.pushes}
+                {local.usedPushes}/{local.totalPushes}
               </div>
             </div>
 
-            <QuotaBar used={local.usedPushes} total={caps.pushes} />
+            <QuotaBar used={local.usedPushes} total={local.totalPushes} />
             <div className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
               Pozostało:{' '}
               <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                {Math.max(0, caps.pushes - local.usedPushes)}
+                {pushesLeft}
               </span>
             </div>
 
@@ -598,7 +593,9 @@ export function SubscriptionPanel({
                   </div>
                   <div className="flex-1">
                     <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-                      +{caps.boosts} podbić
+                      +
+                      {local.plan === 'Plus' ? 1 : local.plan === 'Pro' ? 3 : 0}{' '}
+                      podbić
                     </p>
                     <p className="text-sm text-emerald-800 dark:text-emerald-200">
                       Wyniesienie wydarzenia w górę listingu
@@ -611,7 +608,9 @@ export function SubscriptionPanel({
                   </div>
                   <div className="flex-1">
                     <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-                      +{caps.pushes} lokalnych powiadomień push
+                      +
+                      {local.plan === 'Plus' ? 1 : local.plan === 'Pro' ? 3 : 0}{' '}
+                      lokalnych powiadomień push
                     </p>
                     <p className="text-sm text-emerald-800 dark:text-emerald-200">
                       Powiadomienia dla użytkowników w okolicy

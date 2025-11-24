@@ -264,7 +264,7 @@ async function handleEventSponsorshipCheckout(
   session: Stripe.Checkout.Session,
   metadata: EventSponsorshipMetadata
 ): Promise<void> {
-  const { eventSponsorshipId, intentId } = metadata;
+  const { eventSponsorshipId, intentId, actionType } = metadata;
 
   if (!session.payment_intent) {
     logger.warn(
@@ -284,10 +284,11 @@ async function handleEventSponsorshipCheckout(
     sponsorshipId: eventSponsorshipId,
     stripePaymentIntentId: paymentIntentId,
     stripeCheckoutSessionId: session.id,
+    actionType: actionType as 'new' | 'upgrade' | 'reload' | undefined,
   });
 
   logger.info(
-    { intentId, sponsorshipId: eventSponsorshipId },
+    { intentId, sponsorshipId: eventSponsorshipId, actionType },
     'Event sponsorship checkout processed'
   );
 }

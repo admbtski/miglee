@@ -50,15 +50,15 @@ export const EVENT_PLAN_LIMITS = {
     analytics: 'basic' as const,
   },
   PLUS: {
-    boostsTotal: 3,
-    localPushesTotal: 3,
+    boostsTotal: 1,
+    localPushesTotal: 1,
     maxCapacity: 150,
     featuredInListing: true,
     analytics: 'standard' as const,
   },
   PRO: {
-    boostsTotal: 5,
-    localPushesTotal: 5,
+    boostsTotal: 3,
+    localPushesTotal: 3,
     maxCapacity: 500, // Or unlimited (null)
     featuredInListing: true,
     analytics: 'advanced' as const,
@@ -164,6 +164,7 @@ export interface EventSponsorshipMetadata {
   intentId: string;
   userId: string;
   plan: IntentPlan;
+  actionType?: 'new' | 'upgrade' | 'reload';
 }
 
 export type CheckoutMetadata =

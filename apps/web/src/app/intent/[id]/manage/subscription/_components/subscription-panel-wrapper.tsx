@@ -120,9 +120,11 @@ export function SubscriptionPanelWrapper({
         ? ('Plus' as const)
         : sponsorship.plan === 'PRO'
           ? ('Pro' as const)
-          : ('Basic' as const),
+          : ('Free' as const),
     usedBoosts: sponsorship.boostsUsed,
     usedPushes: sponsorship.localPushesUsed,
+    totalBoosts: sponsorship.boostsTotal, // Real value from backend
+    totalPushes: sponsorship.localPushesTotal, // Real value from backend
     badgeEnabled: true, // TODO: Get from backend
     highlighted: false, // TODO: Get from backend
     highlightTone: undefined, // TODO: Get from backend

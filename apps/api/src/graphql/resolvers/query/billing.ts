@@ -82,7 +82,7 @@ export const myPlanPeriodsQuery: QueryResolvers['myPlanPeriods'] = async (
 };
 
 /**
- * Get all event sponsorships for the current user
+ * Get all event sponsorship periods (transaction history) for the current user
  */
 export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
   async (_parent, args, { user }) => {
@@ -94,17 +94,37 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
       throw new Error('Authentication required');
     }
 
-    const sponsorships = await prisma.eventSponsorship.findMany({
+    const periods = await prisma.eventSponsorshipPeriod.findMany({
       where: { sponsorId: userId },
       orderBy: { createdAt: 'desc' },
       take: limit,
       include: {
         intent: true,
         sponsor: true,
+        eventSponsorship: true,
       },
     });
 
-    return sponsorships;
+    // Map periods to look like EventSponsorship for compatibility
+    return periods.map((period) => ({
+      id: period.id,
+      intentId: period.intentId,
+      sponsorId: period.sponsorId,
+      plan: period.plan,
+      status: period.eventSponsorship?.status || 'COMPLETED',
+      startsAt: period.eventSponsorship?.startsAt,
+      endsAt: period.eventSponsorship?.endsAt,
+      boostsTotal: period.boostsAdded,
+      boostsUsed: 0,
+      localPushesTotal: period.localPushesAdded,
+      localPushesUsed: 0,
+      stripePaymentIntentId: period.stripePaymentIntentId,
+      stripeCheckoutSessionId: period.stripeCheckoutSessionId,
+      createdAt: period.createdAt,
+      updatedAt: period.createdAt,
+      intent: period.intent,
+      sponsor: period.sponsor,
+    })) as any;
   };
 
 /**

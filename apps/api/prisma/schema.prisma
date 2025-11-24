@@ -263,6 +263,7 @@ model User {
   subscriptions     UserSubscription[]
   planPeriods       UserPlanPeriod[]
   eventSponsorships EventSponsorship[] @relation("SponsorUser")
+  eventSponsorshipPeriods EventSponsorshipPeriod[] @relation("EventSponsorshipPeriods")
 
   // Profile & Privacy
   profile      UserProfile?
@@ -353,6 +354,7 @@ model Intent {
   // Note: PostGIS 'geom' column (geography(Point, 4326)) is managed via SQL migration
   // and not directly in this schema. See migration: 20251104220540_add_postgis_geom
   // The 'geom' column is automatically populated from lat/lng and has a GIST index.
+  geom Unsupported("geography(Point, 4326)")?
 
   levels Level[] @default([])
 
@@ -394,6 +396,7 @@ model Intent {
   comments      Comment[]
   reviews       Review[]
   sponsorship   EventSponsorship?
+  sponsorshipPeriods EventSponsorshipPeriod[] @relation("EventSponsorshipPeriods")
   inviteLinks   IntentInviteLink[]
   mutes         IntentMute[]
   favourites    IntentFavourite[]
@@ -807,9 +810,43 @@ model EventSponsorship {
   intent  Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
   sponsor User   @relation("SponsorUser", fields: [sponsorId], references: [id], onDelete: Cascade)
 
+  periods EventSponsorshipPeriod[] // History of all transactions
+
   @@index([plan, status])
   @@index([endsAt])
   @@map("event_sponsorships")
+}
+
+/// Tracks individual event sponsorship purchases (new, reload, upgrade)
+/// Similar to UserPlanPeriod but for event sponsorships
+model EventSponsorshipPeriod {
+  id        String @id @default(cuid())
+  intentId  String
+  sponsorId String
+
+  plan       IntentPlan // Plan purchased (PLUS/PRO)
+  actionType String // 'new', 'reload', 'upgrade'
+
+  boostsAdded      Int @default(0) // How many boosts this purchase added
+  localPushesAdded Int @default(0) // How many pushes this purchase added
+
+  amount   Float // Amount paid in PLN
+  currency String @default("pln")
+
+  stripeCustomerId        String?
+  stripePaymentIntentId   String?
+  stripeCheckoutSessionId String?
+
+  createdAt DateTime @default(now())
+
+  eventSponsorship EventSponsorship @relation(fields: [intentId], references: [intentId], onDelete: Cascade, map: "event_sponsorship_periods_sponsorshipId_fkey")
+  intent           Intent           @relation("EventSponsorshipPeriods", fields: [intentId], references: [id], onDelete: Cascade)
+  sponsor          User             @relation("EventSponsorshipPeriods", fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  @@index([sponsorId])
+  @@index([intentId])
+  @@index([createdAt])
+  @@map("event_sponsorship_periods")
 }
 
 model PaymentEvent {

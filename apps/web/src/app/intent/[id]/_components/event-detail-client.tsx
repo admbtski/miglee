@@ -45,7 +45,6 @@ type EventDetailClientProps = {
 };
 
 export function EventDetailClient({ intentId }: EventDetailClientProps) {
-  // ALL HOOKS MUST BE AT THE TOP - before any conditional returns
   const { data, isLoading, error, refetch } = useIntentDetailQuery({
     id: intentId,
   });
@@ -60,7 +59,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const [shareOpen, setShareOpen] = useState(false);
 
   // Get intent and user data (safe to access after hooks)
-  const intent = data?.intent as any; // Extended intent with members, sponsorship, inviteLinks
+  const intent = data?.intent; // Extended intent with members, sponsorship, inviteLinks
   const currentUserId = authData?.me?.id;
 
   // Check user membership status - must be declared before early returns
