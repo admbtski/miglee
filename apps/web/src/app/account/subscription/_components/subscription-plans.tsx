@@ -17,6 +17,7 @@ interface SubscriptionPlansProps {
     billingType: BillingType;
     price: number;
   }) => void;
+  currentPlan?: 'FREE' | 'PLUS' | 'PRO';
 }
 
 const PLANS = [
@@ -57,7 +58,10 @@ const PLANS = [
   },
 ];
 
-export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
+export function SubscriptionPlans({
+  onPlanSelect,
+  currentPlan = 'FREE',
+}: SubscriptionPlansProps) {
   const [billingType, setBillingType] = useState<BillingType>(
     'monthly-subscription'
   );
@@ -175,6 +179,10 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
           const savings = getSavings(plan);
           const isPopular = plan.popular;
           const isFree = plan.id === 'free';
+          const isCurrent =
+            (currentPlan === 'FREE' && plan.id === 'free') ||
+            (currentPlan === 'PLUS' && plan.id === 'plus') ||
+            (currentPlan === 'PRO' && plan.id === 'pro');
 
           return (
             <motion.div
@@ -190,11 +198,21 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
               )}
             >
               {/* Popular Badge */}
-              {isPopular && (
+              {isPopular && !isCurrent && (
                 <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap">
                     <Sparkles className="w-3 h-3" />
                     NAJPOPULARNIEJSZY
+                  </div>
+                </div>
+              )}
+
+              {/* Current Plan Badge */}
+              {isCurrent && (
+                <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap">
+                    <Check className="w-3 h-3" strokeWidth={3} />
+                    AKTYWNY PLAN
                   </div>
                 </div>
               )}
@@ -282,7 +300,7 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
               <button
                 type="button"
                 onClick={() => {
-                  if (!isFree && onPlanSelect) {
+                  if (!isFree && !isCurrent && onPlanSelect) {
                     onPlanSelect({
                       id: plan.id as PlanType,
                       name: plan.name,
@@ -291,17 +309,21 @@ export function SubscriptionPlans({ onPlanSelect }: SubscriptionPlansProps) {
                     });
                   }
                 }}
-                disabled={isFree}
+                disabled={isFree || isCurrent}
                 className={cn(
                   'mb-8 w-full rounded-2xl px-6 py-3.5 text-sm font-bold transition-all',
-                  isFree
+                  isFree || isCurrent
                     ? 'border-2 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 cursor-not-allowed'
                     : isPopular
                       ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md hover:from-indigo-500 hover:to-indigo-400 hover:shadow-lg'
                       : 'border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 )}
               >
-                {isFree ? 'Aktualny plan' : 'Ulepsz teraz'}
+                {isCurrent
+                  ? 'Aktywny plan'
+                  : isFree
+                    ? 'Plan podstawowy'
+                    : 'Wybierz plan'}
               </button>
 
               {/* Features */}
