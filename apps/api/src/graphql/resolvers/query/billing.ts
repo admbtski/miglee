@@ -13,9 +13,9 @@ import { getUserEffectivePlan } from '../../../lib/billing';
 export const myPlanQuery: QueryResolvers['myPlan'] = async (
   _parent,
   _args,
-  context
+  { user }
 ) => {
-  const { userId } = context;
+  const userId = user?.id;
 
   if (!userId) {
     throw new Error('Authentication required');
@@ -37,9 +37,9 @@ export const myPlanQuery: QueryResolvers['myPlan'] = async (
 export const mySubscriptionQuery: QueryResolvers['mySubscription'] = async (
   _parent,
   _args,
-  context
+  { user }
 ) => {
-  const { userId } = context;
+  const userId = user?.id;
 
   if (!userId) {
     throw new Error('Authentication required');
@@ -62,9 +62,10 @@ export const mySubscriptionQuery: QueryResolvers['mySubscription'] = async (
 export const myPlanPeriodsQuery: QueryResolvers['myPlanPeriods'] = async (
   _parent,
   args,
-  context
+  { user }
 ) => {
-  const { userId } = context;
+  const userId = user?.id;
+
   const { limit = 10 } = args;
 
   if (!userId) {
@@ -86,10 +87,10 @@ export const myPlanPeriodsQuery: QueryResolvers['myPlanPeriods'] = async (
 export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
   _parent,
   args,
-  context
+  { user }
 ) => {
   const { intentId } = args;
-  const { userId } = context;
+  const userId = user?.id;
 
   if (!userId) {
     throw new Error('Authentication required');

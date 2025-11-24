@@ -20,11 +20,11 @@ import { logger } from '../../../lib/pino';
  * Create checkout session for user subscription (auto-renewable)
  */
 export const createSubscriptionCheckoutMutation: MutationResolvers['createSubscriptionCheckout'] =
-  async (_parent, args, context) => {
-    const { userId, user } = context;
+  async (_parent, args, { user }) => {
+    const userId = user?.id;
     const { input } = args;
 
-    if (!userId || !user) {
+    if (!userId) {
       throw new Error('Authentication required');
     }
 
@@ -52,11 +52,11 @@ export const createSubscriptionCheckoutMutation: MutationResolvers['createSubscr
  * Create checkout session for one-off payment (month or year)
  */
 export const createOneOffCheckoutMutation: MutationResolvers['createOneOffCheckout'] =
-  async (_parent, args, context) => {
-    const { userId, user } = context;
+  async (_parent, args, { user }) => {
+    const userId = user?.id;
     const { input } = args;
 
-    if (!userId || !user) {
+    if (!userId) {
       throw new Error('Authentication required');
     }
 
@@ -83,8 +83,8 @@ export const createOneOffCheckoutMutation: MutationResolvers['createOneOffChecko
  * Create checkout session for event sponsorship
  */
 export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEventSponsorshipCheckout'] =
-  async (_parent, args, context) => {
-    const { userId, user } = context;
+  async (_parent, args, { user }) => {
+    const userId = user?.id;
     const { input } = args;
 
     if (!userId || !user) {
@@ -119,8 +119,8 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
  * Cancel user subscription (at period end or immediately)
  */
 export const cancelSubscriptionMutation: MutationResolvers['cancelSubscription'] =
-  async (_parent, args, context) => {
-    const { userId } = context;
+  async (_parent, args, { user }) => {
+    const userId = user?.id;
     const { immediately = false } = args;
 
     if (!userId) {
@@ -138,8 +138,8 @@ export const cancelSubscriptionMutation: MutationResolvers['cancelSubscription']
  * Reactivate a subscription that was set to cancel at period end
  */
 export const reactivateSubscriptionMutation: MutationResolvers['reactivateSubscription'] =
-  async (_parent, _args, context) => {
-    const { userId } = context;
+  async (_parent, _args, { user }) => {
+    const userId = user?.id;
 
     if (!userId) {
       throw new Error('Authentication required');
@@ -158,9 +158,9 @@ export const reactivateSubscriptionMutation: MutationResolvers['reactivateSubscr
 export const useBoostMutation: MutationResolvers['useBoost'] = async (
   _parent,
   args,
-  context
+  { user }
 ) => {
-  const { userId } = context;
+  const userId = user?.id;
   const { intentId } = args;
 
   if (!userId) {
@@ -194,9 +194,9 @@ export const useBoostMutation: MutationResolvers['useBoost'] = async (
 export const useLocalPushMutation: MutationResolvers['useLocalPush'] = async (
   _parent,
   args,
-  context
+  { user }
 ) => {
-  const { userId } = context;
+  const userId = user?.id;
   const { intentId } = args;
 
   if (!userId) {
