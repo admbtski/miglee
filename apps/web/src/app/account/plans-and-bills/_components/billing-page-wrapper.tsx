@@ -1,16 +1,12 @@
 'use client';
 
 import React from 'react';
-import {
-  ArrowRight,
-  Download,
-  Eye,
-  Users,
-} from 'lucide-react';
+import { ArrowRight, Download, Eye, Users } from 'lucide-react';
 import Link from 'next/link';
 import {
   useMyPlan,
   useMySubscription,
+  useMyPlanPeriods,
   useCancelSubscription,
 } from '@/lib/api/billing';
 import { Badge, Progress, Th, Td, SmallButton } from './ui';
@@ -20,6 +16,9 @@ import { toast } from 'sonner';
 export function BillingPageWrapper() {
   const { data: planData, isLoading: planLoading } = useMyPlan();
   const { data: subData, isLoading: subLoading } = useMySubscription();
+  const { data: periodsData, isLoading: periodsLoading } = useMyPlanPeriods({
+    limit: 50,
+  });
   const cancelSubscription = useCancelSubscription();
 
   const [cancelSubOpen, setCancelSubOpen] = React.useState(false);
@@ -46,13 +45,13 @@ export function BillingPageWrapper() {
     toast.success('Pobieranie faktury - funkcja wkrótce dostępna');
   };
 
-  if (planLoading || subLoading) {
+  if (planLoading || subLoading || periodsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="space-y-4 text-center">
           <div className="w-12 h-12 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Loading billing info...
+            Ładowanie informacji rozliczeniowych...
           </p>
         </div>
       </div>
@@ -61,17 +60,25 @@ export function BillingPageWrapper() {
 
   const plan = planData?.myPlan;
   const subscription = subData?.mySubscription;
+  // Sort periods by start date (newest first)
+  const periods = (periodsData?.myPlanPeriods || []).sort(
+    (a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime()
+  );
 
   // Determine plan details
   const planName = plan?.plan || 'FREE';
   const isActive = planName !== 'FREE';
   const planEndsAt = plan?.planEndsAt ? new Date(plan.planEndsAt) : null;
-  
+
   // Calculate planStartsAt based on planEndsAt and billing period
-  const planStartsAt = planEndsAt && plan?.billingPeriod
-    ? new Date(planEndsAt.getTime() - (plan.billingPeriod === 'YEARLY' ? 365 : 30) * 24 * 60 * 60 * 1000)
-    : null;
-  
+  const planStartsAt =
+    planEndsAt && plan?.billingPeriod
+      ? new Date(
+          planEndsAt.getTime() -
+            (plan.billingPeriod === 'YEARLY' ? 365 : 30) * 24 * 60 * 60 * 1000
+        )
+      : null;
+
   const renewsOn = planEndsAt
     ? planEndsAt.toLocaleDateString('pl-PL', {
         month: 'long',
@@ -85,12 +92,21 @@ export function BillingPageWrapper() {
   let timeProgress = 0;
   let daysRemaining = 0;
   let totalDays = 0;
-  
+
   if (planStartsAt && planEndsAt) {
-    totalDays = Math.ceil((planEndsAt.getTime() - planStartsAt.getTime()) / (1000 * 60 * 60 * 24));
-    const elapsed = Math.ceil((now.getTime() - planStartsAt.getTime()) / (1000 * 60 * 60 * 24));
-    daysRemaining = Math.ceil((planEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    timeProgress = Math.min(100, Math.max(0, Math.round((elapsed / totalDays) * 100)));
+    totalDays = Math.ceil(
+      (planEndsAt.getTime() - planStartsAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const elapsed = Math.ceil(
+      (now.getTime() - planStartsAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    daysRemaining = Math.ceil(
+      (planEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    timeProgress = Math.min(
+      100,
+      Math.max(0, Math.round((elapsed / totalDays) * 100))
+    );
   }
 
   // Price based on plan
@@ -147,7 +163,9 @@ export function BillingPageWrapper() {
                 </Badge>
               </div>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                {isActive ? `${plan?.source === 'SUBSCRIPTION' ? 'Odnawia się' : 'Wygasa'} ${renewsOn}` : 'Brak aktywnego planu'}
+                {isActive
+                  ? `${plan?.source === 'SUBSCRIPTION' ? 'Odnawia się' : 'Wygasa'} ${renewsOn}`
+                  : 'Brak aktywnego planu'}
               </p>
             </div>
           </div>
@@ -165,16 +183,21 @@ export function BillingPageWrapper() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-              {plan?.source === 'SUBSCRIPTION' ? 'Czas do odnowienia' : 'Czas do wygaśnięcia'}
+              {plan?.source === 'SUBSCRIPTION'
+                ? 'Czas do odnowienia'
+                : 'Czas do wygaśnięcia'}
             </span>
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              {isActive ? `${daysRemaining} ${daysRemaining === 1 ? 'dzień' : 'dni'} pozostało` : 'Brak aktywnego planu'}
+              {isActive
+                ? `${daysRemaining} ${daysRemaining === 1 ? 'dzień' : 'dni'} pozostało`
+                : 'Brak aktywnego planu'}
             </span>
           </div>
           <Progress value={timeProgress} />
           {isActive && (
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Plan {plan?.source === 'SUBSCRIPTION' ? 'odnowi się' : 'wygaśnie'} {renewsOn}
+              Plan {plan?.source === 'SUBSCRIPTION' ? 'odnowi się' : 'wygaśnie'}{' '}
+              {renewsOn}
             </p>
           )}
         </div>
@@ -189,7 +212,9 @@ export function BillingPageWrapper() {
               <div>
                 <p className="text-zinc-500 dark:text-zinc-400">Typ</p>
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                  {plan?.source === 'SUBSCRIPTION' ? 'Subskrypcja' : 'Jednorazowa'}
+                  {plan?.source === 'SUBSCRIPTION'
+                    ? 'Subskrypcja'
+                    : 'Jednorazowa'}
                 </p>
               </div>
               <div>
@@ -199,18 +224,22 @@ export function BillingPageWrapper() {
                 </p>
               </div>
               <div>
-                <p className="text-zinc-500 dark:text-zinc-400">Data rozpoczęcia</p>
+                <p className="text-zinc-500 dark:text-zinc-400">
+                  Data rozpoczęcia
+                </p>
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                  {planStartsAt?.toLocaleDateString('pl-PL', { 
-                    day: 'numeric', 
-                    month: 'short', 
-                    year: 'numeric' 
+                  {planStartsAt?.toLocaleDateString('pl-PL', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
                   })}
                 </p>
               </div>
               <div>
                 <p className="text-zinc-500 dark:text-zinc-400">
-                  {plan?.source === 'SUBSCRIPTION' ? 'Odnowienie' : 'Wygaśnięcie'}
+                  {plan?.source === 'SUBSCRIPTION'
+                    ? 'Odnowienie'
+                    : 'Wygaśnięcie'}
                 </p>
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">
                   {renewsOn}
@@ -274,45 +303,104 @@ export function BillingPageWrapper() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
-              {plan && isActive ? (
-                <tr className="text-sm hover:bg-zinc-50 dark:hover:bg-[#0a0b12] transition-colors">
-                  <Td>
-                    <span className="text-zinc-600 dark:text-zinc-400">
-                      {planStartsAt ? planStartsAt.toLocaleDateString('pl-PL', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      }) : 'N/A'}
-                    </span>
-                  </Td>
-                  <Td>
-                    <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                      Plan {planName} - {cycle}
-                    </span>
-                  </Td>
-                  <Td>
-                    <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                      zł{price.toFixed(2)}
-                    </span>
-                  </Td>
-                  <Td>
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                      Opłacono
-                    </span>
-                  </Td>
-                  <Td className="pr-6 text-right md:pr-8">
-                    <div className="flex justify-end gap-2">
-                      <SmallButton onClick={handleViewReceipt}>
-                        <Eye className="w-4 h-4" />
-                        <span className="hidden sm:inline">Podgląd</span>
-                      </SmallButton>
-                      <SmallButton onClick={handleDownloadReceipt}>
-                        <Download className="w-4 h-4" />
-                        <span className="hidden sm:inline">Faktura</span>
-                      </SmallButton>
-                    </div>
-                  </Td>
-                </tr>
+              {periods.length > 0 ? (
+                periods.map((period) => {
+                  const periodPlan = period.plan;
+                  const periodSource = period.source;
+                  const periodBillingPeriod = period.billingPeriod;
+                  const isActivePeriod =
+                    period.endsAt && new Date(period.endsAt) > new Date();
+
+                  // Calculate price based on period
+                  const periodPrice =
+                    periodPlan === 'PRO'
+                      ? periodSource === 'SUBSCRIPTION'
+                        ? 69.99
+                        : periodBillingPeriod === 'YEARLY'
+                          ? 839.99
+                          : 83.99
+                      : periodPlan === 'PLUS'
+                        ? periodSource === 'SUBSCRIPTION'
+                          ? 29.99
+                          : periodBillingPeriod === 'YEARLY'
+                            ? 359.99
+                            : 35.99
+                        : 0;
+
+                  const periodCycle =
+                    periodSource === 'SUBSCRIPTION'
+                      ? 'subskrypcja miesięczna'
+                      : periodBillingPeriod === 'YEARLY'
+                        ? 'roczny'
+                        : 'miesięczny';
+
+                  return (
+                    <tr
+                      key={period.id}
+                      className="text-sm hover:bg-zinc-50 dark:hover:bg-[#0a0b12] transition-colors"
+                    >
+                      <Td>
+                        <div className="space-y-1">
+                          <span className="text-zinc-600 dark:text-zinc-400">
+                            {new Date(period.startsAt).toLocaleDateString(
+                              'pl-PL',
+                              {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              }
+                            )}
+                          </span>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-500">
+                            do{' '}
+                            {new Date(period.endsAt).toLocaleDateString(
+                              'pl-PL',
+                              {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              }
+                            )}
+                          </div>
+                        </div>
+                      </Td>
+                      <Td>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                            Plan {periodPlan} - {periodCycle}
+                          </span>
+                          {isActivePeriod && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                              Aktywny
+                            </span>
+                          )}
+                        </div>
+                      </Td>
+                      <Td>
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                          zł{periodPrice.toFixed(2)}
+                        </span>
+                      </Td>
+                      <Td>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                          Opłacono
+                        </span>
+                      </Td>
+                      <Td className="pr-6 text-right md:pr-8">
+                        <div className="flex justify-end gap-2">
+                          <SmallButton onClick={handleViewReceipt}>
+                            <Eye className="w-4 h-4" />
+                            <span className="hidden sm:inline">Podgląd</span>
+                          </SmallButton>
+                          <SmallButton onClick={handleDownloadReceipt}>
+                            <Download className="w-4 h-4" />
+                            <span className="hidden sm:inline">Faktura</span>
+                          </SmallButton>
+                        </div>
+                      </Td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center">
