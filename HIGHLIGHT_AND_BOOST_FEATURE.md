@@ -61,23 +61,42 @@ type Mutation {
 
 ### Event Detail Page (`/intent/[id]`)
 
-**Location:** `apps/web/src/app/intent/[id]/_components/event-hero.tsx`
+**Location:**
+
+- `apps/web/src/app/intent/[id]/_components/event-hero.tsx` - Event card with ring effect
+- `apps/web/src/app/intent/[id]/_components/event-detail-client.tsx` - Page background tint, category tags
 
 #### Features:
 
-1. **Highlight Ring Effect**
+1. **Page Background Tint** (MAIN FEATURE)
+   - Entire page gets a subtle colored background when boosted
+   - Applied to root `<div>` of event detail page
+   - Very subtle intensity (3-8% opacity diagonal gradient)
+   - Creates cohesive, branded feel without overwhelming
+   - Smooth color transition with 500ms duration
+   - Most elegant and professional approach
+
+2. **Category Tags Colored Background**
+   - Category badges use highlight color as full background when boosted
+   - 95% opacity for vibrant but readable effect
+   - Replaces default `bg-black/40` background
+   - Makes tags stand out clearly against cover photo
+
+3. **Event Hero Card - Highlight Ring Effect**
    - Shows colored border when event is boosted AND has a highlight color
    - Supports 4 preset colors with predefined Tailwind classes
    - Supports custom HEX colors with dynamic inline styles
    - Creates a glowing shadow effect matching the highlight color
 
-2. **Promoted Badge with Countdown**
+4. **Promoted Badge with Countdown**
    - Displays when boost is active (within 24 hours of `boostedAt`)
    - Shows real-time countdown timer (updates every second)
    - Format: `Xh Ym` (hours/minutes) or `Ym Xs` (minutes/seconds) or `Xs` (seconds only)
    - Beautiful gradient design with icons
 
 #### Code Structure:
+
+**In `event-hero.tsx`:**
 
 ```tsx
 // Check if boost is active
@@ -102,6 +121,44 @@ useEffect(() => {
   const interval = setInterval(updateTimeLeft, 1000);
   return () => clearInterval(interval);
 }, [event.boostedAt, isBoosted]);
+```
+
+**In `event-detail-client.tsx` (PAGE BACKGROUND APPROACH):**
+
+```tsx
+import { isBoostActive, getHighlightBackgroundStyle } from '@/lib/utils/is-boost-active';
+
+// Check if boost is active (before early returns)
+const isBoosted = useMemo(
+  () => isBoostActive(intent?.boostedAt),
+  [intent?.boostedAt]
+);
+
+// Get subtle background style for entire page
+const subtleHighlightStyle = useMemo(
+  () => getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'subtle'),
+  [intent?.highlightColor, isBoosted]
+);
+
+// Apply to page root
+<div
+  className="min-h-screen pb-20 bg-zinc-50 ... transition-colors duration-500"
+  style={isBoosted ? subtleHighlightStyle : undefined}
+>
+  {/* Entire page content */}
+</div>
+
+// Apply to category tags
+<span
+  className="... text-white rounded-full backdrop-blur-sm"
+  style={
+    isBoosted && intent?.highlightColor
+      ? { backgroundColor: intent.highlightColor, opacity: 0.95 }
+      : { backgroundColor: 'rgba(0, 0, 0, 0.4)' }
+  }
+>
+  {cat.name}
+</span>
 ```
 
 ### Event Cards (`/` and other listings)
@@ -262,17 +319,57 @@ export const HIGHLIGHT_PRESETS = [
 
 ## Utility Functions
 
-### Frontend: `isBoostActive`
+### Frontend: `isBoostActive` & `getHighlightBackgroundStyle`
 
 **Location:** `apps/web/src/lib/utils/is-boost-active.ts`
 
 ```typescript
+// Check if boost is active (within 24 hours)
 export function isBoostActive(boostedAt: string | null | undefined): boolean {
   if (!boostedAt) return false;
   const boostedTime = new Date(boostedAt).getTime();
   const now = Date.now();
   const elapsed = now - boostedTime;
   return elapsed < 24 * 60 * 60 * 1000; // 24 hours in ms
+}
+
+// Generate gradient background styles
+export function getHighlightBackgroundStyle(
+  highlightColor: string | null | undefined,
+  isBoosted: boolean,
+  intensity: 'subtle' | 'medium' | 'strong' = 'medium'
+): React.CSSProperties {
+  if (!isBoosted || !highlightColor) {
+    return {};
+  }
+
+  // Convert HEX to RGB for alpha manipulation
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result && result[1] && result[2] && result[3]
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 59, g: 130, b: 246 }; // fallback to blue
+  };
+
+  const rgb = hexToRgb(highlightColor);
+  const rgbString = `${rgb.r}, ${rgb.g}, ${rgb.b}`;
+
+  // Define opacity levels based on intensity
+  const opacities = {
+    subtle: { start: 0.03, end: 0.08 }, // Very light
+    medium: { start: 0.05, end: 0.12 }, // Noticeable
+    strong: { start: 0.08, end: 0.18 }, // Prominent
+  };
+
+  const { start, end } = opacities[intensity];
+
+  return {
+    background: `linear-gradient(135deg, rgba(${rgbString}, ${start}) 0%, rgba(${rgbString}, ${end}) 100%)`,
+  };
 }
 ```
 
@@ -319,20 +416,42 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
 
 #### Active Boost (with highlight color):
 
-- ✅ Colored glowing border on event card
-- ✅ Colored glowing border on event detail page
-- ✅ "Promowane" badge on cards
-- ✅ "Wydarzenie promowane" panel on detail page with countdown
+**Event Detail Page:**
+
+- ✅ Colored gradient overlay on hero cover image (`mix-blend-overlay`)
+- ✅ Category tags with full highlight color background (95% opacity)
+- ✅ Metadata card with subtle gradient background (barely visible)
+- ✅ Event hero card with colored ring border (from `event-hero.tsx`)
+- ✅ "Wydarzenie promowane" panel with countdown timer
+
+**Event Cards (listings):**
+
+- ✅ Colored border on event card
+- ✅ "Promowane" badge
+
+**Design Philosophy:**
+The background approach is more subtle and professional than glowing borders. It:
+
+- Enhances the visual appeal without being overwhelming
+- Works naturally with photos using `mix-blend-overlay`
+- Creates a cohesive color theme across all elements
+- Maintains readability and accessibility
 
 #### Active Boost (no highlight color):
 
-- ✅ "Promowane" badge on cards
-- ✅ "Wydarzenie promowane" panel on detail page with countdown
-- ❌ No colored border (default appearance)
+**Event Detail Page:**
+
+- ✅ "Wydarzenie promowane" panel with countdown
+- ❌ No colored backgrounds or effects (standard appearance)
+
+**Event Cards:**
+
+- ✅ "Promowane" badge
+- ❌ No colored effects (default appearance)
 
 #### No Boost:
 
-- ❌ No badges, no colored borders
+- ❌ No badges, no colored backgrounds, no effects
 - ℹ️ Standard event appearance
 
 ## Technical Decisions

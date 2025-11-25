@@ -39,6 +39,10 @@ import {
 import { DeleteIntentModals } from '@/app/account/intents/_components/delete-intent-modals';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildIntentCoverUrl } from '@/lib/media/url';
+import {
+  isBoostActive,
+  getHighlightBackgroundStyle,
+} from '@/lib/utils/is-boost-active';
 
 type EventDetailClientProps = {
   intentId: string;
@@ -51,12 +55,6 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
   const { data: authData } = useMeQuery();
 
-  console.log('Intent data:', data?.intent);
-  console.log('Highlight color:', data?.intent?.highlightColor);
-  console.log('Boosted at:', data?.intent?.boostedAt);
-  console.log('Sponsorship:', data?.intent?.sponsorship);
-
-  // Modal states
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [closeJoinId, setCloseJoinId] = useState<string | null>(null);
@@ -85,6 +83,19 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const isRejected = userMembership?.status === 'REJECTED';
   const isBanned = userMembership?.status === 'BANNED';
   const isWaitlisted = userMembership?.status === 'WAITLIST';
+
+  // Check if boost is active (must be before early returns)
+  const isBoosted = useMemo(
+    () => isBoostActive(intent?.boostedAt),
+    [intent?.boostedAt]
+  );
+
+  // Get subtle highlight background for page (must be before early returns)
+  const subtleHighlightStyle = useMemo(
+    () =>
+      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'strong'),
+    [intent?.highlightColor, isBoosted]
+  );
 
   // Determine if user can see members based on visibility settings
   const canSeeMembers = useMemo(() => {
@@ -253,9 +264,12 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <div
+      className="min-h-screen pb-20 transition-colors duration-500 bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100"
+      style={isBoosted ? subtleHighlightStyle : undefined}
+    >
       {/* Back Navigation */}
-      <div className="border-b border-zinc-200 bg-zinc-50/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+      <div className="border-b border-zinc-200 backdrop-blur dark:border-zinc-800 ">
         <div className="container max-w-6xl px-4 py-3 mx-auto">
           <a
             href="/"
@@ -309,7 +323,15 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                     {eventData.categories.slice(0, 2).map((cat) => (
                       <span
                         key={cat.slug}
-                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-white rounded-full bg-black/40 backdrop-blur-sm"
+                        className="inline-flex items-center px-3 py-1 text-xs font-medium text-white rounded-full backdrop-blur-sm"
+                        style={
+                          isBoosted && intent?.highlightColor
+                            ? {
+                                backgroundColor: intent.highlightColor,
+                                opacity: 0.95,
+                              }
+                            : { backgroundColor: 'rgba(0, 0, 0, 0.4)' }
+                        }
                       >
                         {cat.name}
                       </span>
@@ -364,7 +386,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
         {/* Extended Metadata Card - Integrated below hero */}
         <div className="mb-6">
-          <div className="p-4 border rounded-xl border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="relative p-4 overflow-hidden border rounded-xl border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40">
             <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300">
               {/* Event Size Category */}
               <div className="flex items-center gap-1.5">
