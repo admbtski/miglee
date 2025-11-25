@@ -5,6 +5,11 @@ import { ArrowLeft, Zap, Crown, Info } from 'lucide-react';
 import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import {
+  EVENT_PLAN_PRICES,
+  EVENT_PLAN_LIMITS,
+  ACTIONS_NEVER_EXPIRE,
+} from '@/lib/billing-constants';
 
 interface ReloadActionsModalProps {
   intentId: string;
@@ -22,28 +27,13 @@ export function ReloadActionsModal({
   const icon = isPro ? Crown : Zap;
   const Icon = icon;
 
-  const planDetails = {
-    Plus: {
-      boosts: 3,
-      pushes: 3,
-      price: 14.99,
-      color: 'indigo',
-    },
-    Pro: {
-      boosts: 5,
-      pushes: 5,
-      price: 29.99,
-      color: 'amber',
-    },
-    Basic: {
-      boosts: 0,
-      pushes: 0,
-      price: 0,
-      color: 'zinc',
-    },
-  };
-
-  const details = planDetails[currentPlan];
+  // Use shared constants
+  const planKey = currentPlan.toLowerCase() as 'free' | 'plus' | 'pro';
+  const boosts =
+    EVENT_PLAN_LIMITS[planKey.toUpperCase() as 'FREE' | 'PLUS' | 'PRO'].boosts;
+  const pushes =
+    EVENT_PLAN_LIMITS[planKey.toUpperCase() as 'FREE' | 'PLUS' | 'PRO'].pushes;
+  const price = EVENT_PLAN_PRICES[planKey];
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#05060a]">
@@ -92,7 +82,7 @@ export function ReloadActionsModal({
                 </div>
                 <div className="flex-1">
                   <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                    +{details.boosts} podbicia
+                    +{boosts} podbicia
                   </p>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Wyniesienie wydarzenia w górę listingu
@@ -112,7 +102,7 @@ export function ReloadActionsModal({
                 </div>
                 <div className="flex-1">
                   <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-                    +{details.pushes} lokalnych powiadomień push
+                    +{pushes} lokalnych powiadomień push
                   </p>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     Powiadomienia dla użytkowników w okolicy
@@ -123,14 +113,14 @@ export function ReloadActionsModal({
           </div>
 
           {/* Info box */}
-          <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-6">
+          <div className="p-6 border rounded-2xl border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20">
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
-                  Akcje się sumują i nigdy nie wygasają
+                  {ACTIONS_NEVER_EXPIRE}
                 </p>
-                <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed">
+                <p className="text-sm leading-relaxed text-emerald-800 dark:text-emerald-200">
                   Wszystkie akcje pozostają aktywne do końca życia wydarzenia.
                   Możesz dokupować kolejne pakiety w dowolnym momencie.
                 </p>
@@ -142,12 +132,11 @@ export function ReloadActionsModal({
           <div className="pt-6 border-t border-zinc-200 dark:border-white/5">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
+                <p className="mb-1 text-sm text-zinc-500 dark:text-zinc-400">
                   Cena pakietu
                 </p>
                 <p className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
-                  {details.price.toFixed(2)}{' '}
-                  <span className="text-2xl">PLN</span>
+                  {price.toFixed(2)} <span className="text-2xl">PLN</span>
                 </p>
               </div>
               <button

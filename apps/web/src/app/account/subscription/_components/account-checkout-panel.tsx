@@ -8,10 +8,7 @@ import {
   useCreateOneOffCheckout,
 } from '@/lib/api/billing';
 import { toast } from 'sonner';
-import {
-  USER_PLAN_FEATURES_SHORT,
-  PLAN_SCOPE_NOTICE,
-} from './user-plans-constants';
+import { USER_PLAN_FEATURES, PLAN_SCOPE_NOTICE } from '@/lib/billing-constants';
 
 interface AccountCheckoutPanelProps {
   selectedPlan: {
@@ -175,11 +172,11 @@ export function AccountCheckoutPanel({
           </h4>
           <ul className="space-y-2 text-sm text-indigo-800 dark:text-indigo-200">
             {selectedPlan.id === 'plus'
-              ? USER_PLAN_FEATURES_SHORT.PLUS.map((feature, i) => (
+              ? USER_PLAN_FEATURES.PLUS.slice(0, 8).map((feature, i) => (
                   <li key={i}>✓ {feature}</li>
                 ))
               : selectedPlan.id === 'pro'
-                ? USER_PLAN_FEATURES_SHORT.PRO.map((feature, i) => (
+                ? USER_PLAN_FEATURES.PRO.slice(0, 8).map((feature, i) => (
                     <li key={i}>✓ {feature}</li>
                   ))
                 : null}

@@ -26,12 +26,20 @@ export interface CreateEventSponsorshipCheckoutParams {
   userEmail: string;
   userName: string;
   plan: IntentPlan;
+  actionType?: 'new' | 'upgrade' | 'reload';
 }
 
 export async function createEventSponsorshipCheckout(
   params: CreateEventSponsorshipCheckoutParams
 ): Promise<{ checkoutUrl: string; sessionId: string; sponsorshipId: string }> {
-  const { intentId, userId, userEmail, userName, plan } = params;
+  let {
+    intentId,
+    userId,
+    userEmail,
+    userName,
+    plan,
+    actionType = 'new',
+  } = params;
 
   if (plan === 'FREE') {
     throw new Error('Cannot purchase FREE plan');
@@ -66,33 +74,41 @@ export async function createEventSponsorshipCheckout(
     where: { intentId },
   });
 
-  // Determine action type: new, upgrade, or reload
-  let actionType: 'new' | 'upgrade' | 'reload' = 'new';
-
-  if (existing && existing.status === 'ACTIVE') {
-    // Check if it's an upgrade (PLUS -> PRO)
-    if (existing.plan === 'PLUS' && plan === 'PRO') {
-      actionType = 'upgrade';
-      logger.info(
-        { intentId, from: existing.plan, to: plan },
-        'Upgrading event sponsorship plan'
-      );
+  // If actionType not provided, determine automatically
+  if (!actionType || actionType === 'new') {
+    if (existing && existing.status === 'ACTIVE') {
+      // Check if it's an upgrade (PLUS -> PRO)
+      if (existing.plan === 'PLUS' && plan === 'PRO') {
+        actionType = 'upgrade';
+        logger.info(
+          { intentId, from: existing.plan, to: plan },
+          'Upgrading event sponsorship plan'
+        );
+      }
+      // Check if it's a reload (buying same plan again to stack actions)
+      else if (existing.plan === plan) {
+        actionType = 'reload';
+        logger.info(
+          { intentId, plan },
+          'Reloading event sponsorship actions (stacking)'
+        );
+      }
+      // Downgrade is not allowed
+      else if (existing.plan === 'PRO' && plan === 'PLUS') {
+        throw new Error('Downgrade from PRO to PLUS is not allowed');
+      }
+      // Any other case with active sponsorship
+      else {
+        throw new Error('Event already has an active sponsorship');
+      }
     }
-    // Check if it's a reload (buying same plan again to stack actions)
-    else if (existing.plan === plan) {
-      actionType = 'reload';
-      logger.info(
-        { intentId, plan },
-        'Reloading event sponsorship actions (stacking)'
-      );
+  } else {
+    // Validate provided actionType
+    if (actionType === 'upgrade' && existing?.plan !== 'PLUS') {
+      throw new Error('Upgrade only available from PLUS to PRO');
     }
-    // Downgrade is not allowed
-    else if (existing.plan === 'PRO' && plan === 'PLUS') {
-      throw new Error('Downgrade from PRO to PLUS is not allowed');
-    }
-    // Any other case with active sponsorship
-    else {
-      throw new Error('Event already has an active sponsorship');
+    if (actionType === 'reload' && existing?.plan !== plan) {
+      throw new Error('Reload requires same plan');
     }
   }
 

@@ -183,7 +183,7 @@ export function getCheckoutSuccessUrl(
   switch (type) {
     case METADATA_TYPE.USER_SUBSCRIPTION:
     case METADATA_TYPE.USER_ONE_OFF:
-      return `${baseUrl}/account/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`;
+      return `${baseUrl}/account/plans-and-bills?success=true&session_id={CHECKOUT_SESSION_ID}`;
     case METADATA_TYPE.EVENT_SPONSORSHIP:
       return `${baseUrl}/intent/{intentId}/manage/plans?success=true&session_id={CHECKOUT_SESSION_ID}`;
     default:
@@ -198,7 +198,7 @@ export function getCheckoutCancelUrl(
   switch (type) {
     case METADATA_TYPE.USER_SUBSCRIPTION:
     case METADATA_TYPE.USER_ONE_OFF:
-      return `${baseUrl}/account/subscription?canceled=true`;
+      return `${baseUrl}/account/plans-and-bills?canceled=true`;
     case METADATA_TYPE.EVENT_SPONSORSHIP:
       return `${baseUrl}/intent/{intentId}/manage/plans?canceled=true`;
     default:

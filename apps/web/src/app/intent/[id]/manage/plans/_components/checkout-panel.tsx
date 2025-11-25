@@ -7,6 +7,7 @@ import { SponsorPlan } from '../../subscription/_components/subscription-panel-t
 import { useCreateEventSponsorshipCheckout } from '@/lib/api/billing';
 import { IntentPlan } from '@/lib/api/__generated__/react-query-update';
 import { toast } from 'sonner';
+import { EVENT_PLAN_PRICES } from '@/lib/billing-constants';
 
 interface CheckoutPanelProps {
   intentId: string;
@@ -14,13 +15,6 @@ interface CheckoutPanelProps {
   actionType?: 'new' | 'upgrade' | 'reload';
   onBack: () => void;
 }
-
-// Real prices from Stripe product catalog (from .env)
-const PLAN_PRICES: Record<SponsorPlan, number> = {
-  Basic: 0, // Free tier
-  Plus: 14.99, // zł14.99 PLN - STRIPE_PRICE_EVENT_PLUS
-  Pro: 29.99, // zł29.99 PLN - STRIPE_PRICE_EVENT_PRO
-};
 
 export function CheckoutPanel({
   intentId,
@@ -31,7 +25,9 @@ export function CheckoutPanel({
   const [agreeToTerms, setAgreeToTerms] = React.useState(false);
   const createCheckout = useCreateEventSponsorshipCheckout();
 
-  const price = PLAN_PRICES[selectedPlan];
+  // Map frontend plan names to backend price keys
+  const planKey = selectedPlan.toLowerCase() as 'free' | 'plus' | 'pro';
+  const price = EVENT_PLAN_PRICES[planKey];
 
   const getActionTitle = () => {
     if (actionType === 'upgrade') {
@@ -58,9 +54,9 @@ export function CheckoutPanel({
     }
 
     try {
-      // Convert plan to GraphQL enum: Basic, Plus, Pro -> FREE, PLUS, PRO
+      // Convert plan to GraphQL enum: Free, Plus, Pro -> FREE, PLUS, PRO
       const planMap: Record<SponsorPlan, IntentPlan> = {
-        Basic: IntentPlan.Free,
+        Free: IntentPlan.Free,
         Plus: IntentPlan.Plus,
         Pro: IntentPlan.Pro,
       };
@@ -69,6 +65,7 @@ export function CheckoutPanel({
         input: {
           intentId,
           plan: planMap[selectedPlan],
+          actionType,
         },
       });
 

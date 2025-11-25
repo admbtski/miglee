@@ -1,5 +1,14 @@
+import { Suspense } from 'react';
 import { BillingPageWrapper } from './_components/billing-page-wrapper';
+import { PaymentResultModal } from '@/components/billing/payment-result-modal';
 
 export default function BillingPage() {
-  return <BillingPageWrapper />;
+  return (
+    <>
+      <BillingPageWrapper />
+      <Suspense fallback={null}>
+        <PaymentResultModal context="account" />
+      </Suspense>
+    </>
+  );
 }

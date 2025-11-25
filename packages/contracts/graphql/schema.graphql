@@ -1425,6 +1425,7 @@ input CreateOneOffCheckoutInput {
 input CreateEventSponsorshipCheckoutInput {
   intentId: ID!
   plan: IntentPlan!
+  actionType: String
 }
 
 # ------------------------------------------------------------------------------

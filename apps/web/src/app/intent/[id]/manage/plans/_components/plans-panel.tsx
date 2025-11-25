@@ -5,6 +5,14 @@ import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
 import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import {
+  EVENT_PLAN_PRICES,
+  EVENT_PLAN_FEATURES,
+  EVENT_PLAN_DESCRIPTIONS,
+  EVENT_SPONSORSHIP_LIFETIME_NOTICE,
+  ACTIONS_NEVER_EXPIRE,
+  SOCIAL_PROOF_RELOAD,
+} from '@/lib/billing-constants';
 
 type PlanId = 'free' | 'plus' | 'pro';
 
@@ -15,7 +23,7 @@ interface PlanCardProps {
   price: number;
   icon: React.ElementType;
   color: string;
-  features: string[];
+  features: readonly string[];
   highlighted?: boolean;
   popular?: boolean;
   currentPlan?: PlanId | null;
@@ -214,75 +222,36 @@ export function PlansPanel({
     currentPlan: SponsorPlan
   ) => Promise<void> | void;
 }) {
-  // Real prices from Stripe product catalog
+  // Use shared constants for plan definitions
   const PLANS = [
     {
       id: 'free' as PlanId,
       name: 'Free',
-      description: 'Podstawowy plan wydarzenia',
-      price: 0,
+      description: EVENT_PLAN_DESCRIPTIONS.FREE,
+      price: EVENT_PLAN_PRICES.free,
       icon: Sparkles,
       color: 'zinc',
-      features: [
-        'Tworzenie wydarzeń stacjonarnych i online',
-        'Do 10 uczestników',
-        'Podstawowe zarządzanie wydarzeniem',
-        'Brak chatu grupowego',
-        'Brak podbić',
-        'Brak lokalnych powiadomień',
-        'Brak analityki',
-        'Brak wydarzeń hybrydowych',
-        'Brak formularzy dołączenia',
-        'Brak współorganizatorów',
-      ],
+      features: EVENT_PLAN_FEATURES.FREE,
     },
     {
       id: 'plus' as PlanId,
       name: 'Plus',
-      description: 'Dla aktywnych organizatorów',
-      price: 14.99, // zł14.99 PLN - STRIPE_PRICE_EVENT_PLUS
+      description: EVENT_PLAN_DESCRIPTIONS.PLUS,
+      price: EVENT_PLAN_PRICES.plus,
       icon: Zap,
       color: 'indigo',
       popular: !currentPlan || currentPlan === 'free',
       highlighted: true,
-      features: [
-        'Wszystko z Free',
-        'Brak limitu uczestników',
-        'Chat grupowy',
-        'Wydarzenia hybrydowe (onsite + online)',
-        'Badge „Promowane"',
-        'Wyróżniony kafelek na stronie głównej',
-        '1 podbicie wydarzenia (stackuje się)',
-        '1 lokalne powiadomienie push (stackuje się)',
-        'Formularze dołączenia (Join Forms)',
-        'Formularze obecności / Check-in',
-        'Narzędzia zarządzania grupą',
-        'Nieograniczona liczba współorganizatorów',
-        'Przyjazna SEO strona wydarzenia',
-        'Podstawowa analityka',
-        'Wsparcie premium społeczności',
-      ],
+      features: EVENT_PLAN_FEATURES.PLUS,
     },
     {
       id: 'pro' as PlanId,
       name: 'Pro',
-      description: 'Dla profesjonalnych organizatorów',
-      price: 29.99, // zł29.99 PLN - STRIPE_PRICE_EVENT_PRO
+      description: EVENT_PLAN_DESCRIPTIONS.PRO,
+      price: EVENT_PLAN_PRICES.pro,
       icon: Crown,
       color: 'amber',
-      features: [
-        'Wszystko z Plus',
-        'Zaawansowana analityka (trendy, źródła ruchu)',
-        'Narzędzia komunikacji masowej (broadcasty)',
-        '3 podbicia wydarzenia (stackują się)',
-        '3 lokalne powiadomienia push (stackują się)',
-        'Opłaty za bilety (ticketing)',
-        'Zaawansowane narzędzia organizatora',
-        'Priorytetowa widoczność w listingu',
-        'Pełny chat grupowy + moderacja',
-        'Zaawansowane formularze dołączenia',
-        'Eksperckie wsparcie premium',
-      ],
+      features: EVENT_PLAN_FEATURES.PRO,
     },
   ];
 
@@ -380,12 +349,10 @@ export function PlansPanel({
             <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <div>
               <p className="mb-1 text-sm font-semibold text-indigo-900 dark:text-indigo-100">
-                Akcje się stackują i nigdy nie wygasają
+                {EVENT_SPONSORSHIP_LIFETIME_NOTICE}
               </p>
               <p className="text-sm leading-relaxed text-indigo-800 dark:text-indigo-200">
-                Dokupując kolejny pakiet Plus lub Pro, dodasz kolejny zestaw
-                podbić i powiadomień push. Wszystkie akcje pozostają aktywne do
-                końca życia wydarzenia.
+                {ACTIONS_NEVER_EXPIRE}
               </p>
             </div>
           </div>
@@ -395,8 +362,7 @@ export function PlansPanel({
         {currentPlan && currentPlan !== 'free' && (
           <div className="rounded-[24px] border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-6 text-center">
             <p className="text-sm leading-relaxed text-emerald-800 dark:text-emerald-200">
-              💡 <strong>Najczęściej kupowane:</strong> doładowanie akcji po
-              pierwszym tygodniu wydarzenia
+              {SOCIAL_PROOF_RELOAD}
             </p>
           </div>
         )}

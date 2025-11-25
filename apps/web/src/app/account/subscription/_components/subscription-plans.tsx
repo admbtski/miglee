@@ -6,9 +6,11 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PlanType, BillingType } from './subscription-plans-wrapper';
 import {
+  USER_PLAN_PRICES,
   USER_PLAN_FEATURES,
+  USER_PLAN_DESCRIPTIONS,
   PLAN_SCOPE_NOTICE_EXTENDED,
-} from './user-plans-constants';
+} from '@/lib/billing-constants';
 
 interface SubscriptionPlansProps {
   onPlanSelect?: (plan: {
@@ -24,10 +26,10 @@ const PLANS = [
   {
     id: 'free',
     name: 'Free',
-    description: 'Darmowy plan użytkownika',
-    priceMonthlySubscription: 0,
-    priceMonthlyOnetime: 0,
-    priceAnnualOnetime: 0,
+    description: USER_PLAN_DESCRIPTIONS.FREE,
+    priceMonthlySubscription: USER_PLAN_PRICES.free.monthlySubscription,
+    priceMonthlyOnetime: USER_PLAN_PRICES.free.monthlyOnetime,
+    priceAnnualOnetime: USER_PLAN_PRICES.free.annualOnetime,
     icon: Sparkles,
     color: 'zinc',
     features: USER_PLAN_FEATURES.FREE,
@@ -35,10 +37,10 @@ const PLANS = [
   {
     id: 'plus',
     name: 'Plus',
-    description: 'Więcej możliwości, zero limitów',
-    priceMonthlySubscription: 29.99, // STRIPE_PRICE_USER_PLUS_MONTHLY_SUB
-    priceMonthlyOnetime: 35.99, // STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF
-    priceAnnualOnetime: 359.99, // STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF
+    description: USER_PLAN_DESCRIPTIONS.PLUS,
+    priceMonthlySubscription: USER_PLAN_PRICES.plus.monthlySubscription,
+    priceMonthlyOnetime: USER_PLAN_PRICES.plus.monthlyOnetime,
+    priceAnnualOnetime: USER_PLAN_PRICES.plus.annualOnetime,
     icon: Zap,
     color: 'indigo',
     popular: true,
@@ -47,10 +49,10 @@ const PLANS = [
   {
     id: 'pro',
     name: 'Pro',
-    description: 'Profesjonalne narzędzia dla dużych społeczności',
-    priceMonthlySubscription: 69.99, // STRIPE_PRICE_USER_PRO_MONTHLY_SUB
-    priceMonthlyOnetime: 83.99, // STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF
-    priceAnnualOnetime: 839.99, // STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF
+    description: USER_PLAN_DESCRIPTIONS.PRO,
+    priceMonthlySubscription: USER_PLAN_PRICES.pro.monthlySubscription,
+    priceMonthlyOnetime: USER_PLAN_PRICES.pro.monthlyOnetime,
+    priceAnnualOnetime: USER_PLAN_PRICES.pro.annualOnetime,
     icon: Crown,
     color: 'amber',
     popular: false,
