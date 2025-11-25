@@ -94,7 +94,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   // Get subtle highlight background for page (must be before early returns)
   const subtleHighlightStyle = useMemo(
     () =>
-      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'medium'),
+      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'subtle'),
     [intent?.highlightColor, isBoosted]
   );
 

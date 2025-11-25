@@ -14,6 +14,7 @@ import { HIGHLIGHT_PRESETS } from '@/lib/billing-constants';
 import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import { computeEventStateAndStatus } from '@/lib/utils/event-status';
+import { getHighlightBackgroundStyle } from '@/lib/utils/is-boost-active';
 import { motion } from 'framer-motion';
 import {
   Calendar,
@@ -271,6 +272,12 @@ export const EventCard = memo(function EventCard({
     [isBoosted, highlightColor, isCanceled, isDeleted]
   );
 
+  // Get subtle background style for card (only if boosted)
+  const cardBackgroundStyle = useMemo(
+    () => getHighlightBackgroundStyle(highlightColor, isBoosted, 'subtle'),
+    [highlightColor, isBoosted]
+  );
+
   const { status } = useMemo(
     () =>
       computeEventStateAndStatus({
@@ -356,11 +363,17 @@ export const EventCard = memo(function EventCard({
         'bg-white dark:bg-zinc-900',
         'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
         'select-none',
+        'transition-colors duration-500',
         isInactive && 'saturate-0',
         highlightRing.className,
         className
       )}
-      style={highlightRing.style}
+      style={{
+        ...highlightRing.style,
+        ...(isBoosted && cardBackgroundStyle.background
+          ? cardBackgroundStyle
+          : {}),
+      }}
       transition={{
         type: 'spring',
         stiffness: 300,

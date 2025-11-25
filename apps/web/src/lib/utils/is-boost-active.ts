@@ -41,7 +41,8 @@ export function getHighlightBackgroundStyle(
 
   // Define opacity levels based on intensity
   const opacities = {
-    subtle: { start: 0.03, end: 0.08 },
+    subtle: { start: 0.02, end: 0.05 },
+    low: { start: 0.03, end: 0.08 },
     medium: { start: 0.05, end: 0.12 },
     strong: { start: 0.08, end: 0.18 },
   };

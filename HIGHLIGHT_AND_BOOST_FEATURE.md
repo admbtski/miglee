@@ -167,13 +167,44 @@ const subtleHighlightStyle = useMemo(
 
 #### Features:
 
-1. **Promowane Badge**
-   - Shows small "Promowane" badge when boost is active
-   - Positioned at top-right of card
+1. **Card Background Tint**
+   - Card gets subtle colored background when boosted
+   - Subtle intensity (3-8% opacity gradient)
+   - Applied to entire card container
+   - Works alongside ring border effect
 
-2. **Highlight Ring**
-   - Same logic as event detail page
+2. **Promowane Badge**
+   - Shows small "Promowane" badge when boost is active
+   - Positioned at top-left with Sparkles icon
+
+3. **Highlight Ring**
    - Colored border when boosted and has highlight color
+   - Supports preset and custom colors
+   - Glowing shadow effect
+
+**In `event-card.tsx` (CARD BACKGROUND):**
+
+```tsx
+import { getHighlightBackgroundStyle } from '@/lib/utils/is-boost-active';
+
+// Check if boost is active
+const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
+
+// Get card background style
+const cardBackgroundStyle = useMemo(
+  () => getHighlightBackgroundStyle(highlightColor, isBoosted, 'subtle'),
+  [highlightColor, isBoosted]
+);
+
+// Apply to card
+<motion.div
+  className="... transition-colors duration-500"
+  style={{
+    ...highlightRing.style,
+    ...(isBoosted && cardBackgroundStyle.background ? cardBackgroundStyle : {}),
+  }}
+>
+```
 
 ### Subscription Management Panel
 

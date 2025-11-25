@@ -24,14 +24,14 @@ export function EventDetails({ event }: EventDetailsProps) {
   return (
     <div className="space-y-6">
       {/* When and Where Section */}
-      <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Kiedy i gdzie
         </h2>
 
         <div className="space-y-4">
           {/* Duration */}
-          <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
+          <div className="flex items-start gap-3 px-2 py-2 transition rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
             <Clock className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
             <div className="min-w-0">
               <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
@@ -45,14 +45,14 @@ export function EventDetails({ event }: EventDetailsProps) {
 
           {/* Location */}
           {event.meetingKind !== 'ONLINE' && (
-            <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
+            <div className="flex items-start gap-3 px-2 py-2 transition rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
               <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
-              <div className="min-w-0 flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                   Lokalizacja
                 </p>
                 {event.addressVisibility === 'PUBLIC' && event.address ? (
-                  <p className="text-md text-zinc-800 dark:text-zinc-200 break-words">
+                  <p className="break-words text-md text-zinc-800 dark:text-zinc-200">
                     {event.address}
                     {event.radiusKm && event.radiusKm > 0 && (
                       <span className="ml-2 text-xs text-zinc-500">
@@ -76,9 +76,9 @@ export function EventDetails({ event }: EventDetailsProps) {
           {/* Online URL */}
           {(event.meetingKind === 'ONLINE' || event.meetingKind === 'HYBRID') &&
             event.onlineUrl && (
-              <div className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition">
+              <div className="flex items-start gap-3 px-2 py-2 transition rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
                 <Globe className="mt-0.5 h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
-                <div className="min-w-0 flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                     Link online
                   </p>
@@ -86,7 +86,7 @@ export function EventDetails({ event }: EventDetailsProps) {
                     href={event.onlineUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-md text-blue-600 hover:underline underline-offset-2 dark:text-blue-400 break-all"
+                    className="text-blue-600 break-all text-md hover:underline underline-offset-2 dark:text-blue-400"
                   >
                     Otwórz link do spotkania
                   </a>
@@ -102,9 +102,9 @@ export function EventDetails({ event }: EventDetailsProps) {
         event.allowJoinLate ||
         event.lateJoinCutoffMinutesAfterStart ||
         event.joinManuallyClosed) && (
-        <div className="rounded-2xl border border-indigo-200 bg-indigo-50/50 p-6 dark:border-indigo-800 dark:bg-indigo-900/20">
-          <div className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
-            <Gauge className="h-4 w-4" />
+        <div className="p-6 border border-indigo-200 rounded-2xl bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-900/20">
+          <div className="flex items-center gap-2 mb-4 text-sm font-semibold tracking-wide text-indigo-700 uppercase dark:text-indigo-300">
+            <Gauge className="w-4 h-4" />
             Ustawienia zapisów
           </div>
           <div className="space-y-3 text-sm text-indigo-900 dark:text-indigo-100">
@@ -158,7 +158,7 @@ export function EventDetails({ event }: EventDetailsProps) {
               </div>
             )}
             {event.joinManuallyClosed && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-100/50 p-3 dark:border-amber-700 dark:bg-amber-900/30">
+              <div className="flex items-start gap-2 p-3 border rounded-lg border-amber-300 bg-amber-100/50 dark:border-amber-700 dark:bg-amber-900/30">
                 <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700 dark:text-amber-400" />
                 <div>
                   <div className="font-semibold text-amber-900 dark:text-amber-200">
@@ -183,11 +183,11 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       {/* Description Section */}
       {event.description && (
-        <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Opis
           </h2>
-          <p className="text-md text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-6">
+          <p className="leading-6 whitespace-pre-wrap text-md text-zinc-700 dark:text-zinc-300">
             {event.description}
           </p>
         </div>
@@ -195,7 +195,7 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       {/* Categories and Tags */}
       {(event.categories.length > 0 || event.tags.length > 0) && (
-        <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Kontekst
           </h2>
@@ -204,7 +204,7 @@ export function EventDetails({ event }: EventDetailsProps) {
             {event.categories.map((cat) => (
               <span
                 key={cat.slug}
-                className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-100"
+                className="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900/40 dark:text-blue-100"
               >
                 {cat.name}
               </span>
@@ -212,7 +212,7 @@ export function EventDetails({ event }: EventDetailsProps) {
             {event.tags.map((tag) => (
               <span
                 key={tag.slug}
-                className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                className="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
               >
                 #{tag.label}
               </span>
@@ -223,14 +223,14 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       {/* Notes (Owner/Mod only) */}
       {event.notes && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-950">
-          <div className="mb-3 flex items-center gap-2">
-            <Info className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+        <div className="p-6 border rounded-2xl border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+          <div className="flex items-center gap-2 mb-3">
+            <Info className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
               Notatki organizatora
             </h2>
           </div>
-          <p className="whitespace-pre-wrap text-md text-amber-800 dark:text-amber-200 leading-6">
+          <p className="leading-6 whitespace-pre-wrap text-md text-amber-800 dark:text-amber-200">
             {event.notes}
           </p>
         </div>
