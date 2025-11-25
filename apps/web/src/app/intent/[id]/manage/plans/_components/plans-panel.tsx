@@ -11,7 +11,6 @@ import {
   EVENT_PLAN_DESCRIPTIONS,
   EVENT_SPONSORSHIP_LIFETIME_NOTICE,
   ACTIONS_NEVER_EXPIRE,
-  SOCIAL_PROOF_RELOAD,
 } from '@/lib/billing-constants';
 
 type PlanId = 'free' | 'plus' | 'pro';
@@ -208,19 +207,14 @@ export function PlansPanel({
   intentId,
   onPurchase,
   currentPlan = null,
-  onReload,
 }: {
   intentId: string;
   onPurchase?: (
     intentId: string,
     plan: SponsorPlan,
-    action: 'new' | 'upgrade' | 'reload'
+    action: 'new' | 'upgrade'
   ) => Promise<void> | void;
   currentPlan?: 'free' | 'plus' | 'pro' | null;
-  onReload?: (
-    intentId: string,
-    currentPlan: SponsorPlan
-  ) => Promise<void> | void;
 }) {
   // Use shared constants for plan definitions
   const PLANS = [
@@ -258,7 +252,6 @@ export function PlansPanel({
   const getPlanCardProps = (plan: (typeof PLANS)[number]) => {
     const isCurrent = currentPlan === plan.id;
     const canUpgrade = currentPlan === 'plus' && plan.id === 'pro';
-    const canReload = isCurrent && plan.id !== 'free';
     const isLocked =
       currentPlan && currentPlan !== 'free' && plan.id === 'free';
     const isDowngrade = currentPlan === 'pro' && plan.id === 'plus';
@@ -273,20 +266,22 @@ export function PlansPanel({
       badge = '✓ Aktywny plan';
       badgeColor = 'green';
       if (plan.id !== 'free') {
-        actionLabel = 'Doładuj akcje';
-        subtext = 'Ten plan został już zakupiony dla tego wydarzenia.';
+        actionLabel = 'Aktywny';
+        subtext =
+          'Ten plan jest aktywny. Możesz dokupić akcje w zakładce Subskrypcja.';
       }
     } else if (canUpgrade) {
       badge = '⬆ Upgrade dostępny';
       badgeColor = 'gold';
       actionLabel = 'Ulepsz do Pro';
-      subtext = 'Zyskaj 5 podbić, 5 pushy, analitykę i masowe wiadomości.';
+      subtext = 'Zyskaj więcej podbić, pushy, analitykę i masowe wiadomości.';
     } else if (isLocked) {
       badge = 'Plan nieaktywny';
       badgeColor = 'gray';
       actionLabel = 'Niedostępny';
       subtext =
         'Ten event posiada aktywny płatny plan. Downgrade nie jest możliwy.';
+      tooltip = 'Downgrade nie jest możliwy.';
     } else if (isDowngrade) {
       actionLabel = 'Niedostępny';
       tooltip = 'Nie możesz cofnąć planu. Downgrade nie jest możliwy.';
@@ -295,9 +290,7 @@ export function PlansPanel({
     }
 
     const handleAction = async () => {
-      if (canReload && onReload) {
-        await onReload(intentId, plan.id === 'plus' ? 'Plus' : 'Pro');
-      } else if (canUpgrade && onPurchase) {
+      if (canUpgrade && onPurchase) {
         await onPurchase(intentId, 'Pro', 'upgrade');
       } else if (!isCurrent && !isLocked && !isDowngrade && onPurchase) {
         const sponsorPlan =
@@ -311,13 +304,13 @@ export function PlansPanel({
     return {
       ...plan,
       currentPlan,
-      onAction: handleAction,
+      onAction: isCurrent && plan.id !== 'free' ? undefined : handleAction,
       actionLabel,
       badge,
       badgeColor,
       subtext,
       tooltip,
-      disabled: isLocked || isDowngrade,
+      disabled: isLocked || isDowngrade || (isCurrent && plan.id !== 'free'),
     };
   };
 
@@ -330,7 +323,8 @@ export function PlansPanel({
         </h2>
         <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-[60ch] mx-auto leading-relaxed">
           Plan sponsorowania jest aktywny przez cały cykl życia wydarzenia.
-          Upgrade jest możliwy. Downgrade nie jest możliwy.
+          Upgrade jest możliwy. Dokupienie akcji dostępne w zakładce
+          Subskrypcja.
         </p>
       </div>
 
@@ -358,11 +352,12 @@ export function PlansPanel({
           </div>
         </div>
 
-        {/* Social proof */}
+        {/* Info note */}
         {currentPlan && currentPlan !== 'free' && (
           <div className="rounded-[24px] border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-6 text-center">
             <p className="text-sm leading-relaxed text-emerald-800 dark:text-emerald-200">
-              {SOCIAL_PROOF_RELOAD}
+              💡 <strong>Wskazówka:</strong> Dokupienie akcji dostępne jest w
+              zakładce Subskrypcja → Doładuj akcje
             </p>
           </div>
         )}

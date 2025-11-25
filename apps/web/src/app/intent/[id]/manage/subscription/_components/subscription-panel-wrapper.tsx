@@ -1,11 +1,13 @@
 'use client';
 
 import { SubscriptionPanel } from './subscription-panel';
+import { ReloadActionsPanel } from './reload-actions-panel';
 import { useEventSponsorship } from '@/lib/api/billing';
 import { useBoost, useLocalPush } from '@/lib/api/billing';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { billingKeys } from '@/lib/api/billing';
+import { useState } from 'react';
 
 interface SubscriptionPanelWrapperProps {
   intentId: string;
@@ -15,6 +17,7 @@ export function SubscriptionPanelWrapper({
   intentId,
 }: SubscriptionPanelWrapperProps) {
   const queryClient = useQueryClient();
+  const [view, setView] = useState<'subscription' | 'reload'>('subscription');
 
   // Fetch active sponsorship data
   const { data, isLoading } = useEventSponsorship(
@@ -131,6 +134,27 @@ export function SubscriptionPanelWrapper({
     subscriptionPlan: 'None' as const, // Event sponsorship is separate from user subscription
   };
 
+  // Handle reload actions button click
+  const handleReloadActions = () => {
+    setView('reload');
+  };
+
+  // Handle back from reload view
+  const handleBackFromReload = () => {
+    setView('subscription');
+  };
+
+  // If in reload view, show reload panel
+  if (view === 'reload') {
+    return (
+      <ReloadActionsPanel
+        intentId={intentId}
+        currentPlan={sponsorshipState.plan}
+        onBack={handleBackFromReload}
+      />
+    );
+  }
+
   return (
     <SubscriptionPanel
       intentId={intentId}
@@ -139,6 +163,7 @@ export function SubscriptionPanelWrapper({
       onSendLocalPush={handleSendLocalPush}
       onToggleSponsoredBadge={handleToggleSponsoredBadge}
       onToggleHighlight={handleToggleHighlight}
+      onReloadActions={handleReloadActions}
     />
   );
 }

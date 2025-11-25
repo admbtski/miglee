@@ -553,6 +553,31 @@ type EventSponsorship {
   updatedAt: DateTime!
 }
 
+"Individual event sponsorship transaction (purchase, upgrade, reload)"
+type EventSponsorshipPeriod {
+  id: ID!
+  intentId: ID!
+  sponsorId: ID!
+
+  plan: IntentPlan!
+  actionType: String!
+
+  boostsAdded: Int!
+  localPushesAdded: Int!
+
+  amount: Float!
+  currency: String!
+
+  stripeCustomerId: String
+  stripePaymentIntentId: String
+  stripeCheckoutSessionId: String
+
+  createdAt: DateTime!
+
+  intent: Intent!
+  sponsor: User!
+}
+
 "Checkout session response"
 type CheckoutSession {
   checkoutUrl: String!
@@ -1426,6 +1451,7 @@ input CreateEventSponsorshipCheckoutInput {
   intentId: ID!
   plan: IntentPlan!
   actionType: String
+  actionPackageSize: Int
 }
 
 # ------------------------------------------------------------------------------
@@ -1546,8 +1572,8 @@ type Query {
   "Get user's active plan periods"
   myPlanPeriods(limit: Int = 10): [UserPlanPeriod!]!
 
-  "Get all event sponsorships for the current user"
-  myEventSponsorships(limit: Int = 50): [EventSponsorship!]!
+  "Get all event sponsorship transaction history for the current user"
+  myEventSponsorships(limit: Int = 50): [EventSponsorshipPeriod!]!
 
   "Get event sponsorship for an intent"
   eventSponsorship(intentId: ID!): EventSponsorship

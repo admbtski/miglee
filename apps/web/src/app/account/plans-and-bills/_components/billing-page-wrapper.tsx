@@ -20,9 +20,10 @@ export function BillingPageWrapper() {
   const { data: periodsData, isLoading: periodsLoading } = useMyPlanPeriods({
     limit: 50,
   });
-  const { data: sponsorshipsData, isLoading: sponsorshipsLoading } = useMyEventSponsorships({
-    limit: 50,
-  });
+  const { data: sponsorshipsData, isLoading: sponsorshipsLoading } =
+    useMyEventSponsorships({
+      limit: 50,
+    });
   const cancelSubscription = useCancelSubscription();
 
   const [cancelSubOpen, setCancelSubOpen] = React.useState(false);
@@ -64,9 +65,9 @@ export function BillingPageWrapper() {
 
   const plan = planData?.myPlan;
   const subscription = subData?.mySubscription;
-  
+
   // Combine user plan periods and event sponsorships into unified payment history
-  const userPeriods = (periodsData?.myPlanPeriods || []).map(period => ({
+  const userPeriods = (periodsData?.myPlanPeriods || []).map((period) => ({
     type: 'user-plan' as const,
     id: period.id,
     date: new Date(period.startsAt),
@@ -77,17 +78,21 @@ export function BillingPageWrapper() {
     endsAt: period.endsAt,
   }));
 
-  const eventSponsorships = (sponsorshipsData?.myEventSponsorships || []).map(sponsorship => ({
-    type: 'event-sponsorship' as const,
-    id: sponsorship.id,
-    date: new Date(sponsorship.createdAt),
-    plan: sponsorship.plan,
-    intentId: sponsorship.intentId,
-    intentTitle: sponsorship.intent?.title,
-    startsAt: sponsorship.startsAt,
-    endsAt: sponsorship.endsAt,
-    status: sponsorship.status,
-  }));
+  const eventSponsorships = (sponsorshipsData?.myEventSponsorships || []).map(
+    (sponsorship) => ({
+      type: 'event-sponsorship' as const,
+      id: sponsorship.id,
+      date: new Date(sponsorship.createdAt),
+      plan: sponsorship.plan,
+      actionType: sponsorship.actionType,
+      boostsAdded: sponsorship.boostsAdded,
+      localPushesAdded: sponsorship.localPushesAdded,
+      amount: sponsorship.amount,
+      currency: sponsorship.currency,
+      intentId: sponsorship.intentId,
+      intentTitle: sponsorship.intent?.title,
+    })
+  );
 
   // Combine and sort by date (newest first)
   const paymentHistory = [...userPeriods, ...eventSponsorships].sort(
@@ -432,11 +437,20 @@ export function BillingPageWrapper() {
                     );
                   } else {
                     // Event sponsorship
-                    const sponsorshipPlan = item.plan;
-                    const isActive = item.status === 'ACTIVE';
+                    const actionType = item.actionType;
+                    const amount = item.amount;
+                    const boostsAdded = item.boostsAdded;
+                    const localPushesAdded = item.localPushesAdded;
 
-                    const sponsorshipPrice =
-                      sponsorshipPlan === 'PRO' ? 29.99 : sponsorshipPlan === 'PLUS' ? 14.99 : 0;
+                    // Generate descriptive label based on actionType
+                    let description = '';
+                    if (actionType === 'reload') {
+                      description = `Doładowanie akcji (+${boostsAdded} boostów, +${localPushesAdded} pushów)`;
+                    } else if (actionType === 'upgrade') {
+                      description = `Upgrade do ${item.plan}`;
+                    } else {
+                      description = `Event ${item.plan}`;
+                    }
 
                     return (
                       <tr
@@ -458,13 +472,8 @@ export function BillingPageWrapper() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                                Event {sponsorshipPlan}
+                                {description}
                               </span>
-                              {isActive && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                                  Aktywny
-                                </span>
-                              )}
                             </div>
                             <div className="text-xs text-zinc-500 dark:text-zinc-400">
                               {item.intentTitle || 'Wydarzenie'}
@@ -473,7 +482,7 @@ export function BillingPageWrapper() {
                         </Td>
                         <Td>
                           <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                            zł{sponsorshipPrice.toFixed(2)}
+                            zł{amount.toFixed(2)}
                           </span>
                         </Td>
                         <Td>

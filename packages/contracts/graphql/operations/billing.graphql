@@ -30,7 +30,7 @@ query MyPlanPeriods($limit: Int = 10) {
 
 query MyEventSponsorships($limit: Int = 50) {
   myEventSponsorships(limit: $limit) {
-    ...EventSponsorshipFull
+    ...EventSponsorshipPeriodFull
   }
 }
 

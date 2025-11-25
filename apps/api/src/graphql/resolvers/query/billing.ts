@@ -107,7 +107,9 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
 
     // Map periods to look like EventSponsorship for compatibility
     return periods.map((period) => ({
+      ...period,
       id: period.id,
+      actionType: period.actionType,
       intentId: period.intentId,
       sponsorId: period.sponsorId,
       plan: period.plan,
@@ -115,7 +117,11 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
       startsAt: period.eventSponsorship?.startsAt,
       endsAt: period.eventSponsorship?.endsAt,
       boostsTotal: period.boostsAdded,
+      amount: period.amount,
+      currency: period.currency,
+      localPushesAdded: period.localPushesAdded,
       boostsUsed: 0,
+      boostsAdded: period.boostsAdded,
       localPushesTotal: period.localPushesAdded,
       localPushesUsed: 0,
       stripePaymentIntentId: period.stripePaymentIntentId,

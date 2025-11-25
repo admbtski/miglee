@@ -13,6 +13,8 @@ import {
   getCheckoutSuccessUrl,
   getCheckoutCancelUrl,
   CHECKOUT_SESSION_CONFIG,
+  getActionPackage,
+  type ActionPackageSize,
 } from './constants';
 import { config } from '../../env';
 
@@ -27,6 +29,7 @@ export interface CreateEventSponsorshipCheckoutParams {
   userName: string;
   plan: IntentPlan;
   actionType?: 'new' | 'upgrade' | 'reload';
+  actionPackageSize?: ActionPackageSize;
 }
 
 export async function createEventSponsorshipCheckout(
@@ -39,6 +42,7 @@ export async function createEventSponsorshipCheckout(
     userName,
     plan,
     actionType = 'new',
+    actionPackageSize,
   } = params;
 
   if (plan === 'FREE') {
@@ -119,14 +123,32 @@ export async function createEventSponsorshipCheckout(
     userName
   );
 
-  // Get price ID from config
-  const priceId =
-    plan === 'PLUS'
-      ? config.stripePrices.event.plus
-      : config.stripePrices.event.pro;
+  // Get price ID and calculate actions based on actionType
+  let priceId: string;
+  let actionsToAdd: number;
 
-  if (!priceId) {
-    throw new Error(`Stripe price ID not configured for event plan=${plan}`);
+  if (actionType === 'reload' && actionPackageSize) {
+    // For reload with custom package size, use action package pricing
+    const actionPackage = getActionPackage(actionPackageSize);
+    priceId = actionPackage.stripePriceId || '';
+    actionsToAdd = actionPackage.actions;
+
+    if (!priceId) {
+      throw new Error(
+        `Stripe price ID not configured for action package size=${actionPackageSize}`
+      );
+    }
+  } else {
+    // For new/upgrade, use plan-based pricing
+    priceId =
+      (plan === 'PLUS'
+        ? config.stripePrices.event.plus
+        : config.stripePrices.event.pro) || '';
+    actionsToAdd = EVENT_PLAN_LIMITS[plan].boostsTotal;
+
+    if (!priceId) {
+      throw new Error(`Stripe price ID not configured for event plan=${plan}`);
+    }
   }
 
   // Create or update sponsorship record
@@ -137,8 +159,8 @@ export async function createEventSponsorshipCheckout(
       sponsorId: userId,
       plan,
       status: 'PENDING',
-      boostsTotal: EVENT_PLAN_LIMITS[plan].boostsTotal,
-      localPushesTotal: EVENT_PLAN_LIMITS[plan].localPushesTotal,
+      boostsTotal: actionsToAdd,
+      localPushesTotal: actionsToAdd,
     },
     update:
       actionType === 'reload'
@@ -146,10 +168,10 @@ export async function createEventSponsorshipCheckout(
             // For reload: add new actions to existing totals (stacking)
             status: 'PENDING', // Will be set back to ACTIVE after payment
             boostsTotal: {
-              increment: EVENT_PLAN_LIMITS[plan].boostsTotal,
+              increment: actionsToAdd,
             },
             localPushesTotal: {
-              increment: EVENT_PLAN_LIMITS[plan].localPushesTotal,
+              increment: actionsToAdd,
             },
           }
         : actionType === 'upgrade'
@@ -158,18 +180,18 @@ export async function createEventSponsorshipCheckout(
               plan,
               status: 'PENDING',
               boostsTotal: {
-                increment: EVENT_PLAN_LIMITS[plan].boostsTotal,
+                increment: actionsToAdd,
               },
               localPushesTotal: {
-                increment: EVENT_PLAN_LIMITS[plan].localPushesTotal,
+                increment: actionsToAdd,
               },
             }
           : {
               // For new or reactivation: reset everything
               plan,
               status: 'PENDING',
-              boostsTotal: EVENT_PLAN_LIMITS[plan].boostsTotal,
-              localPushesTotal: EVENT_PLAN_LIMITS[plan].localPushesTotal,
+              boostsTotal: actionsToAdd,
+              localPushesTotal: actionsToAdd,
             },
   });
 
@@ -201,7 +223,8 @@ export async function createEventSponsorshipCheckout(
     intentId,
     userId,
     plan,
-    actionType, // Add action type to metadata for webhook processing
+    actionType,
+    actionPackageSize: String(actionPackageSize || actionsToAdd),
   };
 
   // Create checkout session
@@ -264,6 +287,7 @@ export interface ActivateEventSponsorshipParams {
   stripePaymentIntentId: string;
   stripeCheckoutSessionId: string;
   actionType?: 'new' | 'upgrade' | 'reload';
+  actionPackageSize?: ActionPackageSize;
 }
 
 export async function activateEventSponsorship(
@@ -274,6 +298,7 @@ export async function activateEventSponsorship(
     stripePaymentIntentId,
     stripeCheckoutSessionId,
     actionType,
+    actionPackageSize,
   } = params;
 
   const sponsorship = await prisma.eventSponsorship.findUnique({
@@ -328,8 +353,24 @@ export async function activateEventSponsorship(
   });
 
   // Create EventSponsorshipPeriod record for this transaction
-  const planLimits = EVENT_PLAN_LIMITS[updated.plan];
-  const amount = updated.plan === 'PRO' ? 29.99 : 14.99; // Price in PLN
+  // Calculate amount and actions added based on actionType and actionPackageSize
+  let amount: number;
+  let boostsAdded: number;
+  let localPushesAdded: number;
+
+  if (actionType === 'reload' && actionPackageSize) {
+    // For action package reload, use package pricing
+    const actionPackage = getActionPackage(actionPackageSize);
+    amount = actionPackage.price;
+    boostsAdded = actionPackage.actions;
+    localPushesAdded = actionPackage.actions;
+  } else {
+    // For new purchase or upgrade, use plan-based pricing
+    const planLimits = EVENT_PLAN_LIMITS[updated.plan];
+    amount = updated.plan === 'PRO' ? 29.99 : 14.99;
+    boostsAdded = planLimits.boostsTotal;
+    localPushesAdded = planLimits.localPushesTotal;
+  }
 
   await prisma.eventSponsorshipPeriod.create({
     data: {
@@ -337,8 +378,8 @@ export async function activateEventSponsorship(
       sponsorId: sponsorship.sponsorId,
       plan: updated.plan,
       actionType: actionType || 'new',
-      boostsAdded: planLimits.boostsTotal,
-      localPushesAdded: planLimits.localPushesTotal,
+      boostsAdded,
+      localPushesAdded,
       amount,
       currency: 'pln',
       stripePaymentIntentId,

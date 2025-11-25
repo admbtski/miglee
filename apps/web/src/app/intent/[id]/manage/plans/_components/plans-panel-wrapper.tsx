@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { PlansPanel } from './plans-panel';
 import { CheckoutPanel } from './checkout-panel';
-import { ReloadActionsModal } from './reload-actions-modal';
 import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
 import { useEventSponsorship } from '@/lib/api/billing';
 
@@ -11,8 +10,8 @@ interface PlansPanelWrapperProps {
   intentId: string;
 }
 
-type View = 'plans' | 'checkout' | 'reload';
-type ActionType = 'new' | 'upgrade' | 'reload';
+type View = 'plans' | 'checkout';
+type ActionType = 'new' | 'upgrade';
 
 export function PlansPanelWrapper({ intentId }: PlansPanelWrapperProps) {
   const [view, setView] = React.useState<View>('plans');
@@ -35,12 +34,6 @@ export function PlansPanelWrapper({ intentId }: PlansPanelWrapperProps) {
     setSelectedPlan(plan);
     setActionType(action);
     setView('checkout');
-  };
-
-  const handleReload = async (_intentId: string, currentPlan: SponsorPlan) => {
-    setSelectedPlan(currentPlan);
-    setActionType('reload');
-    setView('reload');
   };
 
   const handleBackToPlans = () => {
@@ -71,24 +64,10 @@ export function PlansPanelWrapper({ intentId }: PlansPanelWrapperProps) {
     );
   }
 
-  if (view === 'reload' && selectedPlan) {
-    return (
-      <ReloadActionsModal
-        intentId={intentId}
-        currentPlan={selectedPlan}
-        onBack={handleBackToPlans}
-        onProceedToCheckout={() => {
-          setView('checkout');
-        }}
-      />
-    );
-  }
-
   return (
     <PlansPanel
       intentId={intentId}
       onPurchase={handlePurchase}
-      onReload={handleReload}
       currentPlan={currentPlanId}
     />
   );

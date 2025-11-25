@@ -825,7 +825,7 @@ model EventSponsorshipPeriod {
   sponsorId String
 
   plan       IntentPlan // Plan purchased (PLUS/PRO)
-  actionType String // 'new', 'reload', 'upgrade'
+  actionType String     @default("new") // 'new', 'reload', 'upgrade'
 
   boostsAdded      Int @default(0) // How many boosts this purchase added
   localPushesAdded Int @default(0) // How many pushes this purchase added

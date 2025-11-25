@@ -35,3 +35,32 @@ fragment EventSponsorshipFull on EventSponsorship {
     title
   }
 }
+
+fragment EventSponsorshipPeriodCore on EventSponsorshipPeriod {
+  id
+  intentId
+  sponsorId
+  plan
+  actionType
+  boostsAdded
+  localPushesAdded
+  amount
+  currency
+  stripeCustomerId
+  stripePaymentIntentId
+  stripeCheckoutSessionId
+  createdAt
+}
+
+fragment EventSponsorshipPeriodFull on EventSponsorshipPeriod {
+  ...EventSponsorshipPeriodCore
+
+  sponsor {
+    ...UserLight
+  }
+
+  intent {
+    id
+    title
+  }
+}

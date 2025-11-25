@@ -18,7 +18,6 @@ import { CooldownRing } from '@/components/ui/cooldown-ring';
 import { QuotaBar } from '@/components/ui/quota-bar';
 import { ClickBurst } from '@/components/ui/click-burst';
 import { ClickParticle } from '@/components/ui/click-particle';
-import { Modal } from '@/components/feedback/modal';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { SponsorPlan, SponsorshipState } from './subscription-panel-types';
 import clsx from 'clsx';
@@ -130,6 +129,7 @@ export function SubscriptionPanel({
   onSendLocalPush,
   onToggleSponsoredBadge,
   onToggleHighlight,
+  onReloadActions,
 }: {
   intentId: string;
   sponsorship: SponsorshipState & {
@@ -148,11 +148,11 @@ export function SubscriptionPanel({
     enabled: boolean,
     tone?: HighlightTone
   ) => Promise<void> | void;
+  onReloadActions?: () => void;
 }) {
   const [busy, setBusy] = React.useState<
-    'boost' | 'push' | 'badge' | 'highlight' | 'upgrade' | null
+    'boost' | 'push' | 'badge' | 'highlight' | null
   >(null);
-  const [upgradeOpen, setUpgradeOpen] = React.useState(false);
   const [local, setLocal] = React.useState(sponsorship);
 
   // tone (kolor wyróżnienia)
@@ -290,7 +290,7 @@ export function SubscriptionPanel({
               <button
                 type="button"
                 className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 px-5 py-2.5 text-sm font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
-                onClick={() => setUpgradeOpen(true)}
+                onClick={onReloadActions}
               >
                 <CircleFadingArrowUpIcon className="h-4 w-4" strokeWidth={2} />
                 Doładuj akcje
@@ -556,112 +556,6 @@ export function SubscriptionPanel({
           </div>
         </div>
       </div>
-
-      {/* ---------- MODAL: DOKUPIENIE AKCJI ---------- */}
-      <Modal
-        open={upgradeOpen}
-        onClose={() => setUpgradeOpen(false)}
-        variant="default"
-        density="comfortable"
-        labelledById="topup-modal-title"
-        ariaLabel="Dokup akcje"
-        header={
-          <div className="flex flex-col">
-            <h3
-              id="topup-modal-title"
-              className="text-xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50"
-            >
-              Doładuj akcje dla wydarzenia {local.plan === 'Pro' ? '(Pro)' : ''}
-            </h3>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[60ch]">
-              Każdy dodatkowy pakiet {local.plan} dla tego wydarzenia doda
-              kolejny zestaw podbić i powiadomień push.{' '}
-              <span className="font-semibold">
-                Akcje się sumują i nigdy nie wygasają.
-              </span>
-            </p>
-          </div>
-        }
-        content={
-          <div className="space-y-6">
-            {/* Current plan info */}
-            <div className="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
-                    <span className="text-2xl">🚀</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-                      +
-                      {local.plan === 'Plus' ? 1 : local.plan === 'Pro' ? 3 : 0}{' '}
-                      podbić
-                    </p>
-                    <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                      Wyniesienie wydarzenia w górę listingu
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
-                    <span className="text-2xl">📢</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-                      +
-                      {local.plan === 'Plus' ? 1 : local.plan === 'Pro' ? 3 : 0}{' '}
-                      lokalnych powiadomień push
-                    </p>
-                    <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                      Powiadomienia dla użytkowników w okolicy
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Price and CTA */}
-            <div className="flex items-center justify-between p-6 rounded-2xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-[#0a0b12]">
-              <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">
-                  Cena pakietu {local.plan}
-                </p>
-                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
-                  {local.plan === 'Pro' ? '29.99' : '14.99'}{' '}
-                  <span className="text-xl">PLN</span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setUpgradeOpen(false);
-                  window.location.href = `/intent/${intentId}/manage/plans`;
-                }}
-                className={clsx(
-                  'inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-colors rounded-2xl shadow-md hover:shadow-lg',
-                  'bg-gradient-to-r text-white',
-                  local.plan === 'Pro'
-                    ? 'from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400'
-                    : 'from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400'
-                )}
-              >
-                Kup pakiet {local.plan}
-              </button>
-            </div>
-          </div>
-        }
-        footer={
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setUpgradeOpen(false)}
-              className="rounded-2xl border-2 border-zinc-300 dark:border-zinc-700 px-6 py-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              Zamknij
-            </button>
-          </div>
-        }
-      />
     </>
   );
 }

@@ -66,6 +66,37 @@ export const EVENT_PLAN_LIMITS = {
 } as const satisfies Record<IntentPlan, unknown>;
 
 // ========================================================================================
+// ACTION PACKAGES (for reload/top-up)
+// ========================================================================================
+
+export const ACTION_PACKAGES = {
+  SMALL: {
+    actions: 1,
+    price: 9.99,
+    stripePriceId: process.env.STRIPE_PRICE_ACTION_PACKAGE_SMALL || '',
+  },
+  MEDIUM: {
+    actions: 3,
+    price: 24.99,
+    stripePriceId: process.env.STRIPE_PRICE_ACTION_PACKAGE_MEDIUM || '',
+  },
+  LARGE: {
+    actions: 5,
+    price: 39.99,
+    stripePriceId: process.env.STRIPE_PRICE_ACTION_PACKAGE_LARGE || '',
+  },
+} as const;
+
+export type ActionPackageSize = 1 | 3 | 5;
+
+export function getActionPackage(size: ActionPackageSize) {
+  if (size === 1) return ACTION_PACKAGES.SMALL;
+  if (size === 3) return ACTION_PACKAGES.MEDIUM;
+  if (size === 5) return ACTION_PACKAGES.LARGE;
+  throw new Error(`Invalid action package size: ${size}`);
+}
+
+// ========================================================================================
 // PLAN HIERARCHY (for determining effective plan when multiple periods exist)
 // ========================================================================================
 
@@ -165,6 +196,7 @@ export interface EventSponsorshipMetadata {
   userId: string;
   plan: IntentPlan;
   actionType?: 'new' | 'upgrade' | 'reload';
+  actionPackageSize?: number;
 }
 
 export type CheckoutMetadata =

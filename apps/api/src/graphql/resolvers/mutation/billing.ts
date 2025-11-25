@@ -101,6 +101,7 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
         intentId: input.intentId,
         plan: input.plan,
         actionType: input.actionType,
+        actionPackageSize: input.actionPackageSize,
       },
       'Creating event sponsorship checkout'
     );
@@ -112,6 +113,7 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
       userName: user.name,
       plan: input.plan,
       actionType: input.actionType as 'new' | 'upgrade' | 'reload' | undefined,
+      actionPackageSize: input.actionPackageSize as 1 | 3 | 5 | undefined,
     });
 
     return {
