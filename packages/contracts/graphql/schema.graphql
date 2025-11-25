@@ -516,6 +516,9 @@ type UserPlanPeriod {
   source: UserPlanSource!
   billingPeriod: BillingPeriod!
 
+  amount: Float!
+  currency: String!
+
   stripeCustomerId: String
   stripeSubscriptionId: String
   stripePaymentIntentId: String

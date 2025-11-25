@@ -766,6 +766,10 @@ model UserPlanPeriod {
 
   billingPeriod BillingPeriod // MONTHLY / YEARLY
 
+  // Payment information
+  amount   Float  @default(0) // Amount paid
+  currency String @default("pln") // Currency code (pln, eur, usd, etc.)
+
   // Links to Stripe – depends on source
   stripeCustomerId        String?
   stripeSubscriptionId    String? // for SUBSCRIPTION

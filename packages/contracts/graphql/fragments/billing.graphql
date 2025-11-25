@@ -44,6 +44,8 @@ fragment UserPlanPeriodCore on UserPlanPeriod {
   plan
   source
   billingPeriod
+  amount
+  currency
   stripeCustomerId
   stripeSubscriptionId
   stripePaymentIntentId

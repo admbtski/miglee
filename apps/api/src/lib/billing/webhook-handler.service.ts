@@ -237,12 +237,18 @@ async function handleUserOneOffCheckout(
   const endsAt =
     billingPeriod === 'MONTHLY' ? addMonths(now, 1) : addYears(now, 1);
 
+  // Get amount and currency from session
+  const amount = session.amount_total ? session.amount_total / 100 : 0; // Convert from cents
+  const currency = session.currency || 'pln';
+
   // Create UserPlanPeriod
   await createUserPlanPeriod({
     userId,
     plan,
     source: 'ONE_OFF',
     billingPeriod,
+    amount,
+    currency,
     stripeCustomerId: session.customer as string,
     stripePaymentIntentId: paymentIntentId,
     stripeCheckoutSessionId: session.id,
@@ -359,11 +365,18 @@ async function handleSubscriptionUpdate(
       ? new Date(subscription.trial_end * 1000)
       : new Date(subscription.current_period_end * 1000);
 
+    // Get amount and currency from subscription price
+    const priceData = subscription.items.data[0]?.price;
+    const amount = priceData?.unit_amount ? priceData.unit_amount / 100 : 0;
+    const currency = priceData?.currency || 'pln';
+
     await createUserPlanPeriod({
       userId,
       plan,
       source: 'SUBSCRIPTION',
       billingPeriod: billingPeriod || 'MONTHLY',
+      amount,
+      currency,
       stripeCustomerId: subscription.customer as string,
       stripeSubscriptionId: subscription.id,
       startsAt,
@@ -420,11 +433,17 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
   const startsAt = new Date(invoice.period_start * 1000);
   const endsAt = new Date(invoice.period_end * 1000);
 
+  // Get amount and currency from invoice
+  const amount = invoice.amount_paid ? invoice.amount_paid / 100 : 0;
+  const currency = invoice.currency || 'pln';
+
   await createUserPlanPeriod({
     userId: subscription.userId,
     plan: subscription.plan,
     source: 'SUBSCRIPTION',
     billingPeriod: subscription.billingPeriod,
+    amount,
+    currency,
     stripeCustomerId: subscription.stripeCustomerId,
     stripeSubscriptionId: subscription.stripeSubscriptionId!,
     startsAt,

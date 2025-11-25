@@ -395,6 +395,8 @@ export interface CreateUserPlanPeriodParams {
   plan: SubscriptionPlan;
   source: UserPlanSource;
   billingPeriod: BillingPeriod;
+  amount: number;
+  currency?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   stripePaymentIntentId?: string;
@@ -411,6 +413,8 @@ export async function createUserPlanPeriod(
     plan,
     source,
     billingPeriod,
+    amount,
+    currency = 'pln',
     stripeCustomerId,
     stripeSubscriptionId,
     stripePaymentIntentId,
@@ -432,6 +436,8 @@ export async function createUserPlanPeriod(
       plan,
       source,
       billingPeriod,
+      amount,
+      currency,
       stripeCustomerId,
       stripeSubscriptionId,
       stripePaymentIntentId,
@@ -447,6 +453,8 @@ export async function createUserPlanPeriod(
       plan,
       source,
       billingPeriod,
+      amount,
+      currency,
       startsAt,
       endsAt: calculatedEndsAt,
     },

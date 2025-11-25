@@ -13,6 +13,7 @@ import {
 import { Badge, Progress, Th, Td, SmallButton } from './ui';
 import { CancelSubscriptionModal } from './cancel-subscription-modal';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils/currency';
 
 export function BillingPageWrapper() {
   const { data: planData, isLoading: planLoading } = useMyPlan();
@@ -74,6 +75,8 @@ export function BillingPageWrapper() {
     plan: period.plan,
     source: period.source,
     billingPeriod: period.billingPeriod,
+    amount: period.amount,
+    currency: period.currency,
     startsAt: period.startsAt,
     endsAt: period.endsAt,
   }));
@@ -103,6 +106,13 @@ export function BillingPageWrapper() {
   const planName = plan?.plan || 'FREE';
   const isActive = planName !== 'FREE';
   const planEndsAt = plan?.planEndsAt ? new Date(plan.planEndsAt) : null;
+
+  // Find the most recent active user plan period for displaying price
+  const activePeriod = userPeriods.find(
+    (p) => p.endsAt && new Date(p.endsAt) > new Date()
+  );
+  const price = activePeriod?.amount || 0;
+  const currency = activePeriod?.currency || 'pln';
 
   // Calculate planStartsAt based on planEndsAt and billing period
   const planStartsAt =
@@ -142,22 +152,6 @@ export function BillingPageWrapper() {
       Math.max(0, Math.round((elapsed / totalDays) * 100))
     );
   }
-
-  // Price based on plan
-  const price =
-    planName === 'PRO'
-      ? plan?.source === 'SUBSCRIPTION'
-        ? 69.99
-        : plan?.billingPeriod === 'YEARLY'
-          ? 839.99
-          : 83.99
-      : planName === 'PLUS'
-        ? plan?.source === 'SUBSCRIPTION'
-          ? 29.99
-          : plan?.billingPeriod === 'YEARLY'
-            ? 359.99
-            : 35.99
-        : 0;
 
   const cycle =
     plan?.source === 'SUBSCRIPTION'
@@ -205,7 +199,7 @@ export function BillingPageWrapper() {
           </div>
           <div className="text-left md:text-right">
             <div className="text-4xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-              zł{price.toFixed(2)}
+              {formatCurrency(price, currency)}
             </div>
             <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               {cycle}
@@ -340,32 +334,13 @@ export function BillingPageWrapper() {
               {paymentHistory.length > 0 ? (
                 paymentHistory.map((item) => {
                   if (item.type === 'user-plan') {
-                    const periodPlan = item.plan;
-                    const periodSource = item.source;
-                    const periodBillingPeriod = item.billingPeriod;
                     const isActivePeriod =
                       item.endsAt && new Date(item.endsAt) > new Date();
 
-                    // Calculate price based on period
-                    const periodPrice =
-                      periodPlan === 'PRO'
-                        ? periodSource === 'SUBSCRIPTION'
-                          ? 69.99
-                          : periodBillingPeriod === 'YEARLY'
-                            ? 839.99
-                            : 83.99
-                        : periodPlan === 'PLUS'
-                          ? periodSource === 'SUBSCRIPTION'
-                            ? 29.99
-                            : periodBillingPeriod === 'YEARLY'
-                              ? 359.99
-                              : 35.99
-                          : 0;
-
                     const periodCycle =
-                      periodSource === 'SUBSCRIPTION'
+                      item.source === 'SUBSCRIPTION'
                         ? 'subskrypcja miesięczna'
-                        : periodBillingPeriod === 'YEARLY'
+                        : item.billingPeriod === 'YEARLY'
                           ? 'roczny'
                           : 'miesięczny';
 
@@ -402,7 +377,7 @@ export function BillingPageWrapper() {
                         <Td>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                              Plan {periodPlan} - {periodCycle}
+                              Plan {item.plan} - {periodCycle}
                             </span>
                             {isActivePeriod && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-medium text-indigo-700 dark:text-indigo-300">
@@ -413,7 +388,7 @@ export function BillingPageWrapper() {
                         </Td>
                         <Td>
                           <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                            zł{periodPrice.toFixed(2)}
+                            {formatCurrency(item.amount, item.currency)}
                           </span>
                         </Td>
                         <Td>
@@ -439,6 +414,7 @@ export function BillingPageWrapper() {
                     // Event sponsorship
                     const actionType = item.actionType;
                     const amount = item.amount;
+                    const currency = item.currency;
                     const boostsAdded = item.boostsAdded;
                     const localPushesAdded = item.localPushesAdded;
 
@@ -482,7 +458,7 @@ export function BillingPageWrapper() {
                         </Td>
                         <Td>
                           <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                            zł{amount.toFixed(2)}
+                            {formatCurrency(amount, currency)}
                           </span>
                         </Td>
                         <Td>
