@@ -54,6 +54,9 @@ export type IntentListItem = {
   addressVisibility: AddressVisibility;
   membersVisibility: MembersVisibility;
 
+  // Boost/Sponsorship
+  boostedAt?: string | null; // ISO timestamp of last boost
+
   isFavourite?: boolean;
   savedCount?: number;
 

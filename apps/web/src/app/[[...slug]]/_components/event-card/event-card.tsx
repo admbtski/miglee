@@ -41,6 +41,7 @@ export interface EventCardProps {
   organizerName: string;
   verifiedAt?: string;
   plan?: Plan;
+  boostedAt?: string | null; // ISO timestamp of last boost
   coverKey?: string | null;
   coverBlurhash?: string | null;
   joinedCount: number;
@@ -104,12 +105,8 @@ function getAddressVisibilityMeta(
   };
 }
 
-function getPlanRingClasses(
-  plan: Plan,
-  isCanceled: boolean,
-  isDeleted: boolean
-): string {
-  if (isCanceled || isDeleted || plan === 'default') {
+function getPlanRingClasses(isCanceled: boolean, isDeleted: boolean): string {
+  if (isCanceled || isDeleted) {
     return '';
   }
 
@@ -160,6 +157,21 @@ function getLocationDisplay(
   return null;
 }
 
+/**
+ * Check if a boost is still active (< 24 hours old)
+ * @param boostedAtISO - ISO timestamp of when the event was boosted
+ * @returns true if boost is active, false otherwise
+ */
+function isBoostActive(boostedAtISO: string | null | undefined): boolean {
+  if (!boostedAtISO) return false;
+
+  const boostedAt = new Date(boostedAtISO);
+  const now = new Date();
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  return boostedAt >= twentyFourHoursAgo;
+}
+
 export const EventCard = memo(function EventCard({
   intentId,
   lat,
@@ -188,7 +200,8 @@ export const EventCard = memo(function EventCard({
   allowJoinLate,
   lateJoinCutoffMinutesAfterStart,
   joinManuallyClosed,
-  plan = 'default',
+  plan,
+  boostedAt,
   addressVisibility,
   isFavourite = false,
   isHybrid,
@@ -200,6 +213,9 @@ export const EventCard = memo(function EventCard({
 }: EventCardProps) {
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO), [endISO]);
+
+  // Check if boost is active (< 24h)
+  const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
 
   const { status } = useMemo(
     () =>
@@ -270,8 +286,7 @@ export const EventCard = memo(function EventCard({
   );
 
   const isInactive = isCanceled || isDeleted;
-  const isPremium = plan !== 'default';
-  const maxCategoriesToShow = isPremium ? 1 : 2;
+  const maxCategoriesToShow = isBoosted ? 1 : 2;
   const remainingCategoriesCount = categories.length - maxCategoriesToShow;
 
   return (
@@ -288,7 +303,7 @@ export const EventCard = memo(function EventCard({
         'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
         'select-none',
         isInactive && 'saturate-0',
-        getPlanRingClasses(plan, isCanceled, isDeleted),
+        isBoosted && getPlanRingClasses(isCanceled, isDeleted),
         className
       )}
       transition={{
@@ -308,29 +323,29 @@ export const EventCard = memo(function EventCard({
         />
       )}
 
-      <div className="relative -mx-4 -mt-4 mb-3 h-40 overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
+      <div className="relative h-40 mb-3 -mx-4 -mt-4 overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
         {coverKey ? (
           <BlurHashImage
             src={buildIntentCoverUrl(coverKey, 'card')}
             blurhash={coverBlurhash}
             alt={title}
-            className="h-full w-full object-cover brightness-90 contrast-90"
+            className="object-cover w-full h-full brightness-90 contrast-90"
             width={480}
             height={270}
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+          <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
         )}
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/0 to-black/40" />
 
         {isInactive && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-sm">
             <div className="text-center">
-              <p className="text-white font-semibold text-md">
+              <p className="font-semibold text-white text-md">
                 {isDeleted ? 'Usunięte' : 'Odwołane'}
               </p>
-              <p className="text-white/60 text-xs mt-1">
+              <p className="mt-1 text-xs text-white/60">
                 {isDeleted
                   ? 'To wydarzenie zostało usunięte'
                   : 'To wydarzenie zostało odwołane'}
@@ -339,8 +354,8 @@ export const EventCard = memo(function EventCard({
           </div>
         )}
 
-        {(isPremium || categories.length > 0) && (
-          <div className="absolute top-3 left-3 right-12 z-10">
+        {(isBoosted || categories.length > 0) && (
+          <div className="absolute z-10 top-3 left-3 right-12">
             <div className="flex flex-wrap gap-1.5">
               {!isInactive && (
                 <EventCountdownPill
@@ -359,7 +374,7 @@ export const EventCard = memo(function EventCard({
                 />
               )}
 
-              {isPremium && (
+              {isBoosted && (
                 <span
                   className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm px-2 py-[2px] text-[11px] font-medium text-white shadow-lg"
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
@@ -392,7 +407,7 @@ export const EventCard = memo(function EventCard({
         )}
 
         {organizerName && (
-          <div className="absolute bottom-3 left-3 z-10">
+          <div className="absolute z-10 bottom-3 left-3">
             <Link
               href={`/u/${organizerName}`}
               className="flex items-center gap-1.5 group relative z-[2]"
@@ -403,7 +418,7 @@ export const EventCard = memo(function EventCard({
                 blurhash={avatarBlurhash}
                 alt={organizerName}
                 size={24}
-                className="opacity-90 group-hover:opacity-100 transition-opacity"
+                className="transition-opacity opacity-90 group-hover:opacity-100"
               />
               <div className="flex items-center gap-1.5">
                 <span
@@ -413,7 +428,7 @@ export const EventCard = memo(function EventCard({
                   {organizerName}
                 </span>
                 {verifiedAt && (
-                  <div className="opacity-70 group-hover:opacity-100 transition-opacity">
+                  <div className="transition-opacity opacity-70 group-hover:opacity-100">
                     <VerifiedBadge
                       size="xs"
                       variant="icon"
@@ -447,7 +462,7 @@ export const EventCard = memo(function EventCard({
 
         <div className="flex flex-col gap-1 text-xs text-zinc-600 dark:text-zinc-400">
           {locationDisplay && (
-            <div className="flex items-center gap-1 min-w-0">
+            <div className="flex items-center min-w-0 gap-1">
               <locationDisplay.Icon className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="text-xs truncate">{locationDisplay.text}</span>
             </div>
@@ -461,7 +476,7 @@ export const EventCard = memo(function EventCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2 mt-1">
           <CapacityBadge
             joinedCount={joinedCount}
             size="sm"

@@ -46,6 +46,10 @@ fragment IntentLight on Intent {
 
   levels
 
+  # Media
+  coverKey
+  coverBlurhash
+
   addressVisibility
   membersVisibility
 
@@ -65,6 +69,7 @@ fragment IntentLight on Intent {
 
   createdAt
   updatedAt
+  boostedAt
 
   categories {
     ...CategoryCore
@@ -164,6 +169,7 @@ fragment IntentCore on Intent {
 
   createdAt
   updatedAt
+  boostedAt
 
   categories {
     ...CategoryCore

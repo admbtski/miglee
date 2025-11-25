@@ -216,6 +216,8 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
 
   // Query intents in tile region with pagination
+  // Sorting: Boosted events first (< 24h old), then by startAt
+  // This uses SQL CASE to evaluate 24h expiration inline
   const items = await prisma.$queryRawUnsafe<any[]>(
     `
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
@@ -229,7 +231,14 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
       AND i."canceledAt" IS NULL
       AND i."deletedAt" IS NULL
       ${whereClause}
-    ORDER BY i."startAt" ASC
+    ORDER BY 
+      CASE 
+        WHEN i."boostedAt" IS NOT NULL 
+          AND i."boostedAt" >= NOW() - INTERVAL '24 hours' 
+        THEN i."boostedAt" 
+        ELSE NULL 
+      END DESC NULLS LAST,
+      i."startAt" ASC
     LIMIT $5 OFFSET $6
     `,
     ...params
@@ -271,14 +280,24 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     include: {
       categories: true,
       tags: true,
-      members: { include: { user: true, addedBy: true } },
-      owner: true,
-      canceledBy: true,
-      deletedBy: true,
+      members: {
+        include: {
+          user: { include: { profile: true } },
+          addedBy: { include: { profile: true } },
+        },
+      },
+      owner: { include: { profile: true } },
+      canceledBy: { include: { profile: true } },
+      deletedBy: { include: { profile: true } },
     },
-    orderBy: {
-      startAt: 'asc',
-    },
+    orderBy: [
+      {
+        boostedAt: { sort: 'desc', nulls: 'last' },
+      },
+      {
+        startAt: 'asc',
+      },
+    ],
   });
 
   // Build pagination metadata

@@ -19,20 +19,16 @@ import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
 import { notEmptyString } from '@/lib/utils/intents';
-import { planForIndex } from '@/lib/adapters/plan-utils';
 
 /**
  * Maps raw intent data from API to EventCard component props
  *
  * @param item - Raw intent data from API
- * @param index - Position in list (for plan calculation)
- * @param lang - Language code for category names
  * @param onHover - Optional hover callback for map synchronization
  * @returns Formatted props for EventCard component
  */
 export function mapIntentToEventCardProps(
   item: IntentListItem,
-  index: number,
   lang: string,
   onHover?: IntentHoverCallback
 ): EventCardProps {
@@ -58,7 +54,8 @@ export function mapIntentToEventCardProps(
     avatarBlurhash: item.owner?.avatarBlurhash ?? null,
     organizerName: item.owner?.name ?? item.owner?.email ?? 'Unknown organizer',
     verifiedAt: item.owner?.verifiedAt ?? undefined,
-    plan: planForIndex(index),
+    plan: 'default', // TODO: Will be customizable per event in the future
+    boostedAt: item.boostedAt ?? null, // Real boost timestamp from backend
 
     // Cover image
     coverKey: item.coverKey ?? null,
@@ -128,7 +125,7 @@ function createItemRows(
     for (let j = 0; j < ITEMS_PER_ROW; j++) {
       const item = items[i + j];
       if (item) {
-        row.push(mapIntentToEventCardProps(item, i + j, lang, onHover));
+        row.push(mapIntentToEventCardProps(item, lang, onHover));
       }
     }
 

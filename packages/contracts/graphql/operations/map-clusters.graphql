@@ -46,6 +46,7 @@ query GetRegionIntents(
       hasStarted
       hasEnded
       canJoin
+      boostedAt
       categories {
         id
         slug

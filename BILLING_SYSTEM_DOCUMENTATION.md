@@ -478,6 +478,13 @@ The boost sorting is optimized with:
 1. **Database Index**: `idx_intents_boosted_at_desc` - DESC NULLS LAST index on `boostedAt`
 2. **Application Layer**: 24h expiration logic implemented in the query resolver
 3. **Efficient Filtering**: Only events matching the base criteria are loaded
+4. **Map Clustering**: The `regionIntents` query also respects boost priority with 24h expiration
+
+**Implementation Notes**:
+
+- Main `intentsQuery`: 24h logic in application layer with in-memory sorting
+- Map `regionIntents`: 24h logic in SQL using CASE expression for better performance
+- Both approaches ensure consistent boost behavior across all event listings
 
 **Note**: PostgreSQL's GENERATED columns cannot use `NOW()` (not immutable), so the 24h expiration is handled at the application layer. The indexed `boostedAt` column ensures fast sorting performance.
 
