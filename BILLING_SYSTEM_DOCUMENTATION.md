@@ -442,12 +442,21 @@ const { checkoutUrl, sponsorshipId } = await createEventSponsorshipCheckout({
 
 ### 5. Use Boost or Local Push
 
+**Boost**: When a user uses a boost, the event is moved to the top of the listing by updating the `boostedAt` timestamp. Events with a recent `boostedAt` value are prioritized in all sorting modes.
+
 ```typescript
 import { useBoost, useLocalPush } from '@/lib/billing';
 
-await useBoost('intent_123');
+await useBoost('intent_123'); // Updates Intent.boostedAt to current time
 await useLocalPush('intent_123');
 ```
+
+**Sorting Priority**: The `intentsQuery` resolver automatically prioritizes boosted events:
+
+1. Events are first sorted by `boostedAt` (most recent first, nulls last)
+2. Then by the requested sort field (e.g., `startAt`, `createdAt`, etc.)
+
+This ensures boosted events appear at the top of listings regardless of the sort mode.
 
 ---
 

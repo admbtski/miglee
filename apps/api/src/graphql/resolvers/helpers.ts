@@ -627,6 +627,10 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     deleteReason: i.deleteReason ?? null,
     isDeleted,
 
+    // Billing & Sponsorship
+    sponsorshipPlan: i.sponsorshipPlan as IntentPlan,
+    boostedAt: i.boostedAt ?? null,
+
     // Collections (safe access - may be undefined if not included)
     categories: (i.categories ?? []).map(mapCategory),
     tags: (i.tags ?? []).map(mapTag),

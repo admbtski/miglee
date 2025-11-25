@@ -187,20 +187,28 @@ function buildBaseWhere(args: Parameters<QueryResolvers['intents']>[1]) {
 function buildOrderBy(args: Parameters<QueryResolvers['intents']>[1]) {
   const dir: Prisma.SortOrder = args.sortDir === SortDir.Asc ? 'asc' : 'desc';
 
+  // PRIORITY: Boosted events always come first (most recent boost first)
+  const boostPriority: Prisma.IntentOrderByWithRelationInput = {
+    boostedAt: { sort: 'desc', nulls: 'last' },
+  };
+
   switch (args.sortBy) {
     case IntentsSortBy.StartAt:
       return [
+        boostPriority,
         { startAt: dir },
         { createdAt: 'desc' },
         { id: 'desc' },
       ] as Prisma.IntentOrderByWithRelationInput[];
     case IntentsSortBy.CreatedAt:
       return [
+        boostPriority,
         { createdAt: dir },
         { id: 'desc' },
       ] as Prisma.IntentOrderByWithRelationInput[];
     case IntentsSortBy.UpdatedAt:
       return [
+        boostPriority,
         { updatedAt: dir },
         { createdAt: 'desc' },
         { id: 'desc' },
@@ -208,12 +216,14 @@ function buildOrderBy(args: Parameters<QueryResolvers['intents']>[1]) {
     case IntentsSortBy.MembersCount:
       // sortuje po całkowitej liczbie członków; jeśli chcesz tylko JOINED, użyj denormalizacji joinedCount
       return [
+        boostPriority,
         { members: { _count: dir } },
         { startAt: 'asc' },
         { id: 'desc' },
       ] as Prisma.IntentOrderByWithRelationInput[];
     default:
       return [
+        boostPriority,
         { startAt: 'asc' },
         { createdAt: 'desc' },
         { id: 'desc' },

@@ -372,6 +372,7 @@ model Intent {
 
   // Sponsorship / Plan
   sponsorshipPlan IntentPlan @default(FREE) // Effective plan of the event (Free/Plus/Pro)
+  boostedAt       DateTime? // Last time the event was boosted (used for sorting)
 
   // Ownership
   ownerId            String?
@@ -415,6 +416,7 @@ model Intent {
   // Indexes
   @@index([startAt])
   @@index([endAt])
+  @@index([boostedAt])
   @@index([visibility])
   @@index([joinMode])
   @@index([mode])

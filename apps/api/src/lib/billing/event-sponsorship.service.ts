@@ -419,12 +419,21 @@ export async function useBoost(intentId: string): Promise<void> {
     throw new Error('All boosts have been used');
   }
 
-  await prisma.eventSponsorship.update({
-    where: { id: sponsorship.id },
-    data: {
-      boostsUsed: { increment: 1 },
-    },
-  });
+  // Update both sponsorship and intent in a transaction
+  await prisma.$transaction([
+    prisma.eventSponsorship.update({
+      where: { id: sponsorship.id },
+      data: {
+        boostsUsed: { increment: 1 },
+      },
+    }),
+    prisma.intent.update({
+      where: { id: intentId },
+      data: {
+        boostedAt: new Date(), // Set boostedAt to current time for sorting
+      },
+    }),
+  ]);
 
   logger.info(
     {
@@ -432,7 +441,7 @@ export async function useBoost(intentId: string): Promise<void> {
       boostsUsed: sponsorship.boostsUsed + 1,
       boostsTotal: sponsorship.boostsTotal,
     },
-    'Boost used'
+    'Boost used - event moved to top'
   );
 }
 

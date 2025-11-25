@@ -790,7 +790,7 @@ type Intent {
   # Billing & Sponsorship
   sponsorshipPlan: IntentPlan!
   sponsorship: EventSponsorship
-
+  boostedAt: DateTime # Last time event was boosted (for priority sorting)
   # Relations
   inviteLinks: [IntentInviteLink!]!
 

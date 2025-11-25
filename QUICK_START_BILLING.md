@@ -288,7 +288,7 @@ const { checkoutUrl } = await createSubscriptionCheckout({
 console.log('Redirect user to:', checkoutUrl);
 ```
 
-### Przykład 3: Boost event
+### Przykład 3: Boost event (zakup sponsoringu)
 
 ```typescript
 import { createEventSponsorshipCheckout } from '@/lib/billing';
@@ -303,6 +303,23 @@ const { checkoutUrl } = await createEventSponsorshipCheckout({
 
 console.log('Redirect user to:', checkoutUrl);
 ```
+
+### Przykład 4: Użyj podbicia (boost)
+
+**Podbicie (boost)** przesuwa wydarzenie na górę listy przez zaktualizowanie pola `boostedAt`:
+
+```typescript
+import { useBoost } from '@/lib/billing';
+
+// Boost event - trafia na szczyt listingu
+await useBoost('intent_123');
+```
+
+**Jak działa sortowanie**:
+
+- Wydarzenia są sortowane najpierw po `boostedAt` (najświeższe na górze, null na końcu)
+- Następnie po wybranym kryterium (`startAt`, `createdAt`, etc.)
+- Dzięki temu podbite wydarzenia zawsze są na szczycie, niezależnie od trybu sortowania
 
 ---
 
