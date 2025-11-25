@@ -43,6 +43,7 @@ import {
   isBoostActive,
   getHighlightBackgroundStyle,
 } from '@/lib/utils/is-boost-active';
+import { EventHighlightProvider } from './event-highlight-context';
 
 type EventDetailClientProps = {
   intentId: string;
@@ -93,7 +94,14 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   // Get subtle highlight background for page (must be before early returns)
   const subtleHighlightStyle = useMemo(
     () =>
-      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'strong'),
+      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'medium'),
+    [intent?.highlightColor, isBoosted]
+  );
+
+  // Get medium highlight for navbar (must be before early returns)
+  const navbarHighlightStyle = useMemo(
+    () =>
+      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'subtle'),
     [intent?.highlightColor, isBoosted]
   );
 
@@ -269,7 +277,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       style={isBoosted ? subtleHighlightStyle : undefined}
     >
       {/* Back Navigation */}
-      <div className="border-b border-zinc-200 backdrop-blur dark:border-zinc-800 ">
+      <div
+        className="transition-colors duration-500 border-b border-zinc-200 backdrop-blur dark:border-zinc-800"
+        style={isBoosted ? navbarHighlightStyle : undefined}
+      >
         <div className="container max-w-6xl px-4 py-3 mx-auto">
           <a
             href="/"
