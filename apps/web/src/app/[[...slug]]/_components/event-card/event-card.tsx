@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
+import { HIGHLIGHT_PRESETS } from '@/lib/billing-constants';
 import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import { computeEventStateAndStatus } from '@/lib/utils/event-status';
@@ -42,6 +43,7 @@ export interface EventCardProps {
   verifiedAt?: string;
   plan?: Plan;
   boostedAt?: string | null; // ISO timestamp of last boost
+  highlightColor?: string | null; // Hex color for custom highlight ring
   coverKey?: string | null;
   coverBlurhash?: string | null;
   joinedCount: number;
@@ -105,12 +107,54 @@ function getAddressVisibilityMeta(
   };
 }
 
-function getPlanRingClasses(isCanceled: boolean, isDeleted: boolean): string {
-  if (isCanceled || isDeleted) {
-    return '';
+/**
+ * Get highlight ring classes based on color
+ * @param highlightColor - Hex color code (e.g., "#f59e0b")
+ * @param isCanceled - Whether event is canceled
+ * @param isDeleted - Whether event is deleted
+ * @returns CSS classes and inline style
+ */
+function getHighlightRingClasses(
+  highlightColor: string | null | undefined,
+  isCanceled: boolean,
+  isDeleted: boolean
+): { className: string; style?: React.CSSProperties } {
+  if (isCanceled || isDeleted || !highlightColor) {
+    return { className: '' };
   }
 
-  return 'ring-2 ring-amber-500/30 shadow-[0_0_16px_rgba(245,158,11,0.35),0_0_48px_rgba(245,158,11,0.2)]';
+  // Check if it's a preset color
+  const preset = HIGHLIGHT_PRESETS.find(
+    (p) => p.hex.toLowerCase() === highlightColor.toLowerCase()
+  );
+
+  if (preset) {
+    return {
+      className: `ring-2 ${preset.ring} ${preset.shadow}`,
+    };
+  }
+
+  // Custom color - use inline styles for dynamic colors
+  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result && result[1] && result[2] && result[3]
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 245, g: 158, b: 11 }; // fallback to amber
+  };
+
+  const rgb = hexToRgb(highlightColor);
+
+  return {
+    className: 'ring-2',
+    style: {
+      '--highlight-color': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
+      boxShadow: `0 0 0 2px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3), 0 0 16px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35), 0 0 48px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`,
+    } as React.CSSProperties,
+  };
 }
 
 function getLocationDisplay(
@@ -202,6 +246,7 @@ export const EventCard = memo(function EventCard({
   joinManuallyClosed,
   plan,
   boostedAt,
+  highlightColor,
   addressVisibility,
   isFavourite = false,
   isHybrid,
@@ -216,6 +261,15 @@ export const EventCard = memo(function EventCard({
 
   // Check if boost is active (< 24h)
   const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
+
+  // Get highlight ring classes (only if boosted)
+  const highlightRing = useMemo(
+    () =>
+      isBoosted
+        ? getHighlightRingClasses(highlightColor, isCanceled, isDeleted)
+        : { className: '' },
+    [isBoosted, highlightColor, isCanceled, isDeleted]
+  );
 
   const { status } = useMemo(
     () =>
@@ -303,9 +357,10 @@ export const EventCard = memo(function EventCard({
         'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
         'select-none',
         isInactive && 'saturate-0',
-        isBoosted && getPlanRingClasses(isCanceled, isDeleted),
+        highlightRing.className,
         className
       )}
+      style={highlightRing.style}
       transition={{
         type: 'spring',
         stiffness: 300,

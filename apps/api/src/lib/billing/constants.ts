@@ -197,6 +197,7 @@ export interface EventSponsorshipMetadata {
   plan: IntentPlan;
   actionType?: 'new' | 'upgrade' | 'reload';
   actionPackageSize?: number;
+  highlightColor?: string; // Hex color for highlight ring
 }
 
 export type CheckoutMetadata =

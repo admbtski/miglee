@@ -84,6 +84,10 @@ mutation UseLocalPush($intentId: ID!) {
   useLocalPush(intentId: $intentId)
 }
 
+mutation UpdateIntentHighlightColor($intentId: ID!, $color: String) {
+  updateIntentHighlightColor(intentId: $intentId, color: $color)
+}
+
 # =============================================================================
 # Receipt/Invoice URLs
 # =============================================================================

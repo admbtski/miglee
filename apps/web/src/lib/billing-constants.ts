@@ -219,3 +219,72 @@ export const PLAN_COLOR_CLASSES = {
     icon: 'text-amber-600 dark:text-amber-400',
   },
 } as const;
+
+// ========================================================================================
+// HIGHLIGHT COLORS (for boosted events)
+// ========================================================================================
+
+export type HighlightColorPreset =
+  | 'amber'
+  | 'blue'
+  | 'purple'
+  | 'green'
+  | 'custom';
+
+export const HIGHLIGHT_PRESETS = [
+  {
+    id: 'amber',
+    name: 'Złoty',
+    hex: '#f59e0b', // amber-500
+    ring: 'ring-amber-500/30',
+    shadow:
+      'shadow-[0_0_16px_rgba(245,158,11,0.35),0_0_48px_rgba(245,158,11,0.2)]',
+  },
+  {
+    id: 'blue',
+    name: 'Niebieski',
+    hex: '#3b82f6', // blue-500
+    ring: 'ring-blue-500/30',
+    shadow:
+      'shadow-[0_0_16px_rgba(59,130,246,0.35),0_0_48px_rgba(59,130,246,0.2)]',
+  },
+  {
+    id: 'purple',
+    name: 'Fioletowy',
+    hex: '#a855f7', // purple-500
+    ring: 'ring-purple-500/30',
+    shadow:
+      'shadow-[0_0_16px_rgba(168,85,247,0.35),0_0_48px_rgba(168,85,247,0.2)]',
+  },
+  {
+    id: 'green',
+    name: 'Zielony',
+    hex: '#22c55e', // green-500
+    ring: 'ring-green-500/30',
+    shadow:
+      'shadow-[0_0_16px_rgba(34,197,94,0.35),0_0_48px_rgba(34,197,94,0.2)]',
+  },
+] as const;
+
+export const DEFAULT_HIGHLIGHT_COLOR = HIGHLIGHT_PRESETS[0].hex; // amber
+
+/**
+ * Generate dynamic ring and shadow classes for custom hex color
+ */
+export function getHighlightClasses(
+  hexColor: string | null | undefined
+): string {
+  if (!hexColor) return '';
+
+  // Check if it's a preset
+  const preset = HIGHLIGHT_PRESETS.find(
+    (p) => p.hex.toLowerCase() === hexColor.toLowerCase()
+  );
+  if (preset) {
+    return `ring-2 ${preset.ring} ${preset.shadow}`;
+  }
+
+  // For custom colors, use inline styles (Tailwind can't generate dynamic classes)
+  // We'll apply this via style attribute in the component
+  return 'ring-2 highlight-custom';
+}

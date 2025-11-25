@@ -2,11 +2,15 @@
 
 import { SubscriptionPanel } from './subscription-panel';
 import { ReloadActionsPanel } from './reload-actions-panel';
-import { useEventSponsorship } from '@/lib/api/billing';
-import { useBoost, useLocalPush } from '@/lib/api/billing';
+import {
+  useEventSponsorship,
+  useBoost,
+  useLocalPush,
+  useUpdateIntentHighlightColor,
+  billingKeys,
+} from '@/lib/api/billing';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { billingKeys } from '@/lib/api/billing';
 import { useState } from 'react';
 
 interface SubscriptionPanelWrapperProps {
@@ -27,6 +31,7 @@ export function SubscriptionPanelWrapper({
 
   const boostMutation = useBoost();
   const pushMutation = useLocalPush();
+  const updateColorMutation = useUpdateIntentHighlightColor();
 
   const handleBoostEvent = async (intentId: string) => {
     try {
@@ -58,23 +63,25 @@ export function SubscriptionPanelWrapper({
     }
   };
 
-  const handleToggleSponsoredBadge = async (
+  const handleUpdateHighlightColor = async (
     intentId: string,
-    enabled: boolean
+    color: string | null
   ) => {
-    console.info('[badge]', { intentId, enabled });
-    // TODO: Implement badge toggle API mutation
-    toast.info('Funkcja wkrótce dostępna');
-  };
+    try {
+      await updateColorMutation.mutateAsync({ intentId, color });
+      toast.success('Kolor wyróżnienia został zapisany!');
 
-  const handleToggleHighlight = async (
-    intentId: string,
-    enabled: boolean,
-    tone?: any
-  ) => {
-    console.info('[highlight]', { intentId, enabled, tone });
-    // TODO: Implement highlight toggle API mutation
-    toast.info('Funkcja wkrótce dostępna');
+      // Invalidate query to refetch sponsorship data
+      queryClient.invalidateQueries({
+        queryKey: billingKeys.eventSponsorship(intentId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['GetIntents'], // Invalidate main intents list to update card color
+      });
+    } catch (error: any) {
+      console.error('[color update error]', error);
+      toast.error(error.message || 'Nie udało się zapisać koloru.');
+    }
   };
 
   // Loading state
@@ -128,9 +135,8 @@ export function SubscriptionPanelWrapper({
     usedPushes: sponsorship.localPushesUsed,
     totalBoosts: sponsorship.boostsTotal, // Real value from backend
     totalPushes: sponsorship.localPushesTotal, // Real value from backend
-    badgeEnabled: true, // TODO: Get from backend
-    highlighted: false, // TODO: Get from backend
-    highlightTone: undefined, // TODO: Get from backend
+    highlightColor: sponsorship.intent?.highlightColor || null, // Real color from backend
+    boostedAt: sponsorship.intent?.boostedAt || null, // Timestamp of last boost
     subscriptionPlan: 'None' as const, // Event sponsorship is separate from user subscription
   };
 
@@ -161,8 +167,7 @@ export function SubscriptionPanelWrapper({
       sponsorship={sponsorshipState}
       onBoostEvent={handleBoostEvent}
       onSendLocalPush={handleSendLocalPush}
-      onToggleSponsoredBadge={handleToggleSponsoredBadge}
-      onToggleHighlight={handleToggleHighlight}
+      onUpdateHighlightColor={handleUpdateHighlightColor}
       onReloadActions={handleReloadActions}
     />
   );

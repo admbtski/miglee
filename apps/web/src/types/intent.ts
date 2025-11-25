@@ -56,6 +56,7 @@ export type IntentListItem = {
 
   // Boost/Sponsorship
   boostedAt?: string | null; // ISO timestamp of last boost
+  highlightColor?: string | null; // Custom highlight color (hex format)
 
   isFavourite?: boolean;
   savedCount?: number;

@@ -373,6 +373,7 @@ model Intent {
   // Sponsorship / Plan
   sponsorshipPlan IntentPlan @default(FREE) // Effective plan of the event (Free/Plus/Pro)
   boostedAt       DateTime? // Last time the event was boosted (used for sorting)
+  highlightColor  String? // Custom highlight/ring color (hex format: #RRGGBB)
 
   // Ownership
   ownerId            String?

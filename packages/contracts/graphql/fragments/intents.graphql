@@ -70,6 +70,7 @@ fragment IntentLight on Intent {
   createdAt
   updatedAt
   boostedAt
+  highlightColor
 
   categories {
     ...CategoryCore
@@ -170,6 +171,7 @@ fragment IntentCore on Intent {
   createdAt
   updatedAt
   boostedAt
+  highlightColor
 
   categories {
     ...CategoryCore

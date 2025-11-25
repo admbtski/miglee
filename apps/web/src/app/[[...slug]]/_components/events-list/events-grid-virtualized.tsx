@@ -56,6 +56,7 @@ export function mapIntentToEventCardProps(
     verifiedAt: item.owner?.verifiedAt ?? undefined,
     plan: 'default', // TODO: Will be customizable per event in the future
     boostedAt: item.boostedAt ?? null, // Real boost timestamp from backend
+    highlightColor: item.highlightColor ?? null, // Custom highlight color
 
     // Cover image
     coverKey: item.coverKey ?? null,

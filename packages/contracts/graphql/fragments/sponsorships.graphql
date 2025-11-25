@@ -33,6 +33,8 @@ fragment EventSponsorshipFull on EventSponsorship {
   intent {
     id
     title
+    highlightColor
+    boostedAt
   }
 }
 
