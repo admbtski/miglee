@@ -442,7 +442,9 @@ const { checkoutUrl, sponsorshipId } = await createEventSponsorshipCheckout({
 
 ### 5. Use Boost or Local Push
 
-**Boost**: When a user uses a boost, the event is moved to the top of the listing by updating the `boostedAt` timestamp. Events with a recent `boostedAt` value are prioritized in all sorting modes.
+**Boost**: When a user uses a boost, the event is moved to the top of the listing by updating the `boostedAt` timestamp. Events with a recent boost are prioritized in all sorting modes.
+
+**⏰ Boost Duration**: Boosts are active for **24 hours**. After 24 hours, the boost automatically expires and the event returns to normal sorting (though `boostedAt` remains in the database for historical tracking).
 
 ```typescript
 import { useBoost, useLocalPush } from '@/lib/billing';
@@ -454,18 +456,30 @@ await useLocalPush('intent_123');
 **Sorting Priority**: The `intentsQuery` resolver automatically prioritizes boosted events:
 
 1. **`boostedAt DESC NULLS LAST`** - Boosted events **always** come first (most recent boost at the top)
+   - ⏰ Only boosts < 24 hours old are considered active
+   - Expired boosts (> 24h) are treated as null and return to normal sorting
 2. Then by the requested sort field (e.g., `startAt`, `createdAt`, etc.)
 3. `id DESC` - Tie-breaker for identical values
 
 **Example with `sortBy: START_AT`**:
 
-- Event A: `boostedAt: 2025-11-25 11:00, startAt: 2025-12-01`
-- Event B: `boostedAt: 2025-11-25 10:00, startAt: 2025-11-26`
-- Event C: `boostedAt: null, startAt: 2025-11-25` (earliest start)
+- Event A: `boostedAt: 2025-11-25 11:00` (23h ago - ACTIVE ⭐)
+- Event B: `boostedAt: 2025-11-24 10:00` (25h ago - EXPIRED)
+- Event C: `boostedAt: null` (no boost)
 
-**Result**: A → B → C (boosted events first, regardless of startAt)
+**Result**: A ⭐ → B → C (only Event A gets boost priority)
 
-This ensures boosted events appear at the top of listings regardless of the sort mode.
+This ensures boosted events appear at the top of listings regardless of the sort mode, while preventing "permanent" top positioning.
+
+### Performance Optimization
+
+The boost sorting is optimized with:
+
+1. **Database Index**: `idx_intents_boosted_at_desc` - DESC NULLS LAST index on `boostedAt`
+2. **Application Layer**: 24h expiration logic implemented in the query resolver
+3. **Efficient Filtering**: Only events matching the base criteria are loaded
+
+**Note**: PostgreSQL's GENERATED columns cannot use `NOW()` (not immutable), so the 24h expiration is handled at the application layer. The indexed `boostedAt` column ensures fast sorting performance.
 
 ---
 

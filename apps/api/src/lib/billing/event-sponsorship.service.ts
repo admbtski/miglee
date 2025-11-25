@@ -406,6 +406,19 @@ export async function activateEventSponsorship(
 // USE BOOST
 // ========================================================================================
 
+/**
+ * Uses a boost for an event, moving it to the top of listings for 24 hours.
+ *
+ * How it works:
+ * 1. Increments boostsUsed in EventSponsorship
+ * 2. Sets boostedAt to current timestamp in Intent table
+ * 3. Boost is active for 24 hours from boostedAt timestamp
+ * 4. After 24h, the event returns to normal sorting (boostedAt is treated as null)
+ * 5. boostedAt remains in the database for historical tracking
+ *
+ * @param intentId - ID of the intent to boost
+ * @throws Error if no active sponsorship or all boosts have been used
+ */
 export async function useBoost(intentId: string): Promise<void> {
   const sponsorship = await prisma.eventSponsorship.findUnique({
     where: { intentId },

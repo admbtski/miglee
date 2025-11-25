@@ -317,17 +317,26 @@ await useBoost('intent_123');
 
 **Jak działa sortowanie**:
 
-- Wydarzenia z `boostedAt != null` są **zawsze na górze**, niezależnie od trybu sortowania
+- Wydarzenia z aktywnym boostem (< 24h) są **zawsze na górze**, niezależnie od trybu sortowania
 - Sortowane po `boostedAt DESC` (najnowszy boost na szczycie)
+- Boosty starsze niż 24h **wygasają** i wydarzenie wraca do normalnego sortowania
 - Dopiero potem sortowanie według wybranego kryterium (`startAt`, `createdAt`, etc.)
 
-**Przykład** (`sortBy: START_AT`):
+**Przykład** (`sortBy: START_AT`, obecna godzina: 25.11 12:00):
 
-1. Event A - `boostedAt: 2025-11-25 11:00` (najnowszy boost)
-2. Event B - `boostedAt: 2025-11-25 09:00` (starszy boost)
-3. Event C - `boostedAt: null` (bez boosta, posortowane po startAt)
+1. Event A - `boostedAt: 25.11 11:00` (1h temu - AKTYWNY ⭐)
+2. Event B - `boostedAt: 24.11 10:00` (26h temu - WYGASŁY)
+3. Event C - `boostedAt: null` (bez boosta)
 
-Dzięki temu podbite wydarzenia mają **maksymalną widoczność** nad wszystkimi innymi.
+Event B i C są sortowane normalnie po `startAt`, ponieważ boost Event B wygasł po 24h.
+
+Dzięki temu podbite wydarzenia mają **maksymalną widoczność przez 24h**, bez możliwości "wykupienia" permanentnej pozycji na górze.
+
+**🚀 Optymalizacja wydajności**:
+
+- Indeks `idx_intents_boosted_at_desc` w PostgreSQL dla szybkiego sortowania
+- Logika 24h wygasania w warstwie aplikacji (PostgreSQL GENERATED columns nie wspierają NOW())
+- Efektywne filtrowanie - tylko pasujące wydarzenia są ładowane do pamięci
 
 ---
 

@@ -188,9 +188,9 @@ function buildOrderBy(args: Parameters<QueryResolvers['intents']>[1]) {
   const dir: Prisma.SortOrder = args.sortDir === SortDir.Asc ? 'asc' : 'desc';
 
   // PRIORITY SYSTEM:
-  // 1. boostedAt DESC NULLS LAST - boosted events come first
-  // 2. For non-boosted (null), we want to use createdAt as the timestamp
-  // This is achieved by sorting boostedAt first, then the requested field
+  // 1. boostedAt DESC NULLS LAST - boosted events come first (only if < 24h old)
+  // 2. For non-boosted or expired boosts (null or > 24h), sort by requested field
+  // NOTE: The 24h filter is applied in the WHERE clause, not here
 
   switch (args.sortBy) {
     case IntentsSortBy.StartAt:
@@ -329,16 +329,57 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
     // Gałąź A: status nie wymaga post-filtra → standardowe count + findMany
     if (!statusNeedsPostFilter) {
       const total = await prisma.intent.count({ where: baseWhere });
-      const rows = await prisma.intent.findMany({
+
+      // Fetch all candidates for manual sorting (boost expiration logic)
+      const allRows = await prisma.intent.findMany({
         where: baseWhere,
-        take,
-        skip,
         orderBy,
         include: INTENT_INCLUDE,
       });
 
+      // Apply 24h boost expiration: treat boostedAt older than 24h as null
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const rowsWithEffectiveBoost = allRows.map((row) => ({
+        ...row,
+        effectiveBoostedAt:
+          row.boostedAt && row.boostedAt >= twentyFourHoursAgo
+            ? row.boostedAt
+            : null,
+      }));
+
+      // Manual sort with effective boost
+      const dir = args.sortDir === SortDir.Asc ? 1 : -1;
+      rowsWithEffectiveBoost.sort((a, b) => {
+        // 1. Sort by effectiveBoostedAt (most recent first, nulls last)
+        if (a.effectiveBoostedAt && !b.effectiveBoostedAt) return -1;
+        if (!a.effectiveBoostedAt && b.effectiveBoostedAt) return 1;
+        if (a.effectiveBoostedAt && b.effectiveBoostedAt) {
+          const boostDiff =
+            b.effectiveBoostedAt.getTime() - a.effectiveBoostedAt.getTime();
+          if (boostDiff !== 0) return boostDiff;
+        }
+
+        // 2. Sort by requested field
+        switch (args.sortBy) {
+          case IntentsSortBy.StartAt:
+            return dir * (a.startAt.getTime() - b.startAt.getTime());
+          case IntentsSortBy.CreatedAt:
+            return dir * (a.createdAt.getTime() - b.createdAt.getTime());
+          case IntentsSortBy.UpdatedAt:
+            return dir * (a.updatedAt.getTime() - b.updatedAt.getTime());
+          case IntentsSortBy.MembersCount:
+            // Note: members count would need to be calculated or denormalized
+            return 0;
+          default:
+            return dir * (a.startAt.getTime() - b.startAt.getTime());
+        }
+      });
+
+      // Apply pagination
+      const paginatedRows = rowsWithEffectiveBoost.slice(skip, skip + take);
+
       return {
-        items: rows.map((r) => mapIntent(r, user?.id)),
+        items: paginatedRows.map((r) => mapIntent(r, user?.id)),
         pageInfo: {
           total,
           limit: take,
@@ -378,6 +419,9 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       deletedAt: true,
       joinedCount: true,
       max: true,
+      boostedAt: true, // For 24h boost expiration logic
+      createdAt: true, // For sorting
+      updatedAt: true, // For sorting
     } satisfies Prisma.IntentSelect;
 
     // UWAGA: dla bardzo dużych zbiorów rozważ queryRaw + window functions / materializację.
@@ -387,8 +431,43 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       orderBy,
     });
 
+    // Apply 24h boost expiration
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const candidatesWithEffectiveBoost = allCandidateRows.map((row) => ({
+      ...row,
+      effectiveBoostedAt:
+        row.boostedAt && row.boostedAt >= twentyFourHoursAgo
+          ? row.boostedAt
+          : null,
+    }));
+
+    // Manual sort with effective boost
+    const dir = args.sortDir === SortDir.Asc ? 1 : -1;
+    candidatesWithEffectiveBoost.sort((a, b) => {
+      // 1. Sort by effectiveBoostedAt (most recent first, nulls last)
+      if (a.effectiveBoostedAt && !b.effectiveBoostedAt) return -1;
+      if (!a.effectiveBoostedAt && b.effectiveBoostedAt) return 1;
+      if (a.effectiveBoostedAt && b.effectiveBoostedAt) {
+        const boostDiff =
+          b.effectiveBoostedAt.getTime() - a.effectiveBoostedAt.getTime();
+        if (boostDiff !== 0) return boostDiff;
+      }
+
+      // 2. Sort by requested field
+      switch (args.sortBy) {
+        case IntentsSortBy.StartAt:
+          return dir * (a.startAt.getTime() - b.startAt.getTime());
+        case IntentsSortBy.CreatedAt:
+          return dir * (a.createdAt.getTime() - b.createdAt.getTime());
+        case IntentsSortBy.UpdatedAt:
+          return dir * (a.updatedAt.getTime() - b.updatedAt.getTime());
+        default:
+          return dir * (a.startAt.getTime() - b.startAt.getTime());
+      }
+    });
+
     const filteredIds: string[] = [];
-    for (const r of allCandidateRows) {
+    for (const r of candidatesWithEffectiveBoost) {
       if (r.canceledAt || r.deletedAt) continue;
 
       const { joinOpen, ended } = computeJoinOpenAndFlags({
