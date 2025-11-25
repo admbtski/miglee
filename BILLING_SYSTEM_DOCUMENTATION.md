@@ -453,8 +453,17 @@ await useLocalPush('intent_123');
 
 **Sorting Priority**: The `intentsQuery` resolver automatically prioritizes boosted events:
 
-1. Events are first sorted by `boostedAt` (most recent first, nulls last)
+1. **`boostedAt DESC NULLS LAST`** - Boosted events **always** come first (most recent boost at the top)
 2. Then by the requested sort field (e.g., `startAt`, `createdAt`, etc.)
+3. `id DESC` - Tie-breaker for identical values
+
+**Example with `sortBy: START_AT`**:
+
+- Event A: `boostedAt: 2025-11-25 11:00, startAt: 2025-12-01`
+- Event B: `boostedAt: 2025-11-25 10:00, startAt: 2025-11-26`
+- Event C: `boostedAt: null, startAt: 2025-11-25` (earliest start)
+
+**Result**: A → B → C (boosted events first, regardless of startAt)
 
 This ensures boosted events appear at the top of listings regardless of the sort mode.
 

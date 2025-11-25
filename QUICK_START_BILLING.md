@@ -317,9 +317,17 @@ await useBoost('intent_123');
 
 **Jak działa sortowanie**:
 
-- Wydarzenia są sortowane najpierw po `boostedAt` (najświeższe na górze, null na końcu)
-- Następnie po wybranym kryterium (`startAt`, `createdAt`, etc.)
-- Dzięki temu podbite wydarzenia zawsze są na szczycie, niezależnie od trybu sortowania
+- Wydarzenia z `boostedAt != null` są **zawsze na górze**, niezależnie od trybu sortowania
+- Sortowane po `boostedAt DESC` (najnowszy boost na szczycie)
+- Dopiero potem sortowanie według wybranego kryterium (`startAt`, `createdAt`, etc.)
+
+**Przykład** (`sortBy: START_AT`):
+
+1. Event A - `boostedAt: 2025-11-25 11:00` (najnowszy boost)
+2. Event B - `boostedAt: 2025-11-25 09:00` (starszy boost)
+3. Event C - `boostedAt: null` (bez boosta, posortowane po startAt)
+
+Dzięki temu podbite wydarzenia mają **maksymalną widoczność** nad wszystkimi innymi.
 
 ---
 

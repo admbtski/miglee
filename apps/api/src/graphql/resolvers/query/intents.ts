@@ -187,43 +187,40 @@ function buildBaseWhere(args: Parameters<QueryResolvers['intents']>[1]) {
 function buildOrderBy(args: Parameters<QueryResolvers['intents']>[1]) {
   const dir: Prisma.SortOrder = args.sortDir === SortDir.Asc ? 'asc' : 'desc';
 
-  // PRIORITY: Boosted events always come first (most recent boost first)
-  const boostPriority: Prisma.IntentOrderByWithRelationInput = {
-    boostedAt: { sort: 'desc', nulls: 'last' },
-  };
+  // PRIORITY SYSTEM:
+  // 1. boostedAt DESC NULLS LAST - boosted events come first
+  // 2. For non-boosted (null), we want to use createdAt as the timestamp
+  // This is achieved by sorting boostedAt first, then the requested field
 
   switch (args.sortBy) {
     case IntentsSortBy.StartAt:
       return [
-        boostPriority,
+        { boostedAt: { sort: 'desc', nulls: 'last' } },
         { startAt: dir },
-        { createdAt: 'desc' },
         { id: 'desc' },
       ] as Prisma.IntentOrderByWithRelationInput[];
     case IntentsSortBy.CreatedAt:
       return [
-        boostPriority,
+        { boostedAt: { sort: 'desc', nulls: 'last' } },
         { createdAt: dir },
         { id: 'desc' },
       ] as Prisma.IntentOrderByWithRelationInput[];
     case IntentsSortBy.UpdatedAt:
       return [
-        boostPriority,
+        { boostedAt: { sort: 'desc', nulls: 'last' } },
         { updatedAt: dir },
-        { createdAt: 'desc' },
         { id: 'desc' },
       ] as Prisma.IntentOrderByWithRelationInput[];
     case IntentsSortBy.MembersCount:
-      // sortuje po całkowitej liczbie członków; jeśli chcesz tylko JOINED, użyj denormalizacji joinedCount
       return [
-        boostPriority,
+        { boostedAt: { sort: 'desc', nulls: 'last' } },
         { members: { _count: dir } },
         { startAt: 'asc' },
         { id: 'desc' },
       ] as Prisma.IntentOrderByWithRelationInput[];
     default:
       return [
-        boostPriority,
+        { boostedAt: { sort: 'desc', nulls: 'last' } },
         { startAt: 'asc' },
         { createdAt: 'desc' },
         { id: 'desc' },
