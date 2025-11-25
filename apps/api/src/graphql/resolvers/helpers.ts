@@ -9,6 +9,7 @@ import type {
   NotificationKind,
   Visibility,
   ReportStatus,
+  IntentPlan,
   // GraphQL result types:
   Intent as GQLIntent,
   Notification as GQLNotification,
@@ -62,6 +63,11 @@ export type IntentWithGraph = Prisma.IntentGetPayload<{
     owner: { include: { profile: true } }; // właściciel (ownerId)
     canceledBy: { include: { profile: true } }; // kto anulował
     deletedBy: { include: { profile: true } }; // kto usunął
+    sponsorship: {
+      include: {
+        sponsor: { include: { profile: true } };
+      };
+    };
   };
 }>;
 
@@ -601,6 +607,7 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
 
     // Media
     coverKey: (i as any).coverKey ?? null,
+    coverBlurhash: (i as any).coverBlurhash ?? null,
 
     // Privacy toggles (zwracamy zawsze)
     addressVisibility: i.addressVisibility as AddressVisibility,
@@ -630,6 +637,24 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     // Billing & Sponsorship
     sponsorshipPlan: i.sponsorshipPlan as IntentPlan,
     boostedAt: i.boostedAt ?? null,
+    sponsorship: i.sponsorship
+      ? ({
+          plan: i.sponsorship.plan as IntentPlan,
+          status: i.sponsorship.status as any,
+          startsAt: i.sponsorship.startsAt ?? null,
+          endsAt: i.sponsorship.endsAt ?? null,
+          boostsTotal: i.sponsorship.boostsTotal,
+          boostsUsed: i.sponsorship.boostsUsed,
+          localPushesTotal: i.sponsorship.localPushesTotal,
+          localPushesUsed: i.sponsorship.localPushesUsed,
+          sponsor: i.sponsorship.sponsor
+            ? {
+                id: i.sponsorship.sponsor.id,
+                name: i.sponsorship.sponsor.name,
+              }
+            : null,
+        } as any)
+      : null,
 
     // Collections (safe access - may be undefined if not included)
     categories: (i.categories ?? []).map(mapCategory),
@@ -653,7 +678,6 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     isHybrid: i.meetingKind === 'HYBRID',
     isOnsite: i.meetingKind === 'ONSITE',
 
-    boostedAt: i.boostedAt ?? null,
     highlightColor: i.highlightColor ?? null,
 
     createdAt: i.createdAt,

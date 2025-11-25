@@ -203,6 +203,20 @@ fragment IntentDetail on Intent {
       ...UserLight
     }
   }
+  sponsorship {
+    plan
+    status
+    startsAt
+    endsAt
+    boostsTotal
+    boostsUsed
+    localPushesTotal
+    localPushesUsed
+    sponsor {
+      id
+      name
+    }
+  }
 }
 
 # -----------------------------------------------------------------------------

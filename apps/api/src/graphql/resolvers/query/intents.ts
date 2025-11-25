@@ -25,6 +25,11 @@ const INTENT_INCLUDE = {
   owner: { include: { profile: true } },
   canceledBy: { include: { profile: true } },
   deletedBy: { include: { profile: true } },
+  sponsorship: {
+    include: {
+      sponsor: { include: { profile: true } },
+    },
+  },
   // jeśli masz relację w Prisma:
   // joinManuallyClosedBy: true,
 } satisfies Prisma.IntentInclude;
@@ -552,6 +557,7 @@ export const intentQuery: QueryResolvers['intent'] = resolverWithMetrics(
       where: { id },
       include: INTENT_INCLUDE,
     });
+
     return row ? mapIntent(row, user?.id) : null;
   }
 );

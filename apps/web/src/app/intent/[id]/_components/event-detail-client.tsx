@@ -48,7 +48,13 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const { data, isLoading, error, refetch } = useIntentDetailQuery({
     id: intentId,
   });
+
   const { data: authData } = useMeQuery();
+
+  console.log('Intent data:', data?.intent);
+  console.log('Highlight color:', data?.intent?.highlightColor);
+  console.log('Boosted at:', data?.intent?.boostedAt);
+  console.log('Sponsorship:', data?.intent?.sponsorship);
 
   // Modal states
   const [cancelId, setCancelId] = useState<string | null>(null);
@@ -59,7 +65,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const [shareOpen, setShareOpen] = useState(false);
 
   // Get intent and user data (safe to access after hooks)
-  const intent = data?.intent; // Extended intent with members, sponsorship, inviteLinks
+  // Type assertion needed due to GraphQL codegen type inference issues
+  const intent = data?.intent as typeof data extends { intent: infer T }
+    ? T
+    : any;
   const currentUserId = authData?.me?.id;
 
   // Check user membership status - must be declared before early returns
@@ -199,6 +208,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           localPushesUsed: intent.sponsorship.localPushesUsed,
         }
       : undefined,
+    // Highlight and boost
+    highlightColor: intent.highlightColor,
+    boostedAt: intent.boostedAt,
     // TODO: inviteLinks field not in GraphQL fragment yet
     // inviteLinks: intent.inviteLinks?.map((link: any) => ({
     //   code: link.code,

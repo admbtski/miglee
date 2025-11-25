@@ -41,7 +41,7 @@ export function EventActions({ event }: EventActionsProps) {
   return (
     <div className="space-y-4">
       {/* Quick Actions */}
-      <div className="rounded-2xl border border-zinc-200 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div className="p-4 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Akcje
         </h3>
@@ -50,18 +50,18 @@ export function EventActions({ event }: EventActionsProps) {
           {/* Share */}
           <button
             onClick={handleShare}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm transition-colors rounded-xl text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            <Share2 className="h-4 w-4" />
+            <Share2 className="w-4 h-4" />
             <span>Udostępnij</span>
           </button>
 
           {/* Copy Link */}
           <button
             onClick={handleCopyLink}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm transition-colors rounded-xl text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            <LinkIcon className="h-4 w-4" />
+            <LinkIcon className="w-4 h-4" />
             <span>Kopiuj link</span>
           </button>
 
@@ -69,9 +69,9 @@ export function EventActions({ event }: EventActionsProps) {
           <button
             onClick={() => setChatOpen(true)}
             disabled={!event.userMembership?.isJoined}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm transition-colors rounded-xl text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            <MessageCircle className="h-4 w-4" />
+            <MessageCircle className="w-4 h-4" />
             <span>Otwórz czat</span>
             {event.messagesCount > 0 && (
               <span className="ml-auto rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">
@@ -83,18 +83,18 @@ export function EventActions({ event }: EventActionsProps) {
           {/* Mute */}
           <button
             disabled
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm transition-colors rounded-xl text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
-            <BellOff className="h-4 w-4" />
+            <BellOff className="w-4 h-4" />
             <span>Wycisz powiadomienia</span>
           </button>
 
           {/* Report */}
           <button
             onClick={() => setReportOpen(true)}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-red-600 transition-colors rounded-xl hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
           >
-            <Flag className="h-4 w-4" />
+            <Flag className="w-4 h-4" />
             <span>Zgłoś</span>
           </button>
         </div>
@@ -102,7 +102,7 @@ export function EventActions({ event }: EventActionsProps) {
 
       {/* Invite Links (Owner/Mod only) */}
       {event.inviteLinks && event.inviteLinks.length > 0 && (
-        <div className="rounded-2xl border border-zinc-200 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="p-4 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
           <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Linki zaproszeń
           </h3>
@@ -111,10 +111,10 @@ export function EventActions({ event }: EventActionsProps) {
             {event.inviteLinks.map((link) => (
               <div
                 key={link.code}
-                className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900"
+                className="p-3 border rounded-xl border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900"
               >
-                <div className="mb-1 flex items-center justify-between">
-                  <code className="text-xs font-mono text-zinc-900 dark:text-zinc-100">
+                <div className="flex items-center justify-between mb-1">
+                  <code className="font-mono text-xs text-zinc-900 dark:text-zinc-100">
                     {link.code}
                   </code>
                   <button
@@ -151,9 +151,9 @@ export function EventActions({ event }: EventActionsProps) {
       {event.sponsorship?.status === 'ACTIVE' &&
         (event.sponsorship.plan === 'PLUS' ||
           event.sponsorship.plan === 'PRO') && (
-          <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950">
-            <div className="mb-2 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <div className="p-4 border border-yellow-200 rounded-2xl bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
               <h3 className="text-sm font-semibold text-yellow-900 dark:text-yellow-100">
                 Wydarzenie wyróżnione
               </h3>
@@ -164,12 +164,6 @@ export function EventActions({ event }: EventActionsProps) {
                 {event.sponsorship.sponsor.name}
               </span>
             </p>
-            {event.sponsorship.endsAt && (
-              <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
-                Wyróżnienie do{' '}
-                {new Date(event.sponsorship.endsAt).toLocaleDateString('pl-PL')}
-              </p>
-            )}
           </div>
         )}
 

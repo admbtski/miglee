@@ -1,26 +1,23 @@
-import type { EventDetailsData } from '@/types/event-details';
-import { formatDate, formatTime } from '@/lib/utils/date-format';
-import Link from 'next/link';
-import {
-  MapPin,
-  Calendar,
-  Users,
-  Sparkles,
-  XCircle,
-  Trash2,
-  Wifi,
-  Video,
-  MapPinned,
-} from 'lucide-react';
-import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
-import { PlanBadge } from '@/components/ui/plan-badge';
-import { planAnimationConfig } from '@/components/ui/plan-animations';
-import { Level } from '@/lib/api/__generated__/react-query-update';
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { VerifiedBadge } from '@/components/ui/verified-badge';
-import { buildAvatarUrl } from '@/lib/media/url';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
+import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
+import { VerifiedBadge } from '@/components/ui/verified-badge';
+import { Level } from '@/lib/api/__generated__/react-query-update';
+import { HIGHLIGHT_PRESETS } from '@/lib/billing-constants';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { formatDate, formatTime } from '@/lib/utils/date-format';
+import type { EventDetailsData } from '@/types/event-details';
+import {
+  Calendar,
+  MapPin,
+  MapPinned,
+  Trash2,
+  Users,
+  Video,
+  Wifi,
+  XCircle,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useMemo } from 'react';
 
 type EventHeroProps = {
   event: EventDetailsData;
@@ -30,10 +27,58 @@ export function EventHero({ event }: EventHeroProps) {
   const startDate = new Date(event.startISO);
   const isCanceled = !!event.canceledAt;
   const isDeleted = !!event.deletedAt;
-  const isHighlighted =
-    event.sponsorship?.status === 'ACTIVE' &&
-    (event.sponsorship?.plan === 'PLUS' || event.sponsorship?.plan === 'PRO');
+
+  // Check if boost is active (within 24 hours)
+  const isBoosted = useMemo(() => {
+    if (!event.boostedAt) return false;
+    const boostedTime = new Date(event.boostedAt).getTime();
+    const now = Date.now();
+    const elapsed = now - boostedTime;
+    return elapsed < 24 * 60 * 60 * 1000; // 24 hours in ms
+  }, [event.boostedAt]);
+
   const plan = event.sponsorship?.plan;
+
+  // Get highlight ring classes based on highlightColor
+  const highlightRingClasses = useMemo(() => {
+    if (isCanceled || isDeleted || !isBoosted || !event.highlightColor) {
+      return { className: '', style: undefined };
+    }
+
+    // Check if it's a preset color
+    const preset = HIGHLIGHT_PRESETS.find(
+      (p) => p.hex.toLowerCase() === event.highlightColor?.toLowerCase()
+    );
+
+    if (preset) {
+      return {
+        className: `ring-2 ${preset.ring} ${preset.shadow}`,
+        style: undefined,
+      };
+    }
+
+    // Custom color - use inline styles for dynamic colors
+    const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result && result[1] && result[2] && result[3]
+        ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+          }
+        : { r: 245, g: 158, b: 11 }; // fallback to amber
+    };
+
+    const rgb = hexToRgb(event.highlightColor);
+
+    return {
+      className: 'ring-2',
+      style: {
+        '--highlight-color': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
+        boxShadow: `0 0 0 2px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3), 0 0 16px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35), 0 0 48px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`,
+      } as React.CSSProperties,
+    };
+  }, [isBoosted, isCanceled, isDeleted, event.highlightColor]);
 
   const sortedLevels = useMemo(
     () => sortLevels(event.levels as Level[]),
@@ -79,54 +124,14 @@ export function EventHero({ event }: EventHeroProps) {
   ]);
 
   return (
-    <div className="relative rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/40">
-      {/* Top Right Corner - Favourite Button & Plan Badge */}
-      <div className="absolute -top-2 -right-2 z-10 flex items-start gap-1">
-        {/* Plan Badge with continuous pulse animation */}
-        {plan && (
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{
-              scale: planAnimationConfig.badge.scaleRange,
-              rotate: planAnimationConfig.badge.rotateRange,
-            }}
-            transition={{
-              scale: {
-                duration: planAnimationConfig.badge.duration,
-                repeat: Infinity,
-                repeatDelay: planAnimationConfig.badge.repeatDelay,
-                ease: planAnimationConfig.badge.easing,
-              },
-              rotate: {
-                duration: planAnimationConfig.badge.duration,
-                repeat: Infinity,
-                repeatDelay: planAnimationConfig.badge.repeatDelay,
-                ease: planAnimationConfig.badge.easing,
-              },
-            }}
-            whileHover={{
-              scale: planAnimationConfig.badge.hoverScale,
-              rotate: planAnimationConfig.badge.hoverRotateRange,
-              transition: { duration: planAnimationConfig.badge.hoverDuration },
-            }}
-          >
-            <PlanBadge plan={plan as any} size="md" variant="iconText" />
-          </motion.div>
-        )}
-      </div>
-
-      {/* Highlight Ribbon */}
-      {isHighlighted && (
-        <div className="absolute -right-2 -top-14 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
-          <Sparkles className="inline h-4 w-4 mr-1" />
-          Wyróżnione
-        </div>
-      )}
-
+    <div
+      className={`relative rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightRingClasses.className}`}
+      style={highlightRingClasses.style}
+    >
       {/* Canceled/Deleted Banner */}
       {isCanceled && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-red-900 dark:bg-red-950 dark:text-red-100">
-          <XCircle className="h-5 w-5 flex-shrink-0" />
+        <div className="flex items-center gap-2 p-3 mb-4 text-red-900 rounded-xl bg-red-50 dark:bg-red-950 dark:text-red-100">
+          <XCircle className="flex-shrink-0 w-5 h-5" />
           <div>
             <p className="font-semibold">Wydarzenie anulowane</p>
             {event.cancelReason && (
@@ -137,8 +142,8 @@ export function EventHero({ event }: EventHeroProps) {
       )}
 
       {isDeleted && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl bg-zinc-100 p-3 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
-          <Trash2 className="h-5 w-5 flex-shrink-0" />
+        <div className="flex items-center gap-2 p-3 mb-4 rounded-xl bg-zinc-100 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
+          <Trash2 className="flex-shrink-0 w-5 h-5" />
           <div>
             <p className="font-semibold">Wydarzenie usunięte</p>
             {event.deleteReason && (
@@ -154,7 +159,7 @@ export function EventHero({ event }: EventHeroProps) {
       </h1>
 
       {/* Organizer */}
-      <div className="mt-3 flex items-center gap-3">
+      <div className="flex items-center gap-3 mt-3">
         <Link
           href={`/u/${event.organizer.name}`}
           className="flex-shrink-0"
@@ -167,10 +172,10 @@ export function EventHero({ event }: EventHeroProps) {
               alt={event.organizer.displayName || event.organizer.name}
               width={36}
               height={36}
-              className="h-9 w-9 rounded-full border border-zinc-200 object-cover transition-opacity hover:opacity-80 dark:border-zinc-700"
+              className="object-cover transition-opacity border rounded-full h-9 w-9 border-zinc-200 hover:opacity-80 dark:border-zinc-700"
             />
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-zinc-200 transition-opacity hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700">
+            <div className="flex items-center justify-center transition-opacity border rounded-full h-9 w-9 border-zinc-200 bg-zinc-200 hover:opacity-80 dark:border-zinc-700 dark:bg-zinc-700">
               <span className="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
                 {(event.organizer.displayName ||
                   event.organizer.name)[0]?.toUpperCase()}
@@ -185,7 +190,7 @@ export function EventHero({ event }: EventHeroProps) {
           <div className="flex items-center gap-1.5">
             <Link
               href={`/u/${event.organizer.name}`}
-              className="text-sm font-medium text-zinc-800 transition-colors hover:text-blue-600 dark:text-zinc-200 dark:hover:text-blue-400"
+              className="text-sm font-medium transition-colors text-zinc-800 hover:text-blue-600 dark:text-zinc-200 dark:hover:text-blue-400"
             >
               {event.organizer.displayName || event.organizer.name}
             </Link>
@@ -200,7 +205,7 @@ export function EventHero({ event }: EventHeroProps) {
           </div>
           <Link
             href={`/u/${event.organizer.name}`}
-            className="text-xs text-zinc-500 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+            className="text-xs transition-colors text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
           >
             @{event.organizer.name}
           </Link>
@@ -213,7 +218,7 @@ export function EventHero({ event }: EventHeroProps) {
         <div className="flex flex-wrap gap-3 text-[13px] text-zinc-700 dark:text-zinc-300">
           {/* Date */}
           <span className="inline-flex items-center gap-1.5">
-            <Calendar className="h-4 w-4 opacity-70" />
+            <Calendar className="w-4 h-4 opacity-70" />
             {formatDate(startDate)} o {formatTime(startDate)}
           </span>
 
@@ -226,7 +231,7 @@ export function EventHero({ event }: EventHeroProps) {
             className="inline-flex items-center gap-1.5"
             title={eventSize.description}
           >
-            <Users className="h-4 w-4 opacity-70" />
+            <Users className="w-4 h-4 opacity-70" />
             {event.joinedCount} / {event.max} uczestników
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               ({eventSize.label})
@@ -239,7 +244,7 @@ export function EventHero({ event }: EventHeroProps) {
           {/* Physical Location - only if visible */}
           {canSeeLocation && (
             <span className="inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
-              <MapPinned className="h-4 w-4 opacity-70 text-blue-600 dark:text-blue-400" />
+              <MapPinned className="w-4 h-4 text-blue-600 opacity-70 dark:text-blue-400" />
               <span className="truncate max-w-[300px]">{event.address}</span>
             </span>
           )}
@@ -249,7 +254,7 @@ export function EventHero({ event }: EventHeroProps) {
             event.meetingKind !== 'ONLINE' &&
             event.address && (
               <span className="inline-flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
-                <MapPin className="h-4 w-4 opacity-70" />
+                <MapPin className="w-4 h-4 opacity-70" />
                 <span className="text-xs">
                   Lokalizacja{' '}
                   {event.addressVisibility === 'AFTER_JOIN'
@@ -270,9 +275,9 @@ export function EventHero({ event }: EventHeroProps) {
               )}
               <span className="inline-flex items-center gap-1.5 text-green-700 dark:text-green-400">
                 {event.meetingKind === 'ONLINE' ? (
-                  <Video className="h-4 w-4" />
+                  <Video className="w-4 h-4" />
                 ) : (
-                  <Wifi className="h-4 w-4" />
+                  <Wifi className="w-4 h-4" />
                 )}
                 <span className="font-medium">
                   {event.meetingKind === 'ONLINE'
@@ -286,7 +291,7 @@ export function EventHero({ event }: EventHeroProps) {
       </div>
 
       {/* Badges */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mt-4">
         {/* Join Mode Badge */}
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -306,13 +311,13 @@ export function EventHero({ event }: EventHeroProps) {
 
         {/* Visibility Badge */}
         {event.visibility === 'HIDDEN' && (
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+          <span className="px-3 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-200">
             Nieindeksowane
           </span>
         )}
 
         {/* Meeting Kind Badge */}
-        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+        <span className="px-3 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-100">
           {event.meetingKind === 'ONSITE'
             ? 'Stacjonarne'
             : event.meetingKind === 'ONLINE'
