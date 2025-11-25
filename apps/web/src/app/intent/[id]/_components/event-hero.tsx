@@ -15,9 +15,11 @@ import {
   Video,
   Wifi,
   XCircle,
+  Sparkles,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 type EventHeroProps = {
   event: EventDetailsData;
@@ -37,7 +39,48 @@ export function EventHero({ event }: EventHeroProps) {
     return elapsed < 24 * 60 * 60 * 1000; // 24 hours in ms
   }, [event.boostedAt]);
 
-  const plan = event.sponsorship?.plan;
+  // Calculate remaining time for boost (24h countdown)
+  const [boostTimeLeft, setBoostTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!event.boostedAt || !isBoosted) {
+      setBoostTimeLeft(null);
+      return;
+    }
+
+    const updateTimeLeft = () => {
+      const boostedTime = new Date(event.boostedAt!).getTime();
+      const now = Date.now();
+      const elapsed = now - boostedTime;
+      const remaining = 24 * 60 * 60 * 1000 - elapsed; // 24 hours in ms
+
+      if (remaining <= 0) {
+        setBoostTimeLeft(null);
+      } else {
+        setBoostTimeLeft(remaining);
+      }
+    };
+
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 1000);
+
+    return () => clearInterval(interval);
+  }, [event.boostedAt, isBoosted]);
+
+  // Format remaining time for display
+  const formatTimeLeft = (ms: number): string => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  };
 
   // Get highlight ring classes based on highlightColor
   const highlightRingClasses = useMemo(() => {
@@ -149,6 +192,36 @@ export function EventHero({ event }: EventHeroProps) {
             {event.deleteReason && (
               <p className="text-sm">{event.deleteReason}</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Promoted Badge with Countdown */}
+      {isBoosted && boostTimeLeft !== null && (
+        <div className="flex items-center justify-between gap-3 p-4 mb-4 border rounded-xl bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200 dark:from-yellow-900/20 dark:to-orange-900/20 dark:border-yellow-800/50">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500">
+              <Sparkles className="w-5 h-5 text-white" strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-yellow-900 dark:text-yellow-100">
+                🔥 Wydarzenie promowane
+              </p>
+              <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                Wyróżnione wyżej w listingu wydarzeń
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/60 dark:bg-black/20">
+            <Clock className="w-4 h-4 text-yellow-700 dark:text-yellow-300" />
+            <div className="text-right">
+              <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400">
+                Pozostało
+              </p>
+              <p className="text-sm font-bold font-mono text-yellow-900 dark:text-yellow-100">
+                {formatTimeLeft(boostTimeLeft)}
+              </p>
+            </div>
           </div>
         </div>
       )}
