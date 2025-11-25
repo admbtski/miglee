@@ -14,6 +14,10 @@ import {
   useBoost,
   useLocalPush,
 } from '../../../lib/billing';
+import {
+  getReceiptUrlFromPaymentIntent,
+  getInvoiceUrlFromSubscription,
+} from '../../../lib/billing/stripe.service';
 import { logger } from '../../../lib/pino';
 
 /**
@@ -231,3 +235,86 @@ export const useLocalPushMutation: MutationResolvers['useLocalPush'] = async (
 
   return true;
 };
+
+/**
+ * Get receipt URL for a user plan period
+ */
+export const getUserPlanReceiptUrlMutation: MutationResolvers['getUserPlanReceiptUrl'] =
+  async (_parent, args, { user }) => {
+    const userId = user?.id;
+    const { periodId } = args;
+
+    if (!userId) {
+      throw new Error('Authentication required');
+    }
+
+    // Find the period and verify it belongs to the user
+    const period = await prisma.userPlanPeriod.findUnique({
+      where: { id: periodId },
+    });
+
+    if (!period || period.userId !== userId) {
+      throw new Error('Period not found or unauthorized');
+    }
+
+    // Try to get receipt from payment intent (for one-off payments)
+    if (period.stripePaymentIntentId) {
+      const url = await getReceiptUrlFromPaymentIntent(
+        period.stripePaymentIntentId
+      );
+      if (url) {
+        logger.info({ userId, periodId, url }, 'Retrieved receipt URL');
+        return url;
+      }
+    }
+
+    // Try to get invoice from subscription
+    if (period.stripeSubscriptionId) {
+      const url = await getInvoiceUrlFromSubscription(
+        period.stripeSubscriptionId
+      );
+      if (url) {
+        logger.info({ userId, periodId, url }, 'Retrieved invoice URL');
+        return url;
+      }
+    }
+
+    logger.warn({ userId, periodId }, 'No receipt/invoice URL found');
+    return null;
+  };
+
+/**
+ * Get receipt URL for an event sponsorship period
+ */
+export const getEventSponsorshipReceiptUrlMutation: MutationResolvers['getEventSponsorshipReceiptUrl'] =
+  async (_parent, args, { user }) => {
+    const userId = user?.id;
+    const { periodId } = args;
+
+    if (!userId) {
+      throw new Error('Authentication required');
+    }
+
+    // Find the period and verify it belongs to the user
+    const period = await prisma.eventSponsorshipPeriod.findUnique({
+      where: { id: periodId },
+    });
+
+    if (!period || period.sponsorId !== userId) {
+      throw new Error('Period not found or unauthorized');
+    }
+
+    // Try to get receipt from payment intent
+    if (period.stripePaymentIntentId) {
+      const url = await getReceiptUrlFromPaymentIntent(
+        period.stripePaymentIntentId
+      );
+      if (url) {
+        logger.info({ userId, periodId, url }, 'Retrieved receipt URL');
+        return url;
+      }
+    }
+
+    logger.warn({ userId, periodId }, 'No receipt URL found');
+    return null;
+  };

@@ -43,6 +43,12 @@ import {
   UseLocalPushDocument,
   type UseLocalPushMutation,
   type UseLocalPushMutationVariables,
+  GetUserPlanReceiptUrlDocument,
+  type GetUserPlanReceiptUrlMutation,
+  type GetUserPlanReceiptUrlMutationVariables,
+  GetEventSponsorshipReceiptUrlDocument,
+  type GetEventSponsorshipReceiptUrlMutation,
+  type GetEventSponsorshipReceiptUrlMutationVariables,
 } from './__generated__/react-query-update';
 import { gqlClient } from './client';
 
@@ -317,6 +323,40 @@ export function useLocalPush(
         queryKey: billingKeys.eventSponsorship(variables.intentId),
       });
     },
+    ...options,
+  });
+}
+
+/**
+ * Get receipt URL for a user plan period
+ */
+export function useGetUserPlanReceiptUrl(
+  options?: UseMutationOptions<
+    GetUserPlanReceiptUrlMutation,
+    unknown,
+    GetUserPlanReceiptUrlMutationVariables
+  >
+) {
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(GetUserPlanReceiptUrlDocument, variables),
+    ...options,
+  });
+}
+
+/**
+ * Get receipt URL for an event sponsorship period
+ */
+export function useGetEventSponsorshipReceiptUrl(
+  options?: UseMutationOptions<
+    GetEventSponsorshipReceiptUrlMutation,
+    unknown,
+    GetEventSponsorshipReceiptUrlMutationVariables
+  >
+) {
+  return useMutation({
+    mutationFn: async (variables) =>
+      gqlClient.request(GetEventSponsorshipReceiptUrlDocument, variables),
     ...options,
   });
 }

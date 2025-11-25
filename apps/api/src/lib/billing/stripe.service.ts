@@ -55,11 +55,13 @@ export async function getOrCreateStripeCustomer(
 
   if (existingCustomers.data.length > 0) {
     const customer = existingCustomers.data[0];
-    logger.info(
-      { customerId: customer.id, userId },
-      'Found existing Stripe customer'
-    );
-    return customer.id;
+    if (customer?.id) {
+      logger.info(
+        { customerId: customer.id, userId },
+        'Found existing Stripe customer'
+      );
+      return customer.id;
+    }
   }
 
   // Create new customer
@@ -171,6 +173,77 @@ export function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
+}
+
+// ========================================================================================
+// HELPER: Get Invoice/Receipt URL
+// ========================================================================================
+
+/**
+ * Get receipt URL from Stripe PaymentIntent
+ */
+export async function getReceiptUrlFromPaymentIntent(
+  paymentIntentId: string
+): Promise<string | null> {
+  const stripe = getStripe();
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      paymentIntentId,
+      {
+        expand: ['latest_charge'],
+      }
+    );
+
+    if (paymentIntent.latest_charge) {
+      const charge =
+        typeof paymentIntent.latest_charge === 'string'
+          ? await stripe.charges.retrieve(paymentIntent.latest_charge)
+          : paymentIntent.latest_charge;
+
+      return charge.receipt_url || null;
+    }
+
+    return null;
+  } catch (error: any) {
+    logger.error(
+      { paymentIntentId, error: error.message },
+      'Failed to retrieve receipt URL from PaymentIntent'
+    );
+    return null;
+  }
+}
+
+/**
+ * Get invoice URL from Stripe Subscription
+ */
+export async function getInvoiceUrlFromSubscription(
+  subscriptionId: string
+): Promise<string | null> {
+  const stripe = getStripe();
+
+  try {
+    // Get the most recent invoice for this subscription
+    const invoices = await stripe.invoices.list({
+      subscription: subscriptionId,
+      limit: 1,
+    });
+
+    if (invoices.data.length > 0) {
+      const invoice = invoices.data[0];
+      if (invoice) {
+        return invoice.hosted_invoice_url || invoice.invoice_pdf || null;
+      }
+    }
+
+    return null;
+  } catch (error: any) {
+    logger.error(
+      { subscriptionId, error: error.message },
+      'Failed to retrieve invoice URL from Subscription'
+    );
+    return null;
+  }
 }
 
 // ========================================================================================

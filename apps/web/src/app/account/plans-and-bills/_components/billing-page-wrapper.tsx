@@ -9,6 +9,8 @@ import {
   useMyPlanPeriods,
   useMyEventSponsorships,
   useCancelSubscription,
+  useGetUserPlanReceiptUrl,
+  useGetEventSponsorshipReceiptUrl,
 } from '@/lib/api/billing';
 import { Badge, Progress, Th, Td, SmallButton } from './ui';
 import { CancelSubscriptionModal } from './cancel-subscription-modal';
@@ -26,6 +28,8 @@ export function BillingPageWrapper() {
       limit: 50,
     });
   const cancelSubscription = useCancelSubscription();
+  const getUserPlanReceiptUrl = useGetUserPlanReceiptUrl();
+  const getEventSponsorshipReceiptUrl = useGetEventSponsorshipReceiptUrl();
 
   const [cancelSubOpen, setCancelSubOpen] = React.useState(false);
 
@@ -41,14 +45,60 @@ export function BillingPageWrapper() {
     }
   };
 
-  const handleViewReceipt = () => {
-    // TODO: Implement view receipt functionality
-    toast.info('Przeglądanie faktury - funkcja wkrótce dostępna');
+  const handleViewReceipt = async (
+    periodId: string,
+    type: 'user-plan' | 'event-sponsorship'
+  ) => {
+    try {
+      let url: string | null | undefined = null;
+
+      if (type === 'user-plan') {
+        const result = await getUserPlanReceiptUrl.mutateAsync({ periodId });
+        url = result.getUserPlanReceiptUrl;
+      } else {
+        const result = await getEventSponsorshipReceiptUrl.mutateAsync({
+          periodId,
+        });
+        url = result.getEventSponsorshipReceiptUrl;
+      }
+
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error('Faktura nie jest jeszcze dostępna');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Nie udało się pobrać faktury');
+    }
   };
 
-  const handleDownloadReceipt = () => {
-    // TODO: Implement download receipt functionality
-    toast.success('Pobieranie faktury - funkcja wkrótce dostępna');
+  const handleDownloadReceipt = async (
+    periodId: string,
+    type: 'user-plan' | 'event-sponsorship'
+  ) => {
+    try {
+      let url: string | null | undefined = null;
+
+      if (type === 'user-plan') {
+        const result = await getUserPlanReceiptUrl.mutateAsync({ periodId });
+        url = result.getUserPlanReceiptUrl;
+      } else {
+        const result = await getEventSponsorshipReceiptUrl.mutateAsync({
+          periodId,
+        });
+        url = result.getEventSponsorshipReceiptUrl;
+      }
+
+      if (url) {
+        // Open in new tab - browser will handle download if PDF
+        window.open(url, '_blank', 'noopener,noreferrer');
+        toast.success('Otwieranie faktury...');
+      } else {
+        toast.error('Faktura nie jest jeszcze dostępna');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Nie udało się pobrać faktury');
+    }
   };
 
   if (planLoading || subLoading || periodsLoading || sponsorshipsLoading) {
@@ -398,11 +448,19 @@ export function BillingPageWrapper() {
                         </Td>
                         <Td className="pr-6 text-right md:pr-8">
                           <div className="flex justify-end gap-2">
-                            <SmallButton onClick={handleViewReceipt}>
+                            <SmallButton
+                              onClick={() =>
+                                handleViewReceipt(item.id, 'user-plan')
+                              }
+                            >
                               <Eye className="w-4 h-4" />
                               <span className="hidden sm:inline">Podgląd</span>
                             </SmallButton>
-                            <SmallButton onClick={handleDownloadReceipt}>
+                            <SmallButton
+                              onClick={() =>
+                                handleDownloadReceipt(item.id, 'user-plan')
+                              }
+                            >
                               <Download className="w-4 h-4" />
                               <span className="hidden sm:inline">Faktura</span>
                             </SmallButton>
@@ -468,11 +526,22 @@ export function BillingPageWrapper() {
                         </Td>
                         <Td className="pr-6 text-right md:pr-8">
                           <div className="flex justify-end gap-2">
-                            <SmallButton onClick={handleViewReceipt}>
+                            <SmallButton
+                              onClick={() =>
+                                handleViewReceipt(item.id, 'event-sponsorship')
+                              }
+                            >
                               <Eye className="w-4 h-4" />
                               <span className="hidden sm:inline">Podgląd</span>
                             </SmallButton>
-                            <SmallButton onClick={handleDownloadReceipt}>
+                            <SmallButton
+                              onClick={() =>
+                                handleDownloadReceipt(
+                                  item.id,
+                                  'event-sponsorship'
+                                )
+                              }
+                            >
                               <Download className="w-4 h-4" />
                               <span className="hidden sm:inline">Faktura</span>
                             </SmallButton>

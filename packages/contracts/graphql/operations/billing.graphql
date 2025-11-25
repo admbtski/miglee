@@ -83,3 +83,15 @@ mutation UseBoost($intentId: ID!) {
 mutation UseLocalPush($intentId: ID!) {
   useLocalPush(intentId: $intentId)
 }
+
+# =============================================================================
+# Receipt/Invoice URLs
+# =============================================================================
+
+mutation GetUserPlanReceiptUrl($periodId: ID!) {
+  getUserPlanReceiptUrl(periodId: $periodId)
+}
+
+mutation GetEventSponsorshipReceiptUrl($periodId: ID!) {
+  getEventSponsorshipReceiptUrl(periodId: $periodId)
+}

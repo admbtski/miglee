@@ -2008,6 +2008,12 @@ type Mutation {
   "Reactivate a subscription that was set to cancel at period end"
   reactivateSubscription: Boolean!
 
+  "Get receipt URL for a user plan period"
+  getUserPlanReceiptUrl(periodId: ID!): String
+
+  "Get receipt URL for an event sponsorship period"
+  getEventSponsorshipReceiptUrl(periodId: ID!): String
+
   "Use a boost for event sponsorship"
   useBoost(intentId: ID!): Boolean!
 
