@@ -90,9 +90,28 @@ export function BillingPageWrapper() {
       }
 
       if (url) {
-        // Open in new tab - browser will handle download if PDF
-        window.open(url, '_blank', 'noopener,noreferrer');
-        toast.success('Otwieranie faktury...');
+        // Try to force download using fetch + blob
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = `faktura-${periodId}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Cleanup blob URL
+          window.URL.revokeObjectURL(blobUrl);
+
+          toast.success('Faktura została pobrana');
+        } catch (fetchError) {
+          // Fallback: open in new tab if fetch fails (CORS issues with Stripe URLs)
+          window.open(url, '_blank', 'noopener,noreferrer');
+          toast.success('Otwieranie faktury w nowej karcie...');
+        }
       } else {
         toast.error('Faktura nie jest jeszcze dostępna');
       }
