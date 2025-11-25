@@ -43,11 +43,48 @@ import {
   isBoostActive,
   getHighlightBackgroundStyle,
 } from '@/lib/utils/is-boost-active';
-import { EventHighlightProvider } from './event-highlight-context';
 
 type EventDetailClientProps = {
   intentId: string;
 };
+
+/**
+ * Get highlight ring classes based on color
+ * @param highlightColor - Hex color code (e.g., "#f59e0b")
+ * @param isBoosted - Whether event is boosted
+ * @returns CSS classes and inline style
+ */
+function getHighlightRingClasses(
+  highlightColor: string | null | undefined,
+  isBoosted: boolean
+): { className: string; style?: React.CSSProperties } {
+  if (!isBoosted || !highlightColor) {
+    return { className: '' };
+  }
+
+  // Helper to convert HEX to RGB
+  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result && result[1] && result[2] && result[3]
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 245, g: 158, b: 11 }; // fallback to amber
+  };
+
+  const rgb = hexToRgb(highlightColor);
+
+  // Always use inline styles for consistent, prominent shadow effect
+  return {
+    className: 'ring-4',
+    style: {
+      '--tw-ring-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`,
+      boxShadow: `0 0 0 4px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5), 0 0 24px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6), 0 0 64px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`,
+    } as React.CSSProperties,
+  };
+}
 
 export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const { data, isLoading, error, refetch } = useIntentDetailQuery({
@@ -102,6 +139,12 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const navbarHighlightStyle = useMemo(
     () =>
       getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'subtle'),
+    [intent?.highlightColor, isBoosted]
+  );
+
+  // Get highlight ring for cover image (must be before early returns)
+  const coverHighlightRing = useMemo(
+    () => getHighlightRingClasses(intent?.highlightColor, isBoosted),
     [intent?.highlightColor, isBoosted]
   );
 
@@ -297,7 +340,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       */}
       <div className="container max-w-6xl px-4 py-6 mx-auto">
         <div className="mb-6">
-          <div className="relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
+          <div
+            className={`relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)] transition-all duration-500 ${coverHighlightRing.className}`}
+            style={coverHighlightRing.style}
+          >
             {/* Background Image */}
             {eventData.coverKey ? (
               <BlurHashImage

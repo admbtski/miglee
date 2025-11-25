@@ -76,19 +76,27 @@ type Mutation {
    - Smooth color transition with 500ms duration
    - Most elegant and professional approach
 
-2. **Category Tags Colored Background**
+2. **Cover Image Highlight Ring**
+   - Hero cover image gets colored ring border when boosted
+   - Thicker ring (4px) with glowing shadow effect
+   - Supports preset colors (blue, purple, pink, orange) with Tailwind classes
+   - Supports custom HEX colors with dynamic inline styles
+   - Smooth transition with 500ms duration
+   - More prominent than card rings for hero impact
+
+3. **Category Tags Colored Background**
    - Category badges use highlight color as full background when boosted
    - 95% opacity for vibrant but readable effect
    - Replaces default `bg-black/40` background
    - Makes tags stand out clearly against cover photo
 
-3. **Event Hero Card - Highlight Ring Effect**
+4. **Event Hero Card - Highlight Ring Effect**
    - Shows colored border when event is boosted AND has a highlight color
    - Supports 4 preset colors with predefined Tailwind classes
    - Supports custom HEX colors with dynamic inline styles
    - Creates a glowing shadow effect matching the highlight color
 
-4. **Promoted Badge with Countdown**
+5. **Promoted Badge with Countdown**
    - Displays when boost is active (within 24 hours of `boostedAt`)
    - Shows real-time countdown timer (updates every second)
    - Format: `Xh Ym` (hours/minutes) or `Ym Xs` (minutes/seconds) or `Xs` (seconds only)
@@ -127,6 +135,34 @@ useEffect(() => {
 
 ```tsx
 import { isBoostActive, getHighlightBackgroundStyle } from '@/lib/utils/is-boost-active';
+import { HIGHLIGHT_PRESETS } from '@/lib/billing-constants';
+
+// Helper function for ring styles (same as in event-card.tsx)
+function getHighlightRingClasses(
+  highlightColor: string | null | undefined,
+  isBoosted: boolean
+): { className: string; style?: React.CSSProperties } {
+  if (!isBoosted || !highlightColor) {
+    return { className: '' };
+  }
+
+  const preset = HIGHLIGHT_PRESETS.find(
+    (p) => p.hex.toLowerCase() === highlightColor.toLowerCase()
+  );
+
+  if (preset) {
+    return { className: `ring-4 ${preset.ring} ${preset.shadow}` };
+  }
+
+  // Custom color with inline styles
+  const rgb = hexToRgb(highlightColor);
+  return {
+    className: 'ring-4',
+    style: {
+      boxShadow: `0 0 0 4px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4), ...`,
+    },
+  };
+}
 
 // Check if boost is active (before early returns)
 const isBoosted = useMemo(
@@ -134,31 +170,38 @@ const isBoosted = useMemo(
   [intent?.boostedAt]
 );
 
-// Get subtle background style for entire page
+// Get background styles
 const subtleHighlightStyle = useMemo(
   () => getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'subtle'),
   [intent?.highlightColor, isBoosted]
 );
 
+// Get ring styles for cover
+const coverHighlightRing = useMemo(
+  () => getHighlightRingClasses(intent?.highlightColor, isBoosted),
+  [intent?.highlightColor, isBoosted]
+);
+
 // Apply to page root
 <div
-  className="min-h-screen pb-20 bg-zinc-50 ... transition-colors duration-500"
+  className="min-h-screen ... transition-colors duration-500"
   style={isBoosted ? subtleHighlightStyle : undefined}
 >
-  {/* Entire page content */}
-</div>
+
+// Apply to cover image (with ring)
+<div
+  className={`... transition-all duration-500 ${coverHighlightRing.className}`}
+  style={coverHighlightRing.style}
+>
 
 // Apply to category tags
 <span
-  className="... text-white rounded-full backdrop-blur-sm"
   style={
     isBoosted && intent?.highlightColor
       ? { backgroundColor: intent.highlightColor, opacity: 0.95 }
       : { backgroundColor: 'rgba(0, 0, 0, 0.4)' }
   }
 >
-  {cat.name}
-</span>
 ```
 
 ### Event Cards (`/` and other listings)
