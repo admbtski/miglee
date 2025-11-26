@@ -59,7 +59,9 @@ export function getHighlightBackgroundStyle(
       break;
   }
 
-  return {};
+  return {
+    // background: `linear-gradient(135deg, rgba(${rgb.r},${rgb.g},${rgb.b},${startOpacity}), rgba(${rgb.r},${rgb.g},${rgb.b},${endOpacity}))`,
+  };
 }
 
 /**
@@ -122,7 +124,7 @@ export function getCoverHighlightClasses(
   const rgb = hexToRgb(highlightColor);
 
   return {
-    className: 'ring-2',
+    className: 'ring-1',
     style: {
       '--tw-ring-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`,
       boxShadow: `0 0 0 1px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5), 0 0 24px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6), 0 0 64px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`,

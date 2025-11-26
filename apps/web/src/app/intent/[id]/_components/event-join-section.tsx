@@ -9,6 +9,7 @@ import {
   UserPlus,
   UserMinus,
   UserCheck,
+  MessageCircle,
 } from 'lucide-react';
 import {
   useRequestJoinIntentMutation,
@@ -27,9 +28,10 @@ import { JoinRequestModal } from '@/features/intents/components/join-request-mod
 
 type EventJoinSectionProps = {
   event: EventDetailsData;
+  onOpenChat?: () => void;
 };
 
-export function EventJoinSection({ event }: EventJoinSectionProps) {
+export function EventJoinSection({ event, onOpenChat }: EventJoinSectionProps) {
   const { joinState, userMembership } = event;
   const [isProcessing, setIsProcessing] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -477,6 +479,22 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
         >
           <buttonConfig.icon className="h-4 w-4" />
           {isProcessing ? 'Przetwarzanie...' : buttonConfig.label}
+        </button>
+      )}
+
+      {/* Chat Button - for joined members */}
+      {event.userMembership?.isJoined && onOpenChat && (
+        <button
+          onClick={onOpenChat}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-4 py-3 text-md font-medium text-blue-700 transition hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-900/50 outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span>Otwórz czat wydarzenia</span>
+          {event.messagesCount > 0 && (
+            <span className="ml-1 rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white dark:bg-blue-500">
+              {event.messagesCount}
+            </span>
+          )}
         </button>
       )}
 

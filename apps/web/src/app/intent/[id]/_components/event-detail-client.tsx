@@ -15,10 +15,13 @@ import {
   Users,
   Video,
   Wifi,
+  Flag,
+  MessageCircle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EventActions } from './event-actions';
 import { EventAdminPanel } from './event-admin-panel';
+import { EventChatModal } from './event-chat-modal';
 import { EventComments } from './event-comments';
 import { EventCountdownTimer } from './event-countdown-timer';
 import { EventDetailSkeleton } from './event-detail-skeleton';
@@ -31,6 +34,7 @@ import { EventMetadata } from './event-metadata';
 import { EventParticipants } from './event-participants';
 import { EventReviews } from './event-reviews';
 import { StickyJoinButton } from './sticky-join-button';
+import { ReportIntentModal } from './report-intent-modal';
 import { CancelIntentModals } from '@/app/account/intents/_components/cancel-intent-modals';
 import {
   CloseJoinModal,
@@ -63,6 +67,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const [reopenJoinId, setReopenJoinId] = useState<string | null>(null);
   const [closeJoinReason, setCloseJoinReason] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   // Get intent and user data (safe to access after hooks)
   // Type assertion needed due to GraphQL codegen type inference issues
@@ -333,6 +339,14 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
             {/* Action Buttons - Top Right Corner */}
             <div className="absolute z-10 flex items-center gap-2 top-4 right-4 md:top-6 md:right-6">
+              <button
+                onClick={() => setReportOpen(true)}
+                className="flex items-center justify-center w-10 h-10 transition-all rounded-full shadow-lg md:w-11 md:h-11 bg-white/90 hover:bg-white dark:bg-zinc-800/90 dark:hover:bg-zinc-800 backdrop-blur-sm hover:shadow-xl"
+                aria-label="Zgłoś wydarzenie"
+                title="Zgłoś wydarzenie"
+              >
+                <Flag className="w-4 h-4 text-red-600 dark:text-red-400 md:w-[18px] md:h-[18px]" />
+              </button>
               <ShareButton onClick={() => setShareOpen(true)} size="md" />
               <FavouriteButton
                 intentId={eventData.id}
@@ -593,7 +607,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               isDeleted={!!intent.deletedAt}
             />
 
-            <EventJoinSection event={eventData} />
+            <EventJoinSection
+              event={eventData}
+              onOpenChat={() => setChatOpen(true)}
+            />
 
             {/* Engagement Stats */}
             <EventEngagementStats event={eventData} />
@@ -657,6 +674,40 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
         title={eventData.title}
         description={eventData.description || undefined}
       />
+
+      {/* Chat Modal */}
+      <EventChatModal
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        intentId={eventData.id}
+        intentTitle={eventData.title}
+        membersCount={eventData.joinedCount}
+      />
+
+      {/* Report Modal */}
+      <ReportIntentModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        intentId={eventData.id}
+        intentTitle={eventData.title}
+      />
+
+      {/* Floating Action Button - Chat (Bottom Right) */}
+      {eventData.userMembership?.isJoined && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed z-50 flex items-center justify-center text-white transition-all duration-300 rounded-full shadow-2xl w-14 h-14 bottom-20 right-4 md:bottom-6 md:right-6 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:scale-110 active:scale-95 group"
+          aria-label="Otwórz czat wydarzenia"
+          title="Otwórz czat wydarzenia"
+        >
+          <MessageCircle className="w-6 h-6 transition-transform group-hover:scale-110" />
+          {eventData.messagesCount > 0 && (
+            <span className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full -top-1 -right-1 ring-2 ring-white dark:ring-zinc-900">
+              {eventData.messagesCount > 99 ? '99+' : eventData.messagesCount}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Sticky Join Button at Bottom */}
       <StickyJoinButton event={eventData} />

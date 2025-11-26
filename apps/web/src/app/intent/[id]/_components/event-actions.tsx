@@ -2,14 +2,12 @@ import type { EventDetailsData } from '@/types/event-details';
 import {
   Share2,
   MessageCircle,
-  Flag,
   BellOff,
   Link as LinkIcon,
   Sparkles,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { EventChatModal } from './event-chat-modal';
-import { ReportIntentModal } from './report-intent-modal';
 import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 
 type EventActionsProps = {
@@ -18,7 +16,6 @@ type EventActionsProps = {
 
 export function EventActions({ event }: EventActionsProps) {
   const [chatOpen, setChatOpen] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -119,15 +116,6 @@ export function EventActions({ event }: EventActionsProps) {
             <BellOff className="w-4 h-4" />
             <span>Wycisz powiadomienia</span>
           </button>
-
-          {/* Report */}
-          <button
-            onClick={() => setReportOpen(true)}
-            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-red-600 transition-colors rounded-xl hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
-          >
-            <Flag className="w-4 h-4" />
-            <span>Zgłoś</span>
-          </button>
         </div>
       </div>
 
@@ -211,14 +199,6 @@ export function EventActions({ event }: EventActionsProps) {
         intentId={event.id}
         intentTitle={event.title}
         membersCount={event.joinedCount}
-      />
-
-      {/* Report Modal */}
-      <ReportIntentModal
-        open={reportOpen}
-        onClose={() => setReportOpen(false)}
-        intentId={event.id}
-        intentTitle={event.title}
       />
     </div>
   );
