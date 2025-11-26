@@ -22,6 +22,10 @@ import {
   User,
   UserCheck,
   Users,
+  Sparkles,
+  Crown,
+  Info,
+  Zap,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useCategorySelection } from './category-selection-provider';
@@ -35,6 +39,7 @@ import {
 import { LevelBadge } from '@/components/ui/level-badge';
 import { twMerge } from 'tailwind-merge';
 import type { JoinFormQuestion } from './join-form-step';
+import { useMeQuery } from '@/lib/api/auth';
 
 /* ---------- Section header ---------- */
 
@@ -206,7 +211,7 @@ function Kvp({
 }) {
   return (
     <div className="grid grid-cols-[28px_1fr] items-start gap-3">
-      <div className="grid h-7 w-7 place-items-center rounded-md bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700">
+      <div className="grid rounded-md h-7 w-7 place-items-center bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-200 dark:ring-zinc-700">
         {icon}
       </div>
       <div className="min-w-0">
@@ -259,7 +264,7 @@ function useFormattedTime(start: Date, end: Date) {
 
 function Coordinates({ lat, lng }: { lat: number; lng: number }) {
   return (
-    <span className="font-mono tabular-nums text-xs opacity-80">
+    <span className="font-mono text-xs tabular-nums opacity-80">
       ({lat.toFixed(4)}, {lng.toFixed(4)})
     </span>
   );
@@ -291,6 +296,10 @@ export function ReviewStep({
 
   const { selected: selectedCategories } = useCategorySelection();
   const { selected: selectedTags } = useTagSelection();
+
+  // Get current user's plan
+  const { data: authData } = useMeQuery();
+  const userPlan = authData?.me?.effectivePlan || 'FREE';
 
   // Back-compat: mapujemy ewentualny showAddress -> AddressVisibility
   const resolvedAddressVis: AddressVisibility =
@@ -336,6 +345,21 @@ export function ReviewStep({
     ) : (
       <Chip tone="teal" icon={<MapPin className="h-3.5 w-3.5" />}>
         ONSITE
+      </Chip>
+    );
+
+  const joinModeChip =
+    values.joinMode === 'OPEN' ? (
+      <Chip tone="emerald" icon={<Users className="h-3.5 w-3.5" />}>
+        Otwarty dostęp
+      </Chip>
+    ) : values.joinMode === 'REQUEST' ? (
+      <Chip tone="amber" icon={<UserCheck className="h-3.5 w-3.5" />}>
+        Na żądanie
+      </Chip>
+    ) : (
+      <Chip tone="rose" icon={<LinkIcon className="h-3.5 w-3.5" />}>
+        Tylko zaproszenia
       </Chip>
     );
 
@@ -458,10 +482,10 @@ export function ReviewStep({
     <div className={`grid gap-5 ${showSuggestion && 'md:grid-cols-2'}`}>
       {/* Validation Summary */}
       {validationErrors.length > 0 && (
-        <div className="col-span-full rounded-2xl border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-red-700 dark:text-red-300">
+        <div className="p-4 border border-red-300 col-span-full rounded-2xl bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+          <div className="flex items-center gap-2 mb-2 text-sm font-semibold text-red-700 dark:text-red-300">
             <svg
-              className="h-5 w-5"
+              className="w-5 h-5"
               fill="currentColor"
               viewBox="0 0 20 20"
               aria-hidden="true"
@@ -485,7 +509,7 @@ export function ReviewStep({
                   <button
                     type="button"
                     onClick={() => onEditStep(step)}
-                    className="hover:underline text-left"
+                    className="text-left hover:underline"
                   >
                     <strong>{label}:</strong> {message}
                   </button>
@@ -500,45 +524,196 @@ export function ReviewStep({
         </div>
       )}
 
+      {/* User Plan Info Card */}
+      <div
+        className={`col-span-full rounded-2xl border p-5 shadow-sm transition-all
+        ${
+          userPlan === 'PRO'
+            ? 'border-amber-200/80 bg-gradient-to-br from-white to-amber-50/30 dark:border-amber-800/50 dark:from-zinc-900/60 dark:to-amber-950/20'
+            : userPlan === 'PLUS'
+              ? 'border-indigo-200/80 bg-gradient-to-br from-white to-indigo-50/30 dark:border-indigo-800/50 dark:from-zinc-900/60 dark:to-indigo-950/20'
+              : 'border-zinc-200/80 bg-gradient-to-br from-white to-zinc-50/30 dark:border-zinc-800/50 dark:from-zinc-900/60 dark:to-zinc-900/40'
+        }`}
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            <div
+              className={`flex items-center justify-center w-12 h-12 rounded-xl shadow-sm
+              ${
+                userPlan === 'PRO'
+                  ? 'bg-gradient-to-br from-amber-400 to-amber-500'
+                  : userPlan === 'PLUS'
+                    ? 'bg-gradient-to-br from-indigo-500 to-indigo-600'
+                    : 'bg-gradient-to-br from-zinc-400 to-zinc-500'
+              }`}
+            >
+              {userPlan === 'PRO' ? (
+                <Crown className="w-6 h-6 text-white" strokeWidth={2} />
+              ) : userPlan === 'PLUS' ? (
+                <Zap className="w-6 h-6 text-white" strokeWidth={2} />
+              ) : (
+                <User className="w-6 h-6 text-white" strokeWidth={2} />
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5">
+              <h3 className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                {userPlan === 'PRO'
+                  ? 'Plan PRO'
+                  : userPlan === 'PLUS'
+                    ? 'Plan PLUS'
+                    : 'Plan FREE'}
+              </h3>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white
+                ${
+                  userPlan === 'PRO'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600'
+                    : userPlan === 'PLUS'
+                      ? 'bg-gradient-to-r from-indigo-500 to-indigo-600'
+                      : 'bg-gradient-to-r from-zinc-500 to-zinc-600'
+                }`}
+              >
+                <Sparkles className="w-2.5 h-2.5" strokeWidth={2.5} />
+                Aktywny
+              </span>
+            </div>
+
+            <p className="mb-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              {userPlan === 'PRO'
+                ? 'To wydarzenie zostanie utworzone z planem PRO, obejmującym zaawansowaną analitykę, 3 podbicia i 3 powiadomienia push.'
+                : userPlan === 'PLUS'
+                  ? 'To wydarzenie zostanie utworzone z planem PLUS, obejmującym chat grupowy, 1 podbicie i 1 powiadomienie push.'
+                  : 'To wydarzenie zostanie utworzone z planem FREE (do 10 uczestników, bez chatu grupowego).'}
+            </p>
+
+            <div
+              className={`flex items-start gap-2 p-2.5 rounded-lg border
+              ${
+                userPlan === 'PRO'
+                  ? 'bg-amber-50/50 border-amber-200/50 dark:bg-amber-950/10 dark:border-amber-800/30'
+                  : userPlan === 'PLUS'
+                    ? 'bg-indigo-50/50 border-indigo-200/50 dark:bg-indigo-950/10 dark:border-indigo-800/30'
+                    : 'bg-blue-50/50 border-blue-200/50 dark:bg-blue-950/10 dark:border-blue-800/30'
+              }`}
+            >
+              <Info
+                className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5
+                ${
+                  userPlan === 'PRO'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : userPlan === 'PLUS'
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-blue-600 dark:text-blue-400'
+                }`}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">
+                  {userPlan === 'FREE'
+                    ? 'Możesz ulepszyć plan wydarzenia w późniejszym etapie, aby uzyskać więcej funkcji i większą widoczność.'
+                    : 'Plan wydarzenia dziedziczy Twój plan użytkownika. Możesz go dodatkowo ulepszyć po utworzeniu wydarzenia.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* LEFT: Summary card */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <div className="p-5 bg-white border shadow-sm rounded-2xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900/60">
         {/* Header */}
         <div className="mb-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="truncate text-lg font-semibold tracking-tight">
+              <h3 className="text-lg font-semibold tracking-tight truncate">
                 {values.title || 'Untitled'}
               </h3>
 
-              {/* chips: mode, visibility, kind, levels, categories/tags, allowJoinLate, address/members visibility */}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {modeChip}
-                {visChip}
-                {meetingKindChip}
+              {/* chips: organized by category with clear sections */}
+              <div className="mt-4 space-y-4">
+                {/* Section 1: Format i typ */}
+                <div className="space-y-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Format i typ
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {modeChip}
+                    {meetingKindChip}
+                    {values.mode === 'GROUP' && (
+                      <Chip
+                        tone="zinc"
+                        icon={<Users className="h-3.5 w-3.5" />}
+                      >
+                        {values.min}–{values.max} osób
+                      </Chip>
+                    )}
+                  </div>
+                </div>
 
-                {selectedCategories.map((category) => (
-                  <Chip
-                    key={category.slug}
-                    tone="zinc"
-                    icon={<FolderIcon className="h-3.5 w-3.5" />}
-                  >
-                    {category.label}
-                  </Chip>
-                ))}
-                {selectedTags.map((tag) => (
-                  <Chip
-                    key={tag.slug}
-                    tone="lime"
-                    icon={<HashIcon className="h-3.5 w-3.5" />}
-                  >
-                    {tag.label}
-                  </Chip>
-                ))}
+                {/* Section 2: Dostęp i widoczność */}
+                <div className="space-y-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Dostęp i widoczność
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {visChip}
+                    {joinModeChip}
+                  </div>
+                </div>
 
-                {levelChips}
+                {/* Section 3: Ustawienia prywatności */}
+                <div className="space-y-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Ustawienia prywatności
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {addressVisChip}
+                    {membersVisChip}
+                  </div>
+                </div>
 
-                {addressVisChip}
-                {membersVisChip}
+                {/* Section 4: Kategorie i tagi */}
+                {(selectedCategories.length > 0 || selectedTags.length > 0) && (
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      Kategorie i tagi
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {selectedCategories.map((category) => (
+                        <Chip
+                          key={category.slug}
+                          tone="zinc"
+                          icon={<FolderIcon className="h-3.5 w-3.5" />}
+                        >
+                          {category.label}
+                        </Chip>
+                      ))}
+                      {selectedTags.map((tag) => (
+                        <Chip
+                          key={tag.slug}
+                          tone="lime"
+                          icon={<HashIcon className="h-3.5 w-3.5" />}
+                        >
+                          {tag.label}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 5: Poziomy uczestników */}
+                {levelChips && (
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      Poziomy uczestników
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {levelChips}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -546,52 +721,83 @@ export function ReviewStep({
 
         {/* Content */}
         <div className="grid gap-4">
-          <Kvp
-            icon={<CalendarDays className="h-4 w-4" />}
-            label="Date"
-            value={dDate}
-          />
-          <Kvp
-            icon={<Clock className="h-4 w-4" />}
-            label="Time"
-            value={
-              <span className="tabular-nums">
-                {startT} – {endT}
-              </span>
-            }
-          />
+          {/* Basic Info Section */}
+          <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+              <CalendarDays className="w-3.5 h-3.5" />
+              Podstawowe informacje
+            </h4>
+            <div className="grid gap-3">
+              <Kvp
+                icon={<CalendarDays className="w-4 h-4" />}
+                label="Data"
+                value={dDate}
+              />
+              <Kvp
+                icon={<Clock className="w-4 h-4" />}
+                label="Godziny"
+                value={
+                  <span className="tabular-nums">
+                    {startT} – {endT}
+                  </span>
+                }
+              />
 
-          <Kvp
-            icon={<MapPin className="h-4 w-4" />}
-            label="Where"
-            value={where}
-          />
-          <Kvp
-            icon={<LinkIcon className="h-4 w-4" />}
-            label="Online url"
-            value={onlineUrl}
-          />
+              {values.mode === 'GROUP' && (
+                <Kvp
+                  icon={<Users className="w-4 h-4" />}
+                  label="Pojemność"
+                  value={
+                    <span className="tabular-nums">
+                      {values.min} – {values.max}
+                    </span>
+                  }
+                  mono
+                />
+              )}
+            </div>
+          </div>
 
-          {values.mode === 'GROUP' && (
-            <Kvp
-              icon={<Users className="h-4 w-4" />}
-              label="Capacity"
-              value={
-                <span className="tabular-nums">
-                  {values.min} – {values.max}
-                </span>
-              }
-              mono
-            />
-          )}
+          {/* Location Section */}
+          <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+              <MapPin className="w-3.5 h-3.5" />
+              Lokalizacja i dostęp
+            </h4>
+            <div className="grid gap-3">
+              <Kvp
+                icon={<MapPin className="w-4 h-4" />}
+                label="Miejsce"
+                value={where}
+              />
+              <Kvp
+                icon={<LinkIcon className="w-4 h-4" />}
+                label="Link online"
+                value={onlineUrl}
+              />
+
+              {!!values.location.radiusKm && values.location.radiusKm > 0 && (
+                <Kvp
+                  icon={<Ruler className="w-4 h-4" />}
+                  label="Promień"
+                  value={
+                    <span className="tabular-nums">
+                      {values.location.radiusKm} km
+                    </span>
+                  }
+                  mono
+                />
+              )}
+            </div>
+          </div>
 
           {/* Join window settings */}
           {(values.joinOpensMinutesBeforeStart ||
             values.joinCutoffMinutesBeforeStart ||
             values.allowJoinLate ||
             values.lateJoinCutoffMinutesAfterStart) && (
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 dark:border-indigo-800 dark:bg-indigo-900/20">
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+            <div className="p-3 border border-indigo-200 rounded-xl bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-900/20">
+              <div className="flex items-center gap-2 mb-2 text-xs font-semibold tracking-wide text-indigo-700 uppercase dark:text-indigo-300">
                 <Gauge className="h-3.5 w-3.5" />
                 Join Window Settings
               </div>
@@ -671,23 +877,23 @@ export function ReviewStep({
 
           {/* Join Form Questions */}
           {joinFormQuestions && joinFormQuestions.length > 0 && (
-            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
-                <FileQuestion className="h-4 w-4" />
+            <div className="p-4 border border-blue-200 rounded-xl bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/20">
+              <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                <FileQuestion className="w-4 h-4" />
                 Join Form Questions ({joinFormQuestions.length})
               </div>
               <div className="space-y-3">
                 {joinFormQuestions.map((question, index) => (
                   <div
                     key={question.id}
-                    className="rounded-lg border border-blue-200 bg-white p-3 dark:border-blue-700 dark:bg-blue-950/30"
+                    className="p-3 bg-white border border-blue-200 rounded-lg dark:border-blue-700 dark:bg-blue-950/30"
                   >
                     <div className="flex items-start gap-2 mb-1">
                       <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
                         {index + 1}.
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                             {question.label}
                           </span>
@@ -703,7 +909,7 @@ export function ReviewStep({
                           </span>
                         </div>
                         {question.helpText && (
-                          <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
                             {question.helpText}
                           </p>
                         )}
@@ -744,7 +950,7 @@ export function ReviewStep({
 
           {!!values.location.radiusKm && values.location.radiusKm > 0 && (
             <Kvp
-              icon={<Ruler className="h-4 w-4" />}
+              icon={<Ruler className="w-4 h-4" />}
               label="Radius"
               value={
                 <span className="tabular-nums">
@@ -756,19 +962,19 @@ export function ReviewStep({
           )}
 
           {values.notes && values.notes.trim().length > 0 && (
-            <div className="rounded-xl border border-dashed border-zinc-300 p-3 text-sm text-zinc-700 dark:border-zinc-700 dark:text-zinc-200">
+            <div className="p-3 text-sm border border-dashed rounded-xl border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-200">
               <span className="mr-2 font-medium">Logistics:</span>
               <span className="whitespace-pre-wrap">{values.notes}</span>
             </div>
           )}
 
           {values.description && values.description.trim().length > 0 && (
-            <div className="mt-1 rounded-xl border border-zinc-200/70 bg-white/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+            <div className="p-3 mt-1 border rounded-xl border-zinc-200/70 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/60">
               <div className="mb-1 flex items-center gap-2 text-[11px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 <NotebookText className="h-3.5 w-3.5" />
                 Description
               </div>
-              <div className="whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200">
+              <div className="text-sm whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">
                 {values.description}
               </div>
             </div>

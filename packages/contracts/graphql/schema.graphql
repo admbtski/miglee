@@ -321,6 +321,9 @@ type SessionUser {
   avatarBlurhash: String
   verifiedAt: DateTime
   profile: UserProfile
+
+  # Billing & Subscriptions
+  effectivePlan: UserEffectivePlan!
 }
 
 "Presigned upload URL response"

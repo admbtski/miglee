@@ -16,6 +16,7 @@ fragment SessionUserCore on SessionUser {
   avatarKey
   avatarBlurhash
   verifiedAt
+  effectivePlan
 }
 
 fragment UserCore on User {

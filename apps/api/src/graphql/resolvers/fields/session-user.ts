@@ -1,5 +1,6 @@
 import type { Resolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
+import { getUserEffectivePlan } from '../../../lib/billing';
 
 export const SessionUserFieldResolvers: Resolvers['SessionUser'] = {
   avatarBlurhash: async (parent) => {
@@ -35,5 +36,16 @@ export const SessionUserFieldResolvers: Resolvers['SessionUser'] = {
     });
 
     return profile || null;
+  },
+
+  effectivePlan: async (parent) => {
+    // If already present in parent, return it
+    if ('effectivePlan' in parent && parent.effectivePlan !== undefined) {
+      return parent.effectivePlan;
+    }
+
+    // Get user's effective plan
+    const planInfo = await getUserEffectivePlan(parent.id);
+    return planInfo.plan;
   },
 };
