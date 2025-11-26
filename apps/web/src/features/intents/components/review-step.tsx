@@ -630,110 +630,109 @@ export function ReviewStep({
               <h3 className="text-lg font-semibold tracking-tight truncate">
                 {values.title || 'Untitled'}
               </h3>
-
-              {/* chips: organized by category with clear sections */}
-              <div className="mt-4 space-y-4">
-                {/* Section 1: Format i typ */}
-                <div className="space-y-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    Format i typ
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {modeChip}
-                    {meetingKindChip}
-                    {values.mode === 'GROUP' && (
-                      <Chip
-                        tone="zinc"
-                        icon={<Users className="h-3.5 w-3.5" />}
-                      >
-                        {values.min}–{values.max} osób
-                      </Chip>
-                    )}
-                  </div>
-                </div>
-
-                {/* Section 2: Dostęp i widoczność */}
-                <div className="space-y-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    Dostęp i widoczność
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {visChip}
-                    {joinModeChip}
-                  </div>
-                </div>
-
-                {/* Section 3: Ustawienia prywatności */}
-                <div className="space-y-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    Ustawienia prywatności
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {addressVisChip}
-                    {membersVisChip}
-                  </div>
-                </div>
-
-                {/* Section 4: Kategorie i tagi */}
-                {selectedCategories.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Kategorie
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {selectedCategories.map((category) => (
-                        <Chip
-                          key={category.slug}
-                          tone="zinc"
-                          icon={<FolderIcon className="h-3.5 w-3.5" />}
-                        >
-                          {category.label}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 4: Kategorie i tagi */}
-                {selectedTags.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Tagi
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {selectedTags.map((tag) => (
-                        <Chip
-                          key={tag.slug}
-                          tone="lime"
-                          icon={<HashIcon className="h-3.5 w-3.5" />}
-                        >
-                          {tag.label}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Section 5: Poziomy uczestników */}
-                {levelChips && (
-                  <div className="space-y-2">
-                    <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
-                      <CalendarDays className="w-3.5 h-3.5" />
-                      Podstawowe informacje
-                    </h4>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {levelChips}
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="grid gap-4">
-          {/* Basic Info Section */}
+          {/* Format i typ Section */}
+          <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+              <Users className="w-3.5 h-3.5" />
+              Format i typ
+            </h4>
+            <div className="flex flex-wrap items-center gap-2">
+              {modeChip}
+              {meetingKindChip}
+              {values.mode === 'GROUP' && (
+                <Chip tone="zinc" icon={<Users className="h-3.5 w-3.5" />}>
+                  {values.min}–{values.max} osób
+                </Chip>
+              )}
+            </div>
+          </div>
+
+          {/* Dostęp i widoczność Section */}
+          <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+              <Eye className="w-3.5 h-3.5" />
+              Dostęp i widoczność
+            </h4>
+            <div className="flex flex-wrap items-center gap-2">
+              {visChip}
+              {joinModeChip}
+            </div>
+          </div>
+
+          {/* Ustawienia prywatności Section */}
+          <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+            <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+              <EyeOff className="w-3.5 h-3.5" />
+              Ustawienia prywatności
+            </h4>
+            <div className="flex flex-wrap items-center gap-2">
+              {addressVisChip}
+              {membersVisChip}
+            </div>
+          </div>
+
+          {/* Kategorie Section */}
+          {selectedCategories.length > 0 && (
+            <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+              <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+                <FolderIcon className="w-3.5 h-3.5" />
+                Kategorie
+              </h4>
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedCategories.map((category) => (
+                  <Chip
+                    key={category.slug}
+                    tone="zinc"
+                    icon={<FolderIcon className="h-3.5 w-3.5" />}
+                  >
+                    {category.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tagi Section */}
+          {selectedTags.length > 0 && (
+            <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+              <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+                <HashIcon className="w-3.5 h-3.5" />
+                Tagi
+              </h4>
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedTags.map((tag) => (
+                  <Chip
+                    key={tag.slug}
+                    tone="lime"
+                    icon={<HashIcon className="h-3.5 w-3.5" />}
+                  >
+                    {tag.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Poziomy uczestników Section */}
+          {levelChips && (
+            <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
+              <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+                <Gauge className="w-3.5 h-3.5" />
+                Poziomy uczestników
+              </h4>
+              <div className="flex flex-wrap items-center gap-2">
+                {levelChips}
+              </div>
+            </div>
+          )}
+
+          {/* Podstawowe informacje Section */}
           <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800">
             <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
               <CalendarDays className="w-3.5 h-3.5" />
