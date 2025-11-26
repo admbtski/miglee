@@ -3,10 +3,7 @@
 import * as React from 'react';
 import { Check, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  HIGHLIGHT_PRESETS,
-  DEFAULT_HIGHLIGHT_COLOR,
-} from '@/lib/billing-constants';
+import { HIGHLIGHT_PRESETS } from '@/lib/billing-constants';
 
 interface HighlightColorPickerProps {
   value: string;
@@ -61,17 +58,17 @@ export function HighlightColorPicker({
               onClick={() => handlePresetSelect(preset.hex)}
               disabled={disabled}
               className={cn(
-                'relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
+                'relative flex flex-col items-center gap-2 p-4 border-2 transition-all rounded-xl',
                 'hover:scale-105 active:scale-95',
                 isSelected
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-zinc-900'
-                  : 'border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20',
-                disabled && 'opacity-50 cursor-not-allowed'
+                  ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-2 dark:bg-indigo-950/30 dark:ring-offset-zinc-900'
+                  : 'border-zinc-200 hover:border-zinc-300 dark:border-white/10 dark:hover:border-white/20',
+                disabled && 'cursor-not-allowed opacity-50'
               )}
             >
               {/* Color Circle */}
               <div
-                className="w-12 h-12 rounded-full ring-2 ring-white/50 dark:ring-black/50 shadow-lg"
+                className="w-12 h-12 rounded-full shadow-lg ring-2 ring-white/50 dark:ring-black/50"
                 style={{ backgroundColor: preset.hex }}
               />
 
@@ -82,7 +79,7 @@ export function HighlightColorPicker({
 
               {/* Selected Checkmark */}
               {isSelected && (
-                <div className="absolute top-1 right-1 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white shadow-lg">
+                <div className="absolute flex items-center justify-center w-5 h-5 text-white bg-indigo-600 rounded-full shadow-lg top-1 right-1">
                   <Check className="w-3 h-3" strokeWidth={3} />
                 </div>
               )}
@@ -98,12 +95,12 @@ export function HighlightColorPicker({
           onClick={() => setShowCustomPicker(!showCustomPicker)}
           disabled={disabled}
           className={cn(
-            'flex items-center gap-3 w-full p-4 rounded-xl border-2 transition-all',
+            'flex items-center w-full gap-3 p-4 border-2 transition-all rounded-xl',
             'hover:border-zinc-300 dark:hover:border-white/20',
             showCustomPicker || !isPreset
               ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30'
               : 'border-zinc-200 dark:border-white/10',
-            disabled && 'opacity-50 cursor-not-allowed'
+            disabled && 'cursor-not-allowed opacity-50'
           )}
         >
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700">
@@ -120,7 +117,7 @@ export function HighlightColorPicker({
           </div>
 
           {!isPreset && (
-            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white shadow-lg">
+            <div className="flex items-center justify-center w-5 h-5 text-white bg-indigo-600 rounded-full shadow-lg">
               <Check className="w-3 h-3" strokeWidth={3} />
             </div>
           )}
@@ -128,7 +125,7 @@ export function HighlightColorPicker({
 
         {/* Custom Color Picker (Expanded) */}
         {showCustomPicker && (
-          <div className="mt-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5">
+          <div className="p-4 mt-4 border rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-white/5">
             <div className="flex items-center gap-4">
               <div className="relative flex-shrink-0">
                 <input
@@ -136,12 +133,12 @@ export function HighlightColorPicker({
                   value={customColor}
                   onChange={handleCustomColorChange}
                   disabled={disabled}
-                  className="w-20 h-20 rounded-xl cursor-pointer border-2 border-white dark:border-zinc-800 shadow-lg"
+                  className="w-20 h-20 border-2 border-white shadow-lg cursor-pointer rounded-xl dark:border-zinc-800"
                 />
               </div>
 
               <div className="flex-1">
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                <label className="block mb-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                   Kod koloru (HEX)
                 </label>
                 <input
@@ -158,12 +155,10 @@ export function HighlightColorPicker({
                   disabled={disabled}
                   className={cn(
                     'w-full px-4 py-2 rounded-lg',
-                    'border-2 border-zinc-200 dark:border-white/10',
-                    'bg-white dark:bg-zinc-900',
-                    'text-sm font-mono text-zinc-900 dark:text-zinc-50',
+                    'text-sm font-mono border-2 text-zinc-900 border-zinc-200 bg-white dark:text-zinc-50 dark:border-white/10 dark:bg-zinc-900',
                     'placeholder:text-zinc-400 dark:placeholder:text-zinc-600',
-                    'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
-                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                    'focus:outline-none focus:border-transparent focus:ring-2 focus:ring-indigo-500',
+                    'disabled:cursor-not-allowed disabled:opacity-50'
                   )}
                 />
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -176,7 +171,7 @@ export function HighlightColorPicker({
       </div>
 
       {/* Preview */}
-      <div className="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5">
+      <div className="p-4 border rounded-xl bg-zinc-100 dark:bg-zinc-900/50 border-zinc-200 dark:border-white/5">
         <p className="mb-3 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
           Podgląd wyróżnienia
         </p>

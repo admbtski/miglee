@@ -59,72 +59,109 @@ export function PaymentResultModal({ context }: PaymentResultModalProps) {
       open={isOpen}
       onClose={handleClose}
       size="sm"
-      header={
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-            {isSuccess
-              ? '✅ Płatność zakończona sukcesem!'
-              : '❌ Płatność anulowana'}
-          </h2>
-        </div>
-      }
+      header={null}
       content={
-        <div className="flex flex-col items-center gap-6 py-6">
-          {/* Icon */}
+        <div className="flex flex-col items-center gap-6 px-4 py-8">
+          {/* Icon with animation */}
           <div
-            className={`flex items-center justify-center w-20 h-20 rounded-full ${
+            className={`relative flex items-center justify-center w-24 h-24 rounded-full ${
               isSuccess
-                ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                : 'bg-red-100 dark:bg-red-900/30'
+                ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700'
+                : 'bg-gradient-to-br from-amber-400 to-amber-600 dark:from-amber-500 dark:to-amber-700'
             }`}
           >
             {isSuccess ? (
               <CheckCircle2
-                className="w-10 h-10 text-emerald-600 dark:text-emerald-400"
-                strokeWidth={2}
+                className="text-white w-14 h-14 drop-shadow-lg"
+                strokeWidth={2.5}
               />
             ) : (
               <XCircle
-                className="w-10 h-10 text-red-600 dark:text-red-400"
-                strokeWidth={2}
+                className="text-white w-14 h-14 drop-shadow-lg"
+                strokeWidth={2.5}
               />
             )}
+            {/* Glow effect */}
+            <div
+              className={`absolute inset-0 rounded-full blur-xl opacity-40 ${
+                isSuccess ? 'bg-emerald-400' : 'bg-amber-400'
+              }`}
+            />
           </div>
 
           {/* Message */}
-          <div className="space-y-2 text-center">
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
-              {isSuccess ? 'Gotowe!' : 'Anulowano'}
+          <div className="max-w-md space-y-4 text-center">
+            <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              {isSuccess
+                ? 'Płatność zakończona sukcesem!'
+                : 'Płatność anulowana'}
             </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-[40ch]">
-              {isSuccess
-                ? context === 'account'
-                  ? 'Twój plan użytkownika został aktywowany. Możesz teraz korzystać z nowych funkcji.'
-                  : 'Plan sponsorowania wydarzenia został aktywowany. Możesz teraz używać podbić i lokalnych powiadomień push.'
-                : 'Płatność została anulowana. Możesz spróbować ponownie w dowolnym momencie.'}
-            </p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-[40ch]">
-              {isSuccess
-                ? context === 'account'
-                  ? 'Twój nowy plan jest już aktywny. Sprawdź szczegóły w historii płatności.'
-                  : 'Twoje wydarzenie zostało ulepszone. Zespół Miglee dziękuje za zaufanie!'
-                : 'Nie martw się, możesz wrócić do wyboru planu i spróbować ponownie.'}
-            </p>
+
+            <div className="space-y-3">
+              <p className="text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
+                {isSuccess
+                  ? context === 'account'
+                    ? 'Twój plan użytkownika został aktywowany i jest już gotowy do użycia.'
+                    : 'Plan sponsorowania wydarzenia został aktywowany. Możesz teraz korzystać z podbić i lokalnych powiadomień push.'
+                  : 'Płatność została anulowana. Nic się nie stało – żadne środki nie zostały pobrane.'}
+              </p>
+
+              {isSuccess && (
+                <div
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
+                    context === 'account'
+                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                      : 'bg-violet-50 text-violet-700 dark:bg-violet-950/30 dark:text-violet-300'
+                  }`}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {context === 'account'
+                    ? 'Sprawdź szczegóły w historii płatności'
+                    : 'Twoje funkcje premium są już aktywne'}
+                </div>
+              )}
+
+              {!isSuccess && (
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  Możesz wrócić do wyboru planu i spróbować ponownie w dowolnym
+                  momencie.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       }
       footer={
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-3 px-4 pb-6">
           <button
             type="button"
             onClick={handleClose}
-            className={`inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white transition-colors rounded-2xl ${
+            className={`inline-flex items-center justify-center gap-2 px-8 py-3 text-sm font-semibold text-white transition-all rounded-xl shadow-lg hover:shadow-xl active:scale-95 ${
               isSuccess
-                ? 'bg-emerald-600 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400'
-                : 'bg-zinc-600 hover:bg-zinc-500 dark:bg-zinc-500 dark:hover:bg-zinc-400'
+                ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 dark:from-emerald-500 dark:to-emerald-600'
+                : 'bg-gradient-to-r from-zinc-600 to-zinc-500 hover:from-zinc-500 hover:to-zinc-400'
             }`}
           >
-            {isSuccess ? 'Zamknij' : 'Rozumiem'}
+            {isSuccess ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                Super, zamknij
+              </>
+            ) : (
+              'Rozumiem'
+            )}
           </button>
         </div>
       }
