@@ -2,6 +2,7 @@ import type {
   AddressVisibility,
   MembersVisibility,
   Prisma,
+  IntentPlan,
 } from '@prisma/client';
 import {
   Level as PrismaLevel,
@@ -27,6 +28,7 @@ import type {
   UpdateIntentInput,
 } from '../../__generated__/resolvers-types';
 import { mapIntent, mapNotification, pickLocation } from '../helpers';
+import { getUserEffectivePlan } from '../../../lib/billing';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_START_BUFFER_MS = 5 * 60 * 1000; // >= now + 5 min
@@ -53,6 +55,12 @@ const INTENT_INCLUDE = {
   owner: true,
   canceledBy: true,
   deletedBy: true,
+  sponsorship: {
+    include: {
+      sponsor: true,
+      intent: true,
+    },
+  },
 } satisfies Prisma.IntentInclude;
 
 /* ───────────────────────────── Validation ───────────────────────────── */
@@ -402,6 +410,10 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         ? { connect: input.tagSlugs.map((slug: string) => ({ slug })) }
         : undefined;
 
+      // Get user's effective plan to inherit for the intent
+      const userPlanInfo = await getUserEffectivePlan(ownerId);
+      const inheritedPlan: IntentPlan = userPlanInfo.plan as IntentPlan;
+
       const full = await prisma.$transaction(async (tx) => {
         const intent = await tx.intent.create({
           data: {
@@ -438,6 +450,9 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
               'PUBLIC') as MembersVisibility,
 
             ownerId,
+
+            // Inherit user's plan
+            sponsorshipPlan: inheritedPlan,
 
             ...loc,
             categories: categoriesData,
@@ -506,6 +521,23 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
               },
             });
           }
+        }
+
+        // Create EventSponsorship if user has PLUS or PRO plan
+        if (inheritedPlan === 'PLUS' || inheritedPlan === 'PRO') {
+          await tx.eventSponsorship.create({
+            data: {
+              intentId: intent.id,
+              sponsorId: ownerId,
+              plan: inheritedPlan,
+              status: 'ACTIVE',
+              // Initialize boosts and pushes based on plan
+              boostsTotal: inheritedPlan === 'PRO' ? 3 : 1,
+              boostsUsed: 0,
+              localPushesTotal: inheritedPlan === 'PRO' ? 3 : 1,
+              localPushesUsed: 0,
+            },
+          });
         }
 
         const notification = await tx.notification.create({

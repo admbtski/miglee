@@ -675,10 +675,10 @@ export function ReviewStep({
                 </div>
 
                 {/* Section 4: Kategorie i tagi */}
-                {(selectedCategories.length > 0 || selectedTags.length > 0) && (
+                {selectedCategories.length > 0 && (
                   <div className="space-y-2">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Kategorie i tagi
+                      Kategorie
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {selectedCategories.map((category) => (
@@ -690,6 +690,17 @@ export function ReviewStep({
                           {category.label}
                         </Chip>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section 4: Kategorie i tagi */}
+                {selectedTags.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      Tagi
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
                       {selectedTags.map((tag) => (
                         <Chip
                           key={tag.slug}
@@ -706,9 +717,10 @@ export function ReviewStep({
                 {/* Section 5: Poziomy uczestników */}
                 {levelChips && (
                   <div className="space-y-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Poziomy uczestników
-                    </div>
+                    <h4 className="flex items-center gap-2 mb-3 text-xs font-semibold tracking-wide uppercase text-zinc-500 dark:text-zinc-400">
+                      <CalendarDays className="w-3.5 h-3.5" />
+                      Podstawowe informacje
+                    </h4>
                     <div className="flex flex-wrap items-center gap-2">
                       {levelChips}
                     </div>
