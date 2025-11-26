@@ -263,7 +263,7 @@ export function SubscriptionPlans({
                 <h3 className="mb-2 text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
                   {plan.name}
                 </h3>
-                <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                <p className="text-sm leading-relaxed truncate text-zinc-600 dark:text-zinc-400">
                   {plan.description}
                 </p>
               </div>
@@ -274,7 +274,7 @@ export function SubscriptionPlans({
                   <span className="text-5xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
                     zł{price}
                   </span>
-                  <span className="text-base text-zinc-600 dark:text-zinc-400">
+                  <span className="text-base truncate text-zinc-600 dark:text-zinc-400">
                     {getPriceLabel()}
                   </span>
                 </div>
