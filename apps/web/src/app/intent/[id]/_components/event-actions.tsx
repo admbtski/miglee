@@ -7,9 +7,10 @@ import {
   Link as LinkIcon,
   Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { EventChatModal } from './event-chat-modal';
 import { ReportIntentModal } from './report-intent-modal';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 
 type EventActionsProps = {
   event: EventDetailsData;
@@ -38,10 +39,40 @@ export function EventActions({ event }: EventActionsProps) {
     alert('Link skopiowany do schowka!');
   };
 
+  // Check if boost is active
+  const isBoosted = useMemo(() => {
+    if (!event.boostedAt) return false;
+    const boostedTime = new Date(event.boostedAt).getTime();
+    const now = Date.now();
+    const elapsed = now - boostedTime;
+    return elapsed < 24 * 60 * 60 * 1000;
+  }, [event.boostedAt]);
+
+  // Get highlight classes for main actions card
+  const highlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
+  // Get highlight classes for invite links card
+  const inviteHighlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
+  // Get highlight classes for sponsorship card
+  const sponsorshipHighlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
   return (
     <div className="space-y-4">
       {/* Quick Actions */}
-      <div className="p-4 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div
+        className={`p-4 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
+        style={highlightClasses.style}
+      >
         <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Akcje
         </h3>
@@ -102,7 +133,10 @@ export function EventActions({ event }: EventActionsProps) {
 
       {/* Invite Links (Owner/Mod only) */}
       {event.inviteLinks && event.inviteLinks.length > 0 && (
-        <div className="p-4 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div
+          className={`p-4 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${inviteHighlightClasses.className}`}
+          style={inviteHighlightClasses.style}
+        >
           <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Linki zaproszeń
           </h3>
@@ -151,7 +185,10 @@ export function EventActions({ event }: EventActionsProps) {
       {event.sponsorship?.status === 'ACTIVE' &&
         (event.sponsorship.plan === 'PLUS' ||
           event.sponsorship.plan === 'PRO') && (
-          <div className="p-4 border border-yellow-200 rounded-2xl bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
+          <div
+            className={`p-4 border border-yellow-200 rounded-2xl bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950 transition-all duration-300 ${sponsorshipHighlightClasses.className}`}
+            style={sponsorshipHighlightClasses.style}
+          >
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
               <h3 className="text-sm font-semibold text-yellow-900 dark:text-yellow-100">

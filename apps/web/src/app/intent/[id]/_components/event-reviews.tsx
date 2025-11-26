@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Star, Plus, Loader2, AlertCircle } from 'lucide-react';
 import { useMeQuery } from '@/lib/api/auth';
 import {
@@ -15,6 +15,7 @@ import { AddReviewModal } from './add-review-modal';
 import { ReportReviewModal } from './report-review-modal';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import type { EventDetailsData } from '@/types/event-details';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 
 type EventReviewsProps = {
   event: EventDetailsData;
@@ -123,8 +124,26 @@ export function EventReviews({ event }: EventReviewsProps) {
     : new Date(event.startISO);
   const hasEnded = endDate <= now;
 
+  // Check if boost is active
+  const isBoosted = useMemo(() => {
+    if (!event.boostedAt) return false;
+    const boostedTime = new Date(event.boostedAt).getTime();
+    const nowTime = Date.now();
+    const elapsed = nowTime - boostedTime;
+    return elapsed < 24 * 60 * 60 * 1000;
+  }, [event.boostedAt]);
+
+  // Get highlight classes
+  const highlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div
+      className={`rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
+      style={highlightClasses.style}
+    >
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">

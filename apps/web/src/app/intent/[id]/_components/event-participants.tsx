@@ -3,6 +3,8 @@ import { ShieldCheck, Users as UserGroup } from 'lucide-react';
 import Link from 'next/link';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
+import { useMemo } from 'react';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 
 type EventParticipantsProps = {
   event: EventDetailsData;
@@ -12,9 +14,27 @@ export function EventParticipants({ event }: EventParticipantsProps) {
   const canSeeMembers =
     event.userMembership?.canSeeMembers ?? event.membersVisibility === 'PUBLIC';
 
+  // Check if boost is active
+  const isBoosted = useMemo(() => {
+    if (!event.boostedAt) return false;
+    const boostedTime = new Date(event.boostedAt).getTime();
+    const now = Date.now();
+    const elapsed = now - boostedTime;
+    return elapsed < 24 * 60 * 60 * 1000;
+  }, [event.boostedAt]);
+
+  // Get highlight classes
+  const highlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
   if (!canSeeMembers) {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div
+        className={`rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
+        style={highlightClasses.style}
+      >
         <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Uczestnicy
         </h2>
@@ -39,7 +59,10 @@ export function EventParticipants({ event }: EventParticipantsProps) {
   );
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div
+      className={`rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
+      style={highlightClasses.style}
+    >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Uczestnicy
@@ -111,9 +134,7 @@ export function EventParticipants({ event }: EventParticipantsProps) {
       {/* Capacity Progress */}
       <div className="mt-6">
         <div className="mb-2 flex justify-between text-sm">
-          <span className="text-zinc-600 dark:text-zinc-400">
-            Zapełnienie
-          </span>
+          <span className="text-zinc-600 dark:text-zinc-400">Zapełnienie</span>
           <span className="font-medium text-zinc-900 dark:text-zinc-100">
             {Math.round((event.joinedCount / event.max) * 100)}%
           </span>

@@ -42,49 +42,13 @@ import { buildIntentCoverUrl } from '@/lib/media/url';
 import {
   isBoostActive,
   getHighlightBackgroundStyle,
+  getCoverHighlightClasses,
+  getCardHighlightClasses,
 } from '@/lib/utils/is-boost-active';
 
 type EventDetailClientProps = {
   intentId: string;
 };
-
-/**
- * Get highlight ring classes based on color
- * @param highlightColor - Hex color code (e.g., "#f59e0b")
- * @param isBoosted - Whether event is boosted
- * @returns CSS classes and inline style
- */
-function getHighlightRingClasses(
-  highlightColor: string | null | undefined,
-  isBoosted: boolean
-): { className: string; style?: React.CSSProperties } {
-  if (!isBoosted || !highlightColor) {
-    return { className: '' };
-  }
-
-  // Helper to convert HEX to RGB
-  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result && result[1] && result[2] && result[3]
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : { r: 245, g: 158, b: 11 }; // fallback to amber
-  };
-
-  const rgb = hexToRgb(highlightColor);
-
-  // Always use inline styles for consistent, prominent shadow effect
-  return {
-    className: 'ring-4',
-    style: {
-      '--tw-ring-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`,
-      boxShadow: `0 0 0 4px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5), 0 0 24px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6), 0 0 64px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`,
-    } as React.CSSProperties,
-  };
-}
 
 export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const { data, isLoading, error, refetch } = useIntentDetailQuery({
@@ -144,7 +108,13 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
   // Get highlight ring for cover image (must be before early returns)
   const coverHighlightRing = useMemo(
-    () => getHighlightRingClasses(intent?.highlightColor, isBoosted),
+    () => getCoverHighlightClasses(intent?.highlightColor, isBoosted),
+    [intent?.highlightColor, isBoosted]
+  );
+
+  // Get highlight classes for cards (must be before early returns)
+  const cardHighlightClasses = useMemo(
+    () => getCardHighlightClasses(intent?.highlightColor, isBoosted),
     [intent?.highlightColor, isBoosted]
   );
 
@@ -443,7 +413,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
         {/* Extended Metadata Card - Integrated below hero */}
         <div className="mb-6">
-          <div className="relative p-4 overflow-hidden border rounded-xl border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div
+            className={`relative p-4 overflow-hidden border rounded-xl border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${cardHighlightClasses.className}`}
+            style={cardHighlightClasses.style}
+          >
             <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300">
               {/* Event Size Category */}
               <div className="flex items-center gap-1.5">
@@ -538,7 +511,10 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               (eventData.addressVisibility === 'PUBLIC' ||
                 (eventData.addressVisibility === 'AFTER_JOIN' &&
                   (isJoined || isOwner || isModerator))) && (
-                <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <div
+                  className={`p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${cardHighlightClasses.className}`}
+                  style={cardHighlightClasses.style}
+                >
                   <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                     📍 Lokalizacja
                   </h2>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { EventDetailsData } from '@/types/event-details';
 import { useMeQuery } from '@/lib/api/auth';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import {
   Settings,
   Edit3,
@@ -12,7 +13,13 @@ import {
   AlertTriangle,
   Lock,
   LockOpen,
+  Crown,
+  MessageSquare,
+  UserPlus,
+  Star,
+  BarChart3,
 } from 'lucide-react';
+import { useMemo } from 'react';
 
 type EventAdminPanelProps = {
   event: EventDetailsData;
@@ -54,6 +61,21 @@ export function EventAdminPanel({
     isAppAdmin ||
     isAppModerator;
 
+  // Check if boost is active
+  const isBoosted = useMemo(() => {
+    if (!event.boostedAt) return false;
+    const boostedTime = new Date(event.boostedAt).getTime();
+    const now = Date.now();
+    const elapsed = now - boostedTime;
+    return elapsed < 24 * 60 * 60 * 1000;
+  }, [event.boostedAt]);
+
+  // Get highlight classes
+  const highlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
   if (!canAccessPanel) {
     return null;
   }
@@ -71,7 +93,10 @@ export function EventAdminPanel({
     isAppModerator;
 
   return (
-    <div className="p-4 border border-blue-200 rounded-2xl bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30">
+    <div
+      className={`p-4 border border-blue-200 rounded-2xl bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30 transition-all duration-300 ${highlightClasses.className}`}
+      style={highlightClasses.style}
+    >
       <div className="flex items-center gap-2 mb-3">
         <Settings className="w-4 h-4 text-blue-600 dark:text-blue-400" />
         <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
@@ -80,6 +105,15 @@ export function EventAdminPanel({
       </div>
 
       <div className="space-y-1">
+        {/* Zarządzaj wydarzeniem - główny panel */}
+        <Link
+          href={`/intent/${event.id}/manage`}
+          className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
+        >
+          <Settings className="w-4 h-4" />
+          <span>Panel zarządzania</span>
+        </Link>
+
         {/* Edytuj wydarzenie */}
         {canEdit && !isDeleted && (
           <Link
@@ -87,25 +121,83 @@ export function EventAdminPanel({
             className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
           >
             <Edit3 className="w-4 h-4" />
-            <span>Edytuj wydarzenie</span>
+            <span>Edytuj szczegóły</span>
           </Link>
         )}
 
-        {/* Zarządzaj wydarzeniem */}
+        {/* Uczestnicy */}
         <Link
-          href={`/intent/${event.id}/manage`}
+          href={`/intent/${event.id}/manage/members`}
           className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
         >
           <Users className="w-4 h-4" />
-          <span>Zarządzaj wydarzeniem</span>
-          {event.membersStats && (
-            <span className="ml-auto text-xs opacity-70">
-              {event.membersStats.PENDING
-                ? `${event.membersStats.PENDING} oczekujących`
-                : ''}
+          <span>Zarządzaj członkami</span>
+          {event.membersStats?.PENDING && event.membersStats.PENDING > 0 && (
+            <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-orange-100 text-orange-700 rounded-full dark:bg-orange-900/30 dark:text-orange-300">
+              {event.membersStats.PENDING}
             </span>
           )}
         </Link>
+
+        {/* Sponsorship / Plan */}
+        {!isDeleted && (
+          <Link
+            href={`/intent/${event.id}/manage/subscription`}
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          >
+            <Crown className="w-4 h-4" />
+            <span>Sponsoring & Boosty</span>
+          </Link>
+        )}
+
+        {/* Chat */}
+        {!isDeleted && (
+          <Link
+            href={`/intent/${event.id}/manage/chat`}
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>Chat grupowy</span>
+          </Link>
+        )}
+
+        {/* Zaproszenia */}
+        {!isDeleted && (
+          <Link
+            href={`/intent/${event.id}/manage/invite-links`}
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Linki zaproszeń</span>
+          </Link>
+        )}
+
+        {/* Recenzje */}
+        {!isDeleted && (
+          <Link
+            href={`/intent/${event.id}/manage/reviews`}
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          >
+            <Star className="w-4 h-4" />
+            <span>Recenzje</span>
+          </Link>
+        )}
+
+        {/* Analityka */}
+        {!isDeleted && (
+          <Link
+            href={`/intent/${event.id}/manage/analytics`}
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Analityka</span>
+          </Link>
+        )}
+
+        {/* Separator */}
+        {!isCanceled && !isDeleted && (
+          <div className="h-px my-2 bg-blue-200 dark:bg-blue-800" />
+        )}
 
         {/* Zamknij/Otwórz zapisy */}
         {!isCanceled && !isDeleted && (
@@ -128,6 +220,12 @@ export function EventAdminPanel({
               </button>
             )}
           </>
+        )}
+
+        {/* Separator before danger zone */}
+        {((canCancel && !isCanceled && !isDeleted) ||
+          (canDelete && !isDeleted)) && (
+          <div className="h-px my-2 bg-blue-200 dark:bg-blue-800" />
         )}
 
         {/* Anuluj wydarzenie */}

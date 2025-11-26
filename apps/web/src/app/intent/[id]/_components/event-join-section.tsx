@@ -1,5 +1,6 @@
 import type { EventDetailsData } from '@/types/event-details';
 import { formatOpensIn } from '@/lib/utils/intent-join-state';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import {
   Clock,
   Lock,
@@ -16,7 +17,7 @@ import {
   useJoinWaitlistOpenMutation,
   useLeaveWaitlistMutation,
 } from '@/lib/api/intent-members';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useIntentJoinQuestionsQuery,
@@ -255,8 +256,26 @@ export function EventJoinSection({ event }: EventJoinSectionProps) {
 
   const buttonConfig = getButtonConfig();
 
+  // Check if boost is active
+  const isBoosted = useMemo(() => {
+    if (!event.boostedAt) return false;
+    const boostedTime = new Date(event.boostedAt).getTime();
+    const now = Date.now();
+    const elapsed = now - boostedTime;
+    return elapsed < 24 * 60 * 60 * 1000;
+  }, [event.boostedAt]);
+
+  // Get highlight classes
+  const highlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div
+      className={`rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
+      style={highlightClasses.style}
+    >
       <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
         Zapisy
       </h2>

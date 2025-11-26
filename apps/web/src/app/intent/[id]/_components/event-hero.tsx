@@ -2,10 +2,10 @@ import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { Level } from '@/lib/api/__generated__/react-query-update';
-import { HIGHLIGHT_PRESETS } from '@/lib/billing-constants';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { formatDate, formatTime } from '@/lib/utils/date-format';
 import type { EventDetailsData } from '@/types/event-details';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import {
   Calendar,
   MapPin,
@@ -83,45 +83,14 @@ export function EventHero({ event }: EventHeroProps) {
   };
 
   // Get highlight ring classes based on highlightColor
-  const highlightRingClasses = useMemo(() => {
-    if (isCanceled || isDeleted || !isBoosted || !event.highlightColor) {
-      return { className: '', style: undefined };
-    }
-
-    // Check if it's a preset color
-    const preset = HIGHLIGHT_PRESETS.find(
-      (p) => p.hex.toLowerCase() === event.highlightColor?.toLowerCase()
-    );
-
-    if (preset) {
-      return {
-        className: `ring-2 ${preset.ring} ${preset.shadow}`,
-        style: undefined,
-      };
-    }
-
-    // Custom color - use inline styles for dynamic colors
-    const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result && result[1] && result[2] && result[3]
-        ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16),
-          }
-        : { r: 245, g: 158, b: 11 }; // fallback to amber
-    };
-
-    const rgb = hexToRgb(event.highlightColor);
-
-    return {
-      className: 'ring-2',
-      style: {
-        '--highlight-color': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
-        boxShadow: `0 0 0 2px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3), 0 0 16px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.35), 0 0 48px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.2)`,
-      } as React.CSSProperties,
-    };
-  }, [isBoosted, isCanceled, isDeleted, event.highlightColor]);
+  const highlightRingClasses = useMemo(
+    () =>
+      getCardHighlightClasses(
+        isCanceled || isDeleted ? null : event.highlightColor,
+        isBoosted
+      ),
+    [isBoosted, isCanceled, isDeleted, event.highlightColor]
+  );
 
   const sortedLevels = useMemo(
     () => sortLevels(event.levels as Level[]),

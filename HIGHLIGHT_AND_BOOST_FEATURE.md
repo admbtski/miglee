@@ -393,12 +393,16 @@ export const HIGHLIGHT_PRESETS = [
 
 ## Utility Functions
 
-### Frontend: `isBoostActive` & `getHighlightBackgroundStyle`
+### Centralized Highlight Functions
 
 **Location:** `apps/web/src/lib/utils/is-boost-active.ts`
 
+All highlight-related utility functions are centralized in this file for consistency and reusability:
+
 ```typescript
-// Check if boost is active (within 24 hours)
+/**
+ * Check if boost is active (within 24 hours)
+ */
 export function isBoostActive(boostedAt: string | null | undefined): boolean {
   if (!boostedAt) return false;
   const boostedTime = new Date(boostedAt).getTime();
@@ -407,18 +411,20 @@ export function isBoostActive(boostedAt: string | null | undefined): boolean {
   return elapsed < 24 * 60 * 60 * 1000; // 24 hours in ms
 }
 
-// Generate gradient background styles
+/**
+ * Generate gradient background styles for highlighted events
+ * Used for page backgrounds and card tints
+ */
 export function getHighlightBackgroundStyle(
   highlightColor: string | null | undefined,
   isBoosted: boolean,
   intensity: 'subtle' | 'medium' | 'strong' = 'medium'
-): React.CSSProperties {
+): CSSProperties | undefined {
   if (!isBoosted || !highlightColor) {
-    return {};
+    return undefined;
   }
 
-  // Convert HEX to RGB for alpha manipulation
-  const hexToRgb = (hex: string) => {
+  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result && result[1] && result[2] && result[3]
       ? {
@@ -426,26 +432,158 @@ export function getHighlightBackgroundStyle(
           g: parseInt(result[2], 16),
           b: parseInt(result[3], 16),
         }
-      : { r: 59, g: 130, b: 246 }; // fallback to blue
+      : { r: 245, g: 158, b: 11 }; // fallback to amber
   };
 
   const rgb = hexToRgb(highlightColor);
-  const rgbString = `${rgb.r}, ${rgb.g}, ${rgb.b}`;
 
-  // Define opacity levels based on intensity
-  const opacities = {
-    subtle: { start: 0.03, end: 0.08 }, // Very light
-    medium: { start: 0.05, end: 0.12 }, // Noticeable
-    strong: { start: 0.08, end: 0.18 }, // Prominent
-  };
+  let startOpacity: number;
+  let endOpacity: number;
 
-  const { start, end } = opacities[intensity];
+  switch (intensity) {
+    case 'subtle':
+      startOpacity = 0.03; // 3%
+      endOpacity = 0.08; // 8%
+      break;
+    case 'medium':
+      startOpacity = 0.05; // 5%
+      endOpacity = 0.12; // 12%
+      break;
+    case 'strong':
+      startOpacity = 0.08; // 8%
+      endOpacity = 0.18; // 18%
+      break;
+  }
 
   return {
-    background: `linear-gradient(135deg, rgba(${rgbString}, ${start}) 0%, rgba(${rgbString}, ${end}) 100%)`,
+    background: `linear-gradient(135deg, rgba(${rgb.r},${rgb.g},${rgb.b},${startOpacity}), rgba(${rgb.r},${rgb.g},${rgb.b},${endOpacity}))`,
+  };
+}
+
+/**
+ * Get highlight ring classes and styles for cards
+ * Used for event detail cards and event cards in listings
+ *
+ * Provides consistent ring-2 border with glowing shadow effect:
+ * - 2px ring border at 50% opacity
+ * - 16px inner glow at 60% opacity
+ * - 48px outer glow at 40% opacity
+ */
+export function getCardHighlightClasses(
+  highlightColor: string | null | undefined,
+  isBoosted: boolean
+): { className: string; style?: CSSProperties } {
+  if (!isBoosted || !highlightColor) {
+    return { className: '' };
+  }
+
+  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result && result[1] && result[2] && result[3]
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 245, g: 158, b: 11 };
+  };
+
+  const rgb = hexToRgb(highlightColor);
+
+  return {
+    className: 'ring-2',
+    style: {
+      '--tw-ring-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`,
+      boxShadow: `0 0 0 2px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5), 0 0 16px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6), 0 0 48px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`,
+    } as CSSProperties,
+  };
+}
+
+/**
+ * Get highlight ring classes for cover images (stronger effect)
+ * Used for larger images like event hero covers
+ *
+ * Provides stronger ring-4 border with more prominent shadow:
+ * - 4px ring border at 50% opacity
+ * - 24px inner glow at 60% opacity
+ * - 64px outer glow at 40% opacity
+ */
+export function getCoverHighlightClasses(
+  highlightColor: string | null | undefined,
+  isBoosted: boolean
+): { className: string; style?: CSSProperties } {
+  if (!isBoosted || !highlightColor) {
+    return { className: '' };
+  }
+
+  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result && result[1] && result[2] && result[3]
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 245, g: 158, b: 11 };
+  };
+
+  const rgb = hexToRgb(highlightColor);
+
+  return {
+    className: 'ring-4',
+    style: {
+      '--tw-ring-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`,
+      boxShadow: `0 0 0 4px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5), 0 0 24px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6), 0 0 64px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`,
+    } as CSSProperties,
   };
 }
 ```
+
+### Usage in Components
+
+All event detail components import and use these centralized functions:
+
+```typescript
+import { getCardHighlightClasses, isBoostActive } from '@/lib/utils/is-boost-active';
+
+// In component:
+const isBoosted = useMemo(
+  () => isBoostActive(event.boostedAt),
+  [event.boostedAt]
+);
+
+const highlightClasses = useMemo(
+  () => getCardHighlightClasses(event.highlightColor, isBoosted),
+  [event.highlightColor, isBoosted]
+);
+
+// Apply to card:
+<div
+  className={`rounded-2xl ... ${highlightClasses.className}`}
+  style={highlightClasses.style}
+>
+```
+
+**Components using `getCardHighlightClasses`:**
+
+1. `event-hero.tsx` - Event hero card
+2. `event-details.tsx` - "Kiedy i gdzie", "Opis", "Kontekst" cards
+3. `event-metadata.tsx` - Event metadata card
+4. `event-participants.tsx` - Participants list card
+5. `event-comments.tsx` - Comments section card
+6. `event-reviews.tsx` - Reviews section card
+7. `event-join-section.tsx` - Join/registration card
+8. `event-engagement-stats.tsx` - Engagement statistics card
+9. `event-actions.tsx` - Quick actions, invite links, and sponsorship info cards
+
+**Components using `getCoverHighlightClasses`:**
+
+1. `event-detail-client.tsx` - Hero cover image (stronger ring effect)
+
+**Components using `getHighlightBackgroundStyle`:**
+
+1. `event-detail-client.tsx` - Page background and navbar tint
+2. `event-card.tsx` - Event card background tint
 
 ### Map Helper: `mapIntent`
 
@@ -598,5 +736,21 @@ Users should be able to:
 
 ---
 
-**Last Updated:** 2025-11-25
-**Version:** 1.0
+**Last Updated:** 2025-11-26
+**Version:** 1.1
+
+## Changelog
+
+### v1.1 (2025-11-26)
+
+- **Centralized Utility Functions**: Moved all highlight-related functions to `is-boost-active.ts`
+  - `getCardHighlightClasses()` - For standard event cards (ring-2)
+  - `getCoverHighlightClasses()` - For hero cover images (ring-4, stronger glow)
+  - `getHighlightBackgroundStyle()` - For page/card background tints
+- **Applied to All Event Detail Cards**: All 9+ cards in event detail now use consistent highlight effects
+- **Improved Shadow Effects**: Stronger, more visible glowing shadows for both cards and cover images
+- **Better Code Reusability**: Single source of truth for highlight logic across the application
+
+### v1.0 (2025-11-25)
+
+- Initial implementation of highlight color and boost features

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   useGetComments,
@@ -27,6 +27,7 @@ import { ReportCommentModal } from './report-comment-modal';
 import type { EventDetailsData } from '@/types/event-details';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 
 type EventCommentsProps = {
   event: EventDetailsData;
@@ -454,8 +455,26 @@ export function EventComments({ event }: EventCommentsProps) {
     });
   };
 
+  // Check if boost is active
+  const isBoosted = useMemo(() => {
+    if (!event.boostedAt) return false;
+    const boostedTime = new Date(event.boostedAt).getTime();
+    const now = Date.now();
+    const elapsed = now - boostedTime;
+    return elapsed < 24 * 60 * 60 * 1000;
+  }, [event.boostedAt]);
+
+  // Get highlight classes
+  const highlightClasses = useMemo(
+    () => getCardHighlightClasses(event.highlightColor, isBoosted),
+    [event.highlightColor, isBoosted]
+  );
+
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div
+      className={`rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
+      style={highlightClasses.style}
+    >
       {/* Header */}
       <div className="mb-6 flex items-center gap-2">
         <MessageSquare className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
