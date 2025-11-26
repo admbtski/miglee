@@ -20,6 +20,8 @@ import {
   ChevronDown,
   ChevronUp,
   Flag,
+  EyeOff,
+  Shield,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -37,9 +39,11 @@ type CommentItemProps = {
   comment: any;
   eventId: string;
   currentUserId?: string;
+  isOwnerOrModerator?: boolean;
   isReply?: boolean;
   onEdit: (id: string, content: string) => void;
   onDelete: (id: string) => void;
+  onHide: (id: string) => void;
   onReply: (parentId: string) => void;
   onReport: (commentId: string, authorName: string) => void;
   onToggleThread: (commentId: string) => void;
@@ -58,9 +62,11 @@ function CommentItem({
   comment,
   eventId,
   currentUserId,
+  isOwnerOrModerator = false,
   isReply = false,
   onEdit,
   onDelete,
+  onHide,
   onReply,
   onReport,
   onToggleThread,
@@ -78,6 +84,7 @@ function CommentItem({
   const isEditing = editingId === comment.id;
   const hasReplies = comment.repliesCount > 0;
   const isExpanded = expandedThreads.has(comment.id);
+  const isHidden = Boolean(comment.deletedAt);
 
   // Fetch replies when expanded - hooks are now at the top level of this component
   const repliesQuery = useGetComments(
@@ -123,11 +130,24 @@ function CommentItem({
   return (
     <div
       key={comment.id}
-      className={`${isReply ? 'ml-8 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800' : ''}`}
+      className={`${isReply ? 'ml-8 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800' : ''} ${isHidden ? 'opacity-60' : ''}`}
     >
-      <div className="group rounded-lg bg-white p-4 shadow-sm dark:bg-zinc-900">
+      <div className="p-4 bg-white rounded-lg shadow-sm group dark:bg-zinc-900">
+        {/* Hidden Badge */}
+        {isHidden && (
+          <div className="flex items-center gap-2 px-3 py-2 mb-3 text-xs font-medium border rounded-lg bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-700">
+            <EyeOff className="w-4 h-4" />
+            <span>Ten komentarz został ukryty</span>
+            {isOwnerOrModerator && (
+              <span className="ml-auto text-zinc-500 dark:text-zinc-500">
+                (widoczny dla moderatorów)
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Author & Actions */}
-        <div className="mb-2 flex items-start justify-between">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-3">
             {comment.author?.avatarKey && (
               <Link
@@ -142,14 +162,14 @@ function CommentItem({
                     comment.author.name
                   }
                   size={32}
-                  className="rounded-full transition-opacity hover:opacity-80"
+                  className="transition-opacity rounded-full hover:opacity-80"
                 />
               </Link>
             )}
             <div className="min-w-0">
               <Link
                 href={`/u/${comment.author?.name}`}
-                className="text-sm font-medium text-zinc-900 transition-colors hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                className="text-sm font-medium transition-colors text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
               >
                 {(comment.author as any)?.profile?.displayName ||
                   comment.author?.name ||
@@ -157,7 +177,7 @@ function CommentItem({
               </Link>
               <Link
                 href={`/u/${comment.author?.name}`}
-                className="block text-xs text-zinc-600 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+                className="block text-xs transition-colors text-zinc-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
               >
                 @{comment.author?.name || 'N/A'}
               </Link>
@@ -172,40 +192,51 @@ function CommentItem({
             </div>
           </div>
 
-          {currentUserId && !isEditing && (
-            <div className="relative opacity-0 transition-opacity group-hover:opacity-100">
-              <div className="group/menu relative">
-                <button className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                  <MoreVertical className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+          {currentUserId && !isEditing && !isHidden && (
+            <div className="relative transition-opacity opacity-0 group-hover:opacity-100">
+              <div className="relative group/menu">
+                <button className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                  <MoreVertical className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 </button>
-                <div className="absolute right-0 z-10 mt-1 w-40 origin-top-right scale-0 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-transform group-hover/menu:scale-100 dark:bg-zinc-800">
+                <div className="absolute right-0 z-10 w-48 py-1 mt-1 transition-transform origin-top-right scale-0 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 group-hover/menu:scale-100 dark:bg-zinc-800">
                   {isAuthor ? (
                     <>
                       <button
                         onClick={() => onEdit(comment.id, comment.content)}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className="w-4 h-4" />
                         Edytuj
                       </button>
                       <button
                         onClick={() => onDelete(comment.id)}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
+                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="w-4 h-4" />
                         Usuń
                       </button>
                     </>
                   ) : (
-                    <button
-                      onClick={() =>
-                        onReport(comment.id, comment.author?.name || 'N/A')
-                      }
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                    >
-                      <Flag className="h-4 w-4" />
-                      Zgłoś
-                    </button>
+                    <>
+                      {isOwnerOrModerator && (
+                        <button
+                          onClick={() => onHide(comment.id)}
+                          className="flex items-center w-full gap-2 px-4 py-2 text-sm text-amber-600 hover:bg-zinc-100 dark:text-amber-400 dark:hover:bg-zinc-700"
+                        >
+                          <Shield className="w-4 h-4" />
+                          Ukryj komentarz
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          onReport(comment.id, comment.author?.name || 'N/A')
+                        }
+                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                      >
+                        <Flag className="w-4 h-4" />
+                        Zgłoś
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -219,7 +250,7 @@ function CommentItem({
             <textarea
               value={editingContent}
               onChange={(e) => setEditingContent(e.target.value)}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full px-3 py-2 text-sm border rounded-lg border-zinc-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               rows={3}
               autoFocus
             />
@@ -252,13 +283,13 @@ function CommentItem({
             </p>
 
             {/* Actions */}
-            <div className="mt-3 flex items-center gap-4">
+            <div className="flex items-center gap-4 mt-3">
               {currentUserId && !isReply && (
                 <button
                   onClick={() => onReply(comment.id)}
                   className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                 >
-                  <Reply className="h-3 w-3" />
+                  <Reply className="w-3 h-3" />
                   Odpowiedz
                 </button>
               )}
@@ -270,17 +301,17 @@ function CommentItem({
                 >
                   {isLoadingReplies ? (
                     <>
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <Loader2 className="w-3 h-3 animate-spin" />
                       Ładowanie...
                     </>
                   ) : isExpanded ? (
                     <>
-                      <ChevronUp className="h-3 w-3" />
+                      <ChevronUp className="w-3 h-3" />
                       Ukryj odpowiedzi ({comment.repliesCount})
                     </>
                   ) : (
                     <>
-                      <ChevronDown className="h-3 w-3" />
+                      <ChevronDown className="w-3 h-3" />
                       Pokaż odpowiedzi ({comment.repliesCount})
                     </>
                   )}
@@ -293,17 +324,17 @@ function CommentItem({
 
       {/* Reply Form */}
       {replyingTo === comment.id && (
-        <div className="ml-8 mt-3">
-          <div className="rounded-lg border border-zinc-300 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="mt-3 ml-8">
+          <div className="p-3 bg-white border rounded-lg border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900">
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder="Napisz odpowiedź..."
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="w-full px-3 py-2 text-sm border rounded-lg border-zinc-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               rows={3}
               autoFocus
             />
-            <div className="mt-2 flex gap-2">
+            <div className="flex gap-2 mt-2">
               <button
                 onClick={handleSubmitReply}
                 disabled={createMutation.isPending || !replyContent.trim()}
@@ -334,9 +365,11 @@ function CommentItem({
               comment={reply}
               eventId={eventId}
               currentUserId={currentUserId}
+              isOwnerOrModerator={isOwnerOrModerator}
               isReply={true}
               onEdit={onEdit}
               onDelete={onDelete}
+              onHide={onHide}
               onReply={onReply}
               onReport={onReport}
               onToggleThread={onToggleThread}
@@ -360,6 +393,12 @@ function CommentItem({
 export function EventComments({ event }: EventCommentsProps) {
   const { data: authData } = useMeQuery();
   const currentUserId = authData?.me?.id;
+
+  // Check if current user is owner or moderator
+  const isOwnerOrModerator = useMemo(() => {
+    if (!currentUserId || !event.userMembership) return false;
+    return event.userMembership.isOwner || event.userMembership.isModerator;
+  }, [currentUserId, event.userMembership]);
 
   const [newComment, setNewComment] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -438,6 +477,21 @@ export function EventComments({ event }: EventCommentsProps) {
     }
   };
 
+  const handleHideComment = async (id: string) => {
+    if (
+      !confirm(
+        'Czy na pewno chcesz ukryć ten komentarz? Będzie on widoczny tylko dla moderatorów.'
+      )
+    )
+      return;
+
+    try {
+      await deleteMutation.mutateAsync({ id });
+    } catch (error) {
+      console.error('Failed to hide comment:', error);
+    }
+  };
+
   const handleReportComment = (commentId: string, authorName: string) => {
     setCommentToReport({ id: commentId, authorName });
     setReportModalOpen(true);
@@ -476,8 +530,8 @@ export function EventComments({ event }: EventCommentsProps) {
       style={highlightClasses.style}
     >
       {/* Header */}
-      <div className="mb-6 flex items-center gap-2">
-        <MessageSquare className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+      <div className="flex items-center gap-2 mb-6">
+        <MessageSquare className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Komentarze
         </h2>
@@ -493,23 +547,23 @@ export function EventComments({ event }: EventCommentsProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Dodaj komentarz..."
-            className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className="w-full px-4 py-3 text-sm border rounded-lg border-zinc-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
             rows={3}
           />
-          <div className="mt-2 flex justify-end">
+          <div className="flex justify-end mt-2">
             <button
               type="submit"
               disabled={createMutation.isPending || !newComment.trim()}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {createMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Wysyłanie...
                 </>
               ) : (
                 <>
-                  <Send className="h-4 w-4" />
+                  <Send className="w-4 h-4" />
                   Wyślij komentarz
                 </>
               )}
@@ -517,7 +571,7 @@ export function EventComments({ event }: EventCommentsProps) {
           </div>
         </form>
       ) : (
-        <div className="mb-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-center dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="p-4 mb-6 text-center border rounded-lg border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Zaloguj się, aby dodać komentarz
           </p>
@@ -527,11 +581,11 @@ export function EventComments({ event }: EventCommentsProps) {
       {/* Comments List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin dark:text-blue-400" />
         </div>
       ) : topLevelComments.length === 0 ? (
         <div className="py-12 text-center">
-          <MessageSquare className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
+          <MessageSquare className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-700" />
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             Brak komentarzy. Bądź pierwszy!
           </p>
@@ -544,8 +598,10 @@ export function EventComments({ event }: EventCommentsProps) {
               comment={comment}
               eventId={event.id}
               currentUserId={currentUserId}
+              isOwnerOrModerator={isOwnerOrModerator}
               onEdit={handleEdit}
               onDelete={handleDeleteComment}
+              onHide={handleHideComment}
               onReply={handleReply}
               onReport={handleReportComment}
               onToggleThread={toggleThread}
