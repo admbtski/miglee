@@ -7,6 +7,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { SubscriptionPanelWrapper } from './_components/subscription-panel-wrapper';
 import { ManagementPageLayout } from '../_components/management-page-layout';
+import { PaymentResultModal } from '@/components/billing/payment-result-modal';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -37,6 +38,10 @@ export default async function IntentSubscriptionPage({ params }: PageProps) {
         }
       >
         <SubscriptionPanelWrapper intentId={id} />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <PaymentResultModal context="event" />
       </Suspense>
     </ManagementPageLayout>
   );
