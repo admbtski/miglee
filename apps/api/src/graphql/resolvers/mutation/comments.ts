@@ -199,7 +199,12 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
 
       const existing = await prisma.comment.findUnique({
         where: { id },
-        select: { authorId: true, deletedAt: true, intentId: true },
+        select: {
+          authorId: true,
+          deletedAt: true,
+          hiddenAt: true,
+          intentId: true,
+        },
       });
 
       if (!existing) {
@@ -218,14 +223,173 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
 
       await prisma.comment.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: {
+          deletedAt: new Date(),
+          deletedById: user.id,
+        },
       });
 
-      // Decrement intent commentsCount
-      await prisma.intent.update({
-        where: { id: existing.intentId },
-        data: { commentsCount: { decrement: 1 } },
+      // Decrement intent commentsCount only if not hidden
+      if (!existing.hiddenAt) {
+        await prisma.intent.update({
+          where: { id: existing.intentId },
+          data: { commentsCount: { decrement: 1 } },
+        });
+      }
+
+      return true;
+    }
+  );
+
+/**
+ * Mutation: Hide a comment (moderation - soft delete)
+ */
+export const hideCommentMutation: MutationResolvers['hideComment'] =
+  resolverWithMetrics(
+    'Mutation',
+    'hideComment',
+    async (_p, { id }, { user }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Check if user has moderation permissions
+      const comment = await prisma.comment.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          intentId: true,
+          deletedAt: true,
+          hiddenAt: true,
+          intent: {
+            select: {
+              members: {
+                where: {
+                  userId: user.id,
+                  role: { in: ['OWNER', 'MODERATOR'] },
+                },
+                select: { role: true },
+              },
+            },
+          },
+        },
       });
+
+      if (!comment) {
+        throw new GraphQLError('Comment not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check permissions: app admin/moderator OR intent owner/moderator
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAppModerator = user.role === 'MODERATOR';
+      const isIntentModerator = comment.intent.members.length > 0;
+
+      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+        throw new GraphQLError('Insufficient permissions to hide comments.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      if (comment.hiddenAt) {
+        return true; // Already hidden
+      }
+
+      await prisma.comment.update({
+        where: { id },
+        data: {
+          hiddenAt: new Date(),
+          hiddenById: user.id,
+        },
+      });
+
+      // Decrement intent commentsCount only if not already deleted
+      if (!comment.deletedAt) {
+        await prisma.intent.update({
+          where: { id: comment.intentId },
+          data: { commentsCount: { decrement: 1 } },
+        });
+      }
+
+      return true;
+    }
+  );
+
+/**
+ * Mutation: Unhide a comment (moderation)
+ */
+export const unhideCommentMutation: MutationResolvers['unhideComment'] =
+  resolverWithMetrics(
+    'Mutation',
+    'unhideComment',
+    async (_p, { id }, { user }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Check if user has moderation permissions
+      const comment = await prisma.comment.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          intentId: true,
+          deletedAt: true,
+          hiddenAt: true,
+          intent: {
+            select: {
+              members: {
+                where: {
+                  userId: user.id,
+                  role: { in: ['OWNER', 'MODERATOR'] },
+                },
+                select: { role: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!comment) {
+        throw new GraphQLError('Comment not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check permissions: app admin/moderator OR intent owner/moderator
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAppModerator = user.role === 'MODERATOR';
+      const isIntentModerator = comment.intent.members.length > 0;
+
+      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+        throw new GraphQLError('Insufficient permissions to unhide comments.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      if (!comment.hiddenAt) {
+        return true; // Not hidden
+      }
+
+      await prisma.comment.update({
+        where: { id },
+        data: {
+          hiddenAt: null,
+          hiddenById: null,
+        },
+      });
+
+      // Increment intent commentsCount only if not deleted
+      if (!comment.deletedAt) {
+        await prisma.intent.update({
+          where: { id: comment.intentId },
+          data: { commentsCount: { increment: 1 } },
+        });
+      }
 
       return true;
     }

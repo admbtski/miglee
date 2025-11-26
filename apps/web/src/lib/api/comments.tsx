@@ -14,6 +14,12 @@ import {
   DeleteCommentDocument,
   type DeleteCommentMutation,
   type DeleteCommentMutationVariables,
+  HideCommentDocument,
+  type HideCommentMutation,
+  type HideCommentMutationVariables,
+  UnhideCommentDocument,
+  type UnhideCommentMutation,
+  type UnhideCommentMutationVariables,
   GetCommentDocument,
   type GetCommentQuery,
   type GetCommentQueryVariables,
@@ -205,6 +211,72 @@ export function useDeleteComment(
     },
     meta: {
       successMessage: 'Comment deleted',
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentKeys.all });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Hide a comment (moderation)
+ */
+export function useHideComment(
+  options?: UseMutationOptions<
+    HideCommentMutation,
+    Error,
+    HideCommentMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<HideCommentMutation, Error, HideCommentMutationVariables>({
+    mutationKey: ['HideComment'],
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<HideCommentMutation>(
+        HideCommentDocument,
+        variables
+      );
+      return res;
+    },
+    meta: {
+      successMessage: 'Comment hidden',
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentKeys.all });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Unhide a comment (moderation)
+ */
+export function useUnhideComment(
+  options?: UseMutationOptions<
+    UnhideCommentMutation,
+    Error,
+    UnhideCommentMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    UnhideCommentMutation,
+    Error,
+    UnhideCommentMutationVariables
+  >({
+    mutationKey: ['UnhideComment'],
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<UnhideCommentMutation>(
+        UnhideCommentDocument,
+        variables
+      );
+      return res;
+    },
+    meta: {
+      successMessage: 'Comment restored',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentKeys.all });

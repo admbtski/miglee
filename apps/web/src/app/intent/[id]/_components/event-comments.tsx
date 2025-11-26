@@ -6,6 +6,7 @@ import {
   useGetComments,
   useCreateComment,
   useDeleteComment,
+  useHideComment,
   useUpdateComment,
 } from '@/lib/api/comments';
 import { useMeQuery } from '@/lib/api/auth';
@@ -39,7 +40,9 @@ type CommentItemProps = {
   comment: any;
   eventId: string;
   currentUserId?: string;
-  isOwnerOrModerator?: boolean;
+  isAppAdmin?: boolean;
+  isAppModerator?: boolean;
+  isIntentOwnerOrMod?: boolean;
   isReply?: boolean;
   onEdit: (id: string, content: string) => void;
   onDelete: (id: string) => void;
@@ -62,7 +65,9 @@ function CommentItem({
   comment,
   eventId,
   currentUserId,
-  isOwnerOrModerator = false,
+  isAppAdmin = false,
+  isAppModerator = false,
+  isIntentOwnerOrMod = false,
   isReply = false,
   onEdit,
   onDelete,
@@ -84,7 +89,19 @@ function CommentItem({
   const isEditing = editingId === comment.id;
   const hasReplies = comment.repliesCount > 0;
   const isExpanded = expandedThreads.has(comment.id);
-  const isHidden = Boolean(comment.deletedAt);
+  const isDeleted = Boolean(comment.deletedAt);
+  const isHidden = Boolean(comment.hiddenAt);
+  const isRemovedFromView = isDeleted || isHidden;
+
+  // Permissions
+  const canEdit = isAppAdmin || isAppModerator || isAuthor;
+  const canDelete =
+    isAppAdmin || isAppModerator || isIntentOwnerOrMod || isAuthor;
+  const canHide =
+    (isAppAdmin || isAppModerator || isIntentOwnerOrMod) && !isHidden;
+  const canReport = Boolean(currentUserId) && !isAuthor;
+  const showModerationBadge =
+    (isAppAdmin || isAppModerator || isIntentOwnerOrMod) && isRemovedFromView;
 
   // Fetch replies when expanded - hooks are now at the top level of this component
   const repliesQuery = useGetComments(
@@ -130,95 +147,108 @@ function CommentItem({
   return (
     <div
       key={comment.id}
-      className={`${isReply ? 'ml-8 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800' : ''} ${isHidden ? 'opacity-60' : ''}`}
+      className={`${isReply ? 'ml-8 border-l-2 border-zinc-200 pl-4 dark:border-zinc-800' : ''}`}
     >
       <div className="p-4 bg-white rounded-lg shadow-sm group dark:bg-zinc-900">
-        {/* Hidden Badge */}
-        {isHidden && (
-          <div className="flex items-center gap-2 px-3 py-2 mb-3 text-xs font-medium border rounded-lg bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-700">
+        {/* Deleted/Hidden Comment Placeholder */}
+        {isRemovedFromView && !showModerationBadge ? (
+          <div className="flex items-center gap-3 py-6 text-sm text-zinc-500 dark:text-zinc-400">
             <EyeOff className="w-4 h-4" />
-            <span>Ten komentarz został ukryty</span>
-            {isOwnerOrModerator && (
-              <span className="ml-auto text-zinc-500 dark:text-zinc-500">
-                (widoczny dla moderatorów)
-              </span>
-            )}
+            <span className="italic">
+              {isDeleted
+                ? 'Ten komentarz został usunięty'
+                : 'Ten komentarz został ukryty'}
+            </span>
           </div>
-        )}
-
-        {/* Author & Actions */}
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-3">
-            {comment.author?.avatarKey && (
-              <Link
-                href={`/u/${comment.author.name}`}
-                className="flex-shrink-0"
-              >
-                <Avatar
-                  url={buildAvatarUrl(comment.author.avatarKey, 'xs')}
-                  blurhash={comment.author.avatarBlurhash}
-                  alt={
-                    (comment.author as any).profile?.displayName ||
-                    comment.author.name
-                  }
-                  size={32}
-                  className="transition-opacity rounded-full hover:opacity-80"
-                />
-              </Link>
+        ) : (
+          <>
+            {/* Moderation Badge for deleted/hidden comments visible to moderators */}
+            {isRemovedFromView && showModerationBadge && (
+              <div className="flex items-center gap-2 px-3 py-2 mb-3 text-xs font-medium border rounded-lg bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800">
+                <Shield className="w-4 h-4" />
+                <span>
+                  {isDeleted ? 'Komentarz usunięty' : 'Komentarz ukryty'}
+                  {comment.deletedBy && ` przez ${comment.deletedBy.name}`}
+                  {comment.hiddenBy && ` przez ${comment.hiddenBy.name}`}
+                </span>
+                <span className="ml-auto text-red-600 dark:text-red-400">
+                  (widoczny dla moderatorów)
+                </span>
+              </div>
             )}
-            <div className="min-w-0">
-              <Link
-                href={`/u/${comment.author?.name}`}
-                className="text-sm font-medium transition-colors text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
-              >
-                {(comment.author as any)?.profile?.displayName ||
-                  comment.author?.name ||
-                  'N/A'}
-              </Link>
-              <Link
-                href={`/u/${comment.author?.name}`}
-                className="block text-xs transition-colors text-zinc-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
-              >
-                @{comment.author?.name || 'N/A'}
-              </Link>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                {format(new Date(comment.createdAt), 'dd MMM yyyy, HH:mm', {
-                  locale: pl,
-                })}
-                {comment.updatedAt !== comment.createdAt && (
-                  <span className="ml-1">(edytowano)</span>
+
+            {/* Author & Actions */}
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-3">
+                {comment.author?.avatarKey && (
+                  <Link
+                    href={`/u/${comment.author.name}`}
+                    className="flex-shrink-0"
+                  >
+                    <Avatar
+                      url={buildAvatarUrl(comment.author.avatarKey, 'xs')}
+                      blurhash={comment.author.avatarBlurhash}
+                      alt={
+                        (comment.author as any).profile?.displayName ||
+                        comment.author.name
+                      }
+                      size={32}
+                      className="transition-opacity rounded-full hover:opacity-80"
+                    />
+                  </Link>
                 )}
-              </p>
-            </div>
-          </div>
+                <div className="min-w-0">
+                  <Link
+                    href={`/u/${comment.author?.name}`}
+                    className="text-sm font-medium transition-colors text-zinc-900 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
+                  >
+                    {(comment.author as any)?.profile?.displayName ||
+                      comment.author?.name ||
+                      'N/A'}
+                  </Link>
+                  <Link
+                    href={`/u/${comment.author?.name}`}
+                    className="block text-xs transition-colors text-zinc-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
+                  >
+                    @{comment.author?.name || 'N/A'}
+                  </Link>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    {format(new Date(comment.createdAt), 'dd MMM yyyy, HH:mm', {
+                      locale: pl,
+                    })}
+                    {comment.updatedAt !== comment.createdAt && (
+                      <span className="ml-1">(edytowano)</span>
+                    )}
+                  </p>
+                </div>
+              </div>
 
-          {currentUserId && !isEditing && !isHidden && (
-            <div className="relative transition-opacity opacity-0 group-hover:opacity-100">
-              <div className="relative group/menu">
-                <button className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                  <MoreVertical className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                </button>
-                <div className="absolute right-0 z-10 w-48 py-1 mt-1 transition-transform origin-top-right scale-0 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 group-hover/menu:scale-100 dark:bg-zinc-800">
-                  {isAuthor ? (
-                    <>
-                      <button
-                        onClick={() => onEdit(comment.id, comment.content)}
-                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Edytuj
-                      </button>
-                      <button
-                        onClick={() => onDelete(comment.id)}
-                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Usuń
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {isOwnerOrModerator && (
+              {currentUserId && !isEditing && (
+                <div className="relative transition-opacity opacity-0 group-hover:opacity-100">
+                  <div className="relative group/menu">
+                    <button className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <MoreVertical className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                    </button>
+                    <div className="absolute right-0 z-10 w-48 py-1 mt-1 transition-transform origin-top-right scale-0 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 group-hover/menu:scale-100 dark:bg-zinc-800">
+                      {canEdit && (
+                        <button
+                          onClick={() => onEdit(comment.id, comment.content)}
+                          className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Edytuj
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => onDelete(comment.id)}
+                          className="flex items-center w-full gap-2 px-4 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:text-red-400 dark:hover:bg-zinc-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {isAuthor ? 'Usuń' : 'Usuń (moderacja)'}
+                        </button>
+                      )}
+                      {canHide && !isDeleted && (
                         <button
                           onClick={() => onHide(comment.id)}
                           className="flex items-center w-full gap-2 px-4 py-2 text-sm text-amber-600 hover:bg-zinc-100 dark:text-amber-400 dark:hover:bg-zinc-700"
@@ -227,97 +257,99 @@ function CommentItem({
                           Ukryj komentarz
                         </button>
                       )}
-                      <button
-                        onClick={() =>
-                          onReport(comment.id, comment.author?.name || 'N/A')
-                        }
-                        className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                      >
-                        <Flag className="w-4 h-4" />
-                        Zgłoś
-                      </button>
-                    </>
-                  )}
+                      {canReport && (
+                        <button
+                          onClick={() =>
+                            onReport(comment.id, comment.author?.name || 'N/A')
+                          }
+                          className="flex items-center w-full gap-2 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                        >
+                          <Flag className="w-4 h-4" />
+                          Zgłoś
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            {isEditing ? (
+              <div className="space-y-2">
+                <textarea
+                  value={editingContent}
+                  onChange={(e) => setEditingContent(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border rounded-lg border-zinc-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  rows={3}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (!editingContent.trim()) return;
+                      updateMutation.mutate({
+                        id: comment.id,
+                        input: { content: editingContent.trim() },
+                      });
+                    }}
+                    disabled={updateMutation.isPending}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {updateMutation.isPending ? 'Zapisywanie...' : 'Zapisz'}
+                  </button>
+                  <button
+                    onClick={() => onEdit('', '')}
+                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    Anuluj
+                  </button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            ) : (
+              <>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                  {comment.content}
+                </p>
 
-        {/* Content */}
-        {isEditing ? (
-          <div className="space-y-2">
-            <textarea
-              value={editingContent}
-              onChange={(e) => setEditingContent(e.target.value)}
-              className="w-full px-3 py-2 text-sm border rounded-lg border-zinc-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              rows={3}
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  if (!editingContent.trim()) return;
-                  updateMutation.mutate({
-                    id: comment.id,
-                    input: { content: editingContent.trim() },
-                  });
-                }}
-                disabled={updateMutation.isPending}
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {updateMutation.isPending ? 'Zapisywanie...' : 'Zapisz'}
-              </button>
-              <button
-                onClick={() => onEdit('', '')}
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                Anuluj
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {comment.content}
-            </p>
-
-            {/* Actions */}
-            <div className="flex items-center gap-4 mt-3">
-              {currentUserId && !isReply && (
-                <button
-                  onClick={() => onReply(comment.id)}
-                  className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-                >
-                  <Reply className="w-3 h-3" />
-                  Odpowiedz
-                </button>
-              )}
-              {hasReplies && (
-                <button
-                  onClick={() => onToggleThread(comment.id)}
-                  disabled={isLoadingReplies}
-                  className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100"
-                >
-                  {isLoadingReplies ? (
-                    <>
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      Ładowanie...
-                    </>
-                  ) : isExpanded ? (
-                    <>
-                      <ChevronUp className="w-3 h-3" />
-                      Ukryj odpowiedzi ({comment.repliesCount})
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="w-3 h-3" />
-                      Pokaż odpowiedzi ({comment.repliesCount})
-                    </>
+                {/* Actions */}
+                <div className="flex items-center gap-4 mt-3">
+                  {currentUserId && !isReply && (
+                    <button
+                      onClick={() => onReply(comment.id)}
+                      className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    >
+                      <Reply className="w-3 h-3" />
+                      Odpowiedz
+                    </button>
                   )}
-                </button>
-              )}
-            </div>
+                  {hasReplies && (
+                    <button
+                      onClick={() => onToggleThread(comment.id)}
+                      disabled={isLoadingReplies}
+                      className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    >
+                      {isLoadingReplies ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Ładowanie...
+                        </>
+                      ) : isExpanded ? (
+                        <>
+                          <ChevronUp className="w-3 h-3" />
+                          Ukryj odpowiedzi ({comment.repliesCount})
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-3 h-3" />
+                          Pokaż odpowiedzi ({comment.repliesCount})
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -365,7 +397,9 @@ function CommentItem({
               comment={reply}
               eventId={eventId}
               currentUserId={currentUserId}
-              isOwnerOrModerator={isOwnerOrModerator}
+              isAppAdmin={isAppAdmin}
+              isAppModerator={isAppModerator}
+              isIntentOwnerOrMod={isIntentOwnerOrMod}
               isReply={true}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -393,12 +427,21 @@ function CommentItem({
 export function EventComments({ event }: EventCommentsProps) {
   const { data: authData } = useMeQuery();
   const currentUserId = authData?.me?.id;
+  const userRole = authData?.me?.role;
 
-  // Check if current user is owner or moderator
-  const isOwnerOrModerator = useMemo(() => {
+  // Check permissions hierarchy
+  const isAppAdmin = userRole === 'ADMIN';
+  const isAppModerator = userRole === 'MODERATOR';
+  const isIntentOwnerOrMod = useMemo(() => {
     if (!currentUserId || !event.userMembership) return false;
     return event.userMembership.isOwner || event.userMembership.isModerator;
   }, [currentUserId, event.userMembership]);
+
+  // Permissions:
+  // - App Admin/Moderator: can edit, delete, hide, report any comment
+  // - Intent Owner/Moderator: can delete, hide, report (not edit) others' comments
+  // - Comment Author: can edit and delete own comments
+  // - Any logged user: can report comments
 
   const [newComment, setNewComment] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -425,6 +468,7 @@ export function EventComments({ event }: EventCommentsProps) {
   const createMutation = useCreateComment();
   const updateMutation = useUpdateComment();
   const deleteMutation = useDeleteComment();
+  const hideMutation = useHideComment();
 
   const topLevelComments = commentsData?.comments?.items ?? [];
 
@@ -486,7 +530,7 @@ export function EventComments({ event }: EventCommentsProps) {
       return;
 
     try {
-      await deleteMutation.mutateAsync({ id });
+      await hideMutation.mutateAsync({ id });
     } catch (error) {
       console.error('Failed to hide comment:', error);
     }
@@ -598,7 +642,9 @@ export function EventComments({ event }: EventCommentsProps) {
               comment={comment}
               eventId={event.id}
               currentUserId={currentUserId}
-              isOwnerOrModerator={isOwnerOrModerator}
+              isAppAdmin={isAppAdmin}
+              isAppModerator={isAppModerator}
+              isIntentOwnerOrMod={isIntentOwnerOrMod}
               onEdit={handleEdit}
               onDelete={handleDeleteComment}
               onHide={handleHideComment}

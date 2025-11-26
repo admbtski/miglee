@@ -14,6 +14,12 @@ import {
   DeleteReviewDocument,
   type DeleteReviewMutation,
   type DeleteReviewMutationVariables,
+  HideReviewDocument,
+  type HideReviewMutation,
+  type HideReviewMutationVariables,
+  UnhideReviewDocument,
+  type UnhideReviewMutation,
+  type UnhideReviewMutationVariables,
   GetMyReviewDocument,
   type GetMyReviewQuery,
   type GetMyReviewQueryVariables,
@@ -272,6 +278,72 @@ export function useDeleteReview(
     },
     meta: {
       successMessage: 'Review deleted successfully',
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Hide a review (moderation)
+ */
+export function useHideReview(
+  options?: UseMutationOptions<
+    HideReviewMutation,
+    Error,
+    HideReviewMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<HideReviewMutation, Error, HideReviewMutationVariables>({
+    mutationKey: ['HideReview'],
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<HideReviewMutation>(
+        HideReviewDocument,
+        variables
+      );
+      return res;
+    },
+    meta: {
+      successMessage: 'Review hidden',
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
+    },
+    ...options,
+  });
+}
+
+/**
+ * Unhide a review (moderation)
+ */
+export function useUnhideReview(
+  options?: UseMutationOptions<
+    UnhideReviewMutation,
+    Error,
+    UnhideReviewMutationVariables
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    UnhideReviewMutation,
+    Error,
+    UnhideReviewMutationVariables
+  >({
+    mutationKey: ['UnhideReview'],
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<UnhideReviewMutation>(
+        UnhideReviewDocument,
+        variables
+      );
+      return res;
+    },
+    meta: {
+      successMessage: 'Review restored',
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.all });

@@ -790,6 +790,9 @@ export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
     deletedAt: c.deletedAt ?? null,
+    deletedById: (c as any).deletedById ?? null,
+    hiddenAt: (c as any).hiddenAt ?? null,
+    hiddenById: (c as any).hiddenById ?? null,
 
     intent: c.intent
       ? (mapIntent(c.intent as any, viewerId) as any)
@@ -797,6 +800,8 @@ export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
     author: c.author ? mapUser(c.author as any) : (null as any),
     parent: c.parent ? (mapComment(c.parent as any, viewerId) as any) : null,
     replies: c.replies?.map((r) => mapComment(r as any, viewerId) as any) ?? [],
+    deletedBy: (c as any).deletedBy ? mapUser((c as any).deletedBy) : null,
+    hiddenBy: (c as any).hiddenBy ? mapUser((c as any).hiddenBy) : null,
 
     repliesCount: (c as any)._count?.replies ?? 0,
   };
@@ -813,11 +818,16 @@ export function mapReview(r: ReviewWithGraph, viewerId?: string): GQLReview {
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
     deletedAt: r.deletedAt ?? null,
+    deletedById: (r as any).deletedById ?? null,
+    hiddenAt: (r as any).hiddenAt ?? null,
+    hiddenById: (r as any).hiddenById ?? null,
 
     intent: r.intent
       ? (mapIntent(r.intent as any, viewerId) as any)
       : ({} as any),
     author: r.author ? mapUser(r.author as any) : (null as any),
+    deletedBy: (r as any).deletedBy ? mapUser((r as any).deletedBy) : null,
+    hiddenBy: (r as any).hiddenBy ? mapUser((r as any).hiddenBy) : null,
   };
 }
 

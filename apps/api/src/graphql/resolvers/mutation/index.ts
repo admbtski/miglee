@@ -68,6 +68,8 @@ import {
   createCommentMutation,
   updateCommentMutation,
   deleteCommentMutation,
+  hideCommentMutation,
+  unhideCommentMutation,
 } from './comments';
 
 // Review mutations
@@ -75,6 +77,8 @@ import {
   createReviewMutation,
   updateReviewMutation,
   deleteReviewMutation,
+  hideReviewMutation,
+  unhideReviewMutation,
 } from './reviews';
 
 // Report mutations
@@ -300,11 +304,15 @@ export const Mutation: Resolvers['Mutation'] = {
   createComment: createCommentMutation,
   updateComment: updateCommentMutation,
   deleteComment: deleteCommentMutation,
+  hideComment: hideCommentMutation,
+  unhideComment: unhideCommentMutation,
 
   // ---- Reviews ----
   createReview: createReviewMutation,
   updateReview: updateReviewMutation,
   deleteReview: deleteReviewMutation,
+  hideReview: hideReviewMutation,
+  unhideReview: unhideReviewMutation,
 
   // ---- Reports ----
   createReport: createReportMutation,

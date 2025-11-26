@@ -16,9 +16,20 @@ fragment CommentCore on Comment {
   createdAt
   updatedAt
   deletedAt
+  deletedById
+  hiddenAt
+  hiddenById
   repliesCount
 
   author {
+    ...UserLight
+  }
+
+  deletedBy {
+    ...UserLight
+  }
+
+  hiddenBy {
     ...UserLight
   }
 }

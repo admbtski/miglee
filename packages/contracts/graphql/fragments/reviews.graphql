@@ -15,8 +15,19 @@ fragment ReviewCore on Review {
   createdAt
   updatedAt
   deletedAt
+  deletedById
+  hiddenAt
+  hiddenById
 
   author {
+    ...UserLight
+  }
+
+  deletedBy {
+    ...UserLight
+  }
+
+  hiddenBy {
     ...UserLight
   }
 }

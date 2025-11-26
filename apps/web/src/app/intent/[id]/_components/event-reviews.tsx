@@ -8,6 +8,7 @@ import {
   useGetReviewStats,
   useGetMyReview,
   useDeleteReview,
+  useHideReview,
 } from '@/lib/api/reviews';
 import { ReviewCard } from './review-card';
 import { ReviewStats } from './review-stats';
@@ -33,6 +34,15 @@ export function EventReviews({ event }: EventReviewsProps) {
 
   const { data: authData } = useMeQuery();
   const currentUserId = authData?.me?.id;
+  const userRole = authData?.me?.role;
+
+  // Check permissions hierarchy
+  const isAppAdmin = userRole === 'ADMIN';
+  const isAppModerator = userRole === 'MODERATOR';
+  const isIntentOwnerOrMod = useMemo(() => {
+    if (!currentUserId || !event.userMembership) return false;
+    return event.userMembership.isOwner || event.userMembership.isModerator;
+  }, [currentUserId, event.userMembership]);
 
   // Fetch reviews
   const {
@@ -60,6 +70,7 @@ export function EventReviews({ event }: EventReviewsProps) {
   );
 
   const deleteMutation = useDeleteReview();
+  const hideMutation = useHideReview();
 
   const reviews = reviewsData?.reviews?.items ?? [];
   const stats = statsData?.reviewStats;
@@ -95,6 +106,22 @@ export function EventReviews({ event }: EventReviewsProps) {
       refetchReviews();
     } catch (error) {
       console.error('Failed to delete review:', error);
+    }
+  };
+
+  const handleHideReview = async (reviewId: string) => {
+    if (
+      !confirm(
+        'Czy na pewno chcesz ukryć tę recenzję? Będzie ona widoczna tylko dla moderatorów.'
+      )
+    )
+      return;
+
+    try {
+      await hideMutation.mutateAsync({ id: reviewId });
+      refetchReviews();
+    } catch (error) {
+      console.error('Failed to hide review:', error);
     }
   };
 
@@ -145,9 +172,9 @@ export function EventReviews({ event }: EventReviewsProps) {
       style={highlightClasses.style}
     >
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Star className="h-5 w-5 text-yellow-400" />
+          <Star className="w-5 h-5 text-yellow-400" />
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Recenzje
           </h2>
@@ -162,9 +189,9 @@ export function EventReviews({ event }: EventReviewsProps) {
         {currentUserId && canReview() && (
           <button
             onClick={() => setReviewModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="w-4 h-4" />
             Dodaj recenzję
           </button>
         )}
@@ -173,7 +200,7 @@ export function EventReviews({ event }: EventReviewsProps) {
         {myReview && (
           <button
             onClick={handleEditReview}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-lg border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             Edytuj swoją recenzję
           </button>
@@ -182,7 +209,7 @@ export function EventReviews({ event }: EventReviewsProps) {
 
       {/* Info message for non-participants */}
       {!hasEnded && currentUserId && (
-        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+        <div className="p-4 mb-6 border border-blue-200 rounded-lg bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-900 dark:text-blue-100">
@@ -208,14 +235,14 @@ export function EventReviews({ event }: EventReviewsProps) {
       {/* Loading */}
       {isLoadingReviews && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+          <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
         </div>
       )}
 
       {/* Empty State */}
       {!isLoadingReviews && reviews.length === 0 && (
         <div className="py-12 text-center">
-          <Star className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
+          <Star className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-700" />
           <p className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
             Brak recenzji
           </p>
@@ -235,8 +262,12 @@ export function EventReviews({ event }: EventReviewsProps) {
               key={review.id}
               review={review}
               currentUserId={currentUserId}
+              isAppAdmin={isAppAdmin}
+              isAppModerator={isAppModerator}
+              isIntentOwnerOrMod={isIntentOwnerOrMod}
               onEdit={handleEditReview}
               onDelete={handleDeleteClick}
+              onHide={handleHideReview}
               onReport={handleReportClick}
             />
           ))}

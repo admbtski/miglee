@@ -62,3 +62,13 @@ mutation UpdateReview($id: ID!, $input: UpdateReviewInput!) {
 mutation DeleteReview($id: ID!) {
   deleteReview(id: $id)
 }
+
+# Hide a review (moderation)
+mutation HideReview($id: ID!) {
+  hideReview(id: $id)
+}
+
+# Unhide a review (moderation)
+mutation UnhideReview($id: ID!) {
+  unhideReview(id: $id)
+}

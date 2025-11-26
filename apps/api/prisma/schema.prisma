@@ -222,7 +222,11 @@ model User {
 
   // Social
   commentsWritten Comment[] @relation("CommentAuthor")
+  commentsDeleted Comment[] @relation("CommentDeletedBy")
+  commentsHidden  Comment[] @relation("CommentHiddenBy")
   reviewsWritten  Review[]  @relation("ReviewAuthor")
+  reviewsDeleted  Review[]  @relation("ReviewDeletedBy")
+  reviewsHidden   Review[]  @relation("ReviewHiddenBy")
 
   // DM
   dmThreadsA         DmThread[]          @relation("DmA")
@@ -498,7 +502,16 @@ model Comment {
   content   String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  
+  // Soft delete by author
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("CommentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  
+  // Hidden by moderator
+  hiddenAt   DateTime?
+  hiddenById String?
+  hiddenBy   User?     @relation("CommentHiddenBy", fields: [hiddenById], references: [id], onDelete: SetNull)
 
   intent  Intent    @relation(fields: [intentId], references: [id], onDelete: Cascade)
   author  User      @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
@@ -509,6 +522,8 @@ model Comment {
   @@index([authorId, createdAt])
   @@index([intentId, threadId, createdAt])
   @@index([parentId, createdAt])
+  @@index([deletedById])
+  @@index([hiddenById])
   @@map("comments")
 }
 
@@ -520,7 +535,16 @@ model Review {
   content   String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  
+  // Soft delete by author
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("ReviewDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  
+  // Hidden by moderator
+  hiddenAt   DateTime?
+  hiddenById String?
+  hiddenBy   User?     @relation("ReviewHiddenBy", fields: [hiddenById], references: [id], onDelete: SetNull)
 
   intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
   author User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
@@ -529,6 +553,8 @@ model Review {
   @@index([intentId, createdAt])
   @@index([authorId, createdAt])
   @@index([intentId, rating, createdAt])
+  @@index([deletedById])
+  @@index([hiddenById])
   @@map("reviews")
 }
 

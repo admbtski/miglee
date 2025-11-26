@@ -50,3 +50,13 @@ mutation UpdateComment($id: ID!, $input: UpdateCommentInput!) {
 mutation DeleteComment($id: ID!) {
   deleteComment(id: $id)
 }
+
+# Hide a comment (moderation)
+mutation HideComment($id: ID!) {
+  hideComment(id: $id)
+}
+
+# Unhide a comment (moderation)
+mutation UnhideComment($id: ID!) {
+  unhideComment(id: $id)
+}

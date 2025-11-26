@@ -241,7 +241,7 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
 
       const existing = await prisma.review.findUnique({
         where: { id },
-        select: { authorId: true, deletedAt: true },
+        select: { authorId: true, deletedAt: true, hiddenAt: true },
       });
 
       if (!existing) {
@@ -260,7 +260,148 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
 
       await prisma.review.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: {
+          deletedAt: new Date(),
+          deletedById: user.id,
+        },
+      });
+
+      return true;
+    }
+  );
+
+/**
+ * Mutation: Hide a review (moderation - soft delete)
+ */
+export const hideReviewMutation: MutationResolvers['hideReview'] =
+  resolverWithMetrics(
+    'Mutation',
+    'hideReview',
+    async (_p, { id }, { user }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Check if user has moderation permissions
+      const review = await prisma.review.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          intentId: true,
+          deletedAt: true,
+          hiddenAt: true,
+          intent: {
+            select: {
+              members: {
+                where: {
+                  userId: user.id,
+                  role: { in: ['OWNER', 'MODERATOR'] },
+                },
+                select: { role: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!review) {
+        throw new GraphQLError('Review not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check permissions: app admin/moderator OR intent owner/moderator
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAppModerator = user.role === 'MODERATOR';
+      const isIntentModerator = review.intent.members.length > 0;
+
+      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+        throw new GraphQLError('Insufficient permissions to hide reviews.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      if (review.hiddenAt) {
+        return true; // Already hidden
+      }
+
+      await prisma.review.update({
+        where: { id },
+        data: {
+          hiddenAt: new Date(),
+          hiddenById: user.id,
+        },
+      });
+
+      return true;
+    }
+  );
+
+/**
+ * Mutation: Unhide a review (moderation)
+ */
+export const unhideReviewMutation: MutationResolvers['unhideReview'] =
+  resolverWithMetrics(
+    'Mutation',
+    'unhideReview',
+    async (_p, { id }, { user }) => {
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      // Check if user has moderation permissions
+      const review = await prisma.review.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          intentId: true,
+          deletedAt: true,
+          hiddenAt: true,
+          intent: {
+            select: {
+              members: {
+                where: {
+                  userId: user.id,
+                  role: { in: ['OWNER', 'MODERATOR'] },
+                },
+                select: { role: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!review) {
+        throw new GraphQLError('Review not found.', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Check permissions: app admin/moderator OR intent owner/moderator
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAppModerator = user.role === 'MODERATOR';
+      const isIntentModerator = review.intent.members.length > 0;
+
+      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+        throw new GraphQLError('Insufficient permissions to unhide reviews.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      if (!review.hiddenAt) {
+        return true; // Not hidden
+      }
+
+      await prisma.review.update({
+        where: { id },
+        data: {
+          hiddenAt: null,
+          hiddenById: null,
+        },
       });
 
       return true;

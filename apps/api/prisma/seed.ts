@@ -1452,13 +1452,25 @@ async function seedComments(
         'This sounds amazing!',
       ]);
 
+      const createdAt = new Date(
+        Date.now() - Math.floor(rand() * 5) * 86400000
+      ); // 0-5 days ago
+
+      // 5% of comments are deleted by author
+      const isDeleted = rand() > 0.95;
+      const deletedAt = isDeleted
+        ? new Date(createdAt.getTime() + Math.floor(rand() * 86400000))
+        : null;
+
       const rootComment = await prisma.comment.create({
         data: {
           intentId: intent.id,
           authorId: author!.userId,
           content: commentContent,
           threadId: intent.id, // Root comments use intent ID as threadId
-          createdAt: new Date(Date.now() - Math.floor(rand() * 5) * 86400000), // 0-5 days ago
+          createdAt,
+          deletedAt,
+          deletedById: isDeleted ? author!.userId : null,
         },
       });
 
@@ -1480,6 +1492,35 @@ async function seedComments(
             'Let me know if you need anything.',
           ]);
 
+          const replyCreatedAt = new Date(
+            rootComment.createdAt.getTime() + Math.floor(rand() * 86400000)
+          ); // 0-1 day after parent
+
+          // 3% of replies are hidden by moderator (owner or moderator)
+          const isHidden = rand() > 0.97;
+          let hiddenAt = null;
+          let hiddenById = null;
+
+          if (isHidden) {
+            // Get moderators (owner or moderator role)
+            const moderators = await prisma.intentMember.findMany({
+              where: {
+                intentId: intent.id,
+                role: { in: ['OWNER', 'MODERATOR'] },
+                status: 'JOINED',
+              },
+              select: { userId: true },
+            });
+
+            if (moderators.length > 0) {
+              const moderator = pick(moderators);
+              hiddenById = moderator.userId;
+              hiddenAt = new Date(
+                replyCreatedAt.getTime() + Math.floor(rand() * 3600000)
+              ); // Hidden within 1 hour
+            }
+          }
+
           const reply = await prisma.comment.create({
             data: {
               intentId: intent.id,
@@ -1487,9 +1528,9 @@ async function seedComments(
               content: replyContent,
               threadId: rootComment.id,
               parentId: rootComment.id,
-              createdAt: new Date(
-                rootComment.createdAt.getTime() + Math.floor(rand() * 86400000)
-              ), // 0-1 day after parent
+              createdAt: replyCreatedAt,
+              hiddenAt,
+              hiddenById,
             },
           });
 
@@ -1498,16 +1539,23 @@ async function seedComments(
       }
     }
 
-    // Update intent commentsCount
+    // Update intent commentsCount (only count non-deleted and non-hidden)
+    const visibleComments = comments.filter(
+      (c) => c.intentId === intent.id && !c.deletedAt && !c.hiddenAt
+    );
     await prisma.intent.update({
       where: { id: intent.id },
       data: {
-        commentsCount: comments.filter((c) => c.intentId === intent.id).length,
+        commentsCount: visibleComments.length,
       },
     });
   }
 
-  console.log(`💭 Created ${comments.length} comments`);
+  const deletedCount = comments.filter((c) => c.deletedAt).length;
+  const hiddenCount = comments.filter((c) => c.hiddenAt).length;
+  console.log(
+    `💭 Created ${comments.length} comments (${deletedCount} deleted by authors, ${hiddenCount} hidden by moderators)`
+  );
   return comments;
 }
 
@@ -1574,15 +1622,52 @@ async function seedReviews(
                 'Disappointed.',
               ]);
 
+      const createdAt = new Date(
+        intent.endAt.getTime() + Math.floor(rand() * 3) * 86400000
+      ); // 0-3 days after event
+
+      // 4% of reviews are deleted by author
+      const isDeleted = rand() > 0.96;
+      const deletedAt = isDeleted
+        ? new Date(createdAt.getTime() + Math.floor(rand() * 86400000))
+        : null;
+
+      // 2% of reviews are hidden by moderator
+      const isHidden = rand() > 0.98 && !isDeleted;
+      let hiddenAt = null;
+      let hiddenById = null;
+
+      if (isHidden) {
+        // Get moderators (owner or moderator role)
+        const moderators = await prisma.intentMember.findMany({
+          where: {
+            intentId: intent.id,
+            role: { in: ['OWNER', 'MODERATOR'] },
+            status: 'JOINED',
+          },
+          select: { userId: true },
+        });
+
+        if (moderators.length > 0) {
+          const moderator = pick(moderators);
+          hiddenById = moderator.userId;
+          hiddenAt = new Date(
+            createdAt.getTime() + Math.floor(rand() * 7 * 86400000)
+          ); // Hidden within 7 days
+        }
+      }
+
       const review = await prisma.review.create({
         data: {
           intentId: intent.id,
           authorId: reviewer.userId,
           rating,
           content: reviewContent,
-          createdAt: new Date(
-            intent.endAt.getTime() + Math.floor(rand() * 3) * 86400000
-          ), // 0-3 days after event
+          createdAt,
+          deletedAt,
+          deletedById: isDeleted ? reviewer.userId : null,
+          hiddenAt,
+          hiddenById,
         },
       });
 
@@ -1590,7 +1675,11 @@ async function seedReviews(
     }
   }
 
-  console.log(`⭐ Created ${reviews.length} reviews`);
+  const deletedCount = reviews.filter((r) => r.deletedAt).length;
+  const hiddenCount = reviews.filter((r) => r.hiddenAt).length;
+  console.log(
+    `⭐ Created ${reviews.length} reviews (${deletedCount} deleted by authors, ${hiddenCount} hidden by moderators)`
+  );
   return reviews;
 }
 

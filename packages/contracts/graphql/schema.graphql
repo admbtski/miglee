@@ -942,11 +942,16 @@ type Comment {
   createdAt: DateTime!
   updatedAt: DateTime!
   deletedAt: DateTime
+  deletedById: ID
+  hiddenAt: DateTime
+  hiddenById: ID
 
   intent: Intent!
   author: User!
   parent: Comment
   replies: [Comment!]!
+  deletedBy: User
+  hiddenBy: User
 
   # Computed
   repliesCount: Int!
@@ -972,9 +977,14 @@ type Review {
   createdAt: DateTime!
   updatedAt: DateTime!
   deletedAt: DateTime
+  deletedById: ID
+  hiddenAt: DateTime
+  hiddenById: ID
 
   intent: Intent!
   author: User!
+  deletedBy: User
+  hiddenBy: User
 }
 
 "Paginated reviews result"
@@ -1903,10 +1913,18 @@ type Mutation {
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
   deleteComment(id: ID!): Boolean!
 
+  # Moderation: Hide/unhide comments (soft delete for moderation)
+  hideComment(id: ID!): Boolean!
+  unhideComment(id: ID!): Boolean!
+
   # Reviews
   createReview(input: CreateReviewInput!): Review!
   updateReview(id: ID!, input: UpdateReviewInput!): Review!
   deleteReview(id: ID!): Boolean!
+
+  # Moderation: Hide/unhide reviews (soft delete for moderation)
+  hideReview(id: ID!): Boolean!
+  unhideReview(id: ID!): Boolean!
 
   # Reports
   createReport(input: CreateReportInput!): Report!

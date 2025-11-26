@@ -39,7 +39,6 @@ export const commentsQuery: QueryResolvers['comments'] = resolverWithMetrics(
 
     const where: Prisma.CommentWhereInput = {
       intentId,
-      deletedAt: null,
     };
 
     // Filter by thread (root comments only if threadId specified)
