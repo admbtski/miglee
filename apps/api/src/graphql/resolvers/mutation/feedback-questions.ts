@@ -515,18 +515,6 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         }
       }
 
-      // Update feedback tracking
-      await tx.feedbackTracking.updateMany({
-        where: {
-          intentId,
-          userId: user.id,
-          formSubmittedAt: null, // Only update if not already submitted
-        },
-        data: {
-          formSubmittedAt: new Date(),
-        },
-      });
-
       return { review, feedbackAnswers: createdAnswers };
     });
 

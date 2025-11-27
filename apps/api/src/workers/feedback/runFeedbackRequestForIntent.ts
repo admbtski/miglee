@@ -144,26 +144,6 @@ export async function runFeedbackRequestForIntent(intentId: string) {
     recipients.map(async (member) => {
       const feedbackUrl = generateFeedbackUrl(intentId, member.userId);
 
-      // Create/update feedback tracking
-      await prisma.feedbackTracking.upsert({
-        where: {
-          intentId_userId: {
-            intentId,
-            userId: member.userId,
-          },
-        },
-        update: {
-          emailSentAt: new Date(),
-          channel: 'EMAIL',
-        },
-        create: {
-          intentId,
-          userId: member.userId,
-          emailSentAt: new Date(),
-          channel: 'EMAIL',
-        },
-      });
-
       return sendFeedbackRequestEmail({
         to: member.user.email,
         userName: member.user.name || 'tam',
@@ -191,10 +171,11 @@ export async function runFeedbackRequestForIntent(intentId: string) {
   // Log failures
   emailResults.forEach((result, index) => {
     if (result.status === 'rejected') {
+      const recipient = recipients[index];
       logger.error(
         {
           intentId,
-          recipientEmail: recipients[index].user.email,
+          recipientEmail: recipient?.user.email,
           error: result.reason,
         },
         '[runFeedbackRequestForIntent] Failed to send email'

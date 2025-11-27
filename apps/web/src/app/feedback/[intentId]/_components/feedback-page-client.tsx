@@ -21,17 +21,7 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
 
   // Track page view
   useEffect(() => {
-    // Simple client-side tracking via GraphQL mutation
-    // In production, could use dedicated analytics endpoint
-    const trackView = async () => {
-      try {
-        // TODO: Create trackFeedbackView mutation or use analytics service
-        console.log('[FeedbackTracking] Page viewed:', intentId);
-      } catch (error) {
-        console.error('[FeedbackTracking] Failed to track view:', error);
-      }
-    };
-    trackView();
+    // Page view tracking could be added here if needed
   }, [intentId]);
 
   // Fetch intent
