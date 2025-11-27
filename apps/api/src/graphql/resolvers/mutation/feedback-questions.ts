@@ -413,13 +413,6 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       });
     }
 
-    // Check if event has ended
-    if (intent.endAt > new Date()) {
-      throw new GraphQLError('Cannot submit feedback before event ends', {
-        extensions: { code: 'BAD_USER_INPUT' },
-      });
-    }
-
     // Validate rating
     if (rating < 1 || rating > 5) {
       throw new GraphQLError('Rating must be between 1 and 5', {
@@ -458,6 +451,8 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         include: {
           author: true,
           intent: true,
+          deletedBy: true,
+          hiddenBy: true,
         },
       });
 
@@ -508,8 +503,12 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
               answer: answerInput.answer,
             },
             include: {
-              user: true,
               question: true,
+              member: {
+                include: {
+                  user: true,
+                },
+              },
             },
           });
 
@@ -522,6 +521,9 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
 
     return {
       review: result.review,
-      feedbackAnswers: result.feedbackAnswers,
+      feedbackAnswers: result.feedbackAnswers.map((answer) => ({
+        ...answer,
+        user: answer.member.user,
+      })),
     };
   };

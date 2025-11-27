@@ -75,14 +75,12 @@ export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults']
       include: {
         answers: {
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profile: {
+            member: {
+              include: {
+                user: {
                   select: {
-                    firstName: true,
-                    lastName: true,
+                    id: true,
+                    name: true,
                   },
                 },
               },
@@ -135,10 +133,8 @@ export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults']
       } else if (question.type === 'TEXT') {
         // Collect text answers with user info
         textAnswers = answers.map((answer) => {
-          const userName =
-            answer.user.profile?.firstName && answer.user.profile?.lastName
-              ? `${answer.user.profile.firstName} ${answer.user.profile.lastName}`
-              : answer.user.name || 'Anonymous';
+          const user = answer.member.user;
+          const userName = user.name || 'Anonymous';
 
           return {
             answer: String(answer.answer),
@@ -187,11 +183,15 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
       },
       include: {
         question: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+        member: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },
@@ -204,6 +204,7 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
 
     return answers.map((answer) => ({
       ...answer,
+      user: answer.member.user,
       question: {
         ...answer.question,
         options: answer.question.options || null,

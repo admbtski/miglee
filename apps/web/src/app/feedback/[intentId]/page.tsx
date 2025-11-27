@@ -22,9 +22,9 @@ export default async function FeedbackPage({
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-900">
+        <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-900">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mx-auto" />
+            <Loader2 className="w-8 h-8 mx-auto text-indigo-600 animate-spin" />
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
               Ładowanie formularza...
             </p>

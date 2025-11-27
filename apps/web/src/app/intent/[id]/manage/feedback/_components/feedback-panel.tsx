@@ -116,7 +116,7 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
   if (intentLoading || questionsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
       </div>
     );
   }
@@ -124,21 +124,21 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
   // Show plan upgrade message if not PLUS/PRO
   if (!hasPlanAccess) {
     return (
-      <div className="rounded-2xl border border-indigo-200/80 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-6 shadow-sm">
+      <div className="p-6 border shadow-sm rounded-2xl border-indigo-200/80 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
         <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-            <Lock className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="flex items-center justify-center flex-shrink-0 w-12 h-12 bg-indigo-100 rounded-full dark:bg-indigo-900/30">
+            <Lock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div className="flex-1">
             <h4 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
               Rozszerzony feedback dostępny w planach Plus i Pro
             </h4>
-            <p className="text-sm text-indigo-800 dark:text-indigo-200 mt-2">
+            <p className="mt-2 text-sm text-indigo-800 dark:text-indigo-200">
               Zbieraj szczegółowe opinie od uczestników za pomocą
               niestandardowych ankiet. Uczestnicy mogą wystawić ocenę i
               odpowiedzieć na Twoje pytania po zakończeniu wydarzenia.
             </p>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="flex items-center gap-3 mt-4">
               <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
                 Ulepsz plan
               </Button>
@@ -154,14 +154,14 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
 
   if (questionsError) {
     return (
-      <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4">
+      <div className="p-4 border border-red-200 rounded-lg dark:border-red-800 bg-red-50 dark:bg-red-900/20">
         <div className="flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
           <div>
             <h4 className="font-medium text-red-900 dark:text-red-100">
               Błąd ładowania
             </h4>
-            <p className="text-sm text-red-800 dark:text-red-200 mt-1">
+            <p className="mt-1 text-sm text-red-800 dark:text-red-200">
               Nie udało się załadować pytań feedbackowych. Spróbuj ponownie.
             </p>
           </div>
@@ -175,7 +175,7 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
       {/* Header with info */}
       <div className="space-y-4">
         <div className="flex items-baseline gap-2.5">
-          <FileQuestion className="h-5 w-5 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+          <FileQuestion className="flex-shrink-0 w-5 h-5 text-zinc-500 dark:text-zinc-400" />
           <div className="flex-1">
             <h3 className="text-[22px] font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               Feedback po wydarzeniu
@@ -237,8 +237,8 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
 
           {questions.length === 0 && (
             <div className="rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-8 text-center shadow-sm">
-              <FileQuestion className="h-10 w-10 text-zinc-400 mx-auto mb-4" />
-              <h4 className="font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+              <FileQuestion className="w-10 h-10 mx-auto mb-4 text-zinc-400" />
+              <h4 className="mb-2 font-medium text-zinc-700 dark:text-zinc-300">
                 Brak pytań feedbackowych
               </h4>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-5 max-w-[50ch] mx-auto">
@@ -256,7 +256,7 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
                 size="sm"
                 className="mx-auto"
               >
-                <FileQuestion className="h-4 w-4 mr-2" />
+                <FileQuestion className="w-4 h-4 mr-2" />
                 Dodaj pierwsze pytanie
               </Button>
             </div>
@@ -269,19 +269,19 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
         <div className="space-y-4">
           {resultsLoading && (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
             </div>
           )}
 
           {resultsError && (
-            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4">
+            <div className="p-4 border border-red-200 rounded-lg dark:border-red-800 bg-red-50 dark:bg-red-900/20">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
                 <div>
                   <h4 className="font-medium text-red-900 dark:text-red-100">
                     Błąd ładowania wyników
                   </h4>
-                  <p className="text-sm text-red-800 dark:text-red-200 mt-1">
+                  <p className="mt-1 text-sm text-red-800 dark:text-red-200">
                     Nie udało się załadować wyników feedbacku.
                   </p>
                 </div>
@@ -298,7 +298,7 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
                     <h4 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                       Podsumowanie
                     </h4>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                       {results.totalRespondents} osób wypełniło ankietę
                     </p>
                   </div>
@@ -316,8 +316,8 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
               {/* Questions results */}
               {results.questionStats.length === 0 ? (
                 <div className="rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-8 text-center shadow-sm">
-                  <BarChart3 className="h-10 w-10 text-zinc-400 mx-auto mb-4" />
-                  <h4 className="font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  <BarChart3 className="w-10 h-10 mx-auto mb-4 text-zinc-400" />
+                  <h4 className="mb-2 font-medium text-zinc-700 dark:text-zinc-300">
                     Brak wyników
                   </h4>
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -339,7 +339,7 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
                           <h5 className="text-base font-medium text-zinc-900 dark:text-zinc-100">
                             {stat.question.label}
                           </h5>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                             {stat.totalAnswers} odpowiedzi
                           </p>
                         </div>
@@ -347,7 +347,7 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
 
                       {/* Choice distribution */}
                       {stat.choiceDistribution && (
-                        <div className="space-y-3 mt-4">
+                        <div className="mt-4 space-y-3">
                           {stat.choiceDistribution.map((choice) => (
                             <div key={choice.option} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -359,9 +359,9 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
                                   %)
                                 </span>
                               </div>
-                              <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                              <div className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                                 <div
-                                  className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all"
+                                  className="h-full transition-all bg-indigo-500 rounded-full dark:bg-indigo-400"
                                   style={{ width: `${choice.percentage}%` }}
                                 />
                               </div>
@@ -372,16 +372,16 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
 
                       {/* Text answers */}
                       {stat.textAnswers && (
-                        <div className="space-y-3 mt-4">
+                        <div className="mt-4 space-y-3">
                           {stat.textAnswers.map((textAnswer, i) => (
                             <div
                               key={i}
-                              className="rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-4 border border-zinc-200 dark:border-zinc-700"
+                              className="p-4 border rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
                             >
                               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                                 {textAnswer.answer}
                               </p>
-                              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                                 — {textAnswer.userName}
                               </p>
                             </div>
