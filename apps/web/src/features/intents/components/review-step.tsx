@@ -275,7 +275,6 @@ function Coordinates({ lat, lng }: { lat: number; lng: number }) {
 export function ReviewStep({
   values,
   showMapPreview = false,
-  mapId,
   showSuggestion,
   errors,
   onEditStep,
@@ -283,7 +282,6 @@ export function ReviewStep({
 }: {
   values: IntentFormValues;
   showMapPreview?: boolean;
-  mapId?: string;
   showSuggestion?: boolean;
   errors?: Record<string, { message?: string }>;
   onEditStep?: (stepIndex: number) => void;
@@ -954,7 +952,6 @@ export function ReviewStep({
                 draggableMarker={false}
                 clickToPlace={false}
                 className="w-full h-[320px]"
-                mapId={mapId}
               />
             </div>
           )}

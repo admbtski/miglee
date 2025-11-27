@@ -313,10 +313,6 @@ export function PlaceStep({
                 clickToPlace
                 className="w-full h-[420px]"
                 onUserSetPosition={(pos) => {
-                  setValue('location.placeId', pos.placeId, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  });
                   setValue('location.lat', pos.lat, {
                     shouldValidate: true,
                     shouldDirty: true,
@@ -329,6 +325,14 @@ export function PlaceStep({
                     .then((rg) => {
                       const addr = rg.formattedAddress ?? '';
                       setValue('location.address', addr, { shouldDirty: true });
+
+                      // Also set placeId if available
+                      if (rg.placeId) {
+                        setValue('location.placeId', rg.placeId, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }
                     })
                     .catch(() => {});
                 }}
