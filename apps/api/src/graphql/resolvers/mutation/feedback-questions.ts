@@ -1,6 +1,7 @@
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
+import { enqueueFeedbackRequest } from '../../../workers/feedback/queue';
 
 // Constants for validation
 const MAX_QUESTIONS = 10;
@@ -451,8 +452,6 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         include: {
           author: true,
           intent: true,
-          deletedBy: true,
-          hiddenBy: true,
         },
       });
 
@@ -516,6 +515,18 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         }
       }
 
+      // Update feedback tracking
+      await tx.feedbackTracking.updateMany({
+        where: {
+          intentId,
+          userId: user.id,
+          formSubmittedAt: null, // Only update if not already submitted
+        },
+        data: {
+          formSubmittedAt: new Date(),
+        },
+      });
+
       return { review, feedbackAnswers: createdAnswers };
     });
 
@@ -526,4 +537,104 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         user: answer.member.user,
       })),
     };
+  };
+
+/**
+ * Manual trigger to send feedback requests to all JOINED members
+ * Only owner, moderator, or admin can trigger this
+ */
+export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackRequests'] =
+  async (_parent, { intentId }, { user }) => {
+    if (!user) {
+      throw new GraphQLError('Unauthorized', {
+        extensions: { code: 'UNAUTHORIZED' },
+      });
+    }
+
+    // Fetch intent with membership
+    const intent = await prisma.intent.findUnique({
+      where: { id: intentId },
+      include: {
+        members: {
+          where: {
+            userId: user.id,
+          },
+        },
+        owner: true,
+      },
+    });
+
+    if (!intent) {
+      throw new GraphQLError('Intent not found', {
+        extensions: { code: 'NOT_FOUND' },
+      });
+    }
+
+    // Check permissions (owner, moderator, or admin)
+    const membership = intent.members[0];
+    const isAdmin = user.role === 'ADMIN';
+    const isOwnerOrModerator =
+      membership && ['OWNER', 'MODERATOR'].includes(membership.role);
+
+    if (!isAdmin && !isOwnerOrModerator) {
+      throw new GraphQLError(
+        'Only owner, moderator, or admin can send feedback requests',
+        {
+          extensions: { code: 'FORBIDDEN' },
+        }
+      );
+    }
+
+    // Check if event has ended
+    if (intent.endAt > new Date()) {
+      throw new GraphQLError(
+        'Cannot send feedback requests before event ends',
+        {
+          extensions: { code: 'BAD_USER_INPUT' },
+        }
+      );
+    }
+
+    // Check if event is cancelled or deleted
+    if (intent.canceledAt || intent.deletedAt) {
+      throw new GraphQLError(
+        'Cannot send feedback requests for cancelled/deleted event',
+        {
+          extensions: { code: 'BAD_USER_INPUT' },
+        }
+      );
+    }
+
+    // Count eligible members (JOINED status)
+    const joinedMembers = await prisma.intentMember.count({
+      where: {
+        intentId,
+        status: 'JOINED',
+      },
+    });
+
+    if (joinedMembers === 0) {
+      return {
+        success: false,
+        sentCount: 0,
+        skippedCount: 0,
+        message: 'No joined members to send feedback requests to',
+      };
+    }
+
+    // Enqueue feedback request job
+    try {
+      await enqueueFeedbackRequest(intentId);
+
+      return {
+        success: true,
+        sentCount: joinedMembers,
+        skippedCount: 0,
+        message: `Feedback requests will be sent to ${joinedMembers} member(s)`,
+      };
+    } catch (error) {
+      throw new GraphQLError('Failed to enqueue feedback requests', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
+    }
   };

@@ -275,6 +275,9 @@ model User {
   eventSponsorships       EventSponsorship[]       @relation("SponsorUser")
   eventSponsorshipPeriods EventSponsorshipPeriod[] @relation("EventSponsorshipPeriods")
 
+  // Feedback tracking
+  feedbackTracking FeedbackTracking[]
+
   // Profile & Privacy
   profile      UserProfile?
   privacy      UserPrivacy?
@@ -424,6 +427,7 @@ model Intent {
   // Feedback relations
   feedbackQuestions IntentFeedbackQuestion[]
   feedbackAnswers   IntentFeedbackAnswer[]
+  feedbackTracking  FeedbackTracking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1309,6 +1313,50 @@ model IntentFeedbackAnswer {
   @@index([intentId, userId])
   @@index([questionId])
   @@map("intent_feedback_answers")
+}
+
+// =============================================================================
+/**
+ * Feedback Conversion Tracking - Analytics for feedback requests
+ */
+// =============================================================================
+
+enum FeedbackChannel {
+  EMAIL
+  IN_APP
+  PUSH
+  DIRECT_LINK
+}
+
+model FeedbackTracking {
+  id       String @id @default(cuid())
+  intentId String
+  userId   String
+
+  // Conversion funnel stages
+  emailSentAt     DateTime?
+  emailOpenedAt   DateTime?
+  pageViewedAt    DateTime?
+  formStartedAt   DateTime?
+  formSubmittedAt DateTime?
+
+  // Channel
+  channel FeedbackChannel @default(EMAIL)
+
+  // Additional metadata (device, browser, etc.)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([intentId, userId])
+  @@index([intentId])
+  @@index([userId])
+  @@index([emailSentAt])
+  @@map("feedback_tracking")
 }
 
 // =============================================================================

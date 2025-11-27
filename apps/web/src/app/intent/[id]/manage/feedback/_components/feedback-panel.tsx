@@ -7,6 +7,9 @@ import {
   FileQuestion,
   BarChart3,
   Lock,
+  Send,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FeedbackQuestionEditor } from '@/features/intents/components/feedback-question-editor';
@@ -18,6 +21,7 @@ import {
   useDeleteFeedbackQuestionMutation,
   useReorderFeedbackQuestionsMutation,
   useIntentFeedbackResultsQuery,
+  useSendFeedbackRequestsMutation,
 } from '@/lib/api/feedback';
 import { useIntentQuery } from '@/lib/api/intents';
 import { useMeQuery } from '@/lib/api/auth';
@@ -58,13 +62,18 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
   );
 
   const { data: authData } = useMeQuery();
-  const currentUserId = authData?.me?.id;
 
   // Mutations
   const createQuestion = useCreateFeedbackQuestionMutation();
   const updateQuestion = useUpdateFeedbackQuestionMutation();
   const deleteQuestion = useDeleteFeedbackQuestionMutation();
   const reorderQuestions = useReorderFeedbackQuestionsMutation();
+  const sendFeedbackRequests = useSendFeedbackRequestsMutation();
+
+  const [sendRequestsState, setSendRequestsState] = useState<{
+    success?: boolean;
+    message?: string;
+  } | null>(null);
 
   // Check if plan allows feedback
   const sponsorshipPlan = intentData?.intent?.sponsorshipPlan;
@@ -110,6 +119,37 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
       });
     } catch (error) {
       console.error('Failed to reorder questions:', error);
+    }
+  };
+
+  const handleSendFeedbackRequests = async () => {
+    setSendRequestsState(null);
+    try {
+      const result = await sendFeedbackRequests.mutateAsync({
+        intentId,
+      });
+
+      if (result.sendFeedbackRequests.success) {
+        setSendRequestsState({
+          success: true,
+          message:
+            result.sendFeedbackRequests.message ||
+            `Wysłano prośby o feedback do ${result.sendFeedbackRequests.sentCount} uczestników`,
+        });
+      } else {
+        setSendRequestsState({
+          success: false,
+          message:
+            result.sendFeedbackRequests.message ||
+            'Nie udało się wysłać próśb o feedback',
+        });
+      }
+    } catch (error: any) {
+      setSendRequestsState({
+        success: false,
+        message:
+          error.message || 'Wystąpił błąd podczas wysyłania próśb o feedback',
+      });
     }
   };
 
@@ -223,7 +263,89 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
 
       {/* Questions view */}
       {activeView === 'questions' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Manual send button */}
+          <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-900/50 dark:to-zinc-900/30 p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  Wyślij prośby o feedback
+                </h4>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-[60ch]">
+                  Wyślij emaile z prośbą o ocenę wydarzenia do wszystkich
+                  uczestników ze statusem "Dołączony". Można wysłać w dowolnym
+                  momencie po zakończeniu wydarzenia.
+                </p>
+              </div>
+              <Button
+                onClick={handleSendFeedbackRequests}
+                disabled={
+                  sendFeedbackRequests.isPending ||
+                  !intentData?.intent?.endAt ||
+                  new Date(intentData.intent.endAt) > new Date()
+                }
+                size="lg"
+                className="flex-shrink-0"
+              >
+                {sendFeedbackRequests.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Wysyłanie...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Wyślij prośby
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Send result message */}
+            {sendRequestsState && (
+              <div
+                className={cn(
+                  'mt-4 p-4 rounded-lg border',
+                  sendRequestsState.success
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  {sendRequestsState.success ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                  )}
+                  <p
+                    className={cn(
+                      'text-sm',
+                      sendRequestsState.success
+                        ? 'text-green-800 dark:text-green-200'
+                        : 'text-red-800 dark:text-red-200'
+                    )}
+                  >
+                    {sendRequestsState.message}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Warning if event not ended */}
+            {intentData?.intent?.endAt &&
+              new Date(intentData.intent.endAt) > new Date() && (
+                <div className="mt-4 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      Prośby o feedback można wysłać dopiero po zakończeniu
+                      wydarzenia.
+                    </p>
+                  </div>
+                </div>
+              )}
+          </div>
+
           <FeedbackQuestionEditor
             intentId={intentId}
             questions={questions}

@@ -30,6 +30,9 @@ import {
   SubmitReviewAndFeedbackDocument,
   SubmitReviewAndFeedbackMutation,
   SubmitReviewAndFeedbackMutationVariables,
+  SendFeedbackRequestsDocument,
+  SendFeedbackRequestsMutation,
+  SendFeedbackRequestsMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
@@ -414,6 +417,28 @@ export function useSubmitReviewAndFeedbackMutation(
         queryKey: ['GetIntent', { id: variables.input.intentId }],
       });
     },
+    ...options,
+  });
+}
+
+// Send Feedback Requests (manual trigger)
+export function useSendFeedbackRequestsMutation(
+  options?: UseMutationOptions<
+    SendFeedbackRequestsMutation,
+    Error,
+    SendFeedbackRequestsMutationVariables
+  >
+) {
+  return useMutation<
+    SendFeedbackRequestsMutation,
+    Error,
+    SendFeedbackRequestsMutationVariables
+  >({
+    mutationFn: async (variables) =>
+      gqlClient.request<
+        SendFeedbackRequestsMutation,
+        SendFeedbackRequestsMutationVariables
+      >(SendFeedbackRequestsDocument, variables),
     ...options,
   });
 }

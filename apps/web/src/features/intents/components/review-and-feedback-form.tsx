@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Star, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Star, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { IntentFeedbackQuestionsQuery } from '@/lib/api/__generated__/react-query-update';
 import { Input } from '@/components/ui/input';
@@ -124,24 +124,28 @@ export function ReviewAndFeedbackForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-10">
       {/* Review Section */}
       <div className="space-y-6">
-        <div>
-          <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-xs font-medium">
+            <Star className="h-3.5 w-3.5 fill-current" />
+            Krok 1/2
+          </div>
+          <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
             Jak oceniasz wydarzenie?
           </h3>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-            {intentTitle}
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            &quot;{intentTitle}&quot;
           </p>
         </div>
 
         {/* Star Rating */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">
-            Ocena <span className="text-red-500">*</span>
+        <div className="space-y-3 p-6 rounded-2xl bg-gradient-to-br from-zinc-50 to-zinc-100/50 dark:from-zinc-800/50 dark:to-zinc-800/30 border border-zinc-200/50 dark:border-zinc-700/50">
+          <Label className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            Twoja ocena <span className="text-red-500">*</span>
           </Label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
@@ -149,26 +153,32 @@ export function ReviewAndFeedbackForm({
                 onClick={() => setRating(star)}
                 onMouseEnter={() => setHoveredRating(star)}
                 onMouseLeave={() => setHoveredRating(0)}
-                className="transition-transform hover:scale-110"
+                className="transition-all hover:scale-125 active:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-full"
               >
                 <Star
                   className={cn(
-                    'h-8 w-8 transition-colors',
+                    'h-10 w-10 md:h-12 md:w-12 transition-all duration-200',
                     (hoveredRating || rating) >= star
-                      ? 'fill-yellow-400 text-yellow-400'
+                      ? 'fill-yellow-400 text-yellow-400 drop-shadow-[0_2px_8px_rgba(250,204,21,0.4)]'
                       : 'text-zinc-300 dark:text-zinc-600'
                   )}
                 />
               </button>
             ))}
-            {rating > 0 && (
-              <span className="ml-2 text-sm text-zinc-600 dark:text-zinc-400">
-                {rating} / 5
-              </span>
-            )}
           </div>
+          {rating > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                {rating === 1 && '⭐ Słabo'}
+                {rating === 2 && '⭐⭐ Niezbyt dobrze'}
+                {rating === 3 && '⭐⭐⭐ W porządku'}
+                {rating === 4 && '⭐⭐⭐⭐ Bardzo dobrze'}
+                {rating === 5 && '⭐⭐⭐⭐⭐ Doskonale!'}
+              </span>
+            </div>
+          )}
           {errors.rating && (
-            <div className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+            <div className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">
               <AlertCircle className="h-4 w-4" />
               <span>{errors.rating}</span>
             </div>
@@ -176,27 +186,34 @@ export function ReviewAndFeedbackForm({
         </div>
 
         {/* Review Content */}
-        <div className="space-y-2">
-          <Label htmlFor="content" className="text-sm font-medium">
-            Twoja opinia (opcjonalnie)
+        <div className="space-y-3">
+          <Label
+            htmlFor="content"
+            className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
+          >
+            Twoja opinia{' '}
+            <span className="text-zinc-400 text-sm font-normal">
+              (opcjonalnie)
+            </span>
           </Label>
           <Textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             maxLength={500}
-            rows={4}
-            placeholder="Podziel się swoimi wrażeniami..."
-            className={
+            rows={5}
+            placeholder="Podziel się swoimi wrażeniami z wydarzenia..."
+            className={cn(
+              'resize-none text-base',
               errors.content ? 'border-red-500 focus-visible:ring-red-500' : ''
-            }
+            )}
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {content.length} / 500
+              {content.length} / 500 znaków
             </p>
             {errors.content && (
-              <p className="text-xs text-red-600 dark:text-red-400">
+              <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                 {errors.content}
               </p>
             )}
@@ -206,178 +223,194 @@ export function ReviewAndFeedbackForm({
 
       {/* Feedback Questions Section */}
       {questions.length > 0 && (
-        <div className="space-y-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <div>
-            <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <div className="space-y-6 pt-8 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Krok 2/2
+            </div>
+            <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               Dodatkowe pytania
             </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              Pomóż nam ulepszyć przyszłe wydarzenia
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Pomóż nam ulepszyć przyszłe wydarzenia dzięki krótkim odpowiedziom
             </p>
           </div>
 
           <div className="space-y-6">
             {questions.map((question, index) => (
-              <div key={question.id} className="space-y-3">
+              <div
+                key={question.id}
+                className="space-y-3 p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/50"
+              >
                 <Label
                   htmlFor={`question-${question.id}`}
-                  className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
+                  className="text-base font-semibold text-zinc-900 dark:text-zinc-100 flex items-start gap-2"
                 >
-                  {index + 1}. {question.label}
-                  {question.required && (
-                    <span className="ml-1 text-red-500">*</span>
-                  )}
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex-shrink-0">
+                    {index + 1}
+                  </span>
+                  <span>
+                    {question.label}
+                    {question.required && (
+                      <span className="ml-1.5 text-red-500">*</span>
+                    )}
+                  </span>
                 </Label>
 
                 {question.helpText && (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 ml-8">
                     {question.helpText}
                   </p>
                 )}
 
-                {/* TEXT type */}
-                {question.type === 'TEXT' && (
-                  <>
-                    {question.maxLength && question.maxLength <= 100 ? (
-                      <Input
-                        id={`question-${question.id}`}
-                        value={answers[question.id] || ''}
-                        onChange={(e) =>
-                          handleAnswerChange(question.id, e.target.value)
-                        }
-                        maxLength={question.maxLength || undefined}
-                        placeholder="Twoja odpowiedź..."
-                        className={
-                          errors[question.id]
-                            ? 'border-red-500 focus-visible:ring-red-500'
-                            : ''
-                        }
-                      />
-                    ) : (
-                      <Textarea
-                        id={`question-${question.id}`}
-                        value={answers[question.id] || ''}
-                        onChange={(e) =>
-                          handleAnswerChange(question.id, e.target.value)
-                        }
-                        maxLength={question.maxLength || undefined}
-                        placeholder="Twoja odpowiedź..."
-                        rows={4}
-                        className={
-                          errors[question.id]
-                            ? 'border-red-500 focus-visible:ring-red-500'
-                            : ''
-                        }
-                      />
-                    )}
-                    {question.maxLength && (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {answers[question.id]?.length || 0} /{' '}
-                        {question.maxLength}
-                      </p>
-                    )}
-                  </>
-                )}
+                <div className="ml-8">
+                  {/* TEXT type */}
+                  {question.type === 'TEXT' && (
+                    <>
+                      {question.maxLength && question.maxLength <= 100 ? (
+                        <Input
+                          id={`question-${question.id}`}
+                          value={answers[question.id] || ''}
+                          onChange={(e) =>
+                            handleAnswerChange(question.id, e.target.value)
+                          }
+                          maxLength={question.maxLength || undefined}
+                          placeholder="Twoja odpowiedź..."
+                          className={
+                            errors[question.id]
+                              ? 'border-red-500 focus-visible:ring-red-500'
+                              : ''
+                          }
+                        />
+                      ) : (
+                        <Textarea
+                          id={`question-${question.id}`}
+                          value={answers[question.id] || ''}
+                          onChange={(e) =>
+                            handleAnswerChange(question.id, e.target.value)
+                          }
+                          maxLength={question.maxLength || undefined}
+                          placeholder="Twoja odpowiedź..."
+                          rows={4}
+                          className={cn(
+                            'resize-none',
+                            errors[question.id]
+                              ? 'border-red-500 focus-visible:ring-red-500'
+                              : ''
+                          )}
+                        />
+                      )}
+                      {question.maxLength && (
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
+                          {answers[question.id]?.length || 0} /{' '}
+                          {question.maxLength}
+                        </p>
+                      )}
+                    </>
+                  )}
 
-                {/* SINGLE_CHOICE type */}
-                {question.type === 'SINGLE_CHOICE' && question.options && (
-                  <RadioGroup
-                    value={answers[question.id] || ''}
-                    onValueChange={(value) =>
-                      handleAnswerChange(question.id, value)
-                    }
-                  >
-                    {(
-                      question.options as Array<{
-                        label: string;
-                        value?: string;
-                      }>
-                    ).map((option, optIndex) => {
-                      const optionValue = option.value || option.label;
-                      return (
-                        <div
-                          key={optIndex}
-                          className="flex items-center space-x-2"
-                        >
-                          <RadioGroupItem
-                            value={optionValue}
-                            id={`question-${question.id}-option-${optIndex}`}
-                          />
-                          <Label
-                            htmlFor={`question-${question.id}-option-${optIndex}`}
-                            className="font-normal cursor-pointer"
+                  {/* SINGLE_CHOICE type */}
+                  {question.type === 'SINGLE_CHOICE' && question.options && (
+                    <RadioGroup
+                      value={answers[question.id] || ''}
+                      onValueChange={(value) =>
+                        handleAnswerChange(question.id, value)
+                      }
+                      className="space-y-3"
+                    >
+                      {(
+                        question.options as Array<{
+                          label: string;
+                          value?: string;
+                        }>
+                      ).map((option, optIndex) => {
+                        const optionValue = option.value || option.label;
+                        return (
+                          <div
+                            key={optIndex}
+                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-700/50 transition-colors"
                           >
-                            {option.label}
-                          </Label>
-                        </div>
-                      );
-                    })}
-                  </RadioGroup>
-                )}
+                            <RadioGroupItem
+                              value={optionValue}
+                              id={`question-${question.id}-option-${optIndex}`}
+                            />
+                            <Label
+                              htmlFor={`question-${question.id}-option-${optIndex}`}
+                              className="font-normal cursor-pointer flex-1"
+                            >
+                              {option.label}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </RadioGroup>
+                  )}
 
-                {/* MULTI_CHOICE type */}
-                {question.type === 'MULTI_CHOICE' && question.options && (
-                  <div className="space-y-2">
-                    {(
-                      question.options as Array<{
-                        label: string;
-                        value?: string;
-                      }>
-                    ).map((option, optIndex) => {
-                      const optionValue = option.value || option.label;
-                      const isChecked =
-                        Array.isArray(answers[question.id]) &&
-                        answers[question.id].includes(optionValue);
+                  {/* MULTI_CHOICE type */}
+                  {question.type === 'MULTI_CHOICE' && question.options && (
+                    <div className="space-y-3">
+                      {(
+                        question.options as Array<{
+                          label: string;
+                          value?: string;
+                        }>
+                      ).map((option, optIndex) => {
+                        const optionValue = option.value || option.label;
+                        const isChecked =
+                          Array.isArray(answers[question.id]) &&
+                          answers[question.id].includes(optionValue);
 
-                      return (
-                        <div
-                          key={optIndex}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`question-${question.id}-option-${optIndex}`}
-                            checked={isChecked}
-                            onCheckedChange={(checked) => {
-                              const currentAnswers = Array.isArray(
-                                answers[question.id]
-                              )
-                                ? answers[question.id]
-                                : [];
-
-                              if (checked) {
-                                handleAnswerChange(question.id, [
-                                  ...currentAnswers,
-                                  optionValue,
-                                ]);
-                              } else {
-                                handleAnswerChange(
-                                  question.id,
-                                  currentAnswers.filter(
-                                    (v: string) => v !== optionValue
-                                  )
-                                );
-                              }
-                            }}
-                          />
-                          <Label
-                            htmlFor={`question-${question.id}-option-${optIndex}`}
-                            className="font-normal cursor-pointer"
+                        return (
+                          <div
+                            key={optIndex}
+                            className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-700/50 transition-colors"
                           >
-                            {option.label}
-                          </Label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                            <Checkbox
+                              id={`question-${question.id}-option-${optIndex}`}
+                              checked={isChecked}
+                              onCheckedChange={(checked) => {
+                                const currentAnswers = Array.isArray(
+                                  answers[question.id]
+                                )
+                                  ? answers[question.id]
+                                  : [];
 
-                {/* Error message */}
-                {errors[question.id] && (
-                  <div className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>{errors[question.id]}</span>
-                  </div>
-                )}
+                                if (checked) {
+                                  handleAnswerChange(question.id, [
+                                    ...currentAnswers,
+                                    optionValue,
+                                  ]);
+                                } else {
+                                  handleAnswerChange(
+                                    question.id,
+                                    currentAnswers.filter(
+                                      (v: string) => v !== optionValue
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                            <Label
+                              htmlFor={`question-${question.id}-option-${optIndex}`}
+                              className="font-normal cursor-pointer flex-1"
+                            >
+                              {option.label}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Error message */}
+                  {errors[question.id] && (
+                    <div className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg mt-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{errors[question.id]}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -385,18 +418,21 @@ export function ReviewAndFeedbackForm({
       )}
 
       {/* Submit */}
-      <div className="flex items-center justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-        <p className="text-xs text-zinc-600 dark:text-zinc-400 mr-auto">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           <span className="text-red-500">*</span> Pola wymagane
         </p>
         <Button
           type="submit"
           disabled={isSubmitting}
           size="lg"
-          className="min-w-[200px]"
+          className="w-full sm:w-auto min-w-[220px] h-12 text-base font-semibold shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
         >
           {isSubmitting ? (
-            'Wysyłanie...'
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Wysyłanie...
+            </>
           ) : (
             <>
               <CheckCircle2 className="h-5 w-5 mr-2" />

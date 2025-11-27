@@ -759,6 +759,13 @@ type SubmitReviewAndFeedbackResult {
   feedbackAnswers: [IntentFeedbackAnswer!]!
 }
 
+type SendFeedbackRequestsResult {
+  success: Boolean!
+  sentCount: Int!
+  skippedCount: Int!
+  message: String
+}
+
 "Intent"
 type Intent {
   id: ID!
@@ -2019,6 +2026,9 @@ type Mutation {
   submitReviewAndFeedback(
     input: SubmitReviewAndFeedbackInput!
   ): SubmitReviewAndFeedbackResult!
+
+  # Manual trigger for feedback requests (owner/moderator only)
+  sendFeedbackRequests(intentId: ID!): SendFeedbackRequestsResult!
 
   # notifications
   addNotification(

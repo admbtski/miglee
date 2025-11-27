@@ -127,6 +127,7 @@ import {
   deleteFeedbackQuestionMutation,
   reorderFeedbackQuestionsMutation,
   submitReviewAndFeedbackMutation,
+  sendFeedbackRequestsMutation,
 } from './feedback-questions';
 
 // Join Requests mutations
@@ -354,6 +355,7 @@ export const Mutation: Resolvers['Mutation'] = {
   deleteFeedbackQuestion: deleteFeedbackQuestionMutation,
   reorderFeedbackQuestions: reorderFeedbackQuestionsMutation,
   submitReviewAndFeedback: submitReviewAndFeedbackMutation,
+  sendFeedbackRequests: sendFeedbackRequestsMutation,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,

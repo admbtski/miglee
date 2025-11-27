@@ -1,0 +1,8 @@
+mutation SendFeedbackRequests($intentId: ID!) {
+  sendFeedbackRequests(intentId: $intentId) {
+    success
+    sentCount
+    skippedCount
+    message
+  }
+}

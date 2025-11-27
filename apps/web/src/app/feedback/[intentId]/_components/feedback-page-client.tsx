@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useIntentQuery } from '@/lib/api/intents';
 import {
   useIntentFeedbackQuestionsQuery,
@@ -9,21 +8,31 @@ import {
 } from '@/lib/api/feedback';
 import { ReviewAndFeedbackForm } from '@/features/intents/components/review-and-feedback-form';
 import { Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface FeedbackPageClientProps {
   intentId: string;
   token?: string;
 }
 
-export function FeedbackPageClient({
-  intentId,
-  token,
-}: FeedbackPageClientProps) {
-  const router = useRouter();
+export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Track page view
+  useEffect(() => {
+    // Simple client-side tracking via GraphQL mutation
+    // In production, could use dedicated analytics endpoint
+    const trackView = async () => {
+      try {
+        // TODO: Create trackFeedbackView mutation or use analytics service
+        console.log('[FeedbackTracking] Page viewed:', intentId);
+      } catch (error) {
+        console.error('[FeedbackTracking] Failed to track view:', error);
+      }
+    };
+    trackView();
+  }, [intentId]);
 
   // Fetch intent
   const {
@@ -94,9 +103,12 @@ export function FeedbackPageClient({
               <p className="mt-2 text-sm text-red-800 dark:text-red-200">
                 To wydarzenie nie istnieje lub zostało usunięte.
               </p>
-              <Button asChild variant="outline" className="mt-4">
-                <Link href="/">Powrót do strony głównej</Link>
-              </Button>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center mt-4 h-10 px-4 py-2 rounded-xl border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 focus-visible:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Powrót do strony głównej
+              </Link>
             </div>
           </div>
         </div>
@@ -119,9 +131,12 @@ export function FeedbackPageClient({
                 Opinie mogą wystawiać tylko uczestnicy po zakończeniu
                 wydarzenia.
               </p>
-              <Button asChild variant="outline" className="mt-4">
-                <Link href={`/intent/${intentId}`}>Przejdź do wydarzenia</Link>
-              </Button>
+              <Link
+                href={`/intent/${intentId}`}
+                className="inline-flex items-center justify-center mt-4 h-10 px-4 py-2 rounded-xl border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 focus-visible:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Przejdź do wydarzenia
+              </Link>
             </div>
           </div>
         </div>
@@ -134,27 +149,37 @@ export function FeedbackPageClient({
   // Success state
   if (isSuccess) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4 bg-zinc-50 dark:bg-zinc-900">
-        <div className="w-full max-w-md p-8 text-center border border-green-200 shadow-sm rounded-2xl dark:border-green-800 bg-green-50 dark:bg-green-900/20">
-          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full dark:bg-green-900/30">
-            <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+      <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-green-50 via-emerald-50/50 to-teal-50/30 dark:from-green-950/20 dark:via-emerald-950/10 dark:to-teal-950/5">
+        <div className="w-full max-w-lg p-10 text-center border rounded-3xl border-green-200/80 dark:border-green-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl shadow-green-900/10 dark:shadow-green-950/30">
+          <div className="relative inline-flex items-center justify-center w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 bg-green-100 dark:bg-green-900/30 rounded-full animate-ping opacity-20"></div>
+            <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 rounded-full">
+              <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+            </div>
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            Dziękujemy za opinię!
+
+          <h2 className="mb-3 text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+            Dziękujemy! 🎉
           </h2>
-          <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
-            Twoja opinia pomoże nam ulepszyć przyszłe wydarzenia.
+          <p className="mb-8 text-base text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+            Twoja opinia została wysłana. Dzięki niej możemy tworzyć jeszcze
+            lepsze wydarzenia!
           </p>
+
           <div className="flex flex-col gap-3">
-            <Button asChild className="w-full">
-              <Link href={`/intent/${intentId}`}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Powrót do wydarzenia
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/">Przeglądaj wydarzenia</Link>
-            </Button>
+            <Link
+              href={`/intent/${intentId}`}
+              className="inline-flex items-center justify-center w-full h-12 px-6 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Powrót do wydarzenia
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center w-full h-12 px-6 rounded-xl text-base font-medium border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              Przeglądaj więcej wydarzeń
+            </Link>
           </div>
         </div>
       </div>
@@ -163,27 +188,38 @@ export function FeedbackPageClient({
 
   // Main form
   return (
-    <div className="min-h-screen px-4 py-12 bg-zinc-50 dark:bg-zinc-900">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 py-8 md:py-16 px-4">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 md:mb-12">
           <Link
             href={`/intent/${intentId}`}
-            className="inline-flex items-center mb-4 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+            className="inline-flex items-center text-sm text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-6 transition-colors group"
           >
-            <ArrowLeft className="w-4 h-4 mr-1" />
+            <ArrowLeft className="h-4 w-4 mr-1.5 transition-transform group-hover:-translate-x-1" />
             Powrót do wydarzenia
           </Link>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-            Oceń wydarzenie
-          </h1>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Twoja opinia jest dla nas bardzo ważna
-          </p>
+
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-medium">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              </span>
+              Twoja opinia ma znaczenie
+            </div>
+
+            <h1 className="text-3xl md:text-5xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              Oceń wydarzenie
+            </h1>
+            <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl">
+              Pomóż nam tworzyć jeszcze lepsze wydarzenia w przyszłości
+            </p>
+          </div>
         </div>
 
         {/* Form Card */}
-        <div className="p-8 bg-white border shadow-sm rounded-2xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-3xl border border-zinc-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl p-6 md:p-10 shadow-xl shadow-zinc-900/5 dark:shadow-zinc-950/50">
           <ReviewAndFeedbackForm
             intentTitle={intent.title}
             questions={questions}
@@ -193,20 +229,57 @@ export function FeedbackPageClient({
         </div>
 
         {submitMutation.isError && (
-          <div className="p-4 mt-4 border border-red-200 rounded-lg dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+          <div className="mt-6 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm p-5 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h4 className="font-medium text-red-900 dark:text-red-100">
-                  Błąd podczas wysyłania
+                <h4 className="font-semibold text-red-900 dark:text-red-100 mb-1">
+                  Wystąpił błąd
                 </h4>
-                <p className="mt-1 text-sm text-red-800 dark:text-red-200">
-                  Nie udało się wysłać opinii. Spróbuj ponownie.
+                <p className="text-sm text-red-800 dark:text-red-200">
+                  Nie udało się wysłać opinii. Sprawdź połączenie i spróbuj
+                  ponownie.
                 </p>
               </div>
             </div>
           </div>
         )}
+
+        {/* Trust badges */}
+        <div className="mt-8 flex items-center justify-center gap-6 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+            <span>Bezpieczne połączenie</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
+            </svg>
+            <span>Twoje dane są chronione</span>
+          </div>
+        </div>
       </div>
     </div>
   );

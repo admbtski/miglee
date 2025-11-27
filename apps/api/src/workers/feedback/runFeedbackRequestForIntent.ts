@@ -2,12 +2,11 @@ import { NotificationEntity, NotificationKind, Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { emitPubsub } from '../../lib/pubsub';
 import { logger } from '../logger';
+import { sendFeedbackRequestEmail, generateFeedbackUrl } from '../../lib/email';
 
 /**
  * Send feedback request notifications to all JOINED members of an intent
  * This runs ~1 hour after the event ends
- *
- * TODO: Replace console.log with actual email sending when ready
  */
 export async function runFeedbackRequestForIntent(intentId: string) {
   logger.info({ intentId }, '[runFeedbackRequestForIntent] Starting...');
@@ -24,7 +23,6 @@ export async function runFeedbackRequestForIntent(intentId: string) {
               id: true,
               email: true,
               name: true,
-              profile: true,
             },
           },
         },
@@ -81,16 +79,16 @@ export async function runFeedbackRequestForIntent(intentId: string) {
 
   await prisma.notification.createMany({
     data: recipients.map((member) => ({
-      kind: NotificationKind.NEW_REVIEW, // Reusing NEW_REVIEW or add FEEDBACK_REQUEST
+      kind: NotificationKind.NEW_REVIEW,
       recipientId: member.userId,
       actorId: null,
       entityType: NotificationEntity.INTENT,
       entityId: intent.id,
       intentId: intent.id,
-      title: 'How was the event?',
+      title: 'Jak oceniasz wydarzenie?',
       body: hasFeedbackQuestions
-        ? 'Rate your experience and share your feedback'
-        : 'Rate your experience',
+        ? 'Wystawimy ocenę i podziel się swoją opinią'
+        : 'Wystaw ocenę wydarzenia',
       dedupeKey: `feedback_request:${member.userId}:${intent.id}`,
       createdAt: new Date(),
       data: {
@@ -136,44 +134,71 @@ export async function runFeedbackRequestForIntent(intentId: string) {
     })
   );
 
-  // TODO: Send actual emails
-  // For now, just log what would be sent
+  // Send actual emails via Resend
   logger.info(
     { intentId, recipientCount: recipients.length },
-    '[runFeedbackRequestForIntent] Would send emails to:'
+    '[runFeedbackRequestForIntent] Sending emails via Resend...'
   );
 
-  for (const member of recipients) {
-    const feedbackUrl = `${process.env.APP_URL}/feedback/${intentId}?token=TODO_GENERATE_JWT`;
+  const emailResults = await Promise.allSettled(
+    recipients.map(async (member) => {
+      const feedbackUrl = generateFeedbackUrl(intentId, member.userId);
 
-    console.log('===============================================');
-    console.log('📧 EMAIL NOTIFICATION (not actually sent yet)');
-    console.log('===============================================');
-    console.log(`To: ${member.user.email}`);
-    console.log(`User: ${member.user.name || 'User'}`);
-    console.log(`Subject: How was "${intent.title}"?`);
-    console.log(`---`);
-    console.log(`Hi ${member.user.name || 'there'},`);
-    console.log('');
-    console.log(`Thank you for attending "${intent.title}"!`);
-    console.log('');
-    console.log('We would love to hear your feedback:');
-    console.log(`${feedbackUrl}`);
-    console.log('');
-    if (hasFeedbackQuestions) {
-      console.log('Please rate the event and answer a few quick questions.');
-    } else {
-      console.log('Please rate the event.');
+      // Create/update feedback tracking
+      await prisma.feedbackTracking.upsert({
+        where: {
+          intentId_userId: {
+            intentId,
+            userId: member.userId,
+          },
+        },
+        update: {
+          emailSentAt: new Date(),
+          channel: 'EMAIL',
+        },
+        create: {
+          intentId,
+          userId: member.userId,
+          emailSentAt: new Date(),
+          channel: 'EMAIL',
+        },
+      });
+
+      return sendFeedbackRequestEmail({
+        to: member.user.email,
+        userName: member.user.name || 'tam',
+        intentTitle: intent.title,
+        intentId: intent.id,
+        feedbackUrl,
+        hasFeedbackQuestions,
+      });
+    })
+  );
+
+  // Log results
+  const successCount = emailResults.filter(
+    (r) => r.status === 'fulfilled'
+  ).length;
+  const failureCount = emailResults.filter(
+    (r) => r.status === 'rejected'
+  ).length;
+
+  logger.info(
+    { intentId, successCount, failureCount, total: recipients.length },
+    '[runFeedbackRequestForIntent] Email sending completed'
+  );
+
+  // Log failures
+  emailResults.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      logger.error(
+        {
+          intentId,
+          recipientEmail: recipients[index].user.email,
+          error: result.reason,
+        },
+        '[runFeedbackRequestForIntent] Failed to send email'
+      );
     }
-    console.log('');
-    console.log('Thanks,');
-    console.log('The Miglee Team');
-    console.log('===============================================');
-    console.log('');
-  }
-
-  logger.info(
-    { intentId, recipientCount: recipients.length },
-    '[runFeedbackRequestForIntent] Feedback requests sent (console logged)'
-  );
+  });
 }
