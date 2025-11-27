@@ -10,6 +10,44 @@ import { CategoryOption, TagOption } from '@/types/types';
 import { useTagSelection } from './tag-selection-provider';
 import { TagMultiCombo } from '@/components/forms/tag-multicombo';
 import { getUseTagsLimitData } from '@/features/intents/hooks/use-tags';
+import { Info } from 'lucide-react';
+
+function FormSection({
+  title,
+  description,
+  children,
+  error,
+  hint,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  error?: string;
+  hint?: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          {title}
+        </label>
+        <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {description}
+        </p>
+      </div>
+      {children}
+      {hint && (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">{hint}</p>
+      )}
+      {error && (
+        <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+          <span className="text-base">⚠️</span>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function BasicsStep({
   form,
@@ -24,7 +62,6 @@ export function BasicsStep({
 
   const titleId = useId();
   const titleErrId = useId();
-  const catErrId = useId();
   const descId = useId();
   const descErrId = useId();
 
@@ -46,126 +83,91 @@ export function BasicsStep({
   return (
     <div className="space-y-8">
       {/* Name */}
-      <Controller
-        name="title"
-        control={control}
-        render={({ field }) => (
-          <div className="group">
-            <label
-              htmlFor={titleId}
-              className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Name
-            </label>
-            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Max 60 characters. Keep it clear and specific.
-            </p>
-
+      <FormSection
+        title="Nazwa wydarzenia"
+        description="Maksymalnie 60 znaków. Bądź zwięzły i konkretny."
+        error={errors.title?.message as string}
+      >
+        <Controller
+          name="title"
+          control={control}
+          render={({ field }) => (
             <div className="relative">
               <input
                 {...field}
                 id={titleId}
                 maxLength={titleMax}
-                placeholder="Short, catchy title"
+                placeholder="Np. Poranny bieg w parku"
                 aria-invalid={!!errors.title}
                 aria-describedby={errors.title ? titleErrId : undefined}
                 autoComplete="off"
                 spellCheck={false}
                 className={[
-                  'w-full rounded-2xl border px-4 pr-14 py-3.5 text-base shadow-inner focus:outline-none focus:ring-2',
+                  'w-full rounded-2xl border px-4 pr-14 py-3.5 text-base shadow-sm transition-all focus:outline-none focus:ring-2',
                   errors.title
                     ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
-                    : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
+                    : 'border-zinc-300 focus:border-indigo-400 focus:ring-indigo-500/40',
                   'bg-white text-zinc-900 placeholder:text-zinc-400',
-                  'dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:border-zinc-800 dark:focus:border-zinc-700',
+                  'dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:border-zinc-800 dark:focus:border-indigo-700',
                 ].join(' ')}
               />
               <span
                 className={[
-                  'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 select-none text-xs',
+                  'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 select-none text-xs font-medium tabular-nums',
                   titleMax - (field.value?.length || 0) === 0
-                    ? 'text-red-500'
+                    ? 'text-red-500 dark:text-red-400'
                     : titleMax - (field.value?.length || 0) <= 12
-                      ? 'text-amber-500'
+                      ? 'text-amber-600 dark:text-amber-400'
                       : 'text-zinc-500 dark:text-zinc-400',
                 ].join(' ')}
                 aria-hidden="true"
               >
-                {Math.max(0, titleMax - (field.value?.length || 0))} left
+                {Math.max(0, titleMax - (field.value?.length || 0))}
               </span>
             </div>
-
-            <div
-              className="absolute mt-1 text-xs text-red-500"
-              id={titleErrId}
-              role="alert"
-              aria-live="polite"
-            >
-              {errors.title?.message as string}
-            </div>
-          </div>
-        )}
-      />
+          )}
+        />
+      </FormSection>
 
       {/* Categories (multi 1–3) */}
-      <Controller
-        name="categorySlugs"
-        control={control}
-        render={({ field }) => {
-          const handleChange = (vals: CategoryOption[]) => {
-            const slugs = vals.map((v) => v.slug);
-            field.onChange(slugs);
-            // FIX: pass numeric limit (not the hook itself)
-            setCategories(vals, getUseCategoriesLimitData());
-            void trigger('categorySlugs');
-          };
-          return (
-            <div className="group">
-              <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Categories
-              </label>
-              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-                Choose 1–3 categories to help others find your intent.
-              </p>
-
-              {/* Uncontrolled via Provider */}
+      <FormSection
+        title="Kategorie"
+        description="Wybierz 1–3 kategorie, aby pomóc innym znaleźć Twoje wydarzenie."
+        error={errors.categorySlugs?.message as string}
+      >
+        <Controller
+          name="categorySlugs"
+          control={control}
+          render={({ field }) => {
+            const handleChange = (vals: CategoryOption[]) => {
+              const slugs = vals.map((v) => v.slug);
+              field.onChange(slugs);
+              setCategories(vals, getUseCategoriesLimitData());
+              void trigger('categorySlugs');
+            };
+            return (
               <CategoryMultiCombo
-                placeholder="Search category…"
+                placeholder="Szukaj kategorii…"
                 maxCount={3}
                 size="md"
                 onChange={handleChange}
                 values={selectedCategories}
               />
-
-              <div
-                id={catErrId}
-                role="alert"
-                aria-live="polite"
-                className="absolute mt-1 text-xs text-red-500"
-              >
-                {errors.categorySlugs?.message as string}
-              </div>
-            </div>
-          );
-        }}
-      />
+            );
+          }}
+        />
+      </FormSection>
 
       {/* Description */}
-      <Controller
-        name="description"
-        control={control}
-        render={({ field }) => (
-          <div className="group">
-            <label
-              htmlFor={descId}
-              className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Description (optional)
-            </label>
-            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Add details like pace, difficulty, or required gear.
-            </p>
-
+      <FormSection
+        title="Opis (opcjonalnie)"
+        description="Dodaj szczegóły takie jak tempo, trudność czy wymagany sprzęt."
+        error={errors.description?.message as string}
+      >
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
             <div className="relative">
               <textarea
                 {...field}
@@ -173,114 +175,79 @@ export function BasicsStep({
                 id={descId}
                 rows={4}
                 maxLength={descMax}
-                placeholder="Example: Easy 5k run around the park. Pace 6:00/km."
+                placeholder="Np. Lekki bieg 5km wokół parku. Tempo 6:00/km."
                 aria-invalid={!!errors.description}
                 aria-describedby={errors.description ? descErrId : undefined}
                 spellCheck={true}
                 className={[
-                  'w-full rounded-2xl border px-4 pr-14 py-3.5 text-zinc-900 shadow-inner focus:outline-none focus:ring-2',
+                  'w-full rounded-2xl border px-4 pr-14 py-3.5 text-zinc-900 shadow-sm transition-all focus:outline-none focus:ring-2 resize-none',
                   errors.description
                     ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
-                    : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
+                    : 'border-zinc-300 focus:border-indigo-400 focus:ring-indigo-500/40',
                   'bg-white placeholder:text-zinc-400',
-                  'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-400',
+                  'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500',
                 ].join(' ')}
               />
               <span
                 className={[
-                  'pointer-events-none absolute bottom-2.5 right-3 select-none text-xs',
+                  'pointer-events-none absolute bottom-2.5 right-3 select-none text-xs font-medium tabular-nums',
                   descMax - (field.value?.length || 0) === 0
-                    ? 'text-red-500'
+                    ? 'text-red-500 dark:text-red-400'
                     : descMax - (field.value?.length || 0) <= 100
-                      ? 'text-amber-500'
+                      ? 'text-amber-600 dark:text-amber-400'
                       : 'text-zinc-500 dark:text-zinc-400',
                 ].join(' ')}
                 aria-hidden="true"
               >
-                {Math.max(0, descMax - (field.value?.length || 0))} left
+                {Math.max(0, descMax - (field.value?.length || 0))}
               </span>
             </div>
-
-            <div
-              className="absolute mt-1 text-xs text-red-500"
-              id={descErrId}
-              role="alert"
-              aria-live="polite"
-            >
-              {errors.description?.message as string}
-            </div>
-          </div>
-        )}
-      />
+          )}
+        />
+      </FormSection>
 
       {/* Tags (multi 0–3) */}
-      <Controller
-        name="tagSlugs"
-        control={control}
-        render={({ field }) => {
-          const handleChange = (vals: TagOption[]) => {
-            const slugs = vals.map((v) => v.slug);
-            field.onChange(slugs);
-            setTags(vals, getUseTagsLimitData());
-            void trigger('tagSlugs');
-          };
-          return (
-            <div className="group">
-              <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Tags (optional)
-              </label>
-              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-                Choose 1–3 tags to help others find your intent.
-              </p>
-
-              {/* Uncontrolled via Provider */}
+      <FormSection
+        title="Tagi (opcjonalnie)"
+        description="Wybierz 1–3 tagi, aby pomóc innym znaleźć Twoje wydarzenie."
+      >
+        <Controller
+          name="tagSlugs"
+          control={control}
+          render={({ field }) => {
+            const handleChange = (vals: TagOption[]) => {
+              const slugs = vals.map((v) => v.slug);
+              field.onChange(slugs);
+              setTags(vals, getUseTagsLimitData());
+              void trigger('tagSlugs');
+            };
+            return (
               <TagMultiCombo
-                placeholder="Search tags.."
+                placeholder="Szukaj tagów…"
                 maxCount={3}
                 size="md"
                 onChange={handleChange}
                 values={selectedTags}
               />
-
-              {/* <div
-                id={catErrId}
-                role="alert"
-                aria-live="polite"
-                className="absolute mt-1 text-xs text-red-500"
-              >
-                {errors.categorySlugs?.message as string}
-              </div> */}
-            </div>
-          );
-        }}
-      />
+            );
+          }}
+        />
+      </FormSection>
 
       {/* Info note */}
       <div
         role="note"
-        className="flex items-center gap-2 p-3 text-blue-700 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+        className="flex items-start gap-3 p-4 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20"
       >
-        <span
-          aria-hidden="true"
-          className="inline-flex items-center justify-center text-blue-700 rounded-full shrink-0 h-7 w-7 bg-blue-100/70 ring-1 ring-blue-300/60 dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="w-5 h-5"
-            fill="currentColor"
-            aria-hidden
-          >
-            <path d="M11 9h2v2h-2V9zm0 4h2v6h-2v-6z"></path>
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
-            10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8
-            s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-            ></path>
-          </svg>
-        </span>
-        <p className="text-sm leading-[1.25]">
-          Clear names, short descriptions and relevant categories improve
-          discoverability.
+        <div className="flex-shrink-0 mt-0.5">
+          <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60 dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30">
+            <Info className="w-4 h-4" />
+          </div>
+        </div>
+        <p className="text-sm leading-relaxed text-blue-900 dark:text-blue-100">
+          <strong className="font-semibold">Wskazówka:</strong> Jasne nazwy,
+          zwięzłe opisy i odpowiednie kategorie zwiększają widoczność Twojego
+          wydarzenia.
         </p>
       </div>
     </div>

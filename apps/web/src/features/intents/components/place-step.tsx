@@ -6,14 +6,7 @@ import {
   reverseGeocode,
   reverseGeocodeLatLng,
 } from '@/features/maps/utils/geocode';
-import {
-  Eye,
-  EyeOff,
-  Globe2,
-  Info,
-  Link as LinkIcon,
-  MapPin,
-} from 'lucide-react';
+import { Globe2, Info, Link as LinkIcon, MapPin } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
 import { LocationCombo } from '@/components/forms/location-combobox';
@@ -22,7 +15,43 @@ import { RadiusSlider } from './slider';
 import { IntentFormValues } from './types';
 
 type MK = 'ONSITE' | 'ONLINE' | 'HYBRID';
-type Visibility = 'PUBLIC' | 'HIDDEN';
+
+function FormSection({
+  title,
+  description,
+  children,
+  error,
+  hint,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  error?: string;
+  hint?: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          {title}
+        </label>
+        <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {description}
+        </p>
+      </div>
+      {children}
+      {hint && (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">{hint}</p>
+      )}
+      {error && (
+        <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+          <span className="text-base">⚠️</span>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function PlaceStep({
   form,
@@ -36,7 +65,6 @@ export function PlaceStep({
   } | null>;
 }) {
   const {
-    register,
     setValue,
     watch,
     control,
@@ -123,21 +151,16 @@ export function PlaceStep({
   return (
     <div className="space-y-8">
       {/* Meeting type */}
-      <div>
-        <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Meeting type
-        </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Choose the format. For <b>Online</b> add a link; for <b>On-site</b>{' '}
-          set a pin. <b>Hybrid</b> combines both.
-        </p>
-
+      <FormSection
+        title="Typ spotkania"
+        description="Wybierz format. Dla opcji Online dodaj link; dla Stacjonarne ustaw pin na mapie. Hybrydowe łączy oba."
+      >
         <Controller
           control={control}
           name="meetingKind"
           render={({ field }) => (
             <SegmentedControl<MK>
-              aria-label="Meeting type"
+              aria-label="Typ spotkania"
               value={field.value}
               size="md"
               fullWidth
@@ -145,60 +168,49 @@ export function PlaceStep({
               animated
               onChange={(v) => field.onChange(v)}
               options={[
-                { value: 'ONSITE', label: 'On-site', Icon: MapPin },
+                { value: 'ONSITE', label: 'Stacjonarne', Icon: MapPin },
                 { value: 'ONLINE', label: 'Online', Icon: LinkIcon },
-                { value: 'HYBRID', label: 'Hybrid', Icon: Globe2 },
+                { value: 'HYBRID', label: 'Hybrydowe', Icon: Globe2 },
               ]}
             />
           )}
         />
-      </div>
+      </FormSection>
 
       {/* Online link */}
       {showOnline && (
-        <div>
+        <FormSection
+          title="Link do spotkania online"
+          description="Akceptujemy linki http/https (Zoom, Meet, Teams, Discord)."
+          error={errors.onlineUrl?.message as string}
+        >
           <Controller
             name="onlineUrl"
             control={control}
             render={({ field }) => (
-              <>
-                <label
-                  htmlFor="onlineUrl"
-                  className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
-                >
-                  Online meeting link
-                </label>
-                <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  We accept <b>http/https</b> (Zoom, Meet, Teams, Discord).
-                </p>
-
-                <input
-                  {...field}
-                  value={field.value || ''}
-                  id="onlineUrl"
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://…"
-                  aria-invalid={!!errors.onlineUrl}
-                  aria-describedby={
-                    errors.onlineUrl ? 'onlineUrl-err' : undefined
-                  }
-                  className={[
-                    'w-full rounded-2xl border px-4 py-3 text-zinc-900 shadow-inner focus:outline-none focus:ring-2',
-                    errors.onlineUrl
-                      ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
-                      : 'border-zinc-300 focus:border-zinc-400 focus:ring-indigo-500/40',
-                    'bg-white placeholder:text-zinc-400',
-                    'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500',
-                  ].join(' ')}
-                />
-                <div id="onlineUrl-err" className="mt-1 text-xs text-red-500">
-                  {errors.onlineUrl?.message as string}
-                </div>
-              </>
+              <input
+                {...field}
+                value={field.value || ''}
+                id="onlineUrl"
+                type="url"
+                inputMode="url"
+                placeholder="https://…"
+                aria-invalid={!!errors.onlineUrl}
+                aria-describedby={
+                  errors.onlineUrl ? 'onlineUrl-err' : undefined
+                }
+                className={[
+                  'w-full rounded-2xl border px-4 py-3.5 text-zinc-900 shadow-sm transition-all focus:outline-none focus:ring-2',
+                  errors.onlineUrl
+                    ? 'border-red-500/70 focus:ring-red-500/40 focus:border-red-500'
+                    : 'border-zinc-300 focus:border-indigo-400 focus:ring-indigo-500/40',
+                  'bg-white placeholder:text-zinc-400',
+                  'dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500',
+                ].join(' ')}
+              />
             )}
           />
-        </div>
+        </FormSection>
       )}
 
       {/* On-site / Hybrid */}
@@ -418,19 +430,18 @@ export function PlaceStep({
       {/* Info note */}
       <div
         role="note"
-        className="flex items-start gap-2 p-3 text-blue-700 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+        className="flex items-start gap-3 p-4 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20"
       >
-        <span
-          aria-hidden="true"
-          className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full
-                     bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60
-                     dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
-        >
-          <Info className="h-3.5 w-3.5" />
-        </span>
-        <p className="text-sm leading-5">
-          For private places consider <b>Hidden</b> and a <b>Radius</b> &gt; 0
-          to mask the exact address on the map.
+        <div className="flex-shrink-0 mt-0.5">
+          <div className="inline-flex items-center justify-center w-6 h-6 text-blue-700 rounded-full bg-blue-100/70 ring-1 ring-blue-300/60 dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30">
+            <Info className="w-4 h-4" />
+          </div>
+        </div>
+        <p className="text-sm leading-relaxed text-blue-900 dark:text-blue-100">
+          <strong className="font-semibold">Wskazówka:</strong> Dla prywatnych
+          miejsc rozważ opcję <strong>Ukryte</strong> oraz{' '}
+          <strong>Promień</strong> &gt; 0 aby zamaskować dokładny adres na
+          mapie.
         </p>
       </div>
     </div>

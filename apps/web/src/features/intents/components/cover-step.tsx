@@ -98,8 +98,8 @@ export function CoverStep({
         <div className="relative w-full" style={{ aspectRatio: '21 / 9' }}>
           <img
             src={coverPreview}
-            alt="Cover preview"
-            className="object-cover w-full h-full border rounded-lg border-zinc-200 dark:border-zinc-800"
+            alt="Podgląd okładki"
+            className="object-cover w-full h-full border rounded-2xl border-zinc-200 dark:border-zinc-800 shadow-sm"
           />
           {!isUploading && (
             <button
@@ -125,24 +125,24 @@ export function CoverStep({
       ) : (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${
+          className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${
             isDragActive
-              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-              : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 hover:border-zinc-400 dark:hover:border-zinc-600'
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg'
+              : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-900/70'
           } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <input {...getInputProps()} />
-          <ImageIcon className="w-12 h-12 mx-auto text-zinc-400" />
-          <p className="mt-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          <ImageIcon className="w-16 h-16 mx-auto mb-4 text-zinc-400 dark:text-zinc-500" />
+          <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             {isDragActive
-              ? 'Drop the image here'
-              : 'Drag & drop an image here, or click to select'}
+              ? 'Upuść obrazek tutaj'
+              : 'Przeciągnij i upuść obrazek lub kliknij aby wybrać'}
+          </p>
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            Zalecane: 1280x549px (proporcje 21:9)
           </p>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Recommended: 1280x549px (21:9 aspect ratio)
-          </p>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            PNG, JPG, WEBP up to 10MB
+            PNG, JPG, WEBP do 10MB
           </p>
         </div>
       )}
@@ -155,10 +155,10 @@ export function CoverStep({
             <button
               type="button"
               disabled={isUploading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 transition"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all shadow-sm"
             >
               <Upload className="w-4 h-4" />
-              Change Cover
+              Zmień okładkę
             </button>
           </div>
 
@@ -166,20 +166,21 @@ export function CoverStep({
             <button
               type="button"
               onClick={handleRemove}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-700 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-900/20 transition"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-300 bg-white px-4 py-3 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-700 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-900/20 transition-all shadow-sm"
             >
               <X className="w-4 h-4" />
-              Remove
+              Usuń
             </button>
           )}
         </div>
       )}
 
       {/* Info Text */}
-      <div className="p-3 border border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-        <p className="text-xs text-blue-900 dark:text-blue-100">
-          <strong>Tip:</strong> A good cover image helps your event stand out.
-          Choose an image that represents the activity or location.
+      <div className="p-4 border rounded-2xl border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+        <p className="text-sm leading-relaxed text-blue-900 dark:text-blue-100">
+          <strong className="font-semibold">Wskazówka:</strong> Dobry obraz
+          okładki pomaga wyróżnić Twoje wydarzenie. Wybierz zdjęcie, które
+          reprezentuje aktywność lub lokalizację.
         </p>
       </div>
 

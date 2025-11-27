@@ -520,14 +520,16 @@ export function TimeStep({
   return (
     <div className="space-y-8">
       {/* Quick actions */}
-      <div>
-        <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Quick picks
-        </label>
-        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Ustaw start i koniec jednym kliknięciem albo dopasuj start do
-          najbliższych 15&nbsp;min.
-        </p>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            Szybkie ustawienia
+          </label>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            Ustaw start i koniec jednym kliknięciem albo dopasuj start do
+            najbliższych 15 min.
+          </p>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button

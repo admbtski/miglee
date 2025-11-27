@@ -7,6 +7,38 @@ import { IntentFormValues } from './types';
 import { RangeSlider } from './range-slider';
 import { SegmentedControl } from '@/components/ui/segment-control';
 
+function FormSection({
+  title,
+  description,
+  children,
+  error,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  error?: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          {title}
+        </label>
+        <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {description}
+        </p>
+      </div>
+      {children}
+      {error && (
+        <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+          <span className="text-base">⚠️</span>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // Smart defaults based on category
 const CATEGORY_CAPACITY_DEFAULTS: Record<
   string,
@@ -102,20 +134,12 @@ export function CapacityStep({
   return (
     <div className="space-y-8">
       {/* Mode */}
-      <div>
-        <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Mode
-        </label>
-        <p
-          id={modeHelpId}
-          className="mb-2 text-xs text-zinc-500 dark:text-zinc-400"
-        >
-          In <b>1:1</b> mode capacity is fixed (2 people). In <b>Group</b> you
-          can set the range (2–50).
-        </p>
-
+      <FormSection
+        title="Tryb"
+        description="W trybie 1:1 liczba uczestników jest stała (2 osoby). W trybie grupowym możesz ustawić zakres (2–50)."
+      >
         <SegmentedControl<'ONE_TO_ONE' | 'GROUP'>
-          aria-label="Mode"
+          aria-label="Tryb"
           aria-describedby={modeHelpId}
           size="lg"
           withPill
@@ -124,24 +148,24 @@ export function CapacityStep({
           onChange={(next) => modeField.onChange(next)}
           options={[
             { value: 'ONE_TO_ONE', label: '1:1', Icon: User },
-            { value: 'GROUP', label: 'Group', Icon: Users },
+            { value: 'GROUP', label: 'Grupowe', Icon: Users },
           ]}
           fullWidth
         />
-      </div>
+      </FormSection>
 
       {isGroup && (
-        <div
-          className={[
-            'group rounded-2xl relative',
-            !isGroup ? 'opacity-60' : '',
-          ].join(' ')}
-          aria-disabled={!isGroup}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Capacity
-            </label>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                Liczba uczestników
+              </label>
+              <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Ustaw minimalną i maksymalną liczbę uczestników (przeciągnij
+                suwaki).
+              </p>
+            </div>
             {suggestedCapacity && (
               <button
                 type="button"
@@ -155,24 +179,16 @@ export function CapacityStep({
                     shouldValidate: true,
                   });
                 }}
-                className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline"
-                title={`Apply suggested capacity for ${suggestedCapacity.label}`}
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline transition-colors"
+                title={`Zastosuj sugerowaną liczność dla ${suggestedCapacity.label}`}
               >
-                💡 Use {suggestedCapacity.label}
+                💡 Użyj {suggestedCapacity.label}
               </button>
             )}
           </div>
 
-          <p
-            id={capHelpId}
-            className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
-          >
-            Set the minimum and maximum number of participants (drag the
-            handles).
-          </p>
-
           {/* Visual capacity preview */}
-          <div className="flex items-center gap-2 mt-3 mb-2">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(minVal ?? 2, 10) }).map((_, i) => (
                 <User
@@ -182,7 +198,7 @@ export function CapacityStep({
                 />
               ))}
               {(minVal ?? 2) > 10 && (
-                <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
                   +{(minVal ?? 2) - 10}
                 </span>
               )}
@@ -199,7 +215,7 @@ export function CapacityStep({
                 )
               )}
               {(maxVal ?? 50) > 10 && (
-                <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
                   +{(maxVal ?? 50) - 10}
                 </span>
               )}
@@ -219,52 +235,49 @@ export function CapacityStep({
             }}
             aria-invalid={!!(errors.min || errors.max)}
             aria-describedby={ariaDescribedBy}
-            className="mt-[36px]"
+            className="mt-2"
           />
 
           {(errors.min || errors.max) && (
-            <div
-              id={capErrId}
-              role="alert"
-              aria-live="polite"
-              className="mt-1 text-xs text-red-500"
-            >
+            <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+              <span className="text-base">⚠️</span>
               {String(
                 (errors.min?.message as string) ??
                   (errors.max?.message as string) ??
                   ''
               )}
-            </div>
+            </p>
           )}
         </div>
       )}
 
-      {/* Blue hint (use a distinct id) */}
+      {/* Info hint */}
       <div
         id={capNoteId}
         role="note"
-        className="flex items-center gap-2 p-3 text-blue-700 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20 dark:text-blue-200"
+        className="flex items-start gap-3 p-4 border rounded-2xl border-blue-300/50 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-900/20"
       >
-        <span
-          aria-hidden="true"
-          className="mt-[1px] inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full
-                     bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60
-                     dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30"
-        >
-          <Info className="w-5 h-5" />
-        </span>
+        <div className="flex-shrink-0 mt-0.5">
+          <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100/70 text-blue-700 ring-1 ring-blue-300/60 dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/30">
+            <Info className="w-4 h-4" />
+          </div>
+        </div>
 
-        <p className="text-sm leading-[1.25]">
+        <p className="text-sm leading-relaxed text-blue-900 dark:text-blue-100">
           {isGroup ? (
             <>
-              Choose the <b>minimum</b> and <b>maximum</b> number of
-              participants. The system can <b>auto-close</b> when it reaches
-              capacity.
+              Wybierz <strong className="font-semibold">minimalną</strong> i{' '}
+              <strong className="font-semibold">maksymalną</strong> liczbę
+              uczestników. System może{' '}
+              <strong className="font-semibold">automatycznie zamknąć</strong>{' '}
+              zapisy po osiągnięciu limitu.
             </>
           ) : (
             <>
-              In <b>1:1</b> mode the capacity is fixed to <b>2 people</b>. Use
-              it for pair activities.
+              W trybie <strong className="font-semibold">1:1</strong> liczba
+              uczestników jest stała:{' '}
+              <strong className="font-semibold">2 osoby</strong>. Użyj tego
+              trybu dla aktywności w parach.
             </>
           )}
         </p>
