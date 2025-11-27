@@ -946,14 +946,14 @@ export function ReviewStep({
 
           {/* Mini map (optional) */}
           {showMapPreview && hasCoords && center && (
-            <div className="mt-1">
+            <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-lg bg-white dark:bg-zinc-900">
               <MapPreview
                 center={{ lat: center.lat!, lng: center.lng! }}
                 zoom={center ? 15 : 6}
                 radiusMeters={radiusMeters ?? undefined}
                 draggableMarker={false}
                 clickToPlace={false}
-                className="w-full border border-zinc-200 dark:border-zinc-800"
+                className="w-full h-[320px]"
                 mapId={mapId}
               />
             </div>

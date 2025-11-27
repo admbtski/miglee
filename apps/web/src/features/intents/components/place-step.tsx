@@ -216,16 +216,24 @@ export function PlaceStep({
       {/* On-site / Hybrid */}
       {showOnsite && (
         <>
-          <div>
-            <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Location (address or POI)
-            </label>
-            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Start typing an address or place — or use “Use my location”.
-            </p>
-
+          <FormSection
+            title="Lokalizacja (adres lub miejsce)"
+            description="Zacznij pisać adres lub nazwę miejsca — lub użyj przycisku 'Użyj mojej lokalizacji'."
+            hint={
+              meetingKind === 'ONSITE'
+                ? 'Spotkanie stacjonarne wymaga współrzędnych (adres opcjonalny).'
+                : 'Wydarzenie hybrydowe może zawierać zarówno link, jak i lokalizację.'
+            }
+            error={
+              meetingKind === 'ONSITE' && errors.location
+                ? 'Lokalizacja jest wymagana dla spotkań stacjonarnych'
+                : meetingKind === 'HYBRID'
+                  ? (errors.meetingKind?.message as string)
+                  : undefined
+            }
+          >
             <div className="flex gap-2">
-              <div className="w-full">
+              <div className="flex-1">
                 <LocationCombo
                   loadingOverride={locating}
                   value={loc?.address ?? ''}
@@ -279,7 +287,7 @@ export function PlaceStep({
                     location: { lat: 52.2297, lng: 21.0122 },
                     radius: 50_000,
                   }}
-                  placeholder="Type an address or place…"
+                  placeholder="Wpisz adres lub miejsce…"
                 />
               </div>
 
@@ -287,67 +295,54 @@ export function PlaceStep({
                 type="button"
                 onClick={handleUseMyLocation}
                 disabled={locating}
-                className="px-4 py-3 bg-white border shrink-0 rounded-2xl border-zinc-300 text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                className="px-4 py-3.5 bg-white border shrink-0 rounded-2xl border-zinc-300 text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all shadow-sm font-medium text-sm"
               >
-                {locating ? 'Locating…' : 'Use my location'}
+                {locating ? '🔍 Szukam…' : '📍 Użyj mojej lokalizacji'}
               </button>
             </div>
+          </FormSection>
 
-            <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              {meetingKind === 'ONSITE'
-                ? 'On-site requires coordinates (address optional).'
-                : 'Hybrid can include both link and location.'}
-            </div>
-            <div className="mt-1 text-xs text-red-500" aria-live="polite">
-              {meetingKind === 'ONSITE' &&
-                errors.location &&
-                'Location is required for on-site meetings'}
-              {meetingKind === 'HYBRID' &&
-                (errors.meetingKind?.message as string)}
+          {/* Map Preview */}
+          <div className="relative">
+            <div className="overflow-hidden bg-white border shadow-lg rounded-2xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+              <MapPreview
+                center={center}
+                zoom={center ? 15 : 6}
+                radiusMeters={radiusMeters}
+                draggableMarker
+                clickToPlace
+                className="w-full h-[420px]"
+                onUserSetPosition={(pos) => {
+                  setValue('location.placeId', pos.placeId, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  setValue('location.lat', pos.lat, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  setValue('location.lng', pos.lng, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  reverseGeocode(pos)
+                    .then((rg) => {
+                      const addr = rg.formattedAddress ?? '';
+                      setValue('location.address', addr, { shouldDirty: true });
+                    })
+                    .catch(() => {});
+                }}
+              />
             </div>
           </div>
 
-          <div className="mt-2">
-            <MapPreview
-              center={center}
-              zoom={center ? 15 : 6}
-              radiusMeters={radiusMeters}
-              draggableMarker
-              clickToPlace
-              className="w-full border rounded-2xl border-zinc-200 dark:border-zinc-800"
-              onUserSetPosition={(pos) => {
-                setValue('location.placeId', pos.placeId, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                setValue('location.lat', pos.lat, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                setValue('location.lng', pos.lng, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                reverseGeocode(pos)
-                  .then((rg) => {
-                    const addr = rg.formattedAddress ?? '';
-                    setValue('location.address', addr, { shouldDirty: true });
-                  })
-                  .catch(() => {});
-              }}
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Radius (km, optional)
-            </label>
-            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Set a privacy radius around the pin. <b>0</b> = exact point.
-            </p>
-
+          <FormSection
+            title="Promień prywatności (km, opcjonalnie)"
+            description="Ustaw promień prywatności wokół pinu. 0 = dokładny punkt."
+            hint="Zwiększ aby wyświetlić zaciemniony okrąg wokół lokalizacji (lepsza prywatność)."
+          >
             {/* quick presets */}
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-2">
               {([0, 0.5, 1, 2, 5, 10] as const).map((r) => (
                 <button
                   key={r}
@@ -358,7 +353,12 @@ export function PlaceStep({
                       shouldValidate: true,
                     })
                   }
-                  className="rounded-xl border border-zinc-300 bg-white px-2.5 py-1.5 text-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:bg-zinc-900"
+                  className={[
+                    'rounded-xl border px-3 py-2 text-sm font-medium transition-all',
+                    typeof loc?.radiusKm === 'number' && loc.radiusKm === r
+                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-200 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800'
+                      : 'border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 dark:text-zinc-300',
+                  ].join(' ')}
                 >
                   {r} km
                 </button>
@@ -370,7 +370,6 @@ export function PlaceStep({
               min={0}
               max={20}
               onUpdate={(v) => {
-                // live UI refresh
                 setValue('location.radiusKm', v, { shouldDirty: true });
               }}
               onChange={(v) => {
@@ -379,53 +378,36 @@ export function PlaceStep({
                   shouldValidate: true,
                 });
               }}
-              className="mt-1"
+              className="mt-4"
               aria-describedby="radius-hint"
             />
-
-            <div
-              id="radius-hint"
-              className="mt-1 text-xs text-zinc-500 dark:text-zinc-400"
-            >
-              Increase to display a shaded circle around the location (better
-              privacy).
-            </div>
-          </div>
+          </FormSection>
         </>
       )}
 
       {/* Logistics note */}
-      <div>
+      <FormSection
+        title="Notatka logistyczna (opcjonalnie)"
+        description="Krótka wskazówka, która pomoże ludziom dotrzeć na miejsce lub dołączyć."
+      >
         <Controller
           name="notes"
           control={control}
           render={({ field }) => (
-            <>
-              <label
-                htmlFor="notes"
-                className="block mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Logistics note (optional)
-              </label>
-              <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-                A short hint to help people arrive or join.
-              </p>
-
-              <input
-                {...field}
-                value={field.value || ''}
-                id="notes"
-                placeholder={
-                  meetingKind === 'ONLINE'
-                    ? 'e.g., "Camera optional."'
-                    : 'We meet at entrance A'
-                }
-                className="w-full px-4 py-3 bg-white border rounded-2xl border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-              />
-            </>
+            <input
+              {...field}
+              value={field.value || ''}
+              id="notes"
+              placeholder={
+                meetingKind === 'ONLINE'
+                  ? 'np. "Kamera opcjonalna."'
+                  : 'np. "Spotykamy się przy wejściu A"'
+              }
+              className="w-full px-4 py-3.5 bg-white border rounded-2xl border-zinc-300 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-100 dark:placeholder:text-zinc-500 transition-all shadow-sm"
+            />
           )}
         />
-      </div>
+      </FormSection>
 
       {/* Info note */}
       <div

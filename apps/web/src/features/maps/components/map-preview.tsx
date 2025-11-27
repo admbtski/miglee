@@ -286,7 +286,7 @@ export function MapPreview({
     <div
       ref={containerRef}
       className={className}
-      style={{ height: 260, borderRadius: 16, overflow: 'hidden', ...style }}
+      style={style}
       aria-label="Location map preview"
     />
   );
