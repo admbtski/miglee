@@ -48,6 +48,12 @@ import {
   myJoinRequestsQuery,
 } from './join-questions';
 import {
+  intentFeedbackQuestionsQuery,
+  intentFeedbackResultsQuery,
+  myFeedbackAnswersQuery,
+  canSubmitFeedbackQuery,
+} from './feedback-questions';
+import {
   myNotificationPreferencesQuery,
   intentMuteQuery,
   dmMuteQuery,
@@ -128,6 +134,10 @@ export const Query: Resolvers['Query'] = {
   intentJoinQuestions: intentJoinQuestionsQuery,
   intentJoinRequests: intentJoinRequestsQuery,
   myJoinRequests: myJoinRequestsQuery,
+  intentFeedbackQuestions: intentFeedbackQuestionsQuery,
+  intentFeedbackResults: intentFeedbackResultsQuery,
+  myFeedbackAnswers: myFeedbackAnswersQuery,
+  canSubmitFeedback: canSubmitFeedbackQuery,
   myNotificationPreferences: myNotificationPreferencesQuery,
   intentMute: intentMuteQuery,
   dmMute: dmMuteQuery,

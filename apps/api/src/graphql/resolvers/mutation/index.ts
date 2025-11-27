@@ -120,6 +120,15 @@ import {
   reorderJoinQuestionsMutation,
 } from './join-questions';
 
+// Feedback Questions mutations
+import {
+  createFeedbackQuestionMutation,
+  updateFeedbackQuestionMutation,
+  deleteFeedbackQuestionMutation,
+  reorderFeedbackQuestionsMutation,
+  submitReviewAndFeedbackMutation,
+} from './feedback-questions';
+
 // Join Requests mutations
 import {
   requestJoinIntentWithAnswersMutation,
@@ -338,6 +347,13 @@ export const Mutation: Resolvers['Mutation'] = {
   updateJoinQuestion: updateJoinQuestionMutation,
   deleteJoinQuestion: deleteJoinQuestionMutation,
   reorderJoinQuestions: reorderJoinQuestionsMutation,
+
+  // ---- Feedback Management ----
+  createFeedbackQuestion: createFeedbackQuestionMutation,
+  updateFeedbackQuestion: updateFeedbackQuestionMutation,
+  deleteFeedbackQuestion: deleteFeedbackQuestionMutation,
+  reorderFeedbackQuestions: reorderFeedbackQuestionsMutation,
+  submitReviewAndFeedback: submitReviewAndFeedbackMutation,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,

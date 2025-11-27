@@ -183,7 +183,6 @@ export const dmMessageDeletedSubscription: SubscriptionResolvers['dmMessageDelet
       return pubsub.subscribe(`dmMessageDeleted:${threadId}`);
     },
     resolve: (payload: any) => {
-      console.dir({ adam: '######################' });
       return payload.dmMessageDeleted;
     },
   };

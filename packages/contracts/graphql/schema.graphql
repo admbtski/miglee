@@ -178,6 +178,12 @@ enum JoinQuestionType {
   MULTI_CHOICE
 }
 
+enum FeedbackQuestionType {
+  TEXT
+  SINGLE_CHOICE
+  MULTI_CHOICE
+}
+
 "High-level notification category/kind"
 enum NotificationKind {
   INTENT_CREATED
@@ -670,6 +676,40 @@ type IntentJoinAnswer {
   user: User!
 }
 
+# ------------------------------------------------------------------------------
+# Feedback System
+# ------------------------------------------------------------------------------
+
+"Feedback question for post-event feedback"
+type IntentFeedbackQuestion {
+  id: ID!
+  intentId: ID!
+  order: Int!
+  type: FeedbackQuestionType!
+  label: String!
+  helpText: String
+  required: Boolean!
+  options: JSON
+  maxLength: Int
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"Feedback answer from a user (post-event)"
+type IntentFeedbackAnswer {
+  id: ID!
+  intentId: ID!
+  userId: ID!
+  questionId: ID!
+  answer: JSON!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Relations
+  user: User!
+  question: IntentFeedbackQuestion!
+}
+
 "Join request with answers for host review"
 type IntentJoinRequest {
   member: IntentMember!
@@ -680,6 +720,43 @@ type IntentJoinRequest {
 type IntentJoinRequestsResult {
   items: [IntentJoinRequest!]!
   pageInfo: PageInfo!
+}
+
+# Feedback Results
+"Aggregated feedback statistics for a question"
+type FeedbackQuestionStats {
+  question: IntentFeedbackQuestion!
+  totalAnswers: Int!
+  # For CHOICE types - distribution of answers
+  choiceDistribution: [ChoiceDistribution!]
+  # For TEXT type - list of text answers
+  textAnswers: [TextAnswerWithUser!]
+}
+
+type ChoiceDistribution {
+  option: String!
+  count: Int!
+  percentage: Float!
+}
+
+type TextAnswerWithUser {
+  answer: String!
+  userId: ID!
+  userName: String!
+  createdAt: DateTime!
+}
+
+"Complete feedback results for an intent"
+type IntentFeedbackResults {
+  intentId: ID!
+  questionStats: [FeedbackQuestionStats!]!
+  totalRespondents: Int!
+}
+
+"Combined result for review submission"
+type SubmitReviewAndFeedbackResult {
+  review: Review!
+  feedbackAnswers: [IntentFeedbackAnswer!]!
 }
 
 "Intent"
@@ -1381,6 +1458,41 @@ input UpdateJoinQuestionInput {
   maxLength: Int
 }
 
+# Feedback Inputs
+input CreateFeedbackQuestionInput {
+  intentId: ID!
+  order: Int!
+  type: FeedbackQuestionType!
+  label: String!
+  helpText: String
+  required: Boolean = false
+  options: JSON
+  maxLength: Int
+}
+
+input UpdateFeedbackQuestionInput {
+  order: Int
+  label: String
+  helpText: String
+  required: Boolean
+  options: JSON
+  maxLength: Int
+}
+
+input FeedbackAnswerInput {
+  questionId: ID!
+  answer: JSON!
+}
+
+input SubmitReviewAndFeedbackInput {
+  intentId: ID!
+  # Review data
+  rating: Int!
+  content: String
+  # Feedback answers (optional)
+  feedbackAnswers: [FeedbackAnswerInput!]
+}
+
 input JoinAnswerInput {
   questionId: ID!
   answer: JSON!
@@ -1576,6 +1688,12 @@ type Query {
     limit: Int = 20
     offset: Int = 0
   ): [IntentMember!]!
+
+  # Feedback
+  intentFeedbackQuestions(intentId: ID!): [IntentFeedbackQuestion!]!
+  intentFeedbackResults(intentId: ID!): IntentFeedbackResults!
+  myFeedbackAnswers(intentId: ID!): [IntentFeedbackAnswer!]!
+  canSubmitFeedback(intentId: ID!): Boolean!
 
   # ==============================================================================
   # Billing & Subscriptions
@@ -1882,6 +2000,25 @@ type Mutation {
     intentId: ID!
     questionIds: [ID!]!
   ): [IntentJoinQuestion!]!
+
+  # Feedback mutations
+  createFeedbackQuestion(
+    input: CreateFeedbackQuestionInput!
+  ): IntentFeedbackQuestion!
+  updateFeedbackQuestion(
+    id: ID!
+    input: UpdateFeedbackQuestionInput!
+  ): IntentFeedbackQuestion!
+  deleteFeedbackQuestion(id: ID!): Boolean!
+  reorderFeedbackQuestions(
+    intentId: ID!
+    questionIds: [ID!]!
+  ): [IntentFeedbackQuestion!]!
+
+  # Submit review + feedback (combined)
+  submitReviewAndFeedback(
+    input: SubmitReviewAndFeedbackInput!
+  ): SubmitReviewAndFeedbackResult!
 
   # notifications
   addNotification(

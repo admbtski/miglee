@@ -536,6 +536,7 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     isOngoing,
     withinLock,
   } = derived;
+
   const status = computeIntentStatus(derived);
   const { joinOpen, lockReason } = computeJoinOpenAndReason(i);
 

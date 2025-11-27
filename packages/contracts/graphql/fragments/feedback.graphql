@@ -1,0 +1,56 @@
+# Feedback fragments
+fragment FeedbackQuestion on IntentFeedbackQuestion {
+  id
+  intentId
+  order
+  type
+  label
+  helpText
+  required
+  options
+  maxLength
+  createdAt
+  updatedAt
+}
+
+fragment FeedbackAnswer on IntentFeedbackAnswer {
+  id
+  intentId
+  userId
+  questionId
+  answer
+  createdAt
+  updatedAt
+  user {
+    ...UserCore
+  }
+  question {
+    ...FeedbackQuestion
+  }
+}
+
+fragment FeedbackQuestionStats on FeedbackQuestionStats {
+  question {
+    ...FeedbackQuestion
+  }
+  totalAnswers
+  choiceDistribution {
+    option
+    count
+    percentage
+  }
+  textAnswers {
+    answer
+    userId
+    userName
+    createdAt
+  }
+}
+
+fragment FeedbackResults on IntentFeedbackResults {
+  intentId
+  totalRespondents
+  questionStats {
+    ...FeedbackQuestionStats
+  }
+}

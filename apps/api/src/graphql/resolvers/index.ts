@@ -45,7 +45,6 @@ export const resolvers: Pick<
   },
   Intent: {
     sponsorshipPlan: intentSponsorshipPlanResolver,
-    sponsorship: intentSponsorshipResolver,
     inviteLinks: intentInviteLinksResolver,
     isFavourite: intentIsFavouriteResolver,
     coverBlurhash: intentCoverBlurhashResolver,

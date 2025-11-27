@@ -71,6 +71,7 @@ fragment IntentLight on Intent {
   updatedAt
   boostedAt
   highlightColor
+  sponsorshipPlan
 
   categories {
     ...CategoryCore
@@ -172,6 +173,7 @@ fragment IntentCore on Intent {
   updatedAt
   boostedAt
   highlightColor
+  sponsorshipPlan
 
   categories {
     ...CategoryCore
@@ -183,6 +185,21 @@ fragment IntentCore on Intent {
   # Convenience relations (access-controlled)
   owner {
     ...UserCore
+  }
+
+  sponsorship {
+    plan
+    status
+    startsAt
+    endsAt
+    boostsTotal
+    boostsUsed
+    localPushesTotal
+    localPushesUsed
+    sponsor {
+      id
+      name
+    }
   }
 }
 

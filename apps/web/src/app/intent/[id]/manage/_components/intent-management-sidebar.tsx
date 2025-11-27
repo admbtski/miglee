@@ -210,6 +210,12 @@ export function IntentManagementSidebar({
           icon: Star,
         },
         {
+          id: 'feedback',
+          label: 'Feedback',
+          href: `/intent/${intentId}/manage/feedback`,
+          icon: FileText,
+        },
+        {
           id: 'notifications',
           label: 'Notifications',
           href: `/intent/${intentId}/manage/notifications`,

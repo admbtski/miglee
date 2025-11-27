@@ -173,6 +173,12 @@ enum JoinQuestionType {
   MULTI_CHOICE
 }
 
+enum FeedbackQuestionType {
+  TEXT
+  SINGLE_CHOICE
+  MULTI_CHOICE
+}
+
 enum ReportEntity {
   INTENT
   COMMENT
@@ -264,9 +270,9 @@ model User {
   intentFavourites IntentFavourite[]
 
   // Monetization
-  subscriptions     UserSubscription[]
-  planPeriods       UserPlanPeriod[]
-  eventSponsorships EventSponsorship[] @relation("SponsorUser")
+  subscriptions           UserSubscription[]
+  planPeriods             UserPlanPeriod[]
+  eventSponsorships       EventSponsorship[]       @relation("SponsorUser")
   eventSponsorshipPeriods EventSponsorshipPeriod[] @relation("EventSponsorshipPeriods")
 
   // Profile & Privacy
@@ -396,16 +402,16 @@ model Intent {
   deleteReason String?
 
   // Relations
-  members       IntentMember[]
-  memberEvents  IntentMemberEvent[]
-  notifications Notification[]
-  comments      Comment[]
-  reviews       Review[]
-  sponsorship   EventSponsorship?
+  members            IntentMember[]
+  memberEvents       IntentMemberEvent[]
+  notifications      Notification[]
+  comments           Comment[]
+  reviews            Review[]
+  sponsorship        EventSponsorship?
   sponsorshipPeriods EventSponsorshipPeriod[] @relation("EventSponsorshipPeriods")
-  inviteLinks   IntentInviteLink[]
-  mutes         IntentMute[]
-  favourites    IntentFavourite[]
+  inviteLinks        IntentInviteLink[]
+  mutes              IntentMute[]
+  favourites         IntentFavourite[]
 
   // Event Chat relations
   chatMessages IntentChatMessage[]
@@ -414,6 +420,10 @@ model Intent {
   // Join Form relations
   joinQuestions IntentJoinQuestion[]
   joinAnswers   IntentJoinAnswer[]
+
+  // Feedback relations
+  feedbackQuestions IntentFeedbackQuestion[]
+  feedbackAnswers   IntentFeedbackAnswer[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -465,6 +475,9 @@ model IntentMember {
   // Relations to join form answers
   joinAnswers IntentJoinAnswer[]
 
+  // Relations to feedback answers
+  feedbackAnswers IntentFeedbackAnswer[]
+
   @@unique([intentId, userId])
   @@index([userId, status])
   @@index([intentId, status])
@@ -494,20 +507,20 @@ model IntentMemberEvent {
 }
 
 model Comment {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   intentId  String
   authorId  String
   threadId  String // root comment id; dla rootów = id (ustaw w app)
   parentId  String?
   content   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Soft delete by author
   deletedAt   DateTime?
   deletedById String?
   deletedBy   User?     @relation("CommentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
-  
+
   // Hidden by moderator
   hiddenAt   DateTime?
   hiddenById String?
@@ -528,19 +541,19 @@ model Comment {
 }
 
 model Review {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   intentId  String
   authorId  String
   rating    Int // enforce 1..5 in SQL CHECK (migration)
   content   String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Soft delete by author
   deletedAt   DateTime?
   deletedById String?
   deletedBy   User?     @relation("ReviewDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
-  
+
   // Hidden by moderator
   hiddenAt   DateTime?
   hiddenById String?
@@ -1246,6 +1259,56 @@ model IntentJoinAnswer {
   @@index([intentId, userId])
   @@index([questionId])
   @@map("intent_join_answers")
+}
+
+// =============================================================================
+/**
+ * Feedback System
+ * Post-event feedback questions and answers
+ */
+// =============================================================================
+
+model IntentFeedbackQuestion {
+  id       String               @id @default(cuid())
+  intentId String
+  order    Int                  @default(0) // Display order (0-based)
+  type     FeedbackQuestionType @default(TEXT)
+
+  label     String // Question text (max 200 chars, enforced in app)
+  helpText  String? // Optional help text (max 200 chars, enforced in app)
+  required  Boolean @default(false)
+  options   Json? // For CHOICE types: array of {label: string, value?: string}
+  maxLength Int? // For TEXT type: max answer length
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent  Intent                 @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  answers IntentFeedbackAnswer[]
+
+  @@index([intentId, order])
+  @@map("intent_feedback_questions")
+}
+
+model IntentFeedbackAnswer {
+  id         String @id @default(cuid())
+  intentId   String
+  userId     String
+  questionId String
+
+  answer Json // TEXT: string, SINGLE_CHOICE: string, MULTI_CHOICE: string[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent   Intent                 @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  question IntentFeedbackQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  member   IntentMember           @relation(fields: [intentId, userId], references: [intentId, userId], onDelete: Cascade)
+
+  @@unique([intentId, userId, questionId])
+  @@index([intentId, userId])
+  @@index([questionId])
+  @@map("intent_feedback_answers")
 }
 
 // =============================================================================

@@ -558,6 +558,8 @@ export const intentQuery: QueryResolvers['intent'] = resolverWithMetrics(
       include: INTENT_INCLUDE,
     });
 
+    console.dir({ row });
+
     return row ? mapIntent(row, user?.id) : null;
   }
 );

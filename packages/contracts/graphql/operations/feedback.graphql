@@ -1,0 +1,69 @@
+#import "../fragments/_core.graphql"
+#import "../fragments/feedback.graphql"
+
+# Query feedback questions for an intent
+query IntentFeedbackQuestions($intentId: ID!) {
+  intentFeedbackQuestions(intentId: $intentId) {
+    ...FeedbackQuestion
+  }
+}
+
+# Query feedback results (owner/mod only)
+query IntentFeedbackResults($intentId: ID!) {
+  intentFeedbackResults(intentId: $intentId) {
+    ...FeedbackResults
+  }
+}
+
+# Query my feedback answers
+query MyFeedbackAnswers($intentId: ID!) {
+  myFeedbackAnswers(intentId: $intentId) {
+    ...FeedbackAnswer
+  }
+}
+
+# Check if I can submit feedback
+query CanSubmitFeedback($intentId: ID!) {
+  canSubmitFeedback(intentId: $intentId)
+}
+
+# Create feedback question
+mutation CreateFeedbackQuestion($input: CreateFeedbackQuestionInput!) {
+  createFeedbackQuestion(input: $input) {
+    ...FeedbackQuestion
+  }
+}
+
+# Update feedback question
+mutation UpdateFeedbackQuestion(
+  $id: ID!
+  $input: UpdateFeedbackQuestionInput!
+) {
+  updateFeedbackQuestion(id: $id, input: $input) {
+    ...FeedbackQuestion
+  }
+}
+
+# Delete feedback question
+mutation DeleteFeedbackQuestion($id: ID!) {
+  deleteFeedbackQuestion(id: $id)
+}
+
+# Reorder feedback questions
+mutation ReorderFeedbackQuestions($intentId: ID!, $questionIds: [ID!]!) {
+  reorderFeedbackQuestions(intentId: $intentId, questionIds: $questionIds) {
+    ...FeedbackQuestion
+  }
+}
+
+# Submit review + feedback (combined)
+mutation SubmitReviewAndFeedback($input: SubmitReviewAndFeedbackInput!) {
+  submitReviewAndFeedback(input: $input) {
+    review {
+      ...ReviewCore
+    }
+    feedbackAnswers {
+      ...FeedbackAnswer
+    }
+  }
+}
