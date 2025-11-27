@@ -16,6 +16,7 @@ interface FeedbackEmailData {
   hasFeedbackQuestions: boolean;
 }
 
+let c = 0;
 /**
  * Send feedback request email
  */
@@ -29,12 +30,13 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
     hasFeedbackQuestions,
   } = data;
 
-  const _to = 'bounced@resend.dev';
+  const _from = 'Test <onboarding@resend.dev>';
+  const _to = 'adam.bartski@gmail.com';
 
   try {
     const result = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Miglee <noreply@miglee.pl>',
-      to: _to,
+      from: _from || process.env.EMAIL_FROM || 'Miglee <adaskoo05@gmail.com>',
+      to: _to || to,
       subject: `Jak oceniasz "${intentTitle}"?`,
       html: `
 <!DOCTYPE html>
@@ -69,7 +71,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
                 Dziękujemy za udział w wydarzeniu <strong>"${intentTitle}"</strong>!
               </p>
-              
+               
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
                 Twoja opinia jest dla nas bardzo ważna i pomoże nam ulepszyć przyszłe wydarzenia. 
                 ${hasFeedbackQuestions ? 'Poprosimy Cię o wystawienie oceny oraz odpowiedź na kilka krótkich pytań.' : 'Poprosimy Cię o wystawienie oceny wydarzenia.'}

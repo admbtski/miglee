@@ -12,6 +12,8 @@ const commentInclude = {
       author: true,
     },
   },
+  deletedBy: true,
+  hiddenBy: true,
   replies: {
     include: {
       author: true,
@@ -63,6 +65,8 @@ export const commentsQuery: QueryResolvers['comments'] = resolverWithMetrics(
       orderBy: { createdAt: 'desc' },
       include: commentInclude,
     });
+
+    console.dir({ comments });
 
     return {
       items: comments.map((c) => mapComment(c, user?.id)),

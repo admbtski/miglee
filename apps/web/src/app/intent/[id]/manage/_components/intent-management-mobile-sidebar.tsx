@@ -28,6 +28,7 @@ import {
   Star,
   AlertTriangle,
   MessagesSquare,
+  Crown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -41,7 +42,41 @@ type NavItem = {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  requiredPlan?: 'plus' | 'pro'; // Minimum plan required to access this feature
 };
+
+interface PlanBadgeProps {
+  plan: 'plus' | 'pro';
+  size?: 'sm' | 'xs';
+}
+
+function PlanBadge({ plan, size = 'xs' }: PlanBadgeProps) {
+  const isPro = plan === 'pro';
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full font-bold whitespace-nowrap',
+        size === 'xs' && 'px-1.5 py-0.5 text-[10px]',
+        size === 'sm' && 'px-2 py-1 text-xs',
+        isPro
+          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white'
+          : 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white'
+      )}
+    >
+      {isPro ? (
+        <>
+          <Crown className={cn(size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3')} />
+          PRO
+        </>
+      ) : (
+        <>
+          <Sparkles className={cn(size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3')} />
+          PLUS
+        </>
+      )}
+    </span>
+  );
+}
 
 interface IntentManagementMobileSidebarProps {
   intentId: string;
@@ -99,6 +134,7 @@ export function IntentManagementMobileSidebar({
       label: 'Analytics',
       href: `/intent/${intentId}/manage/analytics`,
       icon: BarChart3,
+      requiredPlan: 'pro',
     },
     {
       id: 'basics',
@@ -147,12 +183,14 @@ export function IntentManagementMobileSidebar({
       label: 'Join Form',
       href: `/intent/${intentId}/manage/join-form`,
       icon: CheckCircle2,
+      requiredPlan: 'plus',
     },
     {
       id: 'invite-links',
       label: 'Invite Links',
       href: `/intent/${intentId}/manage/invite-links`,
       icon: LinkIcon,
+      requiredPlan: 'plus',
     },
     {
       id: 'chat',
@@ -171,6 +209,13 @@ export function IntentManagementMobileSidebar({
       label: 'Reviews',
       href: `/intent/${intentId}/manage/reviews`,
       icon: Star,
+    },
+    {
+      id: 'feedback',
+      label: 'Feedback',
+      href: `/intent/${intentId}/manage/feedback`,
+      icon: FileText,
+      requiredPlan: 'plus',
     },
     {
       id: 'notifications',
@@ -281,7 +326,14 @@ export function IntentManagementMobileSidebar({
                           : 'text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-300'
                       )}
                     />
-                    <span>{item.label}</span>
+                    <span className="flex items-center flex-1 gap-2">
+                      {item.label}
+                      {item.requiredPlan && (
+                        <span className="ml-auto">
+                          <PlanBadge plan={item.requiredPlan} size="xs" />
+                        </span>
+                      )}
+                    </span>
                   </Link>
                 );
               })}

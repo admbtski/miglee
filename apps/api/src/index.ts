@@ -26,6 +26,7 @@ async function start() {
 
   const shutdown = async () => {
     server.log.info('Shutting down...');
+
     try {
       await server.close();
     } catch {}

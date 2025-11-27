@@ -34,6 +34,7 @@ import {
   UserCog,
   DollarSign,
   ChevronDown,
+  Crown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,6 +49,40 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
+  requiredPlan?: 'plus' | 'pro'; // Minimum plan required to access this feature
+}
+
+interface PlanBadgeProps {
+  plan: 'plus' | 'pro';
+  size?: 'sm' | 'xs';
+}
+
+function PlanBadge({ plan, size = 'xs' }: PlanBadgeProps) {
+  const isPro = plan === 'pro';
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full font-bold whitespace-nowrap',
+        size === 'xs' && 'px-1.5 py-0.5 text-[10px]',
+        size === 'sm' && 'px-2 py-1 text-xs',
+        isPro
+          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white'
+          : 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white'
+      )}
+    >
+      {isPro ? (
+        <>
+          <Crown className={cn(size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3')} />
+          PRO
+        </>
+      ) : (
+        <>
+          <Sparkles className={cn(size === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3')} />
+          PLUS
+        </>
+      )}
+    </span>
+  );
 }
 
 interface NavGroup {
@@ -112,6 +147,7 @@ export function IntentManagementSidebar({
           label: 'Analytics',
           href: `/intent/${intentId}/manage/analytics`,
           icon: BarChart3,
+          requiredPlan: 'pro',
         },
       ],
     },
@@ -176,12 +212,14 @@ export function IntentManagementSidebar({
           label: 'Join Form',
           href: `/intent/${intentId}/manage/join-form`,
           icon: CheckCircle2,
+          requiredPlan: 'plus',
         },
         {
           id: 'invite-links',
           label: 'Invite Links',
           href: `/intent/${intentId}/manage/invite-links`,
           icon: LinkIcon,
+          requiredPlan: 'plus',
         },
       ],
     },
@@ -214,6 +252,7 @@ export function IntentManagementSidebar({
           label: 'Feedback',
           href: `/intent/${intentId}/manage/feedback`,
           icon: FileText,
+          requiredPlan: 'plus',
         },
         {
           id: 'notifications',
@@ -412,9 +451,15 @@ export function IntentManagementSidebar({
                                     animate={{ opacity: 1, width: 'auto' }}
                                     exit={{ opacity: 0, width: 0 }}
                                     transition={{ duration: 0.2 }}
-                                    className="overflow-hidden whitespace-nowrap"
+                                    className="flex items-center flex-1 gap-2 overflow-hidden whitespace-nowrap"
                                   >
-                                    {item.label}
+                                    <span>{item.label}</span>
+                                    {item.requiredPlan && (
+                                      <PlanBadge
+                                        plan={item.requiredPlan}
+                                        size="xs"
+                                      />
+                                    )}
                                   </motion.span>
                                 )}
                               </AnimatePresence>
@@ -428,7 +473,15 @@ export function IntentManagementSidebar({
                                 exit={{ opacity: 0, x: -10 }}
                                 className="absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-1.5 text-sm text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
                               >
-                                {item.label}
+                                <div className="flex items-center gap-2">
+                                  {item.label}
+                                  {item.requiredPlan && (
+                                    <PlanBadge
+                                      plan={item.requiredPlan}
+                                      size="xs"
+                                    />
+                                  )}
+                                </div>
                                 <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
                               </motion.div>
                             )}

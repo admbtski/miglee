@@ -13,6 +13,8 @@ const COMMENT_INCLUDE = {
       author: true,
     },
   },
+  deletedBy: true,
+  hiddenBy: true,
   replies: {
     include: {
       author: true,

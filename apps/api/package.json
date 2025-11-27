@@ -20,7 +20,9 @@
     "prisma:reset": "prisma migrate reset",
     "prisma:force:reset": "prisma db push --force-reset",
     "worker:reminders:dev": "tsx watch src/workers/reminders/worker.ts",
-    "worker:reminders": "tsx src/workers/reminders/worker.ts"
+    "worker:reminders": "tsx src/workers/reminders/worker.ts",
+    "worker:feedback:dev": "tsx watch src/workers/feedback/worker.ts",
+    "worker:feedback": "tsx src/workers/reminders/feedback.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.934.0",

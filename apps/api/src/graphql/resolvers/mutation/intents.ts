@@ -21,6 +21,11 @@ import {
   enqueueReminders,
   rescheduleReminders,
 } from '../../../workers/reminders/queue';
+import {
+  enqueueFeedbackRequest,
+  clearFeedbackRequest,
+  rescheduleFeedbackRequest,
+} from '../../../workers/feedback/queue';
 import type {
   CreateIntentInput,
   Intent as GQLIntent,
@@ -572,6 +577,14 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
           // loguj w workerze/metrics; nie blokuj transakcji
         }
 
+        // Feedback request (scheduled after event ends)
+        try {
+          await enqueueFeedbackRequest(intent.id, intent.endAt);
+        } catch (err) {
+          console.dir({ err });
+          // Don't block transaction if feedback scheduling fails
+        }
+
         const fullIntent = await tx.intent.findUniqueOrThrow({
           where: { id: intent.id },
           include: INTENT_INCLUDE,
@@ -777,6 +790,15 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         }
       }
 
+      // Reschedule feedback if endAt changed
+      if (typeof input.endAt !== 'undefined' && updated.endAt) {
+        try {
+          await rescheduleFeedbackRequest(updated.id, updated.endAt);
+        } catch {
+          // Don't block mutation if feedback rescheduling fails
+        }
+      }
+
       // publish INTENT_UPDATED
       if (recipients.length > 0) {
         const dedupeStamp = updated.updatedAt.toISOString();
@@ -879,6 +901,13 @@ export const cancelIntentMutation: MutationResolvers['cancelIntent'] =
 
         try {
           await clearReminders(id);
+        } catch {
+          // swallow
+        }
+
+        // Clear feedback requests
+        try {
+          await clearFeedbackRequest(id);
         } catch {
           // swallow
         }
@@ -1037,6 +1066,18 @@ export const deleteIntentMutation: MutationResolvers['deleteIntent'] =
             });
           })
         );
+      }
+
+      // Clear reminders and feedback
+      try {
+        await clearReminders(id);
+      } catch {
+        // swallow
+      }
+      try {
+        await clearFeedbackRequest(id);
+      } catch {
+        // swallow
       }
 
       return true;

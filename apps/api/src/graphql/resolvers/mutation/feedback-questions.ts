@@ -1,7 +1,7 @@
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
-import { enqueueFeedbackRequest } from '../../../workers/feedback/queue';
+import { enqueueFeedbackRequestNow } from '../../../workers/feedback/queue';
 
 // Constants for validation
 const MAX_QUESTIONS = 10;
@@ -584,7 +584,6 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
         }
       );
     }
-
     // Check if event has ended
     if (intent.endAt > new Date()) {
       throw new GraphQLError(
@@ -624,7 +623,7 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
 
     // Enqueue feedback request job
     try {
-      await enqueueFeedbackRequest(intentId);
+      await enqueueFeedbackRequestNow(intentId);
 
       return {
         success: true,
@@ -632,9 +631,13 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
         skippedCount: 0,
         message: `Feedback requests will be sent to ${joinedMembers} member(s)`,
       };
-    } catch (error) {
-      throw new GraphQLError('Failed to enqueue feedback requests', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      });
+    } catch (error: any) {
+      console.error('[sendFeedbackRequests] Error:', error);
+      throw new GraphQLError(
+        `Failed to enqueue feedback requests: ${error.message || 'Unknown error'}`,
+        {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        }
+      );
     }
   };

@@ -4,7 +4,7 @@ import { runFeedbackRequestForIntent } from './runFeedbackRequestForIntent';
 import { logger } from '../logger';
 
 export const connection = new IORedis({
-  host: process.env.REDIS_HOST ?? 'redis',
+  host: process.env.REDIS_HOST ?? 'localhost',
   port: Number(process.env.REDIS_PORT ?? 6379),
   retryStrategy: (times: number) => Math.min(500 + times * 250, 5000),
   maxRetriesPerRequest: null,
@@ -12,6 +12,14 @@ export const connection = new IORedis({
   connectTimeout: 5_000,
   lazyConnect: false,
   keepAlive: 10_000,
+});
+
+// Log Redis connection status
+connection.on('connect', () => {
+  logger.info('✅ Redis connected for feedback queue');
+});
+connection.on('error', (err) => {
+  logger.error({ err }, '❌ Redis connection error for feedback queue');
 });
 
 // Queue for feedback requests (sent after event ends)
@@ -22,7 +30,7 @@ export type FeedbackRequestPayload = {
 };
 
 function buildJobId(intentId: string) {
-  return `feedback-request:${intentId}`;
+  return `feedback-request-${intentId}`;
 }
 
 /**
@@ -31,8 +39,10 @@ function buildJobId(intentId: string) {
  * @param endAt - Event end date
  */
 export async function enqueueFeedbackRequest(intentId: string, endAt: Date) {
+  console.log('kolejka');
   const now = Date.now();
-  const oneHourAfterEnd = new Date(endAt).getTime() + 60 * 60 * 1000; // 1 hour
+  // const oneHourAfterEnd = new Date(endAt).getTime() + 60 * 1000; // 1 hour
+  const oneHourAfterEnd = new Date(endAt).getTime() + 5 * 1000; // 1 hour
   const delay = oneHourAfterEnd - now;
 
   if (delay <= 0) {
@@ -60,6 +70,30 @@ export async function enqueueFeedbackRequest(intentId: string, endAt: Date) {
   logger.info(
     { intentId },
     '[enqueueFeedbackRequest] Feedback request scheduled.'
+  );
+}
+
+/**
+ * Immediately send feedback request (manual trigger)
+ * @param intentId - Intent ID
+ */
+export async function enqueueFeedbackRequestNow(intentId: string) {
+  logger.info(
+    { intentId },
+    '[enqueueFeedbackRequestNow] Queueing immediate feedback request...'
+  );
+
+  const opts: JobsOptions = {
+    attempts: 3,
+    removeOnComplete: 1000,
+    removeOnFail: 5000,
+    jobId: `${buildJobId(intentId)}-manual-${Date.now()}`, // Unique ID for manual sends
+  };
+
+  await feedbackQueue.add('send', { intentId }, opts);
+  logger.info(
+    { intentId },
+    '[enqueueFeedbackRequestNow] Immediate feedback request queued.'
   );
 }
 

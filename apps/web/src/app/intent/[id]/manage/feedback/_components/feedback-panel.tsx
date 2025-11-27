@@ -265,10 +265,10 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
       {activeView === 'questions' && (
         <div className="space-y-6">
           {/* Manual send button */}
-          <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-900/50 dark:to-zinc-900/30 p-6 shadow-sm">
+          <div className="p-6 border shadow-sm rounded-2xl border-zinc-200/80 dark:border-zinc-800 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-900/50 dark:to-zinc-900/30">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                <h4 className="mb-2 font-semibold text-zinc-900 dark:text-zinc-100">
                   Wyślij prośby o feedback
                 </h4>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-[60ch]">
@@ -334,7 +334,7 @@ export function FeedbackPanel({ intentId }: FeedbackPanelProps) {
             {/* Warning if event not ended */}
             {intentData?.intent?.endAt &&
               new Date(intentData.intent.endAt) > new Date() && (
-                <div className="mt-4 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+                <div className="p-4 mt-4 border rounded-lg border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
                   <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-amber-800 dark:text-amber-200">
