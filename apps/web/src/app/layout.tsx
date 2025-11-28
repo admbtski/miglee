@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 
 import { WebVitals } from '@/lib/config/web-vitals';
 import { ThemeProvider } from '@/features/theme/provider/theme-provider';
+import { I18nProvider, TimezoneProvider } from '@/lib/i18n';
 import { InlineThemeScript } from './scripts/inline/inline-theme-script';
 import '../styles/globals.css';
 
@@ -100,8 +101,12 @@ export default function RootLayout({
         {/* Performance monitoring */}
         <WebVitals />
 
-        {/* Theme provider for dark/light mode */}
-        <ThemeProvider>{children}</ThemeProvider>
+        {/* Global providers */}
+        <ThemeProvider>
+          <I18nProvider>
+            <TimezoneProvider>{children}</TimezoneProvider>
+          </I18nProvider>
+        </ThemeProvider>
 
         {/* Toast notifications */}
         <Toaster

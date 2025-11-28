@@ -4,106 +4,115 @@ import { useMemo, useState, memo, useCallback } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { SectionCard } from '@/components/ui/section-card';
 import { useTheme } from '@/features/theme/provider/theme-provider';
+import {
+  useI18n,
+  useTranslations,
+  useTimezone,
+  localeNames,
+  commonTimezones,
+  type Locale,
+} from '@/lib/i18n';
 
 /* ─────────────────────────  Settings Page  ───────────────────────── */
 
 export default function SettingsPage() {
   const { theme, setTheme: setGlobalTheme } = useTheme();
+  const { locale, setLocale } = useI18n();
+  const t = useTranslations();
+  const { timezone, setTimezone, autoTimezone, setAutoTimezone } =
+    useTimezone();
 
-  // Demo state
-  const [language, setLanguage] = useState('en-GB');
-  const [autoTz, setAutoTz] = useState(true);
-  const [tz, setTz] = useState('Europe/London');
+  // Demo state for date/week settings
   const [dateFormat, setDateFormat] = useState<'MDY' | 'DMY'>('MDY');
   const [weekStart, setWeekStart] = useState('Monday');
   const [weekend, setWeekend] = useState('Sunday');
 
-  // Example lists (trim as you like)
-  const languages = [
-    { value: 'en-GB', label: 'English (UK)' },
-    { value: 'en-US', label: 'English (US)' },
-    { value: 'pl-PL', label: 'Polski' },
+  // Language options
+  const languages: Array<{ value: Locale; label: string }> = [
+    { value: 'en', label: localeNames.en },
+    { value: 'pl', label: localeNames.pl },
+    { value: 'de', label: localeNames.de },
   ];
-  const timezones = useMemo(
-    () => [
-      'Europe/London',
-      'Europe/Warsaw',
-      'Europe/Berlin',
-      'UTC',
-      'America/New_York',
-      'Asia/Tokyo',
-    ],
+
+  // Timezone options
+  const timezoneOptions = useMemo(
+    () =>
+      commonTimezones.map((tz) => ({
+        value: tz,
+        label: tz.replace(/_/g, ' '),
+      })),
     []
   );
+
   const weekdays = ['Monday', 'Sunday', 'Saturday'];
   const weekends = ['Sunday', 'Saturday', 'Friday'];
 
   const handleSave = useCallback(() => {
     // TODO: Call your mutation / REST endpoint
     console.log('save settings', {
-      language,
-      autoTz,
-      tz,
+      locale,
+      timezone,
+      autoTimezone,
       dateFormat,
       weekStart,
       weekend,
       theme,
     });
-  }, [language, autoTz, tz, dateFormat, weekStart, weekend, theme]);
+  }, [locale, timezone, autoTimezone, dateFormat, weekStart, weekend, theme]);
 
   const handleReset = useCallback(() => {
-    setLanguage('en-GB');
-    setAutoTz(true);
-    setTz('Europe/London');
+    setLocale('en');
+    setAutoTimezone(true);
     setDateFormat('MDY');
     setWeekStart('Monday');
     setWeekend('Sunday');
     setGlobalTheme('system');
-  }, [setGlobalTheme]);
+  }, [setLocale, setAutoTimezone, setGlobalTheme]);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Settings
+          {t.settings.title}
         </h1>
         <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-          Customize your workspace and personal preferences
+          {t.settings.subtitle}
         </p>
       </div>
 
-      <SectionCard title="Language">
+      <SectionCard title={t.settings.language.title}>
         <Row
-          label="Language"
-          help="Change the language used in the user interface."
+          label={t.settings.language.label}
+          help={t.settings.language.description}
         >
-          <Select value={language} onChange={setLanguage} options={languages} />
+          <Select
+            value={locale}
+            onChange={(v) => setLocale(v as Locale)}
+            options={languages}
+          />
         </Row>
       </SectionCard>
 
-      <SectionCard title="Time zone">
-        <Row label="Time zone">
+      <SectionCard title={t.settings.timezone.title}>
+        <Row label={t.settings.timezone.label}>
           <div className="flex flex-wrap items-center gap-3">
             <Toggle
-              checked={autoTz}
-              onChange={setAutoTz}
-              label="Automatic time zone"
+              checked={autoTimezone}
+              onChange={setAutoTimezone}
+              label={t.settings.timezone.automatic}
             />
             <Select
-              value={tz}
-              onChange={setTz}
-              options={timezones.map((x) => ({
-                value: x,
-                label: x.replace('_', ' '),
-              }))}
-              disabled={autoTz}
+              value={timezone}
+              onChange={setTimezone}
+              options={timezoneOptions}
+              disabled={autoTimezone}
             />
           </div>
         </Row>
       </SectionCard>
 
-      <SectionCard title="Date & week">
-        <Row label="Date Format">
+      <SectionCard title={t.settings.dateWeek.title}>
+        <Row label={t.settings.dateWeek.dateFormat}>
           <RadioGroup
             value={dateFormat}
             onChange={(v) => setDateFormat(v as 'MDY' | 'DMY')}
@@ -115,8 +124,8 @@ export default function SettingsPage() {
         </Row>
 
         <Row
-          label="Week start"
-          help="This will change how all calendars in your app look."
+          label={t.settings.dateWeek.weekStart}
+          help={t.settings.dateWeek.weekStartHelp}
         >
           <Select
             value={weekStart}
@@ -125,7 +134,7 @@ export default function SettingsPage() {
           />
         </Row>
 
-        <Row label="Weekend">
+        <Row label={t.settings.dateWeek.weekend}>
           <Select
             value={weekend}
             onChange={setWeekend}
@@ -134,26 +143,25 @@ export default function SettingsPage() {
         </Row>
       </SectionCard>
 
-      <SectionCard title="Appearance">
+      <SectionCard title={t.settings.appearance.title}>
         <div className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Theme mode
+          {t.settings.appearance.themeMode}
         </div>
         <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-          Choose how the app looks to you. Select a single theme, or sync with
-          your system and automatically switch between day and night themes.
+          {t.settings.appearance.description}
         </p>
 
         <div className="grid gap-4 sm:grid-cols-3">
           <ThemeCard
             icon={Monitor}
-            title="System"
+            title={t.settings.appearance.system}
             active={theme === 'system'}
             onClick={() => setGlobalTheme('system')}
             imgHint="System preview"
           />
           <ThemeCard
             icon={Sun}
-            title="Light"
+            title={t.settings.appearance.light}
             active={theme === 'light'}
             onClick={() => setGlobalTheme('light')}
             preview="light"
@@ -161,7 +169,7 @@ export default function SettingsPage() {
           />
           <ThemeCard
             icon={Moon}
-            title="Dark"
+            title={t.settings.appearance.dark}
             active={theme === 'dark'}
             onClick={() => setGlobalTheme('dark')}
             preview="dark"
@@ -176,14 +184,14 @@ export default function SettingsPage() {
           onClick={handleSave}
           className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
         >
-          Save changes
+          {t.settings.actions.saveChanges}
         </button>
         <button
           type="button"
           className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-6 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
           onClick={handleReset}
         >
-          Reset
+          {t.settings.actions.reset}
         </button>
       </div>
     </div>
@@ -352,6 +360,8 @@ const ThemeCard = memo(function ThemeCard({
   preview?: 'light' | 'dark';
   imgHint?: string;
 }) {
+  const t = useTranslations();
+
   return (
     <button
       type="button"
@@ -390,7 +400,7 @@ const ThemeCard = memo(function ThemeCard({
         </div>
         {active && (
           <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] font-semibold text-white">
-            Active
+            {t.settings.appearance.active}
           </span>
         )}
       </div>
