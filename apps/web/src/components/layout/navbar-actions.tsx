@@ -3,6 +3,7 @@
 import { Bell, Heart, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
+import { useLocalePath } from '@/hooks/use-locale-path';
 import { useMeQuery } from '@/lib/api/auth';
 import { NotificationBell } from '@/features/notifications/components/notifications-bell';
 import { FavouritesBell } from '@/features/favourites/components/favourites-bell';
@@ -20,6 +21,7 @@ import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
  */
 export function NavbarActions() {
   const router = useRouter();
+  const { localePath } = useLocalePath();
   const [authOpen, setAuthOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<'signin' | 'signup'>(
     'signin'
@@ -29,8 +31,8 @@ export function NavbarActions() {
   const isAuthed = !!data?.me;
 
   const openPost = useCallback(() => {
-    router.push('/intent/creator');
-  }, [router]);
+    router.push(localePath('/intent/creator'));
+  }, [router, localePath]);
 
   const openAuthSignin = useCallback(() => {
     setAuthDefaultTab('signin');

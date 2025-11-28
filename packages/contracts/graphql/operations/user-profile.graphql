@@ -109,7 +109,7 @@ fragment UserWithProfile on User {
   updatedAt
   lastSeenAt
   locale
-  tz
+  timezone
   profile {
     ...UserProfileCore
   }
@@ -264,4 +264,16 @@ mutation AddUserSocialLink($input: AddUserSocialLinkInput!) {
 
 mutation RemoveUserSocialLink($id: ID!) {
   removeUserSocialLink(id: $id)
+}
+
+mutation UpdateUserLocale($locale: String!) {
+  updateUserLocale(locale: $locale) {
+    ...UserCore
+  }
+}
+
+mutation UpdateUserTimezone($timezone: String!) {
+  updateUserTimezone(timezone: $timezone) {
+    ...UserCore
+  }
 }

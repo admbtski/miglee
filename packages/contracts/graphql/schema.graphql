@@ -361,8 +361,8 @@ type User {
   lastSeenAt: DateTime
 
   # Profile / Preferences
-  locale: String
-  tz: String
+  locale: String!
+  timezone: String!
   acceptedTermsAt: DateTime
   acceptedMarketingAt: DateTime
 
@@ -2134,6 +2134,10 @@ type Mutation {
   # User Profile & Privacy
   updateUserProfile(input: UpdateUserProfileInput!): UserProfile!
   updateUserPrivacy(input: UpdateUserPrivacyInput!): UserPrivacy!
+
+  # User Locale & Timezone
+  updateUserLocale(locale: String!): User!
+  updateUserTimezone(timezone: String!): User!
 
   # User Disciplines
   upsertUserDiscipline(input: UpsertUserDisciplineInput!): UserDiscipline!

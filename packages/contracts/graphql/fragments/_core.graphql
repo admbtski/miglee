@@ -33,7 +33,7 @@ fragment UserCore on User {
   updatedAt
   lastSeenAt
   locale
-  tz
+  timezone
   acceptedTermsAt
   acceptedMarketingAt
   profile {

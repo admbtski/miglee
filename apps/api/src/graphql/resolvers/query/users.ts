@@ -29,7 +29,7 @@ function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
     acceptedMarketingAt: u.acceptedMarketingAt,
     acceptedTermsAt: u.acceptedTermsAt,
     locale: u.locale,
-    tz: u.tz,
+    timezone: u.timezone,
     // These fields are resolved by field resolvers
     profile: undefined as any,
     privacy: undefined as any,
@@ -147,7 +147,7 @@ export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
         suspendedAt: true,
         suspensionReason: true,
         locale: true,
-        tz: true,
+        timezone: true,
         acceptedTermsAt: true,
         acceptedMarketingAt: true,
       },

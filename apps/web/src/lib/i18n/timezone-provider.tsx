@@ -135,45 +135,164 @@ export function useTimezone() {
   return ctx;
 }
 
-// Common timezones list
+// Global timezones list - organized by region
 export const commonTimezones = [
+  // UTC
   'UTC',
+
+  // Europe (West to East)
+  'Atlantic/Reykjavik',
+  'Europe/Lisbon',
   'Europe/London',
+  'Europe/Dublin',
   'Europe/Paris',
-  'Europe/Berlin',
-  'Europe/Warsaw',
   'Europe/Madrid',
   'Europe/Rome',
+  'Europe/Berlin',
   'Europe/Amsterdam',
   'Europe/Brussels',
+  'Europe/Luxembourg',
+  'Europe/Zurich',
   'Europe/Vienna',
   'Europe/Prague',
+  'Europe/Warsaw',
   'Europe/Budapest',
   'Europe/Stockholm',
   'Europe/Copenhagen',
-  'Europe/Helsinki',
   'Europe/Oslo',
-  'Europe/Zurich',
+  'Europe/Helsinki',
   'Europe/Athens',
   'Europe/Bucharest',
   'Europe/Sofia',
-  'America/New_York',
-  'America/Chicago',
-  'America/Denver',
+  'Europe/Belgrade',
+  'Europe/Zagreb',
+  'Europe/Istanbul',
+  'Europe/Kiev',
+  'Europe/Minsk',
+  'Europe/Moscow',
+
+  // Americas - North America
+  'America/Anchorage',
   'America/Los_Angeles',
-  'America/Toronto',
+  'America/Vancouver',
+  'America/Phoenix',
+  'America/Denver',
+  'America/Chicago',
   'America/Mexico_City',
+  'America/Toronto',
+  'America/New_York',
+  'America/Montreal',
+  'America/Detroit',
+  'America/Halifax',
+  'America/Caracas',
+
+  // Americas - Central & South America
+  'America/Guatemala',
+  'America/Costa_Rica',
+  'America/Panama',
+  'America/Bogota',
+  'America/Lima',
+  'America/Santiago',
+  'America/La_Paz',
   'America/Sao_Paulo',
+  'America/Rio_de_Janeiro',
   'America/Buenos_Aires',
-  'Asia/Tokyo',
-  'Asia/Shanghai',
-  'Asia/Hong_Kong',
-  'Asia/Singapore',
-  'Asia/Seoul',
-  'Asia/Bangkok',
+  'America/Montevideo',
+
+  // Caribbean
+  'America/Havana',
+  'America/Jamaica',
+  'America/Puerto_Rico',
+
+  // Middle East
+  'Asia/Jerusalem',
+  'Asia/Beirut',
+  'Asia/Damascus',
+  'Asia/Amman',
+  'Asia/Baghdad',
+  'Asia/Kuwait',
+  'Asia/Riyadh',
+  'Asia/Qatar',
+  'Asia/Bahrain',
   'Asia/Dubai',
+  'Asia/Muscat',
+  'Asia/Tehran',
+
+  // Central Asia
+  'Asia/Yerevan',
+  'Asia/Baku',
+  'Asia/Tbilisi',
+  'Asia/Ashgabat',
+  'Asia/Tashkent',
+  'Asia/Almaty',
+  'Asia/Karachi',
+
+  // South Asia
+  'Asia/Kabul',
   'Asia/Kolkata',
+  'Asia/Colombo',
+  'Asia/Kathmandu',
+  'Asia/Dhaka',
+
+  // Southeast Asia
+  'Asia/Yangon',
+  'Asia/Bangkok',
+  'Asia/Ho_Chi_Minh',
+  'Asia/Jakarta',
+  'Asia/Singapore',
+  'Asia/Kuala_Lumpur',
+  'Asia/Manila',
+
+  // East Asia
+  'Asia/Hong_Kong',
+  'Asia/Taipei',
+  'Asia/Shanghai',
+  'Asia/Seoul',
+  'Asia/Tokyo',
+  'Asia/Pyongyang',
+  'Asia/Ulaanbaatar',
+
+  // Africa - North
+  'Africa/Casablanca',
+  'Africa/Tunis',
+  'Africa/Algiers',
+  'Africa/Tripoli',
+  'Africa/Cairo',
+
+  // Africa - West
+  'Africa/Dakar',
+  'Africa/Abidjan',
+  'Africa/Accra',
+  'Africa/Lagos',
+
+  // Africa - Central
+  'Africa/Kinshasa',
+  'Africa/Luanda',
+
+  // Africa - East
+  'Africa/Nairobi',
+  'Africa/Addis_Ababa',
+  'Africa/Dar_es_Salaam',
+  'Africa/Kampala',
+  'Africa/Khartoum',
+
+  // Africa - South
+  'Africa/Johannesburg',
+  'Africa/Maputo',
+  'Africa/Harare',
+
+  // Australia & Oceania
+  'Australia/Perth',
+  'Australia/Darwin',
+  'Australia/Adelaide',
+  'Australia/Brisbane',
   'Australia/Sydney',
   'Australia/Melbourne',
+  'Australia/Hobart',
   'Pacific/Auckland',
+  'Pacific/Fiji',
+  'Pacific/Guam',
+  'Pacific/Honolulu',
+  'Pacific/Tahiti',
+  'Pacific/Tongatapu',
 ] as const;

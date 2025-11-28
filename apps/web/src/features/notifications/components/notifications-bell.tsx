@@ -25,6 +25,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 import {
   // Subskrypcje / badge
@@ -94,6 +96,7 @@ export function NotificationBell({
 }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [hasNew, setHasNew] = useState(false);
+  const { localePath } = useLocalePath();
 
   // ========= Infinite Query =========
   const baseVars: GetNotificationsQueryVariables = useMemo(
@@ -364,14 +367,14 @@ export function NotificationBell({
                   <RefreshCcw className="h-3.5 w-3.5" />
                   Refresh
                 </button>
-                <a
-                  href="/settings/notifications"
+                <Link
+                  href={localePath('/account/settings')}
                   className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                   title="Notification settings"
                 >
                   <Settings2 className="h-3.5 w-3.5" />
                   Settings
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -497,13 +500,13 @@ export function NotificationBell({
               ref={footerRef}
               className="flex items-center justify-between border-t border-zinc-100 px-4 py-2.5 text-xs dark:border-zinc-800"
             >
-              <a
-                href="/account/notifications"
+              <Link
+                href={localePath('/account/notifications')}
                 className="rounded-md px-2 py-1 text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 onClick={(e) => e.stopPropagation()}
               >
                 View all
-              </a>
+              </Link>
               <button
                 type="button"
                 disabled={markingAll}

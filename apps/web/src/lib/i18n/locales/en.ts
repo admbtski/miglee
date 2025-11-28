@@ -25,16 +25,33 @@ export const en = {
     title: 'Settings',
     subtitle: 'Customize your workspace and personal preferences',
     language: {
-      title: 'Language',
+      title: 'Language / Język / Sprache',
       label: 'Language',
-      description: 'Change the language used in the user interface.',
+      description: 'Change the language used in the user interface',
+      changed: 'Language has been changed',
+      error: 'Failed to change language',
     },
     timezone: {
       title: 'Time zone',
       label: 'Time zone',
       automatic: 'Automatic time zone',
-      description:
-        'All dates and times will be displayed in your local time zone.',
+      description: 'Select your time zone for correct date display',
+      detected: 'Detected zone',
+      changed: 'Time zone has been changed',
+      error: 'Failed to change time zone',
+    },
+    theme: {
+      title: 'Theme',
+      description: 'Choose light, dark or automatic theme',
+      light: 'Light',
+      dark: 'Dark',
+      system: 'Automatic',
+      changed: 'Theme has been changed',
+    },
+    info: {
+      tip: 'Tip',
+      tipMessage:
+        'Language and time zone changes are saved in your profile and synchronized across all devices.',
     },
     dateWeek: {
       title: 'Date & week',

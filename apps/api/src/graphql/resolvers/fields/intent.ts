@@ -69,7 +69,7 @@ export const intentSponsorshipResolver: IntentResolvers['sponsorship'] =
           updatedAt: sponsorship.sponsor.updatedAt,
           lastSeenAt: sponsorship.sponsor.lastSeenAt ?? null,
           locale: (sponsorship.sponsor as any).locale ?? null,
-          tz: (sponsorship.sponsor as any).tz ?? null,
+          timezone: (sponsorship.sponsor as any).timezone ?? null,
           acceptedTermsAt: (sponsorship.sponsor as any).acceptedTermsAt ?? null,
           acceptedMarketingAt:
             (sponsorship.sponsor as any).acceptedMarketingAt ?? null,

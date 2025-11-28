@@ -4,7 +4,6 @@ import { Toaster } from 'sonner';
 
 import { WebVitals } from '@/lib/config/web-vitals';
 import { ThemeProvider } from '@/features/theme/provider/theme-provider';
-import { I18nProvider, TimezoneProvider } from '@/lib/i18n';
 import { InlineThemeScript } from './scripts/inline/inline-theme-script';
 import '../styles/globals.css';
 
@@ -83,6 +82,9 @@ export const metadata: Metadata = {
 /**
  * Root layout component
  * Wraps all pages with global providers and configuration
+ *
+ * Note: Language (locale) should NOT be set here.
+ * The HTML lang attribute will be set by the [locale]/layout.tsx
  */
 export default function RootLayout({
   children,
@@ -90,7 +92,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html suppressHydrationWarning>
       <head>
         <InlineThemeScript />
       </head>
@@ -101,12 +103,8 @@ export default function RootLayout({
         {/* Performance monitoring */}
         <WebVitals />
 
-        {/* Global providers */}
-        <ThemeProvider>
-          <I18nProvider>
-            <TimezoneProvider>{children}</TimezoneProvider>
-          </I18nProvider>
-        </ThemeProvider>
+        {/* Global theme provider - locale and timezone are in [locale]/layout.tsx */}
+        <ThemeProvider>{children}</ThemeProvider>
 
         {/* Toast notifications */}
         <Toaster

@@ -1,6 +1,4 @@
-import type { Translations } from './en';
-
-export const pl: Translations = {
+export const pl = {
   // Common
   common: {
     save: 'Zapisz',
@@ -25,18 +23,36 @@ export const pl: Translations = {
   // Settings
   settings: {
     title: 'Ustawienia',
-    subtitle: 'Dostosuj swój obszar roboczy i preferencje osobiste',
+    subtitle: 'Dostosuj swój obszar roboczy i osobiste preferencje',
     language: {
-      title: 'Język',
+      title: 'Język / Language / Sprache',
       label: 'Język',
-      description: 'Zmień język używany w interfejsie użytkownika.',
+      description: 'Zmień język używany w interfejsie użytkownika',
+      changed: 'Język został zmieniony',
+      error: 'Nie udało się zmienić języka',
     },
     timezone: {
       title: 'Strefa czasowa',
       label: 'Strefa czasowa',
       automatic: 'Automatyczna strefa czasowa',
       description:
-        'Wszystkie daty i czasy będą wyświetlane w Twojej lokalnej strefie czasowej.',
+        'Wybierz swoją strefę czasową dla poprawnego wyświetlania dat',
+      detected: 'Wykryta strefa',
+      changed: 'Strefa czasowa została zmieniona',
+      error: 'Nie udało się zmienić strefy czasowej',
+    },
+    theme: {
+      title: 'Motyw',
+      description: 'Wybierz motyw jasny, ciemny lub automatyczny',
+      light: 'Jasny',
+      dark: 'Ciemny',
+      system: 'Automatyczny',
+      changed: 'Motyw został zmieniony',
+    },
+    info: {
+      tip: 'Wskazówka',
+      tipMessage:
+        'Zmiany języka i strefy czasowej są zapisywane w Twoim profilu i synchronizowane na wszystkich urządzeniach.',
     },
     dateWeek: {
       title: 'Data i tydzień',

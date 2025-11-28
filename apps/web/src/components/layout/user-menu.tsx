@@ -2,6 +2,7 @@
 
 import { ThemeSwitchConnected } from '@/components/ui/theme-switch-connect';
 import { buildAvatarUrl } from '@/lib/media/url';
+import { useLocalePath } from '@/hooks/use-locale-path';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   CalendarIcon,
@@ -40,6 +41,7 @@ export function UserMenu({ user }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const { localePath } = useLocalePath();
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -127,35 +129,35 @@ export function UserMenu({ user }: UserMenuProps) {
               <MenuBtn
                 icon={<UserIcon className="w-4 h-4" />}
                 label="Profile"
-                href="/account/view"
+                href={localePath('/account/view')}
                 onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<MessagesSquareIcon className="w-4 h-4" />}
                 label="Chats"
-                href="/account/chats"
+                href={localePath('/account/chats')}
                 onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<CalendarIcon className="w-4 h-4" />}
                 label="Intents"
-                href="/account/intents"
+                href={localePath('/account/intents')}
                 onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<CreditCardIcon className="w-4 h-4" />}
                 label="Plans & Bills"
-                href="/account/plans-and-bills"
+                href={localePath('/account/plans-and-bills')}
                 onClick={handleClose}
               />
 
               <MenuBtn
                 icon={<SettingsIcon className="w-4 h-4" />}
                 label="Settings"
-                href="/account/settings"
+                href={localePath('/account/settings')}
                 onClick={handleClose}
               />
 

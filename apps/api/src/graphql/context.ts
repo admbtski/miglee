@@ -24,6 +24,8 @@ export async function createContext(
           role: user.role as Role,
           avatarKey: user.avatarKey,
           verifiedAt: user.verifiedAt,
+          locale: user.locale,
+          timezone: user.timezone,
         }
       : null,
     pubsub: request.server.graphql.pubsub,

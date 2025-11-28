@@ -207,8 +207,8 @@ model User {
   lastSeenAt       DateTime?
 
   // Profile / Preferences
-  locale              String? // e.g. "pl-PL", "en-US"
-  tz                  String? // IANA TZ, np. "Europe/Warsaw"
+  locale              String    @default("en") // 'en' | 'pl' | 'de' - user's preferred language
+  timezone            String    @default("UTC") // IANA timezone, e.g. "Europe/Warsaw", "America/New_York"
   acceptedTermsAt     DateTime?
   acceptedMarketingAt DateTime?
 

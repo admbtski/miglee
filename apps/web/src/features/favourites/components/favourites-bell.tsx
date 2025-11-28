@@ -21,6 +21,8 @@ import {
 } from '@/lib/api/favourites';
 import type { MyFavouritesQuery } from '@/lib/api/__generated__/react-query-update';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 type FavouritesBellProps = {
   className?: string;
@@ -38,6 +40,7 @@ export function FavouritesBell({
   strategy = 'fixed',
 }: FavouritesBellProps) {
   const router = useRouter();
+  const { localePath } = useLocalePath();
   const [open, setOpen] = useState(false);
 
   // ========= Infinite Query =========
@@ -139,9 +142,9 @@ export function FavouritesBell({
   const handleViewIntent = useCallback(
     (intentId: string) => {
       setOpen(false);
-      router.push(`/intent/${intentId}`);
+      router.push(localePath(`/intent/${intentId}`));
     },
-    [router]
+    [router, localePath]
   );
 
   const loadMore = useCallback(() => {
@@ -329,17 +332,17 @@ export function FavouritesBell({
               ref={footerRef}
               className="flex items-center justify-between border-t border-zinc-100 px-4 py-2.5 text-xs dark:border-zinc-800"
             >
-              <a
-                href="/account/favourites"
+              <Link
+                href={localePath('/account/favourites')}
                 className="rounded-md px-2 py-1 text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 onClick={(e) => {
                   e.preventDefault();
                   setOpen(false);
-                  router.push('/account/favourites');
+                  router.push(localePath('/account/favourites'));
                 }}
               >
                 Zobacz wszystkie
-              </a>
+              </Link>
             </div>
           </div>
         </FloatingFocusManager>

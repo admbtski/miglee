@@ -139,6 +139,16 @@ async function clearDb() {
 }
 
 /** ---------- Seed: Users ---------- */
+const LOCALES = ['en', 'pl', 'de'] as const;
+const TIMEZONES = [
+  'Europe/Warsaw',
+  'Europe/Berlin',
+  'America/New_York',
+  'America/Los_Angeles',
+  'Asia/Tokyo',
+  'UTC',
+] as const;
+
 function emailFor(first: string, last: string, i?: number) {
   const base = `${first}.${last}`.toLowerCase().replace(/\s+/g, '');
   const suffix = i != null ? `+${i}` : '';
@@ -191,6 +201,8 @@ async function seedUsers(): Promise<User[]> {
         role: Role.ADMIN,
         avatarKey: null, // In production, would be set via upload
         verifiedAt: new Date(),
+        locale: 'en',
+        timezone: 'Europe/Warsaw',
       },
     })
   );
@@ -203,6 +215,8 @@ async function seedUsers(): Promise<User[]> {
       role: Role.MODERATOR,
       avatarKey: null, // In production, would be set via upload
       verifiedAt: new Date(),
+      locale: 'pl',
+      timezone: 'Europe/Warsaw',
     },
   });
   created.push(mod1);
@@ -218,6 +232,8 @@ async function seedUsers(): Promise<User[]> {
           role: Role.MODERATOR,
           avatarKey: null, // In production, would be set via upload
           ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
+          locale: pick(LOCALES),
+          timezone: pick(TIMEZONES),
         },
       })
     );
@@ -232,6 +248,8 @@ async function seedUsers(): Promise<User[]> {
         role: Role.USER,
         avatarKey: null, // In production, would be set via upload
         ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
+        locale: 'en',
+        timezone: 'Europe/Warsaw',
       },
     })
   );
@@ -246,6 +264,8 @@ async function seedUsers(): Promise<User[]> {
         role: Role.USER,
         avatarKey: null,
         verifiedAt: new Date(),
+        locale: 'en',
+        timezone: 'America/New_York',
       },
     })
   );
@@ -259,6 +279,8 @@ async function seedUsers(): Promise<User[]> {
         role: Role.USER,
         avatarKey: null,
         verifiedAt: new Date(),
+        locale: 'de',
+        timezone: 'Europe/Berlin',
       },
     })
   );
@@ -272,6 +294,8 @@ async function seedUsers(): Promise<User[]> {
         role: Role.USER,
         avatarKey: null,
         verifiedAt: new Date(),
+        locale: 'pl',
+        timezone: 'Europe/Warsaw',
       },
     })
   );
@@ -285,6 +309,8 @@ async function seedUsers(): Promise<User[]> {
         role: Role.USER,
         avatarKey: null,
         verifiedAt: new Date(),
+        locale: 'en',
+        timezone: 'UTC',
       },
     })
   );
@@ -308,6 +334,8 @@ async function seedUsers(): Promise<User[]> {
             rand() > 0.5
               ? new Date(Date.now() - Math.floor(rand() * 7) * 86400000)
               : null,
+          locale: pick(LOCALES),
+          timezone: pick(TIMEZONES),
         },
       })
     );

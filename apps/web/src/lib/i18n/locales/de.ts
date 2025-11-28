@@ -1,6 +1,4 @@
-import type { Translations } from './en';
-
-export const de: Translations = {
+export const de = {
   // Common
   common: {
     save: 'Speichern',
@@ -28,16 +26,33 @@ export const de: Translations = {
     subtitle:
       'Passen Sie Ihren Arbeitsbereich und persönliche Einstellungen an',
     language: {
-      title: 'Sprache',
+      title: 'Język / Language / Sprache',
       label: 'Sprache',
-      description: 'Ändern Sie die Sprache der Benutzeroberfläche.',
+      description: 'Ändern Sie die Sprache der Benutzeroberfläche',
+      changed: 'Sprache wurde geändert',
+      error: 'Sprache konnte nicht geändert werden',
     },
     timezone: {
       title: 'Zeitzone',
       label: 'Zeitzone',
       automatic: 'Automatische Zeitzone',
-      description:
-        'Alle Daten und Zeiten werden in Ihrer lokalen Zeitzone angezeigt.',
+      description: 'Wählen Sie Ihre Zeitzone für die korrekte Datumsanzeige',
+      detected: 'Erkannte Zone',
+      changed: 'Zeitzone wurde geändert',
+      error: 'Zeitzone konnte nicht geändert werden',
+    },
+    theme: {
+      title: 'Design',
+      description: 'Wählen Sie helles, dunkles oder automatisches Design',
+      light: 'Hell',
+      dark: 'Dunkel',
+      system: 'Automatisch',
+      changed: 'Design wurde geändert',
+    },
+    info: {
+      tip: 'Tipp',
+      tipMessage:
+        'Sprach- und Zeitzonenänderungen werden in Ihrem Profil gespeichert und auf allen Geräten synchronisiert.',
     },
     dateWeek: {
       title: 'Datum und Woche',

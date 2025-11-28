@@ -197,6 +197,8 @@ import {
   removeUserAvailabilityMutation,
   addUserSocialLinkMutation,
   removeUserSocialLinkMutation,
+  updateUserLocaleMutation,
+  updateUserTimezoneMutation,
 } from './user-profile';
 
 // Media Upload mutations
@@ -377,6 +379,8 @@ export const Mutation: Resolvers['Mutation'] = {
   removeUserAvailability: removeUserAvailabilityMutation,
   addUserSocialLink: addUserSocialLinkMutation,
   removeUserSocialLink: removeUserSocialLinkMutation,
+  updateUserLocale: updateUserLocaleMutation,
+  updateUserTimezone: updateUserTimezoneMutation,
 
   // ---- Media Upload ----
   getUploadUrl,

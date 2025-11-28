@@ -485,3 +485,66 @@ export const removeUserSocialLinkMutation: MutationResolvers['removeUserSocialLi
       return true;
     }
   );
+
+// =============================================================================
+// User Locale & Timezone
+// =============================================================================
+
+export const updateUserLocaleMutation: MutationResolvers['updateUserLocale'] =
+  resolverWithMetrics(
+    'Mutation',
+    'updateUserLocale',
+    async (_parent, { locale }, { user }) => {
+      if (!user) {
+        throw new GraphQLError('Unauthorized', {
+          extensions: { code: 'UNAUTHORIZED' },
+        });
+      }
+
+      // Validate locale
+      const validLocales = ['en', 'pl', 'de'];
+      if (!validLocales.includes(locale)) {
+        throw new GraphQLError('Invalid locale. Must be: en, pl, or de', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      // Update user locale
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { locale, updatedAt: new Date() },
+      });
+
+      return updatedUser;
+    }
+  );
+
+export const updateUserTimezoneMutation: MutationResolvers['updateUserTimezone'] =
+  resolverWithMetrics(
+    'Mutation',
+    'updateUserTimezone',
+    async (_parent, { timezone }, { user }) => {
+      if (!user) {
+        throw new GraphQLError('Unauthorized', {
+          extensions: { code: 'UNAUTHORIZED' },
+        });
+      }
+
+      // Basic IANA timezone validation
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: timezone });
+      } catch {
+        throw new GraphQLError('Invalid IANA timezone', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
+      // Update user timezone
+      const updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { timezone, updatedAt: new Date() },
+      });
+
+      return updatedUser;
+    }
+  );

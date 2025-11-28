@@ -3,6 +3,7 @@
 import { Bell, Heart, Menu as MenuIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
 import { useMeQuery } from '@/lib/api/auth';
@@ -44,6 +45,7 @@ function IconButton({
 
 export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
   const router = useRouter();
+  const { localePath } = useLocalePath();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<'signin' | 'signup'>(
@@ -54,8 +56,8 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
   const isAuthed = !!data?.me;
 
   const openPost = useCallback(() => {
-    router.push('/intent/creator');
-  }, [router]);
+    router.push(localePath('/intent/creator'));
+  }, [router, localePath]);
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const openAuthSignin = useCallback(() => {
     setAuthDefaultTab('signin');

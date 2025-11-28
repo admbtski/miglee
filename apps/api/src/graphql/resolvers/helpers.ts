@@ -306,8 +306,8 @@ export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
     lastSeenAt: u.lastSeenAt,
     suspendedAt: u.suspendedAt,
     suspensionReason: (u as any).suspensionReason ?? null,
-    locale: (u as any).locale ?? null,
-    tz: (u as any).tz ?? null,
+    locale: (u as any).locale ?? 'en',
+    timezone: (u as any).timezone ?? 'UTC',
     acceptedTermsAt: (u as any).acceptedTermsAt ?? null,
     acceptedMarketingAt: (u as any).acceptedMarketingAt ?? null,
   };

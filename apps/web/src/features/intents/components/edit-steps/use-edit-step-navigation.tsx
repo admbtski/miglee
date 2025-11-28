@@ -3,12 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 
-export type EditStep =
-  | 'basics'
-  | 'capacity'
-  | 'when'
-  | 'where'
-  | 'settings';
+export type EditStep = 'basics' | 'capacity' | 'when' | 'where' | 'settings';
 
 const STEP_ORDER: EditStep[] = [
   'basics',
@@ -35,8 +30,9 @@ export function useEditStepNavigation({
   const pathname = usePathname();
 
   const getCurrentStep = useCallback((): EditStep => {
-    const lastSegment = pathname?.split('/').pop();
-    if (STEP_ORDER.includes(lastSegment as EditStep)) {
+    if (!pathname) return 'basics';
+    const lastSegment = pathname.split('/').pop();
+    if (lastSegment && STEP_ORDER.includes(lastSegment as EditStep)) {
       return lastSegment as EditStep;
     }
     return 'basics';
@@ -57,7 +53,7 @@ export function useEditStepNavigation({
     const currentStep = getCurrentStep();
     const currentIndex = getStepIndex(currentStep);
     if (currentIndex < STEP_ORDER.length - 1) {
-      goToStep(STEP_ORDER[currentIndex + 1]);
+      goToStep(STEP_ORDER[currentIndex + 1] as EditStep);
     }
   }, [getCurrentStep, getStepIndex, goToStep]);
 
@@ -65,7 +61,7 @@ export function useEditStepNavigation({
     const currentStep = getCurrentStep();
     const currentIndex = getStepIndex(currentStep);
     if (currentIndex > 0) {
-      goToStep(STEP_ORDER[currentIndex - 1]);
+      goToStep(STEP_ORDER[currentIndex - 1] as EditStep);
     }
   }, [getCurrentStep, getStepIndex, goToStep]);
 
@@ -79,9 +75,11 @@ export function useEditStepNavigation({
     return getStepIndex(currentStep) === STEP_ORDER.length - 1;
   }, [getCurrentStep, getStepIndex]);
 
+  const current = getCurrentStep();
+
   return {
-    currentStep: getCurrentStep(),
-    currentStepIndex: getStepIndex(getCurrentStep()),
+    currentStep: current,
+    currentStepIndex: getStepIndex(current),
     totalSteps: STEP_ORDER.length,
     goToStep,
     goToNext,
