@@ -56,7 +56,6 @@ export function MapPreview({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
-  const radiusLayerIdRef = useRef<string | null>(null);
 
   // Theme support
   const { resolvedTheme } = useTheme();
@@ -73,56 +72,103 @@ export function MapPreview({
   const createMarkerElement = useCallback(() => {
     const el = document.createElement('div');
     el.className = 'custom-marker';
+    el.style.position = 'relative';
     el.style.width = '32px';
-    el.style.height = '32px';
-    el.style.borderRadius = '50%';
-    el.style.backgroundColor = '#6366f1'; // Indigo-600
-    el.style.border = '3px solid white';
-    el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+    el.style.height = '44px';
     el.style.cursor = draggableMarker ? 'grab' : 'pointer';
-    el.style.transition = 'background-color 0.2s ease';
 
-    // Add hover effect
-    el.addEventListener('mouseenter', () => {
-      el.style.backgroundColor = '#4f46e5'; // Indigo-700
-    });
+    // Create the pin shape using CSS
+    el.innerHTML = `
+      <svg width="32" height="44" viewBox="0 0 32 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25));">
+        <defs>
+          <linearGradient id="pinGradient" x1="16" y1="0" x2="16" y2="32">
+            <stop offset="0%" stop-color="#F97316" />
+            <stop offset="100%" stop-color="#EA580C" />
+          </linearGradient>
+          <linearGradient id="pinGradientHover" x1="16" y1="0" x2="16" y2="32">
+            <stop offset="0%" stop-color="#FB923C" />
+            <stop offset="100%" stop-color="#F97316" />
+          </linearGradient>
+          <linearGradient id="pinGradientDrag" x1="16" y1="0" x2="16" y2="32">
+            <stop offset="0%" stop-color="#EA580C" />
+            <stop offset="100%" stop-color="#C2410C" />
+          </linearGradient>
+        </defs>
+        
+        <!-- Pin shadow -->
+        <ellipse cx="16" cy="42" rx="4" ry="2" fill="black" opacity="0.2" class="pin-shadow"/>
+        
+        <!-- Main pin body -->
+        <path d="M16 0C10.477 0 6 4.477 6 10c0 2.5 1 4.5 2.5 6.5L16 30l7.5-13.5C25 14.5 26 12.5 26 10c0-5.523-4.477-10-10-10z" 
+              fill="url(#pinGradient)" 
+              class="pin-fill"
+              stroke="white"
+              stroke-width="1.5"
+              stroke-opacity="0.3"/>
+        
+        <!-- Glossy highlight -->
+        <ellipse cx="16" cy="8" rx="6" ry="5" fill="white" opacity="0.25" class="pin-highlight"/>
+        
+        <!-- Inner circle (white dot) -->
+        <circle cx="16" cy="10" r="4" fill="white" opacity="0.95"/>
+        
+        <!-- Inner circle border -->
+        <circle cx="16" cy="10" r="4" fill="none" stroke="white" stroke-width="0.5" opacity="0.5"/>
+        
+        <!-- Tiny center dot -->
+        <circle cx="16" cy="10" r="1.5" fill="url(#pinGradient)" opacity="0.8"/>
+      </svg>
+    `;
 
-    el.addEventListener('mouseleave', () => {
-      // Check if currently being dragged by checking cursor
-      if (el.style.cursor !== 'grabbing') {
-        el.style.backgroundColor = '#6366f1'; // Indigo-600
-      }
-    });
+    const svg = el.querySelector('svg');
+    const pinFill = el.querySelector('.pin-fill');
+
+    if (svg && pinFill) {
+      // Add hover effect
+      el.addEventListener('mouseenter', () => {
+        pinFill.setAttribute('fill', 'url(#pinGradientHover)');
+        if (svg) {
+          svg.style.transform = 'scale(1.08) translateY(-2px)';
+          svg.style.transition =
+            'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        }
+      });
+
+      el.addEventListener('mouseleave', () => {
+        // Check if currently being dragged
+        if (el.style.cursor !== 'grabbing') {
+          pinFill.setAttribute('fill', 'url(#pinGradient)');
+          if (svg) {
+            svg.style.transform = 'scale(1) translateY(0)';
+          }
+        }
+      });
+    }
 
     return el;
   }, [draggableMarker]);
 
-  // Helper function to add/update radius circle
+  // Helper function to update radius circle
   const updateRadiusCircle = useCallback(
     (map: maplibregl.Map, position: LatLng) => {
-      // Check if map style is loaded
-      if (!map.isStyleLoaded()) {
-        // Wait for style to load
-        map.once('load', () => {
-          updateRadiusCircle(map, position);
-        });
-        return;
+      if (!map.isStyleLoaded()) return;
+
+      const sourceId = 'radius-circle';
+      const fillLayerId = 'radius-circle-fill';
+      const borderLayerId = 'radius-circle-border';
+
+      // Remove existing layers and source
+      try {
+        if (map.getLayer(fillLayerId)) map.removeLayer(fillLayerId);
+        if (map.getLayer(borderLayerId)) map.removeLayer(borderLayerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      } catch (e) {
+        // Ignore errors
       }
 
-      if (!radiusMeters || radiusMeters <= 0) {
-        // Remove radius layer if it exists
-        if (radiusLayerIdRef.current) {
-          if (map.getLayer('radius-circle-fill'))
-            map.removeLayer('radius-circle-fill');
-          if (map.getLayer('radius-circle-border'))
-            map.removeLayer('radius-circle-border');
-          if (map.getSource('radius-circle')) map.removeSource('radius-circle');
-          radiusLayerIdRef.current = null;
-        }
-        return;
-      }
+      // If no radius, we're done
 
-      // Create GeoJSON for circle
+      // Create circle GeoJSON
       const createCircle = (
         center: [number, number],
         radiusInMeters: number,
@@ -143,10 +189,9 @@ export function MapPreview({
           const theta = (i / points) * (2 * Math.PI);
           const x = distanceX * Math.cos(theta);
           const y = distanceY * Math.sin(theta);
-
           ret.push([coords.longitude + x, coords.latitude + y]);
         }
-        // Close the polygon by adding the first point again
+        // Close the polygon
         const firstPoint = ret[0];
         if (firstPoint) {
           ret.push(firstPoint);
@@ -164,44 +209,38 @@ export function MapPreview({
 
       const circleGeoJSON = createCircle(
         [position.lng, position.lat],
-        radiusMeters
+        radiusMeters ?? 10
       );
 
-      // Add or update source
-      if (map.getSource('radius-circle')) {
-        (map.getSource('radius-circle') as maplibregl.GeoJSONSource).setData(
-          circleGeoJSON
-        );
-      } else {
-        map.addSource('radius-circle', {
+      // Add new source and layers
+      try {
+        map.addSource(sourceId, {
           type: 'geojson',
           data: circleGeoJSON,
         });
 
-        // Add fill layer
         map.addLayer({
-          id: 'radius-circle-fill',
+          id: fillLayerId,
           type: 'fill',
-          source: 'radius-circle',
+          source: sourceId,
           paint: {
             'fill-color': '#6366f1',
             'fill-opacity': 0.12,
           },
         });
 
-        // Add border layer
         map.addLayer({
-          id: 'radius-circle-border',
+          id: borderLayerId,
           type: 'line',
-          source: 'radius-circle',
+          source: sourceId,
           paint: {
             'line-color': '#6366f1',
             'line-width': 2,
             'line-opacity': 0.6,
           },
         });
-
-        radiusLayerIdRef.current = 'radius-circle';
+      } catch (e) {
+        console.error('Failed to add radius circle:', e);
       }
     },
     [radiusMeters]
@@ -216,16 +255,24 @@ export function MapPreview({
         setIsDragging(true);
         const el = marker.getElement();
         el.style.cursor = 'grabbing';
-        el.style.backgroundColor = '#7c3aed'; // Violet-600
+
+        const pinFill = el.querySelector('.pin-fill');
+        if (pinFill) {
+          pinFill.setAttribute('fill', 'url(#pinGradientDrag)');
+        }
+
+        const svg = el.querySelector('svg');
+        if (svg) {
+          svg.style.transform = 'scale(1.12) translateY(-3px)';
+          svg.style.transition = 'transform 0.15s ease-out';
+        }
       });
 
       marker.on('drag', () => {
         const lngLat = marker.getLngLat();
         const newPos = { lat: lngLat.lat, lng: lngLat.lng };
         setMarkerPosition(newPos);
-        if (map.isStyleLoaded()) {
-          updateRadiusCircle(map, newPos);
-        }
+        updateRadiusCircle(map, newPos);
       });
 
       marker.on('dragend', () => {
@@ -235,9 +282,21 @@ export function MapPreview({
 
         const el = marker.getElement();
         el.style.cursor = 'grab';
-        el.style.backgroundColor = '#6366f1'; // Indigo-600
+
+        const pinFill = el.querySelector('.pin-fill');
+        if (pinFill) {
+          pinFill.setAttribute('fill', 'url(#pinGradient)');
+        }
+
+        const svg = el.querySelector('svg');
+        if (svg) {
+          svg.style.transform = 'scale(1) translateY(0)';
+          svg.style.transition =
+            'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        }
 
         setMarkerPosition(finalPos);
+        updateRadiusCircle(map, finalPos);
         onUserSetPosition?.(finalPos);
       });
     },
@@ -255,10 +314,11 @@ export function MapPreview({
         // Just update position if marker exists
         markerRef.current.setLngLat([position.lng, position.lat]);
       } else {
-        // Create new marker
+        // Create new marker with anchor at the bottom point of the pin
         const marker = new maplibregl.Marker({
           element: createMarkerElement(),
           draggable: draggableMarker,
+          anchor: 'bottom', // Pin point is at the bottom
         })
           .setLngLat([position.lng, position.lat])
           .addTo(map);
@@ -360,7 +420,6 @@ export function MapPreview({
   }, [
     currentStyleUrl,
     markerPosition,
-    radiusMeters,
     draggableMarker,
     createOrUpdateMarker,
     updateRadiusCircle,
@@ -374,14 +433,21 @@ export function MapPreview({
     const hasCenter = isValidLatLng(center);
 
     if (hasCenter) {
-      map.setCenter([center!.lng, center!.lat]);
-      setMarkerPosition(center!);
+      // Only update if position actually changed
+      const currentPos = markerRef.current?.getLngLat();
+      const positionChanged =
+        !currentPos ||
+        Math.abs(currentPos.lat - center!.lat) > 0.000001 ||
+        Math.abs(currentPos.lng - center!.lng) > 0.000001;
 
-      // Create or update marker
-      createOrUpdateMarker(map, center!, !markerRef.current);
+      if (positionChanged) {
+        map.setCenter([center!.lng, center!.lat]);
+        setMarkerPosition(center!);
 
-      // Only update radius circle if map is loaded
-      if (map.isStyleLoaded()) {
+        // Create or update marker
+        createOrUpdateMarker(map, center!, !markerRef.current);
+
+        // Update radius circle
         updateRadiusCircle(map, center!);
       }
     } else {
@@ -394,6 +460,9 @@ export function MapPreview({
         markerRef.current.remove();
         markerRef.current = null;
       }
+
+      // Remove radius
+      updateRadiusCircle(map, { lat: 0, lng: 0 });
     }
   }, [
     center?.lat,
@@ -412,16 +481,13 @@ export function MapPreview({
     }
   }, [zoom]);
 
-  // Update radius circle when radiusMeters changes
+  // Update radius circle when radiusMeters or markerPosition changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !markerPosition) return;
 
-    // Only update if map is loaded
-    if (map.isStyleLoaded()) {
-      updateRadiusCircle(map, markerPosition);
-    }
-  }, [radiusMeters, markerPosition]);
+    updateRadiusCircle(map, markerPosition);
+  }, [radiusMeters, markerPosition, updateRadiusCircle]);
 
   return (
     <>
@@ -431,6 +497,10 @@ export function MapPreview({
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .custom-marker svg {
+          transition: transform 0.2s ease;
         }
 
         /* Hide MapLibre attribution in preview */

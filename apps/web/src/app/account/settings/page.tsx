@@ -3,12 +3,13 @@
 import { useMemo, useState, memo, useCallback } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { SectionCard } from '@/components/ui/section-card';
+import { useTheme } from '@/features/theme/provider/theme-provider';
 
 /* ─────────────────────────  Settings Page  ───────────────────────── */
 
-type ThemeMode = 'system' | 'light' | 'dark';
-
 export default function SettingsPage() {
+  const { theme, setTheme: setGlobalTheme } = useTheme();
+
   // Demo state
   const [language, setLanguage] = useState('en-GB');
   const [autoTz, setAutoTz] = useState(true);
@@ -16,7 +17,6 @@ export default function SettingsPage() {
   const [dateFormat, setDateFormat] = useState<'MDY' | 'DMY'>('MDY');
   const [weekStart, setWeekStart] = useState('Monday');
   const [weekend, setWeekend] = useState('Sunday');
-  const [theme, setTheme] = useState<ThemeMode>('system');
 
   // Example lists (trim as you like)
   const languages = [
@@ -58,8 +58,8 @@ export default function SettingsPage() {
     setDateFormat('MDY');
     setWeekStart('Monday');
     setWeekend('Sunday');
-    setTheme('system');
-  }, []);
+    setGlobalTheme('system');
+  }, [setGlobalTheme]);
 
   return (
     <div className="space-y-8">
@@ -148,14 +148,14 @@ export default function SettingsPage() {
             icon={Monitor}
             title="System"
             active={theme === 'system'}
-            onClick={() => setTheme('system')}
+            onClick={() => setGlobalTheme('system')}
             imgHint="System preview"
           />
           <ThemeCard
             icon={Sun}
             title="Light"
             active={theme === 'light'}
-            onClick={() => setTheme('light')}
+            onClick={() => setGlobalTheme('light')}
             preview="light"
             imgHint="Light preview"
           />
@@ -163,7 +163,7 @@ export default function SettingsPage() {
             icon={Moon}
             title="Dark"
             active={theme === 'dark'}
-            onClick={() => setTheme('dark')}
+            onClick={() => setGlobalTheme('dark')}
             preview="dark"
             imgHint="Dark preview"
           />
