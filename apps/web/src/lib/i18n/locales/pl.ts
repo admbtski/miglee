@@ -78,25 +78,108 @@ export const pl = {
     deleteAccount: {
       title: 'Usuń konto',
       description:
-        'Trwale usuń swoje konto i wszystkie powiązane dane. Ta akcja jest nieodwracalna.',
+        'Poproś o usunięcie konta. Twoje konto zostanie dezaktywowane i możesz je przywrócić w ciągu 30 dni.',
       warning:
-        'Ostrzeżenie: Usunięcie konta spowoduje usunięcie wszystkich wydarzeń, wiadomości i danych osobowych. Ta akcja jest nieodwracalna.',
+        'Ostrzeżenie: Twoje konto zostanie dezaktywowane. Możesz je przywrócić w ciągu 30 dni odwiedzając /restore-account. Po 30 dniach przywrócenie nie będzie już możliwe.',
       button: 'Usuń konto',
       modal: {
         title: 'Usuń konto',
         description:
-          'Czy na pewno chcesz usunąć swoje konto? Ta akcja jest nieodwracalna i wszystkie dane zostaną trwale usunięte po 30 dniach.',
+          'Twoje konto zostanie natychmiast dezaktywowane. Masz 30 dni na przywrócenie go, jeśli zmienisz zdanie.',
         reasonLabel: 'Powód usunięcia (opcjonalnie)',
         reasonPlaceholder: 'Powiedz nam, dlaczego odchodzisz...',
         confirmLabel: 'Wpisz USUŃ aby potwierdzić',
         confirmPlaceholder: 'USUŃ',
         cancel: 'Anuluj',
         confirm: 'Usuń konto',
-        success: 'Twoje konto zostało zaplanowane do usunięcia',
+        success:
+          'Twoje konto zostało dezaktywowane. Możesz je przywrócić w ciągu 30 dni.',
         error: 'Nie udało się usunąć konta',
         invalidConfirmation: 'Proszę wpisać USUŃ aby potwierdzić',
       },
     },
+  },
+
+  // Account Restoration
+  accountRestoration: {
+    request: {
+      title: 'Przywróć swoje konto',
+      subtitle:
+        'Wprowadź swój adres email, aby otrzymać link do przywrócenia konta',
+      emailLabel: 'Adres email',
+      emailPlaceholder: 'twoj@email.com',
+      submit: 'Wyślij link przywracający',
+      submitting: 'Wysyłanie...',
+      success:
+        'Jeśli Twoje konto istnieje i zostało niedawno usunięte, otrzymasz email z instrukcjami przywrócenia.',
+      error: 'Nie udało się wysłać prośby o przywrócenie konta',
+    },
+    restore: {
+      title: 'Przywróć swoje konto',
+      subtitle: 'Kliknij poniżej, aby przywrócić swoje konto',
+      button: 'Przywróć moje konto',
+      restoring: 'Przywracanie...',
+      success: 'Twoje konto zostało przywrócone! Możesz się teraz zalogować.',
+      error:
+        'Nie udało się przywrócić konta. Link mógł wygasnąć lub jest nieprawidłowy.',
+      backToLogin: 'Powrót do logowania',
+    },
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Powiadomienia',
+    subtitle: 'Zarządzaj powiadomieniami i bądź na bieżąco',
+    loginRequired: 'Musisz być zalogowany, aby zobaczyć powiadomienia',
+    refresh: 'Odśwież',
+    markAllRead: 'Oznacz wszystkie jako przeczytane',
+    all: 'Wszystkie',
+    unread: 'Nieprzeczytane',
+    read: 'Przeczytane',
+    total: 'Wszystkie',
+    markAsRead: 'Oznacz jako przeczytane',
+    delete: 'Usuń',
+    loadedAll: 'Wszystko załadowane',
+    empty: {
+      all: 'Brak powiadomień',
+      unread: 'Brak nieprzeczytanych powiadomień',
+      read: 'Brak przeczytanych powiadomień',
+      description: 'Powiadomienia pojawią się tutaj, gdy coś się wydarzy',
+      changeFilter: 'Zmień filtr, aby zobaczyć inne powiadomienia',
+    },
+    kinds: {
+      INTENT_REMINDER: 'Przypomnienie o wydarzeniu',
+      INTENT_UPDATED: 'Wydarzenie zaktualizowane',
+      INTENT_CANCELED: 'Wydarzenie anulowane',
+      INTENT_CREATED: 'Nowe wydarzenie',
+      NEW_MESSAGE: 'Nowa wiadomość',
+      NEW_COMMENT: 'Nowy komentarz',
+      NEW_REVIEW: 'Nowa recenzja',
+      MEMBER_JOINED: 'Nowy uczestnik',
+      MEMBER_LEFT: 'Uczestnik opuścił',
+      INVITE_RECEIVED: 'Otrzymano zaproszenie',
+      default: 'Powiadomienie',
+    },
+  },
+
+  // Favourites
+  favourites: {
+    title: 'Zapisane',
+    subtitle: 'Twoje zapisane wydarzenia',
+    savedEvents: 'zapisanych',
+    savedEvent: 'wydarzenie',
+    savedEventsPlural: 'wydarzenia',
+    emptyTitle: 'Brak zapisanych wydarzeń',
+    emptyDescription:
+      'Przeglądaj wydarzenia i kliknij ikonę ❤️, aby zapisać interesujące wydarzenia na później.',
+    browseEvents: 'Przeglądaj wydarzenia',
+    loadMore: 'Załaduj więcej',
+    loading: 'Ładowanie…',
+    loadingFavourites: 'Ładowanie zapisanych wydarzeń...',
+    removeFromFavourites: 'Usuń z zapisanych',
+    viewEvent: 'Zobacz wydarzenie',
+    participants: 'uczestników',
+    showingEvents: 'Wyświetlanie',
   },
 
   // Navigation

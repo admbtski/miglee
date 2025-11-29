@@ -2142,6 +2142,10 @@ type Mutation {
   # User Account Deletion
   deleteMyAccount(reason: String): Boolean!
 
+  # User Account Restoration
+  requestAccountRestoration(email: String!): Boolean!
+  restoreMyAccount(email: String!, token: String!): Boolean!
+
   # User Disciplines
   upsertUserDiscipline(input: UpsertUserDisciplineInput!): UserDiscipline!
   removeUserDiscipline(id: ID!): Boolean!

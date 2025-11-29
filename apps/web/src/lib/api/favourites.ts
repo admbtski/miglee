@@ -237,7 +237,8 @@ export function useToggleFavouriteMutation(
             Array.isArray(q.queryKey) &&
             (q.queryKey[0] === 'GetIntent' ||
               q.queryKey[0] === 'GetIntents' ||
-              q.queryKey[0] === 'GetIntentsLight'),
+              q.queryKey[0] === 'GetIntentsLight' ||
+              q.queryKey[0] === 'Favourites'),
         });
 
         // Snapshot the previous value
@@ -248,9 +249,53 @@ export function useToggleFavouriteMutation(
               Array.isArray(q.queryKey) &&
               (q.queryKey[0] === 'GetIntent' ||
                 q.queryKey[0] === 'GetIntents' ||
-                q.queryKey[0] === 'GetIntentsLight'),
+                q.queryKey[0] === 'GetIntentsLight' ||
+                q.queryKey[0] === 'Favourites'),
           })
           .map((q) => ({ key: q.queryKey, data: q.state.data }));
+
+        // Optimistically update favourites list (remove the item)
+        qc.setQueriesData(
+          {
+            predicate: (q) =>
+              Array.isArray(q.queryKey) && q.queryKey[0] === 'Favourites',
+          },
+          (old: any) => {
+            if (!old) return old;
+
+            // Handle infinite query
+            if (old.pages) {
+              return {
+                ...old,
+                pages: old.pages.map((page: any) => ({
+                  ...page,
+                  myFavourites: {
+                    ...page.myFavourites,
+                    items:
+                      page.myFavourites?.items?.filter(
+                        (fav: any) => fav.intent?.id !== vars.intentId
+                      ) ?? [],
+                  },
+                })),
+              };
+            }
+
+            // Handle regular query
+            if (old.myFavourites?.items) {
+              return {
+                ...old,
+                myFavourites: {
+                  ...old.myFavourites,
+                  items: old.myFavourites.items.filter(
+                    (fav: any) => fav.intent?.id !== vars.intentId
+                  ),
+                },
+              };
+            }
+
+            return old;
+          }
+        );
 
         // Optimistically update all intent queries
         qc.setQueriesData(
@@ -316,7 +361,7 @@ export function useToggleFavouriteMutation(
         }
       },
       onSuccess: (_data, vars) => {
-        // Invalidate favourites lists
+        // Invalidate favourites lists (don't refetch immediately to avoid race condition)
         qc.invalidateQueries({
           queryKey: favouritesKeys.lists(),
         });
@@ -324,7 +369,7 @@ export function useToggleFavouriteMutation(
         qc.invalidateQueries({
           queryKey: favouritesKeys.detail(vars.intentId),
         });
-        // Invalidate intent queries to update isFavourite field (refetch to ensure consistency)
+        // Invalidate intent queries to update isFavourite field
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) &&

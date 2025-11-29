@@ -78,25 +78,111 @@ export const de = {
     deleteAccount: {
       title: 'Konto löschen',
       description:
-        'Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.',
+        'Kontolöschung beantragen. Ihr Konto wird deaktiviert und kann innerhalb von 30 Tagen wiederhergestellt werden.',
       warning:
-        'Warnung: Das Löschen Ihres Kontos entfernt alle Ihre Veranstaltungen, Nachrichten und persönlichen Daten. Diese Aktion ist unwiderruflich.',
+        'Warnung: Ihr Konto wird deaktiviert. Sie können es innerhalb von 30 Tagen wiederherstellen, indem Sie /restore-account besuchen. Nach 30 Tagen ist eine Wiederherstellung nicht mehr möglich.',
       button: 'Konto löschen',
       modal: {
         title: 'Konto löschen',
         description:
-          'Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und alle Ihre Daten werden nach 30 Tagen dauerhaft gelöscht.',
+          'Ihr Konto wird sofort deaktiviert. Sie haben 30 Tage Zeit, es wiederherzustellen, falls Sie Ihre Meinung ändern.',
         reasonLabel: 'Grund für die Löschung (optional)',
         reasonPlaceholder: 'Sagen Sie uns, warum Sie gehen...',
         confirmLabel: 'Geben Sie LÖSCHEN ein, um zu bestätigen',
         confirmPlaceholder: 'LÖSCHEN',
         cancel: 'Abbrechen',
         confirm: 'Konto löschen',
-        success: 'Ihr Konto wurde zur Löschung geplant',
+        success:
+          'Ihr Konto wurde deaktiviert. Sie können es innerhalb von 30 Tagen wiederherstellen.',
         error: 'Konto konnte nicht gelöscht werden',
         invalidConfirmation: 'Bitte geben Sie LÖSCHEN ein, um zu bestätigen',
       },
     },
+  },
+
+  // Account Restoration
+  accountRestoration: {
+    request: {
+      title: 'Ihr Konto wiederherstellen',
+      subtitle:
+        'Geben Sie Ihre E-Mail-Adresse ein, um einen Wiederherstellungslink zu erhalten',
+      emailLabel: 'E-Mail-Adresse',
+      emailPlaceholder: 'ihre@email.de',
+      submit: 'Wiederherstellungslink senden',
+      submitting: 'Wird gesendet...',
+      success:
+        'Wenn Ihr Konto existiert und kürzlich gelöscht wurde, erhalten Sie eine E-Mail mit Wiederherstellungsanweisungen.',
+      error: 'Fehler beim Anfordern der Kontowiederherstellung',
+    },
+    restore: {
+      title: 'Ihr Konto wiederherstellen',
+      subtitle: 'Klicken Sie unten, um Ihr Konto wiederherzustellen',
+      button: 'Mein Konto wiederherstellen',
+      restoring: 'Wird wiederhergestellt...',
+      success:
+        'Ihr Konto wurde wiederhergestellt! Sie können sich jetzt anmelden.',
+      error:
+        'Kontowiederherstellung fehlgeschlagen. Der Link ist möglicherweise abgelaufen oder ungültig.',
+      backToLogin: 'Zurück zur Anmeldung',
+    },
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Benachrichtigungen',
+    subtitle:
+      'Verwalten Sie Ihre Benachrichtigungen und bleiben Sie auf dem Laufenden',
+    loginRequired:
+      'Sie müssen angemeldet sein, um Benachrichtigungen anzuzeigen',
+    refresh: 'Aktualisieren',
+    markAllRead: 'Alle als gelesen markieren',
+    all: 'Alle',
+    unread: 'Ungelesen',
+    read: 'Gelesen',
+    total: 'Gesamt',
+    markAsRead: 'Als gelesen markieren',
+    delete: 'Löschen',
+    loadedAll: 'Alles geladen',
+    empty: {
+      all: 'Keine Benachrichtigungen',
+      unread: 'Keine ungelesenen Benachrichtigungen',
+      read: 'Keine gelesenen Benachrichtigungen',
+      description: 'Benachrichtigungen erscheinen hier, wenn etwas passiert',
+      changeFilter: 'Filter ändern, um andere Benachrichtigungen zu sehen',
+    },
+    kinds: {
+      INTENT_REMINDER: 'Veranstaltungserinnerung',
+      INTENT_UPDATED: 'Veranstaltung aktualisiert',
+      INTENT_CANCELED: 'Veranstaltung abgesagt',
+      INTENT_CREATED: 'Neue Veranstaltung',
+      NEW_MESSAGE: 'Neue Nachricht',
+      NEW_COMMENT: 'Neuer Kommentar',
+      NEW_REVIEW: 'Neue Bewertung',
+      MEMBER_JOINED: 'Neuer Teilnehmer',
+      MEMBER_LEFT: 'Teilnehmer hat verlassen',
+      INVITE_RECEIVED: 'Einladung erhalten',
+      default: 'Benachrichtigung',
+    },
+  },
+
+  // Favourites
+  favourites: {
+    title: 'Favoriten',
+    subtitle: 'Ihre gespeicherten Veranstaltungen',
+    savedEvents: 'gespeichert',
+    savedEvent: 'Veranstaltung',
+    savedEventsPlural: 'Veranstaltungen',
+    emptyTitle: 'Noch keine Favoriten',
+    emptyDescription:
+      'Durchsuchen Sie Veranstaltungen und klicken Sie auf das ❤️-Symbol, um interessante Veranstaltungen für später zu speichern.',
+    browseEvents: 'Veranstaltungen durchsuchen',
+    loadMore: 'Mehr laden',
+    loading: 'Lädt…',
+    loadingFavourites: 'Ihre Favoriten werden geladen...',
+    removeFromFavourites: 'Aus Favoriten entfernen',
+    viewEvent: 'Veranstaltung ansehen',
+    participants: 'Teilnehmer',
+    showingEvents: 'Anzeige',
   },
 
   // Navigation

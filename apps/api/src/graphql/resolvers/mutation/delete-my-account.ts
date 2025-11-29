@@ -8,9 +8,11 @@ import { logger } from '../../../lib/pino';
  */
 export const deleteMyAccountMutation: MutationResolvers['deleteMyAccount'] =
   async (_parent, args, ctx) => {
-    const { session } = ctx;
+    const { user } = ctx;
 
-    if (!session?.userId) {
+    const userId = user?.id;
+
+    if (!userId) {
       throw new Error('Authentication required');
     }
 
@@ -19,7 +21,7 @@ export const deleteMyAccountMutation: MutationResolvers['deleteMyAccount'] =
     try {
       // Soft delete: set deletedAt and optional reason
       await prisma.user.update({
-        where: { id: session.userId },
+        where: { id: userId },
         data: {
           deletedAt: new Date(),
           deletedReason: reason || null,
@@ -28,7 +30,7 @@ export const deleteMyAccountMutation: MutationResolvers['deleteMyAccount'] =
 
       logger.info(
         {
-          userId: session.userId,
+          userId: userId,
           reason: reason || 'No reason provided',
         },
         'User account marked for deletion'
@@ -38,7 +40,7 @@ export const deleteMyAccountMutation: MutationResolvers['deleteMyAccount'] =
     } catch (error) {
       logger.error(
         {
-          userId: session.userId,
+          userId: userId,
           error,
         },
         'Failed to delete user account'

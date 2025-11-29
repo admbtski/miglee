@@ -204,6 +204,8 @@ model User {
   suspensionReason String? // Reason for suspension
   deletedAt        DateTime? // Soft delete timestamp
   deletedReason    String? // Reason for account deletion
+  restorationToken       String? // Token for self-service restoration
+  restorationTokenExpiry DateTime? // Expiry for restoration token
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   lastSeenAt       DateTime?

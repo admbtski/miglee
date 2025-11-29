@@ -1,0 +1,7 @@
+mutation RequestAccountRestoration($email: String!) {
+  requestAccountRestoration(email: $email)
+}
+
+mutation RestoreMyAccount($email: String!, $token: String!) {
+  restoreMyAccount(email: $email, token: $token)
+}

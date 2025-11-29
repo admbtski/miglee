@@ -1,6 +1,9 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
-import { graphqlClient } from './client';
-import { DeleteMyAccountMutation, DeleteMyAccountMutationVariables } from './__generated__/react-query-update';
+import { gqlClient } from './client';
+import {
+  DeleteMyAccountMutation,
+  DeleteMyAccountMutationVariables,
+} from './__generated__/react-query-update';
 
 const DELETE_MY_ACCOUNT = `
   mutation DeleteMyAccount($reason: String) {
@@ -21,7 +24,7 @@ export function useDeleteMyAccountMutation(
     DeleteMyAccountMutationVariables
   >({
     mutationFn: async (variables) => {
-      return graphqlClient.request<DeleteMyAccountMutation>(
+      return gqlClient.request<DeleteMyAccountMutation>(
         DELETE_MY_ACCOUNT,
         variables
       );
@@ -29,4 +32,3 @@ export function useDeleteMyAccountMutation(
     ...options,
   });
 }
-

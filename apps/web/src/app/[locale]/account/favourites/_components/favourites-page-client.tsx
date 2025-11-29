@@ -8,8 +8,15 @@ import {
 import { useMemo } from 'react';
 import { FavouriteCard } from './favourite-card';
 import Link from 'next/link';
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { AccountPageHeader } from '../../_components';
+import { AnimatePresence } from 'framer-motion';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 export function FavouritesPageClient() {
+  const { localePath } = useLocalePath();
+  const { t } = useI18n();
+
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useMyFavouritesInfiniteQuery(
       { limit: 20 },
@@ -24,18 +31,16 @@ export function FavouritesPageClient() {
   }, [data?.pages]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-          Favourites
-        </h1>
-        <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
-          {items.length > 0
-            ? `${items.length} saved ${items.length === 1 ? 'event' : 'events'}`
-            : 'Your saved events will appear here'}
-        </p>
-      </div>
+      <AccountPageHeader
+        title={t.favourites.title}
+        description={
+          items.length > 0
+            ? `${items.length} ${t.favourites.savedEvents} ${items.length === 1 ? t.favourites.savedEvent : t.favourites.savedEventsPlural}`
+            : t.favourites.subtitle
+        }
+      />
 
       {/* Loading */}
       {isLoading && (
@@ -43,7 +48,7 @@ export function FavouritesPageClient() {
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400 mx-auto" />
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-              Loading your favourites...
+              {t.favourites.loadingFavourites}
             </p>
           </div>
         </div>
@@ -59,18 +64,17 @@ export function FavouritesPageClient() {
             />
           </div>
           <h3 className="mb-3 text-xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-            No favourites yet
+            {t.favourites.emptyTitle}
           </h3>
           <p className="mb-8 max-w-md text-center text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            Browse events and click the ❤️ icon to save interesting events for
-            later.
+            {t.favourites.emptyDescription}
           </p>
           <Link
-            href="/"
+            href={localePath('/')}
             className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition-all hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"
           >
             <Heart className="h-4 w-4" strokeWidth={2} />
-            Browse Events
+            {t.favourites.browseEvents}
           </Link>
         </div>
       )}
@@ -79,14 +83,19 @@ export function FavouritesPageClient() {
       {items.length > 0 && (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((fav) => (
-              <FavouriteCard key={fav.id} favourite={fav} />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {items.map((fav) => (
+                <FavouriteCard key={fav.id} favourite={fav} />
+              ))}
+            </AnimatePresence>
           </div>
 
           {/* Counter */}
           <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-            Showing {items.length} {items.length === 1 ? 'event' : 'events'}
+            {t.favourites.showingEvents} {items.length}{' '}
+            {items.length === 1
+              ? t.favourites.savedEvent
+              : t.favourites.savedEventsPlural}
           </div>
         </>
       )}
@@ -103,10 +112,10 @@ export function FavouritesPageClient() {
             {isFetchingNextPage ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-                Loading…
+                {t.favourites.loading}
               </span>
             ) : (
-              'Load More'
+              t.favourites.loadMore
             )}
           </button>
         </div>

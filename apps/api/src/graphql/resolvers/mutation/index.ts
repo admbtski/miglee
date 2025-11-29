@@ -204,6 +204,12 @@ import {
 // User Account Deletion
 import { deleteMyAccountMutation } from './delete-my-account';
 
+// User Account Restoration
+import {
+  requestAccountRestorationMutation,
+  restoreMyAccountMutation,
+} from './restore-account';
+
 // Media Upload mutations
 import { getUploadUrl, confirmMediaUpload } from './media';
 
@@ -387,6 +393,10 @@ export const Mutation: Resolvers['Mutation'] = {
 
   // ---- User Account Deletion ----
   deleteMyAccount: deleteMyAccountMutation,
+
+  // ---- User Account Restoration ----
+  requestAccountRestoration: requestAccountRestorationMutation,
+  restoreMyAccount: restoreMyAccountMutation,
 
   // ---- Media Upload ----
   getUploadUrl,

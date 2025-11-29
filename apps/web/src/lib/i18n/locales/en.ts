@@ -77,25 +77,107 @@ export const en = {
     deleteAccount: {
       title: 'Delete Account',
       description:
-        'Permanently delete your account and all associated data. This action cannot be undone.',
+        'Request account deletion. Your account will be deactivated and can be restored within 30 days.',
       warning:
-        'Warning: Deleting your account will remove all your events, messages, and personal data. This action is irreversible.',
+        'Warning: Your account will be deactivated. You can restore it within 30 days by visiting /restore-account. After 30 days, restoration will no longer be possible.',
       button: 'Delete Account',
       modal: {
         title: 'Delete Account',
         description:
-          'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted after 30 days.',
+          'Your account will be deactivated immediately. You have 30 days to restore it if you change your mind.',
         reasonLabel: 'Reason for deletion (optional)',
         reasonPlaceholder: 'Tell us why you are leaving...',
         confirmLabel: 'Type DELETE to confirm',
         confirmPlaceholder: 'DELETE',
         cancel: 'Cancel',
         confirm: 'Delete Account',
-        success: 'Your account has been scheduled for deletion',
+        success:
+          'Your account has been deactivated. You can restore it within 30 days.',
         error: 'Failed to delete account',
         invalidConfirmation: 'Please type DELETE to confirm',
       },
     },
+  },
+
+  // Account Restoration
+  accountRestoration: {
+    request: {
+      title: 'Restore Your Account',
+      subtitle: 'Enter your email address to receive a restoration link',
+      emailLabel: 'Email address',
+      emailPlaceholder: 'your@email.com',
+      submit: 'Send Restoration Link',
+      submitting: 'Sending...',
+      success:
+        'If your account exists and was recently deleted, you will receive an email with restoration instructions.',
+      error: 'Failed to request account restoration',
+    },
+    restore: {
+      title: 'Restore Your Account',
+      subtitle: 'Click below to restore your account',
+      button: 'Restore My Account',
+      restoring: 'Restoring...',
+      success: 'Your account has been restored! You can now log in.',
+      error:
+        'Failed to restore account. The link may have expired or is invalid.',
+      backToLogin: 'Back to Login',
+    },
+  },
+
+  // Notifications
+  notifications: {
+    title: 'Notifications',
+    subtitle: 'Manage your notifications and stay updated',
+    loginRequired: 'You must be logged in to view notifications',
+    refresh: 'Refresh',
+    markAllRead: 'Mark all read',
+    all: 'All',
+    unread: 'Unread',
+    read: 'Read',
+    total: 'Total',
+    markAsRead: 'Mark as read',
+    delete: 'Delete',
+    loadedAll: 'All loaded',
+    empty: {
+      all: 'No notifications',
+      unread: 'No unread notifications',
+      read: 'No read notifications',
+      description: 'Notifications will appear here when something happens',
+      changeFilter: 'Change filter to see other notifications',
+    },
+    kinds: {
+      INTENT_REMINDER: 'Event reminder',
+      INTENT_UPDATED: 'Event updated',
+      INTENT_CANCELED: 'Event canceled',
+      INTENT_CREATED: 'New event',
+      NEW_MESSAGE: 'New message',
+      NEW_COMMENT: 'New comment',
+      NEW_REVIEW: 'New review',
+      MEMBER_JOINED: 'New participant',
+      MEMBER_LEFT: 'Participant left',
+      INVITE_RECEIVED: 'Invitation received',
+      default: 'Notification',
+    },
+  },
+
+  // Favourites
+  favourites: {
+    title: 'Favourites',
+    subtitle: 'Your saved events',
+    savedEvents: 'saved',
+    savedEvent: 'event',
+    savedEventsPlural: 'events',
+    emptyTitle: 'No favourites yet',
+    emptyDescription:
+      'Browse events and click the ❤️ icon to save interesting events for later.',
+    browseEvents: 'Browse Events',
+    loadMore: 'Load More',
+    loading: 'Loading…',
+    loadingFavourites: 'Loading your favourites...',
+    removeFromFavourites: 'Remove from favourites',
+    viewEvent: 'View Event',
+    participants: 'participants',
+    showingEvents: 'Showing',
   },
 
   // Navigation

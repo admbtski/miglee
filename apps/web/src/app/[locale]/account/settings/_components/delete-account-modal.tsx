@@ -89,6 +89,18 @@ export function DeleteAccountModal({
                   {t.settings.deleteAccount.modal.description}
                 </p>
 
+                <div className="p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-900/50">
+                  <p className="text-sm text-indigo-800 dark:text-indigo-300">
+                    ℹ️ <strong>Soft Delete (Grace Period):</strong> Your account
+                    will be deactivated, not permanently deleted. You can
+                    restore it within 30 days by visiting{' '}
+                    <span className="font-mono text-xs bg-indigo-100 dark:bg-indigo-950/50 px-1 py-0.5 rounded">
+                      /restore-account
+                    </span>{' '}
+                    and requesting a restoration link via email.
+                  </p>
+                </div>
+
                 {/* Reason Input */}
                 <div>
                   <label

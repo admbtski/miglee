@@ -15,10 +15,9 @@ import {
   AlertCircle,
   Loader2,
   CheckCheck,
-  Filter,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
+import { pl, enUS, de } from 'date-fns/locale';
 import { useMeQuery } from '@/lib/api/auth';
 import {
   useNotificationsInfiniteQuery,
@@ -30,6 +29,8 @@ import type {
   GetNotificationsQuery,
   GetNotificationsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { AccountPageHeader } from '../_components';
 
 type NotificationNode = NonNullable<
   GetNotificationsQuery['notifications']['items']
@@ -62,33 +63,6 @@ function getNotificationIcon(entityType?: string) {
   }
 }
 
-function formatKind(kind: string) {
-  switch (kind) {
-    case 'INTENT_REMINDER':
-      return 'Przypomnienie o wydarzeniu';
-    case 'INTENT_UPDATED':
-      return 'Wydarzenie zaktualizowane';
-    case 'INTENT_CANCELED':
-      return 'Wydarzenie anulowane';
-    case 'INTENT_CREATED':
-      return 'Nowe wydarzenie';
-    case 'NEW_MESSAGE':
-      return 'Nowa wiadomość';
-    case 'NEW_COMMENT':
-      return 'Nowy komentarz';
-    case 'NEW_REVIEW':
-      return 'Nowa recenzja';
-    case 'MEMBER_JOINED':
-      return 'Nowy uczestnik';
-    case 'MEMBER_LEFT':
-      return 'Uczestnik opuścił';
-    case 'INVITE_RECEIVED':
-      return 'Otrzymano zaproszenie';
-    default:
-      return 'Powiadomienie';
-  }
-}
-
 function mergeUniqueById<T extends { id: string }>(arr: T[]): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
@@ -100,9 +74,24 @@ function mergeUniqueById<T extends { id: string }>(arr: T[]): T[] {
   return out;
 }
 
+function getDateLocale(locale: string) {
+  switch (locale) {
+    case 'pl':
+      return pl;
+    case 'de':
+      return de;
+    case 'en':
+    default:
+      return enUS;
+  }
+}
+
 export default function NotificationsPage() {
+  const { t, locale } = useI18n();
   const { data: authData } = useMeQuery();
   const recipientId = authData?.me?.id;
+
+  const dateLocale = getDateLocale(locale);
 
   const [filter, setFilter] = useState<FilterType>('all');
   const [optimistic, setOptimistic] = useState<
@@ -221,43 +210,56 @@ export default function NotificationsPage() {
       if (!n) return null;
 
       const unread = !n.readAt;
+
+      // Get translated notification kind
+      const kindKey = n.kind as string as keyof typeof t.notifications.kinds;
+      const kindLabel =
+        t.notifications.kinds[kindKey] || t.notifications.kinds.default;
+
       return (
         <div
           className={`group relative overflow-hidden rounded-xl border transition-all ${
+            index === 0 ? 'mt-2' : ''
+          } ${
             unread
-              ? 'border-indigo-200 bg-indigo-50/50 shadow-sm dark:border-indigo-900/40 dark:bg-indigo-950/20'
+              ? 'border-indigo-200 bg-gradient-to-br from-indigo-50 to-white shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/30 dark:to-zinc-900'
               : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
-          } hover:shadow-md`}
+          } hover:shadow-md hover:scale-[1.005]`}
         >
-          <div className="flex items-start gap-4 p-4">
+          {/* Unread indicator bar */}
+          {unread && (
+            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 via-purple-500 to-cyan-500" />
+          )}
+
+          <div className="flex items-start gap-3 p-3.5">
             {/* Icon */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 shadow-sm">
               {getNotificationIcon(n.entityType as string)}
             </div>
 
             {/* Content */}
             <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-start justify-between gap-2">
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  {n.title ?? formatKind(n.kind as string)}
+              <div className="mb-1.5 flex items-start justify-between gap-2">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
+                  {n.title ?? kindLabel}
                 </h3>
                 <div className="flex items-center gap-2">
                   {unread && (
-                    <span className="relative inline-flex h-2.5 w-2.5">
-                      <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-indigo-500 opacity-70" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-500 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500 shadow-sm" />
                     </span>
                   )}
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">
                     {format(new Date(n.createdAt), 'dd MMM yyyy, HH:mm', {
-                      locale: pl,
+                      locale: dateLocale,
                     })}
                   </span>
                 </div>
               </div>
 
               {n.body && (
-                <p className="mb-3 text-sm text-zinc-700 dark:text-zinc-300">
+                <p className="mb-2.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-2">
                   {n.body}
                 </p>
               )}
@@ -269,20 +271,20 @@ export default function NotificationsPage() {
                     type="button"
                     disabled={marking}
                     onClick={() => handleMarkOne(n.id)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-indigo-700 active:scale-95 disabled:opacity-50 shadow-sm"
                   >
-                    <Check className="h-3.5 w-3.5" />
-                    Oznacz jako przeczytane
+                    <Check className="h-3 w-3" />
+                    {t.notifications.markAsRead}
                   </button>
                 )}
                 <button
                   type="button"
                   disabled={deleting}
                   onClick={() => handleDeleteOne(n.id)}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-red-50 hover:text-red-600 active:scale-95 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-red-950/30 dark:hover:text-red-400"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Usuń
+                  <Trash2 className="h-3 w-3" />
+                  {t.notifications.delete}
                 </button>
               </div>
             </div>
@@ -290,7 +292,15 @@ export default function NotificationsPage() {
         </div>
       );
     },
-    [filteredNotifications, marking, deleting, handleMarkOne, handleDeleteOne]
+    [
+      filteredNotifications,
+      marking,
+      deleting,
+      handleMarkOne,
+      handleDeleteOne,
+      t,
+      dateLocale,
+    ]
   );
 
   const computeItemKey = useCallback(
@@ -301,27 +311,31 @@ export default function NotificationsPage() {
   const Footer = useCallback(() => {
     if (!hasNextPage && filteredNotifications.length > 0) {
       return (
-        <div className="py-6 text-center">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            Wszystko załadowane ({filteredNotifications.length})
-          </span>
+        <div className="py-4 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 px-4 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <CheckCheck className="h-3.5 w-3.5" />
+            {t.notifications.loadedAll} ({filteredNotifications.length})
+          </div>
         </div>
       );
     }
     if (isFetchingNextPage) {
       return (
-        <div className="flex justify-center py-6">
-          <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+        <div className="flex justify-center py-8">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-md" />
+            <Loader2 className="relative h-7 w-7 animate-spin text-indigo-600" />
+          </div>
         </div>
       );
     }
     return null;
-  }, [hasNextPage, isFetchingNextPage, filteredNotifications.length]);
+  }, [hasNextPage, isFetchingNextPage, filteredNotifications.length, t]);
 
   const virtuosoComponents = useMemo(
     () => ({
       List: ({ children, ...props }: any) => (
-        <div {...props} className="flex flex-col gap-3 p-3">
+        <div {...props} className="flex flex-col gap-2 p-3">
           {children}
         </div>
       ),
@@ -336,7 +350,7 @@ export default function NotificationsPage() {
         <div className="text-center">
           <Bell className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
           <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-            Musisz być zalogowany, aby zobaczyć powiadomienia
+            {t.notifications.loginRequired}
           </p>
         </div>
       </div>
@@ -344,123 +358,148 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header with Actions */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Notifications
-          </h1>
-          <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-            Manage your notifications and stay updated
-          </p>
+    <div className="space-y-4">
+      {/* Header */}
+      <AccountPageHeader
+        title={t.notifications.title}
+        description={t.notifications.subtitle}
+      />
+
+      {/* Stats & Actions Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+        {/* Stats */}
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+            <Bell className="h-4 w-4" />
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              {allNotifications.length}
+            </span>
+          </div>
+          {unreadCount > 0 && (
+            <>
+              <span className="text-zinc-300 dark:text-zinc-700">•</span>
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-500 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
+                </div>
+                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                  {unreadCount}
+                </span>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  {t.notifications.unread}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
+        {/* Filters + Buttons */}
         <div className="flex items-center gap-2">
+          {/* Filters */}
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+            <button
+              onClick={() => setFilter('all')}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                filter === 'all'
+                  ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              {t.notifications.all}
+            </button>
+            <button
+              onClick={() => setFilter('unread')}
+              className={`relative rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                filter === 'unread'
+                  ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              {t.notifications.unread}
+              {unreadCount > 0 && (
+                <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setFilter('read')}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                filter === 'read'
+                  ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              {t.notifications.read}
+            </button>
+          </div>
+
+          {/* Action Buttons */}
           <button
             type="button"
             onClick={() => void refetch()}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            title="Refresh"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            title={t.notifications.refresh}
           >
-            <RefreshCcw className="h-4 w-4" />
-            Refresh
+            <RefreshCcw className="h-3.5 w-3.5" />
           </button>
           {unreadCount > 0 && (
             <button
               type="button"
               onClick={handleMarkAll}
               disabled={markingAll}
-              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
-              title="Mark all as read"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+              title={t.notifications.markAllRead}
             >
-              <CheckCheck className="h-4 w-4" />
-              Mark all read
+              <CheckCheck className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Stats & Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-          <Bell className="h-4 w-4" />
-          <span>
-            Wszystkie: <strong>{allNotifications.length}</strong>
-          </span>
-          <span className="text-zinc-300 dark:text-zinc-700">•</span>
-          <span>
-            Nieprzeczytane:{' '}
-            <strong className="text-indigo-600 dark:text-indigo-400">
-              {unreadCount}
-            </strong>
-          </span>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          <Filter className="h-4 w-4 text-zinc-500" />
-          <button
-            onClick={() => setFilter('all')}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-              filter === 'all'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-            }`}
-          >
-            Wszystkie
-          </button>
-          <button
-            onClick={() => setFilter('unread')}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-              filter === 'unread'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-            }`}
-          >
-            Nieprzeczytane
-          </button>
-          <button
-            onClick={() => setFilter('read')}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-              filter === 'read'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
-            }`}
-          >
-            Przeczytane
-          </button>
-        </div>
-      </div>
-
       {/* Notifications List */}
       {isLoading ? (
-        <div className="flex min-h-[400px] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <div className="flex min-h-[500px] items-center justify-center rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950">
+          <div className="text-center">
+            <div className="relative mx-auto h-14 w-14 mb-3">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 animate-pulse" />
+              <Loader2 className="absolute inset-0 m-auto h-10 w-10 animate-spin text-indigo-600" />
+            </div>
+            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              Loading notifications...
+            </p>
+          </div>
         </div>
       ) : filteredNotifications.length === 0 ? (
-        <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <div className="text-center">
-            <Bell className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
-            <p className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+        <div className="flex min-h-[500px] items-center justify-center rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950">
+          <div className="text-center px-6 py-8">
+            <div className="relative mx-auto w-fit mb-4">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-10 blur-xl rounded-full" />
+              <div className="relative p-4 rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
+                <Bell className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
+              </div>
+            </div>
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1.5">
               {filter === 'unread'
-                ? 'Brak nieprzeczytanych powiadomień'
+                ? t.notifications.empty.unread
                 : filter === 'read'
-                  ? 'Brak przeczytanych powiadomień'
-                  : 'Brak powiadomień'}
-            </p>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  ? t.notifications.empty.read
+                  : t.notifications.empty.all}
+            </h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-sm mx-auto">
               {filter === 'all'
-                ? 'Powiadomienia pojawią się tutaj, gdy coś się wydarzy'
-                : 'Zmień filtr, aby zobaczyć inne powiadomienia'}
+                ? t.notifications.empty.description
+                : t.notifications.empty.changeFilter}
             </p>
           </div>
         </div>
       ) : (
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/30">
+        <div className="rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50/50 to-white dark:border-zinc-800 dark:from-zinc-900/50 dark:to-zinc-950 shadow-sm overflow-hidden">
           <Virtuoso
             style={{
-              height: 'calc(100vh - 420px)',
-              minHeight: '400px',
+              height: 'calc(100vh - 360px)',
+              minHeight: '500px',
             }}
             data={filteredNotifications}
             totalCount={filteredNotifications.length}
