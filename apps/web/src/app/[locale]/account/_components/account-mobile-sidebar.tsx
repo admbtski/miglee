@@ -15,6 +15,8 @@ import {
   BarChart3,
   HelpCircle,
   Cookie,
+  FileText,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -144,6 +146,18 @@ export function AccountMobileSidebar({
       label: t.accountNav.items.cookieSettings,
       href: '/account/cookie-settings',
       icon: Cookie,
+    },
+    {
+      key: 'terms',
+      label: t.accountNav.items.terms,
+      href: '/account/terms',
+      icon: FileText,
+    },
+    {
+      key: 'privacy',
+      label: t.accountNav.items.privacy,
+      href: '/account/privacy',
+      icon: Shield,
     },
     {
       key: 'help',

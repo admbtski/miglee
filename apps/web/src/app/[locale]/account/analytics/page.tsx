@@ -1,12 +1,17 @@
+'use client';
+
 import { AccountPageHeader, AccountEmptyState } from '../_components';
 import { BarChart3 } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 export default function AnalyticsPage() {
+  const { t } = useI18n();
+
   return (
     <div className="space-y-8">
       <AccountPageHeader
-        title="Analytics"
-        description="Track your event performance and engagement"
+        title={t.analytics.title}
+        description={t.analytics.subtitle}
       />
 
       <AccountEmptyState
@@ -15,15 +20,15 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-32 w-32 text-indigo-600 dark:text-indigo-400" />
           </div>
         }
-        title="Analytics coming soon"
-        description="We're working on bringing you detailed analytics for your events. Track views, engagement, and more."
+        title={t.analytics.comingSoon.title}
+        description={t.analytics.comingSoon.description}
         action={
           <button
             type="button"
             disabled
             className="inline-flex items-center gap-2 rounded-lg bg-zinc-200 px-6 py-3 text-base font-semibold text-zinc-500 cursor-not-allowed"
           >
-            Coming Soon
+            {t.analytics.comingSoon.button}
           </button>
         }
       />

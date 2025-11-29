@@ -274,6 +274,8 @@ export const en = {
       analytics: 'Analytics',
       settings: 'Settings',
       cookieSettings: 'Cookie Settings',
+      terms: 'Terms of Service',
+      privacy: 'Privacy Policy',
       help: 'Help',
       signOut: 'Sign out',
     },
@@ -392,6 +394,161 @@ export const en = {
       savePreferences: 'Save Preferences',
       saving: 'Saving...',
       saved: 'Cookie settings saved successfully',
+    },
+  },
+
+  // Analytics
+  analytics: {
+    title: 'Analytics',
+    subtitle: 'Track your event performance and engagement',
+    comingSoon: {
+      title: 'Analytics coming soon',
+      description:
+        "We're working on bringing you detailed analytics for your events. Track views, engagement, and more.",
+      button: 'Coming Soon',
+    },
+  },
+
+  // Plans and Bills
+  plansAndBills: {
+    title: 'Plans & Billing',
+    subtitle: 'Manage your subscription and billing information',
+    loading: 'Loading billing information...',
+    currentPlan: {
+      title: 'Current Plan',
+      renewsOn: 'Renews on',
+      expiresOn: 'Expires on',
+      timeToRenewal: 'Time until renewal',
+      timeToExpiry: 'Time until expiry',
+      daysRemaining: 'days remaining',
+      day: 'day',
+      days: 'days',
+      willRenewOn: 'Plan will renew on',
+      willExpireOn: 'Plan will expire on',
+      planDetails: 'Plan Details',
+      type: 'Type',
+      subscription: 'Subscription',
+      oneTime: 'One-time',
+      period: 'Period',
+      yearly: 'Yearly',
+      monthly: 'Monthly',
+      startDate: 'Start date',
+      renewal: 'Renewal',
+      expiry: 'Expiry',
+      upgradePlan: 'Upgrade Plan',
+      changePlan: 'Change Plan',
+      cancelSubscription: 'Cancel Subscription',
+    },
+    paymentHistory: {
+      title: 'Payment History',
+      subtitle: 'View your billing history and invoices',
+      date: 'Date',
+      description: 'Description',
+      amount: 'Amount',
+      status: 'Status',
+      actionsColumn: 'Actions',
+      to: 'to',
+      active: 'Active',
+      paid: 'Paid',
+      pending: 'Pending',
+      failed: 'Failed',
+      view: 'View',
+      receipt: 'Receipt',
+      noHistory: 'No payment history',
+      noHistoryDescription: 'When you make payments, they will appear here.',
+      plan: 'Plan',
+      event: 'Event',
+      actionPackage: 'Action Package',
+      actions: 'actions',
+    },
+    cancelModal: {
+      title: 'Cancel Subscription',
+      description:
+        'Your subscription will remain active until the end of the current billing period.',
+      confirmButton: 'Cancel Subscription',
+      cancelButton: 'Keep Subscription',
+    },
+    toast: {
+      cancelSuccess:
+        'Subscription will be cancelled at the end of the billing period',
+      cancelError: 'Failed to cancel subscription',
+      receiptNotAvailable: 'Receipt is not yet available',
+      receiptError: 'Failed to fetch receipt',
+    },
+  },
+
+  // Terms of Service
+  termsOfService: {
+    title: 'Terms of Service',
+    subtitle: 'Read our terms and conditions',
+    downloadPdf: 'Download PDF',
+    selectLanguage: 'Select language:',
+    english: 'English',
+    polish: 'Polish',
+    german: 'German',
+    lastUpdated: 'Last updated:',
+    viewOnline: 'View online',
+  },
+
+  // Privacy Policy
+  privacyPolicy: {
+    title: 'Privacy Policy',
+    subtitle: 'Learn how we protect your data',
+    downloadPdf: 'Download PDF',
+    selectLanguage: 'Select language:',
+    english: 'English',
+    polish: 'Polish',
+    german: 'German',
+    lastUpdated: 'Last updated:',
+    viewOnline: 'View online',
+  },
+
+  // Subscription Plans
+  subscriptionPlans: {
+    title: 'Choose your user plan',
+    subtitle:
+      'Upgrade your account to unlock more features and grow your events',
+    billingTypes: {
+      subscription: 'Subscription',
+      monthly: 'Monthly',
+      yearly: 'Yearly',
+      save20: 'Save 20%',
+    },
+    tooltips: {
+      subscription:
+        'Subscription: Renews automatically every 30 days. Cancel anytime.',
+      monthly:
+        'Monthly: One-time payment. Access for 30 days without auto-renewal.',
+      yearly: 'Yearly: One-time payment. Access for 12 months. Save 20%!',
+    },
+    badges: {
+      autoRenewal: 'Auto-renewal',
+      noSubscription: 'No subscription',
+      oneTimeCharge: 'One-time charge',
+      mostPopular: 'MOST POPULAR',
+      activePlan: 'ACTIVE PLAN',
+    },
+    priceLabels: {
+      perMonth: '/ month',
+      perYear: '/ year',
+      saveYearly: 'Save',
+      yearly: 'yearly',
+    },
+    buttons: {
+      activePlan: 'Active plan',
+      freePlan: 'Basic plan',
+      selectPlan: 'Select plan',
+    },
+    features: {
+      included: "What's included",
+      joinQuestions: 'Join questions',
+      noJoinQuestions: 'No join questions',
+    },
+    infoBanner: {
+      subscriptionNote: 'All subscription plans can be cancelled at any time.',
+      onetimeNote:
+        'All one-time payments are final. Choose the plan that best fits your needs.',
+      important: 'Important:',
     },
   },
 } as const;

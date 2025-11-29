@@ -22,6 +22,8 @@ import {
   UserIcon,
   Sparkles,
   Cookie,
+  FileText,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -186,6 +188,18 @@ export function AccountSidebarEnhanced() {
           label: t.accountNav.items.cookieSettings,
           href: '/account/cookie-settings',
           icon: Cookie,
+        },
+        {
+          id: 'terms',
+          label: t.accountNav.items.terms,
+          href: '/account/terms',
+          icon: FileText,
+        },
+        {
+          id: 'privacy',
+          label: t.accountNav.items.privacy,
+          href: '/account/privacy',
+          icon: Shield,
         },
         {
           id: 'help',

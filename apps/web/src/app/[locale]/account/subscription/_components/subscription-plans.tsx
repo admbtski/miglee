@@ -11,6 +11,7 @@ import {
   USER_PLAN_DESCRIPTIONS,
   PLAN_SCOPE_NOTICE_EXTENDED,
 } from '@/lib/billing-constants';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 interface SubscriptionPlansProps {
   onPlanSelect?: (plan: {
@@ -64,6 +65,7 @@ export function SubscriptionPlans({
   onPlanSelect,
   currentPlan = 'FREE',
 }: SubscriptionPlansProps) {
+  const { t } = useI18n();
   const [billingType, setBillingType] = useState<BillingType>(
     'monthly-subscription'
   );
@@ -77,30 +79,29 @@ export function SubscriptionPlans({
   };
 
   const getPriceLabel = () => {
-    if (billingType === 'monthly-subscription') return '/ month';
-    if (billingType === 'monthly-onetime') return '/ month';
-    return '/ year';
+    if (billingType === 'monthly-subscription')
+      return t.subscriptionPlans.priceLabels.perMonth;
+    if (billingType === 'monthly-onetime')
+      return t.subscriptionPlans.priceLabels.perMonth;
+    return t.subscriptionPlans.priceLabels.perYear;
   };
 
   const getBadgeConfig = () => {
     if (billingType === 'monthly-subscription') {
       return {
-        tooltipText:
-          'Subskrypcja: Odnawia się automatycznie co 30 dni. Anuluj kiedy chcesz.',
-        paymentType: 'Auto-renewal',
+        tooltipText: t.subscriptionPlans.tooltips.subscription,
+        paymentType: t.subscriptionPlans.badges.autoRenewal,
       };
     }
     if (billingType === 'monthly-onetime') {
       return {
-        tooltipText:
-          'Miesięczna: Płatność jednorazowa. Dostęp na 30 dni bez auto-odnowienia.',
-        paymentType: 'No subscription',
+        tooltipText: t.subscriptionPlans.tooltips.monthly,
+        paymentType: t.subscriptionPlans.badges.noSubscription,
       };
     }
     return {
-      tooltipText:
-        'Roczna: Płatność jednorazowa. Dostęp na 12 miesięcy. Oszczędzasz 20%!',
-      paymentType: 'One-time charge',
+      tooltipText: t.subscriptionPlans.tooltips.yearly,
+      paymentType: t.subscriptionPlans.badges.oneTimeCharge,
     };
   };
 
@@ -120,11 +121,10 @@ export function SubscriptionPlans({
       {/* Header */}
       <div className="space-y-4 text-center">
         <h2 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-          Wybierz swój plan użytkownika
+          {t.subscriptionPlans.title}
         </h2>
         <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-[60ch] mx-auto leading-relaxed">
-          Ulepsz swoje konto, aby odblokować więcej funkcji i rozwijać swoje
-          wydarzenia
+          {t.subscriptionPlans.subtitle}
         </p>
 
         {/* Billing Type Selection */}
@@ -140,7 +140,7 @@ export function SubscriptionPlans({
                   : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
               )}
             >
-              Subskrypcja
+              {t.subscriptionPlans.billingTypes.subscription}
             </button>
             <button
               type="button"
@@ -152,7 +152,7 @@ export function SubscriptionPlans({
                   : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
               )}
             >
-              Miesięczna
+              {t.subscriptionPlans.billingTypes.monthly}
             </button>
             <button
               type="button"
@@ -164,9 +164,9 @@ export function SubscriptionPlans({
                   : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
               )}
             >
-              <span>Roczna</span>
+              <span>{t.subscriptionPlans.billingTypes.yearly}</span>
               <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
-                Oszczędzaj 20%
+                {t.subscriptionPlans.billingTypes.save20}
               </span>
             </button>
           </div>
@@ -204,7 +204,7 @@ export function SubscriptionPlans({
                 <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap">
                     <Sparkles className="w-3 h-3" />
-                    NAJPOPULARNIEJSZY
+                    {t.subscriptionPlans.badges.mostPopular}
                   </div>
                 </div>
               )}
@@ -214,7 +214,7 @@ export function SubscriptionPlans({
                 <div className="absolute top-0 z-20 -translate-x-1/2 -translate-y-1/2 left-1/2">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg whitespace-nowrap">
                     <Check className="w-3 h-3" strokeWidth={3} />
-                    AKTYWNY PLAN
+                    {t.subscriptionPlans.badges.activePlan}
                   </div>
                 </div>
               )}
@@ -282,7 +282,9 @@ export function SubscriptionPlans({
                 {/* Savings */}
                 {savings > 0 ? (
                   <p className="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    Oszczędzasz zł{savings.toFixed(2)} rocznie
+                    {t.subscriptionPlans.priceLabels.saveYearly} zł
+                    {savings.toFixed(2)}{' '}
+                    {t.subscriptionPlans.priceLabels.yearly}
                   </p>
                 ) : (
                   <p className="mt-2 text-sm font-medium text-transparent">
@@ -322,16 +324,16 @@ export function SubscriptionPlans({
                 )}
               >
                 {isCurrent
-                  ? 'Aktywny plan'
+                  ? t.subscriptionPlans.buttons.activePlan
                   : isFree
-                    ? 'Plan podstawowy'
-                    : 'Wybierz plan'}
+                    ? t.subscriptionPlans.buttons.freePlan
+                    : t.subscriptionPlans.buttons.selectPlan}
               </button>
 
               {/* Features */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold tracking-wider uppercase text-zinc-500 dark:text-zinc-400">
-                  Co zawiera
+                  {t.subscriptionPlans.features.included}
                 </p>
                 <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
@@ -362,12 +364,13 @@ export function SubscriptionPlans({
       <div className="rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-zinc-50 dark:bg-zinc-900/50 p-6 space-y-3">
         <p className="text-sm leading-relaxed text-center text-zinc-600 dark:text-zinc-400">
           {billingType === 'monthly-subscription'
-            ? 'Wszystkie plany subskrypcyjne można anulować w dowolnym momencie.'
-            : 'Wszystkie płatności jednorazowe są ostateczne. Wybierz plan najlepiej dopasowany do Twoich potrzeb.'}
+            ? t.subscriptionPlans.infoBanner.subscriptionNote
+            : t.subscriptionPlans.infoBanner.onetimeNote}
         </p>
         <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700">
           <p className="text-xs leading-relaxed text-center text-zinc-500 dark:text-zinc-400">
-            💡 <strong>Ważne:</strong> {PLAN_SCOPE_NOTICE_EXTENDED}
+            💡 <strong>{t.subscriptionPlans.infoBanner.important}</strong>{' '}
+            {PLAN_SCOPE_NOTICE_EXTENDED}
           </p>
         </div>
       </div>

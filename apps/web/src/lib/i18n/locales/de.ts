@@ -279,6 +279,8 @@ export const de = {
       analytics: 'Analytik',
       settings: 'Einstellungen',
       cookieSettings: 'Cookie-Einstellungen',
+      terms: 'Nutzungsbedingungen',
+      privacy: 'Datenschutzrichtlinie',
       help: 'Hilfe',
       signOut: 'Abmelden',
     },
@@ -400,6 +402,164 @@ export const de = {
       savePreferences: 'Einstellungen speichern',
       saving: 'Wird gespeichert...',
       saved: 'Cookie-Einstellungen erfolgreich gespeichert',
+    },
+  },
+
+  // Analytics
+  analytics: {
+    title: 'Analytik',
+    subtitle:
+      'Verfolgen Sie die Leistung und das Engagement Ihrer Veranstaltungen',
+    comingSoon: {
+      title: 'Analytik kommt bald',
+      description:
+        'Wir arbeiten daran, Ihnen detaillierte Analysen für Ihre Veranstaltungen bereitzustellen. Verfolgen Sie Ansichten, Engagement und mehr.',
+      button: 'Demnächst',
+    },
+  },
+
+  // Plans and Bills
+  plansAndBills: {
+    title: 'Pläne & Rechnungen',
+    subtitle: 'Verwalten Sie Ihr Abonnement und Ihre Rechnungsinformationen',
+    loading: 'Lade Rechnungsinformationen...',
+    currentPlan: {
+      title: 'Aktueller Plan',
+      renewsOn: 'Erneuert sich am',
+      expiresOn: 'Läuft ab am',
+      timeToRenewal: 'Zeit bis zur Erneuerung',
+      timeToExpiry: 'Zeit bis zum Ablauf',
+      daysRemaining: 'Tage verbleibend',
+      day: 'Tag',
+      days: 'Tage',
+      willRenewOn: 'Plan wird erneuert am',
+      willExpireOn: 'Plan läuft ab am',
+      planDetails: 'Plan-Details',
+      type: 'Typ',
+      subscription: 'Abonnement',
+      oneTime: 'Einmalig',
+      period: 'Zeitraum',
+      yearly: 'Jährlich',
+      monthly: 'Monatlich',
+      startDate: 'Startdatum',
+      renewal: 'Erneuerung',
+      expiry: 'Ablauf',
+      upgradePlan: 'Plan upgraden',
+      changePlan: 'Plan ändern',
+      cancelSubscription: 'Abonnement kündigen',
+    },
+    paymentHistory: {
+      title: 'Zahlungsverlauf',
+      subtitle: 'Sehen Sie Ihre Abrechnungshistorie und Rechnungen ein',
+      date: 'Datum',
+      description: 'Beschreibung',
+      amount: 'Betrag',
+      status: 'Status',
+      actionsColumn: 'Aktionen',
+      to: 'bis',
+      active: 'Aktiv',
+      paid: 'Bezahlt',
+      pending: 'Ausstehend',
+      failed: 'Fehlgeschlagen',
+      view: 'Ansehen',
+      receipt: 'Rechnung',
+      noHistory: 'Kein Zahlungsverlauf',
+      noHistoryDescription:
+        'Wenn Sie Zahlungen tätigen, werden sie hier angezeigt.',
+      plan: 'Plan',
+      event: 'Veranstaltung',
+      actionPackage: 'Aktionspaket',
+      actions: 'Aktionen',
+    },
+    cancelModal: {
+      title: 'Abonnement kündigen',
+      description:
+        'Ihr Abonnement bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv.',
+      confirmButton: 'Abonnement kündigen',
+      cancelButton: 'Abonnement behalten',
+    },
+    toast: {
+      cancelSuccess:
+        'Das Abonnement wird am Ende des Abrechnungszeitraums gekündigt',
+      cancelError: 'Fehler beim Kündigen des Abonnements',
+      receiptNotAvailable: 'Rechnung ist noch nicht verfügbar',
+      receiptError: 'Fehler beim Abrufen der Rechnung',
+    },
+  },
+
+  // Terms of Service
+  termsOfService: {
+    title: 'Nutzungsbedingungen',
+    subtitle: 'Lesen Sie unsere Geschäftsbedingungen',
+    downloadPdf: 'PDF herunterladen',
+    selectLanguage: 'Sprache wählen:',
+    english: 'Englisch',
+    polish: 'Polnisch',
+    german: 'Deutsch',
+    lastUpdated: 'Zuletzt aktualisiert:',
+    viewOnline: 'Online ansehen',
+  },
+
+  // Privacy Policy
+  privacyPolicy: {
+    title: 'Datenschutzrichtlinie',
+    subtitle: 'Erfahren Sie, wie wir Ihre Daten schützen',
+    downloadPdf: 'PDF herunterladen',
+    selectLanguage: 'Sprache wählen:',
+    english: 'Englisch',
+    polish: 'Polnisch',
+    german: 'Deutsch',
+    lastUpdated: 'Zuletzt aktualisiert:',
+    viewOnline: 'Online ansehen',
+  },
+
+  // Subscription Plans
+  subscriptionPlans: {
+    title: 'Wählen Sie Ihren Benutzerplan',
+    subtitle:
+      'Upgraden Sie Ihr Konto, um mehr Funktionen freizuschalten und Ihre Veranstaltungen zu erweitern',
+    billingTypes: {
+      subscription: 'Abonnement',
+      monthly: 'Monatlich',
+      yearly: 'Jährlich',
+      save20: 'Sparen Sie 20%',
+    },
+    tooltips: {
+      subscription:
+        'Abonnement: Verlängert sich automatisch alle 30 Tage. Jederzeit kündbar.',
+      monthly:
+        'Monatlich: Einmalzahlung. Zugang für 30 Tage ohne automatische Verlängerung.',
+      yearly: 'Jährlich: Einmalzahlung. Zugang für 12 Monate. Sparen Sie 20%!',
+    },
+    badges: {
+      autoRenewal: 'Auto-renewal',
+      noSubscription: 'No subscription',
+      oneTimeCharge: 'One-time charge',
+      mostPopular: 'AM BELIEBTESTEN',
+      activePlan: 'AKTIVER PLAN',
+    },
+    priceLabels: {
+      perMonth: '/ Monat',
+      perYear: '/ Jahr',
+      saveYearly: 'Sie sparen',
+      yearly: 'jährlich',
+    },
+    buttons: {
+      activePlan: 'Aktiver Plan',
+      freePlan: 'Basisplan',
+      selectPlan: 'Plan wählen',
+    },
+    features: {
+      included: 'Was enthalten ist',
+      joinQuestions: 'Fragen vor dem Beitritt',
+      noJoinQuestions: 'Keine Fragen vor dem Beitritt',
+    },
+    infoBanner: {
+      subscriptionNote:
+        'Alle Abonnementpläne können jederzeit gekündigt werden.',
+      onetimeNote:
+        'Alle Einmalzahlungen sind endgültig. Wählen Sie den Plan, der am besten zu Ihren Bedürfnissen passt.',
+      important: 'Wichtig:',
     },
   },
 } as const;

@@ -16,8 +16,10 @@ import { Badge, Progress, Th, Td, SmallButton } from './ui';
 import { CancelSubscriptionModal } from './cancel-subscription-modal';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils/currency';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 export function BillingPageWrapper() {
+  const { t } = useI18n();
   const { data: planData, isLoading: planLoading } = useMyPlan();
   const { data: subData, isLoading: subLoading } = useMySubscription();
   const { data: periodsData, isLoading: periodsLoading } = useMyPlanPeriods({
@@ -36,12 +38,10 @@ export function BillingPageWrapper() {
   const handleCancelSubscription = async () => {
     try {
       await cancelSubscription.mutateAsync({ immediately: false });
-      toast.success(
-        'Subskrypcja zostanie anulowana na koniec okresu rozliczeniowego'
-      );
+      toast.success(t.plansAndBills.toast.cancelSuccess);
       setCancelSubOpen(false);
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się anulować subskrypcji');
+      toast.error(error.message || t.plansAndBills.toast.cancelError);
     }
   };
 
@@ -65,10 +65,10 @@ export function BillingPageWrapper() {
       if (url) {
         window.open(url, '_blank', 'noopener,noreferrer');
       } else {
-        toast.error('Faktura nie jest jeszcze dostępna');
+        toast.error(t.plansAndBills.toast.receiptNotAvailable);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Nie udało się pobrać faktury');
+      toast.error(error.message || t.plansAndBills.toast.receiptError);
     }
   };
 
@@ -126,7 +126,7 @@ export function BillingPageWrapper() {
         <div className="space-y-4 text-center">
           <div className="w-12 h-12 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Ładowanie informacji rozliczeniowych...
+            {t.plansAndBills.loading}
           </p>
         </div>
       </div>
@@ -235,10 +235,10 @@ export function BillingPageWrapper() {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-            Plany i faktury
+            {t.plansAndBills.title}
           </h1>
           <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
-            Zarządzaj swoją subskrypcją i informacjami rozliczeniowymi
+            {t.plansAndBills.subtitle}
           </p>
         </div>
       </div>

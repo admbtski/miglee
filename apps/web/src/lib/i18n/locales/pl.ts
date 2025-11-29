@@ -276,6 +276,8 @@ export const pl = {
       analytics: 'Analityka',
       settings: 'Ustawienia',
       cookieSettings: 'Ustawienia cookies',
+      terms: 'Regulamin',
+      privacy: 'Polityka prywatności',
       help: 'Pomoc',
       signOut: 'Wyloguj się',
     },
@@ -395,6 +397,163 @@ export const pl = {
       savePreferences: 'Zapisz preferencje',
       saving: 'Zapisywanie...',
       saved: 'Ustawienia cookies zostały zapisane',
+    },
+  },
+
+  // Analytics
+  analytics: {
+    title: 'Analityka',
+    subtitle: 'Śledź wydajność i zaangażowanie w Twoich wydarzeniach',
+    comingSoon: {
+      title: 'Analityka już wkrótce',
+      description:
+        'Pracujemy nad szczegółową analityką dla Twoich wydarzeń. Śledź wyświetlenia, zaangażowanie i wiele więcej.',
+      button: 'Już wkrótce',
+    },
+  },
+
+  // Plans and Bills
+  plansAndBills: {
+    title: 'Plany i faktury',
+    subtitle: 'Zarządzaj swoją subskrypcją i informacjami rozliczeniowymi',
+    loading: 'Ładowanie informacji rozliczeniowych...',
+    currentPlan: {
+      title: 'Aktualny plan',
+      renewsOn: 'Odnawia się',
+      expiresOn: 'Wygasa',
+      timeToRenewal: 'Czas do odnowienia',
+      timeToExpiry: 'Czas do wygaśnięcia',
+      daysRemaining: 'dni pozostało',
+      day: 'dzień',
+      days: 'dni',
+      willRenewOn: 'Plan odnowi się',
+      willExpireOn: 'Plan wygaśnie',
+      planDetails: 'Szczegóły planu',
+      type: 'Typ',
+      subscription: 'Subskrypcja',
+      oneTime: 'Jednorazowy',
+      period: 'Okres',
+      yearly: 'Roczny',
+      monthly: 'Miesięczny',
+      startDate: 'Data rozpoczęcia',
+      renewal: 'Odnowienie',
+      expiry: 'Wygaśnięcie',
+      upgradePlan: 'Ulepsz plan',
+      changePlan: 'Zmień plan',
+      cancelSubscription: 'Anuluj subskrypcję',
+    },
+    paymentHistory: {
+      title: 'Historia płatności',
+      subtitle: 'Przeglądaj swoją historię rozliczeń i faktury',
+      date: 'Data',
+      description: 'Opis',
+      amount: 'Kwota',
+      status: 'Status',
+      actionsColumn: 'Akcje',
+      to: 'do',
+      active: 'Aktywny',
+      paid: 'Opłacone',
+      pending: 'Oczekujące',
+      failed: 'Nieudane',
+      view: 'Zobacz',
+      receipt: 'Faktura',
+      noHistory: 'Brak historii płatności',
+      noHistoryDescription: 'Gdy dokonasz płatności, pojawią się one tutaj.',
+      plan: 'Plan',
+      event: 'Wydarzenie',
+      actionPackage: 'Pakiet akcji',
+      actions: 'akcje',
+    },
+    cancelModal: {
+      title: 'Anuluj subskrypcję',
+      description:
+        'Twoja subskrypcja pozostanie aktywna do końca bieżącego okresu rozliczeniowego.',
+      confirmButton: 'Anuluj subskrypcję',
+      cancelButton: 'Zachowaj subskrypcję',
+    },
+    toast: {
+      cancelSuccess:
+        'Subskrypcja zostanie anulowana na koniec okresu rozliczeniowego',
+      cancelError: 'Nie udało się anulować subskrypcji',
+      receiptNotAvailable: 'Faktura nie jest jeszcze dostępna',
+      receiptError: 'Nie udało się pobrać faktury',
+    },
+  },
+
+  // Terms of Service
+  termsOfService: {
+    title: 'Regulamin',
+    subtitle: 'Zapoznaj się z naszymi warunkami świadczenia usług',
+    downloadPdf: 'Pobierz PDF',
+    selectLanguage: 'Wybierz język:',
+    english: 'Angielski',
+    polish: 'Polski',
+    german: 'Niemiecki',
+    lastUpdated: 'Ostatnia aktualizacja:',
+    viewOnline: 'Zobacz online',
+  },
+
+  // Privacy Policy
+  privacyPolicy: {
+    title: 'Polityka prywatności',
+    subtitle: 'Dowiedz się, jak chronimy Twoje dane',
+    downloadPdf: 'Pobierz PDF',
+    selectLanguage: 'Wybierz język:',
+    english: 'Angielski',
+    polish: 'Polski',
+    german: 'Niemiecki',
+    lastUpdated: 'Ostatnia aktualizacja:',
+    viewOnline: 'Zobacz online',
+  },
+
+  // Subscription Plans
+  subscriptionPlans: {
+    title: 'Wybierz swój plan użytkownika',
+    subtitle:
+      'Ulepsz swoje konto, aby odblokować więcej funkcji i rozwijać swoje wydarzenia',
+    billingTypes: {
+      subscription: 'Subskrypcja',
+      monthly: 'Miesięczna',
+      yearly: 'Roczna',
+      save20: 'Oszczędzaj 20%',
+    },
+    tooltips: {
+      subscription:
+        'Subskrypcja: Odnawia się automatycznie co 30 dni. Anuluj kiedy chcesz.',
+      monthly:
+        'Miesięczna: Płatność jednorazowa. Dostęp na 30 dni bez auto-odnowienia.',
+      yearly:
+        'Roczna: Płatność jednorazowa. Dostęp na 12 miesięcy. Oszczędzasz 20%!',
+    },
+    badges: {
+      autoRenewal: 'Auto-renewal',
+      noSubscription: 'No subscription',
+      oneTimeCharge: 'One-time charge',
+      mostPopular: 'NAJPOPULARNIEJSZY',
+      activePlan: 'AKTYWNY PLAN',
+    },
+    priceLabels: {
+      perMonth: '/ miesiąc',
+      perYear: '/ rok',
+      saveYearly: 'Oszczędzasz',
+      yearly: 'rocznie',
+    },
+    buttons: {
+      activePlan: 'Aktywny plan',
+      freePlan: 'Plan podstawowy',
+      selectPlan: 'Wybierz plan',
+    },
+    features: {
+      included: 'Co zawiera',
+      joinQuestions: 'Pytania przed dołączeniem',
+      noJoinQuestions: 'Brak pytań przed dołączeniem',
+    },
+    infoBanner: {
+      subscriptionNote:
+        'Wszystkie plany subskrypcyjne można anulować w dowolnym momencie.',
+      onetimeNote:
+        'Wszystkie płatności jednorazowe są ostateczne. Wybierz plan najlepiej dopasowany do Twoich potrzeb.',
+      important: 'Ważne:',
     },
   },
 } as const;
