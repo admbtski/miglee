@@ -342,6 +342,43 @@ async function handleSubscriptionUpdate(
 
   const { userId, plan, billingPeriod } = metadata;
 
+  // Log field availability for debugging
+  logger.info(
+    {
+      subscriptionId: subscription.id,
+      has_current_period_start: 'current_period_start' in subscription,
+      has_current_period_end: 'current_period_end' in subscription,
+      current_period_start_value: (subscription as any).current_period_start,
+      current_period_end_value: (subscription as any).current_period_end,
+      billing_cycle_anchor: subscription.billing_cycle_anchor,
+      created: subscription.created,
+      item_current_period_start:
+        subscription.items.data[0]?.current_period_start,
+      item_current_period_end: subscription.items.data[0]?.current_period_end,
+    },
+    'Subscription period fields check'
+  );
+
+  // Use subscription item periods or fallback to billing cycle
+  const currentPeriodStart =
+    (subscription as any).current_period_start ||
+    subscription.items.data[0]?.current_period_start ||
+    subscription.billing_cycle_anchor ||
+    subscription.created;
+
+  const currentPeriodEnd =
+    (subscription as any).current_period_end ||
+    subscription.items.data[0]?.current_period_end ||
+    subscription.billing_cycle_anchor;
+
+  if (!currentPeriodStart || !currentPeriodEnd) {
+    logger.error(
+      { subscription },
+      'Cannot determine subscription period - skipping'
+    );
+    return;
+  }
+
   // Update UserSubscription
   await prisma.userSubscription.upsert({
     where: { stripeSubscriptionId: subscription.id },
@@ -353,32 +390,24 @@ async function handleSubscriptionUpdate(
       stripeCustomerId: subscription.customer as string,
       stripeSubscriptionId: subscription.id,
       stripePriceId: subscription.items.data[0]?.price.id,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      trialEndsAt: subscription.trial_end
-        ? new Date(subscription.trial_end * 1000)
-        : null,
+      currentPeriodStart: new Date(currentPeriodStart * 1000),
+      currentPeriodEnd: new Date(currentPeriodEnd * 1000),
+      trialEndsAt: null, // NO TRIAL
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     },
     update: {
       status: subscription.status.toUpperCase() as any,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      trialEndsAt: subscription.trial_end
-        ? new Date(subscription.trial_end * 1000)
-        : null,
+      currentPeriodStart: new Date(currentPeriodStart * 1000),
+      currentPeriodEnd: new Date(currentPeriodEnd * 1000),
+      trialEndsAt: null, // NO TRIAL
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     },
   });
 
-  // Create/update UserPlanPeriod for active subscription
+  // Create/update UserPlanPeriod for active subscription (NO TRIAL)
   if (['active', 'trialing'].includes(subscription.status)) {
-    const startsAt = subscription.trial_start
-      ? new Date(subscription.trial_start * 1000)
-      : new Date(subscription.current_period_start * 1000);
-    const endsAt = subscription.trial_end
-      ? new Date(subscription.trial_end * 1000)
-      : new Date(subscription.current_period_end * 1000);
+    const startsAt = new Date(currentPeriodStart * 1000);
+    const endsAt = new Date(currentPeriodEnd * 1000);
 
     // Get amount and currency from subscription price
     const priceData = subscription.items.data[0]?.price;

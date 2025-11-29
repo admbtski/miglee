@@ -150,7 +150,7 @@ export async function createSubscriptionCheckout(
     billingPeriod,
   };
 
-  // Create checkout session
+  // Create checkout session - NO TRIAL
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
@@ -160,14 +160,9 @@ export async function createSubscriptionCheckout(
         quantity: 1,
       },
     ],
-    subscription_data: withTrial
-      ? {
-          trial_period_days: TRIAL_DAYS[plan],
-          metadata,
-        }
-      : {
-          metadata,
-        },
+    subscription_data: {
+      metadata,
+    },
     metadata,
     success_url: getCheckoutSuccessUrl(
       config.appUrl,

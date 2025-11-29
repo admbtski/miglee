@@ -53,7 +53,7 @@ export function AccountCheckoutPanel({
           input: {
             plan: plan as any, // GraphQL enum
             billingPeriod: 'MONTHLY' as any, // GraphQL enum
-            withTrial: true, // 7-14 day trial
+            withTrial: false, // NO TRIAL - immediate payment
           },
         });
 

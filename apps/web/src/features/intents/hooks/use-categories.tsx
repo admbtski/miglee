@@ -40,8 +40,9 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import { useGetCategoriesQuery } from '@/lib/api/categories';
+import { Locale, useI18n } from '@/lib/i18n/provider-ssr';
+import { useEffect, useMemo, useState } from 'react';
 
 // =============================================================================
 // Types
@@ -75,6 +76,7 @@ export const getUseCategoriesLimitData = () => 25;
  */
 export function useCategories(query: string, initial?: CategoryOption[]) {
   const [debounced, setDebounced] = useState(() => query.trim());
+  const { locale } = useI18n();
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 300);
@@ -97,9 +99,9 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
     return categories.map((c) => ({
       id: c.id,
       slug: c.slug,
-      label: pickCategoryName(c.names, c.slug),
+      label: pickCategoryName(c.names, c.slug, locale),
     }));
-  }, [data]);
+  }, [data, locale]);
 
   const options: CategoryOption[] = useMemo(() => {
     if (optionsFromApi.length > 0) return optionsFromApi;
@@ -119,14 +121,12 @@ export function useCategories(query: string, initial?: CategoryOption[]) {
 
 function pickCategoryName(
   names: Record<string, unknown> | null | undefined,
-  slug?: string
+  slug?: string,
+  locale?: Locale
 ): string {
   if (names && typeof names === 'object') {
-    const order = ['pl', 'en', 'de'];
-    for (const key of order) {
-      const v = names[key];
-      if (typeof v === 'string' && v.trim().length > 0) return v;
-    }
+    const v = names[locale || 'en'];
+    if (typeof v === 'string' && v.trim().length > 0) return v;
   }
   return slug ?? '—';
 }

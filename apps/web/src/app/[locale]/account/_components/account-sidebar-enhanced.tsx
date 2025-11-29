@@ -21,10 +21,12 @@ import {
   SettingsIcon,
   UserIcon,
   Sparkles,
+  Cookie,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 interface NavItem {
   id: string;
@@ -41,126 +43,159 @@ interface NavGroup {
   defaultOpen?: boolean;
 }
 
-// Grouped navigation items
-const NAV_GROUPS: NavGroup[] = [
-  {
-    id: 'profile',
-    label: 'Profile',
-    icon: UserIcon,
-    defaultOpen: true,
-    items: [
-      {
-        id: 'view',
-        label: 'View Profile',
-        href: '/account/view',
-        icon: Eye,
-      },
-      {
-        id: 'profile-settings',
-        label: 'Edit Profile',
-        href: '/account/profile',
-        icon: UserIcon,
-      },
-    ],
-  },
-  {
-    id: 'events',
-    label: 'Events & Activity',
-    icon: Calendar1Icon,
-    defaultOpen: true,
-    items: [
-      {
-        id: 'intents',
-        label: 'My Events',
-        href: '/account/intents',
-        icon: Calendar1Icon,
-      },
-      {
-        id: 'favourites',
-        label: 'Favourites',
-        href: '/account/favourites',
-        icon: Heart,
-      },
-    ],
-  },
-  {
-    id: 'communication',
-    label: 'Communication',
-    icon: MessagesSquareIcon,
-    defaultOpen: true,
-    items: [
-      {
-        id: 'chats',
-        label: 'Chats',
-        href: '/account/chats',
-        icon: MessagesSquareIcon,
-      },
-      {
-        id: 'notifications',
-        label: 'Notifications',
-        href: '/account/notifications',
-        icon: Bell,
-      },
-    ],
-  },
-  {
-    id: 'account-settings',
-    label: 'Account & Settings',
-    icon: SettingsIcon,
-    defaultOpen: false,
-    items: [
-      {
-        id: 'subscription',
-        label: 'Subscription',
-        href: '/account/subscription',
-        icon: Sparkles,
-      },
-      {
-        id: 'analytics',
-        label: 'Analytics',
-        href: '/account/analytics',
-        icon: BarChart3,
-      },
-      {
-        id: 'plans-and-bills',
-        label: 'Plans & Bills',
-        href: '/account/plans-and-bills',
-        icon: CreditCardIcon,
-      },
-      {
-        id: 'settings',
-        label: 'Settings',
-        href: '/account/settings',
-        icon: SettingsIcon,
-      },
-      {
-        id: 'help',
-        label: 'Help',
-        href: '/account/help',
-        icon: HelpCircle,
-      },
-    ],
-  },
-];
-
-/**
- * AccountSidebarEnhanced - Advanced sidebar with collapse/expand functionality
- *
- * Features:
- * - 100vh height with internal scroll
- * - Collapsed/Expanded modes
- * - Grouped navigation with collapsible sections
- * - Sticky top (logo + toggle) and bottom (user zone)
- * - Scrollable middle section
- * - Smooth animations
- * - Tooltips in collapsed mode
- */
 export function AccountSidebarEnhanced() {
   const pathname = usePathname();
   const router = useRouter();
   const { localePath } = useLocalePath();
+  const { t } = useI18n();
   const { data: authData } = useMeQuery();
   const user = authData?.me;
+
+  const NAV_GROUPS: NavGroup[] = [
+    // ─────────────────────────────────────────
+    // 1. PERSONAL
+    // ─────────────────────────────────────────
+    {
+      id: 'personal',
+      label: t.accountNav.groups.personal,
+      icon: UserIcon,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'view',
+          label: t.accountNav.items.viewProfile,
+          href: '/account/view',
+          icon: Eye,
+        },
+        {
+          id: 'edit-profile',
+          label: t.accountNav.items.editProfile,
+          href: '/account/profile',
+          icon: UserIcon,
+        },
+      ],
+    },
+
+    // ─────────────────────────────────────────
+    // 2. ACTIVITY
+    // ─────────────────────────────────────────
+    {
+      id: 'activity',
+      label: t.accountNav.groups.activity,
+      icon: Calendar1Icon,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'my-events',
+          label: t.accountNav.items.myEvents,
+          href: '/account/intents',
+          icon: Calendar1Icon,
+        },
+        {
+          id: 'favourites',
+          label: t.accountNav.items.favourites,
+          href: '/account/favourites',
+          icon: Heart,
+        },
+      ],
+    },
+
+    // ─────────────────────────────────────────
+    // 3. COMMUNICATION
+    // ─────────────────────────────────────────
+    {
+      id: 'communication',
+      label: t.accountNav.groups.communication,
+      icon: MessagesSquareIcon,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'chats',
+          label: t.accountNav.items.chats,
+          href: '/account/chats',
+          icon: MessagesSquareIcon,
+        },
+        {
+          id: 'notifications',
+          label: t.accountNav.items.notifications,
+          href: '/account/notifications',
+          icon: Bell,
+        },
+      ],
+    },
+
+    // ─────────────────────────────────────────
+    // 4. BILLING
+    // ─────────────────────────────────────────
+    {
+      id: 'billing',
+      label: t.accountNav.groups.billing,
+      icon: CreditCardIcon,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'subscription',
+          label: t.accountNav.items.subscription,
+          href: '/account/subscription',
+          icon: Sparkles,
+        },
+        {
+          id: 'plans-and-bills',
+          label: t.accountNav.items.plansAndBills,
+          href: '/account/plans-and-bills',
+          icon: CreditCardIcon,
+        },
+      ],
+    },
+
+    // ─────────────────────────────────────────
+    // 5. ADVANCED TOOLS
+    // ─────────────────────────────────────────
+    {
+      id: 'tools',
+      label: t.accountNav.groups.tools,
+      icon: BarChart3,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'analytics',
+          label: t.accountNav.items.analytics,
+          href: '/account/analytics',
+          icon: BarChart3,
+        },
+      ],
+    },
+
+    // ─────────────────────────────────────────
+    // 6. SETTINGS & SUPPORT
+    // ─────────────────────────────────────────
+    {
+      id: 'settings-support',
+      label: t.accountNav.groups.settingsSupport,
+      icon: SettingsIcon,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'settings',
+          label: t.accountNav.items.settings,
+          href: '/account/settings',
+          icon: SettingsIcon,
+        },
+        {
+          id: 'cookie-settings',
+          label: t.accountNav.items.cookieSettings,
+          href: '/account/cookie-settings',
+          icon: Cookie,
+        },
+        {
+          id: 'help',
+          label: t.accountNav.items.help,
+          href: '/account/help',
+          icon: HelpCircle,
+        },
+      ],
+    },
+  ];
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -190,7 +225,8 @@ export function AccountSidebarEnhanced() {
   };
 
   const isActive = (item: NavItem) => {
-    return pathname.startsWith(item.href);
+    const fullHref = localePath(item.href);
+    return pathname.startsWith(fullHref);
   };
 
   return (
@@ -274,9 +310,9 @@ export function AccountSidebarEnhanced() {
                           : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <GroupIcon className="w-4 h-4" />
-                        <span>{group.label}</span>
+                      <div className="flex items-center gap-2 truncate">
+                        <GroupIcon className="w-4 h-4 shrink-0" />
+                        <span className="truncate">{group.label}</span>
                       </div>
                       <motion.div
                         animate={{ rotate: isGroupOpen ? 0 : -90 }}
@@ -324,7 +360,7 @@ export function AccountSidebarEnhanced() {
                                     animate={{ opacity: 1, width: 'auto' }}
                                     exit={{ opacity: 0, width: 0 }}
                                     transition={{ duration: 0.2 }}
-                                    className="overflow-hidden whitespace-nowrap"
+                                    className="overflow-hidden whitespace-nowrap truncate"
                                   >
                                     {item.label}
                                   </motion.span>
@@ -417,7 +453,7 @@ export function AccountSidebarEnhanced() {
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all"
                 >
                   <LogOut className="flex-shrink-0 w-5 h-5" />
-                  <span>Sign out</span>
+                  <span>{t.accountNav.items.signOut}</span>
                 </button>
               </motion.div>
             ) : (

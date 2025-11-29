@@ -84,4 +84,136 @@ export const pl = {
     account: 'Konto',
     settings: 'Ustawienia',
   },
+
+  // Account Sidebar Navigation
+  accountNav: {
+    groups: {
+      personal: 'Twój profil',
+      activity: 'Wydarzenia i aktywność',
+      communication: 'Komunikacja',
+      billing: 'Subskrypcja i rozliczenia',
+      tools: 'Zaawansowane narzędzia',
+      settingsSupport: 'Ustawienia i wsparcie',
+    },
+    items: {
+      viewProfile: 'Zobacz profil',
+      editProfile: 'Edytuj profil',
+      myEvents: 'Moje wydarzenia',
+      favourites: 'Ulubione',
+      chats: 'Czaty',
+      notifications: 'Powiadomienia',
+      subscription: 'Subskrypcja',
+      plansAndBills: 'Plany i faktury',
+      analytics: 'Analityka',
+      settings: 'Ustawienia',
+      cookieSettings: 'Ustawienia cookies',
+      help: 'Pomoc',
+      signOut: 'Wyloguj się',
+    },
+  },
+
+  // Help & Support
+  help: {
+    title: 'Pomoc i wsparcie',
+    subtitle: 'Uzyskaj pomoc dotyczącą swojego konta i wydarzeń',
+    form: {
+      title: 'Kontakt z pomocą techniczną',
+      subtitle: 'Wypełnij formularz poniżej, a odpowiemy w ciągu 24 godzin',
+      category: {
+        label: 'Kategoria',
+        placeholder: 'Wybierz kategorię...',
+        account: 'Konto i profil',
+        events: 'Wydarzenia i aktywności',
+        billing: 'Rozliczenia i subskrypcja',
+        technical: 'Problem techniczny',
+        other: 'Inne',
+      },
+      subject: {
+        label: 'Temat',
+        placeholder: 'Krótki opis problemu',
+      },
+      message: {
+        label: 'Wiadomość',
+        placeholder: 'Opisz szczegółowo swój problem...',
+      },
+      responseTime: 'Zazwyczaj odpowiadamy w ciągu 24 godzin',
+      submit: 'Wyślij wiadomość',
+      sending: 'Wysyłanie...',
+      success:
+        'Twoja wiadomość została wysłana! Wkrótce się z Tobą skontaktujemy.',
+      error: 'Proszę wypełnić wszystkie pola',
+    },
+    contact: {
+      emailTitle: 'Wsparcie email',
+      emailDescription: 'Wolisz email? Wyślij nam wiadomość bezpośrednio',
+      faqTitle: 'Najczęstsze pytania',
+      faqItems: {
+        createEvent: 'Jak stworzyć wydarzenie?',
+        manageSubscription: 'Zarządzanie subskrypcją',
+        privacy: 'Prywatność i bezpieczeństwo',
+        paymentIssues: 'Problemy z płatnościami',
+      },
+    },
+  },
+
+  // Cookie Settings
+  cookies: {
+    title: 'Ustawienia cookies',
+    subtitle: 'Zarządzaj preferencjami cookies i ustawieniami prywatności',
+    about: {
+      title: 'O cookies',
+      description:
+        'Używamy plików cookie, aby poprawić Twoje wrażenia z korzystania z naszej witryny. Możesz wybrać, które kategorie plików cookie chcesz zezwolić. Niezbędne pliki cookie są zawsze włączone, ponieważ są konieczne do prawidłowego działania witryny.',
+    },
+    categories: {
+      essential: {
+        name: 'Niezbędne pliki cookie',
+        description:
+          'Te pliki cookie są niezbędne do działania witryny i nie można ich wyłączyć. Są one zazwyczaj ustawiane tylko w odpowiedzi na Twoje działania.',
+        required: '(Wymagane)',
+        examples: {
+          session: 'Pliki cookie sesji',
+          security: 'Tokeny bezpieczeństwa',
+          loadBalancing: 'Równoważenie obciążenia',
+        },
+      },
+      analytics: {
+        name: 'Pliki cookie analityczne',
+        description:
+          'Te pliki cookie pozwalają nam liczyć wizyty i źródła ruchu, dzięki czemu możemy mierzyć i poprawiać wydajność naszej witryny.',
+        examples: {
+          googleAnalytics: 'Google Analytics',
+          pageViews: 'Śledzenie wyświetleń stron',
+          userBehavior: 'Zachowanie użytkowników',
+        },
+      },
+      marketing: {
+        name: 'Pliki cookie marketingowe',
+        description:
+          'Te pliki cookie mogą być ustawiane przez naszą witrynę przez naszych partnerów reklamowych. Mogą być używane do budowania profilu Twoich zainteresowań.',
+        examples: {
+          adTargeting: 'Targetowanie reklam',
+          socialMedia: 'Piksele mediów społecznościowych',
+          remarketing: 'Remarketing',
+        },
+      },
+      preferences: {
+        name: 'Pliki cookie preferencji',
+        description:
+          'Te pliki cookie umożliwiają witrynie zapewnienie ulepszonej funkcjonalności i personalizacji na podstawie Twoich interakcji.',
+        examples: {
+          language: 'Ustawienia języka',
+          theme: 'Preferencje motywu',
+          region: 'Ustawienia regionu',
+        },
+      },
+    },
+    actions: {
+      acceptAll: 'Zaakceptuj wszystkie',
+      rejectAll: 'Odrzuć wszystkie',
+      savePreferences: 'Zapisz preferencje',
+      saving: 'Zapisywanie...',
+      saved: 'Ustawienia cookies zostały zapisane',
+    },
+  },
 } as const;

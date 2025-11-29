@@ -10,6 +10,11 @@ import {
   Bell,
   Heart,
   ListCollapseIcon,
+  Eye,
+  Sparkles,
+  BarChart3,
+  HelpCircle,
+  Cookie,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -18,6 +23,8 @@ import { useMeQuery } from '@/lib/api/auth';
 import { Avatar } from '@/components/ui/avatar';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 type NavItem = {
   key: string;
@@ -26,51 +33,6 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   tone?: 'danger';
 };
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    key: 'profile',
-    label: 'Profile',
-    href: '/account/profile',
-    icon: UserIcon,
-  },
-  {
-    key: 'intents',
-    label: 'My Events',
-    href: '/account/intents',
-    icon: Calendar1Icon,
-  },
-  {
-    key: 'favourites',
-    label: 'Favourites',
-    href: '/account/favourites',
-    icon: Heart,
-  },
-  {
-    key: 'chats',
-    label: 'Chats',
-    href: '/account/chats',
-    icon: MessagesSquareIcon,
-  },
-  {
-    key: 'notifications',
-    label: 'Notifications',
-    href: '/account/notifications',
-    icon: Bell,
-  },
-  {
-    key: 'plans-and-bills',
-    label: 'Plans & Bills',
-    href: '/account/plans-and-bills',
-    icon: CreditCardIcon,
-  },
-  {
-    key: 'settings',
-    label: 'Settings',
-    href: '/account/settings',
-    icon: SettingsIcon,
-  },
-];
 
 type AccountMobileSidebarProps = {
   open: boolean;
@@ -88,14 +50,114 @@ export function AccountMobileSidebar({
 }: AccountMobileSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { localePath } = useLocalePath();
+  const { t } = useI18n();
   const { data: authData } = useMeQuery();
   const user = authData?.me;
+
+  const NAV_ITEMS: NavItem[] = [
+    // ─────────────────────────────
+    // PERSONAL
+    // ─────────────────────────────
+    {
+      key: 'view',
+      label: t.accountNav.items.viewProfile,
+      href: '/account/view',
+      icon: Eye,
+    },
+    {
+      key: 'edit-profile',
+      label: t.accountNav.items.editProfile,
+      href: '/account/profile',
+      icon: UserIcon,
+    },
+
+    // ─────────────────────────────
+    // ACTIVITY
+    // ─────────────────────────────
+    {
+      key: 'my-events',
+      label: t.accountNav.items.myEvents,
+      href: '/account/intents',
+      icon: Calendar1Icon,
+    },
+    {
+      key: 'favourites',
+      label: t.accountNav.items.favourites,
+      href: '/account/favourites',
+      icon: Heart,
+    },
+
+    // ─────────────────────────────
+    // COMMUNICATION
+    // ─────────────────────────────
+    {
+      key: 'chats',
+      label: t.accountNav.items.chats,
+      href: '/account/chats',
+      icon: MessagesSquareIcon,
+    },
+    {
+      key: 'notifications',
+      label: t.accountNav.items.notifications,
+      href: '/account/notifications',
+      icon: Bell,
+    },
+
+    // ─────────────────────────────
+    // BILLING
+    // ─────────────────────────────
+    {
+      key: 'subscription',
+      label: t.accountNav.items.subscription,
+      href: '/account/subscription',
+      icon: Sparkles,
+    },
+    {
+      key: 'plans-and-bills',
+      label: t.accountNav.items.plansAndBills,
+      href: '/account/plans-and-bills',
+      icon: CreditCardIcon,
+    },
+
+    // ─────────────────────────────
+    // ADVANCED TOOLS
+    // ─────────────────────────────
+    {
+      key: 'analytics',
+      label: t.accountNav.items.analytics,
+      href: '/account/analytics',
+      icon: BarChart3,
+    },
+
+    // ─────────────────────────────
+    // SETTINGS & SUPPORT
+    // ─────────────────────────────
+    {
+      key: 'settings',
+      label: t.accountNav.items.settings,
+      href: '/account/settings',
+      icon: SettingsIcon,
+    },
+    {
+      key: 'cookie-settings',
+      label: t.accountNav.items.cookieSettings,
+      href: '/account/cookie-settings',
+      icon: Cookie,
+    },
+    {
+      key: 'help',
+      label: t.accountNav.items.help,
+      href: '/account/help',
+      icon: HelpCircle,
+    },
+  ];
 
   const handleLogout = useCallback(() => {
     onClose();
     // TODO: Implement real logout
-    router.push('/');
-  }, [router, onClose]);
+    router.push(localePath('/'));
+  }, [router, onClose, localePath]);
 
   // Close on route change
   useEffect(() => {
@@ -138,7 +200,7 @@ export function AccountMobileSidebar({
             {/* Top section: Logo + Close button */}
             <div className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 dark:border-zinc-800">
               <Link
-                href="/"
+                href={localePath('/')}
                 className="flex items-center gap-2"
                 onClick={onClose}
               >
@@ -164,17 +226,16 @@ export function AccountMobileSidebar({
             <nav className="flex-1 overflow-y-auto px-3 py-4">
               <div className="space-y-1">
                 {NAV_ITEMS.map((item) => {
-                  const isActive = item.href
-                    ? pathname.startsWith(item.href)
-                    : false;
-                  const Icon = item.icon;
-
                   if (!item.href) return null;
+
+                  const fullHref = localePath(item.href);
+                  const isActive = pathname.startsWith(fullHref);
+                  const Icon = item.icon;
 
                   return (
                     <Link
                       key={item.key}
-                      href={item.href}
+                      href={fullHref}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                         isActive
                           ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300'
@@ -216,7 +277,7 @@ export function AccountMobileSidebar({
                 className="mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all"
               >
                 <LogOut className="h-5 w-5 flex-shrink-0" />
-                <span>Sign out</span>
+                <span>{t.accountNav.items.signOut}</span>
               </button>
             </div>
           </motion.aside>

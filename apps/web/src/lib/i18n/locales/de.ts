@@ -84,4 +84,138 @@ export const de = {
     account: 'Konto',
     settings: 'Einstellungen',
   },
+
+  // Account Sidebar Navigation
+  accountNav: {
+    groups: {
+      personal: 'Ihr Profil',
+      activity: 'Veranstaltungen & Aktivität',
+      communication: 'Kommunikation',
+      billing: 'Abonnement & Abrechnung',
+      tools: 'Erweiterte Tools',
+      settingsSupport: 'Einstellungen & Support',
+    },
+    items: {
+      viewProfile: 'Profil anzeigen',
+      editProfile: 'Profil bearbeiten',
+      myEvents: 'Meine Veranstaltungen',
+      favourites: 'Favoriten',
+      chats: 'Chats',
+      notifications: 'Benachrichtigungen',
+      subscription: 'Abonnement',
+      plansAndBills: 'Pläne & Rechnungen',
+      analytics: 'Analytik',
+      settings: 'Einstellungen',
+      cookieSettings: 'Cookie-Einstellungen',
+      help: 'Hilfe',
+      signOut: 'Abmelden',
+    },
+  },
+
+  // Help & Support
+  help: {
+    title: 'Hilfe & Unterstützung',
+    subtitle: 'Erhalten Sie Hilfe zu Ihrem Konto und Veranstaltungen',
+    form: {
+      title: 'Support kontaktieren',
+      subtitle:
+        'Füllen Sie das Formular aus und wir antworten innerhalb von 24 Stunden',
+      category: {
+        label: 'Kategorie',
+        placeholder: 'Wählen Sie eine Kategorie...',
+        account: 'Konto & Profil',
+        events: 'Veranstaltungen & Aktivitäten',
+        billing: 'Abrechnung & Abonnement',
+        technical: 'Technisches Problem',
+        other: 'Andere',
+      },
+      subject: {
+        label: 'Betreff',
+        placeholder: 'Kurze Beschreibung Ihres Problems',
+      },
+      message: {
+        label: 'Nachricht',
+        placeholder: 'Bitte beschreiben Sie Ihr Problem im Detail...',
+      },
+      responseTime: 'Wir antworten normalerweise innerhalb von 24 Stunden',
+      submit: 'Nachricht senden',
+      sending: 'Wird gesendet...',
+      success: 'Ihre Nachricht wurde gesendet! Wir melden uns bald bei Ihnen.',
+      error: 'Bitte füllen Sie alle Felder aus',
+    },
+    contact: {
+      emailTitle: 'E-Mail-Support',
+      emailDescription:
+        'Bevorzugen Sie E-Mail? Senden Sie uns direkt eine Nachricht',
+      faqTitle: 'Häufige Fragen',
+      faqItems: {
+        createEvent: 'Wie erstelle ich eine Veranstaltung?',
+        manageSubscription: 'Abonnements verwalten',
+        privacy: 'Datenschutz & Sicherheit',
+        paymentIssues: 'Zahlungsprobleme',
+      },
+    },
+  },
+
+  // Cookie Settings
+  cookies: {
+    title: 'Cookie-Einstellungen',
+    subtitle:
+      'Verwalten Sie Ihre Cookie-Präferenzen und Datenschutzeinstellungen',
+    about: {
+      title: 'Über Cookies',
+      description:
+        'Wir verwenden Cookies, um Ihre Erfahrung auf unserer Website zu verbessern. Sie können wählen, welche Kategorien von Cookies Sie zulassen möchten. Wesentliche Cookies sind immer aktiviert, da sie für die ordnungsgemäße Funktion der Website erforderlich sind.',
+    },
+    categories: {
+      essential: {
+        name: 'Wesentliche Cookies',
+        description:
+          'Diese Cookies sind für die Funktion der Website erforderlich und können nicht deaktiviert werden. Sie werden in der Regel nur als Reaktion auf Ihre Aktionen gesetzt.',
+        required: '(Erforderlich)',
+        examples: {
+          session: 'Sitzungs-Cookies',
+          security: 'Sicherheitstoken',
+          loadBalancing: 'Lastverteilung',
+        },
+      },
+      analytics: {
+        name: 'Analyse-Cookies',
+        description:
+          'Diese Cookies ermöglichen es uns, Besuche und Verkehrsquellen zu zählen, damit wir die Leistung unserer Website messen und verbessern können.',
+        examples: {
+          googleAnalytics: 'Google Analytics',
+          pageViews: 'Seitenansichten-Tracking',
+          userBehavior: 'Nutzerverhalten',
+        },
+      },
+      marketing: {
+        name: 'Marketing-Cookies',
+        description:
+          'Diese Cookies können von unseren Werbepartnern über unsere Website gesetzt werden. Sie können verwendet werden, um ein Profil Ihrer Interessen zu erstellen.',
+        examples: {
+          adTargeting: 'Anzeigen-Targeting',
+          socialMedia: 'Social-Media-Pixel',
+          remarketing: 'Remarketing',
+        },
+      },
+      preferences: {
+        name: 'Präferenz-Cookies',
+        description:
+          'Diese Cookies ermöglichen es der Website, erweiterte Funktionalität und Personalisierung basierend auf Ihren Interaktionen bereitzustellen.',
+        examples: {
+          language: 'Spracheinstellungen',
+          theme: 'Design-Präferenzen',
+          region: 'Regionseinstellungen',
+        },
+      },
+    },
+    actions: {
+      acceptAll: 'Alle akzeptieren',
+      rejectAll: 'Alle ablehnen',
+      savePreferences: 'Einstellungen speichern',
+      saving: 'Wird gespeichert...',
+      saved: 'Cookie-Einstellungen erfolgreich gespeichert',
+    },
+  },
 } as const;

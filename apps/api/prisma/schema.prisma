@@ -778,7 +778,7 @@ model UserSubscription {
   status        SubscriptionStatus @default(INCOMPLETE)
 
   stripeCustomerId     String
-  stripeSubscriptionId String?
+  stripeSubscriptionId String  @unique
   stripePriceId        String?
 
   currentPeriodStart DateTime?
@@ -794,7 +794,6 @@ model UserSubscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
-  @@index([stripeSubscriptionId])
   @@index([currentPeriodEnd])
   @@map("user_subscriptions")
 }
