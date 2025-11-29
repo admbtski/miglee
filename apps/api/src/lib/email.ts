@@ -16,7 +16,6 @@ interface FeedbackEmailData {
   hasFeedbackQuestions: boolean;
 }
 
-let c = 0;
 /**
  * Send feedback request email
  */

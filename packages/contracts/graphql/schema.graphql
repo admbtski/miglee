@@ -2139,6 +2139,9 @@ type Mutation {
   updateUserLocale(locale: String!): User!
   updateUserTimezone(timezone: String!): User!
 
+  # User Account Deletion
+  deleteMyAccount(reason: String): Boolean!
+
   # User Disciplines
   upsertUserDiscipline(input: UpsertUserDisciplineInput!): UserDiscipline!
   removeUserDiscipline(id: ID!): Boolean!

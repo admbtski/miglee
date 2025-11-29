@@ -1,13 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Globe, Clock, Palette, Check, Loader2 } from 'lucide-react';
+import {
+  Globe,
+  Clock,
+  Palette,
+  Check,
+  Loader2,
+  AlertTriangle,
+} from 'lucide-react';
 import { useTheme } from '@/features/theme/provider/theme-provider';
 import { useUpdateLocale, useUpdateTimezone } from '@/lib/api/user-preferences';
 import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
 import { commonTimezones } from '@/lib/i18n/timezone-provider';
 import { toast } from 'sonner';
 import { TimezoneDropdown } from '@/components/forms/timezone-dropdown';
+import { DeleteAccountModal } from './_components/delete-account-modal';
+import { useDeleteMyAccountMutation } from '@/lib/api/user-delete-account';
 
 // Get current timezone from browser
 function getCurrentTimezone(): string {
@@ -25,10 +34,12 @@ export default function SettingsPage() {
 
   const [selectedTimezone, setSelectedTimezone] =
     useState<string>(currentTimezone);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const { theme, setTheme } = useTheme();
   const { updateLocale, isPending: isLocaleLoading } = useUpdateLocale();
   const { updateTimezone, isPending: isTimezoneLoading } = useUpdateTimezone();
+  const deleteAccount = useDeleteMyAccountMutation();
 
   const handleLocaleChange = async (newLocale: 'en' | 'pl' | 'de') => {
     if (newLocale === locale) return;
@@ -57,6 +68,20 @@ export default function SettingsPage() {
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme);
     toast.success(t.settings.theme.changed);
+  };
+
+  const handleDeleteAccount = async (reason: string) => {
+    try {
+      await deleteAccount.mutateAsync({ reason: reason || undefined });
+      toast.success(t.settings.deleteAccount.modal.success);
+      setIsDeleteModalOpen(false);
+      // Redirect to home or logout after a delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } catch (error) {
+      toast.error(t.settings.deleteAccount.modal.error);
+    }
   };
 
   return (
@@ -197,12 +222,51 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {/* Delete Account Section */}
+      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-red-200 dark:border-red-900/50 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950/30">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              {t.settings.deleteAccount.title}
+            </h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              {t.settings.deleteAccount.description}
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50">
+          <p className="text-sm text-red-800 dark:text-red-300">
+            {t.settings.deleteAccount.warning}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsDeleteModalOpen(true)}
+          className="px-6 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors dark:focus:ring-offset-zinc-900"
+        >
+          {t.settings.deleteAccount.button}
+        </button>
+      </section>
+
       {/* Info Box */}
       <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           <strong>{t.settings.info.tip}:</strong> {t.settings.info.tipMessage}
         </p>
       </div>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+        isDeleting={deleteAccount.isPending}
+      />
     </div>
   );
 }

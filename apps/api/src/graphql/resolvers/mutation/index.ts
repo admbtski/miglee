@@ -201,6 +201,9 @@ import {
   updateUserTimezoneMutation,
 } from './user-profile';
 
+// User Account Deletion
+import { deleteMyAccountMutation } from './delete-my-account';
+
 // Media Upload mutations
 import { getUploadUrl, confirmMediaUpload } from './media';
 
@@ -381,6 +384,9 @@ export const Mutation: Resolvers['Mutation'] = {
   removeUserSocialLink: removeUserSocialLinkMutation,
   updateUserLocale: updateUserLocaleMutation,
   updateUserTimezone: updateUserTimezoneMutation,
+
+  // ---- User Account Deletion ----
+  deleteMyAccount: deleteMyAccountMutation,
 
   // ---- Media Upload ----
   getUploadUrl,

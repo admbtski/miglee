@@ -74,6 +74,28 @@ export const en = {
       saveChanges: 'Save changes',
       reset: 'Reset',
     },
+    deleteAccount: {
+      title: 'Delete Account',
+      description:
+        'Permanently delete your account and all associated data. This action cannot be undone.',
+      warning:
+        'Warning: Deleting your account will remove all your events, messages, and personal data. This action is irreversible.',
+      button: 'Delete Account',
+      modal: {
+        title: 'Delete Account',
+        description:
+          'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted after 30 days.',
+        reasonLabel: 'Reason for deletion (optional)',
+        reasonPlaceholder: 'Tell us why you are leaving...',
+        confirmLabel: 'Type DELETE to confirm',
+        confirmPlaceholder: 'DELETE',
+        cancel: 'Cancel',
+        confirm: 'Delete Account',
+        success: 'Your account has been scheduled for deletion',
+        error: 'Failed to delete account',
+        invalidConfirmation: 'Please type DELETE to confirm',
+      },
+    },
   },
 
   // Navigation

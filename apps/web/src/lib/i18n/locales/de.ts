@@ -75,6 +75,28 @@ export const de = {
       saveChanges: 'Änderungen speichern',
       reset: 'Zurücksetzen',
     },
+    deleteAccount: {
+      title: 'Konto löschen',
+      description:
+        'Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.',
+      warning:
+        'Warnung: Das Löschen Ihres Kontos entfernt alle Ihre Veranstaltungen, Nachrichten und persönlichen Daten. Diese Aktion ist unwiderruflich.',
+      button: 'Konto löschen',
+      modal: {
+        title: 'Konto löschen',
+        description:
+          'Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und alle Ihre Daten werden nach 30 Tagen dauerhaft gelöscht.',
+        reasonLabel: 'Grund für die Löschung (optional)',
+        reasonPlaceholder: 'Sagen Sie uns, warum Sie gehen...',
+        confirmLabel: 'Geben Sie LÖSCHEN ein, um zu bestätigen',
+        confirmPlaceholder: 'LÖSCHEN',
+        cancel: 'Abbrechen',
+        confirm: 'Konto löschen',
+        success: 'Ihr Konto wurde zur Löschung geplant',
+        error: 'Konto konnte nicht gelöscht werden',
+        invalidConfirmation: 'Bitte geben Sie LÖSCHEN ein, um zu bestätigen',
+      },
+    },
   },
 
   // Navigation

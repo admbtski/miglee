@@ -75,6 +75,28 @@ export const pl = {
       saveChanges: 'Zapisz zmiany',
       reset: 'Resetuj',
     },
+    deleteAccount: {
+      title: 'Usuń konto',
+      description:
+        'Trwale usuń swoje konto i wszystkie powiązane dane. Ta akcja jest nieodwracalna.',
+      warning:
+        'Ostrzeżenie: Usunięcie konta spowoduje usunięcie wszystkich wydarzeń, wiadomości i danych osobowych. Ta akcja jest nieodwracalna.',
+      button: 'Usuń konto',
+      modal: {
+        title: 'Usuń konto',
+        description:
+          'Czy na pewno chcesz usunąć swoje konto? Ta akcja jest nieodwracalna i wszystkie dane zostaną trwale usunięte po 30 dniach.',
+        reasonLabel: 'Powód usunięcia (opcjonalnie)',
+        reasonPlaceholder: 'Powiedz nam, dlaczego odchodzisz...',
+        confirmLabel: 'Wpisz USUŃ aby potwierdzić',
+        confirmPlaceholder: 'USUŃ',
+        cancel: 'Anuluj',
+        confirm: 'Usuń konto',
+        success: 'Twoje konto zostało zaplanowane do usunięcia',
+        error: 'Nie udało się usunąć konta',
+        invalidConfirmation: 'Proszę wpisać USUŃ aby potwierdzić',
+      },
+    },
   },
 
   // Navigation
