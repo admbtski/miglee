@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 
 import { WebVitals } from '@/lib/config/web-vitals';
 import { ThemeProvider } from '@/features/theme/provider/theme-provider';
+import { CookieScriptProvider } from '@/components/cookie-consent';
 import { InlineThemeScript } from './scripts/inline/inline-theme-script';
 import '../styles/globals.css';
 
@@ -102,6 +103,9 @@ export default function RootLayout({
       >
         {/* Performance monitoring */}
         <WebVitals />
+
+        {/* Cookie Consent Banner */}
+        <CookieScriptProvider />
 
         {/* Global theme provider - locale and timezone are in [locale]/layout.tsx */}
         <ThemeProvider>{children}</ThemeProvider>

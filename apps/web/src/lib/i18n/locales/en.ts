@@ -329,8 +329,19 @@ export const en = {
     about: {
       title: 'About Cookies',
       description:
-        'We use cookies to improve your experience on our site. You can choose which categories of cookies you want to allow. Essential cookies are always enabled as they are necessary for the site to function properly.',
+        'We use cookies to improve your experience on our site. Click the button below to customize your cookie preferences for each category.',
     },
+    howItWorks: {
+      title: 'How it works',
+      description:
+        'Click the button above to open the cookie consent banner where you can accept, reject, or customize your cookie preferences for each category.',
+    },
+    categoriesTitle: 'Cookie Categories',
+    clickManage:
+      'Click "Manage Cookie Preferences" above to customize your choices.',
+    gdprCompliant: 'GDPR & ePrivacy Compliant',
+    gdprDescription:
+      'We respect your privacy and comply with GDPR and ePrivacy regulations. You have full control over your cookie preferences and can change them at any time.',
     categories: {
       essential: {
         name: 'Essential Cookies',
@@ -375,6 +386,7 @@ export const en = {
       },
     },
     actions: {
+      manageCookies: 'Manage Cookie Preferences',
       acceptAll: 'Accept All',
       rejectAll: 'Reject All',
       savePreferences: 'Save Preferences',

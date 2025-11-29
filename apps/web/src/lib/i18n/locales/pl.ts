@@ -332,8 +332,19 @@ export const pl = {
     about: {
       title: 'O cookies',
       description:
-        'Używamy plików cookie, aby poprawić Twoje wrażenia z korzystania z naszej witryny. Możesz wybrać, które kategorie plików cookie chcesz zezwolić. Niezbędne pliki cookie są zawsze włączone, ponieważ są konieczne do prawidłowego działania witryny.',
+        'Używamy plików cookie, aby poprawić Twoje wrażenia z korzystania z naszej witryny. Kliknij poniższy przycisk, aby dostosować swoje preferencje dotyczące plików cookie dla każdej kategorii.',
     },
+    howItWorks: {
+      title: 'Jak to działa',
+      description:
+        'Kliknij przycisk powyżej, aby otworzyć banner zgody na pliki cookie, w którym możesz zaakceptować, odrzucić lub dostosować swoje preferencje dla każdej kategorii.',
+    },
+    categoriesTitle: 'Kategorie plików cookie',
+    clickManage:
+      'Kliknij "Zarządzaj preferencjami cookies" powyżej, aby dostosować swoje wybory.',
+    gdprCompliant: 'Zgodność z RODO i ePrivacy',
+    gdprDescription:
+      'Szanujemy Twoją prywatność i przestrzegamy przepisów RODO oraz ePrivacy. Masz pełną kontrolę nad swoimi preferencjami dotyczącymi plików cookie i możesz je zmienić w dowolnym momencie.',
     categories: {
       essential: {
         name: 'Niezbędne pliki cookie',
@@ -378,6 +389,7 @@ export const pl = {
       },
     },
     actions: {
+      manageCookies: 'Zarządzaj preferencjami cookies',
       acceptAll: 'Zaakceptuj wszystkie',
       rejectAll: 'Odrzuć wszystkie',
       savePreferences: 'Zapisz preferencje',

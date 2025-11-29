@@ -1,121 +1,52 @@
 'use client';
 
 import { AccountPageHeader } from '../_components';
-import { Cookie, Shield, Eye, BarChart3, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import {
+  Cookie,
+  Shield,
+  Eye,
+  BarChart3,
+  Settings2,
+  ExternalLink,
+  CheckCircle2,
+  Info,
+} from 'lucide-react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
-
-type CookieCategory = 'essential' | 'analytics' | 'marketing' | 'preferences';
-
-interface CookieSettings {
-  essential: boolean;
-  analytics: boolean;
-  marketing: boolean;
-  preferences: boolean;
-}
+import { showCookieBanner } from '@/components/cookie-consent';
 
 export default function CookieSettingsPage() {
   const { t } = useI18n();
-  const [settings, setSettings] = useState<CookieSettings>({
-    essential: true,
-    analytics: true,
-    marketing: false,
-    preferences: true,
-  });
-  const [isSaving, setIsSaving] = useState(false);
 
-  const COOKIE_CATEGORIES = [
+  const handleOpenCookieBanner = () => {
+    showCookieBanner();
+  };
+
+  const COOKIE_INFO = [
     {
-      id: 'essential' as CookieCategory,
-      name: t.cookies.categories.essential.name,
       icon: Shield,
+      title: t.cookies.categories.essential.name,
       description: t.cookies.categories.essential.description,
-      examples: [
-        t.cookies.categories.essential.examples.session,
-        t.cookies.categories.essential.examples.security,
-        t.cookies.categories.essential.examples.loadBalancing,
-      ],
-      disabled: true,
-      required: t.cookies.categories.essential.required,
+      color: 'indigo',
     },
     {
-      id: 'analytics' as CookieCategory,
-      name: t.cookies.categories.analytics.name,
       icon: BarChart3,
+      title: t.cookies.categories.analytics.name,
       description: t.cookies.categories.analytics.description,
-      examples: [
-        t.cookies.categories.analytics.examples.googleAnalytics,
-        t.cookies.categories.analytics.examples.pageViews,
-        t.cookies.categories.analytics.examples.userBehavior,
-      ],
-      disabled: false,
+      color: 'blue',
     },
     {
-      id: 'marketing' as CookieCategory,
-      name: t.cookies.categories.marketing.name,
       icon: Eye,
+      title: t.cookies.categories.marketing.name,
       description: t.cookies.categories.marketing.description,
-      examples: [
-        t.cookies.categories.marketing.examples.adTargeting,
-        t.cookies.categories.marketing.examples.socialMedia,
-        t.cookies.categories.marketing.examples.remarketing,
-      ],
-      disabled: false,
+      color: 'purple',
     },
     {
-      id: 'preferences' as CookieCategory,
-      name: t.cookies.categories.preferences.name,
       icon: Cookie,
+      title: t.cookies.categories.preferences.name,
       description: t.cookies.categories.preferences.description,
-      examples: [
-        t.cookies.categories.preferences.examples.language,
-        t.cookies.categories.preferences.examples.theme,
-        t.cookies.categories.preferences.examples.region,
-      ],
-      disabled: false,
+      color: 'green',
     },
   ];
-
-  const handleToggle = (category: CookieCategory) => {
-    if (category === 'essential') return; // Cannot toggle essential cookies
-
-    setSettings((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
-
-  const handleSaveSettings = async () => {
-    setIsSaving(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Save to localStorage
-    localStorage.setItem('cookieSettings', JSON.stringify(settings));
-
-    toast.success(t.cookies.actions.saved);
-    setIsSaving(false);
-  };
-
-  const handleAcceptAll = () => {
-    setSettings({
-      essential: true,
-      analytics: true,
-      marketing: true,
-      preferences: true,
-    });
-  };
-
-  const handleRejectAll = () => {
-    setSettings({
-      essential: true,
-      analytics: false,
-      marketing: false,
-      preferences: false,
-    });
-  };
 
   return (
     <div className="space-y-8">
@@ -124,143 +55,127 @@ export default function CookieSettingsPage() {
         description={t.cookies.subtitle}
       />
 
-      {/* Overview Card */}
-      <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-6 dark:from-indigo-900/20 dark:to-violet-900/20 dark:border-indigo-800">
-        <div className="flex items-start gap-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600 dark:bg-indigo-500">
-            <Cookie className="w-6 h-6 text-white" />
+      {/* Main Card - Manage Cookies */}
+      <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-8 dark:from-indigo-900/20 dark:to-violet-900/20 dark:border-indigo-800">
+        <div className="flex flex-col sm:flex-row items-start gap-6">
+          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 dark:bg-indigo-500 shrink-0">
+            <Cookie className="w-8 h-8 text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-3">
               {t.cookies.about.title}
             </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
               {t.cookies.about.description}
+            </p>
+            <button
+              onClick={handleOpenCookieBanner}
+              className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors rounded-xl shadow-lg hover:shadow-xl"
+            >
+              <Settings2 className="w-5 h-5" />
+              Manage Cookie Preferences
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Box */}
+      <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 dark:bg-blue-900/10 dark:border-blue-900/30">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
+              {t.cookies.howItWorks.title}
+            </h4>
+            <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+              {t.cookies.howItWorks.description}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Cookie Categories */}
-      <div className="space-y-4">
-        {COOKIE_CATEGORIES.map((category) => {
-          const Icon = category.icon;
-          const isEnabled = settings[category.id];
+      {/* Cookie Categories Info */}
+      <div>
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+          {t.cookies.categoriesTitle}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {COOKIE_INFO.map((category) => {
+            const Icon = category.icon;
 
-          return (
-            <div
-              key={category.id}
-              className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800"
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div
-                      className={`flex items-center justify-center w-10 h-10 rounded-lg ${
-                        isEnabled
-                          ? 'bg-indigo-100 dark:bg-indigo-900/30'
-                          : 'bg-zinc-100 dark:bg-zinc-800'
-                      }`}
-                    >
-                      <Icon
-                        className={`w-5 h-5 ${
-                          isEnabled
-                            ? 'text-indigo-600 dark:text-indigo-400'
-                            : 'text-zinc-400 dark:text-zinc-600'
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                          {category.name}
-                        </h3>
-                        {category.disabled && category.required && (
-                          <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                            {category.required}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-                        {category.description}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {category.examples.map((example) => (
-                          <span
-                            key={example}
-                            className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                          >
-                            {example}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+            type ColorKey = 'indigo' | 'blue' | 'purple' | 'green';
+            const colorClasses: Record<ColorKey, { bg: string; text: string }> =
+              {
+                indigo: {
+                  bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+                  text: 'text-indigo-600 dark:text-indigo-400',
+                },
+                blue: {
+                  bg: 'bg-blue-100 dark:bg-blue-900/30',
+                  text: 'text-blue-600 dark:text-blue-400',
+                },
+                purple: {
+                  bg: 'bg-purple-100 dark:bg-purple-900/30',
+                  text: 'text-purple-600 dark:text-purple-400',
+                },
+                green: {
+                  bg: 'bg-green-100 dark:bg-green-900/30',
+                  text: 'text-green-600 dark:text-green-400',
+                },
+              };
 
-                  {/* Toggle Switch */}
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(category.id)}
-                    disabled={category.disabled}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                      isEnabled
-                        ? 'bg-indigo-600'
-                        : 'bg-zinc-200 dark:bg-zinc-700'
-                    } ${category.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    role="switch"
-                    aria-checked={isEnabled}
+            const colorClass = colorClasses[category.color as ColorKey];
+
+            return (
+              <div
+                key={category.title}
+                className="bg-white border border-zinc-200 rounded-xl p-5 dark:bg-zinc-900 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 rounded-lg shrink-0 ${colorClass.bg}`}
                   >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        isEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
+                    <Icon className={`w-5 h-5 ${colorClass.text}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                      {category.title}
+                    </h4>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                      {category.description}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400 text-center">
+          {t.cookies.clickManage}
+        </p>
       </div>
 
-      {/* Action Buttons */}
-      <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm p-6 dark:bg-zinc-900 dark:border-zinc-800">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleAcceptAll}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 transition-colors"
+      {/* GDPR Info */}
+      <div className="bg-white border border-zinc-200 rounded-xl p-6 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="flex items-start gap-4">
+          <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+              {t.cookies.gdprCompliant}
+            </h4>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              {t.cookies.gdprDescription}
+            </p>
+            <a
+              href="https://cookie-script.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
             >
-              {t.cookies.actions.acceptAll}
-            </button>
-            <button
-              type="button"
-              onClick={handleRejectAll}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 transition-colors"
-            >
-              {t.cookies.actions.rejectAll}
-            </button>
+              Powered by CookieScript
+              <ExternalLink className="w-4 h-4" />
+            </a>
           </div>
-
-          <button
-            type="button"
-            onClick={handleSaveSettings}
-            disabled={isSaving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:focus:ring-offset-zinc-900"
-          >
-            {isSaving ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                {t.cookies.actions.saving}
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                {t.cookies.actions.savePreferences}
-              </>
-            )}
-          </button>
         </div>
       </div>
     </div>

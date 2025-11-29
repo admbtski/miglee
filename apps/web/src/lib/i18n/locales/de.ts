@@ -337,8 +337,19 @@ export const de = {
     about: {
       title: 'Über Cookies',
       description:
-        'Wir verwenden Cookies, um Ihre Erfahrung auf unserer Website zu verbessern. Sie können wählen, welche Kategorien von Cookies Sie zulassen möchten. Wesentliche Cookies sind immer aktiviert, da sie für die ordnungsgemäße Funktion der Website erforderlich sind.',
+        'Wir verwenden Cookies, um Ihre Erfahrung auf unserer Website zu verbessern. Klicken Sie auf die Schaltfläche unten, um Ihre Cookie-Präferenzen für jede Kategorie anzupassen.',
     },
+    howItWorks: {
+      title: 'Wie es funktioniert',
+      description:
+        'Klicken Sie auf die Schaltfläche oben, um das Cookie-Zustimmungsbanner zu öffnen, in dem Sie Ihre Cookie-Präferenzen für jede Kategorie akzeptieren, ablehnen oder anpassen können.',
+    },
+    categoriesTitle: 'Cookie-Kategorien',
+    clickManage:
+      'Klicken Sie oben auf "Cookie-Präferenzen verwalten", um Ihre Auswahl anzupassen.',
+    gdprCompliant: 'DSGVO und ePrivacy konform',
+    gdprDescription:
+      'Wir respektieren Ihre Privatsphäre und halten uns an die DSGVO- und ePrivacy-Vorschriften. Sie haben die volle Kontrolle über Ihre Cookie-Präferenzen und können diese jederzeit ändern.',
     categories: {
       essential: {
         name: 'Wesentliche Cookies',
@@ -383,6 +394,7 @@ export const de = {
       },
     },
     actions: {
+      manageCookies: 'Cookie-Präferenzen verwalten',
       acceptAll: 'Alle akzeptieren',
       rejectAll: 'Alle ablehnen',
       savePreferences: 'Einstellungen speichern',
