@@ -342,7 +342,9 @@ export const EventCard = memo(function EventCard({
             height={270}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20" />
+          <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20 flex items-center justify-center">
+            <Calendar className="h-16 w-16 text-zinc-400 dark:text-zinc-600 opacity-40" />
+          </div>
         )}
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/0 to-black/40" />

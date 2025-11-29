@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Users,
   Crown,
@@ -9,6 +11,8 @@ import {
   Ban,
   ListOrdered,
 } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { useMemo } from 'react';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -25,20 +29,20 @@ export type RoleFilterValue =
 
 interface RoleOption {
   value: RoleFilterValue;
-  label: string;
+  labelKey: keyof typeof import('@/lib/i18n/locales/en').en.myIntents.filters;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const ROLE_OPTIONS: RoleOption[] = [
-  { value: 'all', label: 'All', icon: Users },
-  { value: 'owner', label: 'Owner', icon: Crown },
-  { value: 'moderator', label: 'Moderator', icon: Shield },
-  { value: 'member', label: 'Participant', icon: User },
-  { value: 'pending', label: 'Pending', icon: Clock },
-  { value: 'invited', label: 'Invited', icon: Mail },
-  { value: 'rejected', label: 'Rejected', icon: XCircle },
-  { value: 'banned', label: 'Banned', icon: Ban },
-  { value: 'waitlist', label: 'Waitlist', icon: ListOrdered },
+  { value: 'all', labelKey: 'all', icon: Users },
+  { value: 'owner', labelKey: 'owner', icon: Crown },
+  { value: 'moderator', labelKey: 'moderator', icon: Shield },
+  { value: 'member', labelKey: 'member', icon: User },
+  { value: 'pending', labelKey: 'pending', icon: Clock },
+  { value: 'invited', labelKey: 'invited', icon: Mail },
+  { value: 'rejected', labelKey: 'rejected', icon: XCircle },
+  { value: 'banned', labelKey: 'banned', icon: Ban },
+  { value: 'waitlist', labelKey: 'waitlist', icon: ListOrdered },
 ];
 
 export interface RoleFilterProps {
@@ -49,13 +53,24 @@ export interface RoleFilterProps {
 /* ───────────────────────────── Component ───────────────────────────── */
 
 export function RoleFilter({ value, onChange }: RoleFilterProps) {
+  const { t } = useI18n();
+
+  const options = useMemo(
+    () =>
+      ROLE_OPTIONS.map((opt) => ({
+        ...opt,
+        label: t.myIntents.filters[opt.labelKey],
+      })),
+    [t]
+  );
+
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        My Role
+        {t.myIntents.filters.role}
       </h3>
       <div className="flex flex-wrap gap-2">
-        {ROLE_OPTIONS.map((option) => {
+        {options.map((option) => {
           const Icon = option.icon;
           const isActive = value === option.value;
 

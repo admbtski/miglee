@@ -16,6 +16,7 @@ import {
   Crown,
   UserCog,
   Eye,
+  Calendar,
 } from 'lucide-react';
 import type {
   IntentMemberStatus,
@@ -25,6 +26,8 @@ import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildIntentCoverUrl } from '@/lib/media/url';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -212,16 +215,17 @@ function getStatusBadge(
 }
 
 function getMembershipBanner(
-  membership: MyIntentCardMembership
+  membership: MyIntentCardMembership,
+  t: any
 ): React.ReactNode {
   switch (membership.status) {
     case 'REJECTED':
       return (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20">
+        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20 mb-4">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
           <div className="flex-1">
             <p className="text-sm font-medium text-red-900 dark:text-red-100">
-              Your request was rejected
+              {t.myIntents.messages.requestRejected}
             </p>
             {membership.rejectReason && (
               <p className="mt-1 text-xs text-red-700 dark:text-red-300">
@@ -233,10 +237,10 @@ function getMembershipBanner(
       );
     case 'BANNED':
       return (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20">
+        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20 mb-4">
           <Ban className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
           <p className="text-sm font-medium text-red-900 dark:text-red-100">
-            You are banned from this Intent
+            {t.myIntents.messages.youAreBanned}
           </p>
         </div>
       );
@@ -248,6 +252,8 @@ function getMembershipBanner(
 /* ───────────────────────────── Component ───────────────────────────── */
 
 export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
+  const { t } = useI18n();
+  const { localePath } = useLocalePath();
   const { intent, membership } = data;
   const intentStatus = getIntentStatus(intent);
   const coverUrl = buildIntentCoverUrl(intent.coverKey, 'card');
@@ -258,7 +264,7 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
 
   // Determine available actions based on role and status
   const showManage = membership.role === 'OWNER' && !isDisabled;
-  const showEdit = membership.role === 'OWNER' && !isDisabled;
+  const showView = !isDisabled; // Everyone can view the event (if not disabled)
   const showCancel = membership.role === 'OWNER' && !isDisabled && !isCanceled;
   const showLeave =
     membership.status === 'JOINED' &&
@@ -282,30 +288,36 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
       )}
     >
       {/* Banner for special statuses */}
-      {getMembershipBanner(membership)}
+      {getMembershipBanner(membership, t)}
 
       <div className="flex gap-6">
-        {/* Cover Image */}
-        {coverUrl && (
-          <Link
-            href={`/intent/${intent.id}`}
-            className="shrink-0 overflow-hidden rounded-2xl transition-all hover:scale-[1.02]"
-          >
-            <BlurHashImage
-              src={coverUrl}
-              blurhash={intent.coverBlurhash}
-              alt={intent.title}
-              className="h-32 w-48 object-cover"
-              width={192}
-              height={128}
-            />
-          </Link>
-        )}
+        {/* Cover Image - Always visible, properly scaled */}
+        <Link
+          href={localePath(`/intent/${intent.id}`)}
+          className="shrink-0 overflow-hidden rounded-xl transition-all hover:scale-[1.02]"
+        >
+          {coverUrl ? (
+            <div className="relative h-32 w-48 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">
+              <BlurHashImage
+                src={coverUrl}
+                blurhash={intent.coverBlurhash}
+                alt={intent.title}
+                className="h-full w-full object-cover"
+                width={192}
+                height={128}
+              />
+            </div>
+          ) : (
+            <div className="h-32 w-48 flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 rounded-xl">
+              <Calendar className="h-12 w-12 text-zinc-400 dark:text-zinc-600" />
+            </div>
+          )}
+        </Link>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <Link
-            href={`/intent/${intent.id}`}
+            href={localePath(`/intent/${intent.id}`)}
             className="block transition-opacity hover:opacity-90"
           >
             {/* Title + Event Status + Role */}
@@ -357,23 +369,26 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
           {!isDisabled && (
             <div className="mt-5 pt-4 border-t border-zinc-200 dark:border-white/5 flex flex-wrap gap-2">
               {/* Owner actions */}
-              {showManage && actions.onManage && (
-                <button
-                  onClick={() => actions.onManage!(intent.id)}
+              {showManage && (
+                <Link
+                  href={localePath(`/intent/${intent.id}/manage`)}
                   className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <Settings className="h-4 w-4" strokeWidth={2} />
-                  Manage
-                </button>
+                  {t.myIntents.actions.manage}
+                </Link>
               )}
 
-              {showEdit && actions.onEdit && (
+              {/* View button - available for everyone */}
+              {showView && (
                 <Link
-                  href={`/intent/${intent.id}/manage`}
+                  href={localePath(`/intent/${intent.id}`)}
                   className="flex items-center gap-1.5 rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <Eye className="h-4 w-4" strokeWidth={2} />
-                  View
+                  {t.myIntents.actions.view}
                 </Link>
               )}
 
@@ -383,7 +398,7 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
                   className="flex items-center gap-1.5 rounded-xl border-2 border-red-300 dark:border-red-800 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <XCircle className="h-4 w-4" strokeWidth={2} />
-                  Cancel
+                  {t.myIntents.actions.cancel}
                 </button>
               )}
 
@@ -394,7 +409,7 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
                   className="flex items-center gap-1.5 rounded-xl border-2 border-red-300 dark:border-red-800 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <LogOut className="h-4 w-4" strokeWidth={2} />
-                  Leave
+                  {t.myIntents.actions.leave}
                 </button>
               )}
 
@@ -405,7 +420,7 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
                   className="flex items-center gap-1.5 rounded-xl border-2 border-red-300 dark:border-red-800 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 transition-all hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <X className="h-4 w-4" strokeWidth={2} />
-                  Withdraw
+                  {t.myIntents.actions.withdraw}
                 </button>
               )}
 
@@ -416,7 +431,7 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
                   className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700 shadow-md"
                 >
                   <Check className="h-4 w-4" strokeWidth={2} />
-                  Accept
+                  {t.myIntents.actions.accept}
                 </button>
               )}
               {showDeclineInvite && actions.onDeclineInvite && (
@@ -425,7 +440,7 @@ export function MyIntentCard({ data, actions = {} }: MyIntentCardProps) {
                   className="flex items-center gap-1.5 rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-all hover:bg-zinc-50 dark:hover:bg-zinc-800"
                 >
                   <X className="h-4 w-4" strokeWidth={2} />
-                  Decline
+                  {t.myIntents.actions.decline}
                 </button>
               )}
             </div>

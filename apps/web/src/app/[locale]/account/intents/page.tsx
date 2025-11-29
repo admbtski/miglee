@@ -8,6 +8,7 @@ import {
   useMyIntentsQuery,
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
+  useLeaveIntentMutationMembers,
 } from '@/lib/api/intent-members';
 import type {
   IntentLifecycleStatus,
@@ -17,15 +18,17 @@ import type {
 
 import { RoleFilter } from './_components/role-filter';
 import { IntentStatusFilter } from './_components/intent-status-filter';
+import { FiltersDropdown } from './_components/filters-dropdown';
 import {
   MyIntentCard,
   type MyIntentCardData,
 } from './_components/my-intent-card';
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
-import { LeaveIntentModals } from './_components/leave-intent-modals';
 import { useMyIntentsFilters } from './_hooks/use-my-intents-filters';
 import { useIntentsModals } from './_hooks/use-intents-modals';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { AccountPageHeader } from '../_components';
 
 function mapToCardData(membership: any): MyIntentCardData {
   return {
@@ -88,12 +91,13 @@ function mapRoleFilterToMembershipStatus(
 }
 
 function LoadingState() {
+  const { t } = useI18n();
   return (
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
         <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          Loading...
+          {t.myIntents.loading}
         </p>
       </div>
     </div>
@@ -101,14 +105,15 @@ function LoadingState() {
 }
 
 function UnauthenticatedState() {
+  const { t } = useI18n();
   return (
     <div className="flex min-h-[400px] items-center justify-center">
       <div className="text-center">
         <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-          Not authenticated
+          {t.myIntents.notAuthenticated}
         </p>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Please log in to view your events
+          {t.myIntents.pleaseLogin}
         </p>
       </div>
     </div>
@@ -120,9 +125,10 @@ type ErrorStateProps = {
 };
 
 function ErrorState({ error }: ErrorStateProps) {
+  const { t } = useI18n();
   return (
     <div className="p-4 text-red-800 border border-red-200 rounded-lg bg-red-50 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
-      <p className="font-medium">Error loading events</p>
+      <p className="font-medium">{t.myIntents.errorLoading}</p>
       <p className="mt-1 text-sm">{error.message}</p>
     </div>
   );
@@ -133,22 +139,24 @@ type EmptyStateProps = {
 };
 
 function EmptyState({ hasActiveFilters }: EmptyStateProps) {
+  const { t } = useI18n();
   return (
     <div className="p-12 text-center border rounded-lg border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
       <Calendar className="w-12 h-12 mx-auto text-zinc-400" />
       <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-100">
-        Brak wydarzeń
+        {t.myIntents.noEvents}
       </h3>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
         {hasActiveFilters
-          ? 'Spróbuj zmienić filtry'
-          : 'Nie masz jeszcze żadnych wydarzeń'}
+          ? t.myIntents.tryChangeFilters
+          : t.myIntents.noEventsYet}
       </p>
     </div>
   );
 }
 
 export default function MyIntentsPage() {
+  const { t } = useI18n();
   const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
   const currentUserId = authData?.me?.id;
 
@@ -161,17 +169,8 @@ export default function MyIntentsPage() {
     hasActiveFilters,
   } = useMyIntentsFilters();
 
-  const {
-    leaveId,
-    cancelId,
-    deleteId,
-    setLeaveId,
-    setCancelId,
-    setManageId,
-    closeLeave,
-    closeCancel,
-    closeDelete,
-  } = useIntentsModals();
+  const { cancelId, deleteId, setCancelId, closeCancel, closeDelete } =
+    useIntentsModals();
 
   const backendRole = useMemo(
     () => mapRoleFilterToBackend(roleFilter),
@@ -197,6 +196,7 @@ export default function MyIntentsPage() {
 
   const acceptInvite = useAcceptInviteMutation();
   const cancelRequest = useCancelJoinRequestMutation();
+  const leaveIntent = useLeaveIntentMutationMembers();
 
   const cardData = useMemo(() => {
     const memberships = data?.myIntents ?? [];
@@ -224,18 +224,20 @@ export default function MyIntentsPage() {
     console.log('Decline invite:', intentId);
   };
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          My Events
-        </h1>
-        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-          Manage all your events in one place
-        </p>
-      </div>
+  const handleLeave = (intentId: string) => {
+    leaveIntent.mutate({ intentId });
+  };
 
-      <div className="p-6 mb-8 space-y-6 bg-white border rounded-lg border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <AccountPageHeader
+        title={t.myIntents.title}
+        description={t.myIntents.subtitle}
+      />
+
+      {/* Filters - Desktop (hidden on mobile) */}
+      <div className="hidden lg:flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800">
         <RoleFilter value={roleFilter} onChange={setRoleFilter} />
         <IntentStatusFilter
           values={statusFilters}
@@ -243,15 +245,25 @@ export default function MyIntentsPage() {
         />
 
         {hasActiveFilters && (
-          <div className="flex justify-end">
-            <button
-              onClick={clearFilters}
-              className="text-sm text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-            >
-              Clear all filters
-            </button>
-          </div>
+          <button
+            onClick={clearFilters}
+            className="ml-auto text-sm text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium whitespace-nowrap"
+          >
+            {t.myIntents.clearFilters}
+          </button>
         )}
+      </div>
+
+      {/* Filters - Mobile Dropdown (visible on mobile/tablet) */}
+      <div className="lg:hidden">
+        <FiltersDropdown
+          roleFilter={roleFilter}
+          statusFilters={statusFilters}
+          onRoleChange={setRoleFilter}
+          onStatusChange={setStatusFilters}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
       </div>
 
       {isLoading && (
@@ -273,9 +285,8 @@ export default function MyIntentsPage() {
               key={item.membership.id}
               data={item}
               actions={{
-                onManage: setManageId,
                 onCancel: setCancelId,
-                onLeave: setLeaveId,
+                onLeave: handleLeave,
                 onWithdraw: handleWithdraw,
                 onAcceptInvite: handleAcceptInvite,
                 onDeclineInvite: handleDeclineInvite,
@@ -284,7 +295,8 @@ export default function MyIntentsPage() {
           ))}
 
           <div className="mt-6 text-sm text-center text-zinc-600 dark:text-zinc-400">
-            Showing {cardData.length} event{cardData.length !== 1 ? 's' : ''}
+            {t.myIntents.showing} {cardData.length}{' '}
+            {cardData.length !== 1 ? t.myIntents.events : t.myIntents.event}
           </div>
         </div>
       )}
@@ -292,13 +304,6 @@ export default function MyIntentsPage() {
       <DeleteIntentModals
         deleteId={deleteId}
         onClose={closeDelete}
-        onSuccess={() => {}}
-      />
-
-      <LeaveIntentModals
-        leaveId={leaveId}
-        onClose={closeLeave}
-        leaveAction={async () => Promise.resolve()}
         onSuccess={() => {}}
       />
 

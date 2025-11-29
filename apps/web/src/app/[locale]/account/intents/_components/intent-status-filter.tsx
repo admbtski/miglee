@@ -1,4 +1,8 @@
+'use client';
+
 import { Calendar, Play, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { useMemo } from 'react';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -11,16 +15,16 @@ export type IntentStatusFilterValue =
 
 interface StatusOption {
   value: IntentStatusFilterValue;
-  label: string;
+  labelKey: keyof typeof import('@/lib/i18n/locales/en').en.myIntents.filters;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const STATUS_OPTIONS: StatusOption[] = [
-  { value: 'upcoming', label: 'Upcoming', icon: Calendar },
-  { value: 'ongoing', label: 'Ongoing', icon: Play },
-  { value: 'finished', label: 'Finished', icon: CheckCircle },
-  { value: 'canceled', label: 'Canceled', icon: XCircle },
-  { value: 'deleted', label: 'Deleted', icon: Trash2 },
+  { value: 'upcoming', labelKey: 'upcoming', icon: Calendar },
+  { value: 'ongoing', labelKey: 'ongoing', icon: Play },
+  { value: 'finished', labelKey: 'finished', icon: CheckCircle },
+  { value: 'canceled', labelKey: 'canceled', icon: XCircle },
+  { value: 'deleted', labelKey: 'canceled', icon: Trash2 }, // Note: using 'canceled' key for 'deleted' value
 ];
 
 export interface IntentStatusFilterProps {
@@ -34,6 +38,17 @@ export function IntentStatusFilter({
   values,
   onChange,
 }: IntentStatusFilterProps) {
+  const { t } = useI18n();
+
+  const options = useMemo(
+    () =>
+      STATUS_OPTIONS.map((opt) => ({
+        ...opt,
+        label: t.myIntents.filters[opt.labelKey],
+      })),
+    [t]
+  );
+
   const toggleStatus = (status: IntentStatusFilterValue) => {
     if (values.includes(status)) {
       // Remove if already selected
@@ -51,10 +66,10 @@ export function IntentStatusFilter({
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-        Event Status
+        {t.myIntents.filters.status}
       </h3>
       <div className="flex flex-wrap gap-2">
-        {STATUS_OPTIONS.map((option) => {
+        {options.map((option) => {
           const Icon = option.icon;
           const isActive = values.includes(option.value);
 
@@ -75,7 +90,7 @@ export function IntentStatusFilter({
         })}
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Multiple selection allowed
+        {t.myIntents.multipleSelectionAllowed}
       </p>
     </div>
   );
