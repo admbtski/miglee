@@ -12,7 +12,7 @@
 'use client';
 
 import type { IntentHoverCallback, IntentListItem } from '@/types/intent';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { EventCard, type EventCardProps } from '../event-card';
 import { EmptyState } from './empty-state';
@@ -153,9 +153,24 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
   const showSkeletons = isLoading && items.length === 0;
   const showItems = !showSkeletons && items.length > 0;
 
+  // Use ref to store the latest onHover callback without triggering re-renders
+  const onHoverRef = useRef(onHover);
+
+  useEffect(() => {
+    onHoverRef.current = onHover;
+  }, [onHover]);
+
+  // Stable callback that uses the ref
+  const stableOnHover = useMemo<IntentHoverCallback | undefined>(() => {
+    if (!onHover) return undefined;
+    return (intentId) => {
+      onHoverRef.current?.(intentId);
+    };
+  }, [onHover ? true : false]);
+
   const itemRows = useMemo(
-    () => createItemRows(items, lang, onHover),
-    [items, lang, onHover]
+    () => createItemRows(items, lang, stableOnHover),
+    [items, lang, stableOnHover]
   );
 
   const handleEndReached = useCallback(() => {
