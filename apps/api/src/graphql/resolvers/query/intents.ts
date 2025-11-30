@@ -48,6 +48,18 @@ function buildBaseWhere(args: QueryIntentsArgs): Prisma.IntentWhereInput {
   const where: Prisma.IntentWhereInput = {};
   const AND = getAndArray(where);
 
+  /* ───────────────────────── Default: Hide canceled & deleted ─────────────────
+     Unless explicitly filtering by CANCELED or DELETED status, we hide them by default.
+  ------------------------------------------------------------------------------ */
+  const status = args.status;
+  const shouldHideCanceledAndDeleted =
+    !status ||
+    (status !== IntentStatus.Canceled && status !== IntentStatus.Deleted);
+
+  if (shouldHideCanceledAndDeleted) {
+    AND.push({ canceledAt: null }, { deletedAt: null });
+  }
+
   /* ───────────────────────── Visibility & Membership ─────────────────────────
      Rules:
      - If visibility is provided AND no memberId → strict visibility filter.
@@ -242,13 +254,14 @@ function applyDistanceBox(
 
 /**
  * Applies status filters that can be fully resolved in SQL:
- * - UPCOMING: startAt > NOW, not canceled, not deleted
- * - ONGOING: startAt <= NOW < endAt, not canceled, not deleted
- * - PAST: endAt < NOW, not canceled, not deleted
- * - CANCELED: canceledAt is not null
- * - DELETED: deletedAt is not null
+ * - UPCOMING: startAt > NOW (canceledAt/deletedAt already filtered in buildBaseWhere)
+ * - ONGOING: startAt <= NOW < endAt (canceledAt/deletedAt already filtered)
+ * - PAST: endAt < NOW (canceledAt/deletedAt already filtered)
+ * - CANCELED: canceledAt is not null (overrides base filter)
+ * - DELETED: deletedAt is not null (overrides base filter)
+ * - ANY: no additional filter (base filter still applies)
  *
- * All statuses are handled in SQL - no post-filtering needed.
+ * Note: canceledAt/deletedAt filters are handled in buildBaseWhere for most statuses.
  */
 function applyStatusWhere(
   where: Prisma.IntentWhereInput,
@@ -261,32 +274,40 @@ function applyStatusWhere(
 
   switch (status) {
     case IntentStatus.Upcoming:
-      AND.push(
-        { startAt: { gt: now } },
-        { canceledAt: null },
-        { deletedAt: null }
-      );
+      AND.push({ startAt: { gt: now } });
+      // canceledAt/deletedAt already null from buildBaseWhere
+      break;
+    case IntentStatus.Ongoing:
+      AND.push({ startAt: { lte: now } }, { endAt: { gt: now } });
+      // canceledAt/deletedAt already null from buildBaseWhere
+      break;
+    case IntentStatus.Past:
+      AND.push({ endAt: { lt: now } });
+      // canceledAt/deletedAt already null from buildBaseWhere
       break;
     case IntentStatus.Canceled:
+      // Override base filter: show ONLY canceled
+      // Remove the base canceledAt: null filter
+      const andArray = where.AND as Prisma.IntentWhereInput[];
+      const canceledIndex = andArray.findIndex(
+        (cond) => cond.canceledAt === null
+      );
+      if (canceledIndex !== -1) {
+        andArray.splice(canceledIndex, 1);
+      }
       AND.push({ canceledAt: { not: null } });
       break;
     case IntentStatus.Deleted:
+      // Override base filter: show ONLY deleted
+      // Remove the base deletedAt: null filter
+      const andArray2 = where.AND as Prisma.IntentWhereInput[];
+      const deletedIndex = andArray2.findIndex(
+        (cond) => cond.deletedAt === null
+      );
+      if (deletedIndex !== -1) {
+        andArray2.splice(deletedIndex, 1);
+      }
       AND.push({ deletedAt: { not: null } });
-      break;
-    case IntentStatus.Ongoing:
-      AND.push(
-        { startAt: { lte: now } },
-        { endAt: { gt: now } },
-        { canceledAt: null },
-        { deletedAt: null }
-      );
-      break;
-    case IntentStatus.Past:
-      AND.push(
-        { endAt: { lt: now } },
-        { canceledAt: null },
-        { deletedAt: null }
-      );
       break;
     default:
       // ANY - no status filter

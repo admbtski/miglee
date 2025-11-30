@@ -347,7 +347,7 @@ export function PlaceStep({
           >
             {/* quick presets */}
             <div className="flex flex-wrap gap-2">
-              {([0, 0.5, 1, 2, 5, 10] as const).map((r) => (
+              {[0, 0.1, 0.2, 0.5, 1, 2, 3, 5, 10].map((r) => (
                 <button
                   key={r}
                   type="button"
@@ -372,7 +372,7 @@ export function PlaceStep({
             <RadiusSlider
               value={typeof loc?.radiusKm === 'number' ? loc.radiusKm : 0}
               min={0}
-              max={20}
+              max={10}
               onUpdate={(v) => {
                 setValue('location.radiusKm', v, { shouldDirty: true });
               }}

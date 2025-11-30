@@ -22,7 +22,7 @@ const LocationSchema = z.object({
   lng: z.number().finite().min(-180).max(180).optional(),
   placeId: z.string().trim().max(240).optional(),
   address: z.string().trim().max(240).optional(),
-  radiusKm: z.number().finite().min(0).max(20).optional(),
+  radiusKm: z.number().finite().min(0).max(10).optional(),
   cityName: z.string().trim().max(240).optional(),
   cityPlaceId: z.string().trim().max(240).optional(),
 });
@@ -221,7 +221,7 @@ export const defaultIntentValues: IntentFormValues = {
     lat: undefined,
     lng: undefined,
     address: '',
-    radiusKm: 1,
+    radiusKm: 0,
     placeId: '',
     cityName: undefined,
     cityPlaceId: undefined,

@@ -563,11 +563,12 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     { isOwnerOrModerator, isParticipant }
   );
 
-  const lat = canSeeLocationAndUrl ? (i.lat ?? null) : null;
-  const lng = canSeeLocationAndUrl ? (i.lng ?? null) : null;
+  const lat = i.lat ?? null;
+  const lng = i.lng ?? null;
+  const radiusKm = i.radiusKm ?? null;
+  const placeId = i.placeId ?? null;
+
   const address = canSeeLocationAndUrl ? (i.address ?? null) : null;
-  const placeId = canSeeLocationAndUrl ? (i.placeId ?? null) : null;
-  const radiusKm = canSeeLocationAndUrl ? (i.radiusKm ?? null) : null;
   const onlineUrl = canSeeLocationAndUrl ? (i.onlineUrl ?? null) : null;
 
   return {

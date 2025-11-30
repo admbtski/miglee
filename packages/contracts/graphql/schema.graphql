@@ -1186,8 +1186,14 @@ input BBoxInput {
 "Filters for clustering map intents"
 input ClusterFiltersInput {
   categorySlugs: [String!]
+  tagSlugs: [String!]
   levels: [Level!]
+  kinds: [MeetingKind!]
+  joinModes: [JoinMode!]
   verifiedOnly: Boolean
+  status: IntentStatus
+  startISO: String
+  endISO: String
 }
 
 "Clustered point on the map representing one or more intents"

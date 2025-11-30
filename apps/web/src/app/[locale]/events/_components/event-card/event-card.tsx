@@ -32,6 +32,7 @@ export interface EventCardProps {
   intentId?: string;
   lat?: number | null;
   lng?: number | null;
+  radiusKm?: number | null;
   startISO: string;
   endISO: string;
   title: string;
@@ -108,6 +109,7 @@ function getAddressVisibilityMeta(
 }
 
 function getLocationDisplay(
+  radiusKm: number | null | undefined,
   isHybrid: boolean,
   isOnsite: boolean,
   isOnline: boolean,
@@ -119,7 +121,7 @@ function getLocationDisplay(
     return {
       Icon: HybridLocationIcon,
       text: avMeta.canShow
-        ? `${address?.split(',')[0]} • Online`
+        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''} • Online`
         : addressVisibility === 'AFTER_JOIN'
           ? 'Szczegóły po dołączeniu'
           : 'Szczegóły ukryte',
@@ -130,7 +132,7 @@ function getLocationDisplay(
     return {
       Icon: MapPin,
       text: avMeta.canShow
-        ? (address?.split(',')[0] ?? '')
+        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''}`
         : addressVisibility === 'AFTER_JOIN'
           ? 'Adres po dołączeniu'
           : 'Adres ukryty',
@@ -172,6 +174,7 @@ export const EventCard = memo(function EventCard({
   lng,
   startISO,
   endISO,
+  radiusKm,
   avatarKey,
   avatarBlurhash,
   organizerName,
@@ -279,6 +282,7 @@ export const EventCard = memo(function EventCard({
   const locationDisplay = useMemo(
     () =>
       getLocationDisplay(
+        radiusKm,
         isHybrid,
         isOnsite,
         isOnline,

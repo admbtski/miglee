@@ -249,8 +249,14 @@ function MapSidebar({
               lang={appLanguage}
               filters={{
                 categorySlugs: filters.categories,
+                tagSlugs: filters.tags,
                 levels: filters.levels as any,
+                kinds: filters.kinds as any,
+                joinModes: filters.joinModes as any,
                 verifiedOnly: filters.verifiedOnly,
+                status: filters.status as any,
+                startISO: filters.startISO ?? undefined,
+                endISO: filters.endISO ?? undefined,
               }}
               onIntentClick={handleIntentClick}
               hoveredIntentId={hoveredIntent?.id ?? null}

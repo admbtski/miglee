@@ -467,34 +467,6 @@ function FilterModalRefactoredComponent({
                 />
               </CollapsibleSection>
 
-              {/* 4. Date Range Section (AFTER Time Status) */}
-              <CollapsibleSection
-                divider={true}
-                title={t.sections.dateRange.title}
-                description={
-                  dateInputsDisabled
-                    ? t.sections.dateRange.disabledByStatus
-                    : t.sections.dateRange.description
-                }
-                icon={<CalendarIcon className="w-5 h-5" />}
-                isExpanded={expandedSections.dateRange}
-                onToggle={() => toggleSection('dateRange')}
-                activeCount={(startISO ? 1 : 0) + (endISO ? 1 : 0)}
-              >
-                <DateRangeSection
-                  startISO={startISO}
-                  endISO={endISO}
-                  onStartChange={setStartISO}
-                  onEndChange={setEndISO}
-                  disabled={dateInputsDisabled}
-                />
-                {dateError && (
-                  <div className="mt-2 text-sm text-red-600 dark:text-red-400">
-                    {dateError}
-                  </div>
-                )}
-              </CollapsibleSection>
-
               {/* 3. Time Status Section (PRIORITY: Before date range) */}
               <CollapsibleSection
                 divider={true}
@@ -539,6 +511,34 @@ function FilterModalRefactoredComponent({
                     ))}
                   </div>
                 </FilterSection>
+              </CollapsibleSection>
+
+              {/* 4. Date Range Section (AFTER Time Status) */}
+              <CollapsibleSection
+                divider={true}
+                title={t.sections.dateRange.title}
+                description={
+                  dateInputsDisabled
+                    ? t.sections.dateRange.disabledByStatus
+                    : t.sections.dateRange.description
+                }
+                icon={<CalendarIcon className="w-5 h-5" />}
+                isExpanded={expandedSections.dateRange}
+                onToggle={() => toggleSection('dateRange')}
+                activeCount={(startISO ? 1 : 0) + (endISO ? 1 : 0)}
+              >
+                <DateRangeSection
+                  startISO={startISO}
+                  endISO={endISO}
+                  onStartChange={setStartISO}
+                  onEndChange={setEndISO}
+                  disabled={dateInputsDisabled}
+                />
+                {dateError && (
+                  <div className="mt-2 text-sm text-red-600 dark:text-red-400">
+                    {dateError}
+                  </div>
+                )}
               </CollapsibleSection>
 
               {/* 5. Event Settings Section (Separated from Time Status) */}

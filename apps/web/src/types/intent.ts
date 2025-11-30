@@ -18,6 +18,7 @@ export type IntentListItem = {
   onlineUrl?: string | null;
   lat?: number | null;
   lng?: number | null;
+  radiusKm?: number | null;
 
   // Cover image
   coverKey?: string | null;

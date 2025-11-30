@@ -138,7 +138,6 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
   );
 
   const plan = (intent.plan as Plan) ?? 'default';
-  const isInactive = isCanceled || isDeleted;
   const isPremium = plan !== 'default';
   const categories = intent.categorySlugs ?? [];
   const maxCategoriesToShow = isPremium ? 1 : 2;
@@ -147,17 +146,12 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
   return (
     <motion.button
       onClick={() => onClick?.(intent.id)}
-      whileHover={{
-        y: isInactive ? 0 : -1,
-        scale: isInactive ? 1 : 1.005,
-      }}
       className={twMerge(
         'relative w-full rounded-2xl overflow-hidden',
         'bg-zinc-900/70 border border-white/5',
         'shadow-[0_6px_24px_-4px_rgba(0,0,0,0.4)]',
         'select-none cursor-pointer text-left',
         'transition-all duration-200',
-        isInactive && 'saturate-0 opacity-60',
         getPlanRingClasses(plan, isCanceled, isDeleted),
         'focus:outline-none focus:ring-2 focus:ring-indigo-400/30'
       )}
@@ -186,42 +180,24 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         {/* Subtle overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
 
-        {/* Inactive Overlay */}
-        {isInactive && (
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-20">
-            <div className="text-center px-4">
-              <p className="text-white font-semibold text-sm">
-                {isDeleted ? 'Usunięte' : 'Odwołane'}
-              </p>
-              <p className="text-white/60 text-xs mt-1">
-                {isDeleted
-                  ? 'To wydarzenie zostało usunięte'
-                  : 'To wydarzenie zostało odwołane'}
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Badges - Top */}
-        {(isPremium || categories.length > 0 || !isInactive) && (
+        {(isPremium || categories.length > 0) && (
           <div className="absolute top-3 left-3 right-3 z-10">
             <div className="flex flex-wrap gap-1.5">
-              {!isInactive && (
-                <EventCountdownPill
-                  startAt={start}
-                  endAt={end}
-                  size="xs"
-                  joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
-                  joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
-                  allowJoinLate={allowJoinLate}
-                  lateJoinCutoffMinutesAfterStart={
-                    lateJoinCutoffMinutesAfterStart
-                  }
-                  joinManuallyClosed={joinManuallyClosed}
-                  isCanceled={isCanceled}
-                  isDeleted={isDeleted}
-                />
-              )}
+              <EventCountdownPill
+                startAt={start}
+                endAt={end}
+                size="xs"
+                joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+                joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+                allowJoinLate={allowJoinLate}
+                lateJoinCutoffMinutesAfterStart={
+                  lateJoinCutoffMinutesAfterStart
+                }
+                joinManuallyClosed={joinManuallyClosed}
+                isCanceled={isCanceled}
+                isDeleted={isDeleted}
+              />
 
               {isPremium && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-violet-600/20 text-violet-300 border border-violet-600/30 px-2 py-0.5 text-xs font-medium backdrop-blur-sm">
@@ -315,16 +291,14 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
             isFull={isFull}
             canJoin={Boolean(intent.canJoin)}
           />
-          {!isInactive &&
-            status.reason !== 'FULL' &&
-            status.reason !== 'OK' && (
-              <StatusBadge
-                size="xs"
-                tone={status.tone}
-                reason={status.reason}
-                label={status.label}
-              />
-            )}
+          {status.reason !== 'FULL' && status.reason !== 'OK' && (
+            <StatusBadge
+              size="xs"
+              tone={status.tone}
+              reason={status.reason}
+              label={status.label}
+            />
+          )}
         </div>
       </div>
     </motion.button>

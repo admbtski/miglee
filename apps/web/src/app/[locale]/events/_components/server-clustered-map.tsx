@@ -32,8 +32,14 @@ export interface ServerClusteredMapProps {
   styleUrlDark?: string;
   filters?: {
     categorySlugs?: string[];
+    tagSlugs?: string[];
     levels?: ('BEGINNER' | 'INTERMEDIATE' | 'ADVANCED')[];
+    kinds?: ('ONSITE' | 'ONLINE' | 'HYBRID')[];
+    joinModes?: ('OPEN' | 'REQUEST' | 'INVITE_ONLY')[];
     verifiedOnly?: boolean;
+    status?: 'ANY' | 'UPCOMING' | 'ONGOING' | 'PAST';
+    startISO?: string;
+    endISO?: string;
   };
   onIntentClick?: (intentId: string) => void;
   hoveredIntentId?: string | null;
@@ -378,8 +384,14 @@ function ServerClusteredMapComponent({
         filters: filters
           ? {
               categorySlugs: filters.categorySlugs,
+              tagSlugs: filters.tagSlugs,
               levels: filters.levels as any,
+              kinds: filters.kinds as any,
+              joinModes: filters.joinModes as any,
               verifiedOnly: filters.verifiedOnly,
+              status: filters.status as any,
+              startISO: filters.startISO,
+              endISO: filters.endISO,
             }
           : undefined,
       },
@@ -403,8 +415,14 @@ function ServerClusteredMapComponent({
       filters: filters
         ? {
             categorySlugs: filters.categorySlugs,
+            tagSlugs: filters.tagSlugs,
             levels: filters.levels as any,
+            kinds: filters.kinds as any,
+            joinModes: filters.joinModes as any,
             verifiedOnly: filters.verifiedOnly,
+            status: filters.status as any,
+            startISO: filters.startISO,
+            endISO: filters.endISO,
           }
         : undefined,
     },

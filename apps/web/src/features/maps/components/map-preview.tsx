@@ -370,13 +370,12 @@ export function MapPreview({
       if (clickToPlace) {
         map.on('click', (e) => {
           const newPos = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-
           // Create or update marker
           createOrUpdateMarker(map, newPos, !markerRef.current);
 
           setMarkerPosition(newPos);
-          updateRadiusCircle(map, newPos);
           onUserSetPosition?.(newPos);
+          updateRadiusCircle(map, newPos);
         });
       }
     };
@@ -488,7 +487,6 @@ export function MapPreview({
 
     updateRadiusCircle(map, markerPosition);
   }, [radiusMeters, markerPosition, updateRadiusCircle]);
-
   return (
     <>
       <style jsx global>{`

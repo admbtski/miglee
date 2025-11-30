@@ -87,12 +87,76 @@ function buildFilterSql(
     return { whereClause: '', params, nextParamIndex: paramIndex };
   }
 
-  // Verified owners
+  const now = new Date();
+
+  // ─── Default: Hide canceled & deleted (unless explicitly filtering for them) ───
+  const status = filters.status;
+  const shouldHideCanceledAndDeleted =
+    !status || (status !== 'CANCELED' && status !== 'DELETED');
+
+  if (shouldHideCanceledAndDeleted) {
+    // These are already in the base WHERE, but we add them here for clarity
+    // (they're actually in the main query, not in buildFilterSql)
+    // So we don't need to add them again - they're handled in the base query
+  }
+
+  // ─── Time Status Filter ───
+  if (filters.status) {
+    switch (filters.status) {
+      case 'UPCOMING':
+        whereConditions.push(`i."startAt" > $${paramIndex}`);
+        params.push(now);
+        paramIndex++;
+        // canceledAt/deletedAt already filtered in base query
+        break;
+      case 'ONGOING':
+        whereConditions.push(
+          `i."startAt" <= $${paramIndex} AND i."endAt" > $${paramIndex + 1}`
+        );
+        params.push(now, now);
+        paramIndex += 2;
+        // canceledAt/deletedAt already filtered in base query
+        break;
+      case 'PAST':
+        whereConditions.push(`i."endAt" < $${paramIndex}`);
+        params.push(now);
+        paramIndex++;
+        // canceledAt/deletedAt already filtered in base query
+        break;
+      case 'CANCELED':
+        // Override base filter: show ONLY canceled
+        whereConditions.push(`i."canceledAt" IS NOT NULL`);
+        break;
+      case 'DELETED':
+        // Override base filter: show ONLY deleted
+        whereConditions.push(`i."deletedAt" IS NOT NULL`);
+        break;
+      case 'ANY':
+      default:
+        // No filter - but canceledAt/deletedAt still null from base query
+        break;
+    }
+  }
+
+  // ─── Date Range Filter (only if status is ANY or not set) ───
+  if ((!filters.status || filters.status === 'ANY') && filters.startISO) {
+    whereConditions.push(`i."startAt" >= $${paramIndex}`);
+    params.push(new Date(filters.startISO));
+    paramIndex++;
+  }
+
+  if ((!filters.status || filters.status === 'ANY') && filters.endISO) {
+    whereConditions.push(`i."endAt" <= $${paramIndex}`);
+    params.push(new Date(filters.endISO));
+    paramIndex++;
+  }
+
+  // ─── Verified Owners ───
   if (filters.verifiedOnly) {
     whereConditions.push(`u."verifiedAt" IS NOT NULL`);
   }
 
-  // Categories
+  // ─── Categories ───
   if (filters.categorySlugs?.length) {
     whereConditions.push(
       `EXISTS (
@@ -105,10 +169,37 @@ function buildFilterSql(
     paramIndex++;
   }
 
-  // Levels (enum array intersection)
+  // ─── Tags ───
+  if (filters.tagSlugs?.length) {
+    whereConditions.push(
+      `EXISTS (
+        SELECT 1 FROM "_IntentToTag" it
+        INNER JOIN tags t ON t.id = it."A"
+        WHERE it."B" = i.id AND t.slug = ANY($${paramIndex}::text[])
+      )`
+    );
+    params.push(filters.tagSlugs);
+    paramIndex++;
+  }
+
+  // ─── Levels (enum array intersection) ───
   if (filters.levels?.length) {
     whereConditions.push(`i.levels && $${paramIndex}::"Level"[]`);
     params.push(filters.levels);
+    paramIndex++;
+  }
+
+  // ─── Meeting Kinds (enum array intersection) ───
+  if (filters.kinds?.length) {
+    whereConditions.push(`i.kinds && $${paramIndex}::"MeetingKind"[]`);
+    params.push(filters.kinds);
+    paramIndex++;
+  }
+
+  // ─── Join Modes (single enum check) ───
+  if (filters.joinModes?.length) {
+    whereConditions.push(`i."joinMode" = ANY($${paramIndex}::"JoinMode"[])`);
+    params.push(filters.joinModes);
     paramIndex++;
   }
 
@@ -139,6 +230,17 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
   // Base params for bbox envelope
   const baseParams = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
 
+  // Determine if we should hide canceled/deleted by default
+  const status = (filters as ClusterFiltersInput)?.status;
+  const shouldHideCanceledAndDeleted =
+    !status || (status !== 'CANCELED' && status !== 'DELETED');
+
+  // Build base WHERE conditions for canceled/deleted
+  const baseWhereConditions = shouldHideCanceledAndDeleted
+    ? `AND i."canceledAt" IS NULL
+      AND i."deletedAt" IS NULL`
+    : '';
+
   // Append filters
   const { whereClause, params: filterParams } = buildFilterSql(
     filters as ClusterFiltersInput,
@@ -157,8 +259,7 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     WHERE i.geom IS NOT NULL
       AND ST_Intersects(i.geom, bbox.geom)
       AND i.visibility = 'PUBLIC'
-      AND i."canceledAt" IS NULL
-      AND i."deletedAt" IS NULL
+      ${baseWhereConditions}
       ${whereClause}
     `,
     ...baseParams,
@@ -251,6 +352,17 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
   const take = Math.max(1, Math.min(perPage, MAX_REGION_PAGE_SIZE));
   const skip = Math.max(0, (page - 1) * take);
 
+  // Determine if we should hide canceled/deleted by default
+  const status = (filters as ClusterFiltersInput)?.status;
+  const shouldHideCanceledAndDeleted =
+    !status || (status !== 'CANCELED' && status !== 'DELETED');
+
+  // Build base WHERE conditions for canceled/deleted
+  const baseWhereConditions = shouldHideCanceledAndDeleted
+    ? `AND i."canceledAt" IS NULL
+      AND i."deletedAt" IS NULL`
+    : '';
+
   // Build WHERE for items query
   const baseParams: any[] = [
     bbox.swLon,
@@ -277,8 +389,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     WHERE i.geom IS NOT NULL
       AND ST_Intersects(i.geom, bbox.geom)
       AND i.visibility = 'PUBLIC'
-      AND i."canceledAt" IS NULL
-      AND i."deletedAt" IS NULL
+      ${baseWhereConditions}
       ${whereClause}
     ORDER BY 
       CASE 
@@ -314,8 +425,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     WHERE i.geom IS NOT NULL
       AND ST_Intersects(i.geom, bbox.geom)
       AND i.visibility = 'PUBLIC'
-      AND i."canceledAt" IS NULL
-      AND i."deletedAt" IS NULL
+      ${baseWhereConditions}
       ${countWhereClause}
     `,
     ...countBaseParams,

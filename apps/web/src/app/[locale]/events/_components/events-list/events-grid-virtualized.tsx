@@ -41,6 +41,7 @@ export function mapIntentToEventCardProps(
     intentId: item.id,
     lat: item.lat,
     lng: item.lng,
+    radiusKm: item.radiusKm,
 
     // Event details
     startISO: item.startAt,
