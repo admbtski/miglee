@@ -6,12 +6,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STATUS_OPTIONS: { value: IntentStatus; label: string }[] = [
   { value: IntentStatus.Any, label: 'Dowolny' },
-  { value: IntentStatus.Available, label: 'Dostępne' },
-  { value: IntentStatus.Full, label: 'Brak miejsc' },
-  { value: IntentStatus.Locked, label: 'Zablokowane' },
+  { value: IntentStatus.Upcoming, label: 'Nadchodzące' },
   { value: IntentStatus.Ongoing, label: 'Trwa teraz' },
-  { value: IntentStatus.Deleted, label: 'Usunięte' },
+  { value: IntentStatus.Past, label: 'Przeszłe' },
   { value: IntentStatus.Canceled, label: 'Anulowane' },
+  { value: IntentStatus.Deleted, label: 'Usunięte' },
 ];
 
 export function StatusFilter({

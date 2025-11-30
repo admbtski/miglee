@@ -1,6 +1,8 @@
 /**
  * Translations for Filter Modal
  * Supports: Polish (pl), English (en)
+ *
+ * REFACTORED: Separated time-based status from event settings
  */
 
 export type FilterModalTranslations = {
@@ -26,10 +28,14 @@ export type FilterModalTranslations = {
       placeholder: string;
       distanceLabel: string;
       globalLabel: string;
+      nearMeLabel: string;
+      customCityLabel: string;
+      locationModeHint: string;
     };
     dateRange: {
       title: string;
       description: string;
+      disabledByStatus: string;
       quickSelect: string;
       customRange: string;
       startLabel: string;
@@ -46,16 +52,18 @@ export type FilterModalTranslations = {
         endBeforeStart: string;
       };
     };
-    settings: {
+    timeStatus: {
       title: string;
       description: string;
-      status: {
-        title: string;
-        any: string;
-        upcoming: string;
-        ongoing: string;
-        past: string;
-      };
+      hint: string;
+      any: string;
+      upcoming: string;
+      ongoing: string;
+      past: string;
+    };
+    eventSettings: {
+      title: string;
+      description: string;
       meetingKind: {
         title: string;
         onsite: string;
@@ -91,6 +99,7 @@ export type FilterModalTranslations = {
     result: string;
     noChanges: string;
     applyFilters: string;
+    tooltipApply: string;
   };
 
   // Pro Tip
@@ -101,10 +110,16 @@ export type FilterModalTranslations = {
 
   // Filter hints
   filterHints: {
-    status: string;
+    timeStatus: string;
     meetingKind: string;
     level: string;
     joinMode: string;
+  };
+
+  // UX bottom hints
+  uxHints: {
+    combineFilters: string;
+    timeReplacesRange: string;
   };
 };
 
@@ -113,14 +128,14 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
     // Header
     title: 'Filtry wyszukiwania',
     clearAll: 'Wyczyść wszystko',
-    clearAllHint: 'Wyczyść wszystkie filtry',
+    clearAllHint: 'Wyczyść wszystkie filtry i rozpocznij od nowa',
     noChangesToClear: 'Brak zmian do wyczyszczenia',
 
     // Sections
     sections: {
       search: {
         title: 'Wyszukiwanie i Kategorie',
-        description: 'Znajdź wydarzenia według tagów i kategorii',
+        description: 'Wybierz kategorię, tag lub wpisz słowo kluczowe',
         placeholder: 'Szukaj tagów lub kategorii…',
         loadingPlaceholder: 'Ładowanie podpowiedzi…',
         tagsLabel: 'Tagi',
@@ -128,14 +143,20 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
       },
       location: {
         title: 'Lokalizacja i Odległość',
-        description: 'Ustaw lokalizację i promień wyszukiwania',
+        description: 'Wybierz tryb lokalizacji i promień wyszukiwania',
         placeholder: 'Wpisz miasto...',
         distanceLabel: 'Odległość',
-        globalLabel: 'Globalnie',
+        globalLabel: '🌍 Globalnie',
+        nearMeLabel: '📍 W pobliżu',
+        customCityLabel: '🏙 Własne miasto',
+        locationModeHint:
+          'Wybierz "Globalnie" dla wszystkich wydarzeń lub ustaw lokalizację',
       },
       dateRange: {
-        title: 'Zakres dat',
-        description: 'Filtruj wydarzenia według daty rozpoczęcia i zakończenia',
+        title: 'Zakres Dat',
+        description: 'Ustaw własny zakres dat dla wydarzeń',
+        disabledByStatus:
+          'Zakres dat jest wyłączony, gdy wybrano status czasowy',
         quickSelect: 'Szybki wybór',
         customRange: 'Własny zakres',
         startLabel: 'Data i godzina rozpoczęcia',
@@ -153,21 +174,23 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
             'Data zakończenia nie może być wcześniejsza niż rozpoczęcia.',
         },
       },
-      settings: {
-        title: 'Ustawienia wydarzenia',
-        description: 'Filtruj według statusu, typu spotkania, poziomu i więcej',
-        status: {
-          title: 'Status',
-          any: 'Dowolny',
-          upcoming: 'Nadchodzące',
-          ongoing: 'W trakcie',
-          past: 'Przeszłe',
-        },
+      timeStatus: {
+        title: 'Status Czasu',
+        description: 'Filtruj według statusu czasowego wydarzenia',
+        hint: 'Status oparty na czasie zastępuje ręcznie ustawiany zakres dat',
+        any: 'Dowolny',
+        upcoming: 'Nadchodzące',
+        ongoing: 'W trakcie',
+        past: 'Przeszłe',
+      },
+      eventSettings: {
+        title: 'Ustawienia Wydarzenia',
+        description: 'Filtruj według typu, poziomu i trybu dołączania',
         meetingKind: {
           title: 'Tryb spotkania',
-          onsite: 'Stacjonarnie',
+          onsite: 'Stacjonarne',
           online: 'Online',
-          hybrid: 'Hybrydowo',
+          hybrid: 'Hybrydowe',
         },
         level: {
           title: 'Poziom',
@@ -183,8 +206,8 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
         },
         organizer: {
           title: 'Organizator',
-          hint: 'Pokaż tylko zweryfikowanych organizatorów.',
-          verifiedOnly: 'Tylko zweryfikowani',
+          hint: 'Pokaż tylko wydarzenia od zweryfikowanych organizatorów',
+          verifiedOnly: 'Tylko zweryfikowani organizatorzy',
         },
       },
     },
@@ -198,21 +221,29 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
       result: 'wynik',
       noChanges: 'Brak zmian',
       applyFilters: 'Zastosuj filtry',
+      tooltipApply: 'Zastosuj wybrane filtry (Cmd/Ctrl + Enter)',
     },
 
     // Pro Tip
     proTip: {
       title: 'Wskazówka:',
       message:
-        'Użyj Cmd/Ctrl+Enter aby szybko zastosować filtry. Łącz wiele filtrów, aby zawęzić wyszukiwanie.',
+        'Łącz wiele filtrów, aby szybciej znaleźć odpowiednie wydarzenia.',
     },
 
     // Filter hints
     filterHints: {
-      status: 'Filtruj:',
-      meetingKind: 'Przełącz:',
-      level: 'Przełącz:',
-      joinMode: 'Przełącz:',
+      timeStatus: 'Filtruj według czasu:',
+      meetingKind: 'Przełącz tryb:',
+      level: 'Przełącz poziom:',
+      joinMode: 'Przełącz tryb dołączania:',
+    },
+
+    // UX bottom hints
+    uxHints: {
+      combineFilters:
+        'Łącz wiele filtrów, aby szybciej znaleźć odpowiednie wydarzenia',
+      timeReplacesRange: 'Filtry czasu zastępują zakres dat',
     },
   },
 
@@ -220,14 +251,14 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
     // Header
     title: 'Search Filters',
     clearAll: 'Clear All',
-    clearAllHint: 'Clear all filters',
+    clearAllHint: 'Clear all filters and start fresh',
     noChangesToClear: 'No changes to clear',
 
     // Sections
     sections: {
       search: {
         title: 'Search & Categories',
-        description: 'Find events by tags and categories',
+        description: 'Choose category, tag, or enter keyword',
         placeholder: 'Search tags or categories…',
         loadingPlaceholder: 'Loading suggestions…',
         tagsLabel: 'Tags',
@@ -235,14 +266,18 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
       },
       location: {
         title: 'Location & Distance',
-        description: 'Set location and search radius',
+        description: 'Choose location mode and search radius',
         placeholder: 'Enter city...',
         distanceLabel: 'Distance',
-        globalLabel: 'Global',
+        globalLabel: '🌍 Global',
+        nearMeLabel: '📍 Near me',
+        customCityLabel: '🏙 Custom city',
+        locationModeHint: 'Choose "Global" for all events or set a location',
       },
       dateRange: {
         title: 'Date Range',
-        description: 'Filter events by start and end date',
+        description: 'Set custom date range for events',
+        disabledByStatus: 'Date range is disabled when time status is selected',
         quickSelect: 'Quick Select',
         customRange: 'Custom Range',
         startLabel: 'Start Date & Time',
@@ -259,16 +294,18 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
           endBeforeStart: 'End date cannot be earlier than start date.',
         },
       },
-      settings: {
+      timeStatus: {
+        title: 'Time Status',
+        description: 'Filter by event time status',
+        hint: 'Time-based status replaces manual date range',
+        any: 'Any',
+        upcoming: 'Upcoming',
+        ongoing: 'Ongoing',
+        past: 'Past',
+      },
+      eventSettings: {
         title: 'Event Settings',
-        description: 'Filter by status, meeting type, level, and more',
-        status: {
-          title: 'Status',
-          any: 'Any',
-          upcoming: 'Upcoming',
-          ongoing: 'Ongoing',
-          past: 'Past',
-        },
+        description: 'Filter by type, level, and join mode',
         meetingKind: {
           title: 'Meeting Type',
           onsite: 'Onsite',
@@ -289,8 +326,8 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
         },
         organizer: {
           title: 'Organizer',
-          hint: 'Show only verified organizers.',
-          verifiedOnly: 'Verified only',
+          hint: 'Show only events from verified organizers',
+          verifiedOnly: 'Verified organizers only',
         },
       },
     },
@@ -304,21 +341,29 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
       result: 'result',
       noChanges: 'No changes',
       applyFilters: 'Apply filters',
+      tooltipApply: 'Apply selected filters (Cmd/Ctrl + Enter)',
     },
 
     // Pro Tip
     proTip: {
       title: 'Pro Tip:',
       message:
-        'Use Cmd/Ctrl+Enter to quickly apply filters. Combine multiple filters to narrow down your search.',
+        'Combine multiple filters to quickly find the right events for you.',
     },
 
     // Filter hints
     filterHints: {
-      status: 'Filter:',
-      meetingKind: 'Toggle:',
-      level: 'Toggle:',
-      joinMode: 'Toggle:',
+      timeStatus: 'Filter by time:',
+      meetingKind: 'Toggle mode:',
+      level: 'Toggle level:',
+      joinMode: 'Toggle join mode:',
+    },
+
+    // UX bottom hints
+    uxHints: {
+      combineFilters:
+        'Combine multiple filters to quickly find the right events',
+      timeReplacesRange: 'Time filters replace date range',
     },
   },
 };

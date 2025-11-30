@@ -242,7 +242,7 @@ export default function IntentsPage() {
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="">Wszystkie</option>
-              <option value={IntentStatus.Available}>Dostępne</option>
+              <option value={IntentStatus.Upcoming}>Nadchodzące</option>
               <option value={IntentStatus.Ongoing}>W trakcie</option>
               <option value={IntentStatus.Past}>Zakończone</option>
               <option value={IntentStatus.Canceled}>Anulowane</option>
@@ -407,10 +407,10 @@ export default function IntentsPage() {
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          intent.status === IntentStatus.Available
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                          intent.status === IntentStatus.Upcoming
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                             : intent.status === IntentStatus.Ongoing
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                               : intent.status === IntentStatus.Past
                                 ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-300'
                                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'

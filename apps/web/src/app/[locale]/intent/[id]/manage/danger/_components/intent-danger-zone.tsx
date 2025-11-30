@@ -54,9 +54,9 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
   const isCancelled = intent.isCanceled;
   const isDeleted = intent.isDeleted;
 
-  // Can cancel if event is Available (active), not already cancelled or deleted
+  // Can cancel if event is Upcoming or Ongoing, not already cancelled or deleted
   const canCancel =
-    (intent.status === IntentStatus.Available ||
+    (intent.status === IntentStatus.Upcoming ||
       intent.status === IntentStatus.Ongoing) &&
     !isCancelled &&
     !isDeleted;
@@ -130,7 +130,8 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
               </span>
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  intent.status === IntentStatus.Available
+                  intent.status === IntentStatus.Upcoming ||
+                  intent.status === IntentStatus.Ongoing
                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                     : intent.status === IntentStatus.Canceled || isCancelled
                       ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'

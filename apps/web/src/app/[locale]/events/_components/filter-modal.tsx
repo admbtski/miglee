@@ -1,5 +1,20 @@
 /**
- * Filter Modal - Modern UI matching create-edit-intent-modal style
+ * Filter Modal - Refactored with separated Time Status and Event Settings
+ *
+ * Key improvements:
+ * 1. Time Status (UPCOMING/ONGOING/PAST) is separated from Event Settings
+ * 2. Time Status disables date range inputs (mutually exclusive)
+ * 3. Date range selection automatically resets Time Status to ANY
+ * 4. Location has Global/NearMe/CustomCity modes
+ * 5. Clear All resets everything including status and dates
+ * 6. UI follows Airbnb/Eventbrite/Meetup standards
+ *
+ * Section Order (Priority-based):
+ * 1. Search & Categories (expanded by default)
+ * 2. Location & Distance (collapsed)
+ * 3. Time Status (collapsed) - BEFORE date range
+ * 4. Date Range (collapsed) - AFTER time status
+ * 5. Event Settings (collapsed) - Meeting type, level, join mode, organizer
  */
 
 'use client';
@@ -33,6 +48,7 @@ import {
   MapPinIcon,
   CalendarIcon,
   SettingsIcon,
+  ClockIcon,
   Info,
 } from 'lucide-react';
 
@@ -75,7 +91,7 @@ type Props = {
   resultsCount?: number;
   onApply: (next: NextFilters) => void;
   onClose: () => void;
-  locale?: 'pl' | 'en'; // Optional locale prop, defaults to 'pl'
+  locale?: 'pl' | 'en';
 };
 
 function FilterModalRefactoredComponent({
@@ -100,70 +116,15 @@ function FilterModalRefactoredComponent({
   onClose,
   locale = 'pl',
 }: Props) {
-  // Get translations based on locale prop
   const t = getFilterModalTranslations(locale);
 
-  // Helper functions to get translated labels
-  const getStatusLabel = (status: IntentStatus) => {
-    switch (status) {
-      case IntentStatus.Any:
-        return t.sections.settings.status.any;
-      case IntentStatus.Upcoming:
-        return t.sections.settings.status.upcoming;
-      case IntentStatus.Ongoing:
-        return t.sections.settings.status.ongoing;
-      case IntentStatus.Past:
-        return t.sections.settings.status.past;
-      default:
-        return status;
-    }
-  };
-
-  const getMeetingKindLabel = (kind: MeetingKind) => {
-    switch (kind) {
-      case MeetingKind.Onsite:
-        return t.sections.settings.meetingKind.onsite;
-      case MeetingKind.Online:
-        return t.sections.settings.meetingKind.online;
-      case MeetingKind.Hybrid:
-        return t.sections.settings.meetingKind.hybrid;
-      default:
-        return kind;
-    }
-  };
-
-  const getLevelLabel = (level: Level) => {
-    switch (level) {
-      case Level.Beginner:
-        return t.sections.settings.level.beginner;
-      case Level.Intermediate:
-        return t.sections.settings.level.intermediate;
-      case Level.Advanced:
-        return t.sections.settings.level.advanced;
-      default:
-        return level;
-    }
-  };
-
-  const getJoinModeLabel = (mode: JoinMode) => {
-    switch (mode) {
-      case JoinMode.Open:
-        return t.sections.settings.joinMode.open;
-      case JoinMode.Request:
-        return t.sections.settings.joinMode.request;
-      case JoinMode.InviteOnly:
-        return t.sections.settings.joinMode.inviteOnly;
-      default:
-        return mode;
-    }
-  };
-
-  // Collapse state for each section
+  // Collapse state for each section - only search is expanded by default
   const [expandedSections, setExpandedSections] = useState({
     search: true,
-    location: true,
-    dateRange: true,
-    settings: true,
+    location: false,
+    dateRange: false,
+    timeStatus: false,
+    eventSettings: false,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -225,8 +186,16 @@ function FilterModalRefactoredComponent({
     setCategories,
     setTags,
     setJoinModes,
-    clearAll,
+    clearAll: _clearAll,
   } = filterState;
+
+  // Enhanced clearAll that resets status and dates
+  const clearAll = useCallback(() => {
+    _clearAll();
+    _setStatus(IntentStatus.Any);
+    _setStartISO(null);
+    _setEndISO(null);
+  }, [_clearAll, _setStatus, _setStartISO, _setEndISO]);
 
   // Wrapped status setter: when changing to time-based status (UPCOMING/ONGOING/PAST),
   // automatically reset date range
@@ -427,7 +396,7 @@ function FilterModalRefactoredComponent({
 
             {/* Body - filters */}
             <div className="space-y-0">
-              {/* Search Section */}
+              {/* 1. Search & Categories Section */}
               <CollapsibleSection
                 title={t.sections.search.title}
                 description={t.sections.search.description}
@@ -471,7 +440,7 @@ function FilterModalRefactoredComponent({
                 />
               </CollapsibleSection>
 
-              {/* Location Section */}
+              {/* 2. Location & Distance Section */}
               <CollapsibleSection
                 divider={true}
                 title={t.sections.location.title}
@@ -498,15 +467,13 @@ function FilterModalRefactoredComponent({
                 />
               </CollapsibleSection>
 
-              {/* Date Range Section */}
+              {/* 4. Date Range Section (AFTER Time Status) */}
               <CollapsibleSection
                 divider={true}
                 title={t.sections.dateRange.title}
                 description={
                   dateInputsDisabled
-                    ? locale === 'pl'
-                      ? 'Nadchodzące wydarzenia to wszystkie, które jeszcze się nie rozpoczęły. Zakres dat jest wyłączony.'
-                      : 'Upcoming events are all events that have not started yet. Date range is disabled.'
+                    ? t.sections.dateRange.disabledByStatus
                     : t.sections.dateRange.description
                 }
                 icon={<CalendarIcon className="w-5 h-5" />}
@@ -528,16 +495,61 @@ function FilterModalRefactoredComponent({
                 )}
               </CollapsibleSection>
 
-              {/* Settings Section */}
+              {/* 3. Time Status Section (PRIORITY: Before date range) */}
               <CollapsibleSection
                 divider={true}
-                title={t.sections.settings.title}
-                description={t.sections.settings.description}
+                title={t.sections.timeStatus.title}
+                description={t.sections.timeStatus.description}
+                icon={<ClockIcon className="w-5 h-5" />}
+                isExpanded={expandedSections.timeStatus}
+                onToggle={() => toggleSection('timeStatus')}
+                activeCount={status !== IntentStatus.Any ? 1 : 0}
+              >
+                <FilterSection
+                  title={t.sections.timeStatus.title}
+                  hint={t.sections.timeStatus.hint}
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      {
+                        value: IntentStatus.Any,
+                        label: t.sections.timeStatus.any,
+                      },
+                      {
+                        value: IntentStatus.Upcoming,
+                        label: t.sections.timeStatus.upcoming,
+                      },
+                      {
+                        value: IntentStatus.Ongoing,
+                        label: t.sections.timeStatus.ongoing,
+                      },
+                      {
+                        value: IntentStatus.Past,
+                        label: t.sections.timeStatus.past,
+                      },
+                    ].map(({ value, label }) => (
+                      <Pill
+                        key={value}
+                        active={status === value}
+                        onClick={() => setStatus(value)}
+                        title={`${t.filterHints.timeStatus} ${label}`}
+                      >
+                        {label}
+                      </Pill>
+                    ))}
+                  </div>
+                </FilterSection>
+              </CollapsibleSection>
+
+              {/* 5. Event Settings Section (Separated from Time Status) */}
+              <CollapsibleSection
+                divider={true}
+                title={t.sections.eventSettings.title}
+                description={t.sections.eventSettings.description}
                 icon={<SettingsIcon className="w-5 h-5" />}
-                isExpanded={expandedSections.settings}
-                onToggle={() => toggleSection('settings')}
+                isExpanded={expandedSections.eventSettings}
+                onToggle={() => toggleSection('eventSettings')}
                 activeCount={
-                  (status !== IntentStatus.Any ? 1 : 0) +
                   kinds.length +
                   levels.length +
                   joinModes.length +
@@ -545,37 +557,26 @@ function FilterModalRefactoredComponent({
                 }
               >
                 <div className="space-y-6">
-                  {/* Status */}
-                  <FilterSection title={t.sections.settings.status.title}>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {[
-                        IntentStatus.Any,
-                        IntentStatus.Upcoming,
-                        IntentStatus.Ongoing,
-                        IntentStatus.Past,
-                      ].map((val) => (
-                        <Pill
-                          key={val}
-                          active={status === val}
-                          onClick={() => setStatus(val)}
-                          title={`${t.filterHints.status} ${getStatusLabel(val)}`}
-                        >
-                          {getStatusLabel(val)}
-                        </Pill>
-                      ))}
-                    </div>
-                  </FilterSection>
-
-                  {/* Kinds */}
-                  <FilterSection title={t.sections.settings.meetingKind.title}>
+                  {/* Meeting Kind */}
+                  <FilterSection
+                    title={t.sections.eventSettings.meetingKind.title}
+                  >
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        MeetingKind.Onsite,
-                        MeetingKind.Online,
-                        MeetingKind.Hybrid,
-                      ].map((kind) => {
+                        {
+                          kind: MeetingKind.Onsite,
+                          label: t.sections.eventSettings.meetingKind.onsite,
+                        },
+                        {
+                          kind: MeetingKind.Online,
+                          label: t.sections.eventSettings.meetingKind.online,
+                        },
+                        {
+                          kind: MeetingKind.Hybrid,
+                          label: t.sections.eventSettings.meetingKind.hybrid,
+                        },
+                      ].map(({ kind, label }) => {
                         const active = kinds.includes(kind);
-                        const label = getMeetingKindLabel(kind);
                         return (
                           <Pill
                             key={kind}
@@ -597,43 +598,63 @@ function FilterModalRefactoredComponent({
                   </FilterSection>
 
                   {/* Level */}
-                  <FilterSection title={t.sections.settings.level.title}>
+                  <FilterSection title={t.sections.eventSettings.level.title}>
                     <div className="grid grid-cols-3 gap-2">
-                      {[Level.Beginner, Level.Intermediate, Level.Advanced].map(
-                        (lv) => {
-                          const active = levels.includes(lv);
-                          const label = getLevelLabel(lv);
-                          return (
-                            <Pill
-                              key={lv}
-                              active={active}
-                              onClick={() =>
-                                setLevels((curr) =>
-                                  active
-                                    ? curr.filter((x) => x !== lv)
-                                    : [...curr, lv]
-                                )
-                              }
-                              title={`${t.filterHints.level} ${label}`}
-                            >
-                              {label}
-                            </Pill>
-                          );
-                        }
-                      )}
+                      {[
+                        {
+                          lv: Level.Beginner,
+                          label: t.sections.eventSettings.level.beginner,
+                        },
+                        {
+                          lv: Level.Intermediate,
+                          label: t.sections.eventSettings.level.intermediate,
+                        },
+                        {
+                          lv: Level.Advanced,
+                          label: t.sections.eventSettings.level.advanced,
+                        },
+                      ].map(({ lv, label }) => {
+                        const active = levels.includes(lv);
+                        return (
+                          <Pill
+                            key={lv}
+                            active={active}
+                            onClick={() =>
+                              setLevels((curr) =>
+                                active
+                                  ? curr.filter((x) => x !== lv)
+                                  : [...curr, lv]
+                              )
+                            }
+                            title={`${t.filterHints.level} ${label}`}
+                          >
+                            {label}
+                          </Pill>
+                        );
+                      })}
                     </div>
                   </FilterSection>
 
                   {/* Join Mode */}
-                  <FilterSection title={t.sections.settings.joinMode.title}>
+                  <FilterSection
+                    title={t.sections.eventSettings.joinMode.title}
+                  >
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        JoinMode.Open,
-                        JoinMode.Request,
-                        JoinMode.InviteOnly,
-                      ].map((jm) => {
+                        {
+                          jm: JoinMode.Open,
+                          label: t.sections.eventSettings.joinMode.open,
+                        },
+                        {
+                          jm: JoinMode.Request,
+                          label: t.sections.eventSettings.joinMode.request,
+                        },
+                        {
+                          jm: JoinMode.InviteOnly,
+                          label: t.sections.eventSettings.joinMode.inviteOnly,
+                        },
+                      ].map(({ jm, label }) => {
                         const active = joinModes.includes(jm);
-                        const label = getJoinModeLabel(jm);
                         return (
                           <Pill
                             key={jm}
@@ -654,10 +675,10 @@ function FilterModalRefactoredComponent({
                     </div>
                   </FilterSection>
 
-                  {/* Verified */}
+                  {/* Verified Organizer */}
                   <FilterSection
-                    title={t.sections.settings.organizer.title}
-                    hint={t.sections.settings.organizer.hint}
+                    title={t.sections.eventSettings.organizer.title}
+                    hint={t.sections.eventSettings.organizer.hint}
                   >
                     <label className="inline-flex items-center gap-3 px-4 py-3 transition-colors border cursor-pointer select-none rounded-xl border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50">
                       <input
@@ -665,7 +686,9 @@ function FilterModalRefactoredComponent({
                         className="sr-only peer"
                         checked={verifiedOnly}
                         onChange={(e) => setVerifiedOnly(e.target.checked)}
-                        aria-label={t.sections.settings.organizer.verifiedOnly}
+                        aria-label={
+                          t.sections.eventSettings.organizer.verifiedOnly
+                        }
                       />
                       <span
                         className={`inline-flex h-6 w-11 items-center rounded-full p-0.5 transition-all duration-200 ${verifiedOnly ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
@@ -688,14 +711,14 @@ function FilterModalRefactoredComponent({
                             />
                           </svg>
                         )}
-                        {t.sections.settings.organizer.verifiedOnly}
+                        {t.sections.eventSettings.organizer.verifiedOnly}
                       </span>
                     </label>
                   </FilterSection>
                 </div>
               </CollapsibleSection>
 
-              {/* Info note */}
+              {/* UX Hint at the bottom */}
               <div className="pt-6">
                 <div className="h-px mb-6 bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800" />
                 <div

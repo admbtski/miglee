@@ -78,6 +78,21 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
     const push = (key: string, label: string, onClear: () => void) =>
       arr.push({ key, label, onClear });
 
+    // Helper to get readable status label
+    const getStatusLabel = (st: IntentStatus) => {
+      switch (st) {
+        case 'UPCOMING':
+          return 'Nadchodzące';
+        case 'ONGOING':
+          return 'W trakcie';
+        case 'PAST':
+          return 'Przeszłe';
+        case 'ANY':
+        default:
+          return 'Dowolny';
+      }
+    };
+
     if (q) push('q', `Szukaj: "${q}"`, onClearQ);
     if (city) push('city', city, onClearCity);
     if (city && distanceKm !== DEFAULT_DISTANCE)
@@ -85,7 +100,8 @@ export function FilterActiveChips(props: FilterActiveChipsProps) {
     if (startISO)
       push('start', new Date(startISO).toLocaleString(), onClearStart);
     if (endISO) push('end', new Date(endISO).toLocaleString(), onClearEnd);
-    if (status !== 'ANY') push('status', `Status: ${status}`, onClearStatus);
+    if (status !== 'ANY')
+      push('status', `Status: ${getStatusLabel(status)}`, onClearStatus);
     if (kinds.length) push('kinds', `Tryb: ${kinds.join(', ')}`, onClearKinds);
     if (levels.length)
       push('levels', `Poziom: ${levels.join(', ')}`, onClearLevels);

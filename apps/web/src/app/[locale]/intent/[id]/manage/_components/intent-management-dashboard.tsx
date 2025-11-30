@@ -285,7 +285,7 @@ export function IntentManagementDashboard({
                       : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400'
               )}
             >
-              {intent.status === IntentStatus.Available && (
+              {intent.status === IntentStatus.Upcoming && (
                 <Activity className="w-3 h-3" />
               )}
               {intent.status === IntentStatus.Canceled && (
@@ -294,7 +294,7 @@ export function IntentManagementDashboard({
               {intent.status === IntentStatus.Past && (
                 <CheckCircle2 className="w-3 h-3" />
               )}
-              {intent.status === IntentStatus.Locked && (
+              {intent.status === IntentStatus.Past && (
                 <AlertCircle className="w-3 h-3" />
               )}
               {intent.status}
