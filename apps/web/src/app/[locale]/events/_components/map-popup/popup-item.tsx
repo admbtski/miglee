@@ -5,16 +5,29 @@
 import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { CapacityBadge } from '@/components/ui/capacity-badge';
+import { HybridLocationIcon } from '@/components/ui/icons/hybrid-location-icon';
 import { Plan } from '@/components/ui/plan-theme';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
-import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
+import {
+  AddressVisibility,
+  Level as GqlLevel,
+} from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import { computeEventStateAndStatus } from '@/lib/utils/event-status';
+import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Sparkles } from 'lucide-react';
+import {
+  Calendar,
+  Eye,
+  EyeOff,
+  MapPin,
+  Sparkles,
+  UserCheck,
+  Wifi as WifiIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -25,6 +38,7 @@ export type PopupIntent = {
   startAt: string;
   endAt: string;
   address?: string | null;
+  radiusKm?: number | null;
   joinedCount?: number | null;
   min?: number | null;
   max?: number | null;
@@ -54,7 +68,13 @@ export type PopupIntent = {
 
   levels?: GqlLevel[] | null;
   plan?: Plan | null;
+  boostedAt?: string | null; // ISO timestamp of last boost
+  highlightColor?: string | null; // Hex color for custom highlight ring
   meetingKind?: 'ONSITE' | 'ONLINE' | 'HYBRID' | null;
+  isHybrid?: boolean;
+  isOnline?: boolean;
+  isOnsite?: boolean;
+  addressVisibility?: AddressVisibility | null;
   categorySlugs?: string[] | null;
   coverKey?: string | null;
   coverBlurhash?: string | null;
@@ -65,16 +85,106 @@ export interface PopupItemProps {
   onClick?: (id: string) => void;
 }
 
-function getPlanRingClasses(
-  plan: Plan,
-  isCanceled: boolean,
-  isDeleted: boolean
-): string {
-  if (isCanceled || isDeleted || plan === 'default') {
-    return '';
+type AddressVisibilityMeta = {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  canShow: boolean;
+};
+
+function getAddressVisibilityMeta(
+  av: AddressVisibility | null | undefined
+): AddressVisibilityMeta {
+  if (!av) {
+    return {
+      label: 'Adres publiczny',
+      Icon: Eye,
+      canShow: true,
+    };
   }
 
-  return 'ring-2 ring-amber-500/30 shadow-[0_0_16px_rgba(245,158,11,0.35),0_0_48px_rgba(245,158,11,0.2)]';
+  const normalized = String(av).toUpperCase();
+
+  if (normalized.includes('PUBLIC')) {
+    return {
+      label: 'Adres publiczny',
+      Icon: Eye,
+      canShow: true,
+    };
+  }
+
+  if (normalized.includes('AFTER_JOIN')) {
+    return {
+      label: 'Adres po dołączeniu',
+      Icon: UserCheck,
+      canShow: false,
+    };
+  }
+
+  return {
+    label: 'Adres ukryty',
+    Icon: EyeOff,
+    canShow: false,
+  };
+}
+
+function getLocationDisplay(
+  radiusKm: number | null | undefined,
+  isHybrid: boolean,
+  isOnsite: boolean,
+  isOnline: boolean,
+  avMeta: AddressVisibilityMeta,
+  address: string | null | undefined,
+  addressVisibility: AddressVisibility | null | undefined
+): { Icon: React.ComponentType<{ className?: string }>; text: string } | null {
+  if (isHybrid) {
+    return {
+      Icon: HybridLocationIcon,
+      text: avMeta.canShow
+        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''} • Online`
+        : addressVisibility === 'AFTER_JOIN'
+          ? 'Szczegóły po dołączeniu'
+          : 'Szczegóły ukryte',
+    };
+  }
+
+  if (isOnsite) {
+    return {
+      Icon: MapPin,
+      text: avMeta.canShow
+        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''}`
+        : addressVisibility === 'AFTER_JOIN'
+          ? 'Adres po dołączeniu'
+          : 'Adres ukryty',
+    };
+  }
+
+  if (isOnline) {
+    return {
+      Icon: WifiIcon,
+      text: avMeta.canShow
+        ? 'Online'
+        : addressVisibility === 'AFTER_JOIN'
+          ? 'Online (po dołączeniu)'
+          : 'Online (ukryte)',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Check if a boost is still active (< 24 hours old)
+ * @param boostedAtISO - ISO timestamp of when the event was boosted
+ * @returns true if boost is active, false otherwise
+ */
+function isBoostActive(boostedAtISO: string | null | undefined): boolean {
+  if (!boostedAtISO) return false;
+
+  const boostedAt = new Date(boostedAtISO);
+  const now = new Date();
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  return boostedAt >= twentyFourHoursAgo;
 }
 
 export function PopupItem({ intent, onClick }: PopupItemProps) {
@@ -89,6 +199,14 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     joinedCount,
     max,
     min,
+    radiusKm,
+    boostedAt,
+    highlightColor,
+    isHybrid = false,
+    isOnline = false,
+    isOnsite = false,
+    addressVisibility,
+    address,
     joinOpensMinutesBeforeStart,
     joinCutoffMinutesBeforeStart,
     allowJoinLate,
@@ -98,6 +216,18 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
 
   const start = useMemo(() => parseISO(startAt), [startAt]);
   const end = useMemo(() => parseISO(endAt), [endAt]);
+
+  // Check if boost is active (< 24h)
+  const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
+
+  // Get highlight ring classes (only if boosted)
+  const highlightRing = useMemo(
+    () =>
+      isBoosted && !isCanceled && !isDeleted
+        ? getCardHighlightClasses(highlightColor, isBoosted)
+        : { className: '' },
+    [isBoosted, isCanceled, isDeleted, highlightColor]
+  );
 
   const { status } = useMemo(
     () =>
@@ -137,24 +267,46 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     ]
   );
 
+  const avMeta = useMemo(
+    () => getAddressVisibilityMeta(addressVisibility),
+    [addressVisibility]
+  );
+
+  const locationDisplay = useMemo(
+    () =>
+      getLocationDisplay(
+        radiusKm,
+        isHybrid,
+        isOnsite,
+        isOnline,
+        avMeta,
+        address,
+        addressVisibility
+      ),
+    [radiusKm, isHybrid, isOnsite, isOnline, avMeta, address, addressVisibility]
+  );
+
   const plan = (intent.plan as Plan) ?? 'default';
-  const isPremium = plan !== 'default';
   const categories = intent.categorySlugs ?? [];
-  const maxCategoriesToShow = isPremium ? 1 : 2;
+  const maxCategoriesToShow = isBoosted ? 1 : 2;
   const remainingCategoriesCount = categories.length - maxCategoriesToShow;
 
   return (
     <motion.button
       onClick={() => onClick?.(intent.id)}
       className={twMerge(
-        'relative w-full rounded-2xl overflow-hidden',
+        'relative w-full rounded-xl overflow-hidden',
         'bg-zinc-900/70 border border-white/5',
-        'shadow-[0_6px_24px_-4px_rgba(0,0,0,0.4)]',
+        'shadow-[0_4px_16px_-2px_rgba(0,0,0,0.4)]',
         'select-none cursor-pointer text-left',
         'transition-all duration-200',
-        getPlanRingClasses(plan, isCanceled, isDeleted),
-        'focus:outline-none focus:ring-2 focus:ring-indigo-400/30'
+        'focus:outline-none focus:ring-2 focus:ring-indigo-400/30',
+        isInactive && 'saturate-0',
+        highlightRing.className
       )}
+      style={{
+        ...highlightRing.style,
+      }}
       transition={{
         type: 'spring',
         stiffness: 400,
@@ -163,7 +315,7 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
       data-plan={plan}
     >
       {/* Cover Image */}
-      <div className="relative h-32 overflow-hidden bg-zinc-800">
+      <div className="relative h-24 overflow-hidden bg-zinc-800">
         {intent.coverKey ? (
           <BlurHashImage
             src={buildIntentCoverUrl(intent.coverKey, 'card')}
@@ -174,16 +326,18 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
             height={270}
           />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-indigo-900/30 to-violet-900/30" />
+          <div className="h-full w-full bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/20 dark:to-violet-900/20 flex items-center justify-center">
+            <Calendar className="h-10 w-10 text-zinc-400 dark:text-zinc-600 opacity-40" />
+          </div>
         )}
 
         {/* Subtle overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
 
         {/* Badges - Top */}
-        {(isPremium || categories.length > 0) && (
-          <div className="absolute top-3 left-3 right-3 z-10">
-            <div className="flex flex-wrap gap-1.5">
+        {(isBoosted || categories.length > 0) && (
+          <div className="absolute top-2 left-2 right-2 z-10">
+            <div className="flex flex-wrap gap-1">
               <EventCountdownPill
                 startAt={start}
                 endAt={end}
@@ -199,9 +353,9 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
                 isDeleted={isDeleted}
               />
 
-              {isPremium && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-violet-600/20 text-violet-300 border border-violet-600/30 px-2 py-0.5 text-xs font-medium backdrop-blur-sm">
-                  <Sparkles className="w-3 h-3" />
+              {isBoosted && (
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600/20 text-violet-300 border border-violet-600/30 px-1.5 py-0.5 text-[10px] font-medium backdrop-blur-sm">
+                  <Sparkles className="w-2.5 h-2.5" />
                   Promowane
                 </span>
               )}
@@ -209,14 +363,14 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
               {categories.slice(0, maxCategoriesToShow).map((cat) => (
                 <span
                   key={cat}
-                  className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-2 py-0.5 text-xs font-medium text-white/90"
+                  className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-1.5 py-0.5 text-[10px] font-medium text-white/90"
                 >
                   {cat}
                 </span>
               ))}
 
               {remainingCategoriesCount > 0 && (
-                <span className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-2 py-0.5 text-xs font-medium text-white/90">
+                <span className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-1.5 py-0.5 text-[10px] font-medium text-white/90">
                   +{remainingCategoriesCount}
                 </span>
               )}
@@ -226,21 +380,21 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
 
         {/* Organizer - Bottom */}
         {intent.owner?.name && (
-          <div className="absolute bottom-3 left-3 z-10">
+          <div className="absolute bottom-2 left-2 z-10">
             <Link
               href={`/u/${intent.owner.name}`}
-              className="flex items-center gap-1.5 group"
+              className="flex items-center gap-1 group"
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar
                 url={buildAvatarUrl(intent.owner?.avatarKey, 'xs')}
                 blurhash={intent.owner?.avatarBlurhash}
                 alt={intent.owner.name}
-                size={20}
+                size={16}
                 className="ring-1 ring-white/20 group-hover:ring-white/40 transition-all"
               />
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-medium text-white/70 group-hover:text-white/90 transition-colors">
+              <div className="flex items-center gap-0.5">
+                <span className="text-[10px] font-medium text-white/70 group-hover:text-white/90 transition-colors">
                   {intent.owner.name}
                 </span>
                 {intent.owner?.verifiedAt && (
@@ -257,23 +411,23 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col gap-3">
+      <div className="p-3 flex flex-col gap-2">
         {/* Title */}
-        <h4 className="text-base font-semibold leading-snug text-white line-clamp-2">
+        <h4 className="text-sm font-semibold leading-tight text-white line-clamp-2">
           {intent.title}
         </h4>
 
         {/* Info Grid */}
-        <div className="flex flex-col gap-2 text-xs text-zinc-400">
-          {intent.address && (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-zinc-500" />
-              <span className="truncate">{intent.address}</span>
+        <div className="flex flex-col gap-1 text-[10px] text-zinc-400">
+          {locationDisplay && (
+            <div className="flex items-center gap-1 min-w-0">
+              <locationDisplay.Icon className="h-3 w-3 flex-shrink-0 text-zinc-500" />
+              <span className="truncate">{locationDisplay.text}</span>
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-zinc-500" />
+          <div className="flex items-center gap-1 min-w-0">
+            <Calendar className="h-3 w-3 flex-shrink-0 text-zinc-500" />
             <span className="truncate">
               {formatDateRange(startAt, endAt)} • {humanDuration(start, end)}
             </span>
@@ -281,7 +435,7 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         </div>
 
         {/* Status Badges */}
-        <div className="flex items-center gap-2 flex-wrap pt-1">
+        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
           <CapacityBadge
             size="xs"
             statusReason={status.reason}

@@ -7,7 +7,6 @@ import { Virtuoso } from 'react-virtuoso';
 import clsx from 'clsx';
 import { PopupItem, PopupIntent } from './popup-item';
 import { PopupItemSkeleton } from './popup-item-skeleton';
-import { Plan } from '@/components/ui/plan-theme';
 
 export interface RegionPopupProps {
   intents: PopupIntent[];
@@ -29,21 +28,6 @@ export const RegionPopup = memo(function RegionPopup({
   // Show items if we have any, regardless of loading state
   const showItems = intents.length > 0;
   const showSkeletons = !showItems && isLoading;
-
-  // Add plan based on index for visual variety
-  const itemsWithPlan = useMemo(
-    () =>
-      intents.map((it, index) => ({
-        ...it,
-        plan: (function planForIndex(i: number): Plan {
-          if (i % 7 === 0) return 'premium';
-          if (i % 5 === 0) return 'plus';
-          if (i % 3 === 0) return 'basic';
-          return 'default';
-        })(index),
-      })),
-    [intents]
-  );
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage && onLoadMore) {
@@ -73,18 +57,18 @@ export const RegionPopup = memo(function RegionPopup({
 
   const renderItem = useCallback(
     (index: number) => {
-      const intent = itemsWithPlan[index];
+      const intent = intents[index];
       if (!intent) return null;
       return (
         <PopupItem key={intent.id} intent={intent} onClick={onIntentClick} />
       );
     },
-    [itemsWithPlan, onIntentClick]
+    [intents, onIntentClick]
   );
 
   const computeItemKey = useCallback(
-    (index: number) => itemsWithPlan[index]?.id || `item-${index}`,
-    [itemsWithPlan]
+    (index: number) => intents[index]?.id || `item-${index}`,
+    [intents]
   );
 
   const virtuosoComponents = useMemo(
@@ -136,8 +120,8 @@ export const RegionPopup = memo(function RegionPopup({
         {/* Scrollable content */}
         <Virtuoso
           style={{ height: '420px', width: '100%' }}
-          data={itemsWithPlan}
-          totalCount={itemsWithPlan.length}
+          data={intents}
+          totalCount={intents.length}
           endReached={handleEndReached}
           overscan={5}
           atBottomThreshold={400}

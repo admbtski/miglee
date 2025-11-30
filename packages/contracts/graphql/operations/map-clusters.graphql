@@ -35,6 +35,7 @@ query GetRegionIntents(
       lng
       address
       placeId
+      radiusKm
       meetingKind
       visibility
       joinMode
@@ -46,7 +47,22 @@ query GetRegionIntents(
       hasStarted
       hasEnded
       canJoin
+      isOngoing
+      isCanceled
+      isDeleted
+      withinLock
+      lockReason
       boostedAt
+      highlightColor
+      coverKey
+      coverBlurhash
+      addressVisibility
+      membersVisibility
+      joinOpensMinutesBeforeStart
+      joinCutoffMinutesBeforeStart
+      allowJoinLate
+      lateJoinCutoffMinutesAfterStart
+      joinManuallyClosed
       categories {
         id
         slug

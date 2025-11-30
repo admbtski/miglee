@@ -15,7 +15,6 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { RegionPopup, PopupIntent } from './map-popup';
-import { Plan } from '@/components/ui/plan-theme';
 
 export function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
@@ -708,6 +707,7 @@ function ServerClusteredMapComponent({
       startAt: intent.startAt,
       endAt: intent.endAt,
       address: intent.address,
+      radiusKm: intent.radiusKm,
       joinedCount: intent.joinedCount,
       min: intent.min,
       max: intent.max,
@@ -720,12 +720,35 @@ function ServerClusteredMapComponent({
       isOngoing: intent.isOngoing ?? false,
       hasStarted: intent.hasStarted ?? false,
       withinLock: intent.withinLock ?? false,
+      lockReason: intent.lockReason,
       canJoin: intent.canJoin ?? false,
+      joinOpensMinutesBeforeStart: intent.joinOpensMinutesBeforeStart,
+      joinCutoffMinutesBeforeStart: intent.joinCutoffMinutesBeforeStart,
+      allowJoinLate: intent.allowJoinLate ?? false,
+      lateJoinCutoffMinutesAfterStart: intent.lateJoinCutoffMinutesAfterStart,
+      joinManuallyClosed: intent.joinManuallyClosed ?? false,
       levels: (intent.levels as GqlLevel[]) ?? null,
-      plan: (intent.plan as Plan) ?? null,
-      meetingKind:
-        (intent.meetingKind as 'ONSITE' | 'ONLINE' | 'HYBRID') ?? null,
-      categorySlugs: intent.categories?.map((c: any) => c.slug) ?? null,
+      plan: null, // Will be determined by boostedAt
+      boostedAt: intent.boostedAt,
+      highlightColor: intent.highlightColor,
+      meetingKind: intent.meetingKind,
+      isHybrid:
+        intent.meetingKind === 'HYBRID' ||
+        (intent.meetingKind &&
+          (intent.meetingKind as string[]).includes('HYBRID')),
+      isOnline:
+        intent.meetingKind === 'ONLINE' ||
+        (intent.meetingKind &&
+          (intent.meetingKind as string[]).includes('ONLINE')),
+      isOnsite:
+        intent.meetingKind === 'ONSITE' ||
+        (intent.meetingKind &&
+          (intent.meetingKind as string[]).includes('ONSITE')),
+      addressVisibility: intent.addressVisibility,
+      categorySlugs:
+        intent.categories?.map((cat: any) => cat.slug).slice(0, 3) ?? [],
+      coverKey: intent.coverKey,
+      coverBlurhash: intent.coverBlurhash,
     }));
 
     // Don't close popup if no data - might be a network error
