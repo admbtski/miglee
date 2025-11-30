@@ -12,7 +12,6 @@ import {
 } from '../../__generated__/resolvers-types';
 import { mapIntent } from '../helpers';
 
-const MINUTE_MS = 60 * 1000;
 const BOOST_DURATION_MS = 24 * 60 * 60 * 1000;
 
 const INTENT_INCLUDE = {
@@ -37,85 +36,6 @@ const INTENT_INCLUDE = {
 } satisfies Prisma.IntentInclude;
 
 /* ───────────────────────────── Helpers ───────────────────────────── */
-
-function computeJoinOpenAndFlags(row: {
-  startAt: Date;
-  endAt: Date;
-  allowJoinLate: boolean;
-  joinOpensMinutesBeforeStart: number | null;
-  joinCutoffMinutesBeforeStart: number | null;
-  lateJoinCutoffMinutesAfterStart: number | null;
-  joinManuallyClosed: boolean;
-  canceledAt: Date | null;
-  deletedAt: Date | null;
-  joinedCount: number;
-  max: number;
-}) {
-  const now = new Date();
-  const { startAt, endAt } = row;
-
-  const beforeStart = now < startAt;
-  const during = now >= startAt && now < endAt;
-  const ended = now >= endAt;
-
-  // Hard blocks first (deleted, canceled, ended, full)
-  if (row.deletedAt || row.canceledAt || ended) {
-    return { joinOpen: false, ended, during, beforeStart };
-  }
-
-  const isFull =
-    typeof row.max === 'number' && row.max > 0 && row.joinedCount >= row.max;
-  if (isFull) {
-    return { joinOpen: false, ended, during, beforeStart };
-  }
-
-  if (row.joinManuallyClosed) {
-    return { joinOpen: false, ended, during, beforeStart };
-  }
-
-  if (beforeStart) {
-    // Not-open-yet window
-    if (
-      row.joinOpensMinutesBeforeStart != null &&
-      now <
-        new Date(
-          startAt.getTime() - row.joinOpensMinutesBeforeStart * MINUTE_MS
-        )
-    ) {
-      return { joinOpen: false, ended, during, beforeStart };
-    }
-    // Pre-start cutoff
-    if (
-      row.joinCutoffMinutesBeforeStart != null &&
-      now >=
-        new Date(
-          startAt.getTime() - row.joinCutoffMinutesBeforeStart * MINUTE_MS
-        )
-    ) {
-      return { joinOpen: false, ended, during, beforeStart };
-    }
-    return { joinOpen: true, ended, during, beforeStart };
-  }
-
-  if (during) {
-    if (!row.allowJoinLate) {
-      return { joinOpen: false, ended, during, beforeStart };
-    }
-    if (
-      row.lateJoinCutoffMinutesAfterStart != null &&
-      now >=
-        new Date(
-          startAt.getTime() + row.lateJoinCutoffMinutesAfterStart * MINUTE_MS
-        )
-    ) {
-      return { joinOpen: false, ended, during, beforeStart };
-    }
-    return { joinOpen: true, ended, during, beforeStart };
-  }
-
-  // Ended (redundant but explicit)
-  return { joinOpen: false, ended: true, during: false, beforeStart: false };
-}
 
 function getAndArray(
   where: Prisma.IntentWhereInput
@@ -322,12 +242,13 @@ function applyDistanceBox(
 
 /**
  * Applies status filters that can be fully resolved in SQL:
- * - CANCELED
- * - DELETED
- * - ONGOING
- * - PAST
+ * - UPCOMING: startAt > NOW, not canceled, not deleted
+ * - ONGOING: startAt <= NOW < endAt, not canceled, not deleted
+ * - PAST: endAt < NOW, not canceled, not deleted
+ * - CANCELED: canceledAt is not null
+ * - DELETED: deletedAt is not null
  *
- * Other statuses (FULL / LOCKED / AVAILABLE) are handled in post-filter branch.
+ * All statuses are handled in SQL - no post-filtering needed.
  */
 function applyStatusWhere(
   where: Prisma.IntentWhereInput,
@@ -339,6 +260,13 @@ function applyStatusWhere(
   const AND = getAndArray(where);
 
   switch (status) {
+    case IntentStatus.Upcoming:
+      AND.push(
+        { startAt: { gt: now } },
+        { canceledAt: null },
+        { deletedAt: null }
+      );
+      break;
     case IntentStatus.Canceled:
       AND.push({ canceledAt: { not: null } });
       break;
@@ -361,27 +289,9 @@ function applyStatusWhere(
       );
       break;
     default:
-      // FULL / LOCKED / AVAILABLE are computed later in application code
+      // ANY - no status filter
       break;
   }
-}
-
-/**
- * Returns true if the given status requires post-filtering in application code
- * (because it depends on dynamic "joinOpen/full" state), e.g.:
- * - FULL
- * - LOCKED
- * - AVAILABLE
- */
-function needsPostFilterStatus(status: IntentStatus | null | undefined) {
-  if (!status || status === IntentStatus.Any) return false;
-
-  return ![
-    IntentStatus.Canceled,
-    IntentStatus.Deleted,
-    IntentStatus.Ongoing,
-    IntentStatus.Past,
-  ].includes(status);
 }
 
 /**
@@ -441,7 +351,6 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
   'intents',
   async (_p, args, { user }) => {
-    const userId = user?.id;
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
     const now = new Date();
@@ -462,162 +371,27 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
     applyStatusWhere(baseWhere, args.status ?? null, now);
     const orderBy = buildOrderBy(args);
 
-    const statusNeedsPostFilter = needsPostFilterStatus(args.status ?? null);
+    // All statuses are handled in SQL - no post-filtering needed
+    const [total, allRows] = await Promise.all([
+      prisma.intent.count({ where: baseWhere }),
+      prisma.intent.findMany({
+        where: baseWhere,
+        orderBy,
+        include: INTENT_INCLUDE,
+        // We fetch `take + skip` so we can apply our in-memory sort and then slice.
+        take: take + skip,
+        skip: 0,
+      }),
+    ]);
 
-    /* ───────────────────── Branch A: pure SQL status ─────────────────────
-       No post-filter needed → standard count + findMany.
-    ---------------------------------------------------------------------- */
-    if (!statusNeedsPostFilter) {
-      const [total, allRows] = await Promise.all([
-        prisma.intent.count({ where: baseWhere }),
-        prisma.intent.findMany({
-          where: baseWhere,
-          orderBy,
-          include: INTENT_INCLUDE,
-          // We fetch `take + skip` so we can apply our in-memory sort and then slice.
-          take: take + skip,
-          skip: 0,
-        }),
-      ]);
-
-      const comparator = buildBoostAwareComparator(args, now);
-      allRows.sort(comparator);
-
-      // Apply pagination after in-memory sorting
-      const paginatedRows = allRows.slice(skip, skip + take);
-
-      return {
-        items: paginatedRows.map((r) => mapIntent(r, user?.id)),
-        pageInfo: {
-          total,
-          limit: take,
-          offset: skip,
-          hasPrev: skip > 0,
-          hasNext: skip + take < total,
-        },
-      };
-    }
-
-    /* ───────────────────── Branch B: computed status ─────────────────────
-       Status requires runtime computation (FULL / LOCKED / AVAILABLE).
-       We pre-filter candidates in SQL and then apply joinOpen/full logic.
-    ---------------------------------------------------------------------- */
-
-    // Pre-filter future, non-canceled, non-deleted intents
-    const preFilterForComputed: Prisma.IntentWhereInput = {
-      endAt: { gt: now },
-      canceledAt: null,
-      deletedAt: null,
-    };
-
-    // NOTE: This intentionally mimics original behavior:
-    // computedWhere uses only baseWhere.AND + preFilterForComputed,
-    // so any top-level fields on baseWhere (e.g. visibility, joinMode)
-    // are not applied in this branch.
-    const computedWhere: Prisma.IntentWhereInput = baseWhere.AND
-      ? {
-          AND: [
-            ...(baseWhere.AND as Prisma.IntentWhereInput[]),
-            preFilterForComputed,
-          ],
-        }
-      : preFilterForComputed;
-
-    const candidateSelect = {
-      id: true,
-      startAt: true,
-      endAt: true,
-      allowJoinLate: true,
-      joinOpensMinutesBeforeStart: true,
-      joinCutoffMinutesBeforeStart: true,
-      lateJoinCutoffMinutesAfterStart: true,
-      joinManuallyClosed: true,
-      canceledAt: true,
-      deletedAt: true,
-      joinedCount: true,
-      max: true,
-      boostedAt: true, // For 24h boost expiration logic
-      createdAt: true, // For sorting
-      updatedAt: true, // For sorting
-    } satisfies Prisma.IntentSelect;
-
-    // Fetch candidates with ordering
-    const allCandidateRows = await prisma.intent.findMany({
-      where: computedWhere,
-      select: candidateSelect,
-      orderBy,
-    });
-
-    // Apply 24h boost expiration and sort using the same comparator
     const comparator = buildBoostAwareComparator(args, now);
-    allCandidateRows.sort(comparator);
+    allRows.sort(comparator);
 
-    // Filter by status (after sorting to maintain order)
-    const filteredIds: string[] = [];
-    for (const r of allCandidateRows) {
-      if (r.canceledAt || r.deletedAt) continue;
-
-      const { joinOpen, ended } = computeJoinOpenAndFlags({
-        startAt: r.startAt,
-        endAt: r.endAt,
-        allowJoinLate: r.allowJoinLate,
-        joinOpensMinutesBeforeStart: r.joinOpensMinutesBeforeStart,
-        joinCutoffMinutesBeforeStart: r.joinCutoffMinutesBeforeStart,
-        lateJoinCutoffMinutesAfterStart: r.lateJoinCutoffMinutesAfterStart,
-        joinManuallyClosed: r.joinManuallyClosed,
-        canceledAt: r.canceledAt,
-        deletedAt: r.deletedAt,
-        joinedCount: r.joinedCount,
-        max: r.max,
-      });
-
-      const isFull =
-        typeof r.max === 'number' && r.max > 0 && r.joinedCount >= r.max;
-
-      switch (args.status) {
-        case IntentStatus.Full:
-          if (!ended && isFull) filteredIds.push(r.id);
-          break;
-        case IntentStatus.Locked:
-          if (!ended && !joinOpen) filteredIds.push(r.id);
-          break;
-        case IntentStatus.Available:
-          if (!ended && joinOpen) filteredIds.push(r.id);
-          break;
-        default:
-          break;
-      }
-    }
-
-    const total = filteredIds.length;
-    const pageIds = filteredIds.slice(skip, skip + take);
-
-    if (!pageIds.length) {
-      return {
-        items: [],
-        pageInfo: {
-          total,
-          limit: take,
-          offset: skip,
-          hasPrev: skip > 0,
-          hasNext: skip + take < total,
-        },
-      };
-    }
-
-    // Fetch full records (maintain order)
-    const pageRows = await prisma.intent.findMany({
-      where: { id: { in: pageIds } },
-      include: INTENT_INCLUDE,
-    });
-
-    const byId = new Map(pageRows.map((r) => [r.id, r]));
-    const ordered = pageIds
-      .map((id) => byId.get(id))
-      .filter((r): r is (typeof pageRows)[number] => Boolean(r));
+    // Apply pagination after in-memory sorting
+    const paginatedRows = allRows.slice(skip, skip + take);
 
     return {
-      items: ordered.map((r) => mapIntent(r, userId)),
+      items: paginatedRows.map((r) => mapIntent(r, user?.id)),
       pageInfo: {
         total,
         limit: take,

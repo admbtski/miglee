@@ -277,14 +277,12 @@ enum UserEffectivePlan {
   PRO
 }
 
-"Intent dynamic status (computed on read)"
+"Intent time-based status (computed on read)"
 enum IntentStatus {
   ANY
+  UPCOMING
   ONGOING
   PAST
-  FULL
-  LOCKED
-  AVAILABLE
   CANCELED
   DELETED
 }
@@ -2147,7 +2145,9 @@ type Mutation {
   restoreMyAccount(email: String!, token: String!): Boolean!
 
   # User Category Levels
-  upsertUserCategoryLevel(input: UpsertUserCategoryLevelInput!): UserCategoryLevel!
+  upsertUserCategoryLevel(
+    input: UpsertUserCategoryLevelInput!
+  ): UserCategoryLevel!
   removeUserCategoryLevel(id: ID!): Boolean!
 
   # User Availability

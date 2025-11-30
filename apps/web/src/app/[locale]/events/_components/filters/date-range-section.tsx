@@ -36,6 +36,7 @@ type DateRangeSectionProps = {
   endISO: string | null;
   onStartChange: (iso: string | null) => void;
   onEndChange: (iso: string | null) => void;
+  disabled?: boolean;
 };
 
 export const DateRangeSection = memo(function DateRangeSection({
@@ -43,6 +44,7 @@ export const DateRangeSection = memo(function DateRangeSection({
   endISO,
   onStartChange,
   onEndChange,
+  disabled = false,
 }: DateRangeSectionProps) {
   const startForInput = useMemo(() => isoToLocalInput(startISO), [startISO]);
   const endForInput = useMemo(() => isoToLocalInput(endISO), [endISO]);
@@ -143,6 +145,7 @@ export const DateRangeSection = memo(function DateRangeSection({
             <button
               key={p.id}
               type="button"
+              disabled={disabled}
               onClick={() =>
                 applyPreset(
                   p.id as 'now1h' | 'tonight' | 'tomorrow' | 'weekend' | '7days'
@@ -151,7 +154,8 @@ export const DateRangeSection = memo(function DateRangeSection({
               className="rounded-xl px-3.5 py-2 text-xs font-medium border transition-all
                          bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300
                          dark:bg-zinc-900/40 dark:text-zinc-300 dark:border-zinc-700/50 dark:hover:bg-zinc-800/60
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40
+                         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-zinc-900/40"
             >
               {p.label}
             </button>
@@ -177,10 +181,11 @@ export const DateRangeSection = memo(function DateRangeSection({
                 <input
                   type="datetime-local"
                   value={startForInput}
+                  disabled={disabled}
                   onChange={(e) =>
                     onStartChange(localInputToISO(e.target.value))
                   }
-                  className="w-full bg-transparent outline-none text-zinc-900 dark:text-zinc-100"
+                  className="w-full bg-transparent outline-none text-zinc-900 dark:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </label>
@@ -198,8 +203,9 @@ export const DateRangeSection = memo(function DateRangeSection({
                   type="datetime-local"
                   value={endForInput}
                   min={endMin}
+                  disabled={disabled}
                   onChange={(e) => onEndChange(localInputToISO(e.target.value))}
-                  className="w-full bg-transparent outline-none text-zinc-900 dark:text-zinc-100"
+                  className="w-full bg-transparent outline-none text-zinc-900 dark:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </label>

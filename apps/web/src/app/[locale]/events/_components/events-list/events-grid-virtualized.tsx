@@ -160,17 +160,9 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
     onHoverRef.current = onHover;
   }, [onHover]);
 
-  // Stable callback that uses the ref
-  const stableOnHover = useMemo<IntentHoverCallback | undefined>(() => {
-    if (!onHover) return undefined;
-    return (intentId) => {
-      onHoverRef.current?.(intentId);
-    };
-  }, [onHover ? true : false]);
-
   const itemRows = useMemo(
-    () => createItemRows(items, lang, stableOnHover),
-    [items, lang, stableOnHover]
+    () => createItemRows(items, lang, onHoverRef.current),
+    [items, lang]
   );
 
   const handleEndReached = useCallback(() => {

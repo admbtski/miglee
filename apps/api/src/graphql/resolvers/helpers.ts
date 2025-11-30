@@ -427,7 +427,10 @@ function computeIntentDerived(i: IntentWithGraph | any) {
 
 /**
  * Compute high-level IntentStatus from derived flags.
- * Priority order: DELETED > CANCELED > PAST > ONGOING > FULL > LOCKED > AVAILABLE
+ * Priority order: DELETED > CANCELED > PAST > ONGOING > UPCOMING
+ *
+ * Note: UPCOMING is computed here for individual intent detail views.
+ * For list queries, status filtering is done in SQL (see intents.ts resolver).
  */
 function computeIntentStatus(
   derived: ReturnType<typeof computeIntentDerived>
@@ -436,9 +439,10 @@ function computeIntentStatus(
   if (derived.isCanceled) return IntentStatus.Canceled;
   if (derived.hasEnded) return IntentStatus.Past;
   if (derived.isOngoing) return IntentStatus.Ongoing;
-  if (derived.isFull) return IntentStatus.Full;
-  if (derived.withinLock) return IntentStatus.Locked;
-  return IntentStatus.Available;
+  // If not started yet → UPCOMING
+  if (!derived.hasStarted) return IntentStatus.Upcoming;
+  // Fallback (shouldn't normally reach here)
+  return IntentStatus.Upcoming;
 }
 
 /**

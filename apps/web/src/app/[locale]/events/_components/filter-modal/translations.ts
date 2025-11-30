@@ -52,10 +52,8 @@ export type FilterModalTranslations = {
       status: {
         title: string;
         any: string;
-        available: string;
+        upcoming: string;
         ongoing: string;
-        full: string;
-        locked: string;
         past: string;
       };
       meetingKind: {
@@ -161,10 +159,8 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
         status: {
           title: 'Status',
           any: 'Dowolny',
-          available: 'Dostępne',
+          upcoming: 'Nadchodzące',
           ongoing: 'W trakcie',
-          full: 'Pełne',
-          locked: 'Zablokowane',
           past: 'Przeszłe',
         },
         meetingKind: {
@@ -269,10 +265,8 @@ export const translations: Record<'pl' | 'en', FilterModalTranslations> = {
         status: {
           title: 'Status',
           any: 'Any',
-          available: 'Available',
+          upcoming: 'Upcoming',
           ongoing: 'Ongoing',
-          full: 'Full',
-          locked: 'Locked',
           past: 'Past',
         },
         meetingKind: {

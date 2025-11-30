@@ -108,14 +108,10 @@ function FilterModalRefactoredComponent({
     switch (status) {
       case IntentStatus.Any:
         return t.sections.settings.status.any;
-      case IntentStatus.Available:
-        return t.sections.settings.status.available;
+      case IntentStatus.Upcoming:
+        return t.sections.settings.status.upcoming;
       case IntentStatus.Ongoing:
         return t.sections.settings.status.ongoing;
-      case IntentStatus.Full:
-        return t.sections.settings.status.full;
-      case IntentStatus.Locked:
-        return t.sections.settings.status.locked;
       case IntentStatus.Past:
         return t.sections.settings.status.past;
       default:
@@ -220,9 +216,9 @@ function FilterModalRefactoredComponent({
     setCityLng,
     setCityPlaceId,
     setDistanceKm,
-    setStartISO,
-    setEndISO,
-    setStatus,
+    setStartISO: _setStartISO,
+    setEndISO: _setEndISO,
+    setStatus: _setStatus,
     setKinds,
     setLevels,
     setVerifiedOnly,
@@ -231,6 +227,50 @@ function FilterModalRefactoredComponent({
     setJoinModes,
     clearAll,
   } = filterState;
+
+  // Wrapped status setter: when changing to time-based status (UPCOMING/ONGOING/PAST),
+  // automatically reset date range
+  const setStatus = useCallback(
+    (newStatus: IntentStatus) => {
+      _setStatus(newStatus);
+      if (
+        newStatus === IntentStatus.Upcoming ||
+        newStatus === IntentStatus.Ongoing ||
+        newStatus === IntentStatus.Past
+      ) {
+        _setStartISO(null);
+        _setEndISO(null);
+      }
+    },
+    [_setStatus, _setStartISO, _setEndISO]
+  );
+
+  // Wrapped date setters: when user sets a date range, automatically change status to ANY
+  const setStartISO = useCallback(
+    (iso: string | null) => {
+      _setStartISO(iso);
+      if (iso !== null && status !== IntentStatus.Any) {
+        _setStatus(IntentStatus.Any);
+      }
+    },
+    [_setStartISO, _setStatus, status]
+  );
+
+  const setEndISO = useCallback(
+    (iso: string | null) => {
+      _setEndISO(iso);
+      if (iso !== null && status !== IntentStatus.Any) {
+        _setStatus(IntentStatus.Any);
+      }
+    },
+    [_setEndISO, _setStatus, status]
+  );
+
+  // Check if date inputs should be disabled (when time-based status is selected)
+  const dateInputsDisabled =
+    status === IntentStatus.Upcoming ||
+    status === IntentStatus.Ongoing ||
+    status === IntentStatus.Past;
 
   // Meta - for search suggestions
   const { data, loading } = useSearchMeta(q);
@@ -462,7 +502,13 @@ function FilterModalRefactoredComponent({
               <CollapsibleSection
                 divider={true}
                 title={t.sections.dateRange.title}
-                description={t.sections.dateRange.description}
+                description={
+                  dateInputsDisabled
+                    ? locale === 'pl'
+                      ? 'Nadchodzące wydarzenia to wszystkie, które jeszcze się nie rozpoczęły. Zakres dat jest wyłączony.'
+                      : 'Upcoming events are all events that have not started yet. Date range is disabled.'
+                    : t.sections.dateRange.description
+                }
                 icon={<CalendarIcon className="w-5 h-5" />}
                 isExpanded={expandedSections.dateRange}
                 onToggle={() => toggleSection('dateRange')}
@@ -473,6 +519,7 @@ function FilterModalRefactoredComponent({
                   endISO={endISO}
                   onStartChange={setStartISO}
                   onEndChange={setEndISO}
+                  disabled={dateInputsDisabled}
                 />
                 {dateError && (
                   <div className="mt-2 text-sm text-red-600 dark:text-red-400">
@@ -503,10 +550,8 @@ function FilterModalRefactoredComponent({
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {[
                         IntentStatus.Any,
-                        IntentStatus.Available,
+                        IntentStatus.Upcoming,
                         IntentStatus.Ongoing,
-                        IntentStatus.Full,
-                        IntentStatus.Locked,
                         IntentStatus.Past,
                       ].map((val) => (
                         <Pill
