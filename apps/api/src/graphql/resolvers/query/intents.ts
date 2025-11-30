@@ -3,10 +3,11 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import {
-  QueryResolvers,
+  IntentsSortBy,
   IntentStatus,
   MeetingKind,
-  IntentsSortBy,
+  QueryIntentsArgs,
+  QueryResolvers,
   SortDir,
 } from '../../__generated__/resolvers-types';
 import { mapIntent } from '../helpers';
@@ -116,8 +117,6 @@ function computeJoinOpenAndFlags(row: {
   return { joinOpen: false, ended: true, during: false, beforeStart: false };
 }
 
-type IntentsArgs = Parameters<QueryResolvers['intents']>[1];
-
 function getAndArray(
   where: Prisma.IntentWhereInput
 ): Prisma.IntentWhereInput[] {
@@ -125,7 +124,7 @@ function getAndArray(
   return where.AND as Prisma.IntentWhereInput[];
 }
 
-function buildBaseWhere(args: IntentsArgs): Prisma.IntentWhereInput {
+function buildBaseWhere(args: QueryIntentsArgs): Prisma.IntentWhereInput {
   const where: Prisma.IntentWhereInput = {};
   const AND = getAndArray(where);
 
@@ -248,7 +247,7 @@ function buildBaseWhere(args: IntentsArgs): Prisma.IntentWhereInput {
   return where;
 }
 
-function buildOrderBy(args: Parameters<QueryResolvers['intents']>[1]) {
+function buildOrderBy(args: QueryIntentsArgs) {
   const dir: Prisma.SortOrder = args.sortDir === SortDir.Asc ? 'asc' : 'desc';
 
   // PRIORITY SYSTEM:
@@ -402,7 +401,7 @@ function buildBoostAwareComparator<
     createdAt: Date;
     updatedAt: Date;
   },
->(args: IntentsArgs, now: Date): (a: T, b: T) => number {
+>(args: QueryIntentsArgs, now: Date): (a: T, b: T) => number {
   const dir = args.sortDir === SortDir.Asc ? 1 : -1;
   const boostThreshold = new Date(now.getTime() - BOOST_DURATION_MS);
 
@@ -442,6 +441,7 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
   'Query',
   'intents',
   async (_p, args, { user }) => {
+    const userId = user?.id;
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
     const now = new Date();
@@ -617,7 +617,7 @@ export const intentsQuery: QueryResolvers['intents'] = resolverWithMetrics(
       .filter((r): r is (typeof pageRows)[number] => Boolean(r));
 
     return {
-      items: ordered.map((r) => mapIntent(r, user?.id)),
+      items: ordered.map((r) => mapIntent(r, userId)),
       pageInfo: {
         total,
         limit: take,
@@ -633,11 +633,12 @@ export const intentQuery: QueryResolvers['intent'] = resolverWithMetrics(
   'Query',
   'intent',
   async (_p, { id }, { user }) => {
+    const userId = user?.id;
     const row = await prisma.intent.findUnique({
       where: { id },
       include: INTENT_INCLUDE,
     });
 
-    return row ? mapIntent(row, user?.id) : null;
+    return row ? mapIntent(row, userId) : null;
   }
 );

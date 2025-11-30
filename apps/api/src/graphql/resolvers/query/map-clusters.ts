@@ -1,53 +1,99 @@
-import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { prisma } from '../../../lib/prisma';
+import { Prisma } from '@prisma/client';
 import {
   clamp,
+  decodeRegion,
+  encodeRegion,
   lngLatToTile,
   tileToBBox,
-  encodeRegion,
-  decodeRegion,
   tileToGeoJsonPolygon,
 } from '../../../lib/geo/webmercator';
+import { prisma } from '../../../lib/prisma';
+import type {
+  ClusterFiltersInput,
+  QueryResolvers,
+} from '../../__generated__/resolvers-types';
 import { mapIntent } from '../helpers';
 
+const INTENT_INCLUDE = {
+  categories: true,
+  tags: true,
+  members: {
+    include: {
+      user: { include: { profile: true } },
+      addedBy: { include: { profile: true } },
+    },
+  },
+  owner: { include: { profile: true } },
+  canceledBy: { include: { profile: true } },
+  deletedBy: { include: { profile: true } },
+  sponsorship: {
+    include: {
+      sponsor: { include: { profile: true } },
+    },
+  },
+  // If you have a relation in Prisma:
+  // joinManuallyClosedBy: true,
+} satisfies Prisma.IntentInclude;
+
+/* ───────────────────────────── Types & constants ───────────────────────────── */
+
+type TileAgg = {
+  x: number;
+  y: number;
+  z: number;
+  sumLat: number;
+  sumLng: number;
+  count: number;
+  points: Array<{ lat: number; lng: number; id: string }>;
+};
+
+const MIN_CLUSTER_SIZE = 1; // tile becomes a cluster from this count
+const MAX_REGION_PAGE_SIZE = 50;
+
+/* ───────────────────────────── Helper functions ───────────────────────────── */
+
 /**
- * Clusters query - returns clustered intent points for a map viewport
- * Groups intents by WebMercator tile at computed zoom level
+ * Very small jitter (~3–5m) for single points to avoid perfect overlap.
+ * Deterministic based on lat/lng/salt.
  */
-export const clustersQuery: QueryResolvers['clusters'] = async (
-  _parent,
-  args,
-  _ctx
-) => {
-  const { bbox, zoom, filters } = args;
+function jitter(lat: number, lng: number, salt: number) {
+  const J = 0.00005; // ~5m in degrees (approx)
+  const s = Math.sin((lat + lng + salt) * 12.9898) * 43758.5453;
+  const r1 = s - Math.floor(s) - 0.5;
+  const r2 = s * 1.1337 - Math.floor(s * 1.1337) - 0.5;
+  return { lat: lat + r1 * J, lng: lng + r2 * J };
+}
 
-  // ───────────────── Clustering tuning ─────────────────
-  // Wyższy Zc => mniejsze kafelki => mniej agresywne klastrowanie
-  // (+1 względem "gołego" zoomu daje subtelne rozrzedzenie)
-  const baseZ = clamp(Math.floor(zoom), 2, 16);
-  const Zc = clamp(baseZ + 2, 3, 16);
-
-  // kafelek staje się klastrem dopiero od tylu punktów
-  const MIN_CLUSTER_SIZE = 1;
-
-  // bardzo mały jitter (ok. 3–5 metrów) dla pojedynczych punktów,
-  // żeby markery nie nakładały się idealnie
-  const jitter = (lat: number, lng: number, salt: number) => {
-    // ~5m w stopniach (zależnie od szer. geogr.; tu prosto i bezpiecznie)
-    const J = 0.00005;
-    const s = Math.sin((lat + lng + salt) * 12.9898) * 43758.5453;
-    const r1 = s - Math.floor(s) - 0.5;
-    const r2 = s * 1.1337 - Math.floor(s * 1.1337) - 0.5;
-    return { lat: lat + r1 * J, lng: lng + r2 * J };
-  };
-
-  // ───────────────── SQL (jak było) ─────────────────
+/**
+ * Build raw SQL WHERE fragments and params for common map filters.
+ * This is shared between clusters and regionIntents queries to keep behavior aligned.
+ *
+ * @param filters Filters object from GraphQL args
+ * @param startParamIndex First free $ index in the SQL statement
+ */
+function buildFilterSql(
+  filters: ClusterFiltersInput,
+  startParamIndex: number
+): {
+  whereClause: string;
+  params: any[];
+  nextParamIndex: number;
+} {
   const whereConditions: string[] = [];
-  const params: any[] = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
-  let paramIndex = 5;
+  const params: any[] = [];
+  let paramIndex = startParamIndex;
 
-  if (filters?.verifiedOnly) whereConditions.push(`u."verifiedAt" IS NOT NULL`);
-  if (filters?.categorySlugs?.length) {
+  if (!filters) {
+    return { whereClause: '', params, nextParamIndex: paramIndex };
+  }
+
+  // Verified owners
+  if (filters.verifiedOnly) {
+    whereConditions.push(`u."verifiedAt" IS NOT NULL`);
+  }
+
+  // Categories
+  if (filters.categorySlugs?.length) {
     whereConditions.push(
       `EXISTS (
         SELECT 1 FROM "_CategoryToIntent" ci
@@ -58,14 +104,46 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     params.push(filters.categorySlugs);
     paramIndex++;
   }
-  if (filters?.levels?.length) {
+
+  // Levels (enum array intersection)
+  if (filters.levels?.length) {
     whereConditions.push(`i.levels && $${paramIndex}::"Level"[]`);
     params.push(filters.levels);
     paramIndex++;
   }
-  const whereClause = whereConditions.length
-    ? `AND ${whereConditions.join(' AND ')}`
-    : '';
+
+  const whereClause =
+    whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
+
+  return { whereClause, params, nextParamIndex: paramIndex };
+}
+
+/* ───────────────────────────── Clusters query ───────────────────────────── */
+
+/**
+ * Clusters query - returns clustered intent points for a map viewport.
+ * Groups intents by WebMercator tile at computed zoom level.
+ */
+export const clustersQuery: QueryResolvers['clusters'] = async (
+  _parent,
+  args,
+  _ctx
+) => {
+  const { bbox, zoom, filters } = args;
+
+  // Clustering tuning:
+  // Higher Zc => smaller tiles => less aggressive clustering.
+  const baseZ = clamp(Math.floor(zoom), 2, 16);
+  const Zc = clamp(baseZ + 2, 3, 16);
+
+  // Base params for bbox envelope
+  const baseParams = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
+
+  // Append filters
+  const { whereClause, params: filterParams } = buildFilterSql(
+    filters as ClusterFiltersInput,
+    5
+  );
 
   const rows = await prisma.$queryRawUnsafe<
     { id: string; lat: number; lng: number }[]
@@ -83,20 +161,11 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
       AND i."deletedAt" IS NULL
       ${whereClause}
     `,
-    ...params
+    ...baseParams,
+    ...filterParams
   );
 
-  // ───────────────── Grupowanie po kafelku ─────────────────
-  type TileAgg = {
-    x: number;
-    y: number;
-    z: number;
-    sumLat: number;
-    sumLng: number;
-    count: number;
-    points: Array<{ lat: number; lng: number; id: string }>;
-  };
-
+  // Group by tile
   const tileMap = new Map<string, TileAgg>();
 
   for (const row of rows) {
@@ -113,7 +182,7 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     tile.points.push({ lat: row.lat, lng: row.lng, id: row.id });
   }
 
-  // ───────────────── Konwersja do wyników ─────────────────
+  // Convert tiles to output clusters
   let autoId = 0;
   const out: Array<{
     id: string;
@@ -125,20 +194,24 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
   }> = [];
 
   for (const tile of tileMap.values()) {
+    const regionToken = encodeRegion(tile.z, tile.x, tile.y);
+    const polygon = tileToGeoJsonPolygon(tile.x, tile.y, tile.z);
+
     if (tile.count >= MIN_CLUSTER_SIZE) {
-      // pełny klaster (centroid kafelka)
+      // Cluster: centroid of the points in this tile
       const centroidLat = tile.sumLat / tile.count;
       const centroidLng = tile.sumLng / tile.count;
+
       out.push({
         id: String(autoId++),
         latitude: centroidLat,
         longitude: centroidLng,
         count: tile.count,
-        region: encodeRegion(tile.z, tile.x, tile.y),
-        geoJson: tileToGeoJsonPolygon(tile.x, tile.y, tile.z),
+        region: regionToken,
+        geoJson: polygon,
       });
     } else {
-      // za mało punktów -> pokaż pojedyncze pinezki (count=1) z lekkim jitterem
+      // Not enough points → emit single markers with light jitter
       for (const p of tile.points) {
         const j = jitter(p.lat, p.lng, autoId);
         out.push({
@@ -146,9 +219,8 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
           latitude: j.lat,
           longitude: j.lng,
           count: 1,
-          // region: używamy tego samego kafelka (OK dla paginacji regionIntents)
-          region: encodeRegion(tile.z, tile.x, tile.y),
-          geoJson: tileToGeoJsonPolygon(tile.x, tile.y, tile.z),
+          region: regionToken,
+          geoJson: polygon,
         });
       }
     }
@@ -157,14 +229,18 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
   return out;
 };
 
+/* ───────────────────────────── RegionIntents query ───────────────────────────── */
+
 /**
- * RegionIntents query - returns paginated intents for a specific map tile region
+ * RegionIntents query - returns paginated intents for a specific map tile region.
  */
 export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
   _parent,
   args,
   _ctx
 ) => {
+  const userId = _ctx.user?.id;
+
   const { region, page = 1, perPage = 20, filters } = args;
 
   // Decode region token to tile coordinates
@@ -172,12 +248,11 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
   const bbox = tileToBBox(x, y, z);
 
   // Clamp pagination parameters
-  const take = Math.max(1, Math.min(perPage, 50));
+  const take = Math.max(1, Math.min(perPage, MAX_REGION_PAGE_SIZE));
   const skip = Math.max(0, (page - 1) * take);
 
-  // Build WHERE conditions for filters
-  const whereConditions: string[] = [];
-  const params: any[] = [
+  // Build WHERE for items query
+  const baseParams: any[] = [
     bbox.swLon,
     bbox.swLat,
     bbox.neLon,
@@ -185,40 +260,14 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     take,
     skip,
   ];
-  let paramIndex = 7;
+  const { whereClause, params: filterParamsForItems } = buildFilterSql(
+    filters as ClusterFiltersInput,
+    7
+  );
 
-  // Filter by verified owners
-  if (filters?.verifiedOnly) {
-    whereConditions.push(`u."verifiedAt" IS NOT NULL`);
-  }
-
-  // Filter by categories
-  if (filters?.categorySlugs && filters.categorySlugs.length > 0) {
-    whereConditions.push(
-      `EXISTS (
-        SELECT 1 FROM "_CategoryToIntent" ci
-        INNER JOIN categories c ON c.id = ci."A"
-        WHERE ci."B" = i.id AND c.slug = ANY($${paramIndex}::text[])
-      )`
-    );
-    params.push(filters.categorySlugs);
-    paramIndex++;
-  }
-
-  // Filter by levels
-  if (filters?.levels && filters.levels.length > 0) {
-    whereConditions.push(`i.levels && $${paramIndex}::"Level"[]`);
-    params.push(filters.levels);
-    paramIndex++;
-  }
-
-  const whereClause =
-    whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
-
-  // Query intents in tile region with pagination
-  // Sorting: Boosted events first (< 24h old), then by startAt
-  // This uses SQL CASE to evaluate 24h expiration inline
-  const items = await prisma.$queryRawUnsafe<any[]>(
+  // Items query:
+  // Sorting: boosted (<24h) first, then by startAt ascending
+  const items = await prisma.$queryRawUnsafe<{ id: string }[]>(
     `
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
     SELECT i.id
@@ -241,17 +290,19 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
       i."startAt" ASC
     LIMIT $5 OFFSET $6
     `,
-    ...params
+    ...baseParams,
+    ...filterParamsForItems
   );
 
-  // Count total intents in region
-  const countParams: any[] = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
-  if (filters?.categorySlugs && filters.categorySlugs.length > 0) {
-    countParams.push(filters.categorySlugs);
-  }
-  if (filters?.levels && filters.levels.length > 0) {
-    countParams.push(filters.levels);
-  }
+  // Count query: reuse the same filter builder but with a different base param index
+  const countBaseParams: any[] = [
+    bbox.swLon,
+    bbox.swLat,
+    bbox.neLon,
+    bbox.neLat,
+  ];
+  const { whereClause: countWhereClause, params: filterParamsForCount } =
+    buildFilterSql(filters as ClusterFiltersInput, 5);
 
   const totalRows = await prisma.$queryRawUnsafe<{ c: number }[]>(
     `
@@ -265,48 +316,51 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
       AND i.visibility = 'PUBLIC'
       AND i."canceledAt" IS NULL
       AND i."deletedAt" IS NULL
-      ${whereClause}
+      ${countWhereClause}
     `,
-    ...countParams
+    ...countBaseParams,
+    ...filterParamsForCount
   );
   const total = totalRows[0]?.c ?? 0;
 
   // Fetch full intent objects using Prisma
   const intentIds = items.map((item) => item.id);
+
+  if (intentIds.length === 0) {
+    return {
+      data: [],
+      meta: {
+        page,
+        totalItems: total,
+        totalPages: 0,
+        prevPage: null,
+        nextPage: null,
+      },
+    };
+  }
+
   const intents = await prisma.intent.findMany({
-    where: {
-      id: { in: intentIds },
-    },
-    include: {
-      categories: true,
-      tags: true,
-      members: {
-        include: {
-          user: { include: { profile: true } },
-          addedBy: { include: { profile: true } },
-        },
-      },
-      owner: { include: { profile: true } },
-      canceledBy: { include: { profile: true } },
-      deletedBy: { include: { profile: true } },
-    },
+    where: { id: { in: intentIds } },
+    include: INTENT_INCLUDE,
     orderBy: [
-      {
-        boostedAt: { sort: 'desc', nulls: 'last' },
-      },
-      {
-        startAt: 'asc',
-      },
+      { boostedAt: { sort: 'desc', nulls: 'last' } },
+      { startAt: 'asc' },
     ],
   });
 
-  // Build pagination metadata
-  const totalPages = Math.max(1, Math.ceil(total / take));
+  // Keep order of ids from raw query
+  const byId = new Map(intents.map((i) => [i.id, i]));
+  const orderedIntents = intentIds
+    .map((id) => byId.get(id))
+    .filter((i): i is (typeof intents)[number] => Boolean(i));
+
+  // Pagination metadata
+  const totalPages = total === 0 ? 0 : Math.max(1, Math.ceil(total / take));
   const prevPage = page > 1 ? page - 1 : null;
   const nextPage = skip + items.length < total ? page + 1 : null;
 
   return {
-    data: intents.map((i) => mapIntent(i)),
+    data: orderedIntents.map((i) => mapIntent(i, userId)),
     meta: {
       page,
       totalItems: total,

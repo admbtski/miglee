@@ -82,7 +82,9 @@ export function IntentsPage() {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useIntentsInfiniteQuery(variables, { enabled: true });
+  } = useIntentsInfiniteQuery(variables, {
+    enabled: true,
+  });
 
   const pages = data?.pages ?? [];
   const flatItems = useMemo(
