@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Plus, Trash2, Edit2, Save, Loader2 } from 'lucide-react';
 import {
-  useUpsertUserDiscipline,
-  useRemoveUserDiscipline,
+  useUpsertUserCategoryLevel,
+  useRemoveUserCategoryLevel,
 } from '@/lib/api/user-profile';
 import type {
   GetMyFullProfileQuery,
@@ -45,7 +45,7 @@ export function SportsTab({ user }: SportsTabProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [disciplineToDelete, setDisciplineToDelete] = useState<{
+  const [categoryLevelToDelete, setCategoryLevelToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
@@ -57,10 +57,10 @@ export function SportsTab({ user }: SportsTabProps) {
   const [selectedLevel, setSelectedLevel] = useState<Level>('BEGINNER');
   const [notes, setNotes] = useState('');
 
-  const upsertMutation = useUpsertUserDiscipline();
-  const removeMutation = useRemoveUserDiscipline();
+  const upsertMutation = useUpsertUserCategoryLevel();
+  const removeMutation = useRemoveUserCategoryLevel();
 
-  const disciplines = user?.disciplines ?? [];
+  const categoryLevels = user?.categoryLevels ?? [];
 
   const resetForm = () => {
     setSelectedCategories([]);
@@ -76,19 +76,19 @@ export function SportsTab({ user }: SportsTabProps) {
     setIsAdding(true);
   };
 
-  const handleEdit = (discipline: any) => {
-    setEditingId(discipline.id);
+  const handleEdit = (categoryLevel: any) => {
+    setEditingId(categoryLevel.id);
 
     // Set selected category for editing
     const categoryOption: CategoryOption = {
-      id: discipline.category.id,
-      label: getCategoryName(discipline.category),
-      slug: discipline.category.slug,
+      id: categoryLevel.category.id,
+      label: getCategoryName(categoryLevel.category),
+      slug: categoryLevel.category.slug,
     };
     setSelectedCategories([categoryOption]);
 
-    setSelectedLevel(discipline.level as Level);
-    setNotes(discipline.notes || '');
+    setSelectedLevel(categoryLevel.level as Level);
+    setNotes(categoryLevel.notes || '');
     setIsAdding(false);
   };
 
@@ -108,25 +108,25 @@ export function SportsTab({ user }: SportsTabProps) {
     resetForm();
   };
 
-  const handleDeleteClick = (discipline: any) => {
+  const handleDeleteClick = (categoryLevel: any) => {
     const categoryName =
-      typeof discipline.category.names === 'object'
-        ? discipline.category.names.en || discipline.category.slug
-        : discipline.category.slug;
+      typeof categoryLevel.category.names === 'object'
+        ? categoryLevel.category.names.en || categoryLevel.category.slug
+        : categoryLevel.category.slug;
 
-    setDisciplineToDelete({
-      id: discipline.id,
+    setCategoryLevelToDelete({
+      id: categoryLevel.id,
       name: categoryName,
     });
     setDeleteModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!disciplineToDelete) return;
+    if (!categoryLevelToDelete) return;
 
-    await removeMutation.mutateAsync({ id: disciplineToDelete.id });
+    await removeMutation.mutateAsync({ id: categoryLevelToDelete.id });
     setDeleteModalOpen(false);
-    setDisciplineToDelete(null);
+    setCategoryLevelToDelete(null);
   };
 
   const getCategoryName = (category: any) => {
@@ -145,7 +145,7 @@ export function SportsTab({ user }: SportsTabProps) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Sports & Disciplines
+            Sports & Category Levels
           </h3>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             Add the sports you practice and your skill level
@@ -157,7 +157,7 @@ export function SportsTab({ user }: SportsTabProps) {
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             <Plus className="w-4 h-4" />
-            Add Discipline
+            Add Category Level
           </button>
         )}
       </div>
@@ -166,7 +166,7 @@ export function SportsTab({ user }: SportsTabProps) {
       {(isAdding || editingId) && (
         <div className="p-4 border border-blue-200 rounded-lg bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20">
           <h4 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {editingId ? 'Edit Discipline' : 'Add New Discipline'}
+            {editingId ? 'Edit Category Level' : 'Add New Category Level'}
           </h4>
           <div className="space-y-4">
             {/* Category Select */}
@@ -260,22 +260,22 @@ export function SportsTab({ user }: SportsTabProps) {
         </div>
       )}
 
-      {/* Disciplines List */}
-      {disciplines.length === 0 ? (
+      {/* Category Levels List */}
+      {categoryLevels.length === 0 ? (
         <div className="p-12 text-center border rounded-lg border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            No disciplines added yet. Click "Add Discipline" to get started.
+            No category levels added yet. Click "Add Category Level" to get started.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {disciplines.map((discipline) => {
-            const levelConfig = getLevelConfig(discipline.level);
-            const categoryName = getCategoryName(discipline.category);
+          {categoryLevels.map((categoryLevel) => {
+            const levelConfig = getLevelConfig(categoryLevel.level);
+            const categoryName = getCategoryName(categoryLevel.category);
 
             return (
               <div
-                key={discipline.id}
+                key={categoryLevel.id}
                 className="flex items-center justify-between p-4 bg-white border rounded-lg border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <div className="flex-1">
@@ -286,19 +286,19 @@ export function SportsTab({ user }: SportsTabProps) {
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${levelConfig?.color || ''}`}
                     >
-                      {levelConfig?.label || discipline.level}
+                      {levelConfig?.label || categoryLevel.level}
                     </span>
                   </div>
-                  {discipline.notes && (
+                  {categoryLevel.notes && (
                     <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                      {discipline.notes}
+                      {categoryLevel.notes}
                     </p>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleEdit(discipline)}
+                    onClick={() => handleEdit(categoryLevel)}
                     disabled={isAdding || editingId !== null}
                     className="p-2 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                     title="Edit"
@@ -306,7 +306,7 @@ export function SportsTab({ user }: SportsTabProps) {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteClick(discipline)}
+                    onClick={() => handleDeleteClick(categoryLevel)}
                     disabled={isAdding || editingId !== null}
                     className="p-2 text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
                     title="Delete"
@@ -326,8 +326,8 @@ export function SportsTab({ user }: SportsTabProps) {
         onClose={() => setDeleteModalOpen(false)}
         variant="error"
         size="sm"
-        title="Delete Discipline"
-        subtitle={`Are you sure you want to remove ${disciplineToDelete?.name || 'this discipline'}? This action cannot be undone.`}
+        title="Delete Category Level"
+        subtitle={`Are you sure you want to remove ${categoryLevelToDelete?.name || 'this category level'}? This action cannot be undone.`}
         primaryLabel={removeMutation.isPending ? 'Deleting...' : 'Delete'}
         secondaryLabel="Cancel"
         onPrimary={handleDeleteConfirm}

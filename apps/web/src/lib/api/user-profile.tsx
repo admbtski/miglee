@@ -14,8 +14,8 @@ import {
   GetMyFullProfileDocument,
   UpdateUserProfileDocument,
   UpdateUserPrivacyDocument,
-  UpsertUserDisciplineDocument,
-  RemoveUserDisciplineDocument,
+  UpsertUserCategoryLevelDocument,
+  RemoveUserCategoryLevelDocument,
   UpsertUserAvailabilityDocument,
   RemoveUserAvailabilityDocument,
   AddUserSocialLinkDocument,
@@ -28,10 +28,10 @@ import {
   type UpdateUserProfileMutationVariables,
   type UpdateUserPrivacyMutation,
   type UpdateUserPrivacyMutationVariables,
-  type UpsertUserDisciplineMutation,
-  type UpsertUserDisciplineMutationVariables,
-  type RemoveUserDisciplineMutation,
-  type RemoveUserDisciplineMutationVariables,
+  type UpsertUserCategoryLevelMutation,
+  type UpsertUserCategoryLevelMutationVariables,
+  type RemoveUserCategoryLevelMutation,
+  type RemoveUserCategoryLevelMutationVariables,
   type UpsertUserAvailabilityMutation,
   type UpsertUserAvailabilityMutationVariables,
   type RemoveUserAvailabilityMutation,
@@ -233,22 +233,22 @@ export function useUpdateUserPrivacy(
   });
 }
 
-export function useUpsertUserDiscipline(
+export function useUpsertUserCategoryLevel(
   options?: UseMutationOptions<
-    UpsertUserDisciplineMutation,
+    UpsertUserCategoryLevelMutation,
     unknown,
-    UpsertUserDisciplineMutationVariables
+    UpsertUserCategoryLevelMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ['UpsertUserDiscipline'],
-    mutationFn: (variables: UpsertUserDisciplineMutationVariables) =>
+    mutationKey: ['UpsertUserCategoryLevel'],
+    mutationFn: (variables: UpsertUserCategoryLevelMutationVariables) =>
       gqlClient.request<
-        UpsertUserDisciplineMutation,
-        UpsertUserDisciplineMutationVariables
-      >(UpsertUserDisciplineDocument, variables),
+        UpsertUserCategoryLevelMutation,
+        UpsertUserCategoryLevelMutationVariables
+      >(UpsertUserCategoryLevelDocument, variables),
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
@@ -264,28 +264,30 @@ export function useUpsertUserDiscipline(
     },
     meta: {
       successMessage: (variables: any) =>
-        variables?.input?.id ? 'Discipline updated' : 'Discipline added',
+        variables?.input?.id
+          ? 'Category level updated'
+          : 'Category level added',
     },
     ...options,
   });
 }
 
-export function useRemoveUserDiscipline(
+export function useRemoveUserCategoryLevel(
   options?: UseMutationOptions<
-    RemoveUserDisciplineMutation,
+    RemoveUserCategoryLevelMutation,
     unknown,
-    RemoveUserDisciplineMutationVariables
+    RemoveUserCategoryLevelMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ['RemoveUserDiscipline'],
-    mutationFn: (variables: RemoveUserDisciplineMutationVariables) =>
+    mutationKey: ['RemoveUserCategoryLevel'],
+    mutationFn: (variables: RemoveUserCategoryLevelMutationVariables) =>
       gqlClient.request<
-        RemoveUserDisciplineMutation,
-        RemoveUserDisciplineMutationVariables
-      >(RemoveUserDisciplineDocument, variables),
+        RemoveUserCategoryLevelMutation,
+        RemoveUserCategoryLevelMutationVariables
+      >(RemoveUserCategoryLevelDocument, variables),
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({
         queryKey: ['UserProfile'],
@@ -300,7 +302,7 @@ export function useRemoveUserDiscipline(
       }
     },
     meta: {
-      successMessage: 'Discipline removed',
+      successMessage: 'Category level removed',
     },
     ...options,
   });

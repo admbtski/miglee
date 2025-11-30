@@ -373,7 +373,7 @@ type User {
 
   # Collections
   socialLinks: [UserSocialLink!]!
-  disciplines: [UserDiscipline!]!
+  categoryLevels: [UserCategoryLevel!]!
   availability: [UserAvailability!]!
   badges: [UserBadge!]!
 
@@ -452,7 +452,7 @@ type UserSocialLink {
   verified: Boolean!
 }
 
-type UserDiscipline {
+type UserCategoryLevel {
   id: ID!
   userId: ID!
   createdAt: DateTime!
@@ -2146,9 +2146,9 @@ type Mutation {
   requestAccountRestoration(email: String!): Boolean!
   restoreMyAccount(email: String!, token: String!): Boolean!
 
-  # User Disciplines
-  upsertUserDiscipline(input: UpsertUserDisciplineInput!): UserDiscipline!
-  removeUserDiscipline(id: ID!): Boolean!
+  # User Category Levels
+  upsertUserCategoryLevel(input: UpsertUserCategoryLevelInput!): UserCategoryLevel!
+  removeUserCategoryLevel(id: ID!): Boolean!
 
   # User Availability
   upsertUserAvailability(input: UpsertUserAvailabilityInput!): UserAvailability!
@@ -2445,7 +2445,7 @@ input UpdateUserPrivacyInput {
   defaultMembersVisibility: MembersVisibility
 }
 
-input UpsertUserDisciplineInput {
+input UpsertUserCategoryLevelInput {
   id: ID
   categoryId: ID!
   level: Level!

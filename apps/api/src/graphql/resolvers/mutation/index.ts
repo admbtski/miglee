@@ -191,8 +191,8 @@ import {
 import {
   updateUserProfileMutation,
   updateUserPrivacyMutation,
-  upsertUserDisciplineMutation,
-  removeUserDisciplineMutation,
+  upsertUserCategoryLevelMutation,
+  removeUserCategoryLevelMutation,
   upsertUserAvailabilityMutation,
   removeUserAvailabilityMutation,
   addUserSocialLinkMutation,
@@ -382,8 +382,8 @@ export const Mutation: Resolvers['Mutation'] = {
   // ---- User Profile & Privacy ----
   updateUserProfile: updateUserProfileMutation,
   updateUserPrivacy: updateUserPrivacyMutation,
-  upsertUserDiscipline: upsertUserDisciplineMutation,
-  removeUserDiscipline: removeUserDisciplineMutation,
+  upsertUserCategoryLevel: upsertUserCategoryLevelMutation,
+  removeUserCategoryLevel: removeUserCategoryLevelMutation,
   upsertUserAvailability: upsertUserAvailabilityMutation,
   removeUserAvailability: removeUserAvailabilityMutation,
   addUserSocialLink: addUserSocialLinkMutation,

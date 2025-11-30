@@ -187,13 +187,13 @@ export const updateUserPrivacyMutation: MutationResolvers['updateUserPrivacy'] =
   );
 
 // =============================================================================
-// User Disciplines
+// User Category Levels
 // =============================================================================
 
-export const upsertUserDisciplineMutation: MutationResolvers['upsertUserDiscipline'] =
+export const upsertUserCategoryLevelMutation: MutationResolvers['upsertUserCategoryLevel'] =
   resolverWithMetrics(
     'Mutation',
-    'upsertUserDiscipline',
+    'upsertUserCategoryLevel',
     async (_parent, { input }, { user }) => {
       if (!user) {
         throw new GraphQLError('Unauthorized', {
@@ -212,9 +212,9 @@ export const upsertUserDisciplineMutation: MutationResolvers['upsertUserDiscipli
         });
       }
 
-      // Upsert discipline
-      const discipline = input.id
-        ? await prisma.userDiscipline.update({
+      // Upsert category level
+      const categoryLevel = input.id
+        ? await prisma.userCategoryLevel.update({
             where: { id: input.id },
             data: {
               level: input.level,
@@ -223,7 +223,7 @@ export const upsertUserDisciplineMutation: MutationResolvers['upsertUserDiscipli
             },
             include: { category: true },
           })
-        : await prisma.userDiscipline.upsert({
+        : await prisma.userCategoryLevel.upsert({
             where: {
               userId_categoryId: {
                 userId: user.id,
@@ -244,14 +244,14 @@ export const upsertUserDisciplineMutation: MutationResolvers['upsertUserDiscipli
             include: { category: true },
           });
 
-      return discipline;
+      return categoryLevel;
     }
   );
 
-export const removeUserDisciplineMutation: MutationResolvers['removeUserDiscipline'] =
+export const removeUserCategoryLevelMutation: MutationResolvers['removeUserCategoryLevel'] =
   resolverWithMetrics(
     'Mutation',
-    'removeUserDiscipline',
+    'removeUserCategoryLevel',
     async (_parent, { id }, { user }) => {
       if (!user) {
         throw new GraphQLError('Unauthorized', {
@@ -260,23 +260,23 @@ export const removeUserDisciplineMutation: MutationResolvers['removeUserDiscipli
       }
 
       // Check ownership
-      const discipline = await prisma.userDiscipline.findUnique({
+      const categoryLevel = await prisma.userCategoryLevel.findUnique({
         where: { id },
       });
 
-      if (!discipline) {
-        throw new GraphQLError('Discipline not found', {
+      if (!categoryLevel) {
+        throw new GraphQLError('Category level not found', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      if (discipline.userId !== user.id) {
+      if (categoryLevel.userId !== user.id) {
         throw new GraphQLError('Forbidden', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
 
-      await prisma.userDiscipline.delete({ where: { id } });
+      await prisma.userCategoryLevel.delete({ where: { id } });
 
       return true;
     }

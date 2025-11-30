@@ -116,7 +116,7 @@ async function clearDb() {
     // Clear user profile related tables
     await prisma.userBadge.deleteMany();
     await prisma.userAvailability.deleteMany();
-    await prisma.userDiscipline.deleteMany();
+    await prisma.userCategoryLevel.deleteMany();
     await prisma.userSocialLink.deleteMany();
     await prisma.userStats.deleteMany();
     await prisma.userPrivacy.deleteMany();
@@ -2249,7 +2249,7 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
         }
       }
 
-      // Some users have disciplines (50%)
+      // Some users have category levels (50%)
       if (rand() > 0.5) {
         const userCategories = pickMany(categories, 1 + Math.floor(rand() * 3));
         const levels: Level[] = [
@@ -2259,7 +2259,7 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
         ];
 
         for (const cat of userCategories) {
-          await prisma.userDiscipline.create({
+          await prisma.userCategoryLevel.create({
             data: {
               userId: user.id,
               categoryId: cat.id,

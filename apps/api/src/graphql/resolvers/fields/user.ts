@@ -145,18 +145,18 @@ export const UserFieldResolvers: Resolvers['User'] = {
     return links;
   },
 
-  disciplines: async (parent) => {
-    if ('disciplines' in parent && parent.disciplines !== undefined) {
-      return parent.disciplines;
+  categoryLevels: async (parent) => {
+    if ('categoryLevels' in parent && parent.categoryLevels !== undefined) {
+      return parent.categoryLevels;
     }
 
-    const disciplines = await prisma.userDiscipline.findMany({
+    const categoryLevels = await prisma.userCategoryLevel.findMany({
       where: { userId: parent.id },
       include: { category: true },
       orderBy: { createdAt: 'asc' },
     });
 
-    return disciplines;
+    return categoryLevels;
   },
 
   availability: async (parent) => {

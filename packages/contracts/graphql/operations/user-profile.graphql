@@ -60,7 +60,7 @@ fragment UserSocialLinkCore on UserSocialLink {
   verified
 }
 
-fragment UserDisciplineCore on UserDiscipline {
+fragment UserCategoryLevelCore on UserCategoryLevel {
   id
   userId
   createdAt
@@ -122,8 +122,8 @@ fragment UserWithProfile on User {
   socialLinks {
     ...UserSocialLinkCore
   }
-  disciplines {
-    ...UserDisciplineCore
+  categoryLevels {
+    ...UserCategoryLevelCore
   }
   availability {
     ...UserAvailabilityCore
@@ -236,14 +236,14 @@ mutation UpdateUserPrivacy($input: UpdateUserPrivacyInput!) {
   }
 }
 
-mutation UpsertUserDiscipline($input: UpsertUserDisciplineInput!) {
-  upsertUserDiscipline(input: $input) {
-    ...UserDisciplineCore
+mutation UpsertUserCategoryLevel($input: UpsertUserCategoryLevelInput!) {
+  upsertUserCategoryLevel(input: $input) {
+    ...UserCategoryLevelCore
   }
 }
 
-mutation RemoveUserDiscipline($id: ID!) {
-  removeUserDiscipline(id: $id)
+mutation RemoveUserCategoryLevel($id: ID!) {
+  removeUserCategoryLevel(id: $id)
 }
 
 mutation UpsertUserAvailability($input: UpsertUserAvailabilityInput!) {

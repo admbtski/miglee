@@ -35,7 +35,7 @@ function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
     privacy: undefined as any,
     stats: undefined as any,
     socialLinks: undefined as any,
-    disciplines: undefined as any,
+    categoryLevels: undefined as any,
     availability: undefined as any,
     badges: undefined as any,
   };

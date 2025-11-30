@@ -282,11 +282,11 @@ model User {
   // Profile & Privacy
   profile      UserProfile?
   privacy      UserPrivacy?
-  stats        UserStats?
-  socialLinks  UserSocialLink[]
-  disciplines  UserDiscipline[]
-  availability UserAvailability[]
-  badges       UserBadge[]
+  stats              UserStats?
+  socialLinks        UserSocialLink[]
+  categoryLevels     UserCategoryLevel[]
+  availability       UserAvailability[]
+  badges             UserBadge[]
 
   @@index([email])
   @@index([name])
@@ -302,8 +302,8 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intents         Intent[]
-  userDisciplines UserDiscipline[]
+  intents            Intent[]
+  userCategoryLevels UserCategoryLevel[]
 
   @@index([slug])
   @@map("categories")
@@ -1163,7 +1163,7 @@ model UserSocialLink {
   @@map("user_social_links")
 }
 
-model UserDiscipline {
+model UserCategoryLevel {
   id        String   @id @default(cuid())
   userId    String
   createdAt DateTime @default(now())
@@ -1179,7 +1179,7 @@ model UserDiscipline {
   @@unique([userId, categoryId])
   @@index([userId])
   @@index([categoryId])
-  @@map("user_disciplines")
+  @@map("user_category_levels")
 }
 
 model UserAvailability {
