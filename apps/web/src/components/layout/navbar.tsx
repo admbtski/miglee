@@ -64,13 +64,22 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
     setAuthOpen(true);
   }, []);
 
+  const handleLogoClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      router.push(localePath('/'));
+    },
+    [router, localePath]
+  );
+
   return (
     <>
       <nav className="sticky text-zinc-900 dark:text-zinc-100 top-0 z-40 border-b border-zinc-200 bg-white/70 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/60">
         <div className="mx-auto flex max-w-8xl items-center gap-3 px-4 py-3">
           {/* Logo */}
           <a
-            href="/"
+            href={localePath('/')}
+            onClick={handleLogoClick}
             className="flex shrink-0 items-center gap-2"
             aria-label="Go to homepage"
           >

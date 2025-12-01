@@ -8,6 +8,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
@@ -48,6 +49,8 @@ const FilterModal = lazy(
  * Main page component for browsing intents
  */
 export function IntentsPage() {
+  const { locale } = useI18n();
+
   const filters = useCommittedFilters();
   const { q, city, distanceKm, apply } = filters;
 
@@ -182,6 +185,7 @@ export function IntentsPage() {
                 hoveredIntent={hoveredIntent}
                 mapCenter={mapCenter}
                 locationMode={locationMode}
+                locale={locale}
               />
             )}
           </AnimatePresence>
@@ -221,6 +225,7 @@ type MapSidebarProps = {
   hoveredIntent: { id: string; lat: number | null; lng: number | null } | null;
   mapCenter: { lat: number; lng: number } | null;
   locationMode: 'EXPLICIT' | 'PROFILE_DEFAULT' | 'NONE';
+  locale: string;
 };
 
 function MapSidebar({
@@ -228,10 +233,14 @@ function MapSidebar({
   hoveredIntent,
   mapCenter,
   locationMode,
+  locale,
 }: MapSidebarProps) {
-  const handleIntentClick = useCallback((intentId: string) => {
-    window.location.href = `/${intentId}`;
-  }, []);
+  const handleIntentClick = useCallback(
+    (intentId: string) => {
+      window.location.href = `/${locale}/intent/${intentId}`;
+    },
+    [locale]
+  );
 
   return (
     <motion.aside
@@ -247,6 +256,7 @@ function MapSidebar({
             <ServerClusteredMap
               fullHeight={true}
               lang={appLanguage}
+              locale={locale}
               filters={{
                 categorySlugs: filters.categories,
                 tagSlugs: filters.tags,

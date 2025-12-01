@@ -14,6 +14,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
+import { useQueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RegionPopup, PopupIntent } from './map-popup';
 
 export function clamp(n: number, min: number, max: number): number {
@@ -27,6 +28,7 @@ export interface ServerClusteredMapProps {
   defaultZoom?: number;
   fullHeight?: boolean;
   lang?: string;
+  locale?: string;
   styleUrlLight?: string;
   styleUrlDark?: string;
   filters?: {
@@ -304,10 +306,14 @@ function ServerClusteredMapComponent({
   hoveredLng,
   centerOn,
   locationMode = 'NONE',
+  locale = 'en',
 }: ServerClusteredMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
+
+  // Get QueryClient instance to pass to popup
+  const queryClient = useQueryClient();
 
   // React root dla popupu – tworzymy JEDEN raz
   const popupRootRef = useRef<Root | null>(null);
@@ -674,7 +680,14 @@ function ServerClusteredMapComponent({
       const cluster = clusters.find((c) => c.region === selectedRegion);
       if (cluster && popupRootRef.current && popupContainerRef.current) {
         popupRootRef.current.render(
-          <RegionPopup intents={[]} onIntentClick={() => {}} isLoading={true} />
+          <QueryClientProvider client={queryClient}>
+            <RegionPopup
+              intents={[]}
+              onIntentClick={() => {}}
+              isLoading={true}
+              locale={locale}
+            />
+          </QueryClientProvider>
         );
 
         // Tylko otwórz popup jeśli nie jest już otwarty
@@ -766,23 +779,26 @@ function ServerClusteredMapComponent({
 
     if (popupRootRef.current && popupContainerRef.current) {
       popupRootRef.current.render(
-        <RegionPopup
-          intents={intents}
-          isLoading={false}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          onLoadMore={() => {
-            // Only fetch next page if we still have a selected region
-            if (selectedRegion) {
-              fetchNextPage();
-            }
-          }}
-          onIntentClick={(id) => {
-            onIntentClick?.(id);
-            popup.remove();
-            setSelectedRegion(null);
-          }}
-        />
+        <QueryClientProvider client={queryClient}>
+          <RegionPopup
+            intents={intents}
+            isLoading={false}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={() => {
+              // Only fetch next page if we still have a selected region
+              if (selectedRegion) {
+                fetchNextPage();
+              }
+            }}
+            onIntentClick={(id) => {
+              onIntentClick?.(id);
+              popup.remove();
+              setSelectedRegion(null);
+            }}
+            locale={locale}
+          />
+        </QueryClientProvider>
       );
 
       // Tylko dodaj popup jeśli nie jest już otwarty

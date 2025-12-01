@@ -84,6 +84,7 @@ export type PopupIntent = {
 export interface PopupItemProps {
   intent: PopupIntent;
   onClick?: (id: string) => void;
+  locale?: string;
 }
 
 type AddressVisibilityMeta = {
@@ -236,7 +237,13 @@ function isBoostActive(boostedAtISO: string | null | undefined): boolean {
   return boostedAt >= twentyFourHoursAgo;
 }
 
-export function PopupItem({ intent, onClick }: PopupItemProps) {
+export function PopupItem({
+  intent,
+  onClick,
+  locale: localeProp,
+}: PopupItemProps) {
+  const locale = localeProp || 'en';
+
   const {
     startAt,
     endAt,
@@ -306,15 +313,14 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
   const isInactive = isCanceled || isDeleted;
 
   return (
-    <motion.button
-      onClick={() => onClick?.(intent.id)}
+    <motion.div
       className={twMerge(
+        'mt-4',
         'relative w-full rounded-xl overflow-hidden',
         'bg-zinc-900/70 border border-white/5',
         'shadow-[0_4px_16px_-2px_rgba(0,0,0,0.4)]',
-        'select-none cursor-pointer text-left',
+        'select-none text-left',
         'transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-indigo-400/30',
         isInactive && 'saturate-0',
         highlightRing.className
       )}
@@ -328,6 +334,13 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
       }}
       data-plan={plan}
     >
+      {/* Main clickable Link */}
+      <Link
+        href={`/${locale}/intent/${encodeURIComponent(intent.id)}`}
+        className="absolute inset-0 z-[1]"
+        aria-label={`Szczegóły wydarzenia: ${intent.title}`}
+      />
+
       {/* Cover Image */}
       <div className="relative h-24 overflow-hidden bg-zinc-800">
         {intent.coverKey ? (
@@ -350,18 +363,18 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
 
         {/* Favourite Button - Top Right */}
         <div
-          className="absolute z-20 top-2 right-2"
+          className="absolute z-20 top-2 right-1"
           onClick={(e) => e.stopPropagation()}
         >
           <FavouriteButton
             intentId={intent.id}
             isFavourite={intent.isFavourite ?? false}
-            size="sm"
+            size="xs"
           />
         </div>
 
         {(isBoosted || categories.length > 0) && (
-          <div className="absolute z-10 top-2 left-2 right-2">
+          <div className="absolute z-10 top-2 left-2 right-9">
             <div className="flex flex-wrap gap-1">
               {!isInactive && (
                 <EventCountdownPill
@@ -416,8 +429,8 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         {intent.owner?.name && (
           <div className="absolute bottom-2 left-2 z-10">
             <Link
-              href={`/u/${intent.owner.name}`}
-              className="flex items-center gap-1 group"
+              href={`/${locale}/u/${intent.owner.name}`}
+              className="flex items-center gap-1 group relative z-[2]"
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar
@@ -447,21 +460,21 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
       {/* Content */}
       <div className="p-3 flex flex-col gap-2">
         {/* Title */}
-        <h4 className="text-sm font-semibold leading-tight text-white line-clamp-2">
+        <h4 className="text-[16px] font-semibold leading-tight text-white line-clamp-2">
           {intent.title}
         </h4>
 
         {/* Info Grid */}
-        <div className="flex flex-col gap-1 text-[10px] text-zinc-400">
+        <div className="flex flex-col gap-0.5 text-[12px] text-zinc-400">
           {locationDisplay && (
             <div className="flex items-center gap-1 min-w-0">
-              <locationDisplay.Icon className="h-3 w-3 flex-shrink-0 text-zinc-500" />
+              <locationDisplay.Icon className="h-3.5 w-3.5 flex-shrink-0 text-zinc-500" />
               <span className="truncate">{locationDisplay.text}</span>
             </div>
           )}
 
           <div className="flex items-center gap-1 min-w-0">
-            <Calendar className="h-3 w-3 flex-shrink-0 text-zinc-500" />
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-zinc-500" />
             <span className="truncate">
               {formatDateRange(startAt, endAt)} • {humanDuration(start, end)}
             </span>
@@ -474,6 +487,6 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
           </div>
         </div>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }

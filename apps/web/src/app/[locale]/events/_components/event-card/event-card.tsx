@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { memo, useCallback, useMemo } from 'react';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 import { twMerge } from 'tailwind-merge';
 
 export interface EventCardProps {
@@ -258,6 +259,8 @@ export const EventCard = memo(function EventCard({
   coverBlurhash,
   onHover,
 }: EventCardProps) {
+  const { locale } = useI18n();
+
   const start = useMemo(() => parseISO(startISO), [startISO]);
   const end = useMemo(() => parseISO(endISO), [endISO]);
 
@@ -340,7 +343,7 @@ export const EventCard = memo(function EventCard({
     >
       {intentId && (
         <Link
-          href={`/intent/${encodeURIComponent(intentId)}`}
+          href={`/${locale}/intent/${encodeURIComponent(intentId)}`}
           className="absolute inset-0 z-[1] rounded-2xl"
           aria-label={`Szczegóły wydarzenia: ${organizerName}`}
         />
@@ -434,7 +437,7 @@ export const EventCard = memo(function EventCard({
         {organizerName && (
           <div className="absolute z-10 bottom-3 left-3">
             <Link
-              href={`/u/${organizerName}`}
+              href={`/${locale}/u/${organizerName}`}
               className="flex items-center gap-1.5 group relative z-[2]"
               onClick={(e) => e.stopPropagation()}
             >

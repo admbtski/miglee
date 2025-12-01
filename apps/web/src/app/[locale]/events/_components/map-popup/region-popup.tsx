@@ -15,6 +15,7 @@ export interface RegionPopupProps {
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
+  locale?: string;
 }
 
 export const RegionPopup = memo(function RegionPopup({
@@ -24,6 +25,7 @@ export const RegionPopup = memo(function RegionPopup({
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
+  locale,
 }: RegionPopupProps) {
   // Show items if we have any, regardless of loading state
   const showItems = intents.length > 0;
@@ -60,10 +62,15 @@ export const RegionPopup = memo(function RegionPopup({
       const intent = intents[index];
       if (!intent) return null;
       return (
-        <PopupItem key={intent.id} intent={intent} onClick={onIntentClick} />
+        <PopupItem
+          key={intent.id}
+          intent={intent}
+          onClick={onIntentClick}
+          locale={locale}
+        />
       );
     },
-    [intents, onIntentClick]
+    [intents, onIntentClick, locale]
   );
 
   const computeItemKey = useCallback(
@@ -74,7 +81,7 @@ export const RegionPopup = memo(function RegionPopup({
   const virtuosoComponents = useMemo(
     () => ({
       List: ({ children, ...props }: any) => (
-        <div {...props} className="px-4 py-4 flex flex-col gap-4">
+        <div {...props} className="px-4 py-4 flex flex-col">
           {children}
         </div>
       ),

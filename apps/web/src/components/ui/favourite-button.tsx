@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 interface FavouriteButtonProps {
   intentId: string;
   isFavourite: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }
 
@@ -47,12 +47,14 @@ export function FavouriteButton({
   };
 
   const sizeClasses = {
+    xs: 'h-6 w-6',
     sm: 'h-7 w-7',
     md: 'h-8 w-8',
     lg: 'h-10 w-10',
   };
 
   const iconSizes = {
+    xs: 'h-3 w-3',
     sm: 'h-3.5 w-3.5',
     md: 'h-4 w-4',
     lg: 'h-5 w-5',
