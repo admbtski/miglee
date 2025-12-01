@@ -22,6 +22,7 @@ import {
   MapPin,
   Sparkles,
   UserCheck,
+  Users,
   Wifi as WifiIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -370,7 +371,7 @@ export const EventCard = memo(function EventCard({
 
         {(isBoosted || categories.length > 0) && (
           <div className="absolute z-10 top-3 left-3 right-12">
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1">
               {!isInactive && (
                 <EventCountdownPill
                   startAt={start}
@@ -390,10 +391,10 @@ export const EventCard = memo(function EventCard({
 
               {isBoosted && (
                 <span
-                  className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm px-2 py-[2px] text-[11px] font-medium text-white shadow-lg"
+                  className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[11px] font-medium text-white shadow-sm select-none"
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   Promowane
                 </span>
               )}
@@ -401,7 +402,7 @@ export const EventCard = memo(function EventCard({
               {categories.slice(0, maxCategoriesToShow).map((cat) => (
                 <span
                   key={cat}
-                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-[2px] text-[11px] font-medium text-white shadow-lg"
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[11px] font-medium text-white shadow-sm select-none"
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
                 >
                   {cat}
@@ -410,7 +411,7 @@ export const EventCard = memo(function EventCard({
 
               {remainingCategoriesCount > 0 && (
                 <span
-                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-[2px] text-[11px] font-medium text-white shadow-lg"
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[11px] font-medium text-white shadow-sm select-none"
                   style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
                 >
                   +{remainingCategoriesCount}
@@ -469,7 +470,7 @@ export const EventCard = memo(function EventCard({
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <h3 className="text-base font-semibold leading-tight text-zinc-900 dark:text-white line-clamp-2">
           {title}
         </h3>
@@ -488,10 +489,19 @@ export const EventCard = memo(function EventCard({
               {formatDateRange(startISO, endISO)} • {humanDuration(start, end)}
             </span>
           </div>
+          <div className="flex items-center gap-1 truncate">
+            <Users className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="text-xs truncate">
+              {joinedCount >= max && `Brak miejsc • ${joinedCount} / ${max}`}
+              {joinedCount < max &&
+                `${joinedCount} / ${max} • ${Math.max(0, max - joinedCount)} wolne`}
+              {!min && !max && `${joinedCount} • brak limitu uczestników`}
+            </span>
+          </div>
         </div>
-
+        {/* 
         <div className="flex flex-wrap items-center gap-2 mt-1">
-          <CapacityBadge
+<CapacityBadge
             joinedCount={joinedCount}
             size="sm"
             min={min}
@@ -499,7 +509,7 @@ export const EventCard = memo(function EventCard({
             isFull={isFull}
             canJoin={canJoin}
             statusReason={status.reason}
-          />
+
           {!isInactive &&
             status.reason !== 'FULL' &&
             status.reason !== 'OK' && (
@@ -510,7 +520,7 @@ export const EventCard = memo(function EventCard({
                 label={status.label}
               />
             )}
-        </div>
+        </div> */}
       </div>
     </motion.div>
   );

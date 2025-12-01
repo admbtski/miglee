@@ -4,34 +4,30 @@
 
 import type { Prisma } from '@prisma/client';
 import {
-  NotificationKind as PrismaNotificationKind,
   NotificationEntity as PrismaNotificationEntity,
+  NotificationKind as PrismaNotificationKind,
   Role,
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
+import {
+  checkDeleteRateLimit,
+  checkEditRateLimit,
+  checkEventChatSendRateLimit,
+} from '../../../lib/chat-rate-limit';
+import {
+  canEdit,
+  canSoftDelete,
+  sanitizeMessageContent,
+} from '../../../lib/chat-utils';
 import { prisma } from '../../../lib/prisma';
 import { healthRedis } from '../../../lib/redis';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import {
-  sanitizeMessageContent,
-  canEdit,
-  canSoftDelete,
-} from '../../../lib/chat-utils';
-import {
-  checkEventChatSendRateLimit,
-  checkEditRateLimit,
-  checkDeleteRateLimit,
-} from '../../../lib/chat-rate-limit';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import { requireEventChatModerator, requireJoinedMember } from '../chat-guards';
 import {
   mapIntentChatMessage,
   type IntentChatMessageWithGraph,
 } from '../helpers';
-import {
-  requireJoinedMember,
-  requireEventChatModerator,
-  requireAdmin,
-} from '../chat-guards';
 
 const MESSAGE_INCLUDE = {
   author: true,

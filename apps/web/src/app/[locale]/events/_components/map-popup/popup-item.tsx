@@ -432,27 +432,15 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
               {formatDateRange(startAt, endAt)} • {humanDuration(start, end)}
             </span>
           </div>
-        </div>
-
-        {/* Status Badges */}
-        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-          <CapacityBadge
-            size="xs"
-            statusReason={status.reason}
-            joinedCount={intent.joinedCount ?? 0}
-            min={intent.min ?? 0}
-            max={intent.max ?? 0}
-            isFull={isFull}
-            canJoin={Boolean(intent.canJoin)}
-          />
-          {status.reason !== 'FULL' && status.reason !== 'OK' && (
-            <StatusBadge
-              size="xs"
-              tone={status.tone}
-              reason={status.reason}
-              label={status.label}
-            />
-          )}
+          <div className="flex items-center gap-1 truncate">
+            <Users className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="text-xs truncate">
+              {joinedCount >= max && `Brak miejsc • ${joinedCount} / ${max}`}
+              {joinedCount < max &&
+                `${joinedCount} / ${max} • ${Math.max(0, max - joinedCount)} wolne`}
+              {!min && !max && `${joinedCount} • brak limitu uczestników`}
+            </span>
+          </div>
         </div>
       </div>
     </motion.button>
