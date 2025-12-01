@@ -1,6 +1,6 @@
 'use client';
 
-import { Info, Settings, User, Users } from 'lucide-react';
+import { Infinity, Info, Settings, User, Users } from 'lucide-react';
 import { useEffect, useId, useMemo } from 'react';
 import { UseFormReturn, useController, useWatch } from 'react-hook-form';
 import { IntentFormValues } from './types';
@@ -209,34 +209,56 @@ export function CapacityStep({
           {/* Visual capacity preview */}
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(minVal ?? 2, 10) }).map((_, i) => (
-                <User
-                  key={`min-${i}`}
-                  className="w-4 h-4 text-indigo-600 dark:text-indigo-400"
-                  aria-hidden="true"
-                />
-              ))}
-              {(minVal ?? 2) > 10 && (
-                <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
-                  +{(minVal ?? 2) - 10}
-                </span>
+              {minVal === null ? (
+                <div className="flex items-center gap-1">
+                  <Infinity className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                    Bez min
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {Array.from({ length: Math.min(minVal, 10) }).map((_, i) => (
+                    <User
+                      key={`min-${i}`}
+                      className="w-4 h-4 text-indigo-600 dark:text-indigo-400"
+                      aria-hidden="true"
+                    />
+                  ))}
+                  {minVal > 10 && (
+                    <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
+                      +{minVal - 10}
+                    </span>
+                  )}
+                </>
               )}
             </div>
             <span className="text-xs text-zinc-400 dark:text-zinc-500">→</span>
             <div className="flex items-center gap-1">
-              {Array.from({
-                length: Math.min(maxVal ?? (isCustom ? 10 : 50), 10),
-              }).map((_, i) => (
-                <User
-                  key={`max-${i}`}
-                  className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
-                  aria-hidden="true"
-                />
-              ))}
-              {(maxVal ?? (isCustom ? 10 : 50)) > 10 && (
-                <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
-                  +{(maxVal ?? (isCustom ? 10 : 50)) - 10}
-                </span>
+              {maxVal === null ? (
+                <div className="flex items-center gap-1">
+                  <Infinity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    Bez max
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {Array.from({
+                    length: Math.min(maxVal, 10),
+                  }).map((_, i) => (
+                    <User
+                      key={`max-${i}`}
+                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                      aria-hidden="true"
+                    />
+                  ))}
+                  {maxVal > 10 && (
+                    <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
+                      +{maxVal - 10}
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -249,16 +271,155 @@ export function CapacityStep({
             min={isCustom ? 1 : 2}
             max={isCustom ? 99999 : 50}
             step={1}
-            disabled={isOneToOne}
+            disabled={
+              isOneToOne || (isCustom && (minVal === null || maxVal === null))
+            }
             onChange={([a, b]) => {
               if (isOneToOne) return;
-              setValue('min', a, { shouldDirty: true, shouldValidate: true });
-              setValue('max', b, { shouldDirty: true, shouldValidate: true });
+              if (isCustom && minVal === null) {
+                // Only update max if min is unlimited
+                setValue('max', b, { shouldDirty: true, shouldValidate: true });
+              } else if (isCustom && maxVal === null) {
+                // Only update min if max is unlimited
+                setValue('min', a, { shouldDirty: true, shouldValidate: true });
+              } else {
+                setValue('min', a, { shouldDirty: true, shouldValidate: true });
+                setValue('max', b, { shouldDirty: true, shouldValidate: true });
+              }
             }}
             aria-invalid={!!(errors.min || errors.max)}
             aria-describedby={ariaDescribedBy}
             className="mt-2"
           />
+
+          {/* CUSTOM mode: Manual inputs and unlimited checkboxes */}
+          {isCustom && (
+            <div className="space-y-4 pt-2">
+              {/* Checkboxes */}
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={minVal === null}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setValue('min', null, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      } else {
+                        setValue('min', 1, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800"
+                  />
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    <Infinity className="w-4 h-4" />
+                    Bez minimalnych ograniczeń
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={maxVal === null}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setValue('max', null, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      } else {
+                        setValue('max', 10, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800"
+                  />
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    <Infinity className="w-4 h-4" />
+                    Bez górnych ograniczeń
+                  </span>
+                </label>
+              </div>
+
+              {/* Manual number inputs */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="capacity-min-input"
+                    className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5"
+                  >
+                    Minimum
+                  </label>
+                  <input
+                    id="capacity-min-input"
+                    type="number"
+                    min={1}
+                    max={99999}
+                    disabled={minVal === null}
+                    value={minVal ?? ''}
+                    onChange={(e) => {
+                      const val =
+                        e.target.value === '' ? null : parseInt(e.target.value);
+                      setValue('min', val, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                    placeholder={minVal === null ? '∞ Bez limitu' : '1'}
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="capacity-max-input"
+                    className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5"
+                  >
+                    Maximum
+                  </label>
+                  <input
+                    id="capacity-max-input"
+                    type="number"
+                    min={1}
+                    max={99999}
+                    disabled={maxVal === null}
+                    value={maxVal ?? ''}
+                    onChange={(e) => {
+                      const val =
+                        e.target.value === '' ? null : parseInt(e.target.value);
+                      setValue('max', val, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                    placeholder={maxVal === null ? '∞ Bez limitu' : '10'}
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Info banner */}
+              {(minVal === null || maxVal === null) && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
+                  <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-indigo-900 dark:text-indigo-100">
+                    {minVal === null && maxVal === null
+                      ? 'Wydarzenie bez ograniczeń pojemności – każdy może dołączyć.'
+                      : minVal === null
+                        ? `Wydarzenie bez minimalnej liczby uczestników, maksymalnie ${maxVal} osób.`
+                        : `Wydarzenie bez maksymalnej liczby uczestników, minimum ${minVal} osób.`}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {(errors.min || errors.max) && (
             <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">

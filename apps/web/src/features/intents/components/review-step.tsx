@@ -316,7 +316,14 @@ export function ReviewStep({
       </Chip>
     ) : values.mode === 'CUSTOM' ? (
       <Chip tone="fuchsia" icon={<Users className="h-3.5 w-3.5" />}>
-        Niestandardowe {values.min}–{values.max}
+        Niestandardowe{' '}
+        {values.min === null && values.max === null
+          ? '∞'
+          : values.min === null
+            ? `do ${values.max}`
+            : values.max === null
+              ? `od ${values.min}`
+              : `${values.min}–${values.max}`}
       </Chip>
     ) : (
       <Chip tone="indigo" icon={<Users className="h-3.5 w-3.5" />}>
@@ -647,11 +654,23 @@ export function ReviewStep({
             <div className="flex flex-wrap items-center gap-2">
               {modeChip}
               {meetingKindChip}
-              {(values.mode === 'GROUP' || values.mode === 'CUSTOM') && (
-                <Chip tone="zinc" icon={<Users className="h-3.5 w-3.5" />}>
-                  {values.min}–{values.max} osób
-                </Chip>
-              )}
+              {(values.mode === 'GROUP' || values.mode === 'CUSTOM') &&
+                values.min !== null &&
+                values.max !== null && (
+                  <Chip tone="zinc" icon={<Users className="h-3.5 w-3.5" />}>
+                    {values.min}–{values.max} osób
+                  </Chip>
+                )}
+              {values.mode === 'CUSTOM' &&
+                (values.min === null || values.max === null) && (
+                  <Chip tone="amber" icon={<Users className="h-3.5 w-3.5" />}>
+                    {values.min === null && values.max === null
+                      ? 'Bez ograniczeń'
+                      : values.min === null
+                        ? `Maks ${values.max}`
+                        : `Min ${values.min}`}
+                  </Chip>
+                )}
             </div>
           </div>
 
@@ -756,18 +775,20 @@ export function ReviewStep({
                 }
               />
 
-              {(values.mode === 'GROUP' || values.mode === 'CUSTOM') && (
-                <Kvp
-                  icon={<Users className="w-4 h-4" />}
-                  label="Pojemność"
-                  value={
-                    <span className="tabular-nums">
-                      {values.min} – {values.max}
-                    </span>
-                  }
-                  mono
-                />
-              )}
+              {(values.mode === 'GROUP' || values.mode === 'CUSTOM') &&
+                (values.min !== null || values.max !== null) && (
+                  <Kvp
+                    icon={<Users className="w-4 h-4" />}
+                    label="Pojemność"
+                    value={
+                      <span className="tabular-nums">
+                        {values.min === null ? '∞' : values.min} –{' '}
+                        {values.max === null ? '∞' : values.max}
+                      </span>
+                    }
+                    mono
+                  />
+                )}
             </div>
           </div>
 

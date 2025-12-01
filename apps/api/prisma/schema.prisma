@@ -337,8 +337,8 @@ model Intent {
   joinMode   JoinMode   @default(OPEN)
 
   mode Mode @default(GROUP)
-  min  Int  @default(2)
-  max  Int  @default(50)
+  min  Int?
+  max  Int?
 
   startAt DateTime
   endAt   DateTime

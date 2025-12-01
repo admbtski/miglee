@@ -58,8 +58,18 @@ export const IntentSchema = z
     addressVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
     membersVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
     levels: z.array(z.enum(['ADVANCED', 'BEGINNER', 'INTERMEDIATE'])),
-    min: z.number().int().min(1, 'Min capacity is 1').max(99999, 'Max 99999'),
-    max: z.number().int().min(1, 'Min capacity is 1').max(99999, 'Max 99999'),
+    min: z
+      .number()
+      .int()
+      .min(1, 'Min capacity is 1')
+      .max(99999, 'Max 99999')
+      .nullable(),
+    max: z
+      .number()
+      .int()
+      .min(1, 'Min capacity is 1')
+      .max(99999, 'Max 99999')
+      .nullable(),
     startAt: z
       .date()
       .transform((d) => new Date(d)) // ensure instance copy (helps with weird inputs)
@@ -123,10 +133,19 @@ export const IntentSchema = z
     (data) => data.endAt.getTime() - data.startAt.getTime() <= MAX_DURATION_MS,
     { path: ['endAt'], message: 'Max duration is 30 days' }
   )
-  .refine((data) => data.min <= data.max, {
-    path: ['min'],
-    message: 'Min must be ≤ Max',
-  })
+  .refine(
+    (data) => {
+      // Only validate if both are set
+      if (data.min !== null && data.max !== null) {
+        return data.min <= data.max;
+      }
+      return true;
+    },
+    {
+      path: ['min'],
+      message: 'Min must be ≤ Max',
+    }
+  )
   // Mode-specific
   .superRefine((data, ctx) => {
     if (data.mode === 'ONE_TO_ONE') {
@@ -145,20 +164,30 @@ export const IntentSchema = z
         });
       }
     } else if (data.mode === 'GROUP') {
-      if (data.min < 2)
+      if (data.min === null || data.min < 2) {
         ctx.addIssue({
           code: 'custom',
           path: ['min'],
           message: 'Minimum capacity is 2 for GROUP mode',
         });
-      if (data.max > 50)
+      }
+      if (data.max === null || data.max > 50) {
         ctx.addIssue({
           code: 'custom',
           path: ['max'],
           message: 'Maximum capacity is 50 for GROUP mode',
         });
+      }
+    } else if (data.mode === 'CUSTOM') {
+      // For CUSTOM mode, if both are set, min must be <= max
+      if (data.min !== null && data.max !== null && data.min > data.max) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['min'],
+          message: 'Min must be ≤ max',
+        });
+      }
     }
-    // CUSTOM mode has no restrictions beyond the base 1-99999 range
   })
   // MeetingKind-specific
   .superRefine((data, ctx) => {

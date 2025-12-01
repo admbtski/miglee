@@ -98,25 +98,12 @@ function assertStartEnd(startAt: Date, endAt: Date) {
 }
 
 /** NEW: validate capacity ranges based on mode */
-function assertCapacity(input: { mode: string; min: number; max: number }) {
+function assertCapacity(input: {
+  mode: string;
+  min: number | null;
+  max: number | null;
+}) {
   const { mode, min, max } = input;
-
-  // General constraints
-  if (min < 1 || min > 99999) {
-    throw new GraphQLError('min must be between 1 and 99999', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'min' },
-    });
-  }
-  if (max < 1 || max > 99999) {
-    throw new GraphQLError('max must be between 1 and 99999', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'max' },
-    });
-  }
-  if (min > max) {
-    throw new GraphQLError('min must be ≤ max', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'min' },
-    });
-  }
 
   // Mode-specific constraints
   if (mode === 'ONE_TO_ONE') {
@@ -126,18 +113,34 @@ function assertCapacity(input: { mode: string; min: number; max: number }) {
       });
     }
   } else if (mode === 'GROUP') {
-    if (min < 2) {
+    if (min === null || min < 2) {
       throw new GraphQLError('GROUP mode requires min >= 2', {
         extensions: { code: 'BAD_USER_INPUT', field: 'min' },
       });
     }
-    if (max > 50) {
+    if (max === null || max > 50) {
       throw new GraphQLError('GROUP mode requires max <= 50', {
         extensions: { code: 'BAD_USER_INPUT', field: 'max' },
       });
     }
+  } else if (mode === 'CUSTOM') {
+    // CUSTOM mode: validate only if both are set
+    if (min !== null && (min < 1 || min > 99999)) {
+      throw new GraphQLError('min must be between 1 and 99999', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'min' },
+      });
+    }
+    if (max !== null && (max < 1 || max > 99999)) {
+      throw new GraphQLError('max must be between 1 and 99999', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'max' },
+      });
+    }
+    if (min !== null && max !== null && min > max) {
+      throw new GraphQLError('min must be ≤ max', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'min' },
+      });
+    }
   }
-  // CUSTOM mode: no additional restrictions beyond 1-99999
 }
 
 /**
