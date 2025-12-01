@@ -280,44 +280,6 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     [isBoosted, isCanceled, isDeleted, highlightColor]
   );
 
-  const { status } = useMemo(
-    () =>
-      computeEventStateAndStatus({
-        now: new Date(),
-        startAt: start,
-        endAt: end,
-        isDeleted,
-        isCanceled,
-        isOngoing,
-        hasStarted,
-        joinOpensMinutesBeforeStart,
-        joinCutoffMinutesBeforeStart,
-        allowJoinLate,
-        lateJoinCutoffMinutesAfterStart,
-        joinManuallyClosed,
-        min: min ?? 1,
-        max: max ?? 99999,
-        joinedCount: joinedCount,
-        joinMode: 'OPEN',
-      }),
-    [
-      start,
-      end,
-      isDeleted,
-      isCanceled,
-      isOngoing,
-      hasStarted,
-      joinOpensMinutesBeforeStart,
-      joinCutoffMinutesBeforeStart,
-      allowJoinLate,
-      lateJoinCutoffMinutesAfterStart,
-      joinManuallyClosed,
-      min,
-      max,
-      joinedCount,
-    ]
-  );
-
   const avMeta = useMemo(
     () => getAddressVisibilityMeta(addressVisibility),
     [addressVisibility]
