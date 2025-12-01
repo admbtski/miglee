@@ -1,6 +1,6 @@
 'use client';
 
-import { Info, User, Users } from 'lucide-react';
+import { Info, Settings, User, Users } from 'lucide-react';
 import { useEffect, useId, useMemo } from 'react';
 import { UseFormReturn, useController, useWatch } from 'react-hook-form';
 import { IntentFormValues } from './types';
@@ -85,6 +85,8 @@ export function CapacityStep({
   const maxVal = useWatch({ control, name: 'max' });
   const categorySlugs = useWatch({ control, name: 'categorySlugs' }) ?? [];
   const isGroup = modeField.value === 'GROUP';
+  const isCustom = modeField.value === 'CUSTOM';
+  const isOneToOne = modeField.value === 'ONE_TO_ONE';
 
   // Smart defaults - suggest capacity based on first category
   const suggestedCapacity = useMemo(() => {
@@ -121,6 +123,21 @@ export function CapacityStep({
         });
         void trigger(['min', 'max']);
       }
+    } else if (modeField.value === 'CUSTOM') {
+      // For CUSTOM mode, keep current values or set sensible defaults
+      if (minVal === 2 && maxVal === 2) {
+        const initialMin = defaultValues?.min ?? 1;
+        const initialMax = defaultValues?.max ?? 10;
+        setValue('min', initialMin, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        setValue('max', initialMax, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        void trigger(['min', 'max']);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeField.value]);
@@ -136,9 +153,9 @@ export function CapacityStep({
       {/* Mode */}
       <FormSection
         title="Tryb"
-        description="W trybie 1:1 liczba uczestników jest stała (2 osoby). W trybie grupowym możesz ustawić zakres (2–50)."
+        description="Wybierz tryb wydarzenia: 1:1 (2 osoby), grupowy (2–50 osób) lub niestandardowy (pełna kontrola nad limitem uczestników)."
       >
-        <SegmentedControl<'ONE_TO_ONE' | 'GROUP'>
+        <SegmentedControl<'ONE_TO_ONE' | 'GROUP' | 'CUSTOM'>
           aria-label="Tryb"
           aria-describedby={modeHelpId}
           size="lg"
@@ -149,12 +166,13 @@ export function CapacityStep({
           options={[
             { value: 'ONE_TO_ONE', label: '1:1', Icon: User },
             { value: 'GROUP', label: 'Grupowe', Icon: Users },
+            { value: 'CUSTOM', label: 'Niestandardowe', Icon: Settings },
           ]}
           fullWidth
         />
       </FormSection>
 
-      {isGroup && (
+      {(isGroup || isCustom) && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -162,8 +180,9 @@ export function CapacityStep({
                 Liczba uczestników
               </label>
               <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                Ustaw minimalną i maksymalną liczbę uczestników (przeciągnij
-                suwaki).
+                {isCustom
+                  ? 'Ustaw dowolną minimalną i maksymalną liczbę uczestników (1–99999).'
+                  : 'Ustaw minimalną i maksymalną liczbę uczestników (przeciągnij suwaki).'}
               </p>
             </div>
             {suggestedCapacity && (
@@ -205,31 +224,34 @@ export function CapacityStep({
             </div>
             <span className="text-xs text-zinc-400 dark:text-zinc-500">→</span>
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(maxVal ?? 50, 10) }).map(
-                (_, i) => (
-                  <User
-                    key={`max-${i}`}
-                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
-                    aria-hidden="true"
-                  />
-                )
-              )}
-              {(maxVal ?? 50) > 10 && (
+              {Array.from({
+                length: Math.min(maxVal ?? (isCustom ? 10 : 50), 10),
+              }).map((_, i) => (
+                <User
+                  key={`max-${i}`}
+                  className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                  aria-hidden="true"
+                />
+              ))}
+              {(maxVal ?? (isCustom ? 10 : 50)) > 10 && (
                 <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
-                  +{(maxVal ?? 50) - 10}
+                  +{(maxVal ?? (isCustom ? 10 : 50)) - 10}
                 </span>
               )}
             </div>
           </div>
 
           <RangeSlider
-            value={[minVal ?? 2, maxVal ?? 50]}
-            min={2}
-            max={50}
+            value={[
+              minVal ?? (isCustom ? 1 : 2),
+              maxVal ?? (isCustom ? 10 : 50),
+            ]}
+            min={isCustom ? 1 : 2}
+            max={isCustom ? 99999 : 50}
             step={1}
-            disabled={!isGroup}
+            disabled={isOneToOne}
             onChange={([a, b]) => {
-              if (!isGroup) return;
+              if (isOneToOne) return;
               setValue('min', a, { shouldDirty: true, shouldValidate: true });
               setValue('max', b, { shouldDirty: true, shouldValidate: true });
             }}

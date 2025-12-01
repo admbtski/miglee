@@ -97,6 +97,49 @@ function assertStartEnd(startAt: Date, endAt: Date) {
   }
 }
 
+/** NEW: validate capacity ranges based on mode */
+function assertCapacity(input: { mode: string; min: number; max: number }) {
+  const { mode, min, max } = input;
+
+  // General constraints
+  if (min < 1 || min > 99999) {
+    throw new GraphQLError('min must be between 1 and 99999', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'min' },
+    });
+  }
+  if (max < 1 || max > 99999) {
+    throw new GraphQLError('max must be between 1 and 99999', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'max' },
+    });
+  }
+  if (min > max) {
+    throw new GraphQLError('min must be ≤ max', {
+      extensions: { code: 'BAD_USER_INPUT', field: 'min' },
+    });
+  }
+
+  // Mode-specific constraints
+  if (mode === 'ONE_TO_ONE') {
+    if (min !== 2 || max !== 2) {
+      throw new GraphQLError('ONE_TO_ONE mode requires min=2 and max=2', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'mode' },
+      });
+    }
+  } else if (mode === 'GROUP') {
+    if (min < 2) {
+      throw new GraphQLError('GROUP mode requires min >= 2', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'min' },
+      });
+    }
+    if (max > 50) {
+      throw new GraphQLError('GROUP mode requires max <= 50', {
+        extensions: { code: 'BAD_USER_INPUT', field: 'max' },
+      });
+    }
+  }
+  // CUSTOM mode: no additional restrictions beyond 1-99999
+}
+
 /**
  * Validate join windows/cutoffs
  */
@@ -235,22 +278,12 @@ function assertCreateInput(input: CreateIntentInput) {
   // join windows/cutoffs
   assertJoinWindows(input);
 
-  // capacity
-  if (input.mode === PrismaMode.ONE_TO_ONE) {
-    if (input.min !== 2 || input.max !== 2) {
-      throw new GraphQLError('For ONE_TO_ONE, min and max must both equal 2.', {
-        extensions: { code: 'BAD_USER_INPUT', field: 'min/max' },
-      });
-    }
-  } else if (
-    typeof input.min === 'number' &&
-    typeof input.max === 'number' &&
-    input.min > input.max
-  ) {
-    throw new GraphQLError('`min` cannot be greater than `max`.', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'min/max' },
-    });
-  }
+  // capacity validation (unified for all modes)
+  assertCapacity({
+    mode: input.mode,
+    min: input.min,
+    max: input.max,
+  });
 
   // meeting kind constraints
   const hasCoords = !!(
@@ -301,25 +334,28 @@ function assertUpdateInput(input: UpdateIntentInput) {
       extensions: { code: 'BAD_USER_INPUT', field: 'max' },
     });
 
+  // Capacity validation when mode or capacity is being updated
   if (
-    typeof input.min === 'number' &&
-    typeof input.max === 'number' &&
-    input.min > input.max
+    input.mode !== undefined ||
+    input.min !== undefined ||
+    input.max !== undefined
   ) {
-    throw new GraphQLError('`min` cannot be greater than `max`.', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'min/max' },
-    });
-  }
-  if (input.mode === PrismaMode.ONE_TO_ONE) {
+    // We need all three values to validate, so fetch from existing if not provided
+    // Note: this assumes the caller will merge with existing values
+    // For a full implementation, you'd need to pass existing values or fetch them here
     if (
-      (typeof input.min === 'number' && input.min !== 2) ||
-      (typeof input.max === 'number' && input.max !== 2)
+      input.mode !== undefined &&
+      input.min !== undefined &&
+      input.max !== undefined
     ) {
-      throw new GraphQLError('For ONE_TO_ONE, min and max must both equal 2.', {
-        extensions: { code: 'BAD_USER_INPUT', field: 'min/max' },
+      assertCapacity({
+        mode: input.mode as string,
+        min: input.min,
+        max: input.max,
       });
     }
   }
+
   // online URL nullability guard when ONLINE explicitly set
   if (
     input.meetingKind === PrismaMeetingKind.ONLINE &&

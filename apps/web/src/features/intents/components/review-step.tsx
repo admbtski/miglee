@@ -314,6 +314,10 @@ export function ReviewStep({
       <Chip tone="violet" icon={<User className="h-3.5 w-3.5" />}>
         1:1
       </Chip>
+    ) : values.mode === 'CUSTOM' ? (
+      <Chip tone="fuchsia" icon={<Users className="h-3.5 w-3.5" />}>
+        Niestandardowe {values.min}–{values.max}
+      </Chip>
     ) : (
       <Chip tone="indigo" icon={<Users className="h-3.5 w-3.5" />}>
         Group {values.min}–{values.max}
@@ -643,7 +647,7 @@ export function ReviewStep({
             <div className="flex flex-wrap items-center gap-2">
               {modeChip}
               {meetingKindChip}
-              {values.mode === 'GROUP' && (
+              {(values.mode === 'GROUP' || values.mode === 'CUSTOM') && (
                 <Chip tone="zinc" icon={<Users className="h-3.5 w-3.5" />}>
                   {values.min}–{values.max} osób
                 </Chip>
@@ -752,7 +756,7 @@ export function ReviewStep({
                 }
               />
 
-              {values.mode === 'GROUP' && (
+              {(values.mode === 'GROUP' || values.mode === 'CUSTOM') && (
                 <Kvp
                   icon={<Users className="w-4 h-4" />}
                   label="Pojemność"

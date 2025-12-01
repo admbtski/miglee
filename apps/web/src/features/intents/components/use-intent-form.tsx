@@ -54,12 +54,12 @@ export const IntentSchema = z
       .max(500, 'Max 500 characters')
       .optional()
       .or(z.literal('')),
-    mode: z.enum(['ONE_TO_ONE', 'GROUP']),
+    mode: z.enum(['ONE_TO_ONE', 'GROUP', 'CUSTOM']),
     addressVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
     membersVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
     levels: z.array(z.enum(['ADVANCED', 'BEGINNER', 'INTERMEDIATE'])),
-    min: z.number().int().min(2, 'Min capacity is 2'),
-    max: z.number().int().max(50, 'Max capacity is 50'),
+    min: z.number().int().min(1, 'Min capacity is 1').max(99999, 'Max 99999'),
+    max: z.number().int().min(1, 'Min capacity is 1').max(99999, 'Max 99999'),
     startAt: z
       .date()
       .transform((d) => new Date(d)) // ensure instance copy (helps with weird inputs)
@@ -144,20 +144,21 @@ export const IntentSchema = z
           message: 'For 1:1 mode, max must be 2',
         });
       }
-    } else {
+    } else if (data.mode === 'GROUP') {
       if (data.min < 2)
         ctx.addIssue({
           code: 'custom',
           path: ['min'],
-          message: 'Minimum capacity is 2',
+          message: 'Minimum capacity is 2 for GROUP mode',
         });
       if (data.max > 50)
         ctx.addIssue({
           code: 'custom',
           path: ['max'],
-          message: 'Maximum capacity is 50',
+          message: 'Maximum capacity is 50 for GROUP mode',
         });
     }
+    // CUSTOM mode has no restrictions beyond the base 1-99999 range
   })
   // MeetingKind-specific
   .superRefine((data, ctx) => {

@@ -403,7 +403,7 @@ async function createIntentWithMembers(opts: {
     JoinMode.REQUEST,
     JoinMode.INVITE_ONLY,
   ]);
-  const mode = pick<Mode>([Mode.GROUP, Mode.ONE_TO_ONE]);
+  const mode = pick<Mode>([Mode.GROUP, Mode.ONE_TO_ONE, Mode.CUSTOM]);
   const allowJoinLate = rand() > 0.3;
 
   // Join window settings (realistic variations)
@@ -461,9 +461,21 @@ async function createIntentWithMembers(opts: {
           AddressVisibility.AFTER_JOIN,
         ]);
 
-  // ONE_TO_ONE = 2/2, GROUP = 2..(6/8/10/12)
-  const min = mode === Mode.ONE_TO_ONE ? 2 : rand() > 0.5 ? 4 : 2;
-  const baseMax = mode === Mode.ONE_TO_ONE ? 2 : pick([6, 8, 10, 12]);
+  // ONE_TO_ONE = 2/2, GROUP = 2..(6/8/10/12), CUSTOM = 1..99 (varied)
+  const min =
+    mode === Mode.ONE_TO_ONE
+      ? 2
+      : mode === Mode.CUSTOM
+        ? pick([1, 1, 2, 3, 5])
+        : rand() > 0.5
+          ? 4
+          : 2;
+  const baseMax =
+    mode === Mode.ONE_TO_ONE
+      ? 2
+      : mode === Mode.CUSTOM
+        ? pick([5, 10, 15, 20, 50, 100])
+        : pick([6, 8, 10, 12]);
   const max = Math.max(min, baseMax);
 
   const selectedCategories = [
@@ -740,7 +752,7 @@ function buildScenarios(total: number): Scenario[] {
     JoinMode.REQUEST,
     JoinMode.INVITE_ONLY,
   ] as const;
-  const modes = [Mode.GROUP, Mode.ONE_TO_ONE] as const;
+  const modes = [Mode.GROUP, Mode.ONE_TO_ONE, Mode.CUSTOM] as const;
   const whens: Scenario['when'][] = ['past', 'soon', 'future'];
 
   // Kategorie → użyjemy do tytułów, by brzmiało sensownie
@@ -758,9 +770,21 @@ function buildScenarios(total: number): Scenario[] {
     const titles = TITLE_BY_CATEGORY[catSlug] ?? ['Meetup'];
     const title = titles[Math.floor(rnd() * titles.length)]!;
 
-    // pojemności – 1:1 → 2/2, GROUP → 2..12
-    const min = mode === Mode.ONE_TO_ONE ? 2 : rand() > 0.5 ? 4 : 2;
-    const max = mode === Mode.ONE_TO_ONE ? 2 : pick([6, 8, 10, 12]);
+    // pojemności – 1:1 → 2/2, GROUP → 2..12, CUSTOM → 1..99
+    const min =
+      mode === Mode.ONE_TO_ONE
+        ? 2
+        : mode === Mode.CUSTOM
+          ? pick([1, 1, 2, 3, 5])
+          : rand() > 0.5
+            ? 4
+            : 2;
+    const max =
+      mode === Mode.ONE_TO_ONE
+        ? 2
+        : mode === Mode.CUSTOM
+          ? pick([5, 10, 15, 20, 50, 100])
+          : pick([6, 8, 10, 12]);
 
     // radius dla onsite/hybrid, bywa 0, 0.5, 1 lub ~losowy
     const radiusKm =
@@ -874,8 +898,15 @@ async function createPresetIntent(
         ? `${title} (online).`
         : `${title} (hybrid): ${place.name}, ${city.name} or online.`;
 
-  const min = s.min ?? (s.mode === Mode.ONE_TO_ONE ? 2 : 2);
-  const max = s.max ?? (s.mode === Mode.ONE_TO_ONE ? 2 : pick([6, 8, 10, 12]));
+  const min =
+    s.min ?? (s.mode === Mode.ONE_TO_ONE ? 2 : s.mode === Mode.CUSTOM ? 1 : 2);
+  const max =
+    s.max ??
+    (s.mode === Mode.ONE_TO_ONE
+      ? 2
+      : s.mode === Mode.CUSTOM
+        ? 10
+        : pick([6, 8, 10, 12]));
 
   // Members visibility: mostly PUBLIC, sometimes AFTER_JOIN, rarely HIDDEN
   const membersVisibility = pick<MembersVisibility>([
