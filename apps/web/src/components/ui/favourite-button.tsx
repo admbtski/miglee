@@ -1,10 +1,10 @@
 'use client';
 
-import { Heart } from 'lucide-react';
 import { useToggleFavouriteMutation } from '@/lib/api/favourites';
-import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Heart } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface FavouriteButtonProps {
   intentId: string;

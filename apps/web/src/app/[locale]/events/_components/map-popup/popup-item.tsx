@@ -4,10 +4,9 @@
 
 import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
-import { CapacityBadge } from '@/components/ui/capacity-badge';
+import { FavouriteButton } from '@/components/ui/favourite-button';
 import { HybridLocationIcon } from '@/components/ui/icons/hybrid-location-icon';
 import { Plan } from '@/components/ui/plan-theme';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import {
@@ -26,6 +25,7 @@ import {
   MapPin,
   Sparkles,
   UserCheck,
+  Users,
   Wifi as WifiIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -78,6 +78,7 @@ export type PopupIntent = {
   categorySlugs?: string[] | null;
   coverKey?: string | null;
   coverBlurhash?: string | null;
+  isFavourite?: boolean;
 };
 
 export interface PopupItemProps {
@@ -173,6 +174,54 @@ function getLocationDisplay(
 }
 
 /**
+ * Format capacity label for event cards
+ * Handles all combinations of min/max being null or set
+ */
+function formatCapacityLabel(
+  joinedCount: number,
+  min: number | null | undefined,
+  max: number | null | undefined
+): string {
+  // Both null or undefined - unlimited
+  if (
+    (min === null || min === undefined) &&
+    (max === null || max === undefined)
+  ) {
+    return `${joinedCount} • brak limitu uczestników`;
+  }
+
+  // Only min is null/undefined - show max only
+  if (min === null || min === undefined) {
+    if (max !== null && max !== undefined) {
+      const isFull = joinedCount >= max;
+      const available = Math.max(0, max - joinedCount);
+      return isFull
+        ? `Brak miejsc • ${joinedCount} / ${max}`
+        : `${joinedCount} / ${max} • ${available} wolne`;
+    }
+  }
+
+  // Only max is null/undefined - show min only
+  if (max === null || max === undefined) {
+    if (min !== null && min !== undefined) {
+      return `${joinedCount} • minimum ${min} osób`;
+    }
+  }
+
+  // Both set - standard display
+  if (min !== null && min !== undefined && max !== null && max !== undefined) {
+    const isFull = joinedCount >= max;
+    const available = Math.max(0, max - joinedCount);
+    return isFull
+      ? `Brak miejsc • ${joinedCount} / ${max}`
+      : `${joinedCount} / ${max} • ${available} wolne`;
+  }
+
+  // Fallback (shouldn't happen)
+  return `${joinedCount} uczestników`;
+}
+
+/**
  * Check if a boost is still active (< 24 hours old)
  * @param boostedAtISO - ISO timestamp of when the event was boosted
  * @returns true if boost is active, false otherwise
@@ -196,7 +245,7 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     isFull,
     isOngoing,
     hasStarted,
-    joinedCount,
+    joinedCount: joinedCountRaw,
     max,
     min,
     radiusKm,
@@ -213,6 +262,8 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
     lateJoinCutoffMinutesAfterStart,
     joinManuallyClosed,
   } = intent;
+
+  const joinedCount = joinedCountRaw ?? 0;
 
   const start = useMemo(() => parseISO(startAt), [startAt]);
   const end = useMemo(() => parseISO(endAt), [endAt]);
@@ -244,9 +295,9 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         allowJoinLate,
         lateJoinCutoffMinutesAfterStart,
         joinManuallyClosed,
-        min: min ?? 2,
-        max: max ?? 2,
-        joinedCount: joinedCount ?? 0,
+        min: min ?? 1,
+        max: max ?? 99999,
+        joinedCount: joinedCount,
         joinMode: 'OPEN',
       }),
     [
@@ -290,6 +341,7 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
   const categories = intent.categorySlugs ?? [];
   const maxCategoriesToShow = isBoosted ? 1 : 2;
   const remainingCategoriesCount = categories.length - maxCategoriesToShow;
+  const isInactive = isCanceled || isDeleted;
 
   return (
     <motion.button
@@ -334,28 +386,44 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
         {/* Subtle overlay for readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
 
-        {/* Badges - Top */}
+        {/* Favourite Button - Top Right */}
+        <div
+          className="absolute z-20 top-2 right-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <FavouriteButton
+            intentId={intent.id}
+            isFavourite={intent.isFavourite ?? false}
+            size="sm"
+          />
+        </div>
+
         {(isBoosted || categories.length > 0) && (
-          <div className="absolute top-2 left-2 right-2 z-10">
+          <div className="absolute z-10 top-2 left-2 right-2">
             <div className="flex flex-wrap gap-1">
-              <EventCountdownPill
-                startAt={start}
-                endAt={end}
-                size="xs"
-                joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
-                joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
-                allowJoinLate={allowJoinLate}
-                lateJoinCutoffMinutesAfterStart={
-                  lateJoinCutoffMinutesAfterStart
-                }
-                joinManuallyClosed={joinManuallyClosed}
-                isCanceled={isCanceled}
-                isDeleted={isDeleted}
-              />
+              {!isInactive && (
+                <EventCountdownPill
+                  startAt={start}
+                  endAt={end}
+                  size="xs"
+                  joinOpensMinutesBeforeStart={joinOpensMinutesBeforeStart}
+                  joinCutoffMinutesBeforeStart={joinCutoffMinutesBeforeStart}
+                  allowJoinLate={allowJoinLate}
+                  lateJoinCutoffMinutesAfterStart={
+                    lateJoinCutoffMinutesAfterStart
+                  }
+                  joinManuallyClosed={joinManuallyClosed}
+                  isCanceled={isCanceled}
+                  isDeleted={isDeleted}
+                />
+              )}
 
               {isBoosted && (
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600/20 text-violet-300 border border-violet-600/30 px-1.5 py-0.5 text-[10px] font-medium backdrop-blur-sm">
-                  <Sparkles className="w-2.5 h-2.5" />
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white shadow-sm select-none"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
                   Promowane
                 </span>
               )}
@@ -363,14 +431,18 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
               {categories.slice(0, maxCategoriesToShow).map((cat) => (
                 <span
                   key={cat}
-                  className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-1.5 py-0.5 text-[10px] font-medium text-white/90"
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white shadow-sm select-none"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
                 >
                   {cat}
                 </span>
               ))}
 
               {remainingCategoriesCount > 0 && (
-                <span className="inline-flex items-center rounded-full bg-white/10 border border-white/5 px-1.5 py-0.5 text-[10px] font-medium text-white/90">
+                <span
+                  className="inline-flex items-center rounded-full bg-black/30 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white shadow-sm select-none"
+                  style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+                >
                   +{remainingCategoriesCount}
                 </span>
               )}
@@ -434,11 +506,8 @@ export function PopupItem({ intent, onClick }: PopupItemProps) {
           </div>
           <div className="flex items-center gap-1 truncate">
             <Users className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="text-xs truncate">
-              {joinedCount >= max && `Brak miejsc • ${joinedCount} / ${max}`}
-              {joinedCount < max &&
-                `${joinedCount} / ${max} • ${Math.max(0, max - joinedCount)} wolne`}
-              {!min && !max && `${joinedCount} • brak limitu uczestników`}
+            <span className="truncate">
+              {formatCapacityLabel(joinedCount, min, max)}
             </span>
           </div>
         </div>

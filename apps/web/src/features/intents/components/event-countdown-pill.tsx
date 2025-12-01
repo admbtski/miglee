@@ -199,7 +199,6 @@ export function EventCountdownPill({
   };
 
   const countdown = getCountdownTarget();
-
   if (!countdown || joinManuallyClosed) {
     return null;
   }

@@ -266,7 +266,11 @@ function assertJoinWindows(input: {
   }
 }
 
-function assertCreateInput(input: CreateIntentInput) {
+function assertCreateInput(
+  input: CreateIntentInput,
+  computedMin: number | null,
+  computedMax: number | null
+) {
   if (!input.categorySlugs?.length || input.categorySlugs.length > 3) {
     throw new GraphQLError('You must select between 1 and 3 categories.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'categorySlugs' },
@@ -281,11 +285,11 @@ function assertCreateInput(input: CreateIntentInput) {
   // join windows/cutoffs
   assertJoinWindows(input);
 
-  // capacity validation (unified for all modes)
+  // capacity validation (unified for all modes) - use computed values
   assertCapacity({
     mode: input.mode,
-    min: input.min,
-    max: input.max,
+    min: computedMin,
+    max: computedMax,
   });
 
   // meeting kind constraints
@@ -328,36 +332,9 @@ function assertUpdateInput(input: UpdateIntentInput) {
     throw new GraphQLError('`title` cannot be null.', {
       extensions: { code: 'BAD_USER_INPUT', field: 'title' },
     });
-  if (input.min === null)
-    throw new GraphQLError('`min` cannot be null.', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'min' },
-    });
-  if (input.max === null)
-    throw new GraphQLError('`max` cannot be null.', {
-      extensions: { code: 'BAD_USER_INPUT', field: 'max' },
-    });
 
-  // Capacity validation when mode or capacity is being updated
-  if (
-    input.mode !== undefined ||
-    input.min !== undefined ||
-    input.max !== undefined
-  ) {
-    // We need all three values to validate, so fetch from existing if not provided
-    // Note: this assumes the caller will merge with existing values
-    // For a full implementation, you'd need to pass existing values or fetch them here
-    if (
-      input.mode !== undefined &&
-      input.min !== undefined &&
-      input.max !== undefined
-    ) {
-      assertCapacity({
-        mode: input.mode as string,
-        min: input.min,
-        max: input.max,
-      });
-    }
-  }
+  // NOTE: min and max can be null in CUSTOM mode, so we don't reject null here
+  // The assertCapacity function will validate them based on mode
 
   // online URL nullability guard when ONLINE explicitly set
   if (
@@ -440,7 +417,30 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         );
       }
 
-      assertCreateInput(input);
+      // Set default min/max based on mode if not provided
+      const mode = input.mode as PrismaMode;
+      let min = input.min;
+      let max = input.max;
+
+      if (min === undefined || min === null) {
+        if (mode === PrismaMode.ONE_TO_ONE) {
+          min = 2;
+        } else if (mode === PrismaMode.GROUP) {
+          min = 2;
+        }
+        // CUSTOM mode: min can be null (no default)
+      }
+
+      if (max === undefined || max === null) {
+        if (mode === PrismaMode.ONE_TO_ONE) {
+          max = 2;
+        } else if (mode === PrismaMode.GROUP) {
+          max = 50;
+        }
+        // CUSTOM mode: max can be null (no default)
+      }
+
+      assertCreateInput(input, min, max);
 
       const loc = pickLocation(input.location) ?? {};
 
@@ -469,9 +469,9 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
               PrismaVisibility.PUBLIC) as PrismaVisibility,
             // joinMode może nie być w SDL — fallback na OPEN
             joinMode: (input as any).joinMode ?? 'OPEN',
-            mode: input.mode as PrismaMode,
-            min: input.min,
-            max: input.max,
+            mode: mode,
+            min: min,
+            max: max,
 
             startAt: input.startAt as Date,
             endAt: input.endAt as Date,
@@ -662,6 +662,7 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           deletedAt: true,
           startAt: true,
           mode: true,
+          min: true,
           max: true,
         },
       });
@@ -671,6 +672,19 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
         });
       }
       assertNotReadOnly(current);
+
+      // Validate capacity with merged values (use existing if not provided in input)
+      if (
+        input.mode !== undefined ||
+        input.min !== undefined ||
+        input.max !== undefined
+      ) {
+        assertCapacity({
+          mode: (input.mode ?? current.mode) as string,
+          min: input.min !== undefined ? input.min : current.min,
+          max: input.max !== undefined ? input.max : current.max,
+        });
+      }
 
       // odbiorcy przed update
       const members = await prisma.intentMember.findMany({
@@ -736,8 +750,8 @@ export const updateIntentMutation: MutationResolvers['updateIntent'] =
           ? { joinMode: (input as any).joinMode }
           : {}),
         ...(input.mode !== undefined ? { mode: input.mode as PrismaMode } : {}),
-        ...(typeof input.min === 'number' ? { min: input.min } : {}),
-        ...(typeof input.max === 'number' ? { max: input.max } : {}),
+        ...(input.min !== undefined ? { min: input.min } : {}),
+        ...(input.max !== undefined ? { max: input.max } : {}),
 
         ...(input.startAt !== undefined
           ? { startAt: input.startAt as Date }

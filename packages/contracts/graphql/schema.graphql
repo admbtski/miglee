@@ -778,8 +778,8 @@ type Intent {
   visibility: Visibility!
   joinMode: JoinMode!
   mode: Mode!
-  min: Int!
-  max: Int!
+  min: Int
+  max: Int
 
   startAt: DateTime!
   endAt: DateTime!
@@ -1276,8 +1276,8 @@ input CreateIntentInput {
   visibility: Visibility! = PUBLIC
   joinMode: JoinMode! = OPEN
   mode: Mode! = GROUP
-  min: Int! = 2
-  max: Int! = 50
+  min: Int
+  max: Int
 
   startAt: DateTime!
   endAt: DateTime!

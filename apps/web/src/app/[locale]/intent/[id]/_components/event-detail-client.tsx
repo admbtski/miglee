@@ -416,7 +416,13 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                   <div className="flex items-center gap-1.5">
                     <Users className="w-4 h-4 opacity-80" />
                     <span>
-                      {eventData.joinedCount} / {eventData.max}
+                      {eventData.min === null && eventData.max === null
+                        ? `${eventData.joinedCount} • bez limitu`
+                        : eventData.min === null
+                          ? `${eventData.joinedCount} / ${eventData.max}`
+                          : eventData.max === null
+                            ? `${eventData.joinedCount} • min ${eventData.min}`
+                            : `${eventData.joinedCount} / ${eventData.max}`}
                     </span>
                   </div>
                 </div>
@@ -436,13 +442,16 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               <div className="flex items-center gap-1.5">
                 <Users className="w-4 h-4 opacity-70" />
                 <span className="font-medium">
-                  {eventData.mode === 'ONE_TO_ONE' || eventData.max <= 2
+                  {eventData.mode === 'ONE_TO_ONE' ||
+                  (eventData.max !== null && eventData.max <= 2)
                     ? 'Indywidualne'
-                    : eventData.max <= 10
-                      ? 'Kameralne'
-                      : eventData.max <= 50
-                        ? 'Grupowe'
-                        : 'Masowe'}
+                    : eventData.max === null
+                      ? 'Bez limitu'
+                      : eventData.max <= 10
+                        ? 'Kameralne'
+                        : eventData.max <= 50
+                          ? 'Grupowe'
+                          : 'Masowe'}
                 </span>
               </div>
 

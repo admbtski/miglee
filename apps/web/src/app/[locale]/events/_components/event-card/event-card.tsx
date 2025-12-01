@@ -49,8 +49,8 @@ export interface EventCardProps {
   coverKey?: string | null;
   coverBlurhash?: string | null;
   joinedCount: number;
-  min: number;
-  max: number;
+  min?: number | null;
+  max?: number | null;
   canJoin: boolean;
   isFull: boolean;
   isOngoing: boolean;
@@ -155,6 +155,54 @@ function getLocationDisplay(
 }
 
 /**
+ * Format capacity label for event cards
+ * Handles all combinations of min/max being null or set
+ */
+function formatCapacityLabel(
+  joinedCount: number,
+  min: number | null | undefined,
+  max: number | null | undefined
+): string {
+  // Both null or undefined - unlimited
+  if (
+    (min === null || min === undefined) &&
+    (max === null || max === undefined)
+  ) {
+    return `${joinedCount} • brak limitu uczestników`;
+  }
+
+  // Only min is null/undefined - show max only
+  if (min === null || min === undefined) {
+    if (max !== null && max !== undefined) {
+      const isFull = joinedCount >= max;
+      const available = Math.max(0, max - joinedCount);
+      return isFull
+        ? `Brak miejsc • ${joinedCount} / ${max}`
+        : `${joinedCount} / ${max} • ${available} wolne`;
+    }
+  }
+
+  // Only max is null/undefined - show min only
+  if (max === null || max === undefined) {
+    if (min !== null && min !== undefined) {
+      return `${joinedCount} • minimum ${min} osób`;
+    }
+  }
+
+  // Both set - standard display
+  if (min !== null && min !== undefined && max !== null && max !== undefined) {
+    const isFull = joinedCount >= max;
+    const available = Math.max(0, max - joinedCount);
+    return isFull
+      ? `Brak miejsc • ${joinedCount} / ${max}`
+      : `${joinedCount} / ${max} • ${available} wolne`;
+  }
+
+  // Fallback (shouldn't happen)
+  return `${joinedCount} uczestników`;
+}
+
+/**
  * Check if a boost is still active (< 24 hours old)
  * @param boostedAtISO - ISO timestamp of when the event was boosted
  * @returns true if boost is active, false otherwise
@@ -223,44 +271,6 @@ export const EventCard = memo(function EventCard({
         ? getCardHighlightClasses(highlightColor, isBoosted)
         : { className: '' },
     [isBoosted, isCanceled, isDeleted, highlightColor]
-  );
-
-  const { status } = useMemo(
-    () =>
-      computeEventStateAndStatus({
-        now: new Date(),
-        startAt: start,
-        endAt: end,
-        isDeleted,
-        isCanceled,
-        isOngoing,
-        hasStarted,
-        joinOpensMinutesBeforeStart,
-        joinCutoffMinutesBeforeStart,
-        allowJoinLate,
-        lateJoinCutoffMinutesAfterStart,
-        joinManuallyClosed,
-        min,
-        max,
-        joinedCount,
-        joinMode: 'OPEN',
-      }),
-    [
-      start,
-      end,
-      isDeleted,
-      isCanceled,
-      isOngoing,
-      hasStarted,
-      joinOpensMinutesBeforeStart,
-      joinCutoffMinutesBeforeStart,
-      allowJoinLate,
-      lateJoinCutoffMinutesAfterStart,
-      joinManuallyClosed,
-      min,
-      max,
-      joinedCount,
-    ]
   );
 
   const handleMouseEnter = useCallback(() => {
@@ -492,35 +502,10 @@ export const EventCard = memo(function EventCard({
           <div className="flex items-center gap-1 truncate">
             <Users className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="text-xs truncate">
-              {joinedCount >= max && `Brak miejsc • ${joinedCount} / ${max}`}
-              {joinedCount < max &&
-                `${joinedCount} / ${max} • ${Math.max(0, max - joinedCount)} wolne`}
-              {!min && !max && `${joinedCount} • brak limitu uczestników`}
+              {formatCapacityLabel(joinedCount, min, max)}
             </span>
           </div>
         </div>
-        {/* 
-        <div className="flex flex-wrap items-center gap-2 mt-1">
-<CapacityBadge
-            joinedCount={joinedCount}
-            size="sm"
-            min={min}
-            max={max}
-            isFull={isFull}
-            canJoin={canJoin}
-            statusReason={status.reason}
-
-          {!isInactive &&
-            status.reason !== 'FULL' &&
-            status.reason !== 'OK' && (
-              <StatusBadge
-                size="sm"
-                tone={status.tone}
-                reason={status.reason}
-                label={status.label}
-              />
-            )}
-        </div> */}
       </div>
     </motion.div>
   );

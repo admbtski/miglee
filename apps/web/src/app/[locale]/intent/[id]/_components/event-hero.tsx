@@ -102,6 +102,9 @@ export function EventHero({ event }: EventHeroProps) {
     if (event.mode === 'ONE_TO_ONE') {
       return { label: 'Indywidualne', description: 'Spotkanie indywidualne' };
     }
+    if (event.max === null) {
+      return { label: 'Bez limitu', description: 'Wydarzenie bez limitu' };
+    }
     if (event.max <= 2) {
       return { label: 'Indywidualne', description: 'Spotkanie indywidualne' };
     }
@@ -274,7 +277,13 @@ export function EventHero({ event }: EventHeroProps) {
             title={eventSize.description}
           >
             <Users className="w-4 h-4 opacity-70" />
-            {event.joinedCount} / {event.max} uczestników
+            {event.min === null && event.max === null
+              ? `${event.joinedCount} • bez limitu`
+              : event.min === null
+                ? `${event.joinedCount} / ${event.max} uczestników`
+                : event.max === null
+                  ? `${event.joinedCount} • min ${event.min} uczestników`
+                  : `${event.joinedCount} / ${event.max} uczestników`}
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               ({eventSize.label})
             </span>

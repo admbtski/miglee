@@ -265,27 +265,40 @@ export function CapacityStep({
 
           <RangeSlider
             value={[
-              minVal ?? (isCustom ? 1 : 2),
-              maxVal ?? (isCustom ? 10 : 50),
+              minVal === null ? 1 : minVal,
+              maxVal === null ? 99999 : maxVal,
             ]}
             min={isCustom ? 1 : 2}
             max={isCustom ? 99999 : 50}
             step={1}
             disabled={
-              isOneToOne || (isCustom && (minVal === null || maxVal === null))
+              isOneToOne || (isCustom && minVal === null && maxVal === null)
             }
+            format={undefined}
             onChange={([a, b]) => {
               if (isOneToOne) return;
+
+              // When min is unlimited, only update max
               if (isCustom && minVal === null) {
-                // Only update max if min is unlimited
-                setValue('max', b, { shouldDirty: true, shouldValidate: true });
-              } else if (isCustom && maxVal === null) {
-                // Only update min if max is unlimited
-                setValue('min', a, { shouldDirty: true, shouldValidate: true });
-              } else {
-                setValue('min', a, { shouldDirty: true, shouldValidate: true });
-                setValue('max', b, { shouldDirty: true, shouldValidate: true });
+                setValue('max', b, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                return;
               }
+
+              // When max is unlimited, only update min
+              if (isCustom && maxVal === null) {
+                setValue('min', a, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                return;
+              }
+
+              // Normal case: update both
+              setValue('min', a, { shouldDirty: true, shouldValidate: true });
+              setValue('max', b, { shouldDirty: true, shouldValidate: true });
             }}
             aria-invalid={!!(errors.min || errors.max)}
             aria-describedby={ariaDescribedBy}
@@ -297,7 +310,7 @@ export function CapacityStep({
             <div className="space-y-4 pt-2">
               {/* Checkboxes */}
               <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={minVal === null}
@@ -318,11 +331,11 @@ export function CapacityStep({
                   />
                   <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     <Infinity className="w-4 h-4" />
-                    Bez minimalnych ograniczeń
+                    Bez minimalnego limitu
                   </span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={maxVal === null}
@@ -343,7 +356,7 @@ export function CapacityStep({
                   />
                   <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     <Infinity className="w-4 h-4" />
-                    Bez górnych ograniczeń
+                    Bez maksymalnego limitu
                   </span>
                 </label>
               </div>
@@ -447,7 +460,16 @@ export function CapacityStep({
         </div>
 
         <p className="text-sm leading-relaxed text-blue-900 dark:text-blue-100">
-          {isGroup ? (
+          {isCustom ? (
+            <>
+              W trybie{' '}
+              <strong className="font-semibold">niestandardowym</strong> masz
+              pełną kontrolę nad limitami uczestników. Możesz ustawić{' '}
+              <strong className="font-semibold">dowolny zakres</strong>{' '}
+              (1-99999) lub całkowicie usunąć ograniczenia, zaznaczając
+              odpowiednie opcje.
+            </>
+          ) : isGroup ? (
             <>
               Wybierz <strong className="font-semibold">minimalną</strong> i{' '}
               <strong className="font-semibold">maksymalną</strong> liczbę

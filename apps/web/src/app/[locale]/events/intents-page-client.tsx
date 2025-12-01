@@ -23,7 +23,6 @@ import type { IntentListItem } from '@/types/intent';
 import { DesktopSearchBar } from './_components/desktop-search-bar';
 import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
 import { EventsHeader } from './_components/events-list/events-header';
-import type { CommittedFilters } from './_types';
 import { useActiveFiltersCount } from './_hooks/use-active-filters-count';
 import { useCommittedFilters } from './_hooks/use-committed-filters';
 import { useCommittedMapVisible } from './_hooks/use-committed-map-vision';
@@ -31,6 +30,7 @@ import { useCommittedSort } from './_hooks/use-committed-sort';
 import { useDebouncedHover } from './_hooks/use-debounced-hover';
 import { useIntentsQueryVariables } from './_hooks/use-intents-query-variables';
 import { useLocationMode } from './_hooks/use-location-mode';
+import type { CommittedFilters } from './_types';
 
 const ServerClusteredMap = lazy(
   () =>

@@ -70,7 +70,13 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
           <UserGroup className="h-5 w-5" />
           <span>
-            {event.joinedCount} / {event.max}
+            {event.min === null && event.max === null
+              ? `${event.joinedCount} • bez limitu`
+              : event.min === null
+                ? `${event.joinedCount} / ${event.max}`
+                : event.max === null
+                  ? `${event.joinedCount} • min ${event.min}`
+                  : `${event.joinedCount} / ${event.max}`}
           </span>
         </div>
       </div>
@@ -136,22 +142,33 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         <div className="mb-2 flex justify-between text-sm">
           <span className="text-zinc-600 dark:text-zinc-400">Zapełnienie</span>
           <span className="font-medium text-zinc-900 dark:text-zinc-100">
-            {Math.round((event.joinedCount / event.max) * 100)}%
+            {event.max === null
+              ? '∞'
+              : `${Math.round((event.joinedCount / event.max) * 100)}%`}
           </span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-          <div
-            className="h-full rounded-full bg-blue-600 transition-all dark:bg-blue-500"
-            style={{
-              width: `${Math.min((event.joinedCount / event.max) * 100, 100)}%`,
-            }}
-          />
-        </div>
-        {event.min > 0 && event.joinedCount < event.min && (
-          <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-            Wydarzenie dojdzie do skutku od {event.min} osób
+        {event.max !== null && (
+          <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all dark:bg-blue-500"
+              style={{
+                width: `${Math.min((event.joinedCount / event.max) * 100, 100)}%`,
+              }}
+            />
+          </div>
+        )}
+        {event.max === null && (
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            Wydarzenie bez limitu uczestników
           </p>
         )}
+        {event.min !== null &&
+          event.min > 0 &&
+          event.joinedCount < event.min && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              Wydarzenie dojdzie do skutku od {event.min} osób
+            </p>
+          )}
       </div>
     </div>
   );
