@@ -213,3 +213,17 @@ export const intentFaqsResolver: IntentResolvers['faqs'] = resolverWithMetrics(
     }));
   }
 );
+
+/**
+ * Field resolver for Intent.joinQuestions
+ * Returns all join questions for this intent, ordered by their order field
+ */
+export const intentJoinQuestionsResolver: IntentResolvers['joinQuestions'] =
+  resolverWithMetrics('Intent', 'joinQuestions', async (parent) => {
+    const questions = await prisma.intentJoinQuestion.findMany({
+      where: { intentId: parent.id },
+      orderBy: { order: 'asc' },
+    });
+
+    return questions as any;
+  });

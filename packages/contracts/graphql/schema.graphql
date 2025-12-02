@@ -881,6 +881,7 @@ type Intent {
   # Relations
   inviteLinks: [IntentInviteLink!]!
   faqs: [IntentFaq!]!
+  joinQuestions: [IntentJoinQuestion!]!
 
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -2002,17 +2003,17 @@ type Mutation {
   # Intent Favourites
   toggleFavourite(intentId: ID!): IntentFavourite
 
-  # Join Form Management
-  createJoinQuestion(input: CreateJoinQuestionInput!): IntentJoinQuestion!
-  updateJoinQuestion(
-    id: ID!
-    input: UpdateJoinQuestionInput!
-  ): IntentJoinQuestion!
-  deleteJoinQuestion(id: ID!): Boolean!
-  reorderJoinQuestions(
-    intentId: ID!
-    questionIds: [ID!]!
-  ): [IntentJoinQuestion!]!
+  # Join Form Management (deprecated - use updateIntentJoinQuestions for bulk replace)
+  # createJoinQuestion(input: CreateJoinQuestionInput!): IntentJoinQuestion!
+  # updateJoinQuestion(
+  #   id: ID!
+  #   input: UpdateJoinQuestionInput!
+  # ): IntentJoinQuestion!
+  # deleteJoinQuestion(id: ID!): Boolean!
+  # reorderJoinQuestions(
+  #   intentId: ID!
+  #   questionIds: [ID!]!
+  # ): [IntentJoinQuestion!]!
 
   # Feedback mutations
   createFeedbackQuestion(
@@ -2038,6 +2039,11 @@ type Mutation {
 
   # FAQ Management
   updateIntentFaqs(input: UpdateIntentFaqsInput!): [IntentFaq!]!
+
+  # Join Form Management
+  updateIntentJoinQuestions(
+    input: UpdateIntentJoinQuestionsInput!
+  ): [IntentJoinQuestion!]!
 
   # notifications
   addNotification(
@@ -2384,6 +2390,25 @@ input IntentFaqInput {
 input UpdateIntentFaqsInput {
   intentId: ID!
   faqs: [IntentFaqInput!]!
+}
+
+input IntentJoinQuestionInput {
+  type: JoinQuestionType!
+  label: String!
+  helpText: String
+  required: Boolean!
+  order: Int!
+  options: [JoinQuestionOptionInput!]
+  maxLength: Int
+}
+
+input JoinQuestionOptionInput {
+  label: String!
+}
+
+input UpdateIntentJoinQuestionsInput {
+  intentId: ID!
+  questions: [IntentJoinQuestionInput!]!
 }
 
 # ------------------------------------------------------------------------------

@@ -112,13 +112,8 @@ import {
 // Favourites mutations
 import { toggleFavouriteMutation } from './favourites';
 
-// Join Form mutations
-import {
-  createJoinQuestionMutation,
-  updateJoinQuestionMutation,
-  deleteJoinQuestionMutation,
-  reorderJoinQuestionsMutation,
-} from './join-questions';
+// Join Questions mutations
+import { joinQuestionsMutations } from './join-questions';
 
 // Feedback Questions mutations
 import {
@@ -358,10 +353,11 @@ export const Mutation: Resolvers['Mutation'] = {
   toggleFavourite: toggleFavouriteMutation,
 
   // ---- Join Form Management ----
-  createJoinQuestion: createJoinQuestionMutation,
-  updateJoinQuestion: updateJoinQuestionMutation,
-  deleteJoinQuestion: deleteJoinQuestionMutation,
-  reorderJoinQuestions: reorderJoinQuestionsMutation,
+  // Legacy individual operations (deprecated - use updateIntentJoinQuestions)
+  // createJoinQuestion: createJoinQuestionMutation,
+  // updateJoinQuestion: updateJoinQuestionMutation,
+  // deleteJoinQuestion: deleteJoinQuestionMutation,
+  // reorderJoinQuestions: reorderJoinQuestionsMutation,
 
   // ---- Feedback Management ----
   createFeedbackQuestion: createFeedbackQuestionMutation,
@@ -372,7 +368,10 @@ export const Mutation: Resolvers['Mutation'] = {
   sendFeedbackRequests: sendFeedbackRequestsMutation,
 
   // ---- FAQ Management ----
-  updateIntentFaqs: faqMutations.updateIntentFaqs,
+  updateIntentFaqs: faqMutations.updateIntentFaqs!,
+
+  // ---- Join Questions Management ----
+  updateIntentJoinQuestions: joinQuestionsMutations.updateIntentJoinQuestions!,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,

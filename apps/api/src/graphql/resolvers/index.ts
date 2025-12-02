@@ -14,6 +14,7 @@ import {
   intentIsFavouriteResolver,
   intentCoverBlurhashResolver,
   intentFaqsResolver,
+  intentJoinQuestionsResolver,
 } from './fields/intent';
 import { intentMemberIntentResolver } from './fields/intent-member';
 import { UserFieldResolvers, UserProfileFieldResolvers } from './fields/user';
@@ -50,6 +51,7 @@ export const resolvers: Pick<
     isFavourite: intentIsFavouriteResolver,
     coverBlurhash: intentCoverBlurhashResolver,
     faqs: intentFaqsResolver,
+    joinQuestions: intentJoinQuestionsResolver,
   },
   IntentMember: {
     intent: intentMemberIntentResolver,

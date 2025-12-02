@@ -5,7 +5,7 @@
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { JoinFormPanel } from './_components/join-form-panel';
+import { JoinFormManagementClient } from './_components/join-form-management-client';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 
 type PageProps = {
@@ -22,7 +22,7 @@ export default async function IntentJoinFormPage({ params }: PageProps) {
   return (
     <ManagementPageLayout
       title="Join Form"
-      description="Configure join form questions and review join requests"
+      description="Configure join form questions for your event"
     >
       <Suspense
         fallback={
@@ -36,7 +36,7 @@ export default async function IntentJoinFormPage({ params }: PageProps) {
           </div>
         }
       >
-        <JoinFormPanel intentId={id} />
+        <JoinFormManagementClient intentId={id} />
       </Suspense>
     </ManagementPageLayout>
   );

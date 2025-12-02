@@ -23,8 +23,18 @@ export interface CheckboxProps
  */
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, checked, onCheckedChange, ...props }, ref) => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    // Merge refs
+    React.useImperativeHandle(ref, () => inputRef.current!);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onCheckedChange?.(e.target.checked);
+    };
+
+    const handleClick = () => {
+      // Trigger the input click to toggle the checkbox
+      inputRef.current?.click();
     };
 
     return (
@@ -32,21 +42,22 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         <input
           type="checkbox"
           className="peer sr-only"
-          ref={ref}
+          ref={inputRef}
           checked={checked}
           onChange={handleChange}
           {...props}
         />
         <div
+          onClick={handleClick}
           className={clsx(
-            'h-4 w-4 rounded border-2 transition-all duration-200',
+            'h-4 w-4 rounded border-2 transition-all duration-200 cursor-pointer',
             'flex items-center justify-center',
             'peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2',
             'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
             checked
               ? 'bg-indigo-600 border-indigo-600 dark:bg-indigo-500 dark:border-indigo-500'
               : 'border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900',
-            'peer-hover:border-indigo-400 dark:peer-hover:border-indigo-400',
+            'hover:border-indigo-400 dark:hover:border-indigo-400',
             className
           )}
         >

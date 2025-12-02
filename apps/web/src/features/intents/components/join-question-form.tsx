@@ -164,84 +164,96 @@ export function JoinQuestionForm({
             )}
 
             {/* SINGLE_CHOICE type */}
-            {question.type === 'SINGLE_CHOICE' && question.options && (
-              <RadioGroup
-                value={answers[question.id] || ''}
-                onValueChange={(value) =>
-                  handleAnswerChange(question.id, value)
-                }
-              >
-                {(
-                  question.options as Array<{ label: string; value?: string }>
-                ).map((option, optIndex) => {
-                  const optionValue = option.value || option.label;
-                  return (
-                    <div key={optIndex} className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value={optionValue}
-                        id={`question-${question.id}-option-${optIndex}`}
-                      />
-                      <Label
-                        htmlFor={`question-${question.id}-option-${optIndex}`}
-                        className="font-normal cursor-pointer"
+            {question.type === 'SINGLE_CHOICE' &&
+              question.options &&
+              Array.isArray(question.options) &&
+              question.options.length > 0 && (
+                <RadioGroup
+                  value={answers[question.id] || ''}
+                  onValueChange={(value) => {
+                    handleAnswerChange(question.id, value);
+                  }}
+                >
+                  {(
+                    question.options as Array<{ label: string; value?: string }>
+                  ).map((option, optIndex) => {
+                    const optionValue = option.value || option.label;
+                    return (
+                      <div
+                        key={optIndex}
+                        className="flex items-center space-x-2"
                       >
-                        {option.label}
-                      </Label>
-                    </div>
-                  );
-                })}
-              </RadioGroup>
-            )}
+                        <RadioGroupItem
+                          value={optionValue}
+                          id={`question-${question.id}-option-${optIndex}`}
+                        />
+                        <Label
+                          htmlFor={`question-${question.id}-option-${optIndex}`}
+                          className="font-normal cursor-pointer"
+                        >
+                          {option.label}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </RadioGroup>
+              )}
 
             {/* MULTI_CHOICE type */}
-            {question.type === 'MULTI_CHOICE' && question.options && (
-              <div className="space-y-2">
-                {(
-                  question.options as Array<{ label: string; value?: string }>
-                ).map((option, optIndex) => {
-                  const optionValue = option.value || option.label;
-                  const isChecked =
-                    Array.isArray(answers[question.id]) &&
-                    answers[question.id].includes(optionValue);
+            {question.type === 'MULTI_CHOICE' &&
+              question.options &&
+              Array.isArray(question.options) &&
+              question.options.length > 0 && (
+                <div className="space-y-2">
+                  {(
+                    question.options as Array<{ label: string; value?: string }>
+                  ).map((option, optIndex) => {
+                    const optionValue = option.value || option.label;
+                    const isChecked =
+                      Array.isArray(answers[question.id]) &&
+                      answers[question.id].includes(optionValue);
 
-                  return (
-                    <div key={optIndex} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`question-${question.id}-option-${optIndex}`}
-                        checked={isChecked}
-                        onCheckedChange={(checked) => {
-                          const currentAnswers = Array.isArray(
-                            answers[question.id]
-                          )
-                            ? answers[question.id]
-                            : [];
-
-                          if (checked) {
-                            handleAnswerChange(question.id, [
-                              ...currentAnswers,
-                              optionValue,
-                            ]);
-                          } else {
-                            handleAnswerChange(
-                              question.id,
-                              currentAnswers.filter(
-                                (v: string) => v !== optionValue
-                              )
-                            );
-                          }
-                        }}
-                      />
-                      <Label
-                        htmlFor={`question-${question.id}-option-${optIndex}`}
-                        className="font-normal cursor-pointer"
+                    return (
+                      <div
+                        key={optIndex}
+                        className="flex items-center space-x-2"
                       >
-                        {option.label}
-                      </Label>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        <Checkbox
+                          id={`question-${question.id}-option-${optIndex}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            const currentAnswers = Array.isArray(
+                              answers[question.id]
+                            )
+                              ? answers[question.id]
+                              : [];
+
+                            if (checked) {
+                              handleAnswerChange(question.id, [
+                                ...currentAnswers,
+                                optionValue,
+                              ]);
+                            } else {
+                              handleAnswerChange(
+                                question.id,
+                                currentAnswers.filter(
+                                  (v: string) => v !== optionValue
+                                )
+                              );
+                            }
+                          }}
+                        />
+                        <Label
+                          htmlFor={`question-${question.id}-option-${optIndex}`}
+                          className="font-normal cursor-pointer"
+                        >
+                          {option.label}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
             {/* Error message */}
             {errors[question.id] && (

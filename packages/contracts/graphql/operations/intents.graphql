@@ -162,3 +162,19 @@ mutation UpdateIntentFaqs($input: UpdateIntentFaqsInput!) {
     updatedAt
   }
 }
+
+mutation UpdateIntentJoinQuestions($input: UpdateIntentJoinQuestionsInput!) {
+  updateIntentJoinQuestions(input: $input) {
+    id
+    intentId
+    order
+    type
+    label
+    helpText
+    required
+    options
+    maxLength
+    createdAt
+    updatedAt
+  }
+}

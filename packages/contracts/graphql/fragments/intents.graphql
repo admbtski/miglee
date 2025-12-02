@@ -243,6 +243,19 @@ fragment IntentDetail on Intent {
     createdAt
     updatedAt
   }
+  joinQuestions {
+    id
+    intentId
+    order
+    type
+    label
+    helpText
+    required
+    options
+    maxLength
+    createdAt
+    updatedAt
+  }
 }
 
 # -----------------------------------------------------------------------------

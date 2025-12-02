@@ -65,9 +65,18 @@ export const RadioGroupItem = React.forwardRef<
 >(({ className, value, ...props }, ref) => {
   const context = React.useContext(RadioGroupContext);
   const isChecked = context.value === value;
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Merge refs
+  React.useImperativeHandle(ref, () => inputRef.current!);
 
   const handleChange = () => {
     context.onValueChange?.(value);
+  };
+
+  const handleClick = () => {
+    // Trigger the input click to activate the radio
+    inputRef.current?.click();
   };
 
   return (
@@ -75,22 +84,23 @@ export const RadioGroupItem = React.forwardRef<
       <input
         type="radio"
         className="peer sr-only"
-        ref={ref}
+        ref={inputRef}
         checked={isChecked}
         onChange={handleChange}
         value={value}
         {...props}
       />
       <div
+        onClick={handleClick}
         className={clsx(
-          'h-4 w-4 rounded-full border-2 transition-all duration-200',
+          'h-4 w-4 rounded-full border-2 transition-all duration-200 cursor-pointer',
           'flex items-center justify-center',
           'peer-focus:ring-2 peer-focus:ring-indigo-500 peer-focus:ring-offset-2',
           'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
           isChecked
             ? 'border-indigo-600 dark:border-indigo-500'
             : 'border-zinc-300 dark:border-zinc-700',
-          'peer-hover:border-indigo-400 dark:peer-hover:border-indigo-400',
+          'hover:border-indigo-400 dark:hover:border-indigo-400',
           className
         )}
       >
