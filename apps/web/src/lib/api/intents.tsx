@@ -25,6 +25,9 @@ import {
   ReopenIntentJoinMutation,
   ReopenIntentJoinMutationVariables,
   GetIntentDetailDocument,
+  UpdateIntentFaqsDocument,
+  UpdateIntentFaqsMutation,
+  UpdateIntentFaqsMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
@@ -630,4 +633,43 @@ export function useReopenIntentJoinMutation(
       ...(options ?? {}),
     })
   );
+}
+
+// FAQ Management
+export function useUpdateIntentFaqsMutation(
+  options?: UseMutationOptions<
+    UpdateIntentFaqsMutation,
+    Error,
+    UpdateIntentFaqsMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    UpdateIntentFaqsMutation,
+    Error,
+    UpdateIntentFaqsMutationVariables
+  >({
+    mutationKey: ['UpdateIntentFaqs'],
+    mutationFn: async (variables) => {
+      const res = await gqlClient.request<UpdateIntentFaqsMutation>(
+        UpdateIntentFaqsDocument,
+        variables
+      );
+      return res;
+    },
+    meta: {
+      successMessage: 'FAQ updated successfully',
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate intent detail query to refetch with updated FAQs
+      if (variables.input.intentId) {
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_ONE_KEY({
+            id: variables.input.intentId,
+          }) as unknown as QueryKey,
+        });
+      }
+    },
+    ...options,
+  });
 }

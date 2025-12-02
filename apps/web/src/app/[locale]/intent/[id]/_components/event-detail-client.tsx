@@ -580,10 +580,8 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               )}
 
             <EventParticipants event={eventData} />
-            <EventReviews event={eventData} />
-            <EventComments event={eventData} />
 
-            {/* FAQ Section */}
+            {/* FAQ Section - above reviews and comments */}
             {intent?.faqs && intent.faqs.length > 0 && (
               <EventFaq
                 faqs={intent.faqs.map((faq: any) => ({
@@ -593,6 +591,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                 }))}
               />
             )}
+
+            <EventReviews event={eventData} />
+            <EventComments event={eventData} />
 
             {/* Metadata at the bottom */}
             <EventMetadata event={eventData} />

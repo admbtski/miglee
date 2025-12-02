@@ -5,16 +5,20 @@
 
 import { GraphQLError } from 'graphql';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
-import { assertAuthenticated } from '../helpers';
+import { prisma } from '../../../lib/prisma';
 
-export const faqMutations: MutationResolvers = {
+export const faqMutations: Partial<MutationResolvers> = {
   /**
    * Update (replace) all FAQs for an intent
    * Only owner/moderators can update FAQs
    * This is a bulk replace operation - all existing FAQs are deleted and replaced
    */
-  updateIntentFaqs: async (_parent, { input }, { db, userId }) => {
-    assertAuthenticated(userId);
+  updateIntentFaqs: async (_parent, { input }, { user }) => {
+    if (!user) {
+      throw new GraphQLError('You must be logged in to update FAQs', {
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+    }
 
     const { intentId, faqs } = input;
 
@@ -50,14 +54,14 @@ export const faqMutations: MutationResolvers = {
     }
 
     // Check if intent exists
-    const intent = await db.intent.findUnique({
+    const intent = await prisma.intent.findUnique({
       where: { id: intentId },
       select: {
         id: true,
         ownerId: true,
         members: {
           where: {
-            userId,
+            userId: user.id,
             status: 'JOINED',
             role: {
               in: ['OWNER', 'MODERATOR'],
@@ -75,7 +79,7 @@ export const faqMutations: MutationResolvers = {
     }
 
     // Check permissions (owner or moderator)
-    const isOwner = intent.ownerId === userId;
+    const isOwner = intent.ownerId === user.id;
     const isModerator = intent.members.some((m) => m.role === 'MODERATOR');
 
     if (!isOwner && !isModerator) {
@@ -85,7 +89,7 @@ export const faqMutations: MutationResolvers = {
     }
 
     // Delete all existing FAQs and create new ones in a transaction
-    const updatedFaqs = await db.$transaction(async (tx) => {
+    const updatedFaqs = await prisma.$transaction(async (tx) => {
       // Delete all existing FAQs
       await tx.intentFaq.deleteMany({
         where: { intentId },
@@ -108,6 +112,6 @@ export const faqMutations: MutationResolvers = {
       return createdFaqs;
     });
 
-    return updatedFaqs;
+    return updatedFaqs as any;
   },
 };

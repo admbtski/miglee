@@ -7,10 +7,31 @@
 
 import { useState } from 'react';
 import { useIntentDetailQuery } from '@/lib/api/intents';
-import { useUpdateIntentFaqsMutation } from './_hooks/use-update-intent-faqs';
-import { HelpCircle, Plus, Trash2, GripVertical, Save } from 'lucide-react';
+import {
+  HelpCircle,
+  Plus,
+  Trash2,
+  GripVertical,
+  Save,
+  MoreVertical,
+  Edit2,
+} from 'lucide-react';
 import { motion, Reorder } from 'framer-motion';
 import { toast } from 'sonner';
+import { useUpdateIntentFaqsMutation } from '@/lib/api/intents';
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  useClick,
+  useDismiss,
+  useRole,
+  useInteractions,
+  FloatingFocusManager,
+  FloatingPortal,
+} from '@floating-ui/react';
 
 interface FaqItem {
   id: string; // Temporary ID for new items (cuid for existing)
@@ -22,6 +43,86 @@ interface FaqManagementClientProps {
   intentId: string;
 }
 
+// FAQ Action Menu Component using floating-ui
+function FaqActionMenu({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    middleware: [offset(4), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+    placement: 'bottom-end',
+  });
+
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context);
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    click,
+    dismiss,
+    role,
+  ]);
+
+  return (
+    <>
+      {/* Trigger Button */}
+      <button
+        ref={refs.setReference}
+        {...getReferenceProps()}
+        className="flex items-center justify-center w-8 h-8 transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+        aria-label="More actions"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+
+      {/* Floating Menu */}
+      {isOpen && (
+        <FloatingPortal>
+          <FloatingFocusManager context={context} modal={false}>
+            <div
+              ref={refs.setFloating}
+              style={floatingStyles}
+              {...getFloatingProps()}
+              className="z-50 min-w-[160px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 dark:ring-white/5"
+            >
+              <div className="p-1">
+                <button
+                  onClick={() => {
+                    onEdit();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center w-full gap-2 px-3 py-2 text-sm transition-colors rounded-md text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Edytuj</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onDelete();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center w-full gap-2 px-3 py-2 text-sm text-red-600 transition-colors rounded-md dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Usuń</span>
+                </button>
+              </div>
+            </div>
+          </FloatingFocusManager>
+        </FloatingPortal>
+      )}
+    </>
+  );
+}
+
 export function FaqManagementClient({ intentId }: FaqManagementClientProps) {
   const { data, isLoading, error, refetch } = useIntentDetailQuery({
     id: intentId,
@@ -31,10 +132,11 @@ export function FaqManagementClient({ intentId }: FaqManagementClientProps) {
   // Local state for FAQs
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Initialize FAQs from query data
   const intent = data?.intent;
-  const initialFaqs = intent?.faqs || [];
+  const initialFaqs = (intent as any)?.faqs || [];
 
   // Sync with server data on load
   if (initialFaqs.length > 0 && faqs.length === 0 && !hasChanges) {
@@ -54,6 +156,7 @@ export function FaqManagementClient({ intentId }: FaqManagementClientProps) {
       answer: '',
     };
     setFaqs([...faqs, newFaq]);
+    setEditingId(newFaq.id); // Auto-edit new FAQ
     setHasChanges(true);
   };
 
@@ -101,11 +204,13 @@ export function FaqManagementClient({ intentId }: FaqManagementClientProps) {
 
     try {
       await updateFaqsMutation.mutateAsync({
-        intentId,
-        faqs: faqs.map((faq) => ({
-          question: faq.question.trim(),
-          answer: faq.answer.trim(),
-        })),
+        input: {
+          intentId,
+          faqs: faqs.map((faq) => ({
+            question: faq.question.trim(),
+            answer: faq.answer.trim(),
+          })),
+        },
       });
       toast.success('FAQ zostało zaktualizowane');
       setHasChanges(false);
@@ -185,70 +290,159 @@ export function FaqManagementClient({ intentId }: FaqManagementClientProps) {
           onReorder={handleReorder}
           className="space-y-4"
         >
-          {faqs.map((faq, index) => (
-            <Reorder.Item
-              key={faq.id}
-              value={faq}
-              className="p-6 border rounded-lg bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-            >
-              <div className="flex items-start gap-4">
-                {/* Drag Handle */}
-                <div className="flex items-center justify-center w-8 h-8 mt-1 transition rounded cursor-move text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                  <GripVertical className="w-5 h-5" />
-                </div>
+          {faqs.map((faq, index) => {
+            const isEditing = editingId === faq.id;
 
-                {/* FAQ Content */}
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      Pytanie {index + 1}
-                    </label>
-                    <input
-                      type="text"
-                      value={faq.question}
-                      onChange={(e) =>
-                        handleUpdateFaq(faq.id, 'question', e.target.value)
-                      }
-                      placeholder="np. Jak mogę dołączyć do wydarzenia?"
-                      maxLength={500}
-                      className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {faq.question.length}/500 znaków
-                    </p>
+            return (
+              <Reorder.Item
+                key={faq.id}
+                value={faq}
+                className={`p-6 border rounded-lg ${
+                  isEditing
+                    ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-300 dark:border-indigo-700'
+                    : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
+                }`}
+                drag={!isEditing}
+                dragListener={!isEditing}
+                dragControls={undefined}
+                dragElastic={0.05}
+                dragMomentum={false}
+                initial={false}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                whileDrag={{
+                  scale: 1.02,
+                  boxShadow:
+                    '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                  cursor: 'grabbing',
+                }}
+                exit={{
+                  opacity: 0,
+                  transition: { duration: 0.15 },
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 500,
+                  damping: 40,
+                }}
+                style={{
+                  position: 'relative',
+                  zIndex: isEditing ? 1 : 'auto',
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  {/* Drag Handle */}
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 mt-1 transition rounded ${
+                      isEditing
+                        ? 'text-zinc-300 dark:text-zinc-600 cursor-not-allowed'
+                        : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-grab active:cursor-grabbing'
+                    }`}
+                    style={{ touchAction: 'none' }}
+                  >
+                    <GripVertical className="w-5 h-5" />
                   </div>
 
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                      Odpowiedź
-                    </label>
-                    <textarea
-                      value={faq.answer}
-                      onChange={(e) =>
-                        handleUpdateFaq(faq.id, 'answer', e.target.value)
-                      }
-                      placeholder="Wpisz odpowiedź..."
-                      maxLength={2000}
-                      rows={4}
-                      className="w-full px-4 py-2 border rounded-lg resize-none bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  {/* FAQ Content */}
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Pytanie {index + 1}
+                        {isEditing && (
+                          <span className="ml-2 text-xs text-indigo-600 dark:text-indigo-400">
+                            (Edycja)
+                          </span>
+                        )}
+                      </label>
+                      {isEditing ? (
+                        <>
+                          <input
+                            type="text"
+                            value={faq.question}
+                            onChange={(e) =>
+                              handleUpdateFaq(
+                                faq.id,
+                                'question',
+                                e.target.value
+                              )
+                            }
+                            placeholder="np. Jak mogę dołączyć do wydarzenia?"
+                            maxLength={500}
+                            className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            autoFocus
+                          />
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            {faq.question.length}/500 znaków
+                          </p>
+                        </>
+                      ) : (
+                        <div className="px-4 py-2 border rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
+                          {faq.question || (
+                            <span className="text-zinc-400 dark:text-zinc-500 italic">
+                              Brak pytania
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Odpowiedź
+                      </label>
+                      {isEditing ? (
+                        <>
+                          <textarea
+                            value={faq.answer}
+                            onChange={(e) =>
+                              handleUpdateFaq(faq.id, 'answer', e.target.value)
+                            }
+                            placeholder="Wpisz odpowiedź..."
+                            maxLength={2000}
+                            rows={4}
+                            className="w-full px-4 py-2 border rounded-lg resize-none bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          />
+                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            {faq.answer.length}/2000 znaków
+                          </p>
+                        </>
+                      ) : (
+                        <div className="px-4 py-2 border rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
+                          {faq.answer || (
+                            <span className="text-zinc-400 dark:text-zinc-500 italic">
+                              Brak odpowiedzi
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Edit mode actions */}
+                    {isEditing && (
+                      <div className="flex items-center gap-2 pt-2">
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 transition bg-indigo-100 rounded-lg hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                        >
+                          Zakończ edycję
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Menu */}
+                  <div className="mt-1">
+                    <FaqActionMenu
+                      onEdit={() => setEditingId(faq.id)}
+                      onDelete={() => handleRemoveFaq(faq.id)}
                     />
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {faq.answer.length}/2000 znaków
-                    </p>
                   </div>
                 </div>
-
-                {/* Remove Button */}
-                <button
-                  onClick={() => handleRemoveFaq(faq.id)}
-                  className="flex items-center justify-center w-8 h-8 transition rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  aria-label="Usuń pytanie"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </Reorder.Item>
-          ))}
+              </Reorder.Item>
+            );
+          })}
         </Reorder.Group>
       )}
 

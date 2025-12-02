@@ -247,6 +247,12 @@ export function IntentManagementMobileSidebar({
           icon: Star,
         },
         {
+          id: 'faq',
+          label: 'FAQ',
+          href: `/intent/${intentId}/manage/faq`,
+          icon: HelpCircle,
+        },
+        {
           id: 'notifications',
           label: 'Notifications',
           href: `/intent/${intentId}/manage/notifications`,
@@ -278,12 +284,6 @@ export function IntentManagementMobileSidebar({
           label: 'Feedback',
           href: `/intent/${intentId}/manage/feedback`,
           icon: FileText,
-        },
-        {
-          id: 'faq',
-          label: 'FAQ',
-          href: `/intent/${intentId}/manage/faq`,
-          icon: HelpCircle,
         },
         {
           id: 'boost',

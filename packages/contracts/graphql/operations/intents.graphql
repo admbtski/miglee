@@ -150,3 +150,15 @@ mutation ReopenIntentJoin($intentId: ID!) {
     ...IntentCore
   }
 }
+
+mutation UpdateIntentFaqs($input: UpdateIntentFaqsInput!) {
+  updateIntentFaqs(input: $input) {
+    id
+    intentId
+    order
+    question
+    answer
+    createdAt
+    updatedAt
+  }
+}
