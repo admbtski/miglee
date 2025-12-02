@@ -113,8 +113,8 @@ function assertCapacity(input: {
       });
     }
   } else if (mode === 'GROUP') {
-    if (min === null || min < 2) {
-      throw new GraphQLError('GROUP mode requires min >= 2', {
+    if (min === null || min < 1) {
+      throw new GraphQLError('GROUP mode requires min >= 1', {
         extensions: { code: 'BAD_USER_INPUT', field: 'min' },
       });
     }
@@ -124,7 +124,7 @@ function assertCapacity(input: {
       });
     }
   } else if (mode === 'CUSTOM') {
-    // CUSTOM mode: validate only if both are set
+    // CUSTOM mode: validate ranges
     if (min !== null && (min < 1 || min > 99999)) {
       throw new GraphQLError('min must be between 1 and 99999', {
         extensions: { code: 'BAD_USER_INPUT', field: 'min' },
@@ -426,7 +426,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         if (mode === PrismaMode.ONE_TO_ONE) {
           min = 2;
         } else if (mode === PrismaMode.GROUP) {
-          min = 2;
+          min = 1;
         }
         // CUSTOM mode: min can be null (no default)
       }

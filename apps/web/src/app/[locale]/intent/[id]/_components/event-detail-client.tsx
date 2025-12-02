@@ -6,6 +6,7 @@ import { ShareModal } from '@/components/ui/share-modal';
 import { useIntentDetailQuery } from '@/lib/api/intents';
 import { useMeQuery } from '@/lib/api/auth';
 import { computeJoinState } from '@/lib/utils/intent-join-state';
+import { formatParticipantsShort } from '@/lib/utils/capacity-formatter';
 import type { EventDetailsData } from '@/types/event-details';
 import {
   Calendar,
@@ -416,13 +417,12 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                   <div className="flex items-center gap-1.5">
                     <Users className="w-4 h-4 opacity-80" />
                     <span>
-                      {eventData.min === null && eventData.max === null
-                        ? `${eventData.joinedCount} • bez limitu`
-                        : eventData.min === null
-                          ? `${eventData.joinedCount} / ${eventData.max}`
-                          : eventData.max === null
-                            ? `${eventData.joinedCount} • min ${eventData.min}`
-                            : `${eventData.joinedCount} / ${eventData.max}`}
+                      {formatParticipantsShort(
+                        eventData.joinedCount,
+                        eventData.min,
+                        eventData.max,
+                        eventData.mode as 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM'
+                      )}
                     </span>
                   </div>
                 </div>

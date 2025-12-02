@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { formatCapacityString } from '@/lib/utils/capacity-formatter';
 import { twMerge } from 'tailwind-merge';
 
 export type PopupIntent = {
@@ -172,54 +173,6 @@ function getLocationDisplay(
   }
 
   return null;
-}
-
-/**
- * Format capacity label for event cards
- * Handles all combinations of min/max being null or set
- */
-function formatCapacityLabel(
-  joinedCount: number,
-  min: number | null | undefined,
-  max: number | null | undefined
-): string {
-  // Both null or undefined - unlimited
-  if (
-    (min === null || min === undefined) &&
-    (max === null || max === undefined)
-  ) {
-    return `${joinedCount} • brak limitu uczestników`;
-  }
-
-  // Only min is null/undefined - show max only
-  if (min === null || min === undefined) {
-    if (max !== null && max !== undefined) {
-      const isFull = joinedCount >= max;
-      const available = Math.max(0, max - joinedCount);
-      return isFull
-        ? `Brak miejsc • ${joinedCount} / ${max}`
-        : `${joinedCount} / ${max} • ${available} wolne`;
-    }
-  }
-
-  // Only max is null/undefined - show min only
-  if (max === null || max === undefined) {
-    if (min !== null && min !== undefined) {
-      return `${joinedCount} • minimum ${min} osób`;
-    }
-  }
-
-  // Both set - standard display
-  if (min !== null && min !== undefined && max !== null && max !== undefined) {
-    const isFull = joinedCount >= max;
-    const available = Math.max(0, max - joinedCount);
-    return isFull
-      ? `Brak miejsc • ${joinedCount} / ${max}`
-      : `${joinedCount} / ${max} • ${available} wolne`;
-  }
-
-  // Fallback (shouldn't happen)
-  return `${joinedCount} uczestników`;
 }
 
 /**
@@ -482,7 +435,7 @@ export function PopupItem({
           <div className="flex items-center gap-1 truncate">
             <Users className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">
-              {formatCapacityLabel(joinedCount, min, max)}
+              {formatCapacityString(joinedCount, min, max)}
             </span>
           </div>
         </div>

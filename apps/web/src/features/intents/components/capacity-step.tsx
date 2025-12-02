@@ -70,7 +70,7 @@ export function CapacityStep({
     setValue,
     trigger,
     control,
-    formState: { errors, defaultValues },
+    formState: { errors },
   } = form;
 
   // a11y ids (FIX: avoid duplicating IDs with the bottom note)
@@ -97,47 +97,37 @@ export function CapacityStep({
   }, [isGroup, categorySlugs]);
 
   // Single source of truth for capacity sync
-  // Only update when mode changes AND values don't match expected values
+  // Always reset values when mode changes
   useEffect(() => {
     if (modeField.value === 'ONE_TO_ONE') {
-      // Only update if values are not already 2,2
+      // Always set to 2,2 for ONE_TO_ONE
       if (minVal !== 2 || maxVal !== 2) {
         setValue('min', 2, { shouldDirty: true, shouldValidate: true });
         setValue('max', 2, { shouldDirty: true, shouldValidate: true });
         void trigger(['min', 'max']);
       }
     } else if (modeField.value === 'GROUP') {
-      // Only update if switching FROM one_to_one (both values are 2)
-      if (minVal === 2 && maxVal === 2) {
-        // Reset to initial values from form defaults (from database)
-        const initialMin = defaultValues?.min ?? 2;
-        const initialMax = defaultValues?.max ?? 50;
-
-        setValue('min', initialMin, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-        setValue('max', initialMax, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-        void trigger(['min', 'max']);
-      }
+      // Always reset to 1,50 for GROUP
+      setValue('min', 1, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue('max', 50, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      void trigger(['min', 'max']);
     } else if (modeField.value === 'CUSTOM') {
-      // For CUSTOM mode, keep current values or set sensible defaults
-      if (minVal === 2 && maxVal === 2) {
-        const initialMin = defaultValues?.min ?? 1;
-        const initialMax = defaultValues?.max ?? 10;
-        setValue('min', initialMin, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-        setValue('max', initialMax, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-        void trigger(['min', 'max']);
-      }
+      // Always reset to 1,99999 for CUSTOM
+      setValue('min', 1, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue('max', 99999, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      void trigger(['min', 'max']);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeField.value]);
@@ -153,7 +143,7 @@ export function CapacityStep({
       {/* Mode */}
       <FormSection
         title="Tryb"
-        description="Wybierz tryb wydarzenia: 1:1 (2 osoby), grupowy (2–50 osób) lub niestandardowy (pełna kontrola nad limitem uczestników)."
+        description="Wybierz tryb wydarzenia: 1:1 (2 osoby), grupowy (1–50 osób) lub niestandardowy (pełna kontrola nad limitem uczestników 1-99999)."
       >
         <SegmentedControl<'ONE_TO_ONE' | 'GROUP' | 'CUSTOM'>
           aria-label="Tryb"
@@ -181,8 +171,8 @@ export function CapacityStep({
               </label>
               <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                 {isCustom
-                  ? 'Ustaw dowolną minimalną i maksymalną liczbę uczestników (1–99999).'
-                  : 'Ustaw minimalną i maksymalną liczbę uczestników (przeciągnij suwaki).'}
+                  ? 'Ustaw dowolną minimalną i maksymalną liczbę uczestników (99999).'
+                  : 'Ustaw minimalną i maksymalną liczbę uczestników (1-50) przeciągając suwaki.'}
               </p>
             </div>
             {suggestedCapacity && (
@@ -268,7 +258,7 @@ export function CapacityStep({
               minVal === null ? 1 : minVal,
               maxVal === null ? 99999 : maxVal,
             ]}
-            min={isCustom ? 1 : 2}
+            min={isCustom ? 1 : 1}
             max={isCustom ? 99999 : 50}
             step={1}
             disabled={
@@ -380,10 +370,24 @@ export function CapacityStep({
                     onChange={(e) => {
                       const val =
                         e.target.value === '' ? null : parseInt(e.target.value);
+
                       setValue('min', val, {
                         shouldDirty: true,
                         shouldValidate: true,
                       });
+                    }}
+                    onBlur={() => {
+                      if (minVal !== null && isCustom) {
+                        // Round to nearest 10
+                        const rounded = Math.round(minVal / 10) * 10;
+                        const clamped = Math.max(1, Math.min(99999, rounded));
+                        if (clamped !== minVal) {
+                          setValue('min', clamped, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }
+                      }
                     }}
                     placeholder={minVal === null ? '∞ Bez limitu' : '1'}
                     className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
@@ -411,6 +415,19 @@ export function CapacityStep({
                         shouldDirty: true,
                         shouldValidate: true,
                       });
+                    }}
+                    onBlur={() => {
+                      if (maxVal !== null && isCustom) {
+                        // Round to nearest 10
+                        const rounded = Math.round(maxVal / 10) * 10;
+                        const clamped = Math.max(1, Math.min(99999, rounded));
+                        if (clamped !== maxVal) {
+                          setValue('max', clamped, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }
+                      }
                     }}
                     placeholder={maxVal === null ? '∞ Bez limitu' : '10'}
                     className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
@@ -467,13 +484,13 @@ export function CapacityStep({
               pełną kontrolę nad limitami uczestników. Możesz ustawić{' '}
               <strong className="font-semibold">dowolny zakres</strong>{' '}
               (1-99999) lub całkowicie usunąć ograniczenia, zaznaczając
-              odpowiednie opcje.
+              odpowiednie opcje. Wartości są zaokrąglane do najbliższej 10.
             </>
           ) : isGroup ? (
             <>
               Wybierz <strong className="font-semibold">minimalną</strong> i{' '}
               <strong className="font-semibold">maksymalną</strong> liczbę
-              uczestników. System może{' '}
+              uczestników (1-50). System może{' '}
               <strong className="font-semibold">automatycznie zamknąć</strong>{' '}
               zapisy po osiągnięciu limitu.
             </>

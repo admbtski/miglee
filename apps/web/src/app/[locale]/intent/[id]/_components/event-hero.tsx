@@ -6,6 +6,7 @@ import { buildAvatarUrl } from '@/lib/media/url';
 import { formatDate, formatTime } from '@/lib/utils/date-format';
 import type { EventDetailsData } from '@/types/event-details';
 import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
+import { formatParticipantsShort } from '@/lib/utils/capacity-formatter';
 import {
   Calendar,
   MapPin,
@@ -277,13 +278,12 @@ export function EventHero({ event }: EventHeroProps) {
             title={eventSize.description}
           >
             <Users className="w-4 h-4 opacity-70" />
-            {event.min === null && event.max === null
-              ? `${event.joinedCount} • bez limitu`
-              : event.min === null
-                ? `${event.joinedCount} / ${event.max} uczestników`
-                : event.max === null
-                  ? `${event.joinedCount} • min ${event.min} uczestników`
-                  : `${event.joinedCount} / ${event.max} uczestników`}
+            {formatParticipantsShort(
+              event.joinedCount,
+              event.min,
+              event.max,
+              event.mode as 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM'
+            )}
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
               ({eventSize.label})
             </span>

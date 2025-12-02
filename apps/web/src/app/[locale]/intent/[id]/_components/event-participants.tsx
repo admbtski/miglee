@@ -5,6 +5,8 @@ import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { useMemo } from 'react';
 import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
+import { formatCapacityDetail } from '@/lib/utils/capacity-formatter';
+import { CapacityStatusCard } from './capacity-status-card';
 
 type EventParticipantsProps = {
   event: EventDetailsData;
@@ -29,6 +31,18 @@ export function EventParticipants({ event }: EventParticipantsProps) {
     [event.highlightColor, isBoosted]
   );
 
+  // Format capacity details using comprehensive formatter
+  const capacityDetails = useMemo(
+    () =>
+      formatCapacityDetail(
+        event.joinedCount,
+        event.min,
+        event.max,
+        event.mode as 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM'
+      ),
+    [event.joinedCount, event.min, event.max, event.mode]
+  );
+
   if (!canSeeMembers) {
     return (
       <div
@@ -38,6 +52,10 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Uczestnicy
         </h2>
+        {/* Capacity Status Info */}
+        <div className="mb-6">
+          <CapacityStatusCard capacityDetails={capacityDetails} />
+        </div>
         <p className="text-md text-zinc-600 dark:text-zinc-400">
           {event.membersVisibility === 'AFTER_JOIN'
             ? 'Lista uczestników będzie widoczna po dołączeniu.'
@@ -69,16 +87,13 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         </h2>
         <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
           <UserGroup className="h-5 w-5" />
-          <span>
-            {event.min === null && event.max === null
-              ? `${event.joinedCount} • bez limitu`
-              : event.min === null
-                ? `${event.joinedCount} / ${event.max}`
-                : event.max === null
-                  ? `${event.joinedCount} • min ${event.min}`
-                  : `${event.joinedCount} / ${event.max}`}
-          </span>
+          <span className="font-medium">{capacityDetails.participants}</span>
         </div>
+      </div>
+
+      {/* Capacity Status Info */}
+      <div className="mb-6">
+        <CapacityStatusCard capacityDetails={capacityDetails} />
       </div>
 
       <div className="space-y-6">

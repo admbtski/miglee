@@ -164,11 +164,11 @@ export const IntentSchema = z
         });
       }
     } else if (data.mode === 'GROUP') {
-      if (data.min === null || data.min < 2) {
+      if (data.min === null || data.min < 1) {
         ctx.addIssue({
           code: 'custom',
           path: ['min'],
-          message: 'Minimum capacity is 2 for GROUP mode',
+          message: 'Minimum capacity is 1 for GROUP mode',
         });
       }
       if (data.max === null || data.max > 50) {
@@ -179,7 +179,22 @@ export const IntentSchema = z
         });
       }
     } else if (data.mode === 'CUSTOM') {
-      // For CUSTOM mode, if both are set, min must be <= max
+      // For CUSTOM mode, validate ranges
+      if (data.min !== null && (data.min < 1 || data.min > 99999)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['min'],
+          message: 'Min must be between 1 and 99999',
+        });
+      }
+      if (data.max !== null && (data.max < 1 || data.max > 99999)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['max'],
+          message: 'Max must be between 1 and 99999',
+        });
+      }
+      // If both are set, min must be <= max
       if (data.min !== null && data.max !== null && data.min > data.max) {
         ctx.addIssue({
           code: 'custom',
