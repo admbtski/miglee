@@ -16,6 +16,8 @@ export type RangeSliderProps = {
   step?: number;
   minDistance?: number;
   disabled?: boolean;
+  disableLeftThumb?: boolean;
+  disableRightThumb?: boolean;
   onChange: (v: [number, number]) => void;
   onUpdate?: (v: [number, number]) => void;
   tooltips?: boolean;
@@ -44,6 +46,8 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       step = 1,
       minDistance,
       disabled,
+      disableLeftThumb = false,
+      disableRightThumb = false,
       onChange,
       onUpdate,
       tooltips = true,
@@ -60,6 +64,22 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
     const rootRef = React.useRef<HTMLDivElement | null>(null);
     const apiRef = React.useRef<API | null>(null);
     const rafRef = React.useRef<number | null>(null);
+
+    // Store callbacks in refs to avoid stale closures
+    const onChangeRef = React.useRef(onChange);
+    const onUpdateRef = React.useRef(onUpdate);
+
+    // Flag to prevent callback during programmatic updates
+    const isProgrammaticUpdateRef = React.useRef(false);
+
+    // Keep refs up to date
+    React.useEffect(() => {
+      onChangeRef.current = onChange;
+    }, [onChange]);
+
+    React.useEffect(() => {
+      onUpdateRef.current = onUpdate;
+    }, [onUpdate]);
 
     const fmt: Format = React.useMemo(
       () => ({
@@ -126,19 +146,25 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
           handles?.[1]?.setAttribute('aria-valuetext', fmt.to(Number(vals[1])));
         }
 
-        if (!onUpdate) return;
+        // Skip callback if this is a programmatic update
+        if (isProgrammaticUpdateRef.current) return;
+
+        if (!onUpdateRef.current) return;
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         rafRef.current = requestAnimationFrame(() => {
           const a = Math.round(Number(vals[0]));
           const b = Math.round(Number(vals[1]));
-          onUpdate([a, b]);
+          onUpdateRef.current?.([a, b]);
         });
       };
 
       const handleCommit = (vals: (string | number)[]) => {
+        // Skip callback if this is a programmatic update
+        if (isProgrammaticUpdateRef.current) return;
+
         const a = Math.round(Number(vals[0]));
         const b = Math.round(Number(vals[1]));
-        onChange([a, b]);
+        onChangeRef.current([a, b]);
       };
 
       api.on('update', handleUpdate);
@@ -186,21 +212,56 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         Math.round(Number(arr[1])),
       ];
       if (cur[0] !== value[0] || cur[1] !== value[1]) {
+        // Set flag to prevent callback during programmatic update
+        isProgrammaticUpdateRef.current = true;
         api.set(value as unknown as number[]);
+        // Reset flag after a short delay to allow the event to fire
+        setTimeout(() => {
+          isProgrammaticUpdateRef.current = false;
+        }, 10);
       }
     }, [value]);
 
     React.useEffect(() => {
       const api = apiRef.current;
       if (!api || !rootRef.current) return;
+
+      const handles =
+        rootRef.current.querySelectorAll<HTMLElement>('.noUi-handle');
+
       if (disabled) {
         rootRef.current.setAttribute('data-disabled', 'true');
         api.disable();
       } else {
         rootRef.current.removeAttribute('data-disabled');
         api.enable();
+
+        // Handle individual thumb disabling
+        if (disableLeftThumb && handles[0]) {
+          handles[0].setAttribute('disabled', 'true');
+          handles[0].style.pointerEvents = 'none';
+          handles[0].style.opacity = '0.5';
+          handles[0].setAttribute('aria-disabled', 'true');
+        } else if (handles[0]) {
+          handles[0].removeAttribute('disabled');
+          handles[0].style.pointerEvents = '';
+          handles[0].style.opacity = '';
+          handles[0].removeAttribute('aria-disabled');
+        }
+
+        if (disableRightThumb && handles[1]) {
+          handles[1].setAttribute('disabled', 'true');
+          handles[1].style.pointerEvents = 'none';
+          handles[1].style.opacity = '0.5';
+          handles[1].setAttribute('aria-disabled', 'true');
+        } else if (handles[1]) {
+          handles[1].removeAttribute('disabled');
+          handles[1].style.pointerEvents = '';
+          handles[1].style.opacity = '';
+          handles[1].removeAttribute('aria-disabled');
+        }
       }
-    }, [disabled]);
+    }, [disabled, disableLeftThumb, disableRightThumb]);
 
     React.useEffect(() => {
       const api = apiRef.current;

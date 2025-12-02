@@ -1,7 +1,7 @@
 'use client';
 
 import { Infinity, Info, Settings, User, Users } from 'lucide-react';
-import { useEffect, useId, useMemo } from 'react';
+import { useEffect, useId, useMemo, useState, useCallback } from 'react';
 import { UseFormReturn, useController, useWatch } from 'react-hook-form';
 import { IntentFormValues } from './types';
 import { RangeSlider } from './range-slider';
@@ -73,6 +73,14 @@ export function CapacityStep({
     formState: { errors },
   } = form;
 
+  // Local state for inputs (only synced on blur)
+  const [localMinInput, setLocalMinInput] = useState<string>('');
+  const [localMaxInput, setLocalMaxInput] = useState<string>('');
+
+  // Local state for checkboxes
+  const [isMinUnlimited, setIsMinUnlimited] = useState<boolean>(false);
+  const [isMaxUnlimited, setIsMaxUnlimited] = useState<boolean>(false);
+
   // a11y ids (FIX: avoid duplicating IDs with the bottom note)
   const modeHelpId = useId();
   const capErrId = useId();
@@ -87,6 +95,17 @@ export function CapacityStep({
   const isGroup = modeField.value === 'GROUP';
   const isCustom = modeField.value === 'CUSTOM';
   const isOneToOne = modeField.value === 'ONE_TO_ONE';
+
+  // Sync local input state with form values
+  useEffect(() => {
+    setLocalMinInput(minVal !== null ? String(minVal) : '');
+    setIsMinUnlimited(minVal === null);
+  }, [minVal]);
+
+  useEffect(() => {
+    setLocalMaxInput(maxVal !== null ? String(maxVal) : '');
+    setIsMaxUnlimited(maxVal === null);
+  }, [maxVal]);
 
   // Smart defaults - suggest capacity based on first category
   const suggestedCapacity = useMemo(() => {
@@ -137,6 +156,36 @@ export function CapacityStep({
     if (errors.min || errors.max) ids.push(capErrId);
     return ids.join(' ');
   }, [capHelpId, capErrId, errors.min, errors.max]);
+
+  // Memoized slider change handler to avoid stale closures
+  const handleSliderChange = useCallback(
+    ([a, b]: [number, number]) => {
+      if (isOneToOne) return;
+
+      // When min is unlimited, only update max
+      if (isCustom && isMinUnlimited) {
+        setValue('max', b, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        return;
+      }
+
+      // When max is unlimited, only update min
+      if (isCustom && isMaxUnlimited) {
+        setValue('min', a, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        return;
+      }
+
+      // Normal case: update both
+      setValue('min', a, { shouldDirty: true, shouldValidate: true });
+      setValue('max', b, { shouldDirty: true, shouldValidate: true });
+    },
+    [isOneToOne, isCustom, isMinUnlimited, isMaxUnlimited, setValue]
+  );
 
   return (
     <div className="space-y-8">
@@ -255,41 +304,19 @@ export function CapacityStep({
 
           <RangeSlider
             value={[
-              minVal === null ? 1 : minVal,
-              maxVal === null ? 99999 : maxVal,
+              isMinUnlimited ? 1 : (minVal ?? 1),
+              isMaxUnlimited ? 99999 : (maxVal ?? 99999),
             ]}
             min={isCustom ? 1 : 1}
             max={isCustom ? 99999 : 50}
             step={1}
             disabled={
-              isOneToOne || (isCustom && minVal === null && maxVal === null)
+              isOneToOne || (isCustom && isMinUnlimited && isMaxUnlimited)
             }
+            disableLeftThumb={isMinUnlimited}
+            disableRightThumb={isMaxUnlimited}
             format={undefined}
-            onChange={([a, b]) => {
-              if (isOneToOne) return;
-
-              // When min is unlimited, only update max
-              if (isCustom && minVal === null) {
-                setValue('max', b, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                return;
-              }
-
-              // When max is unlimited, only update min
-              if (isCustom && maxVal === null) {
-                setValue('min', a, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                return;
-              }
-
-              // Normal case: update both
-              setValue('min', a, { shouldDirty: true, shouldValidate: true });
-              setValue('max', b, { shouldDirty: true, shouldValidate: true });
-            }}
+            onChange={handleSliderChange}
             aria-invalid={!!(errors.min || errors.max)}
             aria-describedby={ariaDescribedBy}
             className="mt-2"
@@ -300,51 +327,67 @@ export function CapacityStep({
             <div className="space-y-4 pt-2">
               {/* Checkboxes */}
               <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={minVal === null}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setValue('min', null, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      } else {
-                        setValue('min', 1, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }
-                    }}
-                    className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800"
-                  />
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="group flex items-center gap-3 cursor-pointer select-none">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isMinUnlimited}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setIsMinUnlimited(checked);
+
+                        if (checked) {
+                          // Set to null immediately
+                          setValue('min', null, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        } else {
+                          // Set to default value immediately
+                          setValue('min', 1, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                  </div>
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     <Infinity className="w-4 h-4" />
                     Bez minimalnego limitu
                   </span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={maxVal === null}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setValue('max', null, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      } else {
-                        setValue('max', 10, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }
-                    }}
-                    className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800"
-                  />
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label className="group flex items-center gap-3 cursor-pointer select-none">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isMaxUnlimited}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setIsMaxUnlimited(checked);
+
+                        if (checked) {
+                          // Set to null immediately
+                          setValue('max', null, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        } else {
+                          // Set to default value immediately
+                          setValue('max', 99999, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-indigo-600"></div>
+                  </div>
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     <Infinity className="w-4 h-4" />
                     Bez maksymalnego limitu
                   </span>
@@ -365,31 +408,34 @@ export function CapacityStep({
                     type="number"
                     min={1}
                     max={99999}
-                    disabled={minVal === null}
-                    value={minVal ?? ''}
+                    disabled={isMinUnlimited}
+                    value={localMinInput}
                     onChange={(e) => {
-                      const val =
-                        e.target.value === '' ? null : parseInt(e.target.value);
+                      // Only update local state while typing
+                      setLocalMinInput(e.target.value);
+                    }}
+                    onBlur={() => {
+                      if (isMinUnlimited) return;
 
-                      setValue('min', val, {
+                      const parsed = parseInt(localMinInput, 10);
+
+                      if (isNaN(parsed) || localMinInput === '') {
+                        // Reset to current value if invalid
+                        setLocalMinInput(String(minVal));
+                        return;
+                      }
+
+                      // Round to nearest 10 and clamp
+                      const rounded = Math.round(parsed / 10) * 10;
+                      const clamped = Math.max(1, Math.min(99999, rounded));
+
+                      // Apply to form
+                      setValue('min', clamped, {
                         shouldDirty: true,
                         shouldValidate: true,
                       });
                     }}
-                    onBlur={() => {
-                      if (minVal !== null && isCustom) {
-                        // Round to nearest 10
-                        const rounded = Math.round(minVal / 10) * 10;
-                        const clamped = Math.max(1, Math.min(99999, rounded));
-                        if (clamped !== minVal) {
-                          setValue('min', clamped, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        }
-                      }
-                    }}
-                    placeholder={minVal === null ? '∞ Bez limitu' : '1'}
+                    placeholder={isMinUnlimited ? '∞ Bez limitu' : '1'}
                     className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
@@ -406,43 +452,47 @@ export function CapacityStep({
                     type="number"
                     min={1}
                     max={99999}
-                    disabled={maxVal === null}
-                    value={maxVal ?? ''}
+                    disabled={isMaxUnlimited}
+                    value={localMaxInput}
                     onChange={(e) => {
-                      const val =
-                        e.target.value === '' ? null : parseInt(e.target.value);
-                      setValue('max', val, {
+                      // Only update local state while typing
+                      setLocalMaxInput(e.target.value);
+                    }}
+                    onBlur={() => {
+                      if (isMaxUnlimited) return;
+
+                      const parsed = parseInt(localMaxInput, 10);
+
+                      if (isNaN(parsed) || localMaxInput === '') {
+                        // Reset to current value if invalid
+                        setLocalMaxInput(String(maxVal));
+                        return;
+                      }
+
+                      // Round to nearest 10 and clamp
+                      const rounded = Math.round(parsed / 10) * 10;
+                      const clamped = Math.max(1, Math.min(99999, rounded));
+
+                      // Apply to form
+                      setValue('max', clamped, {
                         shouldDirty: true,
                         shouldValidate: true,
                       });
                     }}
-                    onBlur={() => {
-                      if (maxVal !== null && isCustom) {
-                        // Round to nearest 10
-                        const rounded = Math.round(maxVal / 10) * 10;
-                        const clamped = Math.max(1, Math.min(99999, rounded));
-                        if (clamped !== maxVal) {
-                          setValue('max', clamped, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        }
-                      }
-                    }}
-                    placeholder={maxVal === null ? '∞ Bez limitu' : '10'}
+                    placeholder={isMaxUnlimited ? '∞ Bez limitu' : '10'}
                     className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
 
               {/* Info banner */}
-              {(minVal === null || maxVal === null) && (
+              {(isMinUnlimited || isMaxUnlimited) && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
                   <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-indigo-900 dark:text-indigo-100">
-                    {minVal === null && maxVal === null
+                    {isMinUnlimited && isMaxUnlimited
                       ? 'Wydarzenie bez ograniczeń pojemności – każdy może dołączyć.'
-                      : minVal === null
+                      : isMinUnlimited
                         ? `Wydarzenie bez minimalnej liczby uczestników, maksymalnie ${maxVal} osób.`
                         : `Wydarzenie bez maksymalnej liczby uczestników, minimum ${minVal} osób.`}
                   </p>
