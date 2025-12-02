@@ -95,8 +95,8 @@ export function getCardHighlightClasses(
   return {
     className: 'ring-1',
     style: {
-      '--tw-ring-color': `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.5)`,
-      boxShadow: `0 0 0 1px rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.5), 0 0 16px rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.6), 0 0 48px rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.4)`,
+      '--tw-ring-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`,
+      boxShadow: `0 0 0 1px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5), 0 0 16px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6), 0 0 48px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`,
     } as CSSProperties,
   };
 }
@@ -129,8 +129,8 @@ export function getCoverHighlightClasses(
   return {
     className: 'ring-1',
     style: {
-      '--tw-ring-color': `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.5)`,
-      boxShadow: `0 0 0 1px rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.5), 0 0 24px rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.6), 0 0 64px rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.4)`,
+      '--tw-ring-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`,
+      boxShadow: `0 0 0 1px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5), 0 0 24px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.6), 0 0 64px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`,
     } as CSSProperties,
   };
 }
