@@ -3,7 +3,7 @@
 import { PlaceStep } from '@/features/intents/components/place-step';
 import { useIntentEdit } from '@/features/intents/components/edit-steps/intent-edit-provider';
 import { useSaveIntentStep } from '@/features/intents/components/edit-steps/use-save-intent-step';
-import { ManagementPageLayout } from '../../_components/management-page-layout';
+import { ManagementPageLayout } from '../../_components';
 import { SaveButton } from '../../_components/save-button';
 import { useFormState, useWatch } from 'react-hook-form';
 

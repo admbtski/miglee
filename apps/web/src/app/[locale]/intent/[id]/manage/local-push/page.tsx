@@ -1,19 +1,18 @@
 /**
- * Intent Active Subscription Page
- * Manage active sponsorship subscription
+ * Local Push Notifications Page
+ * Send push notifications to local users
  */
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { SubscriptionPanelWrapper } from './_components/subscription-panel-wrapper';
-import { ManagementPageLayout } from '../_components/management-page-layout';
-import { PaymentResultModal } from '@/components/billing/payment-result-modal';
+import { LocalPushPageWrapper } from './_components/local-push-page-wrapper';
+import { ManagementPageLayout } from '../_components';
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function IntentSubscriptionPage({ params }: PageProps) {
+export default async function LocalPushPage({ params }: PageProps) {
   const { id } = await params;
 
   if (!id) {
@@ -22,8 +21,8 @@ export default async function IntentSubscriptionPage({ params }: PageProps) {
 
   return (
     <ManagementPageLayout
-      title="Aktywny plan sponsorowania"
-      description="Zarządzaj aktywnym planem sponsorowania i promuj swoje wydarzenie"
+      title="Powiadomienia lokalne"
+      description="Wyślij powiadomienie push do użytkowników w okolicy wydarzenia"
     >
       <Suspense
         fallback={
@@ -31,17 +30,13 @@ export default async function IntentSubscriptionPage({ params }: PageProps) {
             <div className="text-center">
               <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
               <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                Ładowanie planu...
+                Ładowanie...
               </p>
             </div>
           </div>
         }
       >
-        <SubscriptionPanelWrapper intentId={id} />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <PaymentResultModal context="event" />
+        <LocalPushPageWrapper intentId={id} />
       </Suspense>
     </ManagementPageLayout>
   );
@@ -51,7 +46,7 @@ export async function generateMetadata({ params }: PageProps) {
   await params;
 
   return {
-    title: 'Aktywny plan sponsorowania | Miglee',
-    description: 'Zarządzaj aktywnym planem sponsorowania wydarzenia',
+    title: 'Powiadomienia lokalne | Miglee',
+    description: 'Zarządzaj powiadomieniami lokalnymi',
   };
 }

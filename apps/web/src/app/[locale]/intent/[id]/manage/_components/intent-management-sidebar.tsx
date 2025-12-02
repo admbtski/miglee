@@ -31,10 +31,11 @@ import {
   AlertTriangle,
   MessagesSquare,
   Edit3,
-  UserCog,
-  DollarSign,
   ChevronDown,
   Crown,
+  Rocket,
+  Target,
+  Palette,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -91,6 +92,7 @@ interface NavGroup {
   icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
   defaultOpen?: boolean;
+  requiredPlan?: 'plus' | 'pro'; // Minimum plan required to access this group
 }
 
 /**
@@ -103,9 +105,7 @@ export function IntentManagementSidebar({
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(
-    new Set(['overview'])
-  );
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['main']));
 
   const toggleCollapse = () => {
     setIsCollapsed((prev) => !prev);
@@ -125,8 +125,8 @@ export function IntentManagementSidebar({
 
   const navGroups: NavGroup[] = [
     {
-      id: 'overview',
-      label: 'Overview',
+      id: 'main',
+      label: 'Main',
       icon: LayoutDashboard,
       defaultOpen: true,
       items: [
@@ -143,11 +143,16 @@ export function IntentManagementSidebar({
           icon: Eye,
         },
         {
-          id: 'analytics',
-          label: 'Analytics',
-          href: `/intent/${intentId}/manage/analytics`,
-          icon: BarChart3,
-          requiredPlan: 'pro',
+          id: 'members',
+          label: 'Members',
+          href: `/intent/${intentId}/manage/members`,
+          icon: Users,
+        },
+        {
+          id: 'plans',
+          label: 'Sponsorship Plans',
+          href: `/intent/${intentId}/manage/plans`,
+          icon: BadgeDollarSign,
         },
       ],
     },
@@ -196,34 +201,6 @@ export function IntentManagementSidebar({
       ],
     },
     {
-      id: 'access',
-      label: 'Members & Access',
-      icon: UserCog,
-      defaultOpen: true,
-      items: [
-        {
-          id: 'members',
-          label: 'Members',
-          href: `/intent/${intentId}/manage/members`,
-          icon: Users,
-        },
-        {
-          id: 'join-form',
-          label: 'Join Form',
-          href: `/intent/${intentId}/manage/join-form`,
-          icon: CheckCircle2,
-          requiredPlan: 'plus',
-        },
-        {
-          id: 'invite-links',
-          label: 'Invite Links',
-          href: `/intent/${intentId}/manage/invite-links`,
-          icon: LinkIcon,
-          requiredPlan: 'plus',
-        },
-      ],
-    },
-    {
       id: 'engagement',
       label: 'Engagement',
       icon: MessagesSquare,
@@ -248,13 +225,6 @@ export function IntentManagementSidebar({
           icon: Star,
         },
         {
-          id: 'feedback',
-          label: 'Feedback',
-          href: `/intent/${intentId}/manage/feedback`,
-          icon: FileText,
-          requiredPlan: 'plus',
-        },
-        {
           id: 'notifications',
           label: 'Notifications',
           href: `/intent/${intentId}/manage/notifications`,
@@ -263,22 +233,62 @@ export function IntentManagementSidebar({
       ],
     },
     {
-      id: 'monetization',
-      label: 'Monetization',
-      icon: DollarSign,
+      id: 'plus-features',
+      label: 'Plus Features',
+      icon: Sparkles,
       defaultOpen: false,
+      requiredPlan: 'plus',
       items: [
         {
-          id: 'plans',
-          label: 'Sponsorship Plans',
-          href: `/intent/${intentId}/manage/plans`,
-          icon: BadgeDollarSign,
+          id: 'join-form',
+          label: 'Join Form',
+          href: `/intent/${intentId}/manage/join-form`,
+          icon: CheckCircle2,
         },
         {
-          id: 'subscription',
-          label: 'Active Subscription',
-          href: `/intent/${intentId}/manage/subscription`,
-          icon: Sparkles,
+          id: 'invite-links',
+          label: 'Invite Links',
+          href: `/intent/${intentId}/manage/invite-links`,
+          icon: LinkIcon,
+        },
+        {
+          id: 'feedback',
+          label: 'Feedback',
+          href: `/intent/${intentId}/manage/feedback`,
+          icon: FileText,
+        },
+        {
+          id: 'boost',
+          label: 'Event Boost',
+          href: `/intent/${intentId}/manage/boost`,
+          icon: Rocket,
+        },
+        {
+          id: 'local-push',
+          label: 'Local Push',
+          href: `/intent/${intentId}/manage/local-push`,
+          icon: Target,
+        },
+        {
+          id: 'highlight',
+          label: 'Highlight Color',
+          href: `/intent/${intentId}/manage/highlight`,
+          icon: Palette,
+        },
+      ],
+    },
+    {
+      id: 'pro-features',
+      label: 'Pro Features',
+      icon: Crown,
+      defaultOpen: false,
+      requiredPlan: 'pro',
+      items: [
+        {
+          id: 'analytics',
+          label: 'Analytics',
+          href: `/intent/${intentId}/manage/analytics`,
+          icon: BarChart3,
         },
       ],
     },
@@ -380,13 +390,20 @@ export function IntentManagementSidebar({
                     className={cn(
                       'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors',
                       hasActiveItem
-                        ? 'text-indigo-700 dark:text-indigo-400'
+                        ? group.requiredPlan === 'pro'
+                          ? 'text-amber-700 dark:text-amber-400'
+                          : group.requiredPlan === 'plus'
+                            ? 'text-indigo-700 dark:text-indigo-400'
+                            : 'text-indigo-700 dark:text-indigo-400'
                         : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <GroupIcon className="w-4 h-4" />
-                      <span>{group.label}</span>
+                    <div className="flex items-center gap-2 truncate">
+                      <GroupIcon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{group.label}</span>
+                      {group.requiredPlan && (
+                        <PlanBadge plan={group.requiredPlan} size="xs" />
+                      )}
                     </div>
                     <motion.div
                       animate={{ rotate: isGroupOpen ? 0 : -90 }}
@@ -401,7 +418,11 @@ export function IntentManagementSidebar({
                       className={cn(
                         'h-px w-8',
                         hasActiveItem
-                          ? 'bg-indigo-300 dark:bg-indigo-700'
+                          ? group.requiredPlan === 'pro'
+                            ? 'bg-amber-300 dark:bg-amber-700'
+                            : group.requiredPlan === 'plus'
+                              ? 'bg-indigo-300 dark:bg-indigo-700'
+                              : 'bg-indigo-300 dark:bg-indigo-700'
                           : 'bg-zinc-200 dark:bg-zinc-700'
                       )}
                     />
@@ -454,12 +475,6 @@ export function IntentManagementSidebar({
                                     className="flex items-center flex-1 gap-2 overflow-hidden whitespace-nowrap"
                                   >
                                     <span>{item.label}</span>
-                                    {item.requiredPlan && (
-                                      <PlanBadge
-                                        plan={item.requiredPlan}
-                                        size="xs"
-                                      />
-                                    )}
                                   </motion.span>
                                 )}
                               </AnimatePresence>
@@ -475,12 +490,6 @@ export function IntentManagementSidebar({
                               >
                                 <div className="flex items-center gap-2">
                                   {item.label}
-                                  {item.requiredPlan && (
-                                    <PlanBadge
-                                      plan={item.requiredPlan}
-                                      size="xs"
-                                    />
-                                  )}
                                 </div>
                                 <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
                               </motion.div>

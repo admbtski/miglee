@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useIntentEdit } from '@/features/intents/components/edit-steps/intent-edit-provider';
-import { ManagementPageLayout } from '../../_components/management-page-layout';
+import { ManagementPageLayout } from '../../_components';
 import { CoverStep } from '@/features/intents/components/cover-step';
 import { useIntentCoverUpload } from '@/lib/media/use-media-upload';
 import { buildIntentCoverUrl } from '@/lib/media/url';

@@ -10,7 +10,6 @@ import {
   Users,
   MessageSquare,
   BarChart3,
-  Calendar,
   Home,
   X,
   Link as LinkIcon,
@@ -29,10 +28,15 @@ import {
   AlertTriangle,
   MessagesSquare,
   Crown,
+  Edit3,
+  ChevronDown,
+  Rocket,
+  Target,
+  Palette,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIntentManagement } from './intent-management-provider';
@@ -42,7 +46,16 @@ type NavItem = {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  requiredPlan?: 'plus' | 'pro'; // Minimum plan required to access this feature
+  requiredPlan?: 'plus' | 'pro';
+};
+
+type NavGroup = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: NavItem[];
+  defaultOpen?: boolean;
+  requiredPlan?: 'plus' | 'pro';
 };
 
 interface PlanBadgeProps {
@@ -95,6 +108,9 @@ export function IntentManagementMobileSidebar({
 }: IntentManagementMobileSidebarProps) {
   const pathname = usePathname();
   const { intent } = useIntentManagement();
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    new Set(['main', 'settings', 'engagement'])
+  );
 
   // Close on route change
   useEffect(() => {
@@ -116,130 +132,215 @@ export function IntentManagementMobileSidebar({
     };
   }, [open]);
 
-  const navItems: NavItem[] = [
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
+  const navGroups: NavGroup[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      href: `/intent/${intentId}/manage`,
+      id: 'main',
+      label: 'Main',
       icon: LayoutDashboard,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'dashboard',
+          label: 'Dashboard',
+          href: `/intent/${intentId}/manage`,
+          icon: LayoutDashboard,
+        },
+        {
+          id: 'view',
+          label: 'View Event',
+          href: `/intent/${intentId}/manage/view`,
+          icon: Eye,
+        },
+        {
+          id: 'members',
+          label: 'Members',
+          href: `/intent/${intentId}/manage/members`,
+          icon: Users,
+        },
+        {
+          id: 'plans',
+          label: 'Sponsorship Plans',
+          href: `/intent/${intentId}/manage/plans`,
+          icon: BadgeDollarSign,
+        },
+      ],
     },
     {
-      id: 'view',
-      label: 'View Event',
-      href: `/intent/${intentId}/manage/view`,
-      icon: Eye,
+      id: 'settings',
+      label: 'Event Settings',
+      icon: Edit3,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'basics',
+          label: 'Basics',
+          href: `/intent/${intentId}/manage/edit/basics`,
+          icon: FileText,
+        },
+        {
+          id: 'cover',
+          label: 'Cover Image',
+          href: `/intent/${intentId}/manage/edit/cover`,
+          icon: Image,
+        },
+        {
+          id: 'schedule',
+          label: 'Schedule',
+          href: `/intent/${intentId}/manage/edit/when`,
+          icon: Clock,
+        },
+        {
+          id: 'location',
+          label: 'Location',
+          href: `/intent/${intentId}/manage/edit/where`,
+          icon: MapPin,
+        },
+        {
+          id: 'capacity',
+          label: 'Capacity',
+          href: `/intent/${intentId}/manage/edit/capacity`,
+          icon: UsersIcon,
+        },
+        {
+          id: 'privacy',
+          label: 'Privacy',
+          href: `/intent/${intentId}/manage/edit/settings`,
+          icon: Lock,
+        },
+      ],
     },
     {
-      id: 'analytics',
-      label: 'Analytics',
-      href: `/intent/${intentId}/manage/analytics`,
-      icon: BarChart3,
-      requiredPlan: 'pro',
-    },
-    {
-      id: 'basics',
-      label: 'Basics',
-      href: `/intent/${intentId}/manage/edit/basics`,
-      icon: FileText,
-    },
-    {
-      id: 'cover',
-      label: 'Cover Image',
-      href: `/intent/${intentId}/manage/edit/cover`,
-      icon: Image,
-    },
-    {
-      id: 'schedule',
-      label: 'Schedule',
-      href: `/intent/${intentId}/manage/edit/when`,
-      icon: Clock,
-    },
-    {
-      id: 'location',
-      label: 'Location',
-      href: `/intent/${intentId}/manage/edit/where`,
-      icon: MapPin,
-    },
-    {
-      id: 'capacity',
-      label: 'Capacity',
-      href: `/intent/${intentId}/manage/edit/capacity`,
-      icon: UsersIcon,
-    },
-    {
-      id: 'privacy',
-      label: 'Privacy',
-      href: `/intent/${intentId}/manage/edit/settings`,
-      icon: Lock,
-    },
-    {
-      id: 'members',
-      label: 'Members',
-      href: `/intent/${intentId}/manage/members`,
-      icon: Users,
-    },
-    {
-      id: 'join-form',
-      label: 'Join Form',
-      href: `/intent/${intentId}/manage/join-form`,
-      icon: CheckCircle2,
-      requiredPlan: 'plus',
-    },
-    {
-      id: 'invite-links',
-      label: 'Invite Links',
-      href: `/intent/${intentId}/manage/invite-links`,
-      icon: LinkIcon,
-      requiredPlan: 'plus',
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      href: `/intent/${intentId}/manage/chat`,
+      id: 'engagement',
+      label: 'Engagement',
       icon: MessagesSquare,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'chat',
+          label: 'Chat',
+          href: `/intent/${intentId}/manage/chat`,
+          icon: MessagesSquare,
+        },
+        {
+          id: 'comments',
+          label: 'Comments',
+          href: `/intent/${intentId}/manage/comments`,
+          icon: MessageSquare,
+        },
+        {
+          id: 'reviews',
+          label: 'Reviews',
+          href: `/intent/${intentId}/manage/reviews`,
+          icon: Star,
+        },
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          href: `/intent/${intentId}/manage/notifications`,
+          icon: Bell,
+        },
+      ],
     },
     {
-      id: 'comments',
-      label: 'Comments',
-      href: `/intent/${intentId}/manage/comments`,
-      icon: MessageSquare,
-    },
-    {
-      id: 'reviews',
-      label: 'Reviews',
-      href: `/intent/${intentId}/manage/reviews`,
-      icon: Star,
-    },
-    {
-      id: 'feedback',
-      label: 'Feedback',
-      href: `/intent/${intentId}/manage/feedback`,
-      icon: FileText,
-      requiredPlan: 'plus',
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      href: `/intent/${intentId}/manage/notifications`,
-      icon: Bell,
-    },
-    {
-      id: 'plans',
-      label: 'Sponsorship Plans',
-      href: `/intent/${intentId}/manage/plans`,
-      icon: BadgeDollarSign,
-    },
-    {
-      id: 'subscription',
-      label: 'Active Subscription',
-      href: `/intent/${intentId}/manage/subscription`,
+      id: 'plus-features',
+      label: 'Plus Features',
       icon: Sparkles,
+      defaultOpen: false,
+      requiredPlan: 'plus',
+      items: [
+        {
+          id: 'join-form',
+          label: 'Join Form',
+          href: `/intent/${intentId}/manage/join-form`,
+          icon: CheckCircle2,
+        },
+        {
+          id: 'invite-links',
+          label: 'Invite Links',
+          href: `/intent/${intentId}/manage/invite-links`,
+          icon: LinkIcon,
+        },
+        {
+          id: 'feedback',
+          label: 'Feedback',
+          href: `/intent/${intentId}/manage/feedback`,
+          icon: FileText,
+        },
+        {
+          id: 'boost',
+          label: 'Event Boost',
+          href: `/intent/${intentId}/manage/boost`,
+          icon: Rocket,
+        },
+        {
+          id: 'local-push',
+          label: 'Local Push',
+          href: `/intent/${intentId}/manage/local-push`,
+          icon: Target,
+        },
+        {
+          id: 'highlight',
+          label: 'Highlight Color',
+          href: `/intent/${intentId}/manage/highlight`,
+          icon: Palette,
+        },
+      ],
+    },
+    {
+      id: 'pro-features',
+      label: 'Pro Features',
+      icon: Crown,
+      defaultOpen: false,
+      requiredPlan: 'pro',
+      items: [
+        {
+          id: 'analytics',
+          label: 'Analytics',
+          href: `/intent/${intentId}/manage/analytics`,
+          icon: BarChart3,
+        },
+      ],
+    },
+    {
+      id: 'pro-features',
+      label: 'Pro Features',
+      icon: Crown,
+      defaultOpen: false,
+      requiredPlan: 'pro',
+      items: [
+        {
+          id: 'analytics',
+          label: 'Analytics',
+          href: `/intent/${intentId}/manage/analytics`,
+          icon: BarChart3,
+        },
+      ],
     },
     {
       id: 'danger',
-      label: 'Cancel & Delete',
-      href: `/intent/${intentId}/manage/danger`,
+      label: 'Danger Zone',
       icon: AlertTriangle,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'danger',
+          label: 'Cancel & Delete',
+          href: `/intent/${intentId}/manage/danger`,
+          icon: AlertTriangle,
+        },
+      ],
     },
   ];
 
@@ -274,12 +375,14 @@ export function IntentManagementMobileSidebar({
           >
             {/* Header */}
             <div className="flex items-center justify-between h-16 px-4 border-b border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                  Manage Event
+              <Link href="/" className="flex items-center gap-2">
+                <span className="text-xl font-bold tracking-tight text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text">
+                  miglee
                 </span>
-              </div>
+                <span className="text-sm font-medium text-zinc-400 dark:text-zinc-500">
+                  .pl
+                </span>
+              </Link>
               <button
                 onClick={onClose}
                 className="p-2 transition-colors rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
@@ -302,39 +405,90 @@ export function IntentManagementMobileSidebar({
             )}
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
+            <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+              {navGroups.map((group) => {
+                const GroupIcon = group.icon;
+                const isGroupOpen = openGroups.has(group.id);
+                const hasActiveItem = group.items.some((item) =>
+                  isActive(item.href)
+                );
 
                 return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    className={cn(
-                      'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                      active
-                        ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400'
-                        : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-                    )}
-                  >
-                    <Icon
+                  <div key={group.id} className="space-y-1">
+                    {/* Group Header */}
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
                       className={cn(
-                        'h-5 w-5 flex-shrink-0',
-                        active
-                          ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-zinc-500 group-hover:text-zinc-700 dark:text-zinc-400 dark:group-hover:text-zinc-300'
+                        'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors',
+                        hasActiveItem
+                          ? group.requiredPlan === 'pro'
+                            ? 'text-amber-700 dark:text-amber-400'
+                            : group.requiredPlan === 'plus'
+                              ? 'text-indigo-700 dark:text-indigo-400'
+                              : 'text-indigo-700 dark:text-indigo-400'
+                          : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
                       )}
-                    />
-                    <span className="flex items-center flex-1 gap-2">
-                      {item.label}
-                      {item.requiredPlan && (
-                        <span className="ml-auto">
-                          <PlanBadge plan={item.requiredPlan} size="xs" />
-                        </span>
+                    >
+                      <div className="flex items-center gap-2">
+                        <GroupIcon className="w-4 h-4" />
+                        <span>{group.label}</span>
+                        {group.requiredPlan && (
+                          <PlanBadge plan={group.requiredPlan} size="xs" />
+                        )}
+                      </div>
+                      <motion.div
+                        animate={{ rotate: isGroupOpen ? 0 : -90 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                    </button>
+
+                    {/* Group Items */}
+                    <AnimatePresence initial={false}>
+                      {isGroupOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden space-y-1"
+                        >
+                          {group.items.map((item) => {
+                            const Icon = item.icon;
+                            const active = isActive(item.href);
+
+                            return (
+                              <Link
+                                key={item.id}
+                                href={item.href}
+                                className={cn(
+                                  'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ml-2',
+                                  active
+                                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300'
+                                    : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                )}
+                              >
+                                <Icon className="flex-shrink-0 w-4 h-4" />
+                                <span className="flex items-center flex-1">
+                                  {item.label}
+                                  {item.requiredPlan && (
+                                    <span className="ml-auto">
+                                      <PlanBadge
+                                        plan={item.requiredPlan}
+                                        size="xs"
+                                      />
+                                    </span>
+                                  )}
+                                </span>
+                              </Link>
+                            );
+                          })}
+                        </motion.div>
                       )}
-                    </span>
-                  </Link>
+                    </AnimatePresence>
+                  </div>
                 );
               })}
             </nav>

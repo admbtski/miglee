@@ -3,7 +3,7 @@
 import { TimeStep } from '@/features/intents/components/time-step';
 import { useIntentEdit } from '@/features/intents/components/edit-steps/intent-edit-provider';
 import { useSaveIntentStep } from '@/features/intents/components/edit-steps/use-save-intent-step';
-import { ManagementPageLayout } from '../../_components/management-page-layout';
+import { ManagementPageLayout } from '../../_components';
 import { SaveButton } from '../../_components/save-button';
 import { useFormState, useWatch } from 'react-hook-form';
 
@@ -13,11 +13,11 @@ import { useFormState, useWatch } from 'react-hook-form';
 export default function WhenStepPage() {
   const { form } = useIntentEdit();
   const { saveTime, isSaving } = useSaveIntentStep();
-  
+
   // Subscribe to form changes to ensure isDirty is reactive
   // Must read the value to trigger React's subscription
   void useWatch({ control: form.control });
-  
+
   // Use useFormState to subscribe to form state changes reactively
   const { isDirty } = useFormState({ control: form.control });
 
