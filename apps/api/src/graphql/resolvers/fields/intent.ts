@@ -33,7 +33,7 @@ export const intentSponsorshipResolver: IntentResolvers['sponsorship'] =
   resolverWithMetrics(
     'Intent',
     'sponsorship',
-    async (parent, _args, { user }) => {
+    async (parent, _args, _context) => {
       const sponsorship = await prisma.eventSponsorship.findUnique({
         where: { intentId: parent.id },
         include: { sponsor: true, intent: true },
@@ -187,3 +187,29 @@ export const intentCoverBlurhashResolver: IntentResolvers['coverBlurhash'] =
 
     return mediaAsset?.blurhash || null;
   });
+
+/**
+ * Field resolver for Intent.faqs
+ * Returns all FAQs for this intent, ordered by their order field
+ */
+export const intentFaqsResolver: IntentResolvers['faqs'] = resolverWithMetrics(
+  'Intent',
+  'faqs',
+  async (parent) => {
+    const faqs = await prisma.intentFaq.findMany({
+      where: { intentId: parent.id },
+      orderBy: { order: 'asc' },
+    });
+
+    return faqs.map((faq) => ({
+      id: faq.id,
+      intentId: faq.intentId,
+      order: faq.order,
+      question: faq.question,
+      answer: faq.answer,
+      createdAt: faq.createdAt,
+      updatedAt: faq.updatedAt,
+      intent: parent as any, // Avoid circular fetch
+    }));
+  }
+);

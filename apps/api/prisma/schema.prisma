@@ -430,6 +430,9 @@ model Intent {
   feedbackQuestions IntentFeedbackQuestion[]
   feedbackAnswers   IntentFeedbackAnswer[]
 
+  // FAQ relations
+  faqs IntentFaq[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1313,6 +1316,30 @@ model IntentFeedbackAnswer {
   @@index([intentId, userId])
   @@index([questionId])
   @@map("intent_feedback_answers")
+}
+
+// =============================================================================
+/**
+ * FAQ System
+ * Frequently Asked Questions for events
+ */
+// =============================================================================
+
+model IntentFaq {
+  id       String @id @default(cuid())
+  intentId String
+  order    Int    @default(0) // Display order (0-based)
+
+  question String // FAQ question text (max 500 chars, enforced in app)
+  answer   String // FAQ answer text (max 2000 chars, enforced in app)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@index([intentId, order])
+  @@map("intent_faqs")
 }
 
 // =============================================================================

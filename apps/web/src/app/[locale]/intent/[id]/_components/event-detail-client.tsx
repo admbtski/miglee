@@ -28,6 +28,7 @@ import { EventCountdownTimer } from './event-countdown-timer';
 import { EventDetailSkeleton } from './event-detail-skeleton';
 import { EventDetails } from './event-details';
 import { EventEngagementStats } from './event-engagement-stats';
+import { EventFaq } from './event-faq';
 import { EventHero } from './event-hero';
 import { EventJoinSection } from './event-join-section';
 import { EventLocationMap } from './event-location-map';
@@ -581,6 +582,17 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
             <EventParticipants event={eventData} />
             <EventReviews event={eventData} />
             <EventComments event={eventData} />
+
+            {/* FAQ Section */}
+            {intent?.faqs && intent.faqs.length > 0 && (
+              <EventFaq
+                faqs={intent.faqs.map((faq: any) => ({
+                  id: faq.id,
+                  question: faq.question,
+                  answer: faq.answer,
+                }))}
+              />
+            )}
 
             {/* Metadata at the bottom */}
             <EventMetadata event={eventData} />

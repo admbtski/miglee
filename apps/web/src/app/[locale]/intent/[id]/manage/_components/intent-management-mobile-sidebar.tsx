@@ -33,6 +33,7 @@ import {
   Rocket,
   Target,
   Palette,
+  HelpCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -277,6 +278,12 @@ export function IntentManagementMobileSidebar({
           label: 'Feedback',
           href: `/intent/${intentId}/manage/feedback`,
           icon: FileText,
+        },
+        {
+          id: 'faq',
+          label: 'FAQ',
+          href: `/intent/${intentId}/manage/faq`,
+          icon: HelpCircle,
         },
         {
           id: 'boost',

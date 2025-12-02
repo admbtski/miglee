@@ -2029,6 +2029,124 @@ async function seedIntentInviteLinks(
   return links;
 }
 
+/** ---------- Seed: Intent FAQs ---------- */
+async function seedIntentFaqs(
+  allIntents: Array<{ intent: any; owner: User }>
+) {
+  const faqs: any[] = [];
+
+  // FAQ templates by meeting kind
+  const FAQ_TEMPLATES = {
+    ONSITE: [
+      {
+        question: 'Gdzie dokładnie się spotykamy?',
+        answer: 'Spotykamy się przy głównym wejściu w podanej lokalizacji. Szczegółowy adres znajdziesz w opisie wydarzenia.',
+      },
+      {
+        question: 'Czy jest parking w pobliżu?',
+        answer: 'Tak, w okolicy jest parking publiczny. Można również dojechać komunikacją miejską.',
+      },
+      {
+        question: 'Co powinienem zabrać ze sobą?',
+        answer: 'Wygodne buty i wodę. Jeśli masz jakieś specjalne potrzeby, daj nam znać w komentarzach.',
+      },
+      {
+        question: 'Co jeśli się spóźnię?',
+        answer: 'Prosimy o punktualność, ale jeśli się spóźnisz, skontaktuj się z nami przez czat wydarzenia.',
+      },
+    ],
+    ONLINE: [
+      {
+        question: 'Jak dołączyć do spotkania online?',
+        answer: 'Link do spotkania otrzymasz po dołączeniu do wydarzenia. Zostanie również wysłany na email przed startem.',
+      },
+      {
+        question: 'Czy potrzebuję kamery i mikrofonu?',
+        answer: 'Kamera nie jest wymagana, ale mikrofon będzie przydatny do aktywnego uczestnictwa.',
+      },
+      {
+        question: 'Jakie oprogramowanie jest potrzebne?',
+        answer: 'Używamy standardowych platform do wideokonferencji. Szczegóły znajdziesz w linku do spotkania.',
+      },
+      {
+        question: 'Co jeśli mam problemy techniczne?',
+        answer: 'Napisz na czat wydarzenia lub skontaktuj się z organizatorem przed rozpoczęciem.',
+      },
+    ],
+    HYBRID: [
+      {
+        question: 'Czy mogę wybrać między uczestnictwem stacjonarnym a online?',
+        answer: 'Tak! Możesz dołączyć osobiście lub przez internet. Daj nam znać o swojej decyzji w komentarzach.',
+      },
+      {
+        question: 'Gdzie jest link do spotkania online?',
+        answer: 'Link otrzymasz po dołączeniu do wydarzenia i zostanie wysłany na email przed startem.',
+      },
+      {
+        question: 'Czy uczestnicy online mogą w pełni uczestniczyć?',
+        answer: 'Oczywiście! Zadbamy o to, aby wszyscy uczestnicy mogli aktywnie brać udział niezależnie od formy uczestnictwa.',
+      },
+    ],
+  };
+
+  const GENERAL_FAQS = [
+    {
+      question: 'Czy mogę zaprosić znajomego?',
+      answer: 'Sprawdź tryb dołączania do wydarzenia. Jeśli są wolne miejsca, Twój znajomy może się zapisać przez stronę wydarzenia.',
+    },
+    {
+      question: 'Jak mogę skontaktować się z organizatorem?',
+      answer: 'Możesz napisać wiadomość przez czat wydarzenia lub zostawić komentarz pod wydarzeniem.',
+    },
+    {
+      question: 'Czy wydarzenie jest płatne?',
+      answer: 'To wydarzenie jest bezpłatne. Organizator może poprosić o opcjonalną składkę na koszty, ale nie jest to wymagane.',
+    },
+    {
+      question: 'Co jeśli muszę odwołać swój udział?',
+      answer: 'Możesz w każdej chwili zrezygnować z udziału przez stronę wydarzenia. Prosimy o jak najwcześniejsze poinformowanie.',
+    },
+  ];
+
+  // Add FAQs to 40% of active, non-deleted intents
+  const intentsWithFaqs = allIntents
+    .filter(() => rand() > 0.6)
+    .filter(({ intent }) => !intent.deletedAt && !intent.canceledAt)
+    .slice(0, 30);
+
+  for (const { intent } of intentsWithFaqs) {
+    // Select FAQ templates based on meeting kind
+    const templates =
+      FAQ_TEMPLATES[intent.meetingKind as keyof typeof FAQ_TEMPLATES] || [];
+
+    // Mix specific and general FAQs
+    const allTemplates = [...templates, ...GENERAL_FAQS];
+
+    // Create 2-5 FAQs per intent
+    const faqCount = 2 + Math.floor(rand() * 4);
+    const selectedFaqs = pickMany(allTemplates, Math.min(faqCount, allTemplates.length));
+
+    for (let i = 0; i < selectedFaqs.length; i++) {
+      const faqTemplate = selectedFaqs[i];
+      if (!faqTemplate) continue;
+
+      const faq = await prisma.intentFaq.create({
+        data: {
+          intentId: intent.id,
+          order: i,
+          question: faqTemplate.question,
+          answer: faqTemplate.answer,
+        },
+      });
+
+      faqs.push(faq);
+    }
+  }
+
+  console.log(`❓ Created ${faqs.length} FAQ items across ${intentsWithFaqs.length} intents`);
+  return faqs;
+}
+
 /** ---------- Seed: Notification Preferences ---------- */
 async function seedNotificationPreferences(users: User[]) {
   const preferences: any[] = [];
@@ -2471,6 +2589,9 @@ async function main() {
 
   console.log('🔗 Seeding intent invite links…');
   await seedIntentInviteLinks(allIntents);
+
+  console.log('❓ Seeding intent FAQs…');
+  await seedIntentFaqs(allIntents);
 
   console.log('⚙️  Seeding notification preferences…');
   await seedNotificationPreferences(users);

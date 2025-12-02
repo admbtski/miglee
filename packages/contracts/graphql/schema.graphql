@@ -880,6 +880,7 @@ type Intent {
   highlightColor: String # Custom highlight/ring color (hex format: #RRGGBB)
   # Relations
   inviteLinks: [IntentInviteLink!]!
+  faqs: [IntentFaq!]!
 
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -2035,6 +2036,9 @@ type Mutation {
   # Manual trigger for feedback requests (owner/moderator only)
   sendFeedbackRequests(intentId: ID!): SendFeedbackRequestsResult!
 
+  # FAQ Management
+  updateIntentFaqs(input: UpdateIntentFaqsInput!): [IntentFaq!]!
+
   # notifications
   addNotification(
     recipientId: ID!
@@ -2352,6 +2356,34 @@ input UpdateIntentInviteLinkInput {
   label: String
   maxUses: Int
   expiresAt: DateTime
+}
+
+# ------------------------------------------------------------------------------
+# FAQ
+# ------------------------------------------------------------------------------
+
+"FAQ item for an intent"
+type IntentFaq {
+  id: ID!
+  intentId: ID!
+  order: Int!
+  question: String!
+  answer: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  intent: Intent!
+}
+
+"Input for creating/updating FAQ"
+input IntentFaqInput {
+  question: String!
+  answer: String!
+}
+
+"Input for bulk updating FAQs"
+input UpdateIntentFaqsInput {
+  intentId: ID!
+  faqs: [IntentFaqInput!]!
 }
 
 # ------------------------------------------------------------------------------

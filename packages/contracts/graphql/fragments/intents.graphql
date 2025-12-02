@@ -203,7 +203,7 @@ fragment IntentCore on Intent {
   }
 }
 
-# Extended intent fragment for detail page (includes sponsorship, inviteLinks, members)
+# Extended intent fragment for detail page (includes sponsorship, inviteLinks, members, faqs)
 fragment IntentDetail on Intent {
   ...IntentCore
   members {
@@ -233,6 +233,15 @@ fragment IntentDetail on Intent {
       id
       name
     }
+  }
+  faqs {
+    id
+    intentId
+    order
+    question
+    answer
+    createdAt
+    updatedAt
   }
 }
 

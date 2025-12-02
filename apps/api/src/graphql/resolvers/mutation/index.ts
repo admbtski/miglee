@@ -130,6 +130,9 @@ import {
   sendFeedbackRequestsMutation,
 } from './feedback-questions';
 
+// FAQ mutations
+import { faqMutations } from './faq';
+
 // Join Requests mutations
 import {
   requestJoinIntentWithAnswersMutation,
@@ -367,6 +370,9 @@ export const Mutation: Resolvers['Mutation'] = {
   reorderFeedbackQuestions: reorderFeedbackQuestionsMutation,
   submitReviewAndFeedback: submitReviewAndFeedbackMutation,
   sendFeedbackRequests: sendFeedbackRequestsMutation,
+
+  // ---- FAQ Management ----
+  updateIntentFaqs: faqMutations.updateIntentFaqs,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,

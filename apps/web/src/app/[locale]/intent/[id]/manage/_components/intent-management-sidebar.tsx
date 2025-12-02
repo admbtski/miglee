@@ -36,6 +36,7 @@ import {
   Rocket,
   Target,
   Palette,
+  HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -256,6 +257,12 @@ export function IntentManagementSidebar({
           label: 'Feedback',
           href: `/intent/${intentId}/manage/feedback`,
           icon: FileText,
+        },
+        {
+          id: 'faq',
+          label: 'FAQ',
+          href: `/intent/${intentId}/manage/faq`,
+          icon: HelpCircle,
         },
         {
           id: 'boost',
