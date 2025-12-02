@@ -74,7 +74,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
 
   return (
     <>
-      <nav className="sticky text-zinc-900 dark:text-zinc-100 top-0 z-40 border-b border-zinc-200 bg-white/70 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/60">
+      <nav className="sticky top-0 z-40 border-b border-zinc-200  backdrop-blur-xl dark:border-zinc-800  bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
         <div className="mx-auto flex max-w-8xl items-center gap-3 px-4 py-3">
           {/* Logo */}
           <a

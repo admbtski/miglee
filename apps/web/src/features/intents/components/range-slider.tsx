@@ -4,6 +4,10 @@ import * as React from 'react';
 import noUiSlider, { API, PipsMode } from 'nouislider';
 import 'nouislider/dist/nouislider.css';
 
+// ============================================================================
+// TYPES
+// ============================================================================
+
 type Format = {
   to: (v: number) => string;
   from: (s: string) => number;
@@ -28,7 +32,7 @@ export type RangeSliderProps = {
   'aria-invalid'?: boolean;
   'aria-describedby'?: string;
   pipsStep?: number;
-  pipsDensity?: number; // 0-5
+  pipsDensity?: number;
 };
 
 export type RangeSliderRef = {
@@ -36,6 +40,10 @@ export type RangeSliderRef = {
   focusEnd: () => void;
   api: API | null;
 };
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
 
 export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
   (
@@ -61,6 +69,10 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
     },
     ref
   ) => {
+    // --------------------------------------------------------------------------
+    // REFS
+    // --------------------------------------------------------------------------
+
     const rootRef = React.useRef<HTMLDivElement | null>(null);
     const apiRef = React.useRef<API | null>(null);
     const rafRef = React.useRef<number | null>(null);
@@ -72,7 +84,10 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
     // Flag to prevent callback during programmatic updates
     const isProgrammaticUpdateRef = React.useRef(false);
 
-    // Keep refs up to date
+    // --------------------------------------------------------------------------
+    // KEEP CALLBACK REFS UP TO DATE
+    // --------------------------------------------------------------------------
+
     React.useEffect(() => {
       onChangeRef.current = onChange;
     }, [onChange]);
@@ -80,6 +95,10 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
     React.useEffect(() => {
       onUpdateRef.current = onUpdate;
     }, [onUpdate]);
+
+    // --------------------------------------------------------------------------
+    // FORMAT CONFIG
+    // --------------------------------------------------------------------------
 
     const fmt: Format = React.useMemo(
       () => ({
@@ -98,6 +117,10 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         stepped: true,
       };
     }, [pipsStep, pipsDensity]);
+
+    // --------------------------------------------------------------------------
+    // INITIALIZE SLIDER
+    // --------------------------------------------------------------------------
 
     React.useEffect(() => {
       if (!rootRef.current || apiRef.current) return;
@@ -129,8 +152,9 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
 
       apiRef.current = api;
 
+      // Event: Update (called during drag)
       const handleUpdate = (vals: (string | number)[]) => {
-        // Keep aria-valuenow/valuetext synced for SR users
+        // Keep aria attributes synced for screen readers
         const handles =
           rootRef.current!.querySelectorAll<HTMLElement>('.noUi-handle');
         if (handles.length >= 2) {
@@ -158,6 +182,7 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         });
       };
 
+      // Event: Change (called on release/commit)
       const handleCommit = (vals: (string | number)[]) => {
         // Skip callback if this is a programmatic update
         if (isProgrammaticUpdateRef.current) return;
@@ -167,10 +192,12 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         onChangeRef.current([a, b]);
       };
 
+      // Bind event handlers
       api.on('update', handleUpdate);
       api.on('change', handleCommit);
       api.on('set', handleCommit);
 
+      // Setup accessibility attributes
       const handles =
         rootRef.current.querySelectorAll<HTMLElement>('.noUi-handle');
       handles.forEach((h, idx) => {
@@ -192,6 +219,7 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         );
       });
 
+      // Cleanup
       return () => {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         api.off('update');
@@ -203,24 +231,35 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // --------------------------------------------------------------------------
+    // UPDATE SLIDER VALUE (from props)
+    // --------------------------------------------------------------------------
+
     React.useEffect(() => {
       const api = apiRef.current;
       if (!api) return;
+
       const arr = api.get() as (string | number)[];
       const cur: [number, number] = [
         Math.round(Number(arr[0])),
         Math.round(Number(arr[1])),
       ];
+
       if (cur[0] !== value[0] || cur[1] !== value[1]) {
-        // Set flag to prevent callback during programmatic update
+        // Set flag to prevent callback loop during programmatic update
         isProgrammaticUpdateRef.current = true;
         api.set(value as unknown as number[]);
+
         // Reset flag after a short delay to allow the event to fire
         setTimeout(() => {
           isProgrammaticUpdateRef.current = false;
         }, 10);
       }
     }, [value]);
+
+    // --------------------------------------------------------------------------
+    // HANDLE DISABLED STATE
+    // --------------------------------------------------------------------------
 
     React.useEffect(() => {
       const api = apiRef.current;
@@ -230,9 +269,11 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         rootRef.current.querySelectorAll<HTMLElement>('.noUi-handle');
 
       if (disabled) {
+        // Disable entire slider
         rootRef.current.setAttribute('data-disabled', 'true');
         api.disable();
       } else {
+        // Enable slider
         rootRef.current.removeAttribute('data-disabled');
         api.enable();
 
@@ -263,9 +304,14 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       }
     }, [disabled, disableLeftThumb, disableRightThumb]);
 
+    // --------------------------------------------------------------------------
+    // UPDATE SLIDER OPTIONS
+    // --------------------------------------------------------------------------
+
     React.useEffect(() => {
       const api = apiRef.current;
       if (!api) return;
+
       api.updateOptions(
         {
           range: { min, max },
@@ -276,6 +322,7 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         false
       );
 
+      // Update aria attributes
       const handles =
         rootRef.current?.querySelectorAll<HTMLElement>('.noUi-handle');
       handles?.forEach((h) => {
@@ -283,6 +330,10 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         h.setAttribute('aria-valuemax', String(max));
       });
     }, [min, max, step, minDistance, rtl, pipsConfig]);
+
+    // --------------------------------------------------------------------------
+    // UPDATE ARIA ATTRIBUTES
+    // --------------------------------------------------------------------------
 
     React.useEffect(() => {
       if (!rootRef.current) return;
@@ -292,6 +343,10 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
         rootRef.current!.setAttribute(k, String(v));
       });
     }, [id, aria]);
+
+    // --------------------------------------------------------------------------
+    // IMPERATIVE HANDLE
+    // --------------------------------------------------------------------------
 
     React.useImperativeHandle(
       ref,
@@ -311,6 +366,10 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
       []
     );
 
+    // --------------------------------------------------------------------------
+    // RENDER
+    // --------------------------------------------------------------------------
+
     return (
       <div className={className}>
         <div className="noUi-shell rounded-[22px] border border-zinc-200 bg-white/60 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900/40">
@@ -325,4 +384,5 @@ export const RangeSlider = React.forwardRef<RangeSliderRef, RangeSliderProps>(
     );
   }
 );
+
 RangeSlider.displayName = 'RangeSlider';

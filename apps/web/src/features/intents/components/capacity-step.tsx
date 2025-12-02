@@ -1,11 +1,15 @@
 'use client';
 
 import { Infinity, Info, Settings, User, Users } from 'lucide-react';
-import { useEffect, useId, useMemo, useState, useCallback } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { UseFormReturn, useController, useWatch } from 'react-hook-form';
 import { IntentFormValues } from './types';
 import { RangeSlider } from './range-slider';
 import { SegmentedControl } from '@/components/ui/segment-control';
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
 
 function FormSection({
   title,
@@ -39,6 +43,10 @@ function FormSection({
   );
 }
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
 // Smart defaults based on category
 const CATEGORY_CAPACITY_DEFAULTS: Record<
   string,
@@ -61,6 +69,10 @@ const CATEGORY_CAPACITY_DEFAULTS: Record<
   meetup: { min: 5, max: 30, label: 'Meetup (5-30)' },
 };
 
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
 export function CapacityStep({
   form,
 }: {
@@ -73,28 +85,60 @@ export function CapacityStep({
     formState: { errors },
   } = form;
 
-  // Local state for inputs (only synced on blur)
+  // --------------------------------------------------------------------------
+  // LOCAL STATE
+  // --------------------------------------------------------------------------
+
+  // Input values (only synced on blur to prevent premature updates)
   const [localMinInput, setLocalMinInput] = useState<string>('');
   const [localMaxInput, setLocalMaxInput] = useState<string>('');
 
-  // Local state for checkboxes
+  // Checkbox states for unlimited options
   const [isMinUnlimited, setIsMinUnlimited] = useState<boolean>(false);
   const [isMaxUnlimited, setIsMaxUnlimited] = useState<boolean>(false);
 
-  // a11y ids (FIX: avoid duplicating IDs with the bottom note)
+  // --------------------------------------------------------------------------
+  // FORM VALUES & DERIVED STATE
+  // --------------------------------------------------------------------------
+
+  const { field: modeField } = useController({ name: 'mode', control });
+  const minVal = useWatch({ control, name: 'min' });
+  const maxVal = useWatch({ control, name: 'max' });
+  const categorySlugs = useWatch({ control, name: 'categorySlugs' }) ?? [];
+
+  const isGroup = modeField.value === 'GROUP';
+  const isCustom = modeField.value === 'CUSTOM';
+  const isOneToOne = modeField.value === 'ONE_TO_ONE';
+
+  // --------------------------------------------------------------------------
+  // ACCESSIBILITY IDS
+  // --------------------------------------------------------------------------
+
   const modeHelpId = useId();
   const capErrId = useId();
   const capHelpId = useId();
   const capNoteId = useId();
 
-  const { field: modeField } = useController({ name: 'mode', control });
+  const ariaDescribedBy = useMemo(() => {
+    const ids: string[] = [capHelpId];
+    if (errors.min || errors.max) ids.push(capErrId);
+    return ids.join(' ');
+  }, [capHelpId, capErrId, errors.min, errors.max]);
 
-  const minVal = useWatch({ control, name: 'min' });
-  const maxVal = useWatch({ control, name: 'max' });
-  const categorySlugs = useWatch({ control, name: 'categorySlugs' }) ?? [];
-  const isGroup = modeField.value === 'GROUP';
-  const isCustom = modeField.value === 'CUSTOM';
-  const isOneToOne = modeField.value === 'ONE_TO_ONE';
+  // --------------------------------------------------------------------------
+  // SMART SUGGESTIONS
+  // --------------------------------------------------------------------------
+
+  const suggestedCapacity = useMemo(() => {
+    if (!isGroup || categorySlugs.length === 0) return null;
+    const firstCategory = categorySlugs[0];
+    if (!firstCategory || typeof firstCategory !== 'string') return null;
+    return CATEGORY_CAPACITY_DEFAULTS[firstCategory] ?? null;
+  }, [isGroup, categorySlugs]);
+
+  // --------------------------------------------------------------------------
+  // EFFECTS
+  // --------------------------------------------------------------------------
 
   // Sync local input state with form values
   useEffect(() => {
@@ -107,76 +151,44 @@ export function CapacityStep({
     setIsMaxUnlimited(maxVal === null);
   }, [maxVal]);
 
-  // Smart defaults - suggest capacity based on first category
-  const suggestedCapacity = useMemo(() => {
-    if (!isGroup || categorySlugs.length === 0) return null;
-    const firstCategory = categorySlugs[0];
-    if (!firstCategory || typeof firstCategory !== 'string') return null;
-    return CATEGORY_CAPACITY_DEFAULTS[firstCategory] ?? null;
-  }, [isGroup, categorySlugs]);
-
-  // Single source of truth for capacity sync
-  // Always reset values when mode changes
+  // Reset values when mode changes
   useEffect(() => {
     if (modeField.value === 'ONE_TO_ONE') {
-      // Always set to 2,2 for ONE_TO_ONE
       if (minVal !== 2 || maxVal !== 2) {
         setValue('min', 2, { shouldDirty: true, shouldValidate: true });
         setValue('max', 2, { shouldDirty: true, shouldValidate: true });
         void trigger(['min', 'max']);
       }
     } else if (modeField.value === 'GROUP') {
-      // Always reset to 1,50 for GROUP
-      setValue('min', 1, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-      setValue('max', 50, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+      setValue('min', 1, { shouldDirty: true, shouldValidate: true });
+      setValue('max', 50, { shouldDirty: true, shouldValidate: true });
       void trigger(['min', 'max']);
     } else if (modeField.value === 'CUSTOM') {
-      // Always reset to 1,99999 for CUSTOM
-      setValue('min', 1, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-      setValue('max', 99999, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+      setValue('min', 1, { shouldDirty: true, shouldValidate: true });
+      setValue('max', 99999, { shouldDirty: true, shouldValidate: true });
       void trigger(['min', 'max']);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modeField.value]);
 
-  const ariaDescribedBy = useMemo(() => {
-    const ids: string[] = [capHelpId];
-    if (errors.min || errors.max) ids.push(capErrId);
-    return ids.join(' ');
-  }, [capHelpId, capErrId, errors.min, errors.max]);
+  // --------------------------------------------------------------------------
+  // CALLBACKS
+  // --------------------------------------------------------------------------
 
-  // Memoized slider change handler to avoid stale closures
+  // Memoized slider change handler (prevents stale closures)
   const handleSliderChange = useCallback(
     ([a, b]: [number, number]) => {
       if (isOneToOne) return;
 
       // When min is unlimited, only update max
       if (isCustom && isMinUnlimited) {
-        setValue('max', b, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
+        setValue('max', b, { shouldDirty: true, shouldValidate: true });
         return;
       }
 
       // When max is unlimited, only update min
       if (isCustom && isMaxUnlimited) {
-        setValue('min', a, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
+        setValue('min', a, { shouldDirty: true, shouldValidate: true });
         return;
       }
 
@@ -187,9 +199,13 @@ export function CapacityStep({
     [isOneToOne, isCustom, isMinUnlimited, isMaxUnlimited, setValue]
   );
 
+  // --------------------------------------------------------------------------
+  // RENDER
+  // --------------------------------------------------------------------------
+
   return (
     <div className="space-y-8">
-      {/* Mode */}
+      {/* Mode Selection */}
       <FormSection
         title="Tryb"
         description="Wybierz tryb wydarzenia: 1:1 (2 osoby), grupowy (1–50 osób) lub niestandardowy (pełna kontrola nad limitem uczestników 1-99999)."
@@ -211,8 +227,10 @@ export function CapacityStep({
         />
       </FormSection>
 
+      {/* Capacity Controls (only for GROUP and CUSTOM modes) */}
       {(isGroup || isCustom) && (
         <div className="space-y-4">
+          {/* Header with Smart Suggestion */}
           <div className="flex items-center justify-between">
             <div>
               <label className="block text-base font-semibold text-zinc-900 dark:text-zinc-100">
@@ -245,7 +263,7 @@ export function CapacityStep({
             )}
           </div>
 
-          {/* Visual capacity preview */}
+          {/* Visual Capacity Preview */}
           <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-1">
               {minVal === null ? (
@@ -283,9 +301,7 @@ export function CapacityStep({
                 </div>
               ) : (
                 <>
-                  {Array.from({
-                    length: Math.min(maxVal, 10),
-                  }).map((_, i) => (
+                  {Array.from({ length: Math.min(maxVal, 10) }).map((_, i) => (
                     <User
                       key={`max-${i}`}
                       className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
@@ -302,12 +318,13 @@ export function CapacityStep({
             </div>
           </div>
 
+          {/* Range Slider */}
           <RangeSlider
             value={[
               isMinUnlimited ? 1 : (minVal ?? 1),
               isMaxUnlimited ? 99999 : (maxVal ?? 99999),
             ]}
-            min={isCustom ? 1 : 1}
+            min={1}
             max={isCustom ? 99999 : 50}
             step={1}
             disabled={
@@ -315,18 +332,18 @@ export function CapacityStep({
             }
             disableLeftThumb={isMinUnlimited}
             disableRightThumb={isMaxUnlimited}
-            format={undefined}
             onChange={handleSliderChange}
             aria-invalid={!!(errors.min || errors.max)}
             aria-describedby={ariaDescribedBy}
             className="mt-2"
           />
 
-          {/* CUSTOM mode: Manual inputs and unlimited checkboxes */}
+          {/* Custom Mode: Toggle Switches & Manual Inputs */}
           {isCustom && (
             <div className="space-y-4 pt-2">
-              {/* Checkboxes */}
+              {/* Toggle Switches for Unlimited Options */}
               <div className="flex flex-wrap gap-4">
+                {/* Minimum Unlimited Toggle */}
                 <label className="group flex items-center gap-3 cursor-pointer select-none">
                   <div className="relative">
                     <input
@@ -335,20 +352,10 @@ export function CapacityStep({
                       onChange={(e) => {
                         const checked = e.target.checked;
                         setIsMinUnlimited(checked);
-
-                        if (checked) {
-                          // Set to null immediately
-                          setValue('min', null, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        } else {
-                          // Set to default value immediately
-                          setValue('min', 1, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        }
+                        setValue('min', checked ? null : 1, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
                       }}
                       className="sr-only peer"
                     />
@@ -360,6 +367,7 @@ export function CapacityStep({
                   </span>
                 </label>
 
+                {/* Maximum Unlimited Toggle */}
                 <label className="group flex items-center gap-3 cursor-pointer select-none">
                   <div className="relative">
                     <input
@@ -368,20 +376,10 @@ export function CapacityStep({
                       onChange={(e) => {
                         const checked = e.target.checked;
                         setIsMaxUnlimited(checked);
-
-                        if (checked) {
-                          // Set to null immediately
-                          setValue('max', null, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        } else {
-                          // Set to default value immediately
-                          setValue('max', 99999, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        }
+                        setValue('max', checked ? null : 99999, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
                       }}
                       className="sr-only peer"
                     />
@@ -394,8 +392,9 @@ export function CapacityStep({
                 </label>
               </div>
 
-              {/* Manual number inputs */}
+              {/* Manual Number Inputs */}
               <div className="grid grid-cols-2 gap-4">
+                {/* Minimum Input */}
                 <div>
                   <label
                     htmlFor="capacity-min-input"
@@ -410,17 +409,12 @@ export function CapacityStep({
                     max={99999}
                     disabled={isMinUnlimited}
                     value={localMinInput}
-                    onChange={(e) => {
-                      // Only update local state while typing
-                      setLocalMinInput(e.target.value);
-                    }}
+                    onChange={(e) => setLocalMinInput(e.target.value)}
                     onBlur={() => {
                       if (isMinUnlimited) return;
 
                       const parsed = parseInt(localMinInput, 10);
-
                       if (isNaN(parsed) || localMinInput === '') {
-                        // Reset to current value if invalid
                         setLocalMinInput(String(minVal));
                         return;
                       }
@@ -429,7 +423,6 @@ export function CapacityStep({
                       const rounded = Math.round(parsed / 10) * 10;
                       const clamped = Math.max(1, Math.min(99999, rounded));
 
-                      // Apply to form
                       setValue('min', clamped, {
                         shouldDirty: true,
                         shouldValidate: true,
@@ -440,6 +433,7 @@ export function CapacityStep({
                   />
                 </div>
 
+                {/* Maximum Input */}
                 <div>
                   <label
                     htmlFor="capacity-max-input"
@@ -454,17 +448,12 @@ export function CapacityStep({
                     max={99999}
                     disabled={isMaxUnlimited}
                     value={localMaxInput}
-                    onChange={(e) => {
-                      // Only update local state while typing
-                      setLocalMaxInput(e.target.value);
-                    }}
+                    onChange={(e) => setLocalMaxInput(e.target.value)}
                     onBlur={() => {
                       if (isMaxUnlimited) return;
 
                       const parsed = parseInt(localMaxInput, 10);
-
                       if (isNaN(parsed) || localMaxInput === '') {
-                        // Reset to current value if invalid
                         setLocalMaxInput(String(maxVal));
                         return;
                       }
@@ -473,7 +462,6 @@ export function CapacityStep({
                       const rounded = Math.round(parsed / 10) * 10;
                       const clamped = Math.max(1, Math.min(99999, rounded));
 
-                      // Apply to form
                       setValue('max', clamped, {
                         shouldDirty: true,
                         shouldValidate: true,
@@ -485,7 +473,7 @@ export function CapacityStep({
                 </div>
               </div>
 
-              {/* Info banner */}
+              {/* Info Banner for Unlimited Options */}
               {(isMinUnlimited || isMaxUnlimited) && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
                   <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
@@ -501,6 +489,7 @@ export function CapacityStep({
             </div>
           )}
 
+          {/* Error Messages */}
           {(errors.min || errors.max) && (
             <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
               <span className="text-base">⚠️</span>
@@ -514,7 +503,7 @@ export function CapacityStep({
         </div>
       )}
 
-      {/* Info hint */}
+      {/* Info Hint */}
       <div
         id={capNoteId}
         role="note"

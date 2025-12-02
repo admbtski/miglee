@@ -2,6 +2,7 @@
 
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { ShareButton } from '@/components/ui/share-button';
+import { ReportButton } from '@/components/ui/report-button';
 import { ShareModal } from '@/components/ui/share-modal';
 import { useIntentDetailQuery } from '@/lib/api/intents';
 import { useMeQuery } from '@/lib/api/auth';
@@ -16,7 +17,6 @@ import {
   Users,
   Video,
   Wifi,
-  Flag,
   MessageCircle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -340,14 +340,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
             {/* Action Buttons - Top Right Corner */}
             <div className="absolute z-10 flex items-center gap-2 top-4 right-4 md:top-6 md:right-6">
-              <button
-                onClick={() => setReportOpen(true)}
-                className="flex items-center justify-center w-10 h-10 transition-all rounded-full shadow-lg md:w-11 md:h-11 bg-white/90 hover:bg-white dark:bg-zinc-800/90 dark:hover:bg-zinc-800 backdrop-blur-sm hover:shadow-xl"
-                aria-label="Zgłoś wydarzenie"
-                title="Zgłoś wydarzenie"
-              >
-                <Flag className="w-4 h-4 text-red-600 dark:text-red-400 md:w-[18px] md:h-[18px]" />
-              </button>
+              <ReportButton onClick={() => setReportOpen(true)} size="md" />
               <ShareButton onClick={() => setShareOpen(true)} size="md" />
               <FavouriteButton
                 intentId={eventData.id}
@@ -391,11 +384,13 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 opacity-80" />
                     <span>
+                      {/* todo: time formatting */}
                       {new Date(eventData.startISO).toLocaleDateString(
                         'pl-PL',
                         {
                           day: 'numeric',
                           month: 'long',
+                          year: 'numeric',
                         }
                       )}
                     </span>
@@ -404,6 +399,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4 opacity-80" />
                     <span>
+                      {/* todo: time formatting */}
                       {new Date(eventData.startISO).toLocaleTimeString(
                         'pl-PL',
                         {

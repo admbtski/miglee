@@ -31,7 +31,7 @@ export function NavDrawer({
   return (
     <AnimatePresence>
       {open && (
-        <>
+        <div className="bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
           <motion.button
             type="button"
             className="fixed inset-0 z-50 cursor-pointer bg-black/40"
@@ -99,7 +99,7 @@ export function NavDrawer({
               </div>
             </div>
           </motion.aside>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );
