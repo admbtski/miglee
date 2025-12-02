@@ -1,6 +1,0 @@
--- AlterTable
-ALTER TABLE "public"."intents" 
-  ALTER COLUMN "min" DROP NOT NULL,
-  ALTER COLUMN "min" DROP DEFAULT,
-  ALTER COLUMN "max" DROP NOT NULL,
-  ALTER COLUMN "max" DROP DEFAULT;

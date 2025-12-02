@@ -1,3 +1,6 @@
+-- Enable PostGIS extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- CreateEnum
 CREATE TYPE "public"."Visibility" AS ENUM ('PUBLIC', 'HIDDEN');
 
@@ -11,7 +14,7 @@ CREATE TYPE "public"."MembersVisibility" AS ENUM ('PUBLIC', 'AFTER_JOIN', 'HIDDE
 CREATE TYPE "public"."JoinMode" AS ENUM ('OPEN', 'REQUEST', 'INVITE_ONLY');
 
 -- CreateEnum
-CREATE TYPE "public"."Mode" AS ENUM ('ONE_TO_ONE', 'GROUP');
+CREATE TYPE "public"."Mode" AS ENUM ('ONE_TO_ONE', 'GROUP', 'CUSTOM');
 
 -- CreateEnum
 CREATE TYPE "public"."MeetingKind" AS ENUM ('ONSITE', 'ONLINE', 'HYBRID');
@@ -35,22 +38,31 @@ CREATE TYPE "public"."NotificationKind" AS ENUM ('INTENT_CREATED', 'INTENT_UPDAT
 CREATE TYPE "public"."NotificationEntity" AS ENUM ('INTENT', 'MESSAGE', 'PAYMENT', 'INVOICE', 'USER', 'REVIEW', 'SYSTEM', 'OTHER');
 
 -- CreateEnum
-CREATE TYPE "public"."SponsorPlan" AS ENUM ('BASIC', 'PLUS', 'PRO');
-
--- CreateEnum
 CREATE TYPE "public"."SponsorshipStatus" AS ENUM ('PENDING', 'ACTIVE', 'EXPIRED', 'CANCELED');
 
 -- CreateEnum
-CREATE TYPE "public"."SubscriptionPlan" AS ENUM ('BASIC', 'PLUS', 'PRO');
+CREATE TYPE "public"."SubscriptionPlan" AS ENUM ('PLUS', 'PRO');
+
+-- CreateEnum
+CREATE TYPE "public"."UserPlanSource" AS ENUM ('SUBSCRIPTION', 'ONE_OFF');
+
+-- CreateEnum
+CREATE TYPE "public"."BillingPeriod" AS ENUM ('MONTHLY', 'YEARLY');
 
 -- CreateEnum
 CREATE TYPE "public"."SubscriptionStatus" AS ENUM ('INCOMPLETE', 'TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELED', 'UNPAID', 'PAUSED');
+
+-- CreateEnum
+CREATE TYPE "public"."IntentPlan" AS ENUM ('FREE', 'PLUS', 'PRO');
 
 -- CreateEnum
 CREATE TYPE "public"."MemberEvent" AS ENUM ('JOIN', 'REQUEST', 'APPROVE', 'REJECT', 'LEAVE', 'KICK', 'BAN', 'UNBAN', 'INVITE', 'ACCEPT_INVITE', 'CANCEL_REQUEST', 'WAITLIST', 'WAITLIST_LEAVE', 'WAITLIST_PROMOTE');
 
 -- CreateEnum
 CREATE TYPE "public"."JoinQuestionType" AS ENUM ('TEXT', 'SINGLE_CHOICE', 'MULTI_CHOICE');
+
+-- CreateEnum
+CREATE TYPE "public"."FeedbackQuestionType" AS ENUM ('TEXT', 'SINGLE_CHOICE', 'MULTI_CHOICE');
 
 -- CreateEnum
 CREATE TYPE "public"."ReportEntity" AS ENUM ('INTENT', 'COMMENT', 'REVIEW', 'USER', 'MESSAGE');
@@ -60,16 +72,20 @@ CREATE TABLE "public"."users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "imageUrl" TEXT,
+    "avatarKey" TEXT,
     "role" "public"."Role" NOT NULL DEFAULT 'USER',
     "verifiedAt" TIMESTAMP(3),
     "suspendedAt" TIMESTAMP(3),
     "suspensionReason" TEXT,
+    "deletedAt" TIMESTAMP(3),
+    "deletedReason" TEXT,
+    "restorationToken" TEXT,
+    "restorationTokenExpiry" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "lastSeenAt" TIMESTAMP(3),
-    "locale" TEXT,
-    "tz" TEXT,
+    "locale" TEXT NOT NULL DEFAULT 'en',
+    "timezone" TEXT NOT NULL DEFAULT 'UTC',
     "acceptedTermsAt" TIMESTAMP(3),
     "acceptedMarketingAt" TIMESTAMP(3),
 
@@ -107,8 +123,8 @@ CREATE TABLE "public"."intents" (
     "visibility" "public"."Visibility" NOT NULL DEFAULT 'PUBLIC',
     "joinMode" "public"."JoinMode" NOT NULL DEFAULT 'OPEN',
     "mode" "public"."Mode" NOT NULL DEFAULT 'GROUP',
-    "min" INTEGER NOT NULL DEFAULT 2,
-    "max" INTEGER NOT NULL DEFAULT 50,
+    "min" INTEGER,
+    "max" INTEGER,
     "startAt" TIMESTAMP(3) NOT NULL,
     "endAt" TIMESTAMP(3) NOT NULL,
     "joinOpensMinutesBeforeStart" INTEGER,
@@ -128,13 +144,18 @@ CREATE TABLE "public"."intents" (
     "radiusKm" DOUBLE PRECISION,
     "cityName" TEXT,
     "cityPlaceId" TEXT,
+    "geom" geography(Point, 4326),
     "levels" "public"."Level"[] DEFAULT ARRAY[]::"public"."Level"[],
+    "coverKey" TEXT,
     "addressVisibility" "public"."AddressVisibility" NOT NULL DEFAULT 'PUBLIC',
     "membersVisibility" "public"."MembersVisibility" NOT NULL DEFAULT 'PUBLIC',
     "joinedCount" INTEGER NOT NULL DEFAULT 0,
     "commentsCount" INTEGER NOT NULL DEFAULT 0,
     "messagesCount" INTEGER NOT NULL DEFAULT 0,
     "savedCount" INTEGER NOT NULL DEFAULT 0,
+    "sponsorshipPlan" "public"."IntentPlan" NOT NULL DEFAULT 'FREE',
+    "boostedAt" TIMESTAMP(3),
+    "highlightColor" TEXT,
     "ownerId" TEXT,
     "canceledAt" TIMESTAMP(3),
     "canceledById" TEXT,
@@ -190,6 +211,9 @@ CREATE TABLE "public"."comments" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "deletedById" TEXT,
+    "hiddenAt" TIMESTAMP(3),
+    "hiddenById" TEXT,
 
     CONSTRAINT "comments_pkey" PRIMARY KEY ("id")
 );
@@ -204,6 +228,9 @@ CREATE TABLE "public"."reviews" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "deletedById" TEXT,
+    "hiddenAt" TIMESTAMP(3),
+    "hiddenById" TEXT,
 
     CONSTRAINT "reviews_pkey" PRIMARY KEY ("id")
 );
@@ -339,13 +366,15 @@ CREATE TABLE "public"."reports" (
 CREATE TABLE "public"."user_subscriptions" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "plan" "public"."SubscriptionPlan" NOT NULL DEFAULT 'BASIC',
+    "plan" "public"."SubscriptionPlan" NOT NULL,
+    "billingPeriod" "public"."BillingPeriod" NOT NULL DEFAULT 'MONTHLY',
     "status" "public"."SubscriptionStatus" NOT NULL DEFAULT 'INCOMPLETE',
-    "stripeCustomerId" TEXT,
-    "stripeSubscriptionId" TEXT,
+    "stripeCustomerId" TEXT NOT NULL,
+    "stripeSubscriptionId" TEXT NOT NULL,
     "stripePriceId" TEXT,
     "currentPeriodStart" TIMESTAMP(3),
     "currentPeriodEnd" TIMESTAMP(3),
+    "trialEndsAt" TIMESTAMP(3),
     "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
     "canceledAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -355,21 +384,63 @@ CREATE TABLE "public"."user_subscriptions" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."user_plan_periods" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "plan" "public"."SubscriptionPlan" NOT NULL,
+    "source" "public"."UserPlanSource" NOT NULL,
+    "billingPeriod" "public"."BillingPeriod" NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'pln',
+    "stripeCustomerId" TEXT,
+    "stripeSubscriptionId" TEXT,
+    "stripePaymentIntentId" TEXT,
+    "stripeCheckoutSessionId" TEXT,
+    "startsAt" TIMESTAMP(3) NOT NULL,
+    "endsAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_plan_periods_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."event_sponsorships" (
     "id" TEXT NOT NULL,
     "intentId" TEXT NOT NULL,
     "sponsorId" TEXT NOT NULL,
-    "plan" "public"."SponsorPlan" NOT NULL DEFAULT 'BASIC',
+    "plan" "public"."IntentPlan" NOT NULL,
     "status" "public"."SponsorshipStatus" NOT NULL DEFAULT 'PENDING',
-    "highlightOn" BOOLEAN NOT NULL DEFAULT false,
-    "startedAt" TIMESTAMP(3),
+    "startsAt" TIMESTAMP(3),
     "endsAt" TIMESTAMP(3),
+    "boostsTotal" INTEGER NOT NULL DEFAULT 0,
     "boostsUsed" INTEGER NOT NULL DEFAULT 0,
-    "localPushes" INTEGER NOT NULL DEFAULT 0,
+    "localPushesTotal" INTEGER NOT NULL DEFAULT 0,
+    "localPushesUsed" INTEGER NOT NULL DEFAULT 0,
+    "stripePaymentIntentId" TEXT,
+    "stripeCheckoutSessionId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "event_sponsorships_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."event_sponsorship_periods" (
+    "id" TEXT NOT NULL,
+    "intentId" TEXT NOT NULL,
+    "sponsorId" TEXT NOT NULL,
+    "plan" "public"."IntentPlan" NOT NULL,
+    "actionType" TEXT NOT NULL DEFAULT 'new',
+    "boostsAdded" INTEGER NOT NULL DEFAULT 0,
+    "localPushesAdded" INTEGER NOT NULL DEFAULT 0,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'pln',
+    "stripeCustomerId" TEXT,
+    "stripePaymentIntentId" TEXT,
+    "stripeCheckoutSessionId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "event_sponsorship_periods_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -491,7 +562,7 @@ CREATE TABLE "public"."user_profiles" (
     "country" TEXT,
     "homeLat" DOUBLE PRECISION,
     "homeLng" DOUBLE PRECISION,
-    "coverUrl" TEXT,
+    "coverKey" TEXT,
     "speaks" TEXT[],
     "interests" TEXT[],
     "preferredMode" "public"."Mode",
@@ -548,7 +619,7 @@ CREATE TABLE "public"."user_social_links" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."user_disciplines" (
+CREATE TABLE "public"."user_category_levels" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -557,7 +628,7 @@ CREATE TABLE "public"."user_disciplines" (
     "level" "public"."Level" NOT NULL,
     "notes" TEXT,
 
-    CONSTRAINT "user_disciplines_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "user_category_levels_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -617,6 +688,65 @@ CREATE TABLE "public"."intent_join_answers" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."intent_feedback_questions" (
+    "id" TEXT NOT NULL,
+    "intentId" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "type" "public"."FeedbackQuestionType" NOT NULL DEFAULT 'TEXT',
+    "label" TEXT NOT NULL,
+    "helpText" TEXT,
+    "required" BOOLEAN NOT NULL DEFAULT false,
+    "options" JSONB,
+    "maxLength" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "intent_feedback_questions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."intent_feedback_answers" (
+    "id" TEXT NOT NULL,
+    "intentId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
+    "answer" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "intent_feedback_answers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."intent_faqs" (
+    "id" TEXT NOT NULL,
+    "intentId" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "question" TEXT NOT NULL,
+    "answer" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "intent_faqs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."media_assets" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "blurhash" TEXT,
+    "width" INTEGER,
+    "height" INTEGER,
+    "mimeType" TEXT,
+    "ownerId" TEXT,
+    "purpose" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "media_assets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."_CategoryToIntent" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
@@ -670,6 +800,9 @@ CREATE INDEX "intents_startAt_idx" ON "public"."intents"("startAt");
 
 -- CreateIndex
 CREATE INDEX "intents_endAt_idx" ON "public"."intents"("endAt");
+
+-- CreateIndex
+CREATE INDEX "intents_boostedAt_idx" ON "public"."intents"("boostedAt");
 
 -- CreateIndex
 CREATE INDEX "intents_visibility_idx" ON "public"."intents"("visibility");
@@ -753,6 +886,12 @@ CREATE INDEX "comments_intentId_threadId_createdAt_idx" ON "public"."comments"("
 CREATE INDEX "comments_parentId_createdAt_idx" ON "public"."comments"("parentId", "createdAt");
 
 -- CreateIndex
+CREATE INDEX "comments_deletedById_idx" ON "public"."comments"("deletedById");
+
+-- CreateIndex
+CREATE INDEX "comments_hiddenById_idx" ON "public"."comments"("hiddenById");
+
+-- CreateIndex
 CREATE INDEX "reviews_intentId_createdAt_idx" ON "public"."reviews"("intentId", "createdAt");
 
 -- CreateIndex
@@ -760,6 +899,12 @@ CREATE INDEX "reviews_authorId_createdAt_idx" ON "public"."reviews"("authorId", 
 
 -- CreateIndex
 CREATE INDEX "reviews_intentId_rating_createdAt_idx" ON "public"."reviews"("intentId", "rating", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "reviews_deletedById_idx" ON "public"."reviews"("deletedById");
+
+-- CreateIndex
+CREATE INDEX "reviews_hiddenById_idx" ON "public"."reviews"("hiddenById");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "reviews_intentId_authorId_key" ON "public"."reviews"("intentId", "authorId");
@@ -846,13 +991,22 @@ CREATE INDEX "reports_entity_entityId_idx" ON "public"."reports"("entity", "enti
 CREATE INDEX "reports_status_createdAt_idx" ON "public"."reports"("status", "createdAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "user_subscriptions_stripeSubscriptionId_key" ON "public"."user_subscriptions"("stripeSubscriptionId");
+
+-- CreateIndex
 CREATE INDEX "user_subscriptions_userId_status_idx" ON "public"."user_subscriptions"("userId", "status");
 
 -- CreateIndex
-CREATE INDEX "user_subscriptions_stripeSubscriptionId_idx" ON "public"."user_subscriptions"("stripeSubscriptionId");
+CREATE INDEX "user_subscriptions_currentPeriodEnd_idx" ON "public"."user_subscriptions"("currentPeriodEnd");
 
 -- CreateIndex
-CREATE INDEX "user_subscriptions_currentPeriodEnd_idx" ON "public"."user_subscriptions"("currentPeriodEnd");
+CREATE INDEX "user_plan_periods_userId_endsAt_idx" ON "public"."user_plan_periods"("userId", "endsAt");
+
+-- CreateIndex
+CREATE INDEX "user_plan_periods_stripeSubscriptionId_idx" ON "public"."user_plan_periods"("stripeSubscriptionId");
+
+-- CreateIndex
+CREATE INDEX "user_plan_periods_stripePaymentIntentId_idx" ON "public"."user_plan_periods"("stripePaymentIntentId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "event_sponsorships_intentId_key" ON "public"."event_sponsorships"("intentId");
@@ -862,6 +1016,15 @@ CREATE INDEX "event_sponsorships_plan_status_idx" ON "public"."event_sponsorship
 
 -- CreateIndex
 CREATE INDEX "event_sponsorships_endsAt_idx" ON "public"."event_sponsorships"("endsAt");
+
+-- CreateIndex
+CREATE INDEX "event_sponsorship_periods_sponsorId_idx" ON "public"."event_sponsorship_periods"("sponsorId");
+
+-- CreateIndex
+CREATE INDEX "event_sponsorship_periods_intentId_idx" ON "public"."event_sponsorship_periods"("intentId");
+
+-- CreateIndex
+CREATE INDEX "event_sponsorship_periods_createdAt_idx" ON "public"."event_sponsorship_periods"("createdAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "payment_events_eventId_key" ON "public"."payment_events"("eventId");
@@ -936,13 +1099,13 @@ CREATE INDEX "user_social_links_userId_idx" ON "public"."user_social_links"("use
 CREATE UNIQUE INDEX "user_social_links_userId_provider_key" ON "public"."user_social_links"("userId", "provider");
 
 -- CreateIndex
-CREATE INDEX "user_disciplines_userId_idx" ON "public"."user_disciplines"("userId");
+CREATE INDEX "user_category_levels_userId_idx" ON "public"."user_category_levels"("userId");
 
 -- CreateIndex
-CREATE INDEX "user_disciplines_categoryId_idx" ON "public"."user_disciplines"("categoryId");
+CREATE INDEX "user_category_levels_categoryId_idx" ON "public"."user_category_levels"("categoryId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_disciplines_userId_categoryId_key" ON "public"."user_disciplines"("userId", "categoryId");
+CREATE UNIQUE INDEX "user_category_levels_userId_categoryId_key" ON "public"."user_category_levels"("userId", "categoryId");
 
 -- CreateIndex
 CREATE INDEX "user_availability_userId_weekday_idx" ON "public"."user_availability"("userId", "weekday");
@@ -964,6 +1127,33 @@ CREATE INDEX "intent_join_answers_questionId_idx" ON "public"."intent_join_answe
 
 -- CreateIndex
 CREATE UNIQUE INDEX "intent_join_answers_intentId_userId_questionId_key" ON "public"."intent_join_answers"("intentId", "userId", "questionId");
+
+-- CreateIndex
+CREATE INDEX "intent_feedback_questions_intentId_order_idx" ON "public"."intent_feedback_questions"("intentId", "order");
+
+-- CreateIndex
+CREATE INDEX "intent_feedback_answers_intentId_userId_idx" ON "public"."intent_feedback_answers"("intentId", "userId");
+
+-- CreateIndex
+CREATE INDEX "intent_feedback_answers_questionId_idx" ON "public"."intent_feedback_answers"("questionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "intent_feedback_answers_intentId_userId_questionId_key" ON "public"."intent_feedback_answers"("intentId", "userId", "questionId");
+
+-- CreateIndex
+CREATE INDEX "intent_faqs_intentId_order_idx" ON "public"."intent_faqs"("intentId", "order");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "media_assets_key_key" ON "public"."media_assets"("key");
+
+-- CreateIndex
+CREATE INDEX "media_assets_ownerId_idx" ON "public"."media_assets"("ownerId");
+
+-- CreateIndex
+CREATE INDEX "media_assets_purpose_idx" ON "public"."media_assets"("purpose");
+
+-- CreateIndex
+CREATE INDEX "media_assets_createdAt_idx" ON "public"."media_assets"("createdAt");
 
 -- CreateIndex
 CREATE INDEX "_CategoryToIntent_B_index" ON "public"."_CategoryToIntent"("B");
@@ -1002,6 +1192,12 @@ ALTER TABLE "public"."intent_member_events" ADD CONSTRAINT "intent_member_events
 ALTER TABLE "public"."intent_member_events" ADD CONSTRAINT "intent_member_events_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_deletedById_fkey" FOREIGN KEY ("deletedById") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_hiddenById_fkey" FOREIGN KEY ("hiddenById") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_intentId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."intents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1009,6 +1205,12 @@ ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_authorId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "public"."comments" ADD CONSTRAINT "comments_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "public"."comments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."reviews" ADD CONSTRAINT "reviews_deletedById_fkey" FOREIGN KEY ("deletedById") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."reviews" ADD CONSTRAINT "reviews_hiddenById_fkey" FOREIGN KEY ("hiddenById") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."reviews" ADD CONSTRAINT "reviews_intentId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."intents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1086,10 +1288,22 @@ ALTER TABLE "public"."reports" ADD CONSTRAINT "reports_reporterId_fkey" FOREIGN 
 ALTER TABLE "public"."user_subscriptions" ADD CONSTRAINT "user_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "public"."user_plan_periods" ADD CONSTRAINT "user_plan_periods_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "public"."event_sponsorships" ADD CONSTRAINT "event_sponsorships_intentId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."intents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."event_sponsorships" ADD CONSTRAINT "event_sponsorships_sponsorId_fkey" FOREIGN KEY ("sponsorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."event_sponsorship_periods" ADD CONSTRAINT "event_sponsorship_periods_sponsorshipId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."event_sponsorships"("intentId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."event_sponsorship_periods" ADD CONSTRAINT "event_sponsorship_periods_intentId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."intents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."event_sponsorship_periods" ADD CONSTRAINT "event_sponsorship_periods_sponsorId_fkey" FOREIGN KEY ("sponsorId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."intent_invite_links" ADD CONSTRAINT "intent_invite_links_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "public"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1152,10 +1366,10 @@ ALTER TABLE "public"."user_stats" ADD CONSTRAINT "user_stats_userId_fkey" FOREIG
 ALTER TABLE "public"."user_social_links" ADD CONSTRAINT "user_social_links_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."user_disciplines" ADD CONSTRAINT "user_disciplines_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."user_category_levels" ADD CONSTRAINT "user_category_levels_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."user_disciplines" ADD CONSTRAINT "user_disciplines_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "public"."categories"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."user_category_levels" ADD CONSTRAINT "user_category_levels_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "public"."categories"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."user_availability" ADD CONSTRAINT "user_availability_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1174,6 +1388,21 @@ ALTER TABLE "public"."intent_join_answers" ADD CONSTRAINT "intent_join_answers_q
 
 -- AddForeignKey
 ALTER TABLE "public"."intent_join_answers" ADD CONSTRAINT "intent_join_answers_intentId_userId_fkey" FOREIGN KEY ("intentId", "userId") REFERENCES "public"."intent_members"("intentId", "userId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."intent_feedback_questions" ADD CONSTRAINT "intent_feedback_questions_intentId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."intents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."intent_feedback_answers" ADD CONSTRAINT "intent_feedback_answers_intentId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."intents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."intent_feedback_answers" ADD CONSTRAINT "intent_feedback_answers_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "public"."intent_feedback_questions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."intent_feedback_answers" ADD CONSTRAINT "intent_feedback_answers_intentId_userId_fkey" FOREIGN KEY ("intentId", "userId") REFERENCES "public"."intent_members"("intentId", "userId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."intent_faqs" ADD CONSTRAINT "intent_faqs_intentId_fkey" FOREIGN KEY ("intentId") REFERENCES "public"."intents"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."_CategoryToIntent" ADD CONSTRAINT "_CategoryToIntent_A_fkey" FOREIGN KEY ("A") REFERENCES "public"."categories"("id") ON DELETE CASCADE ON UPDATE CASCADE;
