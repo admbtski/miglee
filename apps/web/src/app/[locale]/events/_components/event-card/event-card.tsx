@@ -221,12 +221,19 @@ export const EventCard = memo(function EventCard({
   const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
 
   // Get highlight ring classes (only if boosted)
-  const highlightRing = useMemo(
+  {
+    /*  const highlightRing = useMemo(
     () =>
       isBoosted && !isCanceled && !isDeleted
         ? getCardHighlightClasses(highlightColor, isBoosted)
         : { className: '' },
     [isBoosted, isCanceled, isDeleted, highlightColor]
+  );*/
+  }
+
+  const highlightRing = useMemo(
+    () => getCardHighlightClasses(highlightColor, true),
+    [highlightColor]
   );
 
   const handleMouseEnter = useCallback(() => {
