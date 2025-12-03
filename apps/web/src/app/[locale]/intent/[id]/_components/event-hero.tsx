@@ -5,7 +5,6 @@ import { Level } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { formatDate, formatTime } from '@/lib/utils/date-format';
 import type { EventDetailsData } from '@/types/event-details';
-import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import { formatParticipantsShort } from '@/lib/utils/capacity-formatter';
 import {
   Calendar,
@@ -83,16 +82,6 @@ export function EventHero({ event }: EventHeroProps) {
     }
   };
 
-  // Get highlight ring classes based on highlightColor
-  const highlightRingClasses = useMemo(
-    () =>
-      getCardHighlightClasses(
-        isCanceled || isDeleted ? null : event.highlightColor,
-        isBoosted
-      ),
-    [isBoosted, isCanceled, isDeleted, event.highlightColor]
-  );
-
   const sortedLevels = useMemo(
     () => sortLevels(event.levels as Level[]),
     [event.levels]
@@ -140,10 +129,7 @@ export function EventHero({ event }: EventHeroProps) {
   ]);
 
   return (
-    <div
-      className={`relative rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightRingClasses.className}`}
-      style={highlightRingClasses.style}
-    >
+    <div className="relative rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300">
       {/* Canceled/Deleted Banner */}
       {isCanceled && (
         <div className="flex items-center gap-2 p-3 mb-4 text-red-900 rounded-xl bg-red-50 dark:bg-red-950 dark:text-red-100">

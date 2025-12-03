@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import type { EventDetailsData } from '@/types/event-details';
 import { useMeQuery } from '@/lib/api/auth';
-import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import {
   Settings,
   Edit3,
@@ -19,7 +18,6 @@ import {
   Star,
   BarChart3,
 } from 'lucide-react';
-import { useMemo } from 'react';
 
 type EventAdminPanelProps = {
   event: EventDetailsData;
@@ -61,21 +59,6 @@ export function EventAdminPanel({
     isAppAdmin ||
     isAppModerator;
 
-  // Check if boost is active
-  const isBoosted = useMemo(() => {
-    if (!event.boostedAt) return false;
-    const boostedTime = new Date(event.boostedAt).getTime();
-    const now = Date.now();
-    const elapsed = now - boostedTime;
-    return elapsed < 24 * 60 * 60 * 1000;
-  }, [event.boostedAt]);
-
-  // Get highlight classes
-  const highlightClasses = useMemo(
-    () => getCardHighlightClasses(event.highlightColor, isBoosted),
-    [event.highlightColor, isBoosted]
-  );
-
   if (!canAccessPanel) {
     return null;
   }
@@ -93,10 +76,7 @@ export function EventAdminPanel({
     isAppModerator;
 
   return (
-    <div
-      className={`p-4 border border-blue-200 rounded-2xl bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30 transition-all duration-300 ${highlightClasses.className}`}
-      style={highlightClasses.style}
-    >
+    <div className="p-4 border border-blue-200 rounded-2xl bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30 transition-all duration-300">
       <div className="flex items-center gap-2 mb-3">
         <Settings className="w-4 h-4 text-blue-600 dark:text-blue-400" />
         <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">

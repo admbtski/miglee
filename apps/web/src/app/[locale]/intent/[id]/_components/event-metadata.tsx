@@ -2,8 +2,6 @@ import type { EventDetailsData } from '@/types/event-details';
 import { Calendar, Clock, FileText, InfoIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { useMemo } from 'react';
-import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 
 type EventMetadataProps = {
   event: EventDetailsData;
@@ -14,26 +12,8 @@ export function EventMetadata({ event }: EventMetadataProps) {
   const updatedDate = new Date(event.updatedAt);
   const isUpdated = updatedDate.getTime() - createdDate.getTime() > 60000; // More than 1 minute difference
 
-  // Check if boost is active
-  const isBoosted = useMemo(() => {
-    if (!event.boostedAt) return false;
-    const boostedTime = new Date(event.boostedAt).getTime();
-    const now = Date.now();
-    const elapsed = now - boostedTime;
-    return elapsed < 24 * 60 * 60 * 1000;
-  }, [event.boostedAt]);
-
-  // Get highlight classes
-  const highlightClasses = useMemo(
-    () => getCardHighlightClasses(event.highlightColor, isBoosted),
-    [event.highlightColor, isBoosted]
-  );
-
   return (
-    <div
-      className={`rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
-      style={highlightClasses.style}
-    >
+    <div className="rounded-2xl border border-zinc-200 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300">
       {/* Header */}
       <div className="mb-6 flex items-center gap-2">
         <InfoIcon className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />

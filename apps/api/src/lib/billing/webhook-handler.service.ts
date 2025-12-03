@@ -270,13 +270,8 @@ async function handleEventSponsorshipCheckout(
   session: Stripe.Checkout.Session,
   metadata: EventSponsorshipMetadata
 ): Promise<void> {
-  const {
-    eventSponsorshipId,
-    intentId,
-    actionType,
-    actionPackageSize,
-    highlightColor,
-  } = metadata;
+  const { eventSponsorshipId, intentId, actionType, actionPackageSize } =
+    metadata;
 
   if (!session.payment_intent) {
     logger.warn(
@@ -302,22 +297,12 @@ async function handleEventSponsorshipCheckout(
       : undefined,
   });
 
-  // Update Intent with highlight color if provided (only for new/upgrade, not reload)
-  if (highlightColor && actionType !== 'reload') {
-    await prisma.intent.update({
-      where: { id: intentId },
-      data: { highlightColor },
-    });
-    logger.info({ intentId, highlightColor }, 'Updated intent highlight color');
-  }
-
   logger.info(
     {
       intentId,
       sponsorshipId: eventSponsorshipId,
       actionType,
       actionPackageSize,
-      highlightColor,
     },
     'Event sponsorship checkout processed'
   );

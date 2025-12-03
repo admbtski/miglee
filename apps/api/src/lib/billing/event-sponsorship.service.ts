@@ -30,7 +30,6 @@ export interface CreateEventSponsorshipCheckoutParams {
   plan: IntentPlan;
   actionType?: 'new' | 'upgrade' | 'reload';
   actionPackageSize?: ActionPackageSize;
-  highlightColor?: string; // Hex color for highlight ring
 }
 
 export async function createEventSponsorshipCheckout(
@@ -44,7 +43,6 @@ export async function createEventSponsorshipCheckout(
     plan,
     actionType = 'new',
     actionPackageSize,
-    highlightColor,
   } = params;
 
   if (plan === 'FREE') {
@@ -227,7 +225,6 @@ export async function createEventSponsorshipCheckout(
     plan,
     actionType,
     actionPackageSize: String(actionPackageSize || actionsToAdd),
-    highlightColor: highlightColor || '', // Store custom color for later
   };
 
   // Create checkout session

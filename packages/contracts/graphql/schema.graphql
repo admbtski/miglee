@@ -877,7 +877,6 @@ type Intent {
   sponsorshipPlan: IntentPlan!
   sponsorship: EventSponsorship
   boostedAt: DateTime # Last time event was boosted (for priority sorting)
-  highlightColor: String # Custom highlight/ring color (hex format: #RRGGBB) - DEPRECATED: use appearance.config
   # Appearance customization
   appearance: IntentAppearance
 
@@ -1598,7 +1597,6 @@ input CreateEventSponsorshipCheckoutInput {
   plan: IntentPlan!
   actionType: String
   actionPackageSize: Int
-  highlightColor: String # Hex color for event highlight ring
 }
 
 # ------------------------------------------------------------------------------
@@ -2220,9 +2218,6 @@ type Mutation {
 
   "Use a local push notification for event sponsorship"
   useLocalPush(intentId: ID!): Boolean!
-
-  "Update intent highlight color"
-  updateIntentHighlightColor(intentId: ID!, color: String): Boolean!
 
   "Update intent appearance configuration"
   updateIntentAppearance(input: UpdateIntentAppearanceInput!): IntentAppearance!

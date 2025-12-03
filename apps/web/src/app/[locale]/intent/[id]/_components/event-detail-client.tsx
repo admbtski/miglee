@@ -45,12 +45,6 @@ import {
 import { DeleteIntentModals } from '@/app/[locale]/account/intents/_components/delete-intent-modals';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildIntentCoverUrl } from '@/lib/media/url';
-import {
-  isBoostActive,
-  getHighlightBackgroundStyle,
-  getCoverHighlightClasses,
-  getCardHighlightClasses,
-} from '@/lib/utils/is-boost-active';
 
 type EventDetailClientProps = {
   intentId: string;
@@ -93,38 +87,6 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   const isRejected = userMembership?.status === 'REJECTED';
   const isBanned = userMembership?.status === 'BANNED';
   const isWaitlisted = userMembership?.status === 'WAITLIST';
-
-  // Check if boost is active (must be before early returns)
-  const isBoosted = useMemo(
-    () => isBoostActive(intent?.boostedAt),
-    [intent?.boostedAt]
-  );
-
-  // Get subtle highlight background for page (must be before early returns)
-  const subtleHighlightStyle = useMemo(
-    () =>
-      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'subtle'),
-    [intent?.highlightColor, isBoosted]
-  );
-
-  // Get medium highlight for navbar (must be before early returns)
-  const navbarHighlightStyle = useMemo(
-    () =>
-      getHighlightBackgroundStyle(intent?.highlightColor, isBoosted, 'subtle'),
-    [intent?.highlightColor, isBoosted]
-  );
-
-  // Get highlight ring for cover image (must be before early returns)
-  const coverHighlightRing = useMemo(
-    () => getCoverHighlightClasses(intent?.highlightColor, isBoosted),
-    [intent?.highlightColor, isBoosted]
-  );
-
-  // Get highlight classes for cards (must be before early returns)
-  const cardHighlightClasses = useMemo(
-    () => getCardHighlightClasses(intent?.highlightColor, isBoosted),
-    [intent?.highlightColor, isBoosted]
-  );
 
   // Determine if user can see members based on visibility settings
   const canSeeMembers = useMemo(() => {
@@ -248,8 +210,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
           localPushesUsed: intent.sponsorship.localPushesUsed,
         }
       : undefined,
-    // Highlight and boost
-    highlightColor: intent.highlightColor,
+    // Boost
     boostedAt: intent.boostedAt,
     // TODO: inviteLinks field not in GraphQL fragment yet
     // inviteLinks: intent.inviteLinks?.map((link: any) => ({
@@ -293,15 +254,9 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
   };
 
   return (
-    <div
-      className="min-h-screen pb-20 transition-colors duration-500 bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100"
-      style={isBoosted ? subtleHighlightStyle : undefined}
-    >
+    <div className="min-h-screen pb-20 transition-colors duration-500 bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       {/* Back Navigation */}
-      <div
-        className="transition-colors duration-500 border-b border-zinc-200 backdrop-blur dark:border-zinc-800"
-        style={isBoosted ? navbarHighlightStyle : undefined}
-      >
+      <div className="transition-colors duration-500 border-b border-zinc-200 backdrop-blur dark:border-zinc-800">
         <div className="container max-w-6xl px-4 py-3 mx-auto">
           <a
             href="/"
@@ -318,10 +273,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
       */}
       <div className="container max-w-6xl px-4 py-6 mx-auto">
         <div className="mb-6">
-          <div
-            className={`relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)] transition-all duration-500 ${coverHighlightRing.className}`}
-            style={coverHighlightRing.style}
-          >
+          <div className="relative h-[220px] md:h-[340px] overflow-hidden rounded-[20px] bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)] transition-all duration-500">
             {/* Background Image */}
             {eventData.coverKey ? (
               <BlurHashImage
@@ -360,14 +312,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
                       <span
                         key={cat.slug}
                         className="inline-flex items-center px-3 py-1 text-xs font-medium text-white rounded-full backdrop-blur-sm"
-                        style={
-                          isBoosted && intent?.highlightColor
-                            ? {
-                                backgroundColor: intent.highlightColor,
-                                opacity: 0.95,
-                              }
-                            : { backgroundColor: 'rgba(0, 0, 0, 0.4)' }
-                        }
+                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
                       >
                         {cat.name}
                       </span>
@@ -430,10 +375,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
 
         {/* Extended Metadata Card - Integrated below hero */}
         <div className="mb-6">
-          <div
-            className={`relative p-4 overflow-hidden border rounded-xl border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${cardHighlightClasses.className}`}
-            style={cardHighlightClasses.style}
-          >
+          <div className="relative p-4 overflow-hidden border rounded-xl border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300">
             <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-700 dark:text-zinc-300">
               {/* Event Size Category */}
               <div className="flex items-center gap-1.5">
@@ -531,10 +473,7 @@ export function EventDetailClient({ intentId }: EventDetailClientProps) {
               (eventData.addressVisibility === 'PUBLIC' ||
                 (eventData.addressVisibility === 'AFTER_JOIN' &&
                   (isJoined || isOwner || isModerator))) && (
-                <div
-                  className={`p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${cardHighlightClasses.className}`}
-                  style={cardHighlightClasses.style}
-                >
+                <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300">
                   <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                     📍 Lokalizacja
                   </h2>

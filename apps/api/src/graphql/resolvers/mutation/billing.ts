@@ -106,7 +106,6 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
         plan: input.plan,
         actionType: input.actionType,
         actionPackageSize: input.actionPackageSize,
-        highlightColor: input.highlightColor,
       },
       'Creating event sponsorship checkout'
     );
@@ -119,7 +118,6 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
       plan: input.plan,
       actionType: input.actionType as 'new' | 'upgrade' | 'reload' | undefined,
       actionPackageSize: input.actionPackageSize as 1 | 3 | 5 | undefined,
-      highlightColor: input.highlightColor ?? undefined,
     });
 
     return {
@@ -237,47 +235,6 @@ export const useLocalPushMutation: MutationResolvers['useLocalPush'] = async (
 
   return true;
 };
-
-/**
- * Update intent highlight color
- */
-export const updateIntentHighlightColorMutation: MutationResolvers['updateIntentHighlightColor'] =
-  async (_parent, args, { user }) => {
-    const userId = user?.id;
-    const { intentId, color } = args;
-
-    if (!userId) {
-      throw new Error('Authentication required');
-    }
-
-    // Verify user is owner/moderator of the intent
-    const member = await prisma.intentMember.findFirst({
-      where: {
-        intentId,
-        userId,
-        role: { in: ['OWNER', 'MODERATOR'] },
-        status: 'JOINED',
-      },
-    });
-
-    if (!member) {
-      throw new Error('Only intent owner/moderator can update highlight color');
-    }
-
-    // Validate HEX color format if color is provided (allow null for removal)
-    if (color && !/^#[0-9A-F]{6}$/i.test(color)) {
-      throw new Error('Invalid color format. Use HEX format: #RRGGBB');
-    }
-
-    logger.info({ userId, intentId, color }, 'Updating intent highlight color');
-
-    await prisma.intent.update({
-      where: { id: intentId },
-      data: { highlightColor: color },
-    });
-
-    return true;
-  };
 
 /**
  * Get receipt URL for a user plan period

@@ -126,8 +126,7 @@ export type EventDetailsData = {
     localPushesUsed?: number;
   };
 
-  // Highlight and boost
-  highlightColor?: string | null; // HEX color for highlight ring
+  // Boost
   boostedAt?: string | null; // ISO timestamp of last boost;
 
   // Linki zaproszeń (owner/mod only)

@@ -1,6 +1,5 @@
 import type { EventDetailsData } from '@/types/event-details';
 import { formatDuration } from '@/lib/utils/intent-join-state';
-import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import {
   Clock,
   ClockFading,
@@ -12,7 +11,6 @@ import {
   Rocket,
   Sprout,
 } from 'lucide-react';
-import { useMemo } from 'react';
 
 type EventDetailsProps = {
   event: EventDetailsData;
@@ -23,28 +21,10 @@ export function EventDetails({ event }: EventDetailsProps) {
   const endDate = new Date(event.endISO);
   const duration = formatDuration(startDate, endDate);
 
-  // Check if boost is active
-  const isBoosted = useMemo(() => {
-    if (!event.boostedAt) return false;
-    const boostedTime = new Date(event.boostedAt).getTime();
-    const now = Date.now();
-    const elapsed = now - boostedTime;
-    return elapsed < 24 * 60 * 60 * 1000;
-  }, [event.boostedAt]);
-
-  // Get highlight classes for cards
-  const highlightClasses = useMemo(
-    () => getCardHighlightClasses(event.highlightColor, isBoosted),
-    [event.highlightColor, isBoosted]
-  );
-
   return (
     <div className="space-y-6">
       {/* When and Where Section */}
-      <div
-        className={`p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
-        style={highlightClasses.style}
-      >
+      <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Kiedy i gdzie
         </h2>
@@ -122,10 +102,7 @@ export function EventDetails({ event }: EventDetailsProps) {
         event.allowJoinLate ||
         event.lateJoinCutoffMinutesAfterStart ||
         event.joinManuallyClosed) && (
-        <div
-          className={`p-6 border border-indigo-200 rounded-2xl bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-900/20 transition-all duration-300 ${highlightClasses.className}`}
-          style={highlightClasses.style}
-        >
+        <div className="p-6 border border-indigo-200 rounded-2xl bg-indigo-50/50 dark:border-indigo-800 dark:bg-indigo-900/20 transition-all duration-300">
           <div className="flex items-center gap-2 mb-4 text-sm font-semibold tracking-wide text-indigo-700 uppercase dark:text-indigo-300">
             <Gauge className="w-4 h-4" />
             Ustawienia zapisów
@@ -206,10 +183,7 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       {/* Description Section */}
       {event.description && (
-        <div
-          className={`p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
-          style={highlightClasses.style}
-        >
+        <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300">
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Opis
           </h2>
@@ -221,10 +195,7 @@ export function EventDetails({ event }: EventDetailsProps) {
 
       {/* Categories and Tags */}
       {(event.categories.length > 0 || event.tags.length > 0) && (
-        <div
-          className={`p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300 ${highlightClasses.className}`}
-          style={highlightClasses.style}
-        >
+        <div className="p-6 border rounded-2xl border-zinc-200 bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/40 transition-all duration-300">
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Kontekst
           </h2>

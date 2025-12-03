@@ -70,7 +70,6 @@ fragment IntentLight on Intent {
   createdAt
   updatedAt
   boostedAt
-  highlightColor
   sponsorshipPlan
 
   # Appearance customization
@@ -178,7 +177,6 @@ fragment IntentCore on Intent {
   createdAt
   updatedAt
   boostedAt
-  highlightColor
   sponsorshipPlan
 
   # Appearance customization

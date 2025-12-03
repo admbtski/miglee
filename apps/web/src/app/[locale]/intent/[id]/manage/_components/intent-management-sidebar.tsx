@@ -35,7 +35,6 @@ import {
   Crown,
   Rocket,
   Target,
-  Palette,
   HelpCircle,
   Paintbrush,
 } from 'lucide-react';
@@ -276,12 +275,6 @@ export function IntentManagementSidebar({
           label: 'Local Push',
           href: `/intent/${intentId}/manage/local-push`,
           icon: Target,
-        },
-        {
-          id: 'highlight',
-          label: 'Highlight Color',
-          href: `/intent/${intentId}/manage/highlight`,
-          icon: Palette,
         },
         {
           id: 'appearance',

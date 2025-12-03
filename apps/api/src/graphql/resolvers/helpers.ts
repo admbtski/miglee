@@ -682,8 +682,6 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     isHybrid: i.meetingKind === 'HYBRID',
     isOnsite: i.meetingKind === 'ONSITE',
 
-    highlightColor: i.highlightColor ?? null,
-
     createdAt: i.createdAt,
     updatedAt: i.updatedAt,
   };

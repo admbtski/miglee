@@ -220,7 +220,6 @@ import {
   reactivateSubscriptionMutation,
   useBoostMutation,
   useLocalPushMutation,
-  updateIntentHighlightColorMutation,
   getUserPlanReceiptUrlMutation,
   getEventSponsorshipReceiptUrlMutation,
 } from './billing';
@@ -418,7 +417,6 @@ export const Mutation: Resolvers['Mutation'] = {
   reactivateSubscription: reactivateSubscriptionMutation,
   useBoost: useBoostMutation,
   useLocalPush: useLocalPushMutation,
-  updateIntentHighlightColor: updateIntentHighlightColorMutation,
   getUserPlanReceiptUrl: getUserPlanReceiptUrlMutation,
   getEventSponsorshipReceiptUrl: getEventSponsorshipReceiptUrlMutation,
 

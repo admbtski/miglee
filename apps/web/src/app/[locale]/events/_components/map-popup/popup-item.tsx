@@ -162,11 +162,12 @@ export function PopupItem({
     <motion.div
       className={twMerge(
         'mt-4',
-        'relative w-full rounded-xl overflow-hidden',
-        'bg-zinc-900/70 border border-white/5',
-        'shadow-[0_4px_16px_-2px_rgba(0,0,0,0.4)]',
-        'select-none text-left',
-        'transition-all duration-200',
+        'relative w-full rounded-2xl flex flex-col overflow-hidden',
+        'ring-1 ring-white/5 dark:ring-white/5',
+        'bg-white dark:bg-zinc-900',
+        'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
+        'select-none',
+        'transition-all duration-500',
         isInactive && 'saturate-0'
       )}
       style={appearanceStyle}

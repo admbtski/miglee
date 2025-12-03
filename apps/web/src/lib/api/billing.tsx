@@ -43,9 +43,6 @@ import {
   UseLocalPushDocument,
   type UseLocalPushMutation,
   type UseLocalPushMutationVariables,
-  UpdateIntentHighlightColorDocument,
-  type UpdateIntentHighlightColorMutation,
-  type UpdateIntentHighlightColorMutationVariables,
   GetUserPlanReceiptUrlDocument,
   type GetUserPlanReceiptUrlMutation,
   type GetUserPlanReceiptUrlMutationVariables,
@@ -324,35 +321,6 @@ export function useLocalPush(
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: billingKeys.eventSponsorship(variables.intentId),
-      });
-    },
-    ...options,
-  });
-}
-
-/**
- * Update intent highlight color
- */
-export function useUpdateIntentHighlightColor(
-  options?: UseMutationOptions<
-    UpdateIntentHighlightColorMutation,
-    unknown,
-    UpdateIntentHighlightColorMutationVariables
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (variables) =>
-      gqlClient.request(UpdateIntentHighlightColorDocument, variables),
-    onSuccess: (_data, variables) => {
-      // Invalidate event sponsorship query to refetch updated data
-      queryClient.invalidateQueries({
-        queryKey: billingKeys.eventSponsorship(variables.intentId),
-      });
-      // Also invalidate intent detail if needed
-      queryClient.invalidateQueries({
-        queryKey: ['intent', variables.intentId],
       });
     },
     ...options,
