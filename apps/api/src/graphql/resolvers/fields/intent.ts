@@ -234,7 +234,24 @@ export const intentJoinQuestionsResolver: IntentResolvers['joinQuestions'] =
  */
 export const intentAppearanceResolver: IntentResolvers['appearance'] =
   resolverWithMetrics('Intent', 'appearance', async (parent) => {
-    const appearance = await prisma.intentAppearance.findUnique({
+    // Check if appearance is already loaded (e.g., from include in query)
+    const existingAppearance = (parent as any).appearance;
+    if (existingAppearance !== undefined) {
+      if (!existingAppearance) {
+        return null;
+      }
+      return {
+        id: existingAppearance.id,
+        intentId: existingAppearance.intentId,
+        config: existingAppearance.config,
+        createdAt: existingAppearance.createdAt,
+        updatedAt: existingAppearance.updatedAt,
+      };
+    }
+
+    // Fallback: fetch from database
+    // NOTE: After running `prisma generate`, remove the (prisma as any) cast
+    const appearance = await (prisma as any).intentAppearance.findUnique({
       where: { intentId: parent.id },
     });
 

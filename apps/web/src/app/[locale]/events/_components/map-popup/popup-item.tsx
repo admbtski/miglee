@@ -5,7 +5,6 @@
 import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
-import { HybridLocationIcon } from '@/components/ui/icons/hybrid-location-icon';
 import { Plan } from '@/components/ui/plan-theme';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
@@ -15,23 +14,19 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
-import { computeEventStateAndStatus } from '@/lib/utils/event-status';
-import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import { motion } from 'framer-motion';
-import {
-  Calendar,
-  Eye,
-  EyeOff,
-  MapPin,
-  Sparkles,
-  UserCheck,
-  Users,
-  Wifi as WifiIcon,
-} from 'lucide-react';
+import { Calendar, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { formatCapacityString } from '@/lib/utils/capacity-formatter';
 import { twMerge } from 'tailwind-merge';
+import {
+  type CardAppearanceConfig,
+  getAddressVisibilityMeta,
+  getLocationDisplay,
+  isBoostActive,
+  getAppearanceStyle,
+} from '../shared/card-utils';
 
 export type PopupIntent = {
   id: string;
@@ -70,7 +65,10 @@ export type PopupIntent = {
   levels?: GqlLevel[] | null;
   plan?: Plan | null;
   boostedAt?: string | null; // ISO timestamp of last boost
-  highlightColor?: string | null; // Hex color for custom highlight ring
+  /** Custom appearance config from IntentAppearance */
+  appearance?: {
+    card?: CardAppearanceConfig;
+  } | null;
   meetingKind?: 'ONSITE' | 'ONLINE' | 'HYBRID' | null;
   isHybrid?: boolean;
   isOnline?: boolean;
@@ -86,108 +84,6 @@ export interface PopupItemProps {
   intent: PopupIntent;
   onClick?: (id: string) => void;
   locale?: string;
-}
-
-type AddressVisibilityMeta = {
-  label: string;
-  Icon: React.ComponentType<{ className?: string }>;
-  canShow: boolean;
-};
-
-function getAddressVisibilityMeta(
-  av: AddressVisibility | null | undefined
-): AddressVisibilityMeta {
-  if (!av) {
-    return {
-      label: 'Adres publiczny',
-      Icon: Eye,
-      canShow: true,
-    };
-  }
-
-  const normalized = String(av).toUpperCase();
-
-  if (normalized.includes('PUBLIC')) {
-    return {
-      label: 'Adres publiczny',
-      Icon: Eye,
-      canShow: true,
-    };
-  }
-
-  if (normalized.includes('AFTER_JOIN')) {
-    return {
-      label: 'Adres po dołączeniu',
-      Icon: UserCheck,
-      canShow: false,
-    };
-  }
-
-  return {
-    label: 'Adres ukryty',
-    Icon: EyeOff,
-    canShow: false,
-  };
-}
-
-function getLocationDisplay(
-  radiusKm: number | null | undefined,
-  isHybrid: boolean,
-  isOnsite: boolean,
-  isOnline: boolean,
-  avMeta: AddressVisibilityMeta,
-  address: string | null | undefined,
-  addressVisibility: AddressVisibility | null | undefined
-): { Icon: React.ComponentType<{ className?: string }>; text: string } | null {
-  if (isHybrid) {
-    return {
-      Icon: HybridLocationIcon,
-      text: avMeta.canShow
-        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''} • Online`
-        : addressVisibility === 'AFTER_JOIN'
-          ? 'Szczegóły po dołączeniu'
-          : 'Szczegóły ukryte',
-    };
-  }
-
-  if (isOnsite) {
-    return {
-      Icon: MapPin,
-      text: avMeta.canShow
-        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''}`
-        : addressVisibility === 'AFTER_JOIN'
-          ? 'Adres po dołączeniu'
-          : 'Adres ukryty',
-    };
-  }
-
-  if (isOnline) {
-    return {
-      Icon: WifiIcon,
-      text: avMeta.canShow
-        ? 'Online'
-        : addressVisibility === 'AFTER_JOIN'
-          ? 'Online (po dołączeniu)'
-          : 'Online (ukryte)',
-    };
-  }
-
-  return null;
-}
-
-/**
- * Check if a boost is still active (< 24 hours old)
- * @param boostedAtISO - ISO timestamp of when the event was boosted
- * @returns true if boost is active, false otherwise
- */
-function isBoostActive(boostedAtISO: string | null | undefined): boolean {
-  if (!boostedAtISO) return false;
-
-  const boostedAt = new Date(boostedAtISO);
-  const now = new Date();
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-  return boostedAt >= twentyFourHoursAgo;
 }
 
 export function PopupItem({
@@ -210,7 +106,7 @@ export function PopupItem({
     min,
     radiusKm,
     boostedAt,
-    highlightColor,
+    appearance,
     isHybrid = false,
     isOnline = false,
     isOnsite = false,
@@ -231,13 +127,10 @@ export function PopupItem({
   // Check if boost is active (< 24h)
   const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
 
-  // Get highlight ring classes (only if boosted)
-  const highlightRing = useMemo(
-    () =>
-      isBoosted && !isCanceled && !isDeleted
-        ? getCardHighlightClasses(highlightColor, isBoosted)
-        : { className: '' },
-    [isBoosted, isCanceled, isDeleted, highlightColor]
+  // Get custom appearance styles from config
+  const appearanceStyle = useMemo(
+    () => getAppearanceStyle(appearance),
+    [appearance]
   );
 
   const avMeta = useMemo(
@@ -274,12 +167,9 @@ export function PopupItem({
         'shadow-[0_4px_16px_-2px_rgba(0,0,0,0.4)]',
         'select-none text-left',
         'transition-all duration-200',
-        isInactive && 'saturate-0',
-        highlightRing.className
+        isInactive && 'saturate-0'
       )}
-      style={{
-        ...highlightRing.style,
-      }}
+      style={appearanceStyle}
       transition={{
         type: 'spring',
         stiffness: 400,
@@ -301,7 +191,7 @@ export function PopupItem({
             src={buildIntentCoverUrl(intent.coverKey, 'card')}
             blurhash={intent.coverBlurhash}
             alt={intent.title}
-            className="h-full w-full object-cover"
+            className="object-cover w-full h-full brightness-90 contrast-90"
             width={480}
             height={270}
           />
@@ -413,7 +303,7 @@ export function PopupItem({
       {/* Content */}
       <div className="p-3 flex flex-col gap-2">
         {/* Title */}
-        <h4 className="text-[16px] font-semibold leading-tight text-white line-clamp-2">
+        <h4 className="text-[14px] font-semibold leading-tight text-white line-clamp-2">
           {intent.title}
         </h4>
 

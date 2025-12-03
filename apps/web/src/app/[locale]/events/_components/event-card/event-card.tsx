@@ -3,7 +3,6 @@
 import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
-import { HybridLocationIcon } from '@/components/ui/icons/hybrid-location-icon';
 import { Plan } from '@/components/ui/plan-theme';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
@@ -11,30 +10,22 @@ import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import { motion } from 'framer-motion';
-import {
-  Calendar,
-  Eye,
-  EyeOff,
-  MapPin,
-  Sparkles,
-  UserCheck,
-  Users,
-  Wifi as WifiIcon,
-} from 'lucide-react';
+import { Calendar, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { formatCapacityString } from '@/lib/utils/capacity-formatter';
 import { twMerge } from 'tailwind-merge';
+import {
+  type CardAppearanceConfig,
+  getAddressVisibilityMeta,
+  getLocationDisplay,
+  isBoostActive,
+  getAppearanceStyle,
+} from '../shared/card-utils';
 
-/**
- * Appearance config for card customization
- */
-export interface CardAppearanceConfig {
-  background?: string | null;
-  shadow?: string | null;
-}
+export type { CardAppearanceConfig };
 
 export interface EventCardProps {
   intentId?: string;
@@ -83,100 +74,6 @@ export interface EventCardProps {
     lat?: number | null,
     lng?: number | null
   ) => void;
-}
-
-type AddressVisibilityMeta = {
-  label: string;
-  Icon: React.ComponentType<{ className?: string }>;
-  canShow: boolean;
-};
-
-function getAddressVisibilityMeta(
-  av: AddressVisibility
-): AddressVisibilityMeta {
-  const normalized = String(av).toUpperCase();
-
-  if (normalized.includes('PUBLIC')) {
-    return {
-      label: 'Adres publiczny',
-      Icon: Eye,
-      canShow: true,
-    };
-  }
-
-  if (normalized.includes('AFTER_JOIN')) {
-    return {
-      label: 'Adres po dołączeniu',
-      Icon: UserCheck,
-      canShow: false,
-    };
-  }
-
-  return {
-    label: 'Adres ukryty',
-    Icon: EyeOff,
-    canShow: false,
-  };
-}
-
-function getLocationDisplay(
-  radiusKm: number | null | undefined,
-  isHybrid: boolean,
-  isOnsite: boolean,
-  isOnline: boolean,
-  avMeta: AddressVisibilityMeta,
-  address: string | undefined,
-  addressVisibility: AddressVisibility
-): { Icon: React.ComponentType<{ className?: string }>; text: string } | null {
-  if (isHybrid) {
-    return {
-      Icon: HybridLocationIcon,
-      text: avMeta.canShow
-        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''} • Online`
-        : addressVisibility === 'AFTER_JOIN'
-          ? 'Szczegóły po dołączeniu'
-          : 'Szczegóły ukryte',
-    };
-  }
-
-  if (isOnsite) {
-    return {
-      Icon: MapPin,
-      text: avMeta.canShow
-        ? `${address?.split(',')[0]}${radiusKm ? ` ~ ${radiusKm} km` : ''}`
-        : addressVisibility === 'AFTER_JOIN'
-          ? 'Adres po dołączeniu'
-          : 'Adres ukryty',
-    };
-  }
-
-  if (isOnline) {
-    return {
-      Icon: WifiIcon,
-      text: avMeta.canShow
-        ? 'Online'
-        : addressVisibility === 'AFTER_JOIN'
-          ? 'Online (po dołączeniu)'
-          : 'Online (ukryte)',
-    };
-  }
-
-  return null;
-}
-
-/**
- * Check if a boost is still active (< 24 hours old)
- * @param boostedAtISO - ISO timestamp of when the event was boosted
- * @returns true if boost is active, false otherwise
- */
-function isBoostActive(boostedAtISO: string | null | undefined): boolean {
-  if (!boostedAtISO) return false;
-
-  const boostedAt = new Date(boostedAtISO);
-  const now = new Date();
-  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-  return boostedAt >= twentyFourHoursAgo;
 }
 
 export const EventCard = memo(function EventCard({
@@ -229,19 +126,10 @@ export const EventCard = memo(function EventCard({
   const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
 
   // Get custom appearance styles from config
-  const appearanceStyle = useMemo(() => {
-    const style: React.CSSProperties = {};
-    const cardConfig = appearance?.card;
-
-    if (cardConfig?.background) {
-      style.background = cardConfig.background;
-    }
-    if (cardConfig?.shadow) {
-      style.boxShadow = cardConfig.shadow;
-    }
-
-    return style;
-  }, [appearance?.card]);
+  const appearanceStyle = useMemo(
+    () => getAppearanceStyle(appearance),
+    [appearance]
+  );
 
   const handleMouseEnter = useCallback(() => {
     if (intentId && onHover) {

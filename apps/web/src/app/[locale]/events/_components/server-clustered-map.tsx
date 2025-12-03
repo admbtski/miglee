@@ -743,7 +743,12 @@ function ServerClusteredMapComponent({
       levels: (intent.levels as GqlLevel[]) ?? null,
       plan: null, // Will be determined by boostedAt
       boostedAt: intent.boostedAt,
-      highlightColor: intent.highlightColor,
+      // Extract card appearance from IntentAppearance.config
+      appearance: intent.appearance?.config
+        ? {
+            card: (intent.appearance.config as any)?.card ?? null,
+          }
+        : null,
       meetingKind: intent.meetingKind,
       isHybrid:
         intent.meetingKind === 'HYBRID' ||

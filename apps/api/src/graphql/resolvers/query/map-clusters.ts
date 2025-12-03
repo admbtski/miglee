@@ -31,6 +31,8 @@ const INTENT_INCLUDE = {
       sponsor: { include: { profile: true } },
     },
   },
+  // NOTE: appearance is resolved via field resolver (intentAppearanceResolver)
+  // After running `prisma generate`, you can add: appearance: true
   // If you have a relation in Prisma:
   // joinManuallyClosedBy: true,
 } satisfies Prisma.IntentInclude;

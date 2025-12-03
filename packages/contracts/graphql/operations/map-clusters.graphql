@@ -53,7 +53,10 @@ query GetRegionIntents(
       withinLock
       lockReason
       boostedAt
-      highlightColor
+      appearance {
+        id
+        config
+      }
       coverKey
       coverBlurhash
       addressVisibility
