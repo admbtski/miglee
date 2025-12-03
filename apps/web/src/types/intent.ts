@@ -1,5 +1,6 @@
 import type {
   AddressVisibility,
+  IntentAppearance,
   IntentMember,
   Level,
   MembersVisibility,
@@ -39,6 +40,7 @@ export type IntentListItem = {
   withinLock: boolean;
   lockReason?: string | null;
   canJoin: boolean;
+  appearance?: IntentAppearance | null;
 
   // Join window settings
   joinOpensMinutesBeforeStart?: number | null;

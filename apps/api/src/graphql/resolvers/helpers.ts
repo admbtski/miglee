@@ -352,8 +352,6 @@ export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
 
 /* ---- Intent computed helpers ---- */
 
-const hoursUntil = (date: Date) => (date.getTime() - Date.now()) / 3_600_000;
-
 function computeIntentDerived(i: IntentWithGraph | any) {
   const now = new Date();
 

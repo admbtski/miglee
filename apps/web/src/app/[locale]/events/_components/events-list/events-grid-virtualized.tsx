@@ -57,7 +57,12 @@ export function mapIntentToEventCardProps(
     verifiedAt: item.owner?.verifiedAt ?? undefined,
     plan: 'default', // TODO: Will be customizable per event in the future
     boostedAt: item.boostedAt ?? null, // Real boost timestamp from backend
-    highlightColor: item.highlightColor ?? null, // Custom highlight color
+    // Extract card appearance from IntentAppearance.config
+    appearance: item.appearance?.config
+      ? {
+          card: (item.appearance.config as any)?.card ?? null,
+        }
+      : null,
 
     // Cover image
     coverKey: item.coverKey ?? null,

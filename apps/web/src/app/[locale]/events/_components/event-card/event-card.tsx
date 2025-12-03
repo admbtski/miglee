@@ -2,18 +2,14 @@
 
 import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
-import { CapacityBadge } from '@/components/ui/capacity-badge';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { HybridLocationIcon } from '@/components/ui/icons/hybrid-location-icon';
 import { Plan } from '@/components/ui/plan-theme';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
 import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
-import { computeEventStateAndStatus } from '@/lib/utils/event-status';
-import { getCardHighlightClasses } from '@/lib/utils/is-boost-active';
 import { motion } from 'framer-motion';
 import {
   Calendar,
@@ -26,10 +22,19 @@ import {
   Wifi as WifiIcon,
 } from 'lucide-react';
 import Link from 'next/link';
+import * as React from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { formatCapacityString } from '@/lib/utils/capacity-formatter';
 import { twMerge } from 'tailwind-merge';
+
+/**
+ * Appearance config for card customization
+ */
+export interface CardAppearanceConfig {
+  background?: string | null;
+  shadow?: string | null;
+}
 
 export interface EventCardProps {
   intentId?: string;
@@ -47,7 +52,10 @@ export interface EventCardProps {
   verifiedAt?: string;
   plan?: Plan;
   boostedAt?: string | null; // ISO timestamp of last boost
-  highlightColor?: string | null; // Hex color for custom highlight ring
+  /** Custom appearance config from IntentAppearance */
+  appearance?: {
+    card?: CardAppearanceConfig;
+  } | null;
   coverKey?: string | null;
   coverBlurhash?: string | null;
   joinedCount: number;
@@ -202,7 +210,7 @@ export const EventCard = memo(function EventCard({
   joinManuallyClosed,
   plan,
   boostedAt,
-  highlightColor,
+  appearance,
   addressVisibility,
   isFavourite = false,
   isHybrid,
@@ -220,21 +228,20 @@ export const EventCard = memo(function EventCard({
   // Check if boost is active (< 24h)
   const isBoosted = useMemo(() => isBoostActive(boostedAt), [boostedAt]);
 
-  // Get highlight ring classes (only if boosted)
-  {
-    /*  const highlightRing = useMemo(
-    () =>
-      isBoosted && !isCanceled && !isDeleted
-        ? getCardHighlightClasses(highlightColor, isBoosted)
-        : { className: '' },
-    [isBoosted, isCanceled, isDeleted, highlightColor]
-  );*/
-  }
+  // Get custom appearance styles from config
+  const appearanceStyle = useMemo(() => {
+    const style: React.CSSProperties = {};
+    const cardConfig = appearance?.card;
 
-  const highlightRing = useMemo(
-    () => getCardHighlightClasses(highlightColor, true),
-    [highlightColor]
-  );
+    if (cardConfig?.background) {
+      style.background = cardConfig.background;
+    }
+    if (cardConfig?.shadow) {
+      style.boxShadow = cardConfig.shadow;
+    }
+
+    return style;
+  }, [appearance?.card]);
 
   const handleMouseEnter = useCallback(() => {
     if (intentId && onHover) {
@@ -284,14 +291,11 @@ export const EventCard = memo(function EventCard({
         'bg-white dark:bg-zinc-900',
         'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
         'select-none',
-        'transition-colors duration-500',
+        'transition-all duration-500',
         isInactive && 'saturate-0',
-        highlightRing.className,
         className
       )}
-      style={{
-        ...highlightRing.style,
-      }}
+      style={appearanceStyle}
       transition={{
         type: 'spring',
         stiffness: 300,

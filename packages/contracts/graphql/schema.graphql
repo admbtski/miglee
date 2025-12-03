@@ -877,7 +877,10 @@ type Intent {
   sponsorshipPlan: IntentPlan!
   sponsorship: EventSponsorship
   boostedAt: DateTime # Last time event was boosted (for priority sorting)
-  highlightColor: String # Custom highlight/ring color (hex format: #RRGGBB)
+  highlightColor: String # Custom highlight/ring color (hex format: #RRGGBB) - DEPRECATED: use appearance.config
+  # Appearance customization
+  appearance: IntentAppearance
+
   # Relations
   inviteLinks: [IntentInviteLink!]!
   faqs: [IntentFaq!]!
@@ -2221,6 +2224,9 @@ type Mutation {
   "Update intent highlight color"
   updateIntentHighlightColor(intentId: ID!, color: String): Boolean!
 
+  "Update intent appearance configuration"
+  updateIntentAppearance(input: UpdateIntentAppearanceInput!): IntentAppearance!
+
   # dev only
   devLogin(name: String!): SessionUser
   devLogout: Boolean!
@@ -2390,6 +2396,45 @@ input IntentFaqInput {
 input UpdateIntentFaqsInput {
   intentId: ID!
   faqs: [IntentFaqInput!]!
+}
+
+# ------------------------------------------------------------------------------
+# Intent Appearance
+# ------------------------------------------------------------------------------
+
+"Custom appearance configuration for an intent"
+type IntentAppearance {
+  id: ID!
+  intentId: ID!
+  "JSON configuration for card and detail appearance"
+  config: JSON!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"Input for card appearance configuration"
+input IntentAppearanceCardInput {
+  background: String
+  shadow: String
+}
+
+"Input for detail panel appearance configuration"
+input IntentAppearanceDetailPanelInput {
+  background: String
+  shadow: String
+}
+
+"Input for detail appearance configuration"
+input IntentAppearanceDetailInput {
+  background: String
+  panel: IntentAppearanceDetailPanelInput
+}
+
+"Input for updating intent appearance"
+input UpdateIntentAppearanceInput {
+  intentId: ID!
+  card: IntentAppearanceCardInput
+  detail: IntentAppearanceDetailInput
 }
 
 input IntentJoinQuestionInput {

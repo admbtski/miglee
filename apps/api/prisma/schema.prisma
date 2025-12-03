@@ -433,6 +433,9 @@ model Intent {
   // FAQ relations
   faqs IntentFaq[]
 
+  // Appearance customization
+  appearance IntentAppearance?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1371,4 +1374,27 @@ model MediaAsset {
   @@index([purpose])
   @@index([createdAt])
   @@map("media_assets")
+}
+
+// =============================================================================
+/**
+ * Intent Appearance - Custom visual styling for events
+ * Stores configuration for card and detail page appearance
+ */
+// =============================================================================
+
+model IntentAppearance {
+  id       String @id @default(cuid())
+  intentId String @unique
+
+  /// JSON configuration for appearance customization
+  /// Structure: { card: { background, shadow }, detail: { background, panel: { background, shadow } } }
+  config Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+
+  @@map("intent_appearances")
 }

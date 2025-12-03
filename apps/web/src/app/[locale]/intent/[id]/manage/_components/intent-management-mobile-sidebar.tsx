@@ -34,6 +34,7 @@ import {
   Target,
   Palette,
   HelpCircle,
+  Paintbrush,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -303,6 +304,12 @@ export function IntentManagementMobileSidebar({
           href: `/intent/${intentId}/manage/highlight`,
           icon: Palette,
         },
+        {
+          id: 'appearance',
+          label: 'Appearance',
+          href: `/intent/${intentId}/manage/appearance`,
+          icon: Paintbrush,
+        },
       ],
     },
     {
@@ -321,7 +328,7 @@ export function IntentManagementMobileSidebar({
       ],
     },
     {
-      id: 'pro-features',
+      id: 'pro-features-duplicate',
       label: 'Pro Features',
       icon: Crown,
       defaultOpen: false,

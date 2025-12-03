@@ -15,6 +15,7 @@ import {
   intentCoverBlurhashResolver,
   intentFaqsResolver,
   intentJoinQuestionsResolver,
+  intentAppearanceResolver,
 } from './fields/intent';
 import { intentMemberIntentResolver } from './fields/intent-member';
 import { UserFieldResolvers, UserProfileFieldResolvers } from './fields/user';
@@ -52,6 +53,7 @@ export const resolvers: Pick<
     coverBlurhash: intentCoverBlurhashResolver,
     faqs: intentFaqsResolver,
     joinQuestions: intentJoinQuestionsResolver,
+    appearance: intentAppearanceResolver,
   },
   IntentMember: {
     intent: intentMemberIntentResolver,

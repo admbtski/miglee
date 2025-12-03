@@ -73,6 +73,12 @@ fragment IntentLight on Intent {
   highlightColor
   sponsorshipPlan
 
+  # Appearance customization
+  appearance {
+    id
+    config
+  }
+
   categories {
     ...CategoryCore
   }
@@ -174,6 +180,12 @@ fragment IntentCore on Intent {
   boostedAt
   highlightColor
   sponsorshipPlan
+
+  # Appearance customization
+  appearance {
+    id
+    config
+  }
 
   categories {
     ...CategoryCore

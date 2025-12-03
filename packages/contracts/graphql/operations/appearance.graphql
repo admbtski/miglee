@@ -1,0 +1,27 @@
+# Intent Appearance Operations
+
+# Query to get intent appearance configuration
+query IntentAppearance($intentId: ID!) {
+  intent(id: $intentId) {
+    id
+    appearance {
+      id
+      intentId
+      config
+      createdAt
+      updatedAt
+    }
+  }
+}
+
+# Mutation to update intent appearance
+mutation UpdateIntentAppearance($input: UpdateIntentAppearanceInput!) {
+  updateIntentAppearance(input: $input) {
+    id
+    intentId
+    config
+    createdAt
+    updatedAt
+  }
+}
+

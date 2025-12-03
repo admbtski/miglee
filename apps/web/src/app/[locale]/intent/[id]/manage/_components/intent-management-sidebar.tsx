@@ -37,6 +37,7 @@ import {
   Target,
   Palette,
   HelpCircle,
+  Paintbrush,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -281,6 +282,12 @@ export function IntentManagementSidebar({
           label: 'Highlight Color',
           href: `/intent/${intentId}/manage/highlight`,
           icon: Palette,
+        },
+        {
+          id: 'appearance',
+          label: 'Appearance',
+          href: `/intent/${intentId}/manage/appearance`,
+          icon: Paintbrush,
         },
       ],
     },

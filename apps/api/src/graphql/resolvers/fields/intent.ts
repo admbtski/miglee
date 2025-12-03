@@ -227,3 +227,26 @@ export const intentJoinQuestionsResolver: IntentResolvers['joinQuestions'] =
 
     return questions as any;
   });
+
+/**
+ * Field resolver for Intent.appearance
+ * Returns appearance configuration for this intent
+ */
+export const intentAppearanceResolver: IntentResolvers['appearance'] =
+  resolverWithMetrics('Intent', 'appearance', async (parent) => {
+    const appearance = await prisma.intentAppearance.findUnique({
+      where: { intentId: parent.id },
+    });
+
+    if (!appearance) {
+      return null;
+    }
+
+    return {
+      id: appearance.id,
+      intentId: appearance.intentId,
+      config: appearance.config,
+      createdAt: appearance.createdAt,
+      updatedAt: appearance.updatedAt,
+    };
+  });

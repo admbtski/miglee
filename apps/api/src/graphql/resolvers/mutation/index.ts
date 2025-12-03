@@ -225,6 +225,9 @@ import {
   getEventSponsorshipReceiptUrlMutation,
 } from './billing';
 
+// Appearance mutations
+import { updateIntentAppearanceMutation } from './appearance';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -418,6 +421,9 @@ export const Mutation: Resolvers['Mutation'] = {
   updateIntentHighlightColor: updateIntentHighlightColorMutation,
   getUserPlanReceiptUrl: getUserPlanReceiptUrlMutation,
   getEventSponsorshipReceiptUrl: getEventSponsorshipReceiptUrlMutation,
+
+  // ---- Appearance ----
+  updateIntentAppearance: updateIntentAppearanceMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,
