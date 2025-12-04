@@ -528,6 +528,122 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
   };
 
 /**
+ * Bulk update (replace) all feedback questions for an intent
+ * Similar to updateIntentJoinQuestions - deletes all existing and creates new ones
+ */
+export const updateIntentFeedbackQuestionsMutation: MutationResolvers['updateIntentFeedbackQuestions'] =
+  async (_parent, { input }, { user }) => {
+    if (!user) {
+      throw new GraphQLError('Authentication required', {
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+    }
+
+    const { intentId, questions } = input;
+
+    // Check permissions
+    const { canEdit, reason } = await canEditFeedbackQuestions(
+      intentId,
+      user.id,
+      user.role
+    );
+    if (!canEdit) {
+      throw new GraphQLError(reason || 'Cannot edit feedback questions', {
+        extensions: { code: 'FORBIDDEN' },
+      });
+    }
+
+    // Validate input
+    if (questions.length > MAX_QUESTIONS) {
+      throw new GraphQLError(
+        `Cannot add more than ${MAX_QUESTIONS} questions`,
+        {
+          extensions: { code: 'BAD_USER_INPUT' },
+        }
+      );
+    }
+
+    // Validate each question
+    for (const q of questions) {
+      if (!q.label || q.label.trim().length === 0) {
+        throw new GraphQLError('Question label cannot be empty', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      if (q.label.length > MAX_LABEL_LENGTH) {
+        throw new GraphQLError(
+          `Question label cannot exceed ${MAX_LABEL_LENGTH} characters`,
+          {
+            extensions: { code: 'BAD_USER_INPUT' },
+          }
+        );
+      }
+      if (q.helpText && q.helpText.length > MAX_HELP_TEXT_LENGTH) {
+        throw new GraphQLError(
+          `Help text cannot exceed ${MAX_HELP_TEXT_LENGTH} characters`,
+          {
+            extensions: { code: 'BAD_USER_INPUT' },
+          }
+        );
+      }
+      if (
+        (q.type === 'SINGLE_CHOICE' || q.type === 'MULTI_CHOICE') &&
+        (!q.options || q.options.length === 0)
+      ) {
+        throw new GraphQLError(
+          'Choice questions must have at least one option',
+          {
+            extensions: { code: 'BAD_USER_INPUT' },
+          }
+        );
+      }
+      if (q.options && q.options.length > MAX_OPTIONS) {
+        throw new GraphQLError(
+          `Cannot have more than ${MAX_OPTIONS} options per question`,
+          {
+            extensions: { code: 'BAD_USER_INPUT' },
+          }
+        );
+      }
+    }
+
+    // Delete all existing questions and create new ones in a transaction
+    const updatedQuestions = await prisma.$transaction(async (tx) => {
+      // Delete all existing questions (this also deletes related answers due to cascade)
+      await tx.intentFeedbackQuestion.deleteMany({
+        where: { intentId },
+      });
+
+      // Create new questions with order
+      const createdQuestions = await Promise.all(
+        questions.map((q, index) =>
+          tx.intentFeedbackQuestion.create({
+            data: {
+              intentId,
+              order: q.order ?? index,
+              type: q.type,
+              label: q.label.trim(),
+              helpText: q.helpText?.trim() || null,
+              required: q.required,
+              options: q.options || null,
+              maxLength: q.maxLength || null,
+            },
+          })
+        )
+      );
+
+      return createdQuestions;
+    });
+
+    return updatedQuestions.map((q) => ({
+      ...q,
+      options: q.options || null,
+      maxLength: q.maxLength || null,
+      helpText: q.helpText || null,
+    }));
+  };
+
+/**
  * Manual trigger to send feedback requests to all JOINED members
  * Only owner, moderator, or admin can trigger this
  */

@@ -67,3 +67,12 @@ mutation SubmitReviewAndFeedback($input: SubmitReviewAndFeedbackInput!) {
     }
   }
 }
+
+# Bulk update feedback questions (replaces all questions for intent)
+mutation UpdateIntentFeedbackQuestions(
+  $input: UpdateIntentFeedbackQuestionsInput!
+) {
+  updateIntentFeedbackQuestions(input: $input) {
+    ...FeedbackQuestion
+  }
+}

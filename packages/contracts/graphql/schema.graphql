@@ -2046,6 +2046,11 @@ type Mutation {
     input: UpdateIntentJoinQuestionsInput!
   ): [IntentJoinQuestion!]!
 
+  # Feedback Questions bulk update (replaces create/update/delete/reorder)
+  updateIntentFeedbackQuestions(
+    input: UpdateIntentFeedbackQuestionsInput!
+  ): [IntentFeedbackQuestion!]!
+
   # notifications
   addNotification(
     recipientId: ID!
@@ -2449,6 +2454,26 @@ input JoinQuestionOptionInput {
 input UpdateIntentJoinQuestionsInput {
   intentId: ID!
   questions: [IntentJoinQuestionInput!]!
+}
+
+# Feedback Questions bulk update
+input IntentFeedbackQuestionInput {
+  type: FeedbackQuestionType!
+  label: String!
+  helpText: String
+  required: Boolean!
+  order: Int!
+  options: [FeedbackQuestionOptionInput!]
+  maxLength: Int
+}
+
+input FeedbackQuestionOptionInput {
+  label: String!
+}
+
+input UpdateIntentFeedbackQuestionsInput {
+  intentId: ID!
+  questions: [IntentFeedbackQuestionInput!]!
 }
 
 # ------------------------------------------------------------------------------

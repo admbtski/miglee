@@ -123,6 +123,7 @@ import {
   reorderFeedbackQuestionsMutation,
   submitReviewAndFeedbackMutation,
   sendFeedbackRequestsMutation,
+  updateIntentFeedbackQuestionsMutation,
 } from './feedback-questions';
 
 // FAQ mutations
@@ -368,6 +369,7 @@ export const Mutation: Resolvers['Mutation'] = {
   reorderFeedbackQuestions: reorderFeedbackQuestionsMutation,
   submitReviewAndFeedback: submitReviewAndFeedbackMutation,
   sendFeedbackRequests: sendFeedbackRequestsMutation,
+  updateIntentFeedbackQuestions: updateIntentFeedbackQuestionsMutation,
 
   // ---- FAQ Management ----
   updateIntentFaqs: faqMutations.updateIntentFaqs!,

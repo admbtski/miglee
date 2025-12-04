@@ -34,6 +34,7 @@ import {
   SendFeedbackRequestsMutation,
   SendFeedbackRequestsMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
+import { gql } from 'graphql-request';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
 import {
@@ -439,6 +440,98 @@ export function useSendFeedbackRequestsMutation(
         SendFeedbackRequestsMutation,
         SendFeedbackRequestsMutationVariables
       >(SendFeedbackRequestsDocument, variables),
+    ...options,
+  });
+}
+
+// Inline document for UpdateIntentFeedbackQuestions (until codegen runs)
+const UpdateIntentFeedbackQuestionsDocument = gql`
+  mutation UpdateIntentFeedbackQuestions(
+    $input: UpdateIntentFeedbackQuestionsInput!
+  ) {
+    updateIntentFeedbackQuestions(input: $input) {
+      id
+      intentId
+      order
+      type
+      label
+      helpText
+      required
+      options
+      maxLength
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+// Types for UpdateIntentFeedbackQuestions (until codegen runs)
+export type UpdateIntentFeedbackQuestionsMutation = {
+  updateIntentFeedbackQuestions: Array<{
+    id: string;
+    intentId: string;
+    order: number;
+    type: string;
+    label: string;
+    helpText?: string | null;
+    required: boolean;
+    options?: any;
+    maxLength?: number | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+};
+
+export type UpdateIntentFeedbackQuestionsMutationVariables = {
+  input: {
+    intentId: string;
+    questions: Array<{
+      type: 'TEXT' | 'SINGLE_CHOICE' | 'MULTI_CHOICE';
+      label: string;
+      helpText?: string;
+      required: boolean;
+      order: number;
+      options?: Array<{ label: string }>;
+      maxLength?: number;
+    }>;
+  };
+};
+
+// Bulk Update Feedback Questions (replaces all questions for intent)
+export function useUpdateIntentFeedbackQuestionsMutation(
+  options?: UseMutationOptions<
+    UpdateIntentFeedbackQuestionsMutation,
+    Error,
+    UpdateIntentFeedbackQuestionsMutationVariables
+  >
+) {
+  const queryClient = getQueryClient();
+  return useMutation<
+    UpdateIntentFeedbackQuestionsMutation,
+    Error,
+    UpdateIntentFeedbackQuestionsMutationVariables
+  >({
+    mutationFn: async (variables) =>
+      gqlClient.request<
+        UpdateIntentFeedbackQuestionsMutation,
+        UpdateIntentFeedbackQuestionsMutationVariables
+      >(UpdateIntentFeedbackQuestionsDocument, variables),
+    onSuccess: (_data, variables) => {
+      // Invalidate questions list
+      queryClient.invalidateQueries({
+        queryKey: [
+          'GetIntentFeedbackQuestions',
+          { intentId: variables.input.intentId },
+        ],
+      });
+      // Invalidate results as well since questions might have changed
+      queryClient.invalidateQueries({
+        queryKey: [
+          'GetIntentFeedbackResults',
+          { intentId: variables.input.intentId },
+        ],
+      });
+    },
     ...options,
   });
 }
