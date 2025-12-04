@@ -32,6 +32,7 @@ export interface ServerClusteredMapProps {
   styleUrlLight?: string;
   styleUrlDark?: string;
   filters?: {
+    q?: string;
     categorySlugs?: string[];
     tagSlugs?: string[];
     levels?: ('BEGINNER' | 'INTERMEDIATE' | 'ADVANCED')[];
@@ -41,6 +42,10 @@ export interface ServerClusteredMapProps {
     status?: 'ANY' | 'UPCOMING' | 'ONGOING' | 'PAST';
     startISO?: string;
     endISO?: string;
+    city?: string;
+    cityLat?: number;
+    cityLng?: number;
+    distanceKm?: number;
   };
   onIntentClick?: (intentId: string) => void;
   hoveredIntentId?: string | null;
@@ -388,6 +393,7 @@ function ServerClusteredMapComponent({
         zoom: Math.round(mapZoom),
         filters: filters
           ? {
+              q: filters.q,
               categorySlugs: filters.categorySlugs,
               tagSlugs: filters.tagSlugs,
               levels: filters.levels as any,
@@ -397,6 +403,10 @@ function ServerClusteredMapComponent({
               status: filters.status as any,
               startISO: filters.startISO,
               endISO: filters.endISO,
+              city: filters.city,
+              cityLat: filters.cityLat,
+              cityLng: filters.cityLng,
+              distanceKm: filters.distanceKm,
             }
           : undefined,
       },
@@ -419,6 +429,7 @@ function ServerClusteredMapComponent({
       perPage: 20,
       filters: filters
         ? {
+            q: filters.q,
             categorySlugs: filters.categorySlugs,
             tagSlugs: filters.tagSlugs,
             levels: filters.levels as any,
@@ -428,6 +439,10 @@ function ServerClusteredMapComponent({
             status: filters.status as any,
             startISO: filters.startISO,
             endISO: filters.endISO,
+            city: filters.city,
+            cityLat: filters.cityLat,
+            cityLng: filters.cityLng,
+            distanceKm: filters.distanceKm,
           }
         : undefined,
     },

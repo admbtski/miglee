@@ -469,6 +469,7 @@ function MapSidebar({
               lang={appLanguage}
               locale={locale}
               filters={{
+                q: filters.q || undefined,
                 categorySlugs: filters.categories,
                 tagSlugs: filters.tags,
                 levels: filters.levels as any,
@@ -478,6 +479,10 @@ function MapSidebar({
                 status: filters.status as any,
                 startISO: filters.startISO ?? undefined,
                 endISO: filters.endISO ?? undefined,
+                city: filters.city ?? undefined,
+                cityLat: filters.cityLat ?? undefined,
+                cityLng: filters.cityLng ?? undefined,
+                distanceKm: filters.distanceKm,
               }}
               onIntentClick={handleIntentClick}
               hoveredIntentId={hoveredIntent?.id ?? null}

@@ -1190,15 +1190,34 @@ input BBoxInput {
 
 "Filters for clustering map intents"
 input ClusterFiltersInput {
+  "Search query (keywords)"
+  q: String
+  "Category slugs to filter by"
   categorySlugs: [String!]
+  "Tag slugs to filter by"
   tagSlugs: [String!]
+  "Levels to filter by"
   levels: [Level!]
+  "Meeting kinds to filter by"
   kinds: [MeetingKind!]
+  "Join modes to filter by"
   joinModes: [JoinMode!]
+  "Show only verified organizers"
   verifiedOnly: Boolean
+  "Intent status filter"
   status: IntentStatus
+  "Start date ISO string for date range filter"
   startISO: String
+  "End date ISO string for date range filter"
   endISO: String
+  "City name for location filter"
+  city: String
+  "City latitude for location filter"
+  cityLat: Float
+  "City longitude for location filter"
+  cityLng: Float
+  "Distance in km from city center"
+  distanceKm: Float
 }
 
 "Clustered point on the map representing one or more intents"

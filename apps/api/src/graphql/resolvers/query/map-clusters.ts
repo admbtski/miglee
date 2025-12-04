@@ -205,6 +205,36 @@ function buildFilterSql(
     paramIndex++;
   }
 
+  // ─── Search Query (q) - full-text search on title and description ───
+  if (filters.q && filters.q.trim()) {
+    const searchQuery = filters.q.trim();
+    whereConditions.push(
+      `(i.title ILIKE $${paramIndex} OR i.description ILIKE $${paramIndex})`
+    );
+    params.push(`%${searchQuery}%`);
+    paramIndex++;
+  }
+
+  // ─── Location Filter (city + distance) ───
+  if (
+    filters.cityLat != null &&
+    filters.cityLng != null &&
+    filters.distanceKm != null
+  ) {
+    // Use ST_DWithin for efficient distance filtering
+    // distanceKm is converted to meters for ST_DWithin
+    const distanceMeters = filters.distanceKm * 1000;
+    whereConditions.push(
+      `ST_DWithin(
+        i.geom::geography,
+        ST_SetSRID(ST_MakePoint($${paramIndex}, $${paramIndex + 1}), 4326)::geography,
+        $${paramIndex + 2}
+      )`
+    );
+    params.push(filters.cityLng, filters.cityLat, distanceMeters);
+    paramIndex += 3;
+  }
+
   const whereClause =
     whereConditions.length > 0 ? `AND ${whereConditions.join(' AND ')}` : '';
 
