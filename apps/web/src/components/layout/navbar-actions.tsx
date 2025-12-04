@@ -56,7 +56,7 @@ export function NavbarActions() {
         <button
           type="button"
           onClick={openPost}
-          className="md:hidden inline-flex items-center gap-1 rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 transition-colors"
+          className="md:hidden inline-flex items-center gap-1 rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 transition-colors flex-nowrap"
           aria-label="Post an event"
         >
           <Plus className="h-4 w-4" />

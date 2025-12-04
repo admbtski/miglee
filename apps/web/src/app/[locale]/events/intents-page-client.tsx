@@ -39,7 +39,7 @@ import { EventsGridVirtualized } from './_components/events-list/events-grid-vir
 import { EventsHeader } from './_components/events-list/events-header';
 import { LeftFiltersPanel } from './_components/left-filters-panel';
 import { MobileFiltersDrawer } from './_components/mobile-filters-drawer';
-import { MobileSearchBar } from './_components/mobile-search-bar';
+import { StickyMobileSearchBar } from './_components/mobile-search-bar';
 import { TopDrawer } from './_components/top-drawer';
 import type { TopDrawerFocusSection } from './_components/top-drawer';
 import { useActiveFiltersCount } from './_hooks/use-active-filters-count';
@@ -92,13 +92,13 @@ export function IntentsPage() {
   const [localCityLng, setLocalCityLng] = useState(filters.cityLng);
   const [localCityPlaceId, setLocalCityPlaceId] = useState(filters.cityPlaceId);
   const [localDistanceKm, setLocalDistanceKm] = useState(distanceKm);
+
+  // Local state for Sidebar filters (instant visual feedback, debounced apply)
   const [localStatus, setLocalStatus] = useState<IntentStatus>(filters.status);
   const [localStartISO, setLocalStartISO] = useState<string | null>(
     filters.startISO
   );
   const [localEndISO, setLocalEndISO] = useState<string | null>(filters.endISO);
-
-  // Local state for Sidebar filters (instant visual feedback, debounced apply)
   const [localKinds, setLocalKinds] = useState(filters.kinds);
   const [localLevels, setLocalLevels] = useState(filters.levels);
   const [localJoinModes, setLocalJoinModes] = useState(filters.joinModes);
@@ -180,10 +180,10 @@ export function IntentsPage() {
   const loadedCount = flatItems.length;
 
   // Build grid columns based on map visibility
-  // 3 columns: left filters (hidden on mobile), center content, right map (optional)
+  // 3 columns: left filters (hidden on <lg), center content, right map (optional)
   const gridCols = mapVisible
-    ? 'md:grid-cols-[280px_1fr_400px] lg:grid-cols-[300px_1fr_450px]'
-    : 'md:grid-cols-[280px_1fr] lg:grid-cols-[300px_1fr]';
+    ? 'lg:grid-cols-[280px_1fr_400px] xl:grid-cols-[300px_1fr_450px]'
+    : 'lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr]';
 
   // Open TopDrawer with specific focus
   const openTopDrawer = useCallback((focus: TopDrawerFocusSection) => {
@@ -203,7 +203,7 @@ export function IntentsPage() {
     setRightDrawerOpen(false);
   }, []);
 
-  // Apply TopDrawer filters (immediate)
+  // Apply TopDrawer filters (immediate) - only search, location, distance
   const handleTopDrawerApply = useCallback(() => {
     const normalizedFilters: CommittedFilters = {
       ...filters,
@@ -215,9 +215,6 @@ export function IntentsPage() {
       distanceKm: localDistanceKm,
       tags: localTags.map((t) => t.slug),
       categories: localCategories.map((c) => c.slug),
-      status: localStatus,
-      startISO: localStartISO,
-      endISO: localEndISO,
     };
     apply(normalizedFilters);
   }, [
@@ -231,15 +228,16 @@ export function IntentsPage() {
     localDistanceKm,
     localTags,
     localCategories,
-    localStatus,
-    localStartISO,
-    localEndISO,
   ]);
 
-  // Handle sidebar filter changes with instant visual update + 3s debounce auto-apply
+  // Handle sidebar filter changes with instant visual update + debounce auto-apply
   const handleSidebarFiltersChange = useCallback(
     (nextFilters: Partial<CommittedFilters>) => {
       // INSTANT: Update local state for immediate visual feedback
+      if (nextFilters.status !== undefined) setLocalStatus(nextFilters.status);
+      if (nextFilters.startISO !== undefined)
+        setLocalStartISO(nextFilters.startISO);
+      if (nextFilters.endISO !== undefined) setLocalEndISO(nextFilters.endISO);
       if (nextFilters.kinds !== undefined) setLocalKinds(nextFilters.kinds);
       if (nextFilters.levels !== undefined) setLocalLevels(nextFilters.levels);
       if (nextFilters.joinModes !== undefined)
@@ -281,12 +279,24 @@ export function IntentsPage() {
   const localSidebarFilters = useMemo(
     () => ({
       ...filters,
+      status: localStatus,
+      startISO: localStartISO,
+      endISO: localEndISO,
       kinds: localKinds,
       levels: localLevels,
       joinModes: localJoinModes,
       verifiedOnly: localVerifiedOnly,
     }),
-    [filters, localKinds, localLevels, localJoinModes, localVerifiedOnly]
+    [
+      filters,
+      localStatus,
+      localStartISO,
+      localEndISO,
+      localKinds,
+      localLevels,
+      localJoinModes,
+      localVerifiedOnly,
+    ]
   );
 
   // Cleanup debounce timer on unmount
@@ -317,21 +327,21 @@ export function IntentsPage() {
               onOpenFilters={openRightDrawer}
             />
           }
-          mobileSearchButton={
-            <MobileSearchBar
-              q={q}
-              city={city}
-              activeFiltersCount={activeFilters}
-              onOpenSearch={() => openTopDrawer('search')}
-              onOpenFilters={openRightDrawer}
-            />
-          }
+        />
+
+        {/* Sticky Mobile Search Bar - below navbar, hides on scroll down */}
+        <StickyMobileSearchBar
+          q={q}
+          city={city}
+          activeFiltersCount={activeFilters}
+          onOpenSearch={() => openTopDrawer('search')}
+          onOpenFilters={openRightDrawer}
         />
 
         <main className={`mx-auto grid w-full gap-4 px-4 py-4 ${gridCols}`}>
-          {/* Left Filters Panel - hidden on mobile, sticky like map */}
-          <aside className="hidden md:block">
-            <div className="sticky top-[calc(var(--nav-h)+1rem)] h-[calc(100vh-var(--nav-h)-2rem)] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
+          {/* Left Filters Panel - hidden on <lg, sticky like map */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
               <LeftFiltersPanel
                 filters={localSidebarFilters}
                 onFiltersChange={handleSidebarFiltersChange}
@@ -388,7 +398,7 @@ export function IntentsPage() {
           </div>
         </main>
 
-        {/* Top Drawer - Search, Location, Distance, Time Status, Date Range */}
+        {/* Top Drawer - Search, Location, Distance only */}
         <TopDrawer
           isOpen={topDrawerOpen}
           onClose={closeTopDrawer}
@@ -406,12 +416,6 @@ export function IntentsPage() {
           onCityLngChange={setLocalCityLng}
           onCityPlaceIdChange={setLocalCityPlaceId}
           onDistanceChange={setLocalDistanceKm}
-          status={localStatus}
-          startISO={localStartISO}
-          endISO={localEndISO}
-          onStatusChange={setLocalStatus}
-          onStartISOChange={setLocalStartISO}
-          onEndISOChange={setLocalEndISO}
           onApply={handleTopDrawerApply}
           locale={locale as 'pl' | 'en'}
         />

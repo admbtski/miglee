@@ -86,8 +86,8 @@ export function DesktopSearchBar({
             onClick={onOpenDistance}
           />
           <Divider />
-          {/* Desktop Filters button - opens TopDrawer */}
-          <FiltersButton activeCount={activeFilters} onClick={onOpenSearch} />
+          {/* Desktop Filters button - opens Right Drawer with filters */}
+          <FiltersButton activeCount={activeFilters} onClick={onOpenFilters} />
           {/* Mobile Filters button - opens Right Drawer */}
           <MobileFiltersButton
             activeCount={activeFilters}
@@ -159,7 +159,7 @@ function FiltersButton({ activeCount, onClick }: FiltersButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="hidden md:flex items-center gap-2 pr-2 shrink-0 hover:opacity-90"
+      className="hidden md:flex lg:hidden items-center gap-2 pr-2 shrink-0 hover:opacity-90"
     >
       <Filter className="w-5 h-5 opacity-60" />
       <span className={hasActiveFilters ? '' : 'opacity-60'}>Filters</span>

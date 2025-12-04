@@ -1,13 +1,15 @@
 /**
- * Left Filters Panel - Desktop sidebar with Event Settings filters
- * Contains: Meeting Type, Level, Join Mode, Verified Organizer
- * (Time Status and Date Range moved to TopDrawer)
+ * Left Filters Panel - Desktop sidebar / Mobile drawer with filters
+ * Contains: Time Status, Date Range, Meeting Type, Level, Join Mode, Verified Organizer
+ * All sections are collapsible with default open state
  */
 
 'use client';
 
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+  IntentStatus,
   JoinMode,
   Level,
   MeetingKind,
@@ -25,6 +27,9 @@ import {
   Sparkles,
   Check,
   Loader2,
+  Clock,
+  Calendar,
+  ChevronDown,
 } from 'lucide-react';
 import type { CommittedFilters } from '../_types';
 
@@ -34,25 +39,48 @@ export type LeftFiltersPanelProps = {
   locale?: 'pl' | 'en';
   isDrawer?: boolean;
   onClose?: () => void;
-  isPending?: boolean; // Shows when filters are waiting to be applied
+  isPending?: boolean;
 };
 
 const translations = {
   pl: {
     title: 'Filtry',
     clearAll: 'Wyczyść',
+    // Time Status
+    timeStatus: 'Status czasu',
+    any: 'Dowolny',
+    upcoming: 'Nadchodzące',
+    ongoing: 'W trakcie',
+    past: 'Przeszłe',
+    // Date Range
+    dateRange: 'Zakres dat',
+    dateRangeHint:
+      'Własny zakres dat dostępny tylko gdy Status czasu = Dowolny',
+    dateRangeDisabled: 'Wyłączony przez status czasu',
+    startDate: 'Data początkowa',
+    endDate: 'Data końcowa',
+    // Presets
+    nowPlus1h: 'Teraz +1h',
+    tonight: 'Dziś wieczorem',
+    tomorrow: 'Jutro',
+    weekend: 'Weekend',
+    next7days: 'Następne 7 dni',
+    // Meeting Type
     meetingType: 'Tryb spotkania',
     onsite: 'Stacjonarne',
     online: 'Online',
     hybrid: 'Hybrydowe',
+    // Level
     level: 'Poziom',
     beginner: 'Początkujący',
     intermediate: 'Średniozaawansowany',
     advanced: 'Zaawansowany',
+    // Join Mode
     joinMode: 'Tryb dołączania',
     open: 'Otwarte',
     request: 'Na prośbę',
     inviteOnly: 'Tylko zaproszenia',
+    // Organizer
     organizer: 'Organizator',
     verifiedOnly: 'Tylko zweryfikowani',
     verifiedHint: 'Pokaż tylko wydarzenia od zweryfikowanych organizatorów',
@@ -60,23 +88,171 @@ const translations = {
   en: {
     title: 'Filters',
     clearAll: 'Clear',
+    // Time Status
+    timeStatus: 'Time Status',
+    any: 'Any',
+    upcoming: 'Upcoming',
+    ongoing: 'Ongoing',
+    past: 'Past',
+    // Date Range
+    dateRange: 'Date Range',
+    dateRangeHint: 'Custom date range is available only when Time Status = Any',
+    dateRangeDisabled: 'Disabled by time status',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    // Presets
+    nowPlus1h: 'Now +1h',
+    tonight: 'Tonight',
+    tomorrow: 'Tomorrow',
+    weekend: 'Weekend',
+    next7days: 'Next 7 days',
+    // Meeting Type
     meetingType: 'Meeting Type',
     onsite: 'Onsite',
     online: 'Online',
     hybrid: 'Hybrid',
+    // Level
     level: 'Level',
     beginner: 'Beginner',
     intermediate: 'Intermediate',
     advanced: 'Advanced',
+    // Join Mode
     joinMode: 'Join Mode',
     open: 'Open',
     request: 'Request',
     inviteOnly: 'Invite Only',
+    // Organizer
     organizer: 'Organizer',
     verifiedOnly: 'Verified only',
     verifiedHint: 'Show only events from verified organizers',
   },
 };
+
+// Helper functions for date conversion
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
+
+function isoToLocalInput(iso?: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear();
+  const mm = pad2(d.getMonth() + 1);
+  const dd = pad2(d.getDate());
+  const hh = pad2(d.getHours());
+  const mi = pad2(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function localInputToISO(val?: string | null): string | null {
+  if (!val) return null;
+  const d = new Date(val);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+// Date preset helpers
+function getPresetDates(preset: string): { start: Date; end: Date } {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  switch (preset) {
+    case 'nowPlus1h': {
+      const start = new Date(now);
+      const end = new Date(now.getTime() + 60 * 60 * 1000);
+      return { start, end };
+    }
+    case 'tonight': {
+      const start = new Date(today);
+      start.setHours(18, 0, 0, 0);
+      const end = new Date(today);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    case 'tomorrow': {
+      const start = new Date(today);
+      start.setDate(start.getDate() + 1);
+      const end = new Date(start);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    case 'weekend': {
+      const dayOfWeek = today.getDay();
+      const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+      const start = new Date(today);
+      start.setDate(start.getDate() + daysUntilSaturday);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    case 'next7days': {
+      const start = new Date(now);
+      const end = new Date(today);
+      end.setDate(end.getDate() + 7);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    default:
+      return { start: now, end: now };
+  }
+}
+
+// Collapsible Section Component
+type CollapsibleSectionProps = {
+  title: string;
+  icon: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+  badge?: number;
+};
+
+function CollapsibleSection({
+  title,
+  icon,
+  isOpen,
+  onToggle,
+  children,
+  badge,
+}: CollapsibleSectionProps) {
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between py-2 group"
+        aria-expanded={isOpen}
+      >
+        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+          {icon}
+          {title}
+          {badge !== undefined && badge > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+              {badge}
+            </span>
+          )}
+        </h3>
+        <ChevronDown
+          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 pb-1">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
 
 export const LeftFiltersPanel = memo(function LeftFiltersPanel({
   filters,
@@ -88,7 +264,81 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
 }: LeftFiltersPanelProps) {
   const t = translations[locale];
 
-  // Toggle handlers for multi-select filters
+  // Collapsible state - all open by default
+  const [openSections, setOpenSections] = useState({
+    timeStatus: true,
+    dateRange: true,
+    meetingType: true,
+    level: true,
+    joinMode: true,
+    organizer: true,
+  });
+
+  const toggleSection = useCallback((section: keyof typeof openSections) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  }, []);
+
+  // Check if date inputs should be disabled
+  const dateInputsDisabled =
+    filters.status === IntentStatus.Upcoming ||
+    filters.status === IntentStatus.Ongoing ||
+    filters.status === IntentStatus.Past;
+
+  // Time Status change handler
+  const handleStatusChange = useCallback(
+    (newStatus: IntentStatus) => {
+      const updates: Partial<CommittedFilters> = { status: newStatus };
+      if (
+        newStatus === IntentStatus.Upcoming ||
+        newStatus === IntentStatus.Ongoing ||
+        newStatus === IntentStatus.Past
+      ) {
+        updates.startISO = null;
+        updates.endISO = null;
+      }
+      onFiltersChange(updates);
+    },
+    [onFiltersChange]
+  );
+
+  // Date change handlers
+  const handleStartChange = useCallback(
+    (val: string) => {
+      const iso = localInputToISO(val);
+      const updates: Partial<CommittedFilters> = { startISO: iso };
+      if (iso !== null && filters.status !== IntentStatus.Any) {
+        updates.status = IntentStatus.Any;
+      }
+      onFiltersChange(updates);
+    },
+    [onFiltersChange, filters.status]
+  );
+
+  const handleEndChange = useCallback(
+    (val: string) => {
+      const iso = localInputToISO(val);
+      const updates: Partial<CommittedFilters> = { endISO: iso };
+      if (iso !== null && filters.status !== IntentStatus.Any) {
+        updates.status = IntentStatus.Any;
+      }
+      onFiltersChange(updates);
+    },
+    [onFiltersChange, filters.status]
+  );
+
+  const handlePresetClick = useCallback(
+    (preset: string) => {
+      const { start, end } = getPresetDates(preset);
+      onFiltersChange({
+        status: IntentStatus.Any,
+        startISO: start.toISOString(),
+        endISO: end.toISOString(),
+      });
+    },
+    [onFiltersChange]
+  );
+
+  // Toggle handlers
   const toggleKind = useCallback(
     (kind: MeetingKind) => {
       const newKinds = filters.kinds.includes(kind)
@@ -128,6 +378,9 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
 
   const clearAllFilters = useCallback(() => {
     onFiltersChange({
+      status: IntentStatus.Any,
+      startISO: null,
+      endISO: null,
       kinds: [],
       levels: [],
       joinModes: [],
@@ -135,15 +388,40 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
     });
   }, [onFiltersChange]);
 
-  // Count active filters in this panel
+  // Count active filters
   const activeFiltersCount = useMemo(() => {
-    return (
-      filters.kinds.length +
-      filters.levels.length +
-      filters.joinModes.length +
-      (filters.verifiedOnly ? 1 : 0)
-    );
+    let count = 0;
+    if (filters.status !== IntentStatus.Any) count++;
+    if (filters.startISO || filters.endISO) count++;
+    count += filters.kinds.length;
+    count += filters.levels.length;
+    count += filters.joinModes.length;
+    if (filters.verifiedOnly) count++;
+    return count;
   }, [filters]);
+
+  // Section badges
+  const timeStatusBadge = filters.status !== IntentStatus.Any ? 1 : 0;
+  const dateRangeBadge = filters.startISO || filters.endISO ? 1 : 0;
+  const meetingTypeBadge = filters.kinds.length;
+  const levelBadge = filters.levels.length;
+  const joinModeBadge = filters.joinModes.length;
+  const organizerBadge = filters.verifiedOnly ? 1 : 0;
+
+  const statusOptions = [
+    { value: IntentStatus.Any, label: t.any },
+    { value: IntentStatus.Upcoming, label: t.upcoming },
+    { value: IntentStatus.Ongoing, label: t.ongoing },
+    { value: IntentStatus.Past, label: t.past },
+  ];
+
+  const presets = [
+    { id: 'nowPlus1h', label: t.nowPlus1h },
+    { id: 'tonight', label: t.tonight },
+    { id: 'tomorrow', label: t.tomorrow },
+    { id: 'weekend', label: t.weekend },
+    { id: 'next7days', label: t.next7days },
+  ];
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-950">
@@ -164,7 +442,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
           {isPending && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full dark:text-amber-300 dark:bg-amber-900/40 animate-pulse">
               <Loader2 className="w-3 h-3 animate-spin" />
-              <span className="hidden sm:inline">Oczekuje...</span>
             </span>
           )}
         </div>
@@ -191,15 +468,117 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-5">
+        <div className="p-4 space-y-1">
+          {/* Time Status */}
+          <CollapsibleSection
+            title={t.timeStatus}
+            icon={<Clock className="w-4 h-4 text-cyan-500" />}
+            isOpen={openSections.timeStatus}
+            onToggle={() => toggleSection('timeStatus')}
+            badge={timeStatusBadge}
+          >
+            <div className="grid grid-cols-2 gap-2">
+              {statusOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => handleStatusChange(value)}
+                  className={`px-3 py-2 text-sm font-medium rounded-xl border transition-all ${
+                    filters.status === value
+                      ? 'bg-cyan-50 border-cyan-200 text-cyan-700 dark:bg-cyan-900/30 dark:border-cyan-800 dark:text-cyan-300'
+                      : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-800 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </CollapsibleSection>
+
+          {/* Divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
+
+          {/* Date Range */}
+          <CollapsibleSection
+            title={t.dateRange}
+            icon={<Calendar className="w-4 h-4 text-emerald-500" />}
+            isOpen={openSections.dateRange}
+            onToggle={() => toggleSection('dateRange')}
+            badge={dateRangeBadge}
+          >
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+              {dateInputsDisabled ? t.dateRangeDisabled : t.dateRangeHint}
+            </p>
+
+            {/* Presets */}
+            <div
+              className={`flex flex-wrap gap-1.5 mb-3 transition-opacity ${
+                dateInputsDisabled ? 'opacity-50 pointer-events-none' : ''
+              }`}
+              aria-disabled={dateInputsDisabled}
+            >
+              {presets.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => handlePresetClick(id)}
+                  disabled={dateInputsDisabled}
+                  className="px-2.5 py-1.5 text-xs font-medium rounded-lg border bg-white text-zinc-600 border-zinc-200 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-emerald-900/30 dark:hover:border-emerald-800 dark:hover:text-emerald-300 transition-all disabled:cursor-not-allowed"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Range Inputs */}
+            <div
+              className={`space-y-3 transition-opacity ${
+                dateInputsDisabled ? 'opacity-50 pointer-events-none' : ''
+              }`}
+              aria-disabled={dateInputsDisabled}
+            >
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                  {t.startDate}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={isoToLocalInput(filters.startISO)}
+                  onChange={(e) => handleStartChange(e.target.value)}
+                  disabled={dateInputsDisabled}
+                  aria-disabled={dateInputsDisabled}
+                  className="w-full px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all disabled:cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                  {t.endDate}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={isoToLocalInput(filters.endISO)}
+                  min={isoToLocalInput(filters.startISO) || undefined}
+                  onChange={(e) => handleEndChange(e.target.value)}
+                  disabled={dateInputsDisabled}
+                  aria-disabled={dateInputsDisabled}
+                  className="w-full px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          {/* Divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
+
           {/* Meeting Type */}
-          <section>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3 flex items-center gap-2">
-              <Globe className="w-4 h-4 text-violet-500" />
-              {t.meetingType}
-            </h3>
+          <CollapsibleSection
+            title={t.meetingType}
+            icon={<Globe className="w-4 h-4 text-violet-500" />}
+            isOpen={openSections.meetingType}
+            onToggle={() => toggleSection('meetingType')}
+            badge={meetingTypeBadge}
+          >
             <div className="space-y-2">
-              {/* Onsite */}
               <button
                 onClick={() => toggleKind(MeetingKind.Onsite)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
@@ -219,7 +598,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                 )}
               </button>
 
-              {/* Online */}
               <button
                 onClick={() => toggleKind(MeetingKind.Online)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
@@ -239,7 +617,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                 )}
               </button>
 
-              {/* Hybrid */}
               <button
                 onClick={() => toggleKind(MeetingKind.Hybrid)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
@@ -259,19 +636,20 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                 )}
               </button>
             </div>
-          </section>
+          </CollapsibleSection>
 
           {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800" />
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
 
           {/* Level */}
-          <section>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3 flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-amber-500" />
-              {t.level}
-            </h3>
+          <CollapsibleSection
+            title={t.level}
+            icon={<GraduationCap className="w-4 h-4 text-amber-500" />}
+            isOpen={openSections.level}
+            onToggle={() => toggleSection('level')}
+            badge={levelBadge}
+          >
             <div className="flex flex-wrap gap-2">
-              {/* Beginner */}
               <button
                 onClick={() => toggleLevel(Level.Beginner)}
                 className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
@@ -282,8 +660,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
               >
                 {t.beginner}
               </button>
-
-              {/* Intermediate */}
               <button
                 onClick={() => toggleLevel(Level.Intermediate)}
                 className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
@@ -294,8 +670,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
               >
                 {t.intermediate}
               </button>
-
-              {/* Advanced */}
               <button
                 onClick={() => toggleLevel(Level.Advanced)}
                 className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
@@ -307,19 +681,20 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                 {t.advanced}
               </button>
             </div>
-          </section>
+          </CollapsibleSection>
 
           {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800" />
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
 
           {/* Join Mode */}
-          <section>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-3 flex items-center gap-2">
-              <DoorOpen className="w-4 h-4 text-green-500" />
-              {t.joinMode}
-            </h3>
+          <CollapsibleSection
+            title={t.joinMode}
+            icon={<DoorOpen className="w-4 h-4 text-green-500" />}
+            isOpen={openSections.joinMode}
+            onToggle={() => toggleSection('joinMode')}
+            badge={joinModeBadge}
+          >
             <div className="space-y-2">
-              {/* Open */}
               <button
                 onClick={() => toggleJoinMode(JoinMode.Open)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
@@ -338,8 +713,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   <Check className="w-4 h-4 text-green-500" />
                 )}
               </button>
-
-              {/* Request */}
               <button
                 onClick={() => toggleJoinMode(JoinMode.Request)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
@@ -358,8 +731,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   <Check className="w-4 h-4 text-orange-500" />
                 )}
               </button>
-
-              {/* Invite Only */}
               <button
                 onClick={() => toggleJoinMode(JoinMode.InviteOnly)}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
@@ -379,17 +750,19 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                 )}
               </button>
             </div>
-          </section>
+          </CollapsibleSection>
 
           {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800" />
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
 
           {/* Verified Organizer */}
-          <section>
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 mb-2 flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-indigo-500" />
-              {t.organizer}
-            </h3>
+          <CollapsibleSection
+            title={t.organizer}
+            icon={<UserCheck className="w-4 h-4 text-indigo-500" />}
+            isOpen={openSections.organizer}
+            onToggle={() => toggleSection('organizer')}
+            badge={organizerBadge}
+          >
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
               {t.verifiedHint}
             </p>
@@ -402,29 +775,19 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
               }`}
             >
               <span
-                className={`text-sm font-medium ${
-                  filters.verifiedOnly
-                    ? 'text-indigo-700 dark:text-indigo-300'
-                    : 'text-zinc-700 dark:text-zinc-300'
-                }`}
+                className={`text-sm font-medium ${filters.verifiedOnly ? 'text-indigo-700 dark:text-indigo-300' : 'text-zinc-700 dark:text-zinc-300'}`}
               >
                 {t.verifiedOnly}
               </span>
               <span
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${
-                  filters.verifiedOnly
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600'
-                    : 'bg-zinc-300 dark:bg-zinc-700'
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${filters.verifiedOnly ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
               >
                 <span
-                  className={`absolute h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    filters.verifiedOnly ? 'translate-x-5' : 'translate-x-0.5'
-                  }`}
+                  className={`absolute h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${filters.verifiedOnly ? 'translate-x-5' : 'translate-x-0.5'}`}
                 />
               </span>
             </button>
-          </section>
+          </CollapsibleSection>
         </div>
       </div>
     </div>

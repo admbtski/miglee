@@ -1,6 +1,8 @@
 /**
- * Right Drawer - Slide-in drawer for filters on mobile/tablet
+ * Filters Drawer - Slide-in drawer for filters
  * Slides from RIGHT (like JustJoin.it)
+ * On mobile: replaces left sidebar
+ * On desktop: opens when "Filters" button is clicked
  * Contains Meeting Type, Level, Join Mode, Verified (same as LeftFiltersPanel)
  */
 
@@ -70,7 +72,7 @@ export const MobileFiltersDrawer = memo(function MobileFiltersDrawer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
             aria-hidden="true"
           />
 
@@ -80,7 +82,7 @@ export const MobileFiltersDrawer = memo(function MobileFiltersDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-y-0 right-0 z-[101] w-[85vw] max-w-sm bg-white/95 backdrop-blur-xl dark:bg-zinc-950/95 shadow-2xl md:hidden"
+            className="fixed inset-y-0 right-0 z-[101] w-[85vw] max-w-sm bg-white/95 backdrop-blur-xl dark:bg-zinc-950/95 shadow-2xl"
           >
             <LeftFiltersPanel
               filters={filters}

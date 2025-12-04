@@ -1,14 +1,15 @@
 /**
- * Top Drawer - Slide-down panel for Search, Location, Distance, Time Status, Date Range
+ * Top Drawer - Slide-down panel for Search, Location, Distance
  * Inspired by JustJoin.it search experience
+ *
+ * NOTE: Time Status and Date Range are in the sidebar/drawer filters, NOT here.
  */
 
 'use client';
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar, Clock, MapPin, Ruler, Search, X } from 'lucide-react';
-import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
+import { MapPin, Ruler, Search, X } from 'lucide-react';
 import { useSearchMeta } from '../_hooks/use-search-meta';
 import SearchCombo from './search-combo';
 import { LocationCombo } from '@/components/forms/location-combobox';
@@ -35,13 +36,6 @@ export type TopDrawerProps = {
   onCityLngChange: (lng: number | null) => void;
   onCityPlaceIdChange: (placeId: string | null) => void;
   onDistanceChange: (distance: number) => void;
-  // Time Status & Date Range
-  status: IntentStatus;
-  startISO: string | null;
-  endISO: string | null;
-  onStatusChange: (status: IntentStatus) => void;
-  onStartISOChange: (iso: string | null) => void;
-  onEndISOChange: (iso: string | null) => void;
   // Apply
   onApply: () => void;
   locale?: 'pl' | 'en';
@@ -59,17 +53,6 @@ const translations = {
     locationPlaceholder: 'Wpisz miasto...',
     distanceLabel: 'Odległość',
     global: 'Globalnie',
-    timeStatusLabel: 'Status czasu',
-    timeStatusHint: 'Wybór statusu wyłącza ręczny zakres dat',
-    any: 'Dowolny',
-    upcoming: 'Nadchodzące',
-    ongoing: 'W trakcie',
-    past: 'Przeszłe',
-    dateRangeLabel: 'Zakres dat',
-    dateRangeHint: 'Ustaw własny zakres dat',
-    dateRangeDisabled: 'Wyłączony przez status czasu',
-    startDate: 'Od',
-    endDate: 'Do',
     apply: 'Szukaj',
     close: 'Zamknij',
   },
@@ -84,42 +67,10 @@ const translations = {
     locationPlaceholder: 'Enter city...',
     distanceLabel: 'Distance',
     global: 'Global',
-    timeStatusLabel: 'Time Status',
-    timeStatusHint: 'Selecting status disables manual date range',
-    any: 'Any',
-    upcoming: 'Upcoming',
-    ongoing: 'Ongoing',
-    past: 'Past',
-    dateRangeLabel: 'Date Range',
-    dateRangeHint: 'Set custom date range',
-    dateRangeDisabled: 'Disabled by time status',
-    startDate: 'From',
-    endDate: 'To',
     apply: 'Search',
     close: 'Close',
   },
 };
-
-// Helper functions for date conversion
-const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
-
-function isoToLocalInput(iso?: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const yyyy = d.getFullYear();
-  const mm = pad2(d.getMonth() + 1);
-  const dd = pad2(d.getDate());
-  const hh = pad2(d.getHours());
-  const mi = pad2(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-function localInputToISO(val?: string | null): string | null {
-  if (!val) return null;
-  const d = new Date(val);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
 
 export const TopDrawer = memo(function TopDrawer({
   isOpen,
@@ -138,12 +89,6 @@ export const TopDrawer = memo(function TopDrawer({
   onCityLngChange,
   onCityPlaceIdChange,
   onDistanceChange,
-  status,
-  startISO,
-  endISO,
-  onStatusChange,
-  onStartISOChange,
-  onEndISOChange,
   onApply,
   locale = 'pl',
 }: TopDrawerProps) {
@@ -154,12 +99,6 @@ export const TopDrawer = memo(function TopDrawer({
 
   // Search meta for suggestions
   const { data: searchData, loading: searchLoading } = useSearchMeta(q);
-
-  // Check if date inputs should be disabled
-  const dateInputsDisabled =
-    status === IntentStatus.Upcoming ||
-    status === IntentStatus.Ongoing ||
-    status === IntentStatus.Past;
 
   // Sync location text with city prop
   useEffect(() => {
@@ -220,45 +159,6 @@ export const TopDrawer = memo(function TopDrawer({
     [onCityChange, onCityLatChange, onCityLngChange, onCityPlaceIdChange]
   );
 
-  // Status change - reset dates when selecting time-based status
-  const handleStatusChange = useCallback(
-    (newStatus: IntentStatus) => {
-      onStatusChange(newStatus);
-      if (
-        newStatus === IntentStatus.Upcoming ||
-        newStatus === IntentStatus.Ongoing ||
-        newStatus === IntentStatus.Past
-      ) {
-        onStartISOChange(null);
-        onEndISOChange(null);
-      }
-    },
-    [onStatusChange, onStartISOChange, onEndISOChange]
-  );
-
-  // Date change - reset status to Any when setting dates
-  const handleStartChange = useCallback(
-    (val: string) => {
-      const iso = localInputToISO(val);
-      onStartISOChange(iso);
-      if (iso !== null && status !== IntentStatus.Any) {
-        onStatusChange(IntentStatus.Any);
-      }
-    },
-    [onStartISOChange, onStatusChange, status]
-  );
-
-  const handleEndChange = useCallback(
-    (val: string) => {
-      const iso = localInputToISO(val);
-      onEndISOChange(iso);
-      if (iso !== null && status !== IntentStatus.Any) {
-        onStatusChange(IntentStatus.Any);
-      }
-    },
-    [onEndISOChange, onStatusChange, status]
-  );
-
   const handleApplyAndClose = useCallback(() => {
     onApply();
     onClose();
@@ -274,13 +174,6 @@ export const TopDrawer = memo(function TopDrawer({
     },
     [handleApplyAndClose]
   );
-
-  const statusOptions = [
-    { value: IntentStatus.Any, label: t.any },
-    { value: IntentStatus.Upcoming, label: t.upcoming },
-    { value: IntentStatus.Ongoing, label: t.ongoing },
-    { value: IntentStatus.Past, label: t.past },
-  ];
 
   return (
     <AnimatePresence>
@@ -303,10 +196,10 @@ export const TopDrawer = memo(function TopDrawer({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '-100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 top-0 z-[101] max-h-[90vh] overflow-y-auto"
+            className="fixed inset-x-0 top-0 z-[101] max-h-[85vh] overflow-y-auto"
             onKeyDown={handleKeyDown}
           >
-            <div className="mx-auto max-w-5xl px-4 pt-6 pb-8">
+            <div className="mx-auto max-w-4xl px-4 pt-6 pb-8">
               <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
@@ -323,8 +216,8 @@ export const TopDrawer = memo(function TopDrawer({
                 </div>
 
                 {/* Content */}
-                <div className="p-6 space-y-8">
-                  {/* Row 1: Search */}
+                <div className="p-6 space-y-6">
+                  {/* Search */}
                   <section>
                     <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                       <Search className="w-4 h-4 text-indigo-500" />
@@ -413,7 +306,7 @@ export const TopDrawer = memo(function TopDrawer({
                     )}
                   </section>
 
-                  {/* Row 2: Location & Distance */}
+                  {/* Location & Distance */}
                   <section className="grid gap-6 md:grid-cols-2">
                     {/* Location */}
                     <div>
@@ -503,82 +396,6 @@ export const TopDrawer = memo(function TopDrawer({
                               {km} km
                             </button>
                           ))}
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  {/* Row 3: Time Status & Date Range */}
-                  <section className="grid gap-6 md:grid-cols-2">
-                    {/* Time Status */}
-                    <div>
-                      <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                        <Clock className="w-4 h-4 text-cyan-500" />
-                        {t.timeStatusLabel}
-                      </label>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
-                        {t.timeStatusHint}
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {statusOptions.map(({ value, label }) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => handleStatusChange(value)}
-                            className={`px-3 py-2.5 text-sm font-medium rounded-xl border transition-all ${
-                              status === value
-                                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-transparent shadow-md'
-                                : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-700'
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Date Range */}
-                    <div>
-                      <label className="flex items-center gap-2 mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                        <Calendar className="w-4 h-4 text-emerald-500" />
-                        {t.dateRangeLabel}
-                      </label>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
-                        {dateInputsDisabled
-                          ? t.dateRangeDisabled
-                          : t.dateRangeHint}
-                      </p>
-                      <div
-                        className={`space-y-3 transition-opacity ${
-                          dateInputsDisabled
-                            ? 'opacity-50 pointer-events-none'
-                            : ''
-                        }`}
-                      >
-                        <div>
-                          <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
-                            {t.startDate}
-                          </span>
-                          <input
-                            type="datetime-local"
-                            value={isoToLocalInput(startISO)}
-                            onChange={(e) => handleStartChange(e.target.value)}
-                            disabled={dateInputsDisabled}
-                            className="w-full px-3 py-2.5 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all disabled:cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
-                          <span className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
-                            {t.endDate}
-                          </span>
-                          <input
-                            type="datetime-local"
-                            value={isoToLocalInput(endISO)}
-                            min={isoToLocalInput(startISO) || undefined}
-                            onChange={(e) => handleEndChange(e.target.value)}
-                            disabled={dateInputsDisabled}
-                            className="w-full px-3 py-2.5 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all disabled:cursor-not-allowed"
-                          />
                         </div>
                       </div>
                     </div>

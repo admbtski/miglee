@@ -155,7 +155,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
           </div>
 
           {/* Mobile actions */}
-          <div className="flex flex-1 items-center justify-end gap-2 md:hidden">
+          <div className="flex flex-1 items-center justify-end gap-1 md:hidden">
             {mobileSearchButton}
 
             {!isAuthed ? (
@@ -179,7 +179,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
             <button
               type="button"
               onClick={openPost}
-              className="rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 flex-nowrap text-nowrap"
               aria-label="Post an event"
               title="Post an event"
             >
