@@ -1,3 +1,14 @@
+/**
+ * Desktop Search Bar - Top navigation search bar
+ *
+ * FLOW (JustJoin.it inspired):
+ * - Click on Search → opens TopDrawer focused on search
+ * - Click on Location → opens TopDrawer focused on location
+ * - Click on Distance → opens TopDrawer focused on distance
+ * - Click on Filters (desktop) → opens TopDrawer
+ * - Click on Filters icon (mobile) → opens Right Drawer
+ */
+
 'use client';
 
 import {
@@ -6,6 +17,7 @@ import {
   Ruler as RulerIcon,
   Search,
   SearchIcon,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -16,6 +28,10 @@ export type DesktopSearchBarProps = {
   city: string | null;
   distanceKm: number;
   activeFilters: number;
+  // Callbacks for different sections
+  onOpenSearch: () => void;
+  onOpenLocation: () => void;
+  onOpenDistance: () => void;
   onOpenFilters: () => void;
   cta?: React.ReactNode;
   className?: string;
@@ -29,6 +45,9 @@ export function DesktopSearchBar({
   city,
   distanceKm,
   activeFilters,
+  onOpenSearch,
+  onOpenLocation,
+  onOpenDistance,
   onOpenFilters,
   cta,
   className,
@@ -41,31 +60,40 @@ export function DesktopSearchBar({
       <GlowEffect />
       <GradientBorder>
         <div className="flex items-center py-2 pl-4 pr-1 text-sm rounded-full bg-white/90 text-zinc-800 dark:bg-zinc-950/90 dark:text-zinc-100">
+          {/* Search segment - opens TopDrawer focused on search */}
           <SearchSegment
             icon={<Search className="w-5 h-5 opacity-60" />}
             value={q}
             placeholder="Search.."
             className="flex-1"
-            onClick={onOpenFilters}
+            onClick={onOpenSearch}
           />
           <Divider />
+          {/* Location segment - opens TopDrawer focused on location */}
           <SearchSegment
             icon={<MapPinIcon className="w-5 h-5 opacity-60" />}
             value={city}
             placeholder="Any"
             className="flex-1"
-            onClick={onOpenFilters}
+            onClick={onOpenLocation}
           />
           <Divider />
+          {/* Distance segment - opens TopDrawer focused on distance */}
           <SearchSegment
             icon={<RulerIcon className="w-5 h-5 opacity-60" />}
             value={distanceDisplay}
             placeholder="30 km"
-            onClick={onOpenFilters}
+            onClick={onOpenDistance}
           />
           <Divider />
-          <FiltersButton activeCount={activeFilters} onClick={onOpenFilters} />
-          {cta ?? <DefaultSearchButton onClick={onOpenFilters} />}
+          {/* Desktop Filters button - opens TopDrawer */}
+          <FiltersButton activeCount={activeFilters} onClick={onOpenSearch} />
+          {/* Mobile Filters button - opens Right Drawer */}
+          <MobileFiltersButton
+            activeCount={activeFilters}
+            onClick={onOpenFilters}
+          />
+          {cta ?? <DefaultSearchButton onClick={onOpenSearch} />}
         </div>
       </GradientBorder>
     </div>
@@ -131,10 +159,38 @@ function FiltersButton({ activeCount, onClick }: FiltersButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 pr-2 shrink-0 hover:opacity-90"
+      className="hidden md:flex items-center gap-2 pr-2 shrink-0 hover:opacity-90"
     >
       <Filter className="w-5 h-5 opacity-60" />
       <span className={hasActiveFilters ? '' : 'opacity-60'}>Filters</span>
+      {hasActiveFilters && (
+        <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[12px] text-white shadow-sm ring-1 ring-black/5">
+          {activeCount}
+        </span>
+      )}
+    </button>
+  );
+}
+
+type MobileFiltersButtonProps = {
+  activeCount: number;
+  onClick: () => void;
+};
+
+function MobileFiltersButton({
+  activeCount,
+  onClick,
+}: MobileFiltersButtonProps) {
+  const hasActiveFilters = activeCount > 0;
+
+  return (
+    <button
+      onClick={onClick}
+      className="flex md:hidden items-center gap-2 pr-2 shrink-0 hover:opacity-90"
+      title="Open filters"
+      aria-label="Open filters drawer"
+    >
+      <SlidersHorizontal className="w-5 h-5 opacity-60" />
       {hasActiveFilters && (
         <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[12px] text-white shadow-sm ring-1 ring-black/5">
           {activeCount}
