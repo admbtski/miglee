@@ -506,6 +506,73 @@ export const pl = {
     viewOnline: 'Zobacz online',
   },
 
+  // Events Filters
+  eventsFilters: {
+    // Panel
+    title: 'Filtry',
+    clearAll: 'Wyczyść',
+    // Time Status
+    timeStatus: 'Status czasu',
+    any: 'Dowolny',
+    upcoming: 'Nadchodzące',
+    ongoing: 'W trakcie',
+    past: 'Przeszłe',
+    // Date Range
+    dateRange: 'Zakres dat',
+    dateRangeHint:
+      'Własny zakres dat dostępny tylko gdy Status czasu = Dowolny',
+    dateRangeDisabled: 'Wyłączony przez status czasu',
+    startDate: 'Data początkowa',
+    endDate: 'Data końcowa',
+    // Presets
+    nowPlus1h: 'Teraz +1h',
+    tonight: 'Dziś wieczorem',
+    tomorrow: 'Jutro',
+    weekend: 'Weekend',
+    next7days: 'Następne 7 dni',
+    // Meeting Type
+    meetingType: 'Tryb spotkania',
+    onsite: 'Stacjonarne',
+    online: 'Online',
+    hybrid: 'Hybrydowe',
+    // Level
+    level: 'Poziom',
+    beginner: 'Początkujący',
+    intermediate: 'Średniozaawansowany',
+    advanced: 'Zaawansowany',
+    // Join Mode
+    joinMode: 'Tryb dołączania',
+    open: 'Otwarte',
+    request: 'Na prośbę',
+    inviteOnly: 'Tylko zaproszenia',
+    // Organizer
+    organizer: 'Organizator',
+    verifiedOnly: 'Tylko zweryfikowani',
+    verifiedHint: 'Pokaż tylko wydarzenia od zweryfikowanych organizatorów',
+  },
+
+  // Events Search (Top Drawer)
+  eventsSearch: {
+    title: 'Wyszukiwanie',
+    searchLabel: 'Szukaj',
+    searchPlaceholder: 'Szukaj tagów lub kategorii…',
+    loadingPlaceholder: 'Ładowanie podpowiedzi…',
+    tagsLabel: 'Tagi',
+    categoriesLabel: 'Kategorie',
+    locationLabel: 'Lokalizacja',
+    locationPlaceholder: 'Wpisz miasto...',
+    distanceLabel: 'Odległość',
+    global: 'Globalnie',
+    apply: 'Szukaj',
+    close: 'Zamknij',
+  },
+
+  // Mobile Search Bar
+  mobileSearch: {
+    searchPlaceholder: 'Szukaj wydarzeń...',
+    filters: 'Filtry',
+  },
+
   // Subscription Plans
   subscriptionPlans: {
     title: 'Wybierz swój plan użytkownika',

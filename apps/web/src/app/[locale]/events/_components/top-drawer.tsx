@@ -13,6 +13,7 @@ import { MapPin, Ruler, Search, X } from 'lucide-react';
 import { useSearchMeta } from '../_hooks/use-search-meta';
 import SearchCombo from './search-combo';
 import { LocationCombo } from '@/components/forms/location-combobox';
+import { useTranslations } from '@/lib/i18n/provider-ssr';
 import type { SearchMeta } from '../_hooks/use-search-meta';
 
 export type TopDrawerFocusSection = 'search' | 'location' | 'distance' | null;
@@ -38,38 +39,6 @@ export type TopDrawerProps = {
   onDistanceChange: (distance: number) => void;
   // Apply
   onApply: () => void;
-  locale?: 'pl' | 'en';
-};
-
-const translations = {
-  pl: {
-    title: 'Wyszukiwanie',
-    searchLabel: 'Szukaj',
-    searchPlaceholder: 'Szukaj tagów lub kategorii…',
-    loadingPlaceholder: 'Ładowanie podpowiedzi…',
-    tagsLabel: 'Tagi',
-    categoriesLabel: 'Kategorie',
-    locationLabel: 'Lokalizacja',
-    locationPlaceholder: 'Wpisz miasto...',
-    distanceLabel: 'Odległość',
-    global: 'Globalnie',
-    apply: 'Szukaj',
-    close: 'Zamknij',
-  },
-  en: {
-    title: 'Search',
-    searchLabel: 'Search',
-    searchPlaceholder: 'Search tags or categories…',
-    loadingPlaceholder: 'Loading suggestions…',
-    tagsLabel: 'Tags',
-    categoriesLabel: 'Categories',
-    locationLabel: 'Location',
-    locationPlaceholder: 'Enter city...',
-    distanceLabel: 'Distance',
-    global: 'Global',
-    apply: 'Search',
-    close: 'Close',
-  },
 };
 
 export const TopDrawer = memo(function TopDrawer({
@@ -90,9 +59,9 @@ export const TopDrawer = memo(function TopDrawer({
   onCityPlaceIdChange,
   onDistanceChange,
   onApply,
-  locale = 'pl',
 }: TopDrawerProps) {
-  const t = translations[locale];
+  const translations = useTranslations();
+  const t = translations.eventsSearch;
   const searchInputRef = useRef<HTMLInputElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const [locationText, setLocationText] = useState<string>(city ?? '');

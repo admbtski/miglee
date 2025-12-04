@@ -9,6 +9,7 @@
 import { memo, useRef, useState, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from '@/lib/i18n/provider-ssr';
 
 export type MobileSearchBarProps = {
   q: string;
@@ -18,17 +19,6 @@ export type MobileSearchBarProps = {
   onOpenFilters: () => void;
 };
 
-const translations = {
-  pl: {
-    searchPlaceholder: 'Szukaj wydarzeń...',
-    filters: 'Filtry',
-  },
-  en: {
-    searchPlaceholder: 'Search events...',
-    filters: 'Filters',
-  },
-};
-
 export const MobileSearchBar = memo(function MobileSearchBar({
   q,
   city,
@@ -36,7 +26,8 @@ export const MobileSearchBar = memo(function MobileSearchBar({
   onOpenSearch,
   onOpenFilters,
 }: MobileSearchBarProps) {
-  const t = translations.pl;
+  const translations = useTranslations();
+  const t = translations.mobileSearch;
   const displayText = q || city || '';
 
   return (

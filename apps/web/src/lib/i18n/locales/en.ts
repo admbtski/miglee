@@ -503,6 +503,72 @@ export const en = {
     viewOnline: 'View online',
   },
 
+  // Events Filters
+  eventsFilters: {
+    // Panel
+    title: 'Filters',
+    clearAll: 'Clear',
+    // Time Status
+    timeStatus: 'Time Status',
+    any: 'Any',
+    upcoming: 'Upcoming',
+    ongoing: 'Ongoing',
+    past: 'Past',
+    // Date Range
+    dateRange: 'Date Range',
+    dateRangeHint: 'Custom date range is available only when Time Status = Any',
+    dateRangeDisabled: 'Disabled by time status',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    // Presets
+    nowPlus1h: 'Now +1h',
+    tonight: 'Tonight',
+    tomorrow: 'Tomorrow',
+    weekend: 'Weekend',
+    next7days: 'Next 7 days',
+    // Meeting Type
+    meetingType: 'Meeting Type',
+    onsite: 'Onsite',
+    online: 'Online',
+    hybrid: 'Hybrid',
+    // Level
+    level: 'Level',
+    beginner: 'Beginner',
+    intermediate: 'Intermediate',
+    advanced: 'Advanced',
+    // Join Mode
+    joinMode: 'Join Mode',
+    open: 'Open',
+    request: 'Request',
+    inviteOnly: 'Invite Only',
+    // Organizer
+    organizer: 'Organizer',
+    verifiedOnly: 'Verified only',
+    verifiedHint: 'Show only events from verified organizers',
+  },
+
+  // Events Search (Top Drawer)
+  eventsSearch: {
+    title: 'Search',
+    searchLabel: 'Search',
+    searchPlaceholder: 'Search tags or categories…',
+    loadingPlaceholder: 'Loading suggestions…',
+    tagsLabel: 'Tags',
+    categoriesLabel: 'Categories',
+    locationLabel: 'Location',
+    locationPlaceholder: 'Enter city...',
+    distanceLabel: 'Distance',
+    global: 'Global',
+    apply: 'Search',
+    close: 'Close',
+  },
+
+  // Mobile Search Bar
+  mobileSearch: {
+    searchPlaceholder: 'Search events...',
+    filters: 'Filters',
+  },
+
   // Subscription Plans
   subscriptionPlans: {
     title: 'Choose your user plan',

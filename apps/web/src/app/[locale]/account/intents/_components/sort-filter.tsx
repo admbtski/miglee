@@ -80,7 +80,7 @@ export function SortFilter({
             id={listId}
             role="listbox"
             className={clsx(
-              'absolute z-40 mt-2 w-[240px] overflow-hidden rounded-xl border bg-white shadow-lg',
+              'absolute z-440 mt-2 w-[240px] overflow-hidden rounded-xl border bg-white shadow-lg',
               'border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900'
             )}
           >

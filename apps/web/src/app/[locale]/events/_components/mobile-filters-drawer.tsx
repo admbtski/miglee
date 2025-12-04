@@ -18,7 +18,6 @@ export type MobileFiltersDrawerProps = {
   onClose: () => void;
   filters: CommittedFilters;
   onFiltersChange: (next: Partial<CommittedFilters>) => void;
-  locale?: 'pl' | 'en';
   isPending?: boolean;
 };
 
@@ -27,7 +26,6 @@ export const MobileFiltersDrawer = memo(function MobileFiltersDrawer({
   onClose,
   filters,
   onFiltersChange,
-  locale = 'pl',
   isPending = false,
 }: MobileFiltersDrawerProps) {
   // Close on Escape key
@@ -87,7 +85,6 @@ export const MobileFiltersDrawer = memo(function MobileFiltersDrawer({
             <LeftFiltersPanel
               filters={filters}
               onFiltersChange={handleFiltersChange}
-              locale={locale}
               isDrawer={true}
               onClose={onClose}
               isPending={isPending}

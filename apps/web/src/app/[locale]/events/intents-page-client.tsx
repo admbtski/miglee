@@ -341,11 +341,10 @@ export function IntentsPage() {
         <main className={`mx-auto grid w-full gap-4 px-4 py-4 ${gridCols}`}>
           {/* Left Filters Panel - hidden on <lg, sticky like map */}
           <aside className="hidden lg:block">
-            <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
+            <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
               <LeftFiltersPanel
                 filters={localSidebarFilters}
                 onFiltersChange={handleSidebarFiltersChange}
-                locale={locale as 'pl' | 'en'}
                 isPending={isPendingApply}
               />
             </div>
@@ -417,7 +416,6 @@ export function IntentsPage() {
           onCityPlaceIdChange={setLocalCityPlaceId}
           onDistanceChange={setLocalDistanceKm}
           onApply={handleTopDrawerApply}
-          locale={locale as 'pl' | 'en'}
         />
 
         {/* Right Drawer (mobile) - All sidebar filters */}
@@ -426,7 +424,6 @@ export function IntentsPage() {
           onClose={closeRightDrawer}
           filters={localSidebarFilters}
           onFiltersChange={handleSidebarFiltersChange}
-          locale={locale as 'pl' | 'en'}
           isPending={isPendingApply}
         />
       </div>

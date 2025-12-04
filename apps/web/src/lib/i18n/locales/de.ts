@@ -513,6 +513,74 @@ export const de = {
     viewOnline: 'Online ansehen',
   },
 
+  // Events Filters
+  eventsFilters: {
+    // Panel
+    title: 'Filter',
+    clearAll: 'Löschen',
+    // Time Status
+    timeStatus: 'Zeitstatus',
+    any: 'Beliebig',
+    upcoming: 'Bevorstehend',
+    ongoing: 'Laufend',
+    past: 'Vergangen',
+    // Date Range
+    dateRange: 'Datumsbereich',
+    dateRangeHint:
+      'Benutzerdefinierter Datumsbereich nur verfügbar wenn Zeitstatus = Beliebig',
+    dateRangeDisabled: 'Deaktiviert durch Zeitstatus',
+    startDate: 'Startdatum',
+    endDate: 'Enddatum',
+    // Presets
+    nowPlus1h: 'Jetzt +1h',
+    tonight: 'Heute Abend',
+    tomorrow: 'Morgen',
+    weekend: 'Wochenende',
+    next7days: 'Nächste 7 Tage',
+    // Meeting Type
+    meetingType: 'Veranstaltungsart',
+    onsite: 'Vor Ort',
+    online: 'Online',
+    hybrid: 'Hybrid',
+    // Level
+    level: 'Niveau',
+    beginner: 'Anfänger',
+    intermediate: 'Fortgeschritten',
+    advanced: 'Experte',
+    // Join Mode
+    joinMode: 'Beitrittsmodus',
+    open: 'Offen',
+    request: 'Auf Anfrage',
+    inviteOnly: 'Nur mit Einladung',
+    // Organizer
+    organizer: 'Veranstalter',
+    verifiedOnly: 'Nur verifizierte',
+    verifiedHint:
+      'Nur Veranstaltungen von verifizierten Veranstaltern anzeigen',
+  },
+
+  // Events Search (Top Drawer)
+  eventsSearch: {
+    title: 'Suche',
+    searchLabel: 'Suchen',
+    searchPlaceholder: 'Tags oder Kategorien suchen…',
+    loadingPlaceholder: 'Vorschläge werden geladen…',
+    tagsLabel: 'Tags',
+    categoriesLabel: 'Kategorien',
+    locationLabel: 'Standort',
+    locationPlaceholder: 'Stadt eingeben...',
+    distanceLabel: 'Entfernung',
+    global: 'Global',
+    apply: 'Suchen',
+    close: 'Schließen',
+  },
+
+  // Mobile Search Bar
+  mobileSearch: {
+    searchPlaceholder: 'Veranstaltungen suchen...',
+    filters: 'Filter',
+  },
+
   // Subscription Plans
   subscriptionPlans: {
     title: 'Wählen Sie Ihren Benutzerplan',

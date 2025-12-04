@@ -31,101 +31,15 @@ import {
   Calendar,
   ChevronDown,
 } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n/provider-ssr';
 import type { CommittedFilters } from '../_types';
 
 export type LeftFiltersPanelProps = {
   filters: CommittedFilters;
   onFiltersChange: (next: Partial<CommittedFilters>) => void;
-  locale?: 'pl' | 'en';
   isDrawer?: boolean;
   onClose?: () => void;
   isPending?: boolean;
-};
-
-const translations = {
-  pl: {
-    title: 'Filtry',
-    clearAll: 'Wyczyść',
-    // Time Status
-    timeStatus: 'Status czasu',
-    any: 'Dowolny',
-    upcoming: 'Nadchodzące',
-    ongoing: 'W trakcie',
-    past: 'Przeszłe',
-    // Date Range
-    dateRange: 'Zakres dat',
-    dateRangeHint:
-      'Własny zakres dat dostępny tylko gdy Status czasu = Dowolny',
-    dateRangeDisabled: 'Wyłączony przez status czasu',
-    startDate: 'Data początkowa',
-    endDate: 'Data końcowa',
-    // Presets
-    nowPlus1h: 'Teraz +1h',
-    tonight: 'Dziś wieczorem',
-    tomorrow: 'Jutro',
-    weekend: 'Weekend',
-    next7days: 'Następne 7 dni',
-    // Meeting Type
-    meetingType: 'Tryb spotkania',
-    onsite: 'Stacjonarne',
-    online: 'Online',
-    hybrid: 'Hybrydowe',
-    // Level
-    level: 'Poziom',
-    beginner: 'Początkujący',
-    intermediate: 'Średniozaawansowany',
-    advanced: 'Zaawansowany',
-    // Join Mode
-    joinMode: 'Tryb dołączania',
-    open: 'Otwarte',
-    request: 'Na prośbę',
-    inviteOnly: 'Tylko zaproszenia',
-    // Organizer
-    organizer: 'Organizator',
-    verifiedOnly: 'Tylko zweryfikowani',
-    verifiedHint: 'Pokaż tylko wydarzenia od zweryfikowanych organizatorów',
-  },
-  en: {
-    title: 'Filters',
-    clearAll: 'Clear',
-    // Time Status
-    timeStatus: 'Time Status',
-    any: 'Any',
-    upcoming: 'Upcoming',
-    ongoing: 'Ongoing',
-    past: 'Past',
-    // Date Range
-    dateRange: 'Date Range',
-    dateRangeHint: 'Custom date range is available only when Time Status = Any',
-    dateRangeDisabled: 'Disabled by time status',
-    startDate: 'Start Date',
-    endDate: 'End Date',
-    // Presets
-    nowPlus1h: 'Now +1h',
-    tonight: 'Tonight',
-    tomorrow: 'Tomorrow',
-    weekend: 'Weekend',
-    next7days: 'Next 7 days',
-    // Meeting Type
-    meetingType: 'Meeting Type',
-    onsite: 'Onsite',
-    online: 'Online',
-    hybrid: 'Hybrid',
-    // Level
-    level: 'Level',
-    beginner: 'Beginner',
-    intermediate: 'Intermediate',
-    advanced: 'Advanced',
-    // Join Mode
-    joinMode: 'Join Mode',
-    open: 'Open',
-    request: 'Request',
-    inviteOnly: 'Invite Only',
-    // Organizer
-    organizer: 'Organizer',
-    verifiedOnly: 'Verified only',
-    verifiedHint: 'Show only events from verified organizers',
-  },
 };
 
 // Helper functions for date conversion
@@ -257,12 +171,12 @@ function CollapsibleSection({
 export const LeftFiltersPanel = memo(function LeftFiltersPanel({
   filters,
   onFiltersChange,
-  locale = 'pl',
   isDrawer = false,
   onClose,
   isPending = false,
 }: LeftFiltersPanelProps) {
-  const t = translations[locale];
+  const translations = useTranslations();
+  const t = translations.eventsFilters;
 
   // Collapsible state - all open by default
   const [openSections, setOpenSections] = useState({
@@ -466,8 +380,8 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
         </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Scrollable content with custom scrollbar */}
+      <div className="flex-1 overflow-y-auto filters-scrollbar">
         <div className="p-4 space-y-1">
           {/* Time Status */}
           <CollapsibleSection

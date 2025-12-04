@@ -75,7 +75,7 @@ export function SortByControl({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <span className="opacity-80">Sort by:</span>
+        <span className="opacity-80 hidden sm:block">Sort by:</span>
         <span className="font-medium">{current?.label ?? ''}</span>
         <ChevronDown className="h-4 w-4 shrink-0 opacity-80" />
       </button>
