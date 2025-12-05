@@ -65,19 +65,27 @@ export function useIntentsQueryVariables({
   const isExplicitLocation =
     locationMode === 'EXPLICIT' && cityLat != null && cityLng != null;
 
+  // When status is not ANY, backend handles time filtering based on status
+  // Only use upcomingAfter/endingBefore when status is ANY
+  const shouldUseTimeFilters = status === IntentStatus.Any;
+
   return useMemo<IntentsQueryVariables>(
     () => ({
       limit: INTENTS_CONFIG.DEFAULT_LIMIT,
       visibility: Visibility.Public,
-      upcomingAfter: startISO ?? getUpcomingAfterDefault(),
-      endingBefore: endISO ?? undefined,
+      // Only pass time filters when status is ANY
+      // When status is UPCOMING/ONGOING/PAST, backend handles time logic
+      upcomingAfter: shouldUseTimeFilters
+        ? (startISO ?? getUpcomingAfterDefault())
+        : undefined,
+      endingBefore: shouldUseTimeFilters ? (endISO ?? undefined) : undefined,
       categorySlugs: categories,
       tagSlugs: tags,
       kinds: kinds.length > 0 ? kinds : undefined,
       levels: levels.length > 0 ? levels : undefined,
       joinModes: joinModes.length > 0 ? joinModes : undefined,
       keywords: [],
-      status: status !== IntentStatus.Any ? status : IntentStatus.Any,
+      status,
       verifiedOnly,
       ownerId: undefined,
       memberId: undefined,
@@ -109,6 +117,7 @@ export function useIntentsQueryVariables({
       distanceKm,
       isExplicitLocation,
       sortVars,
+      shouldUseTimeFilters,
     ]
   );
 }

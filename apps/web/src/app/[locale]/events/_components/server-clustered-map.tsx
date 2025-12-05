@@ -7,6 +7,7 @@ import {
   useGetClustersQuery,
   useGetRegionIntentsInfiniteQuery,
 } from '@/lib/api/map-clusters';
+import { getUpcomingAfterDefault } from '@/lib/constants/intents';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import clsx from 'clsx';
 import { ScatterplotLayer, TextLayer } from 'deck.gl';
@@ -380,6 +381,79 @@ function ServerClusteredMapComponent({
     });
   }, THROTTLE_MS);
 
+  // Store default startISO in ref to prevent infinite loop
+  // getUpcomingAfterDefault() creates new Date each time, so we need stable reference
+  const defaultStartISORef = useRef<string>(getUpcomingAfterDefault());
+
+  // When status is not ANY, backend handles time filtering based on status
+  // Only use startISO/endISO when status is ANY or not set
+  const shouldUseTimeFilters = !filters?.status || filters?.status === 'ANY';
+
+  // Stringify filters for stable dependency comparison (arrays cause re-renders)
+  const filtersKey = useMemo(
+    () =>
+      JSON.stringify({
+        q: filters?.q,
+        categorySlugs: filters?.categorySlugs,
+        tagSlugs: filters?.tagSlugs,
+        levels: filters?.levels,
+        kinds: filters?.kinds,
+        joinModes: filters?.joinModes,
+        verifiedOnly: filters?.verifiedOnly,
+        status: filters?.status,
+        startISO: filters?.startISO,
+        endISO: filters?.endISO,
+        city: filters?.city,
+        cityLat: filters?.cityLat,
+        cityLng: filters?.cityLng,
+        distanceKm: filters?.distanceKm,
+        shouldUseTimeFilters,
+      }),
+    [
+      filters?.q,
+      filters?.categorySlugs,
+      filters?.tagSlugs,
+      filters?.levels,
+      filters?.kinds,
+      filters?.joinModes,
+      filters?.verifiedOnly,
+      filters?.status,
+      filters?.startISO,
+      filters?.endISO,
+      filters?.city,
+      filters?.cityLat,
+      filters?.cityLng,
+      filters?.distanceKm,
+      shouldUseTimeFilters,
+    ]
+  );
+
+  // Memoize filters object to prevent infinite loop
+  const memoizedFilters = useMemo(
+    () => ({
+      q: filters?.q,
+      categorySlugs: filters?.categorySlugs,
+      tagSlugs: filters?.tagSlugs,
+      levels: filters?.levels as any,
+      kinds: filters?.kinds as any,
+      joinModes: filters?.joinModes as any,
+      verifiedOnly: filters?.verifiedOnly,
+      status: filters?.status as any,
+      // Only pass time filters when status is ANY or not set
+      // When status is UPCOMING/ONGOING/PAST, backend handles time logic
+      startISO: shouldUseTimeFilters
+        ? (filters?.startISO ?? defaultStartISORef.current)
+        : undefined,
+      endISO: shouldUseTimeFilters ? filters?.endISO : undefined,
+      city: filters?.city,
+      cityLat: filters?.cityLat,
+      cityLng: filters?.cityLng,
+      distanceKm: filters?.distanceKm,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtersKey]
+  );
+
   // Queries (mniej refetchy)
   const { data: clustersData, isLoading: clustersLoading } =
     useGetClustersQuery(
@@ -391,24 +465,7 @@ function ServerClusteredMapComponent({
           neLon: defaultCenter.lng + 0.1,
         },
         zoom: Math.round(mapZoom),
-        filters: filters
-          ? {
-              q: filters.q,
-              categorySlugs: filters.categorySlugs,
-              tagSlugs: filters.tagSlugs,
-              levels: filters.levels as any,
-              kinds: filters.kinds as any,
-              joinModes: filters.joinModes as any,
-              verifiedOnly: filters.verifiedOnly,
-              status: filters.status as any,
-              startISO: filters.startISO,
-              endISO: filters.endISO,
-              city: filters.city,
-              cityLat: filters.cityLat,
-              cityLng: filters.cityLng,
-              distanceKm: filters.distanceKm,
-            }
-          : undefined,
+        filters: memoizedFilters,
       },
       {
         enabled: !!mapBounds,
@@ -427,24 +484,7 @@ function ServerClusteredMapComponent({
     {
       region: selectedRegion || '',
       perPage: 20,
-      filters: filters
-        ? {
-            q: filters.q,
-            categorySlugs: filters.categorySlugs,
-            tagSlugs: filters.tagSlugs,
-            levels: filters.levels as any,
-            kinds: filters.kinds as any,
-            joinModes: filters.joinModes as any,
-            verifiedOnly: filters.verifiedOnly,
-            status: filters.status as any,
-            startISO: filters.startISO,
-            endISO: filters.endISO,
-            city: filters.city,
-            cityLat: filters.cityLat,
-            cityLng: filters.cityLng,
-            distanceKm: filters.distanceKm,
-          }
-        : undefined,
+      filters: memoizedFilters,
     },
     {
       enabled: !!selectedRegion,
