@@ -37,6 +37,7 @@ import {
   Target,
   HelpCircle,
   Paintbrush,
+  Send,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -136,6 +137,12 @@ export function IntentManagementSidebar({
           label: 'Dashboard',
           href: `/intent/${intentId}/manage`,
           icon: LayoutDashboard,
+        },
+        {
+          id: 'publish',
+          label: 'Publish',
+          href: `/intent/${intentId}/manage/publish`,
+          icon: Send,
         },
         {
           id: 'view',

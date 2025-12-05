@@ -22,6 +22,11 @@ import {
   deleteIntentMutation,
   reopenIntentJoinMutation,
   updateIntentMutation,
+  // Publication management
+  publishIntentMutation,
+  scheduleIntentPublicationMutation,
+  cancelScheduledPublicationMutation,
+  unpublishIntentMutation,
 } from './intents';
 
 // Notification mutations
@@ -276,6 +281,12 @@ export const Mutation: Resolvers['Mutation'] = {
   deleteIntent: deleteIntentMutation,
   closeIntentJoin: closeIntentJoinMutation,
   reopenIntentJoin: reopenIntentJoinMutation,
+
+  // ---- Intent Publication ----
+  publishIntent: publishIntentMutation,
+  scheduleIntentPublication: scheduleIntentPublicationMutation,
+  cancelScheduledPublication: cancelScheduledPublicationMutation,
+  unpublishIntent: unpublishIntentMutation,
 
   // ---- Intent Members / Moderation ----
   acceptInvite: acceptInviteMutation,

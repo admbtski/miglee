@@ -65,6 +65,11 @@ fragment IntentLight on Intent {
   canJoin
   isOngoing
 
+  # Publication status
+  publicationStatus
+  publishedAt
+  scheduledPublishAt
+
   ownerId
 
   createdAt
@@ -173,6 +178,11 @@ fragment IntentCore on Intent {
   }
   deleteReason
   isDeleted
+
+  # Publication status
+  publicationStatus
+  publishedAt
+  scheduledPublishAt
 
   createdAt
   updatedAt

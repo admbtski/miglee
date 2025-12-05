@@ -1,42 +1,29 @@
 'use client';
 
 import type {
-  AddressVisibility,
   CreateIntentInput,
   Intent,
   IntentsResultCoreFragment_IntentsResult_items_Intent,
   JoinMode,
   MeetingKind,
-  MembersVisibility,
   Mode,
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
 import type { CategoryOption } from '@/types/types';
 import type { TagOption } from '@/types/types';
-import { IntentFormValues } from './types';
+import { IntentFormValues, SimpleIntentFormValues } from './types';
 
-/** ---- API → Form ---- */
+/** ---- API → Form (full form for editing) ---- */
 export function mapIntentToFormValues(
   intent: IntentsResultCoreFragment_IntentsResult_items_Intent
 ): IntentFormValues {
   return {
+    // Basic fields
     title: intent.title ?? '',
     categorySlugs: intent.categories?.map((c) => c.slug) ?? [],
-    tagSlugs: intent.tags?.map((t) => t.slug) ?? [],
     description: intent.description ?? '',
-    mode: intent.mode,
-    min: intent.min ?? 2,
-    max: intent.max ?? 50,
     startAt: new Date(intent.startAt),
     endAt: new Date(intent.endAt),
-
-    // Join windows / cutoffs
-    joinOpensMinutesBeforeStart: intent.joinOpensMinutesBeforeStart ?? null,
-    joinCutoffMinutesBeforeStart: intent.joinCutoffMinutesBeforeStart ?? null,
-    allowJoinLate: !!intent.allowJoinLate,
-    lateJoinCutoffMinutesAfterStart:
-      intent.lateJoinCutoffMinutesAfterStart ?? null,
-
     meetingKind: intent.meetingKind,
     onlineUrl: intent.onlineUrl ?? '',
     location: {
@@ -48,49 +35,57 @@ export function mapIntentToFormValues(
       cityName: (intent as any).cityName ?? undefined,
       cityPlaceId: (intent as any).cityPlaceId ?? undefined,
     },
+    mode: intent.mode,
+    min: intent.min ?? 2,
+    max: intent.max ?? 50,
     visibility: intent.visibility,
+    joinMode: intent.joinMode,
+
+    // Extended fields (for manage panel)
+    tagSlugs: intent.tags?.map((t) => t.slug) ?? [],
+    notes: intent.notes ?? '',
+    levels: intent.levels,
     addressVisibility: intent.addressVisibility,
     membersVisibility: intent.membersVisibility,
-    joinMode: intent.joinMode,
-    levels: intent.levels,
-    notes: intent.notes ?? '',
+    joinOpensMinutesBeforeStart: intent.joinOpensMinutesBeforeStart ?? null,
+    joinCutoffMinutesBeforeStart: intent.joinCutoffMinutesBeforeStart ?? null,
+    allowJoinLate: !!intent.allowJoinLate,
+    lateJoinCutoffMinutesAfterStart:
+      intent.lateJoinCutoffMinutesAfterStart ?? null,
   };
 }
 
-export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
+/**
+ * Maps simplified form values to CreateIntentInput for new intent creation.
+ * Only includes fields supported by the simplified CreateIntentInput schema.
+ */
+export function mapSimpleFormToCreateInput(
+  v: SimpleIntentFormValues
+): CreateIntentInput {
   const input: CreateIntentInput = {
+    // Required fields
     title: v.title,
-    levels: (v.levels ?? []) as any,
     categorySlugs: v.categorySlugs,
-    tagSlugs: v.tagSlugs,
     startAt: v.startAt.toISOString(),
     endAt: v.endAt.toISOString(),
 
-    // Join windows / cutoffs
-    joinOpensMinutesBeforeStart: v.joinOpensMinutesBeforeStart ?? undefined,
-    joinCutoffMinutesBeforeStart: v.joinCutoffMinutesBeforeStart ?? undefined,
-    allowJoinLate: v.allowJoinLate,
-    lateJoinCutoffMinutesAfterStart:
-      v.lateJoinCutoffMinutesAfterStart ?? undefined,
+    // Optional fields
+    description: v.description?.trim() || undefined,
+    meetingKind: v.meetingKind as MeetingKind,
+    onlineUrl: v.onlineUrl?.trim() || undefined,
+    location: {},
 
+    // Capacity
+    mode: v.mode as Mode,
     min: v.min,
     max: v.max,
-    mode: v.mode as Mode,
-    meetingKind: v.meetingKind as MeetingKind,
-    location: {},
+
+    // Privacy
     visibility: v.visibility as Visibility,
-    addressVisibility: v.addressVisibility as AddressVisibility,
-    membersVisibility: v.membersVisibility as MembersVisibility,
     joinMode: v.joinMode as JoinMode,
-    description: v.description,
-    notes: v.notes,
-    onlineUrl: v.onlineUrl,
   };
 
-  if (v.description?.trim()) input.description = v.description.trim();
-  if (v.onlineUrl?.trim()) input.onlineUrl = v.onlineUrl.trim();
-  if (v.notes?.trim()) input.notes = v.notes.trim();
-
+  // Location fields
   if (v.location.lat != null) input.location!.lat = v.location.lat;
   if (v.location.lng != null) input.location!.lng = v.location.lng;
   if (v.location.address?.trim())
@@ -105,6 +100,18 @@ export function mapFormToCreateInput(v: IntentFormValues): CreateIntentInput {
     input.location!.cityPlaceId = v.location.cityPlaceId.trim();
 
   return input;
+}
+
+/**
+ * Maps full form values to CreateIntentInput.
+ * @deprecated Use mapSimpleFormToCreateInput for new intent creation.
+ * This function is kept for backward compatibility with existing code.
+ */
+export function mapFormToCreateInput(
+  v: IntentFormValues | SimpleIntentFormValues
+): CreateIntentInput {
+  // Use simplified mapper - extra fields will be ignored by backend
+  return mapSimpleFormToCreateInput(v as SimpleIntentFormValues);
 }
 
 /** ---- Form → Update payload ---- */

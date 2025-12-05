@@ -12,6 +12,7 @@ import type { GetIntentQuery } from '@/lib/api/__generated__/react-query-update'
 interface IntentManagementContextValue {
   intent: GetIntentQuery['intent'] | null | undefined;
   isLoading: boolean;
+  refetch: () => void;
 }
 
 const IntentManagementContext = createContext<
@@ -30,11 +31,11 @@ export function IntentManagementProvider({
   intentId,
   children,
 }: IntentManagementProviderProps) {
-  const { data, isLoading } = useIntentQuery({ id: intentId });
+  const { data, isLoading, refetch } = useIntentQuery({ id: intentId });
 
   return (
     <IntentManagementContext.Provider
-      value={{ intent: data?.intent, isLoading }}
+      value={{ intent: data?.intent, isLoading, refetch }}
     >
       {children}
     </IntentManagementContext.Provider>

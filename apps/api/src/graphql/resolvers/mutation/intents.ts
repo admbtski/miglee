@@ -448,11 +448,6 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         {
           connect: input.categorySlugs.map((slug: string) => ({ slug })),
         };
-      const tagsData:
-        | Prisma.TagCreateNestedManyWithoutIntentsInput
-        | undefined = input.tagSlugs?.length
-        ? { connect: input.tagSlugs.map((slug: string) => ({ slug })) }
-        : undefined;
 
       // Get user's effective plan to inherit for the intent
       const userPlanInfo = await getUserEffectivePlan(ownerId);
@@ -461,37 +456,39 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
       const full = await prisma.$transaction(async (tx) => {
         const intent = await tx.intent.create({
           data: {
-            title: input.title,
-            description: input.description ?? null,
-            notes: input.notes ?? null,
+            // Publication status - new intents start as DRAFT
+            status: 'DRAFT',
 
-            visibility: (input.visibility ??
-              PrismaVisibility.PUBLIC) as PrismaVisibility,
-            // joinMode może nie być w SDL — fallback na OPEN
-            joinMode: (input as any).joinMode ?? 'OPEN',
+            // Required fields from input
+            title: input.title,
+            startAt: input.startAt as Date,
+            endAt: input.endAt as Date,
+
+            // Optional fields from input
+            description: input.description ?? null,
+            meetingKind: input.meetingKind as PrismaMeetingKind,
+            onlineUrl: input.onlineUrl ?? null,
+
+            // Capacity
             mode: mode,
             min: min,
             max: max,
 
-            startAt: input.startAt as Date,
-            endAt: input.endAt as Date,
-            allowJoinLate: input.allowJoinLate,
-            joinOpensMinutesBeforeStart:
-              input.joinOpensMinutesBeforeStart ?? null,
-            joinCutoffMinutesBeforeStart:
-              input.joinCutoffMinutesBeforeStart ?? null,
-            lateJoinCutoffMinutesAfterStart:
-              input.lateJoinCutoffMinutesAfterStart ?? null,
+            // Privacy
+            visibility: (input.visibility ??
+              PrismaVisibility.PUBLIC) as PrismaVisibility,
+            joinMode: (input as any).joinMode ?? 'OPEN',
 
-            meetingKind: input.meetingKind as PrismaMeetingKind,
-            onlineUrl: input.onlineUrl ?? null,
-
-            levels: (input.levels ?? []) as PrismaLevel[],
-
-            addressVisibility: (input.addressVisibility ??
-              'PUBLIC') as AddressVisibility,
-            membersVisibility: (input.membersVisibility ??
-              'PUBLIC') as MembersVisibility,
+            // Defaults for fields not in simplified CreateIntentInput
+            // (can be updated later via UpdateIntent in manage panel)
+            notes: null,
+            levels: [] as PrismaLevel[],
+            addressVisibility: 'PUBLIC' as AddressVisibility,
+            membersVisibility: 'PUBLIC' as MembersVisibility,
+            allowJoinLate: true,
+            joinOpensMinutesBeforeStart: null,
+            joinCutoffMinutesBeforeStart: null,
+            lateJoinCutoffMinutesAfterStart: null,
 
             ownerId,
 
@@ -500,7 +497,6 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
 
             ...loc,
             categories: categoriesData,
-            ...(tagsData ? { tags: tagsData } : {}),
           },
         });
 
@@ -513,59 +509,6 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
             joinedAt: new Date(),
           },
         });
-
-        // Create join form questions if provided
-        const joinQuestions = (input as any).joinQuestions;
-        if (
-          joinQuestions &&
-          Array.isArray(joinQuestions) &&
-          joinQuestions.length > 0
-        ) {
-          // Validate max questions (5)
-          if (joinQuestions.length > 5) {
-            throw new GraphQLError('Maximum 5 join questions allowed', {
-              extensions: { code: 'BAD_USER_INPUT' },
-            });
-          }
-
-          // Create questions in order
-          for (let i = 0; i < joinQuestions.length; i++) {
-            const q = joinQuestions[i];
-
-            // Validate label length
-            if (q.label && q.label.length > 200) {
-              throw new GraphQLError(
-                'Question label must be at most 200 characters',
-                {
-                  extensions: { code: 'BAD_USER_INPUT' },
-                }
-              );
-            }
-
-            // Validate help text length
-            if (q.helpText && q.helpText.length > 200) {
-              throw new GraphQLError(
-                'Question help text must be at most 200 characters',
-                {
-                  extensions: { code: 'BAD_USER_INPUT' },
-                }
-              );
-            }
-
-            await tx.intentJoinQuestion.create({
-              data: {
-                intentId: intent.id,
-                order: i,
-                type: q.type,
-                label: q.label,
-                helpText: q.helpText || null,
-                required: q.required ?? true,
-                options: q.options || null,
-                maxLength: q.maxLength || null,
-              },
-            });
-          }
-        }
 
         // Create EventSponsorship if user has PLUS or PRO plan
         if (inheritedPlan === 'PLUS' || inheritedPlan === 'PRO') {
@@ -1268,6 +1211,230 @@ export const reopenIntentJoinMutation: MutationResolvers['reopenIntentJoin'] =
         },
         include: INTENT_INCLUDE,
       });
+
+      return mapIntent(updated, actorId);
+    }
+  );
+
+/* ───────────────────────────── Publication Management ───────────────────────────── */
+
+/** Helper to check if user can manage intent publication */
+async function assertCanManagePublication(intentId: string, actorId: string) {
+  const intent = await prisma.intent.findUnique({
+    where: { id: intentId },
+    include: {
+      members: {
+        where: { userId: actorId },
+        select: { role: true },
+      },
+    },
+  });
+
+  if (!intent) {
+    throw new GraphQLError('Intent not found.', {
+      extensions: { code: 'NOT_FOUND' },
+    });
+  }
+
+  if (intent.deletedAt) {
+    throw new GraphQLError('Intent is deleted.', {
+      extensions: { code: 'FAILED_PRECONDITION' },
+    });
+  }
+
+  if (intent.canceledAt) {
+    throw new GraphQLError('Intent is canceled.', {
+      extensions: { code: 'FAILED_PRECONDITION' },
+    });
+  }
+
+  const isOwner = intent.ownerId === actorId;
+  const isModerator = intent.members.some(
+    (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
+  );
+
+  if (!isOwner && !isModerator) {
+    throw new GraphQLError('Only owner or moderator can manage publication.', {
+      extensions: { code: 'FORBIDDEN' },
+    });
+  }
+
+  return intent;
+}
+
+/** Publish Intent immediately (DRAFT/SCHEDULED -> PUBLISHED) */
+export const publishIntentMutation: MutationResolvers['publishIntent'] =
+  resolverWithMetrics(
+    'Mutation',
+    'publishIntent',
+    async (_p, { id }, { user }) => {
+      const actorId = user?.id;
+      if (!actorId) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const intent = await assertCanManagePublication(id, actorId);
+
+      if (intent.status === 'PUBLISHED') {
+        // Already published, return as-is
+        const full = await prisma.intent.findUniqueOrThrow({
+          where: { id },
+          include: INTENT_INCLUDE,
+        });
+        return mapIntent(full, actorId);
+      }
+
+      const updated = await prisma.intent.update({
+        where: { id },
+        data: {
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
+          scheduledPublishAt: null, // Clear any scheduled time
+        },
+        include: INTENT_INCLUDE,
+      });
+
+      // Enqueue reminders now that intent is published
+      try {
+        await enqueueReminders(updated);
+      } catch {
+        // swallow - reminders are not critical
+      }
+
+      return mapIntent(updated, actorId);
+    }
+  );
+
+/** Schedule Intent publication for a specific time (DRAFT -> SCHEDULED) */
+export const scheduleIntentPublicationMutation: MutationResolvers['scheduleIntentPublication'] =
+  resolverWithMetrics(
+    'Mutation',
+    'scheduleIntentPublication',
+    async (_p, { id, publishAt }, { user }) => {
+      const actorId = user?.id;
+      if (!actorId) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const intent = await assertCanManagePublication(id, actorId);
+
+      // Validate publishAt is in the future
+      const publishDate = new Date(publishAt);
+      if (publishDate.getTime() <= Date.now()) {
+        throw new GraphQLError(
+          'Scheduled publish time must be in the future.',
+          {
+            extensions: { code: 'BAD_USER_INPUT', field: 'publishAt' },
+          }
+        );
+      }
+
+      // Validate publishAt is before startAt
+      if (publishDate.getTime() >= intent.startAt.getTime()) {
+        throw new GraphQLError(
+          'Scheduled publish time must be before event start time.',
+          {
+            extensions: { code: 'BAD_USER_INPUT', field: 'publishAt' },
+          }
+        );
+      }
+
+      if (intent.status === 'PUBLISHED') {
+        throw new GraphQLError('Intent is already published.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+
+      const updated = await prisma.intent.update({
+        where: { id },
+        data: {
+          status: 'SCHEDULED',
+          scheduledPublishAt: publishDate,
+        },
+        include: INTENT_INCLUDE,
+      });
+
+      return mapIntent(updated, actorId);
+    }
+  );
+
+/** Cancel scheduled publication (SCHEDULED -> DRAFT) */
+export const cancelScheduledPublicationMutation: MutationResolvers['cancelScheduledPublication'] =
+  resolverWithMetrics(
+    'Mutation',
+    'cancelScheduledPublication',
+    async (_p, { id }, { user }) => {
+      const actorId = user?.id;
+      if (!actorId) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const intent = await assertCanManagePublication(id, actorId);
+
+      if (intent.status !== 'SCHEDULED') {
+        throw new GraphQLError('Intent is not scheduled for publication.', {
+          extensions: { code: 'FAILED_PRECONDITION' },
+        });
+      }
+
+      const updated = await prisma.intent.update({
+        where: { id },
+        data: {
+          status: 'DRAFT',
+          scheduledPublishAt: null,
+        },
+        include: INTENT_INCLUDE,
+      });
+
+      return mapIntent(updated, actorId);
+    }
+  );
+
+/** Unpublish Intent (PUBLISHED -> DRAFT) */
+export const unpublishIntentMutation: MutationResolvers['unpublishIntent'] =
+  resolverWithMetrics(
+    'Mutation',
+    'unpublishIntent',
+    async (_p, { id }, { user }) => {
+      const actorId = user?.id;
+      if (!actorId) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      const intent = await assertCanManagePublication(id, actorId);
+
+      if (intent.status === 'DRAFT') {
+        // Already draft, return as-is
+        const full = await prisma.intent.findUniqueOrThrow({
+          where: { id },
+          include: INTENT_INCLUDE,
+        });
+        return mapIntent(full, actorId);
+      }
+
+      const updated = await prisma.intent.update({
+        where: { id },
+        data: {
+          status: 'DRAFT',
+          scheduledPublishAt: null,
+        },
+        include: INTENT_INCLUDE,
+      });
+
+      // Clear reminders when unpublishing
+      try {
+        await clearReminders(id);
+      } catch {
+        // swallow
+      }
 
       return mapIntent(updated, actorId);
     }

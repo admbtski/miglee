@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { IntentFormValues } from '../components/types';
+import { SimpleIntentFormValues } from '../components/types';
 import { CategoryOption, TagOption } from '@/types/types';
 
 const DRAFT_KEY = 'intent-draft';
 const AUTO_SAVE_INTERVAL = 5000; // 5 seconds
 
+/**
+ * Hook for auto-saving intent form drafts to localStorage.
+ * Works with both SimpleIntentFormValues (new creator) and full form values.
+ */
 export function useAutoSaveDraft(
-  values: IntentFormValues,
+  values: SimpleIntentFormValues,
   isDirty: boolean,
   enabled: boolean = true,
   categories: CategoryOption[] = [],
@@ -41,7 +45,7 @@ export function useAutoSaveDraft(
 
   // Load draft from localStorage
   const loadDraft = (): {
-    values: IntentFormValues;
+    values: SimpleIntentFormValues;
     categories: CategoryOption[];
     tags: TagOption[];
     savedAt: string;

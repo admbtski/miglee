@@ -27,82 +27,37 @@ const LocationSchema = z.object({
   cityPlaceId: z.string().trim().max(240).optional(),
 });
 
-/** Core validation schema */
-export const IntentSchema = z
+/**
+ * Simplified schema for new intent creator (/intent/new)
+ * Only includes fields used in the 7-step simplified creator.
+ * Advanced fields (tags, notes, levels, join windows, etc.) are set via UpdateIntent in manage panel.
+ */
+export const SimpleIntentSchema = z
   .object({
-    title: z
-      .string()
-      .trim()
-      .min(3, 'Min 3 characters')
-      .max(60, 'Max 60 characters'),
-
-    /** multiple categories: 1–3 required */
+    // Step 1: Basics
+    title: z.string().trim().min(3, 'Min 3 znaki').max(60, 'Max 60 znaków'),
     categorySlugs: z
       .array(z.string().min(1))
-      .min(1, 'Select at least 1 category')
-      .max(3, 'You can select up to 3 categories'),
-
-    /** multiple tags: 0–3 */
-    tagSlugs: z
-      .array(z.string().min(0))
-      .min(0, 'Select at least 1 category')
-      .max(3, 'You can select up to 3 categories'),
-
+      .min(1, 'Wybierz co najmniej 1 kategorię')
+      .max(3, 'Możesz wybrać max 3 kategorie'),
     description: z
       .string()
       .trim()
-      .max(500, 'Max 500 characters')
+      .max(500, 'Max 500 znaków')
       .optional()
       .or(z.literal('')),
-    mode: z.enum(['ONE_TO_ONE', 'GROUP', 'CUSTOM']),
-    addressVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
-    membersVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
-    levels: z.array(z.enum(['ADVANCED', 'BEGINNER', 'INTERMEDIATE'])),
-    min: z
-      .number()
-      .int()
-      .min(1, 'Min capacity is 1')
-      .max(99999, 'Max 99999')
-      .nullable(),
-    max: z
-      .number()
-      .int()
-      .min(1, 'Min capacity is 1')
-      .max(99999, 'Max 99999')
-      .nullable(),
+
+    // Step 2: Schedule
     startAt: z
       .date()
-      .transform((d) => new Date(d)) // ensure instance copy (helps with weird inputs)
+      .transform((d) => new Date(d))
       .refine(
         (d) => d.getTime() >= nowPlus5Min().getTime(),
-        'Start must be in the future (5 min buffer)'
+        'Start musi być w przyszłości (min. 5 min)'
       ),
     endAt: z.date().transform((d) => new Date(d)),
 
-    // Join windows / cutoffs
-    joinOpensMinutesBeforeStart: z
-      .number()
-      .int()
-      .min(0, 'Must be 0 or positive')
-      .max(10080, 'Max 7 days (10080 minutes)')
-      .optional()
-      .nullable(),
-    joinCutoffMinutesBeforeStart: z
-      .number()
-      .int()
-      .min(0, 'Must be 0 or positive')
-      .max(10080, 'Max 7 days (10080 minutes)')
-      .optional()
-      .nullable(),
-    allowJoinLate: z.boolean(),
-    lateJoinCutoffMinutesAfterStart: z
-      .number()
-      .int()
-      .min(0, 'Must be 0 or positive')
-      .max(10080, 'Max 7 days (10080 minutes)')
-      .optional()
-      .nullable(),
-
+    // Step 3: Location & Format
     meetingKind: MeetingKind,
     onlineUrl: z
       .string()
@@ -111,56 +66,64 @@ export const IntentSchema = z
       .or(z.literal(''))
       .refine(
         (s) => !s || URL_REGEX.test(s),
-        'Provide a valid URL (http/https)'
+        'Podaj prawidłowy URL (http/https)'
       ),
-
     location: LocationSchema,
 
+    // Step 4: Capacity
+    mode: z.enum(['ONE_TO_ONE', 'GROUP', 'CUSTOM']),
+    min: z
+      .number()
+      .int()
+      .min(1, 'Min. pojemność to 1')
+      .max(99999, 'Max 99999')
+      .nullable(),
+    max: z
+      .number()
+      .int()
+      .min(1, 'Min. pojemność to 1')
+      .max(99999, 'Max 99999')
+      .nullable(),
+
+    // Step 5: Privacy
     visibility: z.enum(['PUBLIC', 'HIDDEN']),
     joinMode: z.enum(['INVITE_ONLY', 'OPEN', 'REQUEST']),
-    notes: z
-      .string()
-      .trim()
-      .max(300, 'Max 300 characters')
-      .optional()
-      .or(z.literal('')),
   })
+  // Validate end > start
   .refine((data) => data.endAt.getTime() > data.startAt.getTime(), {
     path: ['endAt'],
-    message: 'End must be after start',
+    message: 'Koniec musi być po starcie',
   })
+  // Validate max duration
   .refine(
     (data) => data.endAt.getTime() - data.startAt.getTime() <= MAX_DURATION_MS,
-    { path: ['endAt'], message: 'Max duration is 30 days' }
+    { path: ['endAt'], message: 'Max. czas trwania to 30 dni' }
   )
+  // Validate min <= max
   .refine(
     (data) => {
-      // Only validate if both are set
       if (data.min !== null && data.max !== null) {
         return data.min <= data.max;
       }
       return true;
     },
-    {
-      path: ['min'],
-      message: 'Min must be ≤ Max',
-    }
+    { path: ['min'], message: 'Min musi być ≤ Max' }
   )
-  // Mode-specific
+  // Mode-specific validation
   .superRefine((data, ctx) => {
     if (data.mode === 'ONE_TO_ONE') {
       if (data.min !== 2) {
         ctx.addIssue({
           code: 'custom',
           path: ['min'],
-          message: 'For 1:1 mode, min must be 2',
+          message: 'Dla trybu 1:1, min musi być 2',
         });
       }
       if (data.max !== 2) {
         ctx.addIssue({
           code: 'custom',
           path: ['max'],
-          message: 'For 1:1 mode, max must be 2',
+          message: 'Dla trybu 1:1, max musi być 2',
         });
       }
     } else if (data.mode === 'GROUP') {
@@ -168,43 +131,19 @@ export const IntentSchema = z
         ctx.addIssue({
           code: 'custom',
           path: ['min'],
-          message: 'Minimum capacity is 1 for GROUP mode',
+          message: 'Min. pojemność dla grupy to 1',
         });
       }
       if (data.max === null || data.max > 50) {
         ctx.addIssue({
           code: 'custom',
           path: ['max'],
-          message: 'Maximum capacity is 50 for GROUP mode',
-        });
-      }
-    } else if (data.mode === 'CUSTOM') {
-      // For CUSTOM mode, validate ranges
-      if (data.min !== null && (data.min < 1 || data.min > 99999)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['min'],
-          message: 'Min must be between 1 and 99999',
-        });
-      }
-      if (data.max !== null && (data.max < 1 || data.max > 99999)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['max'],
-          message: 'Max must be between 1 and 99999',
-        });
-      }
-      // If both are set, min must be <= max
-      if (data.min !== null && data.max !== null && data.min > data.max) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['min'],
-          message: 'Min must be ≤ max',
+          message: 'Max. pojemność dla grupy to 50',
         });
       }
     }
   })
-  // MeetingKind-specific
+  // MeetingKind-specific validation
   .superRefine((data, ctx) => {
     const hasCoords =
       Number.isFinite(data.location.lat) && Number.isFinite(data.location.lng);
@@ -215,7 +154,7 @@ export const IntentSchema = z
         if (!hasCoords) {
           ctx.addIssue({
             code: 'custom',
-            message: 'Location coordinates are required for on-site meetings',
+            message: 'Lokalizacja jest wymagana dla spotkań stacjonarnych',
             path: ['location'],
           });
         }
@@ -224,7 +163,7 @@ export const IntentSchema = z
         if (!hasUrl) {
           ctx.addIssue({
             code: 'custom',
-            message: 'Online link is required for online meetings',
+            message: 'Link jest wymagany dla spotkań online',
             path: ['onlineUrl'],
           });
         }
@@ -233,8 +172,7 @@ export const IntentSchema = z
         if (!hasCoords && !hasUrl) {
           ctx.addIssue({
             code: 'custom',
-            message:
-              'Provide either a valid location or an online link (or both)',
+            message: 'Podaj lokalizację lub link online (lub oba)',
             path: ['meetingKind'],
           });
         }
@@ -242,24 +180,60 @@ export const IntentSchema = z
     }
   });
 
-/** Default values */
-export const defaultIntentValues: IntentFormValues = {
+/**
+ * Full schema for intent editing in manage panel.
+ * Includes all fields that can be configured after creation.
+ */
+export const IntentSchema = SimpleIntentSchema.and(
+  z.object({
+    // Additional fields for manage panel editing
+    tagSlugs: z.array(z.string().min(0)).max(3, 'Możesz wybrać max 3 tagi'),
+    notes: z
+      .string()
+      .trim()
+      .max(300, 'Max 300 znaków')
+      .optional()
+      .or(z.literal('')),
+    levels: z.array(z.enum(['ADVANCED', 'BEGINNER', 'INTERMEDIATE'])),
+    addressVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
+    membersVisibility: z.enum(['AFTER_JOIN', 'HIDDEN', 'PUBLIC']),
+
+    // Join windows / cutoffs
+    joinOpensMinutesBeforeStart: z
+      .number()
+      .int()
+      .min(0, 'Musi być 0 lub więcej')
+      .max(10080, 'Max 7 dni (10080 minut)')
+      .optional()
+      .nullable(),
+    joinCutoffMinutesBeforeStart: z
+      .number()
+      .int()
+      .min(0, 'Musi być 0 lub więcej')
+      .max(10080, 'Max 7 dni (10080 minut)')
+      .optional()
+      .nullable(),
+    allowJoinLate: z.boolean(),
+    lateJoinCutoffMinutesAfterStart: z
+      .number()
+      .int()
+      .min(0, 'Musi być 0 lub więcej')
+      .max(10080, 'Max 7 dni (10080 minut)')
+      .optional()
+      .nullable(),
+  })
+);
+
+/** Simplified form values type (for new creator) */
+export type SimpleIntentFormValues = z.infer<typeof SimpleIntentSchema>;
+
+/** Default values for simplified creator */
+export const defaultSimpleIntentValues: SimpleIntentFormValues = {
   title: '',
   categorySlugs: [],
-  tagSlugs: [],
   description: '',
-  mode: 'ONE_TO_ONE',
-  min: 2,
-  max: 2,
   startAt: new Date(Date.now() + NOW_BUFFER_MS),
   endAt: new Date(Date.now() + NOW_BUFFER_MS + 60 * 60 * 1000),
-
-  // Join windows / cutoffs - defaults to null (no restrictions)
-  joinOpensMinutesBeforeStart: null,
-  joinCutoffMinutesBeforeStart: null,
-  allowJoinLate: true,
-  lateJoinCutoffMinutesAfterStart: null,
-
   meetingKind: 'ONSITE',
   onlineUrl: '',
   location: {
@@ -271,14 +245,46 @@ export const defaultIntentValues: IntentFormValues = {
     cityName: undefined,
     cityPlaceId: undefined,
   },
+  mode: 'GROUP',
+  min: 1,
+  max: 10,
   visibility: 'PUBLIC',
   joinMode: 'OPEN',
+};
+
+/** Default values for full form (editing in manage panel) */
+export const defaultIntentValues: IntentFormValues = {
+  ...defaultSimpleIntentValues,
+  tagSlugs: [],
+  notes: '',
   levels: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'],
   addressVisibility: 'PUBLIC',
   membersVisibility: 'PUBLIC',
-  notes: '',
+  joinOpensMinutesBeforeStart: null,
+  joinCutoffMinutesBeforeStart: null,
+  allowJoinLate: true,
+  lateJoinCutoffMinutesAfterStart: null,
 };
 
+/**
+ * Hook for simplified intent creation form (/intent/new)
+ * Uses SimpleIntentSchema with only essential fields.
+ */
+export function useSimpleIntentForm(
+  initial?: Partial<SimpleIntentFormValues>
+): UseFormReturn<SimpleIntentFormValues> {
+  return useForm<SimpleIntentFormValues>({
+    mode: 'onChange',
+    resolver: zodResolver(SimpleIntentSchema),
+    defaultValues: { ...defaultSimpleIntentValues, ...initial },
+    shouldUnregister: false,
+  });
+}
+
+/**
+ * Hook for full intent editing form (manage panel)
+ * Uses full IntentSchema with all fields.
+ */
 export function useIntentForm(
   initial?: Partial<IntentFormValues>
 ): UseFormReturn<IntentFormValues> {

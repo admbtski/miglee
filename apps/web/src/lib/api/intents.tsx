@@ -29,6 +29,8 @@ import {
   UpdateIntentFaqsMutation,
   UpdateIntentFaqsMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
+import { gql } from 'graphql-request';
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
 import {
@@ -667,6 +669,243 @@ export function useUpdateIntentFaqsMutation(
           queryKey: GET_INTENT_ONE_KEY({
             id: variables.input.intentId,
           }) as unknown as QueryKey,
+        });
+      }
+    },
+    ...options,
+  });
+}
+
+/* ----------------------------- PUBLICATION MUTATIONS ----------------------------- */
+
+// Temporary types until codegen runs
+type PublishIntentMutation = { publishIntent: GetIntentQuery['intent'] };
+type PublishIntentMutationVariables = { id: string };
+type ScheduleIntentPublicationMutation = {
+  scheduleIntentPublication: GetIntentQuery['intent'];
+};
+type ScheduleIntentPublicationMutationVariables = {
+  id: string;
+  publishAt: string;
+};
+type CancelScheduledPublicationMutation = {
+  cancelScheduledPublication: GetIntentQuery['intent'];
+};
+type CancelScheduledPublicationMutationVariables = { id: string };
+type UnpublishIntentMutation = { unpublishIntent: GetIntentQuery['intent'] };
+type UnpublishIntentMutationVariables = { id: string };
+
+// Temporary documents until codegen runs
+const PublishIntentDocument = gql`
+  mutation PublishIntent($id: ID!) {
+    publishIntent(id: $id) {
+      id
+      publicationStatus
+      publishedAt
+      scheduledPublishAt
+    }
+  }
+`;
+
+const ScheduleIntentPublicationDocument = gql`
+  mutation ScheduleIntentPublication($id: ID!, $publishAt: DateTime!) {
+    scheduleIntentPublication(id: $id, publishAt: $publishAt) {
+      id
+      publicationStatus
+      publishedAt
+      scheduledPublishAt
+    }
+  }
+`;
+
+const CancelScheduledPublicationDocument = gql`
+  mutation CancelScheduledPublication($id: ID!) {
+    cancelScheduledPublication(id: $id) {
+      id
+      publicationStatus
+      publishedAt
+      scheduledPublishAt
+    }
+  }
+`;
+
+const UnpublishIntentDocument = gql`
+  mutation UnpublishIntent($id: ID!) {
+    unpublishIntent(id: $id) {
+      id
+      publicationStatus
+      publishedAt
+      scheduledPublishAt
+    }
+  }
+`;
+
+// Publish Intent immediately
+export function usePublishIntentMutation(
+  options?: UseMutationOptions<
+    PublishIntentMutation,
+    unknown,
+    PublishIntentMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    PublishIntentMutation,
+    unknown,
+    PublishIntentMutationVariables
+  >({
+    mutationKey: ['PublishIntent'],
+    mutationFn: async (variables) =>
+      gqlClient.request<PublishIntentMutation, PublishIntentMutationVariables>(
+        PublishIntentDocument as unknown as TypedDocumentNode<
+          PublishIntentMutation,
+          PublishIntentMutationVariables
+        >,
+        variables
+      ),
+    meta: {
+      successMessage: 'Event published successfully',
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+      });
+      if (vars.id) {
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+        });
+      }
+    },
+    ...options,
+  });
+}
+
+// Schedule Intent publication
+export function useScheduleIntentPublicationMutation(
+  options?: UseMutationOptions<
+    ScheduleIntentPublicationMutation,
+    unknown,
+    ScheduleIntentPublicationMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    ScheduleIntentPublicationMutation,
+    unknown,
+    ScheduleIntentPublicationMutationVariables
+  >({
+    mutationKey: ['ScheduleIntentPublication'],
+    mutationFn: async (variables) =>
+      gqlClient.request<
+        ScheduleIntentPublicationMutation,
+        ScheduleIntentPublicationMutationVariables
+      >(
+        ScheduleIntentPublicationDocument as unknown as TypedDocumentNode<
+          ScheduleIntentPublicationMutation,
+          ScheduleIntentPublicationMutationVariables
+        >,
+        variables
+      ),
+    meta: {
+      successMessage: 'Publication scheduled successfully',
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+      });
+      if (vars.id) {
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+        });
+      }
+    },
+    ...options,
+  });
+}
+
+// Cancel scheduled publication
+export function useCancelScheduledPublicationMutation(
+  options?: UseMutationOptions<
+    CancelScheduledPublicationMutation,
+    unknown,
+    CancelScheduledPublicationMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    CancelScheduledPublicationMutation,
+    unknown,
+    CancelScheduledPublicationMutationVariables
+  >({
+    mutationKey: ['CancelScheduledPublication'],
+    mutationFn: async (variables) =>
+      gqlClient.request<
+        CancelScheduledPublicationMutation,
+        CancelScheduledPublicationMutationVariables
+      >(
+        CancelScheduledPublicationDocument as unknown as TypedDocumentNode<
+          CancelScheduledPublicationMutation,
+          CancelScheduledPublicationMutationVariables
+        >,
+        variables
+      ),
+    meta: {
+      successMessage: 'Scheduled publication cancelled',
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+      });
+      if (vars.id) {
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+        });
+      }
+    },
+    ...options,
+  });
+}
+
+// Unpublish Intent
+export function useUnpublishIntentMutation(
+  options?: UseMutationOptions<
+    UnpublishIntentMutation,
+    unknown,
+    UnpublishIntentMutationVariables
+  >
+) {
+  const qc = getQueryClient();
+  return useMutation<
+    UnpublishIntentMutation,
+    unknown,
+    UnpublishIntentMutationVariables
+  >({
+    mutationKey: ['UnpublishIntent'],
+    mutationFn: async (variables) =>
+      gqlClient.request<
+        UnpublishIntentMutation,
+        UnpublishIntentMutationVariables
+      >(
+        UnpublishIntentDocument as unknown as TypedDocumentNode<
+          UnpublishIntentMutation,
+          UnpublishIntentMutationVariables
+        >,
+        variables
+      ),
+    meta: {
+      successMessage: 'Event unpublished successfully',
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({
+        predicate: (q) =>
+          Array.isArray(q.queryKey) && q.queryKey[0] === 'GetIntents',
+      });
+      if (vars.id) {
+        qc.invalidateQueries({
+          queryKey: GET_INTENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
         });
       }
     },

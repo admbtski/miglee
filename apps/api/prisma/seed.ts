@@ -6,6 +6,7 @@ import {
   Intent,
   IntentMemberRole,
   IntentMemberStatus,
+  IntentStatus,
   JoinMode,
   Level,
   MeetingKind,
@@ -566,6 +567,9 @@ async function createIntentWithMembers(opts: {
         ownerId: author.id,
         categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
         tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
+        // All seeded intents are published
+        status: IntentStatus.PUBLISHED,
+        publishedAt: new Date(),
       },
     });
 
@@ -1012,6 +1016,9 @@ async function createPresetIntent(
       ownerId: author.id,
       categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
       tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
+      // All seeded intents are published
+      status: IntentStatus.PUBLISHED,
+      publishedAt: new Date(),
     },
   });
 

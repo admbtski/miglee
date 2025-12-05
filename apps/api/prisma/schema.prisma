@@ -151,6 +151,12 @@ enum IntentPlan {
   PRO
 }
 
+enum IntentStatus {
+  DRAFT     // Event is not published yet, only visible to owner/moderators
+  PUBLISHED // Event is live and visible according to visibility settings
+  SCHEDULED // Event is scheduled to be published at a specific time
+}
+
 enum MemberEvent {
   JOIN
   REQUEST
@@ -389,6 +395,11 @@ model Intent {
   sponsorshipPlan IntentPlan @default(FREE) // Effective plan of the event (Free/Plus/Pro)
   boostedAt       DateTime? // Last time the event was boosted (used for sorting)
 
+  // Publication status
+  status             IntentStatus @default(DRAFT) // DRAFT, PUBLISHED, SCHEDULED
+  publishedAt        DateTime? // When the event was published (null for drafts)
+  scheduledPublishAt DateTime? // When the event should be auto-published (for SCHEDULED status)
+
   // Ownership
   ownerId            String?
   owner              User?                     @relation("IntentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
@@ -457,6 +468,9 @@ model Intent {
   @@index([joinOpensMinutesBeforeStart])
   @@index([joinCutoffMinutesBeforeStart])
   @@index([lateJoinCutoffMinutesAfterStart])
+  @@index([status])
+  @@index([status, visibility, startAt])
+  @@index([scheduledPublishAt])
   @@map("intents")
 }
 

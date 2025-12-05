@@ -151,6 +151,31 @@ mutation ReopenIntentJoin($intentId: ID!) {
   }
 }
 
+# Publication mutations
+mutation PublishIntent($id: ID!) {
+  publishIntent(id: $id) {
+    ...IntentCore
+  }
+}
+
+mutation ScheduleIntentPublication($id: ID!, $publishAt: DateTime!) {
+  scheduleIntentPublication(id: $id, publishAt: $publishAt) {
+    ...IntentCore
+  }
+}
+
+mutation CancelScheduledPublication($id: ID!) {
+  cancelScheduledPublication(id: $id) {
+    ...IntentCore
+  }
+}
+
+mutation UnpublishIntent($id: ID!) {
+  unpublishIntent(id: $id) {
+    ...IntentCore
+  }
+}
+
 mutation UpdateIntentFaqs($input: UpdateIntentFaqsInput!) {
   updateIntentFaqs(input: $input) {
     id

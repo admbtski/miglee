@@ -638,6 +638,11 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     deleteReason: i.deleteReason ?? null,
     isDeleted,
 
+    // Publication status
+    publicationStatus: (i.status as any) ?? 'DRAFT',
+    publishedAt: i.publishedAt ?? null,
+    scheduledPublishAt: i.scheduledPublishAt ?? null,
+
     // Billing & Sponsorship
     sponsorshipPlan: i.sponsorshipPlan as IntentPlan,
     boostedAt: i.boostedAt ?? null,

@@ -34,6 +34,7 @@ import {
   Target,
   HelpCircle,
   Paintbrush,
+  Send,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -157,6 +158,12 @@ export function IntentManagementMobileSidebar({
           label: 'Dashboard',
           href: `/intent/${intentId}/manage`,
           icon: LayoutDashboard,
+        },
+        {
+          id: 'publish',
+          label: 'Publish',
+          href: `/intent/${intentId}/manage/publish`,
+          icon: Send,
         },
         {
           id: 'view',
@@ -307,21 +314,6 @@ export function IntentManagementMobileSidebar({
     },
     {
       id: 'pro-features',
-      label: 'Pro Features',
-      icon: Crown,
-      defaultOpen: false,
-      requiredPlan: 'pro',
-      items: [
-        {
-          id: 'analytics',
-          label: 'Analytics',
-          href: `/intent/${intentId}/manage/analytics`,
-          icon: BarChart3,
-        },
-      ],
-    },
-    {
-      id: 'pro-features-duplicate',
       label: 'Pro Features',
       icon: Crown,
       defaultOpen: false,

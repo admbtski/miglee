@@ -56,7 +56,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
   const isAuthed = !!data?.me;
 
   const openPost = useCallback(() => {
-    router.push(localePath('/intent/creator'));
+    router.push(localePath('/intent/new'));
   }, [router, localePath]);
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const openAuthSignin = useCallback(() => {

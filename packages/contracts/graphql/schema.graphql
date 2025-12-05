@@ -288,6 +288,13 @@ enum IntentStatus {
   DELETED
 }
 
+"Publication status of an intent (DRAFT -> PUBLISHED or SCHEDULED -> PUBLISHED)"
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
 "Intent lifecycle status filter for myIntents query"
 enum IntentLifecycleStatus {
   UPCOMING
@@ -861,6 +868,11 @@ type Intent {
   isOnline: Boolean!
   isHybrid: Boolean!
   withinLock: Boolean! # ← DODAJ TO
+  # Publication status (DRAFT -> PUBLISHED or SCHEDULED -> PUBLISHED)
+  publicationStatus: PublicationStatus!
+  publishedAt: DateTime
+  scheduledPublishAt: DateTime
+
   # Cancellation (read-only state)
   canceledAt: DateTime
   canceledBy: User
@@ -1289,40 +1301,26 @@ input JoinQuestionInputData {
 }
 
 input CreateIntentInput {
+  # Required fields
   title: String!
-  description: String
-  notes: String
-
   categorySlugs: [String!]!
-  tagSlugs: [String!]
+  startAt: DateTime!
+  endAt: DateTime!
 
-  visibility: Visibility! = PUBLIC
-  joinMode: JoinMode! = OPEN
+  # Optional basic fields
+  description: String
+  meetingKind: MeetingKind! = ONSITE
+  onlineUrl: String
+  location: LocationInput
+
+  # Capacity (defaults set by backend based on mode)
   mode: Mode! = GROUP
   min: Int
   max: Int
 
-  startAt: DateTime!
-  endAt: DateTime!
-
-  # Joins windows / cutoffs
-  joinOpensMinutesBeforeStart: Int
-  joinCutoffMinutesBeforeStart: Int
-  allowJoinLate: Boolean! = true
-  lateJoinCutoffMinutesAfterStart: Int
-
-  meetingKind: MeetingKind! = ONSITE
-  onlineUrl: String
-
-  location: LocationInput
-  levels: [Level!]
-
-  # Privacy
-  addressVisibility: AddressVisibility! = PUBLIC
-
-  # Join form questions (optional)
-  joinQuestions: [JoinQuestionInputData!]
-  membersVisibility: MembersVisibility! = PUBLIC
+  # Privacy (defaults to open/public)
+  visibility: Visibility! = PUBLIC
+  joinMode: JoinMode! = OPEN
 }
 
 input UpdateIntentInput {
@@ -1983,6 +1981,24 @@ type Mutation {
   cancelIntent(id: ID!, reason: String): Intent!
   closeIntentJoin(intentId: ID!, reason: String): Intent!
   reopenIntentJoin(intentId: ID!): Intent!
+
+  # Publication management
+  """
+  Publish intent immediately (DRAFT/SCHEDULED -> PUBLISHED)
+  """
+  publishIntent(id: ID!): Intent!
+  """
+  Schedule intent publication for a specific time (DRAFT -> SCHEDULED)
+  """
+  scheduleIntentPublication(id: ID!, publishAt: DateTime!): Intent!
+  """
+  Cancel scheduled publication (SCHEDULED -> DRAFT)
+  """
+  cancelScheduledPublication(id: ID!): Intent!
+  """
+  Unpublish intent (PUBLISHED -> DRAFT)
+  """
+  unpublishIntent(id: ID!): Intent!
 
   # memberships (user endpoints)
   requestJoinIntent(intentId: ID!): Intent! # Deprecated: use requestJoinIntentWithAnswers
