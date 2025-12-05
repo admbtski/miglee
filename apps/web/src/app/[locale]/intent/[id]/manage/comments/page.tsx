@@ -23,8 +23,8 @@ export default async function IntentCommentsPage({ params }: PageProps) {
       fallback={
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
               Loading comments...
             </p>
           </div>

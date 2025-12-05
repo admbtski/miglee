@@ -5,9 +5,10 @@
 
 'use client';
 
-import { EyeOff } from 'lucide-react';
+import { MessageSquare, Info, AlertCircle } from 'lucide-react';
 import { useIntentQuery } from '@/lib/api/intents';
 import { EventComments } from '../../../_components/event-comments';
+import { ManagementPageLayout } from '../../_components/management-page-layout';
 
 interface IntentCommentsManagementProps {
   intentId: string;
@@ -24,22 +25,37 @@ export function IntentCommentsManagement({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-            Loading comments...
-          </p>
+      <ManagementPageLayout
+        title="Comments"
+        description="View and manage comments for your event"
+      >
+        <div className="flex min-h-[300px] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+              Loading comments...
+            </p>
+          </div>
         </div>
-      </div>
+      </ManagementPageLayout>
     );
   }
 
   if (!intent) {
     return (
-      <div className="text-center">
-        <p className="text-zinc-600 dark:text-zinc-400">Event not found</p>
-      </div>
+      <ManagementPageLayout
+        title="Comments"
+        description="View and manage comments for your event"
+      >
+        <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-500" />
+            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+              Event not found
+            </p>
+          </div>
+        </div>
+      </ManagementPageLayout>
     );
   }
 
@@ -51,33 +67,47 @@ export function IntentCommentsManagement({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Comments
-        </h1>
-        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-          Manage comments for your event
-        </p>
-      </div>
+    <ManagementPageLayout
+      title="Comments"
+      description="View and manage comments for your event"
+    >
+      <div className="space-y-6">
+        {/* Stats Card */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
+                <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {eventData.commentsCount}
+                </p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Total comments
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {/* Info Banner */}
-      <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
-        <EyeOff className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-        <div className="text-sm text-blue-900 dark:text-blue-100">
-          <p className="font-medium">Moderation Tools Coming Soon</p>
-          <p className="mt-1 text-blue-700 dark:text-blue-300">
-            The ability to hide inappropriate comments will be available in a
-            future update.
-          </p>
+        {/* Info Banner */}
+        <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800/50 dark:bg-blue-950/30">
+          <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+          <div className="text-sm text-blue-900 dark:text-blue-100">
+            <p className="font-medium">Moderation Tools Coming Soon</p>
+            <p className="mt-1 text-blue-700 dark:text-blue-300">
+              The ability to hide inappropriate comments will be available in a
+              future update.
+            </p>
+          </div>
+        </div>
+
+        {/* Comments List */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <EventComments event={eventData as any} />
         </div>
       </div>
-
-      {/* Content */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <EventComments event={eventData as any} />
-      </div>
-    </div>
+    </ManagementPageLayout>
   );
 }

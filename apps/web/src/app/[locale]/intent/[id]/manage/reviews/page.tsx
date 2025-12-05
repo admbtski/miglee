@@ -23,8 +23,8 @@ export default async function IntentReviewsPage({ params }: PageProps) {
       fallback={
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="text-center">
-            <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
               Loading reviews...
             </p>
           </div>

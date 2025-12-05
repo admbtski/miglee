@@ -17,13 +17,17 @@ export default async function FaqPage({ params }: FaqPageProps) {
   return (
     <ManagementPageLayout
       title="FAQ"
-      description="Zarządzaj najczęściej zadawanymi pytaniami dla tego wydarzenia"
-      backHref={`/intent/${intentId}/manage`}
+      description="Manage frequently asked questions for your event"
     >
       <Suspense
         fallback={
-          <div className="flex items-center justify-center p-8">
-            <div className="w-8 h-8 border-4 border-indigo-600 rounded-full animate-spin border-t-transparent" />
+          <div className="flex min-h-[300px] items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+              <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+                Loading FAQ...
+              </p>
+            </div>
           </div>
         }
       >
@@ -31,4 +35,11 @@ export default async function FaqPage({ params }: FaqPageProps) {
       </Suspense>
     </ManagementPageLayout>
   );
+}
+
+export async function generateMetadata() {
+  return {
+    title: 'FAQ | Miglee',
+    description: 'Manage event FAQ',
+  };
 }
