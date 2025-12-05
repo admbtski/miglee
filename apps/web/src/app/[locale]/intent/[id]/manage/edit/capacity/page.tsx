@@ -7,7 +7,6 @@ import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 import { Users, UserPlus, Sparkles, Info, Crown } from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/segment-control';
 import { RangeSlider } from '@/features/intents/components/range-slider';
-import { useMyPlan } from '@/lib/api/billing';
 
 type Mode = 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM';
 
@@ -17,18 +16,16 @@ const GROUP_MAX = 50;
 /**
  * Capacity Section
  * Features: 1:1, Group, Custom modes with PRO gating
+ * Uses intent's sponsorshipPlan to determine PRO access
  */
 export default function CapacityPage() {
   const { intent, isLoading, saveSection } = useEdit();
-  const { data: planData } = useMyPlan();
   const router = useRouter();
   const params = useParams<{ id: string; locale: string }>();
 
-  const currentPlan = (planData?.myPlan?.plan?.toLowerCase() || 'free') as
-    | 'free'
-    | 'plus'
-    | 'pro';
-  const isPro = currentPlan === 'pro';
+  // Use intent's sponsorshipPlan for PRO feature access
+  const sponsorshipPlan = intent?.sponsorshipPlan || 'FREE';
+  const isPro = sponsorshipPlan === 'PRO';
 
   const [mode, setMode] = useState<Mode>('GROUP');
   const [min, setMin] = useState(2);
@@ -81,9 +78,19 @@ export default function CapacityPage() {
       newErrors.min = 'Minimum cannot exceed maximum';
     }
 
+    // Custom mode validation - max 99999
+    if (mode === 'CUSTOM' && isPro) {
+      if (!noMin && (min < 1 || min > 99999)) {
+        newErrors.min = 'Minimum must be between 1 and 99,999';
+      }
+      if (!noMax && (max < 1 || max > 99999)) {
+        newErrors.max = 'Maximum must be between 1 and 99,999';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [mode, getEffectiveLimits, isPro]);
+  }, [mode, getEffectiveLimits, isPro, min, max, noMin, noMax]);
 
   // Save handler
   const handleSave = async () => {
@@ -310,8 +317,11 @@ export default function CapacityPage() {
                   readOnly={!isPro}
                   onChange={(e) => {
                     if (!isPro) return;
-                    setMin(parseInt(e.target.value) || 1);
+                    const value = parseInt(e.target.value) || 1;
+                    // Clamp value between 1 and 99999
+                    setMin(Math.min(99999, Math.max(1, value)));
                     setIsDirty(true);
+                    if (errors.min) setErrors((er) => ({ ...er, min: '' }));
                   }}
                   placeholder="No minimum"
                   className={[
@@ -386,6 +396,7 @@ export default function CapacityPage() {
               <FormField
                 label="Maximum"
                 description="Maximum participants allowed"
+                error={errors.max}
               >
                 <input
                   type="number"
@@ -396,8 +407,11 @@ export default function CapacityPage() {
                   readOnly={!isPro}
                   onChange={(e) => {
                     if (!isPro) return;
-                    setMax(parseInt(e.target.value) || 1);
+                    const value = parseInt(e.target.value) || 1;
+                    // Clamp value between 1 and 99999
+                    setMax(Math.min(99999, Math.max(1, value)));
                     setIsDirty(true);
+                    if (errors.max) setErrors((er) => ({ ...er, max: '' }));
                   }}
                   placeholder="No limit"
                   className={[

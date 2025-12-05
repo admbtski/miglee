@@ -47,6 +47,7 @@ interface IntentData {
   lateJoinCutoffMinutesAfterStart: number | null;
   coverKey: string | null;
   coverBlurhash: string | null;
+  sponsorshipPlan: 'FREE' | 'PLUS' | 'PRO';
 }
 
 interface EditContextValue {
@@ -113,6 +114,7 @@ export function EditProvider({ children, intentId }: EditProviderProps) {
         i.lateJoinCutoffMinutesAfterStart ?? null,
       coverKey: i.coverKey || null,
       coverBlurhash: i.coverBlurhash || null,
+      sponsorshipPlan: i.sponsorshipPlan || 'FREE',
     };
   }, [data?.intent]);
 
