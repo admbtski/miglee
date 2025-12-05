@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocalePath } from '@/hooks/use-locale-path';
-import { AlertTriangle, Ban, Trash2 } from 'lucide-react';
+import { AlertTriangle, Ban, Trash2, Info, Calendar, Users } from 'lucide-react';
 import { useIntentQuery } from '@/lib/api/intents';
 import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
 import { CancelIntentModals } from '@/app/[locale]/account/intents/_components/cancel-intent-modals';
@@ -32,10 +32,10 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[300px] items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-red-600 dark:border-zinc-700 dark:border-t-red-400" />
+          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
             Loading...
           </p>
         </div>
@@ -45,8 +45,13 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
 
   if (!intent) {
     return (
-      <div className="text-center">
-        <p className="text-zinc-600 dark:text-zinc-400">Event not found</p>
+      <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <div className="text-center">
+          <AlertTriangle className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-500" />
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+            Event not found
+          </p>
+        </div>
       </div>
     );
   }
@@ -75,34 +80,55 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
     cancelDisabledReason = `Cannot cancel event with status: ${intent.status}`;
   }
 
-  // Determine delete disabled reason (optional - you can add conditions)
+  // Determine delete disabled reason
   let deleteDisabledReason: string | null = null;
   if (isDeleted) {
     deleteDisabledReason = 'This event has already been deleted';
   }
-  // Example: if you want to prevent deletion of events with many members
-  // if (intent.joinedCount && intent.joinedCount > 50) {
-  //   deleteDisabledReason = 'Cannot delete events with more than 50 members';
-  // }
+
+  const statusConfig = {
+    [IntentStatus.Upcoming]: {
+      color: 'emerald',
+      bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+      text: 'text-emerald-700 dark:text-emerald-400',
+    },
+    [IntentStatus.Ongoing]: {
+      color: 'blue',
+      bg: 'bg-blue-100 dark:bg-blue-900/30',
+      text: 'text-blue-700 dark:text-blue-400',
+    },
+    [IntentStatus.Past]: {
+      color: 'zinc',
+      bg: 'bg-zinc-100 dark:bg-zinc-800',
+      text: 'text-zinc-700 dark:text-zinc-400',
+    },
+    [IntentStatus.Canceled]: {
+      color: 'red',
+      bg: 'bg-red-100 dark:bg-red-900/30',
+      text: 'text-red-700 dark:text-red-400',
+    },
+    [IntentStatus.Any]: {
+      color: 'zinc',
+      bg: 'bg-zinc-100 dark:bg-zinc-800',
+      text: 'text-zinc-700 dark:text-zinc-400',
+    },
+    [IntentStatus.Deleted]: {
+      color: 'red',
+      bg: 'bg-red-100 dark:bg-red-900/30',
+      text: 'text-red-700 dark:text-red-400',
+    },
+  };
+
+  const currentStatus = statusConfig[intent.status] || statusConfig[IntentStatus.Any];
 
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Danger Zone
-          </h1>
-          <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-            Irreversible actions for your event
-          </p>
-        </div>
-
         {/* Warning Banner */}
-        <div className="flex items-start gap-3 p-4 border border-red-200 rounded-xl bg-red-50 dark:border-red-900/50 dark:bg-red-950/20">
+        <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-800/50 dark:bg-red-950/30">
           <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
           <div className="text-sm text-red-900 dark:text-red-100">
-            <p className="font-medium">Warning</p>
+            <p className="font-medium">Warning: Irreversible Actions</p>
             <p className="mt-1 text-red-700 dark:text-red-300">
               Actions on this page are permanent and cannot be undone. Please
               proceed with caution.
@@ -110,14 +136,14 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
           </div>
         </div>
 
-        {/* Event Info */}
-        <div className="p-6 bg-white border rounded-xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        {/* Event Info Card */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
             Event Information
-          </h2>
-          <div className="mt-4 space-y-2">
+          </h3>
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">
                 Title
               </span>
               <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -125,26 +151,18 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">
                 Status
               </span>
               <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  intent.status === IntentStatus.Upcoming ||
-                  intent.status === IntentStatus.Ongoing
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : intent.status === IntentStatus.Canceled || isCancelled
-                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                      : intent.status === IntentStatus.Past
-                        ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400'
-                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                }`}
+                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${currentStatus.bg} ${currentStatus.text}`}
               >
                 {intent.status}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
                 Members
               </span>
               <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
@@ -154,11 +172,11 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
           </div>
         </div>
 
-        {/* Cancel Event - Always visible */}
-        <div className="p-6 bg-white border border-orange-200 rounded-xl dark:border-orange-900/50 dark:bg-zinc-900">
+        {/* Cancel Event Card */}
+        <div className="rounded-2xl border border-amber-200 bg-white p-6 dark:border-amber-800/50 dark:bg-zinc-900">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-orange-100 rounded-lg dark:bg-orange-900/30">
-              <Ban className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
+              <Ban className="h-6 w-6 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -170,31 +188,34 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
                 but no new members can join.
               </p>
               {cancelDisabledReason && (
-                <p className="mt-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                  ℹ️ {cancelDisabledReason}
-                </p>
+                <div className="mt-3 flex items-start gap-2 rounded-xl bg-zinc-100 px-3 py-2 dark:bg-zinc-800">
+                  <Info className="h-4 w-4 text-zinc-500 dark:text-zinc-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    {cancelDisabledReason}
+                  </p>
+                </div>
               )}
               <button
                 onClick={() => !cancelDisabledReason && setCancelId(intentId)}
                 disabled={!!cancelDisabledReason}
-                className={`inline-flex items-center gap-2 px-4 py-2 mt-4 text-sm font-medium transition-colors border rounded-lg ${
+                className={`mt-4 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
                   cancelDisabledReason
-                    ? 'cursor-not-allowed border-zinc-300 bg-zinc-100 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-600'
-                    : 'border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-900/50 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-950/50'
+                    ? 'cursor-not-allowed border border-zinc-200 bg-zinc-100 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-600'
+                    : 'border-2 border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-950/50'
                 }`}
               >
-                <Ban className="w-4 h-4" />
+                <Ban className="h-4 w-4" />
                 Cancel Event
               </button>
             </div>
           </div>
         </div>
 
-        {/* Delete Event - Always visible */}
-        <div className="p-6 bg-white border border-red-200 rounded-xl dark:border-red-900/50 dark:bg-zinc-900">
+        {/* Delete Event Card */}
+        <div className="rounded-2xl border border-red-200 bg-white p-6 dark:border-red-800/50 dark:bg-zinc-900">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-red-100 rounded-lg dark:bg-red-900/30">
-              <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
+              <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -206,26 +227,32 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
                 messages, comments, and reviews will be deleted.
               </p>
               {!isCancelled && !deleteDisabledReason && (
-                <p className="mt-2 text-sm font-medium text-orange-600 dark:text-orange-400">
-                  ⚠️ We recommend cancelling the event first to notify members
-                  before deletion.
-                </p>
+                <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    We recommend cancelling the event first to notify members
+                    before deletion.
+                  </p>
+                </div>
               )}
               {deleteDisabledReason && (
-                <p className="mt-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                  ℹ️ {deleteDisabledReason}
-                </p>
+                <div className="mt-3 flex items-start gap-2 rounded-xl bg-zinc-100 px-3 py-2 dark:bg-zinc-800">
+                  <Info className="h-4 w-4 text-zinc-500 dark:text-zinc-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    {deleteDisabledReason}
+                  </p>
+                </div>
               )}
               <button
                 onClick={() => !deleteDisabledReason && setDeleteId(intentId)}
                 disabled={!!deleteDisabledReason}
-                className={`inline-flex items-center gap-2 px-4 py-2 mt-4 text-sm font-medium transition-colors border rounded-lg ${
+                className={`mt-4 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
                   deleteDisabledReason
-                    ? 'cursor-not-allowed border-zinc-300 bg-zinc-100 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-600'
-                    : 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50'
+                    ? 'cursor-not-allowed border border-zinc-200 bg-zinc-100 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-600'
+                    : 'border-2 border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50'
                 }`}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="h-4 w-4" />
                 Delete Event Permanently
               </button>
             </div>
@@ -238,7 +265,6 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
         cancelId={cancelId}
         onClose={() => setCancelId(null)}
         onSuccess={() => {
-          // Refresh the page to show updated status
           router.refresh();
         }}
         title="Cancel this event?"
@@ -249,7 +275,6 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
         deleteId={deleteId}
         onClose={() => setDeleteId(null)}
         onSuccess={() => {
-          // Redirect to account intents page after deletion
           router.push(localePath('/account/intents'));
         }}
         title="Delete this event permanently?"

@@ -6,7 +6,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { IntentChatManagement } from './_components/intent-chat-management';
-import { Loader2 } from 'lucide-react';
+import { ManagementPageLayout } from '../_components/management-page-layout';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -20,23 +20,17 @@ export default async function IntentChatPage({ params }: PageProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Czat wydarzenia
-        </h1>
-        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400 max-w-[70ch]">
-          Zarządzaj komunikacją z uczestnikami wydarzenia
-        </p>
-      </div>
-
+    <ManagementPageLayout
+      title="Event Chat"
+      description="Manage communication with event participants"
+    >
       <Suspense
         fallback={
-          <div className="flex min-h-[600px] items-center justify-center">
+          <div className="flex min-h-[400px] items-center justify-center">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 mx-auto animate-spin text-indigo-600 dark:text-indigo-400" />
-              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                Ładowanie czatu...
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+              <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+                Loading chat...
               </p>
             </div>
           </div>
@@ -44,7 +38,7 @@ export default async function IntentChatPage({ params }: PageProps) {
       >
         <IntentChatManagement intentId={id} />
       </Suspense>
-    </div>
+    </ManagementPageLayout>
   );
 }
 
