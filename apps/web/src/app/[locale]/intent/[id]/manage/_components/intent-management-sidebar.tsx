@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLocalePath } from '@/hooks/use-locale-path';
 import {
   LayoutDashboard,
   Users,
@@ -38,6 +39,7 @@ import {
   HelpCircle,
   Paintbrush,
   Send,
+  DoorOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -105,6 +107,7 @@ export function IntentManagementSidebar({
   intentId,
 }: IntentManagementSidebarProps) {
   const pathname = usePathname();
+  const { localePath } = useLocalePath();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['main']));
@@ -135,31 +138,31 @@ export function IntentManagementSidebar({
         {
           id: 'dashboard',
           label: 'Dashboard',
-          href: `/intent/${intentId}/manage`,
+          href: localePath(`/intent/${intentId}/manage`),
           icon: LayoutDashboard,
         },
         {
           id: 'publish',
           label: 'Publish',
-          href: `/intent/${intentId}/manage/publish`,
+          href: localePath(`/intent/${intentId}/manage/publish`),
           icon: Send,
         },
         {
           id: 'view',
           label: 'View Event',
-          href: `/intent/${intentId}/manage/view`,
+          href: localePath(`/intent/${intentId}/manage/view`),
           icon: Eye,
         },
         {
           id: 'members',
           label: 'Members',
-          href: `/intent/${intentId}/manage/members`,
+          href: localePath(`/intent/${intentId}/manage/members`),
           icon: Users,
         },
         {
           id: 'plans',
           label: 'Sponsorship Plans',
-          href: `/intent/${intentId}/manage/plans`,
+          href: localePath(`/intent/${intentId}/manage/plans`),
           icon: BadgeDollarSign,
         },
       ],
@@ -173,38 +176,50 @@ export function IntentManagementSidebar({
         {
           id: 'basics',
           label: 'Basics',
-          href: `/intent/${intentId}/manage/edit/basics`,
+          href: localePath(`/intent/${intentId}/manage/edit/basics`),
           icon: FileText,
         },
         {
           id: 'cover',
           label: 'Cover Image',
-          href: `/intent/${intentId}/manage/edit/cover`,
+          href: localePath(`/intent/${intentId}/manage/edit/cover`),
           icon: Image,
         },
         {
           id: 'schedule',
           label: 'Schedule',
-          href: `/intent/${intentId}/manage/edit/when`,
+          href: localePath(`/intent/${intentId}/manage/edit/schedule`),
           icon: Clock,
         },
         {
           id: 'location',
           label: 'Location',
-          href: `/intent/${intentId}/manage/edit/where`,
+          href: localePath(`/intent/${intentId}/manage/edit/location`),
           icon: MapPin,
         },
         {
           id: 'capacity',
           label: 'Capacity',
-          href: `/intent/${intentId}/manage/edit/capacity`,
+          href: localePath(`/intent/${intentId}/manage/edit/capacity`),
           icon: UsersIcon,
         },
         {
           id: 'privacy',
           label: 'Privacy',
-          href: `/intent/${intentId}/manage/edit/settings`,
+          href: localePath(`/intent/${intentId}/manage/edit/privacy`),
           icon: Lock,
+        },
+        {
+          id: 'join-rules',
+          label: 'Join Rules',
+          href: localePath(`/intent/${intentId}/manage/edit/join-rules`),
+          icon: DoorOpen,
+        },
+        {
+          id: 'audience',
+          label: 'Audience',
+          href: localePath(`/intent/${intentId}/manage/edit/audience`),
+          icon: Target,
         },
       ],
     },
@@ -217,31 +232,31 @@ export function IntentManagementSidebar({
         {
           id: 'chat',
           label: 'Chat',
-          href: `/intent/${intentId}/manage/chat`,
+          href: localePath(`/intent/${intentId}/manage/chat`),
           icon: MessagesSquare,
         },
         {
           id: 'comments',
           label: 'Comments',
-          href: `/intent/${intentId}/manage/comments`,
+          href: localePath(`/intent/${intentId}/manage/comments`),
           icon: MessageSquare,
         },
         {
           id: 'reviews',
           label: 'Reviews',
-          href: `/intent/${intentId}/manage/reviews`,
+          href: localePath(`/intent/${intentId}/manage/reviews`),
           icon: Star,
         },
         {
           id: 'faq',
           label: 'FAQ',
-          href: `/intent/${intentId}/manage/faq`,
+          href: localePath(`/intent/${intentId}/manage/faq`),
           icon: HelpCircle,
         },
         {
           id: 'notifications',
           label: 'Notifications',
-          href: `/intent/${intentId}/manage/notifications`,
+          href: localePath(`/intent/${intentId}/manage/notifications`),
           icon: Bell,
         },
       ],
@@ -256,37 +271,37 @@ export function IntentManagementSidebar({
         {
           id: 'join-form',
           label: 'Join Form',
-          href: `/intent/${intentId}/manage/join-form`,
+          href: localePath(`/intent/${intentId}/manage/join-form`),
           icon: CheckCircle2,
         },
         {
           id: 'invite-links',
           label: 'Invite Links',
-          href: `/intent/${intentId}/manage/invite-links`,
+          href: localePath(`/intent/${intentId}/manage/invite-links`),
           icon: LinkIcon,
         },
         {
           id: 'feedback',
           label: 'Feedback',
-          href: `/intent/${intentId}/manage/feedback`,
+          href: localePath(`/intent/${intentId}/manage/feedback`),
           icon: FileText,
         },
         {
           id: 'boost',
           label: 'Event Boost',
-          href: `/intent/${intentId}/manage/boost`,
+          href: localePath(`/intent/${intentId}/manage/boost`),
           icon: Rocket,
         },
         {
           id: 'local-push',
           label: 'Local Push',
-          href: `/intent/${intentId}/manage/local-push`,
+          href: localePath(`/intent/${intentId}/manage/local-push`),
           icon: Target,
         },
         {
           id: 'appearance',
           label: 'Appearance',
-          href: `/intent/${intentId}/manage/appearance`,
+          href: localePath(`/intent/${intentId}/manage/appearance`),
           icon: Paintbrush,
         },
       ],
@@ -301,7 +316,7 @@ export function IntentManagementSidebar({
         {
           id: 'analytics',
           label: 'Analytics',
-          href: `/intent/${intentId}/manage/analytics`,
+          href: localePath(`/intent/${intentId}/manage/analytics`),
           icon: BarChart3,
         },
       ],
@@ -315,7 +330,7 @@ export function IntentManagementSidebar({
         {
           id: 'danger',
           label: 'Cancel & Delete',
-          href: `/intent/${intentId}/manage/danger`,
+          href: localePath(`/intent/${intentId}/manage/danger`),
           icon: AlertTriangle,
         },
       ],
@@ -323,7 +338,8 @@ export function IntentManagementSidebar({
   ];
 
   const isActive = (href: string) => {
-    if (href === `/intent/${intentId}/manage`) {
+    const dashboardPath = localePath(`/intent/${intentId}/manage`);
+    if (href === dashboardPath) {
       return pathname === href;
     }
     return pathname?.startsWith(href);
@@ -532,7 +548,7 @@ export function IntentManagementSidebar({
               transition={{ duration: 0.2 }}
             >
               <Link
-                href={`/intent/${intentId}`}
+                href={localePath(`/intent/${intentId}`)}
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
               >
                 <Home className="flex-shrink-0 w-5 h-5" />
@@ -549,7 +565,7 @@ export function IntentManagementSidebar({
               className="flex justify-center"
             >
               <Link
-                href={`/intent/${intentId}`}
+                href={localePath(`/intent/${intentId}`)}
                 className="p-2 transition-all rounded-lg text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 aria-label="Back to Event"
                 title="Back to Event"

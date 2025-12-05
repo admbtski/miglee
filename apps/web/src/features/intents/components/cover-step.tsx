@@ -1,10 +1,11 @@
 'use client';
 
-import { ImageIcon, X, Upload } from 'lucide-react';
+import { ImageIcon, X, Upload, Sparkles } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
 import { toast } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface CoverStepProps {
   /** Current cover image preview (base64 or URL) */
@@ -15,31 +16,33 @@ interface CoverStepProps {
   onImageSelected: (file: File) => void;
   /** Called when user removes the image */
   onImageRemove: () => void;
+  /** Optional className for the root element */
+  className?: string;
 }
+
+const MAX_SIZE_MB = 10;
 
 export function CoverStep({
   coverPreview,
   isUploading = false,
   onImageSelected,
   onImageRemove,
+  className,
 }: CoverStepProps) {
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
 
   const processFile = useCallback((file: File) => {
-    // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error('Wybierz plik obrazka');
       return;
     }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image size must be less than 10MB');
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast.error(`Rozmiar obrazka musi być mniejszy niż ${MAX_SIZE_MB}MB`);
       return;
     }
 
-    // Read file and open crop modal
     const reader = new FileReader();
     reader.onload = () => {
       setSelectedImageSrc(reader.result as string);
@@ -60,7 +63,7 @@ export function CoverStep({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'],
+      'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
     },
     maxFiles: 1,
     disabled: isUploading,
@@ -70,117 +73,155 @@ export function CoverStep({
 
   const handleCropComplete = async (croppedBlob: Blob) => {
     try {
-      // Convert blob to File
       const file = new File([croppedBlob], 'cover.webp', {
         type: 'image/webp',
       });
-
-      // Call parent handler
       onImageSelected(file);
-
-      // Close modal and reset
       setCropModalOpen(false);
       setSelectedImageSrc(null);
     } catch (error) {
       console.error('Failed to process cropped image:', error);
-      toast.error('Failed to process image. Please try again.');
+      toast.error('Nie udało się przetworzyć obrazka. Spróbuj ponownie.');
     }
   };
 
-  const handleRemove = () => {
-    onImageRemove();
-  };
-
   return (
-    <div className="space-y-4">
+    <div className={cn('space-y-5', className)}>
       {/* Preview or Dropzone */}
       {coverPreview ? (
-        <div className="relative w-full" style={{ aspectRatio: '21 / 9' }}>
-          <img
-            src={coverPreview}
-            alt="Podgląd okładki"
-            className="object-cover w-full h-full border rounded-2xl border-zinc-200 dark:border-zinc-800 shadow-sm"
-          />
-          {!isUploading && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="absolute p-2 text-white transition bg-red-600 rounded-full shadow-lg top-2 right-2 hover:bg-red-700"
-              title="Remove cover image"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-          {isUploading && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 backdrop-blur-sm">
-              <div className="text-center">
-                <div className="inline-block w-8 h-8 border-4 border-white rounded-full animate-spin border-t-transparent" />
-                <p className="mt-2 text-sm font-medium text-white">
-                  Uploading...
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${
-            isDragActive
-              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg'
-              : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-900/70'
-          } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <input {...getInputProps()} />
-          <ImageIcon className="w-16 h-16 mx-auto mb-4 text-zinc-400 dark:text-zinc-500" />
-          <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            {isDragActive
-              ? 'Upuść obrazek tutaj'
-              : 'Przeciągnij i upuść obrazek lub kliknij aby wybrać'}
-          </p>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Zalecane: 1280x549px (proporcje 21:9)
-          </p>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            PNG, JPG, WEBP do 10MB
-          </p>
-        </div>
-      )}
+        <div className="space-y-4">
+          {/* Image Preview */}
+          <div
+            className="relative w-full overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm"
+            style={{ aspectRatio: '21 / 9' }}
+          >
+            <img
+              src={coverPreview}
+              alt="Podgląd okładki"
+              className="object-cover w-full h-full"
+            />
 
-      {/* Action Buttons */}
-      {coverPreview && (
-        <div className="flex gap-2">
-          <div {...getRootProps()} className="flex-1">
-            <input {...getInputProps()} />
-            <button
-              type="button"
-              disabled={isUploading}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all shadow-sm"
-            >
-              <Upload className="w-4 h-4" />
-              Zmień okładkę
-            </button>
+            {/* Remove button */}
+            {!isUploading && (
+              <button
+                type="button"
+                onClick={onImageRemove}
+                className="absolute top-3 right-3 p-2.5 rounded-xl bg-black/60 text-white hover:bg-black/80 transition-all backdrop-blur-sm shadow-lg"
+                title="Usuń okładkę"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Uploading overlay */}
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="text-center">
+                  <div className="inline-block w-10 h-10 border-4 border-white/30 rounded-full animate-spin border-t-white" />
+                  <p className="mt-3 text-sm font-medium text-white">
+                    Przesyłanie...
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
-          {!isUploading && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-300 bg-white px-4 py-3 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-700 dark:bg-zinc-900 dark:text-red-400 dark:hover:bg-red-900/20 transition-all shadow-sm"
-            >
-              <X className="w-4 h-4" />
-              Usuń
-            </button>
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            <div {...getRootProps()} className="flex-1">
+              <input {...getInputProps()} />
+              <button
+                type="button"
+                disabled={isUploading}
+                className={cn(
+                  'w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all',
+                  'border border-zinc-200 dark:border-zinc-700',
+                  'bg-white dark:bg-zinc-800/50',
+                  'text-zinc-700 dark:text-zinc-300',
+                  'hover:bg-zinc-50 dark:hover:bg-zinc-800',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
+              >
+                <Upload className="w-4 h-4" />
+                Zmień okładkę
+              </button>
+            </div>
+
+            {!isUploading && (
+              <button
+                type="button"
+                onClick={onImageRemove}
+                className={cn(
+                  'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all',
+                  'border border-red-200 dark:border-red-800/50',
+                  'bg-white dark:bg-zinc-800/50',
+                  'text-red-600 dark:text-red-400',
+                  'hover:bg-red-50 dark:hover:bg-red-900/20'
+                )}
+              >
+                <X className="w-4 h-4" />
+                Usuń
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Dropzone */
+        <div
+          {...getRootProps()}
+          className={cn(
+            'relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer',
+            isDragActive
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-[1.02]'
+              : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30',
+            !isDragActive &&
+              'hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50',
+            isUploading && 'opacity-50 cursor-not-allowed'
           )}
+          style={{ aspectRatio: '21 / 9' }}
+        >
+          <input {...getInputProps()} />
+
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <div
+              className={cn(
+                'w-14 h-14 rounded-2xl flex items-center justify-center transition-all',
+                isDragActive
+                  ? 'bg-indigo-100 dark:bg-indigo-900/40'
+                  : 'bg-zinc-100 dark:bg-zinc-800'
+              )}
+            >
+              {isDragActive ? (
+                <Upload className="w-7 h-7 text-indigo-500 dark:text-indigo-400" />
+              ) : (
+                <ImageIcon className="w-7 h-7 text-zinc-400 dark:text-zinc-500" />
+              )}
+            </div>
+
+            <div>
+              <p className="text-base font-medium text-zinc-800 dark:text-zinc-200">
+                {isDragActive
+                  ? 'Upuść obrazek tutaj'
+                  : 'Przeciągnij obrazek lub kliknij'}
+              </p>
+              <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                Zalecane: 1280×549px (21:9)
+              </p>
+              <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                PNG, JPG, WEBP do {MAX_SIZE_MB}MB
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Info Text */}
-      <div className="p-4 border rounded-2xl border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
-        <p className="text-sm leading-relaxed text-blue-900 dark:text-blue-100">
-          <strong className="font-semibold">Wskazówka:</strong> Dobry obraz
-          okładki pomaga wyróżnić Twoje wydarzenie. Wybierz zdjęcie, które
-          reprezentuje aktywność lub lokalizację.
+      {/* Info tip */}
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100 dark:border-indigo-900/50">
+        <Sparkles className="w-5 h-5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-indigo-900 dark:text-indigo-100 leading-relaxed">
+          <strong className="font-medium">Wskazówka:</strong> Dobra okładka
+          pomaga wyróżnić Twoje wydarzenie. Wybierz zdjęcie, które reprezentuje
+          aktywność lub lokalizację.
         </p>
       </div>
 
@@ -193,9 +234,9 @@ export function CoverStep({
             setSelectedImageSrc(null);
           }}
           imageSrc={selectedImageSrc}
-          aspect={21 / 9} // 21:9 for cover
+          aspect={21 / 9}
           onCropComplete={handleCropComplete}
-          title="Crop Cover Image"
+          title="Przytnij okładkę"
           isUploading={false}
         />
       )}

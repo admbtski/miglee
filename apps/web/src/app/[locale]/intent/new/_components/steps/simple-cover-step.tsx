@@ -1,10 +1,11 @@
 'use client';
 
-import { ImageIcon, Info, Upload, X } from 'lucide-react';
+import { ImageIcon, Upload, X, Sparkles } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
 import { toast } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface SimpleCoverStepProps {
   coverPreview: string | null;
@@ -13,13 +14,15 @@ interface SimpleCoverStepProps {
   onImageRemove: () => void;
 }
 
+const MAX_SIZE_MB = 10;
+
 /**
- * SimpleCoverStep - Optional cover image step
+ * SimpleCoverStep - Optional cover image step for event creator
  *
  * Features:
  * - Drag & drop upload
  * - Image cropping (21:9 aspect)
- * - Skip option
+ * - Skip option with helpful messaging
  */
 export function SimpleCoverStep({
   coverPreview,
@@ -36,8 +39,8 @@ export function SimpleCoverStep({
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Rozmiar obrazka musi być mniejszy niż 10MB');
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast.error(`Rozmiar obrazka musi być mniejszy niż ${MAX_SIZE_MB}MB`);
       return;
     }
 
@@ -61,7 +64,7 @@ export function SimpleCoverStep({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'],
+      'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
     },
     maxFiles: 1,
     disabled: isUploading,
@@ -90,7 +93,7 @@ export function SimpleCoverStep({
         <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
           Okładka wydarzenia
         </h3>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
           Dodaj atrakcyjną okładkę, aby wyróżnić swoje wydarzenie.
         </p>
       </div>
@@ -98,27 +101,35 @@ export function SimpleCoverStep({
       {/* Preview or Dropzone */}
       {coverPreview ? (
         <div className="space-y-4">
-          <div className="relative w-full" style={{ aspectRatio: '21 / 9' }}>
+          {/* Image Preview */}
+          <div
+            className="relative w-full overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm"
+            style={{ aspectRatio: '21 / 9' }}
+          >
             <img
               src={coverPreview}
               alt="Podgląd okładki"
-              className="object-cover w-full h-full border rounded-xl border-zinc-200 dark:border-zinc-700 shadow-sm"
+              className="object-cover w-full h-full"
             />
+
+            {/* Remove button */}
             {!isUploading && (
               <button
                 type="button"
                 onClick={onImageRemove}
-                className="absolute p-2 text-white transition bg-red-600 rounded-full shadow-lg top-2 right-2 hover:bg-red-700"
+                className="absolute top-3 right-3 p-2.5 rounded-xl bg-black/60 text-white hover:bg-black/80 transition-all backdrop-blur-sm shadow-lg"
                 title="Usuń okładkę"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
+
+            {/* Uploading overlay */}
             {isUploading && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50 backdrop-blur-sm">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                 <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-white rounded-full animate-spin border-t-transparent" />
-                  <p className="mt-2 text-sm font-medium text-white">
+                  <div className="inline-block w-10 h-10 border-4 border-white/30 rounded-full animate-spin border-t-white" />
+                  <p className="mt-3 text-sm font-medium text-white">
                     Przesyłanie...
                   </p>
                 </div>
@@ -126,14 +137,21 @@ export function SimpleCoverStep({
             )}
           </div>
 
-          {/* Change/Remove buttons */}
-          <div className="flex gap-2">
+          {/* Action buttons */}
+          <div className="flex gap-3">
             <div {...getRootProps()} className="flex-1">
               <input {...getInputProps()} />
               <button
                 type="button"
                 disabled={isUploading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all"
+                className={cn(
+                  'w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all',
+                  'border border-zinc-200 dark:border-zinc-700',
+                  'bg-white dark:bg-zinc-800/50',
+                  'text-zinc-700 dark:text-zinc-300',
+                  'hover:bg-zinc-50 dark:hover:bg-zinc-800',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
               >
                 <Upload className="w-4 h-4" />
                 Zmień okładkę
@@ -144,7 +162,13 @@ export function SimpleCoverStep({
               <button
                 type="button"
                 onClick={onImageRemove}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-800 dark:bg-zinc-800/50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all"
+                className={cn(
+                  'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all',
+                  'border border-red-200 dark:border-red-800/50',
+                  'bg-white dark:bg-zinc-800/50',
+                  'text-red-600 dark:text-red-400',
+                  'hover:bg-red-50 dark:hover:bg-red-900/20'
+                )}
               >
                 <X className="w-4 h-4" />
                 Usuń
@@ -153,38 +177,62 @@ export function SimpleCoverStep({
           </div>
         </div>
       ) : (
+        /* Dropzone */
         <div
           {...getRootProps()}
-          className={[
-            'border-2 border-dashed rounded-xl p-10 text-center transition-all cursor-pointer',
+          className={cn(
+            'relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer',
             isDragActive
-              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg'
-              : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/30 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-800/50',
-            isUploading ? 'opacity-50 cursor-not-allowed' : '',
-          ].join(' ')}
+              ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-[1.02]'
+              : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30',
+            !isDragActive &&
+              'hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50',
+            isUploading && 'opacity-50 cursor-not-allowed'
+          )}
+          style={{ aspectRatio: '21 / 9' }}
         >
           <input {...getInputProps()} />
-          <ImageIcon className="w-14 h-14 mx-auto mb-4 text-zinc-400 dark:text-zinc-500" />
-          <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-            {isDragActive
-              ? 'Upuść obrazek tutaj'
-              : 'Przeciągnij obrazek lub kliknij aby wybrać'}
-          </p>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Zalecane: 1280×549px (proporcje 21:9)
-          </p>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-            PNG, JPG, WEBP do 10MB
-          </p>
+
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <div
+              className={cn(
+                'w-14 h-14 rounded-2xl flex items-center justify-center transition-all',
+                isDragActive
+                  ? 'bg-indigo-100 dark:bg-indigo-900/40'
+                  : 'bg-zinc-100 dark:bg-zinc-800'
+              )}
+            >
+              {isDragActive ? (
+                <Upload className="w-7 h-7 text-indigo-500 dark:text-indigo-400" />
+              ) : (
+                <ImageIcon className="w-7 h-7 text-zinc-400 dark:text-zinc-500" />
+              )}
+            </div>
+
+            <div>
+              <p className="text-base font-medium text-zinc-800 dark:text-zinc-200">
+                {isDragActive
+                  ? 'Upuść obrazek tutaj'
+                  : 'Przeciągnij obrazek lub kliknij'}
+              </p>
+              <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                Zalecane: 1280×549px (21:9)
+              </p>
+              <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                PNG, JPG, WEBP do {MAX_SIZE_MB}MB
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Info note */}
-      <div className="flex items-start gap-3 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/50">
-        <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-indigo-900 dark:text-indigo-100">
-          Możesz pominąć ten krok — okładkę dodasz później w panelu wydarzenia.
-          Dobra okładka pomaga wyróżnić wydarzenie w wynikach wyszukiwania.
+      {/* Info note - skip message */}
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100 dark:border-indigo-900/50">
+        <Sparkles className="w-5 h-5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-indigo-900 dark:text-indigo-100 leading-relaxed">
+          <strong className="font-medium">Możesz pominąć ten krok</strong> —
+          okładkę dodasz później w panelu wydarzenia. Dobra okładka pomaga
+          wyróżnić wydarzenie w wynikach wyszukiwania.
         </p>
       </div>
 

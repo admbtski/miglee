@@ -1,20 +1,20 @@
 /**
  * Intent Management Dashboard Component
  * Shows overview, stats, and quick actions
- * Enterprise-grade design with Linear-inspired aesthetics
+ * Modern, clean design with great UX
  */
 
 'use client';
 
 import {
   Activity,
-  AlertCircle,
   ArrowRight,
+  ArrowUpRight,
   BarChart3,
   Calendar,
   CheckCircle2,
   Clock,
-  Edit,
+  Edit3,
   Eye,
   Heart,
   Link as LinkIcon,
@@ -25,14 +25,15 @@ import {
   Sparkles,
   Star,
   TrendingUp,
-  UserCheck,
-  UserPlus,
   Users,
-  XCircle,
+  Video,
+  Globe,
+  Building,
 } from 'lucide-react';
 import Link from 'next/link';
 
 import { useIntentQuery } from '@/lib/api/intents';
+import { useLocalePath } from '@/hooks/use-locale-path';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow, isFuture, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -43,105 +44,11 @@ import {
   CloseJoinModal,
   ReopenJoinModal,
 } from '@/app/[locale]/account/intents/_components/close-join-modals';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
+import { buildIntentCoverUrl } from '@/lib/media/url';
 
 interface IntentManagementDashboardProps {
   intentId: string;
-}
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ComponentType<{ className?: string }>;
-  trend?: {
-    value: string;
-    positive: boolean;
-  };
-  href?: string;
-  description?: string;
-  color?: 'blue' | 'green' | 'purple' | 'orange' | 'pink';
-}
-
-function StatCard({
-  title,
-  value,
-  icon: Icon,
-  trend,
-  href,
-  description,
-  color = 'blue',
-}: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400',
-    green:
-      'bg-green-50 text-green-600 dark:bg-green-950/50 dark:text-green-400',
-    purple:
-      'bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400',
-    orange:
-      'bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400',
-    pink: 'bg-pink-50 text-pink-600 dark:bg-pink-950/50 dark:text-pink-400',
-  };
-
-  const content = (
-    <div
-      className={cn(
-        'group relative overflow-hidden rounded-xl border-[0.5px] border-zinc-200 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.05)] transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none',
-        'p-5',
-        href &&
-          'cursor-pointer hover:shadow-md hover:border-indigo-300 hover:scale-[1.02] dark:hover:border-indigo-700'
-      )}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            {title}
-          </p>
-          <p className="mt-2 text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-            {value}
-          </p>
-          {description && (
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-              {description}
-            </p>
-          )}
-          {trend && (
-            <p
-              className={cn(
-                'mt-2 flex items-center gap-1 text-sm font-medium',
-                trend.positive
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-red-600 dark:text-red-400'
-              )}
-            >
-              <TrendingUp
-                strokeWidth={2}
-                className={cn('h-4 w-4', !trend.positive && 'rotate-180')}
-              />
-              {trend.value}
-            </p>
-          )}
-        </div>
-        <div
-          className={cn(
-            'absolute right-5 top-5 rounded-lg p-2',
-            colorClasses[color]
-          )}
-        >
-          <Icon className="w-5 h-5" />
-        </div>
-      </div>
-      {href && (
-        <div className="absolute transition-opacity opacity-0 bottom-3 right-3 group-hover:opacity-100">
-          <ArrowRight className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-        </div>
-      )}
-    </div>
-  );
-
-  if (href) {
-    return <Link href={href}>{content}</Link>;
-  }
-
-  return content;
 }
 
 /**
@@ -151,6 +58,7 @@ export function IntentManagementDashboard({
   intentId,
 }: IntentManagementDashboardProps) {
   const { data, isLoading, refetch } = useIntentQuery({ id: intentId });
+  const { localePath } = useLocalePath();
   const intent = data?.intent;
 
   // Modal states
@@ -162,8 +70,8 @@ export function IntentManagementDashboard({
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="w-10 h-10 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
             Loading dashboard...
           </p>
         </div>
@@ -173,8 +81,13 @@ export function IntentManagementDashboard({
 
   if (!intent) {
     return (
-      <div className="text-center">
-        <p className="text-zinc-600 dark:text-zinc-400">Event not found</p>
+      <div className="flex min-h-[300px] items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+            <Calendar className="w-8 h-8 text-zinc-400" />
+          </div>
+          <p className="text-zinc-600 dark:text-zinc-400">Event not found</p>
+        </div>
       </div>
     );
   }
@@ -189,256 +102,612 @@ export function IntentManagementDashboard({
     ? Math.round(((intent.joinedCount || 0) / intent.max) * 100)
     : 0;
 
-  // Calculate engagement metrics
-  const totalEngagement =
-    (intent.messagesCount || 0) +
-    (intent.commentsCount || 0) +
-    (intent.savedCount || 0);
-  const engagementPerMember =
-    intent.joinedCount && intent.joinedCount > 0
-      ? (totalEngagement / intent.joinedCount).toFixed(1)
-      : '0';
+  // Status config
+  const statusConfig: Record<
+    IntentStatus,
+    { label: string; color: string; icon: typeof Clock }
+  > = {
+    [IntentStatus.Upcoming]: {
+      label: 'Upcoming',
+      color:
+        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+      icon: Clock,
+    },
+    [IntentStatus.Ongoing]: {
+      label: 'Ongoing',
+      color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      icon: Activity,
+    },
+    [IntentStatus.Past]: {
+      label: 'Completed',
+      color: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400',
+      icon: CheckCircle2,
+    },
+    [IntentStatus.Canceled]: {
+      label: 'Cancelled',
+      color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      icon: Lock,
+    },
+    [IntentStatus.Deleted]: {
+      label: 'Deleted',
+      color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      icon: Lock,
+    },
+    [IntentStatus.Any]: {
+      label: 'Any',
+      color: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400',
+      icon: Clock,
+    },
+  };
 
-  const stats = [
-    {
-      title: 'Total Members',
-      value: intent.joinedCount || 0,
-      icon: Users,
-      description: `${capacityPercentage}% capacity`,
-      href: `/intent/${intentId}/manage/members`,
-      color: 'blue' as const,
-      trend:
-        capacityPercentage >= 80
-          ? { value: 'Almost full', positive: true }
-          : undefined,
+  const currentStatus =
+    statusConfig[intent.status] ?? statusConfig[IntentStatus.Upcoming];
+  const StatusIcon = currentStatus.icon;
+
+  // Meeting kind config
+  const meetingKindConfig = {
+    ONSITE: {
+      label: 'In Person',
+      icon: Building,
+      color: 'text-emerald-600 dark:text-emerald-400',
     },
-    {
-      title: 'Messages',
-      value: intent.messagesCount || 0,
-      icon: MessageSquare,
-      description: intent.joinedCount
-        ? `${((intent.messagesCount || 0) / (intent.joinedCount || 1)).toFixed(1)} per member`
-        : undefined,
-      href: `/intent/${intentId}/manage/chat`,
-      color: 'green' as const,
+    ONLINE: {
+      label: 'Online',
+      icon: Video,
+      color: 'text-blue-600 dark:text-blue-400',
     },
-    {
-      title: 'Reviews',
-      value: (intent as any).reviewsCount || 0,
-      icon: Star,
-      description: (intent as any).averageRating
-        ? `★ ${(intent as any).averageRating.toFixed(1)} average`
-        : 'No reviews yet',
-      href: `/intent/${intentId}/manage/reviews`,
-      color: 'orange' as const,
+    HYBRID: {
+      label: 'Hybrid',
+      icon: Globe,
+      color: 'text-purple-600 dark:text-purple-400',
     },
-    {
-      title: 'Comments',
-      value: intent.commentsCount || 0,
-      icon: MessageSquare,
-      description: intent.joinedCount
-        ? `${((intent.commentsCount || 0) / (intent.joinedCount || 1)).toFixed(1)} per member`
-        : 'No comments yet',
-      href: `/intent/${intentId}/manage/comments`,
-      color: 'purple' as const,
-    },
-    {
-      title: 'Views',
-      value: (intent as any).viewCount || 0,
-      icon: Eye,
-      description: 'Total impressions',
-      href: `/intent/${intentId}/manage/analytics`,
-      color: 'blue' as const,
-    },
-    {
-      title: 'Favourites',
-      value: intent.savedCount || 0,
-      icon: Heart,
-      description:
-        (intent as any).viewCount && (intent as any).viewCount > 0
-          ? `${Math.round(((intent.savedCount || 0) / (intent as any).viewCount) * 100)}% saved`
-          : intent.savedCount === 1
-            ? '1 person saved'
-            : `${intent.savedCount || 0} people saved`,
-      color: 'pink' as const,
-    },
-  ];
+  };
+
+  const meetingKind =
+    meetingKindConfig[intent.meetingKind as keyof typeof meetingKindConfig] ||
+    meetingKindConfig.ONSITE;
+  const MeetingIcon = meetingKind.icon;
+
+  console.dir({ intent });
 
   return (
-    <div className="max-w-[1360px] space-y-10">
-      {/* Header with Status Badge */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
-              Dashboard
-            </h1>
-            <span
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium',
-                (intent as any).status === 'ACTIVE'
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                  : (intent as any).status === 'CANCELLED'
-                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                    : (intent as any).status === 'COMPLETED'
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                      : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400'
-              )}
-            >
-              {intent.status === IntentStatus.Upcoming && (
-                <Activity className="w-3 h-3" />
-              )}
-              {intent.status === IntentStatus.Canceled && (
-                <XCircle className="w-3 h-3" />
-              )}
-              {intent.status === IntentStatus.Past && (
-                <CheckCircle2 className="w-3 h-3" />
-              )}
-              {intent.status === IntentStatus.Past && (
-                <AlertCircle className="w-3 h-3" />
-              )}
-              {intent.status}
-            </span>
-          </div>
-          <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 max-w-[70ch]">
-            Overview of your event management
-          </p>
-        </div>
-        <Link
-          href={`/intent/${intentId}`}
-          className="inline-flex items-center gap-2 px-5 text-sm font-semibold text-white transition-all bg-indigo-600 rounded-lg h-11 hover:bg-indigo-700 hover:shadow-md dark:bg-indigo-500 dark:hover:bg-indigo-600"
-        >
-          <Eye className="w-[18px] h-[18px]" />
-          View Event
-        </Link>
-      </div>
+    <div className="max-w-[1400px] space-y-8">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 p-8 text-white shadow-xl min-h-[200px]">
+        {/* Background Cover Image */}
+        {intent.coverKey ? (
+          <>
+            <div className="absolute inset-0">
+              <BlurHashImage
+                src={buildIntentCoverUrl(intent.coverKey, 'detail') || ''}
+                blurhash={intent.coverBlurhash}
+                alt={intent.title}
+                className="w-full h-full object-cover"
+                width={1280}
+                height={720}
+              />
+            </div>
+            {/* Dark overlay for readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+          </>
+        ) : (
+          /* Fallback pattern when no cover */
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+        )}
 
-      {/* Registration Controls */}
-      {intent.status !== IntentStatus.Canceled &&
-        intent.status !== IntentStatus.Past && (
-          <div className="p-6 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100 mb-1">
-                  Registration Status
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {intent.joinManuallyClosed
-                    ? 'Registrations are currently closed. Users cannot join this event.'
-                    : 'Registrations are open. Users can join this event.'}
-                </p>
+        <div className="relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              {/* Status Badge */}
+              <div className="flex items-center gap-3 mb-4">
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
+                    currentStatus.color
+                  )}
+                >
+                  <StatusIcon className="w-3.5 h-3.5" />
+                  {currentStatus.label}
+                </span>
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-white/20 text-white'
+                  )}
+                >
+                  <MeetingIcon className="w-3.5 h-3.5" />
+                  {meetingKind.label}
+                </span>
               </div>
-              <div className="flex gap-3">
-                {intent.joinManuallyClosed ? (
-                  <button
-                    onClick={() => setReopenJoinId(intentId)}
-                    className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-all bg-emerald-600 rounded-xl hover:bg-emerald-700 hover:shadow-md dark:bg-emerald-500 dark:hover:bg-emerald-600"
-                  >
-                    <LockOpen className="w-[18px] h-[18px]" />
-                    Otwórz zapisy
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setCloseJoinId(intentId)}
-                    className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-all bg-amber-600 rounded-xl hover:bg-amber-700 hover:shadow-md dark:bg-amber-500 dark:hover:bg-amber-600"
-                  >
-                    <Lock className="w-[18px] h-[18px]" />
-                    Zamknij zapisy
-                  </button>
+
+              {/* Title */}
+              <h1 className="text-3xl lg:text-4xl font-bold tracking-tight mb-3 line-clamp-2">
+                {intent.title}
+              </h1>
+
+              {/* Meta Info */}
+              <div className="flex flex-wrap items-center gap-4 text-white/80 text-sm">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{format(startDate, 'PPP', { locale: pl })}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    {format(startDate, 'HH:mm')} - {format(endDate, 'HH:mm')}
+                  </span>
+                </div>
+                {intent.address && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span className="truncate max-w-[200px]">
+                      {intent.address}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href={localePath(`/intent/${intentId}`)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-white text-indigo-700 hover:bg-white/90 transition-all shadow-lg"
+              >
+                <Eye className="w-4 h-4" />
+                View Event
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href={localePath(`/intent/${intentId}/manage/edit/basics`)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-white/20 text-white hover:bg-white/30 transition-all"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Event
+              </Link>
+            </div>
           </div>
-        )}
+        </div>
+      </div>
 
-      {/* Countdown Timer */}
-      <EventCountdownTimer
-        startAt={startDate}
-        endAt={endDate}
-        joinOpensMinutesBeforeStart={intent.joinOpensMinutesBeforeStart}
-        joinCutoffMinutesBeforeStart={intent.joinCutoffMinutesBeforeStart}
-        allowJoinLate={intent.allowJoinLate}
-        lateJoinCutoffMinutesAfterStart={intent.lateJoinCutoffMinutesAfterStart}
-        joinManuallyClosed={intent.joinManuallyClosed}
-        isCanceled={(intent as any).status === 'CANCELLED'}
-        isDeleted={(intent as any).status === 'DELETED'}
-      />
-
-      {/* Quick Metrics Banner */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-5 xl:gap-6">
-        {/* Capacity Status */}
-        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Capacity */}
+        <div className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Capacity
             </span>
             <Users className="w-4 h-4 text-zinc-400" />
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-              {intent.joinedCount}
+          <div className="flex items-baseline gap-1 mb-3">
+            <span className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+              {intent.joinedCount || 0}
             </span>
-            <span className="text-sm text-zinc-500">/ {intent.max}</span>
+            <span className="text-lg text-zinc-400">/ {intent.max || '∞'}</span>
           </div>
-          <div className="h-2 mt-3 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+          <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full bg-gradient-to-r transition-all',
+                'h-full rounded-full transition-all',
                 capacityPercentage >= 90
-                  ? 'from-red-500 to-red-400'
+                  ? 'bg-gradient-to-r from-red-500 to-red-400'
                   : capacityPercentage >= 70
-                    ? 'from-orange-500 to-orange-400'
-                    : 'from-green-500 to-green-400'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-400'
+                    : 'bg-gradient-to-r from-emerald-500 to-emerald-400'
               )}
-              style={{ width: `${capacityPercentage}%` }}
+              style={{ width: `${Math.min(capacityPercentage, 100)}%` }}
             />
           </div>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            {capacityPercentage}% filled
+          </p>
         </div>
 
-        {/* Time Until Event */}
-        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              {isUpcoming ? 'Starts In' : isOngoing ? 'Ends In' : 'Completed'}
+        {/* Time Status */}
+        <div className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              {isUpcoming ? 'Starts In' : isOngoing ? 'Ends In' : 'Ended'}
             </span>
-            <Calendar className="w-4 h-4 text-zinc-400" />
+            <Clock className="w-4 h-4 text-zinc-400" />
           </div>
-          <div className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-            {isUpcoming &&
-              formatDistanceToNow(startDate, { addSuffix: false, locale: pl })}
-            {isOngoing &&
-              formatDistanceToNow(endDate, { addSuffix: false, locale: pl })}
+          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            {isUpcoming && formatDistanceToNow(startDate, { locale: pl })}
+            {isOngoing && formatDistanceToNow(endDate, { locale: pl })}
             {isCompleted &&
               formatDistanceToNow(endDate, { addSuffix: true, locale: pl })}
+          </p>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            {format(isUpcoming ? startDate : endDate, 'PPP p', { locale: pl })}
+          </p>
+        </div>
+
+        {/* Messages */}
+        <Link
+          href={localePath(`/intent/${intentId}/manage/chat`)}
+          className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Messages
+            </span>
+            <MessageSquare className="w-4 h-4 text-zinc-400 group-hover:text-indigo-500 transition-colors" />
+          </div>
+          <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            {intent.messagesCount || 0}
+          </p>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+            View chat
+            <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </p>
+        </Link>
+
+        {/* Favourites */}
+        <div className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Favourites
+            </span>
+            <Heart className="w-4 h-4 text-zinc-400" />
+          </div>
+          <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            {intent.savedCount || 0}
+          </p>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            People saved this event
+          </p>
+        </div>
+      </div>
+
+      {/* Registration Control + Countdown */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Registration Status Card */}
+        {intent.status !== IntentStatus.Canceled &&
+          intent.status !== IntentStatus.Past && (
+            <div className="p-6 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+              <div className="flex items-start gap-4">
+                <div
+                  className={cn(
+                    'flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center',
+                    intent.joinManuallyClosed
+                      ? 'bg-amber-100 dark:bg-amber-900/30'
+                      : 'bg-emerald-100 dark:bg-emerald-900/30'
+                  )}
+                >
+                  {intent.joinManuallyClosed ? (
+                    <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  ) : (
+                    <LockOpen className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                    Registration Status
+                  </h3>
+                  <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    {intent.joinManuallyClosed
+                      ? 'Registrations are closed. Users cannot join this event.'
+                      : 'Registrations are open. Users can join this event.'}
+                  </p>
+                  <div className="mt-4">
+                    {intent.joinManuallyClosed ? (
+                      <button
+                        onClick={() => setReopenJoinId(intentId)}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
+                      >
+                        <LockOpen className="w-4 h-4" />
+                        Open Registrations
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setCloseJoinId(intentId)}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl bg-amber-600 text-white hover:bg-amber-500 transition-colors"
+                      >
+                        <Lock className="w-4 h-4" />
+                        Close Registrations
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Countdown Timer */}
+        <div
+          className={cn(
+            intent.status === IntentStatus.Canceled ||
+              intent.status === IntentStatus.Past
+              ? 'lg:col-span-2'
+              : ''
+          )}
+        >
+          <EventCountdownTimer
+            startAt={startDate}
+            endAt={endDate}
+            joinOpensMinutesBeforeStart={intent.joinOpensMinutesBeforeStart}
+            joinCutoffMinutesBeforeStart={intent.joinCutoffMinutesBeforeStart}
+            allowJoinLate={intent.allowJoinLate}
+            lateJoinCutoffMinutesAfterStart={
+              intent.lateJoinCutoffMinutesAfterStart
+            }
+            joinManuallyClosed={intent.joinManuallyClosed}
+            isCanceled={intent.status === IntentStatus.Canceled}
+            isDeleted={false}
+          />
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link
+            href={localePath(`/intent/${intentId}/manage/members`)}
+            className="group p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-sky-300 dark:hover:border-sky-700 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center mb-3">
+              <Users className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+            </div>
+            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              Members
+            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+              {intent.joinedCount || 0} participants
+            </p>
+          </Link>
+
+          <Link
+            href={localePath(`/intent/${intentId}/manage/chat`)}
+            className="group p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
+              <MessageSquare className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="font-medium text-zinc-900 dark:text-zinc-100">Chat</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+              {intent.messagesCount || 0} messages
+            </p>
+          </Link>
+
+          <Link
+            href={localePath(`/intent/${intentId}/manage/analytics`)}
+            className="group p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-3">
+              <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              Analytics
+            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+              View insights
+            </p>
+          </Link>
+
+          <Link
+            href={localePath(`/intent/${intentId}/manage/invite-links`)}
+            className="group p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-3">
+              <LinkIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+              Invite Links
+            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Share event
+            </p>
+          </Link>
+        </div>
+      </div>
+
+      {/* Event Details Card */}
+      <div className="p-6 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            Event Details
+          </h2>
+          <Link
+            href={localePath(`/intent/${intentId}/manage/edit/basics`)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            Edit
+          </Link>
+        </div>
+
+        {intent.description && (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed max-w-prose">
+            {intent.description}
+          </p>
+        )}
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-4 h-4 text-zinc-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Date & Time
+              </p>
+              <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {format(startDate, 'PPP', { locale: pl })}
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                {format(startDate, 'HH:mm')} - {format(endDate, 'HH:mm')}
+              </p>
+            </div>
+          </div>
+
+          {intent.address && (
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-4 h-4 text-zinc-500" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Location
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {intent.address}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+              <MeetingIcon className="w-4 h-4 text-zinc-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Meeting Type
+              </p>
+              <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {meetingKind.label}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+              <Users className="w-4 h-4 text-zinc-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Capacity
+              </p>
+              <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {intent.joinedCount || 0} / {intent.max || '∞'} members
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+              <Eye className="w-4 h-4 text-zinc-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Visibility
+              </p>
+              <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {intent.visibility === 'PUBLIC' ? 'Public' : 'Hidden'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-4 h-4 text-zinc-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Join Mode
+              </p>
+              <p className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                {intent.joinMode === 'OPEN' ? 'Open' : 'Approval Required'}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Engagement Rate */}
-        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              Engagement
-            </span>
-            <Activity className="w-4 h-4 text-zinc-400" />
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-              {engagementPerMember}
-            </span>
-            <span className="text-sm text-zinc-500">per member</span>
-          </div>
-        </div>
+        {/* Categories & Tags */}
+        {((intent.categories && intent.categories.length > 0) ||
+          (intent.tags && intent.tags.length > 0)) && (
+          <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+            {intent.categories && intent.categories.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+                  Categories
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {intent.categories.map((cat: any) => (
+                    <span
+                      key={cat.id}
+                      className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                    >
+                      {cat.names?.en || cat.slug}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Conversion Rate */}
-        <div className="p-5 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              Conversion
-            </span>
-            <TrendingUp className="w-4 h-4 text-zinc-400" />
+            {intent.tags && intent.tags.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
+                  Tags
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {intent.tags.map((tag: any) => (
+                    <span
+                      key={tag.id}
+                      className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                    >
+                      {tag.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[22px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+        )}
+      </div>
+
+      {/* Engagement Stats */}
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+          Engagement
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link
+            href={localePath(`/intent/${intentId}/manage/reviews`)}
+            className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-amber-300 dark:hover:border-amber-700 transition-all group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <Star className="w-5 h-5 text-amber-500" />
+              <ArrowRight className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              {(intent as any).reviewsCount || 0}
+            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Reviews</p>
+          </Link>
+
+          <Link
+            href={localePath(`/intent/${intentId}/manage/comments`)}
+            className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <MessageSquare className="w-5 h-5 text-blue-500" />
+              <ArrowRight className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              {intent.commentsCount || 0}
+            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Comments</p>
+          </Link>
+
+          <div className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="flex items-center justify-between mb-2">
+              <Eye className="w-5 h-5 text-zinc-400" />
+            </div>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+              {(intent as any).viewCount || 0}
+            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Views</p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="flex items-center justify-between mb-2">
+              <TrendingUp className="w-5 h-5 text-emerald-500" />
+            </div>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
               {(intent as any).viewCount && (intent as any).viewCount > 0
                 ? Math.round(
                     ((intent.joinedCount || 0) / (intent as any).viewCount) *
@@ -446,315 +715,11 @@ export function IntentManagementDashboard({
                   )
                 : 0}
               %
-            </span>
-            <span className="text-sm text-zinc-500">join rate</span>
+            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Conversion
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5 xl:gap-6">
-        {stats.map((stat) => (
-          <StatCard key={stat.title} {...stat} />
-        ))}
-      </div>
-
-      {/* Event Info Card */}
-      <div className="p-6 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-        <div className="flex items-center justify-between pb-6 mb-8 border-b border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
-            Event Information
-          </h2>
-          <Link
-            href={`/intent/${intentId}/manage/edit/basics`}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
-          >
-            <Edit className="h-3.5 w-3.5" />
-            Edit
-          </Link>
-        </div>
-        <div className="space-y-8">
-          <div>
-            <h3 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
-              {intent.title}
-            </h3>
-            {intent.description && (
-              <p className="mt-2 text-sm leading-relaxed max-w-[70ch] text-zinc-500 dark:text-zinc-400">
-                {intent.description}
-              </p>
-            )}
-          </div>
-
-          <div className="grid gap-5 row-gap-5 sm:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <Calendar className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-              <div>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  Start Date
-                </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  {format(startDate, 'PPP p', { locale: pl })}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <Clock className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-              <div>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  End Date
-                </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  {format(endDate, 'PPP p', { locale: pl })}
-                </p>
-              </div>
-            </div>
-
-            {intent.address && (
-              <div className="flex items-start gap-3">
-                <MapPin className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    Location
-                  </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {intent.address}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3">
-              <Users className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  Capacity
-                </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  {intent.joinedCount} / {intent.max} members
-                </p>
-                <div className="w-full h-2 mt-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                  <div
-                    className={cn(
-                      'h-full rounded-full bg-gradient-to-r transition-all',
-                      capacityPercentage >= 90
-                        ? 'from-red-500 to-red-400'
-                        : capacityPercentage >= 70
-                          ? 'from-orange-500 to-orange-400'
-                          : 'from-green-500 to-green-400'
-                    )}
-                    style={{ width: `${capacityPercentage}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {intent.mode && (
-              <div className="flex items-start gap-3">
-                <UserPlus className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    Mode
-                  </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {intent.mode === 'ONE_TO_ONE' ? '1:1' : 'Group'}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {intent.visibility && (
-              <div className="flex items-start gap-3">
-                <Eye className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    Visibility
-                  </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {intent.visibility}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {intent.joinMode && (
-              <div className="flex items-start gap-3">
-                <UserCheck className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    Join Mode
-                  </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {intent.joinMode === 'OPEN'
-                      ? 'Open'
-                      : intent.joinMode === 'REQUEST'
-                        ? 'Approval Required'
-                        : intent.joinMode}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {intent.meetingKind && (
-              <div className="flex items-start gap-3">
-                <MapPin className="flex-shrink-0 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    Meeting Type
-                  </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    {intent.meetingKind === 'ONSITE'
-                      ? 'In Person'
-                      : intent.meetingKind === 'ONLINE'
-                        ? 'Online'
-                        : 'Hybrid'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Categories & Tags */}
-          {(intent.categories && intent.categories.length > 0) ||
-          (intent.tags && intent.tags.length > 0) ? (
-            <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-              {intent.categories && intent.categories.length > 0 && (
-                <div className="mb-4">
-                  <p className="mb-2.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                    Categories
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {intent.categories.map((cat: any) => (
-                      <span
-                        key={cat.id}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-                      >
-                        {cat.names?.en || cat.slug}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {intent.tags && intent.tags.length > 0 && (
-                <div>
-                  <p className="mb-2.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                    Tags
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {intent.tags.map((tag: any) => (
-                      <span
-                        key={tag.id}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                      >
-                        {tag.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="p-6 bg-white border-[0.5px] rounded-xl border-zinc-200 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-100">
-            Quick Actions
-          </h2>
-          <Link
-            href={`/intent/${intentId}/manage/edit/basics`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 transition-colors rounded-lg hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            View All
-          </Link>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Members */}
-          <Link
-            href={`/intent/${intentId}/manage/members`}
-            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-sky-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-sky-700 dark:bg-zinc-900/50"
-          >
-            {intent.joinedCount && intent.joinedCount > 0 && (
-              <span className="absolute top-3 right-3 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
-                {intent.joinedCount}
-              </span>
-            )}
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-sky-500/10 dark:bg-sky-500/10">
-              <Users className="w-6 h-6 text-sky-600 dark:text-sky-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                Members
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Manage participants
-              </p>
-            </div>
-          </Link>
-
-          {/* Chat */}
-          <Link
-            href={`/intent/${intentId}/manage/chat`}
-            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-green-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-green-700 dark:bg-zinc-900/50"
-          >
-            {(intent as any).messagesCount &&
-              (intent as any).messagesCount > 0 && (
-                <span className="absolute top-3 right-3 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                  {(intent as any).messagesCount}
-                </span>
-              )}
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500/10 dark:bg-green-500/10">
-              <MessageSquare className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                Chat
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                View messages
-              </p>
-            </div>
-          </Link>
-
-          {/* Analytics */}
-          <Link
-            href={`/intent/${intentId}/manage/analytics`}
-            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-purple-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-purple-700 dark:bg-zinc-900/50"
-          >
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-500/10 dark:bg-purple-500/10">
-              <BarChart3 className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                Analytics
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                View insights
-              </p>
-            </div>
-          </Link>
-
-          {/* Invite Links */}
-          <Link
-            href={`/intent/${intentId}/manage/invite-links`}
-            className="relative flex flex-col gap-3 py-5 px-6 overflow-hidden transition-all border-[0.5px] group rounded-xl border-zinc-200 hover:border-orange-300 hover:shadow-sm hover:scale-[1.02] dark:border-zinc-800 dark:hover:border-orange-700 dark:bg-zinc-900/50"
-          >
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/10 dark:bg-orange-500/10">
-              <LinkIcon className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                Invite Links
-              </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Share event
-              </p>
-            </div>
-          </Link>
         </div>
       </div>
 

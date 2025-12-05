@@ -5,10 +5,9 @@ interface EditPageProps {
 }
 
 /**
- * Main edit page - redirects to first step (basics)
+ * Main edit page - redirects to first section (basics)
  */
 export default async function EditPage({ params }: EditPageProps) {
   const { id } = await params;
   redirect(`/intent/${id}/manage/edit/basics`);
 }
-

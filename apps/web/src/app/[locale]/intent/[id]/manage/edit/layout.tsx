@@ -1,30 +1,25 @@
+'use client';
+
 import { ReactNode } from 'react';
-import { IntentEditProvider } from '@/features/intents/components/edit-steps/intent-edit-provider';
-import { CategorySelectionProvider } from '@/features/intents/components/category-selection-provider';
-import { TagSelectionProvider } from '@/features/intents/components/tag-selection-provider';
+import { useParams } from 'next/navigation';
+import { EditProvider } from './_components/edit-provider';
 
 interface EditLayoutProps {
   children: ReactNode;
-  params: Promise<{ id: string }>;
 }
 
 /**
  * Layout for event edit section
- * Provides form state context for all edit steps
+ * Each section saves independently - no shared form state needed
+ * Navigation is handled by the main IntentManagementSidebar
  */
-export default async function EditLayout({
-  children,
-  params,
-}: EditLayoutProps) {
-  const { id } = await params;
+export default function EditLayout({ children }: EditLayoutProps) {
+  const params = useParams<{ id: string }>();
+  const intentId = params.id;
 
   return (
-    <CategorySelectionProvider>
-      <TagSelectionProvider>
-        <IntentEditProvider intentId={id}>
-          <div className="flex-1 overflow-y-auto">{children}</div>
-        </IntentEditProvider>
-      </TagSelectionProvider>
-    </CategorySelectionProvider>
+    <EditProvider intentId={intentId}>
+      <div className="flex-1 min-w-0">{children}</div>
+    </EditProvider>
   );
 }
