@@ -37,7 +37,6 @@ export default function CapacityPage() {
   const [noMax, setNoMax] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showProPrompt, setShowProPrompt] = useState(false);
 
   // Initialize from intent data
   useEffect(() => {
@@ -100,13 +99,6 @@ export default function CapacityPage() {
 
   // Handle mode change
   const handleModeChange = (newMode: Mode) => {
-    if (newMode === 'CUSTOM' && !isPro) {
-      // Show PRO upgrade prompt
-      setShowProPrompt(true);
-      return;
-    }
-
-    setShowProPrompt(false);
     setMode(newMode);
     setIsDirty(true);
 
@@ -134,12 +126,15 @@ export default function CapacityPage() {
     setIsDirty(true);
   };
 
+  // Disable save for CUSTOM mode without PRO
+  const canSave = !(mode === 'CUSTOM' && !isPro);
+
   return (
     <EditSection
       title="Capacity"
       description="Set participant limits for your event"
       onSave={handleSave}
-      isDirty={isDirty}
+      isDirty={isDirty && canSave}
       isLoading={isLoading}
     >
       {/* Mode Selection */}
@@ -176,43 +171,6 @@ export default function CapacityPage() {
           ]}
         />
       </FormField>
-
-      {/* PRO Upgrade Prompt - shown when non-PRO user clicks Custom */}
-      {showProPrompt && !isPro && (
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 border border-amber-200 dark:border-amber-700/50 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
-              <Crown className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100">
-                Custom Capacity is a PRO Feature
-              </h3>
-              <p className="mt-1.5 text-sm text-amber-800/90 dark:text-amber-200/90 leading-relaxed">
-                Unlock unlimited participants and custom min/max limits for
-                large-scale events, workshops, and conferences.
-              </p>
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleUpgradeToPro}
-                  className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 transition-all shadow-sm hover:shadow-md inline-flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Upgrade to PRO
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowProPrompt(false)}
-                  className="px-4 py-2 text-sm font-medium rounded-xl text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30 transition-colors"
-                >
-                  Maybe later
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 1:1 Mode Info */}
       {mode === 'ONE_TO_ONE' && (
@@ -296,11 +254,46 @@ export default function CapacityPage() {
         </>
       )}
 
-      {/* Custom Mode - PRO Only */}
-      {mode === 'CUSTOM' && isPro && (
+      {/* Custom Mode */}
+      {mode === 'CUSTOM' && (
         <>
-          {/* Min/Max Inputs */}
-          <div className="grid grid-cols-2 gap-6">
+          {/* PRO Upgrade Banner - shown for non-PRO users */}
+          {!isPro && (
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 dark:from-amber-900/30 dark:via-orange-900/20 dark:to-amber-900/30 border border-amber-200 dark:border-amber-700/50 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
+                  <Crown className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100">
+                    Custom Capacity is a PRO Feature
+                  </h3>
+                  <p className="mt-1.5 text-sm text-amber-800/90 dark:text-amber-200/90 leading-relaxed">
+                    Unlock unlimited participants and custom min/max limits for
+                    large-scale events, workshops, and conferences.
+                  </p>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={handleUpgradeToPro}
+                      className="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400 transition-all shadow-sm hover:shadow-md inline-flex items-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Upgrade to PRO
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Min/Max Inputs - disabled for non-PRO */}
+          <div
+            className={[
+              'grid grid-cols-2 gap-6 transition-opacity',
+              !isPro && 'opacity-50 pointer-events-none',
+            ].join(' ')}
+          >
             {/* Minimum */}
             <div className="space-y-3">
               <FormField
@@ -313,8 +306,10 @@ export default function CapacityPage() {
                   min={1}
                   max={99999}
                   value={noMin ? '' : min}
-                  disabled={noMin}
+                  disabled={noMin || !isPro}
+                  readOnly={!isPro}
                   onChange={(e) => {
+                    if (!isPro) return;
                     setMin(parseInt(e.target.value) || 1);
                     setIsDirty(true);
                   }}
@@ -326,7 +321,7 @@ export default function CapacityPage() {
                     'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
                     'border-zinc-300 dark:border-zinc-700 focus:border-indigo-500 focus:ring-indigo-500/40',
                     'focus:outline-none focus:ring-2',
-                    noMin &&
+                    (noMin || !isPro) &&
                       'opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-800/50',
                   ].join(' ')}
                 />
@@ -335,7 +330,9 @@ export default function CapacityPage() {
               {/* No minimum toggle */}
               <button
                 type="button"
+                disabled={!isPro}
                 onClick={() => {
+                  if (!isPro) return;
                   setNoMin(!noMin);
                   setIsDirty(true);
                 }}
@@ -344,6 +341,7 @@ export default function CapacityPage() {
                   noMin
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
                     : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 hover:border-zinc-300 dark:hover:border-zinc-600',
+                  !isPro && 'cursor-not-allowed',
                 ].join(' ')}
               >
                 <span
@@ -394,8 +392,10 @@ export default function CapacityPage() {
                   min={1}
                   max={99999}
                   value={noMax ? '' : max}
-                  disabled={noMax}
+                  disabled={noMax || !isPro}
+                  readOnly={!isPro}
                   onChange={(e) => {
+                    if (!isPro) return;
                     setMax(parseInt(e.target.value) || 1);
                     setIsDirty(true);
                   }}
@@ -407,7 +407,7 @@ export default function CapacityPage() {
                     'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
                     'border-zinc-300 dark:border-zinc-700 focus:border-indigo-500 focus:ring-indigo-500/40',
                     'focus:outline-none focus:ring-2',
-                    noMax &&
+                    (noMax || !isPro) &&
                       'opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-800/50',
                   ].join(' ')}
                 />
@@ -416,7 +416,9 @@ export default function CapacityPage() {
               {/* No limit toggle */}
               <button
                 type="button"
+                disabled={!isPro}
                 onClick={() => {
+                  if (!isPro) return;
                   setNoMax(!noMax);
                   setIsDirty(true);
                 }}
@@ -425,6 +427,7 @@ export default function CapacityPage() {
                   noMax
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
                     : 'border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 hover:border-zinc-300 dark:hover:border-zinc-600',
+                  !isPro && 'cursor-not-allowed',
                 ].join(' ')}
               >
                 <span
@@ -465,15 +468,18 @@ export default function CapacityPage() {
             </div>
           </div>
 
-          <InfoBox variant="success">
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <p>
-                <strong className="font-medium">PRO feature:</strong> Set custom
-                limits up to 99,999 or unlimited participants.
-              </p>
-            </div>
-          </InfoBox>
+          {/* PRO feature info - only shown for PRO users */}
+          {isPro && (
+            <InfoBox variant="success">
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <p>
+                  <strong className="font-medium">PRO feature:</strong> Set
+                  custom limits up to 99,999 or unlimited participants.
+                </p>
+              </div>
+            </InfoBox>
+          )}
         </>
       )}
     </EditSection>

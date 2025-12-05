@@ -94,14 +94,21 @@ export default function LocationPage() {
   const handleSave = async () => {
     if (!validate()) return false;
 
+    // Build location object for onsite/hybrid events
+    const locationData = showOnsite
+      ? {
+          address: address || null,
+          lat: lat,
+          lng: lng,
+          placeId: placeId,
+          radiusKm: radiusKm,
+        }
+      : null;
+
     return saveSection('Location', {
       meetingKind,
-      address: showOnsite ? address : null,
-      lat: showOnsite ? lat : null,
-      lng: showOnsite ? lng : null,
-      placeId: showOnsite ? placeId : null,
-      radiusKm: showOnsite ? radiusKm : null,
-      onlineUrl: showOnline ? onlineUrl : null,
+      location: locationData,
+      onlineUrl: showOnline ? onlineUrl || null : null,
       notes: notes || null,
     });
   };
