@@ -1,7 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, Calendar, Loader2 } from 'lucide-react';
+import {
+  Star,
+  Calendar,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
+} from 'lucide-react';
 import Link from 'next/link';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import { useUserReviewsQuery } from '@/lib/api/user-reviews';
@@ -28,29 +35,41 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center rounded-3xl border border-slate-100 bg-white p-12 shadow-sm">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      <div className="flex items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-12 shadow-sm">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 mx-auto animate-spin text-indigo-600 dark:text-indigo-400" />
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            Ładowanie opinii...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 text-center shadow-sm">
-        <p className="text-sm text-slate-600">Failed to load reviews</p>
+      <div className="rounded-2xl border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-900/20 p-6 text-center">
+        <p className="text-sm text-red-700 dark:text-red-400">
+          Nie udało się załadować opinii
+        </p>
       </div>
     );
   }
 
   if (reviews.length === 0) {
     return (
-      <div className="rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm">
-        <Star className="mx-auto h-12 w-12 text-slate-400" />
-        <h3 className="mt-4 text-sm font-semibold text-slate-900">
-          No reviews yet
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-12 text-center shadow-sm">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <MessageSquare
+            className="h-10 w-10 text-zinc-400 dark:text-zinc-600"
+            strokeWidth={1.5}
+          />
+        </div>
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Brak opinii
         </h3>
-        <p className="mt-1 text-sm text-slate-600">
-          This user hasn't written any reviews yet
+        <p className="mt-2 text-zinc-600 dark:text-zinc-400 max-w-sm mx-auto">
+          Ten użytkownik nie napisał jeszcze żadnych opinii.
         </p>
       </div>
     );
@@ -59,57 +78,64 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
   return (
     <div className="space-y-4">
       {/* Reviews List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {reviews.map((review: any) => {
           const createdDate = new Date(review.createdAt);
           const categoryNames = review.intent?.categories?.[0]?.names as any;
           const categoryName =
-            categoryNames?.pl || categoryNames?.en || 'Event';
+            categoryNames?.pl || categoryNames?.en || 'Wydarzenie';
 
           return (
             <div
               key={review.id}
-              className="rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+              className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-sm"
             >
               {/* Header: Event Link & Date */}
-              <div className="mb-3 flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <Link
                   href={`/intent/${review.intent?.id}`}
-                  className="group flex-1"
+                  className="group flex-1 min-w-0"
                 >
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-flex items-center rounded-lg bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                      {categoryName}
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                     {review.intent?.title}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-500">
-                    {categoryName}
-                  </p>
                 </Link>
-                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-500">
-                  <Calendar className="h-3 w-3" />
-                  {format(createdDate, 'PPP', { locale: pl })}
+                <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 flex-shrink-0">
+                  <Calendar className="h-4 w-4" />
+                  <span>{format(createdDate, 'PP', { locale: pl })}</span>
                 </div>
               </div>
 
               {/* Rating */}
-              <div className="mb-2 flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${
-                      i < review.rating
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-slate-300 dark:text-zinc-700'
-                    }`}
-                  />
-                ))}
-                <span className="ml-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {review.rating}/5
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${
+                        i < review.rating
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-zinc-200 dark:text-zinc-700'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                  {review.rating}
+                  <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">
+                    /5
+                  </span>
                 </span>
               </div>
 
               {/* Content */}
               {review.content && (
-                <p className="text-sm text-slate-700 dark:text-slate-300">
+                <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
                   {review.content}
                 </p>
               )}
@@ -120,26 +146,36 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-sm">
-          <div className="text-sm text-slate-600 dark:text-slate-400">
-            Page {page + 1} of {totalPages} ({total} reviews)
+        <div className="flex items-center justify-between rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 px-5 py-4 shadow-sm">
+          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+            Strona{' '}
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              {page + 1}
+            </span>{' '}
+            z{' '}
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+              {totalPages}
+            </span>
+            <span className="hidden sm:inline"> ({total} opinii)</span>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="rounded-lg border border-slate-300 dark:border-zinc-700 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             >
-              Previous
+              <ChevronLeft className="h-4 w-4" />
+              Poprzednia
             </button>
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="rounded-lg border border-slate-300 dark:border-zinc-700 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
             >
-              Next
+              Następna
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>

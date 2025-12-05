@@ -3,11 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
 type Tab = {
   key: string;
   label: string;
   href: string;
+  icon?: ReactNode;
+  count?: number;
 };
 
 type AccountPageHeaderProps = {
@@ -15,13 +18,14 @@ type AccountPageHeaderProps = {
   description?: string;
   tabs?: Tab[];
   actions?: ReactNode;
+  icon?: ReactNode;
 };
 
 /**
  * AccountPageHeader - Header section for account pages
  *
  * Contains:
- * - Page title
+ * - Page title with optional icon
  * - Optional description
  * - Optional tabs (sub-navigation)
  * - Optional action buttons
@@ -31,31 +35,41 @@ export function AccountPageHeader({
   description,
   tabs,
   actions,
+  icon,
 }: AccountPageHeaderProps) {
   const pathname = usePathname();
 
   return (
     <div className="space-y-6">
       {/* Title + Actions */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            {title}
-          </h1>
-          {description && (
-            <p className="text-base text-zinc-600 dark:text-zinc-400">
-              {description}
-            </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          {icon && (
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 dark:from-indigo-900/30 dark:to-violet-900/30 shadow-sm">
+              {icon}
+            </div>
           )}
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
+              {title}
+            </h1>
+            {description && (
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 sm:text-base max-w-2xl">
+                {description}
+              </p>
+            )}
+          </div>
         </div>
 
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && (
+          <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>
+        )}
       </div>
 
       {/* Tabs */}
       {tabs && tabs.length > 0 && (
         <div className="border-b border-zinc-200 dark:border-zinc-800">
-          <nav className="-mb-px flex gap-6" aria-label="Tabs">
+          <nav className="-mb-px flex gap-1 overflow-x-auto" aria-label="Tabs">
             {tabs.map((tab) => {
               const isActive =
                 pathname === tab.href || pathname.startsWith(tab.href + '/');
@@ -64,14 +78,45 @@ export function AccountPageHeader({
                 <Link
                   key={tab.key}
                   href={tab.href}
-                  className={`whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
+                  className={`relative flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
-                      ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-                      : 'border-transparent text-zinc-600 hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  {tab.label}
+                  {tab.icon && (
+                    <span
+                      className={
+                        isActive ? 'text-indigo-600 dark:text-indigo-400' : ''
+                      }
+                    >
+                      {tab.icon}
+                    </span>
+                  )}
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && tab.count > 0 && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
+                        isActive
+                          ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                          : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                      }`}
+                    >
+                      {tab.count > 99 ? '99+' : tab.count}
+                    </span>
+                  )}
+                  {isActive && (
+                    <motion.div
+                      layoutId="account-tab-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
+                      transition={{
+                        type: 'spring',
+                        bounce: 0.2,
+                        duration: 0.4,
+                      }}
+                    />
+                  )}
                 </Link>
               );
             })}

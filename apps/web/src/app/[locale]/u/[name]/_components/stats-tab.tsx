@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, Users, Calendar, Star } from 'lucide-react';
+import { Award, Users, Calendar, Star, TrendingUp, Trophy } from 'lucide-react';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 
 type StatsTabProps = {
@@ -12,15 +12,18 @@ export function StatsTab({ user }: StatsTabProps) {
 
   if (!stats) {
     return (
-      <div className="rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-12 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800">
-          <Award className="h-8 w-8 text-slate-400 dark:text-slate-600" />
+      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-12 text-center shadow-sm">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <TrendingUp
+            className="h-10 w-10 text-zinc-400 dark:text-zinc-600"
+            strokeWidth={1.5}
+          />
         </div>
-        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          No stats yet
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Brak statystyk
         </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          This user hasn't participated in any events yet.
+        <p className="mt-2 text-zinc-600 dark:text-zinc-400 max-w-sm mx-auto">
+          Ten użytkownik nie ma jeszcze żadnych statystyk.
         </p>
       </div>
     );
@@ -28,44 +31,49 @@ export function StatsTab({ user }: StatsTabProps) {
 
   const statCards = [
     {
-      label: 'Events Created',
+      label: 'Utworzone wydarzenia',
       value: stats.eventsCreated,
       icon: Calendar,
+      color:
+        'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
     },
     {
-      label: 'Participations',
+      label: 'Uczestnictwa',
       value: stats.eventsJoined,
       icon: Users,
+      color:
+        'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
     },
     {
-      label: 'Reviews Received',
+      label: 'Otrzymane opinie',
       value: stats.reviewsCount,
       icon: Award,
+      color:
+        'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Stats Grid - Clean professional cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Stats Grid */}
+      <div className="grid gap-4 sm:grid-cols-3">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
               key={stat.label}
-              className="rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm"
+              className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 shadow-sm"
             >
-              <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
-                <Icon
-                  className="h-5 w-5 text-slate-600 dark:text-slate-400"
-                  strokeWidth={2}
-                />
+              <div
+                className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${stat.color}`}
+              >
+                <Icon className="h-6 w-6" strokeWidth={2} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                   {stat.label}
                 </p>
               </div>
@@ -76,32 +84,37 @@ export function StatsTab({ user }: StatsTabProps) {
 
       {/* Ratings */}
       {(stats.hostRatingAvg !== null || stats.attendeeRatingAvg !== null) && (
-        <div className="rounded-3xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Ratings
-          </h2>
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
+              <Trophy className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              Oceny
+            </h2>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {stats.hostRatingAvg !== null && (
-              <div className="rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-                <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-                  As Organizer
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-5">
+                <p className="mb-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  Jako organizator
                 </p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                <div className="flex items-baseline gap-2 mb-3">
+                  <span className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
                     {stats.hostRatingAvg?.toFixed(1) ?? '0.0'}
                   </span>
-                  <span className="text-sm text-slate-500 dark:text-slate-500">
+                  <span className="text-lg text-zinc-500 dark:text-zinc-400">
                     / 5.0
                   </span>
                 </div>
-                <div className="mt-2 flex gap-0.5">
+                <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-3 w-3 ${
+                      className={`h-5 w-5 ${
                         i < Math.round(stats.hostRatingAvg!)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-slate-300 dark:text-zinc-700'
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-zinc-200 dark:text-zinc-700'
                       }`}
                     />
                   ))}
@@ -109,26 +122,26 @@ export function StatsTab({ user }: StatsTabProps) {
               </div>
             )}
             {stats.attendeeRatingAvg !== null && (
-              <div className="rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-                <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-                  As Participant
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-5">
+                <p className="mb-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  Jako uczestnik
                 </p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                <div className="flex items-baseline gap-2 mb-3">
+                  <span className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
                     {stats.attendeeRatingAvg?.toFixed(1) ?? '0.0'}
                   </span>
-                  <span className="text-sm text-slate-500 dark:text-slate-500">
+                  <span className="text-lg text-zinc-500 dark:text-zinc-400">
                     / 5.0
                   </span>
                 </div>
-                <div className="mt-2 flex gap-0.5">
+                <div className="flex gap-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-3 w-3 ${
+                      className={`h-5 w-5 ${
                         i < Math.round(stats.attendeeRatingAvg!)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-slate-300 dark:text-zinc-700'
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-zinc-200 dark:text-zinc-700'
                       }`}
                     />
                   ))}
@@ -138,6 +151,19 @@ export function StatsTab({ user }: StatsTabProps) {
           </div>
         </div>
       )}
+
+      {/* Achievement Placeholder - for future */}
+      <div className="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/20 p-8 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <Trophy className="h-7 w-7 text-zinc-400 dark:text-zinc-600" />
+        </div>
+        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          Osiągnięcia wkrótce
+        </h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Tutaj pojawią się odznaki i osiągnięcia użytkownika.
+        </p>
+      </div>
     </div>
   );
 }

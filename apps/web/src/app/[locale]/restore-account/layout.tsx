@@ -1,13 +1,8 @@
-import type { ReactNode } from 'react';
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { ErrorBoundary } from '@/components/feedback/error-boundary';
+import { Navbar } from '@/components/layout/navbar';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
-
-export const metadata = {
-  title: 'Restore Account | Miglee',
-  description: 'Restore your deleted account',
-};
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 
 export default function RestoreAccountLayout({
   children,
@@ -19,7 +14,10 @@ export default function RestoreAccountLayout({
   return (
     <QueryClientProvider>
       <HydrationBoundary state={dehydrate(client)}>
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <div className="min-h-dvh bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+          <Navbar />
+          {children}
+        </div>
       </HydrationBoundary>
     </QueryClientProvider>
   );

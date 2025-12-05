@@ -92,8 +92,12 @@ function CommentItem({
   const isHidden = Boolean(comment.hiddenAt);
   const isRemovedFromView = isDeleted || isHidden;
 
-  // Permissions
-  const canEdit = isAppAdmin || isAppModerator || isAuthor;
+  // Permissions matrix:
+  // - Edit: Only App Admin or Comment Author (App Moderator and Intent Owner/Mod should use hide/delete)
+  // - Delete: App Admin, App Moderator, Intent Owner/Mod, or Comment Author
+  // - Hide: App Admin, App Moderator, or Intent Owner/Mod (not author unless they are also mod)
+  // - Report: Any logged in user except the author
+  const canEdit = isAppAdmin || isAuthor;
   const canDelete =
     isAppAdmin || isAppModerator || isIntentOwnerOrMod || isAuthor;
   const canHide =
@@ -228,7 +232,7 @@ function CommentItem({
                     <button className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
                       <MoreVertical className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                     </button>
-                    <div className="absolute right-0 z-10 w-48 py-1 mt-1 transition-transform origin-top-right scale-0 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 group-hover/menu:scale-100 dark:bg-zinc-800">
+                    <div className="absolute right-0 z-10 w-48 py-1 mt-1 transition-transform origin-top-right scale-0 bg-white rounded-md shadow-lg ring-1 ring-zinc-200 group-hover/menu:scale-100 dark:bg-zinc-800 dark:ring-zinc-700">
                       {canEdit && (
                         <button
                           onClick={() => onEdit(comment.id, comment.content)}

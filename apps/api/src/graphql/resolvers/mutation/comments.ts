@@ -121,6 +121,12 @@ export const createCommentMutation: MutationResolvers['createComment'] =
 
 /**
  * Mutation: Update a comment
+ *
+ * Permissions:
+ * - App Admin: can edit any comment
+ * - App Moderator: CANNOT edit (only hide/delete for moderation)
+ * - Intent Owner/Moderator: CANNOT edit others' comments
+ * - Comment Author: can edit own comments
  */
 export const updateCommentMutation: MutationResolvers['updateComment'] =
   resolverWithMetrics(
@@ -163,7 +169,12 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
         });
       }
 
-      if (existing.authorId !== user.id) {
+      // Permission check: Only App Admin or Comment Author can edit
+      // App Moderators and Intent Owner/Moderators should use hide/delete, not edit
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAuthor = existing.authorId === user.id;
+
+      if (!isAppAdmin && !isAuthor) {
         throw new GraphQLError('Cannot edit comments from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -187,6 +198,12 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
 
 /**
  * Mutation: Delete a comment (soft delete)
+ *
+ * Permissions:
+ * - App Admin: can delete any comment
+ * - App Moderator: can delete any comment
+ * - Intent Owner/Moderator: can delete comments in their intent
+ * - Comment Author: can delete own comments
  */
 export const deleteCommentMutation: MutationResolvers['deleteComment'] =
   resolverWithMetrics(
@@ -206,6 +223,18 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
           deletedAt: true,
           hiddenAt: true,
           intentId: true,
+          intent: {
+            select: {
+              members: {
+                where: {
+                  userId: user.id,
+                  role: { in: ['OWNER', 'MODERATOR'] },
+                  status: 'JOINED',
+                },
+                select: { role: true },
+              },
+            },
+          },
         },
       });
 
@@ -213,7 +242,13 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
         return false; // Idempotent
       }
 
-      if (existing.authorId !== user.id) {
+      // Permission check
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAppModerator = user.role === 'MODERATOR';
+      const isIntentOwnerOrMod = existing.intent.members.length > 0;
+      const isAuthor = existing.authorId === user.id;
+
+      if (!isAppAdmin && !isAppModerator && !isIntentOwnerOrMod && !isAuthor) {
         throw new GraphQLError('Cannot delete comments from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });
