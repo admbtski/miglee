@@ -17,7 +17,7 @@ export default function NewIntentLayout({ children }: { children: ReactNode }) {
     <QueryClientProvider>
       <HydrationBoundary state={dehydrate(client)}>
         <ErrorBoundary>
-          <div className="min-h-dvh bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 text-zinc-900 dark:text-zinc-100">
+          <div className="min-h-dvh bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
             <Navbar />
 
             <div className="container mx-auto max-w-3xl px-4 py-8">

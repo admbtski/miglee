@@ -25,6 +25,7 @@ fragment IntentMemberCore on IntentMember {
   joinedAt
   leftAt
   note
+  rejectReason
   user {
     ...UserCore
   }

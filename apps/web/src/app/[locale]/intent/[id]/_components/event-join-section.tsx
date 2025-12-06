@@ -1,29 +1,30 @@
-import type { EventDetailsData } from '@/types/event-details';
-import { formatOpensIn } from '@/lib/utils/intent-join-state';
+import { JoinRequestModal } from '@/features/intents/components/join-request-modal';
 import {
-  Clock,
-  Lock,
-  CheckCircle,
-  XCircle,
-  UserPlus,
-  UserMinus,
-  UserCheck,
-  MessageCircle,
-} from 'lucide-react';
-import {
-  useRequestJoinIntentMutation,
-  useLeaveIntentMutationMembers,
   useCancelJoinRequestMutation,
   useJoinWaitlistOpenMutation,
+  useLeaveIntentMutationMembers,
   useLeaveWaitlistMutation,
+  useMyMembershipForIntentQuery,
+  useRequestJoinIntentMutation,
 } from '@/lib/api/intent-members';
-import { useState, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   useIntentJoinQuestionsQuery,
   useRequestJoinIntentWithAnswersMutation,
 } from '@/lib/api/join-form';
-import { JoinRequestModal } from '@/features/intents/components/join-request-modal';
+import { formatOpensIn } from '@/lib/utils/intent-join-state';
+import type { EventDetailsData } from '@/types/event-details';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  CheckCircle,
+  Clock,
+  Lock,
+  MessageCircle,
+  UserCheck,
+  UserMinus,
+  UserPlus,
+  XCircle,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 type EventJoinSectionProps = {
   event: EventDetailsData;
@@ -31,7 +32,50 @@ type EventJoinSectionProps = {
 };
 
 export function EventJoinSection({ event, onOpenChat }: EventJoinSectionProps) {
-  const { joinState, userMembership } = event;
+  const {
+    joinState,
+    userMembership: intentUserMembership,
+    membersVisibility,
+  } = event;
+
+  // Determine if we need to fetch membership separately
+  // For PUBLIC visibility, we use intent.userMembership directly
+  // For HIDDEN or AFTER_JOIN, we need to fetch it separately when userMembership is empty
+  const needsSeparateFetch = useMemo(() => {
+    if (membersVisibility === 'PUBLIC') return false;
+    // For HIDDEN or AFTER_JOIN, fetch if userMembership is not available
+    return !intentUserMembership;
+  }, [membersVisibility, intentUserMembership]);
+
+  // Fetch membership separately when needed
+  const { data: fetchedMembership } = useMyMembershipForIntentQuery(
+    { intentId: event.id },
+    { enabled: needsSeparateFetch }
+  );
+
+  // Use fetched membership if we needed to fetch, otherwise use intent's userMembership
+  const userMembership = useMemo(() => {
+    if (!needsSeparateFetch) {
+      return intentUserMembership;
+    }
+
+    // Map fetched membership to the same shape as intentUserMembership
+    const member = fetchedMembership?.myMembershipForIntent;
+    if (!member) return null;
+
+    return {
+      isOwner: member.role === 'OWNER',
+      isModerator: member.role === 'MODERATOR',
+      isJoined: member.status === 'JOINED',
+      isPending: member.status === 'PENDING',
+      isInvited: member.status === 'INVITED',
+      isRejected: member.status === 'REJECTED',
+      isBanned: member.status === 'BANNED',
+      isWaitlisted: member.status === 'WAITLIST',
+      rejectReason: member.rejectReason ?? null,
+      banReason: null, // Not available in IntentMember type
+    };
+  }, [needsSeparateFetch, intentUserMembership, fetchedMembership]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const queryClient = useQueryClient();

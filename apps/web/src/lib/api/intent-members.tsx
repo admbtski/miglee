@@ -9,6 +9,9 @@ import {
   GetIntentMemberDocument,
   GetIntentMemberQuery,
   GetIntentMemberQueryVariables,
+  GetMyMembershipForIntentDocument,
+  GetMyMembershipForIntentQuery,
+  GetMyMembershipForIntentQueryVariables,
   GetMyMembershipsDocument,
   GetMyMembershipsQuery,
   GetMyMembershipsQueryVariables,
@@ -86,6 +89,10 @@ export const GET_INTENT_MEMBERS_KEY = (
 export const GET_INTENT_MEMBER_KEY = (
   variables: GetIntentMemberQueryVariables
 ) => ['GetIntentMember', variables] as const;
+
+export const GET_MY_MEMBERSHIP_FOR_INTENT_KEY = (
+  variables: GetMyMembershipForIntentQueryVariables
+) => ['GetMyMembershipForIntent', variables] as const;
 
 export const GET_MY_MEMBERSHIPS_KEY = (
   variables?: GetMyMembershipsQueryVariables
@@ -470,6 +477,34 @@ export function buildGetIntentMemberOptions(
   };
 }
 
+export function buildGetMyMembershipForIntentOptions(
+  variables: GetMyMembershipForIntentQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      GetMyMembershipForIntentQuery,
+      unknown,
+      GetMyMembershipForIntentQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+): UseQueryOptions<
+  GetMyMembershipForIntentQuery,
+  unknown,
+  GetMyMembershipForIntentQuery,
+  QueryKey
+> {
+  return {
+    queryKey: GET_MY_MEMBERSHIP_FOR_INTENT_KEY(variables) as QueryKey,
+    queryFn: () =>
+      gqlClient.request<
+        GetMyMembershipForIntentQuery,
+        GetMyMembershipForIntentQueryVariables
+      >(GetMyMembershipForIntentDocument, variables),
+    ...(options ?? {}),
+  };
+}
+
 export function buildGetMyMembershipsOptions(
   variables?: GetMyMembershipsQueryVariables,
   options?: Omit<
@@ -566,6 +601,30 @@ export function useIntentMemberQuery(
   return useQuery(
     buildGetIntentMemberOptions(variables, {
       enabled: !!variables.intentId && !!variables.userId,
+      ...(options ?? {}),
+    })
+  );
+}
+
+/**
+ * Get current user's membership for a specific intent.
+ * Used when membersVisibility is HIDDEN or AFTER_JOIN and userMembership is not available from intent query.
+ */
+export function useMyMembershipForIntentQuery(
+  variables: GetMyMembershipForIntentQueryVariables,
+  options?: Omit<
+    UseQueryOptions<
+      GetMyMembershipForIntentQuery,
+      unknown,
+      GetMyMembershipForIntentQuery,
+      QueryKey
+    >,
+    'queryKey' | 'queryFn'
+  >
+) {
+  return useQuery(
+    buildGetMyMembershipForIntentOptions(variables, {
+      enabled: !!variables.intentId,
       ...(options ?? {}),
     })
   );

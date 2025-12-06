@@ -1664,6 +1664,13 @@ type Query {
 
   intentMember(intentId: ID!, userId: ID!): IntentMember
 
+  """
+  Get current user's membership for a specific intent.
+  Returns null if user is not authenticated or has no membership.
+  Unlike intentMember, this doesn't require userId parameter.
+  """
+  myMembershipForIntent(intentId: ID!): IntentMember
+
   myMemberships(
     status: IntentMemberStatus
     role: IntentMemberRole

@@ -140,6 +140,14 @@ query GetIntentMember($intentId: ID!, $userId: ID!) {
   }
 }
 
+# Get current user's membership for a specific intent
+# Unlike GetIntentMember, this doesn't require userId - uses authenticated user
+query GetMyMembershipForIntent($intentId: ID!) {
+  myMembershipForIntent(intentId: $intentId) {
+    ...IntentMemberCore
+  }
+}
+
 # Get current user's memberships across all intents
 query GetMyMemberships(
   $status: IntentMemberStatus

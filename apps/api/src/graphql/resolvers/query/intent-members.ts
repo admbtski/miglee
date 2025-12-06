@@ -182,6 +182,32 @@ export const intentMemberQuery: QueryResolvers['intentMember'] =
     }
   );
 
+/**
+ * Get current user's membership for a specific intent.
+ * Unlike intentMember, this doesn't require userId parameter - uses authenticated user.
+ * Returns null if user is not authenticated or has no membership.
+ */
+export const myMembershipForIntentQuery: QueryResolvers['myMembershipForIntent'] =
+  resolverWithMetrics(
+    'Query',
+    'myMembershipForIntent',
+    async (_p, { intentId }, ctx) => {
+      // Return null if not authenticated
+      if (!ctx.user?.id) {
+        return null;
+      }
+
+      const row = await prisma.intentMember.findUnique({
+        where: { intentId_userId: { intentId, userId: ctx.user.id } },
+        include: MEMBER_INCLUDE,
+      });
+
+      if (!row) return null;
+
+      return mapIntentMember(row as IntentMemberWithUsers);
+    }
+  );
+
 export const myMembershipsQuery: QueryResolvers['myMemberships'] =
   resolverWithMetrics(
     'Query',
