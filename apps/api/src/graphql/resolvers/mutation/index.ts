@@ -366,13 +366,6 @@ export const Mutation: Resolvers['Mutation'] = {
   // ---- Favourites ----
   toggleFavourite: toggleFavouriteMutation,
 
-  // ---- Join Form Management ----
-  // Legacy individual operations (deprecated - use updateIntentJoinQuestions)
-  // createJoinQuestion: createJoinQuestionMutation,
-  // updateJoinQuestion: updateJoinQuestionMutation,
-  // deleteJoinQuestion: deleteJoinQuestionMutation,
-  // reorderJoinQuestions: reorderJoinQuestionsMutation,
-
   // ---- Feedback Management ----
   createFeedbackQuestion: createFeedbackQuestionMutation,
   updateFeedbackQuestion: updateFeedbackQuestionMutation,

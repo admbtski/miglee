@@ -26,7 +26,6 @@ export type EventDetailsData = {
   // Terminy
   startISO: string; // startAt
   endISO: string; // endAt
-  tz?: string | null; // deprecated, use timezone
   timezone?: string | null; // IANA timezone from owner
 
   // Miejsce / tryb

@@ -206,67 +206,6 @@ export function useMyJoinRequestsQuery(
   return useQuery(buildGetMyJoinRequestsOptions(variables, options));
 }
 
-// Mutations (Deprecated - for backward compatibility only)
-// DEPRECATED: Use useUpdateIntentJoinQuestionsMutation for bulk updates
-// These individual mutation hooks are kept for backward compatibility with old components
-// but should not be used in new code. They reference deprecated GraphQL operations.
-
-/**
- * @deprecated Use useUpdateIntentJoinQuestionsMutation from
- * apps/web/src/app/[locale]/intent/[id]/manage/join-form/_hooks/use-update-intent-join-questions.ts
- * This mutation is deprecated and will be removed in a future version.
- */
-export function useCreateJoinQuestionMutation() {
-  console.warn(
-    'useCreateJoinQuestionMutation is deprecated. Use useUpdateIntentJoinQuestionsMutation for bulk updates.'
-  );
-  throw new Error(
-    'createJoinQuestion mutation is no longer available. Use updateIntentJoinQuestions for bulk updates.'
-  );
-}
-
-/**
- * @deprecated Use useUpdateIntentJoinQuestionsMutation from
- * apps/web/src/app/[locale]/intent/[id]/manage/join-form/_hooks/use-update-intent-join-questions.ts
- * This mutation is deprecated and will be removed in a future version.
- */
-export function useUpdateJoinQuestionMutation() {
-  console.warn(
-    'useUpdateJoinQuestionMutation is deprecated. Use useUpdateIntentJoinQuestionsMutation for bulk updates.'
-  );
-  throw new Error(
-    'updateJoinQuestion mutation is no longer available. Use updateIntentJoinQuestions for bulk updates.'
-  );
-}
-
-/**
- * @deprecated Use useUpdateIntentJoinQuestionsMutation from
- * apps/web/src/app/[locale]/intent/[id]/manage/join-form/_hooks/use-update-intent-join-questions.ts
- * This mutation is deprecated and will be removed in a future version.
- */
-export function useDeleteJoinQuestionMutation() {
-  console.warn(
-    'useDeleteJoinQuestionMutation is deprecated. Use useUpdateIntentJoinQuestionsMutation for bulk updates.'
-  );
-  throw new Error(
-    'deleteJoinQuestion mutation is no longer available. Use updateIntentJoinQuestions for bulk updates.'
-  );
-}
-
-/**
- * @deprecated Use useUpdateIntentJoinQuestionsMutation from
- * apps/web/src/app/[locale]/intent/[id]/manage/join-form/_hooks/use-update-intent-join-questions.ts
- * This mutation is deprecated and will be removed in a future version.
- */
-export function useReorderJoinQuestionsMutation() {
-  console.warn(
-    'useReorderJoinQuestionsMutation is deprecated. Use useUpdateIntentJoinQuestionsMutation for bulk updates.'
-  );
-  throw new Error(
-    'reorderJoinQuestions mutation is no longer available. Use updateIntentJoinQuestions for bulk updates.'
-  );
-}
-
 // Request Join with Answers
 export function useRequestJoinIntentWithAnswersMutation(
   options?: UseMutationOptions<

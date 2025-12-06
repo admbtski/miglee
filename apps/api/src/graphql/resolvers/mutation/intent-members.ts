@@ -172,10 +172,7 @@ function reloadFullIntent(tx: Tx, intentId: string) {
 /*                          Join window / capacity                             */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-/**
- * @deprecated Use canStillJoin from lib/waitlist instead
- */
-function evaluateJoinWindow(intent: {
+function assertCanJoinNow(intent: {
   startAt: Date;
   endAt: Date;
   allowJoinLate: boolean;
@@ -184,15 +181,11 @@ function evaluateJoinWindow(intent: {
   lateJoinCutoffMinutesAfterStart: number | null;
   joinManuallyClosed: boolean;
 }) {
-  return canStillJoin({
+  const { open, reason } = canStillJoin({
     ...intent,
     canceledAt: null,
     deletedAt: null,
   });
-}
-
-function assertCanJoinNow(intent: Parameters<typeof evaluateJoinWindow>[0]) {
-  const { open, reason } = evaluateJoinWindow(intent);
   if (!open) {
     throw new GraphQLError('Joining is locked.', {
       extensions: { code: 'FAILED_PRECONDITION', reason },

@@ -2046,18 +2046,6 @@ type Mutation {
   # Intent Favourites
   toggleFavourite(intentId: ID!): IntentFavourite
 
-  # Join Form Management (deprecated - use updateIntentJoinQuestions for bulk replace)
-  # createJoinQuestion(input: CreateJoinQuestionInput!): IntentJoinQuestion!
-  # updateJoinQuestion(
-  #   id: ID!
-  #   input: UpdateJoinQuestionInput!
-  # ): IntentJoinQuestion!
-  # deleteJoinQuestion(id: ID!): Boolean!
-  # reorderJoinQuestions(
-  #   intentId: ID!
-  #   questionIds: [ID!]!
-  # ): [IntentJoinQuestion!]!
-
   # Feedback mutations
   createFeedbackQuestion(
     input: CreateFeedbackQuestionInput!

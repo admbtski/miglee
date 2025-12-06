@@ -117,61 +117,6 @@ query MyJoinRequests(
   }
 }
 
-# Join Form Mutations (deprecated - individual operations)
-# Use UpdateIntentJoinQuestions for bulk replace instead
-
-# mutation CreateJoinQuestion($input: CreateJoinQuestionInput!) {
-#   createJoinQuestion(input: $input) {
-#     id
-#     intentId
-#     order
-#     type
-#     label
-#     helpText
-#     required
-#     options
-#     maxLength
-#     createdAt
-#     updatedAt
-#   }
-# }
-
-# mutation UpdateJoinQuestion($id: ID!, $input: UpdateJoinQuestionInput!) {
-#   updateJoinQuestion(id: $id, input: $input) {
-#     id
-#     intentId
-#     order
-#     type
-#     label
-#     helpText
-#     required
-#     options
-#     maxLength
-#     createdAt
-#     updatedAt
-#   }
-# }
-
-# mutation DeleteJoinQuestion($id: ID!) {
-#   deleteJoinQuestion(id: $id)
-# }
-
-# mutation ReorderJoinQuestions($intentId: ID!, $questionIds: [ID!]!) {
-#   reorderJoinQuestions(intentId: $intentId, questionIds: $questionIds) {
-#     id
-#     intentId
-#     order
-#     type
-#     label
-#     helpText
-#     required
-#     options
-#     maxLength
-#     createdAt
-#     updatedAt
-#   }
-# }
-
 mutation RequestJoinIntentWithAnswers($input: RequestJoinIntentInput!) {
   requestJoinIntentWithAnswers(input: $input) {
     id
