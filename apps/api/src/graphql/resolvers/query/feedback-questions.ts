@@ -216,6 +216,12 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
 
 /**
  * Check if current user can submit feedback for an intent
+ *
+ * Returns false if:
+ * - User is not authenticated
+ * - User is not a JOINED member
+ * - Event has not ended yet
+ * - User has already submitted a review (one review per user per event)
  */
 export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
   async (_parent, { intentId }, { user }) => {
@@ -247,6 +253,23 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
     });
 
     if (!intent || intent.endAt > new Date()) {
+      return false;
+    }
+
+    // Check if user has already submitted a review
+    // Only one review per user per event is allowed
+    const existingReview = await prisma.review.findUnique({
+      where: {
+        intentId_authorId: {
+          intentId,
+          authorId: user.id,
+        },
+      },
+      select: { id: true, deletedAt: true },
+    });
+
+    // If review exists and is not deleted, user cannot submit again
+    if (existingReview && !existingReview.deletedAt) {
       return false;
     }
 

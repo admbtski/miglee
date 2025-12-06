@@ -35,7 +35,8 @@ type ReviewCardProps = {
   currentUserId?: string;
   isAppAdmin?: boolean;
   isAppModerator?: boolean;
-  isIntentOwnerOrMod?: boolean;
+  // Note: isIntentOwnerOrMod is intentionally NOT included for reviews
+  // Intent owners/moderators cannot moderate reviews to protect review integrity
   onEdit?: (reviewId: string) => void;
   onDelete?: (reviewId: string) => void;
   onHide?: (reviewId: string) => void;
@@ -47,7 +48,6 @@ export function ReviewCard({
   currentUserId,
   isAppAdmin = false,
   isAppModerator = false,
-  isIntentOwnerOrMod = false,
   onEdit,
   onDelete,
   onHide,
@@ -58,15 +58,18 @@ export function ReviewCard({
   const isHidden = Boolean(review.hiddenAt);
   const isRemovedFromView = isDeleted || isHidden;
 
-  // Permissions
-  const canEdit = isAppAdmin || isAppModerator || isAuthor;
-  const canDelete =
-    isAppAdmin || isAppModerator || isIntentOwnerOrMod || isAuthor;
-  const canHide =
-    (isAppAdmin || isAppModerator || isIntentOwnerOrMod) && !isHidden;
+  // Permissions matrix for reviews (different from comments to protect review integrity):
+  // - Edit: Only App Admin or Review Author (App Moderator and Intent Owner/Mod should NOT edit)
+  // - Delete: Only App Admin, App Moderator, or Review Author (Intent Owner/Mod CANNOT delete)
+  // - Hide: Only App Admin or App Moderator (Intent Owner/Mod CANNOT hide - protects ratings)
+  // - Report: Any logged in user except the author
+  const canEdit = isAppAdmin || isAuthor;
+  const canDelete = isAppAdmin || isAppModerator || isAuthor;
+  const canHide = (isAppAdmin || isAppModerator) && !isHidden;
   const canReport = Boolean(currentUserId) && !isAuthor;
+  // Only app-level moderators can see hidden/deleted reviews (not intent owner/mod)
   const showModerationBadge =
-    (isAppAdmin || isAppModerator || isIntentOwnerOrMod) && isRemovedFromView;
+    (isAppAdmin || isAppModerator) && isRemovedFromView;
 
   return (
     <div className="p-4 border rounded-lg border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">

@@ -150,6 +150,12 @@ export const createReviewMutation: MutationResolvers['createReview'] =
 
 /**
  * Mutation: Update a review
+ *
+ * Permissions:
+ * - App Admin: can edit any review (for exceptional cases like removing personal data)
+ * - App Moderator: CANNOT edit (should use hide/delete for moderation)
+ * - Intent Owner/Moderator: CANNOT edit others' reviews (protects review integrity)
+ * - Review Author: can edit own review
  */
 export const updateReviewMutation: MutationResolvers['updateReview'] =
   resolverWithMetrics(
@@ -195,7 +201,12 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
         });
       }
 
-      if (existing.authorId !== user.id) {
+      // Permission check: Only App Admin or Review Author can edit
+      // App Moderators and Intent Owner/Moderators should NOT edit reviews
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAuthor = existing.authorId === user.id;
+
+      if (!isAppAdmin && !isAuthor) {
         throw new GraphQLError('Cannot edit reviews from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -227,6 +238,12 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
 
 /**
  * Mutation: Delete a review (soft delete)
+ *
+ * Permissions:
+ * - App Admin: can delete any review
+ * - App Moderator: can delete any review
+ * - Intent Owner/Moderator: CANNOT delete (protects review integrity - they can only report)
+ * - Review Author: can delete own review
  */
 export const deleteReviewMutation: MutationResolvers['deleteReview'] =
   resolverWithMetrics(
@@ -248,7 +265,13 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
         return false; // Idempotent
       }
 
-      if (existing.authorId !== user.id) {
+      // Permission check: Only App Admin, App Moderator, or Review Author can delete
+      // Intent Owner/Moderators CANNOT delete reviews (protects review integrity)
+      const isAppAdmin = user.role === 'ADMIN';
+      const isAppModerator = user.role === 'MODERATOR';
+      const isAuthor = existing.authorId === user.id;
+
+      if (!isAppAdmin && !isAppModerator && !isAuthor) {
         throw new GraphQLError('Cannot delete reviews from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -272,6 +295,15 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
 
 /**
  * Mutation: Hide a review (moderation - soft delete)
+ *
+ * Permissions:
+ * - App Admin: can hide any review
+ * - App Moderator: can hide any review
+ * - Intent Owner/Moderator: CANNOT hide (protects review integrity - they can only report)
+ *
+ * Note: This is different from comments where Intent Owner/Mod can hide.
+ * For reviews, only app-level moderators can hide to prevent organizers from
+ * "polishing" their ratings.
  */
 export const hideReviewMutation: MutationResolvers['hideReview'] =
   resolverWithMetrics(
@@ -284,7 +316,6 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
         });
       }
 
-      // Check if user has moderation permissions
       const review = await prisma.review.findUnique({
         where: { id },
         select: {
@@ -292,17 +323,6 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
           intentId: true,
           deletedAt: true,
           hiddenAt: true,
-          intent: {
-            select: {
-              members: {
-                where: {
-                  userId: user.id,
-                  role: { in: ['OWNER', 'MODERATOR'] },
-                },
-                select: { role: true },
-              },
-            },
-          },
         },
       });
 
@@ -312,12 +332,12 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
         });
       }
 
-      // Check permissions: app admin/moderator OR intent owner/moderator
+      // Permission check: Only App Admin or App Moderator can hide reviews
+      // Intent Owner/Moderators CANNOT hide reviews (protects review integrity)
       const isAppAdmin = user.role === 'ADMIN';
       const isAppModerator = user.role === 'MODERATOR';
-      const isIntentModerator = review.intent.members.length > 0;
 
-      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+      if (!isAppAdmin && !isAppModerator) {
         throw new GraphQLError('Insufficient permissions to hide reviews.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -341,6 +361,11 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
 
 /**
  * Mutation: Unhide a review (moderation)
+ *
+ * Permissions:
+ * - App Admin: can unhide any review
+ * - App Moderator: can unhide any review
+ * - Intent Owner/Moderator: CANNOT unhide (same as hide - only app-level mods)
  */
 export const unhideReviewMutation: MutationResolvers['unhideReview'] =
   resolverWithMetrics(
@@ -353,7 +378,6 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
         });
       }
 
-      // Check if user has moderation permissions
       const review = await prisma.review.findUnique({
         where: { id },
         select: {
@@ -361,17 +385,6 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
           intentId: true,
           deletedAt: true,
           hiddenAt: true,
-          intent: {
-            select: {
-              members: {
-                where: {
-                  userId: user.id,
-                  role: { in: ['OWNER', 'MODERATOR'] },
-                },
-                select: { role: true },
-              },
-            },
-          },
         },
       });
 
@@ -381,12 +394,11 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
         });
       }
 
-      // Check permissions: app admin/moderator OR intent owner/moderator
+      // Permission check: Only App Admin or App Moderator can unhide reviews
       const isAppAdmin = user.role === 'ADMIN';
       const isAppModerator = user.role === 'MODERATOR';
-      const isIntentModerator = review.intent.members.length > 0;
 
-      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+      if (!isAppAdmin && !isAppModerator) {
         throw new GraphQLError('Insufficient permissions to unhide reviews.', {
           extensions: { code: 'FORBIDDEN' },
         });

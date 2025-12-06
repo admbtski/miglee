@@ -6,8 +6,15 @@ import {
   useSubmitReviewAndFeedbackMutation,
   useCanSubmitFeedbackQuery,
 } from '@/lib/api/feedback';
+import { useGetMyReview } from '@/lib/api/reviews';
 import { ReviewAndFeedbackForm } from '@/features/intents/components/review-and-feedback-form';
-import { Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import {
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  ArrowLeft,
+  Star,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -39,6 +46,13 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
   const { data: canSubmit, isLoading: canSubmitLoading } =
     useCanSubmitFeedbackQuery({ intentId });
 
+  // Check if user already has a review (to show appropriate message)
+  const { data: myReviewData, isLoading: myReviewLoading } = useGetMyReview(
+    { intentId },
+    { enabled: canSubmit === false } // Only fetch if canSubmit is false
+  );
+  const existingReview = myReviewData?.myReview;
+
   // Submit mutation
   const submitMutation = useSubmitReviewAndFeedbackMutation({
     onSuccess: () => {
@@ -66,7 +80,12 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
   };
 
   // Loading state
-  if (intentLoading || questionsLoading || canSubmitLoading) {
+  if (
+    intentLoading ||
+    questionsLoading ||
+    canSubmitLoading ||
+    myReviewLoading
+  ) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-900">
         <div className="text-center">
@@ -106,8 +125,66 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
     );
   }
 
-  // Cannot submit state
+  // Cannot submit state - show different message if user already has a review
   if (canSubmit === false) {
+    // User already submitted a review
+    if (existingReview) {
+      return (
+        <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-green-50 via-emerald-50/50 to-teal-50/30 dark:from-green-950/20 dark:via-emerald-950/10 dark:to-teal-950/5">
+          <div className="w-full max-w-lg p-10 text-center border rounded-3xl border-green-200/80 dark:border-green-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-2xl shadow-green-900/10 dark:shadow-green-950/30">
+            <div className="relative inline-flex items-center justify-center w-20 h-20 mx-auto mb-6">
+              <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 rounded-full">
+                <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+
+            <h2 className="mb-3 text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              Już wystawiłeś opinię
+            </h2>
+            <p className="mb-4 text-base text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+              Dziękujemy za Twoją opinię o tym wydarzeniu!
+            </p>
+
+            {/* Show existing review summary */}
+            <div className="p-4 mb-6 border rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+              <div className="flex items-center justify-center gap-1 mb-2">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-5 w-5 ${
+                      i < existingReview.rating
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-zinc-300 dark:text-zinc-600'
+                    }`}
+                  />
+                ))}
+              </div>
+              {existingReview.content && (
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3">
+                  "{existingReview.content}"
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Link
+                href={`/intent/${intentId}`}
+                className="inline-flex items-center justify-center w-full h-12 px-6 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Powrót do wydarzenia
+              </Link>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Jeśli chcesz zmienić swoją opinię, możesz to zrobić na stronie
+                wydarzenia.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // User cannot submit for other reasons (not a participant, event not ended)
     return (
       <div className="flex items-center justify-center min-h-screen p-4 bg-zinc-50 dark:bg-zinc-900">
         <div className="w-full max-w-md p-6 border shadow-sm rounded-2xl border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">

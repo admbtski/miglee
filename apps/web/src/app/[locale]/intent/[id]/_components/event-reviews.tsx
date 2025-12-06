@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Star, Plus, Loader2, AlertCircle } from 'lucide-react';
 import { useMeQuery } from '@/lib/api/auth';
 import {
@@ -35,13 +35,11 @@ export function EventReviews({ event }: EventReviewsProps) {
   const currentUserId = authData?.me?.id;
   const userRole = authData?.me?.role;
 
-  // Check permissions hierarchy
+  // Check permissions hierarchy for reviews
+  // Note: Unlike comments, Intent Owner/Moderators CANNOT moderate reviews
+  // This protects review integrity and prevents organizers from "polishing" ratings
   const isAppAdmin = userRole === 'ADMIN';
   const isAppModerator = userRole === 'MODERATOR';
-  const isIntentOwnerOrMod = useMemo(() => {
-    if (!currentUserId || !event.userMembership) return false;
-    return event.userMembership.isOwner || event.userMembership.isModerator;
-  }, [currentUserId, event.userMembership]);
 
   // Fetch reviews
   const {
@@ -246,7 +244,6 @@ export function EventReviews({ event }: EventReviewsProps) {
               currentUserId={currentUserId}
               isAppAdmin={isAppAdmin}
               isAppModerator={isAppModerator}
-              isIntentOwnerOrMod={isIntentOwnerOrMod}
               onEdit={handleEditReview}
               onDelete={handleDeleteClick}
               onHide={handleHideReview}
