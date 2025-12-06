@@ -221,7 +221,10 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
  * - User is not authenticated
  * - User is not a JOINED member
  * - Event has not ended yet
- * - User has already submitted a review (one review per user per event)
+ * - User has already submitted feedback answers (if there are questions)
+ *
+ * Note: Even if user already submitted a review, they can still submit feedback
+ * if they haven't answered the feedback questions yet.
  */
 export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
   async (_parent, { intentId }, { user }) => {
@@ -256,8 +259,12 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
       return false;
     }
 
+    // Check if there are any feedback questions for this intent
+    const questionsCount = await prisma.intentFeedbackQuestion.count({
+      where: { intentId },
+    });
+
     // Check if user has already submitted a review
-    // Only one review per user per event is allowed
     const existingReview = await prisma.review.findUnique({
       where: {
         intentId_authorId: {
@@ -268,10 +275,28 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
       select: { id: true, deletedAt: true },
     });
 
-    // If review exists and is not deleted, user cannot submit again
-    if (existingReview && !existingReview.deletedAt) {
-      return false;
+    const hasReview = existingReview && !existingReview.deletedAt;
+
+    // If there are no feedback questions, check only for review
+    if (questionsCount === 0) {
+      // No questions - can submit only if no review yet
+      return !hasReview;
     }
 
-    return true;
+    // If there are feedback questions, check if user has answered them
+    const answersCount = await prisma.intentFeedbackAnswer.count({
+      where: {
+        intentId,
+        userId: user.id,
+      },
+    });
+
+    // User can submit if they haven't answered any questions yet
+    // (even if they already have a review - they can update it and add feedback)
+    if (answersCount === 0) {
+      return true;
+    }
+
+    // User has already submitted feedback answers
+    return false;
   };

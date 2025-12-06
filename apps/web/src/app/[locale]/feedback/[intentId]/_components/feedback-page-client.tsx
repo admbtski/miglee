@@ -46,10 +46,10 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
   const { data: canSubmit, isLoading: canSubmitLoading } =
     useCanSubmitFeedbackQuery({ intentId });
 
-  // Check if user already has a review (to show appropriate message)
+  // Check if user already has a review (to show appropriate message or prefill form)
   const { data: myReviewData, isLoading: myReviewLoading } = useGetMyReview(
     { intentId },
-    { enabled: canSubmit === false } // Only fetch if canSubmit is false
+    { enabled: true } // Always fetch to know if we should show "already reviewed" state
   );
   const existingReview = myReviewData?.myReview;
 
@@ -125,9 +125,9 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
     );
   }
 
-  // Cannot submit state - show different message if user already has a review
+  // Cannot submit state - show different message based on reason
   if (canSubmit === false) {
-    // User already submitted a review
+    // User already submitted review AND feedback
     if (existingReview) {
       return (
         <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-green-50 via-emerald-50/50 to-teal-50/30 dark:from-green-950/20 dark:via-emerald-950/10 dark:to-teal-950/5">
@@ -139,10 +139,10 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
             </div>
 
             <h2 className="mb-3 text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-              Już wystawiłeś opinię
+              Dziękujemy za opinię!
             </h2>
             <p className="mb-4 text-base text-zinc-600 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
-              Dziękujemy za Twoją opinię o tym wydarzeniu!
+              Już wystawiłeś opinię i wypełniłeś ankietę dla tego wydarzenia.
             </p>
 
             {/* Show existing review summary */}
@@ -161,7 +161,7 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
               </div>
               {existingReview.content && (
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-3">
-                  "{existingReview.content}"
+                  &quot;{existingReview.content}&quot;
                 </p>
               )}
             </div>
@@ -292,6 +292,14 @@ export function FeedbackPageClient({ intentId }: FeedbackPageClientProps) {
             questions={questions}
             onSubmit={handleSubmit}
             isSubmitting={submitMutation.isPending}
+            existingReview={
+              existingReview
+                ? {
+                    rating: existingReview.rating,
+                    content: existingReview.content,
+                  }
+                : undefined
+            }
           />
         </div>
 
