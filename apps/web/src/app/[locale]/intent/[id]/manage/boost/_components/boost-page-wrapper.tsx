@@ -2,6 +2,11 @@
 
 import { BoostPage } from '../../subscription/_components/boost-page';
 import { useSubscriptionData } from '../../subscription/_components/use-subscription-data';
+import { useIntentQuery } from '@/lib/api/intents';
+import {
+  PlanUpgradeBanner,
+  type SponsorshipPlan,
+} from '../../_components/plan-upgrade-banner';
 
 type BoostPageWrapperProps = {
   intentId: string;
@@ -10,22 +15,57 @@ type BoostPageWrapperProps = {
 export function BoostPageWrapper({ intentId }: BoostPageWrapperProps) {
   const { sponsorship, onBoostEvent } = useSubscriptionData(intentId);
 
-  if (!sponsorship) {
+  // Fetch intent to check plan
+  const { data: intentData, isLoading: intentLoading } = useIntentQuery({
+    id: intentId,
+  });
+
+  const currentPlan = intentData?.intent?.sponsorshipPlan as SponsorshipPlan;
+
+  if (intentLoading) {
     return (
-      <div className="rounded-[32px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] shadow-sm p-6">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Brak aktywnego planu sponsorowania. Wybierz plan, aby uzyskać dostęp
-          do podbić.
-        </p>
+      <div className="flex min-h-[300px] items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+            Ładowanie...
+          </p>
+        </div>
       </div>
     );
   }
 
+  // Create mock sponsorship data for preview
+  const mockSponsorship = {
+    plan: 'Plus' as const,
+    usedBoosts: 0,
+    totalBoosts: 3,
+    usedPushes: 0,
+    totalPushes: 5,
+    boostedAt: null,
+  };
+
   return (
-    <BoostPage
+    <PlanUpgradeBanner
+      currentPlan={currentPlan}
+      requiredPlan="PLUS"
+      featureName="Podbicia wydarzeń dostępne w planach Plus i Pro"
+      featureDescription="Wynieś swoje wydarzenie na szczyt listy na 24 godziny. Zwiększ widoczność i przyciągnij więcej uczestników dzięki podbiciom."
       intentId={intentId}
-      sponsorship={sponsorship}
-      onBoostEvent={onBoostEvent}
-    />
+    >
+      {sponsorship ? (
+        <BoostPage
+          intentId={intentId}
+          sponsorship={sponsorship}
+          onBoostEvent={onBoostEvent}
+        />
+      ) : (
+        <BoostPage
+          intentId={intentId}
+          sponsorship={mockSponsorship}
+          onBoostEvent={async () => {}}
+        />
+      )}
+    </PlanUpgradeBanner>
   );
 }

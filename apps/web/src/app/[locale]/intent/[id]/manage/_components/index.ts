@@ -14,3 +14,5 @@ export {
 } from './intent-management-provider';
 export { ManagementPageLayout } from './management-page-layout';
 export { SaveButton } from './save-button';
+export { PlanUpgradeBanner } from './plan-upgrade-banner';
+export type { SponsorshipPlan } from './plan-upgrade-banner';

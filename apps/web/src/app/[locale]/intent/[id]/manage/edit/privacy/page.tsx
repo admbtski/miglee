@@ -3,10 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
-import { Eye, EyeOff, Users, MapPin, Map, Info } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Users,
+  MapPin,
+  Map,
+  Info,
+  Mail,
+  Lock,
+} from 'lucide-react';
 import { SegmentedControl } from '@/components/ui/segment-control';
 
 type Visibility = 'PUBLIC' | 'HIDDEN';
+type JoinMode = 'OPEN' | 'REQUEST' | 'INVITE_ONLY';
 type AddressVisibility = 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
 type MembersVisibility = 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
 
@@ -18,6 +28,7 @@ export default function PrivacyPage() {
   const { intent, isLoading, saveSection } = useEdit();
 
   const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
+  const [joinMode, setJoinMode] = useState<JoinMode>('OPEN');
   const [addressVisibility, setAddressVisibility] =
     useState<AddressVisibility>('PUBLIC');
   const [membersVisibility, setMembersVisibility] =
@@ -30,6 +41,7 @@ export default function PrivacyPage() {
     if (!intent) return;
 
     setVisibility(intent.visibility || 'PUBLIC');
+    setJoinMode(intent.joinMode || 'OPEN');
     setAddressVisibility(intent.addressVisibility || 'PUBLIC');
     setMembersVisibility(intent.membersVisibility || 'PUBLIC');
     // showOnMap is derived from visibility for now
@@ -41,6 +53,7 @@ export default function PrivacyPage() {
   const handleSave = async () => {
     return saveSection('Privacy', {
       visibility,
+      joinMode,
       addressVisibility,
       membersVisibility,
     });
@@ -121,6 +134,64 @@ export default function PrivacyPage() {
           </label>
         </FormField>
       )}
+
+      {/* Join Mode */}
+      <FormField
+        label="Join mode"
+        description="Control how people can join your event"
+        required
+      >
+        <div className="space-y-3">
+          <SegmentedControl<JoinMode>
+            value={joinMode}
+            onChange={(v) => {
+              setJoinMode(v);
+              setIsDirty(true);
+            }}
+            size="md"
+            fullWidth
+            withPill
+            animated
+            options={[
+              { value: 'OPEN', label: 'Open', Icon: Users },
+              { value: 'REQUEST', label: 'Request', Icon: Mail },
+              { value: 'INVITE_ONLY', label: 'Invite only', Icon: Lock },
+            ]}
+          />
+
+          {/* Join mode description */}
+          <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5">
+                {joinMode === 'OPEN' && (
+                  <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                )}
+                {joinMode === 'REQUEST' && (
+                  <Mail className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                )}
+                {joinMode === 'INVITE_ONLY' && (
+                  <Lock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {joinMode === 'OPEN' && 'Open event'}
+                  {joinMode === 'REQUEST' && 'Requires approval'}
+                  {joinMode === 'INVITE_ONLY' && 'Invite only'}
+                </p>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                  {joinMode === 'OPEN' &&
+                    'Anyone can join without organizer approval. Ideal for public events and open meetups.'}
+                  {joinMode === 'REQUEST' &&
+                    'Users send a join request that you need to approve before they can participate.'}
+                  {joinMode === 'INVITE_ONLY' &&
+                    'Only people with an invite link can join. Provides full control over participants.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </FormField>
 
       {/* Address Visibility */}
       <FormField

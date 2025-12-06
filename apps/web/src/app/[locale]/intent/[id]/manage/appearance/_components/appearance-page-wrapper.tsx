@@ -8,6 +8,11 @@ import {
   type IntentAppearanceQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { AppearancePage } from './appearance-page';
+import { useIntentQuery } from '@/lib/api/intents';
+import {
+  PlanUpgradeBanner,
+  type SponsorshipPlan,
+} from '../../_components/plan-upgrade-banner';
 
 type AppearancePageWrapperProps = {
   intentId: string;
@@ -16,6 +21,11 @@ type AppearancePageWrapperProps = {
 export function AppearancePageWrapper({
   intentId,
 }: AppearancePageWrapperProps) {
+  // Fetch intent to check plan
+  const { data: intentData, isLoading: intentLoading } = useIntentQuery({
+    id: intentId,
+  });
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['IntentAppearance', intentId],
     queryFn: () =>
@@ -26,7 +36,9 @@ export function AppearancePageWrapper({
     enabled: !!intentId,
   });
 
-  if (isLoading) {
+  const currentPlan = intentData?.intent?.sponsorshipPlan as SponsorshipPlan;
+
+  if (isLoading || intentLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
@@ -61,21 +73,29 @@ export function AppearancePageWrapper({
     | undefined;
 
   return (
-    <AppearancePage
+    <PlanUpgradeBanner
+      currentPlan={currentPlan}
+      requiredPlan="PLUS"
+      featureName="Personalizacja wyglądu dostępna w planach Plus i Pro"
+      featureDescription="Wyróżnij swoje wydarzenie niestandardowymi gradientami, poświatami i efektami wizualnymi. Stwórz unikalną kartę wydarzenia, która przyciągnie uwagę."
       intentId={intentId}
-      initialConfig={{
-        card: {
-          background: config?.card?.background ?? null,
-          shadow: config?.card?.shadow ?? null,
-        },
-        detail: {
-          background: config?.detail?.background ?? null,
-          panel: {
-            background: config?.detail?.panel?.background ?? null,
-            shadow: config?.detail?.panel?.shadow ?? null,
+    >
+      <AppearancePage
+        intentId={intentId}
+        initialConfig={{
+          card: {
+            background: config?.card?.background ?? null,
+            shadow: config?.card?.shadow ?? null,
           },
-        },
-      }}
-    />
+          detail: {
+            background: config?.detail?.background ?? null,
+            panel: {
+              background: config?.detail?.panel?.background ?? null,
+              shadow: config?.detail?.panel?.shadow ?? null,
+            },
+          },
+        }}
+      />
+    </PlanUpgradeBanner>
   );
 }

@@ -6,7 +6,10 @@
 'use client';
 
 import { useIntentManagement } from '../../_components/intent-management-provider';
-import { PlanRequiredGuard } from '../../_components/plan-required-guard';
+import {
+  PlanUpgradeBanner,
+  type SponsorshipPlan,
+} from '../../_components/plan-upgrade-banner';
 
 interface AnalyticsPanelWrapperProps {
   intentId: string;
@@ -32,20 +35,17 @@ export function AnalyticsPanelWrapper({
     );
   }
 
-  const currentPlan = (intent?.sponsorshipPlan?.toLowerCase() || 'free') as
-    | 'free'
-    | 'plus'
-    | 'pro';
+  const currentPlan = intent?.sponsorshipPlan as SponsorshipPlan;
 
   return (
-    <PlanRequiredGuard
+    <PlanUpgradeBanner
       currentPlan={currentPlan}
-      requiredPlan="pro"
-      featureName="Zaawansowana analityka"
-      featureDescription="Uzyskaj dostęp do zaawansowanych statystyk, trendów, źródeł ruchu i aktywności uczestników. Funkcja dostępna tylko w planie Pro."
+      requiredPlan="PRO"
+      featureName="Zaawansowana analityka dostępna w planie Pro"
+      featureDescription="Uzyskaj dostęp do zaawansowanych statystyk, trendów, źródeł ruchu i aktywności uczestników. Śledź konwersje i optymalizuj swoje wydarzenia."
       intentId={intentId}
     >
       {children}
-    </PlanRequiredGuard>
+    </PlanUpgradeBanner>
   );
 }

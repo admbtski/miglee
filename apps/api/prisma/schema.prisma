@@ -151,7 +151,7 @@ enum IntentPlan {
   PRO
 }
 
-enum IntentStatus {
+enum PublicationStatus {
   DRAFT     // Event is not published yet, only visible to owner/moderators
   PUBLISHED // Event is live and visible according to visibility settings
   SCHEDULED // Event is scheduled to be published at a specific time
@@ -396,7 +396,7 @@ model Intent {
   boostedAt       DateTime? // Last time the event was boosted (used for sorting)
 
   // Publication status
-  status             IntentStatus @default(DRAFT) // DRAFT, PUBLISHED, SCHEDULED
+  status             PublicationStatus @default(DRAFT) // DRAFT, PUBLISHED, SCHEDULED
   publishedAt        DateTime? // When the event was published (null for drafts)
   scheduledPublishAt DateTime? // When the event should be auto-published (for SCHEDULED status)
 

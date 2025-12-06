@@ -14,7 +14,6 @@ import {
   X,
   Link as LinkIcon,
   CheckCircle2,
-  BadgeDollarSign,
   Sparkles,
   Bell,
   FileText,
@@ -51,6 +50,7 @@ type NavItem = {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   requiredPlan?: 'plus' | 'pro';
+  highlight?: boolean;
 };
 
 type NavGroup = {
@@ -182,9 +182,10 @@ export function IntentManagementMobileSidebar({
         },
         {
           id: 'plans',
-          label: 'Sponsorship Plans',
+          label: 'Upgrade Plan',
           href: localePath(`/intent/${intentId}/manage/plans`),
-          icon: BadgeDollarSign,
+          icon: Rocket,
+          highlight: true,
         },
       ],
     },
@@ -482,10 +483,19 @@ export function IntentManagementMobileSidebar({
                                   'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ml-2',
                                   active
                                     ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300'
-                                    : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+                                    : item.highlight
+                                      ? 'text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/20'
+                                      : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
                                 )}
                               >
-                                <Icon className="flex-shrink-0 w-4 h-4" />
+                                <Icon
+                                  className={cn(
+                                    'flex-shrink-0 w-4 h-4',
+                                    item.highlight &&
+                                      !active &&
+                                      'text-violet-500 dark:text-violet-400'
+                                  )}
+                                />
                                 <span className="flex items-center flex-1">
                                   {item.label}
                                   {item.requiredPlan && (

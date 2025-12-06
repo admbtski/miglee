@@ -6,7 +6,7 @@ import {
   Intent,
   IntentMemberRole,
   IntentMemberStatus,
-  IntentStatus,
+  PublicationStatus,
   JoinMode,
   Level,
   MeetingKind,
@@ -568,7 +568,7 @@ async function createIntentWithMembers(opts: {
         categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
         tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
         // All seeded intents are published
-        status: IntentStatus.PUBLISHED,
+        status: PublicationStatus.PUBLISHED,
         publishedAt: new Date(),
       },
     });
@@ -1017,7 +1017,7 @@ async function createPresetIntent(
       categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
       tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
       // All seeded intents are published
-      status: IntentStatus.PUBLISHED,
+      status: PublicationStatus.PUBLISHED,
       publishedAt: new Date(),
     },
   });

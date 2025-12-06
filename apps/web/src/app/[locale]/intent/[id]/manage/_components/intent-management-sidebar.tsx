@@ -18,7 +18,6 @@ import {
   ListCollapseIcon,
   Link as LinkIcon,
   CheckCircle2,
-  BadgeDollarSign,
   Sparkles,
   Bell,
   FileText,
@@ -55,6 +54,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
   requiredPlan?: 'plus' | 'pro'; // Minimum plan required to access this feature
+  highlight?: boolean; // Special highlight style for important items
 }
 
 interface PlanBadgeProps {
@@ -161,9 +161,10 @@ export function IntentManagementSidebar({
         },
         {
           id: 'plans',
-          label: 'Sponsorship Plans',
+          label: 'Upgrade Plan',
           href: localePath(`/intent/${intentId}/manage/plans`),
-          icon: BadgeDollarSign,
+          icon: Rocket,
+          highlight: true,
         },
       ],
     },
@@ -488,13 +489,22 @@ export function IntentManagementSidebar({
                                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
                                 active
                                   ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300'
-                                  : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
+                                  : item.highlight
+                                    ? 'text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/20'
+                                    : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
                                 isCollapsed && 'justify-center',
                                 !isCollapsed && 'ml-2'
                               )}
                               aria-current={active ? 'page' : undefined}
                             >
-                              <Icon className="flex-shrink-0 w-4 h-4" />
+                              <Icon
+                                className={cn(
+                                  'flex-shrink-0 w-4 h-4',
+                                  item.highlight &&
+                                    !active &&
+                                    'text-violet-500 dark:text-violet-400'
+                                )}
+                              />
                               <AnimatePresence>
                                 {!isCollapsed && (
                                   <motion.span
