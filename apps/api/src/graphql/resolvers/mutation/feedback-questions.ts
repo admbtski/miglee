@@ -1,6 +1,12 @@
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
-import { prisma } from '../../../lib/prisma';
+import {
+  NotificationKind as PrismaNotificationKind,
+  NotificationEntity as PrismaNotificationEntity,
+} from '@prisma/client';
 import { GraphQLError } from 'graphql';
+import { prisma } from '../../../lib/prisma';
+import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import { mapNotification } from '../helpers';
+import { NOTIFICATION_INCLUDE } from './notifications';
 import { enqueueFeedbackRequestNow } from '../../../workers/feedback/queue';
 
 // Constants for validation
@@ -377,7 +383,7 @@ export const reorderFeedbackQuestionsMutation: MutationResolvers['reorderFeedbac
  * Submit review + feedback (combined mutation)
  */
 export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAndFeedback'] =
-  async (_parent, { input }, { user }) => {
+  async (_parent, { input }, { user, pubsub }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -392,6 +398,7 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       select: {
         id: true,
         endAt: true,
+        ownerId: true,
         members: {
           where: {
             userId: user.id,
@@ -517,6 +524,43 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
 
       return { review, feedbackAnswers: createdAnswers };
     });
+
+    // Notify owner about review/feedback submission
+    if (intent.ownerId && intent.ownerId !== user.id) {
+      const hasFeedback = feedbackAnswers && feedbackAnswers.length > 0;
+      const kind = hasFeedback
+        ? PrismaNotificationKind.INTENT_FEEDBACK_RECEIVED
+        : PrismaNotificationKind.INTENT_REVIEW_RECEIVED;
+      const title = hasFeedback
+        ? 'New feedback received'
+        : 'New review received';
+      const body = hasFeedback
+        ? `Someone submitted feedback for your event (${rating} stars)`
+        : `Someone left a ${rating}-star review`;
+
+      const notif = await prisma.notification.create({
+        data: {
+          kind,
+          recipientId: intent.ownerId,
+          actorId: user.id,
+          entityType: PrismaNotificationEntity.REVIEW,
+          entityId: result.review.id,
+          intentId,
+          title,
+          body,
+          dedupeKey: `review_feedback:${intentId}:${result.review.id}`,
+        },
+        include: NOTIFICATION_INCLUDE,
+      });
+      await pubsub?.publish({
+        topic: `NOTIFICATION_ADDED:${intent.ownerId}`,
+        payload: { notificationAdded: mapNotification(notif) },
+      });
+      await pubsub?.publish({
+        topic: `NOTIFICATION_BADGE:${intent.ownerId}`,
+        payload: { notificationBadgeChanged: { recipientId: intent.ownerId } },
+      });
+    }
 
     return {
       review: result.review,

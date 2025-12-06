@@ -140,11 +140,12 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
       const notificationsToCreate = (members ?? [])
         .filter((m) => !mutedUserIds.has(m.userId))
         .map((m) => ({
-          kind: PrismaNotificationKind.NEW_MESSAGE,
+          kind: PrismaNotificationKind.INTENT_CHAT_MESSAGE,
           recipientId: m.userId,
           actorId: user.id,
           entityType: PrismaNotificationEntity.INTENT,
           entityId: intentId,
+          intentId,
           title: 'New message in event chat',
           body: sanitizedContent.substring(0, 100),
           dedupeKey: `event-chat:${intentId}:${message.id}`,

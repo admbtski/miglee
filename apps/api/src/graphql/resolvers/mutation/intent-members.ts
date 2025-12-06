@@ -450,6 +450,7 @@ export const acceptInviteMutation: MutationResolvers['acceptInvite'] =
     'acceptInvite',
     async (_p, { intentId }, ctx) => {
       const userId = assertAuth(ctx);
+      const { pubsub } = ctx;
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
@@ -496,6 +497,24 @@ export const acceptInviteMutation: MutationResolvers['acceptInvite'] =
           userId,
           kind: MemberEvent.ACCEPT_INVITE,
         });
+
+        // Notify owner and moderators that the invite was accepted
+        const moderators = intent.members.filter(
+          (m) =>
+            m.role === IntentMemberRole.OWNER ||
+            m.role === IntentMemberRole.MODERATOR
+        );
+        for (const m of moderators) {
+          await emitIntentNotification(tx, pubsub, {
+            kind: PrismaNotificationKind.INTENT_INVITE_ACCEPTED,
+            recipientId: m.userId,
+            actorId: userId,
+            intentId,
+            title: 'Invite accepted',
+            body: `User accepted your invitation to join the event.`,
+            dedupeKey: `invite_accepted:${userId}:${intentId}:${m.userId}`,
+          });
+        }
 
         return reloadFullIntent(tx, intentId);
       });
@@ -839,6 +858,7 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
     'kickMember',
     async (_p, { input: { intentId, note, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
+      const { pubsub } = ctx;
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
@@ -878,6 +898,19 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
           actorId,
           kind: MemberEvent.KICK,
           note: note ?? null,
+        });
+
+        // Notify kicked user
+        await emitIntentNotification(tx, pubsub, {
+          kind: PrismaNotificationKind.INTENT_MEMBER_KICKED,
+          recipientId: userId,
+          actorId,
+          intentId,
+          title: 'Removed from event',
+          body: note
+            ? `You have been removed from the event. Reason: ${note}`
+            : 'You have been removed from the event.',
+          dedupeKey: `kicked:${userId}:${intentId}`,
         });
 
         // Try to promote someone from waitlist
@@ -1027,6 +1060,7 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
     'updateMemberRole',
     async (_p, { input: { intentId, role, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
+      const { pubsub } = ctx;
 
       const result = await prisma.$transaction(async (tx) => {
         const intent = await loadIntentWithMembers(tx, intentId);
@@ -1048,6 +1082,7 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
           });
         }
 
+        const oldRole = member.role;
         await tx.intentMember.update({
           where: { intentId_userId: { intentId, userId } },
           data: { role },
@@ -1062,6 +1097,22 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
               ? MemberEvent.APPROVE
               : MemberEvent.REJECT, // prosty mapping; rozważ dodanie osobnych eventów PROMOTE/DEMOTE
         });
+
+        // Notify user about role change
+        if (oldRole !== role) {
+          const isPromotion = role === IntentMemberRole.MODERATOR;
+          await emitIntentNotification(tx, pubsub, {
+            kind: PrismaNotificationKind.INTENT_MEMBER_ROLE_CHANGED,
+            recipientId: userId,
+            actorId,
+            intentId,
+            title: isPromotion ? 'Promoted to moderator' : 'Role changed',
+            body: isPromotion
+              ? 'You have been promoted to moderator for this event.'
+              : 'Your role has been changed to participant.',
+            dedupeKey: `role_changed:${userId}:${intentId}`,
+          });
+        }
 
         return reloadFullIntent(tx, intentId);
       });

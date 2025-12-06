@@ -7,7 +7,8 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
-import { mapReview } from '../helpers';
+import { mapReview, mapNotification } from '../helpers';
+import { NOTIFICATION_INCLUDE } from './notifications';
 
 const REVIEW_INCLUDE = {
   author: true,
@@ -21,7 +22,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
   resolverWithMetrics(
     'Mutation',
     'createReview',
-    async (_p, { input }, { user }) => {
+    async (_p, { input }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -128,18 +129,30 @@ export const createReviewMutation: MutationResolvers['createReview'] =
             include: REVIEW_INCLUDE,
           });
 
-      // Optionally notify intent owner about new review
+      // Notify intent owner about new review
       if (intent.ownerId && intent.ownerId !== user.id) {
-        await prisma.notification.create({
+        const notif = await prisma.notification.create({
           data: {
-            kind: PrismaNotificationKind.NEW_REVIEW,
+            kind: PrismaNotificationKind.INTENT_REVIEW_RECEIVED,
             recipientId: intent.ownerId,
             actorId: user.id,
             entityType: PrismaNotificationEntity.REVIEW,
             entityId: review.id,
-            title: 'New review on your intent',
-            body: `${user.name} left a ${rating}-star review`,
+            intentId,
+            title: 'New review on your event',
+            body: `Someone left a ${rating}-star review`,
             dedupeKey: `review:${intentId}:${review.id}`,
+          },
+          include: NOTIFICATION_INCLUDE,
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_ADDED:${intent.ownerId}`,
+          payload: { notificationAdded: mapNotification(notif) },
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_BADGE:${intent.ownerId}`,
+          payload: {
+            notificationBadgeChanged: { recipientId: intent.ownerId },
           },
         });
       }
@@ -309,7 +322,7 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
   resolverWithMetrics(
     'Mutation',
     'hideReview',
-    async (_p, { id }, { user }) => {
+    async (_p, { id }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -321,6 +334,7 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
         select: {
           id: true,
           intentId: true,
+          authorId: true,
           deletedAt: true,
           hiddenAt: true,
         },
@@ -354,6 +368,35 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
           hiddenById: user.id,
         },
       });
+
+      // Notify review author that their review was hidden
+      if (review.authorId !== user.id) {
+        const notif = await prisma.notification.create({
+          data: {
+            kind: PrismaNotificationKind.REVIEW_HIDDEN,
+            title: 'Review hidden by moderation',
+            body: 'Your review has been hidden by a moderator.',
+            entityType: PrismaNotificationEntity.REVIEW,
+            entityId: id,
+            intentId: review.intentId,
+            recipientId: review.authorId,
+            actorId: user.id,
+            data: { reviewId: id, intentId: review.intentId },
+            dedupeKey: `review_hidden:${id}`,
+          },
+          include: NOTIFICATION_INCLUDE,
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_ADDED:${review.authorId}`,
+          payload: { notificationAdded: mapNotification(notif) },
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_BADGE:${review.authorId}`,
+          payload: {
+            notificationBadgeChanged: { recipientId: review.authorId },
+          },
+        });
+      }
 
       return true;
     }

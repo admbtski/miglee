@@ -1,9 +1,14 @@
 import type { Prisma } from '@prisma/client';
+import {
+  NotificationKind as PrismaNotificationKind,
+  NotificationEntity as PrismaNotificationEntity,
+} from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
-import { mapComment } from '../helpers';
+import { mapComment, mapNotification } from '../helpers';
+import { NOTIFICATION_INCLUDE } from './notifications';
 
 const COMMENT_INCLUDE = {
   author: true,
@@ -35,7 +40,7 @@ export const createCommentMutation: MutationResolvers['createComment'] =
   resolverWithMetrics(
     'Mutation',
     'createComment',
-    async (_p, { input }, { user }) => {
+    async (_p, { input }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -60,10 +65,20 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         );
       }
 
-      // Verify intent exists
+      // Verify intent exists and get owner/mods
       const intent = await prisma.intent.findUnique({
         where: { id: intentId },
-        select: { id: true, deletedAt: true },
+        select: {
+          id: true,
+          deletedAt: true,
+          members: {
+            where: {
+              role: { in: ['OWNER', 'MODERATOR'] },
+              status: 'JOINED',
+            },
+            select: { userId: true },
+          },
+        },
       });
 
       if (!intent || intent.deletedAt) {
@@ -74,10 +89,16 @@ export const createCommentMutation: MutationResolvers['createComment'] =
 
       // If parentId provided, verify parent exists and belongs to same intent
       let threadId = intentId; // Default thread is the intent itself
+      let parentAuthorId: string | null = null;
       if (parentId) {
         const parent = await prisma.comment.findUnique({
           where: { id: parentId },
-          select: { intentId: true, threadId: true, deletedAt: true },
+          select: {
+            intentId: true,
+            threadId: true,
+            deletedAt: true,
+            authorId: true,
+          },
         });
 
         if (!parent || parent.deletedAt) {
@@ -96,6 +117,7 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         }
 
         threadId = parent.threadId;
+        parentAuthorId = parent.authorId;
       }
 
       const comment = await prisma.comment.create({
@@ -114,6 +136,73 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         where: { id: intentId },
         data: { commentsCount: { increment: 1 } },
       });
+
+      // Send notifications
+      const notificationRecipients = new Set<string>();
+
+      if (parentId && parentAuthorId && parentAuthorId !== user.id) {
+        // Reply notification to parent comment author
+        notificationRecipients.add(parentAuthorId);
+        const notif = await prisma.notification.create({
+          data: {
+            kind: PrismaNotificationKind.COMMENT_REPLY,
+            title: 'New reply to your comment',
+            body:
+              content.trim().slice(0, 100) +
+              (content.length > 100 ? '...' : ''),
+            entityType: PrismaNotificationEntity.INTENT,
+            entityId: intentId,
+            intentId,
+            recipientId: parentAuthorId,
+            actorId: user.id,
+            data: { commentId: comment.id, intentId },
+            dedupeKey: `comment_reply:${comment.id}`,
+          },
+          include: NOTIFICATION_INCLUDE,
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_ADDED:${parentAuthorId}`,
+          payload: { notificationAdded: mapNotification(notif) },
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_BADGE:${parentAuthorId}`,
+          payload: {
+            notificationBadgeChanged: { recipientId: parentAuthorId },
+          },
+        });
+      } else {
+        // New comment notification to owner/mods (not replies)
+        for (const m of intent.members) {
+          if (m.userId !== user.id && !notificationRecipients.has(m.userId)) {
+            notificationRecipients.add(m.userId);
+            const notif = await prisma.notification.create({
+              data: {
+                kind: PrismaNotificationKind.INTENT_COMMENT_ADDED,
+                title: 'New comment on your event',
+                body:
+                  content.trim().slice(0, 100) +
+                  (content.length > 100 ? '...' : ''),
+                entityType: PrismaNotificationEntity.INTENT,
+                entityId: intentId,
+                intentId,
+                recipientId: m.userId,
+                actorId: user.id,
+                data: { commentId: comment.id, intentId },
+                dedupeKey: `comment_added:${comment.id}:${m.userId}`,
+              },
+              include: NOTIFICATION_INCLUDE,
+            });
+            await pubsub?.publish({
+              topic: `NOTIFICATION_ADDED:${m.userId}`,
+              payload: { notificationAdded: mapNotification(notif) },
+            });
+            await pubsub?.publish({
+              topic: `NOTIFICATION_BADGE:${m.userId}`,
+              payload: { notificationBadgeChanged: { recipientId: m.userId } },
+            });
+          }
+        }
+      }
 
       return mapComment(comment);
     }
@@ -285,7 +374,7 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
   resolverWithMetrics(
     'Mutation',
     'hideComment',
-    async (_p, { id }, { user }) => {
+    async (_p, { id }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -298,6 +387,7 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
         select: {
           id: true,
           intentId: true,
+          authorId: true,
           deletedAt: true,
           hiddenAt: true,
           intent: {
@@ -348,6 +438,35 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
         await prisma.intent.update({
           where: { id: comment.intentId },
           data: { commentsCount: { decrement: 1 } },
+        });
+      }
+
+      // Notify comment author that their comment was hidden
+      if (comment.authorId !== user.id) {
+        const notif = await prisma.notification.create({
+          data: {
+            kind: PrismaNotificationKind.COMMENT_HIDDEN,
+            title: 'Comment hidden by moderation',
+            body: 'Your comment has been hidden by a moderator.',
+            entityType: PrismaNotificationEntity.INTENT,
+            entityId: comment.intentId,
+            intentId: comment.intentId,
+            recipientId: comment.authorId,
+            actorId: user.id,
+            data: { commentId: id, intentId: comment.intentId },
+            dedupeKey: `comment_hidden:${id}`,
+          },
+          include: NOTIFICATION_INCLUDE,
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_ADDED:${comment.authorId}`,
+          payload: { notificationAdded: mapNotification(notif) },
+        });
+        await pubsub?.publish({
+          topic: `NOTIFICATION_BADGE:${comment.authorId}`,
+          payload: {
+            notificationBadgeChanged: { recipientId: comment.authorId },
+          },
         });
       }
 
