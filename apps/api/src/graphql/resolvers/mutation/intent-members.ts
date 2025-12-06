@@ -240,6 +240,17 @@ async function emitIntentNotification(
     data?: Prisma.InputJsonValue;
   }
 ) {
+  // If dedupeKey is provided, delete any existing notification with the same key
+  // This allows re-sending notifications (e.g., re-inviting after cancellation)
+  if (params.dedupeKey) {
+    await tx.notification.deleteMany({
+      where: {
+        recipientId: params.recipientId,
+        dedupeKey: params.dedupeKey,
+      },
+    });
+  }
+
   const notif = await tx.notification.create({
     data: {
       kind: params.kind,
@@ -374,6 +385,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
                   intentId,
                   title: 'Join request received',
                   body: 'A user requested to join your intent.',
+                  dedupeKey: `join_request:${m.userId}:${intentId}:${userId}`,
                 })
               )
             );
@@ -426,6 +438,7 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
                 intentId,
                 title: 'Join request received',
                 body: 'A user requested to join your intent.',
+                dedupeKey: `join_request:${m.userId}:${intentId}:${userId}`,
               })
             )
           );
@@ -731,6 +744,7 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
             intentId,
             title: 'Prośba zaakceptowana - lista oczekujących',
             body: `Twoja prośba została zaakceptowana, ale wydarzenie "${intent.title}" jest pełne. Zostałeś dodany do listy oczekujących.`,
+            dedupeKey: `membership_approved:${userId}:${intentId}`,
           });
 
           return reloadFullIntent(tx, intentId);
@@ -766,6 +780,7 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
           intentId,
           title: 'Membership approved',
           body: 'Your request to join has been approved.',
+          dedupeKey: `membership_approved:${userId}:${intentId}`,
         });
 
         return reloadFullIntent(tx, intentId);
@@ -815,6 +830,7 @@ export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
           intentId,
           title: 'Membership rejected',
           body: 'Your request to join was rejected.',
+          dedupeKey: `membership_rejected:${userId}:${intentId}`,
         });
 
         return reloadFullIntent(tx, intentId);
@@ -949,6 +965,7 @@ export const banMemberMutation: MutationResolvers['banMember'] =
           intentId,
           title: 'You were banned',
           body: 'You have been banned from this intent.',
+          dedupeKey: `banned:${userId}:${intentId}`,
         });
 
         // Try to promote someone from waitlist if user was joined
@@ -1001,6 +1018,7 @@ export const unbanMemberMutation: MutationResolvers['unbanMember'] =
           intentId,
           title: 'Ban lifted',
           body: 'You can request to join again.',
+          dedupeKey: `unbanned:${userId}:${intentId}`,
         });
 
         return reloadFullIntent(tx, intentId);
@@ -1206,6 +1224,7 @@ export const joinWaitlistOpenMutation: MutationResolvers['joinWaitlistOpen'] =
           intentId,
           title: 'Dołączyłeś do listy oczekujących',
           body: `Wydarzenie "${intent.title}" jest pełne. Powiadomimy Cię, jeśli zwolni się miejsce.`,
+          dedupeKey: `waitlist_joined:${userId}:${intentId}`,
         });
 
         return reloadFullIntent(tx, intentId);
@@ -1321,6 +1340,7 @@ export const promoteFromWaitlistMutation: MutationResolvers['promoteFromWaitlist
           intentId,
           title: 'Zostałeś dodany do wydarzenia!',
           body: `Organizator dodał Cię do wydarzenia "${intent.title}" z listy oczekujących.`,
+          dedupeKey: `waitlist_promoted:${userId}:${intentId}`,
         });
 
         return reloadFullIntent(tx, intentId);
