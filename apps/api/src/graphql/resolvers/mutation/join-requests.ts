@@ -260,8 +260,13 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
               entityType: 'INTENT',
               entityId: intentId,
               actorId: user.id,
-              title: 'New join request',
-              body: `${user.name} requested to join "${intent.title}"`,
+              title: null,
+              body: null,
+              data: {
+                intentId,
+                intentTitle: intent.title,
+                actorName: user.name,
+              },
             },
           })
         )
@@ -433,8 +438,13 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
         entityType: 'INTENT',
         entityId: intentId,
         actorId: user.id,
-        title: 'Join request approved',
-        body: `Your request to join "${intent.title}" has been approved`,
+        title: null,
+        body: null,
+        data: {
+          intentId,
+          intentTitle: intent.title,
+          actorName: user.name,
+        },
       },
     });
 
@@ -588,10 +598,14 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
         entityType: 'INTENT',
         entityId: intentId,
         actorId: user.id,
-        title: 'Join request rejected',
-        body: reason
-          ? `Your request to join "${intent.title}" was rejected: ${reason}`
-          : `Your request to join "${intent.title}" was rejected`,
+        title: null,
+        body: null,
+        data: {
+          intentId,
+          intentTitle: intent.title,
+          actorName: user.name,
+          reason: reason || undefined,
+        },
       },
     });
 

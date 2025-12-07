@@ -71,6 +71,7 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         select: {
           id: true,
           deletedAt: true,
+          title: true,
           members: {
             where: {
               role: { in: ['OWNER', 'MODERATOR'] },
@@ -146,16 +147,20 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         const notif = await prisma.notification.create({
           data: {
             kind: PrismaNotificationKind.COMMENT_REPLY,
-            title: 'New reply to your comment',
-            body:
-              content.trim().slice(0, 100) +
-              (content.length > 100 ? '...' : ''),
+            title: null,
+            body: null,
             entityType: PrismaNotificationEntity.INTENT,
             entityId: intentId,
             intentId,
             recipientId: parentAuthorId,
             actorId: user.id,
-            data: { commentId: comment.id, intentId },
+            data: {
+              commentId: comment.id,
+              intentId,
+              intentTitle: intent.title,
+              actorName: user.name,
+              commentContent: content.trim().slice(0, 100),
+            },
             dedupeKey: `comment_reply:${comment.id}`,
           },
           include: NOTIFICATION_INCLUDE,
@@ -178,16 +183,20 @@ export const createCommentMutation: MutationResolvers['createComment'] =
             const notif = await prisma.notification.create({
               data: {
                 kind: PrismaNotificationKind.INTENT_COMMENT_ADDED,
-                title: 'New comment on your event',
-                body:
-                  content.trim().slice(0, 100) +
-                  (content.length > 100 ? '...' : ''),
+                title: null,
+                body: null,
                 entityType: PrismaNotificationEntity.INTENT,
                 entityId: intentId,
                 intentId,
                 recipientId: m.userId,
                 actorId: user.id,
-                data: { commentId: comment.id, intentId },
+                data: {
+                  commentId: comment.id,
+                  intentId,
+                  intentTitle: intent.title,
+                  actorName: user.name,
+                  commentContent: content.trim().slice(0, 100),
+                },
                 dedupeKey: `comment_added:${comment.id}:${m.userId}`,
               },
               include: NOTIFICATION_INCLUDE,
@@ -443,17 +452,28 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
 
       // Notify comment author that their comment was hidden
       if (comment.authorId !== user.id) {
+        // Fetch intent title for notification data
+        const intent = await prisma.intent.findUnique({
+          where: { id: comment.intentId },
+          select: { title: true },
+        });
+
         const notif = await prisma.notification.create({
           data: {
             kind: PrismaNotificationKind.COMMENT_HIDDEN,
-            title: 'Comment hidden by moderation',
-            body: 'Your comment has been hidden by a moderator.',
+            title: null,
+            body: null,
             entityType: PrismaNotificationEntity.INTENT,
             entityId: comment.intentId,
             intentId: comment.intentId,
             recipientId: comment.authorId,
             actorId: user.id,
-            data: { commentId: id, intentId: comment.intentId },
+            data: {
+              commentId: id,
+              intentId: comment.intentId,
+              intentTitle: intent?.title,
+              moderatorName: user.name,
+            },
             dedupeKey: `comment_hidden:${id}`,
           },
           include: NOTIFICATION_INCLUDE,

@@ -530,8 +530,8 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
         const notification = await tx.notification.create({
           data: {
             kind: PrismaNotificationKind.INTENT_CREATED,
-            title: 'Intent created',
-            body: `Your intent "${intent.title}" has been successfully created.`,
+            title: null,
+            body: null,
             entityType: PrismaNotificationEntity.INTENT,
             entityId: intent.id,
             intentId: intent.id,
@@ -539,7 +539,7 @@ export const createIntentMutation: MutationResolvers['createIntent'] =
             actorId: ownerId,
             data: {
               intentId: intent.id,
-              title: intent.title,
+              intentTitle: intent.title,
               startAt: intent.startAt,
             } as Prisma.InputJsonValue,
             dedupeKey: `intent_created:${ownerId}:${intent.id}`,

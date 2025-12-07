@@ -219,6 +219,20 @@ async function isBanned(tx: Tx, intentId: string, userId: string) {
 /*                          Notifications & audit                              */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * Emit an intent-related notification with proper data for i18n interpolation.
+ *
+ * The `data` field should contain all variables needed for frontend translation:
+ * - intentId, intentTitle: for event context
+ * - actorName: for "who did this" context
+ * - reason, note: for rejection/kick/ban messages
+ * - newRole: for role change notifications
+ * - rating: for review/feedback notifications
+ * - preview: for message previews
+ *
+ * Title and body are stored for backward compatibility but frontend should
+ * use kind + data for localized rendering.
+ */
 async function emitIntentNotification(
   tx: Tx,
   pubsub: MercuriusContext['pubsub'],
@@ -227,10 +241,9 @@ async function emitIntentNotification(
     recipientId: string;
     actorId: string | null;
     intentId: string;
-    title: string;
-    body: string;
     dedupeKey?: string;
-    data?: Prisma.InputJsonValue;
+    /** Data for i18n interpolation - will be merged with auto-fetched data */
+    data?: Record<string, unknown>;
   }
 ) {
   // If dedupeKey is provided, delete any existing notification with the same key
@@ -244,18 +257,42 @@ async function emitIntentNotification(
     });
   }
 
+  // Fetch intent title for interpolation
+  const intent = await tx.intent.findUnique({
+    where: { id: params.intentId },
+    select: { title: true },
+  });
+
+  // Fetch actor name for interpolation
+  let actorName: string | undefined;
+  if (params.actorId) {
+    const actor = await tx.user.findUnique({
+      where: { id: params.actorId },
+      select: { name: true },
+    });
+    actorName = actor?.name || undefined;
+  }
+
+  // Build data object for i18n interpolation
+  const notificationData: Record<string, unknown> = {
+    intentId: params.intentId,
+    intentTitle: intent?.title || undefined,
+    actorName,
+    ...(params.data || {}),
+  };
+
   const notif = await tx.notification.create({
     data: {
       kind: params.kind,
-      title: params.title,
-      body: params.body,
+      // Title and body are now optional - frontend uses kind + data for i18n
+      title: null,
+      body: null,
       entityType: PrismaNotificationEntity.INTENT,
       entityId: params.intentId,
       intentId: params.intentId,
       recipientId: params.recipientId,
       actorId: params.actorId,
-      data:
-        params.data ?? ({ intentId: params.intentId } as Prisma.InputJsonValue),
+      data: notificationData as Prisma.InputJsonValue,
       ...(params.dedupeKey ? { dedupeKey: params.dedupeKey } : {}),
     },
     include: NOTIFICATION_INCLUDE,
@@ -376,8 +413,6 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
                   recipientId: m.userId,
                   actorId: userId,
                   intentId,
-                  title: 'Join request received',
-                  body: 'A user requested to join your intent.',
                   dedupeKey: `join_request:${m.userId}:${intentId}:${userId}`,
                 })
               )
@@ -429,8 +464,6 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
                 recipientId: m.userId,
                 actorId: userId,
                 intentId,
-                title: 'Join request received',
-                body: 'A user requested to join your intent.',
                 dedupeKey: `join_request:${m.userId}:${intentId}:${userId}`,
               })
             )
@@ -510,8 +543,6 @@ export const acceptInviteMutation: MutationResolvers['acceptInvite'] =
             recipientId: m.userId,
             actorId: userId,
             intentId,
-            title: 'Invite accepted',
-            body: `User accepted your invitation to join the event.`,
             dedupeKey: `invite_accepted:${userId}:${intentId}:${m.userId}`,
           });
         }
@@ -589,8 +620,6 @@ export const inviteMemberMutation: MutationResolvers['inviteMember'] =
           recipientId: userId,
           actorId,
           intentId,
-          title: 'Invitation to join',
-          body: 'You have been invited to join an intent.',
           dedupeKey: `intent_invite:${userId}:${intentId}`,
         });
 
@@ -754,9 +783,8 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
             recipientId: userId,
             actorId,
             intentId,
-            title: 'Prośba zaakceptowana - lista oczekujących',
-            body: `Twoja prośba została zaakceptowana, ale wydarzenie "${intent.title}" jest pełne. Zostałeś dodany do listy oczekujących.`,
             dedupeKey: `membership_approved:${userId}:${intentId}`,
+            data: { addedToWaitlist: true },
           });
 
           return reloadFullIntent(tx, intentId);
@@ -790,8 +818,6 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
           recipientId: userId,
           actorId,
           intentId,
-          title: 'Membership approved',
-          body: 'Your request to join has been approved.',
           dedupeKey: `membership_approved:${userId}:${intentId}`,
         });
 
@@ -840,9 +866,8 @@ export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
           recipientId: userId,
           actorId,
           intentId,
-          title: 'Membership rejected',
-          body: 'Your request to join was rejected.',
           dedupeKey: `membership_rejected:${userId}:${intentId}`,
+          data: { reason: note || undefined },
         });
 
         return reloadFullIntent(tx, intentId);
@@ -906,11 +931,8 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
           recipientId: userId,
           actorId,
           intentId,
-          title: 'Removed from event',
-          body: note
-            ? `You have been removed from the event. Reason: ${note}`
-            : 'You have been removed from the event.',
           dedupeKey: `kicked:${userId}:${intentId}`,
+          data: { reason: note || undefined },
         });
 
         // Try to promote someone from waitlist
@@ -989,8 +1011,6 @@ export const banMemberMutation: MutationResolvers['banMember'] =
           recipientId: userId,
           actorId,
           intentId,
-          title: 'You were banned',
-          body: 'You have been banned from this intent.',
           dedupeKey: `banned:${userId}:${intentId}`,
         });
 
@@ -1042,8 +1062,6 @@ export const unbanMemberMutation: MutationResolvers['unbanMember'] =
           recipientId: userId,
           actorId,
           intentId,
-          title: 'Ban lifted',
-          body: 'You can request to join again.',
           dedupeKey: `unbanned:${userId}:${intentId}`,
         });
 
@@ -1100,17 +1118,13 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
 
         // Notify user about role change
         if (oldRole !== role) {
-          const isPromotion = role === IntentMemberRole.MODERATOR;
           await emitIntentNotification(tx, pubsub, {
             kind: PrismaNotificationKind.INTENT_MEMBER_ROLE_CHANGED,
             recipientId: userId,
             actorId,
             intentId,
-            title: isPromotion ? 'Promoted to moderator' : 'Role changed',
-            body: isPromotion
-              ? 'You have been promoted to moderator for this event.'
-              : 'Your role has been changed to participant.',
             dedupeKey: `role_changed:${userId}:${intentId}`,
+            data: { newRole: role },
           });
         }
 
@@ -1266,8 +1280,6 @@ export const joinWaitlistOpenMutation: MutationResolvers['joinWaitlistOpen'] =
           recipientId: userId,
           actorId: null,
           intentId,
-          title: 'Dołączyłeś do listy oczekujących',
-          body: `Wydarzenie "${intent.title}" jest pełne. Powiadomimy Cię, jeśli zwolni się miejsce.`,
           dedupeKey: `waitlist_joined:${userId}:${intentId}`,
         });
 
@@ -1382,8 +1394,6 @@ export const promoteFromWaitlistMutation: MutationResolvers['promoteFromWaitlist
           recipientId: userId,
           actorId,
           intentId,
-          title: 'Zostałeś dodany do wydarzenia!',
-          body: `Organizator dodał Cię do wydarzenia "${intent.title}" z listy oczekujących.`,
           dedupeKey: `waitlist_promoted:${userId}:${intentId}`,
         });
 

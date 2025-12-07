@@ -1,0 +1,267 @@
+'use client';
+
+import {
+  Calendar,
+  MessageSquare,
+  CreditCard,
+  User,
+  Info,
+  AlertCircle,
+  Star,
+  UserPlus,
+  UserMinus,
+  Ban,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Bell,
+  MessageCircle,
+  Users,
+  Check,
+  Trash2,
+} from 'lucide-react';
+import { useNotificationContent } from '@/lib/i18n/use-notification-content';
+import { useParams } from 'next/navigation';
+
+interface NotificationItemProps {
+  notification: {
+    id: string;
+    kind: string;
+    title?: string | null;
+    body?: string | null;
+    entityType?: string | null;
+    readAt?: string | null;
+    createdAt: string;
+    data?: Record<string, unknown> | null;
+    actor?: {
+      name?: string | null;
+    } | null;
+    intent?: {
+      title?: string | null;
+    } | null;
+  };
+  onMarkRead?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  isMarkingRead?: boolean;
+  isDeleting?: boolean;
+}
+
+/**
+ * Get icon based on notification kind (more specific than entityType)
+ */
+function getNotificationIcon(kind: string, entityType?: string | null) {
+  // First check by kind for specific icons
+  switch (kind) {
+    // Membership
+    case 'INTENT_INVITE':
+    case 'INTENT_INVITE_ACCEPTED':
+      return (
+        <UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+      );
+    case 'JOIN_REQUEST':
+      return <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+    case 'INTENT_MEMBERSHIP_APPROVED':
+      return (
+        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+      );
+    case 'INTENT_MEMBERSHIP_REJECTED':
+      return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
+    case 'INTENT_MEMBER_KICKED':
+    case 'BANNED':
+      return <Ban className="h-4 w-4 text-red-600 dark:text-red-400" />;
+    case 'UNBANNED':
+      return (
+        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+      );
+
+    // Waitlist
+    case 'WAITLIST_JOINED':
+    case 'WAITLIST_PROMOTED':
+      return <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
+
+    // Reviews & Feedback
+    case 'INTENT_REVIEW_RECEIVED':
+    case 'NEW_REVIEW':
+    case 'INTENT_FEEDBACK_RECEIVED':
+      return <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />;
+    case 'INTENT_FEEDBACK_REQUEST':
+      return (
+        <MessageCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+      );
+    case 'REVIEW_HIDDEN':
+      return (
+        <XCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+      );
+
+    // Comments
+    case 'INTENT_COMMENT_ADDED':
+    case 'COMMENT_REPLY':
+    case 'NEW_COMMENT':
+      return (
+        <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+      );
+    case 'COMMENT_HIDDEN':
+      return (
+        <XCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+      );
+
+    // Messages
+    case 'NEW_MESSAGE':
+    case 'INTENT_CHAT_MESSAGE':
+      return (
+        <MessageSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+      );
+
+    // Intent lifecycle
+    case 'INTENT_REMINDER':
+      return <Bell className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />;
+    case 'INTENT_UPDATED':
+    case 'INTENT_CREATED':
+      return <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
+    case 'INTENT_CANCELED':
+    case 'INTENT_DELETED':
+      return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
+
+    // System
+    case 'SYSTEM':
+      return <Info className="h-4 w-4 text-violet-600 dark:text-violet-400" />;
+  }
+
+  // Fallback to entityType
+  switch (entityType) {
+    case 'INTENT':
+      return <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
+    case 'MESSAGE':
+      return (
+        <MessageSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+      );
+    case 'PAYMENT':
+    case 'INVOICE':
+      return (
+        <CreditCard className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+      );
+    case 'USER':
+      return <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />;
+    case 'SYSTEM':
+      return <Info className="h-4 w-4 text-violet-600 dark:text-violet-400" />;
+    case 'REVIEW':
+      return <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />;
+    default:
+      return (
+        <AlertCircle className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+      );
+  }
+}
+
+/**
+ * Format time with locale support
+ */
+function formatTime(iso: string, locale: string) {
+  try {
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(d);
+  } catch {
+    return iso;
+  }
+}
+
+/**
+ * Get localized button labels
+ */
+function getButtonLabels(locale: string) {
+  const labels: Record<string, { markRead: string; delete: string }> = {
+    pl: { markRead: 'Przeczytane', delete: 'Usuń' },
+    de: { markRead: 'Gelesen', delete: 'Löschen' },
+    en: { markRead: 'Mark read', delete: 'Delete' },
+  };
+  return labels[locale] || labels.en;
+}
+
+export function NotificationItem({
+  notification,
+  onMarkRead,
+  onDelete,
+  isMarkingRead = false,
+  isDeleting = false,
+}: NotificationItemProps) {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
+  const { title, body } = useNotificationContent(notification);
+  const unread = !notification.readAt;
+  const buttonLabels = getButtonLabels(locale);
+
+  return (
+    <li
+      className={[
+        'group relative overflow-hidden rounded-xl border',
+        unread
+          ? 'border-blue-200/60 bg-white shadow-sm dark:border-blue-900/40 dark:bg-zinc-900'
+          : 'border-zinc-200/60 bg-white dark:border-zinc-800/60 dark:bg-zinc-900',
+        'transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800',
+      ].join(' ')}
+    >
+      <div className="flex items-start gap-3 px-4 py-3">
+        {/* Icon based on kind */}
+        <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
+          {getNotificationIcon(notification.kind, notification.entityType)}
+        </div>
+
+        {/* Unread indicator */}
+        <span className="relative mt-2 inline-flex h-2.5 w-2.5">
+          {unread ? (
+            <>
+              <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-sky-500 opacity-70" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-500" />
+            </>
+          ) : (
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-transparent" />
+          )}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-0.5 flex items-center justify-between gap-2">
+            <div className="line-clamp-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              {title}
+            </div>
+            <div className="shrink-0 text-[10px] text-zinc-500">
+              {formatTime(notification.createdAt, locale)}
+            </div>
+          </div>
+          {body && (
+            <div className="line-clamp-2 text-xs text-zinc-600 dark:text-zinc-300">
+              {body}
+            </div>
+          )}
+
+          <div className="mt-2 flex items-center gap-2">
+            {unread && onMarkRead && (
+              <button
+                type="button"
+                disabled={isMarkingRead}
+                onClick={() => onMarkRead(notification.id)}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                <Check className="h-3.5 w-3.5" />
+                {buttonLabels.markRead}
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => onDelete(notification.id)}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {buttonLabels.delete}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}

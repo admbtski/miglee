@@ -56,6 +56,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
           deletedAt: true,
           endAt: true,
           ownerId: true,
+          title: true,
         },
       });
 
@@ -139,9 +140,16 @@ export const createReviewMutation: MutationResolvers['createReview'] =
             entityType: PrismaNotificationEntity.REVIEW,
             entityId: review.id,
             intentId,
-            title: 'New review on your event',
-            body: `Someone left a ${rating}-star review`,
+            title: null,
+            body: null,
             dedupeKey: `review:${intentId}:${review.id}`,
+            data: {
+              intentId,
+              intentTitle: intent.title,
+              actorName: user.name,
+              rating,
+              reviewContent: content?.slice(0, 100) || undefined,
+            },
           },
           include: NOTIFICATION_INCLUDE,
         });
@@ -371,17 +379,28 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
 
       // Notify review author that their review was hidden
       if (review.authorId !== user.id) {
+        // Fetch intent title for notification data
+        const intent = await prisma.intent.findUnique({
+          where: { id: review.intentId },
+          select: { title: true },
+        });
+
         const notif = await prisma.notification.create({
           data: {
             kind: PrismaNotificationKind.REVIEW_HIDDEN,
-            title: 'Review hidden by moderation',
-            body: 'Your review has been hidden by a moderator.',
+            title: null,
+            body: null,
             entityType: PrismaNotificationEntity.REVIEW,
             entityId: id,
             intentId: review.intentId,
             recipientId: review.authorId,
             actorId: user.id,
-            data: { reviewId: id, intentId: review.intentId },
+            data: {
+              reviewId: id,
+              intentId: review.intentId,
+              intentTitle: intent?.title,
+              moderatorName: user.name,
+            },
             dedupeKey: `review_hidden:${id}`,
           },
           include: NOTIFICATION_INCLUDE,

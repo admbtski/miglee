@@ -220,9 +220,14 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
               actorId: user.id,
               entityType: PrismaNotificationEntity.MESSAGE,
               entityId: message.id,
-              title: `New message from ${user.name}`,
-              body: sanitizedContent.substring(0, 100),
+              title: null,
+              body: null,
               dedupeKey: `dm_message:${recipientId}:${message.id}`,
+              data: {
+                actorName: user.name,
+                messageContent: sanitizedContent.substring(0, 100),
+                threadId: thread.id,
+              },
             },
             include: NOTIFICATION_INCLUDE,
           });

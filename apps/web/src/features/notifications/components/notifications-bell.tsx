@@ -10,23 +10,12 @@ import {
   useFloating,
   type Placement,
 } from '@floating-ui/react';
-import {
-  Bell,
-  Check,
-  Plus,
-  RefreshCcw,
-  Settings2,
-  Trash2,
-  Calendar,
-  MessageSquare,
-  CreditCard,
-  User,
-  Info,
-  AlertCircle,
-} from 'lucide-react';
+import { Bell, Plus, RefreshCcw, Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useLocalePath } from '@/hooks/use-locale-path';
+import { NotificationItem } from './notification-item';
 
 import {
   // Subskrypcje / badge
@@ -60,30 +49,57 @@ type NotificationNode = NonNullable<
   GetNotificationsQuery['notifications']['items']
 >[number];
 
-/* ===== Ikony zależne od entityType ===== */
-function getNotificationIcon(entityType?: string) {
-  switch (entityType) {
-    case 'INTENT':
-      return <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
-    case 'MESSAGE':
-      return (
-        <MessageSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-      );
-    case 'PAYMENT':
-    case 'INVOICE':
-      return (
-        <CreditCard className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-      );
-    case 'USER':
-      return <User className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />;
-    case 'SYSTEM':
-      return <Info className="h-4 w-4 text-violet-600 dark:text-violet-400" />;
-    case 'OTHER':
-    default:
-      return (
-        <AlertCircle className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-      );
-  }
+/* ===== Localized labels ===== */
+function getLabels(locale: string) {
+  const labels: Record<
+    string,
+    {
+      notifications: string;
+      add: string;
+      refresh: string;
+      settings: string;
+      loading: string;
+      noNotifications: string;
+      loadMore: string;
+      viewAll: string;
+      markAllRead: string;
+    }
+  > = {
+    pl: {
+      notifications: 'Powiadomienia',
+      add: 'Dodaj',
+      refresh: 'Odśwież',
+      settings: 'Ustawienia',
+      loading: 'Ładowanie…',
+      noNotifications: 'Brak powiadomień.',
+      loadMore: 'Załaduj więcej',
+      viewAll: 'Zobacz wszystkie',
+      markAllRead: 'Oznacz wszystkie jako przeczytane',
+    },
+    de: {
+      notifications: 'Benachrichtigungen',
+      add: 'Hinzufügen',
+      refresh: 'Aktualisieren',
+      settings: 'Einstellungen',
+      loading: 'Laden…',
+      noNotifications: 'Keine Benachrichtigungen.',
+      loadMore: 'Mehr laden',
+      viewAll: 'Alle anzeigen',
+      markAllRead: 'Alle als gelesen markieren',
+    },
+    en: {
+      notifications: 'Notifications',
+      add: 'Add',
+      refresh: 'Refresh',
+      settings: 'Settings',
+      loading: 'Loading…',
+      noNotifications: 'No notifications yet.',
+      loadMore: 'Load more',
+      viewAll: 'View all',
+      markAllRead: 'Mark all as read',
+    },
+  };
+  return labels[locale] || labels.en;
 }
 
 export function NotificationBell({
@@ -97,6 +113,9 @@ export function NotificationBell({
   const [open, setOpen] = useState(false);
   const [hasNew, setHasNew] = useState(false);
   const { localePath } = useLocalePath();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
+  const labels = getLabels(locale);
 
   // ========= Infinite Query =========
   const baseVars: GetNotificationsQueryVariables = useMemo(
@@ -337,7 +356,9 @@ export function NotificationBell({
               className="flex items-center justify-between border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800"
             >
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold">Notifications</h3>
+                <h3 className="text-sm font-semibold">
+                  {labels.notifications}
+                </h3>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                   {headerCount}
                 </span>
@@ -349,10 +370,10 @@ export function NotificationBell({
                     disabled={adding}
                     onClick={handleAddDev}
                     className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                    title="Add test notification"
+                    title={labels.add}
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    Add
+                    {labels.add}
                   </button>
                 )}
                 <button
@@ -362,18 +383,18 @@ export function NotificationBell({
                     void refetch();
                   }}
                   className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  title="Refresh"
+                  title={labels.refresh}
                 >
                   <RefreshCcw className="h-3.5 w-3.5" />
-                  Refresh
+                  {labels.refresh}
                 </button>
                 <Link
                   href={localePath('/account/settings')}
                   className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                  title="Notification settings"
+                  title={labels.settings}
                 >
                   <Settings2 className="h-3.5 w-3.5" />
-                  Settings
+                  {labels.settings}
                 </Link>
               </div>
             </div>
@@ -385,92 +406,42 @@ export function NotificationBell({
               style={{ padding: '0.25rem 0.25rem 0.75rem 0.25rem' }}
             >
               {isLoading && (
-                <div className="px-4 py-10 text-sm text-zinc-500">Loading…</div>
+                <div className="px-4 py-10 text-sm text-zinc-500">
+                  {labels.loading}
+                </div>
               )}
 
               {!isLoading && list.length === 0 && (
                 <div className="px-6 py-10 text-center text-sm text-zinc-500">
-                  No notifications yet.
+                  {labels.noNotifications}
                 </div>
               )}
 
               {list.length > 0 && (
                 <>
                   <ul className="space-y-1 px-1">
-                    {list.map((n) => {
-                      const unread = !n.readAt;
-                      return (
-                        <li
-                          key={n.id}
-                          className={[
-                            'group relative overflow-hidden rounded-xl border',
-                            unread
-                              ? 'border-blue-200/60 bg-white shadow-sm dark:border-blue-900/40 dark:bg-zinc-900'
-                              : 'border-zinc-200/60 bg-white dark:border-zinc-800/60 dark:bg-zinc-900',
-                            'transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800',
-                          ].join(' ')}
-                        >
-                          <div className="flex items-start gap-3 px-4 py-3">
-                            {/* Ikona zależna od entityType */}
-                            <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
-                              {getNotificationIcon(n.entityType as string)}
-                            </div>
-
-                            {/* 🔵 Pulsująca niebieska kropka */}
-                            <span className="relative mt-2 inline-flex h-2.5 w-2.5">
-                              {unread ? (
-                                <>
-                                  <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-sky-500 opacity-70" />
-                                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-500" />
-                                </>
-                              ) : (
-                                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-transparent" />
-                              )}
-                            </span>
-
-                            <div className="min-w-0 flex-1">
-                              <div className="mb-0.5 flex items-center justify-between gap-2">
-                                <div className="line-clamp-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                  {n.title ?? formatKind(n.kind as string)}
-                                </div>
-                                <div className="shrink-0 text-[10px] text-zinc-500">
-                                  {formatTime(n.createdAt)}
-                                </div>
-                              </div>
-                              {n.body ? (
-                                <div className="line-clamp-2 text-xs text-zinc-600 dark:text-zinc-300">
-                                  {n.body}
-                                </div>
-                              ) : null}
-
-                              <div className="mt-2 flex items-center gap-2">
-                                {unread && (
-                                  <button
-                                    type="button"
-                                    disabled={marking}
-                                    onClick={() => handleMarkOne(n.id)}
-                                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                                  >
-                                    <Check className="h-3.5 w-3.5" />
-                                    Mark read
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  disabled={deleting}
-                                  onClick={() => handleDeleteOne(n.id)}
-                                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                    {/* „Oddech” */}
+                    {list.map((n) => (
+                      <NotificationItem
+                        key={n.id}
+                        notification={{
+                          id: n.id,
+                          kind: n.kind as string,
+                          title: n.title,
+                          body: n.body,
+                          entityType: n.entityType,
+                          readAt: n.readAt,
+                          createdAt: n.createdAt,
+                          data: n.data as Record<string, unknown> | null,
+                          actor: n.actor,
+                          intent: n.intent,
+                        }}
+                        onMarkRead={handleMarkOne}
+                        onDelete={handleDeleteOne}
+                        isMarkingRead={marking}
+                        isDeleting={deleting}
+                      />
+                    ))}
+                    {/* „Oddech" */}
                     <li aria-hidden className="h-2" />
                   </ul>
 
@@ -485,9 +456,9 @@ export function NotificationBell({
                           loadMore();
                         }}
                         className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                        title="Load more notifications"
+                        title={labels.loadMore}
                       >
-                        {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                        {isFetchingNextPage ? labels.loading : labels.loadMore}
                       </button>
                     </div>
                   )}
@@ -505,7 +476,7 @@ export function NotificationBell({
                 className="rounded-md px-2 py-1 text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 onClick={(e) => e.stopPropagation()}
               >
-                View all
+                {labels.viewAll}
               </Link>
               <button
                 type="button"
@@ -515,9 +486,9 @@ export function NotificationBell({
                   handleMarkAll();
                 }}
                 className="rounded-md px-2 py-1 text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                title="Mark all notifications as read"
+                title={labels.markAllRead}
               >
-                Mark all as read
+                {labels.markAllRead}
               </button>
             </div>
           </div>
@@ -528,33 +499,6 @@ export function NotificationBell({
 }
 
 /* ======= Helpers ======= */
-
-function formatTime(iso: string) {
-  try {
-    const d = new Date(iso);
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(d);
-  } catch {
-    return iso;
-  }
-}
-
-function formatKind(kind: string) {
-  switch (kind) {
-    case 'INTENT_REMINDER':
-      return 'Upcoming meeting';
-    case 'INTENT_UPDATED':
-      return 'Meeting updated';
-    case 'INTENT_CANCELED':
-      return 'Meeting canceled';
-    case 'INTENT_CREATED':
-      return 'Intent created';
-    default:
-      return 'Notification';
-  }
-}
 
 function mergeUniqueById<T extends { id: string }>(arr: T[]): T[] {
   const seen = new Set<string>();

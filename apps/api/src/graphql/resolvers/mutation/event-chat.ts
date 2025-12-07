@@ -136,6 +136,12 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
 
       const mutedUserIds = new Set(mutes?.map((m) => m.userId) ?? []);
 
+      // Fetch intent title for notification data
+      const intent = await prisma.intent.findUnique({
+        where: { id: intentId },
+        select: { title: true },
+      });
+
       // Create notifications for non-muted members
       const notificationsToCreate = (members ?? [])
         .filter((m) => !mutedUserIds.has(m.userId))
@@ -146,9 +152,15 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
           entityType: PrismaNotificationEntity.INTENT,
           entityId: intentId,
           intentId,
-          title: 'New message in event chat',
-          body: sanitizedContent.substring(0, 100),
+          title: null,
+          body: null,
           dedupeKey: `event-chat:${intentId}:${message.id}`,
+          data: {
+            intentId,
+            intentTitle: intent?.title,
+            actorName: user.name,
+            messageContent: sanitizedContent.substring(0, 100),
+          },
         }));
 
       if (notificationsToCreate.length > 0) {

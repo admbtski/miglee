@@ -140,15 +140,15 @@ async function clearDb() {
 }
 
 /** ---------- Seed: Users ---------- */
-const LOCALES = ['en', 'pl', 'de'] as const;
-const TIMEZONES = [
+const LOCALES: string[] = ['en', 'pl', 'de'];
+const TIMEZONES: string[] = [
   'Europe/Warsaw',
   'Europe/Berlin',
   'America/New_York',
   'America/Los_Angeles',
   'Asia/Tokyo',
   'UTC',
-] as const;
+];
 
 function emailFor(first: string, last: string, i?: number) {
   const base = `${first}.${last}`.toLowerCase().replace(/\s+/g, '');
@@ -1037,7 +1037,7 @@ async function createPresetIntent(
   const alreadyJoined = await tx.intentMember.count({
     where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
   });
-  const freeSlots = Math.max(0, intent.max - alreadyJoined);
+  const freeSlots = Math.max(0, (intent.max ?? 10) - alreadyJoined);
   const howMany =
     intent.mode === Mode.ONE_TO_ONE
       ? Math.min(freeSlots, 1)
@@ -1140,8 +1140,10 @@ async function seedIntentsForFixedUsers(opts: {
             entityType: NotificationEntity.INTENT,
             entityId: updated.id,
             intentId: updated.id,
-            title: 'Meeting canceled',
-            body: 'Organizer posted a cancellation notice.',
+            data: {
+              intentTitle: updated.title,
+              reason: updated.cancelReason,
+            } as Prisma.InputJsonValue,
             dedupeKey: `intent_canceled:${m.userId}:${updated.id}`,
           })),
           skipDuplicates: true,
@@ -1202,8 +1204,10 @@ async function seedCanceledIntents(
           entityType: NotificationEntity.INTENT,
           entityId: updated.id,
           intentId: updated.id,
-          title: 'Meeting canceled',
-          body: `Organizer’s note: ${reason}`,
+          data: {
+            intentTitle: updated.title,
+            reason,
+          } as Prisma.InputJsonValue,
           dedupeKey: `intent_canceled:${m.userId}:${updated.id}`,
           createdAt: new Date(),
         })),
@@ -1255,11 +1259,10 @@ async function seedNotificationsGeneric(
           entityType: NotificationEntity.INTENT,
           entityId: intent.id,
           intentId: intent.id,
-          title: `New event: ${intent.title}`,
-          body: `${owner.name ?? 'Someone'} created "${intent.title}".`,
           data: {
+            intentTitle: intent.title,
             address: intent.address,
-            startAt: intent.startAt,
+            startAt: intent.startAt.toISOString(),
             meetingKind: intent.meetingKind,
           } as Prisma.InputJsonValue,
           dedupeKey: `intent_created:${r.id}:${intent.id}`,
@@ -1276,9 +1279,9 @@ async function seedNotificationsGeneric(
             entityType: NotificationEntity.INTENT,
             entityId: intent.id,
             intentId: intent.id,
-            title: `You're invited: ${intent.title}`,
-            body: `${owner.name ?? 'Someone'} invited you to join "${intent.title}".`,
-            data: { invite: true } as Prisma.InputJsonValue,
+            data: {
+              intentTitle: intent.title,
+            } as Prisma.InputJsonValue,
             dedupeKey: `intent_invite:${r.id}:${intent.id}`,
           },
         });
@@ -1294,12 +1297,9 @@ async function seedNotificationsGeneric(
             entityType: NotificationEntity.INTENT,
             entityId: intent.id,
             intentId: intent.id,
-            title: `Reminder: ${intent.title}`,
-            body: `Starts at ${new Date(intent.startAt).toLocaleString()}.`,
             data: {
-              startsInMinutes: Math.floor(
-                (new Date(intent.startAt).getTime() - Date.now()) / 60000
-              ),
+              intentTitle: intent.title,
+              startsAt: intent.startAt.toISOString(),
             } as Prisma.InputJsonValue,
             dedupeKey: `intent_reminder:${r.id}:${intent.id}`,
           },
@@ -1308,27 +1308,30 @@ async function seedNotificationsGeneric(
     }
   }
 
-  // Messages (use kind=SYSTEM; entityType=MESSAGE)
+  // DM Messages (use kind=NEW_MESSAGE; entityType=MESSAGE)
   for (let i = 0; i < 25; i++) {
     const sender = pick(users);
     const recipient = pick(users.filter((u) => u.id !== sender.id));
     const msgId = idLike('msg');
+    const messageContent = pick([
+      'Hey!',
+      'Are you coming?',
+      "Let's connect.",
+      'See you soon!',
+    ]);
 
     await prisma.notification.create({
       data: {
-        kind: NotificationKind.SYSTEM,
+        kind: NotificationKind.NEW_MESSAGE,
         recipientId: recipient.id,
         actorId: sender.id,
         entityType: NotificationEntity.MESSAGE,
         entityId: msgId,
-        title: `New message from ${sender.name ?? 'User'}`,
-        body: `“${pick(['Hey!', 'Are you coming?', 'Let’s connect.', 'See you soon!'])}”`,
         data: {
-          subtype: 'MESSAGE_RECEIVED',
-          conversationId: idLike('dm'),
-          preview: pick(['👍', 'Got it', 'OK', 'See you', 'Thanks!']),
+          messageContent,
+          threadId: idLike('dm'),
         } as Prisma.InputJsonValue,
-        dedupeKey: `system_message:${recipient.id}:${msgId}`,
+        dedupeKey: `dm_message:${recipient.id}:${msgId}`,
       },
     });
   }
@@ -1347,8 +1350,6 @@ async function seedNotificationsGeneric(
         actorId: null,
         entityType: NotificationEntity.PAYMENT,
         entityId: payId,
-        title: `Payment received`,
-        body: `We registered your payment ${amount.toFixed(2)} ${currency}.`,
         data: {
           subtype: 'PAYMENT_REGISTERED',
           amount,
@@ -1478,7 +1479,7 @@ async function seedDmThreads(users: User[]) {
 /** ---------- Seed: Comments ---------- */
 async function seedComments(
   allIntents: Array<{ intent: any; owner: User }>,
-  users: User[]
+  _users: User[]
 ) {
   const comments: any[] = [];
 
@@ -1542,6 +1543,40 @@ async function seedComments(
 
       comments.push(rootComment);
 
+      // Notify intent owners/moderators about new comment (if not deleted)
+      if (!isDeleted) {
+        const ownersAndMods = await prisma.intentMember.findMany({
+          where: {
+            intentId: intent.id,
+            role: { in: ['OWNER', 'MODERATOR'] },
+            status: 'JOINED',
+            userId: { not: author!.userId },
+          },
+          select: { userId: true },
+        });
+
+        if (ownersAndMods.length > 0) {
+          await prisma.notification.createMany({
+            data: ownersAndMods.map((m) => ({
+              kind: NotificationKind.INTENT_COMMENT_ADDED,
+              recipientId: m.userId,
+              actorId: author!.userId,
+              entityType: NotificationEntity.INTENT,
+              entityId: intent.id,
+              intentId: intent.id,
+              data: {
+                commentId: rootComment.id,
+                intentTitle: intent.title,
+                commentContent: commentContent.slice(0, 100),
+              } as Prisma.InputJsonValue,
+              dedupeKey: `comment_added:${m.userId}:${rootComment.id}`,
+              createdAt,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
       // 40% chance of having 1-3 replies
       if (rand() > 0.6) {
         const replyCount = 1 + Math.floor(rand() * 3);
@@ -1601,6 +1636,28 @@ async function seedComments(
           });
 
           comments.push(reply);
+
+          // Notify parent comment author about reply (if not hidden and not same author)
+          if (!hiddenAt && replyAuthor!.userId !== rootComment.authorId) {
+            await prisma.notification.create({
+              data: {
+                kind: NotificationKind.COMMENT_REPLY,
+                recipientId: rootComment.authorId,
+                actorId: replyAuthor!.userId,
+                entityType: NotificationEntity.INTENT,
+                entityId: intent.id,
+                intentId: intent.id,
+                data: {
+                  commentId: reply.id,
+                  parentCommentId: rootComment.id,
+                  intentTitle: intent.title,
+                  commentContent: replyContent.slice(0, 100),
+                } as Prisma.InputJsonValue,
+                dedupeKey: `comment_reply:${rootComment.authorId}:${reply.id}`,
+                createdAt: replyCreatedAt,
+              },
+            });
+          }
         }
       }
     }
@@ -1628,7 +1685,7 @@ async function seedComments(
 /** ---------- Seed: Reviews ---------- */
 async function seedReviews(
   allIntents: Array<{ intent: any; owner: User }>,
-  users: User[]
+  _users: User[]
 ) {
   const reviews: any[] = [];
 
@@ -1738,6 +1795,41 @@ async function seedReviews(
       });
 
       reviews.push(review);
+
+      // Notify intent owners/moderators about new review (if not deleted)
+      if (!isDeleted) {
+        const ownersAndMods = await prisma.intentMember.findMany({
+          where: {
+            intentId: intent.id,
+            role: { in: ['OWNER', 'MODERATOR'] },
+            status: 'JOINED',
+            userId: { not: reviewer.userId },
+          },
+          select: { userId: true },
+        });
+
+        if (ownersAndMods.length > 0) {
+          await prisma.notification.createMany({
+            data: ownersAndMods.map((m) => ({
+              kind: NotificationKind.INTENT_REVIEW_RECEIVED,
+              recipientId: m.userId,
+              actorId: reviewer.userId,
+              entityType: NotificationEntity.REVIEW,
+              entityId: review.id,
+              intentId: intent.id,
+              data: {
+                reviewId: review.id,
+                intentTitle: intent.title,
+                rating,
+                reviewContent: reviewContent?.slice(0, 100) || null,
+              } as Prisma.InputJsonValue,
+              dedupeKey: `review_received:${m.userId}:${review.id}`,
+              createdAt,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
     }
   }
 
@@ -1824,7 +1916,7 @@ async function seedReports(
 /** ---------- Seed: Event Chat Messages ---------- */
 async function seedEventChatMessages(
   allIntents: Array<{ intent: any; owner: User }>,
-  users: User[]
+  _users: User[]
 ) {
   const messages: any[] = [];
 

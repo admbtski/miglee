@@ -399,6 +399,7 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         id: true,
         endAt: true,
         ownerId: true,
+        title: true,
         members: {
           where: {
             userId: user.id,
@@ -531,12 +532,6 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       const kind = hasFeedback
         ? PrismaNotificationKind.INTENT_FEEDBACK_RECEIVED
         : PrismaNotificationKind.INTENT_REVIEW_RECEIVED;
-      const title = hasFeedback
-        ? 'New feedback received'
-        : 'New review received';
-      const body = hasFeedback
-        ? `Someone submitted feedback for your event (${rating} stars)`
-        : `Someone left a ${rating}-star review`;
 
       const notif = await prisma.notification.create({
         data: {
@@ -546,9 +541,17 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
           entityType: PrismaNotificationEntity.REVIEW,
           entityId: result.review.id,
           intentId,
-          title,
-          body,
+          title: null,
+          body: null,
           dedupeKey: `review_feedback:${intentId}:${result.review.id}`,
+          data: {
+            intentId,
+            intentTitle: intent.title,
+            actorName: user.name,
+            rating,
+            reviewContent: content?.slice(0, 100) || undefined,
+            hasFeedback,
+          },
         },
         include: NOTIFICATION_INCLUDE,
       });
