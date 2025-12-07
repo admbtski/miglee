@@ -6,7 +6,7 @@ import { ReportButton } from '@/components/ui/report-button';
 import { ShareModal } from '@/components/ui/share-modal';
 import { useIntentDetailQuery } from '@/lib/api/intents';
 import { useMeQuery } from '@/lib/api/auth';
-import { computeJoinState } from '@/lib/utils/intent-join-state';
+import { computeJoinState } from '@/features/intents/utils/intent-join-state';
 import { formatParticipantsShort } from '@/lib/utils/capacity-formatter';
 import type { EventDetailsData } from '@/types/event-details';
 import {

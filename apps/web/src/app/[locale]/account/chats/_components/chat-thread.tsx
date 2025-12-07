@@ -15,7 +15,7 @@ import {
   User2,
   Loader2,
 } from 'lucide-react';
-import type { ChatKind, Message } from '../_types';
+import type { ChatKind, Message } from '@/features/chat/types';
 
 // Import sub-components
 import { Avatar } from './avatar';

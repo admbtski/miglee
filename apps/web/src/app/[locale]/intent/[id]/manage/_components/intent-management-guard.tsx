@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
-import { useIntentPermissions } from '@/hooks/use-intent-permissions';
+import { useIntentPermissions } from '@/features/intents/hooks/use-intent-permissions';
 
 interface IntentManagementGuardProps {
   intentId: string;

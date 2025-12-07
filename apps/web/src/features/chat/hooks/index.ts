@@ -1,5 +1,5 @@
 /**
- * Chat Hooks - Barrel Export
+ * Chat Feature Hooks
  */
 
 export { useChannelChat } from './use-channel-chat';

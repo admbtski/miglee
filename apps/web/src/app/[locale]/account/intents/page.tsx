@@ -25,8 +25,10 @@ import {
 } from './_components/my-intent-card';
 import { CancelIntentModals } from './_components/cancel-intent-modals';
 import { DeleteIntentModals } from './_components/delete-intent-modals';
-import { useMyIntentsFilters } from './_hooks/use-my-intents-filters';
-import { useIntentsModals } from './_hooks/use-intents-modals';
+import {
+  useMyIntentsFilters,
+  useIntentsModals,
+} from '@/features/intents/hooks';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { AccountPageHeader } from '../_components';
 

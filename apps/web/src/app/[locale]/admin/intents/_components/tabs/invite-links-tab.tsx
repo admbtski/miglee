@@ -1,6 +1,6 @@
 'use client';
 
-import { InviteLinksPanel } from '@/app/[locale]/account/intents/_components/management/panels';
+import { InviteLinksPanel } from '@/app/[locale]/intent/[id]/manage/invite-links/_components/invite-links-panel';
 
 type InviteLinksTabProps = {
   intentId: string;

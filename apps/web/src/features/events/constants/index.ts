@@ -2,7 +2,7 @@
  * Constants for the intents search page
  */
 
-import type { SortKey } from '../_types';
+import type { SortKey } from '../types';
 
 /**
  * Default distance radius in kilometers for location-based search

@@ -6,8 +6,8 @@
 
 import { useMemo } from 'react';
 import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
-import type { CommittedFilters } from '../_types';
-import { DEFAULT_DISTANCE_KM } from '../_constants';
+import type { CommittedFilters } from '../types';
+import { DEFAULT_DISTANCE_KM } from '../constants';
 
 /**
  * Calculates the number of active filters

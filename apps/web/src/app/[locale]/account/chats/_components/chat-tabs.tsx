@@ -6,7 +6,7 @@
 
 import { memo, useCallback } from 'react';
 import { User2, Hash } from 'lucide-react';
-import type { ChatKind } from '../_types';
+import type { ChatKind } from '@/features/chat/types';
 
 type ChatTabsProps = {
   tab: ChatKind;

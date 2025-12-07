@@ -1,5 +1,5 @@
 import type { EventDetailsData } from '@/types/event-details';
-import { formatDuration } from '@/lib/utils/intent-join-state';
+import { formatDuration } from '@/features/intents/utils/intent-join-state';
 import {
   Clock,
   ClockFading,

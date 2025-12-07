@@ -11,7 +11,7 @@
 import { memo, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LeftFiltersPanel } from './left-filters-panel';
-import type { CommittedFilters } from '../_types';
+import type { CommittedFilters } from '@/features/events/types';
 
 export type MobileFiltersDrawerProps = {
   isOpen: boolean;

@@ -11,8 +11,8 @@ import {
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
 import type { GetIntentsQueryVariables } from '@/lib/api/__generated__/react-query-update';
-import type { SortKey } from '../_types';
-import { VALID_SORT_KEYS } from '../_constants';
+import type { SortKey } from '../types';
+import { VALID_SORT_KEYS } from '../constants';
 
 const buildUrl = (pathname: string, params: URLSearchParams): string =>
   `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;

@@ -1,4 +1,4 @@
-import type { JoinStateResult } from '@/lib/utils/intent-join-state';
+import type { JoinStateResult } from '@/features/intents/utils/intent-join-state';
 
 /**
  * Typ danych dla detalu wydarzenia

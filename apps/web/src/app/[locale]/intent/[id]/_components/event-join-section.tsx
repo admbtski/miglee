@@ -11,7 +11,7 @@ import {
   useIntentJoinQuestionsQuery,
   useRequestJoinIntentWithAnswersMutation,
 } from '@/lib/api/join-form';
-import { formatOpensIn } from '@/lib/utils/intent-join-state';
+import { formatOpensIn } from '@/features/intents/utils/intent-join-state';
 import type { EventDetailsData } from '@/types/event-details';
 import { useQueryClient } from '@tanstack/react-query';
 import {

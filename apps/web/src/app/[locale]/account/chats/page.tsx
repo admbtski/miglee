@@ -47,14 +47,15 @@ import {
   useRemoveIntentReaction,
 } from '@/lib/api/reactions';
 // Chat components imported in sub-components
-import { EditMessageModal } from '@/components/chat/EditMessageModal';
-import { DeleteConfirmModal } from '@/components/chat/DeleteConfirmModal';
-import { UserPicker, type PickedUser } from '@/components/chat/UserPicker';
+import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
+import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
+import {
+  UserPicker,
+  type PickedUser,
+} from '@/features/chat/components/UserPicker';
 
 // Custom Hooks
-import { useMessageActions } from './_hooks/use-message-actions';
-// import { useDmChat } from './_hooks/use-dm-chat';
-// import { useChannelChat } from './_hooks/use-channel-chat';
+import { useMessageActions } from '@/features/chat/hooks';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 

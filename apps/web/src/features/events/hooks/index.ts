@@ -1,5 +1,5 @@
 /**
- * Main Search Page Hooks - Barrel Export
+ * Events Feature Hooks
  */
 
 export { useActiveFiltersCount } from './use-active-filters-count';
@@ -11,4 +11,4 @@ export { useFilterState } from './use-filter-state';
 export { useFilterValidation } from './use-filter-validation';
 export { useIntentsQueryVariables } from './use-intents-query-variables';
 export { useLocationMode } from './use-location-mode';
-export { useSearchMeta } from './use-search-meta';
+export { useSearchMeta, type SearchMeta } from './use-search-meta';

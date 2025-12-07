@@ -5,4 +5,5 @@ const endpoint =
 
 export const gqlClient = new GraphQLClient(endpoint, {
   credentials: 'include',
+  mode: 'cors',
 });

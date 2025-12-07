@@ -6,12 +6,12 @@
 
 import Link from 'next/link';
 import React, { useState, useRef } from 'react';
-import type { Message } from '../_types';
-import { MessageReactions } from '@/components/chat/MessageReactions';
-import { ReadReceipt } from '@/components/chat/ReadReceipt';
-import { MessageActions } from '@/components/chat/MessageActions';
-import { ReactionsBar } from '@/components/chat/ReactionsBar';
-import { MessageMenuPopover } from '@/components/chat/MessageMenuPopover';
+import type { Message } from '@/features/chat/types';
+import { MessageReactions } from '@/features/chat/components/MessageReactions';
+import { ReadReceipt } from '@/features/chat/components/ReadReceipt';
+import { MessageActions } from '@/features/chat/components/MessageActions';
+import { ReactionsBar } from '@/features/chat/components/ReactionsBar';
+import { MessageMenuPopover } from '@/features/chat/components/MessageMenuPopover';
 
 type BubbleProps = {
   align?: 'left' | 'right';

@@ -12,8 +12,8 @@ import {
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
-import type { CommittedFilters } from '../_types';
-import { DEFAULT_DISTANCE_KM, FILTER_PARAM_KEYS } from '../_constants';
+import type { CommittedFilters } from '../types';
+import { DEFAULT_DISTANCE_KM, FILTER_PARAM_KEYS } from '../constants';
 
 const parseCsv = (sp: URLSearchParams, key: string): string[] =>
   sp

@@ -5,7 +5,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { LocationMode, MapCenter } from '../_types';
+import type { LocationMode, MapCenter } from '../types';
 
 type UseLocationModeParams = {
   city: string | null;

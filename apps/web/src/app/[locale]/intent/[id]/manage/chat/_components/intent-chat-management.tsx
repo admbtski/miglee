@@ -26,9 +26,9 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useMeQuery } from '@/lib/api/auth';
 import { ChatThread } from '@/app/[locale]/account/chats/_components/chat-thread';
-import { Message as ChatMessage } from '@/app/[locale]/account/chats/_types';
-import { EditMessageModal } from '@/components/chat/EditMessageModal';
-import { DeleteConfirmModal } from '@/components/chat/DeleteConfirmModal';
+import { Message as ChatMessage } from '@/features/chat/types';
+import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
+import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
 import { useIntentQuery } from '@/lib/api/intents';
 import { Loader2 } from 'lucide-react';
 

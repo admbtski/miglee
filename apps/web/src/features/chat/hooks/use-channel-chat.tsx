@@ -47,7 +47,7 @@ import {
 } from '@/lib/api/event-chat-subscriptions';
 import { useIntentReactionAdded } from '@/lib/api/reactions-subscriptions';
 import { useMyMembershipsQuery } from '@/lib/api/intent-members';
-import type { Message } from '../_types';
+import type { Message } from '../types';
 
 // =============================================================================
 // Types

@@ -18,7 +18,7 @@ import { EventCard, type EventCardProps } from '../event-card';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
-import { notEmptyString } from '@/lib/utils/intents';
+import { notEmptyString } from '@/features/intents/utils/intents';
 
 /**
  * Maps raw intent data from API to EventCard component props

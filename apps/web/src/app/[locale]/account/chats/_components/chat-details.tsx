@@ -18,7 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import type { ChatKind } from '../_types';
+import type { ChatKind } from '@/features/chat/types';
 import { Section, Row } from './chat-details-section';
 
 type ChatDetailsProps = {
@@ -123,4 +123,3 @@ export function ChatDetails({ onClose, kind }: ChatDetailsProps) {
     </div>
   );
 }
-

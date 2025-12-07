@@ -5,7 +5,7 @@
 'use client';
 
 import { Search, User2 } from 'lucide-react';
-import type { Conversation } from '../_types';
+import type { Conversation } from '@/features/chat/types';
 import { Avatar } from './avatar';
 
 type ChatListProps = {
@@ -110,4 +110,3 @@ export function ChatList({
     </div>
   );
 }
-

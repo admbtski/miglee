@@ -42,15 +42,17 @@ import { MobileFiltersDrawer } from './_components/mobile-filters-drawer';
 import { StickyMobileSearchBar } from './_components/mobile-search-bar';
 import { TopDrawer } from './_components/top-drawer';
 import type { TopDrawerFocusSection } from './_components/top-drawer';
-import { useActiveFiltersCount } from './_hooks/use-active-filters-count';
-import { useCommittedFilters } from './_hooks/use-committed-filters';
-import { useCommittedMapVisible } from './_hooks/use-committed-map-vision';
-import { useCommittedSort } from './_hooks/use-committed-sort';
-import { useDebouncedHover } from './_hooks/use-debounced-hover';
-import { useIntentsQueryVariables } from './_hooks/use-intents-query-variables';
-import { useLocationMode } from './_hooks/use-location-mode';
-import type { CommittedFilters } from './_types';
-import type { SearchMeta } from './_hooks/use-search-meta';
+import {
+  useActiveFiltersCount,
+  useCommittedFilters,
+  useCommittedMapVisible,
+  useCommittedSort,
+  useDebouncedHover,
+  useIntentsQueryVariables,
+  useLocationMode,
+  type SearchMeta,
+} from '@/features/events/hooks';
+import type { CommittedFilters } from '@/features/events/types';
 
 const ServerClusteredMap = lazy(
   () =>

@@ -49,7 +49,7 @@ import {
   useDmThreadsSubscriptions,
 } from '@/lib/api/dm-subscriptions';
 import { useDmReactionAdded } from '@/lib/api/reactions-subscriptions';
-import type { Message } from '../_types';
+import type { Message } from '../types';
 // Utility function for time formatting
 function formatRelativeTime(isoString: string): string {
   const now = Date.now();

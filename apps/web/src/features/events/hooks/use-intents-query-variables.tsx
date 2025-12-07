@@ -17,7 +17,7 @@ import type {
   CommittedFilters,
   IntentsQueryVariables,
   LocationMode,
-} from '../_types';
+} from '../types';
 
 type UseIntentsQueryVariablesParams = {
   filters: CommittedFilters;
