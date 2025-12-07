@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
-import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
+import { SponsorPlan } from '../../../_components/subscription-panel-types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {

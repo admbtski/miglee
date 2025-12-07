@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { ArrowLeft, Clock, Lock, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SponsorPlan } from '../../subscription/_components/subscription-panel-types';
+import { SponsorPlan } from '../../../_components/subscription-panel-types';
 import { useCreateEventSponsorshipCheckout } from '@/lib/api/billing';
 import { IntentPlan } from '@/lib/api/__generated__/react-query-update';
 import { toast } from 'sonner';

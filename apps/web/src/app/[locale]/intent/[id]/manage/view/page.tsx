@@ -3,10 +3,10 @@
  * Shows the public event view inside the management interface
  */
 
-import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { IntentViewManagement } from './_components/intent-view-management';
+import { Suspense } from 'react';
 import { ManagementPageLayout } from '../_components/management-page-layout';
+import { IntentViewManagement } from './_components/intent-view-management';
 
 type PageProps = {
   params: Promise<{ id: string }>;

@@ -1,7 +1,7 @@
 'use client';
 
-import { BoostPage } from '../../subscription/_components/boost-page';
-import { useSubscriptionData } from '../../subscription/_components/use-subscription-data';
+import { BoostPage } from './boost-page';
+import { useSubscriptionData } from '../../../_components/use-subscription-data';
 import { useIntentQuery } from '@/lib/api/intents';
 import {
   PlanUpgradeBanner,

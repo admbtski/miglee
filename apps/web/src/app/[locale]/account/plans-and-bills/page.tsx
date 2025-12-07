@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { BillingPageWrapper } from './_components/billing-page-wrapper';
-import { PaymentResultModal } from '@/components/billing/payment-result-modal';
+import { PaymentResultModal } from '@/app/[locale]/account/plans-and-bills/_components/payment-result-modal';
 
 export default function BillingPage() {
   return (

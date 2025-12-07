@@ -1,7 +1,7 @@
 'use client';
 
-import { LocalPushPage } from '../../subscription/_components/local-push-page';
-import { useSubscriptionData } from '../../subscription/_components/use-subscription-data';
+import { LocalPushPage } from '../../../_components/local-push-page';
+import { useSubscriptionData } from '../../../_components/use-subscription-data';
 import { useIntentQuery } from '@/lib/api/intents';
 import {
   PlanUpgradeBanner,

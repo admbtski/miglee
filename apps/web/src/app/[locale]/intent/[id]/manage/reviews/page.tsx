@@ -3,8 +3,8 @@
  * View and moderate reviews
  */
 
-import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import { IntentReviewsManagement } from './_components/intent-reviews-management';
 
 type PageProps = {

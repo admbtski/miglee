@@ -312,22 +312,6 @@ export default function MyIntentsPage() {
         onClose={closeCancel}
         onSuccess={() => {}}
       />
-      {/*
-      <CreateEditIntentModalConnect
-        intentId={editId ?? undefined}
-        open={Boolean(editId)}
-        onClose={closeEdit}
-      />
-*/}
-      {/*
-      <EventManagementModalConnect
-        intentId={manageId ?? ''}
-        canManage={true}
-        isPremium={true}
-        open={Boolean(manageId)}
-        onClose={closeManage}
-      />
-*/}
     </div>
   );
 }
