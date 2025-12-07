@@ -25,11 +25,11 @@ import {
 } from 'lucide-react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { useUpdateIntentJoinQuestionsMutation } from '../_hooks/use-update-intent-join-questions';
 import {
   useIntentJoinRequestsQuery,
   useApproveJoinRequestMutation,
   useRejectJoinRequestMutation,
+  useUpdateIntentJoinQuestionsMutation,
 } from '@/lib/api/join-form';
 import {
   useFloating,

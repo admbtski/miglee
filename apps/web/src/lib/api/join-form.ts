@@ -24,6 +24,9 @@ import {
   CancelJoinRequestDocument,
   CancelJoinRequestMutation,
   CancelJoinRequestMutationVariables,
+  UpdateIntentJoinQuestionsDocument,
+  UpdateIntentJoinQuestionsMutation,
+  UpdateIntentJoinQuestionsMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
@@ -350,6 +353,44 @@ export function useCancelJoinRequestMutation(
       queryClient.invalidateQueries({
         queryKey: ['GetIntent', { id: variables.intentId }],
       });
+    },
+    ...options,
+  });
+}
+
+// Update Join Questions (bulk replace)
+export function useUpdateIntentJoinQuestionsMutation(
+  options?: UseMutationOptions<
+    UpdateIntentJoinQuestionsMutation,
+    Error,
+    UpdateIntentJoinQuestionsMutationVariables
+  >
+) {
+  const queryClient = getQueryClient();
+  return useMutation<
+    UpdateIntentJoinQuestionsMutation,
+    Error,
+    UpdateIntentJoinQuestionsMutationVariables
+  >({
+    mutationKey: ['UpdateIntentJoinQuestions'],
+    mutationFn: async (variables) =>
+      gqlClient.request<
+        UpdateIntentJoinQuestionsMutation,
+        UpdateIntentJoinQuestionsMutationVariables
+      >(UpdateIntentJoinQuestionsDocument, variables),
+    onSuccess: (_data, variables) => {
+      // Invalidate intent detail query to refetch with updated questions
+      if (variables.input.intentId) {
+        queryClient.invalidateQueries({
+          queryKey: ['GetIntentDetail', { id: variables.input.intentId }],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            'GetIntentJoinQuestions',
+            { intentId: variables.input.intentId },
+          ],
+        });
+      }
     },
     ...options,
   });
