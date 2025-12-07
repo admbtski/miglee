@@ -29,8 +29,8 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
     offset: page * limit,
   });
 
-  const reviews = (data as any)?.userReviews?.items || [];
-  const total = (data as any)?.userReviews?.total || 0;
+  const reviews = data?.userReviews?.items || [];
+  const total = data?.userReviews?.total || 0;
   const totalPages = Math.ceil(total / limit);
 
   if (isLoading) {
@@ -79,9 +79,9 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
     <div className="space-y-4">
       {/* Reviews List */}
       <div className="space-y-4">
-        {reviews.map((review: any) => {
+        {reviews.map((review) => {
           const createdDate = new Date(review.createdAt);
-          const categoryNames = review.intent?.categories?.[0]?.names as any;
+          const categoryNames = review.intent?.categories?.[0]?.names;
           const categoryName =
             categoryNames?.pl || categoryNames?.en || 'Wydarzenie';
 

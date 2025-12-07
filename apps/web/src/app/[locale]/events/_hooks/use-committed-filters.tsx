@@ -51,10 +51,10 @@ export function useCommittedFilters() {
   const state = useMemo<CommittedFilters>(() => {
     const q = search.get('q') ?? '';
     const city = search.get('city');
-    const cityLat = Number(search.get('cityLat'));
-    const cityLng = Number(search.get('cityLng'));
+    const cityLat = Number.parseFloat(search.get('cityLat') ?? '');
+    const cityLng = Number.parseFloat(search.get('cityLng') ?? '');
     const cityPlaceId = search.get('cityPlaceId');
-    const distance = Number(search.get('distance'));
+    const distance = Number.parseInt(search.get('distance') ?? '');
     const distanceKm =
       Number.isFinite(distance) && distance > 0
         ? distance
@@ -161,5 +161,6 @@ export function useCommittedFilters() {
     router.replace(buildUrl(defaultFilters), { scroll: false });
   }, [buildUrl, router]);
 
+  console.table(state);
   return { ...state, apply, reset } as const;
 }

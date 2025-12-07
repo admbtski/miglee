@@ -49,6 +49,19 @@ import {
 export const USER_PROFILE_KEY = (variables: GetUserProfileQueryVariables) =>
   ['UserProfile', variables] as const;
 
+// =============================================================================
+// Server-side fetchers (for use in Server Components / generateMetadata)
+// =============================================================================
+
+export async function fetchUserProfile(
+  variables: GetUserProfileQueryVariables
+) {
+  return gqlClient.request<GetUserProfileQuery, GetUserProfileQueryVariables>(
+    GetUserProfileDocument,
+    variables
+  );
+}
+
 export const MY_FULL_PROFILE_KEY = (
   variables: GetMyFullProfileQueryVariables
 ) => ['MyFullProfile', variables] as const;

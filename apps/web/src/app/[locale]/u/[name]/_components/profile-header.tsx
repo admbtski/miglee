@@ -20,6 +20,7 @@ import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 type ProfileHeaderProps = {
   user: NonNullable<GetUserProfileQuery['user']>;
@@ -27,6 +28,7 @@ type ProfileHeaderProps = {
 };
 
 export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
+  const { locale } = useI18n();
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const displayName = user.profile?.displayName || user.name;
   const city = user.profile?.city;
@@ -57,7 +59,7 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
         {/* Edit Button */}
         {isOwnProfile && (
           <Link
-            href="/account/profile"
+            href={`${locale}/account/profile`}
             className="absolute top-4 right-4 inline-flex items-center gap-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 shadow-lg border border-white/20 hover:bg-white dark:hover:bg-zinc-800 transition-all"
           >
             <Settings className="h-4 w-4" strokeWidth={2} />
@@ -197,7 +199,7 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800">
                       <Star className="h-4 w-4 text-amber-500" />
                       <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                        {user.stats.hostRatingAvg.toFixed(1)}
+                        {user.stats.hostRatingAvg?.toFixed(1) ?? '0.0'}
                       </span>
                       <span className="text-xs text-zinc-500 dark:text-zinc-400">
                         ocena

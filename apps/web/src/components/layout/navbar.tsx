@@ -92,14 +92,16 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
           </a>
 
           {/* Desktop search bar */}
-          <div className="mx-3 hidden flex-1 md:block">{searchBar}</div>
+          <div className="mx-3 hidden flex-1 md:block max-w-2xl">
+            {searchBar}
+          </div>
 
           {/* Right actions (desktop) */}
           <div className="ml-auto hidden items-center gap-2 md:flex">
             <button
               type="button"
               onClick={openPost}
-              className="rounded-full border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="cursor-pointer rounded-full border border-zinc-300 px-4 py-2 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 transition-colors"
             >
               Post an event
             </button>
@@ -179,7 +181,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
             <button
               type="button"
               onClick={openPost}
-              className="rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 flex-nowrap text-nowrap"
+              className="cursor-pointer rounded-full border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800 flex-nowrap text-nowrap transition-colors"
               aria-label="Post an event"
               title="Post an event"
             >

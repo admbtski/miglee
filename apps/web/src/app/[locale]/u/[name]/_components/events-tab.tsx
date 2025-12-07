@@ -16,12 +16,14 @@ import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-up
 import { useUserEventsQuery } from '@/lib/api/user-events';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 type EventsTabProps = {
   user: NonNullable<GetUserProfileQuery['user']>;
 };
 
 export function EventsTab({ user }: EventsTabProps) {
+  const { locale } = useI18n();
   const [page, setPage] = useState(0);
   const limit = 10;
 
@@ -31,8 +33,8 @@ export function EventsTab({ user }: EventsTabProps) {
     offset: page * limit,
   });
 
-  const events = (data as any)?.userEvents?.items || [];
-  const total = (data as any)?.userEvents?.total || 0;
+  const events = data?.userEvents?.items || [];
+  const total = data?.userEvents?.total || 0;
   const totalPages = Math.ceil(total / limit);
 
   if (isLoading) {
@@ -81,9 +83,9 @@ export function EventsTab({ user }: EventsTabProps) {
     <div className="space-y-4">
       {/* Events List */}
       <div className="space-y-3">
-        {events.map((event: any) => {
+        {events.map((event) => {
           const startDate = new Date(event.startAt);
-          const categoryNames = event.categories?.[0]?.names as any;
+          const categoryNames = event.categories?.[0]?.names;
           const categoryName =
             categoryNames?.pl || categoryNames?.en || 'Wydarzenie';
           const isOnline = event.meetingKind === 'ONLINE';
@@ -93,7 +95,7 @@ export function EventsTab({ user }: EventsTabProps) {
           return (
             <Link
               key={event.id}
-              href={`/intent/${event.id}`}
+              href={`${locale}/intent/${event.id}`}
               className="group block rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-sm transition-all hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700"
             >
               <div className="flex items-start justify-between gap-4">

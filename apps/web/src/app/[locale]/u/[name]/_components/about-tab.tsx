@@ -1,19 +1,19 @@
 'use client';
 
+import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import {
+  Activity,
+  Dumbbell,
+  ExternalLink,
+  Facebook,
   Globe,
   Heart,
   Instagram,
-  Facebook,
-  Twitter,
-  MessageCircle,
-  Activity,
-  ExternalLink,
   Languages,
+  MessageCircle,
   Sparkles,
-  Dumbbell,
+  Twitter,
 } from 'lucide-react';
-import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 
 type AboutTabProps = {
   user: NonNullable<GetUserProfileQuery['user']>;
@@ -88,7 +88,7 @@ export function AboutTab({ user }: AboutTabProps) {
   const bioLong = user.profile?.bioLong;
   const speaks = user.profile?.speaks ?? [];
   const interests = user.profile?.interests ?? [];
-  const disciplines = user.disciplines ?? [];
+  const categoryLevels = user.categoryLevels ?? [];
   const socialLinks = user.socialLinks ?? [];
 
   const getCategoryName = (category: any) => {
@@ -102,7 +102,7 @@ export function AboutTab({ user }: AboutTabProps) {
     bioLong ||
     speaks.length > 0 ||
     interests.length > 0 ||
-    disciplines.length > 0 ||
+    categoryLevels.length > 0 ||
     socialLinks.length > 0;
 
   return (
@@ -172,35 +172,34 @@ export function AboutTab({ user }: AboutTabProps) {
         </div>
       )}
 
-      {/* Sports & Disciplines */}
-      {disciplines.length > 0 && (
+      {categoryLevels.length > 0 && (
         <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
               <Dumbbell className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Sporty i dyscypliny
+              Poziomy
             </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {disciplines.map((discipline) => {
+            {categoryLevels.map((categoryLevel) => {
               const levelConfig =
-                LEVEL_CONFIG[discipline.level as keyof typeof LEVEL_CONFIG];
-              const categoryName = getCategoryName(discipline.category);
+                LEVEL_CONFIG[categoryLevel.level as keyof typeof LEVEL_CONFIG];
+              const categoryName = getCategoryName(categoryLevel.category);
 
               return (
                 <div
-                  key={discipline.id}
+                  key={categoryLevel.id}
                   className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4"
                 >
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                       {categoryName}
                     </span>
-                    {discipline.notes && (
+                    {categoryLevel.notes && (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
-                        {discipline.notes}
+                        {categoryLevel.notes}
                       </p>
                     )}
                   </div>

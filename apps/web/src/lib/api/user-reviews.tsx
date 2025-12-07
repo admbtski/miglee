@@ -1,29 +1,37 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { gqlClient } from './client';
+import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import {
   GetUserReviewsDocument,
   type GetUserReviewsQuery,
   type GetUserReviewsQueryVariables,
 } from './__generated__/react-query-update';
+import { gqlClient } from './client';
 
 export const USER_REVIEWS_KEY = 'userReviews';
 
 export function buildUserReviewsOptions(
   variables: GetUserReviewsQueryVariables,
-  options?: Partial<UseQueryOptions<GetUserReviewsQuery>>
-): any {
+  options?: Omit<
+    UseQueryOptions<GetUserReviewsQuery, Error, GetUserReviewsQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
+): UseQueryOptions<GetUserReviewsQuery, Error, GetUserReviewsQuery, QueryKey> {
   return {
     queryKey: [USER_REVIEWS_KEY, variables],
-    queryFn: async () => {
-      return gqlClient.request(GetUserReviewsDocument, variables);
-    },
-    ...options,
+    queryFn: async () =>
+      gqlClient.request<GetUserReviewsQuery, GetUserReviewsQueryVariables>(
+        GetUserReviewsDocument,
+        variables
+      ),
+    ...(options ?? {}),
   };
 }
 
 export function useUserReviewsQuery(
   variables: GetUserReviewsQueryVariables,
-  options?: Partial<UseQueryOptions<GetUserReviewsQuery>>
+  options?: Omit<
+    UseQueryOptions<GetUserReviewsQuery, Error, GetUserReviewsQuery, QueryKey>,
+    'queryKey' | 'queryFn'
+  >
 ) {
   return useQuery(buildUserReviewsOptions(variables, options));
 }

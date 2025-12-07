@@ -1,8 +1,7 @@
+import { fetchUserProfile } from '@/lib/api/user-profile';
+import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 import { Metadata } from 'next';
 import { PublicProfileClient } from './_components/public-profile-client';
-import { gqlClient } from '@/lib/api/client';
-import { GetUserProfileDocument } from '@/lib/api/__generated__/react-query-update';
-import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 
 type Props = {
   params: Promise<{ name: string }>;
@@ -14,9 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   try {
     // Fetch user data for metadata
-    const data = await gqlClient.request(GetUserProfileDocument, {
-      name: username,
-    });
+    const data = await fetchUserProfile({ name: username });
 
     const user = data.user;
     if (!user) {
@@ -31,8 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const city = user.profile?.city;
     const country = user.profile?.country;
     const location = [city, country].filter(Boolean).join(', ');
-    const avatarUrl =
-      buildAvatarUrl(user.avatarKey, 'xl') || '/default-avatar.png';
+    const avatarUrl = buildAvatarUrl(user.avatarKey, 'xl') || '';
     const coverUrl =
       buildUserCoverUrl(user.profile?.coverKey, 'detail') || avatarUrl;
 
