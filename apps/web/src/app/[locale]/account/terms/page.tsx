@@ -9,9 +9,7 @@ import { AccountPageHeader } from '../_components';
 
 export default function TermsOfServicePage() {
   const { t, locale } = useI18n();
-  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'pl' | 'de'>(
-    locale as 'en' | 'pl' | 'de'
-  );
+  const [selectedLanguage, setSelectedLanguage] = useState(locale);
 
   // PDF URLs for static documents
   const pdfUrls = {

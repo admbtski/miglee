@@ -85,8 +85,8 @@ export const PublicProfileClientError = ({
 
 export function PublicProfileClient({ username }: PublicProfileClientProps) {
   const [activeTab, setActiveTab] = useState<TabId>('about');
-
   const { data: authData } = useMeQuery();
+
   const currentUserId = authData?.me?.id;
 
   const { data, isLoading, error } = useUserProfileQuery({

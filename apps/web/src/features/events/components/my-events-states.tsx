@@ -96,7 +96,6 @@ function EventCardSkeleton() {
           {/* Title */}
           <div className="space-y-2">
             <div className="h-6 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-            <div className="h-6 w-1/2 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
           </div>
 
           {/* Description */}
@@ -107,10 +106,6 @@ function EventCardSkeleton() {
 
           {/* Meta Info */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-              <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
-            </div>
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
               <div className="h-4 w-40 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
