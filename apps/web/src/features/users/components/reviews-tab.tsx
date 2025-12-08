@@ -14,12 +14,14 @@ import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-up
 import { useUserReviewsQuery } from '@/features/users/api/user-reviews';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 type ReviewsTabProps = {
   user: NonNullable<GetUserProfileQuery['user']>;
 };
 
 export function ReviewsTab({ user }: ReviewsTabProps) {
+  const { locale } = useI18n();
   const [page, setPage] = useState(0);
   const limit = 10;
 
@@ -80,10 +82,10 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
       {/* Reviews List */}
       <div className="space-y-4">
         {reviews.map((review) => {
+          // todo: use u18n
           const createdDate = new Date(review.createdAt);
           const categoryNames = review.event?.categories?.[0]?.names;
-          const categoryName =
-            categoryNames?.pl || categoryNames?.en || 'Wydarzenie';
+          const categoryName = categoryNames?.[locale ?? 'en'] ?? 'Wydarzenie';
 
           return (
             <div
@@ -93,7 +95,7 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
               {/* Header: Event Link & Date */}
               <div className="flex items-start justify-between gap-4 mb-4">
                 <Link
-                  href={`/event/${review.event?.id}`}
+                  href={`${locale}/event/${review.event?.id}`}
                   className="group flex-1 min-w-0"
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -107,6 +109,7 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
                 </Link>
                 <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 flex-shrink-0">
                   <Calendar className="h-4 w-4" />
+                  {/**  todo: use u18n */}
                   <span>{format(createdDate, 'PP', { locale: pl })}</span>
                 </div>
               </div>

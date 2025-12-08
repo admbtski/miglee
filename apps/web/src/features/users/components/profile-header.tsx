@@ -76,6 +76,7 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
     hostRatingAvg: user.stats?.hostRatingAvg ?? null,
   };
 
+  // todo: use u18n
   const dateLocale = locale === 'pl' ? pl : enUS;
 
   return (

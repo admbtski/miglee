@@ -91,6 +91,7 @@ export function AboutTab({ user }: AboutTabProps) {
   const categoryLevels = user.categoryLevels ?? [];
   const socialLinks = user.socialLinks ?? [];
 
+  // todo: use u18n
   const getCategoryName = (category: any) => {
     if (typeof category.names === 'object') {
       return category.names.pl || category.names.en || category.slug;
