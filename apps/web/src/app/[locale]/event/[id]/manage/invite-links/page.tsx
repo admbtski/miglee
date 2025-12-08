@@ -3,8 +3,12 @@
  * Manage event invite links
  */
 
+// TODO: Add i18n for page title, description, and loading text
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { InviteLinksPanel } from './_components/invite-links-panel';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

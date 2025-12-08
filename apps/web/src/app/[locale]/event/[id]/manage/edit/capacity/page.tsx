@@ -1,23 +1,32 @@
 'use client';
 
+/**
+ * Capacity Section
+ * Features: 1:1, Group, Custom modes with PRO gating
+ * Uses event's sponsorshipPlan to determine PRO access
+ */
+
+// TODO: Add i18n for all hardcoded strings (labels, descriptions, errors, PRO feature texts)
+
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { Crown, Info, Sparkles, UserPlus, Users } from 'lucide-react';
+
+// Components
+import { SegmentedControl } from '@/components/ui/segment-control';
+
+// Features
+import { RangeSlider } from '@/features/events/components/range-slider';
+
+// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
-import { Users, UserPlus, Sparkles, Info, Crown } from 'lucide-react';
-import { SegmentedControl } from '@/components/ui/segment-control';
-import { RangeSlider } from '@/features/events/components/range-slider';
 
 type Mode = 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM';
 
 const GROUP_MIN = 1;
 const GROUP_MAX = 50;
 
-/**
- * Capacity Section
- * Features: 1:1, Group, Custom modes with PRO gating
- * Uses event's sponsorshipPlan to determine PRO access
- */
 export default function CapacityPage() {
   const { event, isLoading, saveSection } = useEdit();
   const router = useRouter();
@@ -123,7 +132,7 @@ export default function CapacityPage() {
 
   // Navigate to plans page
   const handleUpgradeToPro = () => {
-    router.push(`/${params.locale}/event${params.id}/manage/plans`);
+    router.push(`/${params.locale}/event/${params.id}/manage/plans`);
   };
 
   // Handle range slider change

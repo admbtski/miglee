@@ -1,9 +1,17 @@
-// app/event/[id]/layout.tsx
-import { ConditionalNavbar } from '@/features/events/components/conditional-navbar';
+/**
+ * Event Detail Layout
+ * Layout for viewing event details with conditional navbar
+ */
+
+import type { ReactNode } from 'react';
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+
+// Features
+import { ConditionalNavbar } from '@/features/events';
+
+// Config
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
 
 export default function EventDetailLayout({
   children,

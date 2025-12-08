@@ -3,32 +3,38 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import {
-  Bell,
-  Check,
-  Trash2,
-  RefreshCcw,
-  Calendar,
-  MessageSquare,
-  CreditCard,
-  User,
-  Info,
   AlertCircle,
-  Loader2,
+  Bell,
+  Calendar,
+  Check,
   CheckCheck,
+  CreditCard,
+  Info,
+  Loader2,
+  MessageSquare,
+  RefreshCcw,
+  Trash2,
+  User,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl, enUS, de } from 'date-fns/locale';
+
+// Features
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
-  useNotificationsInfiniteQuery,
-  useMarkNotificationReadMutation,
   useDeleteNotificationMutation,
   useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+  useNotificationsInfiniteQuery,
 } from '@/features/notifications/api/notifications';
+
+// Types
 import type {
   GetNotificationsQuery,
   GetNotificationsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
+
+// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { AccountPageHeader } from '../_components';
 
@@ -466,6 +472,7 @@ export default function NotificationsPage() {
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 animate-pulse" />
               <Loader2 className="absolute inset-0 m-auto h-10 w-10 animate-spin text-indigo-600" />
             </div>
+            {/* TODO: Add i18n key for "Loading notifications..." */}
             <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
               Loading notifications...
             </p>

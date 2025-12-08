@@ -1,5 +1,19 @@
 'use client';
 
+/**
+ * SimpleCreatorPageClient - Simplified event creator
+ *
+ * Features:
+ * - Minimal cognitive load (max 4 decisions per step)
+ * - Quick presets for common choices
+ * - Draft auto-save
+ * - Creates events as DRAFT status by default
+ */
+
+// Note: This page uses Polish strings - already i18n ready pattern
+
+import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   CalendarDays,
   CheckCircle2,
@@ -10,15 +24,21 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
+
+// Features
 import { useCreateEventMutation } from '@/features/events/api/events';
-import { CategorySelectionProvider } from '@/features/events/components/category-selection-provider';
-import { SimpleEventFormValues } from '@/features/events/components/types';
-import { mapSimpleFormToCreateInput } from '@/features/events/components/mappers';
-import { toast, devLogger } from '@/lib/utils';
+import {
+  CategorySelectionProvider,
+  mapSimpleFormToCreateInput,
+  SuccessEventModal,
+} from '@/features/events';
+import type { SimpleEventFormValues } from '@/features/events/components/types';
+
+// Lib
+import { devLogger, toast } from '@/lib/utils';
+
+// Local components
 import { SimpleCreatorForm } from './simple-creator-form';
-import { SuccessEventModal } from '@/features/events/components/success-event-modal';
 
 /**
  * Step metadata for the simplified creator
@@ -34,15 +54,6 @@ const STEP_META = [
   { key: 'review', label: 'Podsumowanie', Icon: CheckCircle2 },
 ];
 
-/**
- * SimpleCreatorPageClient - Simplified event creator
- *
- * Features:
- * - Minimal cognitive load (max 4 decisions per step)
- * - Quick presets for common choices
- * - Draft auto-save
- * - Creates events as DRAFT status by default
- */
 export function SimpleCreatorPageClient() {
   const router = useRouter();
   const { mutateAsync: createAsync } = useCreateEventMutation();

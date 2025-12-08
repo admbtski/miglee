@@ -3,8 +3,12 @@
  * Cancel or delete event
  */
 
+// TODO: Add i18n for page title, description, and loading text
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { EventDangerZone } from './_components/event-danger-zone';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

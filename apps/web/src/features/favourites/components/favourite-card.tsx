@@ -3,20 +3,21 @@
 import { Heart, Calendar, MapPin, Users, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl, enUS, de } from 'date-fns/locale';
-import { useToggleFavouriteMutation } from '@/features/favourites/api/favourites';
-import type { MyFavouritesQuery } from '@/lib/api/__generated__/react-query-update';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+
+import { useToggleFavouriteMutation } from '@/features/favourites/api/favourites';
+import type { FavouriteItem } from '@/features/favourites/types';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { useLocalePath } from '@/hooks/use-locale-path';
 
-type FavouriteItem = NonNullable<
-  MyFavouritesQuery['myFavourites']['items']
->[number];
+/* ───────────────────────────── Props ───────────────────────────── */
 
-interface FavouriteCardProps {
+export interface FavouriteCardProps {
   favourite: FavouriteItem;
 }
+
+/* ───────────────────────────── Helpers ───────────────────────────── */
 
 function getDateLocale(locale: string) {
   switch (locale) {
@@ -29,6 +30,8 @@ function getDateLocale(locale: string) {
       return enUS;
   }
 }
+
+/* ───────────────────────────── Component ───────────────────────────── */
 
 export function FavouriteCard({ favourite }: FavouriteCardProps) {
   const { locale, t } = useI18n();
@@ -60,7 +63,7 @@ export function FavouriteCard({ favourite }: FavouriteCardProps) {
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className="group relative overflow-hidden rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] shadow-sm transition-all hover:shadow-lg"
     >
-      <Link href={localePath(`/event${event.id}`)} className="block">
+      <Link href={localePath(`/event/${event.id}`)} className="block">
         {/* Favourite Button */}
         <button
           type="button"

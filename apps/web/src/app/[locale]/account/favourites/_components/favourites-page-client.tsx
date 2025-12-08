@@ -1,17 +1,23 @@
 'use client';
 
-import { Heart, Loader2 } from 'lucide-react';
-import {
-  useMyFavouritesInfiniteQuery,
-  flatFavouritesPages,
-} from '@/features/favourites/api/favourites';
-import { useMemo } from 'react';
-import { FavouriteCard } from './favourite-card';
-import Link from 'next/link';
-import { useLocalePath } from '@/hooks/use-locale-path';
-import { AccountPageHeader } from '../../_components';
 import { AnimatePresence } from 'framer-motion';
+import { Heart, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useMemo } from 'react';
+
+// Features
+import {
+  FavouriteCard,
+  flatFavouritesPages,
+  useMyFavouritesInfiniteQuery,
+} from '@/features/favourites';
+
+// Hooks & i18n
+import { useLocalePath } from '@/hooks/use-locale-path';
 import { useI18n } from '@/lib/i18n/provider-ssr';
+
+// Layout
+import { AccountPageHeader } from '../../_components';
 
 export function FavouritesPageClient() {
   const { localePath } = useLocalePath();

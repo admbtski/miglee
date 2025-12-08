@@ -3,45 +3,51 @@
  * Navigation for event management interface
  */
 
+// TODO: Add i18n for all navigation labels
+
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useLocalePath } from '@/hooks/use-locale-path';
-import {
-  LayoutDashboard,
-  Users,
-  MessageSquare,
-  BarChart3,
-  Home,
-  ListCollapseIcon,
-  Link as LinkIcon,
-  CheckCircle2,
-  Sparkles,
-  Bell,
-  FileText,
-  UsersIcon,
-  Clock,
-  MapPin,
-  Lock,
-  Eye,
-  Image,
-  Star,
-  AlertTriangle,
-  MessagesSquare,
-  Edit3,
-  ChevronDown,
-  Crown,
-  Rocket,
-  Target,
-  HelpCircle,
-  Paintbrush,
-  Send,
-  DoorOpen,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  AlertTriangle,
+  BarChart3,
+  Bell,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Crown,
+  DoorOpen,
+  Edit3,
+  Eye,
+  FileText,
+  HelpCircle,
+  Home,
+  Image,
+  LayoutDashboard,
+  Link as LinkIcon,
+  ListCollapseIcon,
+  Lock,
+  MapPin,
+  MessageSquare,
+  MessagesSquare,
+  Paintbrush,
+  Rocket,
+  Send,
+  Sparkles,
+  Star,
+  Target,
+  Users,
+  UsersIcon,
+} from 'lucide-react';
+
+// Hooks
+import { useLocalePath } from '@/hooks/use-locale-path';
+
+// Lib
+import { cn } from '@/lib/utils';
 
 interface EventManagementSidebarProps {
   eventId: string;

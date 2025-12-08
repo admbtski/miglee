@@ -1,19 +1,28 @@
 'use client';
 
+/**
+ * Schedule Section
+ * Features: Quick presets, date/time pickers, duration presets, timezone info
+ */
+
+// TODO: Add i18n for all hardcoded strings (labels, preset names, errors, tips)
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useEdit } from '../_components/edit-provider';
-import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 import {
-  Clock,
   Calendar,
-  Zap,
+  Clock,
   Coffee,
-  Utensils,
-  Wrench,
+  Info,
   Sun,
   Sunrise,
-  Info,
+  Utensils,
+  Wrench,
+  Zap,
 } from 'lucide-react';
+
+// Local components
+import { useEdit } from '../_components/edit-provider';
+import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 
 // Quick presets for start time
 const QUICK_PRESETS = [
@@ -90,10 +99,6 @@ function toLocalDateTimeString(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-/**
- * Schedule Section
- * Features: Quick presets, date/time pickers, duration presets, timezone info
- */
 export default function SchedulePage() {
   const { event, isLoading, saveSection } = useEdit();
 

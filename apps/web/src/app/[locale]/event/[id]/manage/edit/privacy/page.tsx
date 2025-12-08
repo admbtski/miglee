@@ -1,29 +1,36 @@
 'use client';
 
+/**
+ * Privacy Section
+ * Features: Event visibility, Address visibility, Member list visibility, Map toggle
+ */
+
+// TODO: Add i18n for all hardcoded strings (labels, descriptions, tips)
+
 import { useState, useEffect } from 'react';
-import { useEdit } from '../_components/edit-provider';
-import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 import {
   Eye,
   EyeOff,
-  Users,
-  MapPin,
-  Map,
   Info,
-  Mail,
   Lock,
+  Mail,
+  Map,
+  MapPin,
+  Users,
 } from 'lucide-react';
+
+// Components
 import { SegmentedControl } from '@/components/ui/segment-control';
+
+// Local components
+import { useEdit } from '../_components/edit-provider';
+import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 
 type Visibility = 'PUBLIC' | 'HIDDEN';
 type JoinMode = 'OPEN' | 'REQUEST' | 'INVITE_ONLY';
 type AddressVisibility = 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
 type MembersVisibility = 'PUBLIC' | 'AFTER_JOIN' | 'HIDDEN';
 
-/**
- * Privacy Section
- * Features: Event visibility, Address visibility, Member list visibility, Map toggle
- */
 export default function PrivacyPage() {
   const { event, isLoading, saveSection } = useEdit();
 

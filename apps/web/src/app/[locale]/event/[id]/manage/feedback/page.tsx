@@ -3,8 +3,12 @@
  * Configure feedback questions and view results
  */
 
+// TODO: Add i18n for page title, description, and loading text
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { FeedbackPanel } from './_components/feedback-panel';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

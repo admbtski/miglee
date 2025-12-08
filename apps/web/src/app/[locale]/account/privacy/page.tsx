@@ -1,9 +1,11 @@
 'use client';
 
-import { AccountPageHeader } from '../_components';
-import { Shield, Download, ExternalLink } from 'lucide-react';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 import { useState } from 'react';
+import { Download, ExternalLink, Shield } from 'lucide-react';
+
+// i18n & Layout
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { AccountPageHeader } from '../_components';
 
 export default function PrivacyPolicyPage() {
   const { t, locale } = useI18n();
@@ -106,6 +108,7 @@ export default function PrivacyPolicyPage() {
                 <h4 className="text-sm font-semibold text-green-900 dark:text-green-100">
                   {t.privacyPolicy.title}
                 </h4>
+                {/* TODO: Add i18n key for this description */}
                 <p className="mt-1 text-sm text-green-700 dark:text-green-300">
                   We take your privacy seriously. Learn how we collect, use, and
                   protect your personal information.

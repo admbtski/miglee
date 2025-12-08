@@ -1,21 +1,30 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useEdit } from '../_components/edit-provider';
-import { EditSection, FormField, InfoBox } from '../_components/edit-section';
-import { CategoryMultiCombo } from '@/components/forms/category-combobox';
-import { TagMultiCombo } from '@/components/forms/tag-multicombo';
-import { CategoryOption } from '@/features/categories';
-import { Info } from 'lucide-react';
-import { TagOption } from '@/features/tags/types';
-
-const TITLE_MAX = 60;
-const DESC_MAX = 500;
-
 /**
  * Basics Section
  * Fields: Event name, Categories (1-3), Description, Tags (0-3)
  */
+
+// TODO: Add i18n for all hardcoded strings (labels, placeholders, errors, tips)
+
+import { useState, useEffect, useCallback } from 'react';
+import { Info } from 'lucide-react';
+
+// Components
+import { CategoryMultiCombo } from '@/components/forms/category-combobox';
+import { TagMultiCombo } from '@/components/forms/tag-multicombo';
+
+// Features
+import { CategoryOption } from '@/features/categories';
+import { TagOption } from '@/features/tags/types';
+
+// Local components
+import { useEdit } from '../_components/edit-provider';
+import { EditSection, FormField, InfoBox } from '../_components/edit-section';
+
+const TITLE_MAX = 60;
+const DESC_MAX = 500;
+
 export default function BasicsPage() {
   const { event, isLoading, saveSection } = useEdit();
 

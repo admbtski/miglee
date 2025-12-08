@@ -1,26 +1,38 @@
 'use client';
 
+/**
+ * PublishPage - Manage event publication status
+ */
+
+// TODO: Add i18n for all hardcoded strings in this component
+
+import { useState, useCallback } from 'react';
 import {
+  AlertTriangle,
   CalendarClock,
   Clock,
   EyeOff,
   FileEdit,
   Globe,
+  Info,
+  Loader2,
   Rocket,
   Send,
-  AlertTriangle,
-  Loader2,
-  Info,
 } from 'lucide-react';
-import { useState, useCallback } from 'react';
-import { useEventManagement } from '../_components/event-management-provider';
+
+// Features
 import {
+  useCancelScheduledPublicationMutation,
   usePublishEventMutation,
   useScheduleEventPublicationMutation,
-  useCancelScheduledPublicationMutation,
   useUnpublishEventMutation,
 } from '@/features/events/api/events';
+
+// Utils
 import { toast } from '@/lib/utils';
+
+// Local components
+import { useEventManagement } from '../_components/event-management-provider';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 
 // Local enum until codegen runs
@@ -30,9 +42,6 @@ enum PublicationStatus {
   Scheduled = 'SCHEDULED',
 }
 
-/**
- * PublishPage - Manage event publication status
- */
 export default function PublishPage() {
   const { event, isLoading, refetch } = useEventManagement();
 

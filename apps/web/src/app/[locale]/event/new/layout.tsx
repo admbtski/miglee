@@ -1,7 +1,16 @@
+/**
+ * New Event Layout
+ * Layout for creating new events with simplified creator
+ */
+
 import type { ReactNode } from 'react';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+
+// Components
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Navbar } from '@/components/layout/navbar';
+
+// Config
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 

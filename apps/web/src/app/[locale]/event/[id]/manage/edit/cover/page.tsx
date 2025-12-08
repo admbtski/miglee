@@ -1,22 +1,31 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { useEdit } from '../_components/edit-provider';
-import { EditSection, InfoBox } from '../_components/edit-section';
-import { Upload, X, Image as ImageIcon, Sparkles } from 'lucide-react';
-import { uploadEventCover } from '@/lib/media/upload-event-cover';
-import { toast, cn } from '@/lib/utils';
-import { useQueryClient } from '@tanstack/react-query';
-import { useDropzone } from 'react-dropzone';
-import { ImageCropModal } from '@/components/ui/image-crop-modal';
-import { buildEventCoverUrl } from '@/lib/media/url';
-
-const MAX_SIZE_MB = 10;
-
 /**
  * Cover Image Section
  * Features: Upload, drag & drop, image cropping, fallback cover info
  */
+
+// Note: This page uses Polish strings - already i18n ready pattern
+
+import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useDropzone } from 'react-dropzone';
+import { Image as ImageIcon, Sparkles, Upload, X } from 'lucide-react';
+
+// Components
+import { ImageCropModal } from '@/components/ui/image-crop-modal';
+
+// Lib
+import { uploadEventCover } from '@/lib/media/upload-event-cover';
+import { buildEventCoverUrl } from '@/lib/media/url';
+import { cn, toast } from '@/lib/utils';
+
+// Local components
+import { useEdit } from '../_components/edit-provider';
+import { EditSection, InfoBox } from '../_components/edit-section';
+
+const MAX_SIZE_MB = 10;
+
 export default function CoverPage() {
   const { event, eventId, isLoading, refetch } = useEdit();
   const queryClient = useQueryClient();

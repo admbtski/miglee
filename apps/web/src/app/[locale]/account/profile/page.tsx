@@ -7,21 +7,25 @@
 
 import { useState } from 'react';
 import {
-  User,
-  Shield,
-  Link as LinkIcon,
   Calendar,
+  Link as LinkIcon,
   Settings,
+  Shield,
+  User,
 } from 'lucide-react';
 
+// Features
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import { useMyFullProfileQuery } from '@/features/users/api/user-profile';
-import type { TabId, TabConfig } from './_types';
-import { ProfileTab } from './_components/profile-tab';
-import { SportsTab } from './_components/sports-tab';
-import { SocialLinksTab } from './_components/social-links-tab';
-import { PrivacyTab } from './_components/privacy-tab';
 
+// Local types & components
+import type { TabConfig, TabId } from './_types';
+import { PrivacyTab } from './_components/privacy-tab';
+import { ProfileTab } from './_components/profile-tab';
+import { SocialLinksTab } from './_components/social-links-tab';
+import { SportsTab } from './_components/sports-tab';
+
+// TODO: Add i18n for tab labels
 const TABS: TabConfig[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'sports', label: 'Sports & Availability', icon: Calendar },
@@ -50,6 +54,7 @@ function getTabIconClasses(isActive: boolean): string {
   return `${base} text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-400`;
 }
 
+// TODO: Add i18n for loading/error state messages
 function LoadingState() {
   return (
     <div className="flex min-h-[400px] items-center justify-center">
@@ -102,6 +107,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
+      {/* TODO: Add i18n for page title and description */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
           Profile Settings

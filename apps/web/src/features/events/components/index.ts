@@ -56,3 +56,10 @@ export * from './filters-dropdown';
 export * from './my-event-card';
 export * from './my-events-states';
 export * from './role-filter';
+
+// Event Creator Components
+export * from './category-selection-provider';
+export * from './success-event-modal';
+
+// Utils & Mappers (TODO: move to utils/)
+export * from './mappers';

@@ -2,23 +2,34 @@
 
 import { useState } from 'react';
 import {
-  Globe,
-  Clock,
-  Palette,
-  Check,
-  Loader2,
   AlertTriangle,
+  Check,
+  Clock,
+  Globe,
   Info,
+  Loader2,
+  Palette,
 } from 'lucide-react';
-import { useTheme } from '@/features/theme/provider/theme-provider';
-import { useUpdateLocale, useUpdateTimezone } from '@/features/users/api/user-preferences';
-import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
-import { commonTimezones } from '@/lib/i18n/timezone-provider';
 import { toast } from 'sonner';
+
+// Components
 import { TimezoneDropdown } from '@/components/forms/timezone-dropdown';
-import { DeleteAccountModal } from './_components/delete-account-modal';
+
+// Features
+import { useTheme } from '@/features/theme/provider/theme-provider';
 import { useDeleteMyAccountMutation } from '@/features/users/api/user-delete-account';
+import {
+  useUpdateLocale,
+  useUpdateTimezone,
+} from '@/features/users/api/user-preferences';
+
+// i18n & Layout
+import { commonTimezones } from '@/lib/i18n/timezone-provider';
+import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
 import { AccountPageHeader } from '../_components';
+
+// Local components
+import { DeleteAccountModal } from './_components/delete-account-modal';
 
 // Get current timezone from browser
 function getCurrentTimezone(): string {

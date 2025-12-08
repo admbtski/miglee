@@ -1,18 +1,27 @@
 'use client';
 
+/**
+ * Join Rules Section
+ * Features: Presets, open/close windows, late join settings
+ */
+
+// TODO: Add i18n for all hardcoded strings (labels, preset names, descriptions, tips)
+
 import { useState, useEffect } from 'react';
-import { useEdit } from '../_components/edit-provider';
-import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 import {
-  Coffee,
   Calendar,
+  Clock,
+  Coffee,
+  DoorClosed,
+  DoorOpen,
+  Info,
   Wrench,
   Zap,
-  Clock,
-  DoorOpen,
-  DoorClosed,
-  Info,
 } from 'lucide-react';
+
+// Local components
+import { useEdit } from '../_components/edit-provider';
+import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 
 // Presets for join rules
 const JOIN_PRESETS = [
@@ -99,10 +108,6 @@ function formatMinutes(minutes: number | null): string {
   return `${Math.floor(minutes / 1440)} days`;
 }
 
-/**
- * Join Rules Section
- * Features: Presets, open/close windows, late join settings
- */
 export default function JoinRulesPage() {
   const { event, isLoading, saveSection } = useEdit();
 

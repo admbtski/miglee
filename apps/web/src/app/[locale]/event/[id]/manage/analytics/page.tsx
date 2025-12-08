@@ -3,11 +3,15 @@
  * View event analytics and statistics
  */
 
+// TODO: Add i18n for page title, description, loading text, and AnalyticsComingSoon component
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { ManagementPageLayout } from '../_components/management-page-layout';
+import { BarChart3, Eye, TrendingUp, Users } from 'lucide-react';
+
+// Local components
 import { AnalyticsPanelWrapper } from './_components/analytics-panel-wrapper';
-import { BarChart3, TrendingUp, Users, Eye } from 'lucide-react';
+import { ManagementPageLayout } from '../_components/management-page-layout';
 
 type PageProps = {
   params: Promise<{ id: string }>;

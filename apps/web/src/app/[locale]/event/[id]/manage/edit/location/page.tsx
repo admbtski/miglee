@@ -1,32 +1,41 @@
 'use client';
 
+/**
+ * Location Section
+ * Features: Meeting type, address autocomplete, map preview, radius slider, online link
+ */
+
+// TODO: Add i18n for all hardcoded strings (labels, descriptions, errors, tips)
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useEdit } from '../_components/edit-provider';
-import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 import {
-  MapPin,
   Globe,
+  Info,
   Laptop,
   Link as LinkIcon,
-  Info,
+  MapPin,
   Navigation,
 } from 'lucide-react';
-import { SegmentedControl } from '@/components/ui/segment-control';
+
+// Components
 import { LocationCombo } from '@/components/forms/location-combobox';
+import { SegmentedControl } from '@/components/ui/segment-control';
+
+// Features
 import { MapPreview } from '@/features/maps/components/map-preview';
 import {
   reverseGeocode,
   reverseGeocodeLatLng,
 } from '@/features/maps/utils/geocode';
 
+// Local components
+import { useEdit } from '../_components/edit-provider';
+import { EditSection, FormField, InfoBox } from '../_components/edit-section';
+
 type MeetingKind = 'ONSITE' | 'ONLINE' | 'HYBRID';
 
 const RADIUS_OPTIONS = [0, 0.1, 0.2, 0.5, 1, 2, 3, 5, 10];
 
-/**
- * Location Section
- * Features: Meeting type, address autocomplete, map preview, radius slider, online link
- */
 export default function LocationPage() {
   const { event, isLoading, saveSection } = useEdit();
 

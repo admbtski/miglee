@@ -3,8 +3,12 @@
  * Manage event chat and messages
  */
 
+// TODO: Add i18n for page title, description, and loading text
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { EventChatManagement } from './_components/event-chat-management';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

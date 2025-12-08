@@ -3,8 +3,12 @@
  * Send push notifications to local users
  */
 
+// Note: This page uses Polish strings - already i18n ready pattern
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { LocalPushPageWrapper } from './_components/local-push-page-wrapper';
 import { ManagementPageLayout } from '../_components';
 

@@ -3,8 +3,12 @@
  * Customize event card and detail appearance
  */
 
+// Note: This page uses Polish strings - already i18n ready pattern
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { AppearancePageWrapper } from './_components/appearance-page-wrapper';
 import { ManagementPageLayout } from '../_components';
 

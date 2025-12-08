@@ -3,9 +3,13 @@
  * Allows event owner/moderators to manage frequently asked questions
  */
 
+// TODO: Add i18n for page title, description, and loading text
+
 import { Suspense } from 'react';
-import { ManagementPageLayout } from '../_components/management-page-layout';
+
+// Local components
 import { FaqManagementClient } from './_components/faq-management-client';
+import { ManagementPageLayout } from '../_components/management-page-layout';
 
 interface FaqPageProps {
   params: Promise<{ id: string; locale: string }>;

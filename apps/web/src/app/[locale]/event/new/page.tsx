@@ -1,4 +1,6 @@
 import { Suspense } from 'react';
+
+// Local components
 import { SimpleCreatorPageClient } from './_components/simple-creator-page-client';
 import { SimpleCreatorSkeleton } from './_components/simple-creator-skeleton';
 

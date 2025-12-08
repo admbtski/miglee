@@ -1,11 +1,15 @@
 'use client';
 
-import { AccountPageHeader } from '../_components';
-import { HelpCircle, Mail, MessageSquare, Send } from 'lucide-react';
 import { useState } from 'react';
+import { HelpCircle, Mail, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { useI18n } from '@/lib/i18n/provider-ssr';
+
+// Components
 import { SimpleSelect, SelectOption } from '@/components/forms/simple-select';
+
+// i18n & Layout
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { AccountPageHeader } from '../_components';
 
 export default function HelpPage() {
   const { t } = useI18n();
@@ -32,7 +36,8 @@ export default function HelpPage() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
+    // TODO: Integrate with actual feedback/support API (e.g., useSendFeedbackMutation)
+    // Currently simulating API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     toast.success(t.help.form.success);
@@ -184,6 +189,7 @@ export default function HelpPage() {
               </h3>
             </div>
             <ul className="space-y-3">
+              {/* TODO: Link these FAQ items to actual help/docs pages when available */}
               <li>
                 <a
                   href="#"

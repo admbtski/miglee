@@ -1,9 +1,18 @@
 'use client';
 
+/**
+ * Audience Section
+ * Features: Skill level selection (multi-select)
+ */
+
+// TODO: Add i18n for all hardcoded strings (labels, level names, descriptions, tips)
+
 import { useState, useEffect } from 'react';
+import { Award, GraduationCap, Info, Target, Trophy } from 'lucide-react';
+
+// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
-import { Target, GraduationCap, Award, Trophy, Info } from 'lucide-react';
 
 type Level = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
@@ -33,10 +42,6 @@ const LEVELS: {
   },
 ];
 
-/**
- * Audience Section
- * Features: Skill level selection (multi-select)
- */
 export default function AudiencePage() {
   const { event, isLoading, saveSection } = useEdit();
 

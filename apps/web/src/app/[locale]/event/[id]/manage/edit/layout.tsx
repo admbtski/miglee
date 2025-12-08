@@ -1,18 +1,21 @@
 'use client';
 
-import { ReactNode } from 'react';
+/**
+ * Layout for event edit section
+ * Each section saves independently - no shared form state needed
+ * Navigation is handled by the main EventManagementSidebar
+ */
+
+import type { ReactNode } from 'react';
 import { useParams } from 'next/navigation';
+
+// Local components
 import { EditProvider } from './_components/edit-provider';
 
 interface EditLayoutProps {
   children: ReactNode;
 }
 
-/**
- * Layout for event edit section
- * Each section saves independently - no shared form state needed
- * Navigation is handled by the main EventManagementSidebar
- */
 export default function EditLayout({ children }: EditLayoutProps) {
   const params = useParams<{ id: string }>();
   const eventId = params.id;

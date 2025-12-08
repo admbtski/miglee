@@ -1,4 +1,9 @@
-import { ReactNode } from 'react';
+/**
+ * Common layout for management pages
+ * Provides consistent header and spacing
+ */
+
+import type { ReactNode } from 'react';
 
 interface ManagementPageLayoutProps {
   title: string;
@@ -7,10 +12,6 @@ interface ManagementPageLayoutProps {
   actions?: ReactNode;
 }
 
-/**
- * Common layout for management pages
- * Provides consistent header and spacing
- */
 export function ManagementPageLayout({
   title,
   description,

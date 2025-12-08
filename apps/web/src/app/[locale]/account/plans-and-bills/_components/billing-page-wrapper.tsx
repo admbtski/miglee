@@ -1,5 +1,18 @@
+// TODO: Many hardcoded Polish strings in this file need i18n keys
+// Examples: "Aktywny", "Darmowy", "Odnawia się", "Wygasa", "Brak aktywnego planu",
+// "Czas do odnowienia", "dzień/dni pozostało", "Szczegóły planu", "Typ", "Okres",
+// "Subskrypcja", "Jednorazowa", "Roczny", "Miesięczny", "Data rozpoczęcia", "Odnowienie",
+// "Wygaśnięcie", "Ulepsz plan", "Zmień plan", "Anuluj subskrypcję", "Historia płatności",
+// "Przeglądaj swoją historię rozliczeń i faktury", "Data", "Opis", "Kwota", "Status",
+// "Akcje", "Opłacono", "Podgląd", "Faktura", "Brak historii płatności"
 'use client';
 
+import React from 'react';
+import Link from 'next/link';
+import { ArrowRight, Download, Eye, Users } from 'lucide-react';
+import { toast } from 'sonner';
+
+// Features
 import {
   useCancelSubscription,
   useGetEventSponsorshipReceiptUrl,
@@ -9,12 +22,12 @@ import {
   useMyPlanPeriods,
   useMySubscription,
 } from '@/features/billing/api/billing';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 import { formatCurrency } from '@/features/billing/utils/currency';
-import { ArrowRight, Download, Eye, Users } from 'lucide-react';
-import Link from 'next/link';
-import React from 'react';
-import { toast } from 'sonner';
+
+// i18n
+import { useI18n } from '@/lib/i18n/provider-ssr';
+
+// Local components
 import { CancelSubscriptionModal } from './cancel-subscription-modal';
 import { Badge, Progress, SmallButton, Td, Th } from './ui';
 

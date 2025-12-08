@@ -3,8 +3,10 @@
  * Dedicated page for choosing and purchasing subscription plans
  */
 
+// Local components
 import { SubscriptionPlansWrapper } from './_components/subscription-plans-wrapper';
 
+// TODO: Add i18n for hardcoded Polish strings
 export default function SubscriptionPage() {
   return (
     <div className="space-y-8">

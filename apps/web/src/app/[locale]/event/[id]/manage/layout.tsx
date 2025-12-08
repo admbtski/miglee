@@ -7,12 +7,15 @@
 import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 
+// Components
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
+
+// Local components
 import {
-  EventManagementSidebar,
-  EventManagementNavbar,
   EventManagementGuard,
+  EventManagementNavbar,
   EventManagementProvider,
+  EventManagementSidebar,
 } from './_components';
 
 interface EventManagementLayoutProps {

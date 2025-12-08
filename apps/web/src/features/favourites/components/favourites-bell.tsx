@@ -1,3 +1,6 @@
+// TODO: Replace hardcoded Polish strings with i18n translations (useI18n hook)
+// Affected strings: "Zapisane wydarzenia", "Ładowanie…", "Nie masz jeszcze zapisanych wydarzeń.",
+// "Kliknij ❤️ przy wydarzeniu, aby je zapisać.", "Zobacz", "Usuń", "Załaduj więcej", "Zobacz wszystkie"
 'use client';
 
 import {

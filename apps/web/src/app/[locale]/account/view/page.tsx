@@ -1,19 +1,25 @@
 'use client';
+
 /**
  * Profile View Page (within Account Management)
  * Shows the public profile view inside the account management interface
  */
 
-import { useMeQuery } from '@/features/auth/hooks/auth';
 import { Suspense } from 'react';
-import { ProfileViewManagement } from './_components/profile-view-management';
 import { Loader2 } from 'lucide-react';
+
+// Features
+import { useMeQuery } from '@/features/auth/hooks/auth';
+
+// Local components
+import { ProfileViewManagement } from './_components/profile-view-management';
 
 export default function ProfileViewPage() {
   const { data, isLoading } = useMeQuery();
 
   const username = data?.me?.name;
 
+  // TODO: Add i18n for loading/error state messages
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">

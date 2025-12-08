@@ -1,9 +1,11 @@
 'use client';
 
-import { AccountPageHeader } from '../_components';
-import { FileText, Download, ExternalLink } from 'lucide-react';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 import { useState } from 'react';
+import { Download, ExternalLink, FileText } from 'lucide-react';
+
+// i18n & Layout
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { AccountPageHeader } from '../_components';
 
 export default function TermsOfServicePage() {
   const { t, locale } = useI18n();
@@ -106,6 +108,7 @@ export default function TermsOfServicePage() {
                 <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                   {t.termsOfService.title}
                 </h4>
+                {/* TODO: Add i18n key for this description */}
                 <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
                   Please read our terms of service carefully. By using our
                   platform, you agree to these terms and conditions.

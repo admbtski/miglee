@@ -1,7 +1,5 @@
 'use client';
 
-import { showCookieBanner } from '@/components/cookie-consent';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 import {
   BarChart3,
   CheckCircle2,
@@ -12,6 +10,12 @@ import {
   Settings2,
   Shield,
 } from 'lucide-react';
+
+// Cookie consent
+import { showCookieBanner } from '@/components/cookie-consent';
+
+// i18n & Layout
+import { useI18n } from '@/lib/i18n/provider-ssr';
 import { AccountPageHeader } from '../_components';
 
 export default function CookieSettingsPage() {
@@ -69,6 +73,7 @@ export default function CookieSettingsPage() {
               className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors rounded-xl shadow-lg hover:shadow-xl"
             >
               <Settings2 className="w-5 h-5" />
+              {/* TODO: Add i18n key t.cookies.managePreferences */}
               Manage Cookie Preferences
             </button>
           </div>
@@ -168,6 +173,7 @@ export default function CookieSettingsPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
             >
+              {/* TODO: Add i18n key t.cookies.poweredBy */}
               Powered by CookieScript
               <ExternalLink className="w-4 h-4" />
             </a>

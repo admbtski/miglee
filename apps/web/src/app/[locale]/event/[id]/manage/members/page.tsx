@@ -3,8 +3,12 @@
  * Manage event members, roles, and permissions
  */
 
+// TODO: Add i18n for page title, description, and loading text
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { EventMembersManagementConnect } from './_components/event-members-management-connect';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

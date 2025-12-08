@@ -3,8 +3,12 @@
  * Send notifications to event members
  */
 
+// TODO: Add i18n for page title, description, and loading text
+
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { NotificationsPanel } from './_components/notifications-panel';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

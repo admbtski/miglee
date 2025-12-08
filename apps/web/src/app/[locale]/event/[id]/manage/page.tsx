@@ -5,6 +5,8 @@
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+
+// Local components
 import { EventManagementDashboard } from './_components/event-management-dashboard';
 
 type PageProps = {
@@ -24,6 +26,7 @@ export default async function EventManagementPage({ params }: PageProps) {
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+            {/* TODO: Add i18n for loading text */}
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
               Loading dashboard...
             </p>

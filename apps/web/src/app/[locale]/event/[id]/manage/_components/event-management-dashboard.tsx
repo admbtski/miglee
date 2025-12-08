@@ -4,18 +4,26 @@
  * Modern, clean design with great UX
  */
 
+// TODO: Add i18n for all hardcoded strings
+
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
+import { format, formatDistanceToNow, isFuture, isPast } from 'date-fns';
+import { pl } from 'date-fns/locale';
 import {
   Activity,
   ArrowRight,
   ArrowUpRight,
   BarChart3,
+  Building,
   Calendar,
   CheckCircle2,
   Clock,
   Edit3,
   Eye,
+  Globe,
   Heart,
   Link as LinkIcon,
   Lock,
@@ -27,25 +35,26 @@ import {
   TrendingUp,
   Users,
   Video,
-  Globe,
-  Building,
 } from 'lucide-react';
-import Link from 'next/link';
 
+// Components
+import { BlurHashImage } from '@/components/ui/blurhash-image';
+
+// Features
 import { useEventQuery } from '@/features/events/api/events';
-import { useLocalePath } from '@/hooks/use-locale-path';
-import { cn } from '@/lib/utils';
-import { format, formatDistanceToNow, isFuture, isPast } from 'date-fns';
-import { pl } from 'date-fns/locale';
-import { EventCountdownTimer } from '@/features/events/components/event-countdown-timer';
-import { EventStatus } from '@/lib/api/__generated__/react-query-update';
-import { useState } from 'react';
 import {
   CloseJoinModal,
+  EventCountdownTimer,
   ReopenJoinModal,
-} from '@/features/events/components/close-join-modals';
-import { BlurHashImage } from '@/components/ui/blurhash-image';
+} from '@/features/events';
+import { EventStatus } from '@/lib/api/__generated__/react-query-update';
+
+// Hooks
+import { useLocalePath } from '@/hooks/use-locale-path';
+
+// Lib
 import { buildEventCoverUrl } from '@/lib/media/url';
+import { cn } from '@/lib/utils';
 
 interface EventManagementDashboardProps {
   eventId: string;
