@@ -1,7 +1,8 @@
-import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
-import { FeedbackPageClient } from './_components/feedback-page-client';
 import { Loader2 } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
+
+import { FeedbackPageClient } from './_components/feedback-page-client';
 
 type PageProps = {
   params: Promise<{ eventId: string }>;
@@ -37,6 +38,7 @@ export default async function FeedbackPage({
   );
 }
 
+// TODO: Add i18n for metadata
 export async function generateMetadata({ params }: PageProps) {
   await params;
 

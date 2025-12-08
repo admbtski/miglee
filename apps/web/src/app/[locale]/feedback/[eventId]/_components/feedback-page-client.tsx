@@ -1,22 +1,26 @@
 'use client';
 
-import { useEventQuery } from '@/features/events/api/events';
 import {
-  useEventFeedbackQuestionsQuery,
-  useSubmitReviewAndFeedbackMutation,
-  useCanSubmitFeedbackQuery,
-} from '@/features/feedback/api/feedback';
-import { useGetMyReview } from '@/features/events/api/reviews';
-import { ReviewAndFeedbackForm } from '@/features/events/components/review-and-feedback-form';
-import {
-  Loader2,
   AlertCircle,
-  CheckCircle2,
   ArrowLeft,
+  CheckCircle2,
+  Loader2,
   Star,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+// Features
+import { useEventQuery } from '@/features/events/api/events';
+import { useGetMyReview } from '@/features/events/api/reviews';
+import { ReviewAndFeedbackForm } from '@/features/events/components/review-and-feedback-form';
+import {
+  useCanSubmitFeedbackQuery,
+  useEventFeedbackQuestionsQuery,
+  useSubmitReviewAndFeedbackMutation,
+} from '@/features/feedback/api/feedback';
+
+// TODO: Add i18n support - all hardcoded Polish strings should use translations
 
 interface FeedbackPageClientProps {
   eventId: string;
