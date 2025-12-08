@@ -16,6 +16,10 @@ import {
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
 import type { BillingType, PlanType } from './subscription-plans-wrapper';
+import {
+  BillingPeriod,
+  SubscriptionPlan,
+} from '@/lib/api/__generated__/react-query-update';
 
 interface AccountCheckoutPanelProps {
   selectedPlan: {
@@ -61,8 +65,8 @@ export function AccountCheckoutPanel({
         // Create subscription checkout (auto-renewable)
         const result = await createSubscriptionCheckout.mutateAsync({
           input: {
-            plan: plan as any, // GraphQL enum
-            billingPeriod: 'MONTHLY' as any, // GraphQL enum
+            plan: plan as SubscriptionPlan, // GraphQL enum
+            billingPeriod: 'MONTHLY' as BillingPeriod, // GraphQL enum
             withTrial: false, // NO TRIAL - immediate payment
           },
         });

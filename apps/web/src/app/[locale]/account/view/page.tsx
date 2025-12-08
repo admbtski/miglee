@@ -18,6 +18,7 @@ import {
   PublicProfileClient,
   PublicProfileClientLoader,
 } from '@/features/users/components/public-profile-client';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 export default function ProfileViewPage() {
   // Data should be cached from sidebar, so no loading state needed
@@ -47,6 +48,7 @@ interface ProfileHeaderProps {
 }
 
 function ProfileHeader({ username }: ProfileHeaderProps) {
+  const { locale } = useI18n();
   return (
     <div className="flex items-center justify-between p-6 border border-indigo-200/80 dark:border-indigo-800/50 rounded-[24px] bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 shadow-sm">
       <div className="flex items-center gap-4">
@@ -69,7 +71,7 @@ function ProfileHeader({ username }: ProfileHeaderProps) {
       </div>
       {username && (
         <Link
-          href={`/u/${username}`}
+          href={`${locale}/u/${username}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white transition-all bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"

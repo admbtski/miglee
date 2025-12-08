@@ -78,12 +78,66 @@ export function MyEventsEmptyState({
   );
 }
 
-/* ───────────────────────────── Inline Loading Spinner ───────────────────────────── */
+/* ───────────────────────────── Inline Loading Skeleton ───────────────────────────── */
+
+/**
+ * Skeleton loader for event cards
+ * Matches the structure of MyEventCard component
+ */
+function EventCardSkeleton() {
+  return (
+    <div className="rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] p-6 shadow-sm">
+      <div className="flex gap-6">
+        {/* Cover Image Skeleton */}
+        <div className="shrink-0 h-32 w-48 rounded-xl bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+
+        {/* Content Skeleton */}
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* Title */}
+          <div className="space-y-2">
+            <div className="h-6 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            <div className="h-6 w-1/2 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <div className="h-4 w-full rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            <div className="h-4 w-5/6 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          </div>
+
+          {/* Meta Info */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-4 w-40 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-4 w-24 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 pt-2">
+            <div className="h-9 w-24 rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            <div className="h-9 w-20 rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function MyEventsInlineLoading() {
   return (
-    <div className="flex items-center justify-center py-12">
-      <div className="w-8 h-8 border-4 border-indigo-500 rounded-full animate-spin border-t-transparent" />
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <EventCardSkeleton key={i} />
+      ))}
     </div>
   );
 }

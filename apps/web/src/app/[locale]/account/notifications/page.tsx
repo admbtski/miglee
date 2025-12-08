@@ -492,16 +492,40 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       {/* Show loading when: auth is loading (and we don't have recipientId yet) OR notifications are loading */}
       {isLoading || (isLoadingAuth && !recipientId) ? (
-        <div className="flex min-h-[500px] items-center justify-center rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950">
-          <div className="text-center">
-            <div className="relative mx-auto h-14 w-14 mb-3">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 animate-pulse" />
-              <Loader2 className="absolute inset-0 m-auto h-10 w-10 animate-spin text-indigo-600" />
-            </div>
-            {/* TODO: Add i18n key for "Loading notifications..." */}
-            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-              Loading notifications...
-            </p>
+        <div className="rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50/50 to-white dark:border-zinc-800 dark:from-zinc-900/50 dark:to-zinc-950 shadow-sm overflow-hidden">
+          <div className="flex flex-col gap-2 p-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <div className="flex items-start gap-3 p-3.5">
+                  {/* Icon skeleton */}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+
+                  {/* Content skeleton */}
+                  <div className="min-w-0 flex-1 space-y-3">
+                    {/* Title + timestamp */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                      <div className="h-3 w-20 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                    </div>
+
+                    {/* Body */}
+                    <div className="space-y-2">
+                      <div className="h-3 w-full rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                      <div className="h-3 w-5/6 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-24 rounded-md bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                      <div className="h-7 w-20 rounded-md bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ) : filteredNotifications.length === 0 ? (

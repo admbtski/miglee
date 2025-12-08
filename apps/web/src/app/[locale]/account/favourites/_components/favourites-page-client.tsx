@@ -30,6 +30,56 @@ import { useI18n } from '@/lib/i18n/provider-ssr';
 // Layout
 import { AccountPageHeader } from '../../_components';
 
+/**
+ * Skeleton loader for favourite cards
+ * Matches the structure of FavouriteCard component
+ */
+function FavouritesSkeleton() {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div
+          key={i}
+          className="group relative overflow-hidden rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] shadow-sm"
+        >
+          <div className="p-6">
+            {/* Heart button skeleton */}
+            <div className="absolute top-3 right-3 h-9 w-9 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+
+            {/* Title skeleton */}
+            <div className="mb-3 space-y-2 pr-8">
+              <div className="h-6 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-6 w-1/2 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            </div>
+
+            {/* Description skeleton */}
+            <div className="mb-4 space-y-2">
+              <div className="h-4 w-full rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              <div className="h-4 w-5/6 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            </div>
+
+            {/* Meta info skeleton */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                <div className="h-4 w-24 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                <div className="h-4 w-20 rounded bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function FavouritesPageClient() {
   const { localePath } = useLocalePath();
   const { t } = useI18n();
@@ -59,17 +109,8 @@ export function FavouritesPageClient() {
         }
       />
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400 mx-auto" />
-            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-              {t.favourites.loadingFavourites}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Loading - Skeleton */}
+      {isLoading && <FavouritesSkeleton />}
 
       {/* Empty state */}
       {!isLoading && items.length === 0 && (
