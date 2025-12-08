@@ -1,23 +1,27 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import {
-  Loader2,
-  Mail,
   ArrowLeft,
   CheckCircle,
-  XCircle,
+  Loader2,
+  Mail,
   RefreshCw,
+  XCircle,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+// Features
 import {
   useRequestAccountRestorationMutation,
   useRestoreMyAccountMutation,
 } from '@/features/users/api/user-restore-account';
-import { useI18n } from '@/lib/i18n/provider-ssr';
+
+// Hooks & i18n
 import { useLocalePath } from '@/hooks/use-locale-path';
-import { motion } from 'framer-motion';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 
 function RestoreAccountContent() {
   const searchParams = useSearchParams();
@@ -220,6 +224,7 @@ function RestoreAccountContent() {
             )}
           </button>
 
+          {/* TODO: Add i18n for this success message */}
           {requestRestoration.isSuccess && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}

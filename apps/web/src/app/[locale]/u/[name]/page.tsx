@@ -1,7 +1,11 @@
+import type { Metadata } from 'next';
+
+// Features
 import { fetchUserProfile } from '@/features/users/api/user-profile';
-import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
-import { Metadata } from 'next';
 import { PublicProfileClient } from '@/features/users/components/public-profile-client';
+
+// Utils
+import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 
 type Props = {
   params: Promise<{ name: string }>;

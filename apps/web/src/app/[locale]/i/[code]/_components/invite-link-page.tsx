@@ -1,25 +1,33 @@
 'use client';
 
-import * as React from 'react';
-import {
-  useValidateInviteLinkQuery,
-  useJoinByInviteLinkMutation,
-} from '@/features/events/api/invite-links';
-import { useRouter } from 'next/navigation';
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Check,
-  X,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react';
+import clsx from 'clsx';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import clsx from 'clsx';
-import { buildAvatarUrl } from '@/lib/media/url';
+import {
+  AlertCircle,
+  Calendar,
+  Check,
+  Loader2,
+  MapPin,
+  Users,
+  X,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import * as React from 'react';
+
+// Components
 import { Avatar } from '@/components/ui/avatar';
+
+// Features
+import {
+  useJoinByInviteLinkMutation,
+  useValidateInviteLinkQuery,
+} from '@/features/events/api/invite-links';
+
+// Utils
+import { buildAvatarUrl } from '@/lib/media/url';
+
+// TODO: Add i18n support - all hardcoded Polish strings should use translations
 
 interface InviteLinkPageProps {
   code: string;
@@ -363,7 +371,7 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
 
               <EventParticipantsInfo
                 joinedCount={event.joinedCount}
-                max={event.max}
+                max={event.max ?? 0}
                 isFull={event.isFull}
               />
 

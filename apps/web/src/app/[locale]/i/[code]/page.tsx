@@ -1,5 +1,6 @@
 import { InviteLinkPage } from './_components/invite-link-page';
 
+// TODO: Add i18n for metadata
 export const metadata = {
   title: 'Zaproszenie do wydarzenia | Miglee',
   description: 'Dołącz do wydarzenia za pomocą linku zaproszeniowego',

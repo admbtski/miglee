@@ -5,7 +5,7 @@ import { Toaster } from 'sonner';
 import { WebVitals } from '@/lib/config/web-vitals';
 import { ThemeProvider } from '@/features/theme/provider/theme-provider';
 import { CookieScriptProvider } from '@/components/cookie-consent';
-import { InlineThemeScript } from './scripts/inline/inline-theme-script';
+import { InlineThemeScript } from '../features/theme/scripts/inline-theme-script';
 import '../styles/globals.css';
 
 /**

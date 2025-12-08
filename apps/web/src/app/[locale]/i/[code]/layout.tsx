@@ -1,9 +1,9 @@
-// app/account/layout.tsx
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+
 import { Navbar } from '@/components/layout/navbar';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
 
 export default function EventDetailLayout({
   children,
