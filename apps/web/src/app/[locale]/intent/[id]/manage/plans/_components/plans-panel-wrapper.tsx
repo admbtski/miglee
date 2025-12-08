@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { PlansPanel } from './plans-panel';
 import { CheckoutPanel } from './checkout-panel';
-import { SponsorPlan } from '../../../_components/subscription-panel-types';
-import { useEventSponsorship } from '@/lib/api/billing';
+import { SponsorPlan } from '@/features/intents/components/subscription-panel-types';
+import { useEventSponsorship } from '@/features/billing/api/billing';
 
 interface PlansPanelWrapperProps {
   intentId: string;

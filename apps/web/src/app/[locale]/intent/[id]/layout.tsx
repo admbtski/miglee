@@ -1,5 +1,5 @@
 // app/intent/[id]/layout.tsx
-import { ConditionalNavbar } from './_components/conditional-navbar';
+import { ConditionalNavbar } from '@/features/intents/components/conditional-navbar';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';

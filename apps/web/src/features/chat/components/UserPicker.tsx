@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Loader2, User2, AlertCircle } from 'lucide-react';
-import { useUsersQuery } from '@/lib/api/users';
-import { useMeQuery } from '@/lib/api/auth';
+import { useUsersQuery } from '@/features/users/api/users';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { BlurHashImage } from '@/components/ui/blurhash-image';

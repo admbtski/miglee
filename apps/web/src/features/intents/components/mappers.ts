@@ -9,8 +9,8 @@ import type {
   Mode,
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
-import type { CategoryOption } from '@/types/types';
-import type { TagOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
+import { TagOption } from '@/features/tags/types';
 import { IntentFormValues, SimpleIntentFormValues } from './types';
 
 /** ---- API → Form (full form for editing) ---- */

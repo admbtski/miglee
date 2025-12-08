@@ -1,6 +1,6 @@
 'use client';
 
-import { TagOption } from '@/types/types';
+import { TagOption } from '@/features/tags/types';
 import React, {
   createContext,
   useCallback,

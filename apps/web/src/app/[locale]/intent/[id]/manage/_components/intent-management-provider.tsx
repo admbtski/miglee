@@ -6,7 +6,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import type { GetIntentQuery } from '@/lib/api/__generated__/react-query-update';
 
 interface IntentManagementContextValue {

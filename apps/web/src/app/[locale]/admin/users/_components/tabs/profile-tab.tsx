@@ -14,8 +14,8 @@ import {
 import {
   useUserProfileQuery,
   useUpdateUserProfile,
-} from '@/lib/api/user-profile';
-import { useGetCategoriesQuery as useCategoriesQuery } from '@/lib/api/categories';
+} from '@/features/users/api/user-profile';
+import { useGetCategoriesQuery as useCategoriesQuery } from '@/features/categories/api/categories';
 
 type ProfileTabProps = {
   userId: string;

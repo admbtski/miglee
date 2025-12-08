@@ -3,24 +3,12 @@
  * Uses the intentPermissions GraphQL query to get permission flags
  */
 
-import { useIntentPermissionsQuery } from '@/lib/api/intent-permissions';
+import {
+  useIntentPermissionsQuery,
+  type IntentPermissions,
+} from '@/features/intents/api/intent-permissions';
 
-export interface IntentPermissions {
-  /** User can access management interface */
-  canManage: boolean;
-  /** User is the owner of the intent */
-  isOwner: boolean;
-  /** User is a moderator of the intent */
-  isModerator: boolean;
-  /** User is a participant */
-  isParticipant: boolean;
-  /** User is app-level admin */
-  isAppAdmin: boolean;
-  /** User is app-level moderator */
-  isAppModerator: boolean;
-  /** Loading state */
-  isLoading: boolean;
-}
+export type { IntentPermissions };
 
 /**
  * Hook to check if user has management permissions for an intent

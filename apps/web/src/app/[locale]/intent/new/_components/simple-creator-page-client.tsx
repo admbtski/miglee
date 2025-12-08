@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCreateIntentMutation } from '@/lib/api/intents';
+import { useCreateIntentMutation } from '@/features/intents/api/intents';
 import { CategorySelectionProvider } from '@/features/intents/components/category-selection-provider';
 import { SimpleIntentFormValues } from '@/features/intents/components/types';
 import { mapSimpleFormToCreateInput } from '@/features/intents/components/mappers';

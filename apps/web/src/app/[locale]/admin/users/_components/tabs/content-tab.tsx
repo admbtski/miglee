@@ -13,11 +13,11 @@ import { pl } from 'date-fns/locale';
 import {
   useAdminUserCommentsQuery,
   useAdminUserReviewsQuery,
-} from '@/lib/api/admin-users';
+} from '@/features/admin/api/admin-users';
 import {
   useAdminDeleteComment,
   useAdminDeleteReview,
-} from '@/lib/api/admin-comments';
+} from '@/features/admin/api/admin-comments';
 import Link from 'next/link';
 
 type ContentTabProps = {

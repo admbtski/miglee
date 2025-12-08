@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useGetComments } from '@/lib/api/comments';
+import { useGetComments } from '@/features/intents/api/comments';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Trash2 } from 'lucide-react';

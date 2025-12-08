@@ -336,7 +336,110 @@ features/
 └── theme/provider/            # Theme provider
 ```
 
-## Next Steps
+## Next Steps (Priority Order)
 
-1. Move API hooks from `lib/api/` to feature-specific `api/` directories
-2. Consider moving remaining global types from `types/` to feature-specific locations
+### 1. Move API Hooks to Features (High Impact, Medium Effort)
+
+There are 39 files in `lib/api/`. Recommended grouping:
+
+**Intents domain** → `features/intents/api/`:
+
+- `intents.tsx`
+- `intent-members.tsx`
+- `intent-permissions.tsx`
+- `join-form.ts`
+- `comments.tsx`
+- `reviews.tsx`
+- `invite-links.ts`
+
+**Users domain** → `features/users/api/`:
+
+- `user-profile.tsx`
+- `user-preferences.ts`
+- `user-blocks.tsx`
+- `user-events.tsx`
+- `user-reviews.tsx`
+- `user-delete-account.ts`
+- `user-restore-account.ts`
+
+**Chat domain** → `features/chat/api/`:
+
+- `event-chat.tsx`
+- `event-chat-subscriptions.tsx`
+- `dm.tsx`
+- `dm-subscriptions.tsx`
+- `message-actions.tsx`
+- `reactions.tsx`
+- `reactions-subscriptions.tsx`
+
+**Billing domain** → `features/billing/api/`:
+
+- `billing.tsx`
+
+**Notifications domain** → `features/notifications/api/`:
+
+- `notifications.tsx`
+- `preferences-and-mutes.tsx`
+
+**Admin domain** → `features/admin/api/`:
+
+- `admin-intents.tsx`
+- `admin-users.tsx`
+- `admin-comments.tsx`
+- `admin-intent-members.tsx`
+
+**Keep in lib/api/** (shared/core):
+
+- `client.ts` - GraphQL client
+- `codegen.ts` - codegen config
+- `auth.tsx` - authentication
+- `categories.tsx` - shared categories
+- `tags.tsx` - shared tags
+- `favourites.ts` - cross-domain
+- `feedback.ts` - cross-domain
+- `map-clusters.tsx` - maps feature
+- `reports.tsx` - cross-domain
+- `users.tsx` - admin users list
+
+### 2. Global Types Review (Low Priority)
+
+Current `types/` directory contains:
+
+- `event-details.ts` - could move to `features/intents/types/`
+- `intent.ts` - could move to `features/intents/types/`
+- `types.ts` - shared types (CategoryOption, TagOption) - keep global
+
+### 3. Global Hooks Review (Low Priority)
+
+Current `hooks/` directory (5 files) - all are truly global utilities:
+
+- `use-cooldown.tsx`
+- `use-debounced-value.tsx`
+- `use-locale-path.ts`
+- `use-outside-click.tsx`
+- `use-throttled.tsx`
+
+These are fine to keep as global hooks.
+
+### 4. Consider Feature Index Files
+
+Create `features/index.ts` barrel exports for cleaner imports:
+
+```typescript
+// features/intents/index.ts
+export * from './api';
+export * from './hooks';
+export * from './utils';
+export * from './components';
+```
+
+## Migration Strategy for API Hooks
+
+1. **Create feature api directories**
+2. **Copy files to new locations**
+3. **Update imports in feature files first**
+4. **Update imports in app/ routes**
+5. **Delete old files from lib/api/**
+6. **Run TypeScript check after each batch**
+
+Estimated effort: ~2-3 hours for full migration

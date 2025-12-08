@@ -16,16 +16,16 @@ import { pl } from 'date-fns/locale';
 import {
   useAdminUserMembershipsQuery,
   useAdminUserIntentsQuery,
-} from '@/lib/api/admin-users';
+} from '@/features/admin/api/admin-users';
 import {
   useAdminKickMemberMutation,
   useAdminBanMemberMutation,
   useAdminUnbanMemberMutation,
-} from '@/lib/api/admin-intent-members';
+} from '@/features/admin/api/admin-intent-members';
 import {
   useApproveMembershipMutation,
   useRejectMembershipMutation,
-} from '@/lib/api/intent-members';
+} from '@/features/intents/api/intent-members';
 import Link from 'next/link';
 
 type IntentsTabProps = {

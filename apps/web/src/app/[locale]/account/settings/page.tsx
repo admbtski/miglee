@@ -11,13 +11,13 @@ import {
   Info,
 } from 'lucide-react';
 import { useTheme } from '@/features/theme/provider/theme-provider';
-import { useUpdateLocale, useUpdateTimezone } from '@/lib/api/user-preferences';
+import { useUpdateLocale, useUpdateTimezone } from '@/features/users/api/user-preferences';
 import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
 import { commonTimezones } from '@/lib/i18n/timezone-provider';
 import { toast } from 'sonner';
 import { TimezoneDropdown } from '@/components/forms/timezone-dropdown';
 import { DeleteAccountModal } from './_components/delete-account-modal';
-import { useDeleteMyAccountMutation } from '@/lib/api/user-delete-account';
+import { useDeleteMyAccountMutation } from '@/features/users/api/user-delete-account';
 import { AccountPageHeader } from '../_components';
 
 // Get current timezone from browser

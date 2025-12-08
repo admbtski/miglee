@@ -8,11 +8,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocalePath } from '@/hooks/use-locale-path';
-import { AlertTriangle, Ban, Trash2, Info, Calendar, Users } from 'lucide-react';
-import { useIntentQuery } from '@/lib/api/intents';
+import { AlertTriangle, Ban, Trash2, Info, Users } from 'lucide-react';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
-import { CancelIntentModals } from '@/app/[locale]/account/intents/_components/cancel-intent-modals';
-import { DeleteIntentModals } from '@/app/[locale]/account/intents/_components/delete-intent-modals';
+import { CancelIntentModals } from '@/features/intents/components/cancel-intent-modals';
+import { DeleteIntentModals } from '@/features/intents/components/delete-intent-modals';
 
 interface IntentDangerZoneProps {
   intentId: string;
@@ -119,7 +119,8 @@ export function IntentDangerZone({ intentId }: IntentDangerZoneProps) {
     },
   };
 
-  const currentStatus = statusConfig[intent.status] || statusConfig[IntentStatus.Any];
+  const currentStatus =
+    statusConfig[intent.status] || statusConfig[IntentStatus.Any];
 
   return (
     <>

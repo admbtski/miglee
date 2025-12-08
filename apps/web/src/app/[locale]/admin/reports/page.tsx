@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useGetReports } from '@/lib/api/reports';
+import { useGetReports } from '@/features/reports/api/reports';
 import {
   ReportEntity,
   ReportStatus,

@@ -6,7 +6,7 @@ import { Trash2, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
 import {
   useDeleteCategoryMutation,
   useGetCategoryUsageCountQuery,
-} from '@/lib/api/categories';
+} from '@/features/categories/api/categories';
 import Link from 'next/link';
 
 type DeleteCategoryModalProps = {

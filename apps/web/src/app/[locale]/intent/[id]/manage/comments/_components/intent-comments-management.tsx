@@ -6,8 +6,8 @@
 'use client';
 
 import { MessageSquare, Info, AlertCircle } from 'lucide-react';
-import { useIntentQuery } from '@/lib/api/intents';
-import { EventComments } from '../../../_components/event-comments';
+import { useIntentQuery } from '@/features/intents/api/intents';
+import { EventComments } from '@/features/intents/components/event-comments';
 import { ManagementPageLayout } from '../../_components/management-page-layout';
 
 interface IntentCommentsManagementProps {

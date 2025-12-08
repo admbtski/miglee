@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeSwitchConnected } from '@/components/ui/theme-switch-connect';
+import { ThemeSwitchConnected } from '@/features/theme/components/theme-switch-connect';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Cookie,

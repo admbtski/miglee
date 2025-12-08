@@ -7,7 +7,7 @@ import {
   useGetReports,
   useUpdateReportStatus,
   useDeleteReport,
-} from '@/lib/api/reports';
+} from '@/features/reports/api/reports';
 import {
   ReportStatus,
   ReportEntity,

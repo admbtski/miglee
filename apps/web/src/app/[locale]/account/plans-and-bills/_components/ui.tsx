@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, CreditCard, Lock } from 'lucide-react';
+// Icons available: CheckCircle2, CreditCard, Lock from 'lucide-react'
 
 export function Badge({
   children,

@@ -6,8 +6,8 @@
 'use client';
 
 import { Star, Info, AlertCircle, TrendingUp } from 'lucide-react';
-import { useIntentQuery } from '@/lib/api/intents';
-import { EventReviews } from '../../../_components/event-reviews';
+import { useIntentQuery } from '@/features/intents/api/intents';
+import { EventReviews } from '@/features/intents/components/event-reviews';
 import { ManagementPageLayout } from '../../_components/management-page-layout';
 
 interface IntentReviewsManagementProps {

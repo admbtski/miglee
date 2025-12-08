@@ -5,8 +5,8 @@ import {
   useUserQuery,
   useAdminSuspendUserMutation,
   useAdminUnsuspendUserMutation,
-} from '@/lib/api/users';
-import { useAdminUserDmThreadsQuery } from '@/lib/api/admin-users';
+} from '@/features/users/api/users';
+import { useAdminUserDmThreadsQuery } from '@/features/admin/api/admin-users';
 import {
   Shield,
   Ban,

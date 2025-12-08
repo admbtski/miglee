@@ -6,7 +6,6 @@ import {
   getNotificationContent,
   formatRelativeTime,
   getLocalizedRole,
-  type NotificationKind,
 } from './notification-translations';
 
 export interface NotificationData {

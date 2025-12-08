@@ -41,20 +41,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useGetTagsQuery } from '@/lib/api/tags';
-
-// =============================================================================
-// Types
-// =============================================================================
-
-export type TagOption = {
-  /** Tag ID */
-  id: string;
-  /** Tag slug (URL-friendly identifier) */
-  slug: string;
-  /** Display label */
-  label: string;
-};
+import { useGetTagsQuery } from '@/features/tags/api/tags';
+import { TagOption } from '@/features/tags';
 
 // =============================================================================
 // Constants

@@ -454,7 +454,7 @@ function interpolate(
 ): string {
   if (!data) return template.replace(/\{\{[^}]+\}\}/g, '');
 
-  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, key) => {
     const value = data[key];
     if (value === undefined || value === null) return '';
     return String(value);

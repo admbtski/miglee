@@ -4,7 +4,7 @@ import { Bell, Heart, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { useLocalePath } from '@/hooks/use-locale-path';
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import { NotificationBell } from '@/features/notifications/components/notifications-bell';
 import { FavouritesBell } from '@/features/favourites/components/favourites-bell';
 import { UserMenuControlled } from './user-menu-controlled';

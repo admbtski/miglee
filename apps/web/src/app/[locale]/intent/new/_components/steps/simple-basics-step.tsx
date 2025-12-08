@@ -7,7 +7,7 @@ import { useCategorySelection } from '@/features/intents/components/category-sel
 import { SimpleIntentFormValues } from '@/features/intents/components/types';
 import { getUseCategoriesLimitData } from '@/features/intents/hooks/use-categories';
 import { CategoryMultiCombo } from '@/components/forms/category-combobox';
-import { CategoryOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
 
 /**
  * SimpleBasicsStep - Simplified basics step

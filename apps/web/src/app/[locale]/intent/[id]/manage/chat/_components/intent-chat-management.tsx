@@ -7,29 +7,29 @@ import {
   useMarkIntentChatRead,
   usePublishIntentTyping,
   eventChatKeys,
-} from '@/lib/api/event-chat';
+} from '@/features/chat/api/event-chat';
 import {
   useIntentMessageAdded,
   useIntentMessageUpdated,
   useIntentMessageDeleted,
   useIntentTyping,
-} from '@/lib/api/event-chat-subscriptions';
+} from '@/features/chat/api/event-chat-subscriptions';
 import {
   useAddIntentReaction,
   useRemoveIntentReaction,
-} from '@/lib/api/reactions';
-import { useIntentReactionAdded } from '@/lib/api/reactions-subscriptions';
+} from '@/features/chat/api/reactions';
+import { useIntentReactionAdded } from '@/features/chat/api/reactions-subscriptions';
 import {
   useEditIntentMessage,
   useDeleteIntentMessage,
-} from '@/lib/api/message-actions';
+} from '@/features/chat/api/message-actions';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMeQuery } from '@/lib/api/auth';
-import { ChatThread } from '@/app/[locale]/account/chats/_components/chat-thread';
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { ChatThread } from '@/features/chat/components/chat-thread';
 import { Message as ChatMessage } from '@/features/chat/types';
 import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
 import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import { Loader2 } from 'lucide-react';
 
 interface IntentChatManagementProps {

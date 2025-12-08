@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Modal } from '@/components/feedback/modal';
 import { Trash2, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
-import { useDeleteTagMutation, useGetTagUsageCountQuery } from '@/lib/api/tags';
+import { useDeleteTagMutation, useGetTagUsageCountQuery } from '@/features/tags/api/tags';
 import Link from 'next/link';
 
 type DeleteTagModalProps = {

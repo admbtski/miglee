@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeSwitchConnected } from '@/components/ui/theme-switch-connect';
+import { ThemeSwitchConnected } from '@/features/theme/components/theme-switch-connect';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { AnimatePresence, motion } from 'framer-motion';

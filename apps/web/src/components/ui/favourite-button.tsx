@@ -1,6 +1,6 @@
 'use client';
 
-import { useToggleFavouriteMutation } from '@/lib/api/favourites';
+import { useToggleFavouriteMutation } from '@/features/favourites/api/favourites';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';

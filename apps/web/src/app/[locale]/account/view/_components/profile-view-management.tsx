@@ -5,7 +5,7 @@
 
 'use client';
 
-import { PublicProfileClient } from '@/app/[locale]/u/[name]/_components/public-profile-client';
+import { PublicProfileClient } from '@/features/users/components/public-profile-client';
 import { ExternalLink, Eye } from 'lucide-react';
 import Link from 'next/link';
 

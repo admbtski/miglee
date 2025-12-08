@@ -3,11 +3,11 @@
 import * as React from 'react';
 import { ArrowLeft, Clock, Lock, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SponsorPlan } from '../../../_components/subscription-panel-types';
-import { useCreateEventSponsorshipCheckout } from '@/lib/api/billing';
+import { SponsorPlan } from '@/features/intents/components/subscription-panel-types';
+import { useCreateEventSponsorshipCheckout } from '@/features/billing/api/billing';
 import { IntentPlan } from '@/lib/api/__generated__/react-query-update';
 import { toast } from 'sonner';
-import { EVENT_PLAN_PRICES } from '@/lib/billing-constants';
+import { EVENT_PLAN_PRICES } from '@/features/billing/constants/billing-constants';
 
 interface CheckoutPanelProps {
   intentId: string;

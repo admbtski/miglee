@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import {
   X,
   Info,

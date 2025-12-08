@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useUpdateIntentMutation } from '@/lib/api/intents';
+import { useUpdateIntentMutation } from '@/features/intents/api/intents';
 import { toast } from '@/lib/utils';
 import { useIntentEdit } from './intent-edit-provider';
 import { useQueryClient } from '@tanstack/react-query';

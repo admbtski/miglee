@@ -6,13 +6,13 @@ import {
   useIntentMemberStatsQuery,
   useApproveMembershipMutation,
   useRejectMembershipMutation,
-} from '@/lib/api/intent-members';
+} from '@/features/intents/api/intent-members';
 import {
   useAdminUpdateMemberRoleMutation,
   useAdminKickMemberMutation,
   useAdminBanMemberMutation,
   useAdminUnbanMemberMutation,
-} from '@/lib/api/admin-intent-members';
+} from '@/features/admin/api/admin-intent-members';
 import {
   IntentMemberStatus,
   IntentMemberRole,

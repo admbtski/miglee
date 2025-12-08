@@ -14,8 +14,8 @@ import {
   Settings,
 } from 'lucide-react';
 
-import { useMeQuery } from '@/lib/api/auth';
-import { useMyFullProfileQuery } from '@/lib/api/user-profile';
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMyFullProfileQuery } from '@/features/users/api/user-profile';
 import type { TabId, TabConfig } from './_types';
 import { ProfileTab } from './_components/profile-tab';
 import { SportsTab } from './_components/sports-tab';

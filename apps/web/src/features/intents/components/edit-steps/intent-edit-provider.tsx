@@ -10,10 +10,11 @@ import {
 import { UseFormReturn } from 'react-hook-form';
 import { useIntentForm } from '../use-intent-form';
 import { IntentFormValues } from '../types';
-import { CategoryOption, TagOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
 import { useCategorySelection } from '../category-selection-provider';
 import { useTagSelection } from '../tag-selection-provider';
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
+import { TagOption } from '@/features/tags';
 
 interface IntentEditContextValue {
   form: UseFormReturn<IntentFormValues>;

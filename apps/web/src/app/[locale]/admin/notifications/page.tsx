@@ -6,8 +6,8 @@ import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { Search, Bell, BellOff, User } from 'lucide-react';
-import { useUsersQuery } from '@/lib/api/users';
-import { useAdminUserNotificationsQuery } from '@/lib/api/admin-users';
+import { useUsersQuery } from '@/features/users/api/users';
+import { useAdminUserNotificationsQuery } from '@/features/admin/api/admin-users';
 import {
   UsersSortBy,
   SortDir,

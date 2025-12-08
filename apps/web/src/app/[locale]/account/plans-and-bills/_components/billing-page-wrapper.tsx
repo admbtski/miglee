@@ -8,9 +8,9 @@ import {
   useMyPlan,
   useMyPlanPeriods,
   useMySubscription,
-} from '@/lib/api/billing';
+} from '@/features/billing/api/billing';
 import { useI18n } from '@/lib/i18n/provider-ssr';
-import { formatCurrency } from '@/lib/utils/currency';
+import { formatCurrency } from '@/features/billing/utils/currency';
 import { ArrowRight, Download, Eye, Users } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';

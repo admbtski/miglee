@@ -6,9 +6,12 @@ import { PlanType, BillingType } from './subscription-plans-wrapper';
 import {
   useCreateSubscriptionCheckout,
   useCreateOneOffCheckout,
-} from '@/lib/api/billing';
+} from '@/features/billing/api/billing';
 import { toast } from 'sonner';
-import { USER_PLAN_FEATURES, PLAN_SCOPE_NOTICE } from '@/lib/billing-constants';
+import {
+  USER_PLAN_FEATURES,
+  PLAN_SCOPE_NOTICE,
+} from '@/features/billing/constants/billing-constants';
 
 interface AccountCheckoutPanelProps {
   selectedPlan: {

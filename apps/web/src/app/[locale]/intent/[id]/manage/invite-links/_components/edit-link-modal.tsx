@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Modal } from '@/components/feedback/modal';
-import { useUpdateIntentInviteLinkMutation } from '@/lib/api/invite-links';
+import { useUpdateIntentInviteLinkMutation } from '@/features/intents/api/invite-links';
 import { Loader2, Save } from 'lucide-react';
 import clsx from 'clsx';
 

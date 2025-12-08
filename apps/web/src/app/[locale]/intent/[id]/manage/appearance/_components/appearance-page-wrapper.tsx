@@ -8,7 +8,7 @@ import {
   type IntentAppearanceQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { AppearancePage } from './appearance-page';
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,

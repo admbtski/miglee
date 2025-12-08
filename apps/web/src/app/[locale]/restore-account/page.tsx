@@ -14,7 +14,7 @@ import {
 import {
   useRequestAccountRestorationMutation,
   useRestoreMyAccountMutation,
-} from '@/lib/api/user-restore-account';
+} from '@/features/users/api/user-restore-account';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { motion } from 'framer-motion';

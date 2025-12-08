@@ -7,7 +7,7 @@ import {
   useUpdateCategoryMutation,
   useCheckCategorySlugAvailableQuery,
   useGetCategoryUsageCountQuery,
-} from '@/lib/api/categories';
+} from '@/features/categories/api/categories';
 import { isValidSlug } from '@/lib/utils/slug';
 
 type EditCategoryModalProps = {

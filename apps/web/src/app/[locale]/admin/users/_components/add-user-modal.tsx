@@ -8,7 +8,7 @@ import { UserPlus, Mail, AlertCircle } from 'lucide-react';
 import {
   useAdminInviteUserMutation,
   useAdminCreateUserMutation,
-} from '@/lib/api/users';
+} from '@/features/users/api/users';
 
 type AddUserModalProps = {
   open: boolean;

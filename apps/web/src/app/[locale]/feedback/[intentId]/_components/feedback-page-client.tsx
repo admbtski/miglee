@@ -1,12 +1,12 @@
 'use client';
 
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import {
   useIntentFeedbackQuestionsQuery,
   useSubmitReviewAndFeedbackMutation,
   useCanSubmitFeedbackQuery,
-} from '@/lib/api/feedback';
-import { useGetMyReview } from '@/lib/api/reviews';
+} from '@/features/feedback/api/feedback';
+import { useGetMyReview } from '@/features/intents/api/reviews';
 import { ReviewAndFeedbackForm } from '@/features/intents/components/review-and-feedback-form';
 import {
   Loader2,

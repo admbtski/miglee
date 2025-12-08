@@ -38,15 +38,15 @@ import {
   useMarkIntentChatRead,
   useGetIntentUnreadCount,
   usePublishIntentTyping,
-} from '@/lib/api/event-chat';
+} from '@/features/chat/api/event-chat';
 import {
   useIntentMessageAdded,
   useIntentMessageUpdated,
   useIntentMessageDeleted,
   useIntentTyping,
-} from '@/lib/api/event-chat-subscriptions';
-import { useIntentReactionAdded } from '@/lib/api/reactions-subscriptions';
-import { useMyMembershipsQuery } from '@/lib/api/intent-members';
+} from '@/features/chat/api/event-chat-subscriptions';
+import { useIntentReactionAdded } from '@/features/chat/api/reactions-subscriptions';
+import { useMyMembershipsQuery } from '@/features/intents/api/intent-members';
 import type { Message } from '../types';
 
 // =============================================================================

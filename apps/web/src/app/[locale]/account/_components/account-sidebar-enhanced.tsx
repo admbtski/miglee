@@ -1,7 +1,7 @@
 'use client';
 
 import { Avatar } from '@/components/ui/avatar';
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { cn } from '@/lib/utils';
 import { useLocalePath } from '@/hooks/use-locale-path';

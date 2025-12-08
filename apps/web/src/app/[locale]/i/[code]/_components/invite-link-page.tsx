@@ -4,7 +4,7 @@ import * as React from 'react';
 import {
   useValidateInviteLinkQuery,
   useJoinByInviteLinkMutation,
-} from '@/lib/api/invite-links';
+} from '@/features/intents/api/invite-links';
 import { useRouter } from 'next/navigation';
 import {
   Calendar,

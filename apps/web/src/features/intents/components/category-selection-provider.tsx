@@ -1,6 +1,6 @@
 'use client';
 
-import { CategoryOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
 import React, {
   createContext,
   useCallback,

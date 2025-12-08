@@ -3,28 +3,28 @@
 import { useMemo } from 'react';
 import { Calendar } from 'lucide-react';
 
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
   useMyIntentsQuery,
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
   useLeaveIntentMutationMembers,
-} from '@/lib/api/intent-members';
+} from '@/features/intents/api/intent-members';
 import type {
   IntentLifecycleStatus,
   IntentMemberRole,
   IntentMemberStatus,
 } from '@/lib/api/__generated__/react-query-update';
 
-import { RoleFilter } from './_components/role-filter';
-import { IntentStatusFilter } from './_components/intent-status-filter';
-import { FiltersDropdown } from './_components/filters-dropdown';
+import { RoleFilter } from '@/features/intents/components/role-filter';
+import { IntentStatusFilter } from '@/features/intents/components/intent-status-filter';
+import { FiltersDropdown } from '@/features/intents/components/filters-dropdown';
 import {
   MyIntentCard,
   type MyIntentCardData,
-} from './_components/my-intent-card';
-import { CancelIntentModals } from './_components/cancel-intent-modals';
-import { DeleteIntentModals } from './_components/delete-intent-modals';
+} from '@/features/intents/components/my-intent-card';
+import { CancelIntentModals } from '@/features/intents/components/cancel-intent-modals';
+import { DeleteIntentModals } from '@/features/intents/components/delete-intent-modals';
 import {
   useMyIntentsFilters,
   useIntentsModals,

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useLocalePath } from '@/hooks/use-locale-path';
 
 import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import { NavDrawer } from './nav-drawer';
 import { UserMenuControlled } from './user-menu-controlled';
 import { NotificationBell } from '@/features/notifications/components/notifications-bell';

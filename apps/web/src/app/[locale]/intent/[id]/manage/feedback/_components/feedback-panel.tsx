@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import {
   Plus,
   Trash2,
@@ -52,7 +52,7 @@ import {
   useIntentFeedbackResultsQuery,
   useSendFeedbackRequestsMutation,
   useUpdateIntentFeedbackQuestionsMutation,
-} from '@/lib/api/feedback';
+} from '@/features/feedback/api/feedback';
 import type { FeedbackQuestionType } from '@/lib/api/__generated__/react-query-update';
 import {
   PlanUpgradeBanner,

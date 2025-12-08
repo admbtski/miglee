@@ -16,7 +16,7 @@ import {
   getUseCategoriesLimitData,
   useCategories,
 } from '@/features/intents/hooks/use-categories';
-import { CategoryOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
 
 export type CategoryMultiComboProps = {
   values: CategoryOption[];

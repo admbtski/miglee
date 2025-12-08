@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
-import { SponsorPlan } from '../../../_components/subscription-panel-types';
+import { SponsorPlan } from '@/features/intents/components/subscription-panel-types';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -11,7 +11,7 @@ import {
   EVENT_PLAN_DESCRIPTIONS,
   EVENT_SPONSORSHIP_LIFETIME_NOTICE,
   ACTIONS_NEVER_EXPIRE,
-} from '@/lib/billing-constants';
+} from '@/features/billing/constants/billing-constants';
 
 type PlanId = 'free' | 'plus' | 'pro';
 

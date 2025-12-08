@@ -29,7 +29,7 @@ import {
   useMarkNotificationReadMutation,
   // NEW: infinite query
   useNotificationsInfiniteQuery,
-} from '@/lib/api/notifications';
+} from '@/features/notifications/api/notifications';
 
 import type {
   GetNotificationsQuery,

@@ -4,7 +4,7 @@ import { Heart, Loader2 } from 'lucide-react';
 import {
   useMyFavouritesInfiniteQuery,
   flatFavouritesPages,
-} from '@/lib/api/favourites';
+} from '@/features/favourites/api/favourites';
 import { useMemo } from 'react';
 import { FavouriteCard } from './favourite-card';
 import Link from 'next/link';

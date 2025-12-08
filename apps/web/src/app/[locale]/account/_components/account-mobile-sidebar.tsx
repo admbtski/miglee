@@ -21,7 +21,7 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import { Avatar } from '@/components/ui/avatar';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { motion, AnimatePresence } from 'framer-motion';

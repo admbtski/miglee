@@ -5,8 +5,8 @@ import * as React from 'react';
 
 import { QuotaBar } from '@/components/ui/quota-bar';
 import { useCooldown } from '@/hooks/use-cooldown';
-import { ActionButton } from '../../../_components/action-button';
-import { SponsorshipState } from '../../../_components/subscription-panel-types';
+import { ActionButton } from '@/features/intents/components/action-button';
+import { SponsorshipState } from '@/features/intents/components/subscription-panel-types';
 
 type BoostPageProps = {
   intentId: string;

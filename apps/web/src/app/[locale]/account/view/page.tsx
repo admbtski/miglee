@@ -4,7 +4,7 @@
  * Shows the public profile view inside the account management interface
  */
 
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import { Suspense } from 'react';
 import { ProfileViewManagement } from './_components/profile-view-management';
 import { Loader2 } from 'lucide-react';

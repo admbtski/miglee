@@ -8,7 +8,7 @@ import {
   defaultSimpleIntentValues,
   useSimpleIntentForm,
 } from '@/features/intents/components/use-intent-form';
-import { CategoryOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
 import { useAutoSaveDraft } from '@/features/intents/hooks/use-auto-save-draft';
 import { toast } from '@/lib/utils';
 import { uploadIntentCover } from '@/lib/media/upload-intent-cover';

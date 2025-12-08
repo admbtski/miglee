@@ -5,8 +5,9 @@ import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 import { CategoryMultiCombo } from '@/components/forms/category-combobox';
 import { TagMultiCombo } from '@/components/forms/tag-multicombo';
-import { CategoryOption, TagOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
 import { Info } from 'lucide-react';
+import { TagOption } from '@/features/tags/types';
 
 const TITLE_MAX = 60;
 const DESC_MAX = 500;

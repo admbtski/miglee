@@ -17,7 +17,7 @@ import {
   useCancelPendingOrInviteForUserMutation,
   useUnbanMemberMutation,
   usePromoteFromWaitlistMutation,
-} from '@/lib/api/intent-members';
+} from '@/features/intents/api/intent-members';
 import { MembersPanel } from './members-panel';
 import { MemberManageModal } from './member-manage-modal';
 import type { IntentMember } from './types';

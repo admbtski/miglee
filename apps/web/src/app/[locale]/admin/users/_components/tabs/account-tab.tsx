@@ -5,7 +5,7 @@ import {
   useUserQuery,
   useAdminUpdateUserMutation,
   useAdminDeleteUserMutation,
-} from '@/lib/api/users';
+} from '@/features/users/api/users';
 import { Role } from '@/lib/api/__generated__/react-query-update';
 import {
   Shield,
@@ -19,7 +19,7 @@ import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { NoticeModal } from '@/components/feedback/notice-modal';
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import { useRouter } from 'next/navigation';
 import { useLocalePath } from '@/hooks/use-locale-path';
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
   useAdminReviews,
   useAdminDeleteReview,
-} from '@/lib/api/admin-comments';
+} from '@/features/admin/api/admin-comments';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Trash2, Star, Eye } from 'lucide-react';

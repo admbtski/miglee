@@ -12,7 +12,7 @@ import { IntentsTab } from './tabs/intents-tab';
 import { DiagnosticTools } from './tabs/diagnostic-tools';
 import { AuditLogTab } from './tabs/audit-log-tab';
 import { NotificationsTab } from './tabs/notifications-tab';
-import { useUserQuery } from '@/lib/api/users';
+import { useUserQuery } from '@/features/users/api/users';
 
 type UserDetailModalProps = {
   userId: string;

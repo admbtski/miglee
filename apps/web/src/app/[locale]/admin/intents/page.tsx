@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useIntentsQuery } from '@/lib/api/intents';
+import { useIntentsQuery } from '@/features/intents/api/intents';
 import {
   useAdminCancelIntentMutation,
   useAdminDeleteIntentMutation,
   useAdminRestoreIntentMutation,
-} from '@/lib/api/admin-intents';
+} from '@/features/admin/api/admin-intents';
 import {
   Visibility,
   IntentStatus,

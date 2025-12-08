@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { SimpleIntentFormValues } from '../components/types';
-import { CategoryOption, TagOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
+import { TagOption } from '@/features/tags';
 
 const DRAFT_KEY = 'intent-draft';
 const AUTO_SAVE_INTERVAL = 5000; // 5 seconds

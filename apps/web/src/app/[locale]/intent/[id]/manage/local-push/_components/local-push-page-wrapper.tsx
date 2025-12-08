@@ -1,8 +1,8 @@
 'use client';
 
-import { LocalPushPage } from '../../../_components/local-push-page';
-import { useSubscriptionData } from '../../../_components/use-subscription-data';
-import { useIntentQuery } from '@/lib/api/intents';
+import { LocalPushPage } from '@/features/intents/components/local-push-page';
+import { useSubscriptionData } from '@/features/intents/components/use-subscription-data';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,

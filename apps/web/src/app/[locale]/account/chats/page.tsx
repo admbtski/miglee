@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Hash, User2, Loader2 } from 'lucide-react';
 
 // API Hooks
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
   useGetDmThreads,
   useGetDmMessagesInfinite,
@@ -12,7 +12,7 @@ import {
   useMarkDmThreadRead,
   usePublishDmTyping,
   dmKeys,
-} from '@/lib/api/dm';
+} from '@/features/chat/api/dm';
 import {
   useGetIntentMessages,
   useSendIntentMessage,
@@ -20,32 +20,32 @@ import {
   useGetIntentUnreadCount,
   usePublishIntentTyping,
   eventChatKeys,
-} from '@/lib/api/event-chat';
+} from '@/features/chat/api/event-chat';
 import {
   useDmMessageAdded,
   useDmMessageUpdated,
   useDmMessageDeleted,
   useDmTyping,
   useDmThreadsSubscriptions,
-} from '@/lib/api/dm-subscriptions';
+} from '@/features/chat/api/dm-subscriptions';
 import {
   useIntentMessageAdded,
   useIntentMessageUpdated,
   useIntentMessageDeleted,
   useIntentTyping,
-} from '@/lib/api/event-chat-subscriptions';
+} from '@/features/chat/api/event-chat-subscriptions';
 import {
   useDmReactionAdded,
   useIntentReactionAdded,
-} from '@/lib/api/reactions-subscriptions';
-import { useMyMembershipsQuery } from '@/lib/api/intent-members';
+} from '@/features/chat/api/reactions-subscriptions';
+import { useMyMembershipsQuery } from '@/features/intents/api/intent-members';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAddDmReaction,
   useRemoveDmReaction,
   useAddIntentReaction,
   useRemoveIntentReaction,
-} from '@/lib/api/reactions';
+} from '@/features/chat/api/reactions';
 // Chat components imported in sub-components
 import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
 import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
@@ -1256,13 +1256,11 @@ function ChatTabs({
 }
 
 /* ───────────────────────────── List ───────────────────────────── */
-// ChatList moved to _components/chat-list.tsx
-import { ChatList as ChatListComponent } from './_components/chat-list';
+import { ChatList as ChatListComponent } from '@/features/chat/components/chat-list';
 const ChatList = ChatListComponent;
 
 /* ───────────────────────────── Thread ───────────────────────────── */
-// ChatThread moved to _components/chat-thread.tsx
-import { ChatThread as ChatThreadComponent } from './_components/chat-thread';
+import { ChatThread as ChatThreadComponent } from '@/features/chat/components/chat-thread';
 const ChatThread = ChatThreadComponent;
 
 // Helper functions for time formatting (internal use only)
@@ -1280,8 +1278,8 @@ function formatRelativeTime(isoString: string): string {
   return `${diffDays}d`;
 }
 
-// Components moved to _components/ - imported where needed
-import { EmptyThread as EmptyThreadComponent } from './_components/empty-thread';
+// Components moved to features/chat/components/
+import { EmptyThread as EmptyThreadComponent } from '@/features/chat/components/empty-thread';
 const EmptyThread = EmptyThreadComponent;
 
 // ============================================================================

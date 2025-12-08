@@ -7,7 +7,7 @@ import {
   useUpdateTagMutation,
   useCheckTagSlugAvailableQuery,
   useGetTagUsageCountQuery,
-} from '@/lib/api/tags';
+} from '@/features/tags/api/tags';
 import { isValidSlug } from '@/lib/utils/slug';
 
 type EditTagModalProps = {

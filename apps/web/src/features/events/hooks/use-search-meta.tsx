@@ -6,8 +6,8 @@
 'use client';
 
 import { appLanguage, appLanguageFallback } from '@/lib/config/language';
-import { useGetCategoriesQuery } from '@/lib/api/categories';
-import { useGetTagsQuery } from '@/lib/api/tags';
+import { useGetCategoriesQuery } from '@/features/categories/api/categories';
+import { useGetTagsQuery } from '@/features/tags/api/tags';
 import { useEffect, useMemo, useState } from 'react';
 
 const MIN_CHARS = 3;

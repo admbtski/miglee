@@ -6,7 +6,7 @@ import { Plus, AlertCircle, Check, Loader2 } from 'lucide-react';
 import {
   useCreateTagMutation,
   useCheckTagSlugAvailableQuery,
-} from '@/lib/api/tags';
+} from '@/features/tags/api/tags';
 import { generateSlug, isValidSlug } from '@/lib/utils/slug';
 
 type AddTagModalProps = {

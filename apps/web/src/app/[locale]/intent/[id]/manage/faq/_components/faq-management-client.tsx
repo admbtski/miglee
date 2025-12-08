@@ -9,7 +9,7 @@ import { useState } from 'react';
 import {
   useIntentDetailQuery,
   useUpdateIntentFaqsMutation,
-} from '@/lib/api/intents';
+} from '@/features/intents/api/intents';
 import {
   HelpCircle,
   Plus,

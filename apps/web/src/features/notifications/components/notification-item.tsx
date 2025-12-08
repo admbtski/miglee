@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Star,
   UserPlus,
-  UserMinus,
   Ban,
   CheckCircle,
   XCircle,

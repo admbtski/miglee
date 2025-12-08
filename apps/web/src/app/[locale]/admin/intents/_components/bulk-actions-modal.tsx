@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Modal } from '@/components/feedback/modal';
 import { NoticeModal } from '@/components/feedback/notice-modal';
-import { useAdminBulkUpdateIntentsMutation } from '@/lib/api/admin-intents';
+import { useAdminBulkUpdateIntentsMutation } from '@/features/admin/api/admin-intents';
 import { Visibility } from '@/lib/api/__generated__/react-query-update';
 import { EyeOff, Eye, Lock, Unlock, AlertCircle } from 'lucide-react';
 

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { EventDetailClient } from './_components/event-detail-client';
-import { EventDetailSkeleton } from './_components/event-detail-skeleton';
+import { EventDetailClient } from '@/features/intents/components/event-detail-client';
+import { EventDetailSkeleton } from '@/features/intents/components/event-detail-skeleton';
 
 type PageProps = {
   params: Promise<{ id: string }>;

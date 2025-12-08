@@ -6,7 +6,7 @@ import { Plus, AlertCircle, Check, Loader2 } from 'lucide-react';
 import {
   useCreateCategoryMutation,
   useCheckCategorySlugAvailableQuery,
-} from '@/lib/api/categories';
+} from '@/features/categories/api/categories';
 import { generateSlug, isValidSlug } from '@/lib/utils/slug';
 
 type AddCategoryModalProps = {

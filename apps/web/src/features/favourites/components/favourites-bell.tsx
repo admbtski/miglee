@@ -18,7 +18,7 @@ import {
   useMyFavouritesInfiniteQuery,
   useToggleFavouriteMutation,
   flatFavouritesPages,
-} from '@/lib/api/favourites';
+} from '@/features/favourites/api/favourites';
 import type { MyFavouritesQuery } from '@/lib/api/__generated__/react-query-update';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';

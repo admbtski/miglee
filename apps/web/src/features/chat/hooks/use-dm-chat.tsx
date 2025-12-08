@@ -39,7 +39,7 @@ import {
   useSendDmMessage,
   useMarkDmThreadRead,
   usePublishDmTyping,
-} from '@/lib/api/dm';
+} from '@/features/chat/api/dm';
 import type { GetDmMessagesQuery } from '@/lib/api/__generated__/react-query-update';
 import {
   useDmMessageAdded,
@@ -47,8 +47,8 @@ import {
   useDmMessageDeleted,
   useDmTyping,
   useDmThreadsSubscriptions,
-} from '@/lib/api/dm-subscriptions';
-import { useDmReactionAdded } from '@/lib/api/reactions-subscriptions';
+} from '@/features/chat/api/dm-subscriptions';
+import { useDmReactionAdded } from '@/features/chat/api/reactions-subscriptions';
 import type { Message } from '../types';
 // Utility function for time formatting
 function formatRelativeTime(isoString: string): string {

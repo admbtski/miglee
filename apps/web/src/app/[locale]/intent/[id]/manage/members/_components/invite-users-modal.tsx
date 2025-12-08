@@ -4,8 +4,8 @@ import { Check, ChevronDown, Loader2, Search, UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Modal } from '@/components/feedback/modal';
-import { useInviteMemberMutation } from '@/lib/api/intent-members';
-import { useUsersQuery } from '@/lib/api/users';
+import { useInviteMemberMutation } from '@/features/intents/api/intent-members';
+import { useUsersQuery } from '@/features/users/api/users';
 import clsx from 'clsx';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar as AvatarComponent } from '@/components/ui/avatar';

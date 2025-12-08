@@ -10,7 +10,7 @@ import {
   USER_PLAN_FEATURES,
   USER_PLAN_DESCRIPTIONS,
   PLAN_SCOPE_NOTICE_EXTENDED,
-} from '@/lib/billing-constants';
+} from '@/features/billing/constants/billing-constants';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
 interface SubscriptionPlansProps {

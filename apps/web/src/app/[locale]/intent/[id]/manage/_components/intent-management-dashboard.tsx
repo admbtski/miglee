@@ -32,18 +32,18 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { useIntentQuery } from '@/lib/api/intents';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow, isFuture, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { EventCountdownTimer } from '../../_components/event-countdown-timer';
+import { EventCountdownTimer } from '@/features/intents/components/event-countdown-timer';
 import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
 import { useState } from 'react';
 import {
   CloseJoinModal,
   ReopenJoinModal,
-} from '@/app/[locale]/account/intents/_components/close-join-modals';
+} from '@/features/intents/components/close-join-modals';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildIntentCoverUrl } from '@/lib/media/url';
 

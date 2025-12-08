@@ -18,13 +18,13 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl, enUS, de } from 'date-fns/locale';
-import { useMeQuery } from '@/lib/api/auth';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
   useNotificationsInfiniteQuery,
   useMarkNotificationReadMutation,
   useDeleteNotificationMutation,
   useMarkAllNotificationsReadMutation,
-} from '@/lib/api/notifications';
+} from '@/features/notifications/api/notifications';
 import type {
   GetNotificationsQuery,
   GetNotificationsQueryVariables,

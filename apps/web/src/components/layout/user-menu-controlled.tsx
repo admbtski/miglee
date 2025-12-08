@@ -3,7 +3,11 @@
 import { useCallback, useMemo } from 'react';
 import { NavigateKey, UserMenu } from './user-menu';
 
-import { GET_ME_KEY, useDevLogoutMutation, useMeQuery } from '@/lib/api/auth';
+import {
+  GET_ME_KEY,
+  useDevLogoutMutation,
+  useMeQuery,
+} from '@/features/auth/hooks/auth';
 import { getQueryClient } from '@/lib/config/query-client';
 
 export function UserMenuControlled({

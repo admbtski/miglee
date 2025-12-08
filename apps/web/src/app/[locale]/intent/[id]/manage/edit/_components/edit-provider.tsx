@@ -7,7 +7,7 @@ import {
   useMemo,
   useCallback,
 } from 'react';
-import { useIntentQuery, useUpdateIntentMutation } from '@/lib/api/intents';
+import { useIntentQuery, useUpdateIntentMutation } from '@/features/intents/api/intents';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/utils';
 

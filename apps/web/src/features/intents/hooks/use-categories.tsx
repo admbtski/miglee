@@ -40,22 +40,10 @@
 
 'use client';
 
-import { useGetCategoriesQuery } from '@/lib/api/categories';
+import { CategoryOption } from '@/features/categories';
+import { useGetCategoriesQuery } from '@/features/categories/api/categories';
 import { Locale, useI18n } from '@/lib/i18n/provider-ssr';
 import { useEffect, useMemo, useState } from 'react';
-
-// =============================================================================
-// Types
-// =============================================================================
-
-export type CategoryOption = {
-  /** Category ID */
-  id: string;
-  /** Category slug (URL-friendly identifier) */
-  slug: string;
-  /** Display label (localized name) */
-  label: string;
-};
 
 // =============================================================================
 // Constants

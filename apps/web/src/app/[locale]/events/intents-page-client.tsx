@@ -28,20 +28,20 @@ import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
-import { useMeQuery } from '@/lib/api/auth';
-import { useIntentsInfiniteQuery } from '@/lib/api/intents';
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useIntentsInfiniteQuery } from '@/features/intents/api/intents';
 import { appLanguage } from '@/lib/config/language';
 import { INTENTS_CONFIG } from '@/lib/constants/intents';
-import type { IntentListItem } from '@/types/intent';
+import type { IntentListItem } from '@/features/intents/types/intent';
 
-import { DesktopSearchBar } from './_components/desktop-search-bar';
-import { EventsGridVirtualized } from './_components/events-list/events-grid-virtualized';
-import { EventsHeader } from './_components/events-list/events-header';
-import { LeftFiltersPanel } from './_components/left-filters-panel';
-import { MobileFiltersDrawer } from './_components/mobile-filters-drawer';
-import { StickyMobileSearchBar } from './_components/mobile-search-bar';
-import { TopDrawer } from './_components/top-drawer';
-import type { TopDrawerFocusSection } from './_components/top-drawer';
+import { DesktopSearchBar } from '@/features/events/components/desktop-search-bar';
+import { EventsGridVirtualized } from '@/features/events/components/events-list/events-grid-virtualized';
+import { EventsHeader } from '@/features/events/components/events-list/events-header';
+import { LeftFiltersPanel } from '@/features/events/components/left-filters-panel';
+import { MobileFiltersDrawer } from '@/features/events/components/mobile-filters-drawer';
+import { StickyMobileSearchBar } from '@/features/events/components/mobile-search-bar';
+import { TopDrawer } from '@/features/events/components/top-drawer';
+import type { TopDrawerFocusSection } from '@/features/events/components/top-drawer';
 import {
   useActiveFiltersCount,
   useCommittedFilters,
@@ -57,7 +57,7 @@ import type { CommittedFilters } from '@/features/events/types';
 const ServerClusteredMap = lazy(
   () =>
     // @ts-expect-error - Dynamic import with moduleResolution node16
-    import('./_components/server-clustered-map')
+    import('@/features/events/components/server-clustered-map')
 );
 
 // Auto-apply debounce time in milliseconds

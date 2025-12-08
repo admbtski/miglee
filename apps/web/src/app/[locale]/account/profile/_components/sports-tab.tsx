@@ -5,14 +5,14 @@ import { Plus, Trash2, Edit2, Save, Loader2 } from 'lucide-react';
 import {
   useUpsertUserCategoryLevel,
   useRemoveUserCategoryLevel,
-} from '@/lib/api/user-profile';
+} from '@/features/users/api/user-profile';
 import type {
   GetMyFullProfileQuery,
   Level as GQLLevel,
 } from '@/lib/api/__generated__/react-query-update';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import { CategoryMultiCombo } from '@/components/forms/category-combobox';
-import type { CategoryOption } from '@/types/types';
+import { CategoryOption } from '@/features/categories';
 
 type SportsTabProps = {
   user: GetMyFullProfileQuery['user'] | null | undefined;
@@ -264,7 +264,8 @@ export function SportsTab({ user }: SportsTabProps) {
       {categoryLevels.length === 0 ? (
         <div className="p-12 text-center border rounded-lg border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            No category levels added yet. Click "Add Category Level" to get started.
+            No category levels added yet. Click "Add Category Level" to get
+            started.
           </p>
         </div>
       ) : (

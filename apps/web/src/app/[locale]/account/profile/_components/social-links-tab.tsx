@@ -14,7 +14,7 @@ import {
 import {
   useAddUserSocialLink,
   useRemoveUserSocialLink,
-} from '@/lib/api/user-profile';
+} from '@/features/users/api/user-profile';
 import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 

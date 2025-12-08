@@ -6,8 +6,8 @@ import {
   useCreateIntentInviteLinkMutation,
   useRevokeIntentInviteLinkMutation,
   useDeleteIntentInviteLinkMutation,
-} from '@/lib/api/invite-links';
-import { useIntentQuery } from '@/lib/api/intents';
+} from '@/features/intents/api/invite-links';
+import { useIntentQuery } from '@/features/intents/api/intents';
 import {
   Copy,
   Plus,

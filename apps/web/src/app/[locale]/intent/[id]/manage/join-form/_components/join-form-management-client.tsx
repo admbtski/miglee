@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useIntentDetailQuery } from '@/lib/api/intents';
+import { useIntentDetailQuery } from '@/features/intents/api/intents';
 import {
   Plus,
   Trash2,
@@ -30,7 +30,7 @@ import {
   useApproveJoinRequestMutation,
   useRejectJoinRequestMutation,
   useUpdateIntentJoinQuestionsMutation,
-} from '@/lib/api/join-form';
+} from '@/features/intents/api/join-form';
 import {
   useFloating,
   autoUpdate,

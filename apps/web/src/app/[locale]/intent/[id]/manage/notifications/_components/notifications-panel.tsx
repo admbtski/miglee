@@ -9,9 +9,8 @@ import {
   UserPlus,
   Clock,
   Info,
-  CheckCircle2,
 } from 'lucide-react';
-import { useIntentMemberStatsQuery } from '@/lib/api/intent-members';
+import { useIntentMemberStatsQuery } from '@/features/intents/api/intent-members';
 import { toast } from 'sonner';
 
 interface NotificationsPanelProps {

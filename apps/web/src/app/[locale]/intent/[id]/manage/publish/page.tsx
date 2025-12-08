@@ -3,7 +3,6 @@
 import {
   CalendarClock,
   Clock,
-  Eye,
   EyeOff,
   FileEdit,
   Globe,
@@ -20,7 +19,7 @@ import {
   useScheduleIntentPublicationMutation,
   useCancelScheduledPublicationMutation,
   useUnpublishIntentMutation,
-} from '@/lib/api/intents';
+} from '@/features/intents/api/intents';
 import { toast } from '@/lib/utils';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

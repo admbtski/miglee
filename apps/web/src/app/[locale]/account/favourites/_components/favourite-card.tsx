@@ -3,7 +3,7 @@
 import { Heart, Calendar, MapPin, Users, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl, enUS, de } from 'date-fns/locale';
-import { useToggleFavouriteMutation } from '@/lib/api/favourites';
+import { useToggleFavouriteMutation } from '@/features/favourites/api/favourites';
 import type { MyFavouritesQuery } from '@/lib/api/__generated__/react-query-update';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
