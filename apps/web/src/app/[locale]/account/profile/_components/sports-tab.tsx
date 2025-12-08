@@ -1,18 +1,24 @@
 'use client';
 
+import { Edit2, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, Save, Loader2 } from 'lucide-react';
+
+// Components
+import { NoticeModal } from '@/components/feedback/notice-modal';
+import { CategoryMultiCombo } from '@/components/forms/category-combobox';
+
+// Features
+import { CategoryOption } from '@/features/categories';
 import {
-  useUpsertUserCategoryLevel,
   useRemoveUserCategoryLevel,
+  useUpsertUserCategoryLevel,
 } from '@/features/users/api/user-profile';
+
+// Types
 import type {
   GetMyFullProfileQuery,
   Level as GQLLevel,
 } from '@/lib/api/__generated__/react-query-update';
-import { NoticeModal } from '@/components/feedback/notice-modal';
-import { CategoryMultiCombo } from '@/components/forms/category-combobox';
-import { CategoryOption } from '@/features/categories';
 
 type SportsTabProps = {
   user: GetMyFullProfileQuery['user'] | null | undefined;

@@ -1,9 +1,10 @@
 'use client';
 
+import { AlertTriangle, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+
 import { useI18n } from '@/lib/i18n/provider-ssr';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -89,6 +90,7 @@ export function DeleteAccountModal({
                   {t.settings.deleteAccount.modal.description}
                 </p>
 
+                {/* TODO: Add i18n for this info box */}
                 <div className="p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-900/50">
                   <p className="text-sm text-indigo-800 dark:text-indigo-300">
                     ℹ️ <strong>Soft Delete (Grace Period):</strong> Your account

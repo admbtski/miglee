@@ -170,13 +170,16 @@ function formatTime(iso: string, locale: string) {
 /**
  * Get localized button labels
  */
-function getButtonLabels(locale: string) {
-  const labels: Record<string, { markRead: string; delete: string }> = {
-    pl: { markRead: 'Przeczytane', delete: 'Usuń' },
-    de: { markRead: 'Gelesen', delete: 'Löschen' },
-    en: { markRead: 'Mark read', delete: 'Delete' },
-  };
-  return labels[locale] || labels.en;
+type ButtonLabels = { markRead: string; delete: string };
+
+const buttonLabelsMap: Record<string, ButtonLabels> = {
+  pl: { markRead: 'Przeczytane', delete: 'Usuń' },
+  de: { markRead: 'Gelesen', delete: 'Löschen' },
+  en: { markRead: 'Mark read', delete: 'Delete' },
+};
+
+function getButtonLabels(locale: string): ButtonLabels {
+  return buttonLabelsMap[locale] ?? buttonLabelsMap['en']!;
 }
 
 export function NotificationItem({

@@ -5,21 +5,29 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Camera, Image as ImageIcon, Loader2, Save, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Save, Loader2, X, Camera, Image as ImageIcon } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useUpdateUserProfile } from '@/features/users/api/user-profile';
-import { ImageCropModal } from '@/components/ui/image-crop-modal';
+
+// Components
 import { LocationCombo } from '@/components/forms/location-combobox';
+import { BlurHashImage } from '@/components/ui/blurhash-image';
+import { ImageCropModal } from '@/components/ui/image-crop-modal';
+
+// Features
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useUpdateUserProfile } from '@/features/users/api/user-profile';
+
+// Utils
 import { useAvatarUpload, useCoverUpload } from '@/lib/media/use-media-upload';
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
-import { useMeQuery } from '@/features/auth/hooks/auth';
-import { BlurHashImage } from '@/components/ui/blurhash-image';
-import type { TabProps, LocationData } from '../_types';
+
+// Local
 import { COMMON_LANGUAGES, VALIDATION_LIMITS } from '../_constants';
+import type { LocationData, TabProps } from '../_types';
 
 const profileSchema = z.object({
   displayName: z

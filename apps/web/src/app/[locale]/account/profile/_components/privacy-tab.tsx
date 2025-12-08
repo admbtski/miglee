@@ -1,10 +1,14 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff, Loader2, Lock, Save, Users } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Save, Loader2, Eye, EyeOff, Users, Lock } from 'lucide-react';
+
+// Features
 import { useUpdateUserPrivacy } from '@/features/users/api/user-profile';
+
+// Types
 import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-update';
 
 const privacySchema = z.object({

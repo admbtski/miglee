@@ -470,8 +470,8 @@ export function getNotificationContent(
   locale: string = 'en'
 ): { title: string; body: string } {
   const translations =
-    notificationTranslations[locale] || notificationTranslations.en;
-  const translation = translations[kind as NotificationKind];
+    notificationTranslations[locale] ?? notificationTranslations.en;
+  const translation = translations![kind as NotificationKind];
 
   if (!translation) {
     return {
@@ -521,12 +521,12 @@ export function formatRelativeTime(
     },
   };
 
-  const t = formats[locale] || formats.en;
+  const t = (formats[locale] ?? formats['en'])!;
 
-  if (diffMins < 0) return t.soon;
-  if (diffMins < 60) return t.inMinutes;
-  if (diffHours < 24) return t.inHours;
-  return t.inDays;
+  if (diffMins < 0) return t.soon!;
+  if (diffMins < 60) return t.inMinutes!;
+  if (diffHours < 24) return t.inHours!;
+  return t.inDays!;
 }
 
 /**
@@ -551,6 +551,6 @@ export const roleTranslations: Record<string, Record<string, string>> = {
 };
 
 export function getLocalizedRole(role: string, locale: string = 'en'): string {
-  const roles = roleTranslations[locale] || roleTranslations.en;
-  return roles[role] || role;
+  const roles = roleTranslations[locale] ?? roleTranslations.en;
+  return roles![role] ?? role;
 }

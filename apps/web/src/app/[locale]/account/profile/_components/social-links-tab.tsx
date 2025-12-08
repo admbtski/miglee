@@ -1,22 +1,28 @@
 'use client';
 
-import { useState } from 'react';
 import {
+  Facebook,
+  Globe,
+  Instagram,
+  Loader2,
+  MessageCircle,
   Plus,
   Trash2,
-  Loader2,
-  Instagram,
-  Facebook,
   Twitter,
-  Globe,
-  MessageCircle,
 } from 'lucide-react';
+import { useState } from 'react';
+
+// Components
+import { NoticeModal } from '@/components/feedback/notice-modal';
+
+// Features
 import {
   useAddUserSocialLink,
   useRemoveUserSocialLink,
 } from '@/features/users/api/user-profile';
+
+// Types
 import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-update';
-import { NoticeModal } from '@/components/feedback/notice-modal';
 
 type SocialLinksTabProps = {
   user: GetMyFullProfileQuery['user'] | null | undefined;

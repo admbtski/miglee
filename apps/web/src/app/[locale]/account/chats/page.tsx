@@ -1,61 +1,69 @@
 'use client';
 
+import { Hash, Loader2, User2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Hash, User2, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
-// API Hooks
+// Features - Auth
 import { useMeQuery } from '@/features/auth/hooks/auth';
+
+// Features - Chat API
 import {
-  useGetDmThreads,
+  dmKeys,
   useGetDmMessagesInfinite,
-  useSendDmMessage,
+  useGetDmThreads,
   useMarkDmThreadRead,
   usePublishDmTyping,
-  dmKeys,
+  useSendDmMessage,
 } from '@/features/chat/api/dm';
 import {
-  useGetEventMessages,
-  useSendEventMessage,
-  useMarkEventChatRead,
-  useGetEventUnreadCount,
-  usePublishEventTyping,
-  eventChatKeys,
-} from '@/features/chat/api/event-chat';
-import {
   useDmMessageAdded,
-  useDmMessageUpdated,
   useDmMessageDeleted,
-  useDmTyping,
+  useDmMessageUpdated,
   useDmThreadsSubscriptions,
+  useDmTyping,
 } from '@/features/chat/api/dm-subscriptions';
 import {
+  eventChatKeys,
+  useGetEventMessages,
+  useGetEventUnreadCount,
+  useMarkEventChatRead,
+  usePublishEventTyping,
+  useSendEventMessage,
+} from '@/features/chat/api/event-chat';
+import {
   useEventMessageAdded,
-  useEventMessageUpdated,
   useEventMessageDeleted,
+  useEventMessageUpdated,
   useEventTyping,
 } from '@/features/chat/api/event-chat-subscriptions';
+import {
+  useAddDmReaction,
+  useAddEventReaction,
+  useRemoveDmReaction,
+  useRemoveEventReaction,
+} from '@/features/chat/api/reactions';
 import {
   useDmReactionAdded,
   useEventReactionAdded,
 } from '@/features/chat/api/reactions-subscriptions';
-import { useMyMembershipsQuery } from '@/features/events/api/event-members';
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  useAddDmReaction,
-  useRemoveDmReaction,
-  useAddEventReaction,
-  useRemoveEventReaction,
-} from '@/features/chat/api/reactions';
-// Chat components imported in sub-components
-import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
+
+// Features - Chat Components
+import { ChatList as ChatListComponent } from '@/features/chat/components/chat-list';
+import { ChatThread as ChatThreadComponent } from '@/features/chat/components/chat-thread';
 import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
+import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
+import { EmptyThread as EmptyThreadComponent } from '@/features/chat/components/empty-thread';
 import {
   UserPicker,
   type PickedUser,
 } from '@/features/chat/components/UserPicker';
 
-// Custom Hooks
+// Features - Chat Hooks
 import { useMessageActions } from '@/features/chat/hooks';
+
+// Features - Events
+import { useMyMembershipsQuery } from '@/features/events/api/event-members';
 
 /* ───────────────────────────── Types ───────────────────────────── */
 
@@ -1256,11 +1264,9 @@ function ChatTabs({
 }
 
 /* ───────────────────────────── List ───────────────────────────── */
-import { ChatList as ChatListComponent } from '@/features/chat/components/chat-list';
 const ChatList = ChatListComponent;
 
 /* ───────────────────────────── Thread ───────────────────────────── */
-import { ChatThread as ChatThreadComponent } from '@/features/chat/components/chat-thread';
 const ChatThread = ChatThreadComponent;
 
 // Helper functions for time formatting (internal use only)
@@ -1279,7 +1285,6 @@ function formatRelativeTime(isoString: string): string {
 }
 
 // Components moved to features/chat/components/
-import { EmptyThread as EmptyThreadComponent } from '@/features/chat/components/empty-thread';
 const EmptyThread = EmptyThreadComponent;
 
 // ============================================================================

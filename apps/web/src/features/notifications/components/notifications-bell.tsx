@@ -50,56 +50,56 @@ type NotificationNode = NonNullable<
 >[number];
 
 /* ===== Localized labels ===== */
-function getLabels(locale: string) {
-  const labels: Record<
-    string,
-    {
-      notifications: string;
-      add: string;
-      refresh: string;
-      settings: string;
-      loading: string;
-      noNotifications: string;
-      loadMore: string;
-      viewAll: string;
-      markAllRead: string;
-    }
-  > = {
-    pl: {
-      notifications: 'Powiadomienia',
-      add: 'Dodaj',
-      refresh: 'Odśwież',
-      settings: 'Ustawienia',
-      loading: 'Ładowanie…',
-      noNotifications: 'Brak powiadomień.',
-      loadMore: 'Załaduj więcej',
-      viewAll: 'Zobacz wszystkie',
-      markAllRead: 'Oznacz wszystkie jako przeczytane',
-    },
-    de: {
-      notifications: 'Benachrichtigungen',
-      add: 'Hinzufügen',
-      refresh: 'Aktualisieren',
-      settings: 'Einstellungen',
-      loading: 'Laden…',
-      noNotifications: 'Keine Benachrichtigungen.',
-      loadMore: 'Mehr laden',
-      viewAll: 'Alle anzeigen',
-      markAllRead: 'Alle als gelesen markieren',
-    },
-    en: {
-      notifications: 'Notifications',
-      add: 'Add',
-      refresh: 'Refresh',
-      settings: 'Settings',
-      loading: 'Loading…',
-      noNotifications: 'No notifications yet.',
-      loadMore: 'Load more',
-      viewAll: 'View all',
-      markAllRead: 'Mark all as read',
-    },
-  };
-  return labels[locale] || labels.en;
+type Labels = {
+  notifications: string;
+  add: string;
+  refresh: string;
+  settings: string;
+  loading: string;
+  noNotifications: string;
+  loadMore: string;
+  viewAll: string;
+  markAllRead: string;
+};
+
+const labelsMap: Record<string, Labels> = {
+  pl: {
+    notifications: 'Powiadomienia',
+    add: 'Dodaj',
+    refresh: 'Odśwież',
+    settings: 'Ustawienia',
+    loading: 'Ładowanie…',
+    noNotifications: 'Brak powiadomień.',
+    loadMore: 'Załaduj więcej',
+    viewAll: 'Zobacz wszystkie',
+    markAllRead: 'Oznacz wszystkie jako przeczytane',
+  },
+  de: {
+    notifications: 'Benachrichtigungen',
+    add: 'Hinzufügen',
+    refresh: 'Aktualisieren',
+    settings: 'Einstellungen',
+    loading: 'Laden…',
+    noNotifications: 'Keine Benachrichtigungen.',
+    loadMore: 'Mehr laden',
+    viewAll: 'Alle anzeigen',
+    markAllRead: 'Alle als gelesen markieren',
+  },
+  en: {
+    notifications: 'Notifications',
+    add: 'Add',
+    refresh: 'Refresh',
+    settings: 'Settings',
+    loading: 'Loading…',
+    noNotifications: 'No notifications yet.',
+    loadMore: 'Load more',
+    viewAll: 'View all',
+    markAllRead: 'Mark all as read',
+  },
+};
+
+function getLabels(locale: string): Labels {
+  return labelsMap[locale] ?? labelsMap['en']!;
 }
 
 export function NotificationBell({

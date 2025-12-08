@@ -7,4 +7,7 @@
  */
 
 export * from './api';
-// Note: components are exported from their respective directories
+
+// Components
+export { NotificationItem } from './components/notification-item';
+export { NotificationBell } from './components/notifications-bell';
