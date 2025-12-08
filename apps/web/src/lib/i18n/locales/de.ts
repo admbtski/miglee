@@ -151,10 +151,10 @@ export const de = {
       changeFilter: 'Filter ändern, um andere Benachrichtigungen zu sehen',
     },
     kinds: {
-      INTENT_REMINDER: 'Veranstaltungserinnerung',
-      INTENT_UPDATED: 'Veranstaltung aktualisiert',
-      INTENT_CANCELED: 'Veranstaltung abgesagt',
-      INTENT_CREATED: 'Neue Veranstaltung',
+      EVENT_REMINDER: 'Veranstaltungserinnerung',
+      EVENT_UPDATED: 'Veranstaltung aktualisiert',
+      EVENT_CANCELED: 'Veranstaltung abgesagt',
+      EVENT_CREATED: 'Neue Veranstaltung',
       NEW_MESSAGE: 'Neue Nachricht',
       NEW_COMMENT: 'Neuer Kommentar',
       NEW_REVIEW: 'Neue Bewertung',
@@ -185,8 +185,8 @@ export const de = {
     showingEvents: 'Anzeige',
   },
 
-  // My Intents
-  myIntents: {
+  // My Events
+  myEvents: {
     title: 'Meine Veranstaltungen',
     subtitle: 'Verwalten Sie alle Ihre Veranstaltungen an einem Ort',
     loading: 'Lädt...',
@@ -245,14 +245,14 @@ export const de = {
     },
     messages: {
       requestRejected: 'Ihre Anfrage wurde abgelehnt',
-      youAreBanned: 'Sie sind von diesem Intent gesperrt',
+      youAreBanned: 'Sie sind von diesem Event gesperrt',
     },
   },
 
   // Navigation
   nav: {
     dashboard: 'Dashboard',
-    intents: 'Veranstaltungen',
+    events: 'Veranstaltungen',
     account: 'Konto',
     settings: 'Einstellungen',
   },

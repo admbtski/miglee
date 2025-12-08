@@ -2,33 +2,33 @@
 
 import { Avatar } from '@/components/ui/avatar';
 import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { useI18n } from '@/lib/i18n/provider-ssr';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { cn } from '@/lib/utils';
-import { useLocalePath } from '@/hooks/use-locale-path';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
   Bell,
   Calendar1Icon,
   ChevronDown,
+  Cookie,
   CreditCardIcon,
   Eye,
+  FileText,
   Heart,
   HelpCircle,
   ListCollapseIcon,
   LogOut,
   MessagesSquareIcon,
   SettingsIcon,
-  UserIcon,
-  Sparkles,
-  Cookie,
-  FileText,
   Shield,
+  Sparkles,
+  UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 
 interface NavItem {
   id: string;
@@ -90,7 +90,7 @@ export function AccountSidebarEnhanced() {
         {
           id: 'my-events',
           label: t.accountNav.items.myEvents,
-          href: '/account/intents',
+          href: '/account/events',
           icon: Calendar1Icon,
         },
         {

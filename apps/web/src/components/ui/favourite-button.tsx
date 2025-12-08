@@ -7,14 +7,14 @@ import { Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface FavouriteButtonProps {
-  intentId: string;
+  eventId: string;
   isFavourite: boolean;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }
 
 export function FavouriteButton({
-  intentId,
+  eventId,
   isFavourite: initialIsFavourite,
   size = 'md',
   className,
@@ -36,7 +36,7 @@ export function FavouriteButton({
     setIsFavourite((prev) => !prev);
 
     toggleFavourite(
-      { intentId },
+      { eventId },
       {
         onError: () => {
           // Rollback on error

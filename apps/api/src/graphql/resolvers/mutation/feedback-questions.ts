@@ -16,18 +16,18 @@ const MAX_HELP_TEXT_LENGTH = 200;
 const MAX_OPTIONS = 10;
 
 /**
- * Check if user can edit feedback questions for an intent
+ * Check if user can edit feedback questions for an event
  * Rules:
  * - Must be owner or moderator
  * - Event must have PLUS or PRO plan
  */
 async function canEditFeedbackQuestions(
-  intentId: string,
+  eventId: string,
   userId: string,
   userRole: string
 ): Promise<{ canEdit: boolean; reason?: string }> {
-  const intent = await prisma.intent.findUnique({
-    where: { id: intentId },
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
     select: {
       ownerId: true,
       sponsorshipPlan: true,
@@ -42,20 +42,20 @@ async function canEditFeedbackQuestions(
     },
   });
 
-  if (!intent) {
-    return { canEdit: false, reason: 'Intent not found' };
+  if (!event) {
+    return { canEdit: false, reason: 'Event not found' };
   }
 
   // Check plan - feedback is only available for PLUS or PRO
-  if (intent.sponsorshipPlan === 'FREE') {
+  if (event.sponsorshipPlan === 'FREE') {
     return {
       canEdit: false,
       reason: 'Feedback questions are only available for PLUS or PRO plans',
     };
   }
 
-  const isOwner = intent.ownerId === userId;
-  const isModerator = intent.members.some(
+  const isOwner = event.ownerId === userId;
+  const isModerator = event.members.some(
     (m) =>
       m.userId === userId &&
       (m.role === 'OWNER' || m.role === 'MODERATOR') &&
@@ -66,7 +66,7 @@ async function canEditFeedbackQuestions(
   if (!isOwner && !isModerator && !isAdmin) {
     return {
       canEdit: false,
-      reason: 'Only intent owner or moderators can edit feedback questions',
+      reason: 'Only event owner or moderators can edit feedback questions',
     };
   }
 
@@ -86,7 +86,7 @@ export const createFeedbackQuestionMutation: MutationResolvers['createFeedbackQu
 
     // Check permissions
     const { canEdit, reason } = await canEditFeedbackQuestions(
-      input.intentId,
+      input.eventId,
       user.id,
       user.role
     );
@@ -141,22 +141,22 @@ export const createFeedbackQuestionMutation: MutationResolvers['createFeedbackQu
     }
 
     // Check max questions limit
-    const existingCount = await prisma.intentFeedbackQuestion.count({
-      where: { intentId: input.intentId },
+    const existingCount = await prisma.eventFeedbackQuestion.count({
+      where: { eventId: input.eventId },
     });
 
     if (existingCount >= MAX_QUESTIONS) {
       throw new GraphQLError(
-        `Maximum ${MAX_QUESTIONS} questions allowed per intent`,
+        `Maximum ${MAX_QUESTIONS} questions allowed per event`,
         {
           extensions: { code: 'BAD_USER_INPUT' },
         }
       );
     }
 
-    const question = await prisma.intentFeedbackQuestion.create({
+    const question = await prisma.eventFeedbackQuestion.create({
       data: {
-        intentId: input.intentId,
+        eventId: input.eventId,
         order: input.order,
         type: input.type,
         label: input.label,
@@ -186,9 +186,9 @@ export const updateFeedbackQuestionMutation: MutationResolvers['updateFeedbackQu
       });
     }
 
-    const question = await prisma.intentFeedbackQuestion.findUnique({
+    const question = await prisma.eventFeedbackQuestion.findUnique({
       where: { id },
-      select: { intentId: true },
+      select: { eventId: true },
     });
 
     if (!question) {
@@ -199,7 +199,7 @@ export const updateFeedbackQuestionMutation: MutationResolvers['updateFeedbackQu
 
     // Check permissions
     const { canEdit, reason } = await canEditFeedbackQuestions(
-      question.intentId,
+      question.eventId,
       user.id,
       user.role
     );
@@ -253,7 +253,7 @@ export const updateFeedbackQuestionMutation: MutationResolvers['updateFeedbackQu
       }
     }
 
-    const updated = await prisma.intentFeedbackQuestion.update({
+    const updated = await prisma.eventFeedbackQuestion.update({
       where: { id },
       data: {
         ...(input.order !== undefined && { order: input.order }),
@@ -288,9 +288,9 @@ export const deleteFeedbackQuestionMutation: MutationResolvers['deleteFeedbackQu
       });
     }
 
-    const question = await prisma.intentFeedbackQuestion.findUnique({
+    const question = await prisma.eventFeedbackQuestion.findUnique({
       where: { id },
-      select: { intentId: true },
+      select: { eventId: true },
     });
 
     if (!question) {
@@ -301,7 +301,7 @@ export const deleteFeedbackQuestionMutation: MutationResolvers['deleteFeedbackQu
 
     // Check permissions
     const { canEdit, reason } = await canEditFeedbackQuestions(
-      question.intentId,
+      question.eventId,
       user.id,
       user.role
     );
@@ -311,7 +311,7 @@ export const deleteFeedbackQuestionMutation: MutationResolvers['deleteFeedbackQu
       });
     }
 
-    await prisma.intentFeedbackQuestion.delete({
+    await prisma.eventFeedbackQuestion.delete({
       where: { id },
     });
 
@@ -322,7 +322,7 @@ export const deleteFeedbackQuestionMutation: MutationResolvers['deleteFeedbackQu
  * Reorder feedback questions
  */
 export const reorderFeedbackQuestionsMutation: MutationResolvers['reorderFeedbackQuestions'] =
-  async (_parent, { intentId, questionIds }, { user }) => {
+  async (_parent, { eventId, questionIds }, { user }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -331,7 +331,7 @@ export const reorderFeedbackQuestionsMutation: MutationResolvers['reorderFeedbac
 
     // Check permissions
     const { canEdit, reason } = await canEditFeedbackQuestions(
-      intentId,
+      eventId,
       user.id,
       user.role
     );
@@ -341,16 +341,16 @@ export const reorderFeedbackQuestionsMutation: MutationResolvers['reorderFeedbac
       });
     }
 
-    // Verify all questions belong to this intent
-    const questions = await prisma.intentFeedbackQuestion.findMany({
+    // Verify all questions belong to this event
+    const questions = await prisma.eventFeedbackQuestion.findMany({
       where: {
         id: { in: questionIds },
-        intentId,
+        eventId,
       },
     });
 
     if (questions.length !== questionIds.length) {
-      throw new GraphQLError('Some questions do not belong to this intent', {
+      throw new GraphQLError('Some questions do not belong to this event', {
         extensions: { code: 'BAD_USER_INPUT' },
       });
     }
@@ -358,7 +358,7 @@ export const reorderFeedbackQuestionsMutation: MutationResolvers['reorderFeedbac
     // Update order for each question
     await Promise.all(
       questionIds.map((id, index) =>
-        prisma.intentFeedbackQuestion.update({
+        prisma.eventFeedbackQuestion.update({
           where: { id },
           data: { order: index },
         })
@@ -366,8 +366,8 @@ export const reorderFeedbackQuestionsMutation: MutationResolvers['reorderFeedbac
     );
 
     // Return updated questions
-    const updated = await prisma.intentFeedbackQuestion.findMany({
-      where: { intentId },
+    const updated = await prisma.eventFeedbackQuestion.findMany({
+      where: { eventId },
       orderBy: { order: 'asc' },
     });
 
@@ -390,11 +390,11 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       });
     }
 
-    const { intentId, rating, content, feedbackAnswers } = input;
+    const { eventId, rating, content, feedbackAnswers } = input;
 
-    // Verify intent exists and is ended
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Verify event exists and is ended
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       select: {
         id: true,
         endAt: true,
@@ -409,14 +409,14 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
     // Check if user is a member
-    if (intent.members.length === 0) {
+    if (event.members.length === 0) {
       throw new GraphQLError('Only members can submit reviews and feedback', {
         extensions: { code: 'FORBIDDEN' },
       });
@@ -441,8 +441,8 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       // Upsert review
       const review = await tx.review.upsert({
         where: {
-          intentId_authorId: {
-            intentId,
+          eventId_authorId: {
+            eventId,
             authorId: user.id,
           },
         },
@@ -452,14 +452,14 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
           updatedAt: new Date(),
         },
         create: {
-          intentId,
+          eventId,
           authorId: user.id,
           rating,
           content: content || null,
         },
         include: {
           author: true,
-          intent: true,
+          event: true,
         },
       });
 
@@ -467,9 +467,9 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       const createdAnswers = [];
       if (feedbackAnswers && feedbackAnswers.length > 0) {
         // Fetch questions to validate
-        const questions = await tx.intentFeedbackQuestion.findMany({
+        const questions = await tx.eventFeedbackQuestion.findMany({
           where: {
-            intentId,
+            eventId,
             id: { in: feedbackAnswers.map((a) => a.questionId) },
           },
         });
@@ -491,10 +491,10 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
           // Validate answer based on question type
           // (Add more validation as needed)
 
-          const answer = await tx.intentFeedbackAnswer.upsert({
+          const answer = await tx.eventFeedbackAnswer.upsert({
             where: {
-              intentId_userId_questionId: {
-                intentId,
+              eventId_userId_questionId: {
+                eventId,
                 userId: user.id,
                 questionId: answerInput.questionId,
               },
@@ -504,7 +504,7 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
               updatedAt: new Date(),
             },
             create: {
-              intentId,
+              eventId,
               userId: user.id,
               questionId: answerInput.questionId,
               answer: answerInput.answer,
@@ -527,26 +527,26 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
     });
 
     // Notify owner about review/feedback submission
-    if (intent.ownerId && intent.ownerId !== user.id) {
+    if (event.ownerId && event.ownerId !== user.id) {
       const hasFeedback = feedbackAnswers && feedbackAnswers.length > 0;
       const kind = hasFeedback
-        ? PrismaNotificationKind.INTENT_FEEDBACK_RECEIVED
-        : PrismaNotificationKind.INTENT_REVIEW_RECEIVED;
+        ? PrismaNotificationKind.EVENT_FEEDBACK_RECEIVED
+        : PrismaNotificationKind.EVENT_REVIEW_RECEIVED;
 
       const notif = await prisma.notification.create({
         data: {
           kind,
-          recipientId: intent.ownerId,
+          recipientId: event.ownerId,
           actorId: user.id,
           entityType: PrismaNotificationEntity.REVIEW,
           entityId: result.review.id,
-          intentId,
+          eventId,
           title: null,
           body: null,
-          dedupeKey: `review_feedback:${intentId}:${result.review.id}`,
+          dedupeKey: `review_feedback:${eventId}:${result.review.id}`,
           data: {
-            intentId,
-            intentTitle: intent.title,
+            eventId,
+            eventTitle: event.title,
             actorName: user.name,
             rating,
             reviewContent: content?.slice(0, 100) || undefined,
@@ -556,12 +556,12 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         include: NOTIFICATION_INCLUDE,
       });
       await pubsub?.publish({
-        topic: `NOTIFICATION_ADDED:${intent.ownerId}`,
+        topic: `NOTIFICATION_ADDED:${event.ownerId}`,
         payload: { notificationAdded: mapNotification(notif) },
       });
       await pubsub?.publish({
-        topic: `NOTIFICATION_BADGE:${intent.ownerId}`,
-        payload: { notificationBadgeChanged: { recipientId: intent.ownerId } },
+        topic: `NOTIFICATION_BADGE:${event.ownerId}`,
+        payload: { notificationBadgeChanged: { recipientId: event.ownerId } },
       });
     }
 
@@ -575,10 +575,10 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
   };
 
 /**
- * Bulk update (replace) all feedback questions for an intent
- * Similar to updateIntentJoinQuestions - deletes all existing and creates new ones
+ * Bulk update (replace) all feedback questions for an event
+ * Similar to updateEventJoinQuestions - deletes all existing and creates new ones
  */
-export const updateIntentFeedbackQuestionsMutation: MutationResolvers['updateIntentFeedbackQuestions'] =
+export const updateEventFeedbackQuestionsMutation: MutationResolvers['updateEventFeedbackQuestions'] =
   async (_parent, { input }, { user }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
@@ -586,11 +586,11 @@ export const updateIntentFeedbackQuestionsMutation: MutationResolvers['updateInt
       });
     }
 
-    const { intentId, questions } = input;
+    const { eventId, questions } = input;
 
     // Check permissions
     const { canEdit, reason } = await canEditFeedbackQuestions(
-      intentId,
+      eventId,
       user.id,
       user.role
     );
@@ -657,16 +657,16 @@ export const updateIntentFeedbackQuestionsMutation: MutationResolvers['updateInt
     // Delete all existing questions and create new ones in a transaction
     const updatedQuestions = await prisma.$transaction(async (tx) => {
       // Delete all existing questions (this also deletes related answers due to cascade)
-      await tx.intentFeedbackQuestion.deleteMany({
-        where: { intentId },
+      await tx.eventFeedbackQuestion.deleteMany({
+        where: { eventId },
       });
 
       // Create new questions with order
       const createdQuestions = await Promise.all(
         questions.map((q, index) =>
-          tx.intentFeedbackQuestion.create({
+          tx.eventFeedbackQuestion.create({
             data: {
-              intentId,
+              eventId,
               order: q.order ?? index,
               type: q.type,
               label: q.label.trim(),
@@ -695,16 +695,16 @@ export const updateIntentFeedbackQuestionsMutation: MutationResolvers['updateInt
  * Only owner, moderator, or admin can trigger this
  */
 export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackRequests'] =
-  async (_parent, { intentId }, { user }) => {
+  async (_parent, { eventId }, { user }) => {
     if (!user) {
       throw new GraphQLError('Unauthorized', {
         extensions: { code: 'UNAUTHORIZED' },
       });
     }
 
-    // Fetch intent with membership
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Fetch event with membership
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       include: {
         members: {
           where: {
@@ -715,14 +715,14 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
     // Check permissions (owner, moderator, or admin)
-    const membership = intent.members[0];
+    const membership = event.members[0];
     const isAdmin = user.role === 'ADMIN';
     const isOwnerOrModerator =
       membership && ['OWNER', 'MODERATOR'].includes(membership.role);
@@ -736,7 +736,7 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
       );
     }
     // Check if event has ended
-    if (intent.endAt > new Date()) {
+    if (event.endAt > new Date()) {
       throw new GraphQLError(
         'Cannot send feedback requests before event ends',
         {
@@ -746,7 +746,7 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
     }
 
     // Check if event is cancelled or deleted
-    if (intent.canceledAt || intent.deletedAt) {
+    if (event.canceledAt || event.deletedAt) {
       throw new GraphQLError(
         'Cannot send feedback requests for cancelled/deleted event',
         {
@@ -756,9 +756,9 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
     }
 
     // Count eligible members (JOINED status)
-    const joinedMembers = await prisma.intentMember.count({
+    const joinedMembers = await prisma.eventMember.count({
       where: {
-        intentId,
+        eventId,
         status: 'JOINED',
       },
     });
@@ -774,7 +774,7 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
 
     // Enqueue feedback request job
     try {
-      await enqueueFeedbackRequestNow(intentId);
+      await enqueueFeedbackRequestNow(eventId);
 
       return {
         success: true,

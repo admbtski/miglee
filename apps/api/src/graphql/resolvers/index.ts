@@ -5,32 +5,32 @@ import { JSONObjectScalar, JSONScalar } from './scalars';
 import { Subscription } from './subscription';
 import {
   dmMessageReactionsResolver,
-  intentChatMessageReactionsResolver,
+  eventChatMessageReactionsResolver,
 } from './fields/message-reactions';
 import {
-  intentSponsorshipResolver,
-  intentSponsorshipPlanResolver,
-  intentInviteLinksResolver,
-  intentIsFavouriteResolver,
-  intentCoverBlurhashResolver,
-  intentFaqsResolver,
-  intentJoinQuestionsResolver,
-  intentAppearanceResolver,
-} from './fields/intent';
-import { intentMemberIntentResolver } from './fields/intent-member';
+  eventSponsorshipResolver,
+  eventSponsorshipPlanResolver,
+  eventInviteLinksResolver,
+  eventIsFavouriteResolver,
+  eventCoverBlurhashResolver,
+  eventFaqsResolver,
+  eventJoinQuestionsResolver,
+  eventAppearanceResolver,
+} from './fields/event';
+import { eventMemberEventResolver } from './fields/event-member';
 import { UserFieldResolvers, UserProfileFieldResolvers } from './fields/user';
 import { SessionUserFieldResolvers } from './fields/session-user';
-import { IntentInviteLinkFieldResolvers } from './fields/invite-link';
+import { eventInviteLinkFieldResolvers } from './fields/invite-link';
 
 export const resolvers: Pick<
   Resolvers,
   'Query' | 'Mutation' | 'Subscription' | 'JSON' | 'JSONObject'
 > & {
   DmMessage?: Partial<Resolvers['DmMessage']>;
-  IntentChatMessage?: Partial<Resolvers['IntentChatMessage']>;
-  Intent?: Partial<Resolvers['Intent']>;
-  IntentMember?: Partial<Resolvers['IntentMember']>;
-  IntentInviteLink?: Partial<Resolvers['IntentInviteLink']>;
+  EventChatMessage?: Partial<Resolvers['EventChatMessage']>;
+  Event?: Partial<Resolvers['Event']>;
+  EventMember?: Partial<Resolvers['EventMember']>;
+  EventInviteLink?: Partial<Resolvers['EventInviteLink']>;
   User?: Partial<Resolvers['User']>;
   UserProfile?: Partial<Resolvers['UserProfile']>;
   SessionUser?: Partial<Resolvers['SessionUser']>;
@@ -43,22 +43,22 @@ export const resolvers: Pick<
   DmMessage: {
     reactions: dmMessageReactionsResolver,
   },
-  IntentChatMessage: {
-    reactions: intentChatMessageReactionsResolver,
+  EventChatMessage: {
+    reactions: eventChatMessageReactionsResolver,
   },
-  Intent: {
-    sponsorshipPlan: intentSponsorshipPlanResolver,
-    inviteLinks: intentInviteLinksResolver,
-    isFavourite: intentIsFavouriteResolver,
-    coverBlurhash: intentCoverBlurhashResolver,
-    faqs: intentFaqsResolver,
-    joinQuestions: intentJoinQuestionsResolver,
-    appearance: intentAppearanceResolver,
+  Event: {
+    sponsorshipPlan: eventSponsorshipPlanResolver,
+    inviteLinks: eventInviteLinksResolver,
+    isFavourite: eventIsFavouriteResolver,
+    coverBlurhash: eventCoverBlurhashResolver,
+    faqs: eventFaqsResolver,
+    joinQuestions: eventJoinQuestionsResolver,
+    appearance: eventAppearanceResolver,
   },
-  IntentMember: {
-    intent: intentMemberIntentResolver,
+  EventMember: {
+    event: eventMemberEventResolver,
   },
-  IntentInviteLink: IntentInviteLinkFieldResolvers,
+  EventInviteLink: eventInviteLinkFieldResolvers,
   User: UserFieldResolvers,
   UserProfile: UserProfileFieldResolvers,
   SessionUser: SessionUserFieldResolvers,

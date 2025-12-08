@@ -433,7 +433,7 @@ export function NotificationBell({
                           createdAt: n.createdAt,
                           data: n.data as Record<string, unknown> | null,
                           actor: n.actor,
-                          intent: n.intent,
+                          event: n.event,
                         }}
                         onMarkRead={handleMarkOne}
                         onDelete={handleDeleteOne}

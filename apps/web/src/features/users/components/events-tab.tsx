@@ -95,7 +95,7 @@ export function EventsTab({ user }: EventsTabProps) {
           return (
             <Link
               key={event.id}
-              href={`${locale}/intent/${event.id}`}
+              href={`${locale}/event/${event.id}`}
               className="group block rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-5 shadow-sm transition-all hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700"
             >
               <div className="flex items-start justify-between gap-4">

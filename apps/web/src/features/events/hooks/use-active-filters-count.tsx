@@ -5,7 +5,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { IntentStatus } from '@/lib/api/__generated__/react-query-update';
+import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 import type { CommittedFilters } from '../types';
 import { DEFAULT_DISTANCE_KM } from '../constants';
 
@@ -25,7 +25,7 @@ export function useActiveFiltersCount(filters: CommittedFilters): number {
     if (filters.distanceKm !== DEFAULT_DISTANCE_KM) count++;
     if (filters.startISO) count++;
     if (filters.endISO) count++;
-    if (filters.status && filters.status !== IntentStatus.Any) count++;
+    if (filters.status && filters.status !== EventStatus.Any) count++;
     if (filters.kinds.length) count++;
     if (filters.levels.length) count++;
     if (filters.verifiedOnly) count++;

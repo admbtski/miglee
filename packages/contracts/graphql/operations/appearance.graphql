@@ -1,12 +1,12 @@
-# Intent Appearance Operations
+# Event Appearance Operations
 
-# Query to get intent appearance configuration
-query IntentAppearance($intentId: ID!) {
-  intent(id: $intentId) {
+# Query to get event appearance configuration
+query EventAppearance($eventId: ID!) {
+  event(id: $eventId) {
     id
     appearance {
       id
-      intentId
+      eventId
       config
       createdAt
       updatedAt
@@ -14,14 +14,13 @@ query IntentAppearance($intentId: ID!) {
   }
 }
 
-# Mutation to update intent appearance
-mutation UpdateIntentAppearance($input: UpdateIntentAppearanceInput!) {
-  updateIntentAppearance(input: $input) {
+# Mutation to update event appearance
+mutation UpdateEventAppearance($input: UpdateEventAppearanceInput!) {
+  updateEventAppearance(input: $input) {
     id
-    intentId
+    eventId
     config
     createdAt
     updatedAt
   }
 }
-

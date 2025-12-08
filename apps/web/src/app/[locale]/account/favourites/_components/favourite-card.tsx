@@ -33,13 +33,13 @@ function getDateLocale(locale: string) {
 export function FavouriteCard({ favourite }: FavouriteCardProps) {
   const { locale, t } = useI18n();
   const { localePath } = useLocalePath();
-  const intent = favourite.intent;
+  const event = favourite.event;
 
   const { mutate: toggleFavourite, isPending } = useToggleFavouriteMutation();
 
   const dateLocale = getDateLocale(locale);
 
-  if (!intent) return null;
+  if (!event) return null;
 
   const handleRemove = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -48,7 +48,7 @@ export function FavouriteCard({ favourite }: FavouriteCardProps) {
     // Guard: don't trigger if already pending
     if (isPending) return;
 
-    toggleFavourite({ intentId: intent.id });
+    toggleFavourite({ eventId: event.id });
   };
 
   return (
@@ -60,7 +60,7 @@ export function FavouriteCard({ favourite }: FavouriteCardProps) {
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className="group relative overflow-hidden rounded-[24px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] shadow-sm transition-all hover:shadow-lg"
     >
-      <Link href={localePath(`/intent/${intent.id}`)} className="block">
+      <Link href={localePath(`/event${event.id}`)} className="block">
         {/* Favourite Button */}
         <button
           type="button"
@@ -75,13 +75,13 @@ export function FavouriteCard({ favourite }: FavouriteCardProps) {
         {/* Content */}
         <div className="p-6">
           <h3 className="mb-3 line-clamp-2 text-lg font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50 leading-tight pr-8">
-            {intent.title}
+            {event.title}
           </h3>
 
           {/* Description */}
-          {intent.description && (
+          {event.description && (
             <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              {intent.description}
+              {event.description}
             </p>
           )}
 
@@ -90,31 +90,31 @@ export function FavouriteCard({ favourite }: FavouriteCardProps) {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 shrink-0" strokeWidth={2} />
               <span className="font-medium">
-                {format(new Date(intent.startAt), 'dd MMM yyyy, HH:mm', {
+                {format(new Date(event.startAt), 'dd MMM yyyy, HH:mm', {
                   locale: dateLocale,
                 })}
               </span>
             </div>
 
-            {intent.address && (
+            {event.address && (
               <div className="flex items-center gap-2 min-w-0">
                 <MapPin className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span className="truncate">{intent.address.split(',')[0]}</span>
+                <span className="truncate">{event.address.split(',')[0]}</span>
               </div>
             )}
 
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 shrink-0" strokeWidth={2} />
               <span className="font-medium">
-                {intent.joinedCount} / {intent.max} {t.favourites.participants}
+                {event.joinedCount} / {event.max} {t.favourites.participants}
               </span>
             </div>
           </div>
 
           {/* Categories */}
-          {intent.categories && intent.categories.length > 0 && (
+          {event.categories && event.categories.length > 0 && (
             <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-white/5 flex flex-wrap gap-1.5">
-              {intent.categories.slice(0, 3).map((cat) => (
+              {event.categories.slice(0, 3).map((cat) => (
                 <span
                   key={cat.id}
                   className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300"
@@ -122,9 +122,9 @@ export function FavouriteCard({ favourite }: FavouriteCardProps) {
                   {(cat.names as any)?.[locale] || cat.slug}
                 </span>
               ))}
-              {intent.categories.length > 3 && (
+              {event.categories.length > 3 && (
                 <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                  +{intent.categories.length - 3}
+                  +{event.categories.length - 3}
                 </span>
               )}
             </div>

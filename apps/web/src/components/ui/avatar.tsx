@@ -2,7 +2,7 @@
  * Reusable Avatar component with BlurHash support
  */
 
-import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import { EVENTS_CONFIG } from '@/lib/constants/events';
 import { BlurHashImage } from './blurhash-image';
 
 export interface AvatarProps {
@@ -24,7 +24,7 @@ export function Avatar({
   className = '',
 }: AvatarProps) {
   const sizeClass = `w-${Math.floor(size / 4)} h-${Math.floor(size / 4)}`;
-  const finalUrl = url || INTENTS_CONFIG.FALLBACK_AVATAR;
+  const finalUrl = url || EVENTS_CONFIG.FALLBACK_AVATAR;
 
   return (
     <BlurHashImage

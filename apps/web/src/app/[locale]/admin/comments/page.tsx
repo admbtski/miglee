@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useGetComments } from '@/features/intents/api/comments';
+import { useGetComments } from '@/features/events/api/comments';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Trash2 } from 'lucide-react';
 
 export default function CommentsPage() {
-  const [intentId, setIntentId] = useState('');
+  const [eventId, setEventId] = useState('');
 
   const { data, isLoading } = useGetComments({
-    // @ts-expect-error - intentId type mismatch between string and GraphQL ID
-    intentId: intentId ? intentId : undefined,
+    // @ts-expect-error - eventId type mismatch between string and GraphQL ID
+    eventId: eventId ? eventId : undefined,
     limit: 50,
   });
 
@@ -41,8 +41,8 @@ export default function CommentsPage() {
             </label>
             <input
               type="text"
-              value={intentId}
-              onChange={(e) => setIntentId(e.target.value)}
+              value={eventId}
+              onChange={(e) => setEventId(e.target.value)}
               placeholder="Filtruj po ID wydarzenia..."
               className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             />

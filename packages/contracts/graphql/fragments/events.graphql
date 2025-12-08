@@ -1,0 +1,301 @@
+# =============================================================================
+# Event Fragments
+# =============================================================================
+# Fragments for event/event entities at different levels of detail.
+
+#import "./_core.graphql"
+#import "./_pagination.graphql"
+
+# -----------------------------------------------------------------------------
+# Event Fragments
+# -----------------------------------------------------------------------------
+
+# Lightweight event fragment (for lists/cards)
+fragment EventLight on Event {
+  id
+  title
+  description
+
+  visibility
+  joinMode
+  mode
+  min
+  max
+
+  startAt
+  endAt
+
+  # Join windows / status
+  status
+  allowJoinLate
+  joinOpensMinutesBeforeStart
+  joinCutoffMinutesBeforeStart
+  lateJoinCutoffMinutesAfterStart
+  joinManuallyClosed
+  joinOpen
+  lockReason
+
+  meetingKind
+  onlineUrl
+
+  lat
+  lng
+  address
+  placeId
+  radiusKm
+
+  levels
+
+  # Media
+  coverKey
+  coverBlurhash
+
+  addressVisibility
+  membersVisibility
+
+  # Derived / computed
+  joinedCount
+  commentsCount
+  messagesCount
+  isFull
+  hasStarted
+  hasEnded
+  isCanceled
+  isDeleted
+  canJoin
+  isOngoing
+
+  # Publication status
+  publicationStatus
+  publishedAt
+  scheduledPublishAt
+
+  ownerId
+
+  createdAt
+  updatedAt
+  boostedAt
+  sponsorshipPlan
+
+  # Appearance customization
+  appearance {
+    id
+    config
+  }
+
+  categories {
+    ...CategoryCore
+  }
+  tags {
+    ...TagCore
+  }
+
+  owner {
+    ...UserLight
+  }
+}
+
+# Full event fragment (for detail views)
+fragment EventCore on Event {
+  id
+  title
+  description
+  notes
+
+  visibility
+  joinMode
+  mode
+  min
+  max
+
+  startAt
+  endAt
+
+  # Join windows / cutoffs / manual lock
+  allowJoinLate
+  joinOpensMinutesBeforeStart
+  joinCutoffMinutesBeforeStart
+  lateJoinCutoffMinutesAfterStart
+  joinManuallyClosed
+  joinManuallyClosedAt
+  joinManuallyClosedBy {
+    ...UserLight
+  }
+  joinManualCloseReason
+
+  meetingKind
+  onlineUrl
+
+  lat
+  lng
+  address
+  placeId
+  radiusKm
+
+  levels
+
+  # Media
+  coverKey
+  coverBlurhash
+
+  addressVisibility
+  membersVisibility
+
+  # Computed helpers (resolver-calculated)
+  status
+  joinedCount
+  commentsCount
+  messagesCount
+  isFull
+  hasStarted
+  hasEnded
+  canJoin
+  joinOpen
+  lockReason
+  isOngoing
+  withinLock
+  isOnsite
+  isOnline
+  isHybrid
+  isFavourite
+  savedCount
+
+  # Ownership
+  ownerId
+
+  # Cancellation (read-only)
+  canceledAt
+  canceledBy {
+    ...UserCore
+  }
+  cancelReason
+  isCanceled
+
+  # Soft-delete (read-only)
+  deletedAt
+  deletedBy {
+    ...UserCore
+  }
+  deleteReason
+  isDeleted
+
+  # Publication status
+  publicationStatus
+  publishedAt
+  scheduledPublishAt
+
+  createdAt
+  updatedAt
+  boostedAt
+  sponsorshipPlan
+
+  # Appearance customization
+  appearance {
+    id
+    config
+  }
+
+  categories {
+    ...CategoryCore
+  }
+  tags {
+    ...TagCore
+  }
+
+  # Convenience relations (access-controlled)
+  owner {
+    ...UserCore
+  }
+
+  sponsorship {
+    plan
+    status
+    startsAt
+    endsAt
+    boostsTotal
+    boostsUsed
+    localPushesTotal
+    localPushesUsed
+    sponsor {
+      id
+      name
+    }
+  }
+}
+
+# Extended event fragment for detail page (includes sponsorship, inviteLinks, members, faqs)
+fragment EventDetail on Event {
+  ...EventCore
+  members {
+    id
+    role
+    status
+    joinedAt
+    leftAt
+    note
+    user {
+      ...UserCore
+    }
+    addedBy {
+      ...UserLight
+    }
+  }
+  sponsorship {
+    plan
+    status
+    startsAt
+    endsAt
+    boostsTotal
+    boostsUsed
+    localPushesTotal
+    localPushesUsed
+    sponsor {
+      id
+      name
+    }
+  }
+  faqs {
+    id
+    eventId
+    order
+    question
+    answer
+    createdAt
+    updatedAt
+  }
+  joinQuestions {
+    id
+    eventId
+    order
+    type
+    label
+    helpText
+    required
+    options
+    maxLength
+    createdAt
+    updatedAt
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Result Wrappers
+# -----------------------------------------------------------------------------
+
+fragment EventsResultLight on EventsResult {
+  items {
+    ...EventLight
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
+
+fragment EventsResultCore on EventsResult {
+  items {
+    ...EventCore
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}

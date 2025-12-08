@@ -33,7 +33,7 @@ const navigation = [
   },
   {
     name: 'Wydarzenia',
-    href: '/admin/intents',
+    href: '/admin/events',
     icon: Calendar,
   },
   {

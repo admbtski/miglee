@@ -1,15 +1,15 @@
 /**
- * Intent Favourites Query Resolvers
+ * Event Favourites Query Resolvers
  */
 
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapIntent, type IntentWithGraph } from '../helpers';
+import { mapEvent, type EventWithGraph } from '../helpers';
 
 /**
- * Query: Get current user's favourite intents (paginated)
+ * Query: Get current user's favourite events (paginated)
  */
 export const myFavouritesQuery: QueryResolvers['myFavourites'] =
   resolverWithMetrics(
@@ -22,11 +22,11 @@ export const myFavouritesQuery: QueryResolvers['myFavourites'] =
         });
       }
 
-      // Fetch favourites with full intent data
-      const favourites = await prisma.intentFavourite.findMany({
+      // Fetch favourites with full event data
+      const favourites = await prisma.eventFavourite.findMany({
         where: { userId: user.id },
         include: {
-          intent: {
+          event: {
             include: {
               categories: true,
               tags: true,
@@ -51,17 +51,17 @@ export const myFavouritesQuery: QueryResolvers['myFavourites'] =
       });
 
       // Count total for pagination
-      const total = await prisma.intentFavourite.count({
+      const total = await prisma.eventFavourite.count({
         where: { userId: user.id },
       });
 
       const items = favourites.map((fav) => ({
         id: fav.id,
         userId: fav.userId,
-        intentId: fav.intentId,
+        eventId: fav.eventId,
         createdAt: fav.createdAt,
         user: null as any, // Will be resolved by field resolver if needed
-        intent: mapIntent(fav.intent as IntentWithGraph),
+        event: mapEvent(fav.event as EventWithGraph),
       }));
 
       return {
@@ -78,22 +78,22 @@ export const myFavouritesQuery: QueryResolvers['myFavourites'] =
   );
 
 /**
- * Query: Check if current user has favourited a specific intent
+ * Query: Check if current user has favourited a specific event
  */
 export const isFavouriteQuery: QueryResolvers['isFavourite'] =
   resolverWithMetrics(
     'Query',
     'isFavourite',
-    async (_p, { intentId }, { user }) => {
+    async (_p, { eventId }, { user }) => {
       if (!user?.id) {
         return false; // Not authenticated = not favourited
       }
 
-      const favourite = await prisma.intentFavourite.findUnique({
+      const favourite = await prisma.eventFavourite.findUnique({
         where: {
-          userId_intentId: {
+          userId_eventId: {
             userId: user.id,
-            intentId,
+            eventId,
           },
         },
       });

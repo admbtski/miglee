@@ -64,8 +64,8 @@ export const billingKeys = {
     [...billingKeys.all, 'myPlanPeriods', limit] as const,
   myEventSponsorships: (limit?: number) =>
     [...billingKeys.all, 'myEventSponsorships', limit] as const,
-  eventSponsorship: (intentId: string) =>
-    [...billingKeys.all, 'eventSponsorship', intentId] as const,
+  eventSponsorship: (eventId: string) =>
+    [...billingKeys.all, 'eventSponsorship', eventId] as const,
 };
 
 // =============================================================================
@@ -145,7 +145,7 @@ export function useMyEventSponsorships(
 }
 
 /**
- * Get event sponsorship for an intent
+ * Get event sponsorship for an event
  */
 export function useEventSponsorship(
   variables: EventSponsorshipQueryVariables,
@@ -155,7 +155,7 @@ export function useEventSponsorship(
   >
 ) {
   return useQuery({
-    queryKey: billingKeys.eventSponsorship(variables.intentId),
+    queryKey: billingKeys.eventSponsorship(variables.eventId),
     queryFn: async () => gqlClient.request(EventSponsorshipDocument, variables),
     ...options,
   });
@@ -230,9 +230,9 @@ export function useCreateEventSponsorshipCheckout(
       gqlClient.request(CreateEventSponsorshipCheckoutDocument, variables),
     onSuccess: (_data, variables) => {
       // Invalidate event sponsorship query
-      if (variables.input.intentId) {
+      if (variables.input.eventId) {
         queryClient.invalidateQueries({
-          queryKey: billingKeys.eventSponsorship(variables.input.intentId),
+          queryKey: billingKeys.eventSponsorship(variables.input.eventId),
         });
       }
     },
@@ -296,7 +296,7 @@ export function useBoost(
       gqlClient.request(UseBoostDocument, variables),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: billingKeys.eventSponsorship(variables.intentId),
+        queryKey: billingKeys.eventSponsorship(variables.eventId),
       });
     },
     ...options,
@@ -320,7 +320,7 @@ export function useLocalPush(
       gqlClient.request(UseLocalPushDocument, variables),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: billingKeys.eventSponsorship(variables.intentId),
+        queryKey: billingKeys.eventSponsorship(variables.eventId),
       });
     },
     ...options,

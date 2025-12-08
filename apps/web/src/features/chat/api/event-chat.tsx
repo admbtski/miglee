@@ -10,23 +10,23 @@ import {
   type UseInfiniteQueryOptions,
 } from '@tanstack/react-query';
 import {
-  type GetIntentMessagesQuery,
-  type GetIntentUnreadCountQuery,
-  type GetIntentUnreadCountQueryVariables,
-  type SendIntentMessageMutation,
-  type SendIntentMessageMutationVariables,
-  type MarkIntentChatReadMutation,
-  type MarkIntentChatReadMutationVariables,
-  type MuteIntentMutation,
-  type MuteIntentMutationVariables,
-  type PublishIntentTypingMutation,
-  type PublishIntentTypingMutationVariables,
-  SendIntentMessageDocument,
-  MarkIntentChatReadDocument,
-  MuteIntentDocument,
-  PublishIntentTypingDocument,
-  GetIntentMessagesDocument,
-  GetIntentUnreadCountDocument,
+  type GetEventMessagesQuery,
+  type GetEventUnreadCountQuery,
+  type GetEventUnreadCountQueryVariables,
+  type SendEventMessageMutation,
+  type SendEventMessageMutationVariables,
+  type MarkEventChatReadMutation,
+  type MarkEventChatReadMutationVariables,
+  type MuteEventMutation,
+  type MuteEventMutationVariables,
+  type PublishEventTypingMutation,
+  type PublishEventTypingMutationVariables,
+  SendEventMessageDocument,
+  MarkEventChatReadDocument,
+  MuteEventDocument,
+  PublishEventTypingDocument,
+  GetEventMessagesDocument,
+  GetEventUnreadCountDocument,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 
@@ -36,10 +36,10 @@ import { gqlClient } from '@/lib/api/client';
 
 export const eventChatKeys = {
   all: ['eventChat'] as const,
-  messages: (intentId: string) =>
-    [...eventChatKeys.all, 'messages', intentId] as const,
-  unreadCount: (intentId: string) =>
-    [...eventChatKeys.all, 'unread', intentId] as const,
+  messages: (eventId: string) =>
+    [...eventChatKeys.all, 'messages', eventId] as const,
+  unreadCount: (eventId: string) =>
+    [...eventChatKeys.all, 'unread', eventId] as const,
 };
 
 // =============================================================================
@@ -47,26 +47,26 @@ export const eventChatKeys = {
 // =============================================================================
 
 /**
- * Get messages for an intent (infinite scroll with cursor pagination)
+ * Get messages for an event (infinite scroll with cursor pagination)
  */
 /**
  * Get messages with infinite scroll (cursor-based, reverse)
  * Loads newest messages first, then older messages with `before` cursor
  */
-export function useGetIntentMessages(
-  intentId: string,
+export function useGetEventMessages(
+  eventId: string,
   options?: Omit<
-    UseInfiniteQueryOptions<GetIntentMessagesQuery, Error>,
+    UseInfiniteQueryOptions<GetEventMessagesQuery, Error>,
     'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam' | 'select'
   >
 ) {
-  return useInfiniteQuery<GetIntentMessagesQuery, Error>({
-    queryKey: eventChatKeys.messages(intentId),
+  return useInfiniteQuery<GetEventMessagesQuery, Error>({
+    queryKey: eventChatKeys.messages(eventId),
     queryFn: async ({ pageParam }) => {
-      const res = await gqlClient.request<GetIntentMessagesQuery>(
-        GetIntentMessagesDocument,
+      const res = await gqlClient.request<GetEventMessagesQuery>(
+        GetEventMessagesDocument,
         {
-          intentId,
+          eventId,
           first: 20,
           before: pageParam as string | undefined,
         }
@@ -76,36 +76,36 @@ export function useGetIntentMessages(
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => {
       // For reverse scroll: "next" page is actually older messages (before cursor)
-      if (lastPage.intentMessages.pageInfo.hasPreviousPage) {
-        return lastPage.intentMessages.pageInfo.startCursor;
+      if (lastPage.eventMessages.pageInfo.hasPreviousPage) {
+        return lastPage.eventMessages.pageInfo.startCursor;
       }
       return undefined;
     },
-    enabled: !!intentId,
+    enabled: !!eventId,
     ...options,
   });
 }
 
 /**
- * Get unread count for intent chat
+ * Get unread count for event chat
  */
-export function useGetIntentUnreadCount(
-  variables: GetIntentUnreadCountQueryVariables,
+export function useGetEventUnreadCount(
+  variables: GetEventUnreadCountQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetIntentUnreadCountQuery, Error>,
+    UseQueryOptions<GetEventUnreadCountQuery, Error>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery<GetIntentUnreadCountQuery, Error>({
-    queryKey: eventChatKeys.unreadCount(variables.intentId),
+  return useQuery<GetEventUnreadCountQuery, Error>({
+    queryKey: eventChatKeys.unreadCount(variables.eventId),
     queryFn: async () => {
-      const res = await gqlClient.request<GetIntentUnreadCountQuery>(
-        GetIntentUnreadCountDocument,
+      const res = await gqlClient.request<GetEventUnreadCountQuery>(
+        GetEventUnreadCountDocument,
         variables
       );
       return res;
     },
-    enabled: !!variables.intentId,
+    enabled: !!variables.eventId,
     refetchInterval: 30000, // Refetch every 30 seconds
     ...options,
   });
@@ -118,24 +118,24 @@ export function useGetIntentUnreadCount(
 /**
  * Send a message in event chat
  */
-export function useSendIntentMessage(
+export function useSendEventMessage(
   options?: UseMutationOptions<
-    SendIntentMessageMutation,
+    SendEventMessageMutation,
     Error,
-    SendIntentMessageMutationVariables
+    SendEventMessageMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    SendIntentMessageMutation,
+    SendEventMessageMutation,
     Error,
-    SendIntentMessageMutationVariables
+    SendEventMessageMutationVariables
   >({
-    mutationKey: ['SendIntentMessage'],
+    mutationKey: ['SendEventMessage'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<SendIntentMessageMutation>(
-        SendIntentMessageDocument,
+      const res = await gqlClient.request<SendEventMessageMutation>(
+        SendEventMessageDocument,
         variables
       );
       return res;
@@ -146,47 +146,47 @@ export function useSendIntentMessage(
     onSuccess: (_, variables) => {
       // Invalidate messages list
       queryClient.invalidateQueries({
-        queryKey: eventChatKeys.messages(variables.input.intentId),
+        queryKey: eventChatKeys.messages(variables.input.eventId),
       });
 
       // Invalidate unread count
       queryClient.invalidateQueries({
-        queryKey: eventChatKeys.unreadCount(variables.input.intentId),
+        queryKey: eventChatKeys.unreadCount(variables.input.eventId),
       });
 
-      // Invalidate intent query to update messagesCount
+      // Invalidate event query to update messagesCount
       queryClient.invalidateQueries({
-        queryKey: ['intents', 'detail', variables.input.intentId],
+        queryKey: ['events', 'detail', variables.input.eventId],
       });
     },
     ...options,
   });
 }
 
-// NOTE: useEditIntentMessage and useDeleteIntentMessage have been moved to message-actions.tsx
+// NOTE: useEditEventMessage and useDeleteEventMessage have been moved to message-actions.tsx
 // to avoid duplication and better organize message action hooks
 
 /**
- * Mark intent chat as read
+ * Mark event chat as read
  */
-export function useMarkIntentChatRead(
+export function useMarkEventChatRead(
   options?: UseMutationOptions<
-    MarkIntentChatReadMutation,
+    MarkEventChatReadMutation,
     Error,
-    MarkIntentChatReadMutationVariables
+    MarkEventChatReadMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    MarkIntentChatReadMutation,
+    MarkEventChatReadMutation,
     Error,
-    MarkIntentChatReadMutationVariables
+    MarkEventChatReadMutationVariables
   >({
-    mutationKey: ['MarkIntentChatRead'],
+    mutationKey: ['MarkEventChatRead'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<MarkIntentChatReadMutation>(
-        MarkIntentChatReadDocument,
+      const res = await gqlClient.request<MarkEventChatReadMutation>(
+        MarkEventChatReadDocument,
         variables
       );
       return res;
@@ -195,7 +195,7 @@ export function useMarkIntentChatRead(
     onSuccess: (_, variables) => {
       // Invalidate unread count
       queryClient.invalidateQueries({
-        queryKey: eventChatKeys.unreadCount(variables.intentId),
+        queryKey: eventChatKeys.unreadCount(variables.eventId),
       });
     },
     ...options,
@@ -203,22 +203,22 @@ export function useMarkIntentChatRead(
 }
 
 /**
- * Mute/unmute an intent chat
+ * Mute/unmute an event chat
  */
-export function useMuteIntent(
+export function useMuteEvent(
   options?: UseMutationOptions<
-    MuteIntentMutation,
+    MuteEventMutation,
     Error,
-    MuteIntentMutationVariables
+    MuteEventMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<MuteIntentMutation, Error, MuteIntentMutationVariables>({
-    mutationKey: ['MuteIntent'],
+  return useMutation<MuteEventMutation, Error, MuteEventMutationVariables>({
+    mutationKey: ['MuteEvent'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<MuteIntentMutation>(
-        MuteIntentDocument,
+      const res = await gqlClient.request<MuteEventMutation>(
+        MuteEventDocument,
         variables
       );
       return res;
@@ -227,9 +227,9 @@ export function useMuteIntent(
       successMessage: 'Chat muted successfully',
     },
     onSuccess: (_, variables) => {
-      // Invalidate intent query to update mute status
+      // Invalidate event query to update mute status
       queryClient.invalidateQueries({
-        queryKey: ['intents', 'detail', variables.intentId],
+        queryKey: ['events', 'detail', variables.eventId],
       });
     },
     ...options,
@@ -237,24 +237,24 @@ export function useMuteIntent(
 }
 
 /**
- * Publish typing indicator for intent chat
+ * Publish typing indicator for event chat
  */
-export function usePublishIntentTyping(
+export function usePublishEventTyping(
   options?: UseMutationOptions<
-    PublishIntentTypingMutation,
+    PublishEventTypingMutation,
     Error,
-    PublishIntentTypingMutationVariables
+    PublishEventTypingMutationVariables
   >
 ) {
   return useMutation<
-    PublishIntentTypingMutation,
+    PublishEventTypingMutation,
     Error,
-    PublishIntentTypingMutationVariables
+    PublishEventTypingMutationVariables
   >({
-    mutationKey: ['PublishIntentTyping'],
+    mutationKey: ['PublishEventTyping'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<PublishIntentTypingMutation>(
-        PublishIntentTypingDocument,
+      const res = await gqlClient.request<PublishEventTypingMutation>(
+        PublishEventTypingDocument,
         variables
       );
       return res;

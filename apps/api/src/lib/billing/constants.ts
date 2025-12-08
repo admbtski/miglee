@@ -5,7 +5,7 @@
 
 import type {
   SubscriptionPlan,
-  IntentPlan,
+  EventPlan,
   BillingPeriod,
 } from '@prisma/client';
 
@@ -63,7 +63,7 @@ export const EVENT_PLAN_LIMITS = {
     featuredInListing: true,
     analytics: 'advanced' as const,
   },
-} as const satisfies Record<IntentPlan, unknown>;
+} as const satisfies Record<EventPlan, unknown>;
 
 // ========================================================================================
 // ACTION PACKAGES (for reload/top-up)
@@ -149,9 +149,9 @@ export const STRIPE_WEBHOOK_EVENTS = {
   INVOICE_PAYMENT_FAILED: 'invoice.payment_failed',
   INVOICE_UPCOMING: 'invoice.upcoming',
 
-  // Payment Intents
-  PAYMENT_INTENT_SUCCEEDED: 'payment_intent.succeeded',
-  PAYMENT_INTENT_PAYMENT_FAILED: 'payment_intent.payment_failed',
+  // Payment Events
+  PAYMENT_EVENT_SUCCEEDED: 'payment_event.succeeded',
+  PAYMENT_EVENT_PAYMENT_FAILED: 'payment_event.payment_failed',
 
   // Customer
   CUSTOMER_CREATED: 'customer.created',
@@ -192,9 +192,9 @@ export interface UserOneOffMetadata {
 export interface EventSponsorshipMetadata {
   type: typeof METADATA_TYPE.EVENT_SPONSORSHIP;
   eventSponsorshipId: string;
-  intentId: string;
+  eventId: string;
   userId: string;
-  plan: IntentPlan;
+  plan: EventPlan;
   actionType?: 'new' | 'upgrade' | 'reload';
   actionPackageSize?: number;
 }
@@ -217,7 +217,7 @@ export function getCheckoutSuccessUrl(
     case METADATA_TYPE.USER_ONE_OFF:
       return `${baseUrl}/account/plans-and-bills?success=true&session_id={CHECKOUT_SESSION_ID}`;
     case METADATA_TYPE.EVENT_SPONSORSHIP:
-      return `${baseUrl}/intent/{intentId}/manage/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`;
+      return `${baseUrl}/event/{eventId}/manage/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`;
     default:
       return `${baseUrl}?success=true`;
   }
@@ -232,7 +232,7 @@ export function getCheckoutCancelUrl(
     case METADATA_TYPE.USER_ONE_OFF:
       return `${baseUrl}/account/plans-and-bills?canceled=true`;
     case METADATA_TYPE.EVENT_SPONSORSHIP:
-      return `${baseUrl}/intent/{intentId}/manage/subscription?canceled=true`;
+      return `${baseUrl}/event/{eventId}/manage/subscription?canceled=true`;
     default:
       return baseUrl;
   }

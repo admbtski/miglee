@@ -1,6 +1,6 @@
 import type { Resolvers } from '../../__generated__/resolvers-types';
 import { notificationsQuery } from './notifications';
-import { intentsQuery, intentQuery } from './intents';
+import { eventsQuery, eventQuery } from './events';
 import {
   categoriesBySlugsQuery,
   categoriesQuery,
@@ -18,14 +18,14 @@ import {
 import { usersQuery, userQuery } from './users';
 import { meQuery } from './auth';
 import {
-  intentMemberQuery,
-  intentMembersQuery,
-  intentMemberStatsQuery,
-  myMembershipForIntentQuery,
+  eventMemberQuery,
+  eventMembersQuery,
+  eventMemberStatsQuery,
+  myMembershipForEventQuery,
   myMembershipsQuery,
-  myIntentsQuery,
-} from './intent-members';
-import { intentPermissionsQuery } from './intent-permissions';
+  myEventsQuery,
+} from './event-members';
+import { eventPermissionsQuery } from './event-permissions';
 import { dmThreadsQuery, dmThreadQuery, dmMessagesQuery } from './dm';
 import { commentsQuery, commentQuery } from './comments';
 import {
@@ -35,36 +35,36 @@ import {
   myReviewQuery,
 } from './reviews';
 import { reportsQuery, reportQuery } from './reports';
-import { intentMessagesQuery, intentUnreadCountQuery } from './event-chat';
+import { eventMessagesQuery, eventUnreadCountQuery } from './event-chat';
 import { myBlocksQuery, isBlockedQuery } from './user-blocks';
 import {
-  intentInviteLinksQuery,
-  intentInviteLinkQuery,
+  eventInviteLinksQuery,
+  eventInviteLinkQuery,
   validateInviteLinkQuery,
 } from './invite-links';
 import { myFavouritesQuery, isFavouriteQuery } from './favourites';
 import {
-  intentJoinQuestionsQuery,
-  intentJoinRequestsQuery,
+  eventJoinQuestionsQuery,
+  eventJoinRequestsQuery,
   myJoinRequestsQuery,
 } from './join-questions';
 import {
-  intentFeedbackQuestionsQuery,
-  intentFeedbackResultsQuery,
+  eventFeedbackQuestionsQuery,
+  eventFeedbackResultsQuery,
   myFeedbackAnswersQuery,
   canSubmitFeedbackQuery,
 } from './feedback-questions';
 import {
   myNotificationPreferencesQuery,
-  intentMuteQuery,
+  eventMuteQuery,
   dmMuteQuery,
 } from './preferences-and-mutes';
-import { clustersQuery, regionIntentsQuery } from './map-clusters';
+import { clustersQuery, regionEventsQuery } from './map-clusters';
 import {
   adminUserCommentsQuery,
   adminUserReviewsQuery,
   adminUserMembershipsQuery,
-  adminUserIntentsQuery,
+  adminUserEventsQuery,
   adminUserDmThreadsQuery,
   adminUserNotificationsQuery,
 } from './admin-users';
@@ -84,15 +84,15 @@ export const Query: Resolvers['Query'] = {
   adminUserComments: adminUserCommentsQuery,
   adminUserReviews: adminUserReviewsQuery,
   adminUserMemberships: adminUserMembershipsQuery,
-  adminUserIntents: adminUserIntentsQuery,
+  adminUserEvents: adminUserEventsQuery,
   adminUserDmThreads: adminUserDmThreadsQuery,
   adminUserNotifications: adminUserNotificationsQuery,
   adminComments: adminCommentsQuery,
   adminReviews: adminReviewsQuery,
 
   notifications: notificationsQuery,
-  intents: intentsQuery,
-  intent: intentQuery,
+  events: eventsQuery,
+  event: eventQuery,
   categoriesBySlugs: categoriesBySlugsQuery,
   categories: categoriesQuery,
   category: categoryQuery,
@@ -106,13 +106,13 @@ export const Query: Resolvers['Query'] = {
   users: usersQuery,
   user: userQuery,
   me: meQuery,
-  intentMember: intentMemberQuery,
-  intentMembers: intentMembersQuery,
-  intentMemberStats: intentMemberStatsQuery,
-  intentPermissions: intentPermissionsQuery,
-  myMembershipForIntent: myMembershipForIntentQuery,
+  eventMember: eventMemberQuery,
+  eventMembers: eventMembersQuery,
+  eventMemberStats: eventMemberStatsQuery,
+  eventPermissions: eventPermissionsQuery,
+  myMembershipForEvent: myMembershipForEventQuery,
   myMemberships: myMembershipsQuery,
-  myIntents: myIntentsQuery,
+  myEvents: myEventsQuery,
   dmThreads: dmThreadsQuery,
   dmThread: dmThreadQuery,
   dmMessages: dmMessagesQuery,
@@ -124,27 +124,27 @@ export const Query: Resolvers['Query'] = {
   myReview: myReviewQuery,
   reports: reportsQuery,
   report: reportQuery,
-  intentMessages: intentMessagesQuery,
-  intentUnreadCount: intentUnreadCountQuery,
+  eventMessages: eventMessagesQuery,
+  eventUnreadCount: eventUnreadCountQuery,
   myBlocks: myBlocksQuery,
   isBlocked: isBlockedQuery,
-  intentInviteLinks: intentInviteLinksQuery,
-  intentInviteLink: intentInviteLinkQuery,
+  eventInviteLinks: eventInviteLinksQuery,
+  eventInviteLink: eventInviteLinkQuery,
   validateInviteLink: validateInviteLinkQuery,
   myFavourites: myFavouritesQuery,
   isFavourite: isFavouriteQuery,
-  intentJoinQuestions: intentJoinQuestionsQuery,
-  intentJoinRequests: intentJoinRequestsQuery,
+  eventJoinQuestions: eventJoinQuestionsQuery,
+  eventJoinRequests: eventJoinRequestsQuery,
   myJoinRequests: myJoinRequestsQuery,
-  intentFeedbackQuestions: intentFeedbackQuestionsQuery,
-  intentFeedbackResults: intentFeedbackResultsQuery,
+  eventFeedbackQuestions: eventFeedbackQuestionsQuery,
+  eventFeedbackResults: eventFeedbackResultsQuery,
   myFeedbackAnswers: myFeedbackAnswersQuery,
   canSubmitFeedback: canSubmitFeedbackQuery,
   myNotificationPreferences: myNotificationPreferencesQuery,
-  intentMute: intentMuteQuery,
+  eventMute: eventMuteQuery,
   dmMute: dmMuteQuery,
   clusters: clustersQuery,
-  regionIntents: regionIntentsQuery,
+  regionEvents: regionEventsQuery,
   userEvents: userEventsQuery,
   userReviews: userReviewsQuery,
 

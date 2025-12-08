@@ -31,8 +31,7 @@ export const favouritesKeys = {
   listInfinite: (variables?: Omit<MyFavouritesQueryVariables, 'offset'>) =>
     [...favouritesKeys.lists(), 'infinite', variables] as const,
   details: () => [...favouritesKeys.all, 'detail'] as const,
-  detail: (intentId: string) =>
-    [...favouritesKeys.details(), intentId] as const,
+  detail: (eventId: string) => [...favouritesKeys.details(), eventId] as const,
 };
 
 /* ----------------------------- QUERY BUILDERS ---------------------------- */
@@ -104,7 +103,7 @@ export function buildMyFavouritesOptions(
 }
 
 /**
- * Builder for checking if intent is favourited
+ * Builder for checking if event is favourited
  */
 export function buildIsFavouriteOptions(
   variables: IsFavouriteQueryVariables,
@@ -114,7 +113,7 @@ export function buildIsFavouriteOptions(
   >
 ): UseQueryOptions<IsFavouriteQuery, Error, IsFavouriteQuery, QueryKey> {
   return {
-    queryKey: favouritesKeys.detail(variables.intentId) as unknown as QueryKey,
+    queryKey: favouritesKeys.detail(variables.eventId) as unknown as QueryKey,
     queryFn: async () =>
       gqlClient.request<IsFavouriteQuery, IsFavouriteQueryVariables>(
         IsFavouriteDocument,
@@ -165,7 +164,7 @@ export function useMyFavouritesQuery(
 }
 
 /**
- * Query hook to check if intent is favourited
+ * Query hook to check if event is favourited
  */
 export function useIsFavouriteQuery(
   variables: IsFavouriteQueryVariables,
@@ -176,7 +175,7 @@ export function useIsFavouriteQuery(
 ) {
   return useQuery(
     buildIsFavouriteOptions(variables, {
-      enabled: !!variables.intentId,
+      enabled: !!variables.eventId,
       ...(options ?? {}),
     })
   );
@@ -235,9 +234,9 @@ export function useToggleFavouriteMutation(
         await qc.cancelQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) &&
-            (q.queryKey[0] === 'GetIntent' ||
-              q.queryKey[0] === 'GetIntents' ||
-              q.queryKey[0] === 'GetIntentsLight' ||
+            (q.queryKey[0] === 'GetEvent' ||
+              q.queryKey[0] === 'GetEvents' ||
+              q.queryKey[0] === 'GetEventsLight' ||
               q.queryKey[0] === 'Favourites'),
         });
 
@@ -247,9 +246,9 @@ export function useToggleFavouriteMutation(
           .findAll({
             predicate: (q) =>
               Array.isArray(q.queryKey) &&
-              (q.queryKey[0] === 'GetIntent' ||
-                q.queryKey[0] === 'GetIntents' ||
-                q.queryKey[0] === 'GetIntentsLight' ||
+              (q.queryKey[0] === 'GetEvent' ||
+                q.queryKey[0] === 'GetEvents' ||
+                q.queryKey[0] === 'GetEventsLight' ||
                 q.queryKey[0] === 'Favourites'),
           })
           .map((q) => ({ key: q.queryKey, data: q.state.data }));
@@ -273,7 +272,7 @@ export function useToggleFavouriteMutation(
                     ...page.myFavourites,
                     items:
                       page.myFavourites?.items?.filter(
-                        (fav: any) => fav.intent?.id !== vars.intentId
+                        (fav: any) => fav.event?.id !== vars.eventId
                       ) ?? [],
                   },
                 })),
@@ -287,7 +286,7 @@ export function useToggleFavouriteMutation(
                 myFavourites: {
                   ...old.myFavourites,
                   items: old.myFavourites.items.filter(
-                    (fav: any) => fav.intent?.id !== vars.intentId
+                    (fav: any) => fav.event?.id !== vars.eventId
                   ),
                 },
               };
@@ -297,50 +296,50 @@ export function useToggleFavouriteMutation(
           }
         );
 
-        // Optimistically update all intent queries
+        // Optimistically update all event queries
         qc.setQueriesData(
           {
             predicate: (q) =>
               Array.isArray(q.queryKey) &&
-              (q.queryKey[0] === 'GetIntent' ||
-                q.queryKey[0] === 'GetIntents' ||
-                q.queryKey[0] === 'GetIntentsLight'),
+              (q.queryKey[0] === 'GetEvent' ||
+                q.queryKey[0] === 'GetEvents' ||
+                q.queryKey[0] === 'GetEventsLight'),
           },
           (old: any) => {
             if (!old) return old;
 
-            // Handle single intent query (GetIntent)
-            if (old.intent) {
-              if (old.intent.id === vars.intentId) {
+            // Handle single event query (GetEvent)
+            if (old.event) {
+              if (old.event.id === vars.eventId) {
                 return {
                   ...old,
-                  intent: {
-                    ...old.intent,
-                    isFavourite: !old.intent.isFavourite,
-                    savedCount: old.intent.isFavourite
-                      ? Math.max(0, (old.intent.savedCount ?? 0) - 1)
-                      : (old.intent.savedCount ?? 0) + 1,
+                  event: {
+                    ...old.event,
+                    isFavourite: !old.event.isFavourite,
+                    savedCount: old.event.isFavourite
+                      ? Math.max(0, (old.event.savedCount ?? 0) - 1)
+                      : (old.event.savedCount ?? 0) + 1,
                   },
                 };
               }
             }
 
-            // Handle intents list query (GetIntents/GetIntentsLight)
-            if (old.intents?.items) {
+            // Handle events list query (GetEvents/GetEventsLight)
+            if (old.events?.items) {
               return {
                 ...old,
-                intents: {
-                  ...old.intents,
-                  items: old.intents.items.map((intent: any) =>
-                    intent.id === vars.intentId
+                events: {
+                  ...old.events,
+                  items: old.events.items.map((event: any) =>
+                    event.id === vars.eventId
                       ? {
-                          ...intent,
-                          isFavourite: !intent.isFavourite,
-                          savedCount: intent.isFavourite
-                            ? Math.max(0, (intent.savedCount ?? 0) - 1)
-                            : (intent.savedCount ?? 0) + 1,
+                          ...event,
+                          isFavourite: !event.isFavourite,
+                          savedCount: event.isFavourite
+                            ? Math.max(0, (event.savedCount ?? 0) - 1)
+                            : (event.savedCount ?? 0) + 1,
                         }
-                      : intent
+                      : event
                   ),
                 },
               };
@@ -365,17 +364,17 @@ export function useToggleFavouriteMutation(
         qc.invalidateQueries({
           queryKey: favouritesKeys.lists(),
         });
-        // Invalidate specific intent favourite status
+        // Invalidate specific event favourite status
         qc.invalidateQueries({
-          queryKey: favouritesKeys.detail(vars.intentId),
+          queryKey: favouritesKeys.detail(vars.eventId),
         });
-        // Invalidate intent queries to update isFavourite field
+        // Invalidate event queries to update isFavourite field
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) &&
-            (q.queryKey[0] === 'GetIntent' ||
-              q.queryKey[0] === 'GetIntents' ||
-              q.queryKey[0] === 'GetIntentsLight'),
+            (q.queryKey[0] === 'GetEvent' ||
+              q.queryKey[0] === 'GetEvents' ||
+              q.queryKey[0] === 'GetEventsLight'),
         });
       },
       ...(options ?? {}),

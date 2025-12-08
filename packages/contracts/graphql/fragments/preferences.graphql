@@ -15,9 +15,9 @@ fragment NotificationPreferenceCore on NotificationPreference {
   updatedAt
 }
 
-fragment IntentMuteCore on IntentMute {
+fragment EventMuteCore on EventMute {
   id
-  intentId
+  eventId
   userId
   muted
   createdAt

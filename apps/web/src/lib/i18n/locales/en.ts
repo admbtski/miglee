@@ -146,10 +146,10 @@ export const en = {
       changeFilter: 'Change filter to see other notifications',
     },
     kinds: {
-      INTENT_REMINDER: 'Event reminder',
-      INTENT_UPDATED: 'Event updated',
-      INTENT_CANCELED: 'Event canceled',
-      INTENT_CREATED: 'New event',
+      EVENT_REMINDER: 'Event reminder',
+      EVENT_UPDATED: 'Event updated',
+      EVENT_CANCELED: 'Event canceled',
+      EVENT_CREATED: 'New event',
       NEW_MESSAGE: 'New message',
       NEW_COMMENT: 'New comment',
       NEW_REVIEW: 'New review',
@@ -180,8 +180,8 @@ export const en = {
     showingEvents: 'Showing',
   },
 
-  // My Intents
-  myIntents: {
+  // My Events
+  myEvents: {
     title: 'My Events',
     subtitle: 'Manage all your events in one place',
     loading: 'Loading...',
@@ -240,14 +240,14 @@ export const en = {
     },
     messages: {
       requestRejected: 'Your request was rejected',
-      youAreBanned: 'You are banned from this Intent',
+      youAreBanned: 'You are banned from this Event',
     },
   },
 
   // Navigation
   nav: {
     dashboard: 'Dashboard',
-    intents: 'Events',
+    events: 'Events',
     account: 'Account',
     settings: 'Settings',
   },

@@ -1,5 +1,5 @@
 /**
- * Intent Appearance Mutation Resolvers
+ * Event Appearance Mutation Resolvers
  * Handles mutations for custom appearance configuration
  */
 
@@ -25,9 +25,9 @@ interface AppearanceConfig {
 }
 
 /**
- * Update intent appearance configuration
+ * Update event appearance configuration
  */
-export const updateIntentAppearanceMutation: MutationResolvers['updateIntentAppearance'] =
+export const updateEventAppearanceMutation: MutationResolvers['updateEventAppearance'] =
   async (_parent, args, { user }) => {
     const userId = user?.id;
     const { input } = args;
@@ -36,10 +36,10 @@ export const updateIntentAppearanceMutation: MutationResolvers['updateIntentAppe
       throw new Error('Authentication required');
     }
 
-    // Verify user is owner/moderator of the intent
-    const member = await prisma.intentMember.findFirst({
+    // Verify user is owner/moderator of the event
+    const member = await prisma.eventMember.findFirst({
       where: {
-        intentId: input.intentId,
+        eventId: input.eventId,
         userId,
         role: { in: ['OWNER', 'MODERATOR'] },
         status: 'JOINED',
@@ -47,7 +47,7 @@ export const updateIntentAppearanceMutation: MutationResolvers['updateIntentAppe
     });
 
     if (!member) {
-      throw new Error('Only intent owner/moderator can update appearance');
+      throw new Error('Only event owner/moderator can update appearance');
     }
 
     // Build the config object
@@ -66,15 +66,15 @@ export const updateIntentAppearanceMutation: MutationResolvers['updateIntentAppe
     };
 
     logger.info(
-      { userId, intentId: input.intentId, config },
-      'Updating intent appearance'
+      { userId, eventId: input.eventId, config },
+      'Updating event appearance'
     );
 
     // Upsert the appearance record
-    const appearance = await prisma.intentAppearance.upsert({
-      where: { intentId: input.intentId },
+    const appearance = await prisma.eventAppearance.upsert({
+      where: { eventId: input.eventId },
       create: {
-        intentId: input.intentId,
+        eventId: input.eventId,
         config,
       },
       update: {
@@ -84,10 +84,9 @@ export const updateIntentAppearanceMutation: MutationResolvers['updateIntentAppe
 
     return {
       id: appearance.id,
-      intentId: appearance.intentId,
+      eventId: appearance.eventId,
       config: appearance.config,
       createdAt: appearance.createdAt,
       updatedAt: appearance.updatedAt,
     };
   };
-

@@ -1,25 +1,21 @@
 'use client';
 
-import { AccountPageHeader } from '../_components';
-import {
-  Cookie,
-  Shield,
-  Eye,
-  BarChart3,
-  Settings2,
-  ExternalLink,
-  CheckCircle2,
-  Info,
-} from 'lucide-react';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 import { showCookieBanner } from '@/components/cookie-consent';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import {
+  BarChart3,
+  CheckCircle2,
+  Cookie,
+  ExternalLink,
+  Eye,
+  Info,
+  Settings2,
+  Shield,
+} from 'lucide-react';
+import { AccountPageHeader } from '../_components';
 
 export default function CookieSettingsPage() {
   const { t } = useI18n();
-
-  const handleOpenCookieBanner = () => {
-    showCookieBanner();
-  };
 
   const COOKIE_INFO = [
     {
@@ -69,7 +65,7 @@ export default function CookieSettingsPage() {
               {t.cookies.about.description}
             </p>
             <button
-              onClick={handleOpenCookieBanner}
+              onClick={showCookieBanner}
               className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors rounded-xl shadow-lg hover:shadow-xl"
             >
               <Settings2 className="w-5 h-5" />

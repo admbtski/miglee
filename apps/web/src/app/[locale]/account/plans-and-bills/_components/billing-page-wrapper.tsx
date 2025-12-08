@@ -161,8 +161,8 @@ export function BillingPageWrapper() {
       localPushesAdded: sponsorship.localPushesAdded,
       amount: sponsorship.amount,
       currency: sponsorship.currency,
-      intentId: sponsorship.intentId,
-      intentTitle: sponsorship.intent?.title,
+      eventId: sponsorship.eventId,
+      eventitle: sponsorship.eeventtitle,
     })
   );
 
@@ -529,7 +529,7 @@ export function BillingPageWrapper() {
                               </span>
                             </div>
                             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {item.intentTitle || 'Wydarzenie'}
+                              {item.eventitle || 'Wydarzenie'}
                             </div>
                           </div>
                         </Td>

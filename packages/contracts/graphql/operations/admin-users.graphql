@@ -68,7 +68,7 @@ query AdminUserComments($userId: ID!, $limit: Int, $offset: Int) {
         avatarKey
         avatarBlurhash
       }
-      intent {
+      event {
         id
         title
       }
@@ -94,7 +94,7 @@ query AdminUserReviews($userId: ID!, $limit: Int, $offset: Int) {
         avatarKey
         avatarBlurhash
       }
-      intent {
+      event {
         id
         title
       }
@@ -107,7 +107,7 @@ query AdminUserReviews($userId: ID!, $limit: Int, $offset: Int) {
 }
 
 # ============================================
-# QUERIES - Intents & Memberships
+# QUERIES - Events & Memberships
 # ============================================
 
 query AdminUserMemberships($userId: ID!, $limit: Int, $offset: Int) {
@@ -117,7 +117,7 @@ query AdminUserMemberships($userId: ID!, $limit: Int, $offset: Int) {
       status
       role
       joinedAt
-      intent {
+      event {
         id
         title
         startAt
@@ -130,8 +130,8 @@ query AdminUserMemberships($userId: ID!, $limit: Int, $offset: Int) {
   }
 }
 
-query AdminUserIntents($userId: ID!, $limit: Int, $offset: Int) {
-  adminUserIntents(userId: $userId, limit: $limit, offset: $offset) {
+query AdminUserEvents($userId: ID!, $limit: Int, $offset: Int) {
+  adminUserEvents(userId: $userId, limit: $limit, offset: $offset) {
     items {
       id
       title

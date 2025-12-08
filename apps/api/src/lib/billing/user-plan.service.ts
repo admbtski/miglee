@@ -252,7 +252,7 @@ export async function createOneOffCheckout(
       },
     ],
     metadata,
-    payment_intent_data: {
+    payment_event_data: {
       metadata,
     },
     success_url: getCheckoutSuccessUrl(
@@ -394,7 +394,7 @@ export interface CreateUserPlanPeriodParams {
   currency?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
-  stripePaymentIntentId?: string;
+  stripePaymentEventId?: string;
   stripeCheckoutSessionId?: string;
   startsAt?: Date;
   endsAt?: Date;
@@ -412,7 +412,7 @@ export async function createUserPlanPeriod(
     currency = 'pln',
     stripeCustomerId,
     stripeSubscriptionId,
-    stripePaymentIntentId,
+    stripePaymentEventId,
     stripeCheckoutSessionId,
     startsAt = new Date(),
     endsAt,
@@ -435,7 +435,7 @@ export async function createUserPlanPeriod(
       currency,
       stripeCustomerId,
       stripeSubscriptionId,
-      stripePaymentIntentId,
+      stripePaymentEventId,
       stripeCheckoutSessionId,
       startsAt,
       endsAt: calculatedEndsAt,

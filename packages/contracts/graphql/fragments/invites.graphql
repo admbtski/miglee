@@ -1,11 +1,11 @@
 # =============================================================================
-# Intent Invite Link Fragments
+# Event Invite Link Fragments
 # =============================================================================
 # Fragments for event invitation links.
 
-fragment IntentInviteLinkCore on IntentInviteLink {
+fragment EventInviteLinkCore on EventInviteLink {
   id
-  intentId
+  eventId
   code
   maxUses
   usedCount

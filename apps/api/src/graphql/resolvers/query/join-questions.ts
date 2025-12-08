@@ -3,14 +3,14 @@ import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
 
 /**
- * Get join questions for an intent
+ * Get join questions for an event
  * Public for viewing, but answers are only visible to owner/mods
  */
-export const intentJoinQuestionsQuery: QueryResolvers['intentJoinQuestions'] =
-  async (_parent, { intentId }, { user }) => {
+export const eventJoinQuestionsQuery: QueryResolvers['eventJoinQuestions'] =
+  async (_parent, { eventId }, { user }) => {
     // Anyone can view questions (needed for users to see the form)
-    const questions = await prisma.intentJoinQuestion.findMany({
-      where: { intentId },
+    const questions = await prisma.eventJoinQuestion.findMany({
+      where: { eventId },
       orderBy: { order: 'asc' },
     });
 
@@ -23,11 +23,11 @@ export const intentJoinQuestionsQuery: QueryResolvers['intentJoinQuestions'] =
   };
 
 /**
- * Get join requests (PENDING members with their answers) for an intent
+ * Get join requests (PENDING members with their answers) for an event
  * Only accessible by owner/mods
  */
-export const intentJoinRequestsQuery: QueryResolvers['intentJoinRequests'] =
-  async (_parent, { intentId, limit = 20, offset = 0 }, { user }) => {
+export const eventJoinRequestsQuery: QueryResolvers['eventJoinRequests'] =
+  async (_parent, { eventId, limit = 20, offset = 0 }, { user }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -35,8 +35,8 @@ export const intentJoinRequestsQuery: QueryResolvers['intentJoinRequests'] =
     }
 
     // Check if user is owner or moderator
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       select: {
         ownerId: true,
         members: {
@@ -50,19 +50,19 @@ export const intentJoinRequestsQuery: QueryResolvers['intentJoinRequests'] =
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
-    const isOwner = intent.ownerId === user.id;
-    const isModerator = intent.members.length > 0;
+    const isOwner = event.ownerId === user.id;
+    const isModerator = event.members.length > 0;
     const isAdmin = user.role === 'ADMIN';
 
     if (!isOwner && !isModerator && !isAdmin) {
       throw new GraphQLError(
-        'Only intent owner or moderators can view join requests',
+        'Only event owner or moderators can view join requests',
         {
           extensions: { code: 'FORBIDDEN' },
         }
@@ -71,9 +71,9 @@ export const intentJoinRequestsQuery: QueryResolvers['intentJoinRequests'] =
 
     // Get PENDING members with their answers
     const [members, total] = await Promise.all([
-      prisma.intentMember.findMany({
+      prisma.eventMember.findMany({
         where: {
-          intentId,
+          eventId,
           status: 'PENDING',
         },
         include: {
@@ -97,9 +97,9 @@ export const intentJoinRequestsQuery: QueryResolvers['intentJoinRequests'] =
         take: limit,
         skip: offset,
       }),
-      prisma.intentMember.count({
+      prisma.eventMember.count({
         where: {
-          intentId,
+          eventId,
           status: 'PENDING',
         },
       }),
@@ -149,13 +149,13 @@ export const myJoinRequestsQuery: QueryResolvers['myJoinRequests'] = async (
     });
   }
 
-  const members = await prisma.intentMember.findMany({
+  const members = await prisma.eventMember.findMany({
     where: {
       userId: user.id,
       status: status || { in: ['PENDING', 'REJECTED', 'CANCELLED'] },
     },
     include: {
-      intent: {
+      event: {
         include: {
           categories: true,
           tags: true,

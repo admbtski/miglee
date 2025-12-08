@@ -8,13 +8,13 @@ BEGIN
     SELECT 1
     FROM information_schema.columns
     WHERE table_schema = 'public'
-      AND table_name = 'intents'
+      AND table_name = 'events'
       AND column_name = 'geom'
   ) THEN
-    ALTER TABLE "intents" ADD COLUMN "geom" geography(Point, 4326);
+    ALTER TABLE "events" ADD COLUMN "geom" geography(Point, 4326);
     
     -- Populate existing rows with geom from lat/lng
-    UPDATE "intents"
+    UPDATE "events"
     SET "geom" = ST_SetSRID(ST_MakePoint("lng", "lat"), 4326)::geography
     WHERE "lat" IS NOT NULL AND "lng" IS NOT NULL;
   END IF;
@@ -27,15 +27,15 @@ BEGIN
     SELECT 1
     FROM pg_indexes
     WHERE schemaname = 'public'
-      AND tablename = 'intents'
-      AND indexname = 'intents_geom_idx'
+      AND tablename = 'events'
+      AND indexname = 'events_geom_idx'
   ) THEN
-    CREATE INDEX "intents_geom_idx" ON "intents" USING GIST ("geom");
+    CREATE INDEX "events_geom_idx" ON "events" USING GIST ("geom");
   END IF;
 END $$;
 
 -- Create or replace trigger function to auto-update geom from lat/lng
-CREATE OR REPLACE FUNCTION update_intent_geom()
+CREATE OR REPLACE FUNCTION update_event_geom()
 RETURNS TRIGGER AS $$
 BEGIN
   IF NEW.lat IS NOT NULL AND NEW.lng IS NOT NULL THEN
@@ -48,8 +48,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Drop trigger if exists and recreate
-DROP TRIGGER IF EXISTS trigger_update_intent_geom ON "intents";
-CREATE TRIGGER trigger_update_intent_geom
-  BEFORE INSERT OR UPDATE OF lat, lng ON "intents"
+DROP TRIGGER IF EXISTS trigger_update_event_geom ON "events";
+CREATE TRIGGER trigger_update_event_geom
+  BEFORE INSERT OR UPDATE OF lat, lng ON "events"
   FOR EACH ROW
-  EXECUTE FUNCTION update_intent_geom();
+  EXECUTE FUNCTION update_event_geom();

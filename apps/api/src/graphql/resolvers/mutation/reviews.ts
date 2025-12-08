@@ -12,7 +12,7 @@ import { NOTIFICATION_INCLUDE } from './notifications';
 
 const REVIEW_INCLUDE = {
   author: true,
-  intent: true,
+  event: true,
 } satisfies Prisma.ReviewInclude;
 
 /**
@@ -29,7 +29,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
         });
       }
 
-      const { intentId, rating, content } = input;
+      const { eventId, rating, content } = input;
 
       // Validate rating
       if (rating < 1 || rating > 5) {
@@ -48,9 +48,9 @@ export const createReviewMutation: MutationResolvers['createReview'] =
         );
       }
 
-      // Verify intent exists and is not deleted
-      const intent = await prisma.intent.findUnique({
-        where: { id: intentId },
+      // Verify event exists and is not deleted
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
         select: {
           id: true,
           deletedAt: true,
@@ -60,25 +60,25 @@ export const createReviewMutation: MutationResolvers['createReview'] =
         },
       });
 
-      if (!intent || intent.deletedAt) {
-        throw new GraphQLError('Intent not found.', {
+      if (!event || event.deletedAt) {
+        throw new GraphQLError('Event not found.', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      // Check if intent has ended (optional: only allow reviews after event)
+      // Check if event has ended (optional: only allow reviews after event)
       const now = new Date();
-      if (intent.endAt > now) {
-        throw new GraphQLError('Cannot review intent before it ends.', {
+      if (event.endAt > now) {
+        throw new GraphQLError('Cannot review event before it ends.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
       }
 
       // Check if user was a participant
-      const membership = await prisma.intentMember.findUnique({
+      const membership = await prisma.eventMember.findUnique({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: user.id,
           },
         },
@@ -86,7 +86,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
       });
 
       if (!membership || membership.status !== 'JOINED') {
-        throw new GraphQLError('Only participants can review this intent.', {
+        throw new GraphQLError('Only participants can review this event.', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
@@ -94,15 +94,15 @@ export const createReviewMutation: MutationResolvers['createReview'] =
       // Check if review already exists
       const existing = await prisma.review.findUnique({
         where: {
-          intentId_authorId: {
-            intentId,
+          eventId_authorId: {
+            eventId,
             authorId: user.id,
           },
         },
       });
 
       if (existing && !existing.deletedAt) {
-        throw new GraphQLError('You have already reviewed this intent.', {
+        throw new GraphQLError('You have already reviewed this event.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
       }
@@ -122,7 +122,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
           })
         : await prisma.review.create({
             data: {
-              intentId,
+              eventId,
               authorId: user.id,
               rating,
               content: content?.trim() || null,
@@ -130,22 +130,22 @@ export const createReviewMutation: MutationResolvers['createReview'] =
             include: REVIEW_INCLUDE,
           });
 
-      // Notify intent owner about new review
-      if (intent.ownerId && intent.ownerId !== user.id) {
+      // Notify event owner about new review
+      if (event.ownerId && event.ownerId !== user.id) {
         const notif = await prisma.notification.create({
           data: {
-            kind: PrismaNotificationKind.INTENT_REVIEW_RECEIVED,
-            recipientId: intent.ownerId,
+            kind: PrismaNotificationKind.EVENT_REVIEW_RECEIVED,
+            recipientId: event.ownerId,
             actorId: user.id,
             entityType: PrismaNotificationEntity.REVIEW,
             entityId: review.id,
-            intentId,
+            eventId,
             title: null,
             body: null,
-            dedupeKey: `review:${intentId}:${review.id}`,
+            dedupeKey: `review:${eventId}:${review.id}`,
             data: {
-              intentId,
-              intentTitle: intent.title,
+              eventId,
+              eventTitle: event.title,
               actorName: user.name,
               rating,
               reviewContent: content?.slice(0, 100) || undefined,
@@ -154,13 +154,13 @@ export const createReviewMutation: MutationResolvers['createReview'] =
           include: NOTIFICATION_INCLUDE,
         });
         await pubsub?.publish({
-          topic: `NOTIFICATION_ADDED:${intent.ownerId}`,
+          topic: `NOTIFICATION_ADDED:${event.ownerId}`,
           payload: { notificationAdded: mapNotification(notif) },
         });
         await pubsub?.publish({
-          topic: `NOTIFICATION_BADGE:${intent.ownerId}`,
+          topic: `NOTIFICATION_BADGE:${event.ownerId}`,
           payload: {
-            notificationBadgeChanged: { recipientId: intent.ownerId },
+            notificationBadgeChanged: { recipientId: event.ownerId },
           },
         });
       }
@@ -175,7 +175,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
  * Permissions:
  * - App Admin: can edit any review (for exceptional cases like removing personal data)
  * - App Moderator: CANNOT edit (should use hide/delete for moderation)
- * - Intent Owner/Moderator: CANNOT edit others' reviews (protects review integrity)
+ * - Event Owner/Moderator: CANNOT edit others' reviews (protects review integrity)
  * - Review Author: can edit own review
  */
 export const updateReviewMutation: MutationResolvers['updateReview'] =
@@ -223,7 +223,7 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
       }
 
       // Permission check: Only App Admin or Review Author can edit
-      // App Moderators and Intent Owner/Moderators should NOT edit reviews
+      // App Moderators and Event Owner/Moderators should NOT edit reviews
       const isAppAdmin = user.role === 'ADMIN';
       const isAuthor = existing.authorId === user.id;
 
@@ -263,7 +263,7 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
  * Permissions:
  * - App Admin: can delete any review
  * - App Moderator: can delete any review
- * - Intent Owner/Moderator: CANNOT delete (protects review integrity - they can only report)
+ * - Event Owner/Moderator: CANNOT delete (protects review integrity - they can only report)
  * - Review Author: can delete own review
  */
 export const deleteReviewMutation: MutationResolvers['deleteReview'] =
@@ -287,7 +287,7 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
       }
 
       // Permission check: Only App Admin, App Moderator, or Review Author can delete
-      // Intent Owner/Moderators CANNOT delete reviews (protects review integrity)
+      // Event Owner/Moderators CANNOT delete reviews (protects review integrity)
       const isAppAdmin = user.role === 'ADMIN';
       const isAppModerator = user.role === 'MODERATOR';
       const isAuthor = existing.authorId === user.id;
@@ -320,9 +320,9 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
  * Permissions:
  * - App Admin: can hide any review
  * - App Moderator: can hide any review
- * - Intent Owner/Moderator: CANNOT hide (protects review integrity - they can only report)
+ * - Event Owner/Moderator: CANNOT hide (protects review integrity - they can only report)
  *
- * Note: This is different from comments where Intent Owner/Mod can hide.
+ * Note: This is different from comments where Event Owner/Mod can hide.
  * For reviews, only app-level moderators can hide to prevent organizers from
  * "polishing" their ratings.
  */
@@ -341,7 +341,7 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
         where: { id },
         select: {
           id: true,
-          intentId: true,
+          eventId: true,
           authorId: true,
           deletedAt: true,
           hiddenAt: true,
@@ -355,7 +355,7 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
       }
 
       // Permission check: Only App Admin or App Moderator can hide reviews
-      // Intent Owner/Moderators CANNOT hide reviews (protects review integrity)
+      // Event Owner/Moderators CANNOT hide reviews (protects review integrity)
       const isAppAdmin = user.role === 'ADMIN';
       const isAppModerator = user.role === 'MODERATOR';
 
@@ -379,9 +379,9 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
 
       // Notify review author that their review was hidden
       if (review.authorId !== user.id) {
-        // Fetch intent title for notification data
-        const intent = await prisma.intent.findUnique({
-          where: { id: review.intentId },
+        // Fetch event title for notification data
+        const event = await prisma.event.findUnique({
+          where: { id: review.eventId },
           select: { title: true },
         });
 
@@ -392,13 +392,13 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
             body: null,
             entityType: PrismaNotificationEntity.REVIEW,
             entityId: id,
-            intentId: review.intentId,
+            eventId: review.eventId,
             recipientId: review.authorId,
             actorId: user.id,
             data: {
               reviewId: id,
-              intentId: review.intentId,
-              intentTitle: intent?.title,
+              eventId: review.eventId,
+              eventTitle: event?.title,
               moderatorName: user.name,
             },
             dedupeKey: `review_hidden:${id}`,
@@ -427,7 +427,7 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
  * Permissions:
  * - App Admin: can unhide any review
  * - App Moderator: can unhide any review
- * - Intent Owner/Moderator: CANNOT unhide (same as hide - only app-level mods)
+ * - Event Owner/Moderator: CANNOT unhide (same as hide - only app-level mods)
  */
 export const unhideReviewMutation: MutationResolvers['unhideReview'] =
   resolverWithMetrics(
@@ -444,7 +444,7 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
         where: { id },
         select: {
           id: true,
-          intentId: true,
+          eventId: true,
           deletedAt: true,
           hiddenAt: true,
         },

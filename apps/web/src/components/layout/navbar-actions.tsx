@@ -31,7 +31,7 @@ export function NavbarActions() {
   const isAuthed = !!data?.me;
 
   const openPost = useCallback(() => {
-    router.push(localePath('/intent/new'));
+    router.push(localePath('/eventnew'));
   }, [router, localePath]);
 
   const openAuthSignin = useCallback(() => {

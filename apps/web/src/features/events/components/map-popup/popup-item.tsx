@@ -1,5 +1,5 @@
 /**
- * Individual intent item in map popup - styled to match EventCard
+ * Individual event item in map popup - styled to match EventCard
  */
 
 import { Avatar } from '@/components/ui/avatar';
@@ -7,18 +7,18 @@ import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { Plan } from '@/components/ui/plan-theme';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
-import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
+import { EventCountdownPill } from '@/features/events/components/event-countdown-pill';
 import {
   AddressVisibility,
   Level as GqlLevel,
 } from '@/lib/api/__generated__/react-query-update';
-import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
+import { buildAvatarUrl, buildEventCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import { motion } from 'framer-motion';
 import { Calendar, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { formatCapacityString } from '@/features/intents/utils/capacity-formatter';
+import { formatCapacityString } from '@/features/events/utils/capacity-formatter';
 import { twMerge } from 'tailwind-merge';
 import {
   type CardAppearanceConfig,
@@ -28,7 +28,7 @@ import {
   getAppearanceStyle,
 } from '../shared/card-utils';
 
-export type PopupIntent = {
+export type PopupEvent = {
   id: string;
   title: string;
   startAt: string;
@@ -65,7 +65,7 @@ export type PopupIntent = {
   levels?: GqlLevel[] | null;
   plan?: Plan | null;
   boostedAt?: string | null; // ISO timestamp of last boost
-  /** Custom appearance config from IntentAppearance */
+  /** Custom appearance config from EventAppearance */
   appearance?: {
     card?: CardAppearanceConfig;
   } | null;
@@ -81,13 +81,13 @@ export type PopupIntent = {
 };
 
 export interface PopupItemProps {
-  intent: PopupIntent;
+  event: PopupEvent;
   onClick?: (id: string) => void;
   locale?: string;
 }
 
 export function PopupItem({
-  intent,
+  event,
   onClick: _onClick,
   locale: localeProp,
 }: PopupItemProps) {
@@ -117,7 +117,7 @@ export function PopupItem({
     allowJoinLate,
     lateJoinCutoffMinutesAfterStart,
     joinManuallyClosed,
-  } = intent;
+  } = event;
 
   const joinedCount = joinedCountRaw ?? 0;
 
@@ -152,8 +152,8 @@ export function PopupItem({
     [radiusKm, isHybrid, isOnsite, isOnline, avMeta, address, addressVisibility]
   );
 
-  const plan = (intent.plan as Plan) ?? 'default';
-  const categories = intent.categorySlugs ?? [];
+  const plan = (event.plan as Plan) ?? 'default';
+  const categories = event.categorySlugs ?? [];
   const maxCategoriesToShow = isBoosted ? 1 : 2;
   const remainingCategoriesCount = categories.length - maxCategoriesToShow;
   const isInactive = isCanceled || isDeleted;
@@ -180,18 +180,18 @@ export function PopupItem({
     >
       {/* Main clickable Link */}
       <Link
-        href={`/${locale}/intent/${encodeURIComponent(intent.id)}`}
+        href={`/${locale}/event/${encodeURIComponent(event.id)}`}
         className="absolute inset-0 z-[1]"
-        aria-label={`Szczegóły wydarzenia: ${intent.title}`}
+        aria-label={`Szczegóły wydarzenia: ${event.title}`}
       />
 
       {/* Cover Image */}
       <div className="relative h-24 overflow-hidden bg-zinc-800">
-        {intent.coverKey ? (
+        {event.coverKey ? (
           <BlurHashImage
-            src={buildIntentCoverUrl(intent.coverKey, 'card')}
-            blurhash={intent.coverBlurhash}
-            alt={intent.title}
+            src={buildEventCoverUrl(event.coverKey, 'card')}
+            blurhash={event.coverBlurhash}
+            alt={event.title}
             className="object-cover w-full h-full brightness-90 contrast-90"
             width={480}
             height={270}
@@ -211,8 +211,8 @@ export function PopupItem({
           onClick={(e) => e.stopPropagation()}
         >
           <FavouriteButton
-            intentId={intent.id}
-            isFavourite={intent.isFavourite ?? false}
+            eventId={event.id}
+            isFavourite={event.isFavourite ?? false}
             size="xs"
           />
         </div>
@@ -270,29 +270,29 @@ export function PopupItem({
         )}
 
         {/* Organizer - Bottom */}
-        {intent.owner?.name && (
+        {event.owner?.name && (
           <div className="absolute bottom-2 left-2 z-10">
             <Link
-              href={`/${locale}/u/${intent.owner.name}`}
+              href={`/${locale}/u/${event.owner.name}`}
               className="flex items-center gap-1 group relative z-[2]"
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar
-                url={buildAvatarUrl(intent.owner?.avatarKey, 'xs')}
-                blurhash={intent.owner?.avatarBlurhash}
-                alt={intent.owner.name}
+                url={buildAvatarUrl(event.owner?.avatarKey, 'xs')}
+                blurhash={event.owner?.avatarBlurhash}
+                alt={event.owner.name}
                 size={16}
                 className="ring-1 ring-white/20 group-hover:ring-white/40 transition-all"
               />
               <div className="flex items-center gap-0.5">
                 <span className="text-[10px] font-medium text-white/70 group-hover:text-white/90 transition-colors">
-                  {intent.owner.name}
+                  {event.owner.name}
                 </span>
-                {intent.owner?.verifiedAt && (
+                {event.owner?.verifiedAt && (
                   <VerifiedBadge
                     size="xs"
                     variant="icon"
-                    verifiedAt={intent.owner.verifiedAt}
+                    verifiedAt={event.owner.verifiedAt}
                   />
                 )}
               </div>
@@ -305,7 +305,7 @@ export function PopupItem({
       <div className="p-3 flex flex-col gap-2">
         {/* Title */}
         <h4 className="text-[14px] font-semibold leading-tight text-white line-clamp-2">
-          {intent.title}
+          {event.title}
         </h4>
 
         {/* Info Grid */}

@@ -1,6 +1,6 @@
-import type { QueryResolvers } from '../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
+import { QueryResolvers } from '../../__generated__/resolvers-types';
 
 export const userEventsQuery: QueryResolvers['userEvents'] = async (
   _parent,
@@ -42,7 +42,7 @@ export const userEventsQuery: QueryResolvers['userEvents'] = async (
 
   // Get events where user is owner or joined member
   const [items, total] = await Promise.all([
-    prisma.intent.findMany({
+    prisma.event.findMany({
       where: {
         OR: [
           { ownerId: userId },
@@ -65,10 +65,10 @@ export const userEventsQuery: QueryResolvers['userEvents'] = async (
         owner: true,
       },
       orderBy: { startAt: 'desc' },
-      take: limit,
-      skip: offset,
+      take: limit!,
+      skip: offset!,
     }),
-    prisma.intent.count({
+    prisma.event.count({
       where: {
         OR: [
           { ownerId: userId },

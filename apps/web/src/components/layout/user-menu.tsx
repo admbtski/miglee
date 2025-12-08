@@ -142,8 +142,8 @@ export function UserMenu({ user }: UserMenuProps) {
 
               <MenuBtn
                 icon={<CalendarIcon className="w-4 h-4" />}
-                label="Intents"
-                href={localePath('/account/intents')}
+                label="Events"
+                href={localePath('/account/events')}
                 onClick={handleClose}
               />
 

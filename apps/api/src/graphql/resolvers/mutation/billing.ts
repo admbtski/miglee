@@ -15,7 +15,7 @@ import {
   useLocalPush,
 } from '../../../lib/billing';
 import {
-  getReceiptUrlFromPaymentIntent,
+  getReceiptUrlFromPaymentEvent,
   getInvoiceUrlFromSubscription,
 } from '../../../lib/billing/stripe.service';
 import { logger } from '../../../lib/pino';
@@ -102,7 +102,7 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
     logger.info(
       {
         userId,
-        intentId: input.intentId,
+        eventId: input.eventId,
         plan: input.plan,
         actionType: input.actionType,
         actionPackageSize: input.actionPackageSize,
@@ -111,7 +111,7 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
     );
 
     const result = await createEventSponsorshipCheckout({
-      intentId: input.intentId,
+      eventId: input.eventId,
       userId,
       userEmail: user.email,
       userName: user.name,
@@ -173,16 +173,16 @@ export const useBoostMutation: MutationResolvers['useBoost'] = async (
   { user }
 ) => {
   const userId = user?.id;
-  const { intentId } = args;
+  const { eventId } = args;
 
   if (!userId) {
     throw new Error('Authentication required');
   }
 
-  // Verify user is owner/moderator of the intent
-  const member = await prisma.intentMember.findFirst({
+  // Verify user is owner/moderator of the event
+  const member = await prisma.eventMember.findFirst({
     where: {
-      intentId,
+      eventId,
       userId,
       role: { in: ['OWNER', 'MODERATOR'] },
       status: 'JOINED',
@@ -190,12 +190,12 @@ export const useBoostMutation: MutationResolvers['useBoost'] = async (
   });
 
   if (!member) {
-    throw new Error('Only intent owner/moderator can use boosts');
+    throw new Error('Only event owner/moderator can use boosts');
   }
 
-  logger.info({ userId, intentId }, 'Using boost');
+  logger.info({ userId, eventId }, 'Using boost');
 
-  await useBoost(intentId);
+  await useBoost(eventId);
 
   return true;
 };
@@ -209,16 +209,16 @@ export const useLocalPushMutation: MutationResolvers['useLocalPush'] = async (
   { user }
 ) => {
   const userId = user?.id;
-  const { intentId } = args;
+  const { eventId } = args;
 
   if (!userId) {
     throw new Error('Authentication required');
   }
 
-  // Verify user is owner/moderator of the intent
-  const member = await prisma.intentMember.findFirst({
+  // Verify user is owner/moderator of the event
+  const member = await prisma.eventMember.findFirst({
     where: {
-      intentId,
+      eventId,
       userId,
       role: { in: ['OWNER', 'MODERATOR'] },
       status: 'JOINED',
@@ -226,12 +226,12 @@ export const useLocalPushMutation: MutationResolvers['useLocalPush'] = async (
   });
 
   if (!member) {
-    throw new Error('Only intent owner/moderator can use local pushes');
+    throw new Error('Only event owner/moderator can use local pushes');
   }
 
-  logger.info({ userId, intentId }, 'Using local push');
+  logger.info({ userId, eventId }, 'Using local push');
 
-  await useLocalPush(intentId);
+  await useLocalPush(eventId);
 
   return true;
 };
@@ -257,10 +257,10 @@ export const getUserPlanReceiptUrlMutation: MutationResolvers['getUserPlanReceip
       throw new Error('Period not found or unauthorized');
     }
 
-    // Try to get receipt from payment intent (for one-off payments)
-    if (period.stripePaymentIntentId) {
-      const url = await getReceiptUrlFromPaymentIntent(
-        period.stripePaymentIntentId
+    // Try to get receipt from payment event (for one-off payments)
+    if (period.stripePaymentEventId) {
+      const url = await getReceiptUrlFromPaymentEvent(
+        period.stripePaymentEventId
       );
       if (url) {
         logger.info({ userId, periodId, url }, 'Retrieved receipt URL');
@@ -304,10 +304,10 @@ export const getEventSponsorshipReceiptUrlMutation: MutationResolvers['getEventS
       throw new Error('Period not found or unauthorized');
     }
 
-    // Try to get receipt from payment intent
-    if (period.stripePaymentIntentId) {
-      const url = await getReceiptUrlFromPaymentIntent(
-        period.stripePaymentIntentId
+    // Try to get receipt from payment event
+    if (period.stripePaymentEventId) {
+      const url = await getReceiptUrlFromPaymentEvent(
+        period.stripePaymentEventId
       );
       if (url) {
         logger.info({ userId, periodId, url }, 'Retrieved receipt URL');

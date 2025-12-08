@@ -14,11 +14,11 @@ import {
   dmKeys,
 } from '@/features/chat/api/dm';
 import {
-  useGetIntentMessages,
-  useSendIntentMessage,
-  useMarkIntentChatRead,
-  useGetIntentUnreadCount,
-  usePublishIntentTyping,
+  useGetEventMessages,
+  useSendEventMessage,
+  useMarkEventChatRead,
+  useGetEventUnreadCount,
+  usePublishEventTyping,
   eventChatKeys,
 } from '@/features/chat/api/event-chat';
 import {
@@ -29,22 +29,22 @@ import {
   useDmThreadsSubscriptions,
 } from '@/features/chat/api/dm-subscriptions';
 import {
-  useIntentMessageAdded,
-  useIntentMessageUpdated,
-  useIntentMessageDeleted,
-  useIntentTyping,
+  useEventMessageAdded,
+  useEventMessageUpdated,
+  useEventMessageDeleted,
+  useEventTyping,
 } from '@/features/chat/api/event-chat-subscriptions';
 import {
   useDmReactionAdded,
-  useIntentReactionAdded,
+  useEventReactionAdded,
 } from '@/features/chat/api/reactions-subscriptions';
-import { useMyMembershipsQuery } from '@/features/intents/api/intent-members';
+import { useMyMembershipsQuery } from '@/features/events/api/event-members';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAddDmReaction,
   useRemoveDmReaction,
-  useAddIntentReaction,
-  useRemoveIntentReaction,
+  useAddEventReaction,
+  useRemoveEventReaction,
 } from '@/features/chat/api/reactions';
 // Chat components imported in sub-components
 import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
@@ -96,13 +96,13 @@ export default function ChatsPageIntegrated() {
   const messageActions = useMessageActions({
     kind: tab,
     threadId: activeDmId,
-    intentId: activeChId,
+    eventId: activeChId,
   });
 
   // Custom hooks ready for future use
   // TODO: Migrate to custom hooks when data structures are aligned
   // const dmChat = useDmChat({ myUserId: currentUserId, activeThreadId: activeDmId });
-  // const channelChat = useChannelChat({ myUserId: currentUserId, activeIntentId: activeChId });
+  // const channelChat = useChannelChat({ myUserId: currentUserId, activeEventId: activeChId });
 
   // User picker state (for "Start a conversation")
   const [showUserPicker, setShowUserPicker] = useState(false);
@@ -120,7 +120,7 @@ export default function ChatsPageIntegrated() {
     { enabled: !!currentUserId }
   );
 
-  // Fetch user's intent memberships (for channels)
+  // Fetch user's event memberships (for channels)
   const { data: membershipsData, isLoading: membershipsLoading } =
     useMyMembershipsQuery(
       { limit: 100, offset: 0 },
@@ -138,35 +138,35 @@ export default function ChatsPageIntegrated() {
     enabled: !!activeDmId,
   });
 
-  // Fetch intent messages for active channel
+  // Fetch event messages for active channel
   const {
-    data: intentMessagesData,
-    isLoading: intentMessagesLoading,
-    fetchNextPage: fetchNextIntentPage,
-    hasNextPage: hasNextIntentPage,
-  } = useGetIntentMessages(activeChId!, {
+    data: eventMessagesData,
+    isLoading: eventMessagesLoading,
+    fetchNextPage: fetchNextEventPage,
+    hasNextPage: hasNextEventPage,
+  } = useGetEventMessages(activeChId!, {
     enabled: !!activeChId,
   });
 
   // Fetch unread count for active channel
-  const { data: intentUnreadData } = useGetIntentUnreadCount(
-    { intentId: activeChId! },
+  const { data: eventUnreadData } = useGetEventUnreadCount(
+    { eventId: activeChId! },
     { enabled: !!activeChId, refetchInterval: 10000 } // Refetch every 10s
   );
 
   // Mutations
   const sendDmMessage = useSendDmMessage();
-  const sendIntentMessage = useSendIntentMessage();
+  const sendEventMessage = useSendEventMessage();
   const markDmRead = useMarkDmThreadRead();
   const publishDmTyping = usePublishDmTyping();
-  const publishIntentTyping = usePublishIntentTyping();
-  const markIntentRead = useMarkIntentChatRead();
+  const publishEventTyping = usePublishEventTyping();
+  const markEventRead = useMarkEventChatRead();
 
   // Reactions
   const addDmReaction = useAddDmReaction();
   const removeDmReaction = useRemoveDmReaction();
-  const addIntentReaction = useAddIntentReaction();
-  const removeIntentReaction = useRemoveIntentReaction();
+  const addEventReaction = useAddEventReaction();
+  const removeEventReaction = useRemoveEventReaction();
 
   // Subscriptions
   const dmSubResult = useDmMessageAdded({
@@ -181,11 +181,11 @@ export default function ChatsPageIntegrated() {
     },
   });
 
-  const intentSubResult = useIntentMessageAdded({
-    intentId: activeChId!,
+  const EVENTSubResult = useEventMessageAdded({
+    eventId: activeChId!,
     enabled: !!activeChId && tab === 'channel',
     onMessage: (message) => {
-      console.log('[Intent Sub] New message received:', message.id);
+      console.log('[Event Sub] New message received:', message.id);
 
       // Invalidate queries to refetch messages
       queryClient.invalidateQueries({
@@ -197,8 +197,8 @@ export default function ChatsPageIntegrated() {
 
       // Auto-mark as read when new message arrives in active channel
       if (activeChId && message.authorId !== currentUserId) {
-        console.log('[Intent Sub] Auto-marking as read:', message.id);
-        markIntentRead.mutate({ intentId: activeChId });
+        console.log('[Event Sub] Auto-marking as read:', message.id);
+        markEventRead.mutate({ eventId: activeChId });
       }
     },
   });
@@ -218,13 +218,13 @@ export default function ChatsPageIntegrated() {
   useEffect(() => {
     if (tab === 'channel' && activeChId) {
       console.log(
-        '[Intent Sub] Connected:',
-        intentSubResult.connected,
-        'IntentID:',
+        '[Event Sub] Connected:',
+        EVENTSubResult.connected,
+        'EventID:',
         activeChId
       );
     }
-  }, [tab, activeChId, intentSubResult.connected]);
+  }, [tab, activeChId, EVENTSubResult.connected]);
 
   // Typing indicators subscriptions with auto-clear
   const typingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(
@@ -267,18 +267,18 @@ export default function ChatsPageIntegrated() {
     },
   });
 
-  useIntentTyping({
-    intentId: activeChId!,
+  useEventTyping({
+    eventId: activeChId!,
     enabled: !!activeChId && tab === 'channel',
     onTyping: ({ userId, isTyping }) => {
       // Don't show typing for current user
       if (userId === currentUserId) return;
 
       // Clear existing timeout
-      const existingTimeout = typingTimeouts.current.get(`intent-${userId}`);
+      const existingTimeout = typingTimeouts.current.get(`event-${userId}`);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
-        typingTimeouts.current.delete(`intent-${userId}`);
+        typingTimeouts.current.delete(`event-${userId}`);
       }
 
       setChannelTypingUsers((prev) => {
@@ -292,9 +292,9 @@ export default function ChatsPageIntegrated() {
               n.delete(userId);
               return n;
             });
-            typingTimeouts.current.delete(`intent-${userId}`);
+            typingTimeouts.current.delete(`event-${userId}`);
           }, 5000);
-          typingTimeouts.current.set(`intent-${userId}`, timeout);
+          typingTimeouts.current.set(`event-${userId}`, timeout);
         } else {
           next.delete(userId);
         }
@@ -452,29 +452,29 @@ export default function ChatsPageIntegrated() {
     },
   });
 
-  // Subscribe to message updates (Intent)
-  useIntentMessageUpdated({
-    intentId: activeChId!,
+  // Subscribe to message updates (Event)
+  useEventMessageUpdated({
+    eventId: activeChId!,
     enabled: !!activeChId && tab === 'channel',
     onMessageUpdated: (message) => {
-      console.log('[Intent Sub] Message updated:', message.id, message.content);
+      console.log('[Event Sub] Message updated:', message.id, message.content);
 
       // Update cache directly instead of refetching
       queryClient.setQueryData(
         eventChatKeys.messages(activeChId!),
         (oldData: any) => {
-          console.log('[Intent Sub] Old cache data:', oldData);
+          console.log('[Event Sub] Old cache data:', oldData);
           if (!oldData?.pages) return oldData;
 
           const updated = {
             ...oldData,
             pages: oldData.pages.map((page: any) => {
-              if (!page.intentMessages?.edges) return page;
+              if (!page.eventMessages?.edges) return page;
               return {
                 ...page,
-                intentMessages: {
-                  ...page.intentMessages,
-                  edges: page.intentMessages.edges.map((edge: any) =>
+                eventMessages: {
+                  ...page.eventMessages,
+                  edges: page.eventMessages.edges.map((edge: any) =>
                     edge.node.id === message.id
                       ? {
                           ...edge,
@@ -490,20 +490,20 @@ export default function ChatsPageIntegrated() {
               };
             }),
           };
-          console.log('[Intent Sub] Updated cache data:', updated);
+          console.log('[Event Sub] Updated cache data:', updated);
           return updated;
         }
       );
     },
   });
 
-  // Subscribe to message deletions (Intent)
-  useIntentMessageDeleted({
-    intentId: activeChId!,
+  // Subscribe to message deletions (Event)
+  useEventMessageDeleted({
+    eventId: activeChId!,
     enabled: !!activeChId && tab === 'channel',
     onMessageDeleted: (event) => {
       console.log(
-        '[Intent Sub] Message deleted:',
+        '[Event Sub] Message deleted:',
         event.messageId,
         event.deletedAt
       );
@@ -512,18 +512,18 @@ export default function ChatsPageIntegrated() {
       queryClient.setQueryData(
         eventChatKeys.messages(activeChId!),
         (oldData: any) => {
-          console.log('[Intent Sub Delete] Old cache data:', oldData);
+          console.log('[Event Sub Delete] Old cache data:', oldData);
           if (!oldData?.pages) return oldData;
 
           const updated = {
             ...oldData,
             pages: oldData.pages.map((page: any) => {
-              if (!page.intentMessages?.edges) return page;
+              if (!page.eventMessages?.edges) return page;
               return {
                 ...page,
-                intentMessages: {
-                  ...page.intentMessages,
-                  edges: page.intentMessages.edges.map((edge: any) =>
+                eventMessages: {
+                  ...page.eventMessages,
+                  edges: page.eventMessages.edges.map((edge: any) =>
                     edge.node.id === event.messageId
                       ? {
                           ...edge,
@@ -538,7 +538,7 @@ export default function ChatsPageIntegrated() {
               };
             }),
           };
-          console.log('[Intent Sub Delete] Updated cache data:', updated);
+          console.log('[Event Sub Delete] Updated cache data:', updated);
           return updated;
         }
       );
@@ -551,8 +551,8 @@ export default function ChatsPageIntegrated() {
     enabled: !!activeDmId && tab === 'dm',
   });
 
-  useIntentReactionAdded({
-    intentId: activeChId!,
+  useEventReactionAdded({
+    eventId: activeChId!,
     enabled: !!activeChId && tab === 'channel',
   });
 
@@ -601,7 +601,7 @@ export default function ChatsPageIntegrated() {
     });
   }, [dmThreadsData, currentUserId]);
 
-  // Map user's intent memberships to channel conversations
+  // Map user's event memberships to channel conversations
   const channelConversations: Conversation[] = useMemo(() => {
     const memberships = membershipsData?.myMemberships;
     if (!memberships || !currentUserId) return [];
@@ -611,33 +611,33 @@ export default function ChatsPageIntegrated() {
     return memberships
       .filter((membership) => membership.status === 'JOINED')
       .flatMap((membership): Conversation[] => {
-        const intent = membership.intent;
-        if (!intent) return [];
+        const event = membership.event;
+        if (!event) return [];
 
-        // Get last message from intent (if available)
+        // Get last message from event (if available)
         const lastMessage =
-          intent.messagesCount > 0 ? 'Recent activity' : 'No messages yet';
+          event.messagesCount > 0 ? 'Recent activity' : 'No messages yet';
 
         // Use unread count from query if this is the active channel
         const unreadCount =
-          intent.id === activeChId
-            ? (intentUnreadData?.intentUnreadCount ?? 0)
+          event.id === activeChId
+            ? (eventUnreadData?.eventUnreadCount ?? 0)
             : 0;
 
         return [
           {
-            id: intent.id,
+            id: event.id,
             kind: 'channel' as const,
-            title: intent.title || 'Untitled Event',
-            membersCount: intent.joinedCount || 0,
+            title: event.title || 'Untitled Event',
+            membersCount: event.joinedCount || 0,
             preview: lastMessage,
-            lastMessageAt: formatRelativeTime(intent.updatedAt),
+            lastMessageAt: formatRelativeTime(event.updatedAt),
             unread: unreadCount,
-            avatar: intent.owner?.avatarKey || undefined,
+            avatar: event.owner?.avatarKey || undefined,
           },
         ];
       });
-  }, [membershipsData, currentUserId, activeChId, intentUnreadData]);
+  }, [membershipsData, currentUserId, activeChId, eventUnreadData]);
 
   const conversations: Conversation[] =
     tab === 'dm' ? dmConversations : channelConversations;
@@ -799,10 +799,10 @@ export default function ChatsPageIntegrated() {
         }
       );
     } else {
-      sendIntentMessage.mutate(
+      sendEventMessage.mutate(
         {
           input: {
-            intentId: active.id,
+            eventId: active.id,
             content: text,
             replyToId: replyToId || undefined,
           },
@@ -890,11 +890,11 @@ export default function ChatsPageIntegrated() {
         };
       });
     } else {
-      const pages = intentMessagesData?.pages;
+      const pages = eventMessagesData?.pages;
       if (!pages) return [];
 
       const allMessages = pages.flatMap(
-        (page) => page.intentMessages?.edges?.map((e) => e.node) || []
+        (page) => page.eventMessages?.edges?.map((e) => e.node) || []
       );
 
       return allMessages.map((msg) => {
@@ -927,7 +927,7 @@ export default function ChatsPageIntegrated() {
         };
       });
     }
-  }, [active, currentUserId, dmMessagesData, intentMessagesData]);
+  }, [active, currentUserId, dmMessagesData, eventMessagesData]);
 
   // Mark as read when opening a conversation
   useEffect(() => {
@@ -936,7 +936,7 @@ export default function ChatsPageIntegrated() {
     if (active.kind === 'dm' && activeDmId) {
       markDmRead.mutate({ threadId: activeDmId });
     } else if (active.kind === 'channel' && activeChId) {
-      markIntentRead.mutate({ intentId: activeChId });
+      markEventRead.mutate({ eventId: activeChId });
     }
   }, [activeDmId, activeChId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1067,7 +1067,7 @@ export default function ChatsPageIntegrated() {
               loading={
                 tab === 'dm'
                   ? dmMessagesLoading || isFetchingNextDmPage
-                  : intentMessagesLoading
+                  : eventMessagesLoading
               }
               typingUserNames={typingUserNames}
               onBackMobile={() => {}}
@@ -1076,14 +1076,14 @@ export default function ChatsPageIntegrated() {
                 if ((active || activeThreadData)?.kind === 'dm') {
                   addDmReaction.mutate({ messageId, emoji });
                 } else {
-                  addIntentReaction.mutate({ messageId, emoji });
+                  addEventReaction.mutate({ messageId, emoji });
                 }
               }}
               onRemoveReaction={(messageId: string, emoji: string) => {
                 if ((active || activeThreadData)?.kind === 'dm') {
                   removeDmReaction.mutate({ messageId, emoji });
                 } else {
-                  removeIntentReaction.mutate({ messageId, emoji });
+                  removeEventReaction.mutate({ messageId, emoji });
                 }
               }}
               onLoadMore={
@@ -1092,10 +1092,10 @@ export default function ChatsPageIntegrated() {
                       console.log('[LoadMore] Fetching next DM page...');
                       fetchNextDmPage();
                     }
-                  : tab === 'channel' && hasNextIntentPage
+                  : tab === 'channel' && hasNextEventPage
                     ? () => {
-                        console.log('[LoadMore] Fetching next Intent page...');
-                        fetchNextIntentPage();
+                        console.log('[LoadMore] Fetching next Event page...');
+                        fetchNextEventPage();
                       }
                     : undefined
               }
@@ -1106,8 +1106,8 @@ export default function ChatsPageIntegrated() {
                   (active || activeThreadData)?.kind === 'channel' &&
                   activeChId
                 ) {
-                  publishIntentTyping.mutate({
-                    intentId: activeChId,
+                  publishEventTyping.mutate({
+                    eventId: activeChId,
                     isTyping,
                   });
                 }

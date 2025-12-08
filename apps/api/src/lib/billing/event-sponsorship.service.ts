@@ -3,7 +3,7 @@
  * Handles event sponsorship/boost purchases and management
  */
 
-import type { IntentPlan } from '@prisma/client';
+import type { EventPlan } from '@prisma/client';
 import { prisma } from '../prisma';
 import { logger } from '../pino';
 import { getStripe, getOrCreateStripeCustomer } from './stripe.service';
@@ -23,11 +23,11 @@ import { config } from '../../env';
 // ========================================================================================
 
 export interface CreateEventSponsorshipCheckoutParams {
-  intentId: string;
+  eventId: string;
   userId: string;
   userEmail: string;
   userName: string;
-  plan: IntentPlan;
+  plan: EventPlan;
   actionType?: 'new' | 'upgrade' | 'reload';
   actionPackageSize?: ActionPackageSize;
 }
@@ -36,7 +36,7 @@ export async function createEventSponsorshipCheckout(
   params: CreateEventSponsorshipCheckoutParams
 ): Promise<{ checkoutUrl: string; sessionId: string; sponsorshipId: string }> {
   let {
-    intentId,
+    eventId,
     userId,
     userEmail,
     userName,
@@ -51,9 +51,9 @@ export async function createEventSponsorshipCheckout(
 
   const stripe = getStripe();
 
-  // Verify intent exists and user is owner/moderator
-  const intent = await prisma.intent.findUnique({
-    where: { id: intentId },
+  // Verify event exists and user is owner/moderator
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
     include: {
       members: {
         where: {
@@ -65,17 +65,17 @@ export async function createEventSponsorshipCheckout(
     },
   });
 
-  if (!intent) {
-    throw new Error('Intent not found');
+  if (!event) {
+    throw new Error('Event not found');
   }
 
-  if (intent.members.length === 0) {
+  if (event.members.length === 0) {
     throw new Error('User is not authorized to sponsor this event');
   }
 
   // Check if sponsorship already exists
   const existing = await prisma.eventSponsorship.findUnique({
-    where: { intentId },
+    where: { eventId },
   });
 
   // If actionType not provided, determine automatically
@@ -85,7 +85,7 @@ export async function createEventSponsorshipCheckout(
       if (existing.plan === 'PLUS' && plan === 'PRO') {
         actionType = 'upgrade';
         logger.info(
-          { intentId, from: existing.plan, to: plan },
+          { eventId, from: existing.plan, to: plan },
           'Upgrading event sponsorship plan'
         );
       }
@@ -93,7 +93,7 @@ export async function createEventSponsorshipCheckout(
       else if (existing.plan === plan) {
         actionType = 'reload';
         logger.info(
-          { intentId, plan },
+          { eventId, plan },
           'Reloading event sponsorship actions (stacking)'
         );
       }
@@ -153,9 +153,9 @@ export async function createEventSponsorshipCheckout(
 
   // Create or update sponsorship record
   await prisma.eventSponsorship.upsert({
-    where: { intentId },
+    where: { eventId },
     create: {
-      intentId,
+      eventId,
       sponsorId: userId,
       plan,
       status: 'PENDING',
@@ -197,7 +197,7 @@ export async function createEventSponsorshipCheckout(
 
   // Fetch the updated sponsorship to get the correct values after increment
   const sponsorship = await prisma.eventSponsorship.findUnique({
-    where: { intentId },
+    where: { eventId },
   });
 
   if (!sponsorship) {
@@ -206,7 +206,7 @@ export async function createEventSponsorshipCheckout(
 
   logger.info(
     {
-      intentId,
+      eventId,
       actionType,
       plan,
       boostsTotal: sponsorship.boostsTotal,
@@ -220,7 +220,7 @@ export async function createEventSponsorshipCheckout(
   const metadata = {
     type: METADATA_TYPE.EVENT_SPONSORSHIP,
     eventSponsorshipId: sponsorship.id,
-    intentId,
+    eventId,
     userId,
     plan,
     actionType,
@@ -238,17 +238,17 @@ export async function createEventSponsorshipCheckout(
       },
     ],
     metadata: metadata as Record<string, string>,
-    payment_intent_data: {
+    payment_event_data: {
       metadata: metadata as Record<string, string>,
     },
     success_url: getCheckoutSuccessUrl(
       config.appUrl,
       METADATA_TYPE.EVENT_SPONSORSHIP
-    ).replace('{intentId}', intentId),
+    ).replace('{eventId}', eventId),
     cancel_url: getCheckoutCancelUrl(
       config.appUrl,
       METADATA_TYPE.EVENT_SPONSORSHIP
-    ).replace('{intentId}', intentId),
+    ).replace('{eventId}', eventId),
     allow_promotion_codes: CHECKOUT_SESSION_CONFIG.allowPromotionCodes,
     billing_address_collection:
       CHECKOUT_SESSION_CONFIG.billingAddressCollection,
@@ -258,7 +258,7 @@ export async function createEventSponsorshipCheckout(
 
   logger.info(
     {
-      intentId,
+      eventId,
       userId,
       plan,
       sessionId: session.id,
@@ -284,7 +284,7 @@ export async function createEventSponsorshipCheckout(
 
 export interface ActivateEventSponsorshipParams {
   sponsorshipId: string;
-  stripePaymentIntentId: string;
+  stripePaymentEventId: string;
   stripeCheckoutSessionId: string;
   actionType?: 'new' | 'upgrade' | 'reload';
   actionPackageSize?: ActionPackageSize;
@@ -295,7 +295,7 @@ export async function activateEventSponsorship(
 ): Promise<void> {
   const {
     sponsorshipId,
-    stripePaymentIntentId,
+    stripePaymentEventId,
     stripeCheckoutSessionId,
     actionType,
     actionPackageSize,
@@ -303,7 +303,7 @@ export async function activateEventSponsorship(
 
   const sponsorship = await prisma.eventSponsorship.findUnique({
     where: { id: sponsorshipId },
-    include: { intent: true },
+    include: { event: true },
   });
 
   if (!sponsorship) {
@@ -314,7 +314,7 @@ export async function activateEventSponsorship(
 
   let updateData: any = {
     status: 'ACTIVE',
-    stripePaymentIntentId,
+    stripePaymentEventId,
     stripeCheckoutSessionId,
   };
 
@@ -344,9 +344,9 @@ export async function activateEventSponsorship(
     data: updateData,
   });
 
-  // Update intent sponsorshipPlan
-  await prisma.intent.update({
-    where: { id: sponsorship.intentId },
+  // Update event sponsorshipPlan
+  await prisma.event.update({
+    where: { id: sponsorship.eventId },
     data: {
       sponsorshipPlan: updated.plan,
     },
@@ -374,7 +374,7 @@ export async function activateEventSponsorship(
 
   await prisma.eventSponsorshipPeriod.create({
     data: {
-      intentId: sponsorship.intentId,
+      eventId: sponsorship.eventId,
       sponsorId: sponsorship.sponsorId,
       plan: updated.plan,
       actionType: actionType || 'new',
@@ -382,7 +382,7 @@ export async function activateEventSponsorship(
       localPushesAdded,
       amount,
       currency: 'pln',
-      stripePaymentIntentId,
+      stripePaymentEventId,
       stripeCheckoutSessionId,
     },
   });
@@ -390,7 +390,7 @@ export async function activateEventSponsorship(
   logger.info(
     {
       sponsorshipId,
-      intentId: sponsorship.intentId,
+      eventId: sponsorship.eventId,
       plan: updated.plan,
       actionType: actionType || 'unknown',
       boostsTotal: updated.boostsTotal,
@@ -411,17 +411,17 @@ export async function activateEventSponsorship(
  *
  * How it works:
  * 1. Increments boostsUsed in EventSponsorship
- * 2. Sets boostedAt to current timestamp in Intent table
+ * 2. Sets boostedAt to current timestamp in Event table
  * 3. Boost is active for 24 hours from boostedAt timestamp
  * 4. After 24h, the event returns to normal sorting (boostedAt is treated as null)
  * 5. boostedAt remains in the database for historical tracking
  *
- * @param intentId - ID of the intent to boost
+ * @param eventId - ID of the event to boost
  * @throws Error if no active sponsorship or all boosts have been used
  */
-export async function useBoost(intentId: string): Promise<void> {
+export async function useBoost(eventId: string): Promise<void> {
   const sponsorship = await prisma.eventSponsorship.findUnique({
-    where: { intentId },
+    where: { eventId },
   });
 
   if (!sponsorship || sponsorship.status !== 'ACTIVE') {
@@ -432,7 +432,7 @@ export async function useBoost(intentId: string): Promise<void> {
     throw new Error('All boosts have been used');
   }
 
-  // Update both sponsorship and intent in a transaction
+  // Update both sponsorship and event in a transaction
   await prisma.$transaction([
     prisma.eventSponsorship.update({
       where: { id: sponsorship.id },
@@ -440,8 +440,8 @@ export async function useBoost(intentId: string): Promise<void> {
         boostsUsed: { increment: 1 },
       },
     }),
-    prisma.intent.update({
-      where: { id: intentId },
+    prisma.event.update({
+      where: { id: eventId },
       data: {
         boostedAt: new Date(), // Set boostedAt to current time for sorting
       },
@@ -450,7 +450,7 @@ export async function useBoost(intentId: string): Promise<void> {
 
   logger.info(
     {
-      intentId,
+      eventId,
       boostsUsed: sponsorship.boostsUsed + 1,
       boostsTotal: sponsorship.boostsTotal,
     },
@@ -462,9 +462,9 @@ export async function useBoost(intentId: string): Promise<void> {
 // USE LOCAL PUSH
 // ========================================================================================
 
-export async function useLocalPush(intentId: string): Promise<void> {
+export async function useLocalPush(eventId: string): Promise<void> {
   const sponsorship = await prisma.eventSponsorship.findUnique({
-    where: { intentId },
+    where: { eventId },
   });
 
   if (!sponsorship || sponsorship.status !== 'ACTIVE') {
@@ -484,7 +484,7 @@ export async function useLocalPush(intentId: string): Promise<void> {
 
   logger.info(
     {
-      intentId,
+      eventId,
       localPushesUsed: sponsorship.localPushesUsed + 1,
       localPushesTotal: sponsorship.localPushesTotal,
     },
@@ -504,7 +504,7 @@ export async function expireEventSponsorships(): Promise<number> {
       status: 'ACTIVE',
       endsAt: { lte: now },
     },
-    include: { intent: true },
+    include: { event: true },
   });
 
   for (const sponsorship of expiredSponsorships) {
@@ -513,8 +513,8 @@ export async function expireEventSponsorships(): Promise<number> {
         where: { id: sponsorship.id },
         data: { status: 'EXPIRED' },
       }),
-      prisma.intent.update({
-        where: { id: sponsorship.intentId },
+      prisma.event.update({
+        where: { id: sponsorship.eventId },
         data: { sponsorshipPlan: 'FREE' },
       }),
     ]);

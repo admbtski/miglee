@@ -53,7 +53,7 @@ const statusConfig = {
 };
 
 const entityLabels = {
-  [ReportEntity.Intent]: 'Wydarzenie',
+  [ReportEntity.Event]: 'Wydarzenie',
   [ReportEntity.Comment]: 'Komentarz',
   [ReportEntity.Review]: 'Recenzja',
   [ReportEntity.User]: 'Użytkownik',

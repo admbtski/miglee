@@ -10,28 +10,28 @@ import { healthRedis } from '../../../lib/redis';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { requireJoinedMember } from '../chat-guards';
-import { mapIntentChatMessage } from '../helpers';
+import { mapEventChatMessage } from '../helpers';
 
 const MESSAGE_INCLUDE = {
   author: true,
-  intent: true,
+  event: true,
   replyTo: {
     include: {
       author: true,
     },
   },
-} satisfies Prisma.IntentChatMessageInclude;
+} satisfies Prisma.EventChatMessageInclude;
 
 /**
- * Query: Get messages for an intent (cursor-based, reverse infinite scroll)
+ * Query: Get messages for an event (cursor-based, reverse infinite scroll)
  * Default: returns newest 20 messages in ASC order (oldest to newest)
  * For loading older: use `before` cursor
  */
-export const intentMessagesQuery: QueryResolvers['intentMessages'] =
+export const eventMessagesQuery: QueryResolvers['eventMessages'] =
   resolverWithMetrics(
     'Query',
-    'intentMessages',
-    async (_p, { intentId, first = 20, before, after }, { user }) => {
+    'eventMessages',
+    async (_p, { eventId, first = 20, before, after }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -39,7 +39,7 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       const take = Math.max(1, Math.min(first, 100));
 
@@ -47,9 +47,9 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
       const cursorWhere = buildCursorWhere(before, after);
 
       // Fetch messages (DESC order to get newest first, then reverse)
-      const messages = await prisma.intentChatMessage.findMany({
+      const messages = await prisma.eventChatMessage.findMany({
         where: {
-          intentId,
+          eventId,
           ...cursorWhere,
         },
         include: MESSAGE_INCLUDE,
@@ -65,7 +65,7 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
 
       // Build edges
       const edges = items.map((msg) => ({
-        node: mapIntentChatMessage(msg),
+        node: mapEventChatMessage(msg),
         cursor: buildCursor({ createdAt: msg.createdAt, id: msg.id }),
       }));
 
@@ -79,9 +79,9 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
       if (edges.length > 0 && !after) {
         const oldestMessage = items[0];
         if (oldestMessage) {
-          const olderCount = await prisma.intentChatMessage.count({
+          const olderCount = await prisma.eventChatMessage.count({
             where: {
-              intentId,
+              eventId,
               OR: [
                 { createdAt: { lt: oldestMessage.createdAt } },
                 {
@@ -111,14 +111,14 @@ export const intentMessagesQuery: QueryResolvers['intentMessages'] =
   );
 
 /**
- * Query: Get unread count for intent chat
+ * Query: Get unread count for event chat
  * Uses Redis cache with 10s TTL to reduce DB load
  */
-export const intentUnreadCountQuery: QueryResolvers['intentUnreadCount'] =
+export const eventUnreadCountQuery: QueryResolvers['eventUnreadCount'] =
   resolverWithMetrics(
     'Query',
-    'intentUnreadCount',
-    async (_p, { intentId }, { user }) => {
+    'eventUnreadCount',
+    async (_p, { eventId }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -126,9 +126,9 @@ export const intentUnreadCountQuery: QueryResolvers['intentUnreadCount'] =
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
-      const cacheKey = `chat:intent:unread:${intentId}:${user.id}`;
+      const cacheKey = `chat:event:unread:${eventId}:${user.id}`;
 
       // Try to get from cache
       try {
@@ -142,10 +142,10 @@ export const intentUnreadCountQuery: QueryResolvers['intentUnreadCount'] =
       }
 
       // Get last read timestamp
-      const chatRead = await prisma.intentChatRead.findUnique({
+      const chatRead = await prisma.eventChatRead.findUnique({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: user.id,
           },
         },
@@ -157,9 +157,9 @@ export const intentUnreadCountQuery: QueryResolvers['intentUnreadCount'] =
       const lastReadAt = chatRead?.lastReadAt || new Date(0);
 
       // Count unread messages (not from me, not deleted, after lastReadAt)
-      const unreadCount = await prisma.intentChatMessage.count({
+      const unreadCount = await prisma.eventChatMessage.count({
         where: {
-          intentId,
+          eventId,
           authorId: { not: user.id },
           deletedAt: null,
           createdAt: { gt: lastReadAt },

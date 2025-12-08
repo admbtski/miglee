@@ -7,7 +7,7 @@ import { processOriginalImage, validateImage } from './image-processing';
 export type MediaPurpose =
   | 'USER_AVATAR'
   | 'USER_COVER'
-  | 'INTENT_COVER'
+  | 'EVENT_COVER'
   | 'GALLERY_IMAGE';
 
 /**
@@ -24,8 +24,8 @@ export function buildMediaKey(params: {
       return `avatars/${params.ownerId || 'unknown'}/${id}`;
     case 'USER_COVER':
       return `covers/users/${params.ownerId || 'unknown'}/${id}`;
-    case 'INTENT_COVER':
-      return `covers/intents/${params.ownerId || 'unknown'}/${id}`;
+    case 'EVENT_COVER':
+      return `covers/events/${params.ownerId || 'unknown'}/${id}`;
     case 'GALLERY_IMAGE':
       return `gallery/${params.ownerId || 'unknown'}/${id}`;
     default:
@@ -125,7 +125,7 @@ export async function getMediaAssetByKey(key: string) {
 }
 
 /**
- * Find orphaned media assets (not referenced by any user/intent)
+ * Find orphaned media assets (not referenced by any user/event)
  */
 export async function findOrphanedMediaAssets(olderThanDays: number = 7) {
   const cutoffDate = new Date();
@@ -168,12 +168,12 @@ export async function findOrphanedMediaAssets(olderThanDays: number = 7) {
         isOrphaned = profileCount === 0;
         break;
       }
-      case 'INTENT_COVER': {
-        // Check if any intent has this coverKey
-        const intentCount = await prisma.intent.count({
+      case 'EVENT_COVER': {
+        // Check if any event has this coverKey
+        const eventCount = await prisma.event.count({
           where: { coverKey: asset.key },
         });
-        isOrphaned = intentCount === 0;
+        isOrphaned = eventCount === 0;
         break;
       }
       default:

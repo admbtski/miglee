@@ -7,15 +7,15 @@
 
 import { useState, useCallback } from 'react';
 import {
-  IntentStatus,
+  EventStatus,
   JoinMode,
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
-import { INTENTS_CONFIG } from '@/lib/constants/intents';
+import { EVENTS_CONFIG } from '@/lib/constants/events';
 import type { SearchMeta } from './use-search-meta';
 
-const DEFAULT_DISTANCE = INTENTS_CONFIG.DEFAULT_DISTANCE_KM;
+const DEFAULT_DISTANCE = EVENTS_CONFIG.DEFAULT_DISTANCE_KM;
 
 export interface FilterState {
   q: string;
@@ -26,7 +26,7 @@ export interface FilterState {
   distanceKm: number;
   startISO: string | null;
   endISO: string | null;
-  status: IntentStatus;
+  status: EventStatus;
   kinds: MeetingKind[];
   levels: Level[];
   verifiedOnly: boolean;
@@ -45,7 +45,7 @@ export interface UseFilterStateProps {
   initialDistanceKm: number;
   initialStartISO?: string | null;
   initialEndISO?: string | null;
-  initialStatus?: IntentStatus;
+  initialStatus?: EventStatus;
   initialKinds?: MeetingKind[];
   initialLevels?: Level[];
   initialVerifiedOnly?: boolean;
@@ -81,7 +81,7 @@ export function useFilterState(props: UseFilterStateProps) {
     initialDistanceKm,
     initialStartISO = null,
     initialEndISO = null,
-    initialStatus = IntentStatus.Any,
+    initialStatus = EventStatus.Any,
     initialKinds = [],
     initialLevels = [],
     initialVerifiedOnly = false,
@@ -102,7 +102,7 @@ export function useFilterState(props: UseFilterStateProps) {
   );
   const [startISO, setStartISO] = useState<string | null>(initialStartISO);
   const [endISO, setEndISO] = useState<string | null>(initialEndISO);
-  const [status, setStatus] = useState<IntentStatus>(initialStatus);
+  const [status, setStatus] = useState<EventStatus>(initialStatus);
   const [kinds, setKinds] = useState<MeetingKind[]>(initialKinds);
   const [levels, setLevels] = useState<Level[]>(initialLevels);
   const [verifiedOnly, setVerifiedOnly] =
@@ -122,7 +122,7 @@ export function useFilterState(props: UseFilterStateProps) {
     setDistanceKm(DEFAULT_DISTANCE);
     setStartISO(null);
     setEndISO(null);
-    setStatus(IntentStatus.Any);
+    setStatus(EventStatus.Any);
     setKinds([]);
     setLevels([]);
     setVerifiedOnly(false);

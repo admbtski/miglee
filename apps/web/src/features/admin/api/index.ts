@@ -3,6 +3,6 @@
  */
 
 export * from './admin-comments';
-export * from './admin-intent-members';
-export * from './admin-intents';
+export * from './admin-event-members';
+export * from './admin-events';
 export * from './admin-users';

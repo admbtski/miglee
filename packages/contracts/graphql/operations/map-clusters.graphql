@@ -13,13 +13,13 @@ query GetClusters(
   }
 }
 
-query GetRegionIntents(
+query GetRegionEvents(
   $region: String!
   $page: Int
   $perPage: Int
   $filters: ClusterFiltersInput
 ) {
-  regionIntents(
+  regionEvents(
     region: $region
     page: $page
     perPage: $perPage

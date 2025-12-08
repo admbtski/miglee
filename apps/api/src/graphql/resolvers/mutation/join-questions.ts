@@ -9,18 +9,18 @@ import { prisma } from '../../../lib/prisma';
 
 export const joinQuestionsMutations: Partial<MutationResolvers> = {
   /**
-   * Update (replace) all join questions for an intent
+   * Update (replace) all join questions for an event
    * Only owner/moderators can update questions
    * This is a bulk replace operation - all existing questions are deleted and replaced
    */
-  updateIntentJoinQuestions: async (_parent, { input }, { user }) => {
+  updateEventJoinQuestions: async (_parent, { input }, { user }) => {
     if (!user) {
       throw new GraphQLError('You must be logged in to update join questions', {
         extensions: { code: 'UNAUTHENTICATED' },
       });
     }
 
-    const { intentId, questions } = input;
+    const { eventId, questions } = input;
 
     // Validate input
     if (questions.length > 50) {
@@ -67,9 +67,9 @@ export const joinQuestionsMutations: Partial<MutationResolvers> = {
       }
     }
 
-    // Check if intent exists
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Check if event exists
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       select: {
         id: true,
         ownerId: true,
@@ -86,15 +86,15 @@ export const joinQuestionsMutations: Partial<MutationResolvers> = {
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
     // Check permissions (owner or moderator)
-    const isOwner = intent.ownerId === user.id;
-    const isModerator = intent.members.some((m) => m.role === 'MODERATOR');
+    const isOwner = event.ownerId === user.id;
+    const isModerator = event.members.some((m) => m.role === 'MODERATOR');
 
     if (!isOwner && !isModerator) {
       throw new GraphQLError(
@@ -108,16 +108,16 @@ export const joinQuestionsMutations: Partial<MutationResolvers> = {
     // Delete all existing questions and create new ones in a transaction
     const updatedQuestions = await prisma.$transaction(async (tx) => {
       // Delete all existing questions
-      await tx.intentJoinQuestion.deleteMany({
-        where: { intentId },
+      await tx.eventJoinQuestion.deleteMany({
+        where: { eventId },
       });
 
       // Create new questions with order
       const createdQuestions = await Promise.all(
         questions.map((q, index) =>
-          tx.intentJoinQuestion.create({
+          tx.eventJoinQuestion.create({
             data: {
-              intentId,
+              eventId,
               order: q.order ?? index,
               type: q.type,
               label: q.label.trim(),

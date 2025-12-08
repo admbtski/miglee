@@ -9,10 +9,10 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import {
   mapNotificationPreference,
-  mapIntentMute,
+  mapEventMute,
   mapDmMute,
   type NotificationPreferenceWithGraph,
-  type IntentMuteWithGraph,
+  type EventMuteWithGraph,
   type DmMuteWithGraph,
 } from '../helpers';
 
@@ -20,10 +20,10 @@ const NOTIFICATION_PREFERENCE_INCLUDE = {
   user: true,
 } satisfies Prisma.NotificationPreferenceInclude;
 
-const INTENT_MUTE_INCLUDE = {
-  intent: true,
+const EVENT_MUTE_INCLUDE = {
+  event: true,
   user: true,
-} satisfies Prisma.IntentMuteInclude;
+} satisfies Prisma.EventMuteInclude;
 
 const DM_MUTE_INCLUDE = {
   thread: {
@@ -90,38 +90,38 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
   );
 
 /**
- * Mutation: Mute/unmute intent
+ * Mutation: Mute/unmute event
  */
-export const muteIntentMutation: MutationResolvers['muteIntent'] =
+export const muteEventMutation: MutationResolvers['muteEvent'] =
   resolverWithMetrics(
     'Mutation',
-    'muteIntent',
-    async (_p, { intentId, muted }, { user }) => {
+    'muteEvent',
+    async (_p, { eventId, muted }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
 
-      const intentMute = await prisma.intentMute.upsert({
+      const eventMute = await prisma.eventMute.upsert({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: user.id,
           },
         },
         create: {
-          intentId,
+          eventId,
           userId: user.id,
           muted,
         },
         update: {
           muted,
         },
-        include: INTENT_MUTE_INCLUDE,
+        include: EVENT_MUTE_INCLUDE,
       });
 
-      return mapIntentMute(intentMute);
+      return mapEventMute(eventMute);
     }
   );
 

@@ -81,7 +81,7 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
       <div className="space-y-4">
         {reviews.map((review) => {
           const createdDate = new Date(review.createdAt);
-          const categoryNames = review.intent?.categories?.[0]?.names;
+          const categoryNames = review.event?.categories?.[0]?.names;
           const categoryName =
             categoryNames?.pl || categoryNames?.en || 'Wydarzenie';
 
@@ -93,7 +93,7 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
               {/* Header: Event Link & Date */}
               <div className="flex items-start justify-between gap-4 mb-4">
                 <Link
-                  href={`/intent/${review.intent?.id}`}
+                  href={`/event/${review.event?.id}`}
                   className="group flex-1 min-w-0"
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -102,7 +102,7 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
                     </span>
                   </div>
                   <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
-                    {review.intent?.title}
+                    {review.event?.title}
                   </h3>
                 </Link>
                 <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 flex-shrink-0">

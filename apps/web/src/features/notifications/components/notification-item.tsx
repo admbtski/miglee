@@ -35,7 +35,7 @@ interface NotificationItemProps {
     actor?: {
       name?: string | null;
     } | null;
-    intent?: {
+    event?: {
       title?: string | null;
     } | null;
   };
@@ -52,20 +52,20 @@ function getNotificationIcon(kind: string, entityType?: string | null) {
   // First check by kind for specific icons
   switch (kind) {
     // Membership
-    case 'INTENT_INVITE':
-    case 'INTENT_INVITE_ACCEPTED':
+    case 'EVENT_INVITE':
+    case 'EVENT_INVITE_ACCEPTED':
       return (
         <UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
       );
     case 'JOIN_REQUEST':
       return <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
-    case 'INTENT_MEMBERSHIP_APPROVED':
+    case 'EVENT_MEMBERSHIP_APPROVED':
       return (
         <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
       );
-    case 'INTENT_MEMBERSHIP_REJECTED':
+    case 'EVENT_MEMBERSHIP_REJECTED':
       return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
-    case 'INTENT_MEMBER_KICKED':
+    case 'EVENT_MEMBER_KICKED':
     case 'BANNED':
       return <Ban className="h-4 w-4 text-red-600 dark:text-red-400" />;
     case 'UNBANNED':
@@ -79,11 +79,11 @@ function getNotificationIcon(kind: string, entityType?: string | null) {
       return <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
 
     // Reviews & Feedback
-    case 'INTENT_REVIEW_RECEIVED':
+    case 'EVENT_REVIEW_RECEIVED':
     case 'NEW_REVIEW':
-    case 'INTENT_FEEDBACK_RECEIVED':
+    case 'EVENT_FEEDBACK_RECEIVED':
       return <Star className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />;
-    case 'INTENT_FEEDBACK_REQUEST':
+    case 'EVENT_FEEDBACK_REQUEST':
       return (
         <MessageCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
       );
@@ -93,7 +93,7 @@ function getNotificationIcon(kind: string, entityType?: string | null) {
       );
 
     // Comments
-    case 'INTENT_COMMENT_ADDED':
+    case 'EVENT_COMMENT_ADDED':
     case 'COMMENT_REPLY':
     case 'NEW_COMMENT':
       return (
@@ -106,19 +106,19 @@ function getNotificationIcon(kind: string, entityType?: string | null) {
 
     // Messages
     case 'NEW_MESSAGE':
-    case 'INTENT_CHAT_MESSAGE':
+    case 'EVENT_CHAT_MESSAGE':
       return (
         <MessageSquare className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
       );
 
-    // Intent lifecycle
-    case 'INTENT_REMINDER':
+    // Event lifecycle
+    case 'EVENT_REMINDER':
       return <Bell className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />;
-    case 'INTENT_UPDATED':
-    case 'INTENT_CREATED':
+    case 'EVENT_UPDATED':
+    case 'EVENT_CREATED':
       return <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
-    case 'INTENT_CANCELED':
-    case 'INTENT_DELETED':
+    case 'EVENT_CANCELED':
+    case 'EVENT_DELETED':
       return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
 
     // System
@@ -128,7 +128,7 @@ function getNotificationIcon(kind: string, entityType?: string | null) {
 
   // Fallback to entityType
   switch (entityType) {
-    case 'INTENT':
+    case 'EVENT':
       return <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
     case 'MESSAGE':
       return (

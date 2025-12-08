@@ -1,30 +1,30 @@
 #import "../fragments/_core.graphql"
 #import "../fragments/feedback.graphql"
 
-# Query feedback questions for an intent
-query IntentFeedbackQuestions($intentId: ID!) {
-  intentFeedbackQuestions(intentId: $intentId) {
+# Query feedback questions for an event
+query EventFeedbackQuestions($eventId: ID!) {
+  eventFeedbackQuestions(eventId: $eventId) {
     ...FeedbackQuestion
   }
 }
 
 # Query feedback results (owner/mod only)
-query IntentFeedbackResults($intentId: ID!) {
-  intentFeedbackResults(intentId: $intentId) {
+query EventFeedbackResults($eventId: ID!) {
+  eventFeedbackResults(eventId: $eventId) {
     ...FeedbackResults
   }
 }
 
 # Query my feedback answers
-query MyFeedbackAnswers($intentId: ID!) {
-  myFeedbackAnswers(intentId: $intentId) {
+query MyFeedbackAnswers($eventId: ID!) {
+  myFeedbackAnswers(eventId: $eventId) {
     ...FeedbackAnswer
   }
 }
 
 # Check if I can submit feedback
-query CanSubmitFeedback($intentId: ID!) {
-  canSubmitFeedback(intentId: $intentId)
+query CanSubmitFeedback($eventId: ID!) {
+  canSubmitFeedback(eventId: $eventId)
 }
 
 # Create feedback question
@@ -50,8 +50,8 @@ mutation DeleteFeedbackQuestion($id: ID!) {
 }
 
 # Reorder feedback questions
-mutation ReorderFeedbackQuestions($intentId: ID!, $questionIds: [ID!]!) {
-  reorderFeedbackQuestions(intentId: $intentId, questionIds: $questionIds) {
+mutation ReorderFeedbackQuestions($eventId: ID!, $questionIds: [ID!]!) {
+  reorderFeedbackQuestions(eventId: $eventId, questionIds: $questionIds) {
     ...FeedbackQuestion
   }
 }
@@ -68,11 +68,11 @@ mutation SubmitReviewAndFeedback($input: SubmitReviewAndFeedbackInput!) {
   }
 }
 
-# Bulk update feedback questions (replaces all questions for intent)
-mutation UpdateIntentFeedbackQuestions(
-  $input: UpdateIntentFeedbackQuestionsInput!
+# Bulk update feedback questions (replaces all questions for event)
+mutation UpdateEventFeedbackQuestions(
+  $input: UpdateEventFeedbackQuestionsInput!
 ) {
-  updateIntentFeedbackQuestions(input: $input) {
+  updateEventFeedbackQuestions(input: $input) {
     ...FeedbackQuestion
   }
 }

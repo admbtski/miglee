@@ -1,5 +1,5 @@
 /**
- * Custom hook for Channel (Intent) chat functionality
+ * Custom hook for Channel (Event) chat functionality
  *
  * @description
  * Provides complete Channel chat functionality including:
@@ -15,7 +15,7 @@
  * ```tsx
  * const channelChat = useChannelChat({
  *   myUserId: 'user-123',
- *   activeIntentId: 'intent-456',
+ *   activeEventId: 'event-456',
  * });
  *
  * // Send message
@@ -33,20 +33,20 @@
 
 import { useEffect, useMemo } from 'react';
 import {
-  useGetIntentMessages,
-  useSendIntentMessage,
-  useMarkIntentChatRead,
-  useGetIntentUnreadCount,
-  usePublishIntentTyping,
+  useGetEventMessages,
+  useSendEventMessage,
+  useMarkEventChatRead,
+  useGetEventUnreadCount,
+  usePublishEventTyping,
 } from '@/features/chat/api/event-chat';
 import {
-  useIntentMessageAdded,
-  useIntentMessageUpdated,
-  useIntentMessageDeleted,
-  useIntentTyping,
+  useEventMessageAdded,
+  useEventMessageUpdated,
+  useEventMessageDeleted,
+  useEventTyping,
 } from '@/features/chat/api/event-chat-subscriptions';
-import { useIntentReactionAdded } from '@/features/chat/api/reactions-subscriptions';
-import { useMyMembershipsQuery } from '@/features/intents/api/intent-members';
+import { useEventReactionAdded } from '@/features/chat/api/reactions-subscriptions';
+import { useMyMembershipsQuery } from '@/features/events/api/event-members';
 import type { Message } from '../types';
 
 // =============================================================================
@@ -56,8 +56,8 @@ import type { Message } from '../types';
 type UseChannelChatProps = {
   /** Current user ID for determining message sides and reactions */
   myUserId?: string;
-  /** Active intent (channel) ID to fetch messages for */
-  activeIntentId?: string;
+  /** Active event (channel) ID to fetch messages for */
+  activeEventId?: string;
 };
 
 // =============================================================================
@@ -66,7 +66,7 @@ type UseChannelChatProps = {
 
 export function useChannelChat({
   myUserId,
-  activeIntentId,
+  activeEventId,
 }: UseChannelChatProps) {
   // Fetch memberships (channels)
   const { data: membershipsData, isLoading: membershipsLoading } =
@@ -74,50 +74,50 @@ export function useChannelChat({
 
   // Fetch messages for active channel
   const { data: messagesData, isLoading: messagesLoading } =
-    useGetIntentMessages(activeIntentId ?? '', { enabled: !!activeIntentId });
+    useGetEventMessages(activeEventId ?? '', { enabled: !!activeEventId });
 
   // Unread count
-  const { data: unreadData } = useGetIntentUnreadCount(
-    { intentId: activeIntentId ?? '' },
-    { enabled: !!activeIntentId }
+  const { data: unreadData } = useGetEventUnreadCount(
+    { eventId: activeEventId ?? '' },
+    { enabled: !!activeEventId }
   );
 
   // Mutations
-  const sendMessage = useSendIntentMessage();
-  const markAsRead = useMarkIntentChatRead();
-  const publishTyping = usePublishIntentTyping();
+  const sendMessage = useSendEventMessage();
+  const markAsRead = useMarkEventChatRead();
+  const publishTyping = usePublishEventTyping();
 
   // Subscriptions
-  useIntentMessageAdded({
-    intentId: activeIntentId ?? '',
+  useEventMessageAdded({
+    eventId: activeEventId ?? '',
     onMessage: (message) => {
       console.log('[Channel Hook] Message added:', message.id);
     },
-    enabled: !!activeIntentId,
+    enabled: !!activeEventId,
   });
-  useIntentMessageUpdated({
-    intentId: activeIntentId ?? '',
+  useEventMessageUpdated({
+    eventId: activeEventId ?? '',
     onMessageUpdated: (message) => {
       console.log('[Channel Hook] Message updated:', message.id);
     },
-    enabled: !!activeIntentId,
+    enabled: !!activeEventId,
   });
-  useIntentMessageDeleted({
-    intentId: activeIntentId ?? '',
+  useEventMessageDeleted({
+    eventId: activeEventId ?? '',
     onMessageDeleted: (event) => {
       console.log('[Channel Hook] Message deleted:', event.messageId);
     },
-    enabled: !!activeIntentId,
+    enabled: !!activeEventId,
   });
-  useIntentReactionAdded({
-    intentId: activeIntentId ?? '',
-    enabled: !!activeIntentId,
+  useEventReactionAdded({
+    eventId: activeEventId ?? '',
+    enabled: !!activeEventId,
   });
 
   // Typing subscription
-  const typingUsers = useIntentTyping({
-    intentId: activeIntentId ?? '',
-    enabled: !!activeIntentId,
+  const typingUsers = useEventTyping({
+    eventId: activeEventId ?? '',
+    enabled: !!activeEventId,
   });
 
   // Transform memberships to conversations
@@ -125,16 +125,16 @@ export function useChannelChat({
     if (!membershipsData?.myMemberships) return [];
 
     return membershipsData.myMemberships.map((membership) => {
-      const intent = membership.intent;
+      const event = membership.event;
       return {
-        id: intent.id,
+        id: event.id,
         kind: 'channel' as const,
-        title: intent.title,
-        membersCount: intent.joinedCount || 0,
-        preview: intent.description || 'No description',
+        title: event.title,
+        membersCount: event.joinedCount || 0,
+        preview: event.description || 'No description',
         lastMessageAt: '', // TODO: Add last message time from API
         unread: 0, // TODO: Add unread count from API
-        avatar: undefined, // TODO: Add coverKey to intent fragment
+        avatar: undefined, // TODO: Add coverKey to event fragment
       };
     });
   }, [membershipsData]);
@@ -144,7 +144,7 @@ export function useChannelChat({
     if (!messagesData?.pages || !myUserId) return [];
 
     const allMessages = messagesData.pages.flatMap(
-      (page) => page.intentMessages?.edges?.map((edge) => edge.node) || []
+      (page) => page.eventMessages?.edges?.map((edge) => edge.node) || []
     );
 
     return allMessages.map(
@@ -187,11 +187,11 @@ export function useChannelChat({
 
   // Send message handler
   const handleSendMessage = (content: string, replyToId?: string) => {
-    if (!activeIntentId || !content.trim()) return;
+    if (!activeEventId || !content.trim()) return;
 
     sendMessage.mutate({
       input: {
-        intentId: activeIntentId,
+        eventId: activeEventId,
         content: content.trim(),
         replyToId,
       },
@@ -200,33 +200,33 @@ export function useChannelChat({
 
   // Typing handler
   const handleTyping = (isTyping: boolean) => {
-    if (!activeIntentId) return;
-    publishTyping.mutate({ intentId: activeIntentId, isTyping });
+    if (!activeEventId) return;
+    publishTyping.mutate({ eventId: activeEventId, isTyping });
   };
 
   // Mark as read when channel changes
   useEffect(() => {
-    if (activeIntentId) {
-      markAsRead.mutate({ intentId: activeIntentId });
+    if (activeEventId) {
+      markAsRead.mutate({ eventId: activeEventId });
     }
-  }, [activeIntentId, markAsRead]);
+  }, [activeEventId, markAsRead]);
 
   // Get active channel info
   const activeChannel = useMemo(() => {
-    if (!activeIntentId || !membershipsData?.myMemberships) return null;
+    if (!activeEventId || !membershipsData?.myMemberships) return null;
     const membership = membershipsData.myMemberships.find(
-      (m) => m.intent.id === activeIntentId
+      (m) => m.event.id === activeEventId
     );
     if (!membership) return null;
 
-    const intent = membership.intent;
+    const event = membership.event;
     return {
-      id: intent.id,
-      title: intent.title,
-      avatar: undefined, // TODO: Add coverKey to intent fragment
-      members: intent.joinedCount || 0,
+      id: event.id,
+      title: event.title,
+      avatar: undefined, // TODO: Add coverKey to event fragment
+      members: event.joinedCount || 0,
     };
-  }, [activeIntentId, membershipsData]);
+  }, [activeEventId, membershipsData]);
 
   return {
     // Data
@@ -234,7 +234,7 @@ export function useChannelChat({
     messages,
     activeChannel,
     typingUsers,
-    unreadCount: (unreadData?.intentUnreadCount as any)?.unreadCount || 0,
+    unreadCount: (unreadData?.eventUnreadCount as any)?.unreadCount || 0,
 
     // Loading states
     isLoadingChannels: membershipsLoading,

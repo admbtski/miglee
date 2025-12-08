@@ -2,19 +2,14 @@
 # Review Queries
 # =============================================================================
 
-# Get reviews for an intent
+# Get reviews for an event
 query GetReviews(
-  $intentId: ID!
+  $eventId: ID!
   $limit: Int = 20
   $offset: Int = 0
   $rating: Int
 ) {
-  reviews(
-    intentId: $intentId
-    limit: $limit
-    offset: $offset
-    rating: $rating
-  ) {
+  reviews(eventId: $eventId, limit: $limit, offset: $offset, rating: $rating) {
     ...ReviewsResultCore
   }
 }
@@ -26,16 +21,16 @@ query GetReview($id: ID!) {
   }
 }
 
-# Get review statistics for an intent
-query GetReviewStats($intentId: ID!) {
-  reviewStats(intentId: $intentId) {
+# Get review statistics for an event
+query GetReviewStats($eventId: ID!) {
+  reviewStats(eventId: $eventId) {
     ...ReviewStatsCore
   }
 }
 
-# Get current user's review for an intent
-query GetMyReview($intentId: ID!) {
-  myReview(intentId: $intentId) {
+# Get current user's review for an event
+query GetMyReview($eventId: ID!) {
+  myReview(eventId: $eventId) {
     ...ReviewCore
   }
 }

@@ -1,4 +1,4 @@
-export const FIXED_INTENTS_TARGET = 30;
+export const FIXED_EVENTS_TARGET = 30;
 
 export const FIXED_IDS = {
   ADMIN: 'u_admin_00000000000000000001',

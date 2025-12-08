@@ -1,6 +1,6 @@
 // apps/api/src/graphql/helpers.ts
 import { Prisma } from '@prisma/client';
-import { IntentStatus, JoinLockReason } from '../__generated__/resolvers-types';
+import { EventStatus, JoinLockReason } from '../__generated__/resolvers-types';
 import type {
   Level,
   MeetingKind,
@@ -9,24 +9,24 @@ import type {
   NotificationKind,
   Visibility,
   ReportStatus,
-  IntentPlan,
+  EventPlan,
   // GraphQL result types:
-  Intent as GQLIntent,
+  Event as GQLEvent,
   Notification as GQLNotification,
   User as GQLUser,
   Category as GQLCategory,
   Tag as GQLTag,
-  IntentMember as GQLIntentMember,
+  EventMember as GQLEventMember,
   DmThread as GQLDmThread,
   DmMessage as GQLDmMessage,
   Comment as GQLComment,
   Review as GQLReview,
   Report as GQLReport,
-  IntentChatMessage as GQLIntentChatMessage,
+  EventChatMessage as GQLEventChatMessage,
   UserBlock as GQLUserBlock,
-  IntentInviteLink as GQLIntentInviteLink,
+  EventInviteLink as GQLEventInviteLink,
   NotificationPreference as GQLNotificationPreference,
-  IntentMute as GQLIntentMute,
+  EventMute as GQLEventMute,
   DmMute as GQLDmMute,
   JoinMode,
   AddressVisibility,
@@ -43,14 +43,14 @@ const LEVEL_ORDER: Record<Level, number> = {
   ADVANCED: 2,
 };
 
-export type IntentMemberWithUsers = Prisma.IntentMemberGetPayload<{
+export type EventMemberWithUsers = Prisma.EventMemberGetPayload<{
   include: {
     user: { include: { profile: true } };
     addedBy: { include: { profile: true } };
   };
 }>;
 
-export type IntentWithGraph = Prisma.IntentGetPayload<{
+export type EventWithGraph = Prisma.EventGetPayload<{
   include: {
     categories: true;
     tags: true;
@@ -75,7 +75,7 @@ export type NotificationWithGraph = Prisma.NotificationGetPayload<{
   include: {
     recipient: true;
     actor: true;
-    intent: {
+    event: {
       include: {
         categories: true;
         tags: true;
@@ -121,7 +121,7 @@ export type DmMessageWithGraph = Prisma.DmMessageGetPayload<{
 export type CommentWithGraph = Prisma.CommentGetPayload<{
   include: {
     author: true;
-    intent: true;
+    event: true;
     parent: { include: { author: true } };
     replies: { include: { author: true } };
     _count: { select: { replies: true } };
@@ -129,17 +129,17 @@ export type CommentWithGraph = Prisma.CommentGetPayload<{
 }>;
 
 export type ReviewWithGraph = Prisma.ReviewGetPayload<{
-  include: { author: true; intent: true };
+  include: { author: true; event: true };
 }>;
 
 export type ReportWithGraph = Prisma.ReportGetPayload<{
   include: { reporter: true };
 }>;
 
-export type IntentChatMessageWithGraph = Prisma.IntentChatMessageGetPayload<{
+export type EventChatMessageWithGraph = Prisma.EventChatMessageGetPayload<{
   include: {
     author: true;
-    intent: true;
+    event: true;
     replyTo: { include: { author: true } };
   };
 }>;
@@ -148,15 +148,15 @@ export type UserBlockWithGraph = Prisma.UserBlockGetPayload<{
   include: { blocker: true; blocked: true };
 }>;
 
-export type IntentInviteLinkWithGraph = Prisma.IntentInviteLinkGetPayload<{
-  include: { intent: true; createdBy: true; revokedBy: true };
+export type EventInviteLinkWithGraph = Prisma.EventInviteLinkGetPayload<{
+  include: { event: true; createdBy: true; revokedBy: true };
 }>;
 
 export type NotificationPreferenceWithGraph =
   Prisma.NotificationPreferenceGetPayload<{ include: { user: true } }>;
 
-export type IntentMuteWithGraph = Prisma.IntentMuteGetPayload<{
-  include: { intent: true; user: true };
+export type EventMuteWithGraph = Prisma.EventMuteGetPayload<{
+  include: { event: true; user: true };
 }>;
 
 export type DmMuteWithGraph = Prisma.DmMuteGetPayload<{
@@ -225,11 +225,11 @@ export function pickLocation(
  * Helpers (viewer-aware visibility)
  * ========================================================================== */
 
-function getViewerMembership(i: IntentWithGraph | any, viewerId?: string) {
+function getViewerMembership(i: EventWithGraph | any, viewerId?: string) {
   // Safe access to members - may be undefined if not included
   const m = viewerId
     ? ((i.members ?? []).find((mm: any) => mm.userId === viewerId) as
-        | (IntentMemberWithUsers & { status: string; role: string })
+        | (EventMemberWithUsers & { status: string; role: string })
         | undefined)
     : undefined;
 
@@ -314,7 +314,7 @@ export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
 }
 
 export function mapCategory(
-  c: IntentWithGraph['categories'][number]
+  c: EventWithGraph['categories'][number]
 ): GQLCategory {
   return {
     id: c.id,
@@ -325,7 +325,7 @@ export function mapCategory(
   };
 }
 
-export function mapTag(t: IntentWithGraph['tags'][number]): GQLTag {
+export function mapTag(t: EventWithGraph['tags'][number]): GQLTag {
   return {
     id: t.id,
     label: t.label,
@@ -335,10 +335,10 @@ export function mapTag(t: IntentWithGraph['tags'][number]): GQLTag {
   };
 }
 
-export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
+export function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
   return {
     id: m.id,
-    intentId: m.intentId,
+    eventId: m.eventId,
     userId: m.userId,
     role: (m.role as any) ?? 'PARTICIPANT',
     status: (m.status as any) ?? 'PENDING',
@@ -350,9 +350,9 @@ export function mapIntentMember(m: IntentMemberWithUsers): GQLIntentMember {
   };
 }
 
-/* ---- Intent computed helpers ---- */
+/* ---- Event computed helpers ---- */
 
-function computeIntentDerived(i: IntentWithGraph | any) {
+function computeEventDerived(i: EventWithGraph | any) {
   const now = new Date();
 
   const startDate = new Date(i.startAt);
@@ -424,29 +424,29 @@ function computeIntentDerived(i: IntentWithGraph | any) {
 }
 
 /**
- * Compute high-level IntentStatus from derived flags.
+ * Compute high-level EventStatus from derived flags.
  * Priority order: DELETED > CANCELED > PAST > ONGOING > UPCOMING
  *
- * Note: UPCOMING is computed here for individual intent detail views.
- * For list queries, status filtering is done in SQL (see intents.ts resolver).
+ * Note: UPCOMING is computed here for individual event detail views.
+ * For list queries, status filtering is done in SQL (see events.ts resolver).
  */
-function computeIntentStatus(
-  derived: ReturnType<typeof computeIntentDerived>
-): IntentStatus {
-  if (derived.isDeleted) return IntentStatus.Deleted;
-  if (derived.isCanceled) return IntentStatus.Canceled;
-  if (derived.hasEnded) return IntentStatus.Past;
-  if (derived.isOngoing) return IntentStatus.Ongoing;
+function computeEventStatus(
+  derived: ReturnType<typeof computeEventDerived>
+): EventStatus {
+  if (derived.isDeleted) return EventStatus.Deleted;
+  if (derived.isCanceled) return EventStatus.Canceled;
+  if (derived.hasEnded) return EventStatus.Past;
+  if (derived.isOngoing) return EventStatus.Ongoing;
   // If not started yet → UPCOMING
-  if (!derived.hasStarted) return IntentStatus.Upcoming;
+  if (!derived.hasStarted) return EventStatus.Upcoming;
   // Fallback (shouldn't normally reach here)
-  return IntentStatus.Upcoming;
+  return EventStatus.Upcoming;
 }
 
 /**
  * Compute whether joins are currently open and the lock reason if not.
  */
-function computeJoinOpenAndReason(i: IntentWithGraph): {
+function computeJoinOpenAndReason(i: EventWithGraph): {
   joinOpen: boolean;
   lockReason: JoinLockReason | null;
 } {
@@ -460,7 +460,7 @@ function computeJoinOpenAndReason(i: IntentWithGraph): {
 
   const hasStarted = now >= startAt;
   const hasEnded = now >= endAt;
-  const derived = computeIntentDerived(i);
+  const derived = computeEventDerived(i);
 
   // Hard blocks first
   if (derived.isDeleted)
@@ -514,7 +514,7 @@ function computeJoinOpenAndReason(i: IntentWithGraph): {
   return { joinOpen: true, lockReason: null };
 }
 
-function resolveOwnerFromMembers(i: IntentWithGraph | any): GQLUser | null {
+function resolveOwnerFromMembers(i: EventWithGraph | any): GQLUser | null {
   if (i.owner) {
     return mapUser(i.owner);
   }
@@ -525,8 +525,8 @@ function resolveOwnerFromMembers(i: IntentWithGraph | any): GQLUser | null {
   return owner ? mapUser(owner.user) : null;
 }
 
-export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
-  const derived = computeIntentDerived(i);
+export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
+  const derived = computeEventDerived(i);
   const {
     joinedCount,
     isFull,
@@ -539,7 +539,7 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     withinLock,
   } = derived;
 
-  const status = computeIntentStatus(derived);
+  const status = computeEventStatus(derived);
   const { joinOpen, lockReason } = computeJoinOpenAndReason(i);
 
   const { isOwnerOrModerator, isParticipant } = getViewerMembership(
@@ -644,11 +644,11 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
     scheduledPublishAt: i.scheduledPublishAt ?? null,
 
     // Billing & Sponsorship
-    sponsorshipPlan: i.sponsorshipPlan as IntentPlan,
+    sponsorshipPlan: i.sponsorshipPlan as EventPlan,
     boostedAt: i.boostedAt ?? null,
     sponsorship: i.sponsorship
       ? ({
-          plan: i.sponsorship.plan as IntentPlan,
+          plan: i.sponsorship.plan as EventPlan,
           status: i.sponsorship.status as any,
           startsAt: i.sponsorship.startsAt ?? null,
           endsAt: i.sponsorship.endsAt ?? null,
@@ -671,7 +671,7 @@ export function mapIntent(i: IntentWithGraph, viewerId?: string): GQLIntent {
 
     // Convenience relations
     owner: resolveOwnerFromMembers(i),
-    members: visibleMembers.map(mapIntentMember),
+    members: visibleMembers.map(mapEventMember),
 
     // Computed helpers
     status,
@@ -713,7 +713,7 @@ export function mapNotification(
     entityType: (n.entityType as NotificationEntity) ?? 'OTHER',
     entityId: n.entityId ?? null,
 
-    intent: n.intent ? mapIntent(n.intent as any, viewerId) : null,
+    event: n.event ? mapEvent(n.event as any, viewerId) : null,
   };
 }
 
@@ -789,7 +789,7 @@ export function createPairKey(userId1: string, userId2: string): string {
 export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
   return {
     id: c.id,
-    intentId: c.intentId,
+    eventId: c.eventId,
     authorId: c.authorId,
     threadId: c.threadId,
     parentId: c.parentId ?? null,
@@ -801,9 +801,7 @@ export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
     hiddenAt: (c as any).hiddenAt ?? null,
     hiddenById: (c as any).hiddenById ?? null,
 
-    intent: c.intent
-      ? (mapIntent(c.intent as any, viewerId) as any)
-      : ({} as any),
+    event: c.event ? (mapEvent(c.event as any, viewerId) as any) : ({} as any),
     author: c.author ? mapUser(c.author as any) : (null as any),
     parent: c.parent ? (mapComment(c.parent as any, viewerId) as any) : null,
     replies: c.replies?.map((r) => mapComment(r as any, viewerId) as any) ?? [],
@@ -818,7 +816,7 @@ export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
 export function mapReview(r: ReviewWithGraph, viewerId?: string): GQLReview {
   return {
     id: r.id,
-    intentId: r.intentId,
+    eventId: r.eventId,
     authorId: r.authorId,
     rating: r.rating,
     content: r.content ?? null,
@@ -829,9 +827,7 @@ export function mapReview(r: ReviewWithGraph, viewerId?: string): GQLReview {
     hiddenAt: (r as any).hiddenAt ?? null,
     hiddenById: (r as any).hiddenById ?? null,
 
-    intent: r.intent
-      ? (mapIntent(r.intent as any, viewerId) as any)
-      : ({} as any),
+    event: r.event ? (mapEvent(r.event as any, viewerId) as any) : ({} as any),
     author: r.author ? mapUser(r.author as any) : (null as any),
     deletedBy: (r as any).deletedBy ? mapUser((r as any).deletedBy) : null,
     hiddenBy: (r as any).hiddenBy ? mapUser((r as any).hiddenBy) : null,
@@ -854,14 +850,14 @@ export function mapReport(r: ReportWithGraph): GQLReport {
   };
 }
 
-/* ---- IntentChatMessage ---- */
-export function mapIntentChatMessage(
-  m: IntentChatMessageWithGraph,
+/* ---- EventChatMessage ---- */
+export function mapEventChatMessage(
+  m: EventChatMessageWithGraph,
   viewerId?: string
-): GQLIntentChatMessage {
+): GQLEventChatMessage {
   return {
     id: m.id,
-    intentId: m.intentId,
+    eventId: m.eventId,
     authorId: m.authorId,
     content: m.content,
     replyToId: m.replyToId ?? null,
@@ -869,12 +865,10 @@ export function mapIntentChatMessage(
     editedAt: m.editedAt ?? null,
     deletedAt: m.deletedAt ?? null,
 
-    intent: m.intent
-      ? (mapIntent(m.intent as any, viewerId) as any)
-      : ({} as any),
+    event: m.event ? (mapEvent(m.event as any, viewerId) as any) : ({} as any),
     author: mapUser(m.author as any),
     replyTo: m.replyTo
-      ? (mapIntentChatMessage(m.replyTo as any, viewerId) as any)
+      ? (mapEventChatMessage(m.replyTo as any, viewerId) as any)
       : null,
 
     isEdited: !!m.editedAt,
@@ -895,11 +889,11 @@ export function mapUserBlock(b: UserBlockWithGraph): GQLUserBlock {
   };
 }
 
-/* ---- IntentInviteLink ---- */
-export function mapIntentInviteLink(
-  link: IntentInviteLinkWithGraph,
+/* ---- EventInviteLink ---- */
+export function mapEventInviteLink(
+  link: EventInviteLinkWithGraph,
   viewerId?: string
-): GQLIntentInviteLink {
+): GQLEventInviteLink {
   const now = new Date();
   const isExpired = link.expiresAt ? link.expiresAt < now : false;
   const isMaxedOut = link.maxUses ? link.usedCount >= link.maxUses : false;
@@ -908,7 +902,7 @@ export function mapIntentInviteLink(
 
   return {
     id: link.id,
-    intentId: link.intentId,
+    eventId: link.eventId,
     code: link.code,
     maxUses: link.maxUses ?? null,
     usedCount: link.usedCount,
@@ -926,8 +920,8 @@ export function mapIntentInviteLink(
     createdAt: link.createdAt,
     updatedAt: link.updatedAt ?? null,
 
-    intent: link.intent
-      ? (mapIntent(link.intent as any, viewerId) as any)
+    event: link.event
+      ? (mapEvent(link.event as any, viewerId) as any)
       : ({} as any),
 
     isExpired,
@@ -956,20 +950,20 @@ export function mapNotificationPreference(
   };
 }
 
-/* ---- IntentMute ---- */
-export function mapIntentMute(
-  mute: IntentMuteWithGraph,
+/* ---- EventMute ---- */
+export function mapEventMute(
+  mute: EventMuteWithGraph,
   viewerId?: string
-): GQLIntentMute {
+): GQLEventMute {
   return {
     id: mute.id,
-    intentId: mute.intentId,
+    eventId: mute.eventId,
     userId: mute.userId,
     muted: mute.muted,
     createdAt: mute.createdAt,
 
-    intent: mute.intent
-      ? (mapIntent(mute.intent as any, viewerId) as any)
+    event: mute.event
+      ? (mapEvent(mute.event as any, viewerId) as any)
       : ({} as any),
     user: mapUser(mute.user as any),
   };

@@ -3,9 +3,9 @@
 import {
   AddressVisibility,
   Category,
-  Intent,
-  IntentMemberRole,
-  IntentMemberStatus,
+  Event,
+  EventMemberRole,
+  EventMemberStatus,
   PublicationStatus,
   JoinMode,
   Level,
@@ -27,7 +27,7 @@ import {
   CITIES,
   FIRST_NAMES,
   FIXED_IDS,
-  FIXED_INTENTS_TARGET,
+  FIXED_EVENTS_TARGET,
   LAST_NAMES,
   TAGS,
   TITLE_BY_CATEGORY,
@@ -109,8 +109,8 @@ function randomTimeWindow() {
 async function clearDb() {
   try {
     await prisma.notification.deleteMany();
-    await prisma.intentMember.deleteMany();
-    await prisma.intent.deleteMany();
+    await prisma.eventMember.deleteMany();
+    await prisma.event.deleteMany();
     await prisma.category.deleteMany();
     await prisma.tag.deleteMany();
 
@@ -377,15 +377,15 @@ async function seedTags(): Promise<Tag[]> {
   return created;
 }
 
-/** ---------- Intent creation with realistic data & members ---------- */
+/** ---------- Event creation with realistic data & members ---------- */
 const titleFor = (categorySlug: string) =>
   pick(TITLE_BY_CATEGORY[categorySlug] ?? ['Meetup']);
 
-async function createIntentWithMembers(opts: {
+async function createEventWithMembers(opts: {
   author: User;
   categories: Category[];
   tags: Tag[];
-}): Promise<{ intent: Intent; owner: User; participants: number }> {
+}): Promise<{ event: Event; owner: User; participants: number }> {
   const { author, categories, tags } = opts;
   const city = pick(CITIES);
   const coords = randomWithinCity(city);
@@ -425,7 +425,7 @@ async function createIntentWithMembers(opts: {
       ? pick([10, 15, 30, 45, 60]) // 10min, 15min, 30min, 45min, 1h
       : null;
 
-  // 5% of intents are manually closed by owner/moderator
+  // 5% of events are manually closed by owner/moderator
   const joinManuallyClosed = rand() > 0.95;
   const joinManuallyClosedAt = joinManuallyClosed ? new Date() : null;
   const joinManuallyClosedById = joinManuallyClosed ? author.id : null;
@@ -530,9 +530,9 @@ async function createIntentWithMembers(opts: {
         ])
       : null;
 
-  // Transaction: create Intent + memberships
+  // Transaction: create Event + memberships
   return prisma.$transaction(async (tx) => {
-    const intent = await tx.intent.create({
+    const event = await tx.event.create({
       data: {
         title,
         description,
@@ -567,19 +567,19 @@ async function createIntentWithMembers(opts: {
         ownerId: author.id,
         categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
         tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
-        // All seeded intents are published
+        // All seeded events are published
         status: PublicationStatus.PUBLISHED,
         publishedAt: new Date(),
       },
     });
 
     // OWNER — always JOINED
-    await tx.intentMember.create({
+    await tx.eventMember.create({
       data: {
-        intentId: intent.id,
+        eventId: event.id,
         userId: author.id,
-        role: IntentMemberRole.OWNER,
-        status: IntentMemberStatus.JOINED,
+        role: EventMemberRole.OWNER,
+        status: EventMemberStatus.JOINED,
         joinedAt: new Date(),
       },
     });
@@ -595,12 +595,12 @@ async function createIntentWithMembers(opts: {
           })
         : null;
     if (maybeModerator) {
-      await tx.intentMember.create({
+      await tx.eventMember.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           userId: maybeModerator.id,
-          role: IntentMemberRole.MODERATOR,
-          status: IntentMemberStatus.JOINED,
+          role: EventMemberRole.MODERATOR,
+          status: EventMemberStatus.JOINED,
           addedById: author.id,
           joinedAt: new Date(),
         },
@@ -608,8 +608,8 @@ async function createIntentWithMembers(opts: {
     }
 
     // Participants: fill some JOINED, respect capacity strictly
-    const alreadyJoined = await tx.intentMember.count({
-      where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
+    const alreadyJoined = await tx.eventMember.count({
+      where: { eventId: event.id, status: EventMemberStatus.JOINED },
     });
     const freeSlots = Math.max(0, max - alreadyJoined);
 
@@ -633,12 +633,12 @@ async function createIntentWithMembers(opts: {
 
     const participants = pickMany(pool, Math.max(0, targetJoined));
     for (const u of participants) {
-      await tx.intentMember.create({
+      await tx.eventMember.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           userId: u.id,
-          role: IntentMemberRole.PARTICIPANT,
-          status: IntentMemberStatus.JOINED,
+          role: EventMemberRole.PARTICIPANT,
+          status: EventMemberStatus.JOINED,
           addedById: author.id,
           joinedAt: new Date(),
         },
@@ -649,82 +649,82 @@ async function createIntentWithMembers(opts: {
     const others = pool.filter((u) => !participants.find((p) => p.id === u.id));
     const extras = pickMany(others, Math.min(4, others.length));
     for (const u of extras) {
-      const st = pick<IntentMemberStatus>([
-        IntentMemberStatus.PENDING,
-        IntentMemberStatus.INVITED,
-        IntentMemberStatus.REJECTED,
-        IntentMemberStatus.BANNED,
+      const st = pick<EventMemberStatus>([
+        EventMemberStatus.PENDING,
+        EventMemberStatus.INVITED,
+        EventMemberStatus.REJECTED,
+        EventMemberStatus.BANNED,
       ]);
-      await tx.intentMember.create({
+      await tx.eventMember.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           userId: u.id,
-          role: IntentMemberRole.PARTICIPANT,
+          role: EventMemberRole.PARTICIPANT,
           status: st,
           addedById: author.id,
           note:
-            st === IntentMemberStatus.BANNED
+            st === EventMemberStatus.BANNED
               ? 'Banned during moderation (seed).'
-              : st === IntentMemberStatus.REJECTED
+              : st === EventMemberStatus.REJECTED
                 ? 'Rejected due to capacity or profile mismatch (seed).'
                 : null,
         },
       });
     }
 
-    // Update intent joinedCount with actual count
-    const finalJoinedCount = await tx.intentMember.count({
-      where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
+    // Update event joinedCount with actual count
+    const finalJoinedCount = await tx.eventMember.count({
+      where: { eventId: event.id, status: EventMemberStatus.JOINED },
     });
-    await tx.intent.update({
-      where: { id: intent.id },
+    await tx.event.update({
+      where: { id: event.id },
       data: { joinedCount: finalJoinedCount },
     });
 
     return {
-      intent,
+      event,
       owner: author,
       participants: finalJoinedCount,
     };
   });
 }
 
-/** ---------- Seed: Intents (random realistic) ---------- */
-async function seedIntents(opts: {
+/** ---------- Seed: Events (random realistic) ---------- */
+async function seedEvents(opts: {
   users: User[];
   categories: Category[];
   tags: Tag[];
-}): Promise<Array<{ intent: Intent; owner: User }>> {
+}): Promise<Array<{ event: Event; owner: User }>> {
   const { users, categories, tags } = opts;
-  const out: Array<{ intent: Intent; owner: User }> = [];
+  const out: Array<{ event: Event; owner: User }> = [];
 
   const authorPool = users.filter((u) => u.role !== Role.USER);
   const userPool = users;
 
-  // Zwiększona liczba intentów: 500 dla lepszego testowania map clustering
-  const INTENTS_COUNT = 500;
+  // Zwiększona liczba eventów: 500 dla lepszego testowania map clustering
+  const EVENTS_COUNT = 500;
 
-  console.log(`   Creating ${INTENTS_COUNT} intents...`);
+  console.log(`   Creating ${EVENTS_COUNT} events...`);
 
-  for (let i = 0; i < INTENTS_COUNT; i++) {
+  for (let i = 0; i < EVENTS_COUNT; i++) {
     const author = rand() > 0.65 ? pick(authorPool) : pick(userPool);
-    const { intent, owner } = await createIntentWithMembers({
+    const { event, owner } = await createEventWithMembers({
       author,
       categories,
       tags,
     });
-    out.push({ intent, owner });
+    out.push({ event, owner });
 
-    // Progress indicator co 50 intentów
+    // Progress indicator co 50 eventów
     if ((i + 1) % 50 === 0) {
-      console.log(`   Progress: ${i + 1}/${INTENTS_COUNT} intents created`);
+      console.log(`   Progress: ${i + 1}/${EVENTS_COUNT} events created`);
     }
   }
 
   return out;
 }
 
-/** ---------- EXTRA: Curated, diverse intents for FIXED IDS ---------- */
+/** ---------- EXTRA: Curated, diverse events for FIXED IDS ---------- */
 
 type Scenario = {
   title?: string;
@@ -834,7 +834,7 @@ function buildScenarios(total: number): Scenario[] {
   return scenarios;
 }
 
-const SCENARIOS: Scenario[] = buildScenarios(FIXED_INTENTS_TARGET);
+const SCENARIOS: Scenario[] = buildScenarios(FIXED_EVENTS_TARGET);
 
 function findCityDef(name: string) {
   const c = CITIES.find((x) => x.name === name)!;
@@ -857,13 +857,13 @@ function skewedTime(when?: Scenario['when']) {
   return { startAt: start, endAt: end };
 }
 
-async function createPresetIntent(
+async function createPresetEvent(
   tx: Prisma.TransactionClient,
   author: User,
   categories: Category[],
   tags: Tag[],
   s: Scenario
-): Promise<{ intent: Intent; owner: User }> {
+): Promise<{ event: Event; owner: User }> {
   const city = findCityDef(s.city);
   const coords = randomWithinCity(city);
   const place = randomPlace(city);
@@ -935,7 +935,7 @@ async function createPresetIntent(
           AddressVisibility.AFTER_JOIN,
         ]);
 
-  // Join window settings (similar to createIntentWithMembers)
+  // Join window settings (similar to createEventWithMembers)
   const hasJoinWindowRestrictions = rand() > 0.4;
   const joinOpensMinutesBeforeStart = hasJoinWindowRestrictions
     ? rand() > 0.5
@@ -965,7 +965,7 @@ async function createPresetIntent(
       ])
     : null;
 
-  const intent = await tx.intent.create({
+  const event = await tx.event.create({
     data: {
       title,
       description: desc,
@@ -1016,30 +1016,30 @@ async function createPresetIntent(
       ownerId: author.id,
       categories: { connect: selectedCategories.map((c) => ({ id: c.id })) },
       tags: { connect: selectedTags.map((t) => ({ id: t.id })) },
-      // All seeded intents are published
+      // All seeded events are published
       status: PublicationStatus.PUBLISHED,
       publishedAt: new Date(),
     },
   });
 
   // OWNER
-  await tx.intentMember.create({
+  await tx.eventMember.create({
     data: {
-      intentId: intent.id,
+      eventId: event.id,
       userId: author.id,
-      role: IntentMemberRole.OWNER,
-      status: IntentMemberStatus.JOINED,
+      role: EventMemberRole.OWNER,
+      status: EventMemberStatus.JOINED,
       joinedAt: new Date(),
     },
   });
 
   // Wypełnij część miejsc
-  const alreadyJoined = await tx.intentMember.count({
-    where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
+  const alreadyJoined = await tx.eventMember.count({
+    where: { eventId: event.id, status: EventMemberStatus.JOINED },
   });
-  const freeSlots = Math.max(0, (intent.max ?? 10) - alreadyJoined);
+  const freeSlots = Math.max(0, (event.max ?? 10) - alreadyJoined);
   const howMany =
-    intent.mode === Mode.ONE_TO_ONE
+    event.mode === Mode.ONE_TO_ONE
       ? Math.min(freeSlots, 1)
       : Math.min(
           freeSlots,
@@ -1052,35 +1052,35 @@ async function createPresetIntent(
   });
   const participants = pickMany(pool, Math.max(0, howMany));
   for (const u of participants) {
-    await tx.intentMember.create({
+    await tx.eventMember.create({
       data: {
-        intentId: intent.id,
+        eventId: event.id,
         userId: u.id,
-        role: IntentMemberRole.PARTICIPANT,
-        status: IntentMemberStatus.JOINED,
+        role: EventMemberRole.PARTICIPANT,
+        status: EventMemberStatus.JOINED,
         addedById: author.id,
         joinedAt: new Date(),
       },
     });
   }
 
-  // Update intent joinedCount with actual count
-  const finalJoinedCount = await tx.intentMember.count({
-    where: { intentId: intent.id, status: IntentMemberStatus.JOINED },
+  // Update event joinedCount with actual count
+  const finalJoinedCount = await tx.eventMember.count({
+    where: { eventId: event.id, status: EventMemberStatus.JOINED },
   });
-  await tx.intent.update({
-    where: { id: intent.id },
+  await tx.event.update({
+    where: { id: event.id },
     data: { joinedCount: finalJoinedCount },
   });
 
-  return { intent, owner: author };
+  return { event, owner: author };
 }
 
-async function seedIntentsForFixedUsers(opts: {
+async function seedEventsForFixedUsers(opts: {
   users: User[];
   categories: Category[];
   tags: Tag[];
-}): Promise<Array<{ intent: Intent; owner: User }>> {
+}): Promise<Array<{ event: Event; owner: User }>> {
   const { users, categories, tags } = opts;
   const byId = new Map(users.map((u) => [u.id, u]));
   const admin = byId.get(FIXED_IDS.ADMIN);
@@ -1090,22 +1090,22 @@ async function seedIntentsForFixedUsers(opts: {
   const authors: User[] = [admin, mod, user].filter(Boolean) as User[];
   if (!authors.length) return [];
 
-  const pairs: Array<{ intent: Intent; owner: User }> = [];
+  const pairs: Array<{ event: Event; owner: User }> = [];
 
   await prisma.$transaction(async (tx) => {
     // round-robin autorów
     for (let i = 0; i < SCENARIOS.length; i++) {
       const author = authors[i % authors.length]!;
       const s = SCENARIOS[i]!;
-      const pair = await createPresetIntent(tx, author, categories, tags, s);
+      const pair = await createPresetEvent(tx, author, categories, tags, s);
       pairs.push(pair);
     }
 
     // Opcjonalnie anuluj 1–2 z nich + notyfikacje
     const cancelSome = pickMany(pairs, Math.min(2, pairs.length));
-    for (const { intent, owner } of cancelSome) {
-      const updated = await tx.intent.update({
-        where: { id: intent.id },
+    for (const { event, owner } of cancelSome) {
+      const updated = await tx.event.update({
+        where: { id: event.id },
         data: {
           canceledAt: new Date(),
           canceledById: owner.id,
@@ -1117,14 +1117,14 @@ async function seedIntentsForFixedUsers(opts: {
         },
       });
 
-      const recips = await tx.intentMember.findMany({
+      const recips = await tx.eventMember.findMany({
         where: {
-          intentId: updated.id,
+          eventId: updated.id,
           status: {
             in: [
-              IntentMemberStatus.JOINED,
-              IntentMemberStatus.PENDING,
-              IntentMemberStatus.INVITED,
+              EventMemberStatus.JOINED,
+              EventMemberStatus.PENDING,
+              EventMemberStatus.INVITED,
             ],
           },
         },
@@ -1134,17 +1134,17 @@ async function seedIntentsForFixedUsers(opts: {
       if (recips.length) {
         await tx.notification.createMany({
           data: recips.map((m) => ({
-            kind: NotificationKind.INTENT_CANCELED,
+            kind: NotificationKind.EVENT_CANCELED,
             recipientId: m.userId,
             actorId: owner.id,
-            entityType: NotificationEntity.INTENT,
+            entityType: NotificationEntity.EVENT,
             entityId: updated.id,
-            intentId: updated.id,
+            eventId: updated.id,
             data: {
-              intentTitle: updated.title,
+              eventTitle: updated.title,
               reason: updated.cancelReason,
             } as Prisma.InputJsonValue,
-            dedupeKey: `intent_canceled:${m.userId}:${updated.id}`,
+            dedupeKey: `event_canceled:${m.userId}:${updated.id}`,
           })),
           skipDuplicates: true,
         });
@@ -1156,13 +1156,13 @@ async function seedIntentsForFixedUsers(opts: {
 }
 
 /** ---------- NEW: Seed some cancellations + notifications ---------- */
-async function seedCanceledIntents(
-  intentsCreated: Array<{ intent: Intent; owner: User }>
-): Promise<Array<{ intent: Intent; owner: User }>> {
-  // ~30% intentów oznacz jako anulowane
-  const toCancel = intentsCreated.filter(() => rand() > 0.7);
+async function seedCanceledEvents(
+  eventsCreated: Array<{ event: Event; owner: User }>
+): Promise<Array<{ event: Event; owner: User }>> {
+  // ~30% eventów oznacz jako anulowane
+  const toCancel = eventsCreated.filter(() => rand() > 0.7);
   for (const item of toCancel) {
-    const { intent, owner } = item;
+    const { event, owner } = item;
     const reason = pick([
       'Venue unavailable due to maintenance.',
       'Organizer is ill. Sorry!',
@@ -1171,8 +1171,8 @@ async function seedCanceledIntents(
     ]);
 
     // Mark canceled (idempotent)
-    const updated = await prisma.intent.update({
-      where: { id: intent.id },
+    const updated = await prisma.event.update({
+      where: { id: event.id },
       data: {
         canceledAt: new Date(),
         canceledById: owner.id,
@@ -1181,14 +1181,14 @@ async function seedCanceledIntents(
     });
 
     // Notify JOINED/PENDING/INVITED members
-    const recipients = await prisma.intentMember.findMany({
+    const recipients = await prisma.eventMember.findMany({
       where: {
-        intentId: updated.id,
+        eventId: updated.id,
         status: {
           in: [
-            IntentMemberStatus.JOINED,
-            IntentMemberStatus.PENDING,
-            IntentMemberStatus.INVITED,
+            EventMemberStatus.JOINED,
+            EventMemberStatus.PENDING,
+            EventMemberStatus.INVITED,
           ],
         },
       },
@@ -1198,17 +1198,17 @@ async function seedCanceledIntents(
     if (recipients.length > 0) {
       await prisma.notification.createMany({
         data: recipients.map((m) => ({
-          kind: NotificationKind.INTENT_CANCELED,
+          kind: NotificationKind.EVENT_CANCELED,
           recipientId: m.userId,
           actorId: owner.id,
-          entityType: NotificationEntity.INTENT,
+          entityType: NotificationEntity.EVENT,
           entityId: updated.id,
-          intentId: updated.id,
+          eventId: updated.id,
           data: {
-            intentTitle: updated.title,
+            eventTitle: updated.title,
             reason,
           } as Prisma.InputJsonValue,
-          dedupeKey: `intent_canceled:${m.userId}:${updated.id}`,
+          dedupeKey: `event_canceled:${m.userId}:${updated.id}`,
           createdAt: new Date(),
         })),
         skipDuplicates: true,
@@ -1219,15 +1219,15 @@ async function seedCanceledIntents(
 }
 
 /** ---------- NEW: Seed some soft-deleted (after 30 days) ---------- */
-async function seedDeletedIntentsAfterCancel(
-  canceled: Array<{ intent: Intent; owner: User }>
+async function seedDeletedEventsAfterCancel(
+  canceled: Array<{ event: Event; owner: User }>
 ) {
   const sample = canceled.filter(() => rand() > 0.6);
   const THIRTY_FIVE_DAYS_MS = 35 * 24 * 60 * 60 * 1000;
-  for (const { intent, owner } of sample) {
+  for (const { event, owner } of sample) {
     const canceledAtPast = new Date(Date.now() - THIRTY_FIVE_DAYS_MS);
-    await prisma.intent.update({
-      where: { id: intent.id },
+    await prisma.event.update({
+      where: { id: event.id },
       data: {
         canceledAt: canceledAtPast,
         deletedAt: new Date(),
@@ -1242,30 +1242,30 @@ async function seedDeletedIntentsAfterCancel(
 const CURRENCIES = ['PLN', 'EUR', 'USD'] as const;
 
 async function seedNotificationsGeneric(
-  intentsCreated: Array<{ intent: Intent; owner: User }>,
+  eventsCreated: Array<{ event: Event; owner: User }>,
   users: User[]
 ) {
-  for (const { intent, owner } of intentsCreated) {
+  for (const { event, owner } of eventsCreated) {
     const audience = users.filter((u) => u.id !== owner.id);
     const recipients = pickMany(audience, 2 + Math.floor(rand() * 3)); // 2..4
 
     for (const r of recipients) {
-      // INTENT_CREATED
+      // EVENT_CREATED
       await prisma.notification.create({
         data: {
-          kind: NotificationKind.INTENT_CREATED,
+          kind: NotificationKind.EVENT_CREATED,
           recipientId: r.id,
           actorId: owner.id,
-          entityType: NotificationEntity.INTENT,
-          entityId: intent.id,
-          intentId: intent.id,
+          entityType: NotificationEntity.EVENT,
+          entityId: event.id,
+          eventId: event.id,
           data: {
-            intentTitle: intent.title,
-            address: intent.address,
-            startAt: intent.startAt.toISOString(),
-            meetingKind: intent.meetingKind,
+            eventTitle: event.title,
+            address: event.address,
+            startAt: event.startAt.toISOString(),
+            meetingKind: event.meetingKind,
           } as Prisma.InputJsonValue,
-          dedupeKey: `intent_created:${r.id}:${intent.id}`,
+          dedupeKey: `event_created:${r.id}:${event.id}`,
         },
       });
 
@@ -1273,16 +1273,16 @@ async function seedNotificationsGeneric(
       if (rand() > 0.7) {
         await prisma.notification.create({
           data: {
-            kind: NotificationKind.INTENT_INVITE,
+            kind: NotificationKind.EVENT_INVITE,
             recipientId: r.id,
             actorId: owner.id,
-            entityType: NotificationEntity.INTENT,
-            entityId: intent.id,
-            intentId: intent.id,
+            entityType: NotificationEntity.EVENT,
+            entityId: event.id,
+            eventId: event.id,
             data: {
-              intentTitle: intent.title,
+              eventTitle: event.title,
             } as Prisma.InputJsonValue,
-            dedupeKey: `intent_invite:${r.id}:${intent.id}`,
+            dedupeKey: `event_invite:${r.id}:${event.id}`,
           },
         });
       }
@@ -1291,17 +1291,17 @@ async function seedNotificationsGeneric(
       if (rand() > 0.6) {
         await prisma.notification.create({
           data: {
-            kind: NotificationKind.INTENT_REMINDER,
+            kind: NotificationKind.EVENT_REMINDER,
             recipientId: r.id,
             actorId: owner.id,
-            entityType: NotificationEntity.INTENT,
-            entityId: intent.id,
-            intentId: intent.id,
+            entityType: NotificationEntity.EVENT,
+            entityId: event.id,
+            eventId: event.id,
             data: {
-              intentTitle: intent.title,
-              startsAt: intent.startAt.toISOString(),
+              eventTitle: event.title,
+              startsAt: event.startAt.toISOString(),
             } as Prisma.InputJsonValue,
-            dedupeKey: `intent_reminder:${r.id}:${intent.id}`,
+            dedupeKey: `event_reminder:${r.id}:${event.id}`,
           },
         });
       }
@@ -1478,22 +1478,22 @@ async function seedDmThreads(users: User[]) {
 
 /** ---------- Seed: Comments ---------- */
 async function seedComments(
-  allIntents: Array<{ intent: any; owner: User }>,
+  allEvents: Array<{ event: any; owner: User }>,
   _users: User[]
 ) {
   const comments: any[] = [];
 
-  // Add comments to 60% of intents
-  const intentsToComment = allIntents.filter(() => rand() > 0.4).slice(0, 20);
+  // Add comments to 60% of events
+  const eventsToComment = allEvents.filter(() => rand() > 0.4).slice(0, 20);
 
-  for (const { intent } of intentsToComment) {
-    // Skip deleted or canceled intents
-    if (intent.deletedAt || intent.canceledAt) continue;
+  for (const { event } of eventsToComment) {
+    // Skip deleted or canceled events
+    if (event.deletedAt || event.canceledAt) continue;
 
-    // Get members of this intent
-    const members = await prisma.intentMember.findMany({
+    // Get members of this event
+    const members = await prisma.eventMember.findMany({
       where: {
-        intentId: intent.id,
+        eventId: event.id,
         status: 'JOINED',
       },
       select: { userId: true },
@@ -1531,10 +1531,10 @@ async function seedComments(
 
       const rootComment = await prisma.comment.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           authorId: author!.userId,
           content: commentContent,
-          threadId: intent.id, // Root comments use intent ID as threadId
+          threadId: event.id, // Root comments use event ID as threadId
           createdAt,
           deletedAt,
           deletedById: isDeleted ? author!.userId : null,
@@ -1543,11 +1543,11 @@ async function seedComments(
 
       comments.push(rootComment);
 
-      // Notify intent owners/moderators about new comment (if not deleted)
+      // Notify event owners/moderators about new comment (if not deleted)
       if (!isDeleted) {
-        const ownersAndMods = await prisma.intentMember.findMany({
+        const ownersAndMods = await prisma.eventMember.findMany({
           where: {
-            intentId: intent.id,
+            eventId: event.id,
             role: { in: ['OWNER', 'MODERATOR'] },
             status: 'JOINED',
             userId: { not: author!.userId },
@@ -1558,15 +1558,15 @@ async function seedComments(
         if (ownersAndMods.length > 0) {
           await prisma.notification.createMany({
             data: ownersAndMods.map((m) => ({
-              kind: NotificationKind.INTENT_COMMENT_ADDED,
+              kind: NotificationKind.EVENT_COMMENT_ADDED,
               recipientId: m.userId,
               actorId: author!.userId,
-              entityType: NotificationEntity.INTENT,
-              entityId: intent.id,
-              intentId: intent.id,
+              entityType: NotificationEntity.EVENT,
+              entityId: event.id,
+              eventId: event.id,
               data: {
                 commentId: rootComment.id,
-                intentTitle: intent.title,
+                eventTitle: event.title,
                 commentContent: commentContent.slice(0, 100),
               } as Prisma.InputJsonValue,
               dedupeKey: `comment_added:${m.userId}:${rootComment.id}`,
@@ -1604,9 +1604,9 @@ async function seedComments(
 
           if (isHidden) {
             // Get moderators (owner or moderator role)
-            const moderators = await prisma.intentMember.findMany({
+            const moderators = await prisma.eventMember.findMany({
               where: {
-                intentId: intent.id,
+                eventId: event.id,
                 role: { in: ['OWNER', 'MODERATOR'] },
                 status: 'JOINED',
               },
@@ -1624,7 +1624,7 @@ async function seedComments(
 
           const reply = await prisma.comment.create({
             data: {
-              intentId: intent.id,
+              eventId: event.id,
               authorId: replyAuthor!.userId,
               content: replyContent,
               threadId: rootComment.id,
@@ -1644,13 +1644,13 @@ async function seedComments(
                 kind: NotificationKind.COMMENT_REPLY,
                 recipientId: rootComment.authorId,
                 actorId: replyAuthor!.userId,
-                entityType: NotificationEntity.INTENT,
-                entityId: intent.id,
-                intentId: intent.id,
+                entityType: NotificationEntity.EVENT,
+                entityId: event.id,
+                eventId: event.id,
                 data: {
                   commentId: reply.id,
                   parentCommentId: rootComment.id,
-                  intentTitle: intent.title,
+                  eventTitle: event.title,
                   commentContent: replyContent.slice(0, 100),
                 } as Prisma.InputJsonValue,
                 dedupeKey: `comment_reply:${rootComment.authorId}:${reply.id}`,
@@ -1662,12 +1662,12 @@ async function seedComments(
       }
     }
 
-    // Update intent commentsCount (only count non-deleted and non-hidden)
+    // Update event commentsCount (only count non-deleted and non-hidden)
     const visibleComments = comments.filter(
-      (c) => c.intentId === intent.id && !c.deletedAt && !c.hiddenAt
+      (c) => c.eventId === event.id && !c.deletedAt && !c.hiddenAt
     );
-    await prisma.intent.update({
-      where: { id: intent.id },
+    await prisma.event.update({
+      where: { id: event.id },
       data: {
         commentsCount: visibleComments.length,
       },
@@ -1684,22 +1684,22 @@ async function seedComments(
 
 /** ---------- Seed: Reviews ---------- */
 async function seedReviews(
-  allIntents: Array<{ intent: any; owner: User }>,
+  allEvents: Array<{ event: any; owner: User }>,
   _users: User[]
 ) {
   const reviews: any[] = [];
 
-  // Add reviews only to past intents
-  const pastIntents = allIntents.filter(
-    ({ intent }) =>
-      intent.endAt < new Date() && !intent.deletedAt && !intent.canceledAt
+  // Add reviews only to past events
+  const pastEvents = allEvents.filter(
+    ({ event }) =>
+      event.endAt < new Date() && !event.deletedAt && !event.canceledAt
   );
 
-  for (const { intent } of pastIntents) {
+  for (const { event } of pastEvents) {
     // Get members who joined
-    const members = await prisma.intentMember.findMany({
+    const members = await prisma.eventMember.findMany({
       where: {
-        intentId: intent.id,
+        eventId: event.id,
         status: 'JOINED',
       },
       select: { userId: true },
@@ -1746,7 +1746,7 @@ async function seedReviews(
               ]);
 
       const createdAt = new Date(
-        intent.endAt.getTime() + Math.floor(rand() * 3) * 86400000
+        event.endAt.getTime() + Math.floor(rand() * 3) * 86400000
       ); // 0-3 days after event
 
       // 4% of reviews are deleted by author
@@ -1762,9 +1762,9 @@ async function seedReviews(
 
       if (isHidden) {
         // Get moderators (owner or moderator role)
-        const moderators = await prisma.intentMember.findMany({
+        const moderators = await prisma.eventMember.findMany({
           where: {
-            intentId: intent.id,
+            eventId: event.id,
             role: { in: ['OWNER', 'MODERATOR'] },
             status: 'JOINED',
           },
@@ -1782,7 +1782,7 @@ async function seedReviews(
 
       const review = await prisma.review.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           authorId: reviewer.userId,
           rating,
           content: reviewContent,
@@ -1796,11 +1796,11 @@ async function seedReviews(
 
       reviews.push(review);
 
-      // Notify intent owners/moderators about new review (if not deleted)
+      // Notify event owners/moderators about new review (if not deleted)
       if (!isDeleted) {
-        const ownersAndMods = await prisma.intentMember.findMany({
+        const ownersAndMods = await prisma.eventMember.findMany({
           where: {
-            intentId: intent.id,
+            eventId: event.id,
             role: { in: ['OWNER', 'MODERATOR'] },
             status: 'JOINED',
             userId: { not: reviewer.userId },
@@ -1811,15 +1811,15 @@ async function seedReviews(
         if (ownersAndMods.length > 0) {
           await prisma.notification.createMany({
             data: ownersAndMods.map((m) => ({
-              kind: NotificationKind.INTENT_REVIEW_RECEIVED,
+              kind: NotificationKind.EVENT_REVIEW_RECEIVED,
               recipientId: m.userId,
               actorId: reviewer.userId,
               entityType: NotificationEntity.REVIEW,
               entityId: review.id,
-              intentId: intent.id,
+              eventId: event.id,
               data: {
                 reviewId: review.id,
-                intentTitle: intent.title,
+                eventTitle: event.title,
                 rating,
                 reviewContent: reviewContent?.slice(0, 100) || null,
               } as Prisma.InputJsonValue,
@@ -1843,7 +1843,7 @@ async function seedReviews(
 
 /** ---------- Seed: Reports ---------- */
 async function seedReports(
-  allIntents: Array<{ intent: any; owner: User }>,
+  allEvents: Array<{ event: any; owner: User }>,
   users: User[]
 ) {
   const reports: any[] = [];
@@ -1853,17 +1853,15 @@ async function seedReports(
 
   for (let i = 0; i < reportCount; i++) {
     const reporter = pick(users);
-    const entityType = pick(['INTENT', 'COMMENT', 'REVIEW', 'USER', 'MESSAGE']);
+    const entityType = pick(['EVENT', 'COMMENT', 'REVIEW', 'USER', 'MESSAGE']);
 
     let entityId: string | null = null;
 
     // Find a valid entity to report
     switch (entityType) {
-      case 'INTENT': {
-        const intent = pick(
-          allIntents.filter(({ intent }) => !intent.deletedAt)
-        );
-        entityId = intent?.intent.id;
+      case 'EVENT': {
+        const event = pick(allEvents.filter(({ event }) => !event.deletedAt));
+        entityId = event?.event.id;
         break;
       }
       case 'USER': {
@@ -1915,22 +1913,22 @@ async function seedReports(
 
 /** ---------- Seed: Event Chat Messages ---------- */
 async function seedEventChatMessages(
-  allIntents: Array<{ intent: any; owner: User }>,
+  allEvents: Array<{ event: any; owner: User }>,
   _users: User[]
 ) {
   const messages: any[] = [];
 
-  // Add chat messages to 70% of intents
-  const intentsToChat = allIntents
+  // Add chat messages to 70% of events
+  const eventsToChat = allEvents
     .filter(() => rand() > 0.3)
-    .filter(({ intent }) => !intent.deletedAt && !intent.canceledAt)
+    .filter(({ event }) => !event.deletedAt && !event.canceledAt)
     .slice(0, 25);
 
-  for (const { intent } of intentsToChat) {
+  for (const { event } of eventsToChat) {
     // Get JOINED members
-    const members = await prisma.intentMember.findMany({
+    const members = await prisma.eventMember.findMany({
       where: {
-        intentId: intent.id,
+        eventId: event.id,
         status: 'JOINED',
       },
       select: { userId: true },
@@ -1942,7 +1940,7 @@ async function seedEventChatMessages(
     const messageCount = 5 + Math.floor(rand() * 16);
 
     let lastMessageTime = new Date(
-      intent.createdAt.getTime() + Math.floor(rand() * 3600000)
+      event.createdAt.getTime() + Math.floor(rand() * 3600000)
     );
 
     for (let i = 0; i < messageCount; i++) {
@@ -1970,9 +1968,9 @@ async function seedEventChatMessages(
         'Im in!',
       ]);
 
-      const message = await prisma.intentChatMessage.create({
+      const message = await prisma.eventChatMessage.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           authorId: author!.userId,
           content: messageContent,
           createdAt: lastMessageTime,
@@ -1989,7 +1987,7 @@ async function seedEventChatMessages(
       // 10% chance of a reply
       if (rand() > 0.9 && messages.length > 0) {
         const replyTo = messages[Math.floor(rand() * messages.length)];
-        if (replyTo.intentId === intent.id) {
+        if (replyTo.eventId === event.id) {
           const replyAuthor = members[Math.floor(rand() * members.length)];
           const replyContent = pick([
             'Good question!',
@@ -2002,9 +2000,9 @@ async function seedEventChatMessages(
             'I can help with that.',
           ]);
 
-          const reply = await prisma.intentChatMessage.create({
+          const reply = await prisma.eventChatMessage.create({
             data: {
-              intentId: intent.id,
+              eventId: event.id,
               authorId: replyAuthor!.userId,
               content: replyContent,
               replyToId: replyTo.id,
@@ -2017,23 +2015,23 @@ async function seedEventChatMessages(
       }
     }
 
-    // Update intent messagesCount
-    await prisma.intent.update({
-      where: { id: intent.id },
+    // Update event messagesCount
+    await prisma.event.update({
+      where: { id: event.id },
       data: {
-        messagesCount: messages.filter((m) => m.intentId === intent.id).length,
+        messagesCount: messages.filter((m) => m.eventId === event.id).length,
       },
     });
 
-    // Create IntentChatRead for some members (50% have read)
+    // Create EventChatRead for some members (50% have read)
     for (const member of members) {
       if (rand() > 0.5) {
         const lastReadAt = new Date(
           lastMessageTime.getTime() - Math.floor(rand() * 3600000)
         );
-        await prisma.intentChatRead.create({
+        await prisma.eventChatRead.create({
           data: {
-            intentId: intent.id,
+            eventId: event.id,
             userId: member.userId,
             lastReadAt,
           },
@@ -2085,20 +2083,20 @@ async function seedUserBlocks(users: User[]) {
   return blocks;
 }
 
-/** ---------- Seed: Intent Invite Links ---------- */
-async function seedIntentInviteLinks(
-  allIntents: Array<{ intent: any; owner: User }>
+/** ---------- Seed: Event Invite Links ---------- */
+async function seedEventInviteLinks(
+  allEvents: Array<{ event: any; owner: User }>
 ) {
   const links: any[] = [];
 
-  // Add invite links to 30% of intents
-  const intentsWithLinks = allIntents
+  // Add invite links to 30% of events
+  const eventsWithLinks = allEvents
     .filter(() => rand() > 0.7)
-    .filter(({ intent }) => !intent.deletedAt && !intent.canceledAt)
+    .filter(({ event }) => !event.deletedAt && !event.canceledAt)
     .slice(0, 10);
 
-  for (const { intent } of intentsWithLinks) {
-    // Create 1-3 invite links per intent
+  for (const { event } of eventsWithLinks) {
+    // Create 1-3 invite links per event
     const linkCount = 1 + Math.floor(rand() * 3);
 
     for (let i = 0; i < linkCount; i++) {
@@ -2110,9 +2108,9 @@ async function seedIntentInviteLinks(
 
       const usedCount = maxUses ? Math.floor(rand() * Math.min(maxUses, 5)) : 0;
 
-      const link = await prisma.intentInviteLink.create({
+      const link = await prisma.eventInviteLink.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           code: `INV${Math.random().toString(36).substring(2, 12).toUpperCase()}`,
           maxUses,
           usedCount,
@@ -2124,13 +2122,13 @@ async function seedIntentInviteLinks(
     }
   }
 
-  console.log(`🔗 Created ${links.length} intent invite links`);
+  console.log(`🔗 Created ${links.length} event invite links`);
   return links;
 }
 
-/** ---------- Seed: Intent Join Questions ---------- */
-async function seedIntentJoinQuestions(
-  allIntents: Array<{ intent: any; owner: User }>
+/** ---------- Seed: Event Join Questions ---------- */
+async function seedEventJoinQuestions(
+  allEvents: Array<{ event: any; owner: User }>
 ) {
   const joinQuestions: any[] = [];
 
@@ -2181,9 +2179,9 @@ async function seedIntentJoinQuestions(
     },
   ];
 
-  for (const { intent } of allIntents) {
+  for (const { event } of allEvents) {
     // Only for REQUEST mode events, ~30% chance
-    if (intent.joinMode !== 'REQUEST' || Math.random() > 0.3) {
+    if (event.joinMode !== 'REQUEST' || Math.random() > 0.3) {
       continue;
     }
 
@@ -2195,7 +2193,7 @@ async function seedIntentJoinQuestions(
 
     selectedTemplates.forEach((template, index) => {
       joinQuestions.push({
-        intentId: intent.id,
+        eventId: event.id,
         order: index,
         ...template,
         options: template.options || null,
@@ -2205,7 +2203,7 @@ async function seedIntentJoinQuestions(
 
   // Bulk insert
   if (joinQuestions.length > 0) {
-    await prisma.intentJoinQuestion.createMany({
+    await prisma.eventJoinQuestion.createMany({
       data: joinQuestions,
       skipDuplicates: true,
     });
@@ -2213,8 +2211,8 @@ async function seedIntentJoinQuestions(
   }
 }
 
-/** ---------- Seed: Intent FAQs ---------- */
-async function seedIntentFaqs(allIntents: Array<{ intent: any; owner: User }>) {
+/** ---------- Seed: Event FAQs ---------- */
+async function seedEventFaqs(allEvents: Array<{ event: any; owner: User }>) {
   const faqs: any[] = [];
 
   // FAQ templates by meeting kind
@@ -2305,21 +2303,21 @@ async function seedIntentFaqs(allIntents: Array<{ intent: any; owner: User }>) {
     },
   ];
 
-  // Add FAQs to 40% of active, non-deleted intents
-  const intentsWithFaqs = allIntents
+  // Add FAQs to 40% of active, non-deleted events
+  const eventsWithFaqs = allEvents
     .filter(() => rand() > 0.6)
-    .filter(({ intent }) => !intent.deletedAt && !intent.canceledAt)
+    .filter(({ event }) => !event.deletedAt && !event.canceledAt)
     .slice(0, 30);
 
-  for (const { intent } of intentsWithFaqs) {
+  for (const { event } of eventsWithFaqs) {
     // Select FAQ templates based on meeting kind
     const templates =
-      FAQ_TEMPLATES[intent.meetingKind as keyof typeof FAQ_TEMPLATES] || [];
+      FAQ_TEMPLATES[event.meetingKind as keyof typeof FAQ_TEMPLATES] || [];
 
     // Mix specific and general FAQs
     const allTemplates = [...templates, ...GENERAL_FAQS];
 
-    // Create 2-5 FAQs per intent
+    // Create 2-5 FAQs per event
     const faqCount = 2 + Math.floor(rand() * 4);
     const selectedFaqs = pickMany(
       allTemplates,
@@ -2330,9 +2328,9 @@ async function seedIntentFaqs(allIntents: Array<{ intent: any; owner: User }>) {
       const faqTemplate = selectedFaqs[i];
       if (!faqTemplate) continue;
 
-      const faq = await prisma.intentFaq.create({
+      const faq = await prisma.eventFaq.create({
         data: {
-          intentId: intent.id,
+          eventId: event.id,
           order: i,
           question: faqTemplate.question,
           answer: faqTemplate.answer,
@@ -2344,7 +2342,7 @@ async function seedIntentFaqs(allIntents: Array<{ intent: any; owner: User }>) {
   }
 
   console.log(
-    `❓ Created ${faqs.length} FAQ items across ${intentsWithFaqs.length} intents`
+    `❓ Created ${faqs.length} FAQ items across ${eventsWithFaqs.length} events`
   );
   return faqs;
 }
@@ -2375,26 +2373,26 @@ async function seedNotificationPreferences(users: User[]) {
   return preferences;
 }
 
-/** ---------- Seed: Intent & DM Mutes ---------- */
+/** ---------- Seed: Event & DM Mutes ---------- */
 async function seedMutes(
-  allIntents: Array<{ intent: any; owner: User }>,
+  allEvents: Array<{ event: any; owner: User }>,
   users: User[]
 ) {
-  const intentMutes: any[] = [];
+  const eventMutes: any[] = [];
   const dmMutes: any[] = [];
 
-  // Mute 10-15 random intent/user combinations
-  const intentMuteCount = 10 + Math.floor(rand() * 6);
+  // Mute 10-15 random event/user combinations
+  const eventMuteCount = 10 + Math.floor(rand() * 6);
 
-  for (let i = 0; i < intentMuteCount; i++) {
-    const intent = pick(allIntents.filter(({ intent }) => !intent.deletedAt));
+  for (let i = 0; i < eventMuteCount; i++) {
+    const event = pick(allEvents.filter(({ event }) => !event.deletedAt));
     const user = pick(users);
 
     // Check if user is a member
-    const member = await prisma.intentMember.findUnique({
+    const member = await prisma.eventMember.findUnique({
       where: {
-        intentId_userId: {
-          intentId: intent.intent.id,
+        eventId_userId: {
+          eventId: event.event.id,
           userId: user.id,
         },
       },
@@ -2403,21 +2401,21 @@ async function seedMutes(
     if (!member) continue;
 
     // Check if mute already exists
-    const existing = intentMutes.find(
-      (m) => m.intentId === intent.intent.id && m.userId === user.id
+    const existing = eventMutes.find(
+      (m) => m.eventId === event.event.id && m.userId === user.id
     );
 
     if (existing) continue;
 
-    const mute = await prisma.intentMute.create({
+    const mute = await prisma.eventMute.create({
       data: {
-        intentId: intent.intent.id,
+        eventId: event.event.id,
         userId: user.id,
         muted: true,
       },
     });
 
-    intentMutes.push(mute);
+    eventMutes.push(mute);
   }
 
   // Mute 5-10 random DM threads
@@ -2469,9 +2467,9 @@ async function seedMutes(
   }
 
   console.log(
-    `🔕 Created ${intentMutes.length} intent mutes and ${dmMutes.length} DM mutes`
+    `🔕 Created ${eventMutes.length} event mutes and ${dmMutes.length} DM mutes`
   );
-  return { intentMutes, dmMutes };
+  return { eventMutes, dmMutes };
 }
 
 /** ---------- Seed: User Profiles ---------- */
@@ -2674,7 +2672,7 @@ async function seedUserPlans() {
       source: 'ONE_OFF',
       billingPeriod: 'MONTHLY',
       stripeCustomerId: `cus_seed_plus_monthly_${Date.now()}`,
-      stripePaymentIntentId: `pi_seed_plus_monthly_${Date.now()}`,
+      stripePaymentEventId: `pi_seed_plus_monthly_${Date.now()}`,
       stripeCheckoutSessionId: `cs_seed_plus_monthly_${Date.now()}`,
       startsAt: now,
       endsAt: oneMonthFromNow,
@@ -2689,7 +2687,7 @@ async function seedUserPlans() {
       source: 'ONE_OFF',
       billingPeriod: 'MONTHLY',
       stripeCustomerId: `cus_seed_pro_monthly_${Date.now()}`,
-      stripePaymentIntentId: `pi_seed_pro_monthly_${Date.now()}`,
+      stripePaymentEventId: `pi_seed_pro_monthly_${Date.now()}`,
       stripeCheckoutSessionId: `cs_seed_pro_monthly_${Date.now()}`,
       startsAt: now,
       endsAt: oneMonthFromNow,
@@ -2704,7 +2702,7 @@ async function seedUserPlans() {
       source: 'ONE_OFF',
       billingPeriod: 'YEARLY',
       stripeCustomerId: `cus_seed_plus_yearly_${Date.now()}`,
-      stripePaymentIntentId: `pi_seed_plus_yearly_${Date.now()}`,
+      stripePaymentEventId: `pi_seed_plus_yearly_${Date.now()}`,
       stripeCheckoutSessionId: `cs_seed_plus_yearly_${Date.now()}`,
       startsAt: now,
       endsAt: oneYearFromNow,
@@ -2719,7 +2717,7 @@ async function seedUserPlans() {
       source: 'ONE_OFF',
       billingPeriod: 'YEARLY',
       stripeCustomerId: `cus_seed_pro_yearly_${Date.now()}`,
-      stripePaymentIntentId: `pi_seed_pro_yearly_${Date.now()}`,
+      stripePaymentEventId: `pi_seed_pro_yearly_${Date.now()}`,
       stripeCheckoutSessionId: `cs_seed_pro_yearly_${Date.now()}`,
       startsAt: now,
       endsAt: oneYearFromNow,
@@ -2749,63 +2747,63 @@ async function main() {
   console.log('💳 Seeding user plans…');
   await seedUserPlans();
 
-  console.log('📝 Seeding intents (500) with realistic members…');
-  const intentsCreated = await seedIntents({ users, categories, tags });
+  console.log('📝 Seeding events (500) with realistic members…');
+  const eventsCreated = await seedEvents({ users, categories, tags });
 
-  console.log('🎯 Seeding curated intents for FIXED IDS…');
-  const fixedPairs = await seedIntentsForFixedUsers({
+  console.log('🎯 Seeding curated events for FIXED IDS…');
+  const fixedPairs = await seedEventsForFixedUsers({
     users,
     categories,
     tags,
   });
 
-  // Obie listy mają taki sam typ: { intent, owner }
-  const allIntents = [...intentsCreated, ...fixedPairs];
+  // Obie listy mają taki sam typ: { event, owner }
+  const allEvents = [...eventsCreated, ...fixedPairs];
 
-  console.log('⛔ Seeding some canceled intents + notifications…');
-  const canceled = await seedCanceledIntents(allIntents);
+  console.log('⛔ Seeding some canceled events + notifications…');
+  const canceled = await seedCanceledEvents(allEvents);
 
-  console.log('🗑️  Seeding some deleted intents (after 30 days)…');
-  await seedDeletedIntentsAfterCancel(canceled);
+  console.log('🗑️  Seeding some deleted events (after 30 days)…');
+  await seedDeletedEventsAfterCancel(canceled);
 
   console.log('🔔 Seeding generic notifications…');
-  await seedNotificationsGeneric(allIntents, users);
+  await seedNotificationsGeneric(allEvents, users);
 
   console.log('💬 Seeding DM threads and messages…');
   await seedDmThreads(users);
 
   console.log('💭 Seeding comments…');
-  await seedComments(allIntents, users);
+  await seedComments(allEvents, users);
 
   console.log('⭐ Seeding reviews…');
-  await seedReviews(allIntents, users);
+  await seedReviews(allEvents, users);
 
   console.log('🚨 Seeding reports…');
-  await seedReports(allIntents, users);
+  await seedReports(allEvents, users);
 
   console.log('💬 Seeding event chat messages…');
-  await seedEventChatMessages(allIntents, users);
+  await seedEventChatMessages(allEvents, users);
 
   console.log('🚫 Seeding user blocks…');
   await seedUserBlocks(users);
 
-  console.log('🔗 Seeding intent invite links…');
-  await seedIntentInviteLinks(allIntents);
+  console.log('🔗 Seeding event invite links…');
+  await seedEventInviteLinks(allEvents);
 
-  console.log('❓ Seeding intent FAQs…');
-  await seedIntentFaqs(allIntents);
+  console.log('❓ Seeding event FAQs…');
+  await seedEventFaqs(allEvents);
 
   console.log('📝 Seeding join questions…');
-  await seedIntentJoinQuestions(allIntents);
+  await seedEventJoinQuestions(allEvents);
 
   console.log('⚙️  Seeding notification preferences…');
   await seedNotificationPreferences(users);
 
   console.log('🔕 Seeding mutes…');
-  await seedMutes(allIntents, users);
+  await seedMutes(allEvents, users);
 
   console.log(
-    `✅ Done: users=${users.length}, categories=${categories.length}, tags=${tags.length}, intents=${allIntents.length}`
+    `✅ Done: users=${users.length}, categories=${categories.length}, tags=${tags.length}, events=${allEvents.length}`
   );
   console.log('🆔 Fixed IDs:', FIXED_IDS);
 }

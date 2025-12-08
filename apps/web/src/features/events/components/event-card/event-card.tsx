@@ -5,9 +5,9 @@ import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { Plan } from '@/components/ui/plan-theme';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
-import { EventCountdownPill } from '@/features/intents/components/event-countdown-pill';
+import { EventCountdownPill } from '@/features/events/components/event-countdown-pill';
 import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
-import { buildAvatarUrl, buildIntentCoverUrl } from '@/lib/media/url';
+import { buildAvatarUrl, buildEventCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
 import { motion } from 'framer-motion';
 import { Calendar, Sparkles, Users } from 'lucide-react';
@@ -15,7 +15,7 @@ import Link from 'next/link';
 import * as React from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
-import { formatCapacityString } from '@/features/intents/utils/capacity-formatter';
+import { formatCapacityString } from '@/features/events/utils/capacity-formatter';
 import { twMerge } from 'tailwind-merge';
 import {
   type CardAppearanceConfig,
@@ -28,7 +28,7 @@ import {
 export type { CardAppearanceConfig };
 
 export interface EventCardProps {
-  intentId?: string;
+  eventId?: string;
   lat?: number | null;
   lng?: number | null;
   radiusKm?: number | null;
@@ -43,7 +43,7 @@ export interface EventCardProps {
   verifiedAt?: string;
   plan?: Plan;
   boostedAt?: string | null; // ISO timestamp of last boost
-  /** Custom appearance config from IntentAppearance */
+  /** Custom appearance config from EventAppearance */
   appearance?: {
     card?: CardAppearanceConfig;
   } | null;
@@ -70,14 +70,14 @@ export interface EventCardProps {
   isFavourite?: boolean;
   className?: string;
   onHover?: (
-    intentId: string | null,
+    eventId: string | null,
     lat?: number | null,
     lng?: number | null
   ) => void;
 }
 
 export const EventCard = memo(function EventCard({
-  intentId,
+  eventId,
   lat,
   lng,
   startISO,
@@ -132,10 +132,10 @@ export const EventCard = memo(function EventCard({
   );
 
   const handleMouseEnter = useCallback(() => {
-    if (intentId && onHover) {
-      onHover(intentId, lat, lng);
+    if (eventId && onHover) {
+      onHover(eventId, lat, lng);
     }
-  }, [intentId, lat, lng, onHover]);
+  }, [eventId, lat, lng, onHover]);
 
   const handleMouseLeave = useCallback(() => {
     if (onHover) {
@@ -193,9 +193,9 @@ export const EventCard = memo(function EventCard({
       onMouseLeave={handleMouseLeave}
       data-plan={plan}
     >
-      {intentId && (
+      {eventId && (
         <Link
-          href={`/${locale}/intent/${encodeURIComponent(intentId)}`}
+          href={`/${locale}/event/${encodeURIComponent(eventId)}`}
           className="absolute inset-0 z-[1] rounded-2xl"
           aria-label={`Szczegóły wydarzenia: ${organizerName}`}
         />
@@ -204,7 +204,7 @@ export const EventCard = memo(function EventCard({
       <div className="relative h-40 mb-3 -mx-4 -mt-4 overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
         {coverKey ? (
           <BlurHashImage
-            src={buildIntentCoverUrl(coverKey, 'card')}
+            src={buildEventCoverUrl(coverKey, 'card')}
             blurhash={coverBlurhash}
             alt={title}
             className="object-cover w-full h-full brightness-90 contrast-90"
@@ -322,13 +322,13 @@ export const EventCard = memo(function EventCard({
         )}
       </div>
 
-      {intentId && (
+      {eventId && (
         <div
           className="absolute top-2 right-2 z-[2]"
           onClick={(e) => e.stopPropagation()}
         >
           <FavouriteButton
-            intentId={intentId}
+            eventId={eventId}
             isFavourite={isFavourite}
             size="sm"
           />

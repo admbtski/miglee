@@ -26,7 +26,7 @@ function canViewField(
   }
 
   // MEMBERS - check if viewer is a member of any event with this user
-  // For now, we'll implement a simple check - in production you'd query intentMembers
+  // For now, we'll implement a simple check - in production you'd query eventMembers
   if (privacySetting === 'MEMBERS') {
     // TODO: Implement actual membership check
     // For now, return true if logged in

@@ -7,17 +7,17 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 import {
-  IntentsSortBy,
+  EventsSortBy,
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
-import type { GetIntentsQueryVariables } from '@/lib/api/__generated__/react-query-update';
+import type { GetEventsQueryVariables } from '@/lib/api/__generated__/react-query-update';
 import type { SortKey } from '../types';
 import { VALID_SORT_KEYS } from '../constants';
 
 const buildUrl = (pathname: string, params: URLSearchParams): string =>
   `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
 
-type SortVariables = Pick<GetIntentsQueryVariables, 'sortBy' | 'sortDir'>;
+type SortVariables = Pick<GetEventsQueryVariables, 'sortBy' | 'sortDir'>;
 
 /**
  * Maps UI sort key to GraphQL sort variables
@@ -28,19 +28,19 @@ type SortVariables = Pick<GetIntentsQueryVariables, 'sortBy' | 'sortDir'>;
 export function mapSortKeyToGql(key: SortKey): SortVariables | undefined {
   switch (key) {
     case 'start_asc':
-      return { sortBy: IntentsSortBy.StartAt, sortDir: SortDir.Asc };
+      return { sortBy: EventsSortBy.StartAt, sortDir: SortDir.Asc };
     case 'start_desc':
-      return { sortBy: IntentsSortBy.StartAt, sortDir: SortDir.Desc };
+      return { sortBy: EventsSortBy.StartAt, sortDir: SortDir.Desc };
     case 'created_desc':
-      return { sortBy: IntentsSortBy.CreatedAt, sortDir: SortDir.Desc };
+      return { sortBy: EventsSortBy.CreatedAt, sortDir: SortDir.Desc };
     case 'created_asc':
-      return { sortBy: IntentsSortBy.CreatedAt, sortDir: SortDir.Asc };
+      return { sortBy: EventsSortBy.CreatedAt, sortDir: SortDir.Asc };
     case 'updated_desc':
-      return { sortBy: IntentsSortBy.UpdatedAt, sortDir: SortDir.Desc };
+      return { sortBy: EventsSortBy.UpdatedAt, sortDir: SortDir.Desc };
     case 'members_desc':
-      return { sortBy: IntentsSortBy.MembersCount, sortDir: SortDir.Desc };
+      return { sortBy: EventsSortBy.MembersCount, sortDir: SortDir.Desc };
     case 'members_asc':
-      return { sortBy: IntentsSortBy.MembersCount, sortDir: SortDir.Asc };
+      return { sortBy: EventsSortBy.MembersCount, sortDir: SortDir.Asc };
     case 'default':
     default:
       return undefined;

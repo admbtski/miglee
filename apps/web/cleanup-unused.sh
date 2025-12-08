@@ -54,24 +54,24 @@ echo ""
 
 echo "📦 Czyszczenie nieużywanych ikon z lucide-react..."
 
-remove_unused_import "src/app/account/intents/_components/my-intent-card.tsx" "Calendar"
-remove_unused_import "src/app/account/intents/_components/my-intent-card.tsx" "Eye"
-remove_unused_import "src/app/account/intents/_components/my-intent-card.tsx" "ListOrdered"
+remove_unused_import "src/app/account/events/_components/my-event-card.tsx" "Calendar"
+remove_unused_import "src/app/account/events/_components/my-event-card.tsx" "Eye"
+remove_unused_import "src/app/account/events/_components/my-event-card.tsx" "ListOrdered"
 
 remove_unused_import "src/app/account/plans-and-bills/_components/edit-card-modal.tsx" "ChevronDown"
 
 remove_unused_import "src/app/admin/comments/page.tsx" "Search"
 
-remove_unused_import "src/app/admin/intents/_components/intent-detail-modal.tsx" "Star"
+remove_unused_import "src/app/admin/events/_components/event-detail-modal.tsx" "Star"
 
-remove_unused_import "src/app/admin/intents/_components/tabs/settings-tab.tsx" "UserCog"
+remove_unused_import "src/app/admin/events/_components/tabs/settings-tab.tsx" "UserCog"
 
 remove_unused_import "src/app/u/[name]/_components/reviews-tab.tsx" "ChevronRight"
 
 remove_unused_import "src/app/u/[name]/_components/stats-tab.tsx" "TrendingUp"
 remove_unused_import "src/app/u/[name]/_components/stats-tab.tsx" "Sparkles"
 
-remove_unused_import "src/features/intents/components/privacy-step.tsx" "Info"
+remove_unused_import "src/features/events/components/privacy-step.tsx" "Info"
 
 echo ""
 
@@ -85,9 +85,9 @@ remove_unused_import "src/app/account/plans-and-bills/_components/edit-card-moda
 
 remove_unused_import "src/app/admin/notifications/page.tsx" "Role"
 
-remove_unused_import "src/app/admin/intents/_components/tabs/settings-tab.tsx" "useAdminChangeIntentOwnerMutation"
+remove_unused_import "src/app/admin/events/_components/tabs/settings-tab.tsx" "useAdminChangeEventOwnerMutation"
 
-remove_unused_import "src/features/intents/components/create-edit-intent-modal-connect.tsx" "useIntentCoverUpload"
+remove_unused_import "src/features/events/components/create-edit-event-modal-connect.tsx" "useEventCoverUpload"
 
 echo ""
 
@@ -101,7 +101,7 @@ echo "🗑️  Czyszczenie prostych nieużywanych zmiennych..."
 echo "  ⚠️  Następujące pliki wymagają ręcznej weryfikacji:"
 echo "     - src/components/forms/location-combobox.tsx:52 (error)"
 echo "     - src/components/layout/user-menu.tsx:39 (AVATAR_FALLBACK)"
-echo "     - src/features/intents/components/join-question-editor.tsx (multiple)"
+echo "     - src/features/events/components/join-question-editor.tsx (multiple)"
 echo "     - src/app/account/plans-and-bills/page.tsx (handlers)"
 
 echo ""

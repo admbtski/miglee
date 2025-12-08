@@ -16,8 +16,8 @@ import { AlertCard } from '@/features/admin/components/alert-card';
 export default function AdminDashboard() {
   // TODO: Replace with real data from API
   const kpis = {
-    activeIntents: 142,
-    activeIntentsTrend: '+12%',
+    activeEvents: 142,
+    activeEVENTSend: '+12%',
     fullOrLocked: '23%',
     fullOrLockedTrend: '+5%',
     joinRequests: 34,
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
       title: 'Dużo oczekujących wniosków',
       description: '34 wniosków o dołączenie czeka na zatwierdzenie',
       action: 'Zobacz wnioski',
-      href: '/admin/intents?filter=pending',
+      href: '/admin/events?filter=pending',
     },
     {
       id: '2',
@@ -67,8 +67,8 @@ export default function AdminDashboard() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Aktywne wydarzenia"
-          value={kpis.activeIntents}
-          trend={kpis.activeIntentsTrend}
+          value={kpis.activeEVENTS
+          trend={kpis.activeEVENTSend}
           icon={Calendar}
           color="blue"
         />
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
             <BarChart3 className="mx-auto h-12 w-12 opacity-50" />
             <p className="mt-2 text-sm">Wykresy będą dostępne wkrótce</p>
             <p className="mt-1 text-xs">
-              (Intents per MeetingKind, heatmapa, rozkład Level, rating
+              (Events per MeetingKind, heatmapa, rozkład Level, rating
               distribution)
             </p>
           </div>

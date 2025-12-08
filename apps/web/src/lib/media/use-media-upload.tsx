@@ -88,10 +88,10 @@ export function useMediaUpload(options: UseMediaUploadOptions) {
           queryClient.invalidateQueries({ queryKey: ['GetMyFullProfile'] });
           queryClient.invalidateQueries({ queryKey: ['GetUser'] });
           break;
-        case MediaPurpose.IntentCover:
-          queryClient.invalidateQueries({ queryKey: ['GetIntent', entityId] });
-          queryClient.invalidateQueries({ queryKey: ['GetIntents'] });
-          queryClient.invalidateQueries({ queryKey: ['GetIntentsInfinite'] });
+        case MediaPurpose.EventCover:
+          queryClient.invalidateQueries({ queryKey: ['GetEvent', entityId] });
+          queryClient.invalidateQueries({ queryKey: ['GetEvents'] });
+          queryClient.invalidateQueries({ queryKey: ['GetEventsInfinite'] });
           break;
       }
 
@@ -150,18 +150,18 @@ export function useCoverUpload(
 }
 
 /**
- * Hook for uploading intent cover
+ * Hook for uploading event cover
  */
-export function useIntentCoverUpload(
-  intentId: string,
+export function useEventCoverUpload(
+  eventId: string,
   options?: {
     onSuccess?: () => void;
     onError?: (error: Error) => void;
   }
 ) {
   return useMediaUpload({
-    purpose: MediaPurpose.IntentCover,
-    entityId: intentId,
+    purpose: MediaPurpose.EventCover,
+    entityId: eventId,
     ...options,
   });
 }

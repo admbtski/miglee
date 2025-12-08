@@ -7,7 +7,7 @@
 
 fragment EventSponsorshipCore on EventSponsorship {
   id
-  intentId
+  eventId
   sponsorId
   plan
   status
@@ -17,7 +17,7 @@ fragment EventSponsorshipCore on EventSponsorship {
   boostsUsed
   localPushesTotal
   localPushesUsed
-  stripePaymentIntentId
+  stripePaymentEventId
   stripeCheckoutSessionId
   createdAt
   updatedAt
@@ -30,7 +30,7 @@ fragment EventSponsorshipFull on EventSponsorship {
     ...UserLight
   }
 
-  intent {
+  event {
     id
     title
     boostedAt
@@ -43,7 +43,7 @@ fragment EventSponsorshipFull on EventSponsorship {
 
 fragment EventSponsorshipPeriodCore on EventSponsorshipPeriod {
   id
-  intentId
+  eventId
   sponsorId
   plan
   actionType
@@ -52,7 +52,7 @@ fragment EventSponsorshipPeriodCore on EventSponsorshipPeriod {
   amount
   currency
   stripeCustomerId
-  stripePaymentIntentId
+  stripePaymentEventId
   stripeCheckoutSessionId
   createdAt
 }
@@ -64,7 +64,7 @@ fragment EventSponsorshipPeriodFull on EventSponsorshipPeriod {
     ...UserLight
   }
 
-  intent {
+  event {
     id
     title
   }

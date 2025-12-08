@@ -149,14 +149,14 @@ export function ContentTab({ userId }: ContentTabProps) {
                               { locale: pl }
                             )}
                           </span>
-                          {comment.intent && (
+                          {comment.event && (
                             <>
                               <span>•</span>
                               <Link
-                                href={`/intent/${comment.intent.id}`}
+                                href={`/event${comment.eeventId}`}
                                 className="inline-flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400"
                               >
-                                {comment.intent.title}
+                                {comment.eventtitle}
                                 <ExternalLink className="h-3 w-3" />
                               </Link>
                             </>
@@ -254,14 +254,14 @@ export function ContentTab({ userId }: ContentTabProps) {
                               { locale: pl }
                             )}
                           </span>
-                          {review.intent && (
+                          {review.event && (
                             <>
                               <span>•</span>
                               <Link
-                                href={`/intent/${review.intent.id}`}
+                                href={`/event${review.eeventId}`}
                                 className="inline-flex items-center gap-1 text-blue-600 hover:underline dark:text-blue-400"
                               >
-                                {review.intent.title}
+                                {review.eventtitle}
                                 <ExternalLink className="h-3 w-3" />
                               </Link>
                             </>

@@ -1,4 +1,4 @@
-import type { QueryResolvers } from '../__generated__/resolvers-types';
+import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
 
@@ -46,11 +46,11 @@ export const userReviewsQuery: QueryResolvers['userReviews'] = async (
       where: {
         authorId: userId,
         deletedAt: null,
-        // Only show reviews for PUBLIC intents to non-owners
+        // Only show reviews for PUBLIC events to non-owners
         ...(isOwnProfile
           ? {}
           : {
-              intent: {
+              event: {
                 visibility: 'PUBLIC',
                 deletedAt: null,
                 canceledAt: null,
@@ -59,15 +59,15 @@ export const userReviewsQuery: QueryResolvers['userReviews'] = async (
       },
       include: {
         author: true,
-        intent: {
+        event: {
           include: {
             categories: true,
           },
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
+      take: limit!,
+      skip: offset!,
     }),
     prisma.review.count({
       where: {
@@ -76,7 +76,7 @@ export const userReviewsQuery: QueryResolvers['userReviews'] = async (
         ...(isOwnProfile
           ? {}
           : {
-              intent: {
+              event: {
                 visibility: 'PUBLIC',
                 deletedAt: null,
                 canceledAt: null,

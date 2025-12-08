@@ -8,38 +8,38 @@ import {
   type UseQueryOptions,
 } from '@tanstack/react-query';
 import {
-  CreateIntentInviteLinkDocument,
-  DeleteIntentInviteLinkDocument,
+  CreateEventInviteLinkDocument,
+  DeleteEventInviteLinkDocument,
   GetDmMuteDocument,
-  IntentInviteLinkDocument,
-  IntentInviteLinksDocument,
-  GetIntentMuteDocument,
+  EventInviteLinkDocument,
+  EventInviteLinksDocument,
+  GetEventMuteDocument,
   GetMyNotificationPreferencesDocument,
   MuteDmThreadDocument,
-  MuteIntentDocument,
+  MuteEventDocument,
   UpdateNotificationPreferencesDocument,
-  UpdateIntentInviteLinkDocument,
-  type CreateIntentInviteLinkMutation,
-  type CreateIntentInviteLinkMutationVariables,
-  type DeleteIntentInviteLinkMutation,
-  type DeleteIntentInviteLinkMutationVariables,
+  UpdateEventInviteLinkDocument,
+  type CreateEventInviteLinkMutation,
+  type CreateEventInviteLinkMutationVariables,
+  type DeleteEventInviteLinkMutation,
+  type DeleteEventInviteLinkMutationVariables,
   type GetDmMuteQuery,
   type GetDmMuteQueryVariables,
-  type IntentInviteLinkQuery,
-  type IntentInviteLinkQueryVariables,
-  type IntentInviteLinksQuery,
-  type IntentInviteLinksQueryVariables,
-  type GetIntentMuteQuery,
-  type GetIntentMuteQueryVariables,
+  type EventInviteLinkQuery,
+  type EventInviteLinkQueryVariables,
+  type EventInviteLinksQuery,
+  type EventInviteLinksQueryVariables,
+  type GetEventMuteQuery,
+  type GetEventMuteQueryVariables,
   type GetMyNotificationPreferencesQuery,
   type MuteDmThreadMutation,
   type MuteDmThreadMutationVariables,
-  type MuteIntentMutation,
-  type MuteIntentMutationVariables,
+  type MuteEventMutation,
+  type MuteEventMutationVariables,
   type UpdateNotificationPreferencesMutation,
   type UpdateNotificationPreferencesMutationVariables,
-  type UpdateIntentInviteLinkMutation,
-  type UpdateIntentInviteLinkMutationVariables,
+  type UpdateEventInviteLinkMutation,
+  type UpdateEventInviteLinkMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 
@@ -49,43 +49,43 @@ import { gqlClient } from '@/lib/api/client';
 
 export const inviteLinkKeys = {
   all: ['inviteLinks'] as const,
-  byIntent: (intentId: string) => [...inviteLinkKeys.all, intentId] as const,
+  byEvent: (eventId: string) => [...inviteLinkKeys.all, eventId] as const,
   byCode: (code: string) => [...inviteLinkKeys.all, 'code', code] as const,
 };
 
-export function useGetIntentInviteLinks(
-  variables: IntentInviteLinksQueryVariables,
+export function useGetEventInviteLinks(
+  variables: EventInviteLinksQueryVariables,
   options?: Omit<
-    UseQueryOptions<IntentInviteLinksQuery, Error>,
+    UseQueryOptions<EventInviteLinksQuery, Error>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery<IntentInviteLinksQuery, Error>({
-    queryKey: inviteLinkKeys.byIntent(variables.intentId),
+  return useQuery<EventInviteLinksQuery, Error>({
+    queryKey: inviteLinkKeys.byEvent(variables.eventId),
     queryFn: async () => {
-      const res = await gqlClient.request<IntentInviteLinksQuery>(
-        IntentInviteLinksDocument,
+      const res = await gqlClient.request<EventInviteLinksQuery>(
+        EventInviteLinksDocument,
         variables
       );
       return res;
     },
-    enabled: !!variables.intentId,
+    enabled: !!variables.eventId,
     ...options,
   });
 }
 
-export function useGetIntentInviteLink(
-  variables: IntentInviteLinkQueryVariables,
+export function useGetEventInviteLink(
+  variables: EventInviteLinkQueryVariables,
   options?: Omit<
-    UseQueryOptions<IntentInviteLinkQuery, Error>,
+    UseQueryOptions<EventInviteLinkQuery, Error>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery<IntentInviteLinkQuery, Error>({
+  return useQuery<EventInviteLinkQuery, Error>({
     queryKey: inviteLinkKeys.byCode(variables.code!),
     queryFn: async () => {
-      const res = await gqlClient.request<IntentInviteLinkQuery>(
-        IntentInviteLinkDocument,
+      const res = await gqlClient.request<EventInviteLinkQuery>(
+        EventInviteLinkDocument,
         variables
       );
       return res;
@@ -95,24 +95,24 @@ export function useGetIntentInviteLink(
   });
 }
 
-export function useCreateIntentInviteLink(
+export function useCreateEventInviteLink(
   options?: UseMutationOptions<
-    CreateIntentInviteLinkMutation,
+    CreateEventInviteLinkMutation,
     Error,
-    CreateIntentInviteLinkMutationVariables
+    CreateEventInviteLinkMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    CreateIntentInviteLinkMutation,
+    CreateEventInviteLinkMutation,
     Error,
-    CreateIntentInviteLinkMutationVariables
+    CreateEventInviteLinkMutationVariables
   >({
-    mutationKey: ['CreateIntentInviteLink'],
+    mutationKey: ['CreateEventInviteLink'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<CreateIntentInviteLinkMutation>(
-        CreateIntentInviteLinkDocument,
+      const res = await gqlClient.request<CreateEventInviteLinkMutation>(
+        CreateEventInviteLinkDocument,
         variables
       );
       return res;
@@ -122,31 +122,31 @@ export function useCreateIntentInviteLink(
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: inviteLinkKeys.byIntent(variables.input.intentId),
+        queryKey: inviteLinkKeys.byEvent(variables.input.eventId),
       });
     },
     ...options,
   });
 }
 
-export function useDeleteIntentInviteLink(
+export function useDeleteEventInviteLink(
   options?: UseMutationOptions<
-    DeleteIntentInviteLinkMutation,
+    DeleteEventInviteLinkMutation,
     Error,
-    DeleteIntentInviteLinkMutationVariables
+    DeleteEventInviteLinkMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    DeleteIntentInviteLinkMutation,
+    DeleteEventInviteLinkMutation,
     Error,
-    DeleteIntentInviteLinkMutationVariables
+    DeleteEventInviteLinkMutationVariables
   >({
-    mutationKey: ['DeleteIntentInviteLink'],
+    mutationKey: ['DeleteEventInviteLink'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<DeleteIntentInviteLinkMutation>(
-        DeleteIntentInviteLinkDocument,
+      const res = await gqlClient.request<DeleteEventInviteLinkMutation>(
+        DeleteEventInviteLinkDocument,
         variables
       );
       return res;
@@ -161,24 +161,24 @@ export function useDeleteIntentInviteLink(
   });
 }
 
-export function useUseIntentInviteLink(
+export function useUseEventInviteLink(
   options?: UseMutationOptions<
-    UpdateIntentInviteLinkMutation,
+    UpdateEventInviteLinkMutation,
     Error,
-    UpdateIntentInviteLinkMutationVariables
+    UpdateEventInviteLinkMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    UpdateIntentInviteLinkMutation,
+    UpdateEventInviteLinkMutation,
     Error,
-    UpdateIntentInviteLinkMutationVariables
+    UpdateEventInviteLinkMutationVariables
   >({
-    mutationKey: ['UseIntentInviteLink'],
+    mutationKey: ['UseEventInviteLink'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<UpdateIntentInviteLinkMutation>(
-        UpdateIntentInviteLinkDocument,
+      const res = await gqlClient.request<UpdateEventInviteLinkMutation>(
+        UpdateEventInviteLinkDocument,
         variables
       );
       return res;
@@ -187,7 +187,7 @@ export function useUseIntentInviteLink(
       successMessage: 'Joined event successfully',
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['intents'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['myMemberships'] });
     },
     ...options,
@@ -260,45 +260,45 @@ export function useUpdateNotificationPreferences(
 
 export const muteKeys = {
   all: ['mutes'] as const,
-  intent: (intentId: string) => [...muteKeys.all, 'intent', intentId] as const,
+  event: (eventId: string) => [...muteKeys.all, 'event', eventId] as const,
   dm: (threadId: string) => [...muteKeys.all, 'dm', threadId] as const,
 };
 
-export function useGetIntentMute(
-  variables: GetIntentMuteQueryVariables,
+export function useGetEventMute(
+  variables: GetEventMuteQueryVariables,
   options?: Omit<
-    UseQueryOptions<GetIntentMuteQuery, Error>,
+    UseQueryOptions<GetEventMuteQuery, Error>,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery<GetIntentMuteQuery, Error>({
-    queryKey: muteKeys.intent(variables.intentId),
+  return useQuery<GetEventMuteQuery, Error>({
+    queryKey: muteKeys.event(variables.eventId),
     queryFn: async () => {
-      const res = await gqlClient.request<GetIntentMuteQuery>(
-        GetIntentMuteDocument,
+      const res = await gqlClient.request<GetEventMuteQuery>(
+        GetEventMuteDocument,
         variables
       );
       return res;
     },
-    enabled: !!variables.intentId,
+    enabled: !!variables.eventId,
     ...options,
   });
 }
 
-export function useMuteIntent(
+export function useMuteEvent(
   options?: UseMutationOptions<
-    MuteIntentMutation,
+    MuteEventMutation,
     Error,
-    MuteIntentMutationVariables
+    MuteEventMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
-  return useMutation<MuteIntentMutation, Error, MuteIntentMutationVariables>({
-    mutationKey: ['MuteIntent'],
+  return useMutation<MuteEventMutation, Error, MuteEventMutationVariables>({
+    mutationKey: ['MuteEvent'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<MuteIntentMutation>(
-        MuteIntentDocument,
+      const res = await gqlClient.request<MuteEventMutation>(
+        MuteEventDocument,
         variables
       );
       return res;
@@ -308,7 +308,7 @@ export function useMuteIntent(
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: muteKeys.intent(variables.intentId),
+        queryKey: muteKeys.event(variables.eventId),
       });
     },
     ...options,

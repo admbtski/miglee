@@ -51,7 +51,7 @@ const statusActions = [
 ];
 
 const entityLabels = {
-  [ReportEntity.Intent]: 'Wydarzenie',
+  [ReportEntity.Event]: 'Wydarzenie',
   [ReportEntity.Comment]: 'Komentarz',
   [ReportEntity.Review]: 'Recenzja',
   [ReportEntity.User]: 'Użytkownik',
@@ -117,8 +117,8 @@ export function ReportDetailModal({
 
   const getEntityLink = () => {
     switch (report.entity) {
-      case ReportEntity.Intent:
-        return `/intent/${report.entityId}`;
+      case ReportEntity.Event:
+        return `/event/${report.entityId}`;
       case ReportEntity.User:
         return `/admin/users/${report.entityId}`;
       case ReportEntity.Comment:

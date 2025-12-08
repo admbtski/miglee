@@ -81,9 +81,9 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
 
-      case STRIPE_WEBHOOK_EVENTS.PAYMENT_INTENT_SUCCEEDED:
-        await handlePaymentIntentSucceeded(
-          event.data.object as Stripe.PaymentIntent
+      case STRIPE_WEBHOOK_EVENTS.PAYMENT_EVENT_SUCCEEDED:
+        await handlePaymentEventSucceeded(
+          event.data.object as Stripe.PaymentEvent
         );
         break;
 
@@ -219,18 +219,18 @@ async function handleUserOneOffCheckout(
 ): Promise<void> {
   const { userId, plan, billingPeriod } = metadata;
 
-  if (!session.payment_intent) {
+  if (!session.payment_event) {
     logger.warn(
       { sessionId: session.id },
-      'One-off checkout missing payment intent'
+      'One-off checkout missing payment event'
     );
     return;
   }
 
-  const paymentIntentId =
-    typeof session.payment_intent === 'string'
-      ? session.payment_intent
-      : session.payment_intent.id;
+  const paymentEventId =
+    typeof session.payment_event === 'string'
+      ? session.payment_event
+      : session.payment_event.id;
 
   const now = new Date();
   const startsAt = now;
@@ -250,7 +250,7 @@ async function handleUserOneOffCheckout(
     amount,
     currency,
     stripeCustomerId: session.customer as string,
-    stripePaymentIntentId: paymentIntentId,
+    stripePaymentEventId: paymentEventId,
     stripeCheckoutSessionId: session.id,
     startsAt,
     endsAt,
@@ -270,26 +270,26 @@ async function handleEventSponsorshipCheckout(
   session: Stripe.Checkout.Session,
   metadata: EventSponsorshipMetadata
 ): Promise<void> {
-  const { eventSponsorshipId, intentId, actionType, actionPackageSize } =
+  const { eventSponsorshipId, eventId, actionType, actionPackageSize } =
     metadata;
 
-  if (!session.payment_intent) {
+  if (!session.payment_event) {
     logger.warn(
       { sessionId: session.id },
-      'Event sponsorship checkout missing payment intent'
+      'Event sponsorship checkout missing payment event'
     );
     return;
   }
 
-  const paymentIntentId =
-    typeof session.payment_intent === 'string'
-      ? session.payment_intent
-      : session.payment_intent.id;
+  const paymentEventId =
+    typeof session.payment_event === 'string'
+      ? session.payment_event
+      : session.payment_event.id;
 
   // Activate sponsorship
   await activateEventSponsorship({
     sponsorshipId: eventSponsorshipId,
-    stripePaymentIntentId: paymentIntentId,
+    stripePaymentEventId: paymentEventId,
     stripeCheckoutSessionId: session.id,
     actionType: actionType as 'new' | 'upgrade' | 'reload' | undefined,
     actionPackageSize: actionPackageSize
@@ -299,7 +299,7 @@ async function handleEventSponsorshipCheckout(
 
   logger.info(
     {
-      intentId,
+      eventId,
       sponsorshipId: eventSponsorshipId,
       actionType,
       actionPackageSize,
@@ -508,24 +508,24 @@ async function handleInvoicePaymentFailed(
 }
 
 // ========================================================================================
-// PAYMENT INTENT SUCCEEDED
+// PAYMENT EVENT SUCCEEDED
 // ========================================================================================
 
-async function handlePaymentIntentSucceeded(
-  paymentIntent: Stripe.PaymentIntent
+async function handlePaymentEventSucceeded(
+  paymentEvent: Stripe.PaymentEvent
 ): Promise<void> {
-  const metadata = paymentIntent.metadata as any;
+  const metadata = paymentEvent.metadata as any;
 
   if (metadata?.type === METADATA_TYPE.USER_ONE_OFF && metadata.userId) {
     // One-off payment succeeded - UserPlanPeriod should already be created in checkout.session.completed
     logger.info(
-      { paymentIntentId: paymentIntent.id, userId: metadata.userId },
+      { paymentEventId: paymentEvent.id, userId: metadata.userId },
       'One-off payment succeeded'
     );
   } else if (metadata?.type === METADATA_TYPE.EVENT_SPONSORSHIP) {
     // Event sponsorship payment succeeded - should already be activated in checkout.session.completed
     logger.info(
-      { paymentIntentId: paymentIntent.id, intentId: metadata.intentId },
+      { paymentEventId: paymentEvent.id, eventId: metadata.eventId },
       'Event sponsorship payment succeeded'
     );
   }

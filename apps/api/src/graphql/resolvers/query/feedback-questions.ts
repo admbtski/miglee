@@ -3,13 +3,13 @@ import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
 
 /**
- * Get feedback questions for an intent
+ * Get feedback questions for an event
  * Public for viewing (members need to see the form)
  */
-export const intentFeedbackQuestionsQuery: QueryResolvers['intentFeedbackQuestions'] =
-  async (_parent, { intentId }, { user }) => {
-    const questions = await prisma.intentFeedbackQuestion.findMany({
-      where: { intentId },
+export const eventFeedbackQuestionsQuery: QueryResolvers['eventFeedbackQuestions'] =
+  async (_parent, { eventId }, { user }) => {
+    const questions = await prisma.eventFeedbackQuestion.findMany({
+      where: { eventId },
       orderBy: { order: 'asc' },
     });
 
@@ -22,11 +22,11 @@ export const intentFeedbackQuestionsQuery: QueryResolvers['intentFeedbackQuestio
   };
 
 /**
- * Get aggregated feedback results for an intent
+ * Get aggregated feedback results for an event
  * Only accessible by owner/mods
  */
-export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults'] =
-  async (_parent, { intentId }, { user }) => {
+export const eventFeedbackResultsQuery: QueryResolvers['eventFeedbackResults'] =
+  async (_parent, { eventId }, { user }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -34,8 +34,8 @@ export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults']
     }
 
     // Check if user is owner or moderator
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       select: {
         ownerId: true,
         members: {
@@ -49,19 +49,19 @@ export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults']
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
-    const isOwner = intent.ownerId === user.id;
-    const isModerator = intent.members.length > 0;
+    const isOwner = event.ownerId === user.id;
+    const isModerator = event.members.length > 0;
     const isAdmin = user.role === 'ADMIN';
 
     if (!isOwner && !isModerator && !isAdmin) {
       throw new GraphQLError(
-        'Only intent owner or moderators can view feedback results',
+        'Only event owner or moderators can view feedback results',
         {
           extensions: { code: 'FORBIDDEN' },
         }
@@ -69,8 +69,8 @@ export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults']
     }
 
     // Get all questions
-    const questions = await prisma.intentFeedbackQuestion.findMany({
-      where: { intentId },
+    const questions = await prisma.eventFeedbackQuestion.findMany({
+      where: { eventId },
       orderBy: { order: 'asc' },
       include: {
         answers: {
@@ -91,9 +91,9 @@ export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults']
     });
 
     // Count total respondents (unique users who answered at least one question)
-    const totalRespondents = await prisma.intentFeedbackAnswer.groupBy({
+    const totalRespondents = await prisma.eventFeedbackAnswer.groupBy({
       by: ['userId'],
-      where: { intentId },
+      where: { eventId },
       _count: true,
     });
 
@@ -159,26 +159,26 @@ export const intentFeedbackResultsQuery: QueryResolvers['intentFeedbackResults']
     });
 
     return {
-      intentId,
+      eventId,
       questionStats,
       totalRespondents: totalRespondents.length,
     };
   };
 
 /**
- * Get current user's feedback answers for an intent
+ * Get current user's feedback answers for an event
  */
 export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
-  async (_parent, { intentId }, { user }) => {
+  async (_parent, { eventId }, { user }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
         extensions: { code: 'UNAUTHENTICATED' },
       });
     }
 
-    const answers = await prisma.intentFeedbackAnswer.findMany({
+    const answers = await prisma.eventFeedbackAnswer.findMany({
       where: {
-        intentId,
+        eventId,
         userId: user.id,
       },
       include: {
@@ -215,7 +215,7 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
   };
 
 /**
- * Check if current user can submit feedback for an intent
+ * Check if current user can submit feedback for an event
  *
  * Returns false if:
  * - User is not authenticated
@@ -227,16 +227,16 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
  * if they haven't answered the feedback questions yet.
  */
 export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
-  async (_parent, { intentId }, { user }) => {
+  async (_parent, { eventId }, { user }) => {
     if (!user) {
       return false;
     }
 
     // Check if user is a JOINED member
-    const member = await prisma.intentMember.findUnique({
+    const member = await prisma.eventMember.findUnique({
       where: {
-        intentId_userId: {
-          intentId,
+        eventId_userId: {
+          eventId,
           userId: user.id,
         },
       },
@@ -250,25 +250,25 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
     }
 
     // Check if event has ended
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    const eventData = await prisma.event.findUnique({
+      where: { id: eventId },
       select: { endAt: true },
     });
 
-    if (!intent || intent.endAt > new Date()) {
+    if (!eventData || eventData.endAt > new Date()) {
       return false;
     }
 
-    // Check if there are any feedback questions for this intent
-    const questionsCount = await prisma.intentFeedbackQuestion.count({
-      where: { intentId },
+    // Check if there are any feedback questions for this event
+    const questionsCount = await prisma.eventFeedbackQuestion.count({
+      where: { eventId },
     });
 
     // Check if user has already submitted a review
     const existingReview = await prisma.review.findUnique({
       where: {
-        intentId_authorId: {
-          intentId,
+        eventId_authorId: {
+          eventId,
           authorId: user.id,
         },
       },
@@ -284,9 +284,9 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
     }
 
     // If there are feedback questions, check if user has answered them
-    const answersCount = await prisma.intentFeedbackAnswer.count({
+    const answersCount = await prisma.eventFeedbackAnswer.count({
       where: {
-        intentId,
+        eventId,
         userId: user.id,
       },
     });

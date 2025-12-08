@@ -4,9 +4,9 @@ import {
   GetClustersDocument,
   GetClustersQuery,
   GetClustersQueryVariables,
-  GetRegionIntentsDocument,
-  GetRegionIntentsQuery,
-  GetRegionIntentsQueryVariables,
+  GetRegionEventsDocument,
+  GetRegionEventsQuery,
+  GetRegionEventsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import {
@@ -53,36 +53,36 @@ export function useGetClustersQuery(
   return useQuery(buildGetClustersOptions(variables, options));
 }
 
-// ==================== Region Intents Query ====================
+// ==================== Region Events Query ====================
 
-export const GET_REGION_INTENTS_KEY = (
-  variables: GetRegionIntentsQueryVariables
-) => ['GetRegionIntents', variables] as const;
+export const GET_REGION_EVENTS_KEY = (
+  variables: GetRegionEventsQueryVariables
+) => ['GetRegionEvents', variables] as const;
 
-export function buildGetRegionIntentsOptions(
-  variables: GetRegionIntentsQueryVariables,
+export function buildGetRegionEventsOptions(
+  variables: GetRegionEventsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      GetRegionIntentsQuery,
+      GetRegionEventsQuery,
       Error,
-      GetRegionIntentsQuery,
+      GetRegionEventsQuery,
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ): UseQueryOptions<
-  GetRegionIntentsQuery,
+  GetRegionEventsQuery,
   Error,
-  GetRegionIntentsQuery,
+  GetRegionEventsQuery,
   QueryKey
 > {
   return {
-    queryKey: GET_REGION_INTENTS_KEY(variables) as unknown as QueryKey,
+    queryKey: GET_REGION_EVENTS_KEY(variables) as unknown as QueryKey,
     queryFn: async () => {
       return gqlClient.request<
-        GetRegionIntentsQuery,
-        GetRegionIntentsQueryVariables
-      >(GetRegionIntentsDocument, variables);
+        GetRegionEventsQuery,
+        GetRegionEventsQueryVariables
+      >(GetRegionEventsDocument, variables);
     },
     enabled: !!variables.region,
     staleTime: 30_000, // 30 seconds
@@ -91,30 +91,30 @@ export function buildGetRegionIntentsOptions(
   };
 }
 
-export function useGetRegionIntentsQuery(
-  variables: GetRegionIntentsQueryVariables,
+export function useGetRegionEventsQuery(
+  variables: GetRegionEventsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      GetRegionIntentsQuery,
+      GetRegionEventsQuery,
       Error,
-      GetRegionIntentsQuery,
+      GetRegionEventsQuery,
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery(buildGetRegionIntentsOptions(variables, options));
+  return useQuery(buildGetRegionEventsOptions(variables, options));
 }
 
-// ==================== Region Intents Infinite Query ====================
+// ==================== Region Events Infinite Query ====================
 
-export function useGetRegionIntentsInfiniteQuery(
-  variables: Omit<GetRegionIntentsQueryVariables, 'page'>,
+export function useGetRegionEventsInfiniteQuery(
+  variables: Omit<GetRegionEventsQueryVariables, 'page'>,
   options?: Omit<
     UseInfiniteQueryOptions<
-      GetRegionIntentsQuery,
+      GetRegionEventsQuery,
       Error,
-      GetRegionIntentsQuery,
+      GetRegionEventsQuery,
       QueryKey,
       number
     >,
@@ -122,7 +122,7 @@ export function useGetRegionIntentsInfiniteQuery(
   >
 ) {
   return useInfiniteQuery({
-    queryKey: ['GetRegionIntentsInfinite', variables] as unknown as QueryKey,
+    queryKey: ['GetRegionEventsInfinite', variables] as unknown as QueryKey,
     queryFn: async ({ pageParam = 1 }) => {
       // Additional validation to prevent empty region queries
       if (!variables.region || variables.region.trim() === '') {
@@ -130,15 +130,15 @@ export function useGetRegionIntentsInfiniteQuery(
       }
 
       return gqlClient.request<
-        GetRegionIntentsQuery,
-        GetRegionIntentsQueryVariables
-      >(GetRegionIntentsDocument, {
+        GetRegionEventsQuery,
+        GetRegionEventsQueryVariables
+      >(GetRegionEventsDocument, {
         ...variables,
         page: pageParam,
       });
     },
     getNextPageParam: (lastPage) => {
-      const meta = lastPage.regionIntents?.meta;
+      const meta = lastPage.regionEvents?.meta;
       if (!meta) return undefined;
 
       // Jeśli jest nextPage w meta, zwróć go

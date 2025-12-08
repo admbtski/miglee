@@ -34,8 +34,8 @@ export const adminUserCommentsQuery: QueryResolvers['adminUserComments'] =
     async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
       requireAdmin(user);
 
-      const take = Math.max(1, Math.min(limit, 100));
-      const skip = Math.max(0, offset);
+      const take = Math.max(1, Math.min(limit!, 100));
+      const skip = Math.max(0, offset!);
 
       const where = {
         authorId: userId,
@@ -47,7 +47,7 @@ export const adminUserCommentsQuery: QueryResolvers['adminUserComments'] =
         where,
         include: {
           author: true,
-          intent: true,
+          event: true,
           parent: { include: { author: true } },
           replies: { include: { author: true } },
           _count: { select: { replies: true } },
@@ -58,7 +58,7 @@ export const adminUserCommentsQuery: QueryResolvers['adminUserComments'] =
       });
 
       return {
-        items: comments.map((c) => mapComment(c as any, user.id)),
+        items: comments.map((c) => mapComment(c as any, user?.id)),
         pageInfo: {
           total,
           hasMore: skip + take < total,
@@ -77,8 +77,8 @@ export const adminUserReviewsQuery: QueryResolvers['adminUserReviews'] =
     async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
       requireAdmin(user);
 
-      const take = Math.max(1, Math.min(limit, 100));
-      const skip = Math.max(0, offset);
+      const take = Math.max(1, Math.min(limit!, 100));
+      const skip = Math.max(0, offset!);
 
       const where = {
         authorId: userId,
@@ -90,7 +90,7 @@ export const adminUserReviewsQuery: QueryResolvers['adminUserReviews'] =
         where,
         include: {
           author: true,
-          intent: true,
+          event: true,
         },
         orderBy: { createdAt: 'desc' },
         take,
@@ -98,7 +98,7 @@ export const adminUserReviewsQuery: QueryResolvers['adminUserReviews'] =
       });
 
       return {
-        items: reviews.map((r) => mapReview(r as any, user.id)),
+        items: reviews.map((r) => mapReview(r as any, user?.id)),
         pageInfo: {
           total,
           hasMore: skip + take < total,
@@ -117,21 +117,21 @@ export const adminUserMembershipsQuery: QueryResolvers['adminUserMemberships'] =
     async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
       requireAdmin(user);
 
-      const take = Math.max(1, Math.min(limit, 100));
-      const skip = Math.max(0, offset);
+      const take = Math.max(1, Math.min(limit!, 100));
+      const skip = Math.max(0, offset!);
 
       const where = {
         userId,
       };
 
-      const total = await prisma.intentMember.count({ where });
+      const total = await prisma.eventMember.count({ where });
 
-      const memberships = await prisma.intentMember.findMany({
+      const memberships = await prisma.eventMember.findMany({
         where,
         include: {
           user: true,
           addedBy: true,
-          intent: {
+          event: {
             include: {
               categories: true,
               tags: true,
@@ -153,10 +153,10 @@ export const adminUserMembershipsQuery: QueryResolvers['adminUserMemberships'] =
           status: m.status,
           role: m.role,
           joinedAt: m.joinedAt,
-          intent: {
-            id: m.intent.id,
-            title: m.intent.title,
-            startAt: m.intent.startAt,
+          event: {
+            id: m.event.id,
+            title: m.event.title,
+            startAt: m.event.startAt,
           },
         })),
         pageInfo: {
@@ -168,12 +168,12 @@ export const adminUserMembershipsQuery: QueryResolvers['adminUserMemberships'] =
   );
 
 /**
- * Query: Get user's created intents (admin)
+ * Query: Get user's created events (admin)
  */
-export const adminUserIntentsQuery: QueryResolvers['adminUserIntents'] =
+export const adminUserEventsQuery: QueryResolvers['adminUserEvents'] =
   resolverWithMetrics(
     'Query',
-    'adminUserIntents',
+    'adminUserEvents',
     async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
       requireAdmin(user);
 
@@ -184,9 +184,9 @@ export const adminUserIntentsQuery: QueryResolvers['adminUserIntents'] =
         ownerId: userId,
       };
 
-      const total = await prisma.intent.count({ where });
+      const total = await prisma.event.count({ where });
 
-      const intents = await prisma.intent.findMany({
+      const events = await prisma.event.findMany({
         where,
         include: {
           members: true,
@@ -198,7 +198,7 @@ export const adminUserIntentsQuery: QueryResolvers['adminUserIntents'] =
       });
 
       return {
-        items: intents.map((i: any) => ({
+        items: events.map((i: any) => ({
           id: i.id,
           title: i.title,
           startAt: i.startAt,
@@ -230,8 +230,8 @@ export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
     async (_p, { userId, limit = 50, offset = 0 }, { user }) => {
       requireAdmin(user);
 
-      const take = Math.min(limit, 100);
-      const skip = offset;
+      const take = Math.min(limit!, 100);
+      const skip = offset!;
 
       // Get DM threads where user is either aUser or bUser
       const [threads, total] = await Promise.all([
@@ -291,8 +291,8 @@ export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications
     async (_p, { userId, limit = 50, offset = 0 }, { user }) => {
       requireAdmin(user);
 
-      const take = Math.min(limit, 100);
-      const skip = offset;
+      const take = Math.min(limit!, 100);
+      const skip = offset!;
 
       const where = {
         recipientId: userId,
@@ -304,7 +304,7 @@ export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications
           include: {
             recipient: true,
             actor: true,
-            intent: true,
+            event: true,
           },
           orderBy: {
             createdAt: 'desc',
@@ -328,7 +328,7 @@ export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications
           entityId: n.entityId,
           recipient: mapUser(n.recipient),
           actor: n.actor ? mapUser(n.actor) : null,
-          intent: n.intent || null,
+          event: n.event || null,
         })),
         pageInfo: {
           total,

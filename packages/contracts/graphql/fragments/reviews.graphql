@@ -8,7 +8,7 @@
 
 fragment ReviewCore on Review {
   id
-  intentId
+  eventId
   authorId
   rating
   content

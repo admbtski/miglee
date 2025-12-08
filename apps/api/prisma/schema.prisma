@@ -64,13 +64,13 @@ enum Level {
   ADVANCED
 }
 
-enum IntentMemberRole {
+enum EventMemberRole {
   OWNER
   MODERATOR
   PARTICIPANT
 }
 
-enum IntentMemberStatus {
+enum EventMemberStatus {
   JOINED
   PENDING
   INVITED
@@ -83,19 +83,19 @@ enum IntentMemberStatus {
 }
 
 enum NotificationKind {
-  // Intent lifecycle
-  INTENT_CREATED
-  INTENT_UPDATED
-  INTENT_CANCELED
-  INTENT_DELETED
+  // Event lifecycle
+  EVENT_CREATED
+  EVENT_UPDATED
+  EVENT_CANCELED
+  EVENT_DELETED
 
   // Membership
-  INTENT_INVITE
-  INTENT_INVITE_ACCEPTED
-  INTENT_MEMBERSHIP_APPROVED
-  INTENT_MEMBERSHIP_REJECTED
-  INTENT_MEMBER_KICKED
-  INTENT_MEMBER_ROLE_CHANGED
+  EVENT_INVITE
+  EVENT_INVITE_ACCEPTED
+  EVENT_MEMBERSHIP_APPROVED
+  EVENT_MEMBERSHIP_REJECTED
+  EVENT_MEMBER_KICKED
+  EVENT_MEMBER_ROLE_CHANGED
   JOIN_REQUEST
   BANNED
   UNBANNED
@@ -105,13 +105,13 @@ enum NotificationKind {
   WAITLIST_PROMOTED
 
   // Reviews & Feedback
-  INTENT_REVIEW_RECEIVED
-  INTENT_FEEDBACK_RECEIVED
-  INTENT_FEEDBACK_REQUEST
+  EVENT_REVIEW_RECEIVED
+  EVENT_FEEDBACK_RECEIVED
+  EVENT_FEEDBACK_REQUEST
   REVIEW_HIDDEN
 
   // Comments
-  INTENT_COMMENT_ADDED
+  EVENT_COMMENT_ADDED
   COMMENT_REPLY
   COMMENT_HIDDEN
 
@@ -119,15 +119,15 @@ enum NotificationKind {
   NEW_MESSAGE
   NEW_COMMENT
   NEW_REVIEW
-  INTENT_CHAT_MESSAGE
+  EVENT_CHAT_MESSAGE
 
   // Reminders & System
-  INTENT_REMINDER
+  EVENT_REMINDER
   SYSTEM
 }
 
 enum NotificationEntity {
-  INTENT
+  EVENT
   MESSAGE
   PAYMENT
   INVOICE
@@ -169,7 +169,7 @@ enum SubscriptionStatus {
   PAUSED
 }
 
-enum IntentPlan {
+enum EventPlan {
   FREE
   PLUS
   PRO
@@ -211,7 +211,7 @@ enum FeedbackQuestionType {
 }
 
 enum ReportEntity {
-  INTENT
+  EVENT
   COMMENT
   REVIEW
   USER
@@ -250,16 +250,16 @@ model User {
   // Relations
   notifications         Notification[]
   actedNotifications    Notification[]      @relation("NotificationActor")
-  intentMembers         IntentMember[]
-  addedMemberships      IntentMember[]      @relation("IntentMemberAddedBy")
-  canceledIntents       Intent[]            @relation("IntentCanceledBy")
-  deletedIntents        Intent[]            @relation("IntentDeletedBy")
-  ownedIntents          Intent[]            @relation("IntentOwner")
-  memberEventsAsSubject IntentMemberEvent[] @relation("MemberEventUser")
-  memberEventsAsActor   IntentMemberEvent[] @relation("MemberEventActor")
+  eventMembers         EventMember[]
+  addedMemberships      EventMember[]      @relation("EventMemberAddedBy")
+  canceledEvents       Event[]            @relation("EventCanceledBy")
+  deletedEvents        Event[]            @relation("EventDeletedBy")
+  ownedEvents          Event[]            @relation("EventOwner")
+  memberEventsAsSubject EventMemberEvent[] @relation("MemberEventUser")
+  memberEventsAsActor   EventMemberEvent[] @relation("MemberEventActor")
 
-  // NEW: intents z ręcznie zamkniętymi zapisami
-  joinClosedIntents Intent[] @relation("IntentJoinClosedBy")
+  // NEW: events z ręcznie zamkniętymi zapisami
+  joinClosedEvents Event[] @relation("EventJoinClosedBy")
 
   // Social
   commentsWritten Comment[] @relation("CommentAuthor")
@@ -278,13 +278,13 @@ model User {
   dmMessageReactions DmMessageReaction[] @relation("DmMessageReactions")
 
   // Event Chat
-  intentChatMessages         IntentChatMessage[]
-  intentChatReads            IntentChatRead[]
-  intentChatMessageReactions IntentChatMessageReaction[] @relation("IntentChatMessageReactions")
+  eventChatMessages         EventChatMessage[]
+  eventChatReads            EventChatRead[]
+  eventChatMessageReactions EventChatMessageReaction[] @relation("EventChatMessageReactions")
 
   // Mutes / Prefs
   notificationPreference NotificationPreference?
-  intentMutes            IntentMute[]
+  eventMutes            EventMute[]
 
   // Moderation
   reportsFiled    Report[]    @relation("ReportAuthor")
@@ -292,17 +292,17 @@ model User {
   blocksReceived  UserBlock[] @relation("Blocked")
 
   // Ownership transfers
-  ownershipTransfersFrom  IntentOwnershipTransfer[] @relation("IotFrom")
-  ownershipTransfersTo    IntentOwnershipTransfer[] @relation("IotTo")
-  ownershipTransfersActed IntentOwnershipTransfer[] @relation("IotActor")
+  ownershipTransfersFrom  EventOwnershipTransfer[] @relation("IotFrom")
+  ownershipTransfersTo    EventOwnershipTransfer[] @relation("IotTo")
+  ownershipTransfersActed EventOwnershipTransfer[] @relation("IotActor")
 
   // Invite Links
-  createdInviteLinks IntentInviteLink[]      @relation("IntentInviteLinkCreatedBy")
-  revokedInviteLinks IntentInviteLink[]      @relation("IntentInviteLinkRevokedBy")
-  inviteLinkUsages   IntentInviteLinkUsage[]
+  createdInviteLinks EventInviteLink[]      @relation("EventInviteLinkCreatedBy")
+  revokedInviteLinks EventInviteLink[]      @relation("EventInviteLinkRevokedBy")
+  inviteLinkUsages   EventInviteLinkUsage[]
 
   // Favourites
-  intentFavourites IntentFavourite[]
+  eventFavourites EventFavourite[]
 
   // Monetization
   subscriptions           UserSubscription[]
@@ -333,7 +333,7 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intents            Intent[]
+  events            Event[]
   userCategoryLevels UserCategoryLevel[]
 
   @@index([slug])
@@ -347,14 +347,14 @@ model Tag {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intents Intent[]
+  events Event[]
 
   @@index([label])
   @@index([slug])
   @@map("tags")
 }
 
-model Intent {
+model Event {
   id          String  @id @default(cuid())
   title       String
   description String?
@@ -380,7 +380,7 @@ model Intent {
   joinManuallyClosed              Boolean   @default(false)
   joinManuallyClosedAt            DateTime?
   joinManuallyClosedById          String?
-  joinManuallyClosedBy            User?     @relation("IntentJoinClosedBy", fields: [joinManuallyClosedById], references: [id], onDelete: SetNull)
+  joinManuallyClosedBy            User?     @relation("EventJoinClosedBy", fields: [joinManuallyClosedById], references: [id], onDelete: SetNull)
   joinManualCloseReason           String?
 
   meetingKind MeetingKind @default(ONSITE)
@@ -413,10 +413,10 @@ model Intent {
   joinedCount   Int @default(0)
   commentsCount Int @default(0)
   messagesCount Int @default(0)
-  savedCount    Int @default(0) // How many users saved/favourited this intent
+  savedCount    Int @default(0) // How many users saved/favourited this event
 
   // Sponsorship / Plan
-  sponsorshipPlan IntentPlan @default(FREE) // Effective plan of the event (Free/Plus/Pro)
+  sponsorshipPlan EventPlan @default(FREE) // Effective plan of the event (Free/Plus/Pro)
   boostedAt       DateTime? // Last time the event was boosted (used for sorting)
 
   // Publication status
@@ -426,49 +426,49 @@ model Intent {
 
   // Ownership
   ownerId            String?
-  owner              User?                     @relation("IntentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  ownershipTransfers IntentOwnershipTransfer[]
+  owner              User?                     @relation("EventOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownershipTransfers EventOwnershipTransfer[]
 
   // Cancellation / deletion
   canceledAt   DateTime?
   canceledById String?
-  canceledBy   User?     @relation("IntentCanceledBy", fields: [canceledById], references: [id], onDelete: SetNull)
+  canceledBy   User?     @relation("EventCanceledBy", fields: [canceledById], references: [id], onDelete: SetNull)
   cancelReason String?
 
   deletedAt    DateTime?
   deletedById  String?
-  deletedBy    User?     @relation("IntentDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedBy    User?     @relation("EventDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   deleteReason String?
 
   // Relations
-  members            IntentMember[]
-  memberEvents       IntentMemberEvent[]
+  members            EventMember[]
+  memberEvents       EventMemberEvent[]
   notifications      Notification[]
   comments           Comment[]
   reviews            Review[]
   sponsorship        EventSponsorship?
   sponsorshipPeriods EventSponsorshipPeriod[] @relation("EventSponsorshipPeriods")
-  inviteLinks        IntentInviteLink[]
-  mutes              IntentMute[]
-  favourites         IntentFavourite[]
+  inviteLinks        EventInviteLink[]
+  mutes              EventMute[]
+  favourites         EventFavourite[]
 
   // Event Chat relations
-  chatMessages IntentChatMessage[]
-  chatReads    IntentChatRead[]
+  chatMessages EventChatMessage[]
+  chatReads    EventChatRead[]
 
   // Join Form relations
-  joinQuestions IntentJoinQuestion[]
-  joinAnswers   IntentJoinAnswer[]
+  joinQuestions EventJoinQuestion[]
+  joinAnswers   EventJoinAnswer[]
 
   // Feedback relations
-  feedbackQuestions IntentFeedbackQuestion[]
-  feedbackAnswers   IntentFeedbackAnswer[]
+  feedbackQuestions EventFeedbackQuestion[]
+  feedbackAnswers   EventFeedbackAnswer[]
 
   // FAQ relations
-  faqs IntentFaq[]
+  faqs EventFaq[]
 
   // Appearance customization
-  appearance IntentAppearance?
+  appearance EventAppearance?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -495,22 +495,22 @@ model Intent {
   @@index([status])
   @@index([status, visibility, startAt])
   @@index([scheduledPublishAt])
-  @@map("intents")
+  @@map("events")
 }
 
-model IntentMember {
+model EventMember {
   id       String @id @default(cuid())
-  intentId String
+  eventId String
   userId   String
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  role   IntentMemberRole   @default(PARTICIPANT)
-  status IntentMemberStatus @default(PENDING)
+  role   EventMemberRole   @default(PARTICIPANT)
+  status EventMemberStatus @default(PENDING)
 
   addedById String?
-  addedBy   User?   @relation("IntentMemberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+  addedBy   User?   @relation("EventMemberAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
 
   joinedAt     DateTime?
   leftAt       DateTime?
@@ -521,42 +521,42 @@ model IntentMember {
   updatedAt DateTime @updatedAt
 
   // Relations to join form answers
-  joinAnswers IntentJoinAnswer[]
+  joinAnswers EventJoinAnswer[]
 
   // Relations to feedback answers
-  feedbackAnswers IntentFeedbackAnswer[]
+  feedbackAnswers EventFeedbackAnswer[]
 
-  @@unique([intentId, userId])
+  @@unique([eventId, userId])
   @@index([userId, status])
-  @@index([intentId, status])
-  @@index([intentId, role])
-  @@index([intentId, status, role])
+  @@index([eventId, status])
+  @@index([eventId, role])
+  @@index([eventId, status, role])
   @@index([userId, createdAt])
-  @@map("intent_members")
+  @@map("event_members")
 }
 
-model IntentMemberEvent {
+model EventMemberEvent {
   id        String      @id @default(cuid())
-  intentId  String
+  eventId  String
   userId    String
   actorId   String?
   kind      MemberEvent
   note      String?
   createdAt DateTime    @default(now())
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   user  User  @relation("MemberEventUser", fields: [userId], references: [id], onDelete: Cascade)
   actor User? @relation("MemberEventActor", fields: [actorId], references: [id], onDelete: SetNull)
 
-  @@index([intentId, createdAt])
+  @@index([eventId, createdAt])
   @@index([userId, createdAt])
-  @@map("intent_member_events")
+  @@map("event_member_events")
 }
 
 model Comment {
   id        String   @id @default(cuid())
-  intentId  String
+  eventId  String
   authorId  String
   threadId  String // root comment id; dla rootów = id (ustaw w app)
   parentId  String?
@@ -574,14 +574,14 @@ model Comment {
   hiddenById String?
   hiddenBy   User?     @relation("CommentHiddenBy", fields: [hiddenById], references: [id], onDelete: SetNull)
 
-  intent  Intent    @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event  Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   author  User      @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   parent  Comment?  @relation("CommentParent", fields: [parentId], references: [id], onDelete: SetNull)
   replies Comment[] @relation("CommentParent")
 
-  @@index([intentId, createdAt])
+  @@index([eventId, createdAt])
   @@index([authorId, createdAt])
-  @@index([intentId, threadId, createdAt])
+  @@index([eventId, threadId, createdAt])
   @@index([parentId, createdAt])
   @@index([deletedById])
   @@index([hiddenById])
@@ -590,7 +590,7 @@ model Comment {
 
 model Review {
   id        String   @id @default(cuid())
-  intentId  String
+  eventId  String
   authorId  String
   rating    Int // enforce 1..5 in SQL CHECK (migration)
   content   String?
@@ -607,13 +607,13 @@ model Review {
   hiddenById String?
   hiddenBy   User?     @relation("ReviewHiddenBy", fields: [hiddenById], references: [id], onDelete: SetNull)
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   author User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
-  @@unique([intentId, authorId])
-  @@index([intentId, createdAt])
+  @@unique([eventId, authorId])
+  @@index([eventId, createdAt])
   @@index([authorId, createdAt])
-  @@index([intentId, rating, createdAt])
+  @@index([eventId, rating, createdAt])
   @@index([deletedById])
   @@index([hiddenById])
   @@map("reviews")
@@ -692,8 +692,8 @@ model Notification {
   entityType NotificationEntity
   entityId   String?
 
-  intentId String?
-  intent   Intent? @relation(fields: [intentId], references: [id], onDelete: SetNull)
+  eventId String?
+  event   Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   title     String?
   body      String?
@@ -708,15 +708,15 @@ model Notification {
   @@index([recipientId, createdAt])
   @@index([recipientId, entityType, readAt])
   @@index([recipientId, kind, readAt])
-  @@index([intentId])
+  @@index([eventId])
   @@map("notifications")
 }
 
 // ========================== Event Chat ==========================
 
-model IntentChatMessage {
+model EventChatMessage {
   id        String    @id @default(cuid())
-  intentId  String
+  eventId  String
   authorId  String
   content   String
   replyToId String?
@@ -724,46 +724,46 @@ model IntentChatMessage {
   editedAt  DateTime?
   deletedAt DateTime?
 
-  intent    Intent                      @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event    Event                      @relation(fields: [eventId], references: [id], onDelete: Cascade)
   author    User                        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  reactions IntentChatMessageReaction[]
+  reactions EventChatMessageReaction[]
 
-  replyTo IntentChatMessage?  @relation("IntentChatReply", fields: [replyToId], references: [id], onDelete: SetNull)
-  replies IntentChatMessage[] @relation("IntentChatReply")
+  replyTo EventChatMessage?  @relation("EventChatReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies EventChatMessage[] @relation("EventChatReply")
 
-  @@index([intentId, createdAt])
+  @@index([eventId, createdAt])
   @@index([authorId, createdAt])
-  @@map("intent_chat_messages")
+  @@map("event_chat_messages")
 }
 
-model IntentChatMessageReaction {
+model EventChatMessageReaction {
   id        String   @id @default(cuid())
   messageId String
   userId    String
   emoji     String // 👍, ❤️, 😂, 😮, 😢, 🙏
   createdAt DateTime @default(now())
 
-  message IntentChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user    User              @relation("IntentChatMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+  message EventChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User              @relation("EventChatMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId, emoji])
   @@index([messageId])
   @@index([userId])
-  @@map("intent_chat_message_reactions")
+  @@map("event_chat_message_reactions")
 }
 
-model IntentChatRead {
+model EventChatRead {
   id         String   @id @default(cuid())
-  intentId   String
+  eventId   String
   userId     String
   lastReadAt DateTime @default(now())
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([intentId, userId])
+  @@unique([eventId, userId])
   @@index([userId, lastReadAt])
-  @@map("intent_chat_reads")
+  @@map("event_chat_reads")
 }
 
 // ========================== DM Reads ==========================
@@ -862,7 +862,7 @@ model UserPlanPeriod {
   // Links to Stripe – depends on source
   stripeCustomerId        String?
   stripeSubscriptionId    String? // for SUBSCRIPTION
-  stripePaymentIntentId   String? // for ONE_OFF
+  stripePaymentEventId   String? // for ONE_OFF
   stripeCheckoutSessionId String? // optional for debug/trace
 
   startsAt DateTime
@@ -874,16 +874,16 @@ model UserPlanPeriod {
 
   @@index([userId, endsAt])
   @@index([stripeSubscriptionId])
-  @@index([stripePaymentIntentId])
+  @@index([stripePaymentEventId])
   @@map("user_plan_periods")
 }
 
 model EventSponsorship {
   id        String @id @default(cuid())
-  intentId  String @unique // 1:1 with Intent
+  eventId  String @unique // 1:1 with Event
   sponsorId String // sponsoring user (usually owner)
 
-  plan   IntentPlan // PLUS / PRO (FREE doesn't make sense but enum is shared)
+  plan   EventPlan // PLUS / PRO (FREE doesn't make sense but enum is shared)
   status SponsorshipStatus @default(PENDING)
 
   startsAt DateTime?
@@ -894,13 +894,13 @@ model EventSponsorship {
   localPushesTotal Int @default(0)
   localPushesUsed  Int @default(0)
 
-  stripePaymentIntentId   String?
+  stripePaymentEventId   String?
   stripeCheckoutSessionId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intent  Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event  Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   sponsor User   @relation("SponsorUser", fields: [sponsorId], references: [id], onDelete: Cascade)
 
   periods EventSponsorshipPeriod[] // History of all transactions
@@ -914,10 +914,10 @@ model EventSponsorship {
 /// Similar to UserPlanPeriod but for event sponsorships
 model EventSponsorshipPeriod {
   id        String @id @default(cuid())
-  intentId  String
+  eventId  String
   sponsorId String
 
-  plan       IntentPlan // Plan purchased (PLUS/PRO)
+  plan       EventPlan // Plan purchased (PLUS/PRO)
   actionType String     @default("new") // 'new', 'reload', 'upgrade'
 
   boostsAdded      Int @default(0) // How many boosts this purchase added
@@ -927,17 +927,17 @@ model EventSponsorshipPeriod {
   currency String @default("pln")
 
   stripeCustomerId        String?
-  stripePaymentIntentId   String?
+  stripePaymentEventId   String?
   stripeCheckoutSessionId String?
 
   createdAt DateTime @default(now())
 
-  eventSponsorship EventSponsorship @relation(fields: [intentId], references: [intentId], onDelete: Cascade, map: "event_sponsorship_periods_sponsorshipId_fkey")
-  intent           Intent           @relation("EventSponsorshipPeriods", fields: [intentId], references: [id], onDelete: Cascade)
+  eventSponsorship EventSponsorship @relation(fields: [eventId], references: [eventId], onDelete: Cascade, map: "event_sponsorship_periods_sponsorshipId_fkey")
+  event           Event           @relation("EventSponsorshipPeriods", fields: [eventId], references: [id], onDelete: Cascade)
   sponsor          User             @relation("EventSponsorshipPeriods", fields: [sponsorId], references: [id], onDelete: Cascade)
 
   @@index([sponsorId])
-  @@index([intentId])
+  @@index([eventId])
   @@index([createdAt])
   @@map("event_sponsorship_periods")
 }
@@ -960,9 +960,9 @@ model PaymentEvent {
 
 // ========================== Invites ==========================
 
-model IntentInviteLink {
+model EventInviteLink {
   id       String @id @default(cuid())
-  intentId String
+  eventId String
   code     String @unique // Unique code used in URL (/i/:code)
 
   /// Maximum number of successful uses (null = unlimited)
@@ -976,7 +976,7 @@ model IntentInviteLink {
 
   /// Who created this invite link
   createdById String?
-  createdBy   User?   @relation("IntentInviteLinkCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?   @relation("EventInviteLinkCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   /// Optional label for the link (e.g. "Friends from work")
   label String?
@@ -984,24 +984,24 @@ model IntentInviteLink {
   /// Soft deletion
   revokedAt   DateTime?
   revokedById String?
-  revokedBy   User?     @relation("IntentInviteLinkRevokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
+  revokedBy   User?     @relation("EventInviteLinkRevokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
 
-  intent Intent                  @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  uses   IntentInviteLinkUsage[]
+  event Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uses   EventInviteLinkUsage[]
 
   @@index([code])
-  @@index([intentId])
-  @@index([intentId, revokedAt])
-  @@index([intentId, expiresAt])
+  @@index([eventId])
+  @@index([eventId, revokedAt])
+  @@index([eventId, expiresAt])
   @@index([expiresAt])
-  @@map("intent_invite_links")
+  @@map("event_invite_links")
 }
 
 /// Track who used which invite link
-model IntentInviteLinkUsage {
+model EventInviteLinkUsage {
   id     String   @id @default(cuid())
   linkId String
   userId String
@@ -1013,30 +1013,30 @@ model IntentInviteLinkUsage {
   /// User agent (optional, for analytics)
   userAgent String?
 
-  link IntentInviteLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  link EventInviteLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
   user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([linkId, userId]) // One user can only use a link once
   @@index([linkId])
   @@index([userId])
   @@index([usedAt])
-  @@map("intent_invite_link_usages")
+  @@map("event_invite_link_usages")
 }
 
-/// User's saved/favourite intents
-model IntentFavourite {
+/// User's saved/favourite events
+model EventFavourite {
   id        String   @id @default(cuid())
   userId    String
-  intentId  String
+  eventId  String
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, intentId]) // One user can only favourite an intent once
+  @@unique([userId, eventId]) // One user can only favourite an event once
   @@index([userId, createdAt]) // For user's favourites list sorted by when saved
-  @@index([intentId]) // For analytics: how many users saved this intent
-  @@map("intent_favourites")
+  @@index([eventId]) // For analytics: how many users saved this event
+  @@map("event_favourites")
 }
 
 // ========================== Preferences & Mutes ==========================
@@ -1057,18 +1057,18 @@ model NotificationPreference {
   @@map("notification_preferences")
 }
 
-model IntentMute {
+model EventMute {
   id        String   @id @default(cuid())
-  intentId  String
+  eventId  String
   userId    String
   muted     Boolean  @default(true)
   createdAt DateTime @default(now())
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([intentId, userId])
-  @@map("intent_mutes")
+  @@unique([eventId, userId])
+  @@map("event_mutes")
 }
 
 model DmMute {
@@ -1087,22 +1087,22 @@ model DmMute {
 
 // ========================== Ownership transfers ==========================
 
-model IntentOwnershipTransfer {
+model EventOwnershipTransfer {
   id         String   @id @default(cuid())
-  intentId   String
+  eventId   String
   fromUserId String
   toUserId   String
   actorId    String?
   reason     String?
   createdAt  DateTime @default(now())
 
-  intent   Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   fromUser User   @relation("IotFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
   toUser   User   @relation("IotTo", fields: [toUserId], references: [id], onDelete: Cascade)
   actor    User?  @relation("IotActor", fields: [actorId], references: [id], onDelete: SetNull)
 
-  @@index([intentId, createdAt])
-  @@map("intent_ownership_transfers")
+  @@index([eventId, createdAt])
+  @@map("event_ownership_transfers")
 }
 
 // =============================================================================
@@ -1158,7 +1158,7 @@ model UserPrivacy {
   showReviews  String @default("ALL") // ALL / MEMBERS / SELF
   showStats    String @default("ALL") // ALL / MEMBERS / SELF
 
-  // Default visibility for new intents
+  // Default visibility for new events
   defaultAddressVisibility AddressVisibility @default(PUBLIC)
   defaultMembersVisibility MembersVisibility @default(PUBLIC)
 
@@ -1265,9 +1265,9 @@ model UserBadge {
  */
 // =============================================================================
 
-model IntentJoinQuestion {
+model EventJoinQuestion {
   id       String           @id @default(cuid())
-  intentId String
+  eventId String
   order    Int              @default(0) // Display order (0-based)
   type     JoinQuestionType @default(TEXT)
 
@@ -1280,16 +1280,16 @@ model IntentJoinQuestion {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intent  Intent             @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  answers IntentJoinAnswer[]
+  event  Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  answers EventJoinAnswer[]
 
-  @@index([intentId, order])
-  @@map("intent_join_questions")
+  @@index([eventId, order])
+  @@map("event_join_questions")
 }
 
-model IntentJoinAnswer {
+model EventJoinAnswer {
   id         String @id @default(cuid())
-  intentId   String
+  eventId   String
   userId     String
   questionId String
 
@@ -1298,14 +1298,14 @@ model IntentJoinAnswer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intent   Intent             @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  question IntentJoinQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  member   IntentMember       @relation(fields: [intentId, userId], references: [intentId, userId], onDelete: Cascade)
+  event   Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  question EventJoinQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  member   EventMember       @relation(fields: [eventId, userId], references: [eventId, userId], onDelete: Cascade)
 
-  @@unique([intentId, userId, questionId])
-  @@index([intentId, userId])
+  @@unique([eventId, userId, questionId])
+  @@index([eventId, userId])
   @@index([questionId])
-  @@map("intent_join_answers")
+  @@map("event_join_answers")
 }
 
 // =============================================================================
@@ -1315,9 +1315,9 @@ model IntentJoinAnswer {
  */
 // =============================================================================
 
-model IntentFeedbackQuestion {
+model EventFeedbackQuestion {
   id       String               @id @default(cuid())
-  intentId String
+  eventId String
   order    Int                  @default(0) // Display order (0-based)
   type     FeedbackQuestionType @default(TEXT)
 
@@ -1330,16 +1330,16 @@ model IntentFeedbackQuestion {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intent  Intent                 @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  answers IntentFeedbackAnswer[]
+  event  Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  answers EventFeedbackAnswer[]
 
-  @@index([intentId, order])
-  @@map("intent_feedback_questions")
+  @@index([eventId, order])
+  @@map("event_feedback_questions")
 }
 
-model IntentFeedbackAnswer {
+model EventFeedbackAnswer {
   id         String @id @default(cuid())
-  intentId   String
+  eventId   String
   userId     String
   questionId String
 
@@ -1348,14 +1348,14 @@ model IntentFeedbackAnswer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intent   Intent                 @relation(fields: [intentId], references: [id], onDelete: Cascade)
-  question IntentFeedbackQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  member   IntentMember           @relation(fields: [intentId, userId], references: [intentId, userId], onDelete: Cascade)
+  event   Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  question EventFeedbackQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  member   EventMember           @relation(fields: [eventId, userId], references: [eventId, userId], onDelete: Cascade)
 
-  @@unique([intentId, userId, questionId])
-  @@index([intentId, userId])
+  @@unique([eventId, userId, questionId])
+  @@index([eventId, userId])
   @@index([questionId])
-  @@map("intent_feedback_answers")
+  @@map("event_feedback_answers")
 }
 
 // =============================================================================
@@ -1365,9 +1365,9 @@ model IntentFeedbackAnswer {
  */
 // =============================================================================
 
-model IntentFaq {
+model EventFaq {
   id       String @id @default(cuid())
-  intentId String
+  eventId String
   order    Int    @default(0) // Display order (0-based)
 
   question String // FAQ question text (max 500 chars, enforced in app)
@@ -1376,10 +1376,10 @@ model IntentFaq {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@index([intentId, order])
-  @@map("intent_faqs")
+  @@index([eventId, order])
+  @@map("event_faqs")
 }
 
 // =============================================================================
@@ -1390,7 +1390,7 @@ model IntentFaq {
 
 model MediaAsset {
   id  String @id @default(cuid())
-  /// Key under which we store the original and variants (e.g. avatars/{userId}/{uuid}, covers/intents/{intentId}/{uuid})
+  /// Key under which we store the original and variants (e.g. avatars/{userId}/{uuid}, covers/events/{eventId}/{uuid})
   key String @unique
 
   /// Optional metadata from upload/processing
@@ -1399,9 +1399,9 @@ model MediaAsset {
   height   Int?
   mimeType String?
 
-  // Optional owner metadata - no FK to User/Intent (logical reference through key)
+  // Optional owner metadata - no FK to User/Event (logical reference through key)
   ownerId String? // e.g. userId
-  /// USER_AVATAR, USER_COVER, INTENT_COVER, GALLERY_IMAGE, etc.
+  /// USER_AVATAR, USER_COVER, EVENT_COVER, GALLERY_IMAGE, etc.
   purpose String?
 
   createdAt DateTime @default(now())
@@ -1415,14 +1415,14 @@ model MediaAsset {
 
 // =============================================================================
 /**
- * Intent Appearance - Custom visual styling for events
+ * Event Appearance - Custom visual styling for events
  * Stores configuration for card and detail page appearance
  */
 // =============================================================================
 
-model IntentAppearance {
+model EventAppearance {
   id       String @id @default(cuid())
-  intentId String @unique
+  eventId String @unique
 
   /// JSON configuration for appearance customization
   /// Structure: { card: { background, shadow }, detail: { background, panel: { background, shadow } } }
@@ -1431,7 +1431,7 @@ model IntentAppearance {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  intent Intent @relation(fields: [intentId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@map("intent_appearances")
+  @@map("event_appearances")
 }

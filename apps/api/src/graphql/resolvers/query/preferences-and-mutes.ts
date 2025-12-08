@@ -9,10 +9,10 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import {
   mapNotificationPreference,
-  mapIntentMute,
+  mapEventMute,
   mapDmMute,
   type NotificationPreferenceWithGraph,
-  type IntentMuteWithGraph,
+  type EventMuteWithGraph,
   type DmMuteWithGraph,
 } from '../helpers';
 
@@ -20,10 +20,10 @@ const NOTIFICATION_PREFERENCE_INCLUDE = {
   user: true,
 } satisfies Prisma.NotificationPreferenceInclude;
 
-const INTENT_MUTE_INCLUDE = {
-  intent: true,
+const EVENT_MUTE_INCLUDE = {
+  event: true,
   user: true,
-} satisfies Prisma.IntentMuteInclude;
+} satisfies Prisma.EventMuteInclude;
 
 const DM_MUTE_INCLUDE = {
   thread: {
@@ -77,36 +77,35 @@ export const myNotificationPreferencesQuery: QueryResolvers['myNotificationPrefe
   );
 
 /**
- * Query: Get intent mute status
+ * Query: Get event mute status
  */
-export const intentMuteQuery: QueryResolvers['intentMute'] =
-  resolverWithMetrics(
-    'Query',
-    'intentMute',
-    async (_p, { intentId }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
-
-      const mute = await prisma.intentMute.findUnique({
-        where: {
-          intentId_userId: {
-            intentId,
-            userId: user.id,
-          },
-        },
-        include: INTENT_MUTE_INCLUDE,
+export const eventMuteQuery: QueryResolvers['eventMute'] = resolverWithMetrics(
+  'Query',
+  'eventMute',
+  async (_p, { eventId }, { user }) => {
+    if (!user?.id) {
+      throw new GraphQLError('Authentication required.', {
+        extensions: { code: 'UNAUTHENTICATED' },
       });
-
-      if (!mute) {
-        return null;
-      }
-
-      return mapIntentMute(mute as IntentMuteWithGraph);
     }
-  );
+
+    const mute = await prisma.eventMute.findUnique({
+      where: {
+        eventId_userId: {
+          eventId,
+          userId: user.id,
+        },
+      },
+      include: EVENT_MUTE_INCLUDE,
+    });
+
+    if (!mute) {
+      return null;
+    }
+
+    return mapEventMute(mute as EventMuteWithGraph);
+  }
+);
 
 /**
  * Query: Get DM thread mute status

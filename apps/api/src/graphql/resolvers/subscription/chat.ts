@@ -7,11 +7,11 @@ import type { SubscriptionResolvers } from '../../__generated__/resolvers-types'
 import { requireJoinedMember, requireDmParticipant } from '../chat-guards';
 
 /**
- * Subscription: New message added to intent chat
+ * Subscription: New message added to event chat
  */
-export const intentMessageAddedSubscription: SubscriptionResolvers['intentMessageAdded'] =
+export const eventMessageAddedSubscription: SubscriptionResolvers['eventMessageAdded'] =
   {
-    subscribe: async (_p, { intentId }, { user, pubsub }) => {
+    subscribe: async (_p, { eventId }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -19,21 +19,21 @@ export const intentMessageAddedSubscription: SubscriptionResolvers['intentMessag
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       // Subscribe to channel
-      return pubsub.subscribe(`intentMessageAdded:${intentId}`);
+      return pubsub.subscribe(`eventMessageAdded:${eventId}`);
     },
     resolve: (payload: any) => {
-      return payload.intentMessageAdded;
+      return payload.eventMessageAdded;
     },
   };
 
 /**
- * Subscription: Typing indicator for intent chat
+ * Subscription: Typing indicator for eventchat
  */
-export const intentTypingSubscription: SubscriptionResolvers['intentTyping'] = {
-  subscribe: async (_p, { intentId }, { user, pubsub }) => {
+export const eventTypingSubscription: SubscriptionResolvers['eventTyping'] = {
+  subscribe: async (_p, { eventId }, { user, pubsub }) => {
     if (!user?.id) {
       throw new GraphQLError('Authentication required.', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -41,13 +41,13 @@ export const intentTypingSubscription: SubscriptionResolvers['intentTyping'] = {
     }
 
     // Guard: user must be JOINED
-    await requireJoinedMember(user.id, intentId);
+    await requireJoinedMember(user.id, eventId);
 
     // Subscribe to channel
-    return pubsub.subscribe(`intentTyping:${intentId}`);
+    return pubsub.subscribe(`eventTyping:${eventId}`);
   },
   resolve: (payload: any) => {
-    return payload.intentTyping;
+    return payload.eventTyping;
   },
 };
 
@@ -88,13 +88,13 @@ export const dmTypingSubscription: SubscriptionResolvers['dmTyping'] = {
 };
 
 /**
- * Subscription: Reaction added/removed in intent chat
+ * Subscription: Reaction added/removed in eventchat
  */
-export const intentReactionAddedSubscription: SubscriptionResolvers['intentReactionAdded'] =
+export const eventReactionAddedSubscription: SubscriptionResolvers['eventReactionAdded'] =
   {
     subscribe: async (
       _p: any,
-      { intentId }: { intentId: string },
+      { eventId }: { eventId: string },
       { user, pubsub }: any
     ) => {
       if (!user?.id) {
@@ -104,13 +104,13 @@ export const intentReactionAddedSubscription: SubscriptionResolvers['intentReact
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       // Subscribe to channel
-      return pubsub.subscribe(`intentReactionAdded:${intentId}`);
+      return pubsub.subscribe(`eventReactionAdded:${eventId}`);
     },
     resolve: (payload: any) => {
-      return payload.intentReactionAdded;
+      return payload.eventReactionAdded;
     },
   };
 
@@ -188,11 +188,11 @@ export const dmMessageDeletedSubscription: SubscriptionResolvers['dmMessageDelet
   };
 
 /**
- * Subscription: Intent message updated
+ * Subscription: Event message updated
  */
-export const intentMessageUpdatedSubscription: SubscriptionResolvers['intentMessageUpdated'] =
+export const eventMessageUpdatedSubscription: SubscriptionResolvers['eventMessageUpdated'] =
   {
-    subscribe: async (_p, { intentId }, { user, pubsub }) => {
+    subscribe: async (_p, { eventId }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -200,22 +200,22 @@ export const intentMessageUpdatedSubscription: SubscriptionResolvers['intentMess
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       // Subscribe to channel
-      return pubsub.subscribe(`intentMessageUpdated:${intentId}`);
+      return pubsub.subscribe(`eventMessageUpdated:${eventId}`);
     },
     resolve: (payload: any) => {
-      return payload.intentMessageUpdated;
+      return payload.eventMessageUpdated;
     },
   };
 
 /**
- * Subscription: Intent message deleted
+ * Subscription: Event message deleted
  */
-export const intentMessageDeletedSubscription: SubscriptionResolvers['intentMessageDeleted'] =
+export const eventMessageDeletedSubscription: SubscriptionResolvers['eventMessageDeleted'] =
   {
-    subscribe: async (_p, { intentId }, { user, pubsub }) => {
+    subscribe: async (_p, { eventId }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -223,12 +223,12 @@ export const intentMessageDeletedSubscription: SubscriptionResolvers['intentMess
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       // Subscribe to channel
-      return pubsub.subscribe(`intentMessageDeleted:${intentId}`);
+      return pubsub.subscribe(`eventMessageDeleted:${eventId}`);
     },
     resolve: (payload: any) => {
-      return payload.intentMessageDeleted;
+      return payload.eventMessageDeleted;
     },
   };

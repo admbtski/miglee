@@ -1,5 +1,5 @@
 /**
- * Intent Invite Links Mutation Resolvers
+ * Event Invite Links Mutation Resolvers
  */
 
 import type { Prisma } from '@prisma/client';
@@ -8,26 +8,26 @@ import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import {
-  mapIntentInviteLink,
-  mapIntent,
-  type IntentInviteLinkWithGraph,
-  type IntentWithGraph,
+  mapEventInviteLink,
+  mapEvent,
+  type EventInviteLinkWithGraph,
+  type EventWithGraph,
 } from '../helpers';
 import { nanoid } from 'nanoid';
 
 const INVITE_LINK_INCLUDE = {
-  intent: true,
+  event: true,
   createdBy: true,
   revokedBy: true,
-} satisfies Prisma.IntentInviteLinkInclude;
+} satisfies Prisma.EventInviteLinkInclude;
 
 /**
  * Mutation: Create invite link
  */
-export const createIntentInviteLinkMutation: MutationResolvers['createIntentInviteLink'] =
+export const createEventInviteLinkMutation: MutationResolvers['createEventInviteLink'] =
   resolverWithMetrics(
     'Mutation',
-    'createIntentInviteLink',
+    'createEventInviteLink',
     async (_p, { input }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -35,11 +35,11 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
         });
       }
 
-      const { intentId, maxUses, expiresAt, label } = input;
+      const { eventId, maxUses, expiresAt, label } = input;
 
       // Check ownership/moderator
-      const intent = await prisma.intent.findUnique({
-        where: { id: intentId },
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
         select: {
           ownerId: true,
           members: {
@@ -49,14 +49,14 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
         },
       });
 
-      if (!intent) {
-        throw new GraphQLError('Intent not found.', {
+      if (!event) {
+        throw new GraphQLError('Event not found.', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      const isOwner = intent.ownerId === user.id;
-      const isModerator = intent.members.some(
+      const isOwner = event.ownerId === user.id;
+      const isModerator = event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
       const isAdmin = user.role === 'ADMIN';
@@ -73,9 +73,9 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
       // Generate unique code
       const code = nanoid(10);
 
-      const link = await prisma.intentInviteLink.create({
+      const link = await prisma.eventInviteLink.create({
         data: {
-          intentId,
+          eventId,
           code,
           label: label ?? null,
           maxUses: maxUses ?? null,
@@ -85,17 +85,17 @@ export const createIntentInviteLinkMutation: MutationResolvers['createIntentInvi
         include: INVITE_LINK_INCLUDE,
       });
 
-      return mapIntentInviteLink(link as IntentInviteLinkWithGraph);
+      return mapEventInviteLink(link as EventInviteLinkWithGraph);
     }
   );
 
 /**
  * Mutation: Update invite link
  */
-export const updateIntentInviteLinkMutation: MutationResolvers['updateIntentInviteLink'] =
+export const updateEventInviteLinkMutation: MutationResolvers['updateEventInviteLink'] =
   resolverWithMetrics(
     'Mutation',
-    'updateIntentInviteLink',
+    'updateEventInviteLink',
     async (_p, { id, input }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -103,11 +103,11 @@ export const updateIntentInviteLinkMutation: MutationResolvers['updateIntentInvi
         });
       }
 
-      const link = await prisma.intentInviteLink.findUnique({
+      const link = await prisma.eventInviteLink.findUnique({
         where: { id },
         select: {
-          intentId: true,
-          intent: {
+          eventId: true,
+          event: {
             select: {
               ownerId: true,
               members: {
@@ -125,8 +125,8 @@ export const updateIntentInviteLinkMutation: MutationResolvers['updateIntentInvi
         });
       }
 
-      const isOwner = link.intent.ownerId === user.id;
-      const isModerator = link.intent.members.some(
+      const isOwner = link.event.ownerId === user.id;
+      const isModerator = link.event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
       const isAdmin = user.role === 'ADMIN';
@@ -140,7 +140,7 @@ export const updateIntentInviteLinkMutation: MutationResolvers['updateIntentInvi
         );
       }
 
-      const updated = await prisma.intentInviteLink.update({
+      const updated = await prisma.eventInviteLink.update({
         where: { id },
         data: {
           label: input.label ?? undefined,
@@ -150,17 +150,17 @@ export const updateIntentInviteLinkMutation: MutationResolvers['updateIntentInvi
         include: INVITE_LINK_INCLUDE,
       });
 
-      return mapIntentInviteLink(updated as IntentInviteLinkWithGraph);
+      return mapEventInviteLink(updated as EventInviteLinkWithGraph);
     }
   );
 
 /**
  * Mutation: Revoke invite link (soft delete)
  */
-export const revokeIntentInviteLinkMutation: MutationResolvers['revokeIntentInviteLink'] =
+export const revokeEventInviteLinkMutation: MutationResolvers['revokeEventInviteLink'] =
   resolverWithMetrics(
     'Mutation',
-    'revokeIntentInviteLink',
+    'revokeEventInviteLink',
     async (_p, { id }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -168,11 +168,11 @@ export const revokeIntentInviteLinkMutation: MutationResolvers['revokeIntentInvi
         });
       }
 
-      const link = await prisma.intentInviteLink.findUnique({
+      const link = await prisma.eventInviteLink.findUnique({
         where: { id },
         select: {
-          intentId: true,
-          intent: {
+          eventId: true,
+          event: {
             select: {
               ownerId: true,
               members: {
@@ -190,8 +190,8 @@ export const revokeIntentInviteLinkMutation: MutationResolvers['revokeIntentInvi
         });
       }
 
-      const isOwner = link.intent.ownerId === user.id;
-      const isModerator = link.intent.members.some(
+      const isOwner = link.event.ownerId === user.id;
+      const isModerator = link.event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
       const isAdmin = user.role === 'ADMIN';
@@ -205,7 +205,7 @@ export const revokeIntentInviteLinkMutation: MutationResolvers['revokeIntentInvi
         );
       }
 
-      const revoked = await prisma.intentInviteLink.update({
+      const revoked = await prisma.eventInviteLink.update({
         where: { id },
         data: {
           revokedAt: new Date(),
@@ -214,17 +214,17 @@ export const revokeIntentInviteLinkMutation: MutationResolvers['revokeIntentInvi
         include: INVITE_LINK_INCLUDE,
       });
 
-      return mapIntentInviteLink(revoked as IntentInviteLinkWithGraph);
+      return mapEventInviteLink(revoked as EventInviteLinkWithGraph);
     }
   );
 
 /**
  * Mutation: Delete invite link (hard delete)
  */
-export const deleteIntentInviteLinkMutation: MutationResolvers['deleteIntentInviteLink'] =
+export const deleteEventInviteLinkMutation: MutationResolvers['deleteEventInviteLink'] =
   resolverWithMetrics(
     'Mutation',
-    'deleteIntentInviteLink',
+    'deleteEventInviteLink',
     async (_p, { id }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -232,11 +232,11 @@ export const deleteIntentInviteLinkMutation: MutationResolvers['deleteIntentInvi
         });
       }
 
-      const link = await prisma.intentInviteLink.findUnique({
+      const link = await prisma.eventInviteLink.findUnique({
         where: { id },
         select: {
-          intentId: true,
-          intent: {
+          eventId: true,
+          event: {
             select: {
               ownerId: true,
               members: {
@@ -252,8 +252,8 @@ export const deleteIntentInviteLinkMutation: MutationResolvers['deleteIntentInvi
         return false;
       }
 
-      const isOwner = link.intent.ownerId === user.id;
-      const isModerator = link.intent.members.some(
+      const isOwner = link.event.ownerId === user.id;
+      const isModerator = link.event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
       const isAdmin = user.role === 'ADMIN';
@@ -267,13 +267,13 @@ export const deleteIntentInviteLinkMutation: MutationResolvers['deleteIntentInvi
         );
       }
 
-      await prisma.intentInviteLink.delete({ where: { id } });
+      await prisma.eventInviteLink.delete({ where: { id } });
       return true;
     }
   );
 
 /**
- * Mutation: Join intent using invite link
+ * Mutation: Join event using invite link
  */
 export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
   resolverWithMetrics(
@@ -286,10 +286,10 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
         });
       }
 
-      const link = await prisma.intentInviteLink.findUnique({
+      const link = await prisma.eventInviteLink.findUnique({
         where: { code },
         include: {
-          intent: {
+          event: {
             include: {
               categories: true,
               tags: true,
@@ -329,44 +329,44 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
         });
       }
 
-      // Check if intent is deleted or canceled
-      if (link.intent.deletedAt) {
+      // Check if event is deleted or canceled
+      if (link.event.deletedAt) {
         throw new GraphQLError('This event has been deleted.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
       }
 
-      if (link.intent.canceledAt) {
+      if (link.event.canceledAt) {
         throw new GraphQLError('This event has been canceled.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
       }
 
       // Check if already a member
-      const existing = await prisma.intentMember.findUnique({
+      const existing = await prisma.eventMember.findUnique({
         where: {
-          intentId_userId: {
-            intentId: link.intentId,
+          eventId_userId: {
+            eventId: link.eventId,
             userId: user.id,
           },
         },
       });
 
       if (existing && existing.status === 'JOINED') {
-        // Already joined, just return intent
-        return mapIntent(link.intent as IntentWithGraph);
+        // Already joined, just return event
+        return mapEvent(link.event as EventWithGraph);
       }
 
       // Create or update membership
-      await prisma.intentMember.upsert({
+      await prisma.eventMember.upsert({
         where: {
-          intentId_userId: {
-            intentId: link.intentId,
+          eventId_userId: {
+            eventId: link.eventId,
             userId: user.id,
           },
         },
         create: {
-          intentId: link.intentId,
+          eventId: link.eventId,
           userId: user.id,
           status: 'JOINED',
           role: 'PARTICIPANT',
@@ -380,7 +380,7 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
       });
 
       // Record link usage (upsert to handle duplicate attempts)
-      await prisma.intentInviteLinkUsage.upsert({
+      await prisma.eventInviteLinkUsage.upsert({
         where: {
           linkId_userId: {
             linkId: link.id,
@@ -398,17 +398,17 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
       });
 
       // Increment usedCount
-      await prisma.intentInviteLink.update({
+      await prisma.eventInviteLink.update({
         where: { id: link.id },
         data: { usedCount: { increment: 1 } },
       });
 
-      // Update intent joinedCount
-      await prisma.intent.update({
-        where: { id: link.intentId },
+      // Update event joinedCount
+      await prisma.event.update({
+        where: { id: link.eventId },
         data: { joinedCount: { increment: 1 } },
       });
 
-      return mapIntent(link.intent as IntentWithGraph);
+      return mapEvent(link.event as EventWithGraph);
     }
   );

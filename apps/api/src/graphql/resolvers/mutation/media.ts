@@ -267,9 +267,9 @@ async function validateUploadPurpose(
       return userId;
     }
 
-    case 'INTENT_COVER': {
+    case 'EVENT_COVER': {
       if (!entityId) {
-        throw new GraphQLError('entityId is required for INTENT_COVER', {
+        throw new GraphQLError('entityId is required for EVENT_COVER', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
       }
@@ -281,12 +281,12 @@ async function validateUploadPurpose(
       });
 
       if (user?.role === 'ADMIN') {
-        // Global admin can upload cover for any intent
+        // Global admin can upload cover for any event
         return entityId;
       }
 
-      // Check if user is owner or moderator of the intent
-      const intent = await prisma.intent.findUnique({
+      // Check if user is owner or moderator of the event
+      const event = await prisma.event.findUnique({
         where: { id: entityId },
         select: {
           id: true,
@@ -301,17 +301,16 @@ async function validateUploadPurpose(
         },
       });
 
-      if (!intent) {
-        throw new GraphQLError('Intent not found', {
+      if (!event) {
+        throw new GraphQLError('Event not found', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      const isOwnerOrMod =
-        intent.ownerId === userId || intent.members.length > 0;
+      const isOwnerOrMod = event.ownerId === userId || event.members.length > 0;
       if (!isOwnerOrMod) {
         throw new GraphQLError(
-          'Only intent owner, moderator, or admin can upload cover',
+          'Only event owner, moderator, or admin can upload cover',
           {
             extensions: { code: 'FORBIDDEN' },
           }
@@ -417,22 +416,22 @@ async function updateEntityWithMediaKey(
       break;
     }
 
-    case 'INTENT_COVER': {
+    case 'EVENT_COVER': {
       if (!entityId) {
-        throw new GraphQLError('entityId is required for INTENT_COVER', {
+        throw new GraphQLError('entityId is required for EVENT_COVER', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
       }
 
-      const intent = await prisma.intent.findUnique({
+      const event = await prisma.event.findUnique({
         where: { id: entityId },
         select: { coverKey: true },
       });
 
-      const oldKey = intent?.coverKey;
+      const oldKey = event?.coverKey;
 
-      // Update intent
-      await prisma.intent.update({
+      // Update event
+      await prisma.event.update({
         where: { id: entityId },
         data: { coverKey: newKey },
       });
@@ -440,7 +439,7 @@ async function updateEntityWithMediaKey(
       // Delete old media asset
       if (oldKey && oldKey !== newKey) {
         await deleteMediaAsset(oldKey).catch((err) => {
-          console.error('Failed to delete old intent cover:', err);
+          console.error('Failed to delete old event cover:', err);
         });
       }
       break;

@@ -12,9 +12,9 @@ import {
   AdminUserMembershipsDocument,
   AdminUserMembershipsQuery,
   AdminUserMembershipsQueryVariables,
-  AdminUserIntentsDocument,
-  AdminUserIntentsQuery,
-  AdminUserIntentsQueryVariables,
+  AdminUserEventsDocument,
+  AdminUserEventsQuery,
+  AdminUserEventsQueryVariables,
   AdminUserDmThreadsDocument,
   AdminUserDmThreadsQuery,
   AdminUserDmThreadsQueryVariables,
@@ -39,9 +39,9 @@ export const ADMIN_USER_MEMBERSHIPS_KEY = (
   variables: AdminUserMembershipsQueryVariables
 ) => ['AdminUserMemberships', variables] as const;
 
-export const ADMIN_USER_INTENTS_KEY = (
-  variables: AdminUserIntentsQueryVariables
-) => ['AdminUserIntents', variables] as const;
+export const ADMIN_USER_EVENTS_KEY = (
+  variables: AdminUserEventsQueryVariables
+) => ['AdminUserEvents', variables] as const;
 
 export const ADMIN_USER_DM_THREADS_KEY = (
   variables: AdminUserDmThreadsQueryVariables
@@ -137,28 +137,28 @@ export function buildAdminUserMembershipsOptions(
   };
 }
 
-export function buildAdminUserIntentsOptions(
-  variables: AdminUserIntentsQueryVariables,
+export function buildAdminUserEventsOptions(
+  variables: AdminUserEventsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      AdminUserIntentsQuery,
+      AdminUserEventsQuery,
       unknown,
-      AdminUserIntentsQuery,
+      AdminUserEventsQuery,
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ): UseQueryOptions<
-  AdminUserIntentsQuery,
+  AdminUserEventsQuery,
   unknown,
-  AdminUserIntentsQuery,
+  AdminUserEventsQuery,
   QueryKey
 > {
   return {
-    queryKey: ADMIN_USER_INTENTS_KEY(variables) as unknown as QueryKey,
+    queryKey: ADMIN_USER_EVENTS_KEY(variables) as unknown as QueryKey,
     queryFn: () =>
-      gqlClient.request<AdminUserIntentsQuery, AdminUserIntentsQueryVariables>(
-        AdminUserIntentsDocument,
+      gqlClient.request<AdminUserEventsQuery, AdminUserEventsQueryVariables>(
+        AdminUserEventsDocument,
         variables
       ),
     ...(options ?? {}),
@@ -227,20 +227,20 @@ export function useAdminUserMembershipsQuery(
   );
 }
 
-export function useAdminUserIntentsQuery(
-  variables: AdminUserIntentsQueryVariables,
+export function useAdminUserEventsQuery(
+  variables: AdminUserEventsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      AdminUserIntentsQuery,
+      AdminUserEventsQuery,
       unknown,
-      AdminUserIntentsQuery,
+      AdminUserEventsQuery,
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ) {
   return useQuery(
-    buildAdminUserIntentsOptions(variables, {
+    buildAdminUserEventsOptions(variables, {
       enabled: !!variables.userId,
       ...(options ?? {}),
     })

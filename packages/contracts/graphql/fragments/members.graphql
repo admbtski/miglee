@@ -1,12 +1,12 @@
 # =============================================================================
-# Intent Member Fragments
+# Event Member Fragments
 # =============================================================================
-# Fragments for intent membership/participation entities.
+# Fragments for event membership/participation entities.
 
 #import "./_core.graphql"
-#import "./intents.graphql"
+#import "./events.graphql"
 
-fragment IntentMemberLight on IntentMember {
+fragment EventMemberLight on EventMember {
   id
   role
   status
@@ -16,9 +16,9 @@ fragment IntentMemberLight on IntentMember {
   }
 }
 
-fragment IntentMemberCore on IntentMember {
+fragment EventMemberCore on EventMember {
   id
-  intentId
+  eventId
   userId
   role
   status
@@ -32,7 +32,7 @@ fragment IntentMemberCore on IntentMember {
   addedBy {
     ...UserLight
   }
-  intent {
-    ...IntentLight
+  event {
+    ...EventLight
   }
 }

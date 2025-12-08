@@ -24,7 +24,7 @@ const statusOptions = [
 
 const entityOptions = [
   { value: undefined, label: 'Wszystkie typy' },
-  { value: ReportEntity.Intent, label: 'Wydarzenia' },
+  { value: ReportEntity.Event, label: 'Wydarzenia' },
   { value: ReportEntity.Comment, label: 'Komentarze' },
   { value: ReportEntity.Review, label: 'Recenzje' },
   { value: ReportEntity.User, label: 'Użytkownicy' },

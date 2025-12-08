@@ -3,12 +3,12 @@
  */
 
 import {
-  IntentFeedbackQuestionsDocument,
-  IntentFeedbackQuestionsQuery,
-  IntentFeedbackQuestionsQueryVariables,
-  IntentFeedbackResultsDocument,
-  IntentFeedbackResultsQuery,
-  IntentFeedbackResultsQueryVariables,
+  EventFeedbackQuestionsDocument,
+  EventFeedbackQuestionsQuery,
+  EventFeedbackQuestionsQueryVariables,
+  EventFeedbackResultsDocument,
+  EventFeedbackResultsQuery,
+  EventFeedbackResultsQueryVariables,
   MyFeedbackAnswersDocument,
   MyFeedbackAnswersQuery,
   MyFeedbackAnswersQueryVariables,
@@ -47,12 +47,12 @@ import {
 
 /* --------------------------------- KEYS ---------------------------------- */
 export const GET_FEEDBACK_QUESTIONS_KEY = (
-  variables: IntentFeedbackQuestionsQueryVariables
-) => ['GetIntentFeedbackQuestions', variables] as const;
+  variables: EventFeedbackQuestionsQueryVariables
+) => ['GetEventFeedbackQuestions', variables] as const;
 
 export const GET_FEEDBACK_RESULTS_KEY = (
-  variables: IntentFeedbackResultsQueryVariables
-) => ['GetIntentFeedbackResults', variables] as const;
+  variables: EventFeedbackResultsQueryVariables
+) => ['GetEventFeedbackResults', variables] as const;
 
 export const GET_MY_FEEDBACK_ANSWERS_KEY = (
   variables: MyFeedbackAnswersQueryVariables
@@ -65,61 +65,61 @@ export const GET_CAN_SUBMIT_FEEDBACK_KEY = (
 /* ----------------------------- QUERY BUILDERS ---------------------------- */
 
 // Feedback Questions Query
-export function buildGetIntentFeedbackQuestionsOptions(
-  variables: IntentFeedbackQuestionsQueryVariables,
+export function buildGetEventFeedbackQuestionsOptions(
+  variables: EventFeedbackQuestionsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      IntentFeedbackQuestionsQuery,
+      EventFeedbackQuestionsQuery,
       Error,
-      IntentFeedbackQuestionsQuery['intentFeedbackQuestions'],
+      EventFeedbackQuestionsQuery['eventFeedbackQuestions'],
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ): UseQueryOptions<
-  IntentFeedbackQuestionsQuery,
+  EventFeedbackQuestionsQuery,
   Error,
-  IntentFeedbackQuestionsQuery['intentFeedbackQuestions'],
+  EventFeedbackQuestionsQuery['eventFeedbackQuestions'],
   QueryKey
 > {
   return {
     queryKey: GET_FEEDBACK_QUESTIONS_KEY(variables) as unknown as QueryKey,
     queryFn: async () =>
       gqlClient.request<
-        IntentFeedbackQuestionsQuery,
-        IntentFeedbackQuestionsQueryVariables
-      >(IntentFeedbackQuestionsDocument, variables),
-    select: (data) => data.intentFeedbackQuestions,
+        EventFeedbackQuestionsQuery,
+        EventFeedbackQuestionsQueryVariables
+      >(EventFeedbackQuestionsDocument, variables),
+    select: (data) => data.eventFeedbackQuestions,
     ...(options ?? {}),
   };
 }
 
 // Feedback Results Query
-export function buildGetIntentFeedbackResultsOptions(
-  variables: IntentFeedbackResultsQueryVariables,
+export function buildGetEventFeedbackResultsOptions(
+  variables: EventFeedbackResultsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      IntentFeedbackResultsQuery,
+      EventFeedbackResultsQuery,
       Error,
-      IntentFeedbackResultsQuery['intentFeedbackResults'],
+      EventFeedbackResultsQuery['eventFeedbackResults'],
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ): UseQueryOptions<
-  IntentFeedbackResultsQuery,
+  EventFeedbackResultsQuery,
   Error,
-  IntentFeedbackResultsQuery['intentFeedbackResults'],
+  EventFeedbackResultsQuery['eventFeedbackResults'],
   QueryKey
 > {
   return {
     queryKey: GET_FEEDBACK_RESULTS_KEY(variables) as unknown as QueryKey,
     queryFn: async () =>
       gqlClient.request<
-        IntentFeedbackResultsQuery,
-        IntentFeedbackResultsQueryVariables
-      >(IntentFeedbackResultsDocument, variables),
-    select: (data) => data.intentFeedbackResults,
+        EventFeedbackResultsQuery,
+        EventFeedbackResultsQueryVariables
+      >(EventFeedbackResultsDocument, variables),
+    select: (data) => data.eventFeedbackResults,
     ...(options ?? {}),
   };
 }
@@ -187,34 +187,34 @@ export function buildGetCanSubmitFeedbackOptions(
 /* --------------------------------- HOOKS --------------------------------- */
 
 // Queries
-export function useIntentFeedbackQuestionsQuery(
-  variables: IntentFeedbackQuestionsQueryVariables,
+export function useEventFeedbackQuestionsQuery(
+  variables: EventFeedbackQuestionsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      IntentFeedbackQuestionsQuery,
+      EventFeedbackQuestionsQuery,
       Error,
-      IntentFeedbackQuestionsQuery['intentFeedbackQuestions'],
+      EventFeedbackQuestionsQuery['eventFeedbackQuestions'],
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery(buildGetIntentFeedbackQuestionsOptions(variables, options));
+  return useQuery(buildGetEventFeedbackQuestionsOptions(variables, options));
 }
 
-export function useIntentFeedbackResultsQuery(
-  variables: IntentFeedbackResultsQueryVariables,
+export function useEventFeedbackResultsQuery(
+  variables: EventFeedbackResultsQueryVariables,
   options?: Omit<
     UseQueryOptions<
-      IntentFeedbackResultsQuery,
+      EventFeedbackResultsQuery,
       Error,
-      IntentFeedbackResultsQuery['intentFeedbackResults'],
+      EventFeedbackResultsQuery['eventFeedbackResults'],
       QueryKey
     >,
     'queryKey' | 'queryFn'
   >
 ) {
-  return useQuery(buildGetIntentFeedbackResultsOptions(variables, options));
+  return useQuery(buildGetEventFeedbackResultsOptions(variables, options));
 }
 
 export function useMyFeedbackAnswersQuery(
@@ -272,8 +272,8 @@ export function useCreateFeedbackQuestionMutation(
       // Invalidate questions list
       queryClient.invalidateQueries({
         queryKey: [
-          'GetIntentFeedbackQuestions',
-          { intentId: variables.input.intentId },
+          'GetEventFeedbackQuestions',
+          { eventId: variables.input.eventId },
         ],
       });
     },
@@ -303,7 +303,7 @@ export function useUpdateFeedbackQuestionMutation(
     onSuccess: () => {
       // Invalidate all questions queries
       queryClient.invalidateQueries({
-        queryKey: ['GetIntentFeedbackQuestions'],
+        queryKey: ['GetEventFeedbackQuestions'],
       });
     },
     ...options,
@@ -332,7 +332,7 @@ export function useDeleteFeedbackQuestionMutation(
     onSuccess: () => {
       // Invalidate all questions queries
       queryClient.invalidateQueries({
-        queryKey: ['GetIntentFeedbackQuestions'],
+        queryKey: ['GetEventFeedbackQuestions'],
       });
     },
     ...options,
@@ -361,10 +361,7 @@ export function useReorderFeedbackQuestionsMutation(
     onSuccess: (_data, variables) => {
       // Invalidate questions list
       queryClient.invalidateQueries({
-        queryKey: [
-          'GetIntentFeedbackQuestions',
-          { intentId: variables.intentId },
-        ],
+        queryKey: ['GetEventFeedbackQuestions', { eventId: variables.eventId }],
       });
     },
     ...options,
@@ -393,29 +390,29 @@ export function useSubmitReviewAndFeedbackMutation(
     onSuccess: (_data, variables) => {
       // Invalidate reviews
       queryClient.invalidateQueries({
-        queryKey: ['GetReviews', { intentId: variables.input.intentId }],
+        queryKey: ['GetReviews', { eventId: variables.input.eventId }],
       });
       // Invalidate my review
       queryClient.invalidateQueries({
-        queryKey: ['GetMyReview', { intentId: variables.input.intentId }],
+        queryKey: ['GetMyReview', { eventId: variables.input.eventId }],
       });
       // Invalidate feedback results
       queryClient.invalidateQueries({
         queryKey: [
-          'GetIntentFeedbackResults',
-          { intentId: variables.input.intentId },
+          'GetEventFeedbackResults',
+          { eventId: variables.input.eventId },
         ],
       });
       // Invalidate my feedback answers
       queryClient.invalidateQueries({
         queryKey: [
           'GetMyFeedbackAnswers',
-          { intentId: variables.input.intentId },
+          { eventId: variables.input.eventId },
         ],
       });
-      // Invalidate intent
+      // Invalidate event
       queryClient.invalidateQueries({
-        queryKey: ['GetIntent', { id: variables.input.intentId }],
+        queryKey: ['GetEvent', { id: variables.input.eventId }],
       });
     },
     ...options,
@@ -444,14 +441,14 @@ export function useSendFeedbackRequestsMutation(
   });
 }
 
-// Inline document for UpdateIntentFeedbackQuestions (until codegen runs)
-const UpdateIntentFeedbackQuestionsDocument = gql`
-  mutation UpdateIntentFeedbackQuestions(
-    $input: UpdateIntentFeedbackQuestionsInput!
+// Inline document for UpdateEventFeedbackQuestions (until codegen runs)
+const UpdateEventFeedbackQuestionsDocument = gql`
+  mutation UpdateEventFeedbackQuestions(
+    $input: UpdateEventFeedbackQuestionsInput!
   ) {
-    updateIntentFeedbackQuestions(input: $input) {
+    updateEventFeedbackQuestions(input: $input) {
       id
-      intentId
+      eventId
       order
       type
       label
@@ -465,11 +462,11 @@ const UpdateIntentFeedbackQuestionsDocument = gql`
   }
 `;
 
-// Types for UpdateIntentFeedbackQuestions (until codegen runs)
-export type UpdateIntentFeedbackQuestionsMutation = {
-  updateIntentFeedbackQuestions: Array<{
+// Types for UpdateEventFeedbackQuestions (until codegen runs)
+export type UpdateEventFeedbackQuestionsMutation = {
+  updateEventFeedbackQuestions: Array<{
     id: string;
-    intentId: string;
+    eventId: string;
     order: number;
     type: string;
     label: string;
@@ -482,9 +479,9 @@ export type UpdateIntentFeedbackQuestionsMutation = {
   }>;
 };
 
-export type UpdateIntentFeedbackQuestionsMutationVariables = {
+export type UpdateEventFeedbackQuestionsMutationVariables = {
   input: {
-    intentId: string;
+    eventId: string;
     questions: Array<{
       type: 'TEXT' | 'SINGLE_CHOICE' | 'MULTI_CHOICE';
       label: string;
@@ -497,38 +494,38 @@ export type UpdateIntentFeedbackQuestionsMutationVariables = {
   };
 };
 
-// Bulk Update Feedback Questions (replaces all questions for intent)
-export function useUpdateIntentFeedbackQuestionsMutation(
+// Bulk Update Feedback Questions (replaces all questions for event)
+export function useUpdateEventFeedbackQuestionsMutation(
   options?: UseMutationOptions<
-    UpdateIntentFeedbackQuestionsMutation,
+    UpdateEventFeedbackQuestionsMutation,
     Error,
-    UpdateIntentFeedbackQuestionsMutationVariables
+    UpdateEventFeedbackQuestionsMutationVariables
   >
 ) {
   const queryClient = getQueryClient();
   return useMutation<
-    UpdateIntentFeedbackQuestionsMutation,
+    UpdateEventFeedbackQuestionsMutation,
     Error,
-    UpdateIntentFeedbackQuestionsMutationVariables
+    UpdateEventFeedbackQuestionsMutationVariables
   >({
     mutationFn: async (variables) =>
       gqlClient.request<
-        UpdateIntentFeedbackQuestionsMutation,
-        UpdateIntentFeedbackQuestionsMutationVariables
-      >(UpdateIntentFeedbackQuestionsDocument, variables),
+        UpdateEventFeedbackQuestionsMutation,
+        UpdateEventFeedbackQuestionsMutationVariables
+      >(UpdateEventFeedbackQuestionsDocument, variables),
     onSuccess: (_data, variables) => {
       // Invalidate questions list
       queryClient.invalidateQueries({
         queryKey: [
-          'GetIntentFeedbackQuestions',
-          { intentId: variables.input.intentId },
+          'GetEventFeedbackQuestions',
+          { eventId: variables.input.eventId },
         ],
       });
       // Invalidate results as well since questions might have changed
       queryClient.invalidateQueries({
         queryKey: [
-          'GetIntentFeedbackResults',
-          { intentId: variables.input.intentId },
+          'GetEventFeedbackResults',
+          { eventId: variables.input.eventId },
         ],
       });
     },

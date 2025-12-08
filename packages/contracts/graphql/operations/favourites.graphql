@@ -1,4 +1,4 @@
-# Intent Favourites Operations
+# Event Favourites Operations
 
 # Queries
 query MyFavourites($limit: Int = 20, $offset: Int = 0) {
@@ -6,9 +6,9 @@ query MyFavourites($limit: Int = 20, $offset: Int = 0) {
     items {
       id
       userId
-      intentId
+      eventId
       createdAt
-      intent {
+      event {
         id
         title
         description
@@ -63,16 +63,16 @@ query MyFavourites($limit: Int = 20, $offset: Int = 0) {
   }
 }
 
-query IsFavourite($intentId: ID!) {
-  isFavourite(intentId: $intentId)
+query IsFavourite($eventId: ID!) {
+  isFavourite(eventId: $eventId)
 }
 
 # Mutations
-mutation ToggleFavourite($intentId: ID!) {
-  toggleFavourite(intentId: $intentId) {
+mutation ToggleFavourite($eventId: ID!) {
+  toggleFavourite(eventId: $eventId) {
     id
     userId
-    intentId
+    eventId
     createdAt
   }
 }

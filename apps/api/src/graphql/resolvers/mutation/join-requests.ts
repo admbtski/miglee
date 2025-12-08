@@ -1,12 +1,12 @@
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
-import { mapIntent } from '../helpers';
+import { mapEvent } from '../helpers';
 
 /**
- * Request to join an intent with answers to join questions (REQUEST mode)
+ * Request to join an event with answers to join questions (REQUEST mode)
  */
-export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoinIntentWithAnswers'] =
+export const requestJoinEventWithAnswersMutation: MutationResolvers['requestJoinEventWithAnswers'] =
   async (_parent, { input }, { user, pubsub }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
@@ -14,11 +14,11 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
       });
     }
 
-    const { intentId, answers } = input;
+    const { eventId, answers } = input;
 
-    // Fetch intent with all necessary data
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Fetch event with all necessary data
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       include: {
         categories: true,
         tags: true,
@@ -37,21 +37,21 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
-    // Check if intent is deleted or canceled
-    if (intent.deletedAt) {
-      throw new GraphQLError('Cannot join a deleted intent', {
+    // Check if event is deleted or canceled
+    if (event.deletedAt) {
+      throw new GraphQLError('Cannot join a deleted event', {
         extensions: { code: 'FORBIDDEN' },
       });
     }
 
-    if (intent.canceledAt) {
-      throw new GraphQLError('Cannot join a canceled intent', {
+    if (event.canceledAt) {
+      throw new GraphQLError('Cannot join a canceled event', {
         extensions: { code: 'FORBIDDEN' },
       });
     }
@@ -61,18 +61,18 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
     // In REQUEST mode, user is PENDING and needs approval
 
     // Check existing membership
-    const existingMember = intent.members.find((m) => m.userId === user.id);
+    const existingMember = event.members.find((m) => m.userId === user.id);
 
     if (existingMember) {
       if (existingMember.status === 'JOINED') {
-        throw new GraphQLError('You are already a member of this intent', {
+        throw new GraphQLError('You are already a member of this event', {
           extensions: { code: 'ALREADY_MEMBER' },
         });
       }
 
       if (existingMember.status === 'PENDING') {
         throw new GraphQLError(
-          'You already have a pending request for this intent',
+          'You already have a pending request for this event',
           {
             extensions: { code: 'ALREADY_PENDING' },
           }
@@ -80,14 +80,14 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
       }
 
       if (existingMember.status === 'BANNED') {
-        throw new GraphQLError('You are banned from this intent', {
+        throw new GraphQLError('You are banned from this event', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
 
       if (existingMember.status === 'REJECTED') {
         throw new GraphQLError(
-          'Your previous request was rejected. You cannot re-apply to this intent.',
+          'Your previous request was rejected. You cannot re-apply to this event.',
           {
             extensions: { code: 'FORBIDDEN' },
           }
@@ -96,8 +96,8 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
     }
 
     // Fetch join questions
-    const questions = await prisma.intentJoinQuestion.findMany({
-      where: { intentId },
+    const questions = await prisma.eventJoinQuestion.findMany({
+      where: { eventId },
       orderBy: { order: 'asc' },
     });
 
@@ -167,33 +167,32 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
 
     // Determine member status based on join mode and capacity
     // Count current joined members
-    const joinedCount = await prisma.intentMember.count({
+    const joinedCount = await prisma.eventMember.count({
       where: {
-        intentId,
+        eventId,
         status: 'JOINED',
       },
     });
-    const isFull = intent.max !== null && joinedCount >= intent.max;
+    const isFull = event.max !== null && joinedCount >= event.max;
 
     // In OPEN mode: user is JOINED immediately (if not full)
     // In REQUEST mode: user is PENDING and needs approval
     const memberStatus =
-      intent.joinMode === 'OPEN' && !isFull ? 'JOINED' : 'PENDING';
-    const eventKind =
-      intent.joinMode === 'OPEN' && !isFull ? 'JOIN' : 'REQUEST';
+      event.joinMode === 'OPEN' && !isFull ? 'JOINED' : 'PENDING';
+    const eventKind = event.joinMode === 'OPEN' && !isFull ? 'JOIN' : 'REQUEST';
 
-    // Create or update IntentMember and save answers in a transaction
+    // Create or update EventMember and save answers in a transaction
     await prisma.$transaction(async (tx) => {
       // Create or update member
-      await tx.intentMember.upsert({
+      await tx.eventMember.upsert({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: user.id,
           },
         },
         create: {
-          intentId,
+          eventId,
           userId: user.id,
           status: memberStatus,
           role: 'PARTICIPANT',
@@ -206,17 +205,17 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
       });
 
       // Delete existing answers (if re-applying)
-      await tx.intentJoinAnswer.deleteMany({
+      await tx.eventJoinAnswer.deleteMany({
         where: {
-          intentId,
+          eventId,
           userId: user.id,
         },
       });
 
       // Create new answers
-      await tx.intentJoinAnswer.createMany({
+      await tx.eventJoinAnswer.createMany({
         data: answers.map((a) => ({
-          intentId,
+          eventId,
           userId: user.id,
           questionId: a.questionId,
           answer: a.answer,
@@ -225,16 +224,16 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
 
       // Update joinedCount if user was immediately joined
       if (memberStatus === 'JOINED') {
-        await tx.intent.update({
-          where: { id: intentId },
+        await tx.event.update({
+          where: { id: eventId },
           data: { joinedCount: { increment: 1 } },
         });
       }
 
       // Create member event
-      await tx.intentMemberEvent.create({
+      await tx.eventMemberEvent.create({
         data: {
-          intentId,
+          eventId,
           userId: user.id,
           actorId: user.id,
           kind: eventKind,
@@ -245,8 +244,8 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
     // Send notifications to owner and moderators only if user is PENDING (REQUEST mode)
     if (memberStatus === 'PENDING') {
       const recipientIds = [
-        intent.ownerId,
-        ...intent.members
+        event.ownerId,
+        ...event.members
           .filter((m) => m.role === 'MODERATOR' && m.status === 'JOINED')
           .map((m) => m.userId),
       ].filter((id): id is string => id !== null && id !== user.id);
@@ -257,14 +256,14 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
             data: {
               recipientId,
               kind: 'JOIN_REQUEST',
-              entityType: 'INTENT',
-              entityId: intentId,
+              entityType: 'EVENT',
+              entityId: eventId,
               actorId: user.id,
               title: null,
               body: null,
               data: {
-                intentId,
-                intentTitle: intent.title,
+                eventId,
+                eventTitle: event.title,
                 actorName: user.name,
               },
             },
@@ -273,9 +272,9 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
       );
     }
 
-    // Reload intent with full data for response
-    const updatedIntent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Reload event with full data for response
+    const updatedEvent = await prisma.event.findUnique({
+      where: { id: eventId },
       include: {
         categories: true,
         tags: true,
@@ -291,8 +290,8 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
       },
     });
 
-    if (!updatedIntent) {
-      throw new GraphQLError('Intent not found after update', {
+    if (!updatedEvent) {
+      throw new GraphQLError('Event not found after update', {
         extensions: { code: 'INTERNAL_SERVER_ERROR' },
       });
     }
@@ -300,13 +299,13 @@ export const requestJoinIntentWithAnswersMutation: MutationResolvers['requestJoi
     // Publish to pubsub if needed
     if (pubsub) {
       await pubsub.publish({
-        topic: `INTENT_UPDATED:${intentId}`,
-        payload: { intentUpdated: mapIntent(updatedIntent) },
+        topic: `EVENT_UPDATED:${eventId}`,
+        payload: { eventUpdated: mapEvent(updatedEvent) },
       });
     }
 
-    // Return updated intent
-    return mapIntent(updatedIntent);
+    // Return updated event
+    return mapEvent(updatedEvent);
   };
 
 /**
@@ -320,11 +319,11 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
       });
     }
 
-    const { intentId, userId: targetUserId } = input;
+    const { eventId, userId: targetUserId } = input;
 
-    // Fetch intent
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Fetch event
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       include: {
         categories: true,
         tags: true,
@@ -338,15 +337,15 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
     // Check permissions
-    const isOwner = intent.ownerId === user.id;
-    const isModerator = intent.members.some(
+    const isOwner = event.ownerId === user.id;
+    const isModerator = event.members.some(
       (m) =>
         m.userId === user.id &&
         (m.role === 'OWNER' || m.role === 'MODERATOR') &&
@@ -356,7 +355,7 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
 
     if (!isOwner && !isModerator && !isAdmin) {
       throw new GraphQLError(
-        'Only intent owner or moderators can approve requests',
+        'Only event owner or moderators can approve requests',
         {
           extensions: { code: 'FORBIDDEN' },
         }
@@ -364,7 +363,7 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
     }
 
     // Find target member
-    const targetMember = intent.members.find((m) => m.userId === targetUserId);
+    const targetMember = event.members.find((m) => m.userId === targetUserId);
 
     if (!targetMember) {
       throw new GraphQLError('Member not found', {
@@ -379,19 +378,19 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
     }
 
     // Check capacity
-    if (intent.joinedCount >= intent.max) {
-      throw new GraphQLError('Intent is full', {
-        extensions: { code: 'INTENT_FULL' },
+    if (event.joinedCount >= event.max) {
+      throw new GraphQLError('Event is full', {
+        extensions: { code: 'EVENT_FULL' },
       });
     }
 
     // Approve request in transaction
     await prisma.$transaction(async (tx) => {
       // Update member status
-      await tx.intentMember.update({
+      await tx.eventMember.update({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: targetUserId,
           },
         },
@@ -402,8 +401,8 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
       });
 
       // Increment joinedCount
-      await tx.intent.update({
-        where: { id: intentId },
+      await tx.event.update({
+        where: { id: eventId },
         data: {
           joinedCount: {
             increment: 1,
@@ -412,16 +411,16 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
       });
 
       // Create member events
-      await tx.intentMemberEvent.createMany({
+      await tx.eventMemberEvent.createMany({
         data: [
           {
-            intentId,
+            eventId,
             userId: targetUserId,
             actorId: user.id,
             kind: 'APPROVE',
           },
           {
-            intentId,
+            eventId,
             userId: targetUserId,
             actorId: user.id,
             kind: 'JOIN',
@@ -434,23 +433,23 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
     await prisma.notification.create({
       data: {
         recipientId: targetUserId,
-        kind: 'INTENT_MEMBERSHIP_APPROVED',
-        entityType: 'INTENT',
-        entityId: intentId,
+        kind: 'EVENT_MEMBERSHIP_APPROVED',
+        entityType: 'EVENT',
+        entityId: eventId,
         actorId: user.id,
         title: null,
         body: null,
         data: {
-          intentId,
-          intentTitle: intent.title,
+          eventId,
+          eventTitle: event.title,
           actorName: user.name,
         },
       },
     });
 
-    // Return updated intent
-    const updated = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Return updated event
+    const updated = await prisma.event.findUnique({
+      where: { id: eventId },
       include: {
         categories: true,
         tags: true,
@@ -467,7 +466,7 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
     });
 
     if (!updated) {
-      throw new GraphQLError('Intent not found after update', {
+      throw new GraphQLError('Event not found after update', {
         extensions: { code: 'INTERNAL_SERVER_ERROR' },
       });
     }
@@ -475,12 +474,12 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
     // Publish to pubsub
     if (pubsub) {
       await pubsub.publish({
-        topic: `INTENT_UPDATED:${intentId}`,
-        payload: { intentUpdated: mapIntent(updated) },
+        topic: `EVENT_UPDATED:${eventId}`,
+        payload: { eventUpdated: mapEvent(updated) },
       });
     }
 
-    return mapIntent(updated);
+    return mapEvent(updated);
   };
 
 /**
@@ -494,11 +493,11 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
       });
     }
 
-    const { intentId, userId: targetUserId, reason } = input;
+    const { eventId, userId: targetUserId, reason } = input;
 
-    // Fetch intent
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Fetch event
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       include: {
         categories: true,
         tags: true,
@@ -512,15 +511,15 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
     // Check permissions
-    const isOwner = intent.ownerId === user.id;
-    const isModerator = intent.members.some(
+    const isOwner = event.ownerId === user.id;
+    const isModerator = event.members.some(
       (m) =>
         m.userId === user.id &&
         (m.role === 'OWNER' || m.role === 'MODERATOR') &&
@@ -530,7 +529,7 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
 
     if (!isOwner && !isModerator && !isAdmin) {
       throw new GraphQLError(
-        'Only intent owner or moderators can reject requests',
+        'Only event owner or moderators can reject requests',
         {
           extensions: { code: 'FORBIDDEN' },
         }
@@ -538,7 +537,7 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
     }
 
     // Find target member
-    const targetMember = intent.members.find((m) => m.userId === targetUserId);
+    const targetMember = event.members.find((m) => m.userId === targetUserId);
 
     if (!targetMember) {
       throw new GraphQLError('Member not found', {
@@ -565,10 +564,10 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
     // Reject request in transaction
     await prisma.$transaction(async (tx) => {
       // Update member status
-      await tx.intentMember.update({
+      await tx.eventMember.update({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: targetUserId,
           },
         },
@@ -579,9 +578,9 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
       });
 
       // Create member event
-      await tx.intentMemberEvent.create({
+      await tx.eventMemberEvent.create({
         data: {
-          intentId,
+          eventId,
           userId: targetUserId,
           actorId: user.id,
           kind: 'REJECT',
@@ -594,24 +593,24 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
     await prisma.notification.create({
       data: {
         recipientId: targetUserId,
-        kind: 'INTENT_MEMBERSHIP_REJECTED',
-        entityType: 'INTENT',
-        entityId: intentId,
+        kind: 'EVENT_MEMBERSHIP_REJECTED',
+        entityType: 'EVENT',
+        entityId: eventId,
         actorId: user.id,
         title: null,
         body: null,
         data: {
-          intentId,
-          intentTitle: intent.title,
+          eventId,
+          eventTitle: event.title,
           actorName: user.name,
           reason: reason || undefined,
         },
       },
     });
 
-    // Return updated intent
-    const updated = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Return updated event
+    const updated = await prisma.event.findUnique({
+      where: { id: eventId },
       include: {
         categories: true,
         tags: true,
@@ -628,7 +627,7 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
     });
 
     if (!updated) {
-      throw new GraphQLError('Intent not found after update', {
+      throw new GraphQLError('Event not found after update', {
         extensions: { code: 'INTERNAL_SERVER_ERROR' },
       });
     }
@@ -636,12 +635,12 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
     // Publish to pubsub
     if (pubsub) {
       await pubsub.publish({
-        topic: `INTENT_UPDATED:${intentId}`,
-        payload: { intentUpdated: mapIntent(updated) },
+        topic: `EVENT_UPDATED:${eventId}`,
+        payload: { eventUpdated: mapEvent(updated) },
       });
     }
 
-    return mapIntent(updated);
+    return mapEvent(updated);
   };
 
 /**
@@ -649,7 +648,7 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
  * This is an update to the existing cancelJoinRequest mutation
  */
 export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
-  async (_parent, { intentId }, { user, pubsub }) => {
+  async (_parent, { eventId }, { user, pubsub }) => {
     if (!user) {
       throw new GraphQLError('Authentication required', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -657,17 +656,17 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
     }
 
     // Find member
-    const member = await prisma.intentMember.findUnique({
+    const member = await prisma.eventMember.findUnique({
       where: {
-        intentId_userId: {
-          intentId,
+        eventId_userId: {
+          eventId,
           userId: user.id,
         },
       },
     });
 
     if (!member) {
-      throw new GraphQLError('You are not a member of this intent', {
+      throw new GraphQLError('You are not a member of this event', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
@@ -681,10 +680,10 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
     // Cancel request in transaction
     await prisma.$transaction(async (tx) => {
       // Update status to CANCELLED
-      await tx.intentMember.update({
+      await tx.eventMember.update({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: user.id,
           },
         },
@@ -694,9 +693,9 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
       });
 
       // Create member event
-      await tx.intentMemberEvent.create({
+      await tx.eventMemberEvent.create({
         data: {
-          intentId,
+          eventId,
           userId: user.id,
           actorId: user.id,
           kind: 'CANCEL_REQUEST',
@@ -706,8 +705,8 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
 
     // Publish to pubsub
     if (pubsub) {
-      const intent = await prisma.intent.findUnique({
-        where: { id: intentId },
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
         include: {
           categories: true,
           tags: true,
@@ -723,10 +722,10 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
         },
       });
 
-      if (intent) {
+      if (event) {
         await pubsub.publish({
-          topic: `INTENT_UPDATED:${intentId}`,
-          payload: { intentUpdated: mapIntent(intent) },
+          topic: `EVENT_UPDATED:${eventId}`,
+          payload: { eventUpdated: mapEvent(event) },
         });
       }
     }

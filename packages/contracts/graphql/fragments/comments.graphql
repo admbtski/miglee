@@ -1,14 +1,14 @@
 # =============================================================================
 # Comment Fragments
 # =============================================================================
-# Fragments for intent comments and replies.
+# Fragments for event comments and replies.
 
 #import "./_core.graphql"
 #import "./_pagination.graphql"
 
 fragment CommentCore on Comment {
   id
-  intentId
+  eventId
   authorId
   threadId
   parentId

@@ -8,7 +8,7 @@ import { useI18n } from '@/lib/i18n/provider-ssr';
  * Usage:
  * ```tsx
  * const { localePath } = useLocalePath();
- * <Link href={localePath('/intent/123')}>View Intent</Link>
+ * <Link href={localePath('/event/123')}>View Event</Link>
  * ```
  */
 export function useLocalePath() {
@@ -17,8 +17,8 @@ export function useLocalePath() {
   /**
    * Prepend current locale to a path
    *
-   * @param path - Path without locale (e.g., '/intent/123')
-   * @returns Path with locale (e.g., '/pl/intent/123')
+   * @param path - Path without locale (e.g., '/event/123')
+   * @returns Path with locale (e.g., '/pl/event/123')
    */
   const localePath = (path: string): string => {
     // Ensure path starts with /

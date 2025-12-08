@@ -4,11 +4,11 @@
 # QUERIES - Content Moderation
 # ============================================
 
-query AdminComments($limit: Int, $offset: Int, $intentId: ID, $userId: ID) {
+query AdminComments($limit: Int, $offset: Int, $eventId: ID, $userId: ID) {
   adminComments(
     limit: $limit
     offset: $offset
-    intentId: $intentId
+    eventId: $eventId
     userId: $userId
   ) {
     items {
@@ -23,7 +23,7 @@ query AdminComments($limit: Int, $offset: Int, $intentId: ID, $userId: ID) {
         avatarKey
         avatarBlurhash
       }
-      intent {
+      event {
         id
         title
       }
@@ -39,14 +39,14 @@ query AdminComments($limit: Int, $offset: Int, $intentId: ID, $userId: ID) {
 query AdminReviews(
   $limit: Int
   $offset: Int
-  $intentId: ID
+  $eventId: ID
   $userId: ID
   $rating: Int
 ) {
   adminReviews(
     limit: $limit
     offset: $offset
-    intentId: $intentId
+    eventId: $eventId
     userId: $userId
     rating: $rating
   ) {
@@ -63,7 +63,7 @@ query AdminReviews(
         avatarKey
         avatarBlurhash
       }
-      intent {
+      event {
         id
         title
       }

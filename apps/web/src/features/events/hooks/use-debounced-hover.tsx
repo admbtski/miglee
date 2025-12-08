@@ -1,18 +1,21 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { HoveredIntentState, IntentHoverCallback } from '@/features/intents/types/intent';
+import type {
+  HoveredEventState,
+  EventHoverCallback,
+} from '@/features/events/types/event';
 
 const HOVER_DEBOUNCE_MS = 100;
 
 /**
- * Provides debounced hover state management for intent cards
+ * Provides debounced hover state management for event cards
  * Prevents excessive re-renders when hovering over cards quickly
  *
- * @returns Tuple of [hoveredIntent state, handleHover callback]
+ * @returns Tuple of [hoveredEvent state, handleHover callback]
  */
-export function useDebouncedHover(): [HoveredIntentState, IntentHoverCallback] {
-  const [hoveredIntent, setHoveredIntent] = useState<HoveredIntentState>(null);
+export function useDebouncedHover(): [HoveredEventState, EventHoverCallback] {
+  const [hoveredEvent, setHoveredEvent] = useState<HoveredEventState>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -23,18 +26,18 @@ export function useDebouncedHover(): [HoveredIntentState, IntentHoverCallback] {
     };
   }, []);
 
-  const handleIntentHover = useCallback<IntentHoverCallback>(
-    (intentId, lat, lng) => {
+  const handleEventHover = useCallback<EventHoverCallback>(
+    (eventId, lat, lng) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
       timeoutRef.current = setTimeout(() => {
-        if (!intentId) {
-          setHoveredIntent(null);
+        if (!eventId) {
+          setHoveredEvent(null);
         } else {
-          setHoveredIntent({
-            id: intentId,
+          setHoveredEvent({
+            id: eventId,
             lat: lat ?? null,
             lng: lng ?? null,
           });
@@ -44,5 +47,5 @@ export function useDebouncedHover(): [HoveredIntentState, IntentHoverCallback] {
     []
   );
 
-  return [hoveredIntent, handleIntentHover];
+  return [hoveredEvent, handleEventHover];
 }

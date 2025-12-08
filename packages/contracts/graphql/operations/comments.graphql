@@ -2,16 +2,16 @@
 # Comment Queries
 # =============================================================================
 
-# Get comments for an intent
+# Get comments for an event
 query GetComments(
-  $intentId: ID!
+  $eventId: ID!
   $limit: Int = 50
   $offset: Int = 0
   $threadId: ID
   $parentId: ID
 ) {
   comments(
-    intentId: $intentId
+    eventId: $eventId
     limit: $limit
     offset: $offset
     threadId: $threadId

@@ -14,20 +14,20 @@ import {
   updateTagMutation,
 } from './tags';
 
-// Intent mutations (create/update/delete)
+// Event mutations (create/update/delete)
 import {
-  cancelIntentMutation,
-  closeIntentJoinMutation,
-  createIntentMutation,
-  deleteIntentMutation,
-  reopenIntentJoinMutation,
-  updateIntentMutation,
+  cancelEventMutation,
+  closeEventJoinMutation,
+  createEventMutation,
+  deleteEventMutation,
+  reopenEventJoinMutation,
+  updateEventMutation,
   // Publication management
-  publishIntentMutation,
-  scheduleIntentPublicationMutation,
+  publishEventMutation,
+  scheduleEventPublicationMutation,
   cancelScheduledPublicationMutation,
-  unpublishIntentMutation,
-} from './intents';
+  unpublishEventMutation,
+} from './events';
 
 // Notification mutations
 import {
@@ -37,7 +37,7 @@ import {
   markNotificationReadMutation,
 } from './notifications';
 
-// Intent member / moderation mutations
+// Event member / moderation mutations
 import {
   acceptInviteMutation,
   approveMembershipMutation,
@@ -47,14 +47,14 @@ import {
   inviteMemberMutation,
   joinWaitlistOpenMutation,
   kickMemberMutation,
-  leaveIntentMutation,
+  leaveEventMutation,
   leaveWaitlistMutation,
   promoteFromWaitlistMutation,
   rejectMembershipMutation,
-  requestJoinIntentMutation,
+  requestJoinEventMutation,
   unbanMemberMutation,
   updateMemberRoleMutation,
-} from './intent-members';
+} from './event-members';
 
 // DM mutations
 import {
@@ -95,22 +95,22 @@ import {
 
 // Event Chat mutations
 import {
-  sendIntentMessageMutation,
-  editIntentMessageMutation,
-  deleteIntentMessageMutation,
-  markIntentChatReadMutation,
-  publishIntentTypingMutation,
+  sendEventMessageMutation,
+  editEventMessageMutation,
+  deleteEventMessageMutation,
+  markEventChatReadMutation,
+  publishEventTypingMutation,
 } from './event-chat';
 
 // User Blocks mutations
 import { blockUserMutation, unblockUserMutation } from './user-blocks';
 
-// Intent Invite Links mutations
+// Event Invite Links mutations
 import {
-  createIntentInviteLinkMutation,
-  updateIntentInviteLinkMutation,
-  revokeIntentInviteLinkMutation,
-  deleteIntentInviteLinkMutation,
+  createEventInviteLinkMutation,
+  updateEventInviteLinkMutation,
+  revokeEventInviteLinkMutation,
+  deleteEventInviteLinkMutation,
   joinByInviteLinkMutation,
 } from './invite-links';
 
@@ -128,7 +128,7 @@ import {
   reorderFeedbackQuestionsMutation,
   submitReviewAndFeedbackMutation,
   sendFeedbackRequestsMutation,
-  updateIntentFeedbackQuestionsMutation,
+  updateEventFeedbackQuestionsMutation,
 } from './feedback-questions';
 
 // FAQ mutations
@@ -136,7 +136,7 @@ import { faqMutations } from './faq';
 
 // Join Requests mutations
 import {
-  requestJoinIntentWithAnswersMutation,
+  requestJoinEventWithAnswersMutation,
   approveJoinRequestMutation,
   rejectJoinRequestMutation,
   cancelJoinRequestMutation as cancelJoinRequestMutationNew,
@@ -145,7 +145,7 @@ import {
 // Notification Preferences & Mutes mutations
 import {
   updateNotificationPreferencesMutation,
-  muteIntentMutation,
+  muteEventMutation,
   muteDmThreadMutation,
 } from './preferences-and-mutes';
 
@@ -155,9 +155,9 @@ import {
   removeDmReactionMutation,
 } from './dm-reactions';
 import {
-  addIntentReactionMutation,
-  removeIntentReactionMutation,
-} from './intent-reactions';
+  addEventReactionMutation,
+  removeEventReactionMutation,
+} from './event-reactions';
 
 import { devLoginMutation, devLogoutMutation } from './auth';
 
@@ -171,19 +171,19 @@ import {
   adminUnsuspendUserMutation,
 } from './admin-users';
 
-// Admin Intent Management mutations
+// Admin Event Management mutations
 import {
-  adminUpdateIntentMutation,
-  adminDeleteIntentMutation,
-  adminCancelIntentMutation,
-  adminRestoreIntentMutation,
-  adminChangeIntentOwnerMutation,
-  adminBulkUpdateIntentsMutation,
+  adminUpdateEventMutation,
+  adminDeleteEventMutation,
+  adminCancelEventMutation,
+  adminRestoreEventMutation,
+  adminChangeEventOwnerMutation,
+  adminBulkUpdateEventsMutation,
   adminUpdateMemberRoleMutation,
   adminKickMemberMutation,
   adminBanMemberMutation,
   adminUnbanMemberMutation,
-} from './admin-intents';
+} from './admin-events';
 
 // Admin Content Moderation mutations
 import {
@@ -231,7 +231,7 @@ import {
 } from './billing';
 
 // Appearance mutations
-import { updateIntentAppearanceMutation } from './appearance';
+import { updateEventAppearanceMutation } from './appearance';
 
 /**
  * Root Mutation resolvers map.
@@ -246,15 +246,15 @@ export const Mutation: Resolvers['Mutation'] = {
   adminSuspendUser: adminSuspendUserMutation,
   adminUnsuspendUser: adminUnsuspendUserMutation,
 
-  // ---- Admin Intent Management ----
-  adminUpdateIntent: adminUpdateIntentMutation,
-  adminDeleteIntent: adminDeleteIntentMutation,
-  adminCancelIntent: adminCancelIntentMutation,
-  adminRestoreIntent: adminRestoreIntentMutation,
-  adminChangeIntentOwner: adminChangeIntentOwnerMutation,
-  adminBulkUpdateIntents: adminBulkUpdateIntentsMutation,
+  // ---- Admin Event Management ----
+  adminUpdateEvent: adminUpdateEventMutation,
+  adminDeleteEvent: adminDeleteEventMutation,
+  adminCancelEvent: adminCancelEventMutation,
+  adminRestoreEvent: adminRestoreEventMutation,
+  adminChangeEventOwner: adminChangeEventOwnerMutation,
+  adminBulkUpdateEvents: adminBulkUpdateEventsMutation,
 
-  // ---- Admin Intent Member Management ----
+  // ---- Admin Event Member Management ----
   adminUpdateMemberRole: adminUpdateMemberRoleMutation,
   adminKickMember: adminKickMemberMutation,
   adminBanMember: adminBanMemberMutation,
@@ -274,26 +274,26 @@ export const Mutation: Resolvers['Mutation'] = {
   updateTag: updateTagMutation,
   deleteTag: deleteTagMutation,
 
-  // ---- Intent ----
-  createIntent: createIntentMutation,
-  updateIntent: updateIntentMutation,
-  cancelIntent: cancelIntentMutation,
-  deleteIntent: deleteIntentMutation,
-  closeIntentJoin: closeIntentJoinMutation,
-  reopenIntentJoin: reopenIntentJoinMutation,
+  // ---- Event ----
+  createEvent: createEventMutation,
+  updateEvent: updateEventMutation,
+  cancelEvent: cancelEventMutation,
+  deleteEvent: deleteEventMutation,
+  closeEventJoin: closeEventJoinMutation,
+  reopenEventJoin: reopenEventJoinMutation,
 
-  // ---- Intent Publication ----
-  publishIntent: publishIntentMutation,
-  scheduleIntentPublication: scheduleIntentPublicationMutation,
+  // ---- Event Publication ----
+  publishEvent: publishEventMutation,
+  scheduleEventPublication: scheduleEventPublicationMutation,
   cancelScheduledPublication: cancelScheduledPublicationMutation,
-  unpublishIntent: unpublishIntentMutation,
+  unpublishEvent: unpublishEventMutation,
 
-  // ---- Intent Members / Moderation ----
+  // ---- Event Members / Moderation ----
   acceptInvite: acceptInviteMutation,
-  requestJoinIntent: requestJoinIntentMutation,
-  requestJoinIntentWithAnswers: requestJoinIntentWithAnswersMutation,
+  requestJoinEvent: requestJoinEventMutation,
+  requestJoinEventWithAnswers: requestJoinEventWithAnswersMutation,
   cancelJoinRequest: cancelJoinRequestMutationNew, // Updated to handle CANCELLED status
-  leaveIntent: leaveIntentMutation,
+  leaveEvent: leaveEventMutation,
   inviteMember: inviteMemberMutation,
   approveMembership: approveMembershipMutation,
   approveJoinRequest: approveJoinRequestMutation,
@@ -327,11 +327,11 @@ export const Mutation: Resolvers['Mutation'] = {
   publishDmTyping: publishDmTypingMutation,
 
   // ---- Event Chat ----
-  sendIntentMessage: sendIntentMessageMutation,
-  editIntentMessage: editIntentMessageMutation,
-  deleteIntentMessage: deleteIntentMessageMutation,
-  markIntentChatRead: markIntentChatReadMutation,
-  publishIntentTyping: publishIntentTypingMutation,
+  sendEventMessage: sendEventMessageMutation,
+  editEventMessage: editEventMessageMutation,
+  deleteEventMessage: deleteEventMessageMutation,
+  markEventChatRead: markEventChatReadMutation,
+  publishEventTyping: publishEventTypingMutation,
 
   // ---- Comments ----
   createComment: createCommentMutation,
@@ -356,11 +356,11 @@ export const Mutation: Resolvers['Mutation'] = {
   blockUser: blockUserMutation,
   unblockUser: unblockUserMutation,
 
-  // ---- Intent Invite Links ----
-  createIntentInviteLink: createIntentInviteLinkMutation,
-  updateIntentInviteLink: updateIntentInviteLinkMutation,
-  revokeIntentInviteLink: revokeIntentInviteLinkMutation,
-  deleteIntentInviteLink: deleteIntentInviteLinkMutation,
+  // ---- Event Invite Links ----
+  createEventInviteLink: createEventInviteLinkMutation,
+  updateEventInviteLink: updateEventInviteLinkMutation,
+  revokeEventInviteLink: revokeEventInviteLinkMutation,
+  deleteEventInviteLink: deleteEventInviteLinkMutation,
   joinByInviteLink: joinByInviteLinkMutation,
 
   // ---- Favourites ----
@@ -373,24 +373,24 @@ export const Mutation: Resolvers['Mutation'] = {
   reorderFeedbackQuestions: reorderFeedbackQuestionsMutation,
   submitReviewAndFeedback: submitReviewAndFeedbackMutation,
   sendFeedbackRequests: sendFeedbackRequestsMutation,
-  updateIntentFeedbackQuestions: updateIntentFeedbackQuestionsMutation,
+  updateEventFeedbackQuestions: updateEventFeedbackQuestionsMutation,
 
   // ---- FAQ Management ----
-  updateIntentFaqs: faqMutations.updateIntentFaqs!,
+  updateEventFaqs: faqMutations.updateEventFaqs!,
 
   // ---- Join Questions Management ----
-  updateIntentJoinQuestions: joinQuestionsMutations.updateIntentJoinQuestions!,
+  updateEventJoinQuestions: joinQuestionsMutations.updateEventJoinQuestions!,
 
   // ---- Notification Preferences & Mutes ----
   updateNotificationPreferences: updateNotificationPreferencesMutation,
-  muteIntent: muteIntentMutation,
+  muteEvent: muteEventMutation,
   muteDmThread: muteDmThreadMutation,
 
   // ---- Reactions ----
   addDmReaction: addDmReactionMutation,
   removeDmReaction: removeDmReactionMutation,
-  addIntentReaction: addIntentReactionMutation,
-  removeIntentReaction: removeIntentReactionMutation,
+  addEventReaction: addEventReactionMutation,
+  removeEventReaction: removeEventReactionMutation,
 
   // ---- User Profile & Privacy ----
   updateUserProfile: updateUserProfileMutation,
@@ -427,7 +427,7 @@ export const Mutation: Resolvers['Mutation'] = {
   getEventSponsorshipReceiptUrl: getEventSponsorshipReceiptUrlMutation,
 
   // ---- Appearance ----
-  updateIntentAppearance: updateIntentAppearanceMutation,
+  updateEventAppearance: updateEventAppearanceMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

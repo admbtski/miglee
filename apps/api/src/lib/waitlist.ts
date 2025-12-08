@@ -9,7 +9,7 @@
 
 import type { Prisma } from '@prisma/client';
 import {
-  IntentMemberStatus,
+  EventMemberStatus,
   MemberEvent,
   NotificationKind,
 } from '@prisma/client';
@@ -21,9 +21,9 @@ type Tx = Omit<
 >;
 
 /**
- * Intent data required for join window evaluation
+ * Event data required for join window evaluation
  */
-export interface JoinWindowIntent {
+export interface JoinWindowEvent {
   startAt: Date;
   endAt: Date;
   allowJoinLate: boolean;
@@ -54,51 +54,48 @@ export type JoinWindowResult =
     };
 
 /**
- * Evaluates whether users can still join an intent based on time windows and settings.
+ * Evaluates whether users can still join an event based on time windows and settings.
  *
  * This is the single source of truth for join window logic.
  * Used by: joinMember, joinWaitlist, approveMembership, promoteFromWaitlist
  *
- * @param intent - Intent with timing and join settings
+ * @param event - Event with timing and join settings
  * @param now - Current time (defaults to new Date())
  * @returns Object indicating if join window is open and reason if closed
  */
 export function canStillJoin(
-  intent: JoinWindowIntent,
+  event: JoinWindowEvent,
   now: Date = new Date()
 ): JoinWindowResult {
   // Event canceled or deleted
-  if (intent.canceledAt) {
+  if (event.canceledAt) {
     return { open: false, reason: 'CANCELED' };
   }
-  if (intent.deletedAt) {
+  if (event.deletedAt) {
     return { open: false, reason: 'DELETED' };
   }
 
   // Manually closed by host/mod
-  if (intent.joinManuallyClosed) {
+  if (event.joinManuallyClosed) {
     return { open: false, reason: 'MANUALLY_CLOSED' };
   }
 
-  const start = new Date(intent.startAt);
-  const end = new Date(intent.endAt);
+  const start = new Date(event.startAt);
+  const end = new Date(event.endAt);
 
   // Pre-open window (optional)
   if (
-    intent.joinOpensMinutesBeforeStart != null &&
-    now <
-      new Date(start.getTime() - intent.joinOpensMinutesBeforeStart * 60_000)
+    event.joinOpensMinutesBeforeStart != null &&
+    now < new Date(start.getTime() - event.joinOpensMinutesBeforeStart * 60_000)
   ) {
     return { open: false, reason: 'NOT_OPEN_YET' };
   }
 
   // Cutoff before start (optional)
   if (
-    intent.joinCutoffMinutesBeforeStart != null &&
+    event.joinCutoffMinutesBeforeStart != null &&
     now >=
-      new Date(
-        start.getTime() - intent.joinCutoffMinutesBeforeStart * 60_000
-      ) &&
+      new Date(start.getTime() - event.joinCutoffMinutesBeforeStart * 60_000) &&
     now < start
   ) {
     return { open: false, reason: 'PRE_START_CUTOFF' };
@@ -106,14 +103,14 @@ export function canStillJoin(
 
   // After start
   if (now >= start) {
-    if (!intent.allowJoinLate) {
+    if (!event.allowJoinLate) {
       return { open: false, reason: 'LATE_JOIN_DISABLED' };
     }
     if (
-      intent.lateJoinCutoffMinutesAfterStart != null &&
+      event.lateJoinCutoffMinutesAfterStart != null &&
       now >=
         new Date(
-          start.getTime() + intent.lateJoinCutoffMinutesAfterStart * 60_000
+          start.getTime() + event.lateJoinCutoffMinutesAfterStart * 60_000
         ) &&
       now < end
     ) {
@@ -139,16 +136,16 @@ export function canStillJoin(
  * Safe to call multiple times - idempotent if no eligible candidates.
  *
  * @param tx - Prisma transaction client
- * @param intentId - ID of the intent
+ * @param eventId - ID of the event
  * @returns true if someone was promoted, false otherwise
  */
 export async function promoteFromWaitlist(
   tx: Tx,
-  intentId: string
+  eventId: string
 ): Promise<boolean> {
-  // 1. Load intent with current state
-  const intent = await tx.intent.findUnique({
-    where: { id: intentId },
+  // 1. Load event with current state
+  const event = await tx.event.findUnique({
+    where: { id: eventId },
     select: {
       id: true,
       title: true,
@@ -166,26 +163,26 @@ export async function promoteFromWaitlist(
     },
   });
 
-  if (!intent) {
+  if (!event) {
     return false;
   }
 
   // 2. Check join window
-  const joinWindow = canStillJoin(intent);
+  const joinWindow = canStillJoin(event);
   if (!joinWindow.open) {
     return false;
   }
 
   // 3. Check capacity
-  if (intent.joinedCount >= intent.max) {
+  if (event.joinedCount >= event.max) {
     return false;
   }
 
   // 4. Find next candidate (FIFO)
-  const candidate = await tx.intentMember.findFirst({
+  const candidate = await tx.eventMember.findFirst({
     where: {
-      intentId,
-      status: IntentMemberStatus.WAITLIST,
+      eventId,
+      status: EventMemberStatus.WAITLIST,
     },
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     select: {
@@ -201,10 +198,10 @@ export async function promoteFromWaitlist(
 
   // 5. Try to reserve slot with optimistic locking
   // This prevents race conditions when multiple operations try to promote simultaneously
-  const updated = await tx.intent.updateMany({
+  const updated = await tx.event.updateMany({
     where: {
-      id: intentId,
-      joinedCount: { lt: intent.max }, // Only update if still under capacity
+      id: eventId,
+      joinedCount: { lt: event.max }, // Only update if still under capacity
     },
     data: { joinedCount: { increment: 1 } },
   });
@@ -215,18 +212,18 @@ export async function promoteFromWaitlist(
   }
 
   // 6. Promote user
-  await tx.intentMember.update({
+  await tx.eventMember.update({
     where: { id: candidate.id },
     data: {
-      status: IntentMemberStatus.JOINED,
+      status: EventMemberStatus.JOINED,
       joinedAt: new Date(),
     },
   });
 
   // 7. Create audit event
-  await tx.intentMemberEvent.create({
+  await tx.eventMemberEvent.create({
     data: {
-      intentId,
+      eventId,
       userId: candidate.userId,
       actorId: null, // System action
       kind: MemberEvent.WAITLIST_PROMOTE,
@@ -239,12 +236,12 @@ export async function promoteFromWaitlist(
     data: {
       recipientId: candidate.userId,
       kind: NotificationKind.WAITLIST_PROMOTED,
-      entityType: 'INTENT',
-      entityId: intentId,
-      intentId,
+      entityType: 'EVENT',
+      entityId: eventId,
+      eventId,
       title: 'Zwolniło się miejsce!',
-      body: `Zostałeś automatycznie zapisany na wydarzenie "${intent.title}" z listy oczekujących.`,
-      dedupeKey: `waitlist-promoted-${intentId}-${candidate.userId}`,
+      body: `Zostałeś automatycznie zapisany na wydarzenie "${event.title}" z listy oczekujących.`,
+      dedupeKey: `waitlist-promoted-${eventId}-${candidate.userId}`,
     },
   });
 
@@ -259,19 +256,19 @@ export async function promoteFromWaitlist(
  * - Multiple users leave at once
  *
  * @param tx - Prisma transaction client
- * @param intentId - ID of the intent
+ * @param eventId - ID of the event
  * @param maxPromotions - Maximum number of users to promote (default: 10)
  * @returns Number of users promoted
  */
 export async function promoteMultipleFromWaitlist(
   tx: Tx,
-  intentId: string,
+  eventId: string,
   maxPromotions: number = 10
 ): Promise<number> {
   let promoted = 0;
 
   for (let i = 0; i < maxPromotions; i++) {
-    const success = await promoteFromWaitlist(tx, intentId);
+    const success = await promoteFromWaitlist(tx, eventId);
     if (!success) {
       break; // No more candidates or capacity reached
     }

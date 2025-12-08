@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDirs": ["src", "prisma"],
-    "noEmit": false
+    "noEmit": false,
+    "types": ["node"]
   },
   "include": ["src/**/*", "prisma/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]

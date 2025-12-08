@@ -1,7 +1,7 @@
 # Feedback fragments
-fragment FeedbackQuestion on IntentFeedbackQuestion {
+fragment FeedbackQuestion on EventFeedbackQuestion {
   id
-  intentId
+  eventId
   order
   type
   label
@@ -13,9 +13,9 @@ fragment FeedbackQuestion on IntentFeedbackQuestion {
   updatedAt
 }
 
-fragment FeedbackAnswer on IntentFeedbackAnswer {
+fragment FeedbackAnswer on EventFeedbackAnswer {
   id
-  intentId
+  eventId
   userId
   questionId
   answer
@@ -47,8 +47,8 @@ fragment FeedbackQuestionStats on FeedbackQuestionStats {
   }
 }
 
-fragment FeedbackResults on IntentFeedbackResults {
-  intentId
+fragment FeedbackResults on EventFeedbackResults {
+  eventId
   totalRespondents
   questionStats {
     ...FeedbackQuestionStats

@@ -48,9 +48,9 @@ export function buildUserCoverUrl(
 }
 
 /**
- * Build intent cover URL from coverKey with variant preset
+ * Build event cover URL from coverKey with variant preset
  */
-export function buildIntentCoverUrl(
+export function buildEventCoverUrl(
   coverKey: string | null | undefined,
   variant: CoverVariant = 'card'
 ): string | null {

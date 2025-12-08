@@ -1,0 +1,205 @@
+# =============================================================================
+# Event Queries
+# =============================================================================
+
+query GetEvents(
+  $limit: Int = 20
+  $offset: Int = 0
+  $visibility: Visibility
+  $joinMode: JoinMode
+  $ownerId: ID
+  $memberId: ID
+  $upcomingAfter: DateTime
+  $endingBefore: DateTime
+  $categorySlugs: [String!]
+  $tagSlugs: [String!]
+  $levels: [Level!]
+  $kinds: [MeetingKind!]
+  $keywords: [String!]
+  $status: EventStatus
+  $verifiedOnly: Boolean
+  $distanceKm: Float
+  $near: LocationInput
+  $sortBy: EventsSortBy = START_AT
+  $sortDir: SortDir = ASC
+) {
+  events(
+    limit: $limit
+    offset: $offset
+    visibility: $visibility
+    joinMode: $joinMode
+    ownerId: $ownerId
+    memberId: $memberId
+    upcomingAfter: $upcomingAfter
+    endingBefore: $endingBefore
+    categorySlugs: $categorySlugs
+    tagSlugs: $tagSlugs
+    levels: $levels
+    kinds: $kinds
+    keywords: $keywords
+    status: $status
+    verifiedOnly: $verifiedOnly
+    distanceKm: $distanceKm
+    near: $near
+    sortBy: $sortBy
+    sortDir: $sortDir
+  ) {
+    ...EventsResultCore
+  }
+}
+
+# Lightweight query for lists (better performance)
+# Dodano najczęstsze filtry: status/kinds/levels/keywords/verifiedOnly (+near)
+query GetEventsLight(
+  $limit: Int = 20
+  $offset: Int = 0
+  $visibility: Visibility
+  $upcomingAfter: DateTime
+  $endingBefore: DateTime
+  $categorySlugs: [String!]
+  $tagSlugs: [String!]
+  $levels: [Level!]
+  $kinds: [MeetingKind!]
+  $keywords: [String!]
+  $status: EventStatus
+  $verifiedOnly: Boolean
+  $distanceKm: Float
+  $near: LocationInput
+  $sortBy: EventsSortBy = START_AT
+  $sortDir: SortDir = ASC
+) {
+  events(
+    limit: $limit
+    offset: $offset
+    visibility: $visibility
+    upcomingAfter: $upcomingAfter
+    endingBefore: $endingBefore
+    categorySlugs: $categorySlugs
+    tagSlugs: $tagSlugs
+    levels: $levels
+    kinds: $kinds
+    keywords: $keywords
+    status: $status
+    verifiedOnly: $verifiedOnly
+    distanceKm: $distanceKm
+    near: $near
+    sortBy: $sortBy
+    sortDir: $sortDir
+  ) {
+    ...EventsResultLight
+  }
+}
+
+query GetEvent($id: ID!) {
+  event(id: $id) {
+    ...EventCore
+  }
+}
+
+query GetEventDetail($id: ID!) {
+  event(id: $id) {
+    ...EventDetail
+  }
+}
+
+query GetEventPermissions($eventId: ID!) {
+  eventPermissions(eventId: $eventId) {
+    isOwner
+    isModerator
+    isParticipant
+    isAppAdmin
+    isAppModerator
+    canManage
+  }
+}
+
+# =============================================================================
+# Event Mutations
+# =============================================================================
+
+mutation CreateEvent($input: CreateEventInput!) {
+  createEvent(input: $input) {
+    ...EventCore
+  }
+}
+
+mutation UpdateEvent($id: ID!, $input: UpdateEventInput!) {
+  updateEvent(id: $id, input: $input) {
+    ...EventCore
+  }
+}
+
+mutation DeleteEvent($id: ID!) {
+  deleteEvent(id: $id)
+}
+
+mutation CancelEvent($id: ID!, $reason: String) {
+  cancelEvent(id: $id, reason: $reason) {
+    ...EventCore
+  }
+}
+
+mutation CloseEventJoin($eventId: ID!, $reason: String) {
+  closeEventJoin(eventId: $eventId, reason: $reason) {
+    ...EventCore
+  }
+}
+
+mutation ReopenEventJoin($eventId: ID!) {
+  reopenEventJoin(eventId: $eventId) {
+    ...EventCore
+  }
+}
+
+# Publication mutations
+mutation PublishEvent($id: ID!) {
+  publishEvent(id: $id) {
+    ...EventCore
+  }
+}
+
+mutation ScheduleEventPublication($id: ID!, $publishAt: DateTime!) {
+  scheduleEventPublication(id: $id, publishAt: $publishAt) {
+    ...EventCore
+  }
+}
+
+mutation CancelScheduledPublication($id: ID!) {
+  cancelScheduledPublication(id: $id) {
+    ...EventCore
+  }
+}
+
+mutation UnpublishEvent($id: ID!) {
+  unpublishEvent(id: $id) {
+    ...EventCore
+  }
+}
+
+mutation UpdateEventFaqs($input: UpdateEventFaqsInput!) {
+  updateEventFaqs(input: $input) {
+    id
+    eventId
+    order
+    question
+    answer
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateEventJoinQuestions($input: UpdateEventJoinQuestionsInput!) {
+  updateEventJoinQuestions(input: $input) {
+    id
+    eventId
+    order
+    type
+    label
+    helpText
+    required
+    options
+    maxLength
+    createdAt
+    updatedAt
+  }
+}

@@ -10,8 +10,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 interface FeedbackEmailData {
   to: string;
   userName: string;
-  intentTitle: string;
-  intentId: string;
+  eventTitle: string;
+  eventId: string;
   feedbackUrl: string;
   hasFeedbackQuestions: boolean;
 }
@@ -23,8 +23,8 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
   const {
     to,
     userName,
-    intentTitle,
-    intentId,
+    eventitle,
+    eventId,
     feedbackUrl,
     hasFeedbackQuestions,
   } = data;
@@ -36,7 +36,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
     const result = await resend.emails.send({
       from: _from || process.env.EMAIL_FROM || 'Miglee <adaskoo05@gmail.com>',
       to: _to || to,
-      subject: `Jak oceniasz "${intentTitle}"?`,
+      subject: `Jak oceniasz "${eventitle}"?`,
       html: `
 <!DOCTYPE html>
 <html lang="pl">
@@ -68,7 +68,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
               </h2>
               
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
-                Dziękujemy za udział w wydarzeniu <strong>"${intentTitle}"</strong>!
+                Dziękujemy za udział w wydarzeniu <strong>"${eventitle}"</strong>!
               </p>
                
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
@@ -125,7 +125,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
       text: `
 Cześć ${userName}!
 
-Dziękujemy za udział w wydarzeniu "${intentTitle}"!
+Dziękujemy za udział w wydarzeniu "${eventitle}"!
 
 Twoja opinia jest dla nas bardzo ważna i pomoże nam ulepszyć przyszłe wydarzenia. 
 ${hasFeedbackQuestions ? 'Poprosimy Cię o wystawienie oceny oraz odpowiedź na kilka krótkich pytań.' : 'Poprosimy Cię o wystawienie oceny wydarzenia.'}
@@ -142,13 +142,13 @@ Ten email został wysłany, ponieważ brałeś/brałaś udział w wydarzeniu na 
     });
 
     logger.info(
-      { emailId: result.data?.id, to, intentId },
+      { emailId: result.data?.id, to, eventId },
       'Feedback email sent successfully'
     );
 
     return result;
   } catch (error) {
-    logger.error({ error, to, intentId }, 'Failed to send feedback email');
+    logger.error({ error, to, eventId }, 'Failed to send feedback email');
     throw error;
   }
 }
@@ -156,14 +156,14 @@ Ten email został wysłany, ponieważ brałeś/brałaś udział w wydarzeniu na 
 /**
  * Generate feedback URL with JWT token (placeholder for now)
  */
-export function generateFeedbackUrl(intentId: string, userId: string): string {
+export function generateFeedbackUrl(eventId: string, userId: string): string {
   const baseUrl = process.env.APP_URL || 'http://localhost:3000';
 
-  // TODO: Generate JWT token with intentId, userId, and expiry
-  // For now, just use the intentId (auth will be checked by canSubmitFeedback)
-  const token = `temp_${userId}_${intentId}`;
+  // TODO: Generate JWT token with eventId, userId, and expiry
+  // For now, just use the eventId (auth will be checked by canSubmitFeedback)
+  const token = `temp_${userId}_${eventId}`;
 
-  return `${baseUrl}/feedback/${intentId}?token=${token}`;
+  return `${baseUrl}/feedback/${eventId}?token=${token}`;
 }
 
 /**

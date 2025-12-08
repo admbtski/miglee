@@ -33,16 +33,16 @@ export const adminCommentsQuery: QueryResolvers['adminComments'] =
   resolverWithMetrics(
     'Query',
     'adminComments',
-    async (_p, { limit = 50, offset = 0, intentId, userId }, { user }) => {
+    async (_p, { limit = 50, offset = 0, eventId, userId }, { user }) => {
       requireAdmin(user);
 
-      const take = Math.max(1, Math.min(limit, 100));
-      const skip = Math.max(0, offset);
+      const take = Math.max(1, Math.min(limit!, 100));
+      const skip = Math.max(0, offset!);
 
       const where: Prisma.CommentWhereInput = {};
 
-      if (intentId) {
-        where.intentId = intentId;
+      if (eventId) {
+        where.eventId = eventId;
       }
 
       if (userId) {
@@ -55,7 +55,7 @@ export const adminCommentsQuery: QueryResolvers['adminComments'] =
         where,
         include: {
           author: true,
-          intent: {
+          event: {
             select: {
               id: true,
               title: true,
@@ -102,18 +102,18 @@ export const adminReviewsQuery: QueryResolvers['adminReviews'] =
     'adminReviews',
     async (
       _p,
-      { limit = 50, offset = 0, intentId, userId, rating },
+      { limit = 50, offset = 0, eventId, userId, rating },
       { user }
     ) => {
       requireAdmin(user);
 
-      const take = Math.max(1, Math.min(limit, 100));
-      const skip = Math.max(0, offset);
+      const take = Math.max(1, Math.min(limit!, 100));
+      const skip = Math.max(0, offset!);
 
       const where: Prisma.ReviewWhereInput = {};
 
-      if (intentId) {
-        where.intentId = intentId;
+      if (eventId) {
+        where.eventId = eventId;
       }
 
       if (userId) {
@@ -130,7 +130,7 @@ export const adminReviewsQuery: QueryResolvers['adminReviews'] =
         where,
         include: {
           author: true,
-          intent: {
+          event: {
             select: {
               id: true,
               title: true,
@@ -143,7 +143,7 @@ export const adminReviewsQuery: QueryResolvers['adminReviews'] =
       });
 
       return {
-        items: reviews.map((r) => mapReview(r as any, user.id)),
+        items: reviews.map((r) => mapReview(r as any, user?.id)),
         pageInfo: {
           total,
           hasMore: skip + take < total,

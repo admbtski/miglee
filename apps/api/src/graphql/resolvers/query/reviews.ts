@@ -7,23 +7,23 @@ import { mapReview } from '../helpers';
 
 const REVIEW_INCLUDE = {
   author: true,
-  intent: true,
+  event: true,
 } satisfies Prisma.ReviewInclude;
 
 /**
- * Query: Get reviews for an intent
+ * Query: Get reviews for an event
  */
 export const reviewsQuery: QueryResolvers['reviews'] = resolverWithMetrics(
   'Query',
   'reviews',
   async (_p, args) => {
-    const { intentId, limit, offset, rating } = args;
+    const { eventId, limit, offset, rating } = args;
 
     const take = Math.max(1, Math.min(limit ?? 20, 100));
     const skip = Math.max(0, offset ?? 0);
 
     const where: Prisma.ReviewWhereInput = {
-      intentId,
+      eventId,
       deletedAt: null,
     };
 
@@ -75,13 +75,13 @@ export const reviewQuery: QueryResolvers['review'] = resolverWithMetrics(
 );
 
 /**
- * Query: Get review statistics for an intent
+ * Query: Get review statistics for an event
  */
 export const reviewStatsQuery: QueryResolvers['reviewStats'] =
-  resolverWithMetrics('Query', 'reviewStats', async (_p, { intentId }) => {
+  resolverWithMetrics('Query', 'reviewStats', async (_p, { eventId }) => {
     const reviews = await prisma.review.findMany({
       where: {
-        intentId,
+        eventId,
         deletedAt: null,
       },
       select: {
@@ -135,12 +135,12 @@ export const reviewStatsQuery: QueryResolvers['reviewStats'] =
   });
 
 /**
- * Query: Get current user's review for an intent
+ * Query: Get current user's review for an event
  */
 export const myReviewQuery: QueryResolvers['myReview'] = resolverWithMetrics(
   'Query',
   'myReview',
-  async (_p, { intentId }, { user }) => {
+  async (_p, { eventId }, { user }) => {
     if (!user?.id) {
       throw new GraphQLError('Authentication required.', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -149,8 +149,8 @@ export const myReviewQuery: QueryResolvers['myReview'] = resolverWithMetrics(
 
     const review = await prisma.review.findUnique({
       where: {
-        intentId_authorId: {
-          intentId,
+        eventId_authorId: {
+          eventId,
           authorId: user.id,
         },
       },

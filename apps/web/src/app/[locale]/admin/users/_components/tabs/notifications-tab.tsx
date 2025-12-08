@@ -27,15 +27,15 @@ export function NotificationsTab({ userId }: NotificationsTabProps) {
 
   const getNotificationColor = (kind: string) => {
     switch (kind) {
-      case 'INTENT_INVITE':
+      case 'EVENT_INVITE':
         return 'text-blue-600 dark:text-blue-400';
-      case 'INTENT_JOIN_REQUEST':
+      case 'EVENT_JOIN_REQUEST':
         return 'text-purple-600 dark:text-purple-400';
-      case 'INTENT_APPROVED':
+      case 'EVENT_APPROVED':
         return 'text-green-600 dark:text-green-400';
-      case 'INTENT_REJECTED':
+      case 'EVENT_REJECTED':
         return 'text-red-600 dark:text-red-400';
-      case 'INTENT_MESSAGE':
+      case 'EVENT_MESSAGE':
         return 'text-indigo-600 dark:text-indigo-400';
       case 'DM_MESSAGE':
         return 'text-pink-600 dark:text-pink-400';

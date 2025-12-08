@@ -5,7 +5,7 @@
 import { prisma } from '../../../lib/prisma';
 import type {
   DmMessageResolvers,
-  IntentChatMessageResolvers,
+  EventChatMessageResolvers,
   MessageReaction,
 } from '../../__generated__/resolvers-types';
 import { mapUser } from '../helpers';
@@ -24,11 +24,11 @@ export const dmMessageReactionsResolver: DmMessageResolvers['reactions'] =
   };
 
 /**
- * Aggregate reactions for an Intent chat message
+ * Aggregate reactions for an Event chat message
  */
-export const intentChatMessageReactionsResolver: IntentChatMessageResolvers['reactions'] =
+export const eventChatMessageReactionsResolver: EventChatMessageResolvers['reactions'] =
   async (parent, _args, { user }) => {
-    const reactions = await prisma.intentChatMessageReaction.findMany({
+    const reactions = await prisma.eventChatMessageReaction.findMany({
       where: { messageId: parent.id },
       include: { user: true },
     });

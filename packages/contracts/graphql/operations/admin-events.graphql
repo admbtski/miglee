@@ -1,0 +1,94 @@
+# Admin Event Management Operations
+
+# ============================================
+# MUTATIONS - Event Management
+# ============================================
+
+mutation AdminUpdateEvent($id: ID!, $input: UpdateEventInput!) {
+  adminUpdateEvent(id: $id, input: $input) {
+    id
+    title
+    visibility
+    joinManuallyClosed
+    joinManualCloseReason
+    updatedAt
+  }
+}
+
+mutation AdminDeleteEvent($id: ID!) {
+  adminDeleteEvent(id: $id)
+}
+
+mutation AdminCancelEvent($id: ID!, $reason: String) {
+  adminCancelEvent(id: $id, reason: $reason) {
+    id
+    title
+    canceledAt
+    cancelReason
+  }
+}
+
+mutation AdminRestoreEvent($id: ID!) {
+  adminRestoreEvent(id: $id) {
+    id
+    title
+    canceledAt
+    deletedAt
+  }
+}
+
+mutation AdminChangeEventOwner($eventId: ID!, $newOwnerId: ID!) {
+  adminChangeEventOwner(eventId: $eventId, newOwnerId: $newOwnerId) {
+    id
+    title
+    owner {
+      id
+      name
+      avatarKey
+      avatarBlurhash
+    }
+  }
+}
+
+mutation AdminBulkUpdateEvents(
+  $ids: [ID!]!
+  $input: AdminBulkUpdateEventsInput!
+) {
+  adminBulkUpdateEvents(ids: $ids, input: $input) {
+    success
+    failed
+    errors
+  }
+}
+
+# ============================================
+# MUTATIONS - Event Member Management
+# ============================================
+
+mutation AdminUpdateMemberRole($input: UpdateMemberRoleInput!) {
+  adminUpdateMemberRole(input: $input) {
+    id
+    title
+  }
+}
+
+mutation AdminKickMember($input: KickMemberInput!) {
+  adminKickMember(input: $input) {
+    id
+    title
+  }
+}
+
+mutation AdminBanMember($input: BanMemberInput!) {
+  adminBanMember(input: $input) {
+    id
+    title
+  }
+}
+
+mutation AdminUnbanMember($input: UnbanMemberInput!) {
+  adminUnbanMember(input: $input) {
+    id
+    title
+  }
+}

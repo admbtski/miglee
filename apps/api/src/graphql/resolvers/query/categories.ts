@@ -138,8 +138,8 @@ export const getCategoryUsageCountQuery: QueryResolvers['getCategoryUsageCount']
         return 0;
       }
 
-      // Count intents that use this category (many-to-many relation)
-      const count = await prisma.intent.count({
+      // Count events that use this category (many-to-many relation)
+      const count = await prisma.event.count({
         where: {
           categories: {
             some: {

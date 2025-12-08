@@ -9,18 +9,18 @@ import { prisma } from '../../../lib/prisma';
 
 export const faqMutations: Partial<MutationResolvers> = {
   /**
-   * Update (replace) all FAQs for an intent
+   * Update (replace) all FAQs for an event
    * Only owner/moderators can update FAQs
    * This is a bulk replace operation - all existing FAQs are deleted and replaced
    */
-  updateIntentFaqs: async (_parent, { input }, { user }) => {
+  updateEventFaqs: async (_parent, { input }, { user }) => {
     if (!user) {
       throw new GraphQLError('You must be logged in to update FAQs', {
         extensions: { code: 'UNAUTHENTICATED' },
       });
     }
 
-    const { intentId, faqs } = input;
+    const { eventId, faqs } = input;
 
     // Validate input
     if (faqs.length > 50) {
@@ -53,9 +53,9 @@ export const faqMutations: Partial<MutationResolvers> = {
       }
     }
 
-    // Check if intent exists
-    const intent = await prisma.intent.findUnique({
-      where: { id: intentId },
+    // Check if event exists
+    const event = await prisma.event.findUnique({
+      where: { id: eventId },
       select: {
         id: true,
         ownerId: true,
@@ -72,15 +72,15 @@ export const faqMutations: Partial<MutationResolvers> = {
       },
     });
 
-    if (!intent) {
-      throw new GraphQLError('Intent not found', {
+    if (!event) {
+      throw new GraphQLError('Event not found', {
         extensions: { code: 'NOT_FOUND' },
       });
     }
 
     // Check permissions (owner or moderator)
-    const isOwner = intent.ownerId === user.id;
-    const isModerator = intent.members.some((m) => m.role === 'MODERATOR');
+    const isOwner = event.ownerId === user.id;
+    const isModerator = event.members.some((m) => m.role === 'MODERATOR');
 
     if (!isOwner && !isModerator) {
       throw new GraphQLError('Only event owner or moderators can manage FAQs', {
@@ -91,16 +91,16 @@ export const faqMutations: Partial<MutationResolvers> = {
     // Delete all existing FAQs and create new ones in a transaction
     const updatedFaqs = await prisma.$transaction(async (tx) => {
       // Delete all existing FAQs
-      await tx.intentFaq.deleteMany({
-        where: { intentId },
+      await tx.eventFaq.deleteMany({
+        where: { eventId },
       });
 
       // Create new FAQs with order
       const createdFaqs = await Promise.all(
         faqs.map((faq, index) =>
-          tx.intentFaq.create({
+          tx.eventFaq.create({
             data: {
-              intentId,
+              eventId,
               question: faq.question.trim(),
               answer: faq.answer.trim(),
               order: index,

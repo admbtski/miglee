@@ -41,7 +41,7 @@ type ChatThreadProps = {
     messageId: string,
     content: string,
     threadId?: string,
-    intentId?: string
+    eventId?: string
   ) => void;
   onDeleteMessage?: (messageId: string) => void;
   isDraft?: boolean;

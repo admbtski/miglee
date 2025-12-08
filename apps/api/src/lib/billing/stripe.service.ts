@@ -180,26 +180,23 @@ export function addDays(date: Date, days: number): Date {
 // ========================================================================================
 
 /**
- * Get receipt URL from Stripe PaymentIntent
+ * Get receipt URL from Stripe PaymentEvent
  */
-export async function getReceiptUrlFromPaymentIntent(
-  paymentIntentId: string
+export async function getReceiptUrlFromPaymentEvent(
+  paymentEventId: string
 ): Promise<string | null> {
   const stripe = getStripe();
 
   try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      paymentIntentId,
-      {
-        expand: ['latest_charge'],
-      }
-    );
+    const paymentEvent = await stripe.paymentEvents.retrieve(paymentEventId, {
+      expand: ['latest_charge'],
+    });
 
-    if (paymentIntent.latest_charge) {
+    if (paymentEvent.latest_charge) {
       const charge =
-        typeof paymentIntent.latest_charge === 'string'
-          ? await stripe.charges.retrieve(paymentIntent.latest_charge)
-          : paymentIntent.latest_charge;
+        typeof paymentEvent.latest_charge === 'string'
+          ? await stripe.charges.retrieve(paymentEvent.latest_charge)
+          : paymentEvent.latest_charge;
 
       return charge.receipt_url || null;
     }
@@ -207,8 +204,8 @@ export async function getReceiptUrlFromPaymentIntent(
     return null;
   } catch (error: any) {
     logger.error(
-      { paymentIntentId, error: error.message },
-      'Failed to retrieve receipt URL from PaymentIntent'
+      { paymentEventId, error: error.message },
+      'Failed to retrieve receipt URL from PaymentEvent'
     );
     return null;
   }

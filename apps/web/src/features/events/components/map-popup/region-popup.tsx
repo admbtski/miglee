@@ -1,16 +1,16 @@
 /**
- * Popup container for displaying multiple intents in a region with infinity scroll
+ * Popup container for displaying multiple events in a region with infinity scroll
  */
 
 import { memo, useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import clsx from 'clsx';
-import { PopupItem, PopupIntent } from './popup-item';
+import { PopupItem, PopupEvent } from './popup-item';
 import { PopupItemSkeleton } from './popup-item-skeleton';
 
 export interface RegionPopupProps {
-  intents: PopupIntent[];
-  onIntentClick?: (id: string) => void;
+  events: PopupEvent[];
+  onEventClick?: (id: string) => void;
   isLoading?: boolean;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
@@ -19,8 +19,8 @@ export interface RegionPopupProps {
 }
 
 export const RegionPopup = memo(function RegionPopup({
-  intents,
-  onIntentClick,
+  events,
+  onEventClick,
   isLoading,
   hasNextPage = false,
   isFetchingNextPage = false,
@@ -28,7 +28,7 @@ export const RegionPopup = memo(function RegionPopup({
   locale,
 }: RegionPopupProps) {
   // Show items if we have any, regardless of loading state
-  const showItems = intents.length > 0;
+  const showItems = events.length > 0;
   const showSkeletons = !showItems && isLoading;
 
   const handleEndReached = useCallback(() => {
@@ -38,11 +38,11 @@ export const RegionPopup = memo(function RegionPopup({
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 
   const Footer = useCallback(() => {
-    if (!hasNextPage && intents.length > 0) {
+    if (!hasNextPage && events.length > 0) {
       return (
         <div className="py-3 text-center">
           <span className="text-xs text-zinc-500">
-            Wszystko załadowane ({intents.length})
+            Wszystko załadowane ({events.length})
           </span>
         </div>
       );
@@ -55,27 +55,27 @@ export const RegionPopup = memo(function RegionPopup({
       );
     }
     return null;
-  }, [hasNextPage, isFetchingNextPage, intents.length]);
+  }, [hasNextPage, isFetchingNextPage, events.length]);
 
   const renderItem = useCallback(
     (index: number) => {
-      const intent = intents[index];
-      if (!intent) return null;
+      const event = events[index];
+      if (!event) return null;
       return (
         <PopupItem
-          key={intent.id}
-          intent={intent}
-          onClick={onIntentClick}
+          key={event.id}
+          event={event}
+          onClick={onEventClick}
           locale={locale}
         />
       );
     },
-    [intents, onIntentClick, locale]
+    [events, onEventClick, locale]
   );
 
   const computeItemKey = useCallback(
-    (index: number) => intents[index]?.id || `item-${index}`,
-    [intents]
+    (index: number) => events[index]?.id || `item-${index}`,
+    [events]
   );
 
   const virtuosoComponents = useMemo(
@@ -127,8 +127,8 @@ export const RegionPopup = memo(function RegionPopup({
         {/* Scrollable content */}
         <Virtuoso
           style={{ height: '420px', width: '100%' }}
-          data={intents}
-          totalCount={intents.length}
+          data={events}
+          totalCount={events.length}
           endReached={handleEndReached}
           overscan={5}
           atBottomThreshold={400}

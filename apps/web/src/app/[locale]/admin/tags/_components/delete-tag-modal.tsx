@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { Modal } from '@/components/feedback/modal';
 import { Trash2, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
-import { useDeleteTagMutation, useGetTagUsageCountQuery } from '@/features/tags/api/tags';
+import {
+  useDeleteTagMutation,
+  useGetTagUsageCountQuery,
+} from '@/features/tags/api/tags';
 import Link from 'next/link';
 
 type DeleteTagModalProps = {
@@ -106,7 +109,7 @@ export function DeleteTagModal({ open, onClose, tag }: DeleteTagModalProps) {
 
               <div className="mt-4">
                 <Link
-                  href={`/admin/intents?tagSlugs=${tag.slug}`}
+                  href={`/admin/events?tagSlugs=${tag.slug}`}
                   className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline dark:text-blue-400"
                   onClick={handleClose}
                 >

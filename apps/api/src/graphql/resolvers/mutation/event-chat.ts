@@ -25,27 +25,27 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { requireEventChatModerator, requireJoinedMember } from '../chat-guards';
 import {
-  mapIntentChatMessage,
-  type IntentChatMessageWithGraph,
+  mapEventChatMessage,
+  type EventChatMessageWithGraph,
 } from '../helpers';
 
 const MESSAGE_INCLUDE = {
   author: true,
-  intent: true,
+  event: true,
   replyTo: {
     include: {
       author: true,
     },
   },
-} satisfies Prisma.IntentChatMessageInclude;
+} satisfies Prisma.EventChatMessageInclude;
 
 /**
  * Mutation: Send a message in event chat
  */
-export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
+export const sendEventMessageMutation: MutationResolvers['sendEventMessage'] =
   resolverWithMetrics(
     'Mutation',
-    'sendIntentMessage',
+    'sendEventMessage',
     async (_p, { input }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -53,26 +53,26 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
         });
       }
 
-      const { intentId, content, replyToId } = input;
+      const { eventId, content, replyToId } = input;
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       // Rate limit
-      await checkEventChatSendRateLimit(user.id, intentId);
+      await checkEventChatSendRateLimit(user.id, eventId);
 
       // Sanitize content
       const sanitizedContent = sanitizeMessageContent(content);
 
       // Validate replyTo if provided
       if (replyToId) {
-        const replyTo = await prisma.intentChatMessage.findUnique({
+        const replyTo = await prisma.eventChatMessage.findUnique({
           where: { id: replyToId },
-          select: { intentId: true, deletedAt: true },
+          select: { eventId: true, deletedAt: true },
         });
 
-        if (!replyTo || replyTo.intentId !== intentId) {
-          throw new GraphQLError('Reply target not found in this intent.', {
+        if (!replyTo || replyTo.eventId !== eventId) {
+          throw new GraphQLError('Reply target not found in this event.', {
             extensions: { code: 'BAD_USER_INPUT', field: 'replyToId' },
           });
         }
@@ -86,9 +86,9 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
 
       // Create message in transaction (update messagesCount)
       const message = await prisma.$transaction(async (tx) => {
-        const msg = await tx.intentChatMessage.create({
+        const msg = await tx.eventChatMessage.create({
           data: {
-            intentId,
+            eventId,
             authorId: user.id,
             content: sanitizedContent,
             replyToId: replyToId || null,
@@ -96,9 +96,9 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
           include: MESSAGE_INCLUDE,
         });
 
-        // Update intent messagesCount
-        await tx.intent.update({
-          where: { id: intentId },
+        // Update event messagesCount
+        await tx.event.update({
+          where: { id: eventId },
           data: { messagesCount: { increment: 1 } },
         });
 
@@ -107,18 +107,18 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
 
       // Publish to WebSocket subscribers
       await pubsub.publish({
-        topic: `intentMessageAdded:${intentId}`,
+        topic: `eventMessageAdded:${eventId}`,
         payload: {
-          intentMessageAdded: mapIntentChatMessage(
-            message as IntentChatMessageWithGraph
+          eventMessageAdded: mapEventChatMessage(
+            message as EventChatMessageWithGraph
           ),
         },
       });
 
       // Create notifications for other JOINED members (skip muted users)
-      const members = await prisma.intentMember.findMany({
+      const members = await prisma.eventMember.findMany({
         where: {
-          intentId,
+          eventId,
           status: 'JOINED',
           userId: { not: user.id },
         },
@@ -126,9 +126,9 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
       });
 
       // Get muted users
-      const mutes = await prisma.intentMute.findMany({
+      const mutes = await prisma.eventMute.findMany({
         where: {
-          intentId,
+          eventId,
           muted: true,
         },
         select: { userId: true },
@@ -136,9 +136,9 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
 
       const mutedUserIds = new Set(mutes?.map((m) => m.userId) ?? []);
 
-      // Fetch intent title for notification data
-      const intent = await prisma.intent.findUnique({
-        where: { id: intentId },
+      // Fetch event title for notification data
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
         select: { title: true },
       });
 
@@ -146,18 +146,18 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
       const notificationsToCreate = (members ?? [])
         .filter((m) => !mutedUserIds.has(m.userId))
         .map((m) => ({
-          kind: PrismaNotificationKind.INTENT_CHAT_MESSAGE,
+          kind: PrismaNotificationKind.EVENT_CHAT_MESSAGE,
           recipientId: m.userId,
           actorId: user.id,
-          entityType: PrismaNotificationEntity.INTENT,
-          entityId: intentId,
-          intentId,
+          entityType: PrismaNotificationEntity.EVENT,
+          entityId: eventId,
+          eventId,
           title: null,
           body: null,
-          dedupeKey: `event-chat:${intentId}:${message.id}`,
+          dedupeKey: `event-chat:${eventId}:${message.id}`,
           data: {
-            intentId,
-            intentTitle: intent?.title,
+            eventId,
+            eventTitle: event?.title,
             actorName: user.name,
             messageContent: sanitizedContent.substring(0, 100),
           },
@@ -170,17 +170,17 @@ export const sendIntentMessageMutation: MutationResolvers['sendIntentMessage'] =
         });
       }
 
-      return mapIntentChatMessage(message as IntentChatMessageWithGraph);
+      return mapEventChatMessage(message as EventChatMessageWithGraph);
     }
   );
 
 /**
  * Mutation: Edit a message (within 5 minutes)
  */
-export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
+export const editEventMessageMutation: MutationResolvers['editEventMessage'] =
   resolverWithMetrics(
     'Mutation',
-    'editIntentMessage',
+    'editEventMessage',
     async (_p, { id, input }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -194,11 +194,11 @@ export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
       await checkEditRateLimit(user.id);
 
       // Fetch message
-      const existing = await prisma.intentChatMessage.findUnique({
+      const existing = await prisma.eventChatMessage.findUnique({
         where: { id },
         select: {
           authorId: true,
-          intentId: true,
+          eventId: true,
           createdAt: true,
           deletedAt: true,
         },
@@ -236,7 +236,7 @@ export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
       const sanitizedContent = sanitizeMessageContent(content);
 
       // Update message
-      const updated = await prisma.intentChatMessage.update({
+      const updated = await prisma.eventChatMessage.update({
         where: { id },
         data: {
           content: sanitizedContent,
@@ -245,15 +245,13 @@ export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
         include: MESSAGE_INCLUDE,
       });
 
-      const result = mapIntentChatMessage(
-        updated as IntentChatMessageWithGraph
-      );
+      const result = mapEventChatMessage(updated as EventChatMessageWithGraph);
 
       // Publish update to WebSocket
       await pubsub.publish({
-        topic: `intentMessageUpdated:${existing.intentId}`,
+        topic: `eventMessageUpdated:${existing.eventId}`,
         payload: {
-          intentMessageUpdated: result,
+          eventMessageUpdated: result,
         },
       });
 
@@ -267,10 +265,10 @@ export const editIntentMessageMutation: MutationResolvers['editIntentMessage'] =
  * - Moderator/Owner can soft-delete anytime
  * - Owner/Admin can hard-delete
  */
-export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage'] =
+export const deleteEventMessageMutation: MutationResolvers['deleteEventMessage'] =
   resolverWithMetrics(
     'Mutation',
-    'deleteIntentMessage',
+    'deleteEventMessage',
     async (_p, { id, soft = true }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -282,14 +280,14 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
       await checkDeleteRateLimit(user.id);
 
       // Fetch message
-      const existing = await prisma.intentChatMessage.findUnique({
+      const existing = await prisma.eventChatMessage.findUnique({
         where: { id },
         select: {
           authorId: true,
-          intentId: true,
+          eventId: true,
           createdAt: true,
           deletedAt: true,
-          intent: {
+          event: {
             select: {
               ownerId: true,
             },
@@ -302,7 +300,7 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
       }
 
       const isAuthor = existing.authorId === user.id;
-      const isOwner = existing.intent.ownerId === user.id;
+      const isOwner = existing.event.ownerId === user.id;
       const isAdmin = user.role === Role.ADMIN;
 
       // Check permissions for soft delete
@@ -319,7 +317,7 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
           }
         } else {
           // Moderator/Owner can soft-delete anytime
-          await requireEventChatModerator(user.id, existing.intentId);
+          await requireEventChatModerator(user.id, existing.eventId);
         }
 
         if (existing.deletedAt) {
@@ -327,16 +325,16 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
         }
 
         const deletedAt = new Date();
-        await prisma.intentChatMessage.update({
+        await prisma.eventChatMessage.update({
           where: { id },
           data: { deletedAt },
         });
 
         // Publish delete event
         await pubsub.publish({
-          topic: `intentMessageDeleted:${existing.intentId}`,
+          topic: `eventMessageDeleted:${existing.eventId}`,
           payload: {
-            intentMessageDeleted: {
+            eventMessageDeleted: {
               messageId: id,
               deletedAt: deletedAt.toISOString(),
             },
@@ -358,12 +356,12 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
 
       // Hard delete in transaction (decrement messagesCount)
       await prisma.$transaction(async (tx) => {
-        await tx.intentChatMessage.delete({
+        await tx.eventChatMessage.delete({
           where: { id },
         });
 
-        await tx.intent.update({
-          where: { id: existing.intentId },
+        await tx.event.update({
+          where: { id: existing.eventId },
           data: { messagesCount: { decrement: 1 } },
         });
       });
@@ -373,13 +371,13 @@ export const deleteIntentMessageMutation: MutationResolvers['deleteIntentMessage
   );
 
 /**
- * Mutation: Mark intent chat as read
+ * Mutation: Mark event chat as read
  */
-export const markIntentChatReadMutation: MutationResolvers['markIntentChatRead'] =
+export const markEventChatReadMutation: MutationResolvers['markEventChatRead'] =
   resolverWithMetrics(
     'Mutation',
-    'markIntentChatRead',
-    async (_p, { intentId, at }, { user }) => {
+    'markEventChatRead',
+    async (_p, { eventId, at }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -387,20 +385,20 @@ export const markIntentChatReadMutation: MutationResolvers['markIntentChatRead']
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       const timestamp = at ? new Date(at) : new Date();
 
-      // Upsert IntentChatRead
-      await prisma.intentChatRead.upsert({
+      // Upsert EventChatRead
+      await prisma.eventChatRead.upsert({
         where: {
-          intentId_userId: {
-            intentId,
+          eventId_userId: {
+            eventId,
             userId: user.id,
           },
         },
         create: {
-          intentId,
+          eventId,
           userId: user.id,
           lastReadAt: timestamp,
         },
@@ -410,7 +408,7 @@ export const markIntentChatReadMutation: MutationResolvers['markIntentChatRead']
       });
 
       // Invalidate unread count cache
-      const cacheKey = `chat:intent:unread:${intentId}:${user.id}`;
+      const cacheKey = `chat:event:unread:${eventId}:${user.id}`;
       try {
         await healthRedis.del(cacheKey);
       } catch (error) {
@@ -423,13 +421,13 @@ export const markIntentChatReadMutation: MutationResolvers['markIntentChatRead']
   );
 
 /**
- * Publish typing indicator for intent chat
+ * Publish typing indicator for event chat
  */
-export const publishIntentTypingMutation: MutationResolvers['publishIntentTyping'] =
+export const publishEventTypingMutation: MutationResolvers['publishEventTyping'] =
   resolverWithMetrics(
     'Mutation',
-    'publishIntentTyping',
-    async (_p, { intentId, isTyping }, { user, pubsub }) => {
+    'publishEventTyping',
+    async (_p, { eventId, isTyping }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -437,13 +435,13 @@ export const publishIntentTypingMutation: MutationResolvers['publishIntentTyping
       }
 
       // Guard: user must be JOINED
-      await requireJoinedMember(user.id, intentId);
+      await requireJoinedMember(user.id, eventId);
 
       // Publish typing event
       await pubsub?.publish({
-        topic: `intentTyping:${intentId}`,
+        topic: `eventTyping:${eventId}`,
         payload: {
-          intentTyping: {
+          eventTyping: {
             userId: user.id,
             isTyping,
           },

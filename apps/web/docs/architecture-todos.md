@@ -25,9 +25,9 @@ The project uses **Next.js App Router** with a hybrid structure:
 
 ```
 lib/api/
-├── intents.tsx
-├── intent-members.tsx
-├── intent-permissions.tsx
+├── events.tsx
+├── event-members.tsx
+├── event-permissions.tsx
 ├── join-form.ts
 ├── comments.tsx
 ├── reviews.tsx
@@ -38,9 +38,9 @@ lib/api/
 
 ```
 features/
-├── intents/
+├── events/
 │   └── api/
-│       ├── intents.tsx
+│       ├── events.tsx
 │       ├── members.tsx
 │       ├── permissions.tsx
 │       ├── join-form.ts
@@ -73,7 +73,7 @@ features/
 
 - `app/[locale]/events/_hooks/*.tsx` → `features/events/hooks/`
 - `app/[locale]/account/chats/_hooks/*.tsx` → `features/chat/hooks/`
-- `app/[locale]/account/intents/_hooks/*.tsx` → `features/intents/hooks/`
+- `app/[locale]/account/events/_hooks/*.tsx` → `features/events/hooks/`
 
 #### 3. Duplicate GraphQL Client
 
@@ -94,7 +94,7 @@ features/
 features/
 ├── auth/components/        ✅ Good
 ├── favourites/components/  ⚠️ Missing hooks/api
-├── intents/
+├── events/
 │   ├── components/         ✅ Good
 │   └── hooks/              ✅ Good
 ├── maps/
@@ -116,13 +116,13 @@ features/<feature>/
 └── types/         # Feature-specific types
 ```
 
-#### 5. Intent-Specific Utils in Global `lib/utils/`
+#### 5. Event-Specific Utils in Global `lib/utils/`
 
 **Files to move:**
 
-- `lib/utils/intents.ts` → `features/intents/utils/`
-- `lib/utils/intent-join-state.ts` → `features/intents/utils/`
-- `lib/utils/event-status.ts` → `features/intents/utils/`
+- `lib/utils/events.ts` → `features/events/utils/`
+- `lib/utils/event-join-state.ts` → `features/events/utils/`
+- `lib/utils/event-status.ts` → `features/events/utils/`
 
 #### 6. Missing Features Directories
 
@@ -144,7 +144,7 @@ Create these feature directories:
 hooks/
 ├── use-cooldown.tsx
 ├── use-debounced-value.tsx
-├── use-intent-permissions.ts  ← Should be in features/intents/hooks/
+├── use-event-permissions.ts  ← Should be in features/events/hooks/
 ├── use-locale-path.ts
 ├── use-outside-click.tsx
 ├── use-plan-access.ts         ← Should be in features/billing/hooks/
@@ -153,7 +153,7 @@ hooks/
 
 **Move domain-specific hooks to features:**
 
-- `use-intent-permissions.ts` → `features/intents/hooks/`
+- `use-event-permissions.ts` → `features/events/hooks/`
 - `use-plan-access.ts` → `features/billing/hooks/`
 
 #### 8. Components Organization
@@ -172,8 +172,8 @@ The `components/` directory is well-organized:
 
 ```
 types/
-├── event-details.ts  ← Should be in features/intents/types/
-├── intent.ts         ← Should be in features/intents/types/
+├── event-details.ts  ← Should be in features/events/types/
+├── event.ts         ← Should be in features/events/types/
 └── types.ts          ← Review for global vs feature-specific
 ```
 
@@ -192,28 +192,28 @@ mkdir -p features/admin/{api,components,hooks,types}
 
 ### Phase 2: Move API Hooks (Medium Risk)
 
-| From                             | To                                     |
-| -------------------------------- | -------------------------------------- |
-| `lib/api/intents.tsx`            | `features/intents/api/intents.tsx`     |
-| `lib/api/intent-members.tsx`     | `features/intents/api/members.tsx`     |
-| `lib/api/intent-permissions.tsx` | `features/intents/api/permissions.tsx` |
-| `lib/api/join-form.ts`           | `features/intents/api/join-form.ts`    |
-| `lib/api/comments.tsx`           | `features/intents/api/comments.tsx`    |
-| `lib/api/reviews.tsx`            | `features/intents/api/reviews.tsx`     |
-| `lib/api/user-profile.tsx`       | `features/users/api/profile.tsx`       |
-| `lib/api/user-preferences.ts`    | `features/users/api/preferences.ts`    |
-| `lib/api/user-blocks.tsx`        | `features/users/api/blocks.tsx`        |
-| `lib/api/event-chat.tsx`         | `features/chat/api/event-chat.tsx`     |
-| `lib/api/dm.tsx`                 | `features/chat/api/dm.tsx`             |
-| `lib/api/billing.tsx`            | `features/billing/api/billing.tsx`     |
+| From                            | To                                    |
+| ------------------------------- | ------------------------------------- |
+| `lib/api/events.tsx`            | `features/events/api/events.tsx`      |
+| `lib/api/event-members.tsx`     | `features/events/api/members.tsx`     |
+| `lib/api/event-permissions.tsx` | `features/events/api/permissions.tsx` |
+| `lib/api/join-form.ts`          | `features/events/api/join-form.ts`    |
+| `lib/api/comments.tsx`          | `features/events/api/comments.tsx`    |
+| `lib/api/reviews.tsx`           | `features/events/api/reviews.tsx`     |
+| `lib/api/user-profile.tsx`      | `features/users/api/profile.tsx`      |
+| `lib/api/user-preferences.ts`   | `features/users/api/preferences.ts`   |
+| `lib/api/user-blocks.tsx`       | `features/users/api/blocks.tsx`       |
+| `lib/api/event-chat.tsx`        | `features/chat/api/event-chat.tsx`    |
+| `lib/api/dm.tsx`                | `features/chat/api/dm.tsx`            |
+| `lib/api/billing.tsx`           | `features/billing/api/billing.tsx`    |
 
 ### Phase 3: Move Route Hooks (Medium Risk)
 
-| From                                    | To                        |
-| --------------------------------------- | ------------------------- |
-| `app/[locale]/events/_hooks/*`          | `features/events/hooks/`  |
-| `app/[locale]/account/chats/_hooks/*`   | `features/chat/hooks/`    |
-| `app/[locale]/account/intents/_hooks/*` | `features/intents/hooks/` |
+| From                                   | To                       |
+| -------------------------------------- | ------------------------ |
+| `app/[locale]/events/_hooks/*`         | `features/events/hooks/` |
+| `app/[locale]/account/chats/_hooks/*`  | `features/chat/hooks/`   |
+| `app/[locale]/account/events/_hooks/*` | `features/events/hooks/` |
 
 ### Phase 4: Move Chat Components (Low Risk)
 
@@ -244,8 +244,8 @@ After moving files, update `tsconfig.json` paths:
 Create index files for clean imports:
 
 ```typescript
-// features/intents/api/index.ts
-export * from './intents';
+// features/events/api/index.ts
+export * from './events';
 export * from './members';
 export * from './permissions';
 export * from './join-form';
@@ -253,7 +253,7 @@ export * from './comments';
 export * from './reviews';
 
 // Then import as:
-import { useIntentsQuery, useIntentMembersQuery } from '@/features/intents/api';
+import { useEventsQuery, useEventMembersQuery } from '@/features/events/api';
 ```
 
 ## Files to Review for Deletion
@@ -280,7 +280,7 @@ These files may be unused (verify before deleting):
 - [x] Moved `app/[locale]/events/_hooks/*` → `features/events/hooks/`
 - [x] Moved `app/[locale]/events/_types/*` → `features/events/types/`
 - [x] Moved `app/[locale]/events/_constants/*` → `features/events/constants/`
-- [x] Moved `hooks/use-intent-permissions.ts` → `features/intents/hooks/`
+- [x] Moved `hooks/use-event-permissions.ts` → `features/events/hooks/`
 - [x] Moved `hooks/use-plan-access.ts` → `features/billing/hooks/`
 - [x] Moved `components/chat/*` → `features/chat/components/`
 - [x] Created re-export stubs in old locations for backward compatibility
@@ -298,14 +298,14 @@ This allows gradual migration without breaking existing code.
 
 - [x] Moved `app/[locale]/account/chats/_hooks/*` → `features/chat/hooks/`
 - [x] Moved `app/[locale]/account/chats/_types/*` → `features/chat/types/`
-- [x] Moved `app/[locale]/account/intents/_hooks/*` → `features/intents/hooks/`
-- [x] Moved `lib/utils/intents.ts` → `features/intents/utils/`
-- [x] Moved `lib/utils/intent-join-state.ts` → `features/intents/utils/`
-- [x] Moved `lib/utils/event-status.ts` → `features/intents/utils/`
+- [x] Moved `app/[locale]/account/events/_hooks/*` → `features/events/hooks/`
+- [x] Moved `lib/utils/events.ts` → `features/events/utils/`
+- [x] Moved `lib/utils/event-join-state.ts` → `features/events/utils/`
+- [x] Moved `lib/utils/event-status.ts` → `features/events/utils/`
 - [x] Created barrel exports for all feature directories
 - [x] Updated all imports to use new paths (no deprecated re-exports)
-- [x] Deleted old directories: `components/chat/`, `app/[locale]/events/_hooks/`, `app/[locale]/events/_types/`, `app/[locale]/events/_constants/`, `app/[locale]/account/chats/_hooks/`, `app/[locale]/account/chats/_types/`, `app/[locale]/account/intents/_hooks/`
-- [x] Fixed broken import in `admin/intents/_components/tabs/invite-links-tab.tsx`
+- [x] Deleted old directories: `components/chat/`, `app/[locale]/events/_hooks/`, `app/[locale]/events/_types/`, `app/[locale]/events/_constants/`, `app/[locale]/account/chats/_hooks/`, `app/[locale]/account/chats/_types/`, `app/[locale]/account/events/_hooks/`
+- [x] Fixed broken import in `admin/events/_components/tabs/invite-links-tab.tsx`
 
 ## Current State
 
@@ -324,10 +324,10 @@ features/
 │   ├── hooks/                 # Events search hooks
 │   └── types/                 # Events type definitions
 ├── favourites/components/     # Favourites UI
-├── intents/
-│   ├── components/            # Intent form components
-│   ├── hooks/                 # Intent hooks
-│   └── utils/                 # Intent utilities
+├── events/
+│   ├── components/            # Event form components
+│   ├── hooks/                 # Event hooks
+│   └── utils/                 # Event utilities
 ├── maps/
 │   ├── components/            # Map components
 │   ├── hooks/                 # Map hooks
@@ -342,11 +342,11 @@ features/
 
 There are 39 files in `lib/api/`. Recommended grouping:
 
-**Intents domain** → `features/intents/api/`:
+**Events domain** → `features/events/api/`:
 
-- `intents.tsx`
-- `intent-members.tsx`
-- `intent-permissions.tsx`
+- `events.tsx`
+- `event-members.tsx`
+- `event-permissions.tsx`
 - `join-form.ts`
 - `comments.tsx`
 - `reviews.tsx`
@@ -383,10 +383,10 @@ There are 39 files in `lib/api/`. Recommended grouping:
 
 **Admin domain** → `features/admin/api/`:
 
-- `admin-intents.tsx`
+- `admin-events.tsx`
 - `admin-users.tsx`
 - `admin-comments.tsx`
-- `admin-intent-members.tsx`
+- `admin-event-members.tsx`
 
 **Keep in lib/api/** (shared/core):
 
@@ -405,8 +405,8 @@ There are 39 files in `lib/api/`. Recommended grouping:
 
 Current `types/` directory contains:
 
-- `event-details.ts` - could move to `features/intents/types/`
-- `intent.ts` - could move to `features/intents/types/`
+- `event-details.ts` - could move to `features/events/types/`
+- `event.ts` - could move to `features/events/types/`
 - `types.ts` - shared types (CategoryOption, TagOption) - keep global
 
 ### 3. Global Hooks Review (Low Priority)
@@ -426,7 +426,7 @@ These are fine to keep as global hooks.
 Create `features/index.ts` barrel exports for cleaner imports:
 
 ```typescript
-// features/intents/index.ts
+// features/events/index.ts
 export * from './api';
 export * from './hooks';
 export * from './utils';

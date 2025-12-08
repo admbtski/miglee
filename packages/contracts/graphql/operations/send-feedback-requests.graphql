@@ -1,5 +1,5 @@
-mutation SendFeedbackRequests($intentId: ID!) {
-  sendFeedbackRequests(intentId: $intentId) {
+mutation SendFeedbackRequests($eventId: ID!) {
+  sendFeedbackRequests(eventId: $eventId) {
     success
     sentCount
     skippedCount

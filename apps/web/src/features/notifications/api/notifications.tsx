@@ -265,11 +265,11 @@ export function useAddNotificationMutation<TContext extends CtxList = CtxList>(
           createdAt: new Date().toISOString(),
           recipientId: variables.recipientId ?? '',
           recipient: null,
-          intentId:
-            variables.entityType === 'INTENT'
+          eventId:
+            variables.entityType === 'EVENT'
               ? ((variables.entityId as string) ?? null)
               : null,
-          intent: null,
+          event: null,
         };
 
         mutateCache((old) => {

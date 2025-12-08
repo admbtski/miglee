@@ -6,7 +6,7 @@ import { mapComment } from '../helpers';
 
 const commentInclude = {
   author: true,
-  intent: true,
+  event: true,
   parent: {
     include: {
       author: true,
@@ -28,19 +28,19 @@ const commentInclude = {
 } satisfies Prisma.CommentInclude;
 
 /**
- * Query: Get comments for an intent
+ * Query: Get comments for an event
  */
 export const commentsQuery: QueryResolvers['comments'] = resolverWithMetrics(
   'Query',
   'comments',
   async (_p, args, { user }) => {
-    const { intentId, limit, offset, threadId, parentId } = args;
+    const { eventId, limit, offset, threadId, parentId } = args;
 
     const take = Math.max(1, Math.min(limit ?? 50, 200));
     const skip = Math.max(0, offset ?? 0);
 
     const where: Prisma.CommentWhereInput = {
-      intentId,
+      eventId,
     };
 
     // Filter by thread (root comments only if threadId specified)

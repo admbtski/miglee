@@ -5,9 +5,9 @@ import { useThrottled } from '@/hooks/use-throttled';
 import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import {
   useGetClustersQuery,
-  useGetRegionIntentsInfiniteQuery,
+  useGetRegionEventsInfiniteQuery,
 } from '@/features/maps/api/map-clusters';
-import { getUpcomingAfterDefault } from '@/lib/constants/intents';
+import { getUpcomingAfterDefault } from '@/lib/constants/events';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import clsx from 'clsx';
 import { ScatterplotLayer, TextLayer } from 'deck.gl';
@@ -16,7 +16,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { useQueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RegionPopup, PopupIntent } from './map-popup';
+import { RegionPopup, PopupEvent } from './map-popup';
 
 export function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
@@ -48,8 +48,8 @@ export interface ServerClusteredMapProps {
     cityLng?: number;
     distanceKm?: number;
   };
-  onIntentClick?: (intentId: string) => void;
-  hoveredIntentId?: string | null;
+  onEventClick?: (eventId: string) => void;
+  hoveredEventId?: string | null;
   hoveredLat?: number | null;
   hoveredLng?: number | null;
   // NEW: Center map on specific location (e.g., from filters or user profile)
@@ -307,7 +307,7 @@ function ServerClusteredMapComponent({
   styleUrlLight = 'https://tiles.openfreemap.org/styles/liberty',
   styleUrlDark = 'https://tiles.openfreemap.org/styles/dark',
   filters,
-  onIntentClick,
+  onEventClick,
   hoveredLat,
   hoveredLng,
   centerOn,
@@ -475,12 +475,12 @@ function ServerClusteredMapComponent({
     );
 
   const {
-    data: regionIntentsData,
-    isLoading: regionIntentsLoading,
+    data: regionEventsData,
+    isLoading: regionEventsLoading,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useGetRegionIntentsInfiniteQuery(
+  } = useGetRegionEventsInfiniteQuery(
     {
       region: selectedRegion || '',
       perPage: 20,
@@ -730,15 +730,15 @@ function ServerClusteredMapComponent({
     if (!map || !popup) return;
 
     // Jeśli ładujemy pierwszą stronę, pokaż skeleton
-    if (regionIntentsLoading && !(regionIntentsData as any)?.pages?.length) {
+    if (regionEventsLoading && !(regionEventsData as any)?.pages?.length) {
       // Znajdź klaster dla wybranego regionu, żeby pokazać popup w dobrym miejscu
       const cluster = clusters.find((c) => c.region === selectedRegion);
       if (cluster && popupRootRef.current && popupContainerRef.current) {
         popupRootRef.current.render(
           <QueryClientProvider client={queryClient}>
             <RegionPopup
-              intents={[]}
-              onIntentClick={() => {}}
+              events={[]}
+              onEventClick={() => {}}
               isLoading={true}
               locale={locale}
             />
@@ -762,74 +762,74 @@ function ServerClusteredMapComponent({
     }
 
     // Dane załadowane - flatten all pages
-    const pages = (regionIntentsData as any)?.pages;
+    const pages = (regionEventsData as any)?.pages;
     if (!pages) return;
 
-    const allIntents = pages.flatMap(
-      (page: any) => page.regionIntents?.data || []
+    const allEvents = pages.flatMap(
+      (page: any) => page.regionEvents?.data || []
     );
 
-    const intents: PopupIntent[] = allIntents.map((intent: any) => ({
-      id: intent.id,
-      title: intent.title ?? '',
-      startAt: intent.startAt,
-      endAt: intent.endAt,
-      address: intent.address,
-      radiusKm: intent.radiusKm,
-      joinedCount: intent.joinedCount,
-      min: intent.min,
-      max: intent.max,
-      owner: intent.owner,
-      lat: intent.lat,
-      lng: intent.lng,
-      isCanceled: intent.isCanceled ?? false,
-      isDeleted: intent.isDeleted ?? false,
-      isFull: intent.isFull ?? false,
-      isOngoing: intent.isOngoing ?? false,
-      hasStarted: intent.hasStarted ?? false,
-      withinLock: intent.withinLock ?? false,
-      lockReason: intent.lockReason,
-      canJoin: intent.canJoin ?? false,
-      joinOpensMinutesBeforeStart: intent.joinOpensMinutesBeforeStart,
-      joinCutoffMinutesBeforeStart: intent.joinCutoffMinutesBeforeStart,
-      allowJoinLate: intent.allowJoinLate ?? false,
-      lateJoinCutoffMinutesAfterStart: intent.lateJoinCutoffMinutesAfterStart,
-      joinManuallyClosed: intent.joinManuallyClosed ?? false,
-      levels: (intent.levels as GqlLevel[]) ?? null,
+    const events: PopupEvent[] = allEvents.map((event: any) => ({
+      id: event.id,
+      title: event.title ?? '',
+      startAt: event.startAt,
+      endAt: event.endAt,
+      address: event.address,
+      radiusKm: event.radiusKm,
+      joinedCount: event.joinedCount,
+      min: event.min,
+      max: event.max,
+      owner: event.owner,
+      lat: event.lat,
+      lng: event.lng,
+      isCanceled: event.isCanceled ?? false,
+      isDeleted: event.isDeleted ?? false,
+      isFull: event.isFull ?? false,
+      isOngoing: event.isOngoing ?? false,
+      hasStarted: event.hasStarted ?? false,
+      withinLock: event.withinLock ?? false,
+      lockReason: event.lockReason,
+      canJoin: event.canJoin ?? false,
+      joinOpensMinutesBeforeStart: event.joinOpensMinutesBeforeStart,
+      joinCutoffMinutesBeforeStart: event.joinCutoffMinutesBeforeStart,
+      allowJoinLate: event.allowJoinLate ?? false,
+      lateJoinCutoffMinutesAfterStart: event.lateJoinCutoffMinutesAfterStart,
+      joinManuallyClosed: event.joinManuallyClosed ?? false,
+      levels: (event.levels as GqlLevel[]) ?? null,
       plan: null, // Will be determined by boostedAt
-      boostedAt: intent.boostedAt,
-      // Extract card appearance from IntentAppearance.config
-      appearance: intent.appearance?.config
+      boostedAt: event.boostedAt,
+      // Extract card appearance from EventAppearance.config
+      appearance: event.appearance?.config
         ? {
-            card: (intent.appearance.config as any)?.card ?? null,
+            card: (event.appearance.config as any)?.card ?? null,
           }
         : null,
-      meetingKind: intent.meetingKind,
+      meetingKind: event.meetingKind,
       isHybrid:
-        intent.meetingKind === 'HYBRID' ||
-        (intent.meetingKind &&
-          (intent.meetingKind as string[]).includes('HYBRID')),
+        event.meetingKind === 'HYBRID' ||
+        (event.meetingKind &&
+          (event.meetingKind as string[]).includes('HYBRID')),
       isOnline:
-        intent.meetingKind === 'ONLINE' ||
-        (intent.meetingKind &&
-          (intent.meetingKind as string[]).includes('ONLINE')),
+        event.meetingKind === 'ONLINE' ||
+        (event.meetingKind &&
+          (event.meetingKind as string[]).includes('ONLINE')),
       isOnsite:
-        intent.meetingKind === 'ONSITE' ||
-        (intent.meetingKind &&
-          (intent.meetingKind as string[]).includes('ONSITE')),
-      addressVisibility: intent.addressVisibility,
+        event.meetingKind === 'ONSITE' ||
+        (event.meetingKind &&
+          (event.meetingKind as string[]).includes('ONSITE')),
+      addressVisibility: event.addressVisibility,
       categorySlugs:
-        intent.categories?.map((cat: any) => cat.slug).slice(0, 3) ?? [],
-      coverKey: intent.coverKey,
-      coverBlurhash: intent.coverBlurhash,
+        event.categories?.map((cat: any) => cat.slug).slice(0, 3) ?? [],
+      coverKey: event.coverKey,
+      coverBlurhash: event.coverBlurhash,
     }));
 
     // Don't close popup if no data - might be a network error
-    if (!intents.length) {
+    if (!events.length) {
       return;
     }
 
-    const valid = intents.filter((i) => i.lat != null && i.lng != null);
+    const valid = events.filter((i) => i.lat != null && i.lng != null);
     if (!valid.length) {
       return;
     }
@@ -841,7 +841,7 @@ function ServerClusteredMapComponent({
       popupRootRef.current.render(
         <QueryClientProvider client={queryClient}>
           <RegionPopup
-            intents={intents}
+            events={events}
             isLoading={false}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
@@ -851,8 +851,8 @@ function ServerClusteredMapComponent({
                 fetchNextPage();
               }
             }}
-            onIntentClick={(id) => {
-              onIntentClick?.(id);
+            onEventClick={(id) => {
+              onEventClick?.(id);
               popup.remove();
               setSelectedRegion(null);
             }}
@@ -876,9 +876,9 @@ function ServerClusteredMapComponent({
     }
   }, [
     selectedRegion,
-    regionIntentsData,
-    regionIntentsLoading,
-    onIntentClick,
+    regionEventsData,
+    regionEventsLoading,
+    onEventClick,
     clusters,
   ]);
 
@@ -910,7 +910,7 @@ function ServerClusteredMapComponent({
           fullHeight ? 'h-full' : 'h-[520px]',
           'bg-white dark:bg-zinc-900'
         )}
-        aria-label="Server-clustered intents map"
+        aria-label="Server-clustered events map"
         style={{ backfaceVisibility: 'hidden' }}
       />
 

@@ -12,7 +12,7 @@ import { NOTIFICATION_INCLUDE } from './notifications';
 
 const COMMENT_INCLUDE = {
   author: true,
-  intent: true,
+  event: true,
   parent: {
     include: {
       author: true,
@@ -47,7 +47,7 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         });
       }
 
-      const { intentId, content, parentId } = input;
+      const { eventId, content, parentId } = input;
 
       // Validate content
       if (!content || content.trim().length === 0) {
@@ -65,9 +65,9 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         );
       }
 
-      // Verify intent exists and get owner/mods
-      const intent = await prisma.intent.findUnique({
-        where: { id: intentId },
+      // Verify event exists and get owner/mods
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
         select: {
           id: true,
           deletedAt: true,
@@ -82,20 +82,20 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         },
       });
 
-      if (!intent || intent.deletedAt) {
-        throw new GraphQLError('Intent not found.', {
+      if (!event || event.deletedAt) {
+        throw new GraphQLError('Event not found.', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      // If parentId provided, verify parent exists and belongs to same intent
-      let threadId = intentId; // Default thread is the intent itself
+      // If parentId provided, verify parent exists and belongs to same event
+      let threadId = eventId; // Default thread is the event itself
       let parentAuthorId: string | null = null;
       if (parentId) {
         const parent = await prisma.comment.findUnique({
           where: { id: parentId },
           select: {
-            intentId: true,
+            eventId: true,
             threadId: true,
             deletedAt: true,
             authorId: true,
@@ -108,13 +108,10 @@ export const createCommentMutation: MutationResolvers['createComment'] =
           });
         }
 
-        if (parent.intentId !== intentId) {
-          throw new GraphQLError(
-            'Parent comment belongs to different intent.',
-            {
-              extensions: { code: 'BAD_USER_INPUT' },
-            }
-          );
+        if (parent.eventId !== eventId) {
+          throw new GraphQLError('Parent comment belongs to different event.', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
         }
 
         threadId = parent.threadId;
@@ -123,18 +120,18 @@ export const createCommentMutation: MutationResolvers['createComment'] =
 
       const comment = await prisma.comment.create({
         data: {
-          intentId,
+          eventId,
           authorId: user.id,
           content: content.trim(),
           parentId: parentId || null,
-          threadId, // Set threadId to parent's thread or intent id
+          threadId, // Set threadId to parent's thread or event id
         },
         include: COMMENT_INCLUDE,
       });
 
-      // Update intent commentsCount
-      await prisma.intent.update({
-        where: { id: intentId },
+      // Update event commentsCount
+      await prisma.event.update({
+        where: { id: eventId },
         data: { commentsCount: { increment: 1 } },
       });
 
@@ -149,15 +146,15 @@ export const createCommentMutation: MutationResolvers['createComment'] =
             kind: PrismaNotificationKind.COMMENT_REPLY,
             title: null,
             body: null,
-            entityType: PrismaNotificationEntity.INTENT,
-            entityId: intentId,
-            intentId,
+            entityType: PrismaNotificationEntity.EVENT,
+            entityId: eventId,
+            eventId,
             recipientId: parentAuthorId,
             actorId: user.id,
             data: {
               commentId: comment.id,
-              intentId,
-              intentTitle: intent.title,
+              eventId,
+              eventTitle: event.title,
               actorName: user.name,
               commentContent: content.trim().slice(0, 100),
             },
@@ -177,23 +174,23 @@ export const createCommentMutation: MutationResolvers['createComment'] =
         });
       } else {
         // New comment notification to owner/mods (not replies)
-        for (const m of intent.members) {
+        for (const m of event.members) {
           if (m.userId !== user.id && !notificationRecipients.has(m.userId)) {
             notificationRecipients.add(m.userId);
             const notif = await prisma.notification.create({
               data: {
-                kind: PrismaNotificationKind.INTENT_COMMENT_ADDED,
+                kind: PrismaNotificationKind.EVENT_COMMENT_ADDED,
                 title: null,
                 body: null,
-                entityType: PrismaNotificationEntity.INTENT,
-                entityId: intentId,
-                intentId,
+                entityType: PrismaNotificationEntity.EVENT,
+                entityId: eventId,
+                eventId,
                 recipientId: m.userId,
                 actorId: user.id,
                 data: {
                   commentId: comment.id,
-                  intentId,
-                  intentTitle: intent.title,
+                  eventId,
+                  eventTitle: event.title,
                   actorName: user.name,
                   commentContent: content.trim().slice(0, 100),
                 },
@@ -223,7 +220,7 @@ export const createCommentMutation: MutationResolvers['createComment'] =
  * Permissions:
  * - App Admin: can edit any comment
  * - App Moderator: CANNOT edit (only hide/delete for moderation)
- * - Intent Owner/Moderator: CANNOT edit others' comments
+ * - Event Owner/Moderator: CANNOT edit others' comments
  * - Comment Author: can edit own comments
  */
 export const updateCommentMutation: MutationResolvers['updateComment'] =
@@ -268,7 +265,7 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
       }
 
       // Permission check: Only App Admin or Comment Author can edit
-      // App Moderators and Intent Owner/Moderators should use hide/delete, not edit
+      // App Moderators and Event Owner/Moderators should use hide/delete, not edit
       const isAppAdmin = user.role === 'ADMIN';
       const isAuthor = existing.authorId === user.id;
 
@@ -300,7 +297,7 @@ export const updateCommentMutation: MutationResolvers['updateComment'] =
  * Permissions:
  * - App Admin: can delete any comment
  * - App Moderator: can delete any comment
- * - Intent Owner/Moderator: can delete comments in their intent
+ * - Event Owner/Moderator: can delete comments in their event
  * - Comment Author: can delete own comments
  */
 export const deleteCommentMutation: MutationResolvers['deleteComment'] =
@@ -320,8 +317,8 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
           authorId: true,
           deletedAt: true,
           hiddenAt: true,
-          intentId: true,
-          intent: {
+          eventId: true,
+          event: {
             select: {
               members: {
                 where: {
@@ -343,10 +340,10 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
       // Permission check
       const isAppAdmin = user.role === 'ADMIN';
       const isAppModerator = user.role === 'MODERATOR';
-      const isIntentOwnerOrMod = existing.intent.members.length > 0;
+      const isEventOwnerOrMod = existing.event.members.length > 0;
       const isAuthor = existing.authorId === user.id;
 
-      if (!isAppAdmin && !isAppModerator && !isIntentOwnerOrMod && !isAuthor) {
+      if (!isAppAdmin && !isAppModerator && !isEventOwnerOrMod && !isAuthor) {
         throw new GraphQLError('Cannot delete comments from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -364,10 +361,10 @@ export const deleteCommentMutation: MutationResolvers['deleteComment'] =
         },
       });
 
-      // Decrement intent commentsCount only if not hidden
+      // Decrement event commentsCount only if not hidden
       if (!existing.hiddenAt) {
-        await prisma.intent.update({
-          where: { id: existing.intentId },
+        await prisma.event.update({
+          where: { id: existing.eventId },
           data: { commentsCount: { decrement: 1 } },
         });
       }
@@ -395,11 +392,11 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
         where: { id },
         select: {
           id: true,
-          intentId: true,
+          eventId: true,
           authorId: true,
           deletedAt: true,
           hiddenAt: true,
-          intent: {
+          event: {
             select: {
               members: {
                 where: {
@@ -419,12 +416,12 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
         });
       }
 
-      // Check permissions: app admin/moderator OR intent owner/moderator
+      // Check permissions: app admin/moderator OR event owner/moderator
       const isAppAdmin = user.role === 'ADMIN';
       const isAppModerator = user.role === 'MODERATOR';
-      const isIntentModerator = comment.intent.members.length > 0;
+      const isEventModerator = comment.event.members.length > 0;
 
-      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+      if (!isAppAdmin && !isAppModerator && !isEventModerator) {
         throw new GraphQLError('Insufficient permissions to hide comments.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -442,19 +439,19 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
         },
       });
 
-      // Decrement intent commentsCount only if not already deleted
+      // Decrement event commentsCount only if not already deleted
       if (!comment.deletedAt) {
-        await prisma.intent.update({
-          where: { id: comment.intentId },
+        await prisma.event.update({
+          where: { id: comment.eventId },
           data: { commentsCount: { decrement: 1 } },
         });
       }
 
       // Notify comment author that their comment was hidden
       if (comment.authorId !== user.id) {
-        // Fetch intent title for notification data
-        const intent = await prisma.intent.findUnique({
-          where: { id: comment.intentId },
+        // Fetch event title for notification data
+        const event = await prisma.event.findUnique({
+          where: { id: comment.eventId },
           select: { title: true },
         });
 
@@ -463,15 +460,15 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
             kind: PrismaNotificationKind.COMMENT_HIDDEN,
             title: null,
             body: null,
-            entityType: PrismaNotificationEntity.INTENT,
-            entityId: comment.intentId,
-            intentId: comment.intentId,
+            entityType: PrismaNotificationEntity.EVENT,
+            entityId: comment.eventId,
+            eventId: comment.eventId,
             recipientId: comment.authorId,
             actorId: user.id,
             data: {
               commentId: id,
-              intentId: comment.intentId,
-              intentTitle: intent?.title,
+              eventId: comment.eventId,
+              eventTitle: event?.title,
               moderatorName: user.name,
             },
             dedupeKey: `comment_hidden:${id}`,
@@ -513,10 +510,10 @@ export const unhideCommentMutation: MutationResolvers['unhideComment'] =
         where: { id },
         select: {
           id: true,
-          intentId: true,
+          eventId: true,
           deletedAt: true,
           hiddenAt: true,
-          intent: {
+          event: {
             select: {
               members: {
                 where: {
@@ -536,12 +533,12 @@ export const unhideCommentMutation: MutationResolvers['unhideComment'] =
         });
       }
 
-      // Check permissions: app admin/moderator OR intent owner/moderator
+      // Check permissions: app admin/moderator OR event owner/moderator
       const isAppAdmin = user.role === 'ADMIN';
       const isAppModerator = user.role === 'MODERATOR';
-      const isIntentModerator = comment.intent.members.length > 0;
+      const isEventModerator = comment.event.members.length > 0;
 
-      if (!isAppAdmin && !isAppModerator && !isIntentModerator) {
+      if (!isAppAdmin && !isAppModerator && !isEventModerator) {
         throw new GraphQLError('Insufficient permissions to unhide comments.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -559,10 +556,10 @@ export const unhideCommentMutation: MutationResolvers['unhideComment'] =
         },
       });
 
-      // Increment intent commentsCount only if not deleted
+      // Increment event commentsCount only if not deleted
       if (!comment.deletedAt) {
-        await prisma.intent.update({
-          where: { id: comment.intentId },
+        await prisma.event.update({
+          where: { id: comment.eventId },
           data: { commentsCount: { increment: 1 } },
         });
       }

@@ -34,8 +34,8 @@ query MyEventSponsorships($limit: Int = 50) {
   }
 }
 
-query EventSponsorship($intentId: ID!) {
-  eventSponsorship(intentId: $intentId) {
+query EventSponsorship($eventId: ID!) {
+  eventSponsorship(eventId: $eventId) {
     ...EventSponsorshipFull
   }
 }
@@ -76,12 +76,12 @@ mutation CreateEventSponsorshipCheckout(
   }
 }
 
-mutation UseBoost($intentId: ID!) {
-  useBoost(intentId: $intentId)
+mutation UseBoost($eventId: ID!) {
+  useBoost(eventId: $eventId)
 }
 
-mutation UseLocalPush($intentId: ID!) {
-  useLocalPush(intentId: $intentId)
+mutation UseLocalPush($eventId: ID!) {
+  useLocalPush(eventId: $eventId)
 }
 
 # =============================================================================

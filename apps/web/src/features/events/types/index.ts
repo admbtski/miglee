@@ -1,10 +1,10 @@
 /**
- * Type definitions for the intents search page
+ * Type definitions for the events search page
  */
 
 import type {
-  GetIntentsQueryVariables,
-  IntentStatus,
+  GetEventsQueryVariables,
+  EventStatus,
   JoinMode,
   Level,
   MeetingKind,
@@ -38,7 +38,7 @@ export type CommittedFilters = {
   distanceKm: number;
   startISO: string | null;
   endISO: string | null;
-  status: IntentStatus;
+  status: EventStatus;
   kinds: MeetingKind[];
   levels: Level[];
   verifiedOnly: boolean;
@@ -49,7 +49,7 @@ export type CommittedFilters = {
 };
 
 /**
- * Sort key options for intents list
+ * Sort key options for events list
  */
 export type SortKey =
   | 'default'
@@ -62,6 +62,9 @@ export type SortKey =
   | 'members_asc';
 
 /**
- * Query variables for fetching intents (without offset for infinite scroll)
+ * Query variables for fetching events (without offset for infinite scroll)
  */
-export type IntentsQueryVariables = Omit<GetIntentsQueryVariables, 'offset'>;
+export type EventsQueryVariables = Omit<GetEventsQueryVariables, 'offset'>;
+
+export * from './event';
+export * from './event-details';

@@ -11,26 +11,29 @@
 
 'use client';
 
-import type { IntentHoverCallback, IntentListItem } from '@/features/intents/types/intent';
+import type {
+  EventHoverCallback,
+  EventListItem,
+} from '@/features/events/types/event';
 import { memo, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { EventCard, type EventCardProps } from '../event-card';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
-import { notEmptyString } from '@/features/intents/utils/intents';
+import { notEmptyString } from '@/features/events/utils/event';
 
 /**
- * Maps raw intent data from API to EventCard component props
+ * Maps raw event data from API to EventCard component props
  *
- * @param item - Raw intent data from API
+ * @param item - Raw event data from API
  * @param onHover - Optional hover callback for map synchronization
  * @returns Formatted props for EventCard component
  */
-export function mapIntentToEventCardProps(
-  item: IntentListItem,
+export function mapEventToEventCardProps(
+  item: EventListItem,
   lang: string,
-  onHover?: IntentHoverCallback
+  onHover?: EventHoverCallback
 ): EventCardProps {
   const categories = (item.categories ?? [])
     .map((c) => c.names?.[lang] ?? Object.values(c.names ?? {})[0])
@@ -38,7 +41,7 @@ export function mapIntentToEventCardProps(
 
   return {
     // Core identification
-    intentId: item.id,
+    eventId: item.id,
     lat: item.lat,
     lng: item.lng,
     radiusKm: item.radiusKm,
@@ -57,7 +60,7 @@ export function mapIntentToEventCardProps(
     verifiedAt: item.owner?.verifiedAt ?? undefined,
     plan: 'default', // TODO: Will be customizable per event in the future
     boostedAt: item.boostedAt ?? null, // Real boost timestamp from backend
-    // Extract card appearance from IntentAppearance.config
+    // Extract card appearance from EventAppearance.config
     appearance: item.appearance?.config
       ? {
           card: (item.appearance.config as any)?.card ?? null,
@@ -109,20 +112,20 @@ const VIRTUOSO_VIEWPORT_INCREASE = { top: 800, bottom: 1600 };
 const DEFAULT_ITEM_HEIGHT = 450;
 
 type EventsGridVirtualizedProps = {
-  items: IntentListItem[];
+  items: EventListItem[];
   isLoading: boolean;
   error: Error | null;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   lang: string;
   onLoadMore: () => void;
-  onHover?: IntentHoverCallback;
+  onHover?: EventHoverCallback;
 };
 
 function createItemRows(
-  items: IntentListItem[],
+  items: EventListItem[],
   lang: string,
-  onHover?: IntentHoverCallback
+  onHover?: EventHoverCallback
 ): EventCardProps[][] {
   const rows: EventCardProps[][] = [];
 
@@ -132,7 +135,7 @@ function createItemRows(
     for (let j = 0; j < ITEMS_PER_ROW; j++) {
       const item = items[i + j];
       if (item) {
-        row.push(mapIntentToEventCardProps(item, lang, onHover));
+        row.push(mapEventToEventCardProps(item, lang, onHover));
       }
     }
 
@@ -209,7 +212,7 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
       return (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {row.map((props) => (
-            <EventCard key={props.intentId} {...props} />
+            <EventCard key={props.eventId} {...props} />
           ))}
           {needsFiller && <div className="invisible hidden md:block" />}
         </div>
@@ -221,7 +224,7 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
   const computeRowKey = useCallback(
     (index: number) => {
       const row = itemRows[index];
-      return row?.[0]?.intentId ?? `row-${index}`;
+      return row?.[0]?.eventId ?? `row-${index}`;
     },
     [itemRows]
   );

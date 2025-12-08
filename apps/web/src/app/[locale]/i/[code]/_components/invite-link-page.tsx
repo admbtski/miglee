@@ -4,7 +4,7 @@ import * as React from 'react';
 import {
   useValidateInviteLinkQuery,
   useJoinByInviteLinkMutation,
-} from '@/features/intents/api/invite-links';
+} from '@/features/events/api/invite-links';
 import { useRouter } from 'next/navigation';
 import {
   Calendar,
@@ -91,15 +91,15 @@ function ErrorState({ onGoHome }: ErrorStateProps) {
 
 interface InvalidLinkStateProps {
   reason?: string | null;
-  intentId?: string | null;
-  onViewIntent: () => void;
+  eventId?: string | null;
+  onViewEvent: () => void;
   onGoHome: () => void;
 }
 
 function InvalidLinkState({
   reason,
-  intentId,
-  onViewIntent,
+  eventId,
+  onViewEvent,
   onGoHome,
 }: InvalidLinkStateProps) {
   return (
@@ -126,9 +126,9 @@ function InvalidLinkState({
         <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           {reason}
         </p>
-        {intentId && (
+        {eventId && (
           <button
-            onClick={onViewIntent}
+            onClick={onViewEvent}
             className={clsx(BUTTON_PRIMARY, 'mb-3')}
           >
             Zobacz wydarzenie
@@ -285,7 +285,7 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
   const handleJoin = async () => {
     try {
       const result = await joinMutation.mutateAsync({ code });
-      router.push(`/intent/${result.joinByInviteLink.id}`);
+      router.push(`/event/${result.joinByInviteLink.id}`);
     } catch (err) {
       console.error('Failed to join:', err);
     }
@@ -295,9 +295,9 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
     router.push('/');
   };
 
-  const handleViewIntent = () => {
-    if (validation?.intent?.id) {
-      router.push(`/intent/${validation.intent.id}`);
+  const handleViewEvent = () => {
+    if (validation?.event?.id) {
+      router.push(`/event/${validation.event.id}`);
     }
   };
 
@@ -313,16 +313,16 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
     return (
       <InvalidLinkState
         reason={validation.reason}
-        intentId={validation.intent?.id}
-        onViewIntent={handleViewIntent}
+        eventId={validation.event?.id}
+        onViewEvent={handleViewEvent}
         onGoHome={handleGoHome}
       />
     );
   }
 
-  const { intent } = validation;
+  const { event } = validation;
 
-  if (!intent) {
+  if (!event) {
     return null;
   }
 
@@ -347,41 +347,41 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
 
           <div className="mb-8 space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900/50">
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-              {intent.title}
+              {event.title}
             </h2>
 
-            {intent.description && (
+            {event.description && (
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                {intent.description}
+                {event.description}
               </p>
             )}
 
             <div className="space-y-3 pt-4">
-              <EventDateInfo startAt={intent.startAt} endAt={intent.endAt} />
+              <EventDateInfo startAt={event.startAt} endAt={event.endAt} />
 
-              {intent.address && <EventLocationInfo address={intent.address} />}
+              {event.address && <EventLocationInfo address={event.address} />}
 
               <EventParticipantsInfo
-                joinedCount={intent.joinedCount}
-                max={intent.max}
-                isFull={intent.isFull}
+                joinedCount={event.joinedCount}
+                max={event.max}
+                isFull={event.isFull}
               />
 
-              {intent.owner && <EventOrganizerInfo owner={intent.owner} />}
+              {event.owner && <EventOrganizerInfo owner={event.owner} />}
             </div>
           </div>
 
           <div className="space-y-3">
             <button
               onClick={handleJoin}
-              disabled={joinMutation.isPending || intent.isFull}
-              className={getJoinButtonClasses(intent.isFull)}
+              disabled={joinMutation.isPending || event.isFull}
+              className={getJoinButtonClasses(event.isFull)}
             >
-              {getJoinButtonContent(joinMutation.isPending, intent.isFull)}
+              {getJoinButtonContent(joinMutation.isPending, event.isFull)}
             </button>
 
             <button
-              onClick={() => router.push(`/intent/${intent.id}`)}
+              onClick={() => router.push(`/event/${event.id}`)}
               className={BUTTON_SECONDARY}
             >
               Zobacz szczegóły wydarzenia

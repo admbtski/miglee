@@ -3,21 +3,21 @@
 # =============================================================================
 
 # Queries (cursor-based)
-query GetIntentMessages(
-  $intentId: ID!
+query GetEventMessages(
+  $eventId: ID!
   $first: Int = 20
   $before: String
   $after: String
 ) {
-  intentMessages(
-    intentId: $intentId
+  eventMessages(
+    eventId: $eventId
     first: $first
     before: $before
     after: $after
   ) {
     edges {
       node {
-        ...IntentChatMessageWithReply
+        ...EventChatMessageWithReply
       }
       cursor
     }
@@ -30,65 +30,65 @@ query GetIntentMessages(
   }
 }
 
-query GetIntentUnreadCount($intentId: ID!) {
-  intentUnreadCount(intentId: $intentId)
+query GetEventUnreadCount($eventId: ID!) {
+  eventUnreadCount(eventId: $eventId)
 }
 
 # Mutations
-mutation SendIntentMessage($input: SendIntentMessageInput!) {
-  sendIntentMessage(input: $input) {
-    ...IntentChatMessageWithReply
+mutation SendEventMessage($input: SendEventMessageInput!) {
+  sendEventMessage(input: $input) {
+    ...EventChatMessageWithReply
   }
 }
 
-mutation EditIntentMessage($id: ID!, $input: EditIntentMessageInput!) {
-  editIntentMessage(id: $id, input: $input) {
-    ...IntentChatMessageWithReply
+mutation EditEventMessage($id: ID!, $input: EditEventMessageInput!) {
+  editEventMessage(id: $id, input: $input) {
+    ...EventChatMessageWithReply
   }
 }
 
-mutation DeleteIntentMessage($id: ID!, $soft: Boolean = true) {
-  deleteIntentMessage(id: $id, soft: $soft)
+mutation DeleteEventMessage($id: ID!, $soft: Boolean = true) {
+  deleteEventMessage(id: $id, soft: $soft)
 }
 
-mutation MarkIntentChatRead($intentId: ID!, $at: DateTime) {
-  markIntentChatRead(intentId: $intentId, at: $at)
+mutation MarkEventChatRead($eventId: ID!, $at: DateTime) {
+  markEventChatRead(eventId: $eventId, at: $at)
 }
 
-# Mute/unmute an intent chat
-mutation MuteIntent($intentId: ID!, $muted: Boolean!) {
-  muteIntent(intentId: $intentId, muted: $muted) {
-    ...IntentMuteCore
+# Mute/unmute an event chat
+mutation MuteEvent($eventId: ID!, $muted: Boolean!) {
+  muteEvent(eventId: $eventId, muted: $muted) {
+    ...EventMuteCore
   }
 }
 
 # Publish typing indicator
-mutation PublishIntentTyping($intentId: ID!, $isTyping: Boolean!) {
-  publishIntentTyping(intentId: $intentId, isTyping: $isTyping)
+mutation PublishEventTyping($eventId: ID!, $isTyping: Boolean!) {
+  publishEventTyping(eventId: $eventId, isTyping: $isTyping)
 }
 
 # Subscriptions
-subscription OnIntentMessageAdded($intentId: ID!) {
-  intentMessageAdded(intentId: $intentId) {
-    ...IntentChatMessageWithReply
+subscription OnEventMessageAdded($eventId: ID!) {
+  eventMessageAdded(eventId: $eventId) {
+    ...EventChatMessageWithReply
   }
 }
 
-subscription OnIntentMessageUpdated($intentId: ID!) {
-  intentMessageUpdated(intentId: $intentId) {
-    ...IntentChatMessageWithReply
+subscription OnEventMessageUpdated($eventId: ID!) {
+  eventMessageUpdated(eventId: $eventId) {
+    ...EventChatMessageWithReply
   }
 }
 
-subscription OnIntentMessageDeleted($intentId: ID!) {
-  intentMessageDeleted(intentId: $intentId) {
+subscription OnEventMessageDeleted($eventId: ID!) {
+  eventMessageDeleted(eventId: $eventId) {
     messageId
     deletedAt
   }
 }
 
-subscription OnIntentTyping($intentId: ID!) {
-  intentTyping(intentId: $intentId) {
+subscription OnEventTyping($eventId: ID!) {
+  eventTyping(eventId: $eventId) {
     userId
     isTyping
   }

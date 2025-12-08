@@ -5,29 +5,29 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { Client, SubscribePayload } from 'graphql-ws';
 import { print } from 'graphql';
 import {
-  OnIntentMessageAddedDocument,
-  type OnIntentMessageAddedSubscription,
-  OnIntentMessageUpdatedDocument,
-  type OnIntentMessageUpdatedSubscription,
-  OnIntentMessageDeletedDocument,
-  type OnIntentMessageDeletedSubscription,
-  OnIntentTypingDocument,
-  type OnIntentTypingSubscription,
+  OnEventMessageAddedDocument,
+  type OnEventMessageAddedSubscription,
+  OnEventMessageUpdatedDocument,
+  type OnEventMessageUpdatedSubscription,
+  OnEventMessageDeletedDocument,
+  type OnEventMessageDeletedSubscription,
+  OnEventTypingDocument,
+  type OnEventTypingSubscription,
 } from '@/lib/api/__generated__/react-query-update';
 import { getWsClient } from '@/lib/api/ws-client';
 import { eventChatKeys } from './event-chat';
 
 /**
- * Subscribe to new messages in an intent chat
+ * Subscribe to new messages in an event chat
  */
-export function useIntentMessageAdded(params: {
-  intentId: string;
+export function useEventMessageAdded(params: {
+  eventId: string;
   onMessage?: (
-    message: NonNullable<OnIntentMessageAddedSubscription['intentMessageAdded']>
+    message: NonNullable<OnEventMessageAddedSubscription['eventMessageAdded']>
   ) => void;
   enabled?: boolean;
 }) {
-  const { intentId, onMessage, enabled = true } = params;
+  const { eventId, onMessage, enabled = true } = params;
   const queryClient = useQueryClient();
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,7 +40,7 @@ export function useIntentMessageAdded(params: {
   }, [onMessage]);
 
   useEffect(() => {
-    if (!enabled || !intentId) return;
+    if (!enabled || !eventId) return;
 
     let isActive = true;
     const mySession = ++sessionRef.current;
@@ -63,8 +63,8 @@ export function useIntentMessageAdded(params: {
         if (!isActive || mySession !== sessionRef.current) return;
 
         const payload: SubscribePayload = {
-          query: print(OnIntentMessageAddedDocument),
-          variables: { intentId },
+          query: print(OnEventMessageAddedDocument),
+          variables: { eventId },
         };
 
         if (unsubscribeRef.current) {
@@ -75,39 +75,39 @@ export function useIntentMessageAdded(params: {
         }
 
         unsubscribeRef.current =
-          client.subscribe<OnIntentMessageAddedSubscription>(payload, {
+          client.subscribe<OnEventMessageAddedSubscription>(payload, {
             next: (result) => {
               if (!connected) setConnected(true);
 
               if (result.errors?.length) {
                 console.error(
-                  '❌ Intent chat subscription GraphQL errors:',
+                  '❌ Event chat subscription GraphQL errors:',
                   result.errors
                 );
                 return;
               }
 
-              const message = result.data?.intentMessageAdded;
+              const message = result.data?.eventMessageAdded;
               if (message) {
                 if (onMessageRef.current) {
                   onMessageRef.current(message);
                 } else {
                   // Default: invalidate messages query
                   queryClient.invalidateQueries({
-                    queryKey: eventChatKeys.messages(intentId),
+                    queryKey: eventChatKeys.messages(eventId),
                   });
                   queryClient.invalidateQueries({
-                    queryKey: eventChatKeys.unreadCount(intentId),
+                    queryKey: eventChatKeys.unreadCount(eventId),
                   });
                   queryClient.invalidateQueries({
-                    queryKey: ['intents', 'detail', intentId],
+                    queryKey: ['events', 'detail', eventId],
                   });
                 }
               }
             },
             error: (err) => {
               if (!isActive || mySession !== sessionRef.current) return;
-              console.error('❌ Intent chat subscription error:', err);
+              console.error('❌ Event chat subscription error:', err);
               setConnected(false);
               scheduleRetry();
             },
@@ -119,7 +119,7 @@ export function useIntentMessageAdded(params: {
           });
       } catch (err) {
         if (!isActive || mySession !== sessionRef.current) return;
-        console.error('❗ Intent chat subscription setup failed:', err);
+        console.error('❗ Event chat subscription setup failed:', err);
         setConnected(false);
         scheduleRetry();
       }
@@ -143,20 +143,20 @@ export function useIntentMessageAdded(params: {
         unsubscribeRef.current = null;
       }
     };
-  }, [intentId, enabled, queryClient]);
+  }, [eventId, enabled, queryClient]);
 
   return { connected };
 }
 
 /**
- * Subscribe to typing indicators in an intent chat
+ * Subscribe to typing indicators in an event chat
  */
-export function useIntentTyping(params: {
-  intentId: string;
+export function useEventTyping(params: {
+  eventId: string;
   onTyping?: (data: { userId: string; isTyping: boolean }) => void;
   enabled?: boolean;
 }) {
-  const { intentId, onTyping, enabled = true } = params;
+  const { eventId, onTyping, enabled = true } = params;
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionRef = useRef(0);
@@ -168,7 +168,7 @@ export function useIntentTyping(params: {
   }, [onTyping]);
 
   useEffect(() => {
-    if (!enabled || !intentId) return;
+    if (!enabled || !eventId) return;
 
     let isActive = true;
     const mySession = ++sessionRef.current;
@@ -191,8 +191,8 @@ export function useIntentTyping(params: {
         if (!isActive || mySession !== sessionRef.current) return;
 
         const payload: SubscribePayload = {
-          query: print(OnIntentTypingDocument),
-          variables: { intentId },
+          query: print(OnEventTypingDocument),
+          variables: { eventId },
         };
 
         if (unsubscribeRef.current) {
@@ -202,7 +202,7 @@ export function useIntentTyping(params: {
           unsubscribeRef.current = null;
         }
 
-        unsubscribeRef.current = client.subscribe<OnIntentTypingSubscription>(
+        unsubscribeRef.current = client.subscribe<OnEventTypingSubscription>(
           payload,
           {
             next: (result) => {
@@ -210,13 +210,13 @@ export function useIntentTyping(params: {
 
               if (result.errors?.length) {
                 console.error(
-                  '❌ Intent typing subscription errors:',
+                  '❌ Event typing subscription errors:',
                   result.errors
                 );
                 return;
               }
 
-              const data = result.data?.intentTyping;
+              const data = result.data?.eventTyping;
               if (data && onTypingRef.current) {
                 onTypingRef.current({
                   userId: data.userId,
@@ -226,7 +226,7 @@ export function useIntentTyping(params: {
             },
             error: (err) => {
               if (!isActive || mySession !== sessionRef.current) return;
-              console.error('❌ Intent typing subscription error:', err);
+              console.error('❌ Event typing subscription error:', err);
               setConnected(false);
               scheduleRetry();
             },
@@ -239,7 +239,7 @@ export function useIntentTyping(params: {
         );
       } catch (err) {
         if (!isActive || mySession !== sessionRef.current) return;
-        console.error('❗ Intent typing subscription setup failed:', err);
+        console.error('❗ Event typing subscription setup failed:', err);
         setConnected(false);
         scheduleRetry();
       }
@@ -263,24 +263,24 @@ export function useIntentTyping(params: {
         unsubscribeRef.current = null;
       }
     };
-  }, [intentId, enabled]);
+  }, [eventId, enabled]);
 
   return { connected };
 }
 
 /**
- * Subscribe to message updates in an intent chat
+ * Subscribe to message updates in an event chat
  */
-export function useIntentMessageUpdated(params: {
-  intentId: string;
+export function useEventMessageUpdated(params: {
+  eventId: string;
   onMessageUpdated?: (
     message: NonNullable<
-      OnIntentMessageUpdatedSubscription['intentMessageUpdated']
+      OnEventMessageUpdatedSubscription['eventMessageUpdated']
     >
   ) => void;
   enabled?: boolean;
 }) {
-  const { intentId, onMessageUpdated, enabled = true } = params;
+  const { eventId, onMessageUpdated, enabled = true } = params;
   const queryClient = useQueryClient();
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -293,7 +293,7 @@ export function useIntentMessageUpdated(params: {
   }, [onMessageUpdated]);
 
   useEffect(() => {
-    if (!enabled || !intentId) return;
+    if (!enabled || !eventId) return;
 
     let isActive = true;
     const mySession = ++sessionRef.current;
@@ -316,8 +316,8 @@ export function useIntentMessageUpdated(params: {
         if (!isActive || mySession !== sessionRef.current) return;
 
         const payload: SubscribePayload = {
-          query: print(OnIntentMessageUpdatedDocument),
-          variables: { intentId },
+          query: print(OnEventMessageUpdatedDocument),
+          variables: { eventId },
         };
 
         if (unsubscribeRef.current) {
@@ -328,32 +328,32 @@ export function useIntentMessageUpdated(params: {
         }
 
         unsubscribeRef.current =
-          client.subscribe<OnIntentMessageUpdatedSubscription>(payload, {
+          client.subscribe<OnEventMessageUpdatedSubscription>(payload, {
             next: (result) => {
               if (!connected) setConnected(true);
 
               if (result.errors?.length) {
                 console.error(
-                  '❌ Intent message updated subscription errors:',
+                  '❌ Event message updated subscription errors:',
                   result.errors
                 );
                 return;
               }
 
-              const message = result.data?.intentMessageUpdated;
+              const message = result.data?.eventMessageUpdated;
               if (message) {
                 console.log(
-                  '[Intent Sub] Message updated:',
+                  '[Event Sub] Message updated:',
                   message.id,
-                  'IntentID:',
-                  intentId
+                  'EventID:',
+                  eventId
                 );
                 if (onMessageUpdatedRef.current) {
                   onMessageUpdatedRef.current(message);
                 } else {
                   // Default: invalidate messages query
                   queryClient.invalidateQueries({
-                    queryKey: eventChatKeys.messages(intentId),
+                    queryKey: eventChatKeys.messages(eventId),
                   });
                 }
               }
@@ -361,7 +361,7 @@ export function useIntentMessageUpdated(params: {
             error: (err) => {
               if (!isActive || mySession !== sessionRef.current) return;
               console.error(
-                '❌ Intent message updated subscription error:',
+                '❌ Event message updated subscription error:',
                 err
               );
               setConnected(false);
@@ -376,7 +376,7 @@ export function useIntentMessageUpdated(params: {
       } catch (err) {
         if (!isActive || mySession !== sessionRef.current) return;
         console.error(
-          '❗ Intent message updated subscription setup failed:',
+          '❗ Event message updated subscription setup failed:',
           err
         );
         setConnected(false);
@@ -402,24 +402,22 @@ export function useIntentMessageUpdated(params: {
         unsubscribeRef.current = null;
       }
     };
-  }, [intentId, enabled, queryClient]);
+  }, [eventId, enabled, queryClient]);
 
   return { connected };
 }
 
 /**
- * Subscribe to message deletions in an intent chat
+ * Subscribe to message deletions in an event chat
  */
-export function useIntentMessageDeleted(params: {
-  intentId: string;
+export function useEventMessageDeleted(params: {
+  eventId: string;
   onMessageDeleted?: (
-    event: NonNullable<
-      OnIntentMessageDeletedSubscription['intentMessageDeleted']
-    >
+    event: NonNullable<OnEventMessageDeletedSubscription['eventMessageDeleted']>
   ) => void;
   enabled?: boolean;
 }) {
-  const { intentId, onMessageDeleted, enabled = true } = params;
+  const { eventId, onMessageDeleted, enabled = true } = params;
   const queryClient = useQueryClient();
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -432,7 +430,7 @@ export function useIntentMessageDeleted(params: {
   }, [onMessageDeleted]);
 
   useEffect(() => {
-    if (!enabled || !intentId) return;
+    if (!enabled || !eventId) return;
 
     let isActive = true;
     const mySession = ++sessionRef.current;
@@ -455,8 +453,8 @@ export function useIntentMessageDeleted(params: {
         if (!isActive || mySession !== sessionRef.current) return;
 
         const payload: SubscribePayload = {
-          query: print(OnIntentMessageDeletedDocument),
-          variables: { intentId },
+          query: print(OnEventMessageDeletedDocument),
+          variables: { eventId },
         };
 
         if (unsubscribeRef.current) {
@@ -467,32 +465,32 @@ export function useIntentMessageDeleted(params: {
         }
 
         unsubscribeRef.current =
-          client.subscribe<OnIntentMessageDeletedSubscription>(payload, {
+          client.subscribe<OnEventMessageDeletedSubscription>(payload, {
             next: (result) => {
               if (!connected) setConnected(true);
 
               if (result.errors?.length) {
                 console.error(
-                  '❌ Intent message deleted subscription errors:',
+                  '❌ Event message deleted subscription errors:',
                   result.errors
                 );
                 return;
               }
 
-              const event = result.data?.intentMessageDeleted;
+              const event = result.data?.eventMessageDeleted;
               if (event) {
                 console.log(
-                  '[Intent Sub] Message deleted:',
+                  '[Event Sub] Message deleted:',
                   event.messageId,
-                  'IntentID:',
-                  intentId
+                  'EventID:',
+                  eventId
                 );
                 if (onMessageDeletedRef.current) {
                   onMessageDeletedRef.current(event);
                 } else {
                   // Default: invalidate messages query
                   queryClient.invalidateQueries({
-                    queryKey: eventChatKeys.messages(intentId),
+                    queryKey: eventChatKeys.messages(eventId),
                   });
                 }
               }
@@ -500,7 +498,7 @@ export function useIntentMessageDeleted(params: {
             error: (err) => {
               if (!isActive || mySession !== sessionRef.current) return;
               console.error(
-                '❌ Intent message deleted subscription error:',
+                '❌ Event message deleted subscription error:',
                 err
               );
               setConnected(false);
@@ -515,7 +513,7 @@ export function useIntentMessageDeleted(params: {
       } catch (err) {
         if (!isActive || mySession !== sessionRef.current) return;
         console.error(
-          '❗ Intent message deleted subscription setup failed:',
+          '❗ Event message deleted subscription setup failed:',
           err
         );
         setConnected(false);
@@ -541,7 +539,7 @@ export function useIntentMessageDeleted(params: {
         unsubscribeRef.current = null;
       }
     };
-  }, [intentId, enabled, queryClient]);
+  }, [eventId, enabled, queryClient]);
 
   return { connected };
 }

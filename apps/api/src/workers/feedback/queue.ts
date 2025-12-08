@@ -1,6 +1,6 @@
 import { Queue, Worker, JobsOptions } from 'bullmq';
 import IORedis from 'ioredis';
-import { runFeedbackRequestForIntent } from './runFeedbackRequestForIntent';
+import { runFeedbackRequestForEvent } from './runFeedbackRequestForEvent';
 import { logger } from '../logger';
 
 export const connection = new IORedis({
@@ -23,22 +23,22 @@ connection.on('error', (err) => {
 });
 
 // Queue for feedback requests (sent after event ends)
-export const feedbackQueue = new Queue('intent-feedback', { connection });
+export const feedbackQueue = new Queue('event-feedback', { connection });
 
 export type FeedbackRequestPayload = {
-  intentId: string;
+  eventId: string;
 };
 
-function buildJobId(intentId: string) {
-  return `feedback-request-${intentId}`;
+function buildJobId(eventId: string) {
+  return `feedback-request-${eventId}`;
 }
 
 /**
  * Schedule feedback request to be sent 1 hour after event ends
- * @param intentId - Intent ID
+ * @param eventId - Event ID
  * @param endAt - Event end date
  */
-export async function enqueueFeedbackRequest(intentId: string, endAt: Date) {
+export async function enqueueFeedbackRequest(eventId: string, endAt: Date) {
   console.log('kolejka');
   const now = Date.now();
   // const oneHourAfterEnd = new Date(endAt).getTime() + 60 * 1000; // 1 hour
@@ -47,14 +47,14 @@ export async function enqueueFeedbackRequest(intentId: string, endAt: Date) {
 
   if (delay <= 0) {
     logger.info(
-      { intentId, endAt },
+      { eventId, endAt },
       '[enqueueFeedbackRequest] Event already ended, skipping.'
     );
     return;
   }
 
   logger.info(
-    { intentId, endAt, delayMs: delay },
+    { eventId, endAt, delayMs: delay },
     '[enqueueFeedbackRequest] Scheduling feedback request...'
   );
 
@@ -63,23 +63,23 @@ export async function enqueueFeedbackRequest(intentId: string, endAt: Date) {
     attempts: 3,
     removeOnComplete: 1000,
     removeOnFail: 5000,
-    jobId: buildJobId(intentId),
+    jobId: buildJobId(eventId),
   };
 
-  await feedbackQueue.add('send', { intentId }, opts);
+  await feedbackQueue.add('send', { eventId }, opts);
   logger.info(
-    { intentId },
+    { eventId },
     '[enqueueFeedbackRequest] Feedback request scheduled.'
   );
 }
 
 /**
  * Immediately send feedback request (manual trigger)
- * @param intentId - Intent ID
+ * @param eventId - Event ID
  */
-export async function enqueueFeedbackRequestNow(intentId: string) {
+export async function enqueueFeedbackRequestNow(eventId: string) {
   logger.info(
-    { intentId },
+    { eventId },
     '[enqueueFeedbackRequestNow] Queueing immediate feedback request...'
   );
 
@@ -87,55 +87,55 @@ export async function enqueueFeedbackRequestNow(intentId: string) {
     attempts: 3,
     removeOnComplete: 1000,
     removeOnFail: 5000,
-    jobId: `${buildJobId(intentId)}-manual-${Date.now()}`, // Unique ID for manual sends
+    jobId: `${buildJobId(eventId)}-manual-${Date.now()}`, // Unique ID for manual sends
   };
 
-  await feedbackQueue.add('send', { intentId }, opts);
+  await feedbackQueue.add('send', { eventId }, opts);
   logger.info(
-    { intentId },
+    { eventId },
     '[enqueueFeedbackRequestNow] Immediate feedback request queued.'
   );
 }
 
 /**
- * Clear feedback request for an intent
- * @param intentId - Intent ID
+ * Clear feedback request for an event
+ * @param eventId - Event ID
  */
-export async function clearFeedbackRequest(intentId: string) {
-  logger.info({ intentId }, '[clearFeedbackRequest] Removing feedback job...');
-  const jobId = buildJobId(intentId);
+export async function clearFeedbackRequest(eventId: string) {
+  logger.info({ eventId }, '[clearFeedbackRequest] Removing feedback job...');
+  const jobId = buildJobId(eventId);
   const job = await feedbackQueue.getJob(jobId);
 
   if (job) {
     try {
       await job.remove();
-      logger.info({ intentId, jobId }, '[clearFeedbackRequest] Job removed');
+      logger.info({ eventId, jobId }, '[clearFeedbackRequest] Job removed');
     } catch (e) {
       logger.warn(
-        { err: e, intentId, jobId },
+        { err: e, eventId, jobId },
         '[clearFeedbackRequest] Remove failed'
       );
     }
   } else {
-    logger.debug({ intentId, jobId }, '[clearFeedbackRequest] No job found');
+    logger.debug({ eventId, jobId }, '[clearFeedbackRequest] No job found');
   }
 }
 
 /**
  * Reschedule feedback request (e.g., when event endAt changes)
- * @param intentId - Intent ID
+ * @param eventId - Event ID
  * @param newEndAt - New event end date
  */
 export async function rescheduleFeedbackRequest(
-  intentId: string,
+  eventId: string,
   newEndAt: Date
 ) {
   logger.info(
-    { intentId, newEndAt },
+    { eventId, newEndAt },
     '[rescheduleFeedbackRequest] Rescheduling...'
   );
-  await clearFeedbackRequest(intentId);
-  await enqueueFeedbackRequest(intentId, newEndAt);
+  await clearFeedbackRequest(eventId);
+  await enqueueFeedbackRequest(eventId, newEndAt);
 }
 
 /**
@@ -145,21 +145,21 @@ export function bootstrapFeedbackWorker() {
   logger.info('🚀 Starting feedback worker...');
 
   const worker = new Worker<FeedbackRequestPayload>(
-    'intent-feedback',
+    'event-feedback',
     async (job) => {
-      const { intentId } = job.data;
+      const { eventId } = job.data;
       logger.info(
-        { jobId: job.id, intentId },
+        { jobId: job.id, eventId },
         '[Worker] Executing feedback request job...'
       );
       try {
-        await runFeedbackRequestForIntent(intentId);
+        await runFeedbackRequestForEvent(eventId);
         logger.info(
-          { intentId },
+          { eventId },
           '[Worker] Feedback request sent successfully.'
         );
       } catch (err) {
-        logger.error({ err, intentId }, '[Worker] Feedback request failed.');
+        logger.error({ err, eventId }, '[Worker] Feedback request failed.');
         throw err;
       }
     },

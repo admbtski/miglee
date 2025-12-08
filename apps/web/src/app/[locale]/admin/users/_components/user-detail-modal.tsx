@@ -8,7 +8,7 @@ import { ProfileTab } from './tabs/profile-tab';
 import { CommunicationTab } from './tabs/communication-tab';
 import { SecurityTab } from './tabs/security-tab';
 import { ContentTab } from './tabs/content-tab';
-import { IntentsTab } from './tabs/intents-tab';
+import { EventsTab } from './tabs/events-tab';
 import { DiagnosticTools } from './tabs/diagnostic-tools';
 import { AuditLogTab } from './tabs/audit-log-tab';
 import { NotificationsTab } from './tabs/notifications-tab';
@@ -27,7 +27,7 @@ type TabId =
   | 'communication'
   | 'security'
   | 'content'
-  | 'intents'
+  | 'events'
   | 'notifications'
   | 'tools'
   | 'audit';
@@ -38,7 +38,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'communication', label: 'Komunikacja' },
   { id: 'security', label: 'Bezpieczeństwo' },
   { id: 'content', label: 'Treści' },
-  { id: 'intents', label: 'Wydarzenia' },
+  { id: 'events', label: 'Wydarzenia' },
   { id: 'notifications', label: 'Powiadomienia' },
   { id: 'tools', label: 'Narzędzia' },
   { id: 'audit', label: 'Historia' },
@@ -120,7 +120,7 @@ export function UserDetailModal({
               <SecurityTab userId={userId} onRefresh={onRefresh} />
             )}
             {activeTab === 'content' && <ContentTab userId={userId} />}
-            {activeTab === 'intents' && <IntentsTab userId={userId} />}
+            {activeTab === 'events' && <EventTab userId={userId} />}
             {activeTab === 'notifications' && (
               <NotificationsTab userId={userId} />
             )}

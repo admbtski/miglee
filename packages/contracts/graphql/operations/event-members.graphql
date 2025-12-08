@@ -1,0 +1,196 @@
+# =============================================================================
+# Event Membership Mutations (User Actions)
+# =============================================================================
+
+# User requests to join an event
+mutation RequestJoinEvent($eventId: ID!) {
+  requestJoinEvent(eventId: $eventId) {
+    ...EventCore
+  }
+}
+
+# User cancels their join request
+mutation CancelJoinRequest($eventId: ID!) {
+  cancelJoinRequest(eventId: $eventId)
+}
+
+# User leaves an event they've joined
+mutation LeaveEvent($eventId: ID!) {
+  leaveEvent(eventId: $eventId) {
+    ...EventCore
+  }
+}
+
+# User accepts an invitation to join
+mutation AcceptInvite($eventId: ID!) {
+  acceptInvite(eventId: $eventId) {
+    ...EventCore
+  }
+}
+
+# =============================================================================
+# Waitlist Mutations (User Actions)
+# =============================================================================
+
+# User joins the waitlist for a full OPEN event
+mutation JoinWaitlistOpen($eventId: ID!) {
+  joinWaitlistOpen(eventId: $eventId) {
+    ...EventCore
+  }
+}
+
+# User leaves the waitlist
+mutation LeaveWaitlist($eventId: ID!) {
+  leaveWaitlist(eventId: $eventId)
+}
+
+# =============================================================================
+# Event Membership Mutations (Owner/Moderator Actions)
+# =============================================================================
+
+# Owner/moderator invites a user to join
+mutation InviteMember($input: InviteMemberInput!) {
+  inviteMember(input: $input) {
+    ...EventCore
+  }
+}
+
+# Owner/moderator approves a pending join request
+mutation ApproveMembership($input: ApproveMembershipInput!) {
+  approveMembership(input: $input) {
+    ...EventCore
+  }
+}
+
+# Owner/moderator rejects a join request
+mutation RejectMembership($input: RejectMembershipInput!) {
+  rejectMembership(input: $input) {
+    ...EventCore
+  }
+}
+
+# Owner/moderator kicks a member
+mutation KickMember($input: KickMemberInput!) {
+  kickMember(input: $input) {
+    ...EventCore
+  }
+}
+
+# Owner/moderator bans a member (permanent block)
+mutation BanMember($input: BanMemberInput!) {
+  banMember(input: $input) {
+    ...EventCore
+  }
+}
+
+mutation UnbanMember($input: UnbanMemberInput!) {
+  unbanMember(input: $input) {
+    ...EventCore
+  }
+}
+
+# Owner/moderator cancels a pending or invited membership
+mutation CancelPendingOrInviteForUser(
+  $input: CancelPendingOrInviteForUserInput!
+) {
+  cancelPendingOrInviteForUser(input: $input)
+}
+
+# Owner/moderator updates a member's role (OWNER / MODERATOR / PARTICIPANT)
+mutation UpdateMemberRole($input: UpdateMemberRoleInput!) {
+  updateMemberRole(input: $input) {
+    ...EventCore
+  }
+}
+
+# Owner/moderator manually promotes a user from waitlist to joined
+mutation PromoteFromWaitlist($input: PromoteFromWaitlistInput!) {
+  promoteFromWaitlist(input: $input) {
+    ...EventCore
+  }
+}
+
+# =============================================================================
+# Event Membership Queries
+# =============================================================================
+
+# List members of an event (with filtering)
+query GetEventMembers(
+  $eventId: ID!
+  $status: EventMemberStatus
+  $role: EventMemberRole
+  $limit: Int = 50
+  $offset: Int = 0
+) {
+  eventMembers(
+    eventId: $eventId
+    status: $status
+    role: $role
+    limit: $limit
+    offset: $offset
+  ) {
+    ...EventMemberCore
+  }
+}
+
+# Get a single membership
+query GetEventMember($eventId: ID!, $userId: ID!) {
+  eventMember(eventId: $eventId, userId: $userId) {
+    ...EventMemberCore
+  }
+}
+
+# Get current user's membership for a specific event
+# Unlike GetEventMember, this doesn't require userId - uses authenticated user
+query GetMyMembershipForEvent($eventId: ID!) {
+  myMembershipForEvent(eventId: $eventId) {
+    ...EventMemberCore
+  }
+}
+
+# Get current user's memberships across all events
+query GetMyMemberships(
+  $status: EventMemberStatus
+  $role: EventMemberRole
+  $limit: Int = 50
+  $offset: Int = 0
+) {
+  myMemberships(status: $status, role: $role, limit: $limit, offset: $offset) {
+    ...EventMemberCore
+  }
+}
+
+# Get current user's events with flexible filtering (membership + event lifecycle status)
+query GetMyEvents(
+  $role: EventMemberRole
+  $membershipStatus: EventMemberStatus
+  $eventStatuses: [EventLifecycleStatus!]
+  $limit: Int = 50
+  $offset: Int = 0
+) {
+  myEvents(
+    role: $role
+    membershipStatus: $membershipStatus
+    eventStatuses: $eventStatuses
+    limit: $limit
+    offset: $offset
+  ) {
+    ...EventMemberCore
+    event {
+      ...EventCore
+    }
+  }
+}
+
+# Get membership statistics for an event
+query GetEventMemberStats($eventId: ID!) {
+  eventMemberStats(eventId: $eventId) {
+    joined
+    pending
+    invited
+    rejected
+    banned
+    left
+    kicked
+  }
+}

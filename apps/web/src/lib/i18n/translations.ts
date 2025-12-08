@@ -1,5 +1,5 @@
 /**
- * Translations for the intents page
+ * Translations for the events page
  * Currently supports Polish (pl) only
  * TODO: Add English (en) and other languages
  */

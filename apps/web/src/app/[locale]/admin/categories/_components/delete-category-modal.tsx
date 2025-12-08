@@ -117,7 +117,7 @@ export function DeleteCategoryModal({
 
               <div className="mt-4">
                 <Link
-                  href={`/admin/intents?categorySlugs=${category.slug}`}
+                  href={`/admin/events?categorySlugs=${category.slug}`}
                   className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline dark:text-blue-400"
                   onClick={handleClose}
                 >

@@ -9,7 +9,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  IntentStatus,
+  EventStatus,
   JoinMode,
   Level,
   MeetingKind,
@@ -194,18 +194,18 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
 
   // Check if date inputs should be disabled
   const dateInputsDisabled =
-    filters.status === IntentStatus.Upcoming ||
-    filters.status === IntentStatus.Ongoing ||
-    filters.status === IntentStatus.Past;
+    filters.status === EventStatus.Upcoming ||
+    filters.status === EventStatus.Ongoing ||
+    filters.status === EventStatus.Past;
 
   // Time Status change handler
   const handleStatusChange = useCallback(
-    (newStatus: IntentStatus) => {
+    (newStatus: EventStatus) => {
       const updates: Partial<CommittedFilters> = { status: newStatus };
       if (
-        newStatus === IntentStatus.Upcoming ||
-        newStatus === IntentStatus.Ongoing ||
-        newStatus === IntentStatus.Past
+        newStatus === EventStatus.Upcoming ||
+        newStatus === EventStatus.Ongoing ||
+        newStatus === EventStatus.Past
       ) {
         updates.startISO = null;
         updates.endISO = null;
@@ -220,8 +220,8 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
     (val: string) => {
       const iso = localInputToISO(val);
       const updates: Partial<CommittedFilters> = { startISO: iso };
-      if (iso !== null && filters.status !== IntentStatus.Any) {
-        updates.status = IntentStatus.Any;
+      if (iso !== null && filters.status !== EventStatus.Any) {
+        updates.status = EventStatus.Any;
       }
       onFiltersChange(updates);
     },
@@ -232,8 +232,8 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
     (val: string) => {
       const iso = localInputToISO(val);
       const updates: Partial<CommittedFilters> = { endISO: iso };
-      if (iso !== null && filters.status !== IntentStatus.Any) {
-        updates.status = IntentStatus.Any;
+      if (iso !== null && filters.status !== EventStatus.Any) {
+        updates.status = EventStatus.Any;
       }
       onFiltersChange(updates);
     },
@@ -244,7 +244,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
     (preset: string) => {
       const { start, end } = getPresetDates(preset);
       onFiltersChange({
-        status: IntentStatus.Any,
+        status: EventStatus.Any,
         startISO: start.toISOString(),
         endISO: end.toISOString(),
       });
@@ -292,7 +292,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
 
   const clearAllFilters = useCallback(() => {
     onFiltersChange({
-      status: IntentStatus.Any,
+      status: EventStatus.Any,
       startISO: null,
       endISO: null,
       kinds: [],
@@ -305,7 +305,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
   // Count active filters
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (filters.status !== IntentStatus.Any) count++;
+    if (filters.status !== EventStatus.Any) count++;
     if (filters.startISO || filters.endISO) count++;
     count += filters.kinds.length;
     count += filters.levels.length;
@@ -315,7 +315,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
   }, [filters]);
 
   // Section badges
-  const timeStatusBadge = filters.status !== IntentStatus.Any ? 1 : 0;
+  const timeStatusBadge = filters.status !== EventStatus.Any ? 1 : 0;
   const dateRangeBadge = filters.startISO || filters.endISO ? 1 : 0;
   const meetingTypeBadge = filters.kinds.length;
   const levelBadge = filters.levels.length;
@@ -323,10 +323,10 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
   const organizerBadge = filters.verifiedOnly ? 1 : 0;
 
   const statusOptions = [
-    { value: IntentStatus.Any, label: t.any },
-    { value: IntentStatus.Upcoming, label: t.upcoming },
-    { value: IntentStatus.Ongoing, label: t.ongoing },
-    { value: IntentStatus.Past, label: t.past },
+    { value: EventStatus.Any, label: t.any },
+    { value: EventStatus.Upcoming, label: t.upcoming },
+    { value: EventStatus.Ongoing, label: t.ongoing },
+    { value: EventStatus.Past, label: t.past },
   ];
 
   const presets = [

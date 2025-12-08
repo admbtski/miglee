@@ -131,18 +131,18 @@ export function FavouritesBell({
   const toggle = useCallback(() => setOpen((v) => !v), []);
 
   const handleRemove = useCallback(
-    (intentId: string, favouriteId: string) => {
+    (eventId: string, favouriteId: string) => {
       // Optimistic
       setDeletedIds((prev) => new Set(prev).add(favouriteId));
-      toggleFavourite({ intentId });
+      toggleFavourite({ eventId });
     },
     [toggleFavourite]
   );
 
-  const handleViewIntent = useCallback(
-    (intentId: string) => {
+  const handleViewEvent = useCallback(
+    (eventId: string) => {
       setOpen(false);
-      router.push(localePath(`/intent/${intentId}`));
+      router.push(localePath(`/event/${eventId}`));
     },
     [router, localePath]
   );
@@ -235,8 +235,8 @@ export function FavouritesBell({
                 <>
                   <ul className="space-y-1 px-1">
                     {list.map((fav) => {
-                      const intent = fav.intent;
-                      if (!intent) return null;
+                      const event = fav.event;
+                      if (!event) return null;
 
                       return (
                         <li
@@ -252,7 +252,7 @@ export function FavouritesBell({
                             <div className="min-w-0 flex-1">
                               {/* Title */}
                               <div className="mb-1 line-clamp-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                {intent.title}
+                                {event.title}
                               </div>
 
                               {/* Date & Location */}
@@ -260,16 +260,16 @@ export function FavouritesBell({
                                 <div className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
                                   {format(
-                                    new Date(intent.startAt),
+                                    new Date(event.startAt),
                                     'dd MMM yyyy, HH:mm',
                                     { locale: pl }
                                   )}
                                 </div>
-                                {intent.address && (
+                                {event.address && (
                                   <div className="flex items-center gap-1">
                                     <MapPin className="h-3 w-3" />
                                     <span className="line-clamp-1">
-                                      {intent.address}
+                                      {event.address}
                                     </span>
                                   </div>
                                 )}
@@ -279,7 +279,7 @@ export function FavouritesBell({
                               <div className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => handleViewIntent(intent.id)}
+                                  onClick={() => handleViewEvent(event.id)}
                                   className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                                 >
                                   <ExternalLink className="h-3.5 w-3.5" />
@@ -288,9 +288,7 @@ export function FavouritesBell({
                                 <button
                                   type="button"
                                   disabled={toggling}
-                                  onClick={() =>
-                                    handleRemove(intent.id, fav.id)
-                                  }
+                                  onClick={() => handleRemove(event.id, fav.id)}
                                   className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:text-rose-400 dark:hover:bg-rose-900/30"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />

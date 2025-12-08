@@ -18,17 +18,17 @@ mutation UpdateNotificationPreferences(
   }
 }
 
-# Intent Mute Queries
-query GetIntentMute($intentId: ID!) {
-  intentMute(intentId: $intentId) {
-    ...IntentMuteCore
+# Event Mute Queries
+query GetEventMute($eventId: ID!) {
+  eventMute(eventId: $eventId) {
+    ...EventMuteCore
   }
 }
 
-# Intent Mute Mutations
-mutation MuteIntent($intentId: ID!, $muted: Boolean!) {
-  muteIntent(intentId: $intentId, muted: $muted) {
-    ...IntentMuteCore
+# Event Mute Mutations
+mutation MuteEvent($eventId: ID!, $muted: Boolean!) {
+  muteEvent(eventId: $eventId, muted: $muted) {
+    ...EventMuteCore
   }
 }
 

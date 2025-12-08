@@ -80,7 +80,7 @@ export function ShareModal({
       color: 'bg-sky-500 hover:bg-sky-600',
       action: (url, title) => {
         window.open(
-          `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+          `https://twitter.com/event/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
           '_blank',
           'width=600,height=400'
         );

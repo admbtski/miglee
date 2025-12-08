@@ -28,14 +28,14 @@ import { useState } from 'react';
 import {
   useUpdateDmMessage,
   useDeleteDmMessage,
-  useEditIntentMessage,
-  useDeleteIntentMessage,
+  useEditEventMessage,
+  useDeleteEventMessage,
 } from '@/features/chat/api/message-actions';
 import {
   useAddDmReaction,
   useRemoveDmReaction,
-  useAddIntentReaction,
-  useRemoveIntentReaction,
+  useAddEventReaction,
+  useRemoveEventReaction,
 } from '@/features/chat/api/reactions';
 
 // =============================================================================
@@ -43,12 +43,12 @@ import {
 // =============================================================================
 
 type UseMessageActionsProps = {
-  /** Chat type: 'dm' for direct messages, 'channel' for intent chats */
+  /** Chat type: 'dm' for direct messages, 'channel' for event chats */
   kind: 'dm' | 'channel';
   /** DM thread ID (required if kind is 'dm') */
   threadId?: string;
-  /** Intent ID (required if kind is 'channel') */
-  intentId?: string;
+  /** Event ID (required if kind is 'channel') */
+  eventId?: string;
 };
 
 // =============================================================================
@@ -58,7 +58,7 @@ type UseMessageActionsProps = {
 export function useMessageActions({
   kind,
   threadId,
-  intentId,
+  eventId,
 }: UseMessageActionsProps) {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -69,14 +69,14 @@ export function useMessageActions({
   // Edit/Delete mutations
   const updateDmMessage = useUpdateDmMessage();
   const deleteDmMessage = useDeleteDmMessage();
-  const editIntentMessage = useEditIntentMessage();
-  const deleteIntentMessage = useDeleteIntentMessage();
+  const editEventMessage = useEditEventMessage();
+  const deleteEventMessage = useDeleteEventMessage();
 
   // Reaction mutations
   const addDmReaction = useAddDmReaction();
   const removeDmReaction = useRemoveDmReaction();
-  const addIntentReaction = useAddIntentReaction();
-  const removeIntentReaction = useRemoveIntentReaction();
+  const addEventReaction = useAddEventReaction();
+  const removeEventReaction = useRemoveEventReaction();
 
   // Edit handlers
   const handleEditMessage = (messageId: string, content: string) => {
@@ -102,8 +102,8 @@ export function useMessageActions({
           },
         }
       );
-    } else if (kind === 'channel' && intentId) {
-      editIntentMessage.mutate(
+    } else if (kind === 'channel' && eventId) {
+      editEventMessage.mutate(
         {
           id: editingMessageId,
           input: {
@@ -142,9 +142,9 @@ export function useMessageActions({
           },
         }
       );
-    } else if (kind === 'channel' && intentId) {
-      deleteIntentMessage.mutate(
-        { id: deletingMessageId, intentId },
+    } else if (kind === 'channel' && eventId) {
+      deleteEventMessage.mutate(
+        { id: deletingMessageId, eventId },
         {
           onSuccess: () => {
             setDeletingMessageId(null);
@@ -159,7 +159,7 @@ export function useMessageActions({
     if (kind === 'dm') {
       addDmReaction.mutate({ messageId, emoji });
     } else if (kind === 'channel') {
-      addIntentReaction.mutate({ messageId, emoji });
+      addEventReaction.mutate({ messageId, emoji });
     }
   };
 
@@ -167,7 +167,7 @@ export function useMessageActions({
     if (kind === 'dm') {
       removeDmReaction.mutate({ messageId, emoji });
     } else if (kind === 'channel') {
-      removeIntentReaction.mutate({ messageId, emoji });
+      removeEventReaction.mutate({ messageId, emoji });
     }
   };
 
@@ -176,11 +176,11 @@ export function useMessageActions({
     editingMessageId,
     editingContent,
     setEditingContent,
-    isEditLoading: updateDmMessage.isPending || editIntentMessage.isPending,
+    isEditLoading: updateDmMessage.isPending || editEventMessage.isPending,
 
     // Delete state
     deletingMessageId,
-    isDeleteLoading: deleteDmMessage.isPending || deleteIntentMessage.isPending,
+    isDeleteLoading: deleteDmMessage.isPending || deleteEventMessage.isPending,
 
     // Handlers
     handleEditMessage,

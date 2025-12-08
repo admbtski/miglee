@@ -12,9 +12,9 @@ import type {
   ClusterFiltersInput,
   QueryResolvers,
 } from '../../__generated__/resolvers-types';
-import { mapIntent } from '../helpers';
+import { mapEvent } from '../helpers';
 
-const INTENT_INCLUDE = {
+const EVENT_INCLUDE = {
   categories: true,
   tags: true,
   members: {
@@ -31,11 +31,11 @@ const INTENT_INCLUDE = {
       sponsor: { include: { profile: true } },
     },
   },
-  // NOTE: appearance is resolved via field resolver (intentAppearanceResolver)
+  // NOTE: appearance is resolved via field resolver (eventAppearanceResolver)
   // After running `prisma generate`, you can add: appearance: true
   // If you have a relation in Prisma:
   // joinManuallyClosedBy: true,
-} satisfies Prisma.IntentInclude;
+} satisfies Prisma.EventInclude;
 
 /* ───────────────────────────── Types & constants ───────────────────────────── */
 
@@ -68,7 +68,7 @@ function jitter(lat: number, lng: number, salt: number) {
 
 /**
  * Build raw SQL WHERE fragments and params for common map filters.
- * This is shared between clusters and regionIntents queries to keep behavior aligned.
+ * This is shared between clusters and regionEvent queries to keep behavior aligned.
  *
  * @param filters Filters object from GraphQL args
  * @param startParamIndex First free $ index in the SQL statement
@@ -162,7 +162,7 @@ function buildFilterSql(
   if (filters.categorySlugs?.length) {
     whereConditions.push(
       `EXISTS (
-        SELECT 1 FROM "_CategoryToIntent" ci
+        SELECT 1 FROM "_CategoryToEvent" ci
         INNER JOIN categories c ON c.id = ci."A"
         WHERE ci."B" = i.id AND c.slug = ANY($${paramIndex}::text[])
       )`
@@ -175,7 +175,7 @@ function buildFilterSql(
   if (filters.tagSlugs?.length) {
     whereConditions.push(
       `EXISTS (
-        SELECT 1 FROM "_IntentToTag" it
+        SELECT 1 FROM "_EventToTag" it
         INNER JOIN tags t ON t.id = it."A"
         WHERE it."B" = i.id AND t.slug = ANY($${paramIndex}::text[])
       )`
@@ -244,8 +244,8 @@ function buildFilterSql(
 /* ───────────────────────────── Clusters query ───────────────────────────── */
 
 /**
- * Clusters query - returns clustered intent points for a map viewport.
- * Groups intents by WebMercator tile at computed zoom level.
+ * Clusters query - returns clustered event points for a map viewport.
+ * Groups events by WebMercator tile at computed zoom level.
  */
 export const clustersQuery: QueryResolvers['clusters'] = async (
   _parent,
@@ -285,7 +285,7 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     `
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
     SELECT i.id, i.lat, i.lng
-    FROM intents i
+    FROM events i
     INNER JOIN users u ON u.id = i."ownerId"
     CROSS JOIN bbox
     WHERE i.geom IS NOT NULL
@@ -362,12 +362,12 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
   return out;
 };
 
-/* ───────────────────────────── RegionIntents query ───────────────────────────── */
+/* ───────────────────────────── RegionEvent query ───────────────────────────── */
 
 /**
- * RegionIntents query - returns paginated intents for a specific map tile region.
+ * RegionEvent query - returns paginated events for a specific map tile region.
  */
-export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
+export const regionEventsQuery: QueryResolvers['regionEvents'] = async (
   _parent,
   args,
   _ctx
@@ -415,7 +415,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     `
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
     SELECT i.id
-    FROM intents i
+    FROM events i
     INNER JOIN users u ON u.id = i."ownerId"
     CROSS JOIN bbox
     WHERE i.geom IS NOT NULL
@@ -451,7 +451,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     `
     WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
     SELECT COUNT(*)::int AS c
-    FROM intents i
+    FROM events i
     INNER JOIN users u ON u.id = i."ownerId"
     CROSS JOIN bbox
     WHERE i.geom IS NOT NULL
@@ -465,10 +465,10 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
   );
   const total = totalRows[0]?.c ?? 0;
 
-  // Fetch full intent objects using Prisma
-  const intentIds = items.map((item) => item.id);
+  // Fetch full event objects using Prisma
+  const eventIds = items.map((item) => item.id);
 
-  if (intentIds.length === 0) {
+  if (eventIds.length === 0) {
     return {
       data: [],
       meta: {
@@ -481,9 +481,9 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
     };
   }
 
-  const intents = await prisma.intent.findMany({
-    where: { id: { in: intentIds } },
-    include: INTENT_INCLUDE,
+  const events = await prisma.event.findMany({
+    where: { id: { in: eventIds } },
+    include: EVENT_INCLUDE,
     orderBy: [
       { boostedAt: { sort: 'desc', nulls: 'last' } },
       { startAt: 'asc' },
@@ -491,10 +491,10 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
   });
 
   // Keep order of ids from raw query
-  const byId = new Map(intents.map((i) => [i.id, i]));
-  const orderedIntents = intentIds
+  const byId = new Map(events.map((i) => [i.id, i]));
+  const orderedEvent = eventIds
     .map((id) => byId.get(id))
-    .filter((i): i is (typeof intents)[number] => Boolean(i));
+    .filter((i): i is (typeof events)[number] => Boolean(i));
 
   // Pagination metadata
   const totalPages = total === 0 ? 0 : Math.max(1, Math.ceil(total / take));
@@ -502,7 +502,7 @@ export const regionIntentsQuery: QueryResolvers['regionIntents'] = async (
   const nextPage = skip + items.length < total ? page + 1 : null;
 
   return {
-    data: orderedIntents.map((i) => mapIntent(i, userId)),
+    data: orderedEvent.map((i) => mapEvent(i, userId)),
     meta: {
       page,
       totalItems: total,

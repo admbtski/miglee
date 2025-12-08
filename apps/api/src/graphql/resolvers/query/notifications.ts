@@ -8,7 +8,7 @@ import { mapNotification } from '../helpers';
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
-  intent: {
+  event: {
     include: {
       categories: true,
       tags: true,

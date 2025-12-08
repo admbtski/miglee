@@ -45,12 +45,12 @@ export const createReportMutation: MutationResolvers['createReport'] =
       // Verify entity exists based on type
       let entityExists = false;
       switch (entity) {
-        case 'INTENT': {
-          const intent = await prisma.intent.findUnique({
+        case 'EVENT': {
+          const event = await prisma.event.findUnique({
             where: { id: entityId },
             select: { id: true, deletedAt: true },
           });
-          entityExists = !!intent && !intent.deletedAt;
+          entityExists = !!event && !event.deletedAt;
           break;
         }
         case 'COMMENT': {

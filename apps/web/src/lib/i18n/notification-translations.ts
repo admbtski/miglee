@@ -9,18 +9,18 @@
  */
 
 export type NotificationKind =
-  // Intent lifecycle
-  | 'INTENT_CREATED'
-  | 'INTENT_UPDATED'
-  | 'INTENT_CANCELED'
-  | 'INTENT_DELETED'
+  // Event lifecycle
+  | 'EVENT_CREATED'
+  | 'EVENT_UPDATED'
+  | 'EVENT_CANCELED'
+  | 'EVENT_DELETED'
   // Membership
-  | 'INTENT_INVITE'
-  | 'INTENT_INVITE_ACCEPTED'
-  | 'INTENT_MEMBERSHIP_APPROVED'
-  | 'INTENT_MEMBERSHIP_REJECTED'
-  | 'INTENT_MEMBER_KICKED'
-  | 'INTENT_MEMBER_ROLE_CHANGED'
+  | 'EVENT_INVITE'
+  | 'EVENT_INVITE_ACCEPTED'
+  | 'EVENT_MEMBERSHIP_APPROVED'
+  | 'EVENT_MEMBERSHIP_REJECTED'
+  | 'EVENT_MEMBER_KICKED'
+  | 'EVENT_MEMBER_ROLE_CHANGED'
   | 'JOIN_REQUEST'
   | 'BANNED'
   | 'UNBANNED'
@@ -28,21 +28,21 @@ export type NotificationKind =
   | 'WAITLIST_JOINED'
   | 'WAITLIST_PROMOTED'
   // Reviews & Feedback
-  | 'INTENT_REVIEW_RECEIVED'
-  | 'INTENT_FEEDBACK_RECEIVED'
-  | 'INTENT_FEEDBACK_REQUEST'
+  | 'EVENT_REVIEW_RECEIVED'
+  | 'EVENT_FEEDBACK_RECEIVED'
+  | 'EVENT_FEEDBACK_REQUEST'
   | 'REVIEW_HIDDEN'
   // Comments
-  | 'INTENT_COMMENT_ADDED'
+  | 'EVENT_COMMENT_ADDED'
   | 'COMMENT_REPLY'
   | 'COMMENT_HIDDEN'
   // Messages
   | 'NEW_MESSAGE'
   | 'NEW_COMMENT'
   | 'NEW_REVIEW'
-  | 'INTENT_CHAT_MESSAGE'
+  | 'EVENT_CHAT_MESSAGE'
   // Reminders & System
-  | 'INTENT_REMINDER'
+  | 'EVENT_REMINDER'
   | 'SYSTEM';
 
 export interface NotificationTranslation {
@@ -60,46 +60,46 @@ export const notificationTranslations: Record<
   NotificationTranslations
 > = {
   pl: {
-    // Intent lifecycle
-    INTENT_CREATED: {
+    // Event lifecycle
+    EVENT_CREATED: {
       title: 'Nowe wydarzenie',
       body: 'Utworzono nowe wydarzenie.',
     },
-    INTENT_UPDATED: {
+    EVENT_UPDATED: {
       title: 'Wydarzenie zaktualizowane',
-      body: 'Wydarzenie "{{intentTitle}}" zostało zaktualizowane.',
+      body: 'Wydarzenie "{{eventTitle}}" zostało zaktualizowane.',
     },
-    INTENT_CANCELED: {
+    EVENT_CANCELED: {
       title: 'Wydarzenie anulowane',
       body: '{{reason}}',
     },
-    INTENT_DELETED: {
+    EVENT_DELETED: {
       title: 'Wydarzenie usunięte',
       body: 'Wydarzenie zostało trwale usunięte.',
     },
 
     // Membership
-    INTENT_INVITE: {
+    EVENT_INVITE: {
       title: 'Zaproszenie do wydarzenia',
-      body: 'Zostałeś zaproszony do wydarzenia "{{intentTitle}}".',
+      body: 'Zostałeś zaproszony do wydarzenia "{{eventTitle}}".',
     },
-    INTENT_INVITE_ACCEPTED: {
+    EVENT_INVITE_ACCEPTED: {
       title: 'Zaproszenie zaakceptowane',
       body: '{{actorName}} zaakceptował(a) zaproszenie do wydarzenia.',
     },
-    INTENT_MEMBERSHIP_APPROVED: {
+    EVENT_MEMBERSHIP_APPROVED: {
       title: 'Prośba zaakceptowana',
-      body: 'Twoja prośba o dołączenie do "{{intentTitle}}" została zaakceptowana.',
+      body: 'Twoja prośba o dołączenie do "{{eventTitle}}" została zaakceptowana.',
     },
-    INTENT_MEMBERSHIP_REJECTED: {
+    EVENT_MEMBERSHIP_REJECTED: {
       title: 'Prośba odrzucona',
-      body: 'Twoja prośba o dołączenie do "{{intentTitle}}" została odrzucona.{{reason}}',
+      body: 'Twoja prośba o dołączenie do "{{eventTitle}}" została odrzucona.{{reason}}',
     },
-    INTENT_MEMBER_KICKED: {
+    EVENT_MEMBER_KICKED: {
       title: 'Usunięto z wydarzenia',
       body: 'Zostałeś usunięty z wydarzenia.{{reason}}',
     },
-    INTENT_MEMBER_ROLE_CHANGED: {
+    EVENT_MEMBER_ROLE_CHANGED: {
       title: 'Zmiana roli',
       body: 'Twoja rola została zmieniona na {{newRole}}.',
     },
@@ -127,17 +127,17 @@ export const notificationTranslations: Record<
     },
 
     // Reviews & Feedback
-    INTENT_REVIEW_RECEIVED: {
+    EVENT_REVIEW_RECEIVED: {
       title: 'Nowa recenzja',
       body: '{{actorName}} wystawił(a) recenzję ({{rating}} ⭐){{reviewContent}}',
     },
-    INTENT_FEEDBACK_RECEIVED: {
+    EVENT_FEEDBACK_RECEIVED: {
       title: 'Nowy feedback',
       body: '{{actorName}} przesłał(a) feedback ({{rating}} ⭐).',
     },
-    INTENT_FEEDBACK_REQUEST: {
+    EVENT_FEEDBACK_REQUEST: {
       title: 'Podziel się opinią',
-      body: 'Jak oceniasz wydarzenie "{{intentTitle}}"? Podziel się swoją opinią.',
+      body: 'Jak oceniasz wydarzenie "{{eventTitle}}"? Podziel się swoją opinią.',
     },
     REVIEW_HIDDEN: {
       title: 'Recenzja ukryta',
@@ -145,7 +145,7 @@ export const notificationTranslations: Record<
     },
 
     // Comments
-    INTENT_COMMENT_ADDED: {
+    EVENT_COMMENT_ADDED: {
       title: 'Nowy komentarz',
       body: '{{actorName}}: {{commentContent}}',
     },
@@ -171,15 +171,15 @@ export const notificationTranslations: Record<
       title: 'Nowa recenzja',
       body: '{{actorName}} wystawił(a) recenzję ({{rating}} ⭐).',
     },
-    INTENT_CHAT_MESSAGE: {
+    EVENT_CHAT_MESSAGE: {
       title: 'Nowa wiadomość w czacie',
       body: '{{actorName}}: {{messageContent}}',
     },
 
     // Reminders & System
-    INTENT_REMINDER: {
+    EVENT_REMINDER: {
       title: 'Przypomnienie o wydarzeniu',
-      body: 'Wydarzenie "{{intentTitle}}" zaczyna się {{startsIn}}.',
+      body: 'Wydarzenie "{{eventTitle}}" zaczyna się {{startsIn}}.',
     },
     SYSTEM: {
       title: 'Powiadomienie systemowe',
@@ -188,46 +188,46 @@ export const notificationTranslations: Record<
   },
 
   en: {
-    // Intent lifecycle
-    INTENT_CREATED: {
+    // Event lifecycle
+    EVENT_CREATED: {
       title: 'New event',
       body: 'A new event has been created.',
     },
-    INTENT_UPDATED: {
+    EVENT_UPDATED: {
       title: 'Event updated',
-      body: 'Event "{{intentTitle}}" has been updated.',
+      body: 'Event "{{eventTitle}}" has been updated.',
     },
-    INTENT_CANCELED: {
+    EVENT_CANCELED: {
       title: 'Event canceled',
       body: '{{reason}}',
     },
-    INTENT_DELETED: {
+    EVENT_DELETED: {
       title: 'Event deleted',
       body: 'The event has been permanently deleted.',
     },
 
     // Membership
-    INTENT_INVITE: {
+    EVENT_INVITE: {
       title: 'Event invitation',
-      body: 'You have been invited to "{{intentTitle}}".',
+      body: 'You have been invited to "{{eventTitle}}".',
     },
-    INTENT_INVITE_ACCEPTED: {
+    EVENT_INVITE_ACCEPTED: {
       title: 'Invitation accepted',
       body: '{{actorName}} accepted your invitation to join the event.',
     },
-    INTENT_MEMBERSHIP_APPROVED: {
+    EVENT_MEMBERSHIP_APPROVED: {
       title: 'Request approved',
-      body: 'Your request to join "{{intentTitle}}" has been approved.',
+      body: 'Your request to join "{{eventTitle}}" has been approved.',
     },
-    INTENT_MEMBERSHIP_REJECTED: {
+    EVENT_MEMBERSHIP_REJECTED: {
       title: 'Request rejected',
-      body: 'Your request to join "{{intentTitle}}" was rejected.{{reason}}',
+      body: 'Your request to join "{{eventTitle}}" was rejected.{{reason}}',
     },
-    INTENT_MEMBER_KICKED: {
+    EVENT_MEMBER_KICKED: {
       title: 'Removed from event',
       body: 'You have been removed from the event.{{reason}}',
     },
-    INTENT_MEMBER_ROLE_CHANGED: {
+    EVENT_MEMBER_ROLE_CHANGED: {
       title: 'Role changed',
       body: 'Your role has been changed to {{newRole}}.',
     },
@@ -255,17 +255,17 @@ export const notificationTranslations: Record<
     },
 
     // Reviews & Feedback
-    INTENT_REVIEW_RECEIVED: {
+    EVENT_REVIEW_RECEIVED: {
       title: 'New review',
       body: '{{actorName}} left a review ({{rating}} ⭐){{reviewContent}}',
     },
-    INTENT_FEEDBACK_RECEIVED: {
+    EVENT_FEEDBACK_RECEIVED: {
       title: 'New feedback',
       body: '{{actorName}} submitted feedback ({{rating}} ⭐).',
     },
-    INTENT_FEEDBACK_REQUEST: {
+    EVENT_FEEDBACK_REQUEST: {
       title: 'Share your feedback',
-      body: 'How was "{{intentTitle}}"? Share your feedback.',
+      body: 'How was "{{eventTitle}}"? Share your feedback.',
     },
     REVIEW_HIDDEN: {
       title: 'Review hidden',
@@ -273,7 +273,7 @@ export const notificationTranslations: Record<
     },
 
     // Comments
-    INTENT_COMMENT_ADDED: {
+    EVENT_COMMENT_ADDED: {
       title: 'New comment',
       body: '{{actorName}}: {{commentContent}}',
     },
@@ -299,15 +299,15 @@ export const notificationTranslations: Record<
       title: 'New review',
       body: '{{actorName}} left a review ({{rating}} ⭐).',
     },
-    INTENT_CHAT_MESSAGE: {
+    EVENT_CHAT_MESSAGE: {
       title: 'New chat message',
       body: '{{actorName}}: {{messageContent}}',
     },
 
     // Reminders & System
-    INTENT_REMINDER: {
+    EVENT_REMINDER: {
       title: 'Event reminder',
-      body: 'Event "{{intentTitle}}" starts {{startsIn}}.',
+      body: 'Event "{{eventTitle}}" starts {{startsIn}}.',
     },
     SYSTEM: {
       title: 'System notification',
@@ -316,46 +316,46 @@ export const notificationTranslations: Record<
   },
 
   de: {
-    // Intent lifecycle
-    INTENT_CREATED: {
+    // Event lifecycle
+    EVENT_CREATED: {
       title: 'Neues Event',
       body: 'Ein neues Event wurde erstellt.',
     },
-    INTENT_UPDATED: {
+    EVENT_UPDATED: {
       title: 'Event aktualisiert',
-      body: 'Event "{{intentTitle}}" wurde aktualisiert.',
+      body: 'Event "{{eventTitle}}" wurde aktualisiert.',
     },
-    INTENT_CANCELED: {
+    EVENT_CANCELED: {
       title: 'Event abgesagt',
       body: '{{reason}}',
     },
-    INTENT_DELETED: {
+    EVENT_DELETED: {
       title: 'Event gelöscht',
       body: 'Das Event wurde dauerhaft gelöscht.',
     },
 
     // Membership
-    INTENT_INVITE: {
+    EVENT_INVITE: {
       title: 'Event-Einladung',
-      body: 'Du wurdest zu "{{intentTitle}}" eingeladen.',
+      body: 'Du wurdest zu "{{eventTitle}}" eingeladen.',
     },
-    INTENT_INVITE_ACCEPTED: {
+    EVENT_INVITE_ACCEPTED: {
       title: 'Einladung angenommen',
       body: '{{actorName}} hat deine Einladung angenommen.',
     },
-    INTENT_MEMBERSHIP_APPROVED: {
+    EVENT_MEMBERSHIP_APPROVED: {
       title: 'Anfrage genehmigt',
-      body: 'Deine Anfrage für "{{intentTitle}}" wurde genehmigt.',
+      body: 'Deine Anfrage für "{{eventTitle}}" wurde genehmigt.',
     },
-    INTENT_MEMBERSHIP_REJECTED: {
+    EVENT_MEMBERSHIP_REJECTED: {
       title: 'Anfrage abgelehnt',
-      body: 'Deine Anfrage für "{{intentTitle}}" wurde abgelehnt.{{reason}}',
+      body: 'Deine Anfrage für "{{eventTitle}}" wurde abgelehnt.{{reason}}',
     },
-    INTENT_MEMBER_KICKED: {
+    EVENT_MEMBER_KICKED: {
       title: 'Vom Event entfernt',
       body: 'Du wurdest vom Event entfernt.{{reason}}',
     },
-    INTENT_MEMBER_ROLE_CHANGED: {
+    EVENT_MEMBER_ROLE_CHANGED: {
       title: 'Rolle geändert',
       body: 'Deine Rolle wurde zu {{newRole}} geändert.',
     },
@@ -383,17 +383,17 @@ export const notificationTranslations: Record<
     },
 
     // Reviews & Feedback
-    INTENT_REVIEW_RECEIVED: {
+    EVENT_REVIEW_RECEIVED: {
       title: 'Neue Bewertung',
       body: '{{actorName}} hat eine Bewertung hinterlassen ({{rating}} ⭐){{reviewContent}}',
     },
-    INTENT_FEEDBACK_RECEIVED: {
+    EVENT_FEEDBACK_RECEIVED: {
       title: 'Neues Feedback',
       body: '{{actorName}} hat Feedback gesendet ({{rating}} ⭐).',
     },
-    INTENT_FEEDBACK_REQUEST: {
+    EVENT_FEEDBACK_REQUEST: {
       title: 'Teile dein Feedback',
-      body: 'Wie war "{{intentTitle}}"? Teile dein Feedback.',
+      body: 'Wie war "{{eventTitle}}"? Teile dein Feedback.',
     },
     REVIEW_HIDDEN: {
       title: 'Bewertung ausgeblendet',
@@ -401,7 +401,7 @@ export const notificationTranslations: Record<
     },
 
     // Comments
-    INTENT_COMMENT_ADDED: {
+    EVENT_COMMENT_ADDED: {
       title: 'Neuer Kommentar',
       body: '{{actorName}}: {{commentContent}}',
     },
@@ -427,15 +427,15 @@ export const notificationTranslations: Record<
       title: 'Neue Bewertung',
       body: '{{actorName}} hat eine Bewertung hinterlassen ({{rating}} ⭐).',
     },
-    INTENT_CHAT_MESSAGE: {
+    EVENT_CHAT_MESSAGE: {
       title: 'Neue Chat-Nachricht',
       body: '{{actorName}}: {{messageContent}}',
     },
 
     // Reminders & System
-    INTENT_REMINDER: {
+    EVENT_REMINDER: {
       title: 'Event-Erinnerung',
-      body: 'Event "{{intentTitle}}" beginnt {{startsIn}}.',
+      body: 'Event "{{eventTitle}}" beginnt {{startsIn}}.',
     },
     SYSTEM: {
       title: 'Systembenachrichtigung',
@@ -530,7 +530,7 @@ export function formatRelativeTime(
 }
 
 /**
- * Role translations for INTENT_MEMBER_ROLE_CHANGED
+ * Role translations for EVENT_MEMBER_ROLE_CHANGED
  */
 export const roleTranslations: Record<string, Record<string, string>> = {
   pl: {

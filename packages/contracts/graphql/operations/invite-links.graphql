@@ -1,10 +1,10 @@
-# Intent Invite Links Operations
+# Event Invite Links Operations
 
 # Queries
-query IntentInviteLinks($intentId: ID!, $includeRevoked: Boolean = false) {
-  intentInviteLinks(intentId: $intentId, includeRevoked: $includeRevoked) {
+query EventInviteLinks($eventId: ID!, $includeRevoked: Boolean = false) {
+  eventInviteLinks(eventId: $eventId, includeRevoked: $includeRevoked) {
     id
-    intentId
+    eventId
     code
     label
     maxUses
@@ -41,10 +41,10 @@ query IntentInviteLinks($intentId: ID!, $includeRevoked: Boolean = false) {
   }
 }
 
-query IntentInviteLink($id: ID, $code: String) {
-  intentInviteLink(id: $id, code: $code) {
+query EventInviteLink($id: ID, $code: String) {
+  eventInviteLink(id: $id, code: $code) {
     id
-    intentId
+    eventId
     code
     label
     maxUses
@@ -90,7 +90,7 @@ query ValidateInviteLink($code: String!) {
       isRevoked
       isValid
     }
-    intent {
+    event {
       id
       title
       description
@@ -113,10 +113,10 @@ query ValidateInviteLink($code: String!) {
 }
 
 # Mutations
-mutation CreateIntentInviteLink($input: CreateIntentInviteLinkInput!) {
-  createIntentInviteLink(input: $input) {
+mutation CreateEventInviteLink($input: CreateEventInviteLinkInput!) {
+  createEventInviteLink(input: $input) {
     id
-    intentId
+    eventId
     code
     label
     maxUses
@@ -138,13 +138,10 @@ mutation CreateIntentInviteLink($input: CreateIntentInviteLinkInput!) {
   }
 }
 
-mutation UpdateIntentInviteLink(
-  $id: ID!
-  $input: UpdateIntentInviteLinkInput!
-) {
-  updateIntentInviteLink(id: $id, input: $input) {
+mutation UpdateEventInviteLink($id: ID!, $input: UpdateEventInviteLinkInput!) {
+  updateEventInviteLink(id: $id, input: $input) {
     id
-    intentId
+    eventId
     code
     label
     maxUses
@@ -158,10 +155,10 @@ mutation UpdateIntentInviteLink(
   }
 }
 
-mutation RevokeIntentInviteLink($id: ID!) {
-  revokeIntentInviteLink(id: $id) {
+mutation RevokeEventInviteLink($id: ID!) {
+  revokeEventInviteLink(id: $id) {
     id
-    intentId
+    eventId
     revokedAt
     revokedById
     revokedBy {
@@ -175,8 +172,8 @@ mutation RevokeIntentInviteLink($id: ID!) {
   }
 }
 
-mutation DeleteIntentInviteLink($id: ID!) {
-  deleteIntentInviteLink(id: $id)
+mutation DeleteEventInviteLink($id: ID!) {
+  deleteEventInviteLink(id: $id)
 }
 
 mutation JoinByInviteLink($code: String!) {

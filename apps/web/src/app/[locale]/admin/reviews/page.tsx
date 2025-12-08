@@ -11,14 +11,14 @@ import { Trash2, Star, Eye } from 'lucide-react';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 
 export default function ReviewsPage() {
-  const [intentId, setIntentId] = useState('');
+  const [eventId, setEventId] = useState('');
   const [userId, setUserId] = useState('');
   const [minRating, setMinRating] = useState<number | undefined>();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
 
   const { data, isLoading, refetch } = useAdminReviews({
-    intentId: intentId || undefined,
+    eventId: eventId || undefined,
     userId: userId || undefined,
     rating: minRating,
     limit: 100,
@@ -69,8 +69,8 @@ export default function ReviewsPage() {
             </label>
             <input
               type="text"
-              value={intentId}
-              onChange={(e) => setIntentId(e.target.value)}
+              value={eventId}
+              onChange={(e) => setEventId(e.target.value)}
               placeholder="Filtruj po ID wydarzenia..."
               className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             />
@@ -166,7 +166,7 @@ export default function ReviewsPage() {
                       {review.author?.name || 'N/A'}
                     </td>
                     <td className="max-w-xs truncate px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
-                      {review.intent?.title || 'N/A'}
+                      {review.event?.title || 'N/A'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <div className="flex items-center gap-1">
@@ -190,9 +190,9 @@ export default function ReviewsPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                       <div className="flex items-center justify-end gap-2">
-                        {review.intent?.id && (
+                        {review.event?.id && (
                           <a
-                            href={`/intent/${review.intent.id}`}
+                            href={`/event/${review.event.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"

@@ -4,12 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   UpdateDmMessageDocument,
   DeleteDmMessageDocument,
-  EditIntentMessageDocument,
-  DeleteIntentMessageDocument,
+  EditEventMessageDocument,
+  DeleteEventMessageDocument,
   type UpdateDmMessageMutationVariables,
   type DeleteDmMessageMutationVariables,
-  type EditIntentMessageMutationVariables,
-  type DeleteIntentMessageMutationVariables,
+  type EditEventMessageMutationVariables,
+  type DeleteEventMessageMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { dmKeys } from './dm';
@@ -69,50 +69,50 @@ export function useDeleteDmMessage() {
   });
 }
 
-// ============ Intent Message Actions ============
+// ============ Event Message Actions ============
 
-export function useEditIntentMessage() {
+export function useEditEventMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (variables: EditIntentMessageMutationVariables) => {
-      console.log('[useEditIntentMessage] Calling mutation with:', variables);
+    mutationFn: async (variables: EditEventMessageMutationVariables) => {
+      console.log('[useEditEventMessage] Calling mutation with:', variables);
       const result = await gqlClient.request(
-        EditIntentMessageDocument,
+        EditEventMessageDocument,
         variables
       );
-      console.log('[useEditIntentMessage] Result:', result);
+      console.log('[useEditEventMessage] Result:', result);
       return result;
     },
     onSuccess: (data) => {
-      console.log('[useEditIntentMessage] onSuccess:', data);
-      const message = data.editIntentMessage;
-      if (message?.intentId) {
+      console.log('[useEditEventMessage] onSuccess:', data);
+      const message = data.editEventMessage;
+      if (message?.eventId) {
         queryClient.invalidateQueries({
-          queryKey: eventChatKeys.messages(message.intentId),
+          queryKey: eventChatKeys.messages(message.eventId),
         });
       }
     },
   });
 }
 
-export function useDeleteIntentMessage() {
+export function useDeleteEventMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (
-      variables: DeleteIntentMessageMutationVariables & { intentId: string }
+      variables: DeleteEventMessageMutationVariables & { eventId: string }
     ) => {
-      return gqlClient.request(DeleteIntentMessageDocument, {
+      return gqlClient.request(DeleteEventMessageDocument, {
         id: variables.id,
         soft: variables.soft,
       });
     },
     onSuccess: (_data, variables) => {
-      // deleteIntentMessage returns boolean, so we use variables.intentId
-      if (variables.intentId) {
+      // deleteEventMessage returns boolean, so we use variables.eventId
+      if (variables.eventId) {
         queryClient.invalidateQueries({
-          queryKey: eventChatKeys.messages(variables.intentId),
+          queryKey: eventChatKeys.messages(variables.eventId),
         });
       }
     },

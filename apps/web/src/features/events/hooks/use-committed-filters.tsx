@@ -7,7 +7,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 import {
-  IntentStatus,
+  EventStatus,
   JoinMode,
   Level,
   MeetingKind,
@@ -69,7 +69,7 @@ export function useCommittedFilters() {
       distanceKm,
       startISO: search.get('start') ?? null,
       endISO: search.get('end') ?? null,
-      status: (search.get('status') as IntentStatus) ?? IntentStatus.Any,
+      status: (search.get('status') as EventStatus) ?? EventStatus.Any,
       kinds: parseCsv(search, 'kinds') as MeetingKind[],
       levels: parseCsv(search, 'levels') as Level[],
       verifiedOnly: parseBool(search, 'verified'),
@@ -114,7 +114,7 @@ export function useCommittedFilters() {
       if (merged.endISO) {
         params.set('end', merged.endISO);
       }
-      if (merged.status !== IntentStatus.Any) {
+      if (merged.status !== EventStatus.Any) {
         params.set('status', merged.status);
       }
 
@@ -149,7 +149,7 @@ export function useCommittedFilters() {
       distanceKm: DEFAULT_DISTANCE_KM,
       startISO: null,
       endISO: null,
-      status: IntentStatus.Any,
+      status: EventStatus.Any,
       kinds: [],
       levels: [],
       verifiedOnly: false,

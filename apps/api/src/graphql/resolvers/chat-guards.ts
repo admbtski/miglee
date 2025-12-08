@@ -11,17 +11,17 @@ import type { SessionUser } from '../__generated__/resolvers-types';
 // =============================================================================
 
 /**
- * Check if user is a JOINED member of the intent
+ * Check if user is a JOINED member of the event
  * Required for reading/writing event chat messages
  */
 export async function requireJoinedMember(
   userId: string,
-  intentId: string
+  eventId: string
 ): Promise<void> {
-  const member = await prisma.intentMember.findUnique({
+  const member = await prisma.eventMember.findUnique({
     where: {
-      intentId_userId: {
-        intentId,
+      eventId_userId: {
+        eventId,
         userId,
       },
     },
@@ -42,10 +42,10 @@ export async function requireJoinedMember(
  */
 export async function requireEventChatModerator(
   userId: string,
-  intentId: string
+  eventId: string
 ): Promise<void> {
-  const intent = await prisma.intent.findUnique({
-    where: { id: intentId },
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
     select: {
       ownerId: true,
       members: {
@@ -60,14 +60,14 @@ export async function requireEventChatModerator(
     },
   });
 
-  if (!intent) {
-    throw new GraphQLError('Intent not found.', {
+  if (!event) {
+    throw new GraphQLError('Event not found.', {
       extensions: { code: 'NOT_FOUND' },
     });
   }
 
-  const isOwner = intent.ownerId === userId;
-  const isModerator = intent.members.some(
+  const isOwner = event.ownerId === userId;
+  const isModerator = event.members.some(
     (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
   );
 
@@ -158,7 +158,7 @@ export async function requireMessageAuthor(
   let message: { authorId?: string; senderId?: string } | null = null;
 
   if (messageType === 'event') {
-    message = await prisma.intentChatMessage.findUnique({
+    message = await prisma.eventChatMessage.findUnique({
       where: { id: messageId },
       select: { authorId: true },
     });

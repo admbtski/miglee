@@ -1,9 +1,9 @@
 # Join Form Queries
 
-query IntentJoinQuestions($intentId: ID!) {
-  intentJoinQuestions(intentId: $intentId) {
+query EventJoinQuestions($eventId: ID!) {
+  eventJoinQuestions(eventId: $eventId) {
     id
-    intentId
+    eventId
     order
     type
     label
@@ -16,12 +16,12 @@ query IntentJoinQuestions($intentId: ID!) {
   }
 }
 
-query IntentJoinRequests($intentId: ID!, $limit: Int = 20, $offset: Int = 0) {
-  intentJoinRequests(intentId: $intentId, limit: $limit, offset: $offset) {
+query EventJoinRequests($eventId: ID!, $limit: Int = 20, $offset: Int = 0) {
+  eventJoinRequests(eventId: $eventId, limit: $limit, offset: $offset) {
     items {
       member {
         id
-        intentId
+        eventId
         userId
         role
         status
@@ -44,7 +44,7 @@ query IntentJoinRequests($intentId: ID!, $limit: Int = 20, $offset: Int = 0) {
       }
       answers {
         id
-        intentId
+        eventId
         userId
         questionId
         answer
@@ -73,13 +73,13 @@ query IntentJoinRequests($intentId: ID!, $limit: Int = 20, $offset: Int = 0) {
 }
 
 query MyJoinRequests(
-  $status: IntentMemberStatus
+  $status: EventMemberStatus
   $limit: Int = 20
   $offset: Int = 0
 ) {
   myJoinRequests(status: $status, limit: $limit, offset: $offset) {
     id
-    intentId
+    eventId
     userId
     role
     status
@@ -87,7 +87,7 @@ query MyJoinRequests(
     leftAt
     note
     rejectReason
-    intent {
+    event {
       id
       title
       description
@@ -117,8 +117,8 @@ query MyJoinRequests(
   }
 }
 
-mutation RequestJoinIntentWithAnswers($input: RequestJoinIntentInput!) {
-  requestJoinIntentWithAnswers(input: $input) {
+mutation RequestJoinEventWithAnswers($input: RequestJoinEventInput!) {
+  requestJoinEventWithAnswers(input: $input) {
     id
     title
     joinedCount
@@ -144,6 +144,6 @@ mutation RejectJoinRequest($input: RejectJoinRequestInput!) {
   }
 }
 
-mutation CancelJoinRequest($intentId: ID!) {
-  cancelJoinRequest(intentId: $intentId)
+mutation CancelJoinRequest($eventId: ID!) {
+  cancelJoinRequest(eventId: $eventId)
 }

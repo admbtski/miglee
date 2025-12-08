@@ -16,7 +16,7 @@ interface RateLimitConfig {
 }
 
 const RATE_LIMITS = {
-  // Event chat: 10 messages per 30 seconds per (user, intent)
+  // Event chat: 10 messages per 30 seconds per (user, event)
   eventChatSend: {
     maxRequests: 30,
     windowSeconds: 30,
@@ -49,9 +49,9 @@ const RATE_LIMITS = {
  */
 export async function checkEventChatSendRateLimit(
   userId: string,
-  intentId: string
+  eventId: string
 ): Promise<void> {
-  const key = `chat:event:send:${intentId}:${userId}`;
+  const key = `chat:event:send:${eventId}:${userId}`;
   await checkRateLimit(key, RATE_LIMITS.eventChatSend);
 }
 
@@ -151,10 +151,10 @@ const TYPING_TTL_SECONDS = 3;
  */
 export async function setEventChatTyping(
   userId: string,
-  intentId: string,
+  eventId: string,
   isTyping: boolean
 ): Promise<void> {
-  const key = `chat:event:typing:${intentId}:${userId}`;
+  const key = `chat:event:typing:${eventId}:${userId}`;
 
   if (isTyping) {
     await healthRedis.setex(key, TYPING_TTL_SECONDS, '1');
@@ -167,9 +167,9 @@ export async function setEventChatTyping(
  * Get all users currently typing in event chat
  */
 export async function getEventChatTypingUsers(
-  intentId: string
+  eventId: string
 ): Promise<string[]> {
-  const pattern = `chat:event:typing:${intentId}:*`;
+  const pattern = `chat:event:typing:${eventId}:*`;
   const keys = await healthRedis.keys(pattern);
 
   return keys

@@ -1,7 +1,7 @@
 /**
  * Sidebar Layout Component
  * Reusable layout with sidebar and navbar structure
- * Used in /account and /intent/[id]/manage
+ * Used in /account and /event/[id]/manage
  */
 
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';

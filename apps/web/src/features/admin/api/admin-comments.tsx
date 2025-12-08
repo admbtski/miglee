@@ -15,7 +15,7 @@ import {
 export function useAdminComments(params?: {
   limit?: number;
   offset?: number;
-  intentId?: string;
+  eventId?: string;
   userId?: string;
 }) {
   return useQuery({
@@ -24,7 +24,7 @@ export function useAdminComments(params?: {
       return gqlClient.request(AdminCommentsDocument, {
         limit: params?.limit,
         offset: params?.offset,
-        intentId: params?.intentId,
+        eventId: params?.eventId,
         userId: params?.userId,
       });
     },
@@ -61,7 +61,7 @@ export function useAdminDeleteComment() {
 export function useAdminReviews(params?: {
   limit?: number;
   offset?: number;
-  intentId?: string;
+  eventId?: string;
   userId?: string;
   rating?: number;
 }) {
@@ -71,7 +71,7 @@ export function useAdminReviews(params?: {
       return gqlClient.request(AdminReviewsDocument, {
         limit: params?.limit,
         offset: params?.offset,
-        intentId: params?.intentId,
+        eventId: params?.eventId,
         userId: params?.userId,
         rating: params?.rating,
       });

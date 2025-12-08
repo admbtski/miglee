@@ -21,7 +21,7 @@ enum SortDir {
   DESC
 }
 
-enum IntentsSortBy {
+enum EventsSortBy {
   START_AT
   CREATED_AT
   UPDATED_AT
@@ -48,8 +48,8 @@ type UsersResult {
   pageInfo: PageInfo!
 }
 
-type IntentsResult {
-  items: [Intent!]!
+type EventsResult {
+  items: [Event!]!
   pageInfo: PageInfo!
 }
 
@@ -59,7 +59,7 @@ type NotificationsResult {
 }
 
 type UserEventsResult {
-  items: [Intent!]!
+  items: [Event!]!
   total: Int!
 }
 
@@ -73,7 +73,7 @@ input UsersSort {
   dir: SortDir! = DESC
 }
 
-"Visibility of an intent"
+"Visibility of an event"
 enum Visibility {
   PUBLIC
   HIDDEN
@@ -91,7 +91,7 @@ enum MembersVisibility {
   HIDDEN
 }
 
-"Join mode - how users can join an intent"
+"Join mode - how users can join an event"
 enum JoinMode {
   OPEN
   REQUEST
@@ -130,19 +130,19 @@ enum Level {
 enum MediaPurpose {
   USER_AVATAR
   USER_COVER
-  INTENT_COVER
+  EVENT_COVER
   GALLERY_IMAGE
 }
 
-"Per-intent role"
-enum IntentMemberRole {
+"Per-event role"
+enum EventMemberRole {
   OWNER
   MODERATOR
   PARTICIPANT
 }
 
 "Membership lifecycle status"
-enum IntentMemberStatus {
+enum EventMemberStatus {
   JOINED
   PENDING
   INVITED
@@ -187,19 +187,19 @@ enum FeedbackQuestionType {
 
 "High-level notification category/kind"
 enum NotificationKind {
-  # Intent lifecycle
-  INTENT_CREATED
-  INTENT_UPDATED
-  INTENT_CANCELED
-  INTENT_DELETED
+  # Event lifecycle
+  EVENT_CREATED
+  EVENT_UPDATED
+  EVENT_CANCELED
+  EVENT_DELETED
 
   # Membership
-  INTENT_INVITE
-  INTENT_INVITE_ACCEPTED
-  INTENT_MEMBERSHIP_APPROVED
-  INTENT_MEMBERSHIP_REJECTED
-  INTENT_MEMBER_KICKED
-  INTENT_MEMBER_ROLE_CHANGED
+  EVENT_INVITE
+  EVENT_INVITE_ACCEPTED
+  EVENT_MEMBERSHIP_APPROVED
+  EVENT_MEMBERSHIP_REJECTED
+  EVENT_MEMBER_KICKED
+  EVENT_MEMBER_ROLE_CHANGED
   JOIN_REQUEST
   BANNED
   UNBANNED
@@ -209,13 +209,13 @@ enum NotificationKind {
   WAITLIST_PROMOTED
 
   # Reviews & Feedback
-  INTENT_REVIEW_RECEIVED
-  INTENT_FEEDBACK_RECEIVED
-  INTENT_FEEDBACK_REQUEST
+  EVENT_REVIEW_RECEIVED
+  EVENT_FEEDBACK_RECEIVED
+  EVENT_FEEDBACK_REQUEST
   REVIEW_HIDDEN
 
   # Comments
-  INTENT_COMMENT_ADDED
+  EVENT_COMMENT_ADDED
   COMMENT_REPLY
   COMMENT_HIDDEN
 
@@ -223,16 +223,16 @@ enum NotificationKind {
   NEW_MESSAGE
   NEW_COMMENT
   NEW_REVIEW
-  INTENT_CHAT_MESSAGE
+  EVENT_CHAT_MESSAGE
 
   # Reminders & System
-  INTENT_REMINDER
+  EVENT_REMINDER
   SYSTEM
 }
 
 "Polymorphic target for notifications (deep-link)"
 enum NotificationEntity {
-  INTENT
+  EVENT
   MESSAGE
   PAYMENT
   INVOICE
@@ -244,7 +244,7 @@ enum NotificationEntity {
 
 "Report entity type"
 enum ReportEntity {
-  INTENT
+  EVENT
   COMMENT
   REVIEW
   USER
@@ -280,8 +280,8 @@ enum SubscriptionStatus {
   PAUSED
 }
 
-"Intent/Event plan tiers"
-enum IntentPlan {
+"Event/Event plan tiers"
+enum EventPlan {
   FREE
   PLUS
   PRO
@@ -302,8 +302,8 @@ enum UserEffectivePlan {
   PRO
 }
 
-"Intent time-based status (computed on read)"
-enum IntentStatus {
+"Event time-based status (computed on read)"
+enum EventStatus {
   ANY
   UPCOMING
   ONGOING
@@ -312,15 +312,15 @@ enum IntentStatus {
   DELETED
 }
 
-"Publication status of an intent (DRAFT -> PUBLISHED or SCHEDULED -> PUBLISHED)"
+"Publication status of an event (DRAFT -> PUBLISHED or SCHEDULED -> PUBLISHED)"
 enum PublicationStatus {
   DRAFT
   PUBLISHED
   SCHEDULED
 }
 
-"Intent lifecycle status filter for myIntents query"
-enum IntentLifecycleStatus {
+"Event lifecycle status filter for myEvents query"
+enum EventLifecycleStatus {
   UPCOMING
   ONGOING
   FINISHED
@@ -560,7 +560,7 @@ type UserPlanPeriod {
 
   stripeCustomerId: String
   stripeSubscriptionId: String
-  stripePaymentIntentId: String
+  stripePaymentEventId: String
   stripeCheckoutSessionId: String
 
   startsAt: DateTime!
@@ -569,15 +569,15 @@ type UserPlanPeriod {
   createdAt: DateTime!
 }
 
-"Event/Intent sponsorship"
+"Event/Event sponsorship"
 type EventSponsorship {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   sponsorId: ID!
-  intent: Intent!
+  event: Event!
   sponsor: User!
 
-  plan: IntentPlan!
+  plan: EventPlan!
   status: SponsorshipStatus!
 
   startsAt: DateTime
@@ -588,7 +588,7 @@ type EventSponsorship {
   localPushesTotal: Int!
   localPushesUsed: Int!
 
-  stripePaymentIntentId: String
+  stripePaymentEventId: String
   stripeCheckoutSessionId: String
 
   createdAt: DateTime!
@@ -598,10 +598,10 @@ type EventSponsorship {
 "Individual event sponsorship transaction (purchase, upgrade, reload)"
 type EventSponsorshipPeriod {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   sponsorId: ID!
 
-  plan: IntentPlan!
+  plan: EventPlan!
   actionType: String!
 
   boostsAdded: Int!
@@ -611,12 +611,12 @@ type EventSponsorshipPeriod {
   currency: String!
 
   stripeCustomerId: String
-  stripePaymentIntentId: String
+  stripePaymentEventId: String
   stripeCheckoutSessionId: String
 
   createdAt: DateTime!
 
-  intent: Intent!
+  event: Event!
   sponsor: User!
 }
 
@@ -659,13 +659,13 @@ type Tag {
   updatedAt: DateTime!
 }
 
-"Intent membership (user-in-intent)"
-type IntentMember {
+"Event membership (user-in-event)"
+type EventMember {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   userId: ID!
-  role: IntentMemberRole!
-  status: IntentMemberStatus!
+  role: EventMemberRole!
+  status: EventMemberStatus!
 
   addedBy: User
   joinedAt: DateTime
@@ -674,14 +674,14 @@ type IntentMember {
   rejectReason: String
 
   user: User!
-  intent: Intent!
-  joinAnswers: [IntentJoinAnswer!]!
+  event: Event!
+  joinAnswers: [EventJoinAnswer!]!
 }
 
 "Join form question for REQUEST mode"
-type IntentJoinQuestion {
+type EventJoinQuestion {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   order: Int!
   type: JoinQuestionType!
   label: String!
@@ -694,15 +694,15 @@ type IntentJoinQuestion {
 }
 
 "Join form answer from a user"
-type IntentJoinAnswer {
+type EventJoinAnswer {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   userId: ID!
   questionId: ID!
   answer: JSON!
   createdAt: DateTime!
   updatedAt: DateTime!
-  question: IntentJoinQuestion!
+  question: EventJoinQuestion!
   user: User!
 }
 
@@ -711,9 +711,9 @@ type IntentJoinAnswer {
 # ------------------------------------------------------------------------------
 
 "Feedback question for post-event feedback"
-type IntentFeedbackQuestion {
+type EventFeedbackQuestion {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   order: Int!
   type: FeedbackQuestionType!
   label: String!
@@ -726,9 +726,9 @@ type IntentFeedbackQuestion {
 }
 
 "Feedback answer from a user (post-event)"
-type IntentFeedbackAnswer {
+type EventFeedbackAnswer {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   userId: ID!
   questionId: ID!
   answer: JSON!
@@ -737,25 +737,25 @@ type IntentFeedbackAnswer {
 
   # Relations
   user: User!
-  question: IntentFeedbackQuestion!
+  question: EventFeedbackQuestion!
 }
 
 "Join request with answers for host review"
-type IntentJoinRequest {
-  member: IntentMember!
-  answers: [IntentJoinAnswer!]!
+type EventJoinRequest {
+  member: EventMember!
+  answers: [EventJoinAnswer!]!
 }
 
 "Result type for paginated join requests"
-type IntentJoinRequestsResult {
-  items: [IntentJoinRequest!]!
+type EventJoinRequestsResult {
+  items: [EventJoinRequest!]!
   pageInfo: PageInfo!
 }
 
 # Feedback Results
 "Aggregated feedback statistics for a question"
 type FeedbackQuestionStats {
-  question: IntentFeedbackQuestion!
+  question: EventFeedbackQuestion!
   totalAnswers: Int!
   # For CHOICE types - distribution of answers
   choiceDistribution: [ChoiceDistribution!]
@@ -776,9 +776,9 @@ type TextAnswerWithUser {
   createdAt: DateTime!
 }
 
-"Complete feedback results for an intent"
-type IntentFeedbackResults {
-  intentId: ID!
+"Complete feedback results for an event"
+type EventFeedbackResults {
+  eventId: ID!
   questionStats: [FeedbackQuestionStats!]!
   totalRespondents: Int!
 }
@@ -786,7 +786,7 @@ type IntentFeedbackResults {
 "Combined result for review submission"
 type SubmitReviewAndFeedbackResult {
   review: Review!
-  feedbackAnswers: [IntentFeedbackAnswer!]!
+  feedbackAnswers: [EventFeedbackAnswer!]!
 }
 
 type SendFeedbackRequestsResult {
@@ -796,8 +796,8 @@ type SendFeedbackRequestsResult {
   message: String
 }
 
-"Intent"
-type Intent {
+"Event"
+type Event {
   id: ID!
   title: String!
   description: String
@@ -870,19 +870,19 @@ type Intent {
   joinedCount: Int!
   commentsCount: Int!
   messagesCount: Int!
-  savedCount: Int! # How many users saved/favourited this intent (visible to owner/moderators)
+  savedCount: Int! # How many users saved/favourited this event (visible to owner/moderators)
   # Ownership
   ownerId: String
   owner: User
 
   # Access policy: OWNER/MODERATOR can see all statuses; others see JOINED only.
-  members: [IntentMember!]!
+  members: [EventMember!]!
 
   # ---------- Computed helpers ----------
-  status: IntentStatus! # single, high-level status
+  status: EventStatus! # single, high-level status
   isFull: Boolean!
   hasStarted: Boolean!
-  isFavourite: Boolean! # Whether the current user has favourited this intent
+  isFavourite: Boolean! # Whether the current user has favourited this event
   hasEnded: Boolean!
   isOngoing: Boolean!
   canJoin: Boolean! # generic yes/no for primary CTA
@@ -910,16 +910,16 @@ type Intent {
   isDeleted: Boolean!
 
   # Billing & Sponsorship
-  sponsorshipPlan: IntentPlan!
+  sponsorshipPlan: EventPlan!
   sponsorship: EventSponsorship
   boostedAt: DateTime # Last time event was boosted (for priority sorting)
   # Appearance customization
-  appearance: IntentAppearance
+  appearance: EventAppearance
 
   # Relations
-  inviteLinks: [IntentInviteLink!]!
-  faqs: [IntentFaq!]!
-  joinQuestions: [IntentJoinQuestion!]!
+  inviteLinks: [EventInviteLink!]!
+  faqs: [EventFaq!]!
+  joinQuestions: [EventJoinQuestion!]!
 
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -942,16 +942,16 @@ type Notification {
   entityType: NotificationEntity!
   entityId: ID
 
-  # Convenience: resolved when entityType=INTENT (join on intentId or entityId)
-  intent: Intent
+  # Convenience: resolved when entityType=EVENT (join on eventId or entityId)
+  event: Event
 }
 
 type NotificationBadgeChanged {
   recipientId: String!
 }
 
-# Simple aggregated counters per intent; useful for badges
-type IntentMemberStats {
+# Simple aggregated counters per event; useful for badges
+type EventMemberStats {
   joined: Int!
   pending: Int!
   invited: Int!
@@ -962,13 +962,13 @@ type IntentMemberStats {
 }
 
 """
-User permissions for a specific intent.
+User permissions for a specific event.
 Indicates what actions the current user can perform.
 """
-type IntentPermissions {
-  "User is the owner of the intent"
+type EventPermissions {
+  "User is the owner of the event"
   isOwner: Boolean!
-  "User is a moderator of the intent"
+  "User is a moderator of the event"
   isModerator: Boolean!
   "User is a participant (joined member)"
   isParticipant: Boolean!
@@ -1054,10 +1054,10 @@ type DmMessageEdge {
 # Comments
 # ------------------------------------------------------------------------------
 
-"Comment on an intent (2-level threading)"
+"Comment on an event (2-level threading)"
 type Comment {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   authorId: ID!
   threadId: ID!
   parentId: ID
@@ -1069,7 +1069,7 @@ type Comment {
   hiddenAt: DateTime
   hiddenById: ID
 
-  intent: Intent!
+  event: Event!
   author: User!
   parent: Comment
   replies: [Comment!]!
@@ -1090,10 +1090,10 @@ type CommentsResult {
 # Reviews
 # ------------------------------------------------------------------------------
 
-"Review for an intent (1-5 stars)"
+"Review for an event (1-5 stars)"
 type Review {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   authorId: ID!
   rating: Int!
   content: String
@@ -1104,7 +1104,7 @@ type Review {
   hiddenAt: DateTime
   hiddenById: ID
 
-  intent: Intent!
+  event: Event!
   author: User!
   deletedBy: User
   hiddenBy: User
@@ -1116,7 +1116,7 @@ type ReviewsResult {
   pageInfo: PageInfo!
 }
 
-"Review statistics for an intent"
+"Review statistics for an event"
 type ReviewStats {
   totalCount: Int!
   averageRating: Float!
@@ -1162,13 +1162,13 @@ type ReportsResult {
 }
 
 # ------------------------------------------------------------------------------
-# Event Chat (Intent Chat Messages)
+# Event Chat (Event Chat Messages)
 # ------------------------------------------------------------------------------
 
-"Message in an intent chat room"
-type IntentChatMessage {
+"Message in an event chat room"
+type EventChatMessage {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   authorId: ID!
   content: String!
   replyToId: ID
@@ -1176,9 +1176,9 @@ type IntentChatMessage {
   editedAt: DateTime
   deletedAt: DateTime
 
-  intent: Intent!
+  event: Event!
   author: User!
-  replyTo: IntentChatMessage
+  replyTo: EventChatMessage
   reactions: [MessageReaction!]!
 
   # Computed
@@ -1194,21 +1194,21 @@ type MessageReaction {
   reacted: Boolean!
 }
 
-"Paginated intent chat messages result"
-type IntentChatMessagesResult {
-  items: [IntentChatMessage!]!
+"Paginated event chat messages result"
+type EventChatMessagesResult {
+  items: [EventChatMessage!]!
   pageInfo: CursorPageInfo!
   hasMore: Boolean!
 }
 
-"Cursor-based Intent messages connection"
-type IntentMessagesConnection {
-  edges: [IntentMessageEdge!]!
+"Cursor-based Event messages connection"
+type EventMessagesConnection {
+  edges: [EventMessageEdge!]!
   pageInfo: CursorPageInfo!
 }
 
-type IntentMessageEdge {
-  node: IntentChatMessage!
+type EventMessageEdge {
+  node: EventChatMessage!
   cursor: String!
 }
 
@@ -1224,7 +1224,7 @@ input BBoxInput {
   neLon: Float!
 }
 
-"Filters for clustering map intents"
+"Filters for clustering map events"
 input ClusterFiltersInput {
   "Search query (keywords)"
   q: String
@@ -1240,8 +1240,8 @@ input ClusterFiltersInput {
   joinModes: [JoinMode!]
   "Show only verified organizers"
   verifiedOnly: Boolean
-  "Intent status filter"
-  status: IntentStatus
+  "Event status filter"
+  status: EventStatus
   "Start date ISO string for date range filter"
   startISO: String
   "End date ISO string for date range filter"
@@ -1256,7 +1256,7 @@ input ClusterFiltersInput {
   distanceKm: Float
 }
 
-"Clustered point on the map representing one or more intents"
+"Clustered point on the map representing one or more events"
 type Cluster {
   id: ID!
   latitude: Float!
@@ -1266,7 +1266,7 @@ type Cluster {
   geoJson: JSON!
 }
 
-"Page metadata for region intents"
+"Page metadata for region events"
 type PageMeta {
   page: Int!
   totalItems: Int!
@@ -1275,9 +1275,9 @@ type PageMeta {
   nextPage: Int
 }
 
-"Paginated result for intents in a map region"
-type RegionIntentPage {
-  data: [Intent!]!
+"Paginated result for events in a map region"
+type RegionEventPage {
+  data: [Event!]!
   meta: PageMeta!
 }
 
@@ -1324,7 +1324,7 @@ input JoinQuestionInputData {
   maxLength: Int
 }
 
-input CreateIntentInput {
+input CreateEventInput {
   # Required fields
   title: String!
   categorySlugs: [String!]!
@@ -1347,7 +1347,7 @@ input CreateIntentInput {
   joinMode: JoinMode! = OPEN
 }
 
-input UpdateIntentInput {
+input UpdateEventInput {
   title: String
   categorySlugs: [String!]
   tagSlugs: [String!]
@@ -1382,52 +1382,52 @@ input UpdateIntentInput {
 }
 
 input InviteMemberInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
 }
 
 input ApproveMembershipInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
 }
 
 input RejectMembershipInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
   note: String
 }
 
 input KickMemberInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
   note: String
 }
 
 input UpdateMemberRoleInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
-  role: IntentMemberRole!
+  role: EventMemberRole!
 }
 
 # NEW: Ban / Unban / Cancel pending-or-invite
 input BanMemberInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
   note: String
 }
 
 input UnbanMemberInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
 }
 
 input CancelPendingOrInviteForUserInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
 }
 
 input PromoteFromWaitlistInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
 }
 
@@ -1444,7 +1444,7 @@ input UpdateDmMessageInput {
 
 # Comment Inputs
 input CreateCommentInput {
-  intentId: ID!
+  eventId: ID!
   content: String!
   parentId: ID
 }
@@ -1455,7 +1455,7 @@ input UpdateCommentInput {
 
 # Review Inputs
 input CreateReviewInput {
-  intentId: ID!
+  eventId: ID!
   rating: Int!
   content: String
 }
@@ -1477,26 +1477,26 @@ input UpdateReportStatusInput {
 }
 
 # Event Chat Inputs
-input SendIntentMessageInput {
-  intentId: ID!
+input SendEventMessageInput {
+  eventId: ID!
   content: String!
   replyToId: ID
 }
 
-input EditIntentMessageInput {
+input EditEventMessageInput {
   content: String!
 }
 
-# Intent Invite Link Inputs
-input CreateIntentInviteLinkInput {
-  intentId: ID!
+# Event Invite Link Inputs
+input CreateEventInviteLinkInput {
+  eventId: ID!
   maxUses: Int
   expiresAt: DateTime
 }
 
 # Join Form Inputs
 input CreateJoinQuestionInput {
-  intentId: ID!
+  eventId: ID!
   order: Int!
   type: JoinQuestionType!
   label: String!
@@ -1517,7 +1517,7 @@ input UpdateJoinQuestionInput {
 
 # Feedback Inputs
 input CreateFeedbackQuestionInput {
-  intentId: ID!
+  eventId: ID!
   order: Int!
   type: FeedbackQuestionType!
   label: String!
@@ -1542,7 +1542,7 @@ input FeedbackAnswerInput {
 }
 
 input SubmitReviewAndFeedbackInput {
-  intentId: ID!
+  eventId: ID!
   # Review data
   rating: Int!
   content: String
@@ -1555,18 +1555,18 @@ input JoinAnswerInput {
   answer: JSON!
 }
 
-input RequestJoinIntentInput {
-  intentId: ID!
+input RequestJoinEventInput {
+  eventId: ID!
   answers: [JoinAnswerInput!]!
 }
 
 input ApproveJoinRequestInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
 }
 
 input RejectJoinRequestInput {
-  intentId: ID!
+  eventId: ID!
   userId: ID!
   reason: String
 }
@@ -1605,8 +1605,8 @@ input AdminCreateUserInput {
   verified: Boolean! = false
 }
 
-# Admin Intent Management Inputs
-input AdminBulkUpdateIntentsInput {
+# Admin Event Management Inputs
+input AdminBulkUpdateEventsInput {
   visibility: Visibility
   joinManuallyClosed: Boolean
   joinManualCloseReason: String
@@ -1634,8 +1634,8 @@ input CreateOneOffCheckoutInput {
 }
 
 input CreateEventSponsorshipCheckoutInput {
-  intentId: ID!
-  plan: IntentPlan!
+  eventId: ID!
+  plan: EventPlan!
   actionType: String
   actionPackageSize: Int
 }
@@ -1653,7 +1653,7 @@ type Query {
     offset: Int = 0
   ): NotificationsResult!
 
-  intents(
+  events(
     limit: Int = 20
     offset: Int = 0
     visibility: Visibility
@@ -1668,95 +1668,95 @@ type Query {
     levels: [Level!]
     kinds: [MeetingKind!]
     keywords: [String!]
-    status: IntentStatus
+    status: EventStatus
     verifiedOnly: Boolean
     distanceKm: Float
     near: LocationInput
-    sortBy: IntentsSortBy = START_AT
+    sortBy: EventsSortBy = START_AT
     sortDir: SortDir = ASC
-  ): IntentsResult!
+  ): EventsResult!
 
-  intent(id: ID!): Intent
+  event(id: ID!): Event
 
-  intentMembers(
-    intentId: ID!
-    status: IntentMemberStatus
-    role: IntentMemberRole
+  eventMembers(
+    eventId: ID!
+    status: EventMemberStatus
+    role: EventMemberRole
     limit: Int = 50
     offset: Int = 0
-  ): [IntentMember!]!
+  ): [EventMember!]!
 
-  intentMember(intentId: ID!, userId: ID!): IntentMember
+  eventMember(eventId: ID!, userId: ID!): EventMember
 
   """
-  Get current user's membership for a specific intent.
+  Get current user's membership for a specific event.
   Returns null if user is not authenticated or has no membership.
-  Unlike intentMember, this doesn't require userId parameter.
+  Unlike eventMember, this doesn't require userId parameter.
   """
-  myMembershipForIntent(intentId: ID!): IntentMember
+  myMembershipForEvent(eventId: ID!): EventMember
 
   myMemberships(
-    status: IntentMemberStatus
-    role: IntentMemberRole
+    status: EventMemberStatus
+    role: EventMemberRole
     limit: Int = 50
     offset: Int = 0
-  ): [IntentMember!]!
+  ): [EventMember!]!
 
   """
-  Get all intents where current user has membership, with flexible filtering.
-  Supports filtering by membership role/status AND intent lifecycle status.
+  Get all events where current user has membership, with flexible filtering.
+  Supports filtering by membership role/status AND event lifecycle status.
   """
-  myIntents(
+  myEvents(
     "Filter by membership role (OWNER, MODERATOR, MEMBER)"
-    role: IntentMemberRole
+    role: EventMemberRole
     "Filter by membership status (JOINED, PENDING, INVITED, etc.)"
-    membershipStatus: IntentMemberStatus
-    "Filter by intent lifecycle status (UPCOMING, ONGOING, FINISHED, etc.) - supports multiple"
-    intentStatuses: [IntentLifecycleStatus!]
+    membershipStatus: EventMemberStatus
+    "Filter by event lifecycle status (UPCOMING, ONGOING, FINISHED, etc.) - supports multiple"
+    eventStatuses: [EventLifecycleStatus!]
     "Pagination limit"
     limit: Int = 50
     "Pagination offset"
     offset: Int = 0
-  ): [IntentMember!]!
+  ): [EventMember!]!
 
-  intentMemberStats(intentId: ID!): IntentMemberStats!
+  eventMemberStats(eventId: ID!): EventMemberStats!
 
   """
-  Check user's permissions for a specific intent.
+  Check user's permissions for a specific event.
   Returns permission flags for the current authenticated user.
   """
-  intentPermissions(intentId: ID!): IntentPermissions!
+  eventPermissions(eventId: ID!): EventPermissions!
 
-  # Intent Invite Links
-  intentInviteLinks(
-    intentId: ID!
+  # Event Invite Links
+  eventInviteLinks(
+    eventId: ID!
     includeRevoked: Boolean = false
-  ): [IntentInviteLink!]!
-  intentInviteLink(id: ID, code: String): IntentInviteLink
-  validateInviteLink(code: String!): IntentInviteLinkValidation!
+  ): [EventInviteLink!]!
+  eventInviteLink(id: ID, code: String): EventInviteLink
+  validateInviteLink(code: String!): EventInviteLinkValidation!
 
-  # Intent Favourites
-  myFavourites(limit: Int = 20, offset: Int = 0): IntentFavouritesResult!
-  isFavourite(intentId: ID!): Boolean!
+  # Event Favourites
+  myFavourites(limit: Int = 20, offset: Int = 0): EventFavouritesResult!
+  isFavourite(eventId: ID!): Boolean!
 
   # Join Form
-  intentJoinQuestions(intentId: ID!): [IntentJoinQuestion!]!
-  intentJoinRequests(
-    intentId: ID!
+  eventJoinQuestions(eventId: ID!): [EventJoinQuestion!]!
+  eventJoinRequests(
+    eventId: ID!
     limit: Int = 20
     offset: Int = 0
-  ): IntentJoinRequestsResult!
+  ): EventJoinRequestsResult!
   myJoinRequests(
-    status: IntentMemberStatus
+    status: EventMemberStatus
     limit: Int = 20
     offset: Int = 0
-  ): [IntentMember!]!
+  ): [EventMember!]!
 
   # Feedback
-  intentFeedbackQuestions(intentId: ID!): [IntentFeedbackQuestion!]!
-  intentFeedbackResults(intentId: ID!): IntentFeedbackResults!
-  myFeedbackAnswers(intentId: ID!): [IntentFeedbackAnswer!]!
-  canSubmitFeedback(intentId: ID!): Boolean!
+  eventFeedbackQuestions(eventId: ID!): [EventFeedbackQuestion!]!
+  eventFeedbackResults(eventId: ID!): EventFeedbackResults!
+  myFeedbackAnswers(eventId: ID!): [EventFeedbackAnswer!]!
+  canSubmitFeedback(eventId: ID!): Boolean!
 
   # ==============================================================================
   # Billing & Subscriptions
@@ -1774,8 +1774,8 @@ type Query {
   "Get all event sponsorship transaction history for the current user"
   myEventSponsorships(limit: Int = 50): [EventSponsorshipPeriod!]!
 
-  "Get event sponsorship for an intent"
-  eventSponsorship(intentId: ID!): EventSponsorship
+  "Get event sponsorship for an event"
+  eventSponsorship(eventId: ID!): EventSponsorship
 
   categoriesBySlugs(slugs: [String!]!, limit: Int): [Category!]!
   categories(query: String, limit: Int = 50): [Category!]!
@@ -1821,7 +1821,7 @@ type Query {
 
   # Comment Queries
   comments(
-    intentId: ID!
+    eventId: ID!
     limit: Int = 50
     offset: Int = 0
     threadId: ID
@@ -1832,7 +1832,7 @@ type Query {
 
   # Review Queries
   reviews(
-    intentId: ID!
+    eventId: ID!
     limit: Int = 20
     offset: Int = 0
     rating: Int
@@ -1840,9 +1840,9 @@ type Query {
 
   review(id: ID!): Review
 
-  reviewStats(intentId: ID!): ReviewStats!
+  reviewStats(eventId: ID!): ReviewStats!
 
-  myReview(intentId: ID!): Review
+  myReview(eventId: ID!): Review
 
   # Report Queries (admin only)
   reports(
@@ -1855,14 +1855,14 @@ type Query {
   report(id: ID!): Report
 
   # Event Chat Queries
-  intentMessages(
-    intentId: ID!
+  eventMessages(
+    eventId: ID!
     first: Int = 20
     before: String
     after: String
-  ): IntentMessagesConnection!
+  ): EventMessagesConnection!
 
-  intentUnreadCount(intentId: ID!): Int!
+  eventUnreadCount(eventId: ID!): Int!
 
   # User Block Queries
   myBlocks(limit: Int = 50, offset: Int = 0): UserBlocksResult!
@@ -1872,7 +1872,7 @@ type Query {
   myNotificationPreferences: NotificationPreference!
 
   # Mute Queries
-  intentMute(intentId: ID!): IntentMute
+  eventMute(eventId: ID!): EventMute
   dmMute(threadId: ID!): DmMute
 
   # Map Clustering Queries
@@ -1882,12 +1882,12 @@ type Query {
     filters: ClusterFiltersInput
   ): [Cluster!]!
 
-  regionIntents(
+  regionEvents(
     region: String!
     page: Int = 1
     perPage: Int = 20
     filters: ClusterFiltersInput
-  ): RegionIntentPage!
+  ): RegionEventPage!
 
   # Admin User Management Queries
   adminUserComments(userId: ID!, limit: Int, offset: Int): AdminCommentsResult!
@@ -1897,7 +1897,7 @@ type Query {
     limit: Int
     offset: Int
   ): AdminMembershipsResult!
-  adminUserIntents(userId: ID!, limit: Int, offset: Int): AdminIntentsResult!
+  adminUserEvents(userId: ID!, limit: Int, offset: Int): AdminEventsResult!
   adminUserDmThreads(
     userId: ID!
     limit: Int
@@ -1916,13 +1916,13 @@ type Query {
   adminComments(
     limit: Int
     offset: Int
-    intentId: ID
+    eventId: ID
     userId: ID
   ): AdminCommentsResult!
   adminReviews(
     limit: Int
     offset: Int
-    intentId: ID
+    eventId: ID
     userId: ID
     rating: Int
   ): AdminReviewsResult!
@@ -1947,8 +1947,8 @@ type AdminMembershipsResult {
   pageInfo: AdminPageInfo!
 }
 
-type AdminIntentsResult {
-  items: [AdminIntentItem!]!
+type AdminEventsResult {
+  items: [AdminEventItem!]!
   pageInfo: AdminPageInfo!
 }
 
@@ -1964,13 +1964,13 @@ type AdminPageInfo {
 
 type AdminMembershipItem {
   id: ID!
-  status: IntentMemberStatus!
-  role: IntentMemberRole!
+  status: EventMemberStatus!
+  role: EventMemberRole!
   joinedAt: DateTime
-  intent: AdminIntentSummary!
+  event: AdminEventSummary!
 }
 
-type AdminIntentItem {
+type AdminEventItem {
   id: ID!
   title: String!
   startAt: DateTime!
@@ -1986,7 +1986,7 @@ type AdminDmThreadItem {
   messageCount: Int!
 }
 
-type AdminIntentSummary {
+type AdminEventSummary {
   id: ID!
   title: String!
   startAt: DateTime!
@@ -2005,84 +2005,84 @@ type Mutation {
   updateTag(id: ID!, input: UpdateTagInput!): Tag!
   deleteTag(id: ID!): Boolean!
 
-  # intents
-  createIntent(input: CreateIntentInput!): Intent!
-  updateIntent(id: ID!, input: UpdateIntentInput!): Intent!
-  deleteIntent(id: ID!): Boolean!
-  cancelIntent(id: ID!, reason: String): Intent!
-  closeIntentJoin(intentId: ID!, reason: String): Intent!
-  reopenIntentJoin(intentId: ID!): Intent!
+  # events
+  createEvent(input: CreateEventInput!): Event!
+  updateEvent(id: ID!, input: UpdateEventInput!): Event!
+  deleteEvent(id: ID!): Boolean!
+  cancelEvent(id: ID!, reason: String): Event!
+  closeEventJoin(eventId: ID!, reason: String): Event!
+  reopenEventJoin(eventId: ID!): Event!
 
   # Publication management
   """
-  Publish intent immediately (DRAFT/SCHEDULED -> PUBLISHED)
+  Publish event immediately (DRAFT/SCHEDULED -> PUBLISHED)
   """
-  publishIntent(id: ID!): Intent!
+  publishEvent(id: ID!): Event!
   """
-  Schedule intent publication for a specific time (DRAFT -> SCHEDULED)
+  Schedule event publication for a specific time (DRAFT -> SCHEDULED)
   """
-  scheduleIntentPublication(id: ID!, publishAt: DateTime!): Intent!
+  scheduleEventPublication(id: ID!, publishAt: DateTime!): Event!
   """
   Cancel scheduled publication (SCHEDULED -> DRAFT)
   """
-  cancelScheduledPublication(id: ID!): Intent!
+  cancelScheduledPublication(id: ID!): Event!
   """
-  Unpublish intent (PUBLISHED -> DRAFT)
+  Unpublish event (PUBLISHED -> DRAFT)
   """
-  unpublishIntent(id: ID!): Intent!
+  unpublishEvent(id: ID!): Event!
 
   # memberships (user endpoints)
-  requestJoinIntent(intentId: ID!): Intent! # Deprecated: use requestJoinIntentWithAnswers
-  requestJoinIntentWithAnswers(input: RequestJoinIntentInput!): Intent!
-  cancelJoinRequest(intentId: ID!): Boolean!
-  leaveIntent(intentId: ID!): Intent!
-  acceptInvite(intentId: ID!): Intent!
+  requestJoinEvent(eventId: ID!): Event! # Deprecated: use requestJoinEventWithAnswers
+  requestJoinEventWithAnswers(input: RequestJoinEventInput!): Event!
+  cancelJoinRequest(eventId: ID!): Boolean!
+  leaveEvent(eventId: ID!): Event!
+  acceptInvite(eventId: ID!): Event!
 
   # waitlist (user endpoints)
-  joinWaitlistOpen(intentId: ID!): Intent!
-  leaveWaitlist(intentId: ID!): Boolean!
+  joinWaitlistOpen(eventId: ID!): Event!
+  leaveWaitlist(eventId: ID!): Boolean!
 
   # memberships (owner/mod endpoints)
-  inviteMember(input: InviteMemberInput!): Intent!
-  approveMembership(input: ApproveMembershipInput!): Intent! # Deprecated: use approveJoinRequest
-  approveJoinRequest(input: ApproveJoinRequestInput!): Intent!
-  rejectMembership(input: RejectMembershipInput!): Intent! # Deprecated: use rejectJoinRequest
-  rejectJoinRequest(input: RejectJoinRequestInput!): Intent!
-  kickMember(input: KickMemberInput!): Intent!
-  updateMemberRole(input: UpdateMemberRoleInput!): Intent!
-  banMember(input: BanMemberInput!): Intent!
-  unbanMember(input: UnbanMemberInput!): Intent!
-  promoteFromWaitlist(input: PromoteFromWaitlistInput!): Intent!
+  inviteMember(input: InviteMemberInput!): Event!
+  approveMembership(input: ApproveMembershipInput!): Event! # Deprecated: use approveJoinRequest
+  approveJoinRequest(input: ApproveJoinRequestInput!): Event!
+  rejectMembership(input: RejectMembershipInput!): Event! # Deprecated: use rejectJoinRequest
+  rejectJoinRequest(input: RejectJoinRequestInput!): Event!
+  kickMember(input: KickMemberInput!): Event!
+  updateMemberRole(input: UpdateMemberRoleInput!): Event!
+  banMember(input: BanMemberInput!): Event!
+  unbanMember(input: UnbanMemberInput!): Event!
+  promoteFromWaitlist(input: PromoteFromWaitlistInput!): Event!
   cancelPendingOrInviteForUser(
     input: CancelPendingOrInviteForUserInput!
   ): Boolean!
 
-  # Intent Invite Links
-  createIntentInviteLink(input: CreateIntentInviteLinkInput!): IntentInviteLink!
-  updateIntentInviteLink(
+  # Event Invite Links
+  createEventInviteLink(input: CreateEventInviteLinkInput!): EventInviteLink!
+  updateEventInviteLink(
     id: ID!
-    input: UpdateIntentInviteLinkInput!
-  ): IntentInviteLink!
-  revokeIntentInviteLink(id: ID!): IntentInviteLink!
-  deleteIntentInviteLink(id: ID!): Boolean!
-  joinByInviteLink(code: String!): Intent!
+    input: UpdateEventInviteLinkInput!
+  ): EventInviteLink!
+  revokeEventInviteLink(id: ID!): EventInviteLink!
+  deleteEventInviteLink(id: ID!): Boolean!
+  joinByInviteLink(code: String!): Event!
 
-  # Intent Favourites
-  toggleFavourite(intentId: ID!): IntentFavourite
+  # Event Favourites
+  toggleFavourite(eventId: ID!): EventFavourite
 
   # Feedback mutations
   createFeedbackQuestion(
     input: CreateFeedbackQuestionInput!
-  ): IntentFeedbackQuestion!
+  ): EventFeedbackQuestion!
   updateFeedbackQuestion(
     id: ID!
     input: UpdateFeedbackQuestionInput!
-  ): IntentFeedbackQuestion!
+  ): EventFeedbackQuestion!
   deleteFeedbackQuestion(id: ID!): Boolean!
   reorderFeedbackQuestions(
-    intentId: ID!
+    eventId: ID!
     questionIds: [ID!]!
-  ): [IntentFeedbackQuestion!]!
+  ): [EventFeedbackQuestion!]!
 
   # Submit review + feedback (combined)
   submitReviewAndFeedback(
@@ -2090,20 +2090,20 @@ type Mutation {
   ): SubmitReviewAndFeedbackResult!
 
   # Manual trigger for feedback requests (owner/moderator only)
-  sendFeedbackRequests(intentId: ID!): SendFeedbackRequestsResult!
+  sendFeedbackRequests(eventId: ID!): SendFeedbackRequestsResult!
 
   # FAQ Management
-  updateIntentFaqs(input: UpdateIntentFaqsInput!): [IntentFaq!]!
+  updateEventFaqs(input: UpdateEventFaqsInput!): [EventFaq!]!
 
   # Join Form Management
-  updateIntentJoinQuestions(
-    input: UpdateIntentJoinQuestionsInput!
-  ): [IntentJoinQuestion!]!
+  updateEventJoinQuestions(
+    input: UpdateEventJoinQuestionsInput!
+  ): [EventJoinQuestion!]!
 
   # Feedback Questions bulk update (replaces create/update/delete/reorder)
-  updateIntentFeedbackQuestions(
-    input: UpdateIntentFeedbackQuestionsInput!
-  ): [IntentFeedbackQuestion!]!
+  updateEventFeedbackQuestions(
+    input: UpdateEventFeedbackQuestionsInput!
+  ): [EventFeedbackQuestion!]!
 
   # notifications
   addNotification(
@@ -2154,17 +2154,17 @@ type Mutation {
   deleteReport(id: ID!): Boolean!
 
   # Event Chat
-  sendIntentMessage(input: SendIntentMessageInput!): IntentChatMessage!
-  editIntentMessage(id: ID!, input: EditIntentMessageInput!): IntentChatMessage!
-  deleteIntentMessage(id: ID!, soft: Boolean = true): Boolean!
-  markIntentChatRead(intentId: ID!, at: DateTime): Boolean!
-  publishIntentTyping(intentId: ID!, isTyping: Boolean!): Boolean!
+  sendEventMessage(input: SendEventMessageInput!): EventChatMessage!
+  editEventMessage(id: ID!, input: EditEventMessageInput!): EventChatMessage!
+  deleteEventMessage(id: ID!, soft: Boolean = true): Boolean!
+  markEventChatRead(eventId: ID!, at: DateTime): Boolean!
+  publishEventTyping(eventId: ID!, isTyping: Boolean!): Boolean!
 
   # Reactions
   addDmReaction(messageId: ID!, emoji: String!): Boolean!
   removeDmReaction(messageId: ID!, emoji: String!): Boolean!
-  addIntentReaction(messageId: ID!, emoji: String!): Boolean!
-  removeIntentReaction(messageId: ID!, emoji: String!): Boolean!
+  addEventReaction(messageId: ID!, emoji: String!): Boolean!
+  removeEventReaction(messageId: ID!, emoji: String!): Boolean!
 
   # User Blocks
   blockUser(userId: ID!): UserBlock! # ← DODANE
@@ -2174,7 +2174,7 @@ type Mutation {
     input: UpdateNotificationPreferenceInput!
   ): NotificationPreference! # ← DODANE
   # Mutes
-  muteIntent(intentId: ID!, muted: Boolean!): IntentMute!
+  muteEvent(eventId: ID!, muted: Boolean!): EventMute!
   muteDmThread(threadId: ID!, muted: Boolean!): DmMute!
 
   # Admin - User Management
@@ -2185,26 +2185,26 @@ type Mutation {
   adminSuspendUser(id: ID!, reason: String): User!
   adminUnsuspendUser(id: ID!): User!
 
-  # Admin - Intent Management
-  adminUpdateIntent(id: ID!, input: UpdateIntentInput!): Intent!
-  adminDeleteIntent(id: ID!): Boolean!
-  adminCancelIntent(id: ID!, reason: String): Intent!
-  adminRestoreIntent(id: ID!): Intent!
-  adminChangeIntentOwner(intentId: ID!, newOwnerId: ID!): Intent!
-  adminBulkUpdateIntents(
+  # Admin - Event Management
+  adminUpdateEvent(id: ID!, input: UpdateEventInput!): Event!
+  adminDeleteEvent(id: ID!): Boolean!
+  adminCancelEvent(id: ID!, reason: String): Event!
+  adminRestoreEvent(id: ID!): Event!
+  adminChangeEventOwner(eventId: ID!, newOwnerId: ID!): Event!
+  adminBulkUpdateEvents(
     ids: [ID!]!
-    input: AdminBulkUpdateIntentsInput!
+    input: AdminBulkUpdateEventsInput!
   ): AdminBulkUpdateResult!
 
   # Admin - Content Moderation
   adminDeleteComment(id: ID!): Boolean!
   adminDeleteReview(id: ID!): Boolean!
 
-  # Admin - Intent Member Management
-  adminUpdateMemberRole(input: UpdateMemberRoleInput!): Intent!
-  adminKickMember(input: KickMemberInput!): Intent!
-  adminBanMember(input: BanMemberInput!): Intent!
-  adminUnbanMember(input: UnbanMemberInput!): Intent!
+  # Admin - Event Member Management
+  adminUpdateMemberRole(input: UpdateMemberRoleInput!): Event!
+  adminKickMember(input: KickMemberInput!): Event!
+  adminBanMember(input: BanMemberInput!): Event!
+  adminUnbanMember(input: UnbanMemberInput!): Event!
 
   # User Profile & Privacy
   updateUserProfile(input: UpdateUserProfileInput!): UserProfile!
@@ -2273,13 +2273,13 @@ type Mutation {
   getEventSponsorshipReceiptUrl(periodId: ID!): String
 
   "Use a boost for event sponsorship"
-  useBoost(intentId: ID!): Boolean!
+  useBoost(eventId: ID!): Boolean!
 
   "Use a local push notification for event sponsorship"
-  useLocalPush(intentId: ID!): Boolean!
+  useLocalPush(eventId: ID!): Boolean!
 
-  "Update intent appearance configuration"
-  updateIntentAppearance(input: UpdateIntentAppearanceInput!): IntentAppearance!
+  "Update event appearance configuration"
+  updateEventAppearance(input: UpdateEventAppearanceInput!): EventAppearance!
 
   # dev only
   devLogin(name: String!): SessionUser
@@ -2295,11 +2295,11 @@ type Subscription {
   notificationBadgeChanged(recipientId: ID!): NotificationBadgeChanged!
 
   # Event Chat Subscriptions
-  intentMessageAdded(intentId: ID!): IntentChatMessage!
-  intentMessageUpdated(intentId: ID!): IntentChatMessage!
-  intentMessageDeleted(intentId: ID!): MessageDeletedEvent!
-  intentTyping(intentId: ID!): TypingIndicator!
-  intentReactionAdded(intentId: ID!): ReactionEvent!
+  eventMessageAdded(eventId: ID!): EventChatMessage!
+  eventMessageUpdated(eventId: ID!): EventChatMessage!
+  eventMessageDeleted(eventId: ID!): MessageDeletedEvent!
+  eventTyping(eventId: ID!): TypingIndicator!
+  eventReactionAdded(eventId: ID!): ReactionEvent!
 
   # DM Subscriptions
   dmMessageAdded(threadId: ID!): DmMessage!
@@ -2356,13 +2356,13 @@ type UserBlocksResult {
 }
 
 # ------------------------------------------------------------------------------
-# Intent Invite Links
+# Event Invite Links
 # ------------------------------------------------------------------------------
 
-"Invite link for intent with usage limits"
-type IntentInviteLink {
+"Invite link for event with usage limits"
+type EventInviteLink {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   code: String!
   maxUses: Int
   usedCount: Int!
@@ -2376,8 +2376,8 @@ type IntentInviteLink {
   createdAt: DateTime!
   updatedAt: DateTime
 
-  intent: Intent!
-  uses: [IntentInviteLinkUsage!]!
+  event: Event!
+  uses: [EventInviteLinkUsage!]!
 
   # Computed
   isExpired: Boolean!
@@ -2387,7 +2387,7 @@ type IntentInviteLink {
 }
 
 "Usage record for invite link"
-type IntentInviteLinkUsage {
+type EventInviteLinkUsage {
   id: ID!
   linkId: ID!
   userId: ID!
@@ -2396,29 +2396,29 @@ type IntentInviteLinkUsage {
 }
 
 "Paginated invite links result"
-type IntentInviteLinksResult {
-  items: [IntentInviteLink!]!
+type EventInviteLinksResult {
+  items: [EventInviteLink!]!
   pageInfo: PageInfo!
 }
 
 "Validation result for invite link"
-type IntentInviteLinkValidation {
+type EventInviteLinkValidation {
   valid: Boolean!
   reason: String
-  link: IntentInviteLink
-  intent: Intent
+  link: EventInviteLink
+  event: Event
 }
 
 "Input for creating invite link"
-input CreateIntentInviteLinkInput {
-  intentId: ID!
+input CreateEventInviteLinkInput {
+  eventId: ID!
   label: String
   maxUses: Int
   expiresAt: DateTime
 }
 
 "Input for updating invite link"
-input UpdateIntentInviteLinkInput {
+input UpdateEventInviteLinkInput {
   label: String
   maxUses: Int
   expiresAt: DateTime
@@ -2428,38 +2428,38 @@ input UpdateIntentInviteLinkInput {
 # FAQ
 # ------------------------------------------------------------------------------
 
-"FAQ item for an intent"
-type IntentFaq {
+"FAQ item for an event"
+type EventFaq {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   order: Int!
   question: String!
   answer: String!
   createdAt: DateTime!
   updatedAt: DateTime!
-  intent: Intent!
+  event: Event!
 }
 
 "Input for creating/updating FAQ"
-input IntentFaqInput {
+input EventFaqInput {
   question: String!
   answer: String!
 }
 
 "Input for bulk updating FAQs"
-input UpdateIntentFaqsInput {
-  intentId: ID!
-  faqs: [IntentFaqInput!]!
+input UpdateEventFaqsInput {
+  eventId: ID!
+  faqs: [EventFaqInput!]!
 }
 
 # ------------------------------------------------------------------------------
-# Intent Appearance
+# Event Appearance
 # ------------------------------------------------------------------------------
 
-"Custom appearance configuration for an intent"
-type IntentAppearance {
+"Custom appearance configuration for an event"
+type EventAppearance {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   "JSON configuration for card and detail appearance"
   config: JSON!
   createdAt: DateTime!
@@ -2467,31 +2467,31 @@ type IntentAppearance {
 }
 
 "Input for card appearance configuration"
-input IntentAppearanceCardInput {
+input EventAppearanceCardInput {
   background: String
   shadow: String
 }
 
 "Input for detail panel appearance configuration"
-input IntentAppearanceDetailPanelInput {
+input EventAppearanceDetailPanelInput {
   background: String
   shadow: String
 }
 
 "Input for detail appearance configuration"
-input IntentAppearanceDetailInput {
+input EventAppearanceDetailInput {
   background: String
-  panel: IntentAppearanceDetailPanelInput
+  panel: EventAppearanceDetailPanelInput
 }
 
-"Input for updating intent appearance"
-input UpdateIntentAppearanceInput {
-  intentId: ID!
-  card: IntentAppearanceCardInput
-  detail: IntentAppearanceDetailInput
+"Input for updating event appearance"
+input UpdateEventAppearanceInput {
+  eventId: ID!
+  card: EventAppearanceCardInput
+  detail: EventAppearanceDetailInput
 }
 
-input IntentJoinQuestionInput {
+input EventJoinQuestionInput {
   type: JoinQuestionType!
   label: String!
   helpText: String
@@ -2505,13 +2505,13 @@ input JoinQuestionOptionInput {
   label: String!
 }
 
-input UpdateIntentJoinQuestionsInput {
-  intentId: ID!
-  questions: [IntentJoinQuestionInput!]!
+input UpdateEventJoinQuestionsInput {
+  eventId: ID!
+  questions: [EventJoinQuestionInput!]!
 }
 
 # Feedback Questions bulk update
-input IntentFeedbackQuestionInput {
+input EventFeedbackQuestionInput {
   type: FeedbackQuestionType!
   label: String!
   helpText: String
@@ -2525,29 +2525,29 @@ input FeedbackQuestionOptionInput {
   label: String!
 }
 
-input UpdateIntentFeedbackQuestionsInput {
-  intentId: ID!
-  questions: [IntentFeedbackQuestionInput!]!
+input UpdateEventFeedbackQuestionsInput {
+  eventId: ID!
+  questions: [EventFeedbackQuestionInput!]!
 }
 
 # ------------------------------------------------------------------------------
-# Intent Favourites
+# Event Favourites
 # ------------------------------------------------------------------------------
 
-"User's saved/favourite intent"
-type IntentFavourite {
+"User's saved/favourite event"
+type EventFavourite {
   id: ID!
   userId: ID!
-  intentId: ID!
+  eventId: ID!
   createdAt: DateTime!
 
   user: User!
-  intent: Intent!
+  event: Event!
 }
 
 "Paginated favourites result"
-type IntentFavouritesResult {
-  items: [IntentFavourite!]!
+type EventFavouritesResult {
+  items: [EventFavourite!]!
   pageInfo: PageInfo!
 }
 
@@ -2571,18 +2571,18 @@ type NotificationPreference {
 }
 
 # ------------------------------------------------------------------------------
-# Mutes (Intent & DM)
+# Mutes (Event & DM)
 # ------------------------------------------------------------------------------
 
-"Intent mute status"
-type IntentMute {
+"Event mute status"
+type EventMute {
   id: ID!
-  intentId: ID!
+  eventId: ID!
   userId: ID!
   muted: Boolean!
   createdAt: DateTime!
 
-  intent: Intent!
+  event: Event!
   user: User!
 }
 

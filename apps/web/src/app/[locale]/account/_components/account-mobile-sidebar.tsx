@@ -1,32 +1,32 @@
 'use client';
 
+import { Avatar } from '@/components/ui/avatar';
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+  BarChart3,
+  Bell,
   Calendar1Icon,
+  Cookie,
   CreditCardIcon,
+  Eye,
+  FileText,
+  Heart,
+  HelpCircle,
+  ListCollapseIcon,
   LogOut,
   MessagesSquareIcon,
   SettingsIcon,
-  UserIcon,
-  Bell,
-  Heart,
-  ListCollapseIcon,
-  Eye,
-  Sparkles,
-  BarChart3,
-  HelpCircle,
-  Cookie,
-  FileText,
   Shield,
+  Sparkles,
+  UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
-import { useMeQuery } from '@/features/auth/hooks/auth';
-import { Avatar } from '@/components/ui/avatar';
-import { buildAvatarUrl } from '@/lib/media/url';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useLocalePath } from '@/hooks/use-locale-path';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 
 type NavItem = {
   key: string;
@@ -80,7 +80,7 @@ export function AccountMobileSidebar({
     {
       key: 'my-events',
       label: t.accountNav.items.myEvents,
-      href: '/account/intents',
+      href: '/account/events',
       icon: Calendar1Icon,
     },
     {

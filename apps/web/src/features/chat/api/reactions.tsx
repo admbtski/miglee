@@ -12,12 +12,12 @@ import {
   RemoveDmReactionDocument,
   type RemoveDmReactionMutation,
   type RemoveDmReactionMutationVariables,
-  AddIntentReactionDocument,
-  type AddIntentReactionMutation,
-  type AddIntentReactionMutationVariables,
-  RemoveIntentReactionDocument,
-  type RemoveIntentReactionMutation,
-  type RemoveIntentReactionMutationVariables,
+  AddEventReactionDocument,
+  type AddEventReactionMutation,
+  type AddEventReactionMutationVariables,
+  RemoveEventReactionDocument,
+  type RemoveEventReactionMutation,
+  type RemoveEventReactionMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { dmKeys } from './dm';
@@ -101,30 +101,30 @@ export function useRemoveDmReaction(
 }
 
 // =============================================================================
-// Intent Reactions
+// Event Reactions
 // =============================================================================
 
 /**
- * Add reaction to Intent chat message
+ * Add reaction to Event chat message
  */
-export function useAddIntentReaction(
+export function useAddEventReaction(
   options?: UseMutationOptions<
-    AddIntentReactionMutation,
+    AddEventReactionMutation,
     Error,
-    AddIntentReactionMutationVariables
+    AddEventReactionMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    AddIntentReactionMutation,
+    AddEventReactionMutation,
     Error,
-    AddIntentReactionMutationVariables
+    AddEventReactionMutationVariables
   >({
-    mutationKey: ['AddIntentReaction'],
+    mutationKey: ['AddEventReaction'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<AddIntentReactionMutation>(
-        AddIntentReactionDocument,
+      const res = await gqlClient.request<AddEventReactionMutation>(
+        AddEventReactionDocument,
         variables
       );
       return res;
@@ -141,26 +141,26 @@ export function useAddIntentReaction(
 }
 
 /**
- * Remove reaction from Intent chat message
+ * Remove reaction from Event chat message
  */
-export function useRemoveIntentReaction(
+export function useRemoveEventReaction(
   options?: UseMutationOptions<
-    RemoveIntentReactionMutation,
+    RemoveEventReactionMutation,
     Error,
-    RemoveIntentReactionMutationVariables
+    RemoveEventReactionMutationVariables
   >
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    RemoveIntentReactionMutation,
+    RemoveEventReactionMutation,
     Error,
-    RemoveIntentReactionMutationVariables
+    RemoveEventReactionMutationVariables
   >({
-    mutationKey: ['RemoveIntentReaction'],
+    mutationKey: ['RemoveEventReaction'],
     mutationFn: async (variables) => {
-      const res = await gqlClient.request<RemoveIntentReactionMutation>(
-        RemoveIntentReactionDocument,
+      const res = await gqlClient.request<RemoveEventReactionMutation>(
+        RemoveEventReactionDocument,
         variables
       );
       return res;

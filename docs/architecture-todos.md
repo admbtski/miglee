@@ -44,7 +44,7 @@ These errors existed before the refactoring:
 
 1. Move remaining admin sub-components:
    - `app/[locale]/admin/users/_components/*`
-   - `app/[locale]/admin/intents/_components/*`
+   - `app/[locale]/admin/events/_components/*`
    - `app/[locale]/admin/reports/_components/*`
    - `app/[locale]/admin/categories/_components/*`
    - `app/[locale]/admin/tags/_components/*`
@@ -82,12 +82,12 @@ features/                         (219 files)
 │   └── components/
 ├── feedback/
 │   └── api/                     ✅ feedback.ts
-├── intents/
-│   ├── api/                     ✅ intents, intent-members, comments, reviews
-│   ├── components/              ✅ All event detail + my intents components
-│   ├── hooks/                   ✅ use-intent-permissions, use-intents-modals
-│   ├── types/                   ✅ IntentListItem, EventDetailsData
-│   └── utils/                   ✅ intents.ts, intent-join-state.ts
+├── events/
+│   ├── api/                     ✅ events, event-members, comments, reviews
+│   ├── components/              ✅ All event detail + my events components
+│   ├── hooks/                   ✅ use-event-permissions, use-events-modals
+│   ├── types/                   ✅ EventListItem, EventDetailsData
+│   └── utils/                   ✅ events.ts, event-join-state.ts
 ├── maps/
 │   ├── api/                     ✅ map-clusters.tsx
 │   ├── components/
@@ -135,7 +135,7 @@ types/                           (global types only)
 
 ```typescript
 // Feature API
-import { useIntentsInfiniteQuery } from '@/features/intents/api/intents';
+import { useEventsInfiniteQuery } from '@/features/events/api/events';
 import { useMeQuery } from '@/lib/api/auth';
 
 // Feature Components
@@ -148,7 +148,7 @@ import { useCommittedFilters } from '@/features/events/hooks';
 import { usePlanAccess } from '@/features/billing/hooks';
 
 // Feature Types
-import type { IntentListItem } from '@/features/intents/types';
+import type { EventListItem } from '@/features/events/types';
 import type { SortKey } from '@/features/events/types';
 
 // Global

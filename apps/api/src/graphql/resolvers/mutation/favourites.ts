@@ -1,5 +1,5 @@
 /**
- * Intent Favourites Mutation Resolvers
+ * Event Favourites Mutation Resolvers
  */
 
 import { GraphQLError } from 'graphql';
@@ -15,31 +15,31 @@ export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
   resolverWithMetrics(
     'Mutation',
     'toggleFavourite',
-    async (_p, { intentId }, { user }) => {
+    async (_p, { eventId }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
 
-      // Check if intent exists
-      const intent = await prisma.intent.findUnique({
-        where: { id: intentId },
+      // Check if eventexists
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
         select: { id: true, savedCount: true },
       });
 
-      if (!intent) {
-        throw new GraphQLError('Intent not found.', {
+      if (!event) {
+        throw new GraphQLError('Event not found.', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
       // Check if already favourited
-      const existing = await prisma.intentFavourite.findUnique({
+      const existing = await prisma.eventFavourite.findUnique({
         where: {
-          userId_intentId: {
+          userId_eventId: {
             userId: user.id,
-            intentId,
+            eventId,
           },
         },
       });
@@ -47,11 +47,11 @@ export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
       if (existing) {
         // Remove favourite
         await prisma.$transaction([
-          prisma.intentFavourite.delete({
+          prisma.eventFavourite.delete({
             where: { id: existing.id },
           }),
-          prisma.intent.update({
-            where: { id: intentId },
+          prisma.event.update({
+            where: { id: eventId },
             data: { savedCount: { decrement: 1 } },
           }),
         ]);
@@ -60,14 +60,14 @@ export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
       } else {
         // Add favourite
         const [favourite] = await prisma.$transaction([
-          prisma.intentFavourite.create({
+          prisma.eventFavourite.create({
             data: {
               userId: user.id,
-              intentId,
+              eventId,
             },
           }),
-          prisma.intent.update({
-            where: { id: intentId },
+          prisma.event.update({
+            where: { id: eventId },
             data: { savedCount: { increment: 1 } },
           }),
         ]);
@@ -75,10 +75,10 @@ export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
         return {
           id: favourite.id,
           userId: favourite.userId,
-          intentId: favourite.intentId,
+          eventId: favourite.eventId,
           createdAt: favourite.createdAt,
           user: null as any, // Will be resolved by field resolver if needed
-          intent: null as any, // Will be resolved by field resolver if needed
+          event: null as any, // Will be resolved by field resolver if needed
         };
       }
     }

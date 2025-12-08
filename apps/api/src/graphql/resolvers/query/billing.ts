@@ -99,7 +99,7 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
       orderBy: { createdAt: 'desc' },
       take: limit,
       include: {
-        intent: true,
+        event: true,
         sponsor: true,
         eventSponsorship: true,
       },
@@ -110,7 +110,7 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
       ...period,
       id: period.id,
       actionType: period.actionType,
-      intentId: period.intentId,
+      eventId: period.eventId,
       sponsorId: period.sponsorId,
       plan: period.plan,
       status: period.eventSponsorship?.status || 'COMPLETED',
@@ -124,24 +124,24 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
       boostsAdded: period.boostsAdded,
       localPushesTotal: period.localPushesAdded,
       localPushesUsed: 0,
-      stripePaymentIntentId: period.stripePaymentIntentId,
+      stripePaymentEventId: period.stripePaymentEventId,
       stripeCheckoutSessionId: period.stripeCheckoutSessionId,
       createdAt: period.createdAt,
       updatedAt: period.createdAt,
-      intent: period.intent,
+      event: period.event,
       sponsor: period.sponsor,
     })) as any;
   };
 
 /**
- * Get event sponsorship for a specific intent
+ * Get event sponsorship for a specific event
  */
 export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
   _parent,
   args,
   { user }
 ) => {
-  const { intentId } = args;
+  const { eventId } = args;
   const userId = user?.id;
 
   if (!userId) {
@@ -149,9 +149,9 @@ export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
   }
 
   const sponsorship = await prisma.eventSponsorship.findUnique({
-    where: { intentId },
+    where: { eventId },
     include: {
-      intent: true,
+      event: true,
       sponsor: true,
     },
   });

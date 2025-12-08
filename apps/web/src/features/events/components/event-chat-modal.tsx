@@ -1,0 +1,451 @@
+'use client';
+
+import { Modal } from '@/components/feedback/modal';
+import { X } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import {
+  useGetEventMessages,
+  useSendEventMessage,
+  useMarkEventChatRead,
+  usePublishEventTyping,
+  eventChatKeys,
+} from '@/features/chat/api/event-chat';
+import {
+  useEventMessageAdded,
+  useEventMessageUpdated,
+  useEventMessageDeleted,
+  useEventTyping,
+} from '@/features/chat/api/event-chat-subscriptions';
+import {
+  useAddEventReaction,
+  useRemoveEventReaction,
+} from '@/features/chat/api/reactions';
+import { useEventReactionAdded } from '@/features/chat/api/reactions-subscriptions';
+import {
+  useEditEventMessage,
+  useDeleteEventMessage,
+} from '@/features/chat/api/message-actions';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { ChatThread } from '@/features/chat/components/chat-thread';
+import { Message as ChatMessage } from '@/features/chat/types';
+import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
+import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
+
+type EventChatModalProps = {
+  open: boolean;
+  onClose: () => void;
+  eventId: string;
+  eventTitle: string;
+  membersCount?: number;
+};
+
+export function EventChatModal({
+  open,
+  onClose,
+  eventId,
+  eventTitle,
+  membersCount = 0,
+}: EventChatModalProps) {
+  const queryClient = useQueryClient();
+  const { data: authData } = useMeQuery();
+  const currentUserId = authData?.me?.id;
+
+  // Edit/Delete state
+  const [editingMessage, setEditingMessage] = useState<{
+    id: string;
+    content: string;
+  } | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
+    null
+  );
+
+  // Typing state with auto-clear timeouts
+  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const typingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map()
+  );
+
+  // Fetch messages (infinite query)
+  const {
+    data: messagesData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+  } = useGetEventMessages(eventId, {
+    enabled: open,
+  });
+
+  // Mutations
+  const sendMessage = useSendEventMessage();
+  const markRead = useMarkEventChatRead();
+  const publishTyping = usePublishEventTyping();
+  const addReaction = useAddEventReaction();
+  const removeReaction = useRemoveEventReaction();
+  const editMessage = useEditEventMessage();
+  const deleteMessage = useDeleteEventMessage();
+
+  // Subscriptions
+  useEventMessageAdded({
+    eventId,
+    enabled: open,
+    onMessage: (message) => {
+      // Invalidate queries to fetch new messages
+      queryClient.invalidateQueries({
+        queryKey: eventChatKeys.messages(eventId),
+      });
+
+      // Auto-mark as read
+      if (message.authorId !== currentUserId) {
+        markRead.mutate({ eventId });
+      }
+    },
+  });
+
+  useEventMessageUpdated({
+    eventId,
+    enabled: open,
+    onMessageUpdated: (message) => {
+      // Update cache directly (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(eventId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              eventMessages: {
+                ...page.eventMessages,
+                edges: page.eventMessages?.edges?.map((edge: any) =>
+                  edge.node.id === message.id
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          content: message.content,
+                          editedAt: message.editedAt,
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+    },
+  });
+
+  useEventMessageDeleted({
+    eventId,
+    enabled: open,
+    onMessageDeleted: (event) => {
+      // Update cache directly (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(eventId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              eventMessages: {
+                ...page.eventMessages,
+                edges: page.eventMessages?.edges?.map((edge: any) =>
+                  edge.node.id === event.messageId
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          deletedAt: event.deletedAt,
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+    },
+  });
+
+  // Typing indicator subscription with auto-clear
+  useEventTyping({
+    eventId,
+    enabled: open,
+    onTyping: ({ userId, isTyping }) => {
+      // Don't show typing for current user
+      if (userId === currentUserId) return;
+
+      // Clear existing timeout
+      const existingTimeout = typingTimeouts.current.get(`event-${userId}`);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+        typingTimeouts.current.delete(`event-${userId}`);
+      }
+
+      setTypingUsers((prev) => {
+        const next = new Set(prev);
+        if (isTyping) {
+          next.add(userId);
+          // Auto-clear after 5 seconds
+          const timeout = setTimeout(() => {
+            setTypingUsers((p) => {
+              const n = new Set(p);
+              n.delete(userId);
+              return n;
+            });
+            typingTimeouts.current.delete(`event-${userId}`);
+          }, 5000);
+          typingTimeouts.current.set(`event-${userId}`, timeout);
+        } else {
+          next.delete(userId);
+        }
+        return next;
+      });
+    },
+  });
+
+  // Reaction subscription
+  useEventReactionAdded({
+    eventId,
+    enabled: open,
+  });
+
+  // Map messages to ChatThread format
+  const messages: ChatMessage[] = useMemo(() => {
+    if (!messagesData?.pages || !currentUserId) return [];
+
+    const pages = messagesData.pages;
+    // Extract messages from edges structure: { edges: [{ node, cursor }], pageInfo }
+    const allMessages = pages.flatMap(
+      (page: any) =>
+        page.eventMessages?.edges?.map((edge: any) => edge.node) || []
+    );
+
+    return allMessages.map((msg: any) => ({
+      id: msg.id,
+      text: msg.content,
+      at: new Date(msg.createdAt).getTime(),
+      side: (msg.authorId === currentUserId ? 'right' : 'left') as
+        | 'left'
+        | 'right',
+      author: {
+        id: msg.author.id,
+        name: msg.author.name || 'Unknown',
+        avatar: msg.author.avatarKey || undefined,
+        avatarBlurhash: msg.author.avatarBlurhash || undefined,
+      },
+      block: !!msg.deletedAt,
+      reactions: msg.reactions || [],
+      editedAt: msg.editedAt,
+      deletedAt: msg.deletedAt,
+      replyTo: msg.replyTo
+        ? {
+            id: msg.replyTo.id,
+            author: {
+              id: msg.replyTo.author.id,
+              name: msg.replyTo.author.name || 'Unknown',
+            },
+            content: msg.replyTo.content,
+          }
+        : null,
+    }));
+  }, [messagesData, currentUserId]);
+
+  // Handlers
+  const handleSend = (text: string, replyToId?: string) => {
+    sendMessage.mutate(
+      {
+        input: {
+          eventId,
+          content: text,
+          replyToId: replyToId || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: eventChatKeys.messages(eventId),
+          });
+        },
+      }
+    );
+  };
+
+  const handleEditMessage = (messageId: string, content: string) => {
+    setEditingMessage({ id: messageId, content });
+  };
+
+  const handleSaveEdit = async (newContent: string) => {
+    if (!editingMessage) return;
+
+    try {
+      await editMessage.mutateAsync({
+        id: editingMessage.id,
+        input: { content: newContent },
+      });
+
+      // Optimistic update (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(eventId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              eventMessages: {
+                ...page.eventMessages,
+                edges: page.eventMessages?.edges?.map((edge: any) =>
+                  edge.node.id === editingMessage.id
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          content: newContent,
+                          editedAt: new Date().toISOString(),
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+
+      setEditingMessage(null);
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+    }
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    setDeletingMessageId(messageId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingMessageId) return;
+
+    try {
+      await deleteMessage.mutateAsync({
+        id: deletingMessageId,
+        soft: true,
+        eventId,
+      });
+
+      // Optimistic update (edges structure)
+      queryClient.setQueryData(
+        eventChatKeys.messages(eventId),
+        (oldData: any) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              eventMessages: {
+                ...page.eventMessages,
+                edges: page.eventMessages?.edges?.map((edge: any) =>
+                  edge.node.id === deletingMessageId
+                    ? {
+                        ...edge,
+                        node: {
+                          ...edge.node,
+                          deletedAt: new Date().toISOString(),
+                        },
+                      }
+                    : edge
+                ),
+              },
+            })),
+          };
+        }
+      );
+
+      setDeletingMessageId(null);
+    } catch (error) {
+      console.error('Failed to delete message:', error);
+    }
+  };
+
+  // Get typing user names (simplified - would need to fetch user data)
+  const typingUserNames =
+    typingUsers.size > 0 ? [`${typingUsers.size} osób`] : null;
+
+  const header = (
+    <div className="flex items-center justify-between">
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Czat wydarzenia
+        </h2>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">{eventTitle}</p>
+      </div>
+      <button
+        onClick={onClose}
+        className="p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+      >
+        <X className="w-5 h-5" />
+      </button>
+    </div>
+  );
+
+  const content = (
+    <div className="h-[calc(100vh-200px)] min-h-[500px]">
+      <ChatThread
+        kind="channel"
+        title={eventTitle}
+        members={membersCount}
+        messages={messages}
+        loading={isLoading}
+        typingUserNames={typingUserNames}
+        onBackMobile={() => {}}
+        onSend={handleSend}
+        onLoadMore={hasNextPage ? fetchNextPage : undefined}
+        onTyping={(isTyping) => {
+          publishTyping.mutate({ eventId, isTyping });
+        }}
+        onAddReaction={(messageId, emoji) => {
+          addReaction.mutate({ messageId, emoji });
+        }}
+        onRemoveReaction={(messageId, emoji) => {
+          removeReaction.mutate({ messageId, emoji });
+        }}
+        onEditMessage={(messageId, content) => {
+          handleEditMessage(messageId, content);
+        }}
+        onDeleteMessage={handleDeleteMessage}
+      />
+
+      {/* Edit Message Modal */}
+      <EditMessageModal
+        isOpen={!!editingMessage}
+        onClose={() => setEditingMessage(null)}
+        onSave={handleSaveEdit}
+        initialContent={editingMessage?.content || ''}
+        isLoading={editMessage.isPending}
+      />
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deletingMessageId}
+        onClose={() => setDeletingMessageId(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={deleteMessage.isPending}
+      />
+    </div>
+  );
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="xl"
+      density="compact"
+      header={header}
+      content={content}
+    />
+  );
+}

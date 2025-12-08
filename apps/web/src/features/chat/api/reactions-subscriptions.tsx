@@ -7,8 +7,8 @@ import { print } from 'graphql';
 import {
   OnDmReactionAddedDocument,
   type OnDmReactionAddedSubscription,
-  OnIntentReactionAddedDocument,
-  type OnIntentReactionAddedSubscription,
+  OnEventReactionAddedDocument,
+  type OnEventReactionAddedSubscription,
 } from '@/lib/api/__generated__/react-query-update';
 import { getWsClient } from '@/lib/api/ws-client';
 
@@ -132,14 +132,14 @@ export function useDmReactionAdded(params: {
 }
 
 // =============================================================================
-// Intent Reaction Subscription
+// Event Reaction Subscription
 // =============================================================================
 
-export function useIntentReactionAdded(params: {
-  intentId: string;
+export function useEventReactionAdded(params: {
+  eventId: string;
   enabled?: boolean;
 }) {
-  const { intentId, enabled = true } = params;
+  const { eventId, enabled = true } = params;
   const queryClient = useQueryClient();
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,7 +147,7 @@ export function useIntentReactionAdded(params: {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    if (!enabled || !intentId) return;
+    if (!enabled || !eventId) return;
 
     let isActive = true;
     const mySession = ++sessionRef.current;
@@ -170,8 +170,8 @@ export function useIntentReactionAdded(params: {
         if (!isActive || mySession !== sessionRef.current) return;
 
         const payload: SubscribePayload = {
-          query: print(OnIntentReactionAddedDocument),
-          variables: { intentId },
+          query: print(OnEventReactionAddedDocument),
+          variables: { eventId },
         };
 
         if (unsubscribeRef.current) {
@@ -182,34 +182,34 @@ export function useIntentReactionAdded(params: {
         }
 
         unsubscribeRef.current =
-          client.subscribe<OnIntentReactionAddedSubscription>(payload, {
+          client.subscribe<OnEventReactionAddedSubscription>(payload, {
             next: (result) => {
               if (!connected) setConnected(true);
 
               if (result.errors?.length) {
                 console.error(
-                  '❌ Intent reaction subscription GraphQL errors:',
+                  '❌ Event reaction subscription GraphQL errors:',
                   result.errors
                 );
                 return;
               }
 
-              const reaction = result.data?.intentReactionAdded;
+              const reaction = result.data?.eventReactionAdded;
               if (reaction) {
                 // Invalidate messages to refetch with updated reactions
-                // Use correct query key structure: ['eventChat', 'messages', intentId]
+                // Use correct query key structure: ['eventChat', 'messages', eventId]
                 queryClient.invalidateQueries({
-                  queryKey: ['eventChat', 'messages', intentId],
+                  queryKey: ['eventChat', 'messages', eventId],
                 });
 
                 console.log(
-                  `[Intent Reaction] ${reaction.action} ${reaction.emoji} on message ${reaction.messageId} by user ${reaction.userId}`
+                  `[Event Reaction] ${reaction.action} ${reaction.emoji} on message ${reaction.messageId} by user ${reaction.userId}`
                 );
               }
             },
             error: (err) => {
               if (!isActive || mySession !== sessionRef.current) return;
-              console.error('❌ Intent reaction subscription error:', err);
+              console.error('❌ Event reaction subscription error:', err);
               setConnected(false);
               scheduleRetry();
             },
@@ -221,7 +221,7 @@ export function useIntentReactionAdded(params: {
           });
       } catch (err) {
         if (!isActive || mySession !== sessionRef.current) return;
-        console.error('❗ Intent reaction subscription setup failed:', err);
+        console.error('❗ Event reaction subscription setup failed:', err);
         setConnected(false);
         scheduleRetry();
       }
@@ -245,7 +245,7 @@ export function useIntentReactionAdded(params: {
         unsubscribeRef.current = null;
       }
     };
-  }, [intentId, enabled, queryClient, connected]);
+  }, [eventId, enabled, queryClient, connected]);
 
   return { connected };
 }

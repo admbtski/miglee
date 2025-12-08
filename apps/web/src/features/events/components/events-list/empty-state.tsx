@@ -49,7 +49,7 @@ export const EmptyState = memo(function EmptyState({
         )}
 
         <Link
-          href={localePath('/intent/new')}
+          href={localePath('/event/new')}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-medium hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-lg"
         >
           <Plus className="w-4 h-4" />

@@ -11,12 +11,12 @@ mutation RemoveDmReaction($messageId: ID!, $emoji: String!) {
   removeDmReaction(messageId: $messageId, emoji: $emoji)
 }
 
-mutation AddIntentReaction($messageId: ID!, $emoji: String!) {
-  addIntentReaction(messageId: $messageId, emoji: $emoji)
+mutation AddEventReaction($messageId: ID!, $emoji: String!) {
+  addEventReaction(messageId: $messageId, emoji: $emoji)
 }
 
-mutation RemoveIntentReaction($messageId: ID!, $emoji: String!) {
-  removeIntentReaction(messageId: $messageId, emoji: $emoji)
+mutation RemoveEventReaction($messageId: ID!, $emoji: String!) {
+  removeEventReaction(messageId: $messageId, emoji: $emoji)
 }
 
 # Subscriptions
@@ -29,8 +29,8 @@ subscription OnDmReactionAdded($threadId: ID!) {
   }
 }
 
-subscription OnIntentReactionAdded($intentId: ID!) {
-  intentReactionAdded(intentId: $intentId) {
+subscription OnEventReactionAdded($eventId: ID!) {
+  eventReactionAdded(eventId: $eventId) {
     messageId
     userId
     emoji

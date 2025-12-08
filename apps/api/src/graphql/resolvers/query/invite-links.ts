@@ -1,5 +1,5 @@
 /**
- * Intent Invite Links Query Resolvers
+ * Event Invite Links Query Resolvers
  */
 
 import type { Prisma } from '@prisma/client';
@@ -8,26 +8,26 @@ import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import {
-  mapIntentInviteLink,
-  mapIntent,
-  type IntentInviteLinkWithGraph,
-  type IntentWithGraph,
+  mapEventInviteLink,
+  mapEvent,
+  type EventInviteLinkWithGraph,
+  type EventWithGraph,
 } from '../helpers';
 
 const INVITE_LINK_INCLUDE = {
-  intent: true,
+  event: true,
   createdBy: true,
   revokedBy: true,
-} satisfies Prisma.IntentInviteLinkInclude;
+} satisfies Prisma.EventInviteLinkInclude;
 
 /**
- * Query: Get all invite links for an intent (owner/moderator only)
+ * Query: Get all invite links for an event (owner/moderator only)
  */
-export const intentInviteLinksQuery: QueryResolvers['intentInviteLinks'] =
+export const eventInviteLinksQuery: QueryResolvers['eventInviteLinks'] =
   resolverWithMetrics(
     'Query',
-    'intentInviteLinks',
-    async (_p, { intentId, includeRevoked }, { user }) => {
+    'eventInviteLinks',
+    async (_p, { eventId, includeRevoked }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -35,8 +35,8 @@ export const intentInviteLinksQuery: QueryResolvers['intentInviteLinks'] =
       }
 
       // Check if user is owner or moderator
-      const intent = await prisma.intent.findUnique({
-        where: { id: intentId },
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
         select: {
           ownerId: true,
           members: {
@@ -49,40 +49,40 @@ export const intentInviteLinksQuery: QueryResolvers['intentInviteLinks'] =
         },
       });
 
-      if (!intent) {
-        throw new GraphQLError('Intent not found.', {
+      if (!event) {
+        throw new GraphQLError('Event not found.', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      const isOwner = intent.ownerId === user.id;
-      const isModerator = intent.members.some(
+      const isOwner = event.ownerId === user.id;
+      const isModerator = event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
       const isAdmin = user.role === 'ADMIN';
 
       if (!isOwner && !isModerator && !isAdmin) {
         throw new GraphQLError(
-          'Only intent owner, moderators, or admins can view invite links.',
+          'Only event owner, moderators, or admins can view invite links.',
           {
             extensions: { code: 'FORBIDDEN' },
           }
         );
       }
 
-      const where: Prisma.IntentInviteLinkWhereInput = { intentId };
+      const where: Prisma.EventInviteLinkWhereInput = { eventId };
       if (!includeRevoked) {
         where.revokedAt = null;
       }
 
-      const links = await prisma.intentInviteLink.findMany({
+      const links = await prisma.eventInviteLink.findMany({
         where,
         include: INVITE_LINK_INCLUDE,
         orderBy: { createdAt: 'desc' },
       });
 
       return links.map((link) =>
-        mapIntentInviteLink(link as IntentInviteLinkWithGraph)
+        mapEventInviteLink(link as EventInviteLinkWithGraph)
       );
     }
   );
@@ -90,10 +90,10 @@ export const intentInviteLinksQuery: QueryResolvers['intentInviteLinks'] =
 /**
  * Query: Get invite link by id or code
  */
-export const intentInviteLinkQuery: QueryResolvers['intentInviteLink'] =
+export const eventInviteLinkQuery: QueryResolvers['eventInviteLink'] =
   resolverWithMetrics(
     'Query',
-    'intentInviteLink',
+    'eventInviteLink',
     async (_p, { id, code }, { user }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
@@ -107,7 +107,7 @@ export const intentInviteLinkQuery: QueryResolvers['intentInviteLink'] =
         });
       }
 
-      const link = await prisma.intentInviteLink.findUnique({
+      const link = await prisma.eventInviteLink.findUnique({
         where: id ? { id } : { code: code! },
         include: INVITE_LINK_INCLUDE,
       });
@@ -116,7 +116,7 @@ export const intentInviteLinkQuery: QueryResolvers['intentInviteLink'] =
         return null;
       }
 
-      return mapIntentInviteLink(link as IntentInviteLinkWithGraph);
+      return mapEventInviteLink(link as EventInviteLinkWithGraph);
     }
   );
 
@@ -134,11 +134,11 @@ export const validateInviteLinkQuery: QueryResolvers['validateInviteLink'] =
         });
       }
 
-      const link = await prisma.intentInviteLink.findUnique({
+      const link = await prisma.eventInviteLink.findUnique({
         where: { code },
         include: {
           ...INVITE_LINK_INCLUDE,
-          intent: {
+          event: {
             include: {
               categories: true,
               tags: true,
@@ -163,7 +163,7 @@ export const validateInviteLinkQuery: QueryResolvers['validateInviteLink'] =
           valid: false,
           reason: 'Link nie istnieje',
           link: null,
-          intent: null,
+          event: null,
         };
       }
 
@@ -172,8 +172,8 @@ export const validateInviteLinkQuery: QueryResolvers['validateInviteLink'] =
         return {
           valid: false,
           reason: 'Link został odwołany',
-          link: mapIntentInviteLink(link as IntentInviteLinkWithGraph),
-          intent: null,
+          link: mapEventInviteLink(link as EventInviteLinkWithGraph),
+          event: null,
         };
       }
 
@@ -182,8 +182,8 @@ export const validateInviteLinkQuery: QueryResolvers['validateInviteLink'] =
         return {
           valid: false,
           reason: 'Link wygasł',
-          link: mapIntentInviteLink(link as IntentInviteLinkWithGraph),
-          intent: null,
+          link: mapEventInviteLink(link as EventInviteLinkWithGraph),
+          event: null,
         };
       }
 
@@ -192,46 +192,46 @@ export const validateInviteLinkQuery: QueryResolvers['validateInviteLink'] =
         return {
           valid: false,
           reason: 'Link osiągnął limit użyć',
-          link: mapIntentInviteLink(link as IntentInviteLinkWithGraph),
-          intent: null,
+          link: mapEventInviteLink(link as EventInviteLinkWithGraph),
+          event: null,
         };
       }
 
       // Check if user is already a member
-      const existingMember = (link.intent as any).members[0];
+      const existingMember = (link.event as any).members[0];
       if (existingMember) {
         return {
           valid: false,
           reason: `Już jesteś członkiem tego wydarzenia (status: ${existingMember.status})`,
-          link: mapIntentInviteLink(link as IntentInviteLinkWithGraph),
-          intent: mapIntent(link.intent as IntentWithGraph, user.id),
+          link: mapEventInviteLink(link as EventInviteLinkWithGraph),
+          event: mapEvent(link.event as EventWithGraph, user.id),
         };
       }
 
-      // Check if intent is deleted or canceled
-      if ((link.intent as any).deletedAt) {
+      // Check if event is deleted or canceled
+      if ((link.event as any).deletedAt) {
         return {
           valid: false,
           reason: 'Wydarzenie zostało usunięte',
-          link: mapIntentInviteLink(link as IntentInviteLinkWithGraph),
-          intent: mapIntent(link.intent as IntentWithGraph, user.id),
+          link: mapEventInviteLink(link as EventInviteLinkWithGraph),
+          event: mapEvent(link.event as EventWithGraph, user.id),
         };
       }
 
-      if ((link.intent as any).canceledAt) {
+      if ((link.event as any).canceledAt) {
         return {
           valid: false,
           reason: 'Wydarzenie zostało anulowane',
-          link: mapIntentInviteLink(link as IntentInviteLinkWithGraph),
-          intent: mapIntent(link.intent as IntentWithGraph, user.id),
+          link: mapEventInviteLink(link as EventInviteLinkWithGraph),
+          event: mapEvent(link.event as EventWithGraph, user.id),
         };
       }
 
       return {
         valid: true,
         reason: null,
-        link: mapIntentInviteLink(link as IntentInviteLinkWithGraph),
-        intent: mapIntent(link.intent as IntentWithGraph, user.id),
+        link: mapEventInviteLink(link as EventInviteLinkWithGraph),
+        event: mapEvent(link.event as EventWithGraph, user.id),
       };
     }
   );

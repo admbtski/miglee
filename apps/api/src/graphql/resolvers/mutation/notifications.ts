@@ -12,7 +12,7 @@ import { mapNotification } from '../helpers';
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
-  intent: {
+  event: {
     include: {
       categories: true,
       tags: true,
@@ -54,11 +54,11 @@ export const addNotificationMutation: MutationResolvers['addNotification'] =
         );
       }
 
-      // Jeśli wskazujesz INTENT – ustaw także intentId (ułatwia zapytania)
-      const isIntent =
-        (entityType ?? NotificationEntity.OTHER) === NotificationEntity.INTENT;
-      const safeIntentId =
-        isIntent && typeof entityId === 'string' && entityId.length > 0
+      // Jeśli wskazujesz EVENT – ustaw także eventId (ułatwia zapytania)
+      const isEvent =
+        (entityType ?? NotificationEntity.OTHER) === NotificationEntity.EVENT;
+      const safeEventId =
+        isEvent && typeof entityId === 'string' && entityId.length > 0
           ? entityId
           : null;
 
@@ -72,7 +72,7 @@ export const addNotificationMutation: MutationResolvers['addNotification'] =
           entityId: entityId ?? null,
           recipientId,
           actorId: user.id,
-          intentId: safeIntentId, // jeżeli to INTENT — powiąż
+          eventId: safeEventId, // jeżeli to EVENT — powiąż
           // dedupeKey opcjonalny — jeśli chcesz, rozszerz schema/mutation o pole dedupeKey
         },
         include: NOTIFICATION_INCLUDE,

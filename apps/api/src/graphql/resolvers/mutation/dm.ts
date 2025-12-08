@@ -35,7 +35,7 @@ const DM_MESSAGE_INCLUDE = {
 const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
-  intent: {
+  event: {
     include: {
       categories: true,
       tags: true,

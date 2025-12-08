@@ -10,8 +10,8 @@ import {
 
 export interface NotificationData {
   // Common
-  intentId?: string;
-  intentTitle?: string;
+  eventId?: string;
+  eventTitle?: string;
   actorName?: string;
 
   // Messages
@@ -53,7 +53,7 @@ export interface NotificationInput {
   actor?: {
     name?: string | null;
   } | null;
-  intent?: {
+  event?: {
     title?: string | null;
   } | null;
 }
@@ -73,7 +73,7 @@ export function useNotificationContent(notification: NotificationInput) {
       body: storedBody,
       data,
       actor,
-      intent,
+      event,
     } = notification;
 
     // Build data object with all available information
@@ -81,8 +81,8 @@ export function useNotificationContent(notification: NotificationInput) {
       ...(data || {}),
       // Add actor name if available
       actorName: data?.actorName || actor?.name || undefined,
-      // Add intent title if available
-      intentTitle: data?.intentTitle || intent?.title || undefined,
+      // Add event title if available
+      eventTitle: data?.eventTitle || event?.title || undefined,
     };
 
     // Translate role if present
@@ -124,13 +124,13 @@ export function getLocalizedNotificationContent(
     body: storedBody,
     data,
     actor,
-    intent,
+    event,
   } = notification;
 
   const enrichedData: NotificationData = {
     ...(data || {}),
     actorName: data?.actorName || actor?.name || undefined,
-    intentTitle: data?.intentTitle || intent?.title || undefined,
+    eventTitle: data?.eventTitle || event?.title || undefined,
   };
 
   if (enrichedData.newRole) {

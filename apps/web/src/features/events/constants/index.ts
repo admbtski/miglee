@@ -1,5 +1,5 @@
 /**
- * Constants for the intents search page
+ * Constants for the events search page
  */
 
 import type { SortKey } from '../types';

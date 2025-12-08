@@ -126,8 +126,8 @@ export const getTagUsageCountQuery: QueryResolvers['getTagUsageCount'] =
       return 0;
     }
 
-    // Count intents that use this tag (many-to-many relation)
-    const count = await prisma.intent.count({
+    // Count events that use this tag (many-to-many relation)
+    const count = await prisma.event.count({
       where: {
         tags: {
           some: {

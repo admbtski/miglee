@@ -40,7 +40,7 @@ type FilterType = 'all' | 'unread' | 'read';
 
 function getNotificationIcon(entityType?: string) {
   switch (entityType) {
-    case 'INTENT':
+    case 'EVENT':
       return <Calendar className="h-5 w-5 text-sky-600 dark:text-sky-400" />;
     case 'MESSAGE':
       return (

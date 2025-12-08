@@ -1,6 +1,6 @@
 import { Queue, Worker, JobsOptions } from 'bullmq';
 import IORedis from 'ioredis';
-import { runReminderForIntent } from './runReminderForIntent';
+import { runReminderForEvent } from './runReminderForEvent';
 import { logger } from '../logger';
 
 export const connection = new IORedis({
@@ -19,7 +19,7 @@ export const connection = new IORedis({
 });
 
 // Jedna kolejka dla wszystkich przypomnień
-export const remindersQueue = new Queue('intent-reminders', { connection });
+export const remindersQueue = new Queue('event-reminders', { connection });
 
 /** Buckety (w minutach): 24h, 12h, 6h, 3h, 1h, 30m, 15m */
 export const BUCKETS_MIN = [
@@ -43,19 +43,19 @@ export const BUCKETS_MIN = [
 ] as const;
 
 export type ReminderPayload = {
-  intentId: string;
+  eventId: string;
   minutesBefore: number;
 };
 
-function buildJobId(intentId: string, minutesBefore: number) {
-  return `reminder:${minutesBefore}m:${intentId}`;
+function buildJobId(eventId: string, minutesBefore: number) {
+  return `reminder:${minutesBefore}m:${eventId}`;
 }
 
-/** Dodaje wszystkie przypomnienia dla Intentu (pomiń przeszłość/za bliskie) */
-export async function enqueueReminders(intentId: string, startAt: Date) {
+/** Dodaje wszystkie przypomnienia dla Eventu (pomiń przeszłość/za bliskie) */
+export async function enqueueReminders(eventId: string, startAt: Date) {
   const now = Date.now();
   logger.info(
-    { intentId, startAt },
+    { eventId, startAt },
     '[enqueueReminders] Scheduling reminders...'
   );
 
@@ -70,51 +70,48 @@ export async function enqueueReminders(intentId: string, startAt: Date) {
       attempts: 3,
       removeOnComplete: 1000,
       removeOnFail: 5000,
-      jobId: buildJobId(intentId, minutesBefore),
+      jobId: buildJobId(eventId, minutesBefore),
     };
 
-    await remindersQueue.add('send', { intentId, minutesBefore }, opts);
+    await remindersQueue.add('send', { eventId, minutesBefore }, opts);
     added++;
     logger.debug(
-      { intentId, minutesBefore, delay },
+      { eventId, minutesBefore, delay },
       '[enqueueReminders] Added job'
     );
   }
 
-  logger.info({ intentId, added }, '[enqueueReminders] Done.');
+  logger.info({ eventId, added }, '[enqueueReminders] Done.');
 }
 
 /** Czyści wszystkie przypomnienia */
-export async function clearReminders(intentId: string) {
-  logger.info({ intentId }, '[clearReminders] Removing existing jobs...');
+export async function clearReminders(eventId: string) {
+  logger.info({ eventId }, '[clearReminders] Removing existing jobs...');
   let removed = 0;
   for (const minutesBefore of BUCKETS_MIN) {
-    const jobId = buildJobId(intentId, minutesBefore);
+    const jobId = buildJobId(eventId, minutesBefore);
     const job = await remindersQueue.getJob(jobId);
     if (job) {
       try {
         await job.remove();
         removed++;
-        logger.debug({ intentId, jobId }, '[clearReminders] Job removed');
+        logger.debug({ eventId, jobId }, '[clearReminders] Job removed');
       } catch (e) {
         logger.warn(
-          { err: e, intentId, jobId },
+          { err: e, eventId, jobId },
           '[clearReminders] Remove failed'
         );
       }
     }
   }
-  logger.info({ intentId, removed }, '[clearReminders] Done.');
+  logger.info({ eventId, removed }, '[clearReminders] Done.');
 }
 
 /** Przebudowuje przypomnienia po zmianie startAt */
-export async function rescheduleReminders(intentId: string, newStartAt: Date) {
-  logger.info(
-    { intentId, newStartAt },
-    '[rescheduleReminders] Rescheduling...'
-  );
-  await clearReminders(intentId);
-  await enqueueReminders(intentId, newStartAt);
+export async function rescheduleReminders(eventId: string, newStartAt: Date) {
+  logger.info({ eventId, newStartAt }, '[rescheduleReminders] Rescheduling...');
+  await clearReminders(eventId);
+  await enqueueReminders(eventId, newStartAt);
 }
 
 /** Worker (uruchamiany osobno) */
@@ -122,22 +119,22 @@ export function bootstrapRemindersWorker() {
   logger.info('🚀 Starting reminders worker...');
 
   const worker = new Worker<ReminderPayload>(
-    'intent-reminders',
+    'event-reminders',
     async (job) => {
-      const { intentId, minutesBefore } = job.data;
+      const { eventId, minutesBefore } = job.data;
       logger.info(
-        { jobId: job.id, intentId, minutesBefore },
+        { jobId: job.id, eventId, minutesBefore },
         '[Worker] Executing reminder job...'
       );
       try {
-        await runReminderForIntent(intentId, minutesBefore);
+        await runReminderForEvent(eventId, minutesBefore);
         logger.info(
-          { intentId, minutesBefore },
+          { eventId, minutesBefore },
           '[Worker] Reminder sent successfully.'
         );
       } catch (err) {
         logger.error(
-          { err, intentId, minutesBefore },
+          { err, eventId, minutesBefore },
           '[Worker] Reminder failed.'
         );
         throw err;

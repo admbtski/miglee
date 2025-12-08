@@ -6,14 +6,14 @@
 -- the enum.
 
 
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_INVITE_ACCEPTED';
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_MEMBER_KICKED';
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_MEMBER_ROLE_CHANGED';
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_REVIEW_RECEIVED';
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_FEEDBACK_RECEIVED';
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_FEEDBACK_REQUEST';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_INVITE_ACCEPTED';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_MEMBER_KICKED';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_MEMBER_ROLE_CHANGED';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_REVIEW_RECEIVED';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_FEEDBACK_RECEIVED';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_FEEDBACK_REQUEST';
 ALTER TYPE "public"."NotificationKind" ADD VALUE 'REVIEW_HIDDEN';
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_COMMENT_ADDED';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_COMMENT_ADDED';
 ALTER TYPE "public"."NotificationKind" ADD VALUE 'COMMENT_REPLY';
 ALTER TYPE "public"."NotificationKind" ADD VALUE 'COMMENT_HIDDEN';
-ALTER TYPE "public"."NotificationKind" ADD VALUE 'INTENT_CHAT_MESSAGE';
+ALTER TYPE "public"."NotificationKind" ADD VALUE 'EVENT_CHAT_MESSAGE';

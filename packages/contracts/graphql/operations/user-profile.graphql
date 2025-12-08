@@ -205,7 +205,7 @@ query GetUserReviews($userId: ID!, $limit: Int, $offset: Int) {
         avatarKey
         avatarBlurhash
       }
-      intent {
+      event {
         id
         title
         startAt

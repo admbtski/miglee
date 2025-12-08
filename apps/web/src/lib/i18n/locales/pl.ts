@@ -148,10 +148,10 @@ export const pl = {
       changeFilter: 'Zmień filtr, aby zobaczyć inne powiadomienia',
     },
     kinds: {
-      INTENT_REMINDER: 'Przypomnienie o wydarzeniu',
-      INTENT_UPDATED: 'Wydarzenie zaktualizowane',
-      INTENT_CANCELED: 'Wydarzenie anulowane',
-      INTENT_CREATED: 'Nowe wydarzenie',
+      EVENT_REMINDER: 'Przypomnienie o wydarzeniu',
+      EVENT_UPDATED: 'Wydarzenie zaktualizowane',
+      EVENT_CANCELED: 'Wydarzenie anulowane',
+      EVENT_CREATED: 'Nowe wydarzenie',
       NEW_MESSAGE: 'Nowa wiadomość',
       NEW_COMMENT: 'Nowy komentarz',
       NEW_REVIEW: 'Nowa recenzja',
@@ -182,8 +182,8 @@ export const pl = {
     showingEvents: 'Wyświetlanie',
   },
 
-  // My Intents
-  myIntents: {
+  // My Events
+  myEvents: {
     title: 'Moje wydarzenia',
     subtitle: 'Zarządzaj wszystkimi swoimi wydarzeniami w jednym miejscu',
     loading: 'Ładowanie...',
@@ -249,7 +249,7 @@ export const pl = {
   // Navigation
   nav: {
     dashboard: 'Panel',
-    intents: 'Wydarzenia',
+    events: 'Wydarzenia',
     account: 'Konto',
     settings: 'Ustawienia',
   },

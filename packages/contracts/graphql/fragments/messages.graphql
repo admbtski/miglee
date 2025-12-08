@@ -110,9 +110,9 @@ fragment DmMuteCore on DmMute {
 # Event Chat Fragments
 # -----------------------------------------------------------------------------
 
-fragment IntentChatMessageCore on IntentChatMessage {
+fragment EventChatMessageCore on EventChatMessage {
   id
-  intentId
+  eventId
   authorId
   content
   replyToId
@@ -130,10 +130,10 @@ fragment IntentChatMessageCore on IntentChatMessage {
   }
 }
 
-fragment IntentChatMessageWithReply on IntentChatMessage {
-  ...IntentChatMessageCore
+fragment EventChatMessageWithReply on EventChatMessage {
+  ...EventChatMessageCore
   replyTo {
-    ...IntentChatMessageCore
+    ...EventChatMessageCore
   }
 }
 
@@ -150,9 +150,9 @@ fragment DmThreadsResultCore on DmThreadsResult {
   }
 }
 
-fragment IntentChatMessagesResultCore on IntentChatMessagesResult {
+fragment EventChatMessagesResultCore on EventChatMessagesResult {
   items {
-    ...IntentChatMessageWithReply
+    ...EventChatMessageWithReply
   }
   pageInfo {
     ...CursorPageInfoCore
