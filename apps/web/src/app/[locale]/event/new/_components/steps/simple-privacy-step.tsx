@@ -2,7 +2,7 @@
 
 import { Eye, EyeOff, Info, Lock, Mail, Users } from 'lucide-react';
 import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
-import { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 import { SegmentedControl } from '@/components/ui/segment-control';
 
 type JoinMode = 'OPEN' | 'INVITE_ONLY' | 'REQUEST';

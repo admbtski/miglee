@@ -4,7 +4,7 @@ import { Info } from 'lucide-react';
 import { useId } from 'react';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { useCategorySelection } from '@/features/events/components/category-selection-provider';
-import { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 import { getUseCategoriesLimitData } from '@/features/events/hooks/use-categories';
 import { CategoryMultiCombo } from '@/components/forms/category-combobox';
 import { CategoryOption } from '@/features/categories';

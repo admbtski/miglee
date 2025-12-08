@@ -1,6 +1,6 @@
-// TODO: Move this file to features/events/utils/mappers.ts
-// These are mapping functions for transforming API data to form values.
-'use client';
+/**
+ * Mapping functions for transforming API data to form values
+ */
 
 import type {
   CreateEventInput,
@@ -11,9 +11,12 @@ import type {
   Mode,
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
-import { CategoryOption } from '@/features/categories';
-import { TagOption } from '@/features/tags/types';
-import { EventFormValues, SimpleEventFormValues } from './types';
+import type { CategoryOption } from '@/features/categories';
+import type { TagOption } from '@/features/tags/types';
+import type {
+  EventFormValues,
+  SimpleEventFormValues,
+} from '../types/event-form';
 
 /** ---- API → Form (full form for editing) ---- */
 export function mapEventToFormValues(

@@ -3,7 +3,7 @@
 import { Crown, Info, User, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { UseFormReturn, useController, useWatch } from 'react-hook-form';
-import { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 import { SegmentedControl } from '@/components/ui/segment-control';
 import { RangeSlider } from '@/features/events/components/range-slider';
 

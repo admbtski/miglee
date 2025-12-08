@@ -2,13 +2,14 @@
  * Events Feature Components
  */
 
+// Search & Browse
 export * from './desktop-search-bar';
 export * from './event-card';
+export * from './events-list/empty-state';
+export * from './events-list/error-state';
 export * from './events-list/events-grid-virtualized';
 export * from './events-list/events-header';
 export * from './events-list/loading-skeleton';
-export * from './events-list/empty-state';
-export * from './events-list/error-state';
 export * from './left-filters-panel';
 export * from './map-popup';
 export * from './mobile-filters-drawer';
@@ -19,6 +20,7 @@ export * from './sort-by-control';
 export * from './toggle-map';
 export * from './top-drawer';
 
+// Event Detail
 export * from './action-button';
 export * from './add-review-modal';
 export * from './capacity-status-card';
@@ -47,7 +49,7 @@ export * from './review-card';
 export * from './review-stats';
 export * from './sticky-join-button';
 
-// My Events Components
+// My Events
 export * from './cancel-event-modals';
 export * from './close-join-modals';
 export * from './delete-event-modals';
@@ -57,9 +59,20 @@ export * from './my-event-card';
 export * from './my-events-states';
 export * from './role-filter';
 
-// Event Creator Components
+// Event Creator
 export * from './category-selection-provider';
 export * from './success-event-modal';
+export * from './tag-selection-provider';
 
-// Utils & Mappers (TODO: move to utils/)
-export * from './mappers';
+// Join Form
+export * from './join-answers-viewer';
+export * from './join-question-editor';
+export * from './join-question-form';
+export * from './join-request-modal';
+
+// UI Components
+export * from './range-slider';
+export * from './slider';
+
+// Review & Feedback
+export * from './review-and-feedback-form';

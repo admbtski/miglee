@@ -32,7 +32,7 @@ import {
   mapSimpleFormToCreateInput,
   SuccessEventModal,
 } from '@/features/events';
-import type { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 // Lib
 import { devLogger, toast } from '@/lib/utils';

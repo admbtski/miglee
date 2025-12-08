@@ -6,7 +6,7 @@ import * as React from 'react';
 import { QuotaBar } from '@/components/ui/quota-bar';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { ActionButton } from '@/features/events/components/action-button';
-import { SponsorshipState } from '@/features/events/components/subscription-panel-types';
+import { SponsorshipState } from '@/features/events/types/sponsorship';
 
 type BoostPageProps = {
   eventId: string;

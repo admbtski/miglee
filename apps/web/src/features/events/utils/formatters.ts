@@ -1,5 +1,6 @@
-// TODO: Move this file to features/events/utils/formatters.ts
-// These are utility functions for date/capacity formatting.
+/**
+ * Date and capacity formatting utilities
+ */
 
 export const MONTHS_PL_SHORT = [
   'sty',
@@ -17,6 +18,7 @@ export const MONTHS_PL_SHORT = [
 ] as const;
 
 export const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
+
 export const isValidDate = (d: Date) =>
   d instanceof Date && !Number.isNaN(d.getTime());
 

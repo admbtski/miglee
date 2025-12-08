@@ -3,7 +3,7 @@
 import { Globe2, Info, Link as LinkIcon, MapPin } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
-import { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 import { SegmentedControl } from '@/components/ui/segment-control';
 import { LocationCombo } from '@/components/forms/location-combobox';
 import { MapPreview } from '@/features/maps/components/map-preview';

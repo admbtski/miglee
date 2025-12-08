@@ -1,10 +1,10 @@
 /**
- * Type definitions for the events search page
+ * Events Feature Types
  */
 
 import type {
-  GetEventsQueryVariables,
   EventStatus,
+  GetEventsQueryVariables,
   JoinMode,
   Level,
   MeetingKind,
@@ -66,6 +66,13 @@ export type SortKey =
  */
 export type EventsQueryVariables = Omit<GetEventsQueryVariables, 'offset'>;
 
+// Event types
 export * from './event';
 export * from './event-details';
 export * from './my-events';
+
+// Form types
+export * from './event-form';
+
+// Sponsorship types
+export * from './sponsorship';

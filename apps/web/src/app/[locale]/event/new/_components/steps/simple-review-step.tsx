@@ -14,7 +14,7 @@ import {
   MapPin,
   Users,
 } from 'lucide-react';
-import { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 import { useCategorySelection } from '@/features/events/components/category-selection-provider';
 
 interface SimpleReviewStepProps {

@@ -3,7 +3,7 @@
 import { Clock, Info } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
-import { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 /**
  * SimpleScheduleStep - Simplified schedule step with presets

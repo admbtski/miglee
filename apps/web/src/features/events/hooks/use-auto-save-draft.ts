@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { SimpleEventFormValues } from '../components/types';
+import type { SimpleEventFormValues } from '../types/event-form';
 import { CategoryOption } from '@/features/categories';
 import { TagOption } from '@/features/tags';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { LocalPushPage } from '@/features/events/components/local-push-page';
-import { useSubscriptionData } from '@/features/events/components/use-subscription-data';
+import { useSubscriptionData } from '@/features/events/hooks/use-subscription-data';
 import { useEventQuery } from '@/features/events/api/events';
 import {
   PlanUpgradeBanner,

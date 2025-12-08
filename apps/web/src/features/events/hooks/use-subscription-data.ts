@@ -1,16 +1,18 @@
-// TODO: Move this file to features/events/hooks/use-subscription-data.ts
-// This is a hook, not a component. Should be in hooks/ directory.
+/**
+ * Hook for event subscription/sponsorship data
+ */
+
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  useEventSponsorship,
-  useBoost,
-  useLocalPush,
   billingKeys,
+  useBoost,
+  useEventSponsorship,
+  useLocalPush,
 } from '@/features/billing/api/billing';
-import { SponsorshipState } from './subscription-panel-types';
+import type { SponsorshipState } from '../types/sponsorship';
 
 export function useSubscriptionData(eventId: string) {
   const queryClient = useQueryClient();

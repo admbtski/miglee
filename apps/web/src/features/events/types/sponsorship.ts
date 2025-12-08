@@ -1,3 +1,7 @@
+/**
+ * Sponsorship types for event management
+ */
+
 export type SponsorPlan = 'Free' | 'Plus' | 'Pro';
 
 export type SponsorshipState = {

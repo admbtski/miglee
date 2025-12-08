@@ -3,11 +3,11 @@
 import { Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCategorySelection } from '@/features/events/components/category-selection-provider';
-import { SimpleEventFormValues } from '@/features/events/components/types';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 import {
   defaultSimpleEventValues,
   useSimpleEventForm,
-} from '@/features/events/components/use-event-form';
+} from '@/features/events/hooks/use-event-form';
 import { CategoryOption } from '@/features/categories';
 import { useAutoSaveDraft } from '@/features/events/hooks/use-auto-save-draft';
 import { toast } from '@/lib/utils';

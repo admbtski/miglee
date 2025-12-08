@@ -1,11 +1,12 @@
-// TODO: Move this file to features/events/hooks/use-event-form.tsx
-// This is a hook, not a component. Should be in hooks/ directory.
+/**
+ * Event form hooks and schemas
+ */
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
-import type { EventFormValues } from './types';
 
 /** --- Constants --- */
 const NOW_BUFFER_MS = 5 * 60 * 1000; // 5 minutes buffer
@@ -228,6 +229,9 @@ export const EventSchema = SimpleEventSchema.and(
 
 /** Simplified form values type (for new creator) */
 export type SimpleEventFormValues = z.infer<typeof SimpleEventSchema>;
+
+/** Full form values type (for manage panel) */
+export type EventFormValues = z.infer<typeof EventSchema>;
 
 /** Default values for simplified creator */
 export const defaultSimpleEventValues: SimpleEventFormValues = {

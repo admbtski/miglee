@@ -6,7 +6,7 @@ import * as React from 'react';
 import { QuotaBar } from '@/components/ui/quota-bar';
 import { useCooldown } from '@/hooks/use-cooldown';
 import { ActionButton } from './action-button';
-import { SponsorshipState } from './subscription-panel-types';
+import { SponsorshipState } from '../types/sponsorship';
 
 type LocalPushPageProps = {
   eventId: string;

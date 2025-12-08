@@ -9,7 +9,7 @@ import {
 } from 'framer-motion';
 import { Check, ExternalLink, Sparkles } from 'lucide-react';
 import { Modal } from '@/components/feedback/modal';
-import { eventCreatedEditedConfetti } from './utils';
+import { eventCreatedEditedConfetti } from '../utils/confetti';
 
 type Props = {
   open: boolean;

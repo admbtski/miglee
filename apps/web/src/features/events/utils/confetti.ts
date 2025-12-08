@@ -1,5 +1,6 @@
-// TODO: Move this file to features/events/utils/confetti.ts
-// This is a utility function, not a component.
+/**
+ * Confetti effect for event creation/editing success
+ */
 
 export const eventCreatedEditedConfetti = async (opts?: {
   intensity?: 'low' | 'normal' | 'high';
