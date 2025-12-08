@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { Download, ExternalLink, FileText } from 'lucide-react';
+import { useState } from 'react';
 
 // i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
     locale as 'en' | 'pl' | 'de'
   );
 
-  // PDF URLs - replace with your actual PDF URLs
+  // PDF URLs for static documents
   const pdfUrls = {
     en: '/docs/terms-of-service-en.pdf',
     pl: '/docs/terms-of-service-pl.pdf',
@@ -45,6 +45,7 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 {t.termsOfService.title}
               </h2>
+              {/* TODO: Add i18n for date format - use date-fns with locale */}
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 {t.termsOfService.lastUpdated} November 29, 2024
               </p>
@@ -78,7 +79,7 @@ export default function TermsOfServicePage() {
           </div>
         </div>
 
-        {/* PDF Actions */}
+        {/* PDF Actions - external static files, keep as <a> */}
         <div className="p-6 space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             <a
@@ -108,7 +109,7 @@ export default function TermsOfServicePage() {
                 <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                   {t.termsOfService.title}
                 </h4>
-                {/* TODO: Add i18n key for this description */}
+                {/* TODO: Add i18n key for t.termsOfService.infoDescription */}
                 <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
                   Please read our terms of service carefully. By using our
                   platform, you agree to these terms and conditions.

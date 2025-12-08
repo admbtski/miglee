@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { Download, ExternalLink, Shield } from 'lucide-react';
+import { useState } from 'react';
 
 // i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
     locale as 'en' | 'pl' | 'de'
   );
 
-  // PDF URLs - replace with your actual PDF URLs
+  // PDF URLs for static documents
   const pdfUrls = {
     en: '/docs/privacy-policy-en.pdf',
     pl: '/docs/privacy-policy-pl.pdf',
@@ -45,6 +45,7 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                 {t.privacyPolicy.title}
               </h2>
+              {/* TODO: Add i18n for date format - use date-fns with locale */}
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 {t.privacyPolicy.lastUpdated} November 29, 2024
               </p>
@@ -78,7 +79,7 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
 
-        {/* PDF Actions */}
+        {/* PDF Actions - external static files, keep as <a> */}
         <div className="p-6 space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             <a
@@ -108,7 +109,7 @@ export default function PrivacyPolicyPage() {
                 <h4 className="text-sm font-semibold text-green-900 dark:text-green-100">
                   {t.privacyPolicy.title}
                 </h4>
-                {/* TODO: Add i18n key for this description */}
+                {/* TODO: Add i18n key for t.privacyPolicy.infoDescription */}
                 <p className="mt-1 text-sm text-green-700 dark:text-green-300">
                   We take your privacy seriously. Learn how we collect, use, and
                   protect your personal information.
