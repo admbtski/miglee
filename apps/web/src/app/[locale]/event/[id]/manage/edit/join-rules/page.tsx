@@ -116,29 +116,29 @@ export default function JoinRulesPage() {
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Initialize from eventIdata
+  // Initialize from event data
   useEffect(() => {
-    if (!event return;
+    if (!event) return;
 
-    setJoinOpensMinutesBeforeStart(eventjoinOpensMinutesBeforeStart);
-    setJoinCutoffMinutesBeforeStart(eventjoinCutoffMinutesBeforeStart);
-    setAllowJoinLate(eventallowJoinLate ?? true);
-    setLateJoinCutoffMinutesAfterStart(eventlateJoinCutoffMinutesAfterStart);
+    setJoinOpensMinutesBeforeStart(event.joinOpensMinutesBeforeStart);
+    setJoinCutoffMinutesBeforeStart(event.joinCutoffMinutesBeforeStart);
+    setAllowJoinLate(event.allowJoinLate ?? true);
+    setLateJoinCutoffMinutesAfterStart(event.lateJoinCutoffMinutesAfterStart);
     setIsDirty(false);
 
     // Detect active preset
     const matchingPreset = JOIN_PRESETS.find(
       (p) =>
         p.values.joinOpensMinutesBeforeStart ===
-          eventjoinOpensMinutesBeforeStart &&
+          event.joinOpensMinutesBeforeStart &&
         p.values.joinCutoffMinutesBeforeStart ===
-          eventjoinCutoffMinutesBeforeStart &&
-        p.values.allowJoinLate === eventallowJoinLate &&
+          event.joinCutoffMinutesBeforeStart &&
+        p.values.allowJoinLate === event.allowJoinLate &&
         p.values.lateJoinCutoffMinutesAfterStart ===
-          eventlateJoinCutoffMinutesAfterStart
+          event.lateJoinCutoffMinutesAfterStart
     );
     setActivePreset(matchingPreset?.key || null);
-  }, [event);
+  }, [event]);
 
   // Save handler
   const handleSave = async () => {

@@ -18,59 +18,30 @@ import {
   Eye,
   Calendar,
 } from 'lucide-react';
-import type {
-  EventMemberStatus,
-  EventMemberRole,
-} from '@/lib/api/__generated__/react-query-update';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildEventCoverUrl } from '@/lib/media/url';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { useLocalePath } from '@/hooks/use-locale-path';
+import type {
+  MyEventCardData,
+  MyEventCardActions,
+  MyEventCardEvent,
+  MyEventCardMembership,
+  EventMemberStatus,
+  EventMemberRole,
+} from '../types/my-events';
 
-/* ───────────────────────────── Types ───────────────────────────── */
-
-export interface MyEventCardEvent {
-  id: string;
-  title: string;
-  description?: string | null;
-  startAt?: string | null;
-  endAt?: string | null;
-  address?: string | null;
-  joinedCount?: number | null;
-  max?: number | null;
-  coverKey?: string | null;
-  coverBlurhash?: string | null;
-  canceledAt?: string | null;
-  deletedAt?: string | null;
-}
-
-export interface MyEventCardMembership {
-  id: string;
-  status: EventMemberStatus;
-  role: EventMemberRole;
-  joinedAt?: string | null;
-  rejectReason?: string | null;
-}
-
-export interface MyEventCardData {
-  event: MyEventCardEvent;
-  membership: MyEventCardMembership;
-}
-
-export interface MyEventCardActions {
-  onCancel?: (eventId: string) => void;
-  onLeave?: (eventId: string) => void;
-  onWithdraw?: (eventId: string) => void;
-  onAcceptInvite?: (eventId: string) => void;
-  onDeclineInvite?: (eventId: string) => void;
-}
+/* ───────────────────────────── Props ───────────────────────────── */
 
 export interface MyEventCardProps {
   data: MyEventCardData;
   actions?: MyEventCardActions;
 }
+
+// Re-export types for consumers
+export type { MyEventCardData, MyEventCardActions };
 
 /* ───────────────────────────── Helpers ───────────────────────────── */
 

@@ -1,3 +1,5 @@
+// TODO: Move this file to features/events/hooks/use-subscription-data.ts
+// This is a hook, not a component. Should be in hooks/ directory.
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';

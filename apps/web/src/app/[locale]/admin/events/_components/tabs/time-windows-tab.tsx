@@ -26,12 +26,12 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
               </span>
             </div>
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              {format(new Date(eventstartAt), 'dd MMM yyyy, HH:mm', {
+              {format(new Date(event.startAt), 'dd MMM yyyy, HH:mm', {
                 locale: pl,
               })}
             </span>
           </div>
-          {eventendAt && (
+          {event.endAt && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-zinc-400" />
@@ -40,7 +40,7 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
                 </span>
               </div>
               <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {format(new Date(eventendAt), 'dd MMM yyyy, HH:mm', {
+                {format(new Date(event.endAt), 'dd MMM yyyy, HH:mm', {
                   locale: pl,
                 })}
               </span>
@@ -55,7 +55,7 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
           Okna zapisów
         </h3>
         <div className="space-y-3">
-          {eventjoinOpensMinutesBeforeStart !== null && (
+          {event.joinOpensMinutesBeforeStart !== null && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-zinc-400" />
@@ -64,11 +64,11 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
                 </span>
               </div>
               <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {eventjoinOpensMinutesBeforeStart} min przed startem
+                {event.joinOpensMinutesBeforeStart} min przed startem
               </span>
             </div>
           )}
-          {eventjoinCutoffMinutesBeforeStart !== null && (
+          {event.joinCutoffMinutesBeforeStart !== null && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-zinc-400" />
@@ -77,11 +77,11 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
                 </span>
               </div>
               <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {eventjoinCutoffMinutesBeforeStart} min przed startem
+                {event.joinCutoffMinutesBeforeStart} min przed startem
               </span>
             </div>
           )}
-          {eventallowJoinLate && (
+          {event.allowJoinLate && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Unlock className="h-4 w-4 text-zinc-400" />
@@ -91,8 +91,8 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
               </div>
               <span className="text-sm font-medium text-green-600 dark:text-green-400">
                 Dozwolone
-                {eventlateJoinCutoffMinutesAfterStart &&
-                  ` (do ${eventlateJoinCutoffMinutesAfterStart} min)`}
+                {event.lateJoinCutoffMinutesAfterStart &&
+                  ` (do ${event.lateJoinCutoffMinutesAfterStart} min)`}
               </span>
             </div>
           )}
@@ -100,7 +100,7 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
       </div>
 
       {/* Manual Lock */}
-      {eventjoinManuallyClosed && (
+      {event.joinManuallyClosed && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-950/30">
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
@@ -108,9 +108,9 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
               <h3 className="text-sm font-semibold text-orange-900 dark:text-orange-100">
                 Zapisy ręcznie zamknięte
               </h3>
-              {eventjoinManualCloseReason && (
+              {event.joinManualCloseReason && (
                 <p className="mt-1 text-sm text-orange-800 dark:text-orange-300">
-                  Powód: {eventjoinManualCloseReason}
+                  Powód: {event.joinManualCloseReason}
                 </p>
               )}
             </div>
@@ -129,13 +129,13 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
               Status wydarzenia:
             </span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {eventstatus}
+              {event.status}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-zinc-600 dark:text-zinc-400">W trakcie:</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {eventisOngoing ? 'Tak' : 'Nie'}
+              {event.isOngoing ? 'Tak' : 'Nie'}
             </span>
           </div>
           <div className="flex justify-between">
@@ -143,16 +143,16 @@ export function TimeWindowsTab({ event }: TimeWindowsTabProps) {
               Zapisy otwarte:
             </span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {eventjoinOpen ? 'Tak' : 'Nie'}
+              {event.joinOpen ? 'Tak' : 'Nie'}
             </span>
           </div>
-          {eventlockReason && (
+          {event.lockReason && (
             <div className="flex justify-between">
               <span className="text-zinc-600 dark:text-zinc-400">
                 Powód blokady:
               </span>
               <span className="font-medium text-orange-600 dark:text-orange-400">
-                {eventlockReason}
+                {event.lockReason}
               </span>
             </div>
           )}

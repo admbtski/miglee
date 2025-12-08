@@ -11,7 +11,7 @@ import {
   Visibility,
   EventStatus,
   MeetingKind,
-  EventSortBy,
+  EventsSortBy,
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
 import { format } from 'date-fns';
@@ -36,7 +36,7 @@ export default function EventPage() {
   const [visibility, setVisibility] = useState<Visibility | undefined>();
   const [status, setStatus] = useState<EventStatus | undefined>();
   const [kind, setKind] = useState<MeetingKind | undefined>();
-  const [sortBy, setSortBy] = useState<EventSortBy>(EEventortBy.CreatedAt);
+  const [sortBy, setSortBy] = useState<EventsSortBy>(EventsSortBy.CreatedAt);
   const [sortDir, setSortDir] = useState<SortDir>(SortDir.Desc);
 
   // Selected events for bulk operations
@@ -53,7 +53,7 @@ export default function EventPage() {
   const [actionEventId, setActionEventId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
 
-  const { data, isLoading, refetch } = useEventQuery({
+  const { data, isLoading, refetch } = useEventsQuery({
     keywords: keywords ? [keywords] : undefined,
     visibility,
     status,
@@ -277,13 +277,13 @@ export default function EventPage() {
             </label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as EventSortBy)}
+              onChange={(e) => setSortBy(e.target.value as EventsSortBy)}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             >
-              <option value={EventSortBy.StartAt}>Data rozpoczęcia</option>
-              <option value={EventSortBy.CreatedAt}>Data utworzenia</option>
-              <option value={EventSortBy.UpdatedAt}>Data aktualizacji</option>
-              <option value={EventSortBy.MembersCount}>Liczba członków</option>
+              <option value={EventsSortBy.StartAt}>Data rozpoczęcia</option>
+              <option value={EventsSortBy.CreatedAt}>Data utworzenia</option>
+              <option value={EventsSortBy.UpdatedAt}>Data aktualizacji</option>
+              <option value={EventsSortBy.MembersCount}>Liczba członków</option>
             </select>
           </div>
           <div>

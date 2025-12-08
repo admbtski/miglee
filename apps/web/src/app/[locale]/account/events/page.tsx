@@ -1,163 +1,47 @@
 'use client';
 
-import { Calendar } from 'lucide-react';
 import { useMemo } from 'react';
 
+// Auth
 import { useMeQuery } from '@/features/auth/hooks/auth';
+
+// Events API
 import {
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
   useLeaveEventMutationMembers,
   useMyEventsQuery,
 } from '@/features/events/api/event-members';
-import type {
-  EventLifecycleStatus,
-  EventMemberRole,
-  EventMemberStatus,
-  GetMyEventsQuery_myEvents_EventMember,
-} from '@/lib/api/__generated__/react-query-update';
 
-import { useEventsModals, useMyEventsFilters } from '@/features/events';
-import { CancelEventModals } from '@/features/events/components/cancel-event-modals';
-import { DeleteEventModals } from '@/features/events/components/delete-event-modals';
-import { EventStatusFilter } from '@/features/events/components/event-status-filter';
-import { FiltersDropdown } from '@/features/events/components/filters-dropdown';
+// Events Feature (components, hooks, types, mappers)
 import {
+  // Components
+  CancelEventModals,
+  DeleteEventModals,
+  EventStatusFilter,
+  FiltersDropdown,
   MyEventCard,
-  type MyEventCardData,
-} from '@/features/events/components/my-event-card';
-import { RoleFilter } from '@/features/events/components/role-filter';
+  RoleFilter,
+  MyEventsLoadingState,
+  MyEventsUnauthenticatedState,
+  MyEventsErrorState,
+  MyEventsEmptyState,
+  MyEventsInlineLoading,
+  // Hooks
+  useEventsModals,
+  useMyEventsFilters,
+  // Types & Mappers
+  mapMembershipToCardData,
+  mapRoleFilterToBackend,
+  mapRoleFilterToMembershipStatus,
+  mapStatusFiltersToBackend,
+} from '@/features/events';
+
+// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { AccountPageHeader } from '../_components';
 
-function mapToCardData(
-  membership: GetMyEventsQuery_myEvents_EventMember
-): MyEventCardData {
-  return {
-    event: {
-      id: membership.event.id,
-      title: membership.event.title,
-      description: membership.event.description,
-      startAt: membership.event.startAt,
-      endAt: membership.event.endAt,
-      address: membership.event.address,
-      joinedCount: membership.event.joinedCount,
-      max: membership.event.max,
-      coverKey: membership.event.coverKey,
-      coverBlurhash: membership.event.coverBlurhash,
-      canceledAt: membership.event.canceledAt,
-      deletedAt: membership.event.deletedAt,
-    },
-    membership: {
-      id: membership.id,
-      status: membership.status as EventMemberStatus,
-      role: membership.role as EventMemberRole,
-      joinedAt: membership.joinedAt,
-      rejectReason: membership.rejectReason,
-    },
-  };
-}
-
-function mapRoleFilterToBackend(
-  roleFilter: string
-): EventMemberRole | undefined {
-  switch (roleFilter) {
-    case 'owner':
-      return 'OWNER' as EventMemberRole;
-    case 'moderator':
-      return 'MODERATOR' as EventMemberRole;
-    case 'member':
-      return 'PARTICIPANT' as EventMemberRole;
-    default:
-      return undefined;
-  }
-}
-
-function mapRoleFilterToMembershipStatus(
-  roleFilter: string
-): EventMemberStatus | undefined {
-  switch (roleFilter) {
-    case 'pending':
-      return 'PENDING' as EventMemberStatus;
-    case 'invited':
-      return 'INVITED' as EventMemberStatus;
-    case 'rejected':
-      return 'REJECTED' as EventMemberStatus;
-    case 'banned':
-      return 'BANNED' as EventMemberStatus;
-    case 'waitlist':
-      return 'WAITLIST' as EventMemberStatus;
-    default:
-      return undefined;
-  }
-}
-
-function LoadingState() {
-  const { t } = useI18n();
-  return (
-    <div className="flex min-h-[400px] items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          {t.myEvents.loading}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function UnauthenticatedState() {
-  const { t } = useI18n();
-  return (
-    <div className="flex min-h-[400px] items-center justify-center">
-      <div className="text-center">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-          {t.myEvents.notAuthenticated}
-        </p>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          {t.myEvents.pleaseLogin}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-type ErrorStateProps = {
-  error: Error;
-};
-
-function ErrorState({ error }: ErrorStateProps) {
-  const { t } = useI18n();
-  return (
-    <div className="p-4 text-red-800 border border-red-200 rounded-lg bg-red-50 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-300">
-      <p className="font-medium">{t.myEvents.errorLoading}</p>
-      <p className="mt-1 text-sm">{error.message}</p>
-    </div>
-  );
-}
-
-type EmptyStateProps = {
-  hasActiveFilters: boolean;
-};
-
-function EmptyState({ hasActiveFilters }: EmptyStateProps) {
-  const { t } = useI18n();
-  return (
-    <div className="p-12 text-center border rounded-lg border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-      <Calendar className="w-12 h-12 mx-auto text-zinc-400" />
-      <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-zinc-100">
-        {t.myEvents.noEvents}
-      </h3>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        {hasActiveFilters
-          ? t.myEvents.tryChangeFilters
-          : t.myEvents.noEventsYet}
-      </p>
-    </div>
-  );
-}
-
-export default function MyEventPage() {
+export default function MyEventsPage() {
   const { t } = useI18n();
   const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
   const currentUserId = authData?.me?.id;
@@ -185,11 +69,12 @@ export default function MyEventPage() {
   );
 
   const backendEventStatuses = useMemo(
-    () => statusFilters.map((s) => s.toUpperCase()) as EventLifecycleStatus[],
+    () => mapStatusFiltersToBackend(statusFilters),
     [statusFilters]
   );
 
-  // todo: add pagination
+  // TODO: Add pagination support (infinite scroll or load more button)
+  // Currently limited to 200 events which should be enough for most users
   const { data, isLoading, error } = useMyEventsQuery({
     role: backendRole,
     membershipStatus: backendMembershipStatus,
@@ -204,17 +89,20 @@ export default function MyEventPage() {
 
   const cardData = useMemo(() => {
     const memberships = data?.myEvents ?? [];
-    return memberships.map(mapToCardData);
+    return memberships.map(mapMembershipToCardData);
   }, [data?.myEvents]);
 
+  // ─── Auth Loading State ───
   if (isLoadingAuth) {
-    return <LoadingState />;
+    return <MyEventsLoadingState />;
   }
 
+  // ─── Unauthenticated State ───
   if (!currentUserId) {
-    return <UnauthenticatedState />;
+    return <MyEventsUnauthenticatedState />;
   }
 
+  // ─── Action Handlers ───
   const handleWithdraw = (eventId: string) => {
     cancelRequest.mutate({ eventId });
   };
@@ -224,7 +112,8 @@ export default function MyEventPage() {
   };
 
   const handleDeclineInvite = (eventId: string) => {
-    // todo: implement decline invite mutation
+    // TODO: Implement decline invite mutation (requires backend support)
+    // For now, users can use "withdraw" action after accepting
     console.log('Decline invite:', eventId);
   };
 
@@ -267,18 +156,18 @@ export default function MyEventPage() {
         />
       </div>
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-indigo-500 rounded-full animate-spin border-t-transparent" />
-        </div>
-      )}
+      {/* Loading State */}
+      {isLoading && <MyEventsInlineLoading />}
 
-      {error && <ErrorState error={error} />}
+      {/* Error State */}
+      {error && <MyEventsErrorState error={error} />}
 
+      {/* Empty State */}
       {!isLoading && !error && cardData.length === 0 && (
-        <EmptyState hasActiveFilters={hasActiveFilters} />
+        <MyEventsEmptyState hasActiveFilters={hasActiveFilters} />
       )}
 
+      {/* Events List */}
       {!isLoading && !error && cardData.length > 0 && (
         <div className="space-y-4">
           {cardData.map((item) => (
@@ -302,6 +191,7 @@ export default function MyEventPage() {
         </div>
       )}
 
+      {/* Modals */}
       <DeleteEventModals
         deleteId={deleteId}
         onClose={closeDelete}

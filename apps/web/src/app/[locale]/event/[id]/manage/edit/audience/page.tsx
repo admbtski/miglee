@@ -43,13 +43,13 @@ export default function AudiencePage() {
   const [levels, setLevels] = useState<Level[]>([]);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Initialize from eventIdata
+  // Initialize from event data
   useEffect(() => {
-    if (!event return;
+    if (!event) return;
 
-    setLevels(eventlevels || []);
+    setLevels(event.levels || []);
     setIsDirty(false);
-  }, [event);
+  }, [event]);
 
   // Save handler
   const handleSave = async () => {

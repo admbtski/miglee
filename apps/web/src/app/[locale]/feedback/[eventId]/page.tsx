@@ -32,7 +32,7 @@ export default async function FeedbackPage({
         </div>
       }
     >
-      <FeedbackPageClient eventId={eevent} token={token} />
+      <FeedbackPageClient eventId={eventId} token={token} />
     </Suspense>
   );
 }

@@ -169,7 +169,7 @@ export function PlanUpgradeBanner({
           {/* Right: Actions */}
           <div className="flex flex-shrink-0 flex-col gap-2 lg:items-end">
             <Link
-              href={`/event${eevent}/manage/plans`}
+              href={`/event/${eventId}/manage/plans`}
               className={cn(
                 'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg',
                 isPro

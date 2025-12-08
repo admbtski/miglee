@@ -36,18 +36,18 @@ export default function PrivacyPage() {
   const [showOnMap, setShowOnMap] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Initialize from eventIdata
+  // Initialize from event data
   useEffect(() => {
-    if (!event return;
+    if (!event) return;
 
-    setVisibility(eventvisibility || 'PUBLIC');
-    setJoinMode(eventjoinMode || 'OPEN');
-    setAddressVisibility(eventaddressVisibility || 'PUBLIC');
-    setMembersVisibility(eventmembersVisibility || 'PUBLIC');
+    setVisibility(event.visibility || 'PUBLIC');
+    setJoinMode(event.joinMode || 'OPEN');
+    setAddressVisibility(event.addressVisibility || 'PUBLIC');
+    setMembersVisibility(event.membersVisibility || 'PUBLIC');
     // showOnMap is derived from visibility for now
-    setShowOnMap(eventvisibility === 'PUBLIC');
+    setShowOnMap(event.visibility === 'PUBLIC');
     setIsDirty(false);
-  }, [event);
+  }, [event]);
 
   // Save handler
   const handleSave = async () => {

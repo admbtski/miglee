@@ -32,7 +32,7 @@ type EventTabProps = {
   userId: string;
 };
 
-export function EventTab({ userId }: EEventabProps) {
+export function EventTab({ userId }: EventTabProps) {
   const [membershipsOpen, setMembershipsOpen] = useState(false);
   const [eventsOpen, setEventOpen] = useState(false);
 
@@ -43,13 +43,12 @@ export function EventTab({ userId }: EEventabProps) {
       offset: 0,
     });
 
-  const { data: eventsData, isLoading: eventsLoading } = useAdminUserEventQuery(
-    {
+  const { data: eventsData, isLoading: eventsLoading } =
+    useAdminUserEventsQuery({
       userId,
       limit: 50,
       offset: 0,
-    }
-  );
+    });
 
   const kickMemberMutation = useAdminKickMemberMutation();
   const banMemberMutation = useAdminBanMemberMutation();
@@ -58,7 +57,7 @@ export function EventTab({ userId }: EEventabProps) {
   const rejectMembershipMutation = useRejectMembershipMutation();
 
   const memberships = membershipsData?.adminUserMemberships?.items ?? [];
-  const events = eventsData?.adminUserEvent?.items ?? [];
+  const events = eventsData?.adminUserEvents?.items ?? [];
 
   const handleKickMember = async (eventId: string) => {
     if (

@@ -1,3 +1,5 @@
+// TODO: Move this file to features/events/types/event-form.ts
+// These types are form-related and should be colocated with other event types.
 'use client';
 
 import { z } from 'zod';

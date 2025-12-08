@@ -67,7 +67,7 @@ export default function AdminDashboard() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard
           title="Aktywne wydarzenia"
-          value={kpis.activeEVENTS
+          value={kpis.activeEvents}
           trend={kpis.activeEVENTSend}
           icon={Calendar}
           color="blue"

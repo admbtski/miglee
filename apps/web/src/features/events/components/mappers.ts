@@ -1,3 +1,5 @@
+// TODO: Move this file to features/events/utils/mappers.ts
+// These are mapping functions for transforming API data to form values.
 'use client';
 
 import type {

@@ -19,12 +19,12 @@ const GROUP_MAX = 50;
  * Uses event's sponsorshipPlan to determine PRO access
  */
 export default function CapacityPage() {
-  const { event isLoading, saveSection } = useEdit();
+  const { event, isLoading, saveSection } = useEdit();
   const router = useRouter();
   const params = useParams<{ id: string; locale: string }>();
 
-  // Use events sponsorshipPlan for PRO feature access
-  const sponsorshipPlan = event.sponsorshipPlan || 'FREE';
+  // Use event's sponsorshipPlan for PRO feature access
+  const sponsorshipPlan = event?.sponsorshipPlan || 'FREE';
   const isPro = sponsorshipPlan === 'PRO';
 
   const [mode, setMode] = useState<Mode>('GROUP');
@@ -35,17 +35,17 @@ export default function CapacityPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Initialize from eventIdata
+  // Initialize from event data
   useEffect(() => {
-    if (!event return;
+    if (!event) return;
 
-    setMode(eventmode || 'GROUP');
-    setMin(eventmin ?? 2);
-    setMax(eventmax ?? 10);
-    setNoMin(eventmin === null);
-    setNoMax(eventmax === null);
+    setMode(event.mode || 'GROUP');
+    setMin(event.min ?? 2);
+    setMax(event.max ?? 10);
+    setNoMin(event.min === null);
+    setNoMax(event.max === null);
     setIsDirty(false);
-  }, [event);
+  }, [event]);
 
   // Get effective limits based on mode and plan
   const getEffectiveLimits = useCallback(() => {

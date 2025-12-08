@@ -84,7 +84,7 @@ function Chip({
 export function InviteUsersModal({
   open,
   onClose,
-  event,
+  eventId,
   suggestions = [],
   onInvited,
 }: InviteUsersModalProps) {
@@ -153,7 +153,7 @@ export function InviteUsersModal({
     const results = await Promise.allSettled(
       ids.map(async (userId, idx) => {
         const res = await inviteOne.mutateAsync({
-          input: { event, userId },
+          input: { eventId, userId },
         });
         setProgress(Math.round(((idx + 1) / ids.length) * 100));
         return res;

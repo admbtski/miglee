@@ -68,3 +68,4 @@ export type EventsQueryVariables = Omit<GetEventsQueryVariables, 'offset'>;
 
 export * from './event';
 export * from './event-details';
+export * from './my-events';

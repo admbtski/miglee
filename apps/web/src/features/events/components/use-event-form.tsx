@@ -1,3 +1,5 @@
+// TODO: Move this file to features/events/hooks/use-event-form.tsx
+// This is a hook, not a component. Should be in hooks/ directory.
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';

@@ -8,7 +8,7 @@ import { ProfileTab } from './tabs/profile-tab';
 import { CommunicationTab } from './tabs/communication-tab';
 import { SecurityTab } from './tabs/security-tab';
 import { ContentTab } from './tabs/content-tab';
-import { EventsTab } from './tabs/events-tab';
+import { EventTab } from './tabs/events-tab';
 import { DiagnosticTools } from './tabs/diagnostic-tools';
 import { AuditLogTab } from './tabs/audit-log-tab';
 import { NotificationsTab } from './tabs/notifications-tab';

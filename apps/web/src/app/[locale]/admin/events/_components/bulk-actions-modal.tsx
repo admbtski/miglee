@@ -30,7 +30,7 @@ export function BulkActionsModal({
   const [successOpen, setSuccessOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const bulkUpdateMutation = useAdminBulkUpdateEventMutation();
+  const bulkUpdateMutation = useAdminBulkUpdateEventsMutation();
 
   const handleClose = () => {
     setAction(null);
@@ -58,9 +58,9 @@ export function BulkActionsModal({
 
       setConfirmOpen(false);
 
-      if (result.adminBulkUpdateEvent.failed > 0) {
+      if (result.adminBulkUpdateEvents.failed > 0) {
         setError(
-          `Zaktualizowano ${result.adminBulkUpdateEvent.success} wydarzeń. Błędy: ${result.adminBulkUpdateEEventfailed}`
+          `Zaktualizowano ${result.adminBulkUpdateEvents.success} wydarzeń. Błędy: ${result.adminBulkUpdateEvents.failed}`
         );
       } else {
         setSuccessOpen(true);

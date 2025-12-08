@@ -162,7 +162,7 @@ export function BillingPageWrapper() {
       amount: sponsorship.amount,
       currency: sponsorship.currency,
       eventId: sponsorship.eventId,
-      eventitle: sponsorship.eeventtitle,
+      eventTitle: sponsorship.event?.title,
     })
   );
 
@@ -529,7 +529,7 @@ export function BillingPageWrapper() {
                               </span>
                             </div>
                             <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {item.eventitle || 'Wydarzenie'}
+                              {item.eventTitle || 'Wydarzenie'}
                             </div>
                           </div>
                         </Td>

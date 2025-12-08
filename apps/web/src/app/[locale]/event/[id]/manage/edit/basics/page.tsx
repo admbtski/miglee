@@ -27,14 +27,14 @@ export default function BasicsPage() {
   const [isDirty, setIsDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Initialize from eventIdata
+  // Initialize from event data
   useEffect(() => {
-    if (!event return;
+    if (!event) return;
 
-    setTitle(eventtitle || '');
-    setDescription(eventIdescription || '');
+    setTitle(event.title || '');
+    setDescription(event.description || '');
     setCategories(
-      eventcategories?.map((c) => ({
+      event.categories?.map((c) => ({
         id: c.id,
         slug: c.slug,
         label: c.names?.en || c.slug,
@@ -42,7 +42,7 @@ export default function BasicsPage() {
       })) || []
     );
     setTags(
-      eventtags?.map((t) => ({
+      event.tags?.map((t) => ({
         id: t.id,
         slug: t.slug,
         label: t.label,
@@ -50,7 +50,7 @@ export default function BasicsPage() {
       })) || []
     );
     setIsDirty(false);
-  }, [event);
+  }, [event]);
 
   // Validation
   const validate = useCallback(() => {

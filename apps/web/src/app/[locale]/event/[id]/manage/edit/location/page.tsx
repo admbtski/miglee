@@ -42,20 +42,20 @@ export default function LocationPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLocating, setIsLocating] = useState(false);
 
-  // Initialize from eventIdata
+  // Initialize from event data
   useEffect(() => {
-    if (!event return;
+    if (!event) return;
 
-    setMeetingKind(eventmeetingKind || 'ONSITE');
-    setAddress(eventaddress || '');
-    setLat(eventlat);
-    setLng(eventlng);
-    setPlaceId(eventplaceId);
-    setRadiusKm(eventradiusKm ?? 1);
-    setOnlineUrl(eventonlineUrl || '');
-    setNotes(eventnotes || '');
+    setMeetingKind(event.meetingKind || 'ONSITE');
+    setAddress(event.address || '');
+    setLat(event.lat);
+    setLng(event.lng);
+    setPlaceId(event.placeId);
+    setRadiusKm(event.radiusKm ?? 1);
+    setOnlineUrl(event.onlineUrl || '');
+    setNotes(event.notes || '');
     setIsDirty(false);
-  }, [event);
+  }, [event]);
 
   const showOnsite = meetingKind === 'ONSITE' || meetingKind === 'HYBRID';
   const showOnline = meetingKind === 'ONLINE' || meetingKind === 'HYBRID';

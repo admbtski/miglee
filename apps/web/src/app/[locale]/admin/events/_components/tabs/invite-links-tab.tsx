@@ -16,7 +16,7 @@ export function InviteLinksTab({ eventId }: InviteLinksTabProps) {
         </p>
       </div>
 
-      <InviteLinksPanel eventId={eevent} />
+      <InviteLinksPanel eventId={eventId} />
     </div>
   );
 }

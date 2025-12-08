@@ -37,7 +37,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
 
   const user = profileData?.user;
   const profile = user?.profile;
-  const disciplines = user?.disciplines || [];
+  const disciplines = user?.categoryLevels || [];
   const socialLinks = user?.socialLinks || [];
   const privacy = user?.privacy;
   const stats = user?.stats;

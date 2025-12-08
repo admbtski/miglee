@@ -56,7 +56,7 @@ export function PlansPanelWrapper({ eventId }: PlansPanelWrapperProps) {
   if (view === 'checkout' && selectedPlan) {
     return (
       <CheckoutPanel
-        eventId={eevent}
+        eventId={eventId}
         selectedPlan={selectedPlan}
         actionType={actionType}
         onBack={handleBackToPlans}
@@ -66,7 +66,7 @@ export function PlansPanelWrapper({ eventId }: PlansPanelWrapperProps) {
 
   return (
     <PlansPanel
-      eventId={eevent}
+      eventId={eventId}
       onPurchase={handlePurchase}
       currentPlan={currentPlanId}
     />

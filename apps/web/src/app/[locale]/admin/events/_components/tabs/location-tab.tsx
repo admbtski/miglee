@@ -18,51 +18,51 @@ export function LocationTab({ event }: LocationTabProps) {
         <div className="flex items-center gap-2">
           <Globe className="h-4 w-4 text-zinc-400" />
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            {eventmeetingKind || 'Nie określono'}
+            {event.meetingKind || 'Nie określono'}
           </span>
         </div>
       </div>
 
       {/* Online URL */}
-      {eventonlineUrl && (
+      {event.onlineUrl && (
         <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Link online
           </h3>
           <a
-            href={eventonlineUrl}
+            href={event.onlineUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-blue-600 hover:underline dark:text-blue-400"
           >
-            {eventonlineUrl}
+            {event.onlineUrl}
           </a>
         </div>
       )}
 
       {/* Physical Location */}
-      {(eventaddress || eeventat || eveventg) && (
+      {(event.address || event.lat || event.lng) && (
         <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <h3 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Lokalizacja fizyczna
           </h3>
           <div className="space-y-3">
-            {eventaddress && (
+            {event.address && (
               <div className="flex items-start gap-2">
                 <MapPin className="mt-0.5 h-4 w-4 text-zinc-400" />
                 <span className="text-sm text-zinc-900 dark:text-zinc-100">
-                  {eventaddress}
+                  {event.address}
                 </span>
               </div>
             )}
-            {eventlat && eeventng && (
+            {event.lat && event.lng && (
               <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                Współrzędne: {eventlat.toFixed(6)}, {eeventng.toFixed(6)}
+                Współrzędne: {event.lat.toFixed(6)}, {event.lng.toFixed(6)}
               </div>
             )}
-            {eventradiusKm && (
+            {event.radiusKm && (
               <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                Promień: {eventradiusKm} km
+                Promień: {event.radiusKm} km
               </div>
             )}
           </div>
@@ -77,7 +77,7 @@ export function LocationTab({ event }: LocationTabProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {eventaddressVisibility === 'PUBLIC' ? (
+              {event.addressVisibility === 'PUBLIC' ? (
                 <Eye className="h-4 w-4 text-zinc-400" />
               ) : (
                 <EyeOff className="h-4 w-4 text-zinc-400" />
@@ -87,12 +87,12 @@ export function LocationTab({ event }: LocationTabProps) {
               </span>
             </div>
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              {eventaddressVisibility || 'PUBLIC'}
+              {event.addressVisibility || 'PUBLIC'}
             </span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {eventmembersVisibility === 'PUBLIC' ? (
+              {event.membersVisibility === 'PUBLIC' ? (
                 <Eye className="h-4 w-4 text-zinc-400" />
               ) : (
                 <EyeOff className="h-4 w-4 text-zinc-400" />
@@ -102,7 +102,7 @@ export function LocationTab({ event }: LocationTabProps) {
               </span>
             </div>
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              {eventmembersVisibility || 'PUBLIC'}
+              {event.membersVisibility || 'PUBLIC'}
             </span>
           </div>
         </div>

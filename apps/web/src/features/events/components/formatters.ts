@@ -1,3 +1,6 @@
+// TODO: Move this file to features/events/utils/formatters.ts
+// These are utility functions for date/capacity formatting.
+
 export const MONTHS_PL_SHORT = [
   'sty',
   'lut',

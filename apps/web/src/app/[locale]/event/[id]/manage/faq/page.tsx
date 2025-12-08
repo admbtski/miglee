@@ -31,7 +31,7 @@ export default async function FaqPage({ params }: FaqPageProps) {
           </div>
         }
       >
-        <FaqManagementClient eventId={eevent} />
+        <FaqManagementClient eventId={eventId} />
       </Suspense>
     </ManagementPageLayout>
   );

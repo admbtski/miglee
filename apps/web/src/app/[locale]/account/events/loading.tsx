@@ -1,15 +1,16 @@
+// TODO: Consider using i18n for hardcoded strings
+// TODO: Consider using MyEventsLoadingState from @/features/events for consistency
+
+import { AccountPageHeader } from '../_components';
+
 export default function EventsLoading() {
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          My Events
-        </h1>
-        <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-          Loading your events...
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* Header Skeleton */}
+      <AccountPageHeader
+        title="My Events"
+        description="Loading your events..."
+      />
 
       {/* Loading skeleton */}
       <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
