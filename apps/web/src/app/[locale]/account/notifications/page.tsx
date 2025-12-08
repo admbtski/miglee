@@ -1,7 +1,18 @@
+/**
+ * Notifications Page
+ * Displays user notifications with filtering, marking as read, and deletion
+ */
+
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+
+// External libraries
+import { format } from 'date-fns';
+import { pl, enUS, de } from 'date-fns/locale';
 import { Virtuoso } from 'react-virtuoso';
+
+// Icons
 import {
   AlertCircle,
   Bell,
@@ -16,8 +27,6 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl, enUS, de } from 'date-fns/locale';
 
 // Features
 import { useMeQuery } from '@/features/auth/hooks/auth';
@@ -94,7 +103,12 @@ function getDateLocale(locale: string) {
 
 export default function NotificationsPage() {
   const { t, locale } = useI18n();
-  const { data: authData } = useMeQuery();
+
+  // useMeQuery with staleTime to use cached data from sidebar
+  // This prevents showing "login required" message when data is still loading
+  const { data: authData, isLoading: isLoadingAuth } = useMeQuery({
+    staleTime: 5 * 60 * 1000, // 5 minutes - use cached data
+  });
   const recipientId = authData?.me?.id;
 
   const dateLocale = getDateLocale(locale);
@@ -350,14 +364,25 @@ export default function NotificationsPage() {
     [Footer]
   );
 
-  if (!recipientId) {
+  // Only show login required if auth is done loading and we don't have userId
+  // While auth is loading, show the page structure (header, filters) with loading state for notifications
+  if (!isLoadingAuth && !recipientId) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center">
-          <Bell className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
-          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-            {t.notifications.loginRequired}
-          </p>
+      <div className="space-y-4">
+        {/* Header - always visible */}
+        <AccountPageHeader
+          title={t.notifications.title}
+          description={t.notifications.subtitle}
+        />
+
+        {/* Login required message */}
+        <div className="flex min-h-[400px] items-center justify-center rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950">
+          <div className="text-center">
+            <Bell className="mx-auto h-12 w-12 text-zinc-300 dark:text-zinc-700" />
+            <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+              {t.notifications.loginRequired}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -465,7 +490,8 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notifications List */}
-      {isLoading ? (
+      {/* Show loading when: auth is loading (and we don't have recipientId yet) OR notifications are loading */}
+      {isLoading || (isLoadingAuth && !recipientId) ? (
         <div className="flex min-h-[500px] items-center justify-center rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950">
           <div className="text-center">
             <div className="relative mx-auto h-14 w-14 mb-3">

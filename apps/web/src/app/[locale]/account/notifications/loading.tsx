@@ -1,3 +1,10 @@
+/**
+ * Notifications Loading State
+ * Displayed while notifications page is loading
+ */
+
+// TODO: Add i18n for hardcoded strings: "Notifications", "Loading notifications..."
+
 export default function NotificationsLoading() {
   return (
     <div className="space-y-8">

@@ -1,14 +1,20 @@
 /**
  * Profile Settings Page
  * Allows users to manage their profile, sports, social links, and privacy settings
+ *
+ * Header and tabs are always visible immediately.
+ * Tab content loads with a single loader inside the content area.
  */
 
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+
+// Icons
 import {
   Calendar,
   Link as LinkIcon,
+  Loader2,
   Settings,
   Shield,
   User,
@@ -54,14 +60,14 @@ function getTabIconClasses(isActive: boolean): string {
   return `${base} text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-400`;
 }
 
-// TODO: Add i18n for loading/error state messages
-function LoadingState() {
+// TODO: Add i18n for "Loading..."
+function TabContentLoader() {
   return (
-    <div className="flex min-h-[400px] items-center justify-center">
+    <div className="flex min-h-[300px] items-center justify-center">
       <div className="text-center">
-        <div className="w-8 h-8 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+        <Loader2 className="w-8 h-8 mx-auto animate-spin text-indigo-600 dark:text-indigo-400" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          Loading profile...
+          Loading...
         </p>
       </div>
     </div>
@@ -70,12 +76,14 @@ function LoadingState() {
 
 function UnauthenticatedState() {
   return (
-    <div className="flex min-h-[400px] items-center justify-center">
+    <div className="flex min-h-[300px] items-center justify-center">
       <div className="text-center">
         <Settings className="w-12 h-12 mx-auto text-zinc-400" />
+        {/* TODO: Add i18n for "Not authenticated" */}
         <p className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Not authenticated
         </p>
+        {/* TODO: Add i18n for "Please log in to view your profile" */}
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Please log in to view your profile
         </p>
@@ -84,19 +92,25 @@ function UnauthenticatedState() {
   );
 }
 
-export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState<TabId>('profile');
-
-  const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
+/**
+ * Tab content component that handles data fetching internally
+ * This allows the header and tabs to render immediately while content loads
+ */
+function ProfileTabContent({ activeTab }: { activeTab: TabId }) {
+  // useMeQuery should have staleTime set so it uses cached data from sidebar
+  const { data: authData, isLoading: isLoadingAuth } = useMeQuery({
+    staleTime: 5 * 60 * 1000, // 5 minutes - use cached data
+  });
   const userId = authData?.me?.id;
 
   const { data: profileData, isLoading: isLoadingProfile } =
     useMyFullProfileQuery({ id: userId ?? '' }, { enabled: Boolean(userId) });
 
-  const isLoading = isLoadingAuth || isLoadingProfile;
+  // Show loader only when actually loading
+  const isLoading = isLoadingAuth || (userId && isLoadingProfile);
 
   if (isLoading) {
-    return <LoadingState />;
+    return <TabContentLoader />;
   }
 
   if (!userId) {
@@ -106,17 +120,33 @@ export default function ProfilePage() {
   const user = profileData?.user;
 
   return (
+    <>
+      {activeTab === 'profile' && <ProfileTab user={user} userId={userId} />}
+      {activeTab === 'sports' && <SportsTab user={user} userId={userId} />}
+      {activeTab === 'social' && <SocialLinksTab user={user} userId={userId} />}
+      {activeTab === 'privacy' && <PrivacyTab user={user} userId={userId} />}
+    </>
+  );
+}
+
+export default function ProfilePage() {
+  const [activeTab, setActiveTab] = useState<TabId>('profile');
+
+  return (
     <div className="space-y-8">
-      {/* TODO: Add i18n for page title and description */}
+      {/* Header - always visible immediately */}
       <div className="space-y-2">
+        {/* TODO: Add i18n for "Profile Settings" */}
         <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
           Profile Settings
         </h1>
+        {/* TODO: Add i18n for "Manage your public profile, sports preferences, and privacy settings" */}
         <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
           Manage your public profile, sports preferences, and privacy settings
         </p>
       </div>
 
+      {/* Tabs - always visible immediately */}
       <div className="border-b border-zinc-200 dark:border-zinc-800">
         <nav className="flex -mb-px gap-6" aria-label="Profile settings tabs">
           {TABS.map((tab) => {
@@ -138,13 +168,11 @@ export default function ProfilePage() {
         </nav>
       </div>
 
+      {/* Tab content - loads with single loader inside */}
       <div className="p-8 bg-white dark:bg-[#10121a] border border-zinc-200/80 dark:border-white/5 shadow-sm rounded-[24px]">
-        {activeTab === 'profile' && <ProfileTab user={user} userId={userId} />}
-        {activeTab === 'sports' && <SportsTab user={user} userId={userId} />}
-        {activeTab === 'social' && (
-          <SocialLinksTab user={user} userId={userId} />
-        )}
-        {activeTab === 'privacy' && <PrivacyTab user={user} userId={userId} />}
+        <Suspense fallback={<TabContentLoader />}>
+          <ProfileTabContent activeTab={activeTab} />
+        </Suspense>
       </div>
     </div>
   );

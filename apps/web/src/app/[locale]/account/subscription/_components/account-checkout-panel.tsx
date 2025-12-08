@@ -1,17 +1,21 @@
 'use client';
 
+import { ArrowLeft, Clock, Loader2, Lock } from 'lucide-react';
+import Link from 'next/link';
 import * as React from 'react';
-import { ArrowLeft, Lock, Clock, Loader2 } from 'lucide-react';
-import { PlanType, BillingType } from './subscription-plans-wrapper';
-import {
-  useCreateSubscriptionCheckout,
-  useCreateOneOffCheckout,
-} from '@/features/billing/api/billing';
 import { toast } from 'sonner';
+
 import {
-  USER_PLAN_FEATURES,
+  useCreateOneOffCheckout,
+  useCreateSubscriptionCheckout,
+} from '@/features/billing/api/billing';
+import {
   PLAN_SCOPE_NOTICE,
+  USER_PLAN_FEATURES,
 } from '@/features/billing/constants/billing-constants';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+
+import type { BillingType, PlanType } from './subscription-plans-wrapper';
 
 interface AccountCheckoutPanelProps {
   selectedPlan: {
@@ -27,6 +31,7 @@ export function AccountCheckoutPanel({
   selectedPlan,
   onBack,
 }: AccountCheckoutPanelProps) {
+  const { locale } = useI18n();
   const createSubscriptionCheckout = useCreateSubscriptionCheckout();
   const createOneOffCheckout = useCreateOneOffCheckout();
 
@@ -35,12 +40,14 @@ export function AccountCheckoutPanel({
 
   const handleCreateCheckout = async () => {
     if (selectedPlan.id === 'free') {
+      // TODO: Add i18n key for error message
       toast.error('Nie można zakupić planu FREE');
       onBack();
       return;
     }
 
     if (!agreeToTerms) {
+      // TODO: Add i18n key for error message
       toast.error('Musisz zaakceptować regulamin i politykę prywatności');
       return;
     }
@@ -79,11 +86,13 @@ export function AccountCheckoutPanel({
       }
     } catch (error: any) {
       console.error('Failed to create checkout:', error);
+      // TODO: Add i18n key for error message
       toast.error(error.message || 'Nie udało się utworzyć sesji płatności');
       setIsCreatingCheckout(false);
     }
   };
 
+  // TODO: Add i18n keys for billing type labels
   const getBillingTypeLabel = () => {
     switch (selectedPlan.billingType) {
       case 'monthly-subscription':
@@ -95,10 +104,11 @@ export function AccountCheckoutPanel({
     }
   };
 
+  // TODO: Add i18n for date formatting - use date-fns with locale
   const getActiveUntilDate = () => {
     const days = selectedPlan.billingType === 'annual-onetime' ? 365 : 30;
     return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString(
-      'pl-PL',
+      locale === 'pl' ? 'pl-PL' : locale === 'de' ? 'de-DE' : 'en-US',
       { month: 'long', day: 'numeric', year: 'numeric' }
     );
   };
@@ -112,6 +122,7 @@ export function AccountCheckoutPanel({
         className="inline-flex items-center gap-2 text-sm font-medium transition-colors text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 disabled:opacity-50"
       >
         <ArrowLeft className="w-4 h-4" />
+        {/* TODO: Add i18n key */}
         Powrót do planów
       </button>
 
@@ -119,9 +130,11 @@ export function AccountCheckoutPanel({
       <div className="rounded-[32px] bg-white dark:bg-[#10121a] border-2 border-zinc-200/80 dark:border-white/5 shadow-sm p-8 space-y-8">
         {/* Header */}
         <div>
+          {/* TODO: Add i18n key */}
           <h2 className="text-2xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50 mb-2">
             Dokończ zakup
           </h2>
+          {/* TODO: Add i18n key */}
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Przejrzyj swoje zamówienie przed przejściem do płatności
           </p>
@@ -130,6 +143,7 @@ export function AccountCheckoutPanel({
         {/* Order Summary */}
         <div className="rounded-2xl border border-zinc-200 dark:border-white/5 bg-white dark:bg-[#0a0b12] overflow-hidden">
           <div className="px-6 py-4 bg-zinc-50 dark:bg-[#050608] border-b border-zinc-200 dark:border-white/5">
+            {/* TODO: Add i18n key */}
             <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-500 dark:text-zinc-400 uppercase">
               Podsumowanie zamówienia
             </h3>
@@ -157,6 +171,7 @@ export function AccountCheckoutPanel({
             <div className="pt-4 border-t border-zinc-200 dark:border-white/5">
               <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
                 <Clock className="w-4 h-4" />
+                {/* TODO: Add i18n key */}
                 <span>
                   Twój plan będzie aktywny do:{' '}
                   <span className="font-medium text-zinc-900 dark:text-zinc-50">
@@ -170,6 +185,7 @@ export function AccountCheckoutPanel({
 
         {/* Features reminder */}
         <div className="p-6 border border-indigo-200 rounded-2xl dark:border-indigo-800/30 bg-indigo-50 dark:bg-indigo-900/10">
+          {/* TODO: Add i18n key */}
           <h4 className="mb-3 text-sm font-semibold text-indigo-900 dark:text-indigo-100">
             Co zawiera plan {selectedPlan.name}:
           </h4>
@@ -195,6 +211,7 @@ export function AccountCheckoutPanel({
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
             <Lock className="w-4 h-4" />
+            {/* TODO: Add i18n key */}
             <span className="font-medium">
               Wszystkie transakcje są bezpieczne i szyfrowane
             </span>
@@ -208,21 +225,22 @@ export function AccountCheckoutPanel({
               disabled={isCreatingCheckout}
               className="w-4 h-4 mt-1 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
             />
+            {/* TODO: Add i18n key */}
             <span className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               Wyrażam zgodę na{' '}
-              <a
-                href="#"
+              <Link
+                href={`/${locale}/account/terms`}
                 className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 Regulamin
-              </a>{' '}
+              </Link>{' '}
               i{' '}
-              <a
-                href="#"
+              <Link
+                href={`/${locale}/account/privacy`}
                 className="text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 Politykę Prywatności
-              </a>
+              </Link>
               . Rozumiem, że zostanę przekierowany do Stripe w celu bezpiecznej
               realizacji płatności.
             </span>
@@ -233,6 +251,7 @@ export function AccountCheckoutPanel({
         <div className="pt-6 border-t border-zinc-200 dark:border-white/5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
+              {/* TODO: Add i18n key */}
               <p className="mb-1 text-sm text-zinc-500 dark:text-zinc-400">
                 Suma całkowita
               </p>
@@ -249,10 +268,12 @@ export function AccountCheckoutPanel({
               {isCreatingCheckout ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
+                  {/* TODO: Add i18n key */}
                   Przetwarzanie...
                 </>
               ) : (
                 <>
+                  {/* TODO: Add i18n key */}
                   Przejdź do płatności
                   <ArrowLeft className="w-5 h-5 rotate-180" />
                 </>
@@ -262,6 +283,7 @@ export function AccountCheckoutPanel({
 
           {/* Payment info */}
           <div className="pt-6 mt-6 border-t border-zinc-200 dark:border-white/5">
+            {/* TODO: Add i18n key */}
             <p className="text-xs text-center text-zinc-500 dark:text-zinc-400">
               Obsługiwane przez{' '}
               <span className="font-semibold text-indigo-600 dark:text-indigo-400">

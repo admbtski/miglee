@@ -5,12 +5,16 @@
 
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Camera, Image as ImageIcon, Loader2, Save, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+
+// External libraries
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
+
+// Icons
+import { Camera, Image as ImageIcon, Loader2, Save, X } from 'lucide-react';
 
 // Components
 import { LocationCombo } from '@/components/forms/location-combobox';
@@ -328,6 +332,17 @@ export function ProfileTab({ user }: TabProps) {
       console.error('Cover upload failed:', error);
     }
   };
+
+  // TODO: Add i18n for all hardcoded strings in this component:
+  // - "Profile Images", "Avatar", "Recommended: Square image, at least 512x512px"
+  // - "Uploading...", "Change Avatar", "Cover Image", "Recommended: 1920x1080px (16:9 aspect ratio)"
+  // - "No cover image", "Change Cover", "Display Name", "This is how others will see you (3-40 characters)"
+  // - "Short Bio", "A brief description (max 200 characters)", "Tell us about yourself in a few words..."
+  // - "About Me", "A longer description (max 1000 characters)", "Share more about your interests, experience, and what you're looking for..."
+  // - "Location", "Search for your city (only cities are selectable)", "Type your city name...", "Selected:"
+  // - "Languages", "Select the languages you speak", "Interests", "Add up to 20 interests or hobbies"
+  // - "e.g., Cycling, Photography", "Add", "Cancel", "Saving...", "Save Changes"
+  // - "Crop Avatar", "Crop Cover Image"
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

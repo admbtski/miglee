@@ -1,9 +1,20 @@
+/**
+ * Favourites Page Client Component
+ * Handles fetching and displaying favourite events with infinite scroll
+ */
+
 'use client';
 
-import { AnimatePresence } from 'framer-motion';
-import { Heart, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import { useMemo } from 'react';
+
+// External libraries
+import { AnimatePresence } from 'framer-motion';
+
+// Next.js
+import Link from 'next/link';
+
+// Icons
+import { Heart, Loader2 } from 'lucide-react';
 
 // Features
 import {

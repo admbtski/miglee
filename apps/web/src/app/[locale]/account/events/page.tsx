@@ -1,11 +1,19 @@
+/**
+ * My Events Page
+ * Displays user's events with filtering by role and status
+ *
+ * Header and filters are always visible immediately.
+ * Events list loads with a single loader in the content area.
+ */
+
 'use client';
 
-import { useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
 
-// Auth
+// Features - Auth
 import { useMeQuery } from '@/features/auth/hooks/auth';
 
-// Events API
+// Features - Events API
 import {
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
@@ -13,7 +21,7 @@ import {
   useMyEventsQuery,
 } from '@/features/events/api/event-members';
 
-// Events Feature (components, hooks, types, mappers)
+// Features - Events (components, hooks, types, mappers)
 import {
   // Components
   CancelEventModals,
@@ -22,7 +30,6 @@ import {
   FiltersDropdown,
   MyEventCard,
   RoleFilter,
-  MyEventsLoadingState,
   MyEventsUnauthenticatedState,
   MyEventsErrorState,
   MyEventsEmptyState,
@@ -31,6 +38,8 @@ import {
   useEventsModals,
   useMyEventsFilters,
   // Types & Mappers
+  type RoleFilterValue,
+  type EventStatusFilterValue,
   mapMembershipToCardData,
   mapRoleFilterToBackend,
   mapRoleFilterToMembershipStatus,
@@ -41,22 +50,29 @@ import {
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { AccountPageHeader } from '../_components';
 
-export default function MyEventsPage() {
+/**
+ * Events list content component that handles data fetching
+ * This allows header and filters to render immediately while events load
+ */
+function EventsListContent({
+  roleFilter,
+  statusFilters,
+  hasActiveFilters,
+  setCancelId,
+}: {
+  roleFilter: RoleFilterValue;
+  statusFilters: EventStatusFilterValue[];
+  hasActiveFilters: boolean;
+  setCancelId: (id: string) => void;
+}) {
   const { t } = useI18n();
-  const { data: authData, isLoading: isLoadingAuth } = useMeQuery();
+
+  // useMeQuery with staleTime to use cached data from sidebar
+  // Don't show loading state if we have cached data
+  const { data: authData, isLoading: isLoadingAuth } = useMeQuery({
+    staleTime: 5 * 60 * 1000, // 5 minutes - use cached data
+  });
   const currentUserId = authData?.me?.id;
-
-  const {
-    roleFilter,
-    statusFilters,
-    setRoleFilter,
-    setStatusFilters,
-    clearFilters,
-    hasActiveFilters,
-  } = useMyEventsFilters();
-
-  const { cancelId, deleteId, setCancelId, closeCancel, closeDelete } =
-    useEventsModals();
 
   const backendRole = useMemo(
     () => mapRoleFilterToBackend(roleFilter),
@@ -75,13 +91,18 @@ export default function MyEventsPage() {
 
   // TODO: Add pagination support (infinite scroll or load more button)
   // Currently limited to 200 events which should be enough for most users
-  const { data, isLoading, error } = useMyEventsQuery({
-    role: backendRole,
-    membershipStatus: backendMembershipStatus,
-    eventStatuses: backendEventStatuses,
-    offset: 0,
-    limit: 200,
-  });
+  const { data, isLoading, error } = useMyEventsQuery(
+    {
+      role: backendRole,
+      membershipStatus: backendMembershipStatus,
+      eventStatuses: backendEventStatuses,
+      offset: 0,
+      limit: 200,
+    },
+    {
+      enabled: Boolean(currentUserId),
+    }
+  );
 
   const acceptInvite = useAcceptInviteMutation();
   const cancelRequest = useCancelJoinRequestMutation();
@@ -91,16 +112,6 @@ export default function MyEventsPage() {
     const memberships = data?.myEvents ?? [];
     return memberships.map(mapMembershipToCardData);
   }, [data?.myEvents]);
-
-  // ─── Auth Loading State ───
-  if (isLoadingAuth) {
-    return <MyEventsLoadingState />;
-  }
-
-  // ─── Unauthenticated State ───
-  if (!currentUserId) {
-    return <MyEventsUnauthenticatedState />;
-  }
 
   // ─── Action Handlers ───
   const handleWithdraw = (eventId: string) => {
@@ -121,15 +132,77 @@ export default function MyEventsPage() {
     leaveEvent.mutate({ eventId });
   };
 
+  // Show loader only when events are loading (not when auth is loading if we have cached data)
+  // If auth is still loading and we don't have userId yet, show loader
+  // If we have userId but events are loading, show loader
+  const showLoading =
+    (isLoadingAuth && !currentUserId) || (currentUserId && isLoading);
+
+  if (showLoading) {
+    return <MyEventsInlineLoading />;
+  }
+
+  // Only show unauthenticated state if auth is done and we don't have userId
+  if (!isLoadingAuth && !currentUserId) {
+    return <MyEventsUnauthenticatedState />;
+  }
+
+  if (error) {
+    return <MyEventsErrorState error={error} />;
+  }
+
+  if (cardData.length === 0) {
+    return <MyEventsEmptyState hasActiveFilters={hasActiveFilters} />;
+  }
+
+  return (
+    <div className="space-y-4">
+      {cardData.map((item) => (
+        <MyEventCard
+          key={item.event.id}
+          data={item}
+          actions={{
+            onCancel: setCancelId,
+            onLeave: handleLeave,
+            onWithdraw: handleWithdraw,
+            onAcceptInvite: handleAcceptInvite,
+            onDeclineInvite: handleDeclineInvite,
+          }}
+        />
+      ))}
+
+      <div className="mt-6 text-sm text-center text-zinc-600 dark:text-zinc-400">
+        {t.myEvents.showing} {cardData.length}{' '}
+        {cardData.length !== 1 ? t.myEvents.events : t.myEvents.event}
+      </div>
+    </div>
+  );
+}
+
+export default function MyEventsPage() {
+  const { t } = useI18n();
+
+  const {
+    roleFilter,
+    statusFilters,
+    setRoleFilter,
+    setStatusFilters,
+    clearFilters,
+    hasActiveFilters,
+  } = useMyEventsFilters();
+
+  const { cancelId, deleteId, setCancelId, closeCancel, closeDelete } =
+    useEventsModals();
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - always visible immediately */}
       <AccountPageHeader
         title={t.myEvents.title}
         description={t.myEvents.subtitle}
       />
 
-      {/* Filters - Desktop (hidden on mobile) */}
+      {/* Filters - Desktop (hidden on mobile) - always visible immediately */}
       <div className="hidden lg:flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800">
         <RoleFilter value={roleFilter} onChange={setRoleFilter} />
         <EventStatusFilter values={statusFilters} onChange={setStatusFilters} />
@@ -144,7 +217,7 @@ export default function MyEventsPage() {
         )}
       </div>
 
-      {/* Filters - Mobile Dropdown (visible on mobile/tablet) */}
+      {/* Filters - Mobile Dropdown (visible on mobile/tablet) - always visible immediately */}
       <div className="lg:hidden">
         <FiltersDropdown
           roleFilter={roleFilter}
@@ -156,40 +229,15 @@ export default function MyEventsPage() {
         />
       </div>
 
-      {/* Loading State */}
-      {isLoading && <MyEventsInlineLoading />}
-
-      {/* Error State */}
-      {error && <MyEventsErrorState error={error} />}
-
-      {/* Empty State */}
-      {!isLoading && !error && cardData.length === 0 && (
-        <MyEventsEmptyState hasActiveFilters={hasActiveFilters} />
-      )}
-
-      {/* Events List */}
-      {!isLoading && !error && cardData.length > 0 && (
-        <div className="space-y-4">
-          {cardData.map((item) => (
-            <MyEventCard
-              key={item.event.id}
-              data={item}
-              actions={{
-                onCancel: setCancelId,
-                onLeave: handleLeave,
-                onWithdraw: handleWithdraw,
-                onAcceptInvite: handleAcceptInvite,
-                onDeclineInvite: handleDeclineInvite,
-              }}
-            />
-          ))}
-
-          <div className="mt-6 text-sm text-center text-zinc-600 dark:text-zinc-400">
-            {t.myEvents.showing} {cardData.length}{' '}
-            {cardData.length !== 1 ? t.myEvents.events : t.myEvents.event}
-          </div>
-        </div>
-      )}
+      {/* Events List - loads with single loader */}
+      <Suspense fallback={<MyEventsInlineLoading />}>
+        <EventsListContent
+          roleFilter={roleFilter}
+          statusFilters={statusFilters}
+          hasActiveFilters={hasActiveFilters}
+          setCancelId={setCancelId}
+        />
+      </Suspense>
 
       {/* Modals */}
       <DeleteEventModals

@@ -1,8 +1,17 @@
+/**
+ * Help & Support Page
+ * Contact form for user support requests and FAQ links
+ */
+
 'use client';
 
 import { useState } from 'react';
-import { HelpCircle, Mail, MessageSquare, Send } from 'lucide-react';
+
+// External libraries
 import { toast } from 'sonner';
+
+// Icons
+import { HelpCircle, Mail, MessageSquare, Send } from 'lucide-react';
 
 // Components
 import { SimpleSelect, SelectOption } from '@/components/forms/simple-select';

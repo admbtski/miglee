@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   AlertTriangle,
   Check,
@@ -10,6 +9,7 @@ import {
   Loader2,
   Palette,
 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 // Components
@@ -24,8 +24,8 @@ import {
 } from '@/features/users/api/user-preferences';
 
 // i18n & Layout
-import { commonTimezones } from '@/lib/i18n/timezone-provider';
 import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
+import { commonTimezones } from '@/lib/i18n/timezone-provider';
 import { AccountPageHeader } from '../_components';
 
 // Local components
@@ -182,6 +182,7 @@ export default function SettingsPage() {
             timezones={commonTimezones}
             disabled={isTimezoneLoading}
             loading={isTimezoneLoading}
+            // TODO: Add i18n key for placeholder
             placeholder="Select timezone..."
           />
 

@@ -1,7 +1,11 @@
+/**
+ * UI Components for Plans and Bills page
+ * Reusable Badge, Progress, Table components
+ */
+
 'use client';
 
 import React from 'react';
-// Icons available: CheckCircle2, CreditCard, Lock from 'lucide-react'
 
 export function Badge({
   children,

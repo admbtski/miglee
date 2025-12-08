@@ -1,5 +1,13 @@
+/**
+ * Social Links Tab Component
+ * Allows users to manage their social media links
+ */
+
 'use client';
 
+import { useState } from 'react';
+
+// Icons
 import {
   Facebook,
   Globe,
@@ -10,7 +18,6 @@ import {
   Trash2,
   Twitter,
 } from 'lucide-react';
-import { useState } from 'react';
 
 // Components
 import { NoticeModal } from '@/components/feedback/notice-modal';
@@ -29,6 +36,7 @@ type SocialLinksTabProps = {
   userId: string;
 };
 
+// TODO: Add i18n for provider labels and placeholders
 const PROVIDERS = [
   {
     id: 'instagram',
@@ -137,6 +145,15 @@ export function SocialLinksTab({ user }: SocialLinksTabProps) {
   const availableProviders = PROVIDERS.filter(
     (p) => !socialLinks.some((link) => link.provider === p.id)
   );
+
+  // TODO: Add i18n for all hardcoded strings in this component:
+  // - "Social Links", "Connect your social media accounts (max 10 links)"
+  // - "Add Link", "Add Social Link", "Platform", "Select a platform..."
+  // - "URL", "You can paste the full URL or just the username/path"
+  // - "Cancel", "Adding...", "Add Link", "No social links added yet. Click 'Add Link' to connect your accounts."
+  // - "Verified", "Delete", "You've reached the maximum of 10 social links. Remove a link to add a new one."
+  // - "Delete Social Link", "Are you sure you want to remove your ... link? This action cannot be undone."
+  // - "Deleting...", "Delete", "Cancel"
 
   return (
     <div className="space-y-6">

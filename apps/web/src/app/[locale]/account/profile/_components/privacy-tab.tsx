@@ -1,9 +1,17 @@
+/**
+ * Privacy Tab Component
+ * Allows users to manage their privacy settings
+ */
+
 'use client';
 
+// External libraries
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Loader2, Lock, Save, Users } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+// Icons
+import { Eye, EyeOff, Loader2, Lock, Save, Users } from 'lucide-react';
 
 // Features
 import { useUpdateUserPrivacy } from '@/features/users/api/user-profile';
@@ -28,6 +36,8 @@ type PrivacyTabProps = {
   user: GetMyFullProfileQuery['user'] | null | undefined;
   userId: string;
 };
+
+// TODO: Add i18n for all option labels and descriptions in this file
 
 const DM_POLICY_OPTIONS = [
   {
@@ -70,6 +80,14 @@ const ADDRESS_VISIBILITY_OPTIONS = [
   },
   { value: 'HIDDEN', label: 'Hidden', description: 'Only organizer' },
 ];
+
+// TODO: Add i18n for all hardcoded strings in this component:
+// - "Direct Messages", "Control who can send you direct messages"
+// - "Profile Visibility", "Control who can see your profile information"
+// - "Last Seen", "Location", "Events", "Reviews", "Statistics"
+// - "Default Event Settings", "These settings will be applied to new events you create"
+// - "Address Visibility", "Members List Visibility"
+// - "Cancel", "Saving...", "Save Changes"
 
 export function PrivacyTab({ user }: PrivacyTabProps) {
   const updateMutation = useUpdateUserPrivacy();

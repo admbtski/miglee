@@ -1,7 +1,20 @@
+/**
+ * Cancel Subscription Modal
+ * Confirmation dialog for cancelling user subscription
+ */
+
+// TODO: Add i18n for hardcoded strings:
+// "Cancel Subscription", "Are you sure?", "If you cancel this subscription...",
+// "After that date, you will lose access...", "Keep Subscription", "Yes, Cancel Subscription"
+
 'use client';
 
 import React from 'react';
+
+// Icons
 import { AlertTriangle, X } from 'lucide-react';
+
+// Components
 import { Modal } from '@/components/feedback/modal';
 
 export function CancelSubscriptionModal({

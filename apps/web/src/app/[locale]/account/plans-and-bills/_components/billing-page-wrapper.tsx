@@ -1,3 +1,8 @@
+/**
+ * Billing Page Wrapper
+ * Displays current plan, subscription status, and payment history
+ */
+
 // TODO: Many hardcoded Polish strings in this file need i18n keys
 // Examples: "Aktywny", "Darmowy", "Odnawia się", "Wygasa", "Brak aktywnego planu",
 // "Czas do odnowienia", "dzień/dni pozostało", "Szczegóły planu", "Typ", "Okres",
@@ -5,12 +10,21 @@
 // "Wygaśnięcie", "Ulepsz plan", "Zmień plan", "Anuluj subskrypcję", "Historia płatności",
 // "Przeglądaj swoją historię rozliczeń i faktury", "Data", "Opis", "Kwota", "Status",
 // "Akcje", "Opłacono", "Podgląd", "Faktura", "Brak historii płatności"
+// Also: "Faktura została pobrana", "Otwieranie faktury w nowej karcie...",
+// "Faktura nie jest jeszcze dostępna", "Nie udało się pobrać faktury"
+
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { ArrowRight, Download, Eye, Users } from 'lucide-react';
+
+// External libraries
 import { toast } from 'sonner';
+
+// Next.js
+import Link from 'next/link';
+
+// Icons
+import { ArrowRight, Download, Eye, Users } from 'lucide-react';
 
 // Features
 import {
@@ -31,7 +45,26 @@ import { useI18n } from '@/lib/i18n/provider-ssr';
 import { CancelSubscriptionModal } from './cancel-subscription-modal';
 import { Badge, Progress, SmallButton, Td, Th } from './ui';
 
-export function BillingPageWrapper() {
+// TODO: Add i18n for "Loading billing information..."
+function BillingLoader() {
+  const { t } = useI18n();
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="space-y-4 text-center">
+        <div className="w-12 h-12 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          {t.plansAndBills.loading}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * BillingContent - Content component without header
+ * Used by page.tsx which renders header separately for immediate visibility
+ */
+export function BillingContent() {
   const { t } = useI18n();
   const { data: planData, isLoading: planLoading } = useMyPlan();
   const { data: subData, isLoading: subLoading } = useMySubscription();
@@ -134,16 +167,7 @@ export function BillingPageWrapper() {
   };
 
   if (planLoading || subLoading || periodsLoading || sponsorshipsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="space-y-4 text-center">
-          <div className="w-12 h-12 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {t.plansAndBills.loading}
-          </p>
-        </div>
-      </div>
-    );
+    return <BillingLoader />;
   }
 
   const plan = planData?.myPlan;
@@ -243,19 +267,7 @@ export function BillingPageWrapper() {
         : 'monthly';
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
-            {t.plansAndBills.title}
-          </h1>
-          <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
-            {t.plansAndBills.subtitle}
-          </p>
-        </div>
-      </div>
-
+    <>
       {/* Current Plan Card */}
       <div className="rounded-[32px] border-2 border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] p-6 md:p-8 shadow-sm">
         <div className="flex flex-col justify-between gap-6 mb-6 md:flex-row md:items-start">
@@ -604,6 +616,32 @@ export function BillingPageWrapper() {
         onClose={() => setCancelSubOpen(false)}
         onConfirm={handleCancelSubscription}
       />
+    </>
+  );
+}
+
+/**
+ * @deprecated Use BillingContent instead - this is kept for backwards compatibility
+ */
+export function BillingPageWrapper() {
+  const { t } = useI18n();
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
+            {t.plansAndBills.title}
+          </h1>
+          <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
+            {t.plansAndBills.subtitle}
+          </p>
+        </div>
+      </div>
+
+      {/* Content */}
+      <BillingContent />
     </div>
   );
 }

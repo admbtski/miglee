@@ -31,6 +31,58 @@ type PublicProfileClientProps = {
   username: string;
 };
 
+export const PublicProfileClientLoader = () => (
+  <div className="flex min-h-[60vh] items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+    <div className="text-center">
+      <div className="relative mx-auto h-16 w-16">
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 opacity-20 blur-xl animate-pulse" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-zinc-900 shadow-lg">
+          <Loader2
+            className="h-8 w-8 text-indigo-600 dark:text-indigo-400 animate-spin"
+            strokeWidth={2}
+          />
+        </div>
+      </div>
+      <p className="mt-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        Ładowanie profilu...
+      </p>
+    </div>
+  </div>
+);
+
+export const PublicProfileClientError = ({
+  username,
+}: {
+  username: string;
+}) => (
+  <div className="flex min-h-[60vh] items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+    <div className="text-center max-w-md mx-auto px-4">
+      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+        <User
+          className="h-10 w-10 text-zinc-400 dark:text-zinc-600"
+          strokeWidth={1.5}
+        />
+      </div>
+      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+        Nie znaleziono użytkownika
+      </h1>
+      <p className="mt-3 text-zinc-600 dark:text-zinc-400">
+        Użytkownik{' '}
+        <span className="font-medium text-zinc-900 dark:text-zinc-100">
+          @{username}
+        </span>{' '}
+        nie istnieje lub został usunięty.
+      </p>
+      <a
+        href="/"
+        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white shadow-lg transition-all hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+      >
+        Wróć do strony głównej
+      </a>
+    </div>
+  </div>
+);
+
 export function PublicProfileClient({ username }: PublicProfileClientProps) {
   const [activeTab, setActiveTab] = useState<TabId>('about');
 
@@ -42,55 +94,11 @@ export function PublicProfileClient({ username }: PublicProfileClientProps) {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <div className="text-center">
-          <div className="relative mx-auto h-16 w-16">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 opacity-20 blur-xl animate-pulse" />
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-zinc-900 shadow-lg">
-              <Loader2
-                className="h-8 w-8 text-indigo-600 dark:text-indigo-400 animate-spin"
-                strokeWidth={2}
-              />
-            </div>
-          </div>
-          <p className="mt-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Ładowanie profilu...
-          </p>
-        </div>
-      </div>
-    );
+    return <PublicProfileClientLoader />;
   }
 
   if (error || !data?.user) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-            <User
-              className="h-10 w-10 text-zinc-400 dark:text-zinc-600"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-            Nie znaleziono użytkownika
-          </h1>
-          <p className="mt-3 text-zinc-600 dark:text-zinc-400">
-            Użytkownik{' '}
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              @{username}
-            </span>{' '}
-            nie istnieje lub został usunięty.
-          </p>
-          <a
-            href="/"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white shadow-lg transition-all hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
-          >
-            Wróć do strony głównej
-          </a>
-        </div>
-      </div>
-    );
+    return <PublicProfileClientError username={username} />;
   }
 
   const user = data.user;

@@ -8,59 +8,35 @@
  * so we don't show a loading state for it - only for PublicProfileClient.
  */
 
-import { ExternalLink, Eye, Loader2 } from 'lucide-react';
+import { ExternalLink, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
 // Features
 import { useMeQuery } from '@/features/auth/hooks/auth';
-import { PublicProfileClient } from '@/features/users/components/public-profile-client';
-
-function ProfileLoader() {
-  return (
-    <div className="flex min-h-[400px] items-center justify-center">
-      <div className="text-center">
-        <Loader2 className="w-8 h-8 mx-auto text-indigo-600 dark:text-indigo-400 animate-spin" />
-        {/* TODO: Add i18n key for "Loading profile..." */}
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          Loading profile...
-        </p>
-      </div>
-    </div>
-  );
-}
+import {
+  PublicProfileClient,
+  PublicProfileClientLoader,
+} from '@/features/users/components/public-profile-client';
 
 export default function ProfileViewPage() {
   // Data should be cached from sidebar, so no loading state needed
-  const { data } = useMeQuery();
+  const { data, isLoading } = useMeQuery();
   const username = data?.me?.name;
-
-  // If no username yet (edge case - data not in cache), show minimal state
-  // This shouldn't happen in normal flow since sidebar loads it first
-  if (!username) {
-    return (
-      <div className="space-y-6">
-        {/* Header - always visible */}
-        <ProfileHeader username={null} />
-
-        {/* Profile View Container - show loader */}
-        <div className="overflow-hidden rounded-[32px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#0a0a0b] shadow-sm">
-          <ProfileLoader />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
       {/* Header - always visible */}
-      <ProfileHeader username={username} />
+      <ProfileHeader username={username ?? null} />
 
       {/* Profile View Container - with Suspense for lazy loading */}
       <div className="overflow-hidden rounded-[32px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#0a0a0b] shadow-sm">
-        <Suspense fallback={<ProfileLoader />}>
-          <PublicProfileClient username={username} />
-        </Suspense>
+        {isLoading && <PublicProfileClientLoader />}
+        {username && (
+          <Suspense fallback={null}>
+            <PublicProfileClient username={username} />
+          </Suspense>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,14 @@
+/**
+ * Privacy Policy Page
+ * Displays privacy policy documents in multiple languages
+ */
+
 'use client';
 
-import { Download, ExternalLink, Shield } from 'lucide-react';
 import { useState } from 'react';
+
+// Icons
+import { Download, ExternalLink, Shield } from 'lucide-react';
 
 // i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';

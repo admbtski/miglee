@@ -1,17 +1,19 @@
 'use client';
 
-import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Check, Crown, Info, Sparkles, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { PlanType, BillingType } from './subscription-plans-wrapper';
+
 import {
-  USER_PLAN_PRICES,
-  USER_PLAN_FEATURES,
-  USER_PLAN_DESCRIPTIONS,
   PLAN_SCOPE_NOTICE_EXTENDED,
+  USER_PLAN_DESCRIPTIONS,
+  USER_PLAN_FEATURES,
+  USER_PLAN_PRICES,
 } from '@/features/billing/constants/billing-constants';
 import { useI18n } from '@/lib/i18n/provider-ssr';
+import { cn } from '@/lib/utils';
+
+import type { BillingType, PlanType } from './subscription-plans-wrapper';
 
 interface SubscriptionPlansProps {
   onPlanSelect?: (plan: {

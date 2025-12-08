@@ -1,5 +1,11 @@
+/**
+ * Cookie Settings Page
+ * Allows users to manage cookie preferences and view cookie categories
+ */
+
 'use client';
 
+// Icons
 import {
   BarChart3,
   CheckCircle2,

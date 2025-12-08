@@ -1,3 +1,7 @@
+/**
+ * Type definitions for Plans and Bills page
+ */
+
 export type Conversation = {
   id: string;
   title: string;

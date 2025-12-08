@@ -1,5 +1,11 @@
+/**
+ * Analytics Page
+ * Coming soon - will display user analytics and statistics
+ */
+
 'use client';
 
+// Icons
 import { BarChart3 } from 'lucide-react';
 
 // i18n & Layout

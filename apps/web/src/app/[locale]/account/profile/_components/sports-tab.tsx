@@ -1,7 +1,14 @@
+/**
+ * Sports Tab Component
+ * Allows users to manage their sports and skill levels
+ */
+
 'use client';
 
-import { Edit2, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+
+// Icons
+import { Edit2, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 
 // Components
 import { NoticeModal } from '@/components/feedback/notice-modal';
@@ -27,6 +34,7 @@ type SportsTabProps = {
 
 type Level = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
+// TODO: Add i18n for level labels: "Beginner", "Intermediate", "Advanced"
 const LEVELS: { value: Level; label: string; color: string }[] = [
   {
     value: 'BEGINNER',
@@ -144,6 +152,15 @@ export function SportsTab({ user }: SportsTabProps) {
 
   const getLevelConfig = (level: string) =>
     LEVELS.find((l) => l.value === level) || LEVELS[0];
+
+  // TODO: Add i18n for all hardcoded strings in this component:
+  // - "Sports & Category Levels", "Add the sports you practice and your skill level"
+  // - "Add Category Level", "Edit Category Level", "Add New Category Level"
+  // - "Sport / Discipline", "Search and select a sport or discipline", "Search sport..."
+  // - "Skill Level", "Notes (optional)", "Any additional information..."
+  // - "Cancel", "Saving...", "Save", "No category levels added yet. Click 'Add Category Level' to get started."
+  // - "Edit", "Delete", "Delete Category Level", "Are you sure you want to remove ... ? This action cannot be undone."
+  // - "Deleting...", "Delete", "Cancel"
 
   return (
     <div className="space-y-6">
