@@ -57,6 +57,7 @@ export function AccountMobileSidebar({
   const { data: authData } = useMeQuery();
   const user = authData?.me;
 
+  // todo: memo NAV_ITEMS
   const NAV_ITEMS: NavItem[] = [
     // ─────────────────────────────
     // PERSONAL

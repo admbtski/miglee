@@ -1,3 +1,5 @@
+'use client';
+
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';

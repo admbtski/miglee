@@ -1,3 +1,5 @@
+'use client';
+
 import type { EventDetailsData } from '@/features/events/types/event-details';
 import {
   Share2,

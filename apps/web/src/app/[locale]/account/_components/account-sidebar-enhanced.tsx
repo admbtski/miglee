@@ -53,10 +53,8 @@ export function AccountSidebarEnhanced() {
   const { data: authData } = useMeQuery();
   const user = authData?.me;
 
+  // todo: memo NAV_GROUPS
   const NAV_GROUPS: NavGroup[] = [
-    // ─────────────────────────────────────────
-    // 1. PERSONAL
-    // ─────────────────────────────────────────
     {
       id: 'personal',
       label: t.accountNav.groups.personal,
@@ -77,10 +75,6 @@ export function AccountSidebarEnhanced() {
         },
       ],
     },
-
-    // ─────────────────────────────────────────
-    // 2. ACTIVITY
-    // ─────────────────────────────────────────
     {
       id: 'activity',
       label: t.accountNav.groups.activity,
@@ -101,10 +95,6 @@ export function AccountSidebarEnhanced() {
         },
       ],
     },
-
-    // ─────────────────────────────────────────
-    // 3. COMMUNICATION
-    // ─────────────────────────────────────────
     {
       id: 'communication',
       label: t.accountNav.groups.communication,
@@ -125,10 +115,6 @@ export function AccountSidebarEnhanced() {
         },
       ],
     },
-
-    // ─────────────────────────────────────────
-    // 4. BILLING
-    // ─────────────────────────────────────────
     {
       id: 'billing',
       label: t.accountNav.groups.billing,
@@ -149,10 +135,6 @@ export function AccountSidebarEnhanced() {
         },
       ],
     },
-
-    // ─────────────────────────────────────────
-    // 5. ADVANCED TOOLS
-    // ─────────────────────────────────────────
     {
       id: 'tools',
       label: t.accountNav.groups.tools,
@@ -167,10 +149,6 @@ export function AccountSidebarEnhanced() {
         },
       ],
     },
-
-    // ─────────────────────────────────────────
-    // 6. SETTINGS & SUPPORT
-    // ─────────────────────────────────────────
     {
       id: 'settings-support',
       label: t.accountNav.groups.settingsSupport,

@@ -1,18 +1,9 @@
 'use client';
 
-/**
- * Profile View Page (within Account Management)
- * Shows the public profile view inside the account management interface
- *
- * Note: useMeQuery data should already be in cache from AccountSidebarEnhanced,
- * so we don't show a loading state for it - only for PublicProfileClient.
- */
-
 import { ExternalLink, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-// Features
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
   PublicProfileClient,
@@ -34,7 +25,7 @@ export default function ProfileViewPage() {
       <div className="overflow-hidden rounded-[32px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#0a0a0b] shadow-sm">
         {isLoading && <PublicProfileClientLoader />}
         {username && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<PublicProfileClientLoader />}>
             <PublicProfileClient username={username} />
           </Suspense>
         )}
@@ -69,18 +60,20 @@ function ProfileHeader({ username }: ProfileHeaderProps) {
           </p>
         </div>
       </div>
-      {username && (
-        <Link
-          href={`${locale}/u/${username}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white transition-all bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"
-        >
-          <ExternalLink className="w-4 h-4" strokeWidth={2} />
-          {/* TODO: Add i18n key for "Open in New Tab" */}
-          Open in New Tab
-        </Link>
-      )}
+      <Link
+        href={username ? `${locale}/u/${username}` : ''}
+        style={{
+          opacity: !!username ? 1 : 0.8,
+          pointerEvents: !!username ? 'auto' : 'none',
+        }}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white transition-all bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"
+      >
+        <ExternalLink className="w-4 h-4" strokeWidth={2} />
+        {/* TODO: Add i18n key for "Open in New Tab" */}
+        Open in New Tab
+      </Link>
     </div>
   );
 }

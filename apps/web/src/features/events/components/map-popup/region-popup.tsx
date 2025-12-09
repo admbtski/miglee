@@ -1,3 +1,4 @@
+'use client';
 /**
  * Popup container for displaying multiple events in a region with infinity scroll
  */

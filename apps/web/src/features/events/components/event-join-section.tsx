@@ -1,3 +1,5 @@
+'use client';
+
 import { JoinRequestModal } from '@/features/events/components/join-request-modal';
 import {
   useCancelJoinRequestMutation,

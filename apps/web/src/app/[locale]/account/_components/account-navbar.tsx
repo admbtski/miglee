@@ -5,14 +5,6 @@ import { useState } from 'react';
 import { AccountMobileSidebar } from './account-mobile-sidebar';
 import { NavbarActions } from '@/components/layout/navbar-actions';
 
-/**
- * AccountNavbar - Top bar for content area only (not sidebar)
- *
- * Features:
- * - Right-aligned elements
- * - Search, notifications, favourites, user menu
- * - Mobile menu toggle
- */
 export function AccountNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

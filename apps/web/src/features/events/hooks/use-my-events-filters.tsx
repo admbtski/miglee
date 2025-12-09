@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback } from 'react';
 import type { RoleFilterValue } from '@/features/events/components/role-filter';
 import type { EventStatusFilterValue } from '@/features/events/components/event-status-filter';

@@ -100,7 +100,7 @@ function EventsListContent({
       limit: 200,
     },
     {
-      enabled: Boolean(currentUserId),
+      enabled: !!currentUserId,
     }
   );
 
