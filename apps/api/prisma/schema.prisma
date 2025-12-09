@@ -304,6 +304,9 @@ model User {
   // Favourites
   eventFavourites EventFavourite[]
 
+  // Agenda
+  agendaHostings EventAgendaItemHost[] @relation("AgendaItemHosts")
+
   // Monetization
   subscriptions           UserSubscription[]
   planPeriods             UserPlanPeriod[]
@@ -469,6 +472,9 @@ model Event {
 
   // Appearance customization
   appearance EventAppearance?
+
+  // Agenda
+  agendaItems EventAgendaItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1434,4 +1440,72 @@ model EventAppearance {
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("event_appearances")
+}
+
+// =============================================================================
+/**
+ * Agenda System
+ * Event agenda with time slots and hosts
+ */
+// =============================================================================
+
+enum AgendaHostKind {
+  USER   // Host is a registered user
+  MANUAL // Host is manually entered (external person)
+}
+
+model EventAgendaItem {
+  id       String @id @default(cuid())
+  eventId String
+
+  /// Display order (0-based)
+  order Int @default(0)
+
+  /// Required: slot title (3-120 chars)
+  title String
+
+  /// Optional: slot description (max 1000 chars)
+  description String?
+
+  /// Optional: start time (UTC)
+  startAt DateTime?
+
+  /// Optional: end time (UTC) - must be after startAt if both are set
+  endAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  hosts EventAgendaItemHost[]
+
+  @@index([eventId, order])
+  @@map("event_agenda_items")
+}
+
+model EventAgendaItemHost {
+  id           String         @id @default(cuid())
+  agendaItemId String
+  order        Int            @default(0)
+
+  /// Type of host: USER (system user) or MANUAL (external person)
+  kind AgendaHostKind @default(USER)
+
+  /// For USER kind: reference to User
+  userId String?
+  user   User?   @relation("AgendaItemHosts", fields: [userId], references: [id], onDelete: SetNull)
+
+  /// For MANUAL kind: manually entered name (required, max 120 chars)
+  name String?
+
+  /// For MANUAL kind: optional avatar URL
+  avatarUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agendaItem EventAgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+
+  @@index([agendaItemId, order])
+  @@map("event_agenda_item_hosts")
 }

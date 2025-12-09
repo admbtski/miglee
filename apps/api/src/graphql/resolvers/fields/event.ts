@@ -267,3 +267,60 @@ export const eventAppearanceResolver: EventResolvers['appearance'] =
       updatedAt: appearance.updatedAt,
     };
   });
+
+/**
+ * Field resolver for Event.agendaItems
+ * Returns all agenda items for this event, sorted by startAt (nulls last), then order
+ */
+export const eventAgendaItemsResolver: EventResolvers['agendaItems'] =
+  resolverWithMetrics('Event', 'agendaItems', async (parent) => {
+    // Check if agendaItems is already loaded (e.g., from include in query)
+    const existingItems = (parent as any).agendaItems;
+    if (existingItems !== undefined) {
+      return existingItems;
+    }
+
+    // Fallback: fetch from database
+    const items = await prisma.eventAgendaItem.findMany({
+      where: { eventId: parent.id },
+      include: {
+        hosts: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarKey: true,
+              },
+            },
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: [{ startAt: { sort: 'asc', nulls: 'last' } }, { order: 'asc' }],
+    });
+
+    return items.map((item) => ({
+      id: item.id,
+      eventId: item.eventId,
+      order: item.order,
+      title: item.title,
+      description: item.description,
+      startAt: item.startAt,
+      endAt: item.endAt,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      hosts: item.hosts.map((host) => ({
+        id: host.id,
+        agendaItemId: host.agendaItemId,
+        order: host.order,
+        kind: host.kind,
+        userId: host.userId,
+        user: host.user,
+        name: host.name,
+        avatarUrl: host.avatarUrl,
+        createdAt: host.createdAt,
+        updatedAt: host.updatedAt,
+      })),
+    }));
+  });

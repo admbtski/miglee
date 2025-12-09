@@ -16,6 +16,7 @@ import {
   eventFaqsResolver,
   eventJoinQuestionsResolver,
   eventAppearanceResolver,
+  eventAgendaItemsResolver,
 } from './fields/event';
 import { eventMemberEventResolver } from './fields/event-member';
 import { UserFieldResolvers, UserProfileFieldResolvers } from './fields/user';
@@ -54,6 +55,7 @@ export const resolvers: Pick<
     faqs: eventFaqsResolver,
     joinQuestions: eventJoinQuestionsResolver,
     appearance: eventAppearanceResolver,
+    agendaItems: eventAgendaItemsResolver,
   },
   EventMember: {
     event: eventMemberEventResolver,

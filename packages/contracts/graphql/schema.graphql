@@ -920,6 +920,7 @@ type Event {
   inviteLinks: [EventInviteLink!]!
   faqs: [EventFaq!]!
   joinQuestions: [EventJoinQuestion!]!
+  agendaItems: [EventAgendaItem!]!
 
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -1758,6 +1759,9 @@ type Query {
   myFeedbackAnswers(eventId: ID!): [EventFeedbackAnswer!]!
   canSubmitFeedback(eventId: ID!): Boolean!
 
+  # Agenda
+  eventAgendaItems(eventId: ID!): [EventAgendaItem!]!
+
   # ==============================================================================
   # Billing & Subscriptions
   # ==============================================================================
@@ -2094,6 +2098,9 @@ type Mutation {
 
   # FAQ Management
   updateEventFaqs(input: UpdateEventFaqsInput!): [EventFaq!]!
+
+  # Agenda Management
+  updateEventAgenda(input: UpdateEventAgendaInput!): [EventAgendaItem!]!
 
   # Join Form Management
   updateEventJoinQuestions(
@@ -2646,4 +2653,83 @@ input UpsertUserAvailabilityInput {
 input AddUserSocialLinkInput {
   provider: String!
   url: String!
+}
+
+# ------------------------------------------------------------------------------
+# Agenda System
+# ------------------------------------------------------------------------------
+
+"Host type for agenda slots"
+enum AgendaHostKind {
+  USER
+  MANUAL
+}
+
+"Host for an agenda slot"
+type EventAgendaItemHost {
+  id: ID!
+  agendaItemId: ID!
+  order: Int!
+  kind: AgendaHostKind!
+
+  "For USER kind: the user reference"
+  userId: ID
+  user: User
+
+  "For MANUAL kind: manually entered name"
+  name: String
+
+  "For MANUAL kind: optional avatar URL"
+  avatarUrl: String
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"Agenda slot for an event"
+type EventAgendaItem {
+  id: ID!
+  eventId: ID!
+  order: Int!
+  title: String!
+  description: String
+  startAt: DateTime
+  endAt: DateTime
+
+  hosts: [EventAgendaItemHost!]!
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"Input for a single host in agenda slot"
+input AgendaHostInput {
+  kind: AgendaHostKind!
+  "Required for USER kind"
+  userId: ID
+  "Required for MANUAL kind (max 120 chars)"
+  name: String
+  "Optional for MANUAL kind"
+  avatarUrl: String
+}
+
+"Input for a single agenda slot"
+input AgendaItemInput {
+  "Title of the slot (3-120 chars)"
+  title: String!
+  "Description of the slot (max 1000 chars)"
+  description: String
+  "Start time (UTC) - if set, endAt must also be set"
+  startAt: DateTime
+  "End time (UTC) - must be after startAt"
+  endAt: DateTime
+  "Hosts for this slot (max 10)"
+  hosts: [AgendaHostInput!]
+}
+
+"Input for bulk updating agenda"
+input UpdateEventAgendaInput {
+  eventId: ID!
+  "Complete list of agenda items (replaces existing, max 50)"
+  items: [AgendaItemInput!]!
 }

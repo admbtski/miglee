@@ -276,6 +276,32 @@ fragment EventDetail on Event {
     createdAt
     updatedAt
   }
+  agendaItems {
+    id
+    eventId
+    order
+    title
+    description
+    startAt
+    endAt
+    hosts {
+      id
+      agendaItemId
+      order
+      kind
+      userId
+      user {
+        id
+        name
+        avatarKey
+        avatarBlurhash
+      }
+      name
+      avatarUrl
+    }
+    createdAt
+    updatedAt
+  }
 }
 
 # -----------------------------------------------------------------------------

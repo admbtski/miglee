@@ -1,0 +1,63 @@
+# Agenda Queries & Mutations
+
+query EventAgendaItems($eventId: ID!) {
+  eventAgendaItems(eventId: $eventId) {
+    id
+    eventId
+    order
+    title
+    description
+    startAt
+    endAt
+    hosts {
+      id
+      agendaItemId
+      order
+      kind
+      userId
+      user {
+        id
+        name
+        avatarKey
+        avatarBlurhash
+      }
+      name
+      avatarUrl
+      createdAt
+      updatedAt
+    }
+    createdAt
+    updatedAt
+  }
+}
+
+mutation UpdateEventAgenda($input: UpdateEventAgendaInput!) {
+  updateEventAgenda(input: $input) {
+    id
+    eventId
+    order
+    title
+    description
+    startAt
+    endAt
+    hosts {
+      id
+      agendaItemId
+      order
+      kind
+      userId
+      user {
+        id
+        name
+        avatarKey
+        avatarBlurhash
+      }
+      name
+      avatarUrl
+      createdAt
+      updatedAt
+    }
+    createdAt
+    updatedAt
+  }
+}

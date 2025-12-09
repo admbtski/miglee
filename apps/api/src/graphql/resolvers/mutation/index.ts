@@ -233,6 +233,9 @@ import {
 // Appearance mutations
 import { updateEventAppearanceMutation } from './appearance';
 
+// Agenda mutations
+import { updateEventAgendaMutation } from './agenda';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -428,6 +431,9 @@ export const Mutation: Resolvers['Mutation'] = {
 
   // ---- Appearance ----
   updateEventAppearance: updateEventAppearanceMutation,
+
+  // ---- Agenda ----
+  updateEventAgenda: updateEventAgendaMutation,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

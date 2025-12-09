@@ -27,6 +27,7 @@ export * from './capacity-status-card';
 export * from './conditional-navbar';
 export * from './event-actions';
 export * from './event-admin-panel';
+export * from './event-agenda';
 export * from './event-chat-modal';
 export * from './event-comments';
 export * from './event-countdown-timer';

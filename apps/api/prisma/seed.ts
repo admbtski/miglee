@@ -2347,6 +2347,156 @@ async function seedEventFaqs(allEvents: Array<{ event: any; owner: User }>) {
   return faqs;
 }
 
+/** ---------- Seed: Event Agenda ---------- */
+async function seedEventAgenda(allEvents: Array<{ event: any; owner: User }>) {
+  const agendaItems: any[] = [];
+
+  // Agenda templates for different types of events
+  const AGENDA_TEMPLATES = {
+    WORKSHOP: [
+      { title: 'Rejestracja i powitanie', duration: 15 },
+      {
+        title: 'Wprowadzenie teoretyczne',
+        duration: 30,
+        description: 'Podstawy tematu i kontekst',
+      },
+      {
+        title: 'Ćwiczenia praktyczne',
+        duration: 45,
+        description: 'Praktyczne zastosowanie wiedzy',
+      },
+      { title: 'Przerwa', duration: 15 },
+      { title: 'Sesja Q&A', duration: 20 },
+      { title: 'Podsumowanie i zakończenie', duration: 10 },
+    ],
+    CONFERENCE: [
+      { title: 'Rejestracja i networking', duration: 30 },
+      { title: 'Otwarcie konferencji', duration: 15 },
+      {
+        title: 'Keynote - Prezentacja główna',
+        duration: 45,
+        description: 'Wystąpienie głównego prelegenta',
+      },
+      { title: 'Panel dyskusyjny', duration: 30 },
+      { title: 'Przerwa kawowa', duration: 20 },
+      { title: 'Prezentacje równoległe', duration: 60 },
+      { title: 'Lunch', duration: 45 },
+      { title: 'Warsztaty praktyczne', duration: 90 },
+      { title: 'Networking i zakończenie', duration: 30 },
+    ],
+    MEETUP: [
+      { title: 'Powitanie i przedstawienie', duration: 10 },
+      {
+        title: 'Główny temat spotkania',
+        duration: 30,
+        description: 'Prezentacja lub dyskusja',
+      },
+      { title: 'Dyskusja otwarta', duration: 20 },
+      { title: 'Networking', duration: 30 },
+    ],
+    SIMPLE: [
+      { title: 'Rozpoczęcie', duration: 10 },
+      { title: 'Główna część', duration: 60 },
+      { title: 'Zakończenie', duration: 10 },
+    ],
+  };
+
+  // Add agendas to 25% of active, non-deleted events with longer duration
+  const eventsWithAgenda = allEvents
+    .filter(() => rand() > 0.75)
+    .filter(({ event }) => !event.deletedAt && !event.canceledAt)
+    .filter(({ event }) => {
+      // Only add agenda to events that are at least 1 hour long
+      const start = new Date(event.startAt);
+      const end = new Date(event.endAt);
+      const durationMs = end.getTime() - start.getTime();
+      return durationMs >= 60 * 60 * 1000; // 1 hour
+    })
+    .slice(0, 20);
+
+  for (const { event, owner } of eventsWithAgenda) {
+    // Choose template based on event duration
+    const start = new Date(event.startAt);
+    const end = new Date(event.endAt);
+    const durationMs = end.getTime() - start.getTime();
+    const durationHours = durationMs / (60 * 60 * 1000);
+
+    let templateKey: keyof typeof AGENDA_TEMPLATES;
+    if (durationHours >= 6) {
+      templateKey = 'CONFERENCE';
+    } else if (durationHours >= 2) {
+      templateKey = rand() > 0.5 ? 'WORKSHOP' : 'MEETUP';
+    } else {
+      templateKey = 'SIMPLE';
+    }
+
+    const template = AGENDA_TEMPLATES[templateKey];
+    let currentTime = new Date(start);
+
+    for (let i = 0; i < template.length; i++) {
+      const slot = template[i]!;
+
+      // Calculate end time
+      const slotEnd = new Date(
+        currentTime.getTime() + slot.duration * 60 * 1000
+      );
+
+      // Stop if we exceed event end time
+      if (slotEnd > end) break;
+
+      const item = await prisma.eventAgendaItem.create({
+        data: {
+          eventId: event.id,
+          order: i,
+          title: slot.title,
+          description: slot.description || null,
+          startAt: currentTime,
+          endAt: slotEnd,
+        },
+      });
+
+      // Add host (owner) to 50% of slots
+      if (rand() > 0.5) {
+        await prisma.eventAgendaItemHost.create({
+          data: {
+            agendaItemId: item.id,
+            order: 0,
+            kind: 'USER',
+            userId: owner.id,
+          },
+        });
+      }
+
+      // Occasionally add a manual host
+      if (rand() > 0.8) {
+        const guestNames = [
+          'Jan Kowalski',
+          'Anna Nowak',
+          'Piotr Wiśniewski',
+          'Maria Wójcik',
+          'Tomasz Kamiński',
+        ];
+        await prisma.eventAgendaItemHost.create({
+          data: {
+            agendaItemId: item.id,
+            order: 1,
+            kind: 'MANUAL',
+            name: pick(guestNames),
+          },
+        });
+      }
+
+      agendaItems.push(item);
+      currentTime = slotEnd;
+    }
+  }
+
+  console.log(
+    `📋 Created ${agendaItems.length} agenda items across ${eventsWithAgenda.length} events`
+  );
+  return agendaItems;
+}
+
 /** ---------- Seed: Notification Preferences ---------- */
 async function seedNotificationPreferences(users: User[]) {
   const preferences: any[] = [];
@@ -2792,6 +2942,9 @@ async function main() {
 
   console.log('❓ Seeding event FAQs…');
   await seedEventFaqs(allEvents);
+
+  console.log('📋 Seeding event agendas…');
+  await seedEventAgenda(allEvents);
 
   console.log('📝 Seeding join questions…');
   await seedEventJoinQuestions(allEvents);

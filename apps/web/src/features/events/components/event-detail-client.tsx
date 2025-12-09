@@ -22,6 +22,7 @@ import {
 import { useMemo, useState } from 'react';
 import { EventActions } from './event-actions';
 import { EventAdminPanel } from './event-admin-panel';
+import { EventAgenda } from './event-agenda';
 import { EventChatModal } from './event-chat-modal';
 import { EventComments } from './event-comments';
 import { EventCountdownTimer } from './event-countdown-timer';
@@ -516,7 +517,26 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
                 </div>
               )}
 
-            <EventParticipants event={eventData} />
+            {/* Agenda Section - event schedule/program */}
+            {event?.agendaItems && event.agendaItems.length > 0 && (
+              <EventAgenda
+                items={event.agendaItems.map((item: any) => ({
+                  id: item.id,
+                  title: item.title,
+                  description: item.description,
+                  startAt: item.startAt,
+                  endAt: item.endAt,
+                  hosts: (item.hosts || []).map((h: any) => ({
+                    id: h.id,
+                    kind: h.kind,
+                    userId: h.userId,
+                    user: h.user,
+                    name: h.name,
+                    avatarUrl: h.avatarUrl,
+                  })),
+                }))}
+              />
+            )}
 
             {/* FAQ Section - above reviews and comments */}
             {event?.faqs && event.faqs.length > 0 && (
@@ -528,6 +548,8 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
                 }))}
               />
             )}
+
+            <EventParticipants event={eventData} />
 
             <EventReviews event={eventData} />
             <EventComments event={eventData} />

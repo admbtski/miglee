@@ -78,6 +78,7 @@ import {
   myEventSponsorshipsQuery,
   eventSponsorshipQuery,
 } from './billing';
+import { eventAgendaItemsQuery } from './agenda';
 
 export const Query: Resolvers['Query'] = {
   // Admin queries
@@ -154,4 +155,7 @@ export const Query: Resolvers['Query'] = {
   myPlanPeriods: myPlanPeriodsQuery,
   myEventSponsorships: myEventSponsorshipsQuery,
   eventSponsorship: eventSponsorshipQuery,
+
+  // Agenda
+  eventAgendaItems: eventAgendaItemsQuery,
 };

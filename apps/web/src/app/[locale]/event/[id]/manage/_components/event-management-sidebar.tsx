@@ -31,6 +31,7 @@ import {
   LayoutDashboard,
   Link as LinkIcon,
   ListCollapseIcon,
+  ListOrdered,
   Lock,
   MapPin,
   MessageSquare,
@@ -277,6 +278,12 @@ export function EventManagementSidebar({
       defaultOpen: false,
       requiredPlan: 'plus',
       items: [
+        {
+          id: 'agenda',
+          label: 'Agenda',
+          href: localePath(`/event/${eventId}/manage/agenda`),
+          icon: ListOrdered,
+        },
         {
           id: 'join-form',
           label: 'Join Form',
