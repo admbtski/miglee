@@ -114,6 +114,13 @@ const VIRTUOSO_OVERSCAN = 5;
 const VIRTUOSO_VIEWPORT_INCREASE = { top: 800, bottom: 1600 };
 const DEFAULT_ITEM_HEIGHT = 450;
 
+// Stable List component - defined outside to prevent recreation
+const VirtuosoList = ({ children, ...props }: any) => (
+  <div {...props} className="flex flex-col gap-6">
+    {children}
+  </div>
+);
+
 type EventsGridVirtualizedProps = {
   items: EventListItem[];
   isLoading: boolean;
@@ -183,17 +190,38 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
     }
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 
+  // Store footer state in refs to avoid recreating the Footer component
+  const footerStateRef = useRef({
+    hasNextPage,
+    isFetchingNextPage,
+    itemsLength: items.length,
+  });
+
+  // Update ref values without causing re-renders
+  footerStateRef.current = {
+    hasNextPage,
+    isFetchingNextPage,
+    itemsLength: items.length,
+  };
+
+  // Stable Footer component that reads from ref
   const Footer = useCallback(() => {
-    if (!hasNextPage && items.length > 0) {
+    const {
+      hasNextPage: hp,
+      isFetchingNextPage: ifnp,
+      itemsLength,
+    } = footerStateRef.current;
+
+    if (!hp && itemsLength > 0) {
       return (
         <div className="py-6 text-center">
           <span className="text-xs opacity-60">
-            Wszystko załadowane ({items.length})
+            Wszystko załadowane ({itemsLength})
           </span>
         </div>
       );
     }
-    if (isFetchingNextPage) {
+    if (ifnp) {
       return (
         <div className="py-6 text-center">
           <span className="text-sm opacity-70">Ładowanie...</span>
@@ -201,7 +229,7 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
       );
     }
     return null;
-  }, [hasNextPage, isFetchingNextPage, items.length]);
+  }, []); // Empty deps - reads from ref
 
   const renderRow = useCallback(
     (index: number) => {
@@ -232,13 +260,10 @@ export const EventsGridVirtualized = memo(function EventsGridVirtualized({
     [itemRows]
   );
 
+  // Stable components object - only created once
   const virtuosoComponents = useMemo(
     () => ({
-      List: ({ children, ...props }: any) => (
-        <div {...props} className="flex flex-col gap-6">
-          {children}
-        </div>
-      ),
+      List: VirtuosoList,
       Footer,
     }),
     [Footer]
