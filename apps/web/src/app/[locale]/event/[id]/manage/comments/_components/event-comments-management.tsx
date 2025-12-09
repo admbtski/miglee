@@ -3,6 +3,8 @@
  * View and moderate comments
  */
 
+// TODO i18n: All hardcoded strings need translation keys
+
 'use client';
 
 import { MessageSquare, Info, AlertCircle } from 'lucide-react';

@@ -1,7 +1,10 @@
 'use client';
 
+// TODO i18n: button labels ("Saving...", "Saved!", "Save Changes")
+
 import { ReactNode, useState } from 'react';
-import { Loader2, Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
+
 import { ManagementPageLayout } from '../../_components/management-page-layout';
 
 interface EditSectionProps {

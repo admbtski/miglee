@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-// Features
 import { EventDetailClient, EventDetailSkeleton } from '@/features/events';
 
 type PageProps = {
@@ -17,7 +16,7 @@ export default async function EventDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Suspense fallback={<EventDetailSkeleton />}>
         <EventDetailClient eventId={id} />
       </Suspense>
@@ -25,9 +24,9 @@ export default async function EventDetailPage({ params }: PageProps) {
   );
 }
 
-// TODO: Add i18n for metadata and fetch event data for dynamic title
+// TODO i18n: metadata title and description
 export async function generateMetadata({ params }: PageProps) {
-  await params; // Resolve params for Next.js
+  await params;
 
   return {
     title: 'Szczegóły wydarzenia | Miglee',

@@ -20,7 +20,8 @@ import {
   useSubmitReviewAndFeedbackMutation,
 } from '@/features/feedback/api/feedback';
 
-// TODO: Add i18n support - all hardcoded Polish strings should use translations
+// TODO i18n: All hardcoded Polish strings need translation keys
+// - Loading states, error messages, success messages, button texts, trust badges
 
 interface FeedbackPageClientProps {
   eventId: string;
@@ -90,6 +91,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
         <div className="text-center">
           <Loader2 className="w-8 h-8 mx-auto text-indigo-600 animate-spin" />
           <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            {/* TODO i18n */}
             Ładowanie...
           </p>
         </div>
@@ -105,6 +107,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
           <div className="flex items-start gap-3">
             <AlertCircle className="flex-shrink-0 w-6 h-6 text-red-600 dark:text-red-400" />
             <div className="flex-1">
+              {/* TODO i18n */}
               <h3 className="font-semibold text-red-900 dark:text-red-100">
                 Nie znaleziono wydarzenia
               </h3>
@@ -137,6 +140,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
               </div>
             </div>
 
+            {/* TODO i18n */}
             <h2 className="mb-3 text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
               Dziękujemy za opinię!
             </h2>
@@ -171,9 +175,11 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
                 className="inline-flex items-center justify-center w-full h-12 px-6 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
+                {/* TODO i18n */}
                 Powrót do wydarzenia
               </Link>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {/* TODO i18n */}
                 Jeśli chcesz zmienić swoją opinię, możesz to zrobić na stronie
                 wydarzenia.
               </p>
@@ -190,6 +196,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
           <div className="flex items-start gap-3">
             <AlertCircle className="flex-shrink-0 w-6 h-6 text-amber-600 dark:text-amber-400" />
             <div className="flex-1">
+              {/* TODO i18n */}
               <h3 className="font-semibold text-amber-900 dark:text-amber-100">
                 Nie możesz wystawić opinii
               </h3>
@@ -224,6 +231,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
             </div>
           </div>
 
+          {/* TODO i18n */}
           <h2 className="mb-3 text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
             Dziękujemy! 🎉
           </h2>
@@ -238,12 +246,14 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
               className="inline-flex items-center justify-center w-full h-12 px-6 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
+              {/* TODO i18n */}
               Powrót do wydarzenia
             </Link>
             <Link
               href="/"
               className="inline-flex items-center justify-center w-full h-12 px-6 rounded-xl text-base font-medium border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             >
+              {/* TODO i18n */}
               Przeglądaj więcej wydarzeń
             </Link>
           </div>
@@ -272,9 +282,11 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
               </span>
+              {/* TODO i18n */}
               Twoja opinia ma znaczenie
             </div>
 
+            {/* TODO i18n */}
             <h1 className="text-3xl md:text-5xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
               Oceń wydarzenie
             </h1>
@@ -307,6 +319,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
+                {/* TODO i18n */}
                 <h4 className="font-semibold text-red-900 dark:text-red-100 mb-1">
                   Wystąpił błąd
                 </h4>
@@ -319,7 +332,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
           </div>
         )}
 
-        {/* Trust badges */}
+        {/* Trust badges - TODO i18n */}
         <div className="mt-8 flex items-center justify-center gap-6 text-xs text-zinc-500 dark:text-zinc-400">
           <div className="flex items-center gap-2">
             <svg

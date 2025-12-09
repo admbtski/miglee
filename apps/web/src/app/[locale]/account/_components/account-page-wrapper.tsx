@@ -1,6 +1,12 @@
-import { ReactNode } from 'react';
+/**
+ * AccountPageWrapper - Standardized layout wrapper for account pages
+ *
+ * Provides consistent max-width, padding, and spacing across all account pages.
+ */
 
-type AccountPageWrapperProps = {
+import type { ReactNode } from 'react';
+
+interface AccountPageWrapperProps {
   children: ReactNode;
   /**
    * Max width of the content area
@@ -14,24 +20,8 @@ type AccountPageWrapperProps = {
    * Padding configuration
    */
   padding?: 'default' | 'compact' | 'none';
-};
+}
 
-/**
- * AccountPageWrapper - Standardized wrapper for all account pages
- *
- * Provides:
- * - Consistent max-width
- * - Consistent padding
- * - Consistent spacing
- *
- * Usage:
- * ```tsx
- * <AccountPageWrapper>
- *   <AccountPageHeader title="..." />
- *   <div>Content</div>
- * </AccountPageWrapper>
- * ```
- */
 export function AccountPageWrapper({
   children,
   maxWidth = 'default',

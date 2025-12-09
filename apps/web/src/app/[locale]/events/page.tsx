@@ -1,3 +1,5 @@
+// TODO i18n: Loading fallback text needs translation
+
 import { buildGetCategoriesOptions } from '@/features/categories/api/categories';
 import { getQueryClient } from '@/lib/config/query-client';
 // import { trace } from '@opentelemetry/api';

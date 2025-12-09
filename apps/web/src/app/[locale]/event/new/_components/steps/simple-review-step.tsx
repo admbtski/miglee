@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Polish strings need translation
+// TODO i18n: date formatting should be locale-aware
+
 import {
   CalendarDays,
   Clock,
@@ -14,8 +17,9 @@ import {
   MapPin,
   Users,
 } from 'lucide-react';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+
 import { useCategorySelection } from '@/features/events/components/category-selection-provider';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 interface SimpleReviewStepProps {
   values: SimpleEventFormValues;

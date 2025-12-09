@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: Button labels are handled but formatTime should use locale-aware formatting
+
 import {
   Calendar,
   MessageSquare,

@@ -26,8 +26,10 @@ import {
 
 // Utils
 import { buildAvatarUrl } from '@/lib/media/url';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
-// TODO: Add i18n support - all hardcoded Polish strings should use translations
+// TODO i18n: All hardcoded Polish strings need translation keys
+// TODO i18n: Date formatting should be locale-aware (currently using pl locale hardcoded)
 
 interface InviteLinkPageProps {
   code: string;
@@ -58,6 +60,7 @@ function LoadingState() {
       <div className="text-center">
         <Loader2 className="mx-auto h-12 w-12 animate-spin text-indigo-600" />
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+          {/* TODO i18n */}
           Sprawdzanie zaproszenia...
         </p>
       </div>
@@ -83,6 +86,7 @@ function ErrorState({ onGoHome }: ErrorStateProps) {
         >
           <X className="h-8 w-8 text-red-600 dark:text-red-400" />
         </div>
+        {/* TODO i18n */}
         <h1 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           Nieprawidłowy link
         </h1>
@@ -128,6 +132,7 @@ function InvalidLinkState({
         >
           <AlertCircle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
         </div>
+        {/* TODO i18n */}
         <h1 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
           Link niedostępny
         </h1>
@@ -160,6 +165,7 @@ function EventDateInfo({ startAt, endAt }: EventDateInfoProps) {
     <div className="flex items-start gap-3">
       <Calendar className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
       <div className="text-sm">
+        {/* TODO i18n: date format should use user locale */}
         <div className="font-medium text-zinc-900 dark:text-zinc-100">
           {format(new Date(startAt), 'EEEE, d MMMM yyyy', { locale: pl })}
         </div>
@@ -203,11 +209,13 @@ function EventParticipantsInfo({
         <span className="font-medium text-zinc-900 dark:text-zinc-100">
           {joinedCount} / {max}
         </span>
+        {/* TODO i18n */}
         <span className="ml-1 text-zinc-600 dark:text-zinc-400">
           uczestników
         </span>
         {isFull && (
           <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            {/* TODO i18n */}
             Pełne
           </span>
         )}
@@ -237,6 +245,7 @@ function EventOrganizerInfo({ owner }: EventOrganizerInfoProps) {
         />
       )}
       <div className="text-sm">
+        {/* TODO i18n */}
         <div className="text-zinc-600 dark:text-zinc-400">Organizator</div>
         <div className="font-medium text-zinc-900 dark:text-zinc-100">
           {owner.name}
@@ -263,6 +272,7 @@ function getJoinButtonContent(
   isPending: boolean,
   isFull: boolean
 ): React.ReactNode {
+  // TODO i18n: button texts
   if (isPending) {
     return (
       <span className="flex items-center justify-center gap-2">
@@ -285,6 +295,7 @@ function getJoinButtonContent(
 
 export function InviteLinkPage({ code }: InviteLinkPageProps) {
   const router = useRouter();
+  const { localePath } = useLocalePath();
   const { data, isLoading, error } = useValidateInviteLinkQuery({ code });
   const joinMutation = useJoinByInviteLinkMutation();
 
@@ -293,19 +304,19 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
   const handleJoin = async () => {
     try {
       const result = await joinMutation.mutateAsync({ code });
-      router.push(`/event/${result.joinByInviteLink.id}`);
+      router.push(localePath(`/events/${result.joinByInviteLink.id}`));
     } catch (err) {
       console.error('Failed to join:', err);
     }
   };
 
   const handleGoHome = () => {
-    router.push('/');
+    router.push(localePath('/'));
   };
 
   const handleViewEvent = () => {
     if (validation?.event?.id) {
-      router.push(`/event/${validation.event.id}`);
+      router.push(localePath(`/events/${validation.event.id}`));
     }
   };
 
@@ -345,6 +356,7 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
 
         <div className="rounded-3xl border border-white/20 bg-white/80 p-8 shadow-2xl backdrop-blur-xl dark:border-zinc-800/50 dark:bg-zinc-900/80">
           <div className="mb-6 text-center">
+            {/* TODO i18n */}
             <h1 className="mb-2 text-3xl font-bold text-zinc-900 dark:text-zinc-100">
               Zostałeś zaproszony!
             </h1>
@@ -389,15 +401,17 @@ export function InviteLinkPage({ code }: InviteLinkPageProps) {
             </button>
 
             <button
-              onClick={() => router.push(`/event/${event.id}`)}
+              onClick={() => router.push(localePath(`/events/${event.id}`))}
               className={BUTTON_SECONDARY}
             >
+              {/* TODO i18n */}
               Zobacz szczegóły wydarzenia
             </button>
           </div>
 
           {joinMutation.isError && (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/30 dark:bg-red-950/20">
+              {/* TODO i18n */}
               <p className="text-sm text-red-700 dark:text-red-400">
                 Wystąpił błąd podczas dołączania do wydarzenia. Spróbuj ponownie
                 później.

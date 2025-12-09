@@ -1,35 +1,43 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
-
-type Tab = {
-  key: string;
-  label: string;
-  href: string;
-  icon?: ReactNode;
-  count?: number;
-};
-
-type AccountPageHeaderProps = {
-  title: string;
-  description?: string;
-  tabs?: Tab[];
-  actions?: ReactNode;
-  icon?: ReactNode;
-};
-
 /**
  * AccountPageHeader - Header section for account pages
  *
  * Contains:
  * - Page title with optional icon
- * - Optional description
- * - Optional tabs (sub-navigation)
+ * - Optional description (should be translated by parent)
+ * - Optional tabs (sub-navigation with locale-aware hrefs)
  * - Optional action buttons
  */
+
+import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
+
+import { useLocalePath } from '@/hooks/use-locale-path';
+
+interface Tab {
+  key: string;
+  label: string;
+  href: string;
+  icon?: ReactNode;
+  count?: number;
+}
+
+interface AccountPageHeaderProps {
+  /** Page title - should be translated by parent */
+  title: string;
+  /** Page description - should be translated by parent */
+  description?: string;
+  /** Sub-navigation tabs */
+  tabs?: Tab[];
+  /** Action buttons */
+  actions?: ReactNode;
+  /** Icon displayed before title */
+  icon?: ReactNode;
+}
+
 export function AccountPageHeader({
   title,
   description,
@@ -38,6 +46,7 @@ export function AccountPageHeader({
   icon,
 }: AccountPageHeaderProps) {
   const pathname = usePathname();
+  const { localePath } = useLocalePath();
 
   return (
     <div className="space-y-6">
@@ -71,13 +80,15 @@ export function AccountPageHeader({
         <div className="border-b border-zinc-200 dark:border-zinc-800">
           <nav className="-mb-px flex gap-1 overflow-x-auto" aria-label="Tabs">
             {tabs.map((tab) => {
+              const localizedHref = localePath(tab.href);
               const isActive =
-                pathname === tab.href || pathname.startsWith(tab.href + '/');
+                pathname === localizedHref ||
+                pathname.startsWith(`${localizedHref}/`);
 
               return (
                 <Link
                   key={tab.key}
-                  href={tab.href}
+                  href={localizedHref}
                   className={`relative flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
                       ? 'text-indigo-600 dark:text-indigo-400'

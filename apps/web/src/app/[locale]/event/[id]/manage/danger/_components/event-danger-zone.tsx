@@ -3,16 +3,19 @@
  * Cancel or permanently delete event
  */
 
+// TODO i18n: All hardcoded strings need translation
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocalePath } from '@/hooks/use-locale-path';
-import { AlertTriangle, Ban, Trash2, Info, Users } from 'lucide-react';
-import { useEventQuery } from '@/features/events/api/events';
-import { EventStatus } from '@/lib/api/__generated__/react-query-update';
+import { AlertTriangle, Ban, Info, Trash2, Users } from 'lucide-react';
+
 import { CancelEventModals } from '@/features/events/components/cancel-event-modals';
 import { DeleteEventModals } from '@/features/events/components/delete-event-modals';
+import { useEventQuery } from '@/features/events/api/events';
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 
 interface EventDangerZoneProps {
   eventId: string;

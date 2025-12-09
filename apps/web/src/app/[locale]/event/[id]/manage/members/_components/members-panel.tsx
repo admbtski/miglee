@@ -1,8 +1,11 @@
 'use client';
 
-import clsx from 'clsx';
-import { BarChart2, ChevronDown, Filter, UserPlus, X } from 'lucide-react';
+// TODO i18n: Polish strings need translation keys
+
 import * as React from 'react';
+import { BarChart2, ChevronDown, Filter, UserPlus, X } from 'lucide-react';
+import clsx from 'clsx';
+
 import { groupMembers, EventMember, STATUS_GROUP_ORDER } from './types';
 import { MembersSection } from './member-section';
 import { InviteUsersModal } from './invite-users-modal';

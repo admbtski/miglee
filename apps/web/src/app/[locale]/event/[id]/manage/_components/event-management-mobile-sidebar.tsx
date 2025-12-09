@@ -3,6 +3,10 @@
  * Mobile drawer navigation for event management
  */
 
+// TODO i18n: All navigation labels need translation keys
+// - group labels, item labels, plan badges
+// - "Close menu", "Current Event", "Back to Event"
+
 'use client';
 
 import {

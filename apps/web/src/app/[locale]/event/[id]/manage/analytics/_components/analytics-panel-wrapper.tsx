@@ -3,6 +3,8 @@
  * Wraps analytics with plan requirement check
  */
 
+// TODO i18n: Polish strings need translation keys
+
 'use client';
 
 import { useEventManagement } from '../../_components/event-management-provider';

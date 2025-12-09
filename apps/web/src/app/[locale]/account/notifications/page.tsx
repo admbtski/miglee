@@ -1,18 +1,21 @@
 /**
  * Notifications Page
- * Displays user notifications with filtering, marking as read, and deletion
+ *
+ * Features:
+ * - Infinite scroll with virtualization
+ * - Filter by read/unread status
+ * - Mark as read (single and all)
+ * - Delete notifications
+ *
+ * TODO: format date/time with user.timezone + locale (i18n)
  */
 
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-
-// External libraries
+import { useCallback, useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { pl, enUS, de } from 'date-fns/locale';
+import { de, enUS, pl } from 'date-fns/locale';
 import { Virtuoso } from 'react-virtuoso';
-
-// Icons
 import {
   AlertCircle,
   Bell,
@@ -28,7 +31,6 @@ import {
   User,
 } from 'lucide-react';
 
-// Features
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
   useDeleteNotificationMutation,
@@ -36,15 +38,12 @@ import {
   useMarkNotificationReadMutation,
   useNotificationsInfiniteQuery,
 } from '@/features/notifications/api/notifications';
-
-// Types
 import type {
   GetNotificationsQuery,
   GetNotificationsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
-
-// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
+
 import { AccountPageHeader } from '../_components';
 
 type NotificationNode = NonNullable<
@@ -99,6 +98,13 @@ function getDateLocale(locale: string) {
     default:
       return enUS;
   }
+}
+
+// TODO i18n: use centralized, locale-aware date/time formatter (incl. TZ)
+function formatNotificationDate(dateIso: string, locale: string) {
+  return format(new Date(dateIso), 'dd MMM yyyy, HH:mm', {
+    locale: getDateLocale(locale),
+  });
 }
 
 export default function NotificationsPage() {
@@ -271,9 +277,7 @@ export default function NotificationsPage() {
                     </span>
                   )}
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">
-                    {format(new Date(n.createdAt), 'dd MMM yyyy, HH:mm', {
-                      locale: dateLocale,
-                    })}
+                    {formatNotificationDate(n.createdAt, locale)}
                   </span>
                 </div>
               </div>

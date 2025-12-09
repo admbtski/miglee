@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Labels need translation keys
+// - "Crop Image", "Zoom", "Rotation", "Rotate 90°", "Cancel", "Save & Upload", "Uploading..."
+
 import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { X, RotateCw, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';

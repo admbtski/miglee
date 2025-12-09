@@ -1,28 +1,26 @@
 /**
  * Help & Support Page
- * Contact form for user support requests and FAQ links
+ *
+ * Features:
+ * - Contact form for support requests
+ * - Quick contact info (email)
+ * - FAQ links to relevant pages
+ *
+ * All text uses i18n via useI18n hook
  */
 
 'use client';
 
 import { useState } from 'react';
-
-// External libraries
+import Link from 'next/link';
 import { toast } from 'sonner';
-
-// Icons
 import { HelpCircle, Mail, MessageSquare, Send } from 'lucide-react';
 
-// Components
 import { SimpleSelect, SelectOption } from '@/components/forms/simple-select';
-
-// Hooks
 import { useLocalePath } from '@/hooks/use-locale-path';
-
-// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
+
 import { AccountPageHeader } from '../_components';
-import Link from 'next/link';
 
 export default function HelpPage() {
   const { t } = useI18n();

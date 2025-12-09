@@ -1,16 +1,19 @@
 'use client';
 
-import { Globe2, Info, Link as LinkIcon, MapPin } from 'lucide-react';
+// TODO i18n: Polish strings need translation
+
 import { useCallback, useMemo, useState } from 'react';
 import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
-import { SegmentedControl } from '@/components/ui/segment-control';
+import { Globe2, Info, Link as LinkIcon, MapPin } from 'lucide-react';
+
 import { LocationCombo } from '@/components/forms/location-combobox';
+import { SegmentedControl } from '@/components/ui/segment-control';
 import { MapPreview } from '@/features/maps/components/map-preview';
 import {
   reverseGeocode,
   reverseGeocodeLatLng,
 } from '@/features/maps/utils/geocode';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 type MK = 'ONSITE' | 'ONLINE' | 'HYBRID';
 

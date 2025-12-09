@@ -3,12 +3,11 @@
  * View and moderate reviews
  */
 
-// TODO: Add i18n for loading text
+// TODO i18n: loading text, metadata
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-// Local components
 import { EventReviewsManagement } from './_components/event-reviews-management';
 
 type PageProps = {

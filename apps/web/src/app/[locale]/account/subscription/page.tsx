@@ -5,10 +5,9 @@
 
 import type { Metadata } from 'next';
 
-// Local components
 import { SubscriptionPageClient } from './_components/subscription-page-client';
 
-// TODO: Add i18n for metadata
+// TODO i18n: metadata title/description
 export const metadata: Metadata = {
   title: 'Plany użytkownika | Miglee',
   description: 'Wybierz i wykup swój plan subskrypcji',

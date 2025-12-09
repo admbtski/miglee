@@ -1,10 +1,14 @@
 'use client';
 
+// TODO i18n: aria-labels and titles need translation
+
 import clsx from 'clsx';
 import { MoreVertical } from 'lucide-react';
+
+import { buildAvatarUrl } from '@/lib/media/url';
+
 import { EventMember, ManageCallbacks } from './types';
 import { Avatar, iconForRole } from './ui';
-import { buildAvatarUrl } from '@/lib/media/url';
 
 // Generate consistent color from string
 function stringToColor(str: string): string {

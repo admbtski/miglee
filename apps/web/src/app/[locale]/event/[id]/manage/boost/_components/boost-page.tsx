@@ -1,12 +1,15 @@
 'use client';
 
-import { Loader2, Rocket, Sparkles } from 'lucide-react';
+// TODO i18n: Polish strings need translation
+// TODO i18n: date formatting should be locale-aware
+
 import * as React from 'react';
+import { Loader2, Rocket, Sparkles } from 'lucide-react';
 
 import { QuotaBar } from '@/components/ui/quota-bar';
-import { useCooldown } from '@/hooks/use-cooldown';
 import { ActionButton } from '@/features/events/components/action-button';
 import { SponsorshipState } from '@/features/events/types/sponsorship';
+import { useCooldown } from '@/hooks/use-cooldown';
 
 type BoostPageProps = {
   eventId: string;

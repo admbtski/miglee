@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Report reasons, modal titles, descriptions, button labels, warnings
+
 import { useState } from 'react';
 import { Modal } from '@/components/feedback/modal';
 import { NoticeModal } from '@/components/feedback/notice-modal';

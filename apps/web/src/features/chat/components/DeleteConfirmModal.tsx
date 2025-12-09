@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Strings need translation keys
+// - "Delete Message", "This action cannot be undone", "Are you sure...", "Cancel", "Delete", "Deleting..."
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 

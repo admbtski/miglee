@@ -1,10 +1,17 @@
 'use client';
 
-import { Avatar } from '@/components/ui/avatar';
-import { useMeQuery } from '@/features/auth/hooks/auth';
-import { useLocalePath } from '@/hooks/use-locale-path';
-import { useI18n } from '@/lib/i18n/provider-ssr';
-import { buildAvatarUrl } from '@/lib/media/url';
+/**
+ * AccountMobileSidebar - Mobile navigation drawer for account pages
+ *
+ * Features:
+ * - Slide-in from left on mobile
+ * - i18n labels from provider
+ * - Locale-aware navigation via localePath
+ */
+
+import { useCallback, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
@@ -24,28 +31,26 @@ import {
   Sparkles,
   UserIcon,
 } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
 
-type NavItem = {
+import { Avatar } from '@/components/ui/avatar';
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { buildAvatarUrl } from '@/lib/media/url';
+
+interface NavItem {
   key: string;
   label: string;
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
   tone?: 'danger';
-};
+}
 
-type AccountMobileSidebarProps = {
+interface AccountMobileSidebarProps {
   open: boolean;
   onClose: () => void;
-};
+}
 
-/**
- * AccountMobileSidebar - Mobile version of sidebar
- *
- * Slide-in drawer from left side on mobile devices
- */
 export function AccountMobileSidebar({
   open,
   onClose,

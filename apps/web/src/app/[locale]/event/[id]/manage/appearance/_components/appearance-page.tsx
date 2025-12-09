@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Polish strings need translation
+
+import * as React from 'react';
 import {
   Calendar,
   Info,
@@ -11,7 +14,6 @@ import {
   Users,
   Wand2,
 } from 'lucide-react';
-import * as React from 'react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 

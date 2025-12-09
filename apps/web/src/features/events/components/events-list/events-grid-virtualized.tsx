@@ -9,6 +9,9 @@
  * - Uses window scroll for natural page scrolling
  */
 
+// TODO i18n: Polish strings need translation keys
+// - "Wszystko załadowane", "Ładowanie...", "Unknown organizer"
+
 'use client';
 
 import type {
@@ -22,7 +25,6 @@ import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
 import { notEmptyString } from '@/features/events/utils/event';
-import { AnimatePresence } from 'framer-motion';
 
 /**
  * Maps raw event data from API to EventCard component props

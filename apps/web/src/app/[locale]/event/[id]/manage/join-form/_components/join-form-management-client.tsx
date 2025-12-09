@@ -4,6 +4,9 @@
  * Similar to FAQ management
  */
 
+// TODO i18n: All Polish strings need translation keys
+// TODO i18n: Date formatting should be locale-aware
+
 'use client';
 
 import { useState } from 'react';

@@ -14,6 +14,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 
+// TODO i18n: metadata title and description
 export const metadata = {
   title: 'Create Event | Miglee',
   description: 'Create a new event quickly with our simplified creator',

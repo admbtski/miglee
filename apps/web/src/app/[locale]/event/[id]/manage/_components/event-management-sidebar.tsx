@@ -3,7 +3,9 @@
  * Navigation for event management interface
  */
 
-// TODO: Add i18n for all navigation labels
+// TODO i18n: All navigation labels need translation keys
+// - group labels, item labels, plan badges
+// - tooltips and aria-labels
 
 'use client';
 

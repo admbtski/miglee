@@ -3,12 +3,11 @@
  * Purchase and manage sponsorship plans
  */
 
-// TODO: Add i18n for page title, description, and loading text
+// TODO i18n: page title, description, loading text, metadata
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-// Local components
 import { ManagementPageLayout } from '../_components/management-page-layout';
 import { PlansPanelWrapper } from './_components/plans-panel-wrapper';
 

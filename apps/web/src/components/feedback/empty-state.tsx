@@ -2,6 +2,8 @@
  * Global empty state component
  */
 
+// TODO i18n: Default title and message have Polish strings that need translation keys
+
 'use client';
 
 import { memo, ReactNode } from 'react';

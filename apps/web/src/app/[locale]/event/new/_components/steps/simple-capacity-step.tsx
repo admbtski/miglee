@@ -1,11 +1,14 @@
 'use client';
 
-import { Crown, Info, User, Users } from 'lucide-react';
+// TODO i18n: Polish strings need translation
+
 import { useEffect, useState } from 'react';
 import { UseFormReturn, useController, useWatch } from 'react-hook-form';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import { Crown, Info, User, Users } from 'lucide-react';
+
 import { SegmentedControl } from '@/components/ui/segment-control';
 import { RangeSlider } from '@/features/events/components/range-slider';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 type ModeType = 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM';
 

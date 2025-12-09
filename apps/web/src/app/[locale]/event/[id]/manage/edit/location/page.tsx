@@ -5,9 +5,9 @@
  * Features: Meeting type, address autocomplete, map preview, radius slider, online link
  */
 
-// TODO: Add i18n for all hardcoded strings (labels, descriptions, errors, tips)
+// TODO i18n: All hardcoded strings (labels, descriptions, errors, tips)
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Globe,
   Info,
@@ -17,18 +17,14 @@ import {
   Navigation,
 } from 'lucide-react';
 
-// Components
 import { LocationCombo } from '@/components/forms/location-combobox';
 import { SegmentedControl } from '@/components/ui/segment-control';
-
-// Features
 import { MapPreview } from '@/features/maps/components/map-preview';
 import {
   reverseGeocode,
   reverseGeocodeLatLng,
 } from '@/features/maps/utils/geocode';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 

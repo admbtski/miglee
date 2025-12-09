@@ -3,6 +3,10 @@
  * Displays the public event view within the management interface
  */
 
+// TODO i18n: All hardcoded strings need translation keys
+// - "Live Preview", "This is how your event appears to visitors"
+// - "Open in New Tab", "Preview Mode", info text
+
 'use client';
 
 import { EventDetailClient } from '@/features/events/components/event-detail-client';

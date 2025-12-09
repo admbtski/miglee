@@ -469,10 +469,10 @@ export function getNotificationContent(
   data: Record<string, unknown> | null | undefined,
   locale: string = 'en'
 ): { title: string; body: string } {
-  const translations =
+  const translationsForLocale =
     notificationTranslations[locale] ?? notificationTranslations.en;
-  const translation = translations![kind as NotificationKind];
 
+  const translation = translationsForLocale?.[kind as NotificationKind];
   if (!translation) {
     return {
       title: 'Notification',

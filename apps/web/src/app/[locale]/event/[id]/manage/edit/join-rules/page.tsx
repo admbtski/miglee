@@ -5,9 +5,9 @@
  * Features: Presets, open/close windows, late join settings
  */
 
-// TODO: Add i18n for all hardcoded strings (labels, preset names, descriptions, tips)
+// TODO i18n: All hardcoded strings (labels, preset names, descriptions, tips)
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Calendar,
   Clock,
@@ -19,7 +19,6 @@ import {
   Zap,
 } from 'lucide-react';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 

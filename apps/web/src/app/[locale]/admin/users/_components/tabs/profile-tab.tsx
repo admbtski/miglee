@@ -16,10 +16,34 @@ import {
   useUpdateUserProfile,
 } from '@/features/users/api/user-profile';
 import { useGetCategoriesQuery as useCategoriesQuery } from '@/features/categories/api/categories';
+import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
+
+// TODO i18n: extract all static labels in admin user profile tab
 
 type ProfileTabProps = {
   userId: string;
   onRefresh?: () => void;
+};
+
+type UserProfile = GetUserProfileQuery['user'];
+type Profile = NonNullable<UserProfile>['profile'];
+type CategoryLevel = NonNullable<
+  NonNullable<UserProfile>['categoryLevels']
+>[number];
+type SocialLink = NonNullable<NonNullable<UserProfile>['socialLinks']>[number];
+
+type Category = NonNullable<
+  NonNullable<ReturnType<typeof useCategoriesQuery>['data']>['categories']
+>[number];
+
+type EditedProfile = {
+  displayName: string;
+  bioShort: string;
+  bioLong: string;
+  city: string;
+  country: string;
+  speaks: string[];
+  interests: string[];
 };
 
 export function ProfileTab({ userId }: ProfileTabProps) {
@@ -33,12 +57,12 @@ export function ProfileTab({ userId }: ProfileTabProps) {
   const updateMutation = useUpdateUserProfile();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState<any>(null);
+  const [editedData, setEditedData] = useState<EditedProfile | null>(null);
 
-  const user = profileData?.user;
-  const profile = user?.profile;
-  const disciplines = user?.categoryLevels || [];
-  const socialLinks = user?.socialLinks || [];
+  const user: UserProfile | undefined = profileData?.user;
+  const profile: Profile | undefined | null = user?.profile;
+  const disciplines: CategoryLevel[] = user?.categoryLevels ?? [];
+  const socialLinks: SocialLink[] = user?.socialLinks ?? [];
   const privacy = user?.privacy;
   const stats = user?.stats;
 
@@ -84,7 +108,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
   };
 
   const getCategoryName = (categoryId: string) => {
-    const cat = categories.find((c: any) => c.id === categoryId);
+    const cat = categories.find((c: Category) => c.id === categoryId);
     if (!cat) return categoryId;
     if (typeof cat.names === 'object') {
       return cat.names.en || cat.names.pl || cat.slug;
@@ -372,7 +396,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
         </h4>
         {socialLinks.length > 0 ? (
           <div className="space-y-2">
-            {socialLinks.map((link: any) => (
+            {socialLinks.map((link) => (
               <div
                 key={link.id}
                 className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800"

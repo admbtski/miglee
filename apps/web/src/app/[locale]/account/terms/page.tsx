@@ -1,10 +1,19 @@
+/**
+ * Terms of Service Page
+ *
+ * Displays terms of service documents in multiple languages.
+ * All text uses i18n via useI18n hook.
+ *
+ * TODO: format date/time with user.timezone + locale (i18n) - "lastUpdated" date
+ */
+
 'use client';
 
-import { Download, ExternalLink, FileText } from 'lucide-react';
 import { useState } from 'react';
+import { Download, ExternalLink, FileText } from 'lucide-react';
 
-// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
+
 import { AccountPageHeader } from '../_components';
 
 export default function TermsOfServicePage() {
@@ -32,11 +41,11 @@ export default function TermsOfServicePage() {
       />
 
       {/* Main Content Card */}
-      <div className="bg-white border rounded-2xl dark:bg-[#10121a] dark:border-white/5">
+      <div className="rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {/* Header with Icon */}
-        <div className="p-6 border-b border-zinc-200 dark:border-white/5">
+        <div className="border-b border-zinc-200 p-6 dark:border-zinc-800">
           <div className="flex items-start gap-4">
-            <div className="flex items-center justify-center flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-white text-blue-600 shadow-sm dark:border-blue-900/40 dark:bg-zinc-900 dark:text-blue-400">
               <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex-1">
@@ -52,7 +61,7 @@ export default function TermsOfServicePage() {
         </div>
 
         {/* Language Selection */}
-        <div className="p-6 border-b border-zinc-200 dark:border-white/5">
+        <div className="border-b border-zinc-200 p-6 dark:border-zinc-800">
           <label className="block mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {t.termsOfService.selectLanguage}
           </label>
@@ -62,14 +71,11 @@ export default function TermsOfServicePage() {
                 key={lang}
                 type="button"
                 onClick={() => setSelectedLanguage(lang)}
-                className={`
-                  px-4 py-3 text-sm font-medium rounded-xl transition-all
-                  ${
-                    selectedLanguage === lang
-                      ? 'bg-indigo-600 text-white shadow-md'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                  }
-                `}
+                className={`px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+                  selectedLanguage === lang
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                }`}
               >
                 {languageNames[lang]}
               </button>
@@ -83,7 +89,7 @@ export default function TermsOfServicePage() {
             <a
               href={pdfUrls[selectedLanguage]}
               download
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-colors rounded-xl bg-indigo-600 hover:bg-indigo-700"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
             >
               <Download className="w-4 h-4" />
               {t.termsOfService.downloadPdf}
@@ -92,7 +98,7 @@ export default function TermsOfServicePage() {
               href={pdfUrls[selectedLanguage]}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold transition-colors border-2 rounded-xl text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               <ExternalLink className="w-4 h-4" />
               {t.termsOfService.viewOnline}
@@ -100,7 +106,7 @@ export default function TermsOfServicePage() {
           </div>
 
           {/* Info Box */}
-          <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/20">
             <div className="flex items-start gap-3">
               <FileText className="flex-shrink-0 w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="flex-1">

@@ -9,16 +9,13 @@
 // TODO: Add i18n for all hardcoded strings (labels, descriptions, errors, PRO feature texts)
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Crown, Info, Sparkles, UserPlus, Users } from 'lucide-react';
 
-// Components
 import { SegmentedControl } from '@/components/ui/segment-control';
-
-// Features
 import { RangeSlider } from '@/features/events/components/range-slider';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 
@@ -30,7 +27,7 @@ const GROUP_MAX = 50;
 export default function CapacityPage() {
   const { event, isLoading, saveSection } = useEdit();
   const router = useRouter();
-  const params = useParams<{ id: string; locale: string }>();
+  const { localePath } = useLocalePath();
 
   // Use event's sponsorshipPlan for PRO feature access
   const sponsorshipPlan = event?.sponsorshipPlan || 'FREE';
@@ -132,7 +129,9 @@ export default function CapacityPage() {
 
   // Navigate to plans page
   const handleUpgradeToPro = () => {
-    router.push(`/${params.locale}/event/${params.id}/manage/plans`);
+    if (event?.id) {
+      router.push(localePath(`/event/${event.id}/manage/plans`));
+    }
   };
 
   // Handle range slider change

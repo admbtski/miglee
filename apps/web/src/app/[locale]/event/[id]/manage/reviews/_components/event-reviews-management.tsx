@@ -3,6 +3,8 @@
  * View and moderate reviews
  */
 
+// TODO i18n: All hardcoded strings need translation keys
+
 'use client';
 
 import { Star, Info, AlertCircle, TrendingUp } from 'lucide-react';

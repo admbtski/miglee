@@ -3,12 +3,11 @@
  * View and moderate comments
  */
 
-// TODO: Add i18n for loading text
+// TODO i18n: loading text, metadata
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-// Local components
 import { EventCommentsManagement } from './_components/event-comments-management';
 
 type PageProps = {

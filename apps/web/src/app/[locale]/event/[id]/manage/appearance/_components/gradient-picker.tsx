@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: Color and direction names need translation keys
+
 import * as React from 'react';
 import {
   Check,

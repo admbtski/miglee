@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Section titles, level labels, social media labels, empty state
+
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import {
   Activity,
@@ -91,7 +94,7 @@ export function AboutTab({ user }: AboutTabProps) {
   const categoryLevels = user.categoryLevels ?? [];
   const socialLinks = user.socialLinks ?? [];
 
-  // todo: use u18n
+  // TODO i18n: use locale-aware category names
   const getCategoryName = (category: any) => {
     if (typeof category.names === 'object') {
       return category.names.pl || category.names.en || category.slug;

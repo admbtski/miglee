@@ -10,6 +10,8 @@
  * 5. Auto-apply with 3s debounce for sidebar filters
  */
 
+// TODO i18n: Map loading fallback text needs translation
+
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';

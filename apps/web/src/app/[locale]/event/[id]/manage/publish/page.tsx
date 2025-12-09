@@ -4,9 +4,10 @@
  * PublishPage - Manage event publication status
  */
 
-// TODO: Add i18n for all hardcoded strings in this component
+// TODO i18n: All hardcoded strings (labels, descriptions, toasts)
+// TODO i18n: date/time formatting should be locale-aware
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   AlertTriangle,
   CalendarClock,
@@ -20,18 +21,14 @@ import {
   Send,
 } from 'lucide-react';
 
-// Features
 import {
   useCancelScheduledPublicationMutation,
   usePublishEventMutation,
   useScheduleEventPublicationMutation,
   useUnpublishEventMutation,
 } from '@/features/events/api/events';
-
-// Utils
 import { toast } from '@/lib/utils';
 
-// Local components
 import { useEventManagement } from '../_components/event-management-provider';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 

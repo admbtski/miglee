@@ -2,6 +2,9 @@
  * Empty thread placeholder
  */
 
+// TODO i18n: Polish strings need translation keys
+// - "Wybierz chat", "Wybierz chat z listy..."
+
 'use client';
 
 import { memo } from 'react';

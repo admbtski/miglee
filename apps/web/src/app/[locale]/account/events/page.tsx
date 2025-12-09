@@ -1,53 +1,45 @@
 /**
  * My Events Page
- * Displays user's events with filtering by role and status
  *
- * Header and filters are always visible immediately.
- * Events list loads with a single loader in the content area.
+ * Displays user's events with filtering by role and status.
+ * Header and filters render immediately, events list loads async.
+ *
+ * All text uses i18n via useI18n hook.
  */
 
 'use client';
 
 import { Suspense, useMemo } from 'react';
 
-// Features - Auth
 import { useMeQuery } from '@/features/auth/hooks/auth';
-
-// Features - Events API
 import {
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
   useLeaveEventMutationMembers,
   useMyEventsQuery,
 } from '@/features/events/api/event-members';
-
-// Features - Events (components, hooks, types, mappers)
 import {
-  // Components
   CancelEventModals,
   DeleteEventModals,
   EventStatusFilter,
   FiltersDropdown,
   MyEventCard,
-  RoleFilter,
-  MyEventsUnauthenticatedState,
-  MyEventsErrorState,
   MyEventsEmptyState,
+  MyEventsErrorState,
   MyEventsInlineLoading,
-  // Hooks
-  useEventsModals,
-  useMyEventsFilters,
-  // Types & Mappers
-  type RoleFilterValue,
-  type EventStatusFilterValue,
+  MyEventsUnauthenticatedState,
+  RoleFilter,
   mapMembershipToCardData,
   mapRoleFilterToBackend,
   mapRoleFilterToMembershipStatus,
   mapStatusFiltersToBackend,
+  useEventsModals,
+  useMyEventsFilters,
+  type EventStatusFilterValue,
+  type RoleFilterValue,
 } from '@/features/events';
-
-// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
+
 import { AccountPageHeader } from '../_components';
 
 /**
@@ -203,14 +195,14 @@ export default function MyEventsPage() {
       />
 
       {/* Filters - Desktop (hidden on mobile) - always visible immediately */}
-      <div className="hidden lg:flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800">
+      <div className="hidden lg:flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <RoleFilter value={roleFilter} onChange={setRoleFilter} />
         <EventStatusFilter values={statusFilters} onChange={setStatusFilters} />
 
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="ml-auto text-sm text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium whitespace-nowrap"
+            className="ml-auto text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 whitespace-nowrap"
           >
             {t.myEvents.clearFilters}
           </button>

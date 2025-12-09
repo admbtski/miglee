@@ -1,6 +1,10 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+// TODO i18n: Chat management texts should be translatable
+// - "Ładowanie czatu...", "Nie znaleziono wydarzenia"
+// - "Wiadomości", "Uczestnicy", message counts
+
+import { useMemo, useRef, useState } from 'react';
 import {
   useGetEventMessages,
   useSendEventMessage,

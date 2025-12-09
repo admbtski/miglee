@@ -1,8 +1,17 @@
 'use client';
 
-import { AlertTriangle, X } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+/**
+ * Delete Account Modal
+ *
+ * Confirmation dialog for account deletion with:
+ * - Reason input (optional)
+ * - Confirmation text input
+ * - Grace period info (soft delete)
+ */
+
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, X } from 'lucide-react';
 
 import { useI18n } from '@/lib/i18n/provider-ssr';
 

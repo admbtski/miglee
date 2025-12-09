@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All menu labels need translation keys
+// - "Menu", "Wydarzenia", "Konto", "About us", etc., "Sign in to your account", "Follow us on social media"
+
 import { ThemeSwitchConnected } from '@/features/theme/components/theme-switch-connect';
 import { AnimatePresence, motion } from 'framer-motion';
 import {

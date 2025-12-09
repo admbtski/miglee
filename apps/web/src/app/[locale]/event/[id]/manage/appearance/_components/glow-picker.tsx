@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: Color and intensity names need translation keys
+
 import * as React from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';

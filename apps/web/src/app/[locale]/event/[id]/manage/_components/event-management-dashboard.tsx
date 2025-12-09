@@ -4,7 +4,8 @@
  * Modern, clean design with great UX
  */
 
-// TODO: Add i18n for all hardcoded strings
+// TODO i18n: All hardcoded strings need translation keys
+// TODO i18n: date/time formatting should use user.timezone + locale
 
 'use client';
 
@@ -80,6 +81,7 @@ export function EventManagementDashboard({
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 mx-auto border-4 rounded-full animate-spin border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+          {/* TODO i18n: loading text */}
           <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
             Loading dashboard...
           </p>
@@ -95,6 +97,7 @@ export function EventManagementDashboard({
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
             <Calendar className="w-8 h-8 text-zinc-400" />
           </div>
+          {/* TODO i18n: error message */}
           <p className="text-zinc-600 dark:text-zinc-400">Event not found</p>
         </div>
       </div>
@@ -176,8 +179,6 @@ export function EventManagementDashboard({
     meetingKindConfig[event.meetingKind as keyof typeof meetingKindConfig] ||
     meetingKindConfig.ONSITE;
   const MeetingIcon = meetingKind.icon;
-
-  console.dir({ event });
 
   return (
     <div className="max-w-[1400px] space-y-8">

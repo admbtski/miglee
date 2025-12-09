@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Tab labels, loading states, error messages
+
 import { useState } from 'react';
 import { User, Calendar, Star, Loader2, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +23,7 @@ interface TabConfig {
   icon: typeof User;
 }
 
+// TODO i18n: Tab labels
 const TABS: TabConfig[] = [
   { id: 'about', label: 'O mnie', icon: User },
   { id: 'events', label: 'Wydarzenia', icon: Calendar },
@@ -43,6 +47,7 @@ export const PublicProfileClientLoader = () => (
           />
         </div>
       </div>
+      {/* TODO i18n */}
       <p className="mt-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
         Ładowanie profilu...
       </p>
@@ -63,6 +68,7 @@ export const PublicProfileClientError = ({
           strokeWidth={1.5}
         />
       </div>
+      {/* TODO i18n */}
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
         Nie znaleziono użytkownika
       </h1>

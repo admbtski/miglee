@@ -5,12 +5,11 @@
  * Features: Skill level selection (multi-select)
  */
 
-// TODO: Add i18n for all hardcoded strings (labels, level names, descriptions, tips)
+// TODO i18n: All hardcoded strings (labels, level names, descriptions, tips)
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Award, GraduationCap, Info, Target, Trophy } from 'lucide-react';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 

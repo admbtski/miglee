@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// TODO i18n: Currency formatting should be locale-aware
+
 import * as React from 'react';
 import { ArrowLeft, Clock, Lock, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';

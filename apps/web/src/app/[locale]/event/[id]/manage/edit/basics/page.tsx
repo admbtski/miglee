@@ -5,20 +5,16 @@
  * Fields: Event name, Categories (1-3), Description, Tags (0-3)
  */
 
-// TODO: Add i18n for all hardcoded strings (labels, placeholders, errors, tips)
+// TODO i18n: All hardcoded strings (labels, placeholders, errors, tips)
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 
-// Components
 import { CategoryMultiCombo } from '@/components/forms/category-combobox';
 import { TagMultiCombo } from '@/components/forms/tag-multicombo';
-
-// Features
 import { CategoryOption } from '@/features/categories';
 import { TagOption } from '@/features/tags/types';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 

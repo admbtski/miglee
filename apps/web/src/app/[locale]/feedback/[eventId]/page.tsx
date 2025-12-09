@@ -26,6 +26,7 @@ export default async function FeedbackPage({
         <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-900">
           <div className="text-center">
             <Loader2 className="w-8 h-8 mx-auto text-indigo-600 animate-spin" />
+            {/* TODO i18n */}
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
               Ładowanie formularza...
             </p>

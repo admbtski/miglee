@@ -1,7 +1,8 @@
 'use client';
 
-import { Modal } from '@/components/feedback/modal';
-import clsx from 'clsx';
+// TODO i18n: Polish strings need translation (button labels, confirmations, etc.)
+
+import * as React from 'react';
 import {
   ArrowUpCircle,
   Ban,
@@ -15,7 +16,11 @@ import {
   UserX,
   XCircle,
 } from 'lucide-react';
-import * as React from 'react';
+import clsx from 'clsx';
+
+import { Modal } from '@/components/feedback/modal';
+import { buildAvatarUrl } from '@/lib/media/url';
+
 import {
   EventManagementModalProps,
   EventMember,
@@ -24,7 +29,6 @@ import {
   STATUS_BADGE_CLASSES,
 } from './types';
 import { Avatar, Badge, iconForRole } from './ui';
-import { buildAvatarUrl } from '@/lib/media/url';
 
 type BtnVariant =
   | 'solid'

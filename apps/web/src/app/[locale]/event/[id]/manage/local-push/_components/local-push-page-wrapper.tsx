@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: Polish strings need translation keys
+
 import { LocalPushPage } from '@/features/events/components/local-push-page';
 import { useSubscriptionData } from '@/features/events/hooks/use-subscription-data';
 import { useEventQuery } from '@/features/events/api/events';

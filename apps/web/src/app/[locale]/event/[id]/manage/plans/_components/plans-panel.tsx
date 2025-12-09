@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All hardcoded Polish strings need translation keys
+// TODO i18n: Currency formatting should be locale-aware
+
 import * as React from 'react';
 import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
 import { SponsorPlan } from '@/features/events/types/sponsorship';

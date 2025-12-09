@@ -4,6 +4,10 @@
  * Pattern: Similar to join-form-management-client.tsx
  */
 
+// TODO i18n: All Polish strings need translation keys
+// - All button labels, error messages, placeholders
+// - Tab labels, result labels, question type names
+
 'use client';
 
 import { useState } from 'react';

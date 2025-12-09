@@ -1,3 +1,6 @@
+// TODO i18n: Metadata strings need translation keys
+// - "User not found", "View profile", descriptions
+
 import type { Metadata } from 'next';
 
 // Features

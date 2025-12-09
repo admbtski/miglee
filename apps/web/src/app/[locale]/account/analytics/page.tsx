@@ -1,15 +1,16 @@
 /**
  * Analytics Page
- * Coming soon - will display user analytics and statistics
+ *
+ * Coming soon - will display user analytics and statistics.
+ * All text uses i18n via useI18n hook.
  */
 
 'use client';
 
-// Icons
 import { BarChart3 } from 'lucide-react';
 
-// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
+
 import { AccountEmptyState, AccountPageHeader } from '../_components';
 
 export default function AnalyticsPage() {
@@ -24,8 +25,8 @@ export default function AnalyticsPage() {
 
       <AccountEmptyState
         illustration={
-          <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 p-12 dark:from-indigo-900/20 dark:to-violet-900/20">
-            <BarChart3 className="h-32 w-32 text-indigo-600 dark:text-indigo-400" />
+          <div className="flex items-center justify-center rounded-2xl bg-zinc-50 p-10 dark:bg-zinc-900">
+            <BarChart3 className="h-28 w-28 text-indigo-600 dark:text-indigo-400" />
           </div>
         }
         title={t.analytics.comingSoon.title}
@@ -34,7 +35,7 @@ export default function AnalyticsPage() {
           <button
             type="button"
             disabled
-            className="inline-flex items-center gap-2 rounded-lg bg-zinc-200 px-6 py-3 text-base font-semibold text-zinc-500 cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-500 shadow-sm cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900"
           >
             {t.analytics.comingSoon.button}
           </button>

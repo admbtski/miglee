@@ -9,6 +9,8 @@
  * - Click on Filters icon (mobile) → opens Right Drawer
  */
 
+// TODO i18n: Placeholder texts need translation keys ("Search..", "Any", "Filters")
+
 'use client';
 
 import {

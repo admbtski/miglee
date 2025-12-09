@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Default labels need translation keys
+// - "Notice", "OK", "Cancel", "Don't show me this again", "Working…", "Closing in Xs…"
+
 import React, {
   useCallback,
   useEffect,

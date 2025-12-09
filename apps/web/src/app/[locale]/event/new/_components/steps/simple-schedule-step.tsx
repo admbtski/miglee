@@ -1,8 +1,12 @@
 'use client';
 
-import { Clock, Info } from 'lucide-react';
+// TODO i18n: Polish strings need translation
+// TODO i18n: date/time formatting should be locale-aware
+
 import { useCallback, useMemo, useState } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
+import { Clock, Info } from 'lucide-react';
+
 import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 /**

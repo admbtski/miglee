@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+
 import { SearchX, Plus, MapPin, Calendar } from 'lucide-react';
 import { memo } from 'react';
 import Link from 'next/link';

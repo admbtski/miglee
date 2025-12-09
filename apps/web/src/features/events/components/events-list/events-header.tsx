@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All hardcoded strings need translation keys
+// - "Loading…", "Failed to load", "Znaleziono w...", "event/s", "updating…"
+
 import { memo } from 'react';
 import { SortByControl, type SortKey } from '../sort-by-control';
 import { ToggleMap } from '../toggle-map';

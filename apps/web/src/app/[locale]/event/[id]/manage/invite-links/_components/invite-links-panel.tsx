@@ -1,34 +1,39 @@
 'use client';
 
+// TODO i18n: Panel labels and button texts need translation
+// TODO i18n: date formatting should be locale-aware
+
 import * as React from 'react';
 import {
-  useEventInviteLinksQuery,
-  useCreateEventInviteLinkMutation,
-  useRevokeEventInviteLinkMutation,
-  useDeleteEventInviteLinkMutation,
-} from '@/features/events/api/invite-links';
-import { useEventQuery } from '@/features/events/api/events';
-import {
-  Copy,
-  Plus,
-  Trash2,
   Ban,
-  ExternalLink,
   Calendar,
-  Users,
   Check,
-  Edit,
   ChevronDown,
   ChevronUp,
-  Link as LinkIcon,
+  Copy,
+  Edit,
+  ExternalLink,
   Info,
+  Link as LinkIcon,
+  Plus,
+  Trash2,
+  Users,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { EditLinkModal } from './edit-link-modal';
-import { buildAvatarUrl } from '@/lib/media/url';
+
 import { Avatar } from '@/components/ui/avatar';
+import { useEventQuery } from '@/features/events/api/events';
+import {
+  useCreateEventInviteLinkMutation,
+  useDeleteEventInviteLinkMutation,
+  useEventInviteLinksQuery,
+  useRevokeEventInviteLinkMutation,
+} from '@/features/events/api/invite-links';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { cn } from '@/lib/utils';
+
+import { EditLinkModal } from './edit-link-modal';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,

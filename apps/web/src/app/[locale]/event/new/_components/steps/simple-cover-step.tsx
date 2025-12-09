@@ -1,11 +1,13 @@
 'use client';
 
-import { ImageIcon, Upload, X, Sparkles } from 'lucide-react';
-import { useState, useCallback } from 'react';
+// TODO i18n: Polish strings need translation
+
+import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { ImageIcon, Sparkles, Upload, X } from 'lucide-react';
+
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
-import { toast } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { cn, toast } from '@/lib/utils';
 
 interface SimpleCoverStepProps {
   coverPreview: string | null;

@@ -3,10 +3,14 @@
  * Shows upgrade message with preview of disabled feature content
  */
 
+// TODO i18n: Polish strings need translation keys
+
 'use client';
 
-import { Lock, Sparkles, Crown, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { ArrowRight, Crown, ExternalLink, Lock, Sparkles } from 'lucide-react';
+
+import { useLocalePath } from '@/hooks/use-locale-path';
 import { cn } from '@/lib/utils';
 
 export type SponsorshipPlan = 'FREE' | 'PLUS' | 'PRO' | null | undefined;
@@ -50,6 +54,7 @@ export function PlanUpgradeBanner({
   eventId,
   children,
 }: PlanUpgradeBannerProps) {
+  const { localePath } = useLocalePath();
   const userHasAccess = hasAccess(currentPlan, requiredPlan);
 
   // If user has access, just render children
@@ -169,7 +174,7 @@ export function PlanUpgradeBanner({
           {/* Right: Actions */}
           <div className="flex flex-shrink-0 flex-col gap-2 lg:items-end">
             <Link
-              href={`/event/${eventId}/manage/plans`}
+              href={localePath(`/event/${eventId}/manage/plans`)}
               className={cn(
                 'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg',
                 isPro
@@ -177,12 +182,13 @@ export function PlanUpgradeBanner({
                   : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500'
               )}
             >
+              {/* TODO i18n */}
               Ulepsz to wydarzenie
               <ArrowRight className="h-4 w-4" />
             </Link>
 
             <Link
-              href="/account/subscription"
+              href={localePath('/account/subscription')}
               className={cn(
                 'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors',
                 isPro
@@ -190,6 +196,7 @@ export function PlanUpgradeBanner({
                   : 'text-indigo-700 hover:text-indigo-900 dark:text-indigo-300 dark:hover:text-indigo-100'
               )}
             >
+              {/* TODO i18n */}
               Ulepsz konto
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>

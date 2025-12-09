@@ -2,6 +2,9 @@
  * Chat Thread Component - Main message view with virtualized list
  */
 
+// TODO i18n: All strings need translation keys
+// - "X members", "Direct message", "Pinned", "Start your conversation with...", "Odpowiadasz na", "Anuluj odpowiedź"
+
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';

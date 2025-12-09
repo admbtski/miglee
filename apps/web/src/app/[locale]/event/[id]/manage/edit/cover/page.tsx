@@ -5,22 +5,18 @@
  * Features: Upload, drag & drop, image cropping, fallback cover info
  */
 
-// Note: This page uses Polish strings - already i18n ready pattern
+// TODO i18n: Polish strings need translation
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDropzone } from 'react-dropzone';
 import { Image as ImageIcon, Sparkles, Upload, X } from 'lucide-react';
 
-// Components
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
-
-// Lib
 import { uploadEventCover } from '@/lib/media/upload-event-cover';
 import { buildEventCoverUrl } from '@/lib/media/url';
 import { cn, toast } from '@/lib/utils';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, InfoBox } from '../_components/edit-section';
 

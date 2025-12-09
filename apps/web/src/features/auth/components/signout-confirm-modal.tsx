@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Polish strings need translation keys
+// - "Wylogować się?", "Zostaniesz wylogowany...", "Anuluj", "Wyloguj"
+
 import { AnimatePresence, motion } from 'framer-motion';
 import { LogOut } from 'lucide-react';
 import { useEffect, useMemo } from 'react';

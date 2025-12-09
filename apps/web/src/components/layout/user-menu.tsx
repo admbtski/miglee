@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Menu labels need translation keys
+// - "Profile", "Chats", "Events", "Plans & Bills", "Settings", "Dark mode", "Sign out"
+
 import { ThemeSwitchConnected } from '@/features/theme/components/theme-switch-connect';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { useLocalePath } from '@/hooks/use-locale-path';

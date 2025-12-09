@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Button labels, badges, stat labels, date formatting
+
 import { useState } from 'react';
 import {
   MessageCircle,
@@ -76,7 +79,7 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
     hostRatingAvg: user.stats?.hostRatingAvg ?? null,
   };
 
-  // todo: use u18n
+  // TODO i18n: use locale-aware date formatting
   const dateLocale = locale === 'pl' ? pl : enUS;
 
   return (

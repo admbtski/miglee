@@ -1,6 +1,9 @@
 // components/auth/AuthModal.tsx
 'use client';
 
+// TODO i18n: Polish strings need translation keys
+// - "Zaloguj się", "Utwórz konto", "Formularz logowania", "Formularz tworzenia konta", "Zamknij"
+
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useId, useState } from 'react';

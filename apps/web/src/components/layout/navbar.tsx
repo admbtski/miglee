@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Button labels need translation keys
+// - "Post an event", "Sign in", "Menu", "Notifications", "Favourites", "+ Event"
+
 import { Bell, Heart, Menu as MenuIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';

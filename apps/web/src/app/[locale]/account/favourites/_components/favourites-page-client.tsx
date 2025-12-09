@@ -1,33 +1,25 @@
 /**
  * Favourites Page Client Component
- * Handles fetching and displaying favourite events with infinite scroll
+ *
+ * Handles fetching and displaying favourite events with infinite scroll.
+ * All text uses i18n via useI18n hook.
  */
 
 'use client';
 
 import { useMemo } from 'react';
-
-// External libraries
-import { AnimatePresence } from 'framer-motion';
-
-// Next.js
 import Link from 'next/link';
-
-// Icons
+import { AnimatePresence } from 'framer-motion';
 import { Heart, Loader2 } from 'lucide-react';
 
-// Features
 import {
   FavouriteCard,
   flatFavouritesPages,
   useMyFavouritesInfiniteQuery,
 } from '@/features/favourites';
-
-// Hooks & i18n
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-// Layout
 import { AccountPageHeader } from '../../_components';
 
 /**

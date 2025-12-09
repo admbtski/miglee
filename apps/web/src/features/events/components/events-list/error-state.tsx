@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { memo } from 'react';
 import Link from 'next/link';

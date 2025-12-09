@@ -5,9 +5,10 @@
  * Features: Quick presets, date/time pickers, duration presets, timezone info
  */
 
-// TODO: Add i18n for all hardcoded strings (labels, preset names, errors, tips)
+// TODO i18n: All hardcoded strings (labels, preset names, errors, tips)
+// TODO i18n: date/time formatting should be locale-aware
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Calendar,
   Clock,
@@ -20,7 +21,6 @@ import {
   Zap,
 } from 'lucide-react';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 

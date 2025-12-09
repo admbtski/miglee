@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: Hardcoded Polish strings need translation keys
+// - "Przekierowanie...", "Ładowanie...", "Link do przywrócenia konta..."
+
 import {
   ArrowLeft,
   CheckCircle,
@@ -150,6 +153,7 @@ function RestoreAccountContent() {
                 </p>
                 <div className="flex items-center justify-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                   <Loader2 className="w-4 h-4 animate-spin" />
+                  {/* TODO i18n */}
                   <span>Przekierowanie...</span>
                 </div>
               </div>
@@ -224,7 +228,7 @@ function RestoreAccountContent() {
             )}
           </button>
 
-          {/* TODO: Add i18n for this success message */}
+          {/* TODO i18n: success message */}
           {requestRestoration.isSuccess && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -233,6 +237,7 @@ function RestoreAccountContent() {
             >
               <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto mb-2" />
               <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                {/* TODO i18n */}
                 Link do przywrócenia konta został wysłany na Twój adres email.
               </p>
             </motion.div>
@@ -261,6 +266,7 @@ export default function RestoreAccountPage() {
           <div className="text-center">
             <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin mx-auto" />
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+              {/* TODO i18n */}
               Ładowanie...
             </p>
           </div>

@@ -1,11 +1,20 @@
 'use client';
 
-import { Avatar } from '@/components/ui/avatar';
-import { useMeQuery } from '@/features/auth/hooks/auth';
-import { useLocalePath } from '@/hooks/use-locale-path';
-import { useI18n } from '@/lib/i18n/provider-ssr';
-import { buildAvatarUrl } from '@/lib/media/url';
-import { cn } from '@/lib/utils';
+/**
+ * AccountSidebarEnhanced - Desktop sidebar with collapsible groups
+ *
+ * Features:
+ * - Collapsible sidebar (icon-only mode)
+ * - Grouped navigation items with expand/collapse
+ * - i18n labels from provider
+ * - Locale-aware navigation
+ * - Active state indication
+ * - Tooltip for collapsed items
+ */
+
+import { useCallback, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
@@ -26,9 +35,13 @@ import {
   Sparkles,
   UserIcon,
 } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+
+import { Avatar } from '@/components/ui/avatar';
+import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { cn } from '@/lib/utils';
 
 interface NavItem {
   id: string;
@@ -431,9 +444,11 @@ export function AccountSidebarEnhanced() {
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate text-zinc-900 dark:text-zinc-100">
+                      {/* TODO i18n: fallback user name */}
                       {user?.name || 'User'}
                     </p>
                     <p className="text-xs truncate text-zinc-500 dark:text-zinc-400">
+                      {/* TODO i18n: fallback user email */}
                       {user?.email || 'user@example.com'}
                     </p>
                   </div>

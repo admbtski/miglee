@@ -2,6 +2,8 @@
  * Global error state component
  */
 
+// TODO i18n: Default title, message and help text have Polish strings that need translation keys
+
 'use client';
 
 import { memo } from 'react';

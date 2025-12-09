@@ -5,9 +5,9 @@
  * Features: Event visibility, Address visibility, Member list visibility, Map toggle
  */
 
-// TODO: Add i18n for all hardcoded strings (labels, descriptions, tips)
+// TODO i18n: All hardcoded strings (labels, descriptions, tips)
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Eye,
   EyeOff,
@@ -19,10 +19,8 @@ import {
   Users,
 } from 'lucide-react';
 
-// Components
 import { SegmentedControl } from '@/components/ui/segment-control';
 
-// Local components
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';
 

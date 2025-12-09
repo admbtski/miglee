@@ -3,6 +3,8 @@
  * Handles adding, editing, removing, and reordering FAQs
  */
 
+// TODO i18n: All hardcoded strings need translation keys
+
 'use client';
 
 import { useState } from 'react';

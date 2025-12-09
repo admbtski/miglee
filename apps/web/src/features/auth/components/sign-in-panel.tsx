@@ -1,6 +1,9 @@
 // components/auth/sign-in-panel.tsx
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Validation messages, labels, button texts, placeholders
+
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useId, useMemo, useRef, useState } from 'react';

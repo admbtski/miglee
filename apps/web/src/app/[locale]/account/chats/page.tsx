@@ -1,13 +1,24 @@
 'use client';
 
-import { Hash, Loader2, User2 } from 'lucide-react';
+/**
+ * Chats Page - Direct Messages & Event Channels
+ *
+ * Features:
+ * - DM conversations with other users
+ * - Event channel conversations
+ * - Real-time message updates via subscriptions
+ * - Typing indicators
+ * - Message reactions
+ *
+ * TODO: add translation (i18n) - all hardcoded strings
+ * TODO: format date/time with user.timezone + locale (i18n)
+ */
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Hash, Loader2, User2 } from 'lucide-react';
 
-// Features - Auth
 import { useMeQuery } from '@/features/auth/hooks/auth';
-
-// Features - Chat API
 import {
   dmKeys,
   useGetDmMessagesInfinite,
@@ -47,8 +58,6 @@ import {
   useDmReactionAdded,
   useEventReactionAdded,
 } from '@/features/chat/api/reactions-subscriptions';
-
-// Features - Chat Components
 import { ChatList as ChatListComponent } from '@/features/chat/components/chat-list';
 import { ChatThread as ChatThreadComponent } from '@/features/chat/components/chat-thread';
 import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
@@ -58,11 +67,7 @@ import {
   UserPicker,
   type PickedUser,
 } from '@/features/chat/components/UserPicker';
-
-// Features - Chat Hooks
 import { useMessageActions } from '@/features/chat/hooks';
-
-// Features - Events
 import { useMyMembershipsQuery } from '@/features/events/api/event-members';
 
 /* ───────────────────────────── Types ───────────────────────────── */
@@ -623,6 +628,7 @@ export default function ChatsPageIntegrated() {
         if (!event) return [];
 
         // Get last message from event (if available)
+        // TODO: add translation (i18n) - "Recent activity", "No messages yet"
         const lastMessage =
           event.messagesCount > 0 ? 'Recent activity' : 'No messages yet';
 
@@ -966,6 +972,7 @@ export default function ChatsPageIntegrated() {
     }
 
     // For channels, we'd need to fetch user names (simplified for now)
+    // TODO: add translation (i18n) - "person", "people"
     return [
       `${typingUsers.size} ${typingUsers.size === 1 ? 'person' : 'people'}`,
     ];
@@ -1018,9 +1025,11 @@ export default function ChatsPageIntegrated() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          {/* TODO: add translation (i18n) */}
           Chats
         </h1>
         <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
+          {/* TODO: add translation (i18n) */}
           Manage your direct messages and event conversations
         </p>
       </div>
@@ -1236,6 +1245,7 @@ function ChatTabs({
   return (
     <div className="grid grid-cols-2 gap-2 p-1 mb-2 text-sm border rounded-2xl border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
       <button
+        type="button"
         className={[
           'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors',
           tab === 'dm'
@@ -1243,11 +1253,14 @@ function ChatTabs({
             : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60',
         ].join(' ')}
         onClick={() => setTab('dm')}
+        aria-pressed={tab === 'dm'}
       >
         <User2 className="w-4 h-4" />
+        {/* TODO: add translation (i18n) */}
         DM
       </button>
       <button
+        type="button"
         className={[
           'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors',
           tab === 'channel'
@@ -1255,8 +1268,10 @@ function ChatTabs({
             : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60',
         ].join(' ')}
         onClick={() => setTab('channel')}
+        aria-pressed={tab === 'channel'}
       >
         <Hash className="w-4 h-4" />
+        {/* TODO: add translation (i18n) */}
         Channels
       </button>
     </div>
@@ -1269,13 +1284,18 @@ const ChatList = ChatListComponent;
 /* ───────────────────────────── Thread ───────────────────────────── */
 const ChatThread = ChatThreadComponent;
 
-// Helper functions for time formatting (internal use only)
+/**
+ * Format relative time for chat timestamps
+ * TODO: format date/time with user.timezone + locale (i18n)
+ * Consider using date-fns formatDistanceToNow with locale support
+ */
 function formatRelativeTime(isoString: string): string {
   const now = Date.now();
   const then = new Date(isoString).getTime();
   const diffMs = now - then;
   const diffMins = Math.floor(diffMs / 60000);
 
+  // TODO: add translation (i18n) - "now", time units
   if (diffMins < 1) return 'now';
   if (diffMins < 60) return `${diffMins}m`;
   const diffHours = Math.floor(diffMins / 60);

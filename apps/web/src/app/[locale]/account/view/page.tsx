@@ -1,8 +1,17 @@
 'use client';
 
-import { ExternalLink, Eye } from 'lucide-react';
-import Link from 'next/link';
+/**
+ * Profile View Page
+ *
+ * Shows how the user's profile appears to others.
+ * Uses the PublicProfileClient component for the actual profile rendering.
+ *
+ * TODO: add translation (i18n) - hardcoded strings marked inline
+ */
+
 import { Suspense } from 'react';
+import Link from 'next/link';
+import { ExternalLink, Eye } from 'lucide-react';
 
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
@@ -22,7 +31,7 @@ export default function ProfileViewPage() {
       <ProfileHeader username={username ?? null} />
 
       {/* Profile View Container - with Suspense for lazy loading */}
-      <div className="overflow-hidden rounded-[32px] border border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#0a0a0b] shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {isLoading && <PublicProfileClientLoader />}
         {username && (
           <Suspense fallback={<PublicProfileClientLoader />}>
@@ -40,40 +49,52 @@ interface ProfileHeaderProps {
 
 function ProfileHeader({ username }: ProfileHeaderProps) {
   const { localePath } = useLocalePath();
+  const hasUsername = Boolean(username);
+
+  const cta = hasUsername ? (
+    <Link
+      href={localePath(`/u/${username}`)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-md transition-all hover:from-indigo-500 hover:to-indigo-400 hover:shadow-lg"
+    >
+      <ExternalLink className="h-4 w-4" strokeWidth={2} />
+      {/* TODO i18n: Open in new tab */}
+      Open in New Tab
+    </Link>
+  ) : (
+    <button
+      type="button"
+      disabled
+      className="inline-flex items-center gap-2 rounded-2xl bg-zinc-200 px-5 py-3 text-sm font-semibold text-zinc-500 shadow-sm"
+    >
+      <ExternalLink className="h-4 w-4" strokeWidth={2} />
+      {/* TODO i18n: Loading profile... */}
+      Loading profile...
+    </button>
+  );
+
   return (
-    <div className="flex items-center justify-between p-6 border border-indigo-200/80 dark:border-indigo-800/50 rounded-[24px] bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 shadow-sm">
+    <div className="flex flex-col gap-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
-        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-indigo-200/50 dark:border-indigo-800/50">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-indigo-200/60 bg-white text-indigo-600 shadow-sm dark:border-indigo-800/50 dark:bg-zinc-900 dark:text-indigo-400">
           <Eye
             className="w-6 h-6 text-indigo-600 dark:text-indigo-400"
             strokeWidth={2}
           />
         </div>
         <div>
-          {/* TODO: Add i18n key for "Profile Preview" - use t.account.viewProfile.title */}
-          <h2 className="text-base font-bold tracking-[-0.02em] text-indigo-900 dark:text-indigo-100">
+          {/* TODO i18n: Profile Preview (t.account.viewProfile.title) */}
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             Profile Preview
           </h2>
-          {/* TODO: Add i18n key for "This is how your profile appears to other users" - use t.account.viewProfile.description */}
-          <p className="mt-1 text-sm leading-relaxed text-indigo-700 dark:text-indigo-300 max-w-[60ch]">
+          {/* TODO i18n: This is how your profile appears to other users (t.account.viewProfile.description) */}
+          <p className="mt-1 max-w-[60ch] text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
             This is how your profile appears to other users
           </p>
         </div>
       </div>
-      <Link
-        href={username ? localePath(`u/${username}`) : '#'}
-        style={{
-          opacity: !!username ? 1 : 0.8,
-          pointerEvents: !!username ? 'auto' : 'none',
-        }}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white transition-all bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"
-      >
-        <ExternalLink className="w-4 h-4" strokeWidth={2} />
-        {/* TODO: Add i18n key for "Open in New Tab" - use t.account.viewProfile.openInNewTab */}
-        Open in New Tab
-      </Link>
+      {cta}
     </div>
   );
 }

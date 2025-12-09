@@ -3,10 +3,12 @@
  * Displays user's saved/favourite events
  */
 
+import type { Metadata } from 'next';
+
 import { FavouritesPageClient } from './_components/favourites-page-client';
 
-// TODO: Add i18n for metadata - title and description are hardcoded in Polish
-export const metadata = {
+// TODO i18n: metadata title/description
+export const metadata: Metadata = {
   title: 'Zapisane wydarzenia | miglee.pl',
   description: 'Twoje zapisane wydarzenia',
 };

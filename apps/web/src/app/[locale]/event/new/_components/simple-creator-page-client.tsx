@@ -10,8 +10,6 @@
  * - Creates events as DRAFT status by default
  */
 
-// Note: This page uses Polish strings - already i18n ready pattern
-
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -25,7 +23,6 @@ import {
   Users,
 } from 'lucide-react';
 
-// Features
 import { useCreateEventMutation } from '@/features/events/api/events';
 import {
   CategorySelectionProvider,
@@ -33,11 +30,9 @@ import {
   SuccessEventModal,
 } from '@/features/events';
 import type { SimpleEventFormValues } from '@/features/events/types/event-form';
-
-// Lib
+import { useLocalePath } from '@/hooks/use-locale-path';
 import { devLogger, toast } from '@/lib/utils';
 
-// Local components
 import { SimpleCreatorForm } from './simple-creator-form';
 
 /**
@@ -56,6 +51,7 @@ const STEP_META = [
 
 export function SimpleCreatorPageClient() {
   const router = useRouter();
+  const { localePath } = useLocalePath();
   const { mutateAsync: createAsync } = useCreateEventMutation();
 
   const [successOpen, setSuccessOpen] = useState(false);
@@ -68,10 +64,10 @@ export function SimpleCreatorPageClient() {
 
     // Navigate to event management page after success modal is closed
     if (createdEventId) {
-      router.push(`/event/${createdEventId}/manage`);
+      router.push(localePath(`/event/${createdEventId}/manage`));
       setCreatedEventId(undefined);
     }
-  }, [createdEventId, router]);
+  }, [createdEventId, router, localePath]);
 
   const handleSubmit = useCallback(
     async (
@@ -169,7 +165,7 @@ export function SimpleCreatorPageClient() {
         subtitle="Twoje wydarzenie zostało zapisane jako wersja robocza. Teraz możesz je opublikować lub dalej konfigurować w panelu zarządzania."
         onViewEvent={
           createdEventId
-            ? () => router.push(`/event/${createdEventId}/manage`)
+            ? () => router.push(localePath(`/event/${createdEventId}/manage`))
             : undefined
         }
         viewLabel="Przejdź do panelu"

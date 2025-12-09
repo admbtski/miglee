@@ -1,9 +1,12 @@
 'use client';
 
+// TODO i18n: status labels should be translated
+
 import * as React from 'react';
+import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import { ChevronDown } from 'lucide-react';
+
 import { EventMember, EventMemberStatus } from './types';
 import { MemberRow } from './member-row';
 

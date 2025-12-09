@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: All hardcoded strings need translation keys
+
 import * as React from 'react';
 import {
   Bell,

@@ -1,20 +1,19 @@
 /**
  * Plans and Bills Page
- * Displays user subscription status, plan details, and payment history
  *
- * Header is always visible immediately.
- * Plan details and payment history load with a single loader.
+ * Displays subscription status, plan details, and payment history.
+ * Header renders immediately, content loads async.
+ *
+ * All text uses i18n via useI18n hook.
  */
 
 'use client';
 
 import { Suspense } from 'react';
 
-// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
-import { AccountPageHeader } from '../_components';
 
-// Local components
+import { AccountPageHeader } from '../_components';
 import { BillingContent } from './_components/billing-page-wrapper';
 import { PaymentResultModal } from './_components/payment-result-modal';
 

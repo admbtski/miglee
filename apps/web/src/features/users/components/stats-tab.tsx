@@ -1,5 +1,8 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Stat labels, section titles, empty state, rating labels
+
 import { Award, Users, Calendar, Star, TrendingUp, Trophy } from 'lucide-react';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
 

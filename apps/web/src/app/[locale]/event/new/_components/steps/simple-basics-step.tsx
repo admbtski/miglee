@@ -1,13 +1,16 @@
 'use client';
 
-import { Info } from 'lucide-react';
+// TODO i18n: Polish strings need translation
+
 import { useId } from 'react';
 import { Controller, UseFormReturn } from 'react-hook-form';
-import { useCategorySelection } from '@/features/events/components/category-selection-provider';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
-import { getUseCategoriesLimitData } from '@/features/events/hooks/use-categories';
+import { Info } from 'lucide-react';
+
 import { CategoryMultiCombo } from '@/components/forms/category-combobox';
 import { CategoryOption } from '@/features/categories';
+import { useCategorySelection } from '@/features/events/components/category-selection-provider';
+import { getUseCategoriesLimitData } from '@/features/events/hooks/use-categories';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 /**
  * SimpleBasicsStep - Simplified basics step

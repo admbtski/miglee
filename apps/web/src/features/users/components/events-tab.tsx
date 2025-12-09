@@ -1,5 +1,9 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Loading/error/empty states, pagination labels, event badges
+// TODO i18n: Date formatting should be locale-aware
+
 import { useState } from 'react';
 import {
   Calendar,

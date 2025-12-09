@@ -1,11 +1,12 @@
 /**
  * Cookie Settings Page
- * Allows users to manage cookie preferences and view cookie categories
+ *
+ * Allows users to manage cookie preferences and view cookie categories.
+ * All text uses i18n via useI18n hook.
  */
 
 'use client';
 
-// Icons
 import {
   BarChart3,
   CheckCircle2,
@@ -17,11 +18,9 @@ import {
   Shield,
 } from 'lucide-react';
 
-// Cookie consent
 import { showCookieBanner } from '@/components/cookie-consent';
-
-// i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
+
 import { AccountPageHeader } from '../_components';
 
 export default function CookieSettingsPage() {
@@ -62,10 +61,10 @@ export default function CookieSettingsPage() {
       />
 
       {/* Main Card - Manage Cookies */}
-      <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-8 dark:from-indigo-900/20 dark:to-violet-900/20 dark:border-indigo-800">
+      <div className="rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex flex-col sm:flex-row items-start gap-6">
-          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 dark:bg-indigo-500 shrink-0">
-            <Cookie className="w-8 h-8 text-white" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-indigo-200 bg-white text-indigo-600 shadow-sm dark:border-indigo-800/60 dark:bg-zinc-900 dark:text-indigo-400">
+            <Cookie className="w-7 h-7" />
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-3">
@@ -76,7 +75,7 @@ export default function CookieSettingsPage() {
             </p>
             <button
               onClick={showCookieBanner}
-              className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors rounded-xl shadow-lg hover:shadow-xl"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
             >
               <Settings2 className="w-5 h-5" />
               {/* TODO: Add i18n key t.cookies.managePreferences */}
@@ -87,7 +86,7 @@ export default function CookieSettingsPage() {
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 dark:bg-blue-900/10 dark:border-blue-900/30">
+      <div className="rounded-xl border border-blue-100 bg-blue-50 p-5 dark:border-blue-900/30 dark:bg-blue-900/10">
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
           <div>
@@ -136,7 +135,7 @@ export default function CookieSettingsPage() {
             return (
               <div
                 key={category.title}
-                className="bg-white border border-zinc-200 rounded-xl p-5 dark:bg-zinc-900 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
               >
                 <div className="flex items-start gap-4">
                   <div
@@ -163,7 +162,7 @@ export default function CookieSettingsPage() {
       </div>
 
       {/* GDPR Info */}
-      <div className="bg-white border border-zinc-200 rounded-xl p-6 dark:bg-zinc-900 dark:border-zinc-800">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-start gap-4">
           <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
           <div className="flex-1">

@@ -1,5 +1,9 @@
 'use client';
 
+// TODO i18n: All Polish strings need translation keys
+// - Loading/error/empty states, pagination labels
+// TODO i18n: Date formatting should be locale-aware
+
 import { useState } from 'react';
 import {
   Star,
@@ -82,7 +86,7 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
       {/* Reviews List */}
       <div className="space-y-4">
         {reviews.map((review) => {
-          // todo: use u18n
+          // TODO i18n: use locale-aware date formatting and category names
           const createdDate = new Date(review.createdAt);
           const categoryNames = review.event?.categories?.[0]?.names;
           const categoryName = categoryNames?.[locale ?? 'en'] ?? 'Wydarzenie';
@@ -109,7 +113,7 @@ export function ReviewsTab({ user }: ReviewsTabProps) {
                 </Link>
                 <div className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 flex-shrink-0">
                   <Calendar className="h-4 w-4" />
-                  {/**  todo: use u18n */}
+                  {/* TODO i18n: locale-aware date */}
                   <span>{format(createdDate, 'PP', { locale: pl })}</span>
                 </div>
               </div>

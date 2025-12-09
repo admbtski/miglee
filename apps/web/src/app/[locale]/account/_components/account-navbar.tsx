@@ -1,9 +1,19 @@
 'use client';
 
-import { ListCollapseIcon } from 'lucide-react';
+/**
+ * AccountNavbar - Top navigation bar for account pages
+ *
+ * Features:
+ * - Mobile menu toggle (shows AccountMobileSidebar)
+ * - Shared navbar actions (notifications, user menu)
+ */
+
 import { useState } from 'react';
-import { AccountMobileSidebar } from './account-mobile-sidebar';
+import { ListCollapseIcon } from 'lucide-react';
+
 import { NavbarActions } from '@/components/layout/navbar-actions';
+
+import { AccountMobileSidebar } from './account-mobile-sidebar';
 
 export function AccountNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,6 +28,7 @@ export function AccountNavbar() {
             onClick={() => setMobileMenuOpen(true)}
             className="p-2 transition-colors rounded-lg lg:hidden text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
             aria-label="Open menu"
+            /* TODO i18n: menu button aria label */
           >
             <ListCollapseIcon className="w-6 h-6" />
           </button>

@@ -3,14 +3,13 @@
  * Shows the public event view inside the management interface
  */
 
-// TODO: Add i18n for page title, description, and loading text
+// TODO i18n: page title, description, loading text, metadata
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-// Local components
-import { EventViewManagement } from './_components/event-view-management';
 import { ManagementPageLayout } from '../_components/management-page-layout';
+import { EventViewManagement } from './_components/event-view-management';
 
 type PageProps = {
   params: Promise<{ id: string }>;

@@ -2,6 +2,9 @@
  * Chat List Component - List of conversations
  */
 
+// TODO i18n: Strings need translation keys
+// - "Inbox", "Newest", "No messages yet", "Start a conversation", "New conversation"
+
 'use client';
 
 import { Search, User2 } from 'lucide-react';

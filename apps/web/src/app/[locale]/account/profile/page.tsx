@@ -1,16 +1,17 @@
 /**
  * Profile Settings Page
- * Allows users to manage their profile, sports, social links, and privacy settings
  *
- * Header and tabs are always visible immediately.
- * Tab content loads with a single loader inside the content area.
+ * Manages profile, sports preferences, social links, and privacy settings.
+ * Uses tabbed navigation for different settings sections.
+ *
+ * Header and tabs render immediately, tab content loads async.
+ *
+ * TODO: add translation (i18n) - tab labels, loading states (marked inline)
  */
 
 'use client';
 
 import { Suspense, useState } from 'react';
-
-// Icons
 import {
   Calendar,
   Link as LinkIcon,
@@ -20,18 +21,16 @@ import {
   User,
 } from 'lucide-react';
 
-// Features
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import { useMyFullProfileQuery } from '@/features/users/api/user-profile';
 
-// Local types & components
 import type { TabConfig, TabId } from './_types';
 import { PrivacyTab } from './_components/privacy-tab';
 import { ProfileTab } from './_components/profile-tab';
 import { SocialLinksTab } from './_components/social-links-tab';
 import { SportsTab } from './_components/sports-tab';
 
-// TODO: Add i18n for tab labels
+// TODO i18n: tab labels
 const TABS: TabConfig[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'sports', label: 'Sports & Availability', icon: Calendar },
@@ -41,7 +40,7 @@ const TABS: TabConfig[] = [
 
 function getTabClasses(isActive: boolean): string {
   const base =
-    'group inline-flex items-center gap-2.5 border-b-2 px-1 py-4 text-sm font-semibold transition-all';
+    'group inline-flex items-center gap-2.5 border-b-2 px-1 py-3 text-sm font-semibold transition-colors';
 
   if (isActive) {
     return `${base} border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400`;
@@ -60,7 +59,7 @@ function getTabIconClasses(isActive: boolean): string {
   return `${base} text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-400`;
 }
 
-// TODO: Add i18n for "Loading..."
+// TODO i18n: Loading...
 function TabContentLoader() {
   return (
     <div className="flex min-h-[300px] items-center justify-center">
@@ -78,12 +77,12 @@ function UnauthenticatedState() {
   return (
     <div className="flex min-h-[300px] items-center justify-center">
       <div className="text-center">
-        <Settings className="w-12 h-12 mx-auto text-zinc-400" />
-        {/* TODO: Add i18n for "Not authenticated" */}
+        <Settings className="mx-auto h-12 w-12 text-zinc-400" />
+        {/* TODO i18n: Not authenticated */}
         <p className="mt-4 text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Not authenticated
         </p>
-        {/* TODO: Add i18n for "Please log in to view your profile" */}
+        {/* TODO i18n: Please log in to view your profile */}
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Please log in to view your profile
         </p>
@@ -136,11 +135,11 @@ export default function ProfilePage() {
     <div className="space-y-8">
       {/* Header - always visible immediately */}
       <div className="space-y-2">
-        {/* TODO: Add i18n for "Profile Settings" */}
+        {/* TODO i18n: Profile Settings */}
         <h1 className="text-3xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50">
           Profile Settings
         </h1>
-        {/* TODO: Add i18n for "Manage your public profile, sports preferences, and privacy settings" */}
+        {/* TODO i18n: Manage your public profile, sports preferences, and privacy settings */}
         <p className="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[70ch]">
           Manage your public profile, sports preferences, and privacy settings
         </p>
@@ -148,7 +147,10 @@ export default function ProfilePage() {
 
       {/* Tabs - always visible immediately */}
       <div className="border-b border-zinc-200 dark:border-zinc-800">
-        <nav className="flex -mb-px gap-6" aria-label="Profile settings tabs">
+        <nav
+          className="flex -mb-px gap-4 sm:gap-6"
+          aria-label="Profile settings tabs"
+        >
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -169,7 +171,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Tab content - loads with single loader inside */}
-      <div className="p-8 bg-white dark:bg-[#10121a] border border-zinc-200/80 dark:border-white/5 shadow-sm rounded-[24px]">
+      <div className="rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <Suspense fallback={<TabContentLoader />}>
           <ProfileTabContent activeTab={activeTab} />
         </Suspense>

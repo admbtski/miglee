@@ -1,9 +1,12 @@
 'use client';
 
-import { Eye, EyeOff, Info, Lock, Mail, Users } from 'lucide-react';
+// TODO i18n: Polish strings need translation
+
 import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import { Eye, EyeOff, Info, Lock, Mail, Users } from 'lucide-react';
+
 import { SegmentedControl } from '@/components/ui/segment-control';
+import type { SimpleEventFormValues } from '@/features/events/types/event-form';
 
 type JoinMode = 'OPEN' | 'INVITE_ONLY' | 'REQUEST';
 type VisibilityMode = 'PUBLIC' | 'HIDDEN';

@@ -1,5 +1,7 @@
 'use client';
 
+// TODO i18n: Footer strings need translation keys (see inline TODOs)
+
 import { Github, Linkedin, Twitter } from 'lucide-react';
 import Link from 'next/link';
 

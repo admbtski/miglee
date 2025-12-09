@@ -1,5 +1,17 @@
 'use client';
 
+/**
+ * Settings Page
+ *
+ * Manage user preferences:
+ * - Language (locale)
+ * - Timezone (for date/time formatting)
+ * - Theme (light/dark/system)
+ * - Delete account
+ */
+
+import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   AlertTriangle,
   Check,
@@ -9,29 +21,19 @@ import {
   Loader2,
   Palette,
 } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
-// Components
 import { TimezoneDropdown } from '@/components/forms/timezone-dropdown';
-
-// Features
 import { useTheme } from '@/features/theme/provider/theme-provider';
 import { useDeleteMyAccountMutation } from '@/features/users/api/user-delete-account';
 import {
   useUpdateLocale,
   useUpdateTimezone,
 } from '@/features/users/api/user-preferences';
-
-// Hooks
 import { useLocalePath } from '@/hooks/use-locale-path';
-
-// i18n & Layout
 import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
 import { commonTimezones } from '@/lib/i18n/timezone-provider';
-import { AccountPageHeader } from '../_components';
 
-// Local components
+import { AccountPageHeader } from '../_components';
 import { DeleteAccountModal } from './_components/delete-account-modal';
 
 // Get current timezone from browser
