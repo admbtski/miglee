@@ -16,7 +16,6 @@ import * as React from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { formatCapacityString } from '@/features/events/utils/capacity-formatter';
-import { twMerge } from 'tailwind-merge';
 import {
   type CardAppearanceConfig,
   getAddressVisibilityMeta,
@@ -24,6 +23,7 @@ import {
   isBoostActive,
   getAppearanceStyle,
 } from '../shared/card-utils';
+import { cn } from '@/lib/utils';
 
 export type { CardAppearanceConfig };
 
@@ -173,7 +173,7 @@ export const EventCard = memo(function EventCard({
         y: isInactive ? 0 : -4,
         scale: isInactive ? 1 : 1.015,
       }}
-      className={twMerge(
+      className={cn(
         'relative w-full rounded-2xl p-4 flex flex-col gap-2',
         'ring-1 ring-white/5 dark:ring-white/5',
         'bg-white dark:bg-zinc-900',
@@ -336,7 +336,7 @@ export const EventCard = memo(function EventCard({
       )}
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-base font-semibold leading-tight text-zinc-900 dark:text-white line-clamp-2">
+        <h3 className="text-base font-semibold leading-tight text-zinc-900 dark:text-white line-clamp-1">
           {title}
         </h3>
 

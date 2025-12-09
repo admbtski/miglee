@@ -12,8 +12,6 @@
 
 'use client';
 
-import { EventStatus } from '@/lib/api/__generated__/react-query-update';
-import { useI18n } from '@/lib/i18n/provider-ssr';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   lazy,
@@ -24,15 +22,17 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useI18n } from '@/lib/i18n/provider-ssr';
+import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import { useEventsInfiniteQuery } from '@/features/events/api/events';
-import type { EventListItem } from '@/features/events/types/event';
 import { appLanguage } from '@/lib/config/language';
 import { EVENTS_CONFIG } from '@/lib/constants/events';
+import type { EventListItem } from '@/features/events/types/event';
 
 import { DesktopSearchBar } from '@/features/events/components/desktop-search-bar';
 import { EventsGridVirtualized } from '@/features/events/components/events-list/events-grid-virtualized';
@@ -40,8 +40,8 @@ import { EventsHeader } from '@/features/events/components/events-list/events-he
 import { LeftFiltersPanel } from '@/features/events/components/left-filters-panel';
 import { MobileFiltersDrawer } from '@/features/events/components/mobile-filters-drawer';
 import { StickyMobileSearchBar } from '@/features/events/components/mobile-search-bar';
-import type { TopDrawerFocusSection } from '@/features/events/components/top-drawer';
 import { TopDrawer } from '@/features/events/components/top-drawer';
+import type { TopDrawerFocusSection } from '@/features/events/components/top-drawer';
 import {
   useActiveFiltersCount,
   useCommittedFilters,

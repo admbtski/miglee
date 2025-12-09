@@ -22,6 +22,7 @@ import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
 import { notEmptyString } from '@/features/events/utils/event';
+import { AnimatePresence } from 'framer-motion';
 
 /**
  * Maps raw event data from API to EventCard component props
