@@ -23,6 +23,9 @@ import {
   useUpdateTimezone,
 } from '@/features/users/api/user-preferences';
 
+// Hooks
+import { useLocalePath } from '@/hooks/use-locale-path';
+
 // i18n & Layout
 import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
 import { commonTimezones } from '@/lib/i18n/timezone-provider';
@@ -44,6 +47,7 @@ function getCurrentTimezone(): string {
 export default function SettingsPage() {
   const currentTimezone = getCurrentTimezone();
   const { t, locale } = useI18n();
+  const { localePath } = useLocalePath();
 
   const [selectedTimezone, setSelectedTimezone] =
     useState<string>(currentTimezone);
@@ -90,7 +94,7 @@ export default function SettingsPage() {
       setIsDeleteModalOpen(false);
       // Redirect to home or logout after a delay
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = localePath('/');
       }, 2000);
     } catch (error) {
       toast.error(t.settings.deleteAccount.modal.error);

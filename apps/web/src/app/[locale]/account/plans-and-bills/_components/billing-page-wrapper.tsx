@@ -38,6 +38,9 @@ import {
 } from '@/features/billing/api/billing';
 import { formatCurrency } from '@/features/billing/utils/currency';
 
+// Hooks
+import { useLocalePath } from '@/hooks/use-locale-path';
+
 // i18n
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
@@ -66,6 +69,7 @@ function BillingLoader() {
  */
 export function BillingContent() {
   const { t } = useI18n();
+  const { localePath } = useLocalePath();
   const { data: planData, isLoading: planLoading } = useMyPlan();
   const { data: subData, isLoading: subLoading } = useMySubscription();
   const { data: periodsData, isLoading: periodsLoading } = useMyPlanPeriods({
@@ -152,16 +156,20 @@ export function BillingContent() {
           // Cleanup blob URL
           window.URL.revokeObjectURL(blobUrl);
 
+          // TODO: Add i18n key for "Faktura została pobrana" - use t.plansAndBills.toast.receiptDownloaded
           toast.success('Faktura została pobrana');
         } catch (fetchError) {
           // Fallback: open in new tab if fetch fails (CORS issues with Stripe URLs)
           window.open(url, '_blank', 'noopener,noreferrer');
+          // TODO: Add i18n key for "Otwieranie faktury w nowej karcie..." - use t.plansAndBills.toast.openingReceipt
           toast.success('Otwieranie faktury w nowej karcie...');
         }
       } else {
+        // TODO: Add i18n key for "Faktura nie jest jeszcze dostępna" - use t.plansAndBills.toast.receiptNotAvailable
         toast.error('Faktura nie jest jeszcze dostępna');
       }
     } catch (error: any) {
+      // TODO: Add i18n key for "Nie udało się pobrać faktury" - use t.plansAndBills.toast.receiptDownloadError
       toast.error(error.message || 'Nie udało się pobrać faktury');
     }
   };
@@ -281,10 +289,12 @@ export function BillingContent() {
                   {planName}
                 </h3>
                 <Badge tone={isActive ? 'indigo' : 'zinc'}>
+                  {/* TODO: Add i18n keys for "Aktywny" and "Darmowy" - use t.plansAndBills.status.active and t.plansAndBills.status.free */}
                   {isActive ? 'Aktywny' : 'Darmowy'}
                 </Badge>
               </div>
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                {/* TODO: Add i18n keys for renewal/expiry messages - use t.plansAndBills.renewsOn and t.plansAndBills.expiresOn */}
                 {isActive
                   ? `${plan?.source === 'SUBSCRIPTION' ? 'Odnawia się' : 'Wygasa'} ${renewsOn}`
                   : 'Brak aktywnego planu'}
@@ -305,11 +315,13 @@ export function BillingContent() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              {/* TODO: Add i18n keys for "Czas do odnowienia" and "Czas do wygaśnięcia" - use t.plansAndBills.timeUntilRenewal and t.plansAndBills.timeUntilExpiry */}
               {plan?.source === 'SUBSCRIPTION'
                 ? 'Czas do odnowienia'
                 : 'Czas do wygaśnięcia'}
             </span>
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              {/* TODO: Add i18n keys for days remaining - use t.plansAndBills.daysRemaining with pluralization */}
               {isActive
                 ? `${daysRemaining} ${daysRemaining === 1 ? 'dzień' : 'dni'} pozostało`
                 : 'Brak aktywnego planu'}
@@ -327,29 +339,36 @@ export function BillingContent() {
         {/* Plan Details */}
         {isActive && (
           <div className="mb-6 p-4 rounded-2xl bg-zinc-50 dark:bg-[#0a0b12] border border-zinc-200 dark:border-white/5">
+            {/* TODO: Add i18n key for "Szczegóły planu" - use t.plansAndBills.planDetails.title */}
             <h4 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
               Szczegóły planu
             </h4>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
+                {/* TODO: Add i18n key for "Typ" - use t.plansAndBills.planDetails.type */}
                 <p className="text-zinc-500 dark:text-zinc-400">Typ</p>
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                  {/* TODO: Add i18n keys for "Subskrypcja" and "Jednorazowa" - use t.plansAndBills.planDetails.subscription and t.plansAndBills.planDetails.oneTime */}
                   {plan?.source === 'SUBSCRIPTION'
                     ? 'Subskrypcja'
                     : 'Jednorazowa'}
                 </p>
               </div>
               <div>
+                {/* TODO: Add i18n key for "Okres" - use t.plansAndBills.planDetails.period */}
                 <p className="text-zinc-500 dark:text-zinc-400">Okres</p>
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                  {/* TODO: Add i18n keys for "Roczny" and "Miesięczny" - use t.plansAndBills.planDetails.yearly and t.plansAndBills.planDetails.monthly */}
                   {plan?.billingPeriod === 'YEARLY' ? 'Roczny' : 'Miesięczny'}
                 </p>
               </div>
               <div>
+                {/* TODO: Add i18n key for "Data rozpoczęcia" - use t.plansAndBills.planDetails.startDate */}
                 <p className="text-zinc-500 dark:text-zinc-400">
                   Data rozpoczęcia
                 </p>
                 <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                  {/* TODO: Use date-fns with locale for date formatting instead of toLocaleDateString */}
                   {planStartsAt?.toLocaleDateString('pl-PL', {
                     day: 'numeric',
                     month: 'short',
@@ -358,6 +377,7 @@ export function BillingContent() {
                 </p>
               </div>
               <div>
+                {/* TODO: Add i18n keys for "Odnowienie" and "Wygaśnięcie" - use t.plansAndBills.planDetails.renewal and t.plansAndBills.planDetails.expiry */}
                 <p className="text-zinc-500 dark:text-zinc-400">
                   {plan?.source === 'SUBSCRIPTION'
                     ? 'Odnowienie'
@@ -375,18 +395,20 @@ export function BillingContent() {
         <div className="flex flex-wrap items-center gap-3">
           {!isActive && (
             <Link
-              href="/account/subscription"
+              href={localePath('/account/subscription')}
               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-colors rounded-2xl bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
             >
+              {/* TODO: Add i18n key for "Ulepsz plan" - use t.plansAndBills.upgradePlan */}
               Ulepsz plan <ArrowRight className="w-4 h-4" />
             </Link>
           )}
           {isActive && (
             <>
               <Link
-                href="/account/subscription"
+                href={localePath('/account/subscription')}
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white transition-colors rounded-2xl bg-zinc-900 dark:bg-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
               >
+                {/* TODO: Add i18n key for "Zmień plan" - use t.plansAndBills.changePlan */}
                 Zmień plan <ArrowRight className="w-4 h-4" />
               </Link>
             </>
@@ -397,6 +419,7 @@ export function BillingContent() {
               onClick={() => setCancelSubOpen(true)}
               className="inline-flex items-center gap-2 px-6 py-3 ml-auto text-sm font-medium text-red-700 transition-colors border-2 border-red-300 rounded-2xl dark:border-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
+              {/* TODO: Add i18n key for "Anuluj subskrypcję" - use t.plansAndBills.cancelSubscription */}
               Anuluj subskrypcję
             </button>
           )}
@@ -406,9 +429,11 @@ export function BillingContent() {
       {/* Payment History */}
       <div className="rounded-[32px] border-2 border-zinc-200/80 dark:border-white/5 bg-white dark:bg-[#10121a] shadow-sm overflow-hidden">
         <div className="px-6 py-6 border-b md:px-8 border-zinc-200 dark:border-white/5">
+          {/* TODO: Add i18n key for "Historia płatności" - use t.plansAndBills.paymentHistory.title */}
           <h3 className="text-xl font-bold tracking-[-0.02em] text-zinc-900 dark:text-zinc-50 mb-1">
             Historia płatności
           </h3>
+          {/* TODO: Add i18n key for "Przeglądaj swoją historię rozliczeń i faktury" - use t.plansAndBills.paymentHistory.description */}
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Przeglądaj swoją historię rozliczeń i faktury
           </p>
@@ -417,6 +442,7 @@ export function BillingContent() {
           <table className="min-w-full divide-y divide-zinc-200 dark:divide-white/5">
             <thead>
               <tr className="text-sm text-left bg-zinc-50 dark:bg-[#0a0b12]">
+                {/* TODO: Add i18n keys for table headers - use t.plansAndBills.paymentHistory.table.date, description, amount, status, actions */}
                 <Th>Data</Th>
                 <Th>Opis</Th>
                 <Th>Kwota</Th>
@@ -475,6 +501,7 @@ export function BillingContent() {
                             </span>
                             {isActivePeriod && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                                {/* TODO: Add i18n key for "Aktywny" - use t.plansAndBills.paymentHistory.status.active */}
                                 Aktywny
                               </span>
                             )}
@@ -486,6 +513,7 @@ export function BillingContent() {
                           </span>
                         </Td>
                         <Td>
+                          {/* TODO: Add i18n key for "Opłacono" - use t.plansAndBills.paymentHistory.status.paid */}
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                             Opłacono
                           </span>
@@ -498,6 +526,7 @@ export function BillingContent() {
                               }
                             >
                               <Eye className="w-4 h-4" />
+                              {/* TODO: Add i18n key for "Podgląd" - use t.plansAndBills.paymentHistory.actions.preview */}
                               <span className="hidden sm:inline">Podgląd</span>
                             </SmallButton>
                             <SmallButton
@@ -506,6 +535,7 @@ export function BillingContent() {
                               }
                             >
                               <Download className="w-4 h-4" />
+                              {/* TODO: Add i18n key for "Faktura" - use t.plansAndBills.paymentHistory.actions.receipt */}
                               <span className="hidden sm:inline">Faktura</span>
                             </SmallButton>
                           </div>
@@ -564,6 +594,7 @@ export function BillingContent() {
                           </span>
                         </Td>
                         <Td>
+                          {/* TODO: Add i18n key for "Opłacono" - use t.plansAndBills.paymentHistory.status.paid */}
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                             Opłacono
                           </span>
@@ -576,6 +607,7 @@ export function BillingContent() {
                               }
                             >
                               <Eye className="w-4 h-4" />
+                              {/* TODO: Add i18n key for "Podgląd" - use t.plansAndBills.paymentHistory.actions.preview */}
                               <span className="hidden sm:inline">Podgląd</span>
                             </SmallButton>
                             <SmallButton
@@ -587,6 +619,7 @@ export function BillingContent() {
                               }
                             >
                               <Download className="w-4 h-4" />
+                              {/* TODO: Add i18n key for "Faktura" - use t.plansAndBills.paymentHistory.actions.receipt */}
                               <span className="hidden sm:inline">Faktura</span>
                             </SmallButton>
                           </div>
@@ -598,6 +631,7 @@ export function BillingContent() {
               ) : (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center">
+                    {/* TODO: Add i18n key for "Brak historii płatności" - use t.plansAndBills.paymentHistory.empty */}
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       Brak historii płatności
                     </p>

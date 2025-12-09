@@ -92,6 +92,7 @@ export function PaymentResultModal({ context }: PaymentResultModalProps) {
           {/* Message */}
           <div className="max-w-md space-y-4 text-center">
             <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              {/* TODO: Add i18n keys for payment result titles - use t.paymentResult.success.title and t.paymentResult.canceled.title */}
               {isSuccess
                 ? 'Płatność zakończona sukcesem!'
                 : 'Płatność anulowana'}
@@ -99,6 +100,7 @@ export function PaymentResultModal({ context }: PaymentResultModalProps) {
 
             <div className="space-y-3">
               <p className="text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
+                {/* TODO: Add i18n keys for payment result messages - use t.paymentResult.success.accountMessage, t.paymentResult.success.eventMessage, and t.paymentResult.canceled.message */}
                 {isSuccess
                   ? context === 'account'
                     ? 'Twój plan użytkownika został aktywowany i jest już gotowy do użycia.'
@@ -127,6 +129,7 @@ export function PaymentResultModal({ context }: PaymentResultModalProps) {
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
+                  {/* TODO: Add i18n keys for success info messages - use t.paymentResult.success.accountInfo and t.paymentResult.success.eventInfo */}
                   {context === 'account'
                     ? 'Sprawdź szczegóły w historii płatności'
                     : 'Twoje funkcje premium są już aktywne'}
@@ -135,6 +138,7 @@ export function PaymentResultModal({ context }: PaymentResultModalProps) {
 
               {!isSuccess && (
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  {/* TODO: Add i18n key for canceled message - use t.paymentResult.canceled.retryMessage */}
                   Możesz wrócić do wyboru planu i spróbować ponownie w dowolnym
                   momencie.
                 </p>
@@ -154,6 +158,7 @@ export function PaymentResultModal({ context }: PaymentResultModalProps) {
                 : 'bg-gradient-to-r from-zinc-600 to-zinc-500 hover:from-zinc-500 hover:to-zinc-400'
             }`}
           >
+            {/* TODO: Add i18n keys for button labels - use t.paymentResult.success.button and t.paymentResult.canceled.button */}
             {isSuccess ? (
               <>
                 <CheckCircle2 className="w-4 h-4" />

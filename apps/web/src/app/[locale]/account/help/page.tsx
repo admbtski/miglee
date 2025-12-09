@@ -16,12 +16,17 @@ import { HelpCircle, Mail, MessageSquare, Send } from 'lucide-react';
 // Components
 import { SimpleSelect, SelectOption } from '@/components/forms/simple-select';
 
+// Hooks
+import { useLocalePath } from '@/hooks/use-locale-path';
+
 // i18n & Layout
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { AccountPageHeader } from '../_components';
+import Link from 'next/link';
 
 export default function HelpPage() {
   const { t } = useI18n();
+  const { localePath } = useLocalePath();
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
@@ -200,36 +205,36 @@ export default function HelpPage() {
             <ul className="space-y-3">
               {/* TODO: Link these FAQ items to actual help/docs pages when available */}
               <li>
-                <a
-                  href="#"
+                <Link
+                  href={localePath('/help')}
                   className="text-sm text-zinc-600 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.help.contact.faqItems.createEvent}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href={localePath('/account/subscription')}
                   className="text-sm text-zinc-600 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.help.contact.faqItems.manageSubscription}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href={localePath('/account/privacy')}
                   className="text-sm text-zinc-600 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.help.contact.faqItems.privacy}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  href={localePath('/account/plans-and-bills')}
                   className="text-sm text-zinc-600 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors"
                 >
                   {t.help.contact.faqItems.paymentIssues}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

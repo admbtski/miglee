@@ -9,7 +9,7 @@ import {
   PublicProfileClient,
   PublicProfileClientLoader,
 } from '@/features/users/components/public-profile-client';
-import { useI18n } from '@/lib/i18n/provider-ssr';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 export default function ProfileViewPage() {
   // Data should be cached from sidebar, so no loading state needed
@@ -39,7 +39,7 @@ interface ProfileHeaderProps {
 }
 
 function ProfileHeader({ username }: ProfileHeaderProps) {
-  const { locale } = useI18n();
+  const { localePath } = useLocalePath();
   return (
     <div className="flex items-center justify-between p-6 border border-indigo-200/80 dark:border-indigo-800/50 rounded-[24px] bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 shadow-sm">
       <div className="flex items-center gap-4">
@@ -50,18 +50,18 @@ function ProfileHeader({ username }: ProfileHeaderProps) {
           />
         </div>
         <div>
-          {/* TODO: Add i18n key for "Profile Preview" */}
+          {/* TODO: Add i18n key for "Profile Preview" - use t.account.viewProfile.title */}
           <h2 className="text-base font-bold tracking-[-0.02em] text-indigo-900 dark:text-indigo-100">
             Profile Preview
           </h2>
-          {/* TODO: Add i18n key for "This is how your profile appears to other users" */}
+          {/* TODO: Add i18n key for "This is how your profile appears to other users" - use t.account.viewProfile.description */}
           <p className="mt-1 text-sm leading-relaxed text-indigo-700 dark:text-indigo-300 max-w-[60ch]">
             This is how your profile appears to other users
           </p>
         </div>
       </div>
       <Link
-        href={username ? `${locale}/u/${username}` : ''}
+        href={username ? localePath(`u/${username}`) : '#'}
         style={{
           opacity: !!username ? 1 : 0.8,
           pointerEvents: !!username ? 'auto' : 'none',
@@ -71,7 +71,7 @@ function ProfileHeader({ username }: ProfileHeaderProps) {
         className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white transition-all bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl hover:from-indigo-500 hover:to-indigo-400 shadow-md hover:shadow-lg"
       >
         <ExternalLink className="w-4 h-4" strokeWidth={2} />
-        {/* TODO: Add i18n key for "Open in New Tab" */}
+        {/* TODO: Add i18n key for "Open in New Tab" - use t.account.viewProfile.openInNewTab */}
         Open in New Tab
       </Link>
     </div>
