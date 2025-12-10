@@ -5,6 +5,7 @@ import type {
   Prisma,
 } from '@prisma/client';
 import {
+  EventMemberStatus,
   Level as PrismaLevel,
   MeetingKind as PrismaMeetingKind,
   Mode as PrismaMode,
@@ -603,10 +604,16 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
         select: {
           canceledAt: true,
           deletedAt: true,
+          title: true,
+          description: true,
           startAt: true,
+          endAt: true,
           mode: true,
           min: true,
           max: true,
+          address: true,
+          onlineUrl: true,
+          meetingKind: true,
         },
       });
       if (!current) {
@@ -633,7 +640,14 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
       const members = await prisma.eventMember.findMany({
         where: {
           eventId: id,
-          status: { in: ['JOINED', 'PENDING', 'INVITED'] },
+          status: {
+            in: [
+              EventMemberStatus.WAITLIST,
+              EventMemberStatus.PENDING,
+              EventMemberStatus.INVITED,
+              EventMemberStatus.WAITLIST,
+            ],
+          },
         },
         select: { userId: true },
       });
@@ -751,7 +765,7 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
         typeof input.max === 'number' &&
         current?.max &&
         input.max > current.max;
-      const slotsAdded = maxIncreased ? input.max! - current!.max : 0;
+      const slotsAdded = maxIncreased ? input.max! - (current!.max ?? 0) : 0;
 
       const updated = await prisma.$transaction(async (tx) => {
         const event = await tx.event.update({
@@ -798,6 +812,87 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
       // publish EVENT_UPDATED
       if (recipients.length > 0) {
         const dedupeStamp = updated.updatedAt.toISOString();
+
+        // Track what changed
+        const changedFields: string[] = [];
+        if (input.title !== undefined && input.title !== current.title) {
+          changedFields.push('title');
+        }
+        if (
+          input.description !== undefined &&
+          input.description !== current.description
+        ) {
+          changedFields.push('description');
+        }
+        if (
+          input.startAt !== undefined &&
+          new Date(input.startAt as Date).getTime() !==
+            current.startAt?.getTime()
+        ) {
+          changedFields.push('startAt');
+        }
+        if (
+          input.endAt !== undefined &&
+          new Date(input.endAt as Date).getTime() !== current.endAt?.getTime()
+        ) {
+          changedFields.push('endAt');
+        }
+        if (
+          input.location?.address !== undefined &&
+          input.location.address !== current.address
+        ) {
+          changedFields.push('address');
+        }
+        if (
+          input.onlineUrl !== undefined &&
+          input.onlineUrl !== current.onlineUrl
+        ) {
+          changedFields.push('onlineUrl');
+        }
+        if (input.min !== undefined && input.min !== current.min) {
+          changedFields.push('min');
+        }
+        if (input.max !== undefined && input.max !== current.max) {
+          changedFields.push('max');
+        }
+        if (
+          input.meetingKind !== undefined &&
+          input.meetingKind !== current.meetingKind
+        ) {
+          changedFields.push('meetingKind');
+        }
+
+        // Create notification data with changes
+        const notificationData = {
+          eventId: id,
+          eventTitle: updated.title,
+          changedFields,
+          changes: {
+            ...(changedFields.includes('startAt')
+              ? {
+                  startAt: {
+                    old: current.startAt?.toISOString(),
+                    new: updated.startAt?.toISOString(),
+                  },
+                }
+              : {}),
+            ...(changedFields.includes('endAt')
+              ? {
+                  endAt: {
+                    old: current.endAt?.toISOString(),
+                    new: updated.endAt?.toISOString(),
+                  },
+                }
+              : {}),
+            ...(changedFields.includes('address')
+              ? { address: { old: current.address, new: updated.address } }
+              : {}),
+            ...(changedFields.includes('max')
+              ? { max: { old: current.max, new: updated.max } }
+              : {}),
+          },
+        };
+
         await prisma.notification.createMany({
           data: recipients.map((recipientId) => ({
             kind: PrismaNotificationKind.EVENT_UPDATED,
@@ -806,8 +901,9 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
             entityType: PrismaNotificationEntity.EVENT,
             entityId: id,
             eventId: id,
-            title: 'Meeting updated',
-            body: 'Organizer updated meeting details.',
+            title: null, // Use translation
+            body: null, // Use translation with data
+            data: notificationData,
             createdAt: new Date(),
             dedupeKey: `event_updated:${recipientId}:${id}:${dedupeStamp}`,
           })),
@@ -1004,7 +1100,14 @@ export const deleteEventMutation: MutationResolvers['deleteEvent'] =
       const members = await prisma.eventMember.findMany({
         where: {
           eventId: id,
-          status: { in: ['JOINED', 'PENDING', 'INVITED'] },
+          status: {
+            in: [
+              EventMemberStatus.WAITLIST,
+              EventMemberStatus.PENDING,
+              EventMemberStatus.INVITED,
+              EventMemberStatus.WAITLIST,
+            ],
+          },
         },
         select: { userId: true },
       });

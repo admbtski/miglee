@@ -163,6 +163,145 @@ export const de = {
       INVITE_RECEIVED: 'Einladung erhalten',
       default: 'Benachrichtigung',
     },
+    // Notification content (title + body with interpolation)
+    content: {
+      EVENT_CREATED: {
+        title: 'Neues Event',
+        body: 'Ein neues Event wurde erstellt.',
+      },
+      EVENT_UPDATED: {
+        title: 'Event aktualisiert',
+        body: 'Event "{{eventTitle}}" wurde aktualisiert.{{changesDescription}}',
+      },
+      EVENT_CANCELED: {
+        title: 'Event abgesagt',
+        body: '{{reason}}',
+      },
+      EVENT_DELETED: {
+        title: 'Event gelöscht',
+        body: 'Das Event wurde dauerhaft gelöscht.',
+      },
+      EVENT_INVITE: {
+        title: 'Event-Einladung',
+        body: 'Du wurdest zu "{{eventTitle}}" eingeladen.',
+      },
+      EVENT_INVITE_ACCEPTED: {
+        title: 'Einladung angenommen',
+        body: '{{actorName}} hat deine Einladung angenommen.',
+      },
+      EVENT_MEMBERSHIP_APPROVED: {
+        title: 'Anfrage genehmigt',
+        body: 'Deine Anfrage für "{{eventTitle}}" wurde genehmigt.',
+      },
+      EVENT_MEMBERSHIP_REJECTED: {
+        title: 'Anfrage abgelehnt',
+        body: 'Deine Anfrage für "{{eventTitle}}" wurde abgelehnt.{{reason}}',
+      },
+      EVENT_MEMBER_KICKED: {
+        title: 'Vom Event entfernt',
+        body: 'Du wurdest vom Event entfernt.{{reason}}',
+      },
+      EVENT_MEMBER_ROLE_CHANGED: {
+        title: 'Rolle geändert',
+        body: 'Deine Rolle wurde zu {{newRole}} geändert.',
+      },
+      JOIN_REQUEST: {
+        title: 'Neue Beitrittsanfrage',
+        body: '{{actorName}} möchte deinem Event beitreten.',
+      },
+      BANNED: {
+        title: 'Gesperrt',
+        body: 'Du wurdest vom Event gesperrt.{{reason}}',
+      },
+      UNBANNED: {
+        title: 'Entsperrt',
+        body: 'Deine Sperre wurde aufgehoben. Du kannst erneut anfragen.',
+      },
+      WAITLIST_JOINED: {
+        title: 'Zur Warteliste hinzugefügt',
+        body: '{{actorName}} hat sich auf die Warteliste gesetzt.',
+      },
+      WAITLIST_PROMOTED: {
+        title: 'Von Warteliste befördert',
+        body: 'Du wurdest von der Warteliste befördert! Du bist jetzt Teilnehmer.',
+      },
+      EVENT_REVIEW_RECEIVED: {
+        title: 'Neue Bewertung',
+        body: '{{actorName}} hat eine Bewertung hinterlassen ({{rating}} ⭐){{reviewContent}}',
+      },
+      EVENT_FEEDBACK_RECEIVED: {
+        title: 'Neues Feedback',
+        body: '{{actorName}} hat Feedback gesendet ({{rating}} ⭐).',
+      },
+      EVENT_FEEDBACK_REQUEST: {
+        title: 'Teile dein Feedback',
+        body: 'Wie war "{{eventTitle}}"? Teile dein Feedback.',
+      },
+      REVIEW_HIDDEN: {
+        title: 'Bewertung ausgeblendet',
+        body: 'Deine Bewertung wurde von {{moderatorName}} ausgeblendet.',
+      },
+      EVENT_COMMENT_ADDED: {
+        title: 'Neuer Kommentar',
+        body: '{{actorName}}: {{commentContent}}',
+      },
+      COMMENT_REPLY: {
+        title: 'Antwort auf deinen Kommentar',
+        body: '{{actorName}}: {{commentContent}}',
+      },
+      COMMENT_HIDDEN: {
+        title: 'Kommentar ausgeblendet',
+        body: 'Dein Kommentar wurde von {{moderatorName}} ausgeblendet.',
+      },
+      NEW_MESSAGE: {
+        title: 'Neue Nachricht',
+        body: '{{actorName}}: {{messageContent}}',
+      },
+      NEW_COMMENT: {
+        title: 'Neuer Kommentar',
+        body: '{{actorName}} hat einen Kommentar hinzugefügt.',
+      },
+      NEW_REVIEW: {
+        title: 'Neue Bewertung',
+        body: '{{actorName}} hat eine Bewertung hinterlassen ({{rating}} ⭐).',
+      },
+      EVENT_CHAT_MESSAGE: {
+        title: 'Neue Chat-Nachricht',
+        body: '{{actorName}}: {{messageContent}}',
+      },
+      EVENT_REMINDER: {
+        title: 'Event-Erinnerung',
+        body: 'Event "{{eventTitle}}" beginnt {{startsIn}}.',
+      },
+      SYSTEM: {
+        title: 'Systembenachrichtigung',
+        body: '{{message}}',
+      },
+    },
+    roles: {
+      OWNER: 'Eigentümer',
+      MODERATOR: 'Moderator',
+      PARTICIPANT: 'Teilnehmer',
+    },
+    relativeTime: {
+      inMinutes: 'in {{count}} Min.',
+      inHours: 'in {{count}} Std.',
+      inDays: 'in {{count}} Tagen',
+      soon: 'bald',
+    },
+    reasonPrefix: 'Grund:',
+    changedFields: {
+      title: 'Titel',
+      description: 'Beschreibung',
+      startAt: 'Startzeit',
+      endAt: 'Endzeit',
+      address: 'Standort',
+      onlineUrl: 'Online-Link',
+      min: 'Min. Teilnehmer',
+      max: 'Max. Teilnehmer',
+      meetingKind: 'Veranstaltungstyp',
+    },
+    changesPrefix: ' Geändert:',
   },
 
   // Favourites

@@ -265,6 +265,7 @@ export function ChatThread({
           kind={kind}
           eventId={eventId}
           threadId={threadId}
+          chatName={title}
         />
       ) : (
         <>

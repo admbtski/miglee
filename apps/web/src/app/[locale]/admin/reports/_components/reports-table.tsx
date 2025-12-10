@@ -52,12 +52,13 @@ const statusConfig = {
   },
 };
 
-const entityLabels = {
+const entityLabels: Record<ReportEntity, string> = {
   [ReportEntity.Event]: 'Wydarzenie',
   [ReportEntity.Comment]: 'Komentarz',
   [ReportEntity.Review]: 'Recenzja',
   [ReportEntity.User]: 'Użytkownik',
   [ReportEntity.Message]: 'Wiadomość',
+  [ReportEntity.Chat]: 'Czat',
 };
 
 export function ReportsTable({ reports, onSelectReport }: ReportsTableProps) {

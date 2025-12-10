@@ -158,6 +158,145 @@ export const en = {
       INVITE_RECEIVED: 'Invitation received',
       default: 'Notification',
     },
+    // Notification content (title + body with interpolation)
+    content: {
+      EVENT_CREATED: {
+        title: 'New event',
+        body: 'A new event has been created.',
+      },
+      EVENT_UPDATED: {
+        title: 'Event updated',
+        body: 'Event "{{eventTitle}}" has been updated.{{changesDescription}}',
+      },
+      EVENT_CANCELED: {
+        title: 'Event canceled',
+        body: '{{reason}}',
+      },
+      EVENT_DELETED: {
+        title: 'Event deleted',
+        body: 'The event has been permanently deleted.',
+      },
+      EVENT_INVITE: {
+        title: 'Event invitation',
+        body: 'You have been invited to "{{eventTitle}}".',
+      },
+      EVENT_INVITE_ACCEPTED: {
+        title: 'Invitation accepted',
+        body: '{{actorName}} accepted your invitation to join the event.',
+      },
+      EVENT_MEMBERSHIP_APPROVED: {
+        title: 'Request approved',
+        body: 'Your request to join "{{eventTitle}}" has been approved.',
+      },
+      EVENT_MEMBERSHIP_REJECTED: {
+        title: 'Request rejected',
+        body: 'Your request to join "{{eventTitle}}" was rejected.{{reason}}',
+      },
+      EVENT_MEMBER_KICKED: {
+        title: 'Removed from event',
+        body: 'You have been removed from the event.{{reason}}',
+      },
+      EVENT_MEMBER_ROLE_CHANGED: {
+        title: 'Role changed',
+        body: 'Your role has been changed to {{newRole}}.',
+      },
+      JOIN_REQUEST: {
+        title: 'New join request',
+        body: '{{actorName}} is requesting to join your event.',
+      },
+      BANNED: {
+        title: 'Banned',
+        body: 'You have been banned from the event.{{reason}}',
+      },
+      UNBANNED: {
+        title: 'Unbanned',
+        body: 'Your ban has been lifted. You can request to join again.',
+      },
+      WAITLIST_JOINED: {
+        title: 'Added to waitlist',
+        body: '{{actorName}} joined the waitlist.',
+      },
+      WAITLIST_PROMOTED: {
+        title: 'Promoted from waitlist',
+        body: "You've been promoted from the waitlist! You're now a participant.",
+      },
+      EVENT_REVIEW_RECEIVED: {
+        title: 'New review',
+        body: '{{actorName}} left a review ({{rating}} ⭐){{reviewContent}}',
+      },
+      EVENT_FEEDBACK_RECEIVED: {
+        title: 'New feedback',
+        body: '{{actorName}} submitted feedback ({{rating}} ⭐).',
+      },
+      EVENT_FEEDBACK_REQUEST: {
+        title: 'Share your feedback',
+        body: 'How was "{{eventTitle}}"? Share your feedback.',
+      },
+      REVIEW_HIDDEN: {
+        title: 'Review hidden',
+        body: 'Your review has been hidden by {{moderatorName}}.',
+      },
+      EVENT_COMMENT_ADDED: {
+        title: 'New comment',
+        body: '{{actorName}}: {{commentContent}}',
+      },
+      COMMENT_REPLY: {
+        title: 'Reply to your comment',
+        body: '{{actorName}}: {{commentContent}}',
+      },
+      COMMENT_HIDDEN: {
+        title: 'Comment hidden',
+        body: 'Your comment has been hidden by {{moderatorName}}.',
+      },
+      NEW_MESSAGE: {
+        title: 'New message',
+        body: '{{actorName}}: {{messageContent}}',
+      },
+      NEW_COMMENT: {
+        title: 'New comment',
+        body: '{{actorName}} added a comment.',
+      },
+      NEW_REVIEW: {
+        title: 'New review',
+        body: '{{actorName}} left a review ({{rating}} ⭐).',
+      },
+      EVENT_CHAT_MESSAGE: {
+        title: 'New chat message',
+        body: '{{actorName}}: {{messageContent}}',
+      },
+      EVENT_REMINDER: {
+        title: 'Event reminder',
+        body: 'Event "{{eventTitle}}" starts {{startsIn}}.',
+      },
+      SYSTEM: {
+        title: 'System notification',
+        body: '{{message}}',
+      },
+    },
+    roles: {
+      OWNER: 'owner',
+      MODERATOR: 'moderator',
+      PARTICIPANT: 'participant',
+    },
+    relativeTime: {
+      inMinutes: 'in {{count}} min',
+      inHours: 'in {{count}} hours',
+      inDays: 'in {{count}} days',
+      soon: 'soon',
+    },
+    reasonPrefix: 'Reason:',
+    changedFields: {
+      title: 'title',
+      description: 'description',
+      startAt: 'start time',
+      endAt: 'end time',
+      address: 'location',
+      onlineUrl: 'online link',
+      min: 'minimum participants',
+      max: 'maximum participants',
+      meetingKind: 'meeting type',
+    },
+    changesPrefix: ' Changed:',
   },
 
   // Favourites

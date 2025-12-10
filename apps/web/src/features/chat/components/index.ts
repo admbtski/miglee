@@ -13,6 +13,7 @@ export { ReadReceipt } from './ReadReceipt';
 export { ReverseScrollMessages } from './ReverseScrollMessages';
 export { ChatAvatar, UserAvatarPopover } from './UserAvatarPopover';
 export { UserPicker } from './UserPicker';
+export { ReportChatModal } from './ReportChatModal';
 
 // Chat page components
 export * from './avatar';

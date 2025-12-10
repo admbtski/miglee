@@ -1189,6 +1189,7 @@ async function seedCanceledEvents(
             EventMemberStatus.JOINED,
             EventMemberStatus.PENDING,
             EventMemberStatus.INVITED,
+            EventMemberStatus.WAITLIST,
           ],
         },
       },
@@ -1853,7 +1854,14 @@ async function seedReports(
 
   for (let i = 0; i < reportCount; i++) {
     const reporter = pick(users);
-    const entityType = pick(['EVENT', 'COMMENT', 'REVIEW', 'USER', 'MESSAGE']);
+    const entityType = pick([
+      'EVENT',
+      'COMMENT',
+      'REVIEW',
+      'USER',
+      'MESSAGE',
+      'CHAT',
+    ]);
 
     let entityId: string | null = null;
 
@@ -1867,6 +1875,24 @@ async function seedReports(
       case 'USER': {
         const user = pick(users.filter((u) => u.id !== reporter.id));
         entityId = user?.id;
+        break;
+      }
+      case 'CHAT': {
+        // Report a DM thread or event chat
+        const dmThread = await prisma.dmThread.findFirst({
+          where: {
+            OR: [{ aUserId: reporter.id }, { bUserId: reporter.id }],
+          },
+        });
+        if (dmThread) {
+          entityId = dmThread.id;
+        } else {
+          // Fallback to event chat
+          const eventWithChat = pick(
+            allEvents.filter(({ event }) => !event.deletedAt)
+          );
+          entityId = eventWithChat?.event.id;
+        }
         break;
       }
       // For COMMENT, REVIEW, MESSAGE - we'd need to query them

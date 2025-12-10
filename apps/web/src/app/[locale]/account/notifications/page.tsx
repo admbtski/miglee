@@ -16,6 +16,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { de, enUS, pl } from 'date-fns/locale';
 import { Virtuoso } from 'react-virtuoso';
+import Link from 'next/link';
 import {
   AlertCircle,
   Bell,
@@ -23,6 +24,7 @@ import {
   Check,
   CheckCheck,
   CreditCard,
+  ExternalLink,
   Info,
   Loader2,
   MessageSquare,
@@ -30,6 +32,8 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
+
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
@@ -88,6 +92,63 @@ function mergeUniqueById<T extends { id: string }>(arr: T[]): T[] {
   return out;
 }
 
+/**
+ * Notification kinds that should link to an event
+ */
+const EVENT_LINKED_KINDS = new Set([
+  'EVENT_CREATED',
+  'EVENT_UPDATED',
+  'EVENT_CANCELED',
+  'EVENT_DELETED',
+  'EVENT_INVITE',
+  'EVENT_INVITE_ACCEPTED',
+  'EVENT_MEMBERSHIP_APPROVED',
+  'EVENT_MEMBERSHIP_REJECTED',
+  'EVENT_MEMBER_KICKED',
+  'EVENT_MEMBER_ROLE_CHANGED',
+  'JOIN_REQUEST',
+  'BANNED',
+  'UNBANNED',
+  'WAITLIST_JOINED',
+  'WAITLIST_PROMOTED',
+  'EVENT_REVIEW_RECEIVED',
+  'EVENT_FEEDBACK_RECEIVED',
+  'EVENT_FEEDBACK_REQUEST',
+  'REVIEW_HIDDEN',
+  'EVENT_COMMENT_ADDED',
+  'COMMENT_REPLY',
+  'COMMENT_HIDDEN',
+  'EVENT_CHAT_MESSAGE',
+  'EVENT_REMINDER',
+]);
+
+/**
+ * Get the event URL for a notification
+ */
+function getNotificationEventUrl(
+  notification: NotificationNode,
+  localePath: (path: string) => string
+): string | null {
+  // Check if this notification kind should link to an event
+  if (!EVENT_LINKED_KINDS.has(notification.kind as string)) {
+    return null;
+  }
+
+  // Try to get event ID from various sources
+  const eventId =
+    notification.event?.id ||
+    ((notification.data as Record<string, unknown> | null)?.eventId as
+      | string
+      | undefined) ||
+    (notification.entityType === 'EVENT' ? notification.entityId : null);
+
+  if (!eventId) {
+    return null;
+  }
+
+  return localePath(`/event/${eventId}`);
+}
+
 function getDateLocale(locale: string) {
   switch (locale) {
     case 'pl':
@@ -109,6 +170,7 @@ function formatNotificationDate(dateIso: string, locale: string) {
 
 export default function NotificationsPage() {
   const { t, locale } = useI18n();
+  const { localePath } = useLocalePath();
 
   // useMeQuery with staleTime to use cached data from sidebar
   // This prevents showing "login required" message when data is still loading
@@ -116,8 +178,6 @@ export default function NotificationsPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes - use cached data
   });
   const recipientId = authData?.me?.id;
-
-  const dateLocale = getDateLocale(locale);
 
   const [filter, setFilter] = useState<FilterType>('all');
   const [optimistic, setOptimistic] = useState<
@@ -242,16 +302,12 @@ export default function NotificationsPage() {
       const kindLabel =
         t.notifications.kinds[kindKey] || t.notifications.kinds.default;
 
-      return (
-        <div
-          className={`group relative overflow-hidden rounded-xl border transition-all ${
-            index === 0 ? 'mt-2' : ''
-          } ${
-            unread
-              ? 'border-indigo-200 bg-gradient-to-br from-indigo-50 to-white shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/30 dark:to-zinc-900'
-              : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
-          } hover:shadow-md hover:scale-[1.005]`}
-        >
+      // Check if this notification should link to an event
+      const linkUrl = getNotificationEventUrl(n, localePath);
+      const isClickable = !!linkUrl;
+
+      const content = (
+        <>
           {/* Unread indicator bar */}
           {unread && (
             <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 via-purple-500 to-cyan-500" />
@@ -266,8 +322,11 @@ export default function NotificationsPage() {
             {/* Content */}
             <div className="min-w-0 flex-1">
               <div className="mb-1.5 flex items-start justify-between gap-2">
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug flex items-center gap-1.5">
                   {n.title ?? kindLabel}
+                  {isClickable && (
+                    <ExternalLink className="h-3 w-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
                 </h3>
                 <div className="flex items-center gap-2">
                   {unread && (
@@ -288,13 +347,17 @@ export default function NotificationsPage() {
                 </p>
               )}
 
-              {/* Actions */}
-              <div className="flex items-center gap-2">
+              {/* Actions with higher z-index and stopPropagation */}
+              <div className="relative z-10 flex items-center gap-2">
                 {unread && (
                   <button
                     type="button"
                     disabled={marking}
-                    onClick={() => handleMarkOne(n.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleMarkOne(n.id);
+                    }}
                     className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white transition hover:bg-indigo-700 active:scale-95 disabled:opacity-50 shadow-sm"
                   >
                     <Check className="h-3 w-3" />
@@ -304,7 +367,11 @@ export default function NotificationsPage() {
                 <button
                   type="button"
                   disabled={deleting}
-                  onClick={() => handleDeleteOne(n.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDeleteOne(n.id);
+                  }}
                   className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-red-50 hover:text-red-600 active:scale-95 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-red-950/30 dark:hover:text-red-400"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -313,6 +380,26 @@ export default function NotificationsPage() {
               </div>
             </div>
           </div>
+        </>
+      );
+
+      return (
+        <div
+          className={`group relative overflow-hidden rounded-xl border transition-all ${
+            index === 0 ? 'mt-2' : ''
+          } ${
+            unread
+              ? 'border-indigo-200 bg-gradient-to-br from-indigo-50 to-white shadow-sm dark:border-indigo-900/40 dark:from-indigo-950/30 dark:to-zinc-900'
+              : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
+          } hover:shadow-md hover:scale-[1.005] ${isClickable ? 'cursor-pointer' : ''}`}
+        >
+          {isClickable ? (
+            <Link href={linkUrl} className="block">
+              {content}
+            </Link>
+          ) : (
+            content
+          )}
         </div>
       );
     },
@@ -323,7 +410,8 @@ export default function NotificationsPage() {
       handleMarkOne,
       handleDeleteOne,
       t,
-      dateLocale,
+      locale,
+      localePath,
     ]
   );
 

@@ -160,6 +160,145 @@ export const pl = {
       INVITE_RECEIVED: 'Otrzymano zaproszenie',
       default: 'Powiadomienie',
     },
+    // Notification content (title + body with interpolation)
+    content: {
+      EVENT_CREATED: {
+        title: 'Nowe wydarzenie',
+        body: 'Utworzono nowe wydarzenie.',
+      },
+      EVENT_UPDATED: {
+        title: 'Wydarzenie zaktualizowane',
+        body: 'Wydarzenie "{{eventTitle}}" zostało zaktualizowane.{{changesDescription}}',
+      },
+      EVENT_CANCELED: {
+        title: 'Wydarzenie anulowane',
+        body: '{{reason}}',
+      },
+      EVENT_DELETED: {
+        title: 'Wydarzenie usunięte',
+        body: 'Wydarzenie zostało trwale usunięte.',
+      },
+      EVENT_INVITE: {
+        title: 'Zaproszenie do wydarzenia',
+        body: 'Zostałeś zaproszony do wydarzenia "{{eventTitle}}".',
+      },
+      EVENT_INVITE_ACCEPTED: {
+        title: 'Zaproszenie zaakceptowane',
+        body: '{{actorName}} zaakceptował(a) zaproszenie do wydarzenia.',
+      },
+      EVENT_MEMBERSHIP_APPROVED: {
+        title: 'Prośba zaakceptowana',
+        body: 'Twoja prośba o dołączenie do "{{eventTitle}}" została zaakceptowana.',
+      },
+      EVENT_MEMBERSHIP_REJECTED: {
+        title: 'Prośba odrzucona',
+        body: 'Twoja prośba o dołączenie do "{{eventTitle}}" została odrzucona.{{reason}}',
+      },
+      EVENT_MEMBER_KICKED: {
+        title: 'Usunięto z wydarzenia',
+        body: 'Zostałeś usunięty z wydarzenia.{{reason}}',
+      },
+      EVENT_MEMBER_ROLE_CHANGED: {
+        title: 'Zmiana roli',
+        body: 'Twoja rola została zmieniona na {{newRole}}.',
+      },
+      JOIN_REQUEST: {
+        title: 'Nowa prośba o dołączenie',
+        body: '{{actorName}} prosi o dołączenie do Twojego wydarzenia.',
+      },
+      BANNED: {
+        title: 'Zablokowano',
+        body: 'Zostałeś zablokowany w wydarzeniu.{{reason}}',
+      },
+      UNBANNED: {
+        title: 'Odblokowano',
+        body: 'Blokada została zdjęta. Możesz ponownie poprosić o dołączenie.',
+      },
+      WAITLIST_JOINED: {
+        title: 'Dodano do listy oczekujących',
+        body: '{{actorName}} dołączył(a) do listy oczekujących.',
+      },
+      WAITLIST_PROMOTED: {
+        title: 'Awans z listy oczekujących',
+        body: 'Zostałeś awansowany z listy oczekujących! Teraz jesteś uczestnikiem.',
+      },
+      EVENT_REVIEW_RECEIVED: {
+        title: 'Nowa recenzja',
+        body: '{{actorName}} wystawił(a) recenzję ({{rating}} ⭐){{reviewContent}}',
+      },
+      EVENT_FEEDBACK_RECEIVED: {
+        title: 'Nowy feedback',
+        body: '{{actorName}} przesłał(a) feedback ({{rating}} ⭐).',
+      },
+      EVENT_FEEDBACK_REQUEST: {
+        title: 'Podziel się opinią',
+        body: 'Jak oceniasz wydarzenie "{{eventTitle}}"? Podziel się swoją opinią.',
+      },
+      REVIEW_HIDDEN: {
+        title: 'Recenzja ukryta',
+        body: 'Twoja recenzja została ukryta przez {{moderatorName}}.',
+      },
+      EVENT_COMMENT_ADDED: {
+        title: 'Nowy komentarz',
+        body: '{{actorName}}: {{commentContent}}',
+      },
+      COMMENT_REPLY: {
+        title: 'Odpowiedź na komentarz',
+        body: '{{actorName}}: {{commentContent}}',
+      },
+      COMMENT_HIDDEN: {
+        title: 'Komentarz ukryty',
+        body: 'Twój komentarz został ukryty przez {{moderatorName}}.',
+      },
+      NEW_MESSAGE: {
+        title: 'Nowa wiadomość',
+        body: '{{actorName}}: {{messageContent}}',
+      },
+      NEW_COMMENT: {
+        title: 'Nowy komentarz',
+        body: '{{actorName}} dodał(a) komentarz.',
+      },
+      NEW_REVIEW: {
+        title: 'Nowa recenzja',
+        body: '{{actorName}} wystawił(a) recenzję ({{rating}} ⭐).',
+      },
+      EVENT_CHAT_MESSAGE: {
+        title: 'Nowa wiadomość w czacie',
+        body: '{{actorName}}: {{messageContent}}',
+      },
+      EVENT_REMINDER: {
+        title: 'Przypomnienie o wydarzeniu',
+        body: 'Wydarzenie "{{eventTitle}}" zaczyna się {{startsIn}}.',
+      },
+      SYSTEM: {
+        title: 'Powiadomienie systemowe',
+        body: '{{message}}',
+      },
+    },
+    roles: {
+      OWNER: 'właściciel',
+      MODERATOR: 'moderator',
+      PARTICIPANT: 'uczestnik',
+    },
+    relativeTime: {
+      inMinutes: 'za {{count}} min',
+      inHours: 'za {{count}} godz.',
+      inDays: 'za {{count}} dni',
+      soon: 'wkrótce',
+    },
+    reasonPrefix: 'Powód:',
+    changedFields: {
+      title: 'tytuł',
+      description: 'opis',
+      startAt: 'czas rozpoczęcia',
+      endAt: 'czas zakończenia',
+      address: 'lokalizacja',
+      onlineUrl: 'link online',
+      min: 'min. uczestników',
+      max: 'maks. uczestników',
+      meetingKind: 'typ spotkania',
+    },
+    changesPrefix: ' Zmieniono:',
   },
 
   // Favourites

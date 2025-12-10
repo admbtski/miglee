@@ -13,6 +13,7 @@ import {
   Bell,
   BellOff,
   ChevronDown,
+  Flag,
   ImageIcon,
   LinkIcon,
   Palette,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react';
 import type { ChatKind } from '@/features/chat/types';
 import { Section, Row } from './chat-details-section';
+import { ReportChatModal } from './ReportChatModal';
 import {
   useGetEventMute,
   useGetDmMute,
@@ -40,6 +42,8 @@ type ChatDetailsProps = {
   eventId?: string;
   /** Thread ID for DM type */
   threadId?: string;
+  /** Chat name/title for report modal */
+  chatName?: string;
 };
 
 export function ChatDetails({
@@ -47,8 +51,10 @@ export function ChatDetails({
   kind,
   eventId,
   threadId,
+  chatName = '',
 }: ChatDetailsProps) {
   const [openCustomize, setOpenCustomize] = useState(true);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   // Query mute status based on chat type
   const eventMuteQuery = useGetEventMute(
@@ -241,8 +247,23 @@ export function ChatDetails({
               label="Zobacz przypięte wiadomości"
             />
           )}
+          <Row
+            icon={<Flag className="w-4 h-4 text-red-500" />}
+            // TODO i18n
+            label={kind === 'channel' ? 'Zgłoś kanał' : 'Zgłoś rozmowę'}
+            onClick={() => setReportModalOpen(true)}
+          />
         </Section>
       </div>
+
+      {/* Report Modal */}
+      <ReportChatModal
+        open={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        entityId={(kind === 'channel' ? eventId : threadId) || ''}
+        kind={kind}
+        chatName={chatName}
+      />
     </div>
   );
 }

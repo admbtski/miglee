@@ -46,6 +46,11 @@ import {
   useEventAgendaItemsQuery,
   useUpdateEventAgendaMutation,
 } from '@/features/events/api/agenda';
+import { useEventQuery } from '@/features/events/api/events';
+import {
+  PlanUpgradeBanner,
+  type SponsorshipPlan,
+} from '../../_components/plan-upgrade-banner';
 import { useUsersQuery } from '@/features/users/api/users';
 import { Modal } from '@/components/feedback/modal';
 import { Avatar as AvatarComponent } from '@/components/ui/avatar';
@@ -634,15 +639,24 @@ function UserHostDisplay({
 export function AgendaManagementClient({
   eventId,
 }: AgendaManagementClientProps) {
+  // Fetch event for plan check
+  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+    id: eventId,
+  });
+
   const {
     data: serverItems,
-    isLoading,
+    isLoading: agendaLoading,
     error,
     refetch,
   } = useEventAgendaItemsQuery({
     eventId,
   });
   const updateAgendaMutation = useUpdateEventAgendaMutation();
+
+  // Check sponsorship plan
+  const sponsorshipPlan = eventData?.event?.sponsorshipPlan as SponsorshipPlan;
+  const isLoading = eventLoading || agendaLoading;
 
   // Local state
   const [items, setItems] = useState<AgendaItem[]>([]);
@@ -925,391 +939,405 @@ export function AgendaManagementClient({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with Add Button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
-            <ListOrdered className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+    <PlanUpgradeBanner
+      currentPlan={sponsorshipPlan}
+      requiredPlan="PLUS"
+      featureName="Agenda dostępna w planach Plus i Pro"
+      featureDescription="Stwórz szczegółowy program wydarzenia z podziałem na sloty czasowe. Dodaj prowadzących i opisy, aby uczestnicy wiedzieli, czego się spodziewać."
+      eventId={eventId}
+    >
+      <div className="space-y-6">
+        {/* Header with Add Button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+              <ListOrdered className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Program wydarzenia
+              </h2>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                Dodaj sloty programu z tytułem, opisem i prowadzącymi
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Program wydarzenia
-            </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Dodaj sloty programu z tytułem, opisem i prowadzącymi
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={handleAddItem}
-          disabled={items.length >= 50}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="w-4 h-4" />
-          Dodaj slot
-        </button>
-      </div>
-
-      {/* Info Banner */}
-      <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
-        <p className="text-sm text-indigo-800 dark:text-indigo-200">
-          <strong>Wskazówka:</strong> Przeciągnij sloty aby zmienić kolejność.
-          Możesz dodać prowadzących z systemu Miglee lub ręcznie (np. gości
-          zewnętrznych).
-        </p>
-      </div>
-
-      {/* Items List (Reorderable) */}
-      {items.length === 0 ? (
-        <div className="p-8 text-center border-2 border-dashed rounded-xl border-zinc-300 dark:border-zinc-700">
-          <ListOrdered className="w-12 h-12 mx-auto mb-4 text-zinc-400 dark:text-zinc-600" />
-          <h3 className="mb-2 text-lg font-medium text-zinc-900 dark:text-zinc-100">
-            Brak slotów w agendzie
-          </h3>
-          <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-            Dodaj pierwszy slot, aby rozpocząć tworzenie programu wydarzenia
-          </p>
           <button
             onClick={handleAddItem}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition bg-indigo-600 rounded-lg hover:bg-indigo-700"
+            disabled={items.length >= 50}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
-            Dodaj pierwszy slot
+            Dodaj slot
           </button>
         </div>
-      ) : (
-        <Reorder.Group
-          axis="y"
-          values={items}
-          onReorder={handleReorder}
-          className="space-y-4"
-        >
-          {items.map((item, index) => {
-            const isEditing = editingId === item.id;
 
-            return (
-              <Reorder.Item
-                key={item.id}
-                value={item}
-                className={cn(
-                  'border rounded-xl overflow-hidden',
-                  isEditing
-                    ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-300 dark:border-indigo-700'
-                    : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
-                )}
-                drag={!isEditing}
-                dragListener={!isEditing}
-                dragControls={undefined}
-                dragElastic={0.05}
-                dragMomentum={false}
-                initial={false}
-                animate={{ opacity: 1, scale: 1 }}
-                whileDrag={{
-                  scale: 1.02,
-                  boxShadow:
-                    '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                  cursor: 'grabbing',
-                }}
-                exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                style={{ position: 'relative', zIndex: isEditing ? 1 : 'auto' }}
-              >
-                {/* Item Header */}
-                <div className="flex items-start gap-4 p-4">
-                  {/* Drag Handle */}
-                  <div
-                    className={cn(
-                      'flex items-center justify-center w-8 h-8 mt-1 transition rounded',
-                      isEditing
-                        ? 'text-zinc-300 dark:text-zinc-600 cursor-not-allowed'
-                        : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-grab active:cursor-grabbing'
-                    )}
-                    style={{ touchAction: 'none' }}
-                  >
-                    <GripVertical className="w-5 h-5" />
-                  </div>
+        {/* Info Banner */}
+        <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
+          <p className="text-sm text-indigo-800 dark:text-indigo-200">
+            <strong>Wskazówka:</strong> Przeciągnij sloty aby zmienić kolejność.
+            Możesz dodać prowadzących z systemu Miglee lub ręcznie (np. gości
+            zewnętrznych).
+          </p>
+        </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    {isEditing ? (
-                      <div className="space-y-4">
-                        {/* Title */}
-                        <div>
-                          <label className="block mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Tytuł slotu <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) =>
-                              handleUpdateItem(item.id, {
-                                title: e.target.value,
-                              })
-                            }
-                            placeholder="np. Otwarcie konferencji"
-                            maxLength={120}
-                            className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            autoFocus
-                          />
-                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            {item.title.length}/120 znaków
-                          </p>
-                        </div>
+        {/* Items List (Reorderable) */}
+        {items.length === 0 ? (
+          <div className="p-8 text-center border-2 border-dashed rounded-xl border-zinc-300 dark:border-zinc-700">
+            <ListOrdered className="w-12 h-12 mx-auto mb-4 text-zinc-400 dark:text-zinc-600" />
+            <h3 className="mb-2 text-lg font-medium text-zinc-900 dark:text-zinc-100">
+              Brak slotów w agendzie
+            </h3>
+            <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+              Dodaj pierwszy slot, aby rozpocząć tworzenie programu wydarzenia
+            </p>
+            <button
+              onClick={handleAddItem}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition bg-indigo-600 rounded-lg hover:bg-indigo-700"
+            >
+              <Plus className="w-4 h-4" />
+              Dodaj pierwszy slot
+            </button>
+          </div>
+        ) : (
+          <Reorder.Group
+            axis="y"
+            values={items}
+            onReorder={handleReorder}
+            className="space-y-4"
+          >
+            {items.map((item, index) => {
+              const isEditing = editingId === item.id;
 
-                        {/* Description */}
-                        <div>
-                          <label className="block mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Opis (opcjonalnie)
-                          </label>
-                          <textarea
-                            value={item.description || ''}
-                            onChange={(e) =>
-                              handleUpdateItem(item.id, {
-                                description: e.target.value,
-                              })
-                            }
-                            placeholder="Dodatkowe informacje o tym slocie..."
-                            rows={3}
-                            maxLength={1000}
-                            className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                          />
-                          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            {(item.description || '').length}/1000 znaków
-                          </p>
-                        </div>
+              return (
+                <Reorder.Item
+                  key={item.id}
+                  value={item}
+                  className={cn(
+                    'border rounded-xl overflow-hidden',
+                    isEditing
+                      ? 'bg-indigo-50 dark:bg-indigo-900/10 border-indigo-300 dark:border-indigo-700'
+                      : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'
+                  )}
+                  drag={!isEditing}
+                  dragListener={!isEditing}
+                  dragControls={undefined}
+                  dragElastic={0.05}
+                  dragMomentum={false}
+                  initial={false}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileDrag={{
+                    scale: 1.02,
+                    boxShadow:
+                      '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    cursor: 'grabbing',
+                  }}
+                  exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                  style={{
+                    position: 'relative',
+                    zIndex: isEditing ? 1 : 'auto',
+                  }}
+                >
+                  {/* Item Header */}
+                  <div className="flex items-start gap-4 p-4">
+                    {/* Drag Handle */}
+                    <div
+                      className={cn(
+                        'flex items-center justify-center w-8 h-8 mt-1 transition rounded',
+                        isEditing
+                          ? 'text-zinc-300 dark:text-zinc-600 cursor-not-allowed'
+                          : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-grab active:cursor-grabbing'
+                      )}
+                      style={{ touchAction: 'none' }}
+                    >
+                      <GripVertical className="w-5 h-5" />
+                    </div>
 
-                        {/* Time Fields */}
-                        <div className="grid grid-cols-2 gap-4">
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <div className="space-y-4">
+                          {/* Title */}
                           <div>
                             <label className="block mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                              Rozpoczęcie
+                              Tytuł slotu{' '}
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
-                              type="datetime-local"
-                              value={
-                                item.startAt ? item.startAt.slice(0, 16) : ''
-                              }
+                              type="text"
+                              value={item.title}
                               onChange={(e) =>
                                 handleUpdateItem(item.id, {
-                                  startAt: e.target.value
-                                    ? new Date(e.target.value).toISOString()
-                                    : undefined,
+                                  title: e.target.value,
                                 })
                               }
-                              className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="np. Otwarcie konferencji"
+                              maxLength={120}
+                              className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              autoFocus
                             />
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              {item.title.length}/120 znaków
+                            </p>
                           </div>
+
+                          {/* Description */}
                           <div>
                             <label className="block mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                              Zakończenie
+                              Opis (opcjonalnie)
                             </label>
-                            <input
-                              type="datetime-local"
-                              value={item.endAt ? item.endAt.slice(0, 16) : ''}
+                            <textarea
+                              value={item.description || ''}
                               onChange={(e) =>
                                 handleUpdateItem(item.id, {
-                                  endAt: e.target.value
-                                    ? new Date(e.target.value).toISOString()
-                                    : undefined,
+                                  description: e.target.value,
                                 })
                               }
-                              className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="Dodatkowe informacje o tym slocie..."
+                              rows={3}
+                              maxLength={1000}
+                              className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                             />
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              {(item.description || '').length}/1000 znaków
+                            </p>
                           </div>
-                        </div>
 
-                        {/* Hosts Section */}
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                              Prowadzący ({item.hosts.length}/10)
-                            </label>
-                            {item.hosts.length < 10 && (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => openUserSearch(item.id)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition"
-                                >
-                                  <Search className="w-3 h-3" />
-                                  Wyszukaj
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddManualHost(item.id)}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
-                                >
-                                  <UserPlus className="w-3 h-3" />
-                                  Ręcznie
-                                </button>
+                          {/* Time Fields */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Rozpoczęcie
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={
+                                  item.startAt ? item.startAt.slice(0, 16) : ''
+                                }
+                                onChange={(e) =>
+                                  handleUpdateItem(item.id, {
+                                    startAt: e.target.value
+                                      ? new Date(e.target.value).toISOString()
+                                      : undefined,
+                                  })
+                                }
+                                className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              />
+                            </div>
+                            <div>
+                              <label className="block mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Zakończenie
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={
+                                  item.endAt ? item.endAt.slice(0, 16) : ''
+                                }
+                                onChange={(e) =>
+                                  handleUpdateItem(item.id, {
+                                    endAt: e.target.value
+                                      ? new Date(e.target.value).toISOString()
+                                      : undefined,
+                                  })
+                                }
+                                className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Hosts Section */}
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Prowadzący ({item.hosts.length}/10)
+                              </label>
+                              {item.hosts.length < 10 && (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openUserSearch(item.id)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition"
+                                  >
+                                    <Search className="w-3 h-3" />
+                                    Wyszukaj
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddManualHost(item.id)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+                                  >
+                                    <UserPlus className="w-3 h-3" />
+                                    Ręcznie
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {item.hosts.length === 0 ? (
+                              <div className="p-4 text-center border-2 border-dashed rounded-lg border-zinc-200 dark:border-zinc-700">
+                                <User className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
+                                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                  Brak prowadzących
+                                </p>
+                                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                                  Wyszukaj użytkownika lub dodaj ręcznie
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {item.hosts.map((host) =>
+                                  host.kind === 'USER' ? (
+                                    <UserHostDisplay
+                                      key={host.id}
+                                      host={host}
+                                      onRemove={() =>
+                                        handleRemoveHost(item.id, host.id)
+                                      }
+                                    />
+                                  ) : (
+                                    <ManualHostEditor
+                                      key={host.id}
+                                      host={host}
+                                      onUpdate={(updates) =>
+                                        handleUpdateHost(
+                                          item.id,
+                                          host.id,
+                                          updates
+                                        )
+                                      }
+                                      onRemove={() =>
+                                        handleRemoveHost(item.id, host.id)
+                                      }
+                                    />
+                                  )
+                                )}
                               </div>
                             )}
                           </div>
 
-                          {item.hosts.length === 0 ? (
-                            <div className="p-4 text-center border-2 border-dashed rounded-lg border-zinc-200 dark:border-zinc-700">
-                              <User className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
-                              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                Brak prowadzących
-                              </p>
-                              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-                                Wyszukaj użytkownika lub dodaj ręcznie
-                              </p>
+                          {/* Done editing button */}
+                          <div className="pt-2">
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 transition bg-indigo-100 rounded-lg hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                            >
+                              Zakończ edycję
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Read-only view */}
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                                  Slot {index + 1}
+                                </span>
+                                {item.startAt && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                    <Clock className="w-3 h-3" />
+                                    {formatTime(item.startAt)} -{' '}
+                                    {formatTime(item.endAt)}
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
+                                {item.title || (
+                                  <span className="text-zinc-400 italic">
+                                    Brak tytułu
+                                  </span>
+                                )}
+                              </h4>
+                              {item.description && (
+                                <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                                  {item.description}
+                                </p>
+                              )}
                             </div>
-                          ) : (
-                            <div className="space-y-3">
-                              {item.hosts.map((host) =>
-                                host.kind === 'USER' ? (
-                                  <UserHostDisplay
-                                    key={host.id}
-                                    host={host}
-                                    onRemove={() =>
-                                      handleRemoveHost(item.id, host.id)
-                                    }
-                                  />
-                                ) : (
-                                  <ManualHostEditor
-                                    key={host.id}
-                                    host={host}
-                                    onUpdate={(updates) =>
-                                      handleUpdateHost(
-                                        item.id,
-                                        host.id,
-                                        updates
-                                      )
-                                    }
-                                    onRemove={() =>
-                                      handleRemoveHost(item.id, host.id)
-                                    }
-                                  />
-                                )
+                          </div>
+
+                          {/* Hosts preview */}
+                          {item.hosts.length > 0 && (
+                            <div className="mt-3 flex items-center gap-2 flex-wrap">
+                              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Prowadzący:
+                              </span>
+                              {item.hosts.slice(0, 3).map((host) => (
+                                <HostAvatar key={host.id} host={host} />
+                              ))}
+                              {item.hosts.length > 3 && (
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                                  +{item.hosts.length - 3} więcej
+                                </span>
                               )}
                             </div>
                           )}
-                        </div>
+                        </>
+                      )}
+                    </div>
 
-                        {/* Done editing button */}
-                        <div className="pt-2">
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 transition bg-indigo-100 rounded-lg hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
-                          >
-                            Zakończ edycję
-                          </button>
-                        </div>
+                    {/* Action Menu */}
+                    {!isEditing && (
+                      <div className="mt-1">
+                        <AgendaItemActionMenu
+                          onEdit={() => setEditingId(item.id)}
+                          onDelete={() => handleRemoveItem(item.id)}
+                        />
                       </div>
-                    ) : (
-                      <>
-                        {/* Read-only view */}
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                                Slot {index + 1}
-                              </span>
-                              {item.startAt && (
-                                <span className="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                  <Clock className="w-3 h-3" />
-                                  {formatTime(item.startAt)} -{' '}
-                                  {formatTime(item.endAt)}
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                              {item.title || (
-                                <span className="text-zinc-400 italic">
-                                  Brak tytułu
-                                </span>
-                              )}
-                            </h4>
-                            {item.description && (
-                              <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
-                                {item.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Hosts preview */}
-                        {item.hosts.length > 0 && (
-                          <div className="mt-3 flex items-center gap-2 flex-wrap">
-                            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                              Prowadzący:
-                            </span>
-                            {item.hosts.slice(0, 3).map((host) => (
-                              <HostAvatar key={host.id} host={host} />
-                            ))}
-                            {item.hosts.length > 3 && (
-                              <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                                +{item.hosts.length - 3} więcej
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </>
                     )}
                   </div>
+                </Reorder.Item>
+              );
+            })}
+          </Reorder.Group>
+        )}
 
-                  {/* Action Menu */}
-                  {!isEditing && (
-                    <div className="mt-1">
-                      <AgendaItemActionMenu
-                        onEdit={() => setEditingId(item.id)}
-                        onDelete={() => handleRemoveItem(item.id)}
-                      />
-                    </div>
-                  )}
-                </div>
-              </Reorder.Item>
-            );
-          })}
-        </Reorder.Group>
-      )}
+        {/* Save Button (Sticky Bottom) */}
+        {hasChanges && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="sticky bottom-6 z-10"
+          >
+            <div className="flex justify-end">
+              <button
+                onClick={handleSave}
+                disabled={updateAgendaMutation.isPending}
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white transition bg-indigo-600 rounded-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {updateAgendaMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Zapisywanie...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Zapisz agendę
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
 
-      {/* Save Button (Sticky Bottom) */}
-      {hasChanges && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="sticky bottom-6 z-10"
-        >
-          <div className="flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={updateAgendaMutation.isPending}
-              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white transition bg-indigo-600 rounded-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {updateAgendaMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Zapisywanie...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Zapisz agendę
-                </>
-              )}
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* User Search Modal */}
-      <UserSearchModal
-        open={userSearchOpen}
-        onClose={() => {
-          setUserSearchOpen(false);
-          setUserSearchItemId(null);
-        }}
-        onSelect={(user) => {
-          if (userSearchItemId) {
-            handleAddUserHost(userSearchItemId, user);
-          }
-        }}
-        existingUserIds={existingUserIds}
-      />
-    </div>
+        {/* User Search Modal */}
+        <UserSearchModal
+          open={userSearchOpen}
+          onClose={() => {
+            setUserSearchOpen(false);
+            setUserSearchItemId(null);
+          }}
+          onSelect={(user) => {
+            if (userSearchItemId) {
+              handleAddUserHost(userSearchItemId, user);
+            }
+          }}
+          existingUserIds={existingUserIds}
+        />
+      </div>
+    </PlanUpgradeBanner>
   );
 }

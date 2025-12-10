@@ -250,7 +250,16 @@ export function NotificationBell({
     });
 
   // ========= Handlery =========
-  const toggle = useCallback(() => setOpen((v) => !v), []);
+  const toggle = useCallback(() => {
+    setOpen((v) => {
+      // Always refresh when opening
+      if (!v) {
+        void refetch();
+        setHasNew(false);
+      }
+      return !v;
+    });
+  }, [refetch]);
 
   const handleMarkOne = useCallback(
     (id: string) => {
@@ -429,6 +438,7 @@ export function NotificationBell({
                           title: n.title,
                           body: n.body,
                           entityType: n.entityType,
+                          entityId: n.entityId,
                           readAt: n.readAt,
                           createdAt: n.createdAt,
                           data: n.data as Record<string, unknown> | null,
