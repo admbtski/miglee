@@ -1,9 +1,16 @@
+/**
+ * DM Query Resolvers
+ *
+ * Authorization: SELF (user must be participant in thread)
+ */
+
 import type { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { createPairKey, mapDmMessage, mapDmThread } from '../helpers';
+import { requireAuth } from '../shared/auth-guards';
 
 const DM_THREAD_INCLUDE = {
   aUser: true,
@@ -35,29 +42,26 @@ const DM_MESSAGE_INCLUDE = {
 
 /**
  * Query: Get all DM threads for current user
+ * Authorization: AUTH (SELF)
  */
 export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
   'Query',
   'dmThreads',
-  async (_p, args, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_p, args, ctx) => {
+    const userId = requireAuth(ctx);
 
     const take = Math.max(1, Math.min(args.limit ?? 20, 100));
     const skip = Math.max(0, args.offset ?? 0);
 
     const where: Prisma.DmThreadWhereInput = {
-      OR: [{ aUserId: user.id }, { bUserId: user.id }],
+      OR: [{ aUserId: userId }, { bUserId: userId }],
     };
 
     // Filter for unread threads
     if (args.unreadOnly) {
       where.messages = {
         some: {
-          senderId: { not: user.id },
+          senderId: { not: userId },
           readAt: null,
           deletedAt: null,
         },
@@ -74,9 +78,7 @@ export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
       include: {
         ...DM_THREAD_INCLUDE,
         reads: {
-          where: {
-            userId: user.id,
-          },
+          where: { userId },
         },
       },
     });
@@ -85,12 +87,12 @@ export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
     const threadsWithUnread = await Promise.all(
       threads.map(async (t) => {
         const lastReadAt =
-          t.reads.find((r) => r.userId === user.id)?.lastReadAt || new Date(0);
+          t.reads.find((r) => r.userId === userId)?.lastReadAt || new Date(0);
 
         const unreadCount = await prisma.dmMessage.count({
           where: {
             threadId: t.id,
-            senderId: { not: user.id },
+            senderId: { not: userId },
             deletedAt: null,
             createdAt: { gt: lastReadAt },
           },
@@ -101,7 +103,7 @@ export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
     );
 
     return {
-      items: threadsWithUnread.map((t) => mapDmThread(t as any, user.id)),
+      items: threadsWithUnread.map((t) => mapDmThread(t as any, userId)),
       pageInfo: {
         total,
         limit: take,
@@ -115,16 +117,13 @@ export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
 
 /**
  * Query: Get a specific DM thread
+ * Authorization: AUTH (SELF - must be participant)
  */
 export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
   'Query',
   'dmThread',
-  async (_p, { id, otherUserId }, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_p, { id, otherUserId }, ctx) => {
+    const userId = requireAuth(ctx);
 
     let thread;
 
@@ -134,32 +133,24 @@ export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
         where: { id },
         include: {
           ...DM_THREAD_INCLUDE,
-          reads: {
-            where: {
-              userId: user.id,
-            },
-          },
+          reads: { where: { userId } },
         },
       });
 
-      // Verify user is part of this thread
-      if (thread && thread.aUserId !== user.id && thread.bUserId !== user.id) {
+      // Verify user is participant
+      if (thread && thread.aUserId !== userId && thread.bUserId !== userId) {
         throw new GraphQLError('Access denied.', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
     } else if (otherUserId) {
       // Find by other user ID
-      const pairKey = createPairKey(user.id, otherUserId);
+      const pairKey = createPairKey(userId, otherUserId);
       thread = await prisma.dmThread.findUnique({
         where: { pairKey },
         include: {
           ...DM_THREAD_INCLUDE,
-          reads: {
-            where: {
-              userId: user.id,
-            },
-          },
+          reads: { where: { userId } },
         },
       });
     }
@@ -170,18 +161,18 @@ export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
 
     // Calculate unread count using DmRead
     const lastReadAt =
-      thread.reads.find((r) => r.userId === user.id)?.lastReadAt || new Date(0);
+      thread.reads.find((r) => r.userId === userId)?.lastReadAt || new Date(0);
 
     const unreadCount = await prisma.dmMessage.count({
       where: {
         threadId: thread.id,
-        senderId: { not: user.id },
+        senderId: { not: userId },
         deletedAt: null,
         createdAt: { gt: lastReadAt },
       },
     });
 
-    return mapDmThread({ ...thread, unreadCount } as any, user.id);
+    return mapDmThread({ ...thread, unreadCount } as any, userId);
   }
 );
 
@@ -199,6 +190,7 @@ function decodeCursor(cursor: string): { createdAt: Date; id: string } | null {
   try {
     const decoded = Buffer.from(cursor, 'base64').toString('utf-8');
     const [timestamp, id] = decoded.split(':');
+    if (!timestamp || !id) return null;
     return { createdAt: new Date(parseInt(timestamp, 10)), id };
   } catch {
     return null;
@@ -206,20 +198,15 @@ function decodeCursor(cursor: string): { createdAt: Date; id: string } | null {
 }
 
 /**
- * Query: Get messages in a thread (cursor-based, reverse infinite scroll)
- * Default: returns newest 20 messages in ASC order (oldest to newest)
- * For loading older: use `before` cursor
+ * Query: Get messages in a thread (cursor-based)
+ * Authorization: AUTH (SELF - must be participant)
  */
 export const dmMessagesQuery: QueryResolvers['dmMessages'] =
   resolverWithMetrics(
     'Query',
     'dmMessages',
-    async (_p, { threadId, first = 20, before, after }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { threadId, first = 20, before, after }, ctx) => {
+      const userId = requireAuth(ctx);
 
       // Verify user has access to this thread
       const thread = await prisma.dmThread.findUnique({
@@ -233,7 +220,7 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
         });
       }
 
-      if (thread.aUserId !== user.id && thread.bUserId !== user.id) {
+      if (thread.aUserId !== userId && thread.bUserId !== userId) {
         throw new GraphQLError('Access denied.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -287,14 +274,14 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
       items.reverse();
 
       // Get the other user's lastReadAt to determine if messages are read
-      const otherUserId =
-        thread.aUserId === user.id ? thread.bUserId : thread.aUserId;
+      const otherParticipantId =
+        thread.aUserId === userId ? thread.bUserId : thread.aUserId;
 
       const otherUserRead = await prisma.dmRead.findUnique({
         where: {
           threadId_userId: {
             threadId,
-            userId: otherUserId,
+            userId: otherParticipantId,
           },
         },
         select: { lastReadAt: true },
@@ -303,7 +290,7 @@ export const dmMessagesQuery: QueryResolvers['dmMessages'] =
       // Build edges
       const edges = items.map((msg) => {
         const readAt =
-          msg.senderId === user.id &&
+          msg.senderId === userId &&
           otherUserRead?.lastReadAt &&
           msg.createdAt <= otherUserRead.lastReadAt
             ? otherUserRead.lastReadAt

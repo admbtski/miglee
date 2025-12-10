@@ -1,14 +1,25 @@
+/**
+ * Join Questions Query Resolvers
+ *
+ * Authorization levels:
+ * - eventJoinQuestions: AUTH
+ * - eventJoinRequests: EVENT_MOD_OR_OWNER
+ * - myJoinRequests: AUTH (SELF)
+ */
+
+import { GraphQLError } from 'graphql';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
-import { GraphQLError } from 'graphql';
+import { requireAuth, requireEventModOrOwner } from '../shared/auth-guards';
 
 /**
- * Get join questions for an event
- * Public for viewing, but answers are only visible to owner/mods
+ * Query: Get join questions for an event
+ * Authorization: AUTH
  */
 export const eventJoinQuestionsQuery: QueryResolvers['eventJoinQuestions'] =
-  async (_parent, { eventId }, { user }) => {
-    // Anyone can view questions (needed for users to see the form)
+  async (_parent, { eventId }, ctx) => {
+    requireAuth(ctx);
+
     const questions = await prisma.eventJoinQuestion.findMany({
       where: { eventId },
       orderBy: { order: 'asc' },
@@ -23,51 +34,13 @@ export const eventJoinQuestionsQuery: QueryResolvers['eventJoinQuestions'] =
   };
 
 /**
- * Get join requests (PENDING members with their answers) for an event
- * Only accessible by owner/mods
+ * Query: Get join requests (PENDING members with answers)
+ * Authorization: EVENT_MOD_OR_OWNER
  */
 export const eventJoinRequestsQuery: QueryResolvers['eventJoinRequests'] =
-  async (_parent, { eventId, limit = 20, offset = 0 }, { user }) => {
-    if (!user) {
-      throw new GraphQLError('Authentication required', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
-
-    // Check if user is owner or moderator
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      select: {
-        ownerId: true,
-        members: {
-          where: {
-            userId: user.id,
-            role: { in: ['OWNER', 'MODERATOR'] },
-            status: 'JOINED',
-          },
-          select: { role: true },
-        },
-      },
-    });
-
-    if (!event) {
-      throw new GraphQLError('Event not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
-
-    const isOwner = event.ownerId === user.id;
-    const isModerator = event.members.length > 0;
-    const isAdmin = user.role === 'ADMIN';
-
-    if (!isOwner && !isModerator && !isAdmin) {
-      throw new GraphQLError(
-        'Only event owner or moderators can view join requests',
-        {
-          extensions: { code: 'FORBIDDEN' },
-        }
-      );
-    }
+  async (_parent, { eventId, limit = 20, offset = 0 }, ctx) => {
+    // Check EVENT_MOD_OR_OWNER (includes app mod/admin bypass)
+    await requireEventModOrOwner(ctx.user, eventId);
 
     // Get PENDING members with their answers
     const [members, total] = await Promise.all([
@@ -136,22 +109,19 @@ export const eventJoinRequestsQuery: QueryResolvers['eventJoinRequests'] =
   };
 
 /**
- * Get current user's join requests (their PENDING/REJECTED/CANCELLED memberships)
+ * Query: Get current user's join requests
+ * Authorization: AUTH (SELF)
  */
 export const myJoinRequestsQuery: QueryResolvers['myJoinRequests'] = async (
   _parent,
   { status, limit = 20, offset = 0 },
-  { user }
+  ctx
 ) => {
-  if (!user) {
-    throw new GraphQLError('Authentication required', {
-      extensions: { code: 'UNAUTHENTICATED' },
-    });
-  }
+  const userId = requireAuth(ctx);
 
   const members = await prisma.eventMember.findMany({
     where: {
-      userId: user.id,
+      userId,
       status: status || { in: ['PENDING', 'REJECTED', 'CANCELLED'] },
     },
     include: {

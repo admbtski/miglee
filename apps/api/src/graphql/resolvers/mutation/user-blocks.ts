@@ -1,5 +1,7 @@
 /**
  * User Blocks Mutation Resolvers
+ *
+ * Authorization: AUTH (SELF)
  */
 
 import type { Prisma } from '@prisma/client';
@@ -8,6 +10,7 @@ import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapUserBlock } from '../helpers';
+import { requireAuth } from '../shared/auth-guards';
 
 const USER_BLOCK_INCLUDE = {
   blocker: true,
@@ -16,19 +19,16 @@ const USER_BLOCK_INCLUDE = {
 
 /**
  * Mutation: Block a user
+ * Authorization: AUTH (SELF)
  */
 export const blockUserMutation: MutationResolvers['blockUser'] =
   resolverWithMetrics(
     'Mutation',
     'blockUser',
-    async (_p, { userId }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { userId: targetUserId }, ctx) => {
+      const userId = requireAuth(ctx);
 
-      if (userId === user.id) {
+      if (targetUserId === userId) {
         throw new GraphQLError('Cannot block yourself.', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
@@ -36,7 +36,7 @@ export const blockUserMutation: MutationResolvers['blockUser'] =
 
       // Check if user exists
       const targetUser = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: targetUserId },
         select: { id: true },
       });
 
@@ -49,10 +49,7 @@ export const blockUserMutation: MutationResolvers['blockUser'] =
       // Check if already blocked
       const existing = await prisma.userBlock.findUnique({
         where: {
-          blockerId_blockedId: {
-            blockerId: user.id,
-            blockedId: userId,
-          },
+          blockerId_blockedId: { blockerId: userId, blockedId: targetUserId },
         },
         include: USER_BLOCK_INCLUDE,
       });
@@ -63,10 +60,7 @@ export const blockUserMutation: MutationResolvers['blockUser'] =
 
       // Create block
       const block = await prisma.userBlock.create({
-        data: {
-          blockerId: user.id,
-          blockedId: userId,
-        },
+        data: { blockerId: userId, blockedId: targetUserId },
         include: USER_BLOCK_INCLUDE,
       });
 
@@ -76,24 +70,18 @@ export const blockUserMutation: MutationResolvers['blockUser'] =
 
 /**
  * Mutation: Unblock a user
+ * Authorization: AUTH (SELF)
  */
 export const unblockUserMutation: MutationResolvers['unblockUser'] =
   resolverWithMetrics(
     'Mutation',
     'unblockUser',
-    async (_p, { userId }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { userId: targetUserId }, ctx) => {
+      const userId = requireAuth(ctx);
 
       const block = await prisma.userBlock.findUnique({
         where: {
-          blockerId_blockedId: {
-            blockerId: user.id,
-            blockedId: userId,
-          },
+          blockerId_blockedId: { blockerId: userId, blockedId: targetUserId },
         },
       });
 

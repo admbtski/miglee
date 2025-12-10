@@ -1,9 +1,15 @@
+/**
+ * Reviews Query Resolvers
+ *
+ * Authorization: ANY (public reviews) or AUTH (myReview)
+ */
+
 import type { Prisma } from '@prisma/client';
-import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { mapReview } from '../helpers';
+import { requireAuth } from '../shared/auth-guards';
 
 const REVIEW_INCLUDE = {
   author: true,
@@ -136,22 +142,19 @@ export const reviewStatsQuery: QueryResolvers['reviewStats'] =
 
 /**
  * Query: Get current user's review for an event
+ * Authorization: AUTH (SELF)
  */
 export const myReviewQuery: QueryResolvers['myReview'] = resolverWithMetrics(
   'Query',
   'myReview',
-  async (_p, { eventId }, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_p, { eventId }, ctx) => {
+    const userId = requireAuth(ctx);
 
     const review = await prisma.review.findUnique({
       where: {
         eventId_authorId: {
           eventId,
-          authorId: user.id,
+          authorId: userId,
         },
       },
       include: REVIEW_INCLUDE,

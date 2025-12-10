@@ -1,13 +1,15 @@
 /**
  * User Blocks Query Resolvers
+ *
+ * Authorization: AUTH (SELF)
  */
 
 import type { Prisma } from '@prisma/client';
-import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { mapUserBlock } from '../helpers';
+import { requireAuth } from '../shared/auth-guards';
 
 const USER_BLOCK_INCLUDE = {
   blocker: true,
@@ -16,27 +18,24 @@ const USER_BLOCK_INCLUDE = {
 
 /**
  * Query: Get my blocks (users I've blocked)
+ * Authorization: AUTH (SELF)
  */
 export const myBlocksQuery: QueryResolvers['myBlocks'] = resolverWithMetrics(
   'Query',
   'myBlocks',
-  async (_p, { limit = 50, offset = 0 }, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_p, { limit = 50, offset = 0 }, ctx) => {
+    const userId = requireAuth(ctx);
 
     const [blocks, total] = await Promise.all([
       prisma.userBlock.findMany({
-        where: { blockerId: user.id },
+        where: { blockerId: userId },
         include: USER_BLOCK_INCLUDE,
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
       }),
       prisma.userBlock.count({
-        where: { blockerId: user.id },
+        where: { blockerId: userId },
       }),
     ]);
 
@@ -57,22 +56,19 @@ export const myBlocksQuery: QueryResolvers['myBlocks'] = resolverWithMetrics(
 
 /**
  * Query: Check if a user is blocked (by me or blocking me)
+ * Authorization: AUTH (SELF)
  */
 export const isBlockedQuery: QueryResolvers['isBlocked'] = resolverWithMetrics(
   'Query',
   'isBlocked',
-  async (_p, { userId }, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_p, { userId: targetUserId }, ctx) => {
+    const userId = requireAuth(ctx);
 
     const block = await prisma.userBlock.findFirst({
       where: {
         OR: [
-          { blockerId: user.id, blockedId: userId },
-          { blockerId: userId, blockedId: user.id },
+          { blockerId: userId, blockedId: targetUserId },
+          { blockerId: targetUserId, blockedId: userId },
         ],
       },
     });

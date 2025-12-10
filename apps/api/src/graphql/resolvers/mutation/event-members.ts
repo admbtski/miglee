@@ -13,12 +13,16 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import { canStillJoin, promoteFromWaitlist } from '../../../lib/waitlist';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapEvent, mapNotification } from '../helpers';
+import { isAdminOrModerator, isAdmin } from '../shared/auth-guards';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*                               Includes / types                             */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-export const NOTIFICATION_INCLUDE = {
+/**
+ * Notification include for event member notifications.
+ */
+const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
   event: {
@@ -71,10 +75,19 @@ function isOwner(
   );
 }
 
+/**
+ * Require EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN.
+ * Global ADMIN/MODERATOR always have access.
+ */
 function requireModOrOwner(
   event: { members: { userId: string; role: EventMemberRole }[] },
-  userId: string
+  userId: string,
+  ctx: MercuriusContext
 ) {
+  // Global ADMIN or MODERATOR always has access
+  if (isAdminOrModerator(ctx.user)) {
+    return;
+  }
   if (!isModeratorOrOwner(event, userId)) {
     throw new GraphQLError('Forbidden. Moderator or owner role required.', {
       extensions: { code: 'FORBIDDEN' },
@@ -82,10 +95,20 @@ function requireModOrOwner(
   }
 }
 
+/**
+ * Require EVENT_OWNER or ADMIN_ONLY.
+ * Global ADMIN always has OWNER privileges.
+ * Global MODERATOR does NOT have OWNER privileges.
+ */
 function requireOwner(
   event: { members: { userId: string; role: EventMemberRole }[] },
-  userId: string
+  userId: string,
+  ctx: MercuriusContext
 ) {
+  // Global ADMIN always has access
+  if (isAdmin(ctx.user)) {
+    return;
+  }
   if (!isOwner(event, userId)) {
     throw new GraphQLError('Only the owner can perform this action.', {
       extensions: { code: 'FORBIDDEN' },
@@ -568,7 +591,7 @@ export const inviteMemberMutation: MutationResolvers['inviteMember'] =
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireModOrOwner(event, actorId);
+        requireModOrOwner(event, actorId, ctx);
 
         if (isOwner(event, userId)) {
           throw new GraphQLError('Cannot invite the owner.', {
@@ -731,7 +754,7 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireModOrOwner(event, actorId);
+        requireModOrOwner(event, actorId, ctx);
 
         if (await isBanned(tx, eventId, userId)) {
           throw new GraphQLError('User is banned for this event.', {
@@ -836,7 +859,7 @@ export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireModOrOwner(event, actorId);
+        requireModOrOwner(event, actorId, ctx);
 
         const member = await tx.eventMember.findUnique({
           where: { eventId_userId: { eventId, userId } },
@@ -886,7 +909,7 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireModOrOwner(event, actorId);
+        requireModOrOwner(event, actorId, ctx);
 
         if (isOwner(event, userId)) {
           throw new GraphQLError('Cannot kick the owner.', {
@@ -953,7 +976,7 @@ export const banMemberMutation: MutationResolvers['banMember'] =
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireModOrOwner(event, actorId);
+        requireModOrOwner(event, actorId, ctx);
 
         if (isOwner(event, userId)) {
           throw new GraphQLError('Cannot ban the owner.', {
@@ -1034,7 +1057,7 @@ export const unbanMemberMutation: MutationResolvers['unbanMember'] =
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireModOrOwner(event, actorId);
+        requireModOrOwner(event, actorId, ctx);
 
         const existing = await tx.eventMember.findUnique({
           where: { eventId_userId: { eventId, userId } },
@@ -1081,7 +1104,7 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireOwner(event, actorId);
+        requireOwner(event, actorId, ctx);
 
         if (isOwner(event, userId)) {
           throw new GraphQLError(
@@ -1134,6 +1157,10 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
     }
   );
 
+/**
+ * Cancel pending or invite for a user (owner/mod action)
+ * Required level: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+ */
 export const cancelPendingOrInviteForUserMutation: MutationResolvers['cancelPendingOrInviteForUser'] =
   resolverWithMetrics(
     'Mutation',
@@ -1141,22 +1168,25 @@ export const cancelPendingOrInviteForUserMutation: MutationResolvers['cancelPend
     async (_p, { input: { eventId, userId } }, ctx) => {
       const actorId = assertAuth(ctx);
 
-      // uprawnienia: OWNER/MODERATOR oraz JOINED
-      const actorMembership = await prisma.eventMember.findUnique({
-        where: { eventId_userId: { eventId, userId: actorId } },
-        select: { role: true, status: true },
-      });
+      // Global ADMIN or MODERATOR always has access
+      if (!isAdminOrModerator(ctx.user)) {
+        // Check event membership: OWNER/MODERATOR and JOINED
+        const actorMembership = await prisma.eventMember.findUnique({
+          where: { eventId_userId: { eventId, userId: actorId } },
+          select: { role: true, status: true },
+        });
 
-      if (
-        !actorMembership ||
-        actorMembership.status !== EventMemberStatus.JOINED ||
-        (actorMembership.role !== EventMemberRole.OWNER &&
-          actorMembership.role !== EventMemberRole.MODERATOR)
-      ) {
-        throw new GraphQLError(
-          'Forbidden. Moderator or owner role required for this action.',
-          { extensions: { code: 'FORBIDDEN' } }
-        );
+        if (
+          !actorMembership ||
+          actorMembership.status !== EventMemberStatus.JOINED ||
+          (actorMembership.role !== EventMemberRole.OWNER &&
+            actorMembership.role !== EventMemberRole.MODERATOR)
+        ) {
+          throw new GraphQLError(
+            'Forbidden. Moderator or owner role required for this action.',
+            { extensions: { code: 'FORBIDDEN' } }
+          );
+        }
       }
 
       const res = await prisma.eventMember.deleteMany({
@@ -1340,7 +1370,7 @@ export const promoteFromWaitlistMutation: MutationResolvers['promoteFromWaitlist
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
-        requireModOrOwner(event, actorId);
+        requireModOrOwner(event, actorId, ctx);
 
         const member = await tx.eventMember.findUnique({
           where: { eventId_userId: { eventId, userId } },

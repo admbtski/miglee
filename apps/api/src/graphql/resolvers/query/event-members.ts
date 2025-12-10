@@ -1,7 +1,18 @@
+/**
+ * Event Members Query Resolvers
+ *
+ * Authorization levels:
+ * - eventMembers: AUTH (full data for EVENT_MOD_OR_OWNER)
+ * - eventMember: AUTH (access if SELF or EVENT_MOD_OR_OWNER)
+ * - myMembershipForEvent: AUTH (returns null if not found)
+ * - myMemberships: AUTH
+ * - myEvents: AUTH
+ * - eventMemberStats: EVENT_MOD_OR_OWNER (full stats) or ANY (joined count only)
+ */
+
 import type { Prisma } from '@prisma/client';
 import { EventMemberRole, EventMemberStatus } from '@prisma/client';
 import { GraphQLError } from 'graphql';
-import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
@@ -12,6 +23,11 @@ import type {
 } from '../../__generated__/resolvers-types';
 import type { EventMemberWithUsers } from '../helpers';
 import { mapUser } from '../helpers';
+import {
+  requireAuth,
+  getEffectiveEventRole,
+  isEventModeratorRole,
+} from '../shared/auth-guards';
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Mapping
@@ -42,48 +58,17 @@ const MEMBER_INCLUDE = {
 } satisfies Prisma.EventMemberInclude;
 
 /* ────────────────────────────────────────────────────────────────────────────
- * Auth & role helpers
- * ────────────────────────────────────────────────────────────────────────── */
-
-async function authUser(ctx: MercuriusContext) {
-  if (!ctx.user?.id) {
-    throw new GraphQLError('Authentication required.', {
-      extensions: { code: 'UNAUTHENTICATED' },
-    });
-  }
-  return ctx.user.id;
-}
-
-function isMod(role: EventMemberRole | null): boolean {
-  return role === EventMemberRole.OWNER || role === EventMemberRole.MODERATOR;
-}
-
-/**
- * Zwraca rolę widza (jeśli JOINED) dla danego eventu albo null.
- */
-async function resolveViewerRole(
-  eventId: string,
-  viewerId?: string
-): Promise<EventMemberRole | null> {
-  if (!viewerId) return null;
-
-  const me = await prisma.eventMember.findUnique({
-    where: { eventId_userId: { eventId, userId: viewerId } },
-    select: { role: true, status: true },
-  });
-
-  if (!me) return null;
-  if (me.status !== EventMemberStatus.JOINED) return null;
-  return me.role;
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
  * Filters & ordering
  * ────────────────────────────────────────────────────────────────────────── */
 
 /**
  * Jeśli nie-moderator: widzi wyłącznie JOINED (i ukrywa BANNED).
  * Jeśli moderator/owner: może filtrować dowolnym statusem/rolą.
+ */
+/**
+ * Build member filter based on viewer's effective role.
+ * - Mods/Owners: full access, can filter by any status/role
+ * - Non-mods: see only JOINED members
  */
 function buildMemberWhere(
   eventId: string,
@@ -95,20 +80,18 @@ function buildMemberWhere(
 ): Prisma.EventMemberWhereInput {
   const base: Prisma.EventMemberWhereInput = { eventId };
 
-  // Filtr roli (jeśli podany)
   if (opts.desiredRole) {
     base.role = opts.desiredRole;
   }
 
-  if (isMod(viewerRole)) {
-    // Mod/Owner: pełny zakres, ewentualnie status na żądanie
+  if (isEventModeratorRole(viewerRole)) {
     if (opts.desiredStatus) {
       base.status = opts.desiredStatus;
     }
     return base;
   }
 
-  // Nie-mod: pokazuj tylko JOINED (i z definicji nie pokazuj BANNED)
+  // Non-mods: show only JOINED
   return {
     ...base,
     status: EventMemberStatus.JOINED,
@@ -132,15 +115,22 @@ function buildMemberOrder(): Prisma.EventMemberOrderByWithRelationInput[] {
  * Queries
  * ────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * Query: eventMembers
+ * Authorization: AUTH (full data for EVENT_MOD_OR_OWNER)
+ */
 export const eventMembersQuery: QueryResolvers['eventMembers'] =
   resolverWithMetrics(
     'Query',
     'eventMembers',
-    async (_p, { eventId, status, role, limit, offset }, { user }) => {
+    async (_p, { eventId, status, role, limit, offset }, ctx) => {
+      requireAuth(ctx);
+
       const take = Math.max(1, Math.min(limit ?? 50, 200));
       const skip = Math.max(0, offset ?? 0);
 
-      const viewerRole = await resolveViewerRole(eventId, user?.id);
+      // Get viewer's effective role (considers global mod/admin)
+      const viewerRole = await getEffectiveEventRole(ctx.user, eventId);
 
       const where = buildMemberWhere(eventId, viewerRole, {
         desiredStatus: (status as unknown as EventMemberStatus | null) ?? null,
@@ -159,12 +149,19 @@ export const eventMembersQuery: QueryResolvers['eventMembers'] =
     }
   );
 
+/**
+ * Query: eventMember
+ * Authorization: AUTH (access if SELF or EVENT_MOD_OR_OWNER)
+ */
 export const eventMemberQuery: QueryResolvers['eventMember'] =
   resolverWithMetrics(
     'Query',
     'eventMember',
     async (_p, { eventId, userId }, ctx) => {
-      const viewerRole = await resolveViewerRole(eventId, ctx.user?.id);
+      const viewerId = requireAuth(ctx);
+
+      // Get viewer's effective role
+      const viewerRole = await getEffectiveEventRole(ctx.user, eventId);
 
       const row = await prisma.eventMember.findUnique({
         where: { eventId_userId: { eventId, userId } },
@@ -173,8 +170,12 @@ export const eventMemberQuery: QueryResolvers['eventMember'] =
 
       if (!row) return null;
 
-      // Nie-modowie widzą tylko JOINED
-      if (!isMod(viewerRole) && row.status !== EventMemberStatus.JOINED) {
+      // Non-mods see only JOINED (unless viewing their own membership)
+      if (
+        !isEventModeratorRole(viewerRole) &&
+        row.status !== EventMemberStatus.JOINED &&
+        row.userId !== viewerId
+      ) {
         return null;
       }
 
@@ -208,12 +209,16 @@ export const myMembershipForEventQuery: QueryResolvers['myMembershipForEvent'] =
     }
   );
 
+/**
+ * Query: myMemberships
+ * Authorization: AUTH (SELF)
+ */
 export const myMembershipsQuery: QueryResolvers['myMemberships'] =
   resolverWithMetrics(
     'Query',
     'myMemberships',
     async (_p, { status, role, limit, offset }, ctx) => {
-      const me = await authUser(ctx);
+      const me = requireAuth(ctx);
 
       const take = Math.max(1, Math.min(limit ?? 50, 200));
       const skip = Math.max(0, offset ?? 0);
@@ -236,11 +241,15 @@ export const myMembershipsQuery: QueryResolvers['myMemberships'] =
     }
   );
 
+/**
+ * Query: myEvents
+ * Authorization: AUTH (SELF)
+ */
 export const myEventsQuery: QueryResolvers['myEvents'] = resolverWithMetrics(
   'Query',
   'myEvents',
   async (_p, { role, membershipStatus, eventStatuses, limit, offset }, ctx) => {
-    const me = await authUser(ctx);
+    const me = requireAuth(ctx);
 
     const take = Math.max(1, Math.min(limit ?? 50, 200));
     const skip = Math.max(0, offset ?? 0);
@@ -326,14 +335,19 @@ export const myEventsQuery: QueryResolvers['myEvents'] = resolverWithMetrics(
   }
 );
 
+/**
+ * Query: eventMemberStats
+ * Authorization: ANY (joined count), EVENT_MOD_OR_OWNER (full stats)
+ */
 export const eventMemberStatsQuery: QueryResolvers['eventMemberStats'] =
   resolverWithMetrics(
     'Query',
     'eventMemberStats',
-    async (_p, { eventId }, { user }) => {
-      const viewerRole = await resolveViewerRole(eventId, user?.id);
+    async (_p, { eventId }, ctx) => {
+      // Get viewer's effective role (works for unauthenticated users too)
+      const viewerRole = await getEffectiveEventRole(ctx.user, eventId);
 
-      if (isMod(viewerRole)) {
+      if (isEventModeratorRole(viewerRole)) {
         const byStatus = await prisma.eventMember.groupBy({
           by: ['status'],
           where: { eventId },

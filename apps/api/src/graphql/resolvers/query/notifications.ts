@@ -1,9 +1,16 @@
+/**
+ * Notifications Query Resolvers
+ *
+ * Authorization: SELF (recipientId must match current user)
+ */
+
 import type { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import { QueryResolvers } from '../../__generated__/resolvers-types';
 import { mapNotification } from '../helpers';
+import { requireAuth, isAdmin } from '../shared/auth-guards';
 
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
@@ -21,22 +28,15 @@ export const NOTIFICATION_INCLUDE = {
 } satisfies Prisma.NotificationInclude;
 
 /**
- * Query: notifications (paginated NotificationsResult)
- * - wymaga zgodności args.recipientId z zalogowanym użytkownikiem
- * - wspiera unreadOnly i entityType
- * - sort: newest first
+ * Query: notifications
+ * Authorization: SELF (recipientId must match current user, ADMIN can access any)
  */
 export const notificationsQuery: QueryResolvers['notifications'] =
-  resolverWithMetrics('Query', 'notifications', async (_p, args, { user }) => {
-    // --- auth & ownership ---
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  resolverWithMetrics('Query', 'notifications', async (_p, args, ctx) => {
+    const userId = requireAuth(ctx);
 
-    if (args.recipientId !== user.id) {
-      // (opcjonalnie: dopuść ADMIN)
+    // SELF check with ADMIN bypass
+    if (args.recipientId !== userId && !isAdmin(ctx.user)) {
       throw new GraphQLError('Access denied for requested recipient.', {
         extensions: { code: 'FORBIDDEN' },
       });

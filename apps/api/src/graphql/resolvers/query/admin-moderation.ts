@@ -1,30 +1,15 @@
 /**
  * Admin Content Moderation Query Resolvers
+ *
+ * Authorization: ADMIN_ONLY
  */
 
 import type { Prisma } from '@prisma/client';
-import { Role } from '@prisma/client';
-import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { mapComment, mapReview } from '../helpers';
-
-/**
- * Helper: Check if user is admin
- */
-function requireAdmin(user: any) {
-  if (!user?.id) {
-    throw new GraphQLError('Authentication required.', {
-      extensions: { code: 'UNAUTHENTICATED' },
-    });
-  }
-  if (user.role !== Role.ADMIN) {
-    throw new GraphQLError('Admin access required.', {
-      extensions: { code: 'FORBIDDEN' },
-    });
-  }
-}
+import { requireAdmin } from '../shared/auth-guards';
 
 /**
  * Query: Get all comments (admin)

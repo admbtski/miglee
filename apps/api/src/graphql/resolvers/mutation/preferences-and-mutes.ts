@@ -1,20 +1,15 @@
 /**
  * Notification Preferences & Mutes Mutation Resolvers
+ *
+ * Authorization: AUTH (SELF)
  */
 
 import type { Prisma } from '@prisma/client';
-import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
-import {
-  mapNotificationPreference,
-  mapEventMute,
-  mapDmMute,
-  type NotificationPreferenceWithGraph,
-  type EventMuteWithGraph,
-  type DmMuteWithGraph,
-} from '../helpers';
+import { mapNotificationPreference, mapEventMute, mapDmMute } from '../helpers';
+import { requireAuth } from '../shared/auth-guards';
 
 const NOTIFICATION_PREFERENCE_INCLUDE = {
   user: true,
@@ -37,17 +32,14 @@ const DM_MUTE_INCLUDE = {
 
 /**
  * Mutation: Update notification preferences
+ * Authorization: AUTH (SELF)
  */
 export const updateNotificationPreferencesMutation: MutationResolvers['updateNotificationPreferences'] =
   resolverWithMetrics(
     'Mutation',
     'updateNotificationPreferences',
-    async (_p, { input }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { input }, ctx) => {
+      const userId = requireAuth(ctx);
 
       // Build update/create data
       const updateData: Prisma.NotificationPreferenceUpdateInput = {};
@@ -70,7 +62,7 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
 
       // For create, we need plain values (not field update operations)
       const createData: Prisma.NotificationPreferenceCreateInput = {
-        user: { connect: { id: user.id } },
+        user: { connect: { id: userId } },
         emailOnInvite: input.emailOnInvite ?? undefined,
         emailOnJoinRequest: input.emailOnJoinRequest ?? undefined,
         emailOnMessage: input.emailOnMessage ?? undefined,
@@ -79,7 +71,7 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
       };
 
       const preferences = await prisma.notificationPreference.upsert({
-        where: { userId: user.id },
+        where: { userId },
         create: createData,
         update: updateData,
         include: NOTIFICATION_PREFERENCE_INCLUDE,
@@ -91,30 +83,20 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
 
 /**
  * Mutation: Mute/unmute event
+ * Authorization: AUTH (SELF)
  */
 export const muteEventMutation: MutationResolvers['muteEvent'] =
   resolverWithMetrics(
     'Mutation',
     'muteEvent',
-    async (_p, { eventId, muted }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { eventId, muted }, ctx) => {
+      const userId = requireAuth(ctx);
 
       const eventMute = await prisma.eventMute.upsert({
         where: {
-          eventId_userId: {
-            eventId,
-            userId: user.id,
-          },
+          eventId_userId: { eventId, userId },
         },
-        create: {
-          eventId,
-          userId: user.id,
-          muted,
-        },
+        create: { eventId, userId, muted },
         update: {
           muted,
         },
@@ -127,33 +109,21 @@ export const muteEventMutation: MutationResolvers['muteEvent'] =
 
 /**
  * Mutation: Mute/unmute DM thread
+ * Authorization: AUTH (SELF)
  */
 export const muteDmThreadMutation: MutationResolvers['muteDmThread'] =
   resolverWithMetrics(
     'Mutation',
     'muteDmThread',
-    async (_p, { threadId, muted }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { threadId, muted }, ctx) => {
+      const userId = requireAuth(ctx);
 
       const dmMute = await prisma.dmMute.upsert({
         where: {
-          threadId_userId: {
-            threadId,
-            userId: user.id,
-          },
+          threadId_userId: { threadId, userId },
         },
-        create: {
-          threadId,
-          userId: user.id,
-          muted,
-        },
-        update: {
-          muted,
-        },
+        create: { threadId, userId, muted },
+        update: { muted },
         include: DM_MUTE_INCLUDE,
       });
 

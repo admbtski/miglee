@@ -1,10 +1,18 @@
+/**
+ * Reports Mutation Resolvers
+ *
+ * Authorization:
+ * - createReport: AUTH
+ * - updateReportStatus, deleteReport: APP_MOD_OR_ADMIN
+ */
+
 import type { Prisma } from '@prisma/client';
-import { Role } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapReport } from '../helpers';
+import { requireAuth, requireAdminOrModerator } from '../shared/auth-guards';
 
 const REPORT_INCLUDE = {
   reporter: true,
@@ -12,17 +20,14 @@ const REPORT_INCLUDE = {
 
 /**
  * Mutation: Create a report
+ * Authorization: AUTH
  */
 export const createReportMutation: MutationResolvers['createReport'] =
   resolverWithMetrics(
     'Mutation',
     'createReport',
-    async (_p, { input }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { input }, ctx) => {
+      const userId = requireAuth(ctx);
 
       const { entity, entityId, reason } = input;
 
@@ -100,7 +105,7 @@ export const createReportMutation: MutationResolvers['createReport'] =
       // Check for duplicate reports (same user, same entity)
       const existing = await prisma.report.findFirst({
         where: {
-          reporterId: user.id,
+          reporterId: userId,
           entity: entity as any,
           entityId,
           status: { in: ['OPEN', 'INVESTIGATING'] },
@@ -115,7 +120,7 @@ export const createReportMutation: MutationResolvers['createReport'] =
 
       const report = await prisma.report.create({
         data: {
-          reporterId: user.id,
+          reporterId: userId,
           entity: entity as any,
           entityId,
           reason: reason.trim(),
@@ -129,19 +134,15 @@ export const createReportMutation: MutationResolvers['createReport'] =
   );
 
 /**
- * Mutation: Update report status (admin only)
+ * Mutation: Update report status
+ * Authorization: APP_MOD_OR_ADMIN
  */
 export const updateReportStatusMutation: MutationResolvers['updateReportStatus'] =
   resolverWithMetrics(
     'Mutation',
     'updateReportStatus',
-    async (_p, { id, input }, { user }) => {
-      // Admin only
-      if (!user?.id || user.role !== Role.ADMIN) {
-        throw new GraphQLError('Admin access required.', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+    async (_p, { id, input }, ctx) => {
+      requireAdminOrModerator(ctx.user);
 
       const { status } = input;
 
@@ -176,33 +177,25 @@ export const updateReportStatusMutation: MutationResolvers['updateReportStatus']
   );
 
 /**
- * Mutation: Delete a report (admin only)
+ * Mutation: Delete a report
+ * Authorization: APP_MOD_OR_ADMIN
  */
 export const deleteReportMutation: MutationResolvers['deleteReport'] =
-  resolverWithMetrics(
-    'Mutation',
-    'deleteReport',
-    async (_p, { id }, { user }) => {
-      // Admin only
-      if (!user?.id || user.role !== Role.ADMIN) {
-        throw new GraphQLError('Admin access required.', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
+  resolverWithMetrics('Mutation', 'deleteReport', async (_p, { id }, ctx) => {
+    requireAdminOrModerator(ctx.user);
 
-      const existing = await prisma.report.findUnique({
-        where: { id },
-        select: { id: true },
-      });
+    const existing = await prisma.report.findUnique({
+      where: { id },
+      select: { id: true },
+    });
 
-      if (!existing) {
-        return false; // Idempotent
-      }
-
-      await prisma.report.delete({
-        where: { id },
-      });
-
-      return true;
+    if (!existing) {
+      return false; // Idempotent
     }
-  );
+
+    await prisma.report.delete({
+      where: { id },
+    });
+
+    return true;
+  });

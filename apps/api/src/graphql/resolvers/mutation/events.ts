@@ -5,6 +5,7 @@ import type {
   Prisma,
 } from '@prisma/client';
 import {
+  EventMemberRole,
   EventMemberStatus,
   Level as PrismaLevel,
   MeetingKind as PrismaMeetingKind,
@@ -35,11 +36,19 @@ import type {
   UpdateEventInput,
 } from '../../__generated__/resolvers-types';
 import { mapEvent, mapNotification, pickLocation } from '../helpers';
+import {
+  requireEventModOrOwnerOrAppMod,
+  requireEventOwnerOrAdmin,
+  type AuthCheckUser,
+} from '../shared/auth-guards';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_START_BUFFER_MS = 5 * 60 * 1000; // >= now + 5 min
 
-export const NOTIFICATION_INCLUDE = {
+/**
+ * Notification include for event-related notifications.
+ */
+const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
   event: {
@@ -54,6 +63,9 @@ export const NOTIFICATION_INCLUDE = {
   },
 } satisfies Prisma.NotificationInclude;
 
+/**
+ * Event include for mutations.
+ */
 const EVENT_INCLUDE = {
   categories: true,
   tags: true,
@@ -563,8 +575,7 @@ export const createEventMutation: MutationResolvers['createEvent'] =
         // Feedback request (scheduled after event ends)
         try {
           await enqueueFeedbackRequest(event.id, event.endAt);
-        } catch (err) {
-          console.dir({ err });
+        } catch {
           // Don't block transaction if feedback scheduling fails
         }
 
@@ -580,8 +591,10 @@ export const createEventMutation: MutationResolvers['createEvent'] =
     }
   );
 
-/** Update Event (publikacja EVENT_UPDATED + reschedule reminders) */
-// todo: can be updated only by owner
+/**
+ * Update Event (publikacja EVENT_UPDATED + reschedule reminders)
+ * Required level: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+ */
 export const updateEventMutation: MutationResolvers['updateEvent'] =
   resolverWithMetrics(
     'Mutation',
@@ -596,6 +609,9 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
           }
         );
       }
+
+      // Check authorization: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+      await requireEventModOrOwnerOrAppMod(user, id);
 
       assertUpdateInput(input);
 
@@ -1051,8 +1067,10 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
     }
   );
 
-/** Cancel Event – sprzątanie reminders + publikacje */
-// todo: can be canceled only by owner
+/**
+ * Cancel Event – sprzątanie reminders + publikacje
+ * Required level: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+ */
 export const cancelEventMutation: MutationResolvers['cancelEvent'] =
   resolverWithMetrics(
     'Mutation',
@@ -1064,6 +1082,9 @@ export const cancelEventMutation: MutationResolvers['cancelEvent'] =
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
+
+      // Check authorization: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+      await requireEventModOrOwnerOrAppMod(user, id);
 
       const event = await prisma.event.findUnique({
         where: { id },
@@ -1167,8 +1188,10 @@ export const cancelEventMutation: MutationResolvers['cancelEvent'] =
     }
   );
 
-/** Delete Event (SOFT) — z publikacją EVENT_DELETED */
-// todo: can be deleted only by owner
+/**
+ * Delete Event (SOFT) — z publikacją EVENT_DELETED
+ * Required level: EVENT_OWNER or ADMIN_ONLY
+ */
 export const deleteEventMutation: MutationResolvers['deleteEvent'] =
   resolverWithMetrics(
     'Mutation',
@@ -1183,6 +1206,9 @@ export const deleteEventMutation: MutationResolvers['deleteEvent'] =
           }
         );
       }
+
+      // Check authorization: EVENT_OWNER or ADMIN_ONLY
+      await requireEventOwnerOrAdmin(user, id);
 
       const row = await prisma.event.findUnique({
         where: { id },
@@ -1432,14 +1458,21 @@ export const reopenEventJoinMutation: MutationResolvers['reopenEventJoin'] =
 
 /* ───────────────────────────── Publication Management ───────────────────────────── */
 
-/** Helper to check if user can manage event publication */
-async function assertCanManagePublication(eventId: string, actorId: string) {
+/**
+ * Helper to check if user can manage event publication
+ * Required level: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+ */
+async function assertCanManagePublication(
+  eventId: string,
+  actorId: string,
+  user: AuthCheckUser | null | undefined
+) {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
       members: {
         where: { userId: actorId },
-        select: { role: true },
+        select: { role: true, status: true },
       },
     },
   });
@@ -1462,12 +1495,19 @@ async function assertCanManagePublication(eventId: string, actorId: string) {
     });
   }
 
+  // Global ADMIN or MODERATOR always has access
+  if (user?.role === 'ADMIN' || user?.role === 'MODERATOR') {
+    return event;
+  }
+
   const isOwner = event.ownerId === actorId;
-  const isModerator = event.members.some(
-    (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
+  const isJoinedModerator = event.members.some(
+    (m) =>
+      m.status === EventMemberStatus.JOINED &&
+      (m.role === EventMemberRole.MODERATOR || m.role === EventMemberRole.OWNER)
   );
 
-  if (!isOwner && !isModerator) {
+  if (!isOwner && !isJoinedModerator) {
     throw new GraphQLError('Only owner or moderator can manage publication.', {
       extensions: { code: 'FORBIDDEN' },
     });
@@ -1489,7 +1529,7 @@ export const publishEventMutation: MutationResolvers['publishEvent'] =
         });
       }
 
-      const event = await assertCanManagePublication(id, actorId);
+      const event = await assertCanManagePublication(id, actorId, user);
 
       if (event.status === 'PUBLISHED') {
         // Already published, return as-is
@@ -1521,7 +1561,10 @@ export const publishEventMutation: MutationResolvers['publishEvent'] =
     }
   );
 
-/** Schedule Event publication for a specific time (DRAFT -> SCHEDULED) */
+/**
+ * Schedule Event publication for a specific time (DRAFT -> SCHEDULED)
+ * Required level: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+ */
 export const scheduleEventPublicationMutation: MutationResolvers['scheduleEventPublication'] =
   resolverWithMetrics(
     'Mutation',
@@ -1534,7 +1577,7 @@ export const scheduleEventPublicationMutation: MutationResolvers['scheduleEventP
         });
       }
 
-      const event = await assertCanManagePublication(id, actorId);
+      const event = await assertCanManagePublication(id, actorId, user);
 
       // Validate publishAt is in the future
       const publishDate = new Date(publishAt);
@@ -1576,7 +1619,10 @@ export const scheduleEventPublicationMutation: MutationResolvers['scheduleEventP
     }
   );
 
-/** Cancel scheduled publication (SCHEDULED -> DRAFT) */
+/**
+ * Cancel scheduled publication (SCHEDULED -> DRAFT)
+ * Required level: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+ */
 export const cancelScheduledPublicationMutation: MutationResolvers['cancelScheduledPublication'] =
   resolverWithMetrics(
     'Mutation',
@@ -1589,7 +1635,7 @@ export const cancelScheduledPublicationMutation: MutationResolvers['cancelSchedu
         });
       }
 
-      const event = await assertCanManagePublication(id, actorId);
+      const event = await assertCanManagePublication(id, actorId, user);
 
       if (event.status !== 'SCHEDULED') {
         throw new GraphQLError('Event is not scheduled for publication.', {
@@ -1610,7 +1656,10 @@ export const cancelScheduledPublicationMutation: MutationResolvers['cancelSchedu
     }
   );
 
-/** Unpublish Event (PUBLISHED -> DRAFT) */
+/**
+ * Unpublish Event (PUBLISHED -> DRAFT)
+ * Required level: EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+ */
 export const unpublishEventMutation: MutationResolvers['unpublishEvent'] =
   resolverWithMetrics(
     'Mutation',
@@ -1623,7 +1672,7 @@ export const unpublishEventMutation: MutationResolvers['unpublishEvent'] =
         });
       }
 
-      const event = await assertCanManagePublication(id, actorId);
+      const event = await assertCanManagePublication(id, actorId, user);
 
       if (event.status === 'DRAFT') {
         // Already draft, return as-is

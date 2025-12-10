@@ -1,16 +1,22 @@
 /**
  * Event Chat Query Resolvers
+ *
+ * Authorization levels:
+ * - eventMessages: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
+ * - eventUnreadCount: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
  */
 
 import type { Prisma } from '@prisma/client';
-import { GraphQLError } from 'graphql';
 import { buildCursor, buildCursorWhere } from '../../../lib/chat-utils';
 import { prisma } from '../../../lib/prisma';
 import { healthRedis } from '../../../lib/redis';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { requireJoinedMember } from '../chat-guards';
 import { mapEventChatMessage } from '../helpers';
+import {
+  requireAuth,
+  requireEventParticipantOrAppMod,
+} from '../shared/auth-guards';
 
 const MESSAGE_INCLUDE = {
   author: true,
@@ -24,22 +30,17 @@ const MESSAGE_INCLUDE = {
 
 /**
  * Query: Get messages for an event (cursor-based, reverse infinite scroll)
- * Default: returns newest 20 messages in ASC order (oldest to newest)
- * For loading older: use `before` cursor
+ * Authorization: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
  */
 export const eventMessagesQuery: QueryResolvers['eventMessages'] =
   resolverWithMetrics(
     'Query',
     'eventMessages',
-    async (_p, { eventId, first = 20, before, after }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { eventId, first = 20, before, after }, ctx) => {
+      requireAuth(ctx);
 
-      // Guard: user must be JOINED
-      await requireJoinedMember(user.id, eventId);
+      // EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
+      await requireEventParticipantOrAppMod(ctx.user, eventId);
 
       const take = Math.max(1, Math.min(first, 100));
 
@@ -112,23 +113,19 @@ export const eventMessagesQuery: QueryResolvers['eventMessages'] =
 
 /**
  * Query: Get unread count for event chat
- * Uses Redis cache with 10s TTL to reduce DB load
+ * Authorization: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
  */
 export const eventUnreadCountQuery: QueryResolvers['eventUnreadCount'] =
   resolverWithMetrics(
     'Query',
     'eventUnreadCount',
-    async (_p, { eventId }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { eventId }, ctx) => {
+      const userId = requireAuth(ctx);
 
-      // Guard: user must be JOINED
-      await requireJoinedMember(user.id, eventId);
+      // EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
+      await requireEventParticipantOrAppMod(ctx.user, eventId);
 
-      const cacheKey = `chat:event:unread:${eventId}:${user.id}`;
+      const cacheKey = `chat:event:unread:${eventId}:${userId}`;
 
       // Try to get from cache
       try {
@@ -146,7 +143,7 @@ export const eventUnreadCountQuery: QueryResolvers['eventUnreadCount'] =
         where: {
           eventId_userId: {
             eventId,
-            userId: user.id,
+            userId,
           },
         },
         select: {
@@ -160,7 +157,7 @@ export const eventUnreadCountQuery: QueryResolvers['eventUnreadCount'] =
       const unreadCount = await prisma.eventChatMessage.count({
         where: {
           eventId,
-          authorId: { not: user.id },
+          authorId: { not: userId },
           deletedAt: null,
           createdAt: { gt: lastReadAt },
         },

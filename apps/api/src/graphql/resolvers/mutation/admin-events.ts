@@ -6,22 +6,7 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma.js';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics.js';
 import type { MutationResolvers } from '../../__generated__/resolvers-types.js';
-
-/**
- * Helper: Check if user is admin
- */
-function requireAdmin(user: any) {
-  if (!user?.id) {
-    throw new GraphQLError('Authentication required.', {
-      extensions: { code: 'UNAUTHENTICATED' },
-    });
-  }
-  if (user.role !== 'ADMIN') {
-    throw new GraphQLError('Admin role required.', {
-      extensions: { code: 'FORBIDDEN' },
-    });
-  }
-}
+import { requireAdmin } from '../shared/auth-guards.js';
 
 /**
  * Mutation: Admin update event

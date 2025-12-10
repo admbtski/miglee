@@ -1,9 +1,10 @@
 /**
  * Notification Preferences & Mutes Query Resolvers
+ *
+ * Authorization: AUTH (SELF)
  */
 
 import type { Prisma } from '@prisma/client';
-import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
@@ -15,6 +16,7 @@ import {
   type EventMuteWithGraph,
   type DmMuteWithGraph,
 } from '../helpers';
+import { requireAuth } from '../shared/auth-guards';
 
 const NOTIFICATION_PREFERENCE_INCLUDE = {
   user: true,
@@ -37,21 +39,18 @@ const DM_MUTE_INCLUDE = {
 
 /**
  * Query: Get my notification preferences
+ * Authorization: AUTH (SELF)
  */
 export const myNotificationPreferencesQuery: QueryResolvers['myNotificationPreferences'] =
   resolverWithMetrics(
     'Query',
     'myNotificationPreferences',
-    async (_p, _args, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, _args, ctx) => {
+      const userId = requireAuth(ctx);
 
       // Find or create preferences
       let preferences = await prisma.notificationPreference.findUnique({
-        where: { userId: user.id },
+        where: { userId },
         include: NOTIFICATION_PREFERENCE_INCLUDE,
       });
 
@@ -59,7 +58,7 @@ export const myNotificationPreferencesQuery: QueryResolvers['myNotificationPrefe
         // Create default preferences
         preferences = await prisma.notificationPreference.create({
           data: {
-            userId: user.id,
+            userId,
             emailOnInvite: true,
             emailOnJoinRequest: true,
             emailOnMessage: false,
@@ -78,22 +77,19 @@ export const myNotificationPreferencesQuery: QueryResolvers['myNotificationPrefe
 
 /**
  * Query: Get event mute status
+ * Authorization: AUTH (SELF)
  */
 export const eventMuteQuery: QueryResolvers['eventMute'] = resolverWithMetrics(
   'Query',
   'eventMute',
-  async (_p, { eventId }, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_p, { eventId }, ctx) => {
+    const userId = requireAuth(ctx);
 
     const mute = await prisma.eventMute.findUnique({
       where: {
         eventId_userId: {
           eventId,
-          userId: user.id,
+          userId,
         },
       },
       include: EVENT_MUTE_INCLUDE,
@@ -109,22 +105,19 @@ export const eventMuteQuery: QueryResolvers['eventMute'] = resolverWithMetrics(
 
 /**
  * Query: Get DM thread mute status
+ * Authorization: AUTH (SELF)
  */
 export const dmMuteQuery: QueryResolvers['dmMute'] = resolverWithMetrics(
   'Query',
   'dmMute',
-  async (_p, { threadId }, { user }) => {
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_p, { threadId }, ctx) => {
+    const userId = requireAuth(ctx);
 
     const mute = await prisma.dmMute.findUnique({
       where: {
         threadId_userId: {
           threadId,
-          userId: user.id,
+          userId,
         },
       },
       include: DM_MUTE_INCLUDE,

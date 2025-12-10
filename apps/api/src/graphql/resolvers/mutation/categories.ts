@@ -5,6 +5,7 @@ import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { toJSONObject } from '../helpers';
+import { requireAdminOrModerator } from '../shared/auth-guards';
 
 /**
  * Normalizes a slug to be URL-safe and lowercase.
@@ -31,59 +32,69 @@ const categorySelect = {
 
 /**
  * Mutation: Create Category
+ * Required level: APP_MOD_OR_ADMIN
  */
 export const createCategoryMutation: MutationResolvers['createCategory'] =
-  resolverWithMetrics('Mutation', 'createCategory', async (_p, { input }) => {
-    const slug = normalizeSlug(input.slug);
-    if (!slug) {
-      throw new GraphQLError('Slug cannot be empty after normalization.', {
-        extensions: { code: 'BAD_USER_INPUT', field: 'slug' },
-      });
-    }
+  resolverWithMetrics(
+    'Mutation',
+    'createCategory',
+    async (_p, { input }, { user }) => {
+      requireAdminOrModerator(user);
 
-    // names jest JSON (nienullowalne) — wymuś sensowną strukturę
-    if (input.names == null || typeof input.names !== 'object') {
-      throw new GraphQLError('`names` must be a JSON object.', {
-        extensions: { code: 'BAD_USER_INPUT', field: 'names' },
-      });
-    }
-
-    try {
-      const created = await prisma.category.create({
-        data: {
-          slug,
-          names: input.names, // GraphQL JSON -> Prisma.JsonValue
-        },
-        select: categorySelect,
-      });
-
-      return {
-        id: created.id,
-        slug: created.slug,
-        names: toJSONObject(created.names),
-        createdAt: created.createdAt,
-        updatedAt: created.updatedAt,
-      };
-    } catch (e: any) {
-      if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
-        if (e.code === 'P2002') {
-          throw new GraphQLError('Category with this slug already exists.', {
-            extensions: { code: 'CONFLICT', target: e.meta?.target },
-          });
-        }
+      const slug = normalizeSlug(input.slug);
+      if (!slug) {
+        throw new GraphQLError('Slug cannot be empty after normalization.', {
+          extensions: { code: 'BAD_USER_INPUT', field: 'slug' },
+        });
       }
-      throw e;
+
+      // names jest JSON (nienullowalne) — wymuś sensowną strukturę
+      if (input.names == null || typeof input.names !== 'object') {
+        throw new GraphQLError('`names` must be a JSON object.', {
+          extensions: { code: 'BAD_USER_INPUT', field: 'names' },
+        });
+      }
+
+      try {
+        const created = await prisma.category.create({
+          data: {
+            slug,
+            names: input.names, // GraphQL JSON -> Prisma.JsonValue
+          },
+          select: categorySelect,
+        });
+
+        return {
+          id: created.id,
+          slug: created.slug,
+          names: toJSONObject(created.names),
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt,
+        };
+      } catch (e: any) {
+        if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
+          if (e.code === 'P2002') {
+            throw new GraphQLError('Category with this slug already exists.', {
+              extensions: { code: 'CONFLICT', target: e.meta?.target },
+            });
+          }
+        }
+        throw e;
+      }
     }
-  });
+  );
 
 /**
  * Mutation: Update Category
+ * Required level: APP_MOD_OR_ADMIN
  */
 export const updateCategoryMutation: MutationResolvers['updateCategory'] =
   resolverWithMetrics(
     'Mutation',
     'updateCategory',
-    async (_p, { id, input }) => {
+    async (_p, { id, input }, { user }) => {
+      requireAdminOrModerator(user);
+
       const data: Prisma.CategoryUpdateInput = {};
 
       // Slug normalization and validation
@@ -148,25 +159,32 @@ export const updateCategoryMutation: MutationResolvers['updateCategory'] =
 
 /**
  * Mutation: Delete Category
+ * Required level: APP_MOD_OR_ADMIN
  */
 export const deleteCategoryMutation: MutationResolvers['deleteCategory'] =
-  resolverWithMetrics('Mutation', 'deleteCategory', async (_p, { id }) => {
-    try {
-      await prisma.category.delete({ where: { id } });
-      return true;
-    } catch (e: any) {
-      if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
-        if (e.code === 'P2025') {
-          // brak rekordu -> semantyka idempotentnego delete: false
-          return false;
+  resolverWithMetrics(
+    'Mutation',
+    'deleteCategory',
+    async (_p, { id }, { user }) => {
+      requireAdminOrModerator(user);
+
+      try {
+        await prisma.category.delete({ where: { id } });
+        return true;
+      } catch (e: any) {
+        if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
+          if (e.code === 'P2025') {
+            // brak rekordu -> semantyka idempotentnego delete: false
+            return false;
+          }
+          // przyszłościowo, gdy dodasz FK z ON RESTRICT:
+          // if (e.code === 'P2003') {
+          //   throw new GraphQLError('Cannot delete category referenced by other records.', {
+          //     extensions: { code: 'FAILED_PRECONDITION' },
+          //   });
+          // }
         }
-        // przyszłościowo, gdy dodasz FK z ON RESTRICT:
-        // if (e.code === 'P2003') {
-        //   throw new GraphQLError('Cannot delete category referenced by other records.', {
-        //     extensions: { code: 'FAILED_PRECONDITION' },
-        //   });
-        // }
+        throw e;
       }
-      throw e;
     }
-  });
+  );

@@ -55,13 +55,14 @@ export const createEventInviteLinkMutation: MutationResolvers['createEventInvite
         });
       }
 
+      // Global ADMIN or MODERATOR always has access
+      const isGlobalMod = user.role === 'ADMIN' || user.role === 'MODERATOR';
       const isOwner = event.ownerId === user.id;
-      const isModerator = event.members.some(
+      const isEventModerator = event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
-      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator && !isAdmin) {
+      if (!isGlobalMod && !isOwner && !isEventModerator) {
         throw new GraphQLError(
           'Only owner, moderators, or admins can create invite links.',
           {
@@ -125,13 +126,14 @@ export const updateEventInviteLinkMutation: MutationResolvers['updateEventInvite
         });
       }
 
+      // Global ADMIN or MODERATOR always has access
+      const isGlobalMod = user.role === 'ADMIN' || user.role === 'MODERATOR';
       const isOwner = link.event.ownerId === user.id;
-      const isModerator = link.event.members.some(
+      const isEventModerator = link.event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
-      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator && !isAdmin) {
+      if (!isGlobalMod && !isOwner && !isEventModerator) {
         throw new GraphQLError(
           'Only owner, moderators, or admins can update invite links.',
           {
@@ -190,13 +192,14 @@ export const revokeEventInviteLinkMutation: MutationResolvers['revokeEventInvite
         });
       }
 
+      // Global ADMIN or MODERATOR always has access
+      const isGlobalMod = user.role === 'ADMIN' || user.role === 'MODERATOR';
       const isOwner = link.event.ownerId === user.id;
-      const isModerator = link.event.members.some(
+      const isEventModerator = link.event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
-      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator && !isAdmin) {
+      if (!isGlobalMod && !isOwner && !isEventModerator) {
         throw new GraphQLError(
           'Only owner, moderators, or admins can revoke invite links.',
           {
@@ -252,13 +255,14 @@ export const deleteEventInviteLinkMutation: MutationResolvers['deleteEventInvite
         return false;
       }
 
+      // Global ADMIN or MODERATOR always has access
+      const isGlobalMod = user.role === 'ADMIN' || user.role === 'MODERATOR';
       const isOwner = link.event.ownerId === user.id;
-      const isModerator = link.event.members.some(
+      const isEventModerator = link.event.members.some(
         (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
       );
-      const isAdmin = user.role === 'ADMIN';
 
-      if (!isOwner && !isModerator && !isAdmin) {
+      if (!isGlobalMod && !isOwner && !isEventModerator) {
         throw new GraphQLError(
           'Only owner, moderators, or admins can delete invite links.',
           {

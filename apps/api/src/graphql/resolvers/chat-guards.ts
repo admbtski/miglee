@@ -1,18 +1,32 @@
 /**
- * Chat authorization guards
+ * Chat Authorization Guards
+ *
+ * This file provides backwards-compatible wrappers around the shared auth guards.
+ * These wrappers accept (userId, eventId) signatures for compatibility with existing code.
+ *
+ * For new code, prefer importing directly from './shared/auth-guards'.
  */
 
+import { EventMemberStatus } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../lib/prisma';
-import type { SessionUser } from '../__generated__/resolvers-types';
+import {
+  requireAdmin,
+  requireDmParticipant,
+  requireDmAllowed,
+  requireMessageAuthor,
+  getEventMembership,
+  isEventModeratorRole,
+} from './shared/auth-guards';
 
-// =============================================================================
-// Event Chat Guards
-// =============================================================================
+// Re-export guards that don't need wrapping
+export { requireAdmin, requireDmParticipant, requireMessageAuthor };
+export { requireDmAllowed as checkDmAllowed };
 
 /**
- * Check if user is a JOINED member of the event
- * Required for reading/writing event chat messages
+ * Check if user is a JOINED member of the event.
+ * Required for reading/writing event chat messages.
+ * @deprecated Use requireEventParticipantOrAppMod from shared/auth-guards instead
  */
 export async function requireJoinedMember(
   userId: string,
@@ -20,17 +34,12 @@ export async function requireJoinedMember(
 ): Promise<void> {
   const member = await prisma.eventMember.findUnique({
     where: {
-      eventId_userId: {
-        eventId,
-        userId,
-      },
+      eventId_userId: { eventId, userId },
     },
-    select: {
-      status: true,
-    },
+    select: { status: true },
   });
 
-  if (!member || member.status !== 'JOINED') {
+  if (!member || member.status !== EventMemberStatus.JOINED) {
     throw new GraphQLError('You must be a joined member to access this chat.', {
       extensions: { code: 'FORBIDDEN' },
     });
@@ -38,165 +47,23 @@ export async function requireJoinedMember(
 }
 
 /**
- * Check if user can moderate event chat (owner or moderator)
+ * Check if user can moderate event chat (owner or moderator).
+ * @deprecated Use requireEventModOrOwner from shared/auth-guards instead
  */
 export async function requireEventChatModerator(
   userId: string,
   eventId: string
 ): Promise<void> {
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    select: {
-      ownerId: true,
-      members: {
-        where: {
-          userId,
-          status: 'JOINED',
-        },
-        select: {
-          role: true,
-        },
-      },
-    },
-  });
+  const member = await getEventMembership(userId, eventId);
 
-  if (!event) {
-    throw new GraphQLError('Event not found.', {
-      extensions: { code: 'NOT_FOUND' },
-    });
-  }
-
-  const isOwner = event.ownerId === userId;
-  const isModerator = event.members.some(
-    (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
-  );
-
-  if (!isOwner && !isModerator) {
+  if (!member || member.status !== EventMemberStatus.JOINED) {
     throw new GraphQLError('Moderator access required.', {
       extensions: { code: 'FORBIDDEN' },
     });
   }
-}
 
-// =============================================================================
-// DM Guards
-// =============================================================================
-
-/**
- * Check if user is a participant in the DM thread
- */
-export async function requireDmParticipant(
-  userId: string,
-  threadId: string
-): Promise<void> {
-  const thread = await prisma.dmThread.findUnique({
-    where: { id: threadId },
-    select: {
-      aUserId: true,
-      bUserId: true,
-    },
-  });
-
-  if (!thread) {
-    throw new GraphQLError('DM thread not found.', {
-      extensions: { code: 'NOT_FOUND' },
-    });
-  }
-
-  if (thread.aUserId !== userId && thread.bUserId !== userId) {
-    throw new GraphQLError('You are not a participant in this thread.', {
-      extensions: { code: 'FORBIDDEN' },
-    });
-  }
-}
-
-/**
- * Check if users can create DM thread (no blocks, not self)
- */
-export async function checkDmAllowed(
-  userId1: string,
-  userId2: string
-): Promise<void> {
-  if (userId1 === userId2) {
-    throw new GraphQLError('Cannot create DM thread with yourself.', {
-      extensions: { code: 'BAD_USER_INPUT' },
-    });
-  }
-
-  // Check for UserBlock in either direction
-  const block = await prisma.userBlock.findFirst({
-    where: {
-      OR: [
-        { blockerId: userId1, blockedId: userId2 },
-        { blockerId: userId2, blockedId: userId1 },
-      ],
-    },
-  });
-
-  if (block) {
-    throw new GraphQLError(
-      'Cannot send messages to this user due to blocking.',
-      {
-        extensions: { code: 'FORBIDDEN' },
-      }
-    );
-  }
-}
-
-// =============================================================================
-// Message Ownership Guards
-// =============================================================================
-
-/**
- * Check if user is the author of a message
- */
-export async function requireMessageAuthor(
-  userId: string,
-  messageId: string,
-  messageType: 'event' | 'dm'
-): Promise<void> {
-  let message: { authorId?: string; senderId?: string } | null = null;
-
-  if (messageType === 'event') {
-    message = await prisma.eventChatMessage.findUnique({
-      where: { id: messageId },
-      select: { authorId: true },
-    });
-  } else {
-    message = await prisma.dmMessage.findUnique({
-      where: { id: messageId },
-      select: { senderId: true },
-    });
-  }
-
-  if (!message) {
-    throw new GraphQLError('Message not found.', {
-      extensions: { code: 'NOT_FOUND' },
-    });
-  }
-
-  const authorId =
-    messageType === 'event'
-      ? (message as any).authorId
-      : (message as any).senderId;
-
-  if (authorId !== userId) {
-    throw new GraphQLError('You can only edit/delete your own messages.', {
-      extensions: { code: 'FORBIDDEN' },
-    });
-  }
-}
-
-// =============================================================================
-// Admin Guard
-// =============================================================================
-
-/**
- * Check if user is an admin
- */
-export function requireAdmin(user: SessionUser | null): void {
-  if (!user || user.role !== 'ADMIN') {
-    throw new GraphQLError('Admin access required.', {
+  if (!isEventModeratorRole(member.role)) {
+    throw new GraphQLError('Moderator access required.', {
       extensions: { code: 'FORBIDDEN' },
     });
   }

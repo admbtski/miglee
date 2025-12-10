@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
@@ -98,11 +99,22 @@ export const tagQuery: QueryResolvers['tag'] = resolverWithMetrics(
   }
 );
 
+/**
+ * Check if tag slug is available
+ * Required level: AUTH (protection against mass scanning)
+ */
 export const checkTagSlugAvailableQuery: QueryResolvers['checkTagSlugAvailable'] =
   resolverWithMetrics(
     'Query',
     'checkTagSlugAvailable',
-    async (_p, { slug }) => {
+    async (_p, { slug }, { user }) => {
+      // AUTH required
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
       const trimmedSlug = slug.trim().toLowerCase();
 
       if (!trimmedSlug) {
@@ -118,24 +130,45 @@ export const checkTagSlugAvailableQuery: QueryResolvers['checkTagSlugAvailable']
     }
   );
 
+/**
+ * Get tag usage count
+ * Required level: APP_MOD_OR_ADMIN (sensitive statistics)
+ */
 export const getTagUsageCountQuery: QueryResolvers['getTagUsageCount'] =
-  resolverWithMetrics('Query', 'getTagUsageCount', async (_p, { slug }) => {
-    const trimmedSlug = slug.trim();
+  resolverWithMetrics(
+    'Query',
+    'getTagUsageCount',
+    async (_p, { slug }, { user }) => {
+      // APP_MOD_OR_ADMIN required
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
 
-    if (!trimmedSlug) {
-      return 0;
-    }
+      if (user.role !== 'ADMIN' && user.role !== 'MODERATOR') {
+        throw new GraphQLError('Admin or moderator access required.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
 
-    // Count events that use this tag (many-to-many relation)
-    const count = await prisma.event.count({
-      where: {
-        tags: {
-          some: {
-            slug: trimmedSlug,
+      const trimmedSlug = slug.trim();
+
+      if (!trimmedSlug) {
+        return 0;
+      }
+
+      // Count events that use this tag (many-to-many relation)
+      const count = await prisma.event.count({
+        where: {
+          tags: {
+            some: {
+              slug: trimmedSlug,
+            },
           },
         },
-      },
-    });
+      });
 
-    return count;
-  });
+      return count;
+    }
+  );

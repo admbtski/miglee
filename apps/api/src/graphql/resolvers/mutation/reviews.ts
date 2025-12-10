@@ -1,3 +1,13 @@
+/**
+ * Reviews Mutation Resolvers
+ *
+ * Authorization:
+ * - createReview: EVENT_PARTICIPANT (after event ends)
+ * - updateReview: SELF or ADMIN
+ * - deleteReview: SELF or APP_MOD_OR_ADMIN
+ * - hideReview/unhideReview: APP_MOD_OR_ADMIN
+ */
+
 import type { Prisma } from '@prisma/client';
 import {
   NotificationKind as PrismaNotificationKind,
@@ -9,6 +19,12 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapReview, mapNotification } from '../helpers';
 import { NOTIFICATION_INCLUDE } from './notifications';
+import {
+  requireAuth,
+  isAdmin,
+  isAdminOrModerator,
+  requireSelfOrAppMod,
+} from '../shared/auth-guards';
 
 const REVIEW_INCLUDE = {
   author: true,
@@ -17,17 +33,14 @@ const REVIEW_INCLUDE = {
 
 /**
  * Mutation: Create a review
+ * Authorization: EVENT_PARTICIPANT (must have been JOINED, event must have ended)
  */
 export const createReviewMutation: MutationResolvers['createReview'] =
   resolverWithMetrics(
     'Mutation',
     'createReview',
-    async (_p, { input }, { user, pubsub }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { input }, ctx) => {
+      const userId = requireAuth(ctx);
 
       const { eventId, rating, content } = input;
 
@@ -77,10 +90,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
       // Check if user was a participant
       const membership = await prisma.eventMember.findUnique({
         where: {
-          eventId_userId: {
-            eventId,
-            userId: user.id,
-          },
+          eventId_userId: { eventId, userId },
         },
         select: { status: true },
       });
@@ -94,10 +104,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
       // Check if review already exists
       const existing = await prisma.review.findUnique({
         where: {
-          eventId_authorId: {
-            eventId,
-            authorId: user.id,
-          },
+          eventId_authorId: { eventId, authorId: userId },
         },
       });
 
@@ -123,7 +130,7 @@ export const createReviewMutation: MutationResolvers['createReview'] =
         : await prisma.review.create({
             data: {
               eventId,
-              authorId: user.id,
+              authorId: userId,
               rating,
               content: content?.trim() || null,
             },
@@ -131,12 +138,12 @@ export const createReviewMutation: MutationResolvers['createReview'] =
           });
 
       // Notify event owner about new review
-      if (event.ownerId && event.ownerId !== user.id) {
+      if (event.ownerId && event.ownerId !== userId) {
         const notif = await prisma.notification.create({
           data: {
             kind: PrismaNotificationKind.EVENT_REVIEW_RECEIVED,
             recipientId: event.ownerId,
-            actorId: user.id,
+            actorId: userId,
             entityType: PrismaNotificationEntity.REVIEW,
             entityId: review.id,
             eventId,
@@ -146,18 +153,18 @@ export const createReviewMutation: MutationResolvers['createReview'] =
             data: {
               eventId,
               eventTitle: event.title,
-              actorName: user.name,
+              actorName: ctx.user!.name,
               rating,
               reviewContent: content?.slice(0, 100) || undefined,
             },
           },
           include: NOTIFICATION_INCLUDE,
         });
-        await pubsub?.publish({
+        await ctx.pubsub?.publish({
           topic: `NOTIFICATION_ADDED:${event.ownerId}`,
           payload: { notificationAdded: mapNotification(notif) },
         });
-        await pubsub?.publish({
+        await ctx.pubsub?.publish({
           topic: `NOTIFICATION_BADGE:${event.ownerId}`,
           payload: {
             notificationBadgeChanged: { recipientId: event.ownerId },
@@ -171,23 +178,14 @@ export const createReviewMutation: MutationResolvers['createReview'] =
 
 /**
  * Mutation: Update a review
- *
- * Permissions:
- * - App Admin: can edit any review (for exceptional cases like removing personal data)
- * - App Moderator: CANNOT edit (should use hide/delete for moderation)
- * - Event Owner/Moderator: CANNOT edit others' reviews (protects review integrity)
- * - Review Author: can edit own review
+ * Authorization: SELF or ADMIN (author can edit own, admin can edit any)
  */
 export const updateReviewMutation: MutationResolvers['updateReview'] =
   resolverWithMetrics(
     'Mutation',
     'updateReview',
-    async (_p, { id, input }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { id, input }, ctx) => {
+      const userId = requireAuth(ctx);
 
       const { rating, content } = input;
 
@@ -222,12 +220,9 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
         });
       }
 
-      // Permission check: Only App Admin or Review Author can edit
-      // App Moderators and Event Owner/Moderators should NOT edit reviews
-      const isAppAdmin = user.role === 'ADMIN';
-      const isAuthor = existing.authorId === user.id;
-
-      if (!isAppAdmin && !isAuthor) {
+      // Permission check: Only Admin or Author can edit (not Moderator)
+      const isAuthor = existing.authorId === userId;
+      if (!isAdmin(ctx.user) && !isAuthor) {
         throw new GraphQLError('Cannot edit reviews from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -259,225 +254,153 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
 
 /**
  * Mutation: Delete a review (soft delete)
- *
- * Permissions:
- * - App Admin: can delete any review
- * - App Moderator: can delete any review
- * - Event Owner/Moderator: CANNOT delete (protects review integrity - they can only report)
- * - Review Author: can delete own review
+ * Authorization: SELF or APP_MOD_OR_ADMIN
  */
 export const deleteReviewMutation: MutationResolvers['deleteReview'] =
-  resolverWithMetrics(
-    'Mutation',
-    'deleteReview',
-    async (_p, { id }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+  resolverWithMetrics('Mutation', 'deleteReview', async (_p, { id }, ctx) => {
+    const userId = requireAuth(ctx);
 
-      const existing = await prisma.review.findUnique({
-        where: { id },
-        select: { authorId: true, deletedAt: true, hiddenAt: true },
-      });
+    const existing = await prisma.review.findUnique({
+      where: { id },
+      select: { authorId: true, deletedAt: true, hiddenAt: true },
+    });
 
-      if (!existing) {
-        return false; // Idempotent
-      }
-
-      // Permission check: Only App Admin, App Moderator, or Review Author can delete
-      // Event Owner/Moderators CANNOT delete reviews (protects review integrity)
-      const isAppAdmin = user.role === 'ADMIN';
-      const isAppModerator = user.role === 'MODERATOR';
-      const isAuthor = existing.authorId === user.id;
-
-      if (!isAppAdmin && !isAppModerator && !isAuthor) {
-        throw new GraphQLError('Cannot delete reviews from other users.', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
-
-      if (existing.deletedAt) {
-        return true; // Already deleted
-      }
-
-      await prisma.review.update({
-        where: { id },
-        data: {
-          deletedAt: new Date(),
-          deletedById: user.id,
-        },
-      });
-
-      return true;
+    if (!existing) {
+      return false; // Idempotent
     }
-  );
+
+    // Permission check: SELF or APP_MOD_OR_ADMIN
+    requireSelfOrAppMod(ctx.user, existing.authorId);
+
+    if (existing.deletedAt) {
+      return true; // Already deleted
+    }
+
+    await prisma.review.update({
+      where: { id },
+      data: { deletedAt: new Date(), deletedById: userId },
+    });
+
+    return true;
+  });
 
 /**
- * Mutation: Hide a review (moderation - soft delete)
- *
- * Permissions:
- * - App Admin: can hide any review
- * - App Moderator: can hide any review
- * - Event Owner/Moderator: CANNOT hide (protects review integrity - they can only report)
- *
- * Note: This is different from comments where Event Owner/Mod can hide.
- * For reviews, only app-level moderators can hide to prevent organizers from
- * "polishing" their ratings.
+ * Mutation: Hide a review (moderation)
+ * Authorization: APP_MOD_OR_ADMIN
  */
 export const hideReviewMutation: MutationResolvers['hideReview'] =
-  resolverWithMetrics(
-    'Mutation',
-    'hideReview',
-    async (_p, { id }, { user, pubsub }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+  resolverWithMetrics('Mutation', 'hideReview', async (_p, { id }, ctx) => {
+    const userId = requireAuth(ctx);
 
-      const review = await prisma.review.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          eventId: true,
-          authorId: true,
-          deletedAt: true,
-          hiddenAt: true,
-        },
+    // Only APP_MOD_OR_ADMIN can hide reviews
+    if (!isAdminOrModerator(ctx.user)) {
+      throw new GraphQLError('Insufficient permissions to hide reviews.', {
+        extensions: { code: 'FORBIDDEN' },
       });
-
-      if (!review) {
-        throw new GraphQLError('Review not found.', {
-          extensions: { code: 'NOT_FOUND' },
-        });
-      }
-
-      // Permission check: Only App Admin or App Moderator can hide reviews
-      // Event Owner/Moderators CANNOT hide reviews (protects review integrity)
-      const isAppAdmin = user.role === 'ADMIN';
-      const isAppModerator = user.role === 'MODERATOR';
-
-      if (!isAppAdmin && !isAppModerator) {
-        throw new GraphQLError('Insufficient permissions to hide reviews.', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
-
-      if (review.hiddenAt) {
-        return true; // Already hidden
-      }
-
-      await prisma.review.update({
-        where: { id },
-        data: {
-          hiddenAt: new Date(),
-          hiddenById: user.id,
-        },
-      });
-
-      // Notify review author that their review was hidden
-      if (review.authorId !== user.id) {
-        // Fetch event title for notification data
-        const event = await prisma.event.findUnique({
-          where: { id: review.eventId },
-          select: { title: true },
-        });
-
-        const notif = await prisma.notification.create({
-          data: {
-            kind: PrismaNotificationKind.REVIEW_HIDDEN,
-            title: null,
-            body: null,
-            entityType: PrismaNotificationEntity.REVIEW,
-            entityId: id,
-            eventId: review.eventId,
-            recipientId: review.authorId,
-            actorId: user.id,
-            data: {
-              reviewId: id,
-              eventId: review.eventId,
-              eventTitle: event?.title,
-              moderatorName: user.name,
-            },
-            dedupeKey: `review_hidden:${id}`,
-          },
-          include: NOTIFICATION_INCLUDE,
-        });
-        await pubsub?.publish({
-          topic: `NOTIFICATION_ADDED:${review.authorId}`,
-          payload: { notificationAdded: mapNotification(notif) },
-        });
-        await pubsub?.publish({
-          topic: `NOTIFICATION_BADGE:${review.authorId}`,
-          payload: {
-            notificationBadgeChanged: { recipientId: review.authorId },
-          },
-        });
-      }
-
-      return true;
     }
-  );
+
+    const review = await prisma.review.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        eventId: true,
+        authorId: true,
+        deletedAt: true,
+        hiddenAt: true,
+      },
+    });
+
+    if (!review) {
+      throw new GraphQLError('Review not found.', {
+        extensions: { code: 'NOT_FOUND' },
+      });
+    }
+
+    if (review.hiddenAt) {
+      return true; // Already hidden
+    }
+
+    await prisma.review.update({
+      where: { id },
+      data: { hiddenAt: new Date(), hiddenById: userId },
+    });
+
+    // Notify review author that their review was hidden
+    if (review.authorId !== userId) {
+      const event = await prisma.event.findUnique({
+        where: { id: review.eventId },
+        select: { title: true },
+      });
+
+      const notif = await prisma.notification.create({
+        data: {
+          kind: PrismaNotificationKind.REVIEW_HIDDEN,
+          title: null,
+          body: null,
+          entityType: PrismaNotificationEntity.REVIEW,
+          entityId: id,
+          eventId: review.eventId,
+          recipientId: review.authorId,
+          actorId: userId,
+          data: {
+            reviewId: id,
+            eventId: review.eventId,
+            eventTitle: event?.title,
+            moderatorName: ctx.user!.name,
+          },
+          dedupeKey: `review_hidden:${id}`,
+        },
+        include: NOTIFICATION_INCLUDE,
+      });
+      await ctx.pubsub?.publish({
+        topic: `NOTIFICATION_ADDED:${review.authorId}`,
+        payload: { notificationAdded: mapNotification(notif) },
+      });
+      await ctx.pubsub?.publish({
+        topic: `NOTIFICATION_BADGE:${review.authorId}`,
+        payload: {
+          notificationBadgeChanged: { recipientId: review.authorId },
+        },
+      });
+    }
+
+    return true;
+  });
 
 /**
  * Mutation: Unhide a review (moderation)
- *
- * Permissions:
- * - App Admin: can unhide any review
- * - App Moderator: can unhide any review
- * - Event Owner/Moderator: CANNOT unhide (same as hide - only app-level mods)
+ * Authorization: APP_MOD_OR_ADMIN
  */
 export const unhideReviewMutation: MutationResolvers['unhideReview'] =
-  resolverWithMetrics(
-    'Mutation',
-    'unhideReview',
-    async (_p, { id }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+  resolverWithMetrics('Mutation', 'unhideReview', async (_p, { id }, ctx) => {
+    requireAuth(ctx);
 
-      const review = await prisma.review.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          eventId: true,
-          deletedAt: true,
-          hiddenAt: true,
-        },
+    // Only APP_MOD_OR_ADMIN can unhide reviews
+    if (!isAdminOrModerator(ctx.user)) {
+      throw new GraphQLError('Insufficient permissions to unhide reviews.', {
+        extensions: { code: 'FORBIDDEN' },
       });
-
-      if (!review) {
-        throw new GraphQLError('Review not found.', {
-          extensions: { code: 'NOT_FOUND' },
-        });
-      }
-
-      // Permission check: Only App Admin or App Moderator can unhide reviews
-      const isAppAdmin = user.role === 'ADMIN';
-      const isAppModerator = user.role === 'MODERATOR';
-
-      if (!isAppAdmin && !isAppModerator) {
-        throw new GraphQLError('Insufficient permissions to unhide reviews.', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
-
-      if (!review.hiddenAt) {
-        return true; // Not hidden
-      }
-
-      await prisma.review.update({
-        where: { id },
-        data: {
-          hiddenAt: null,
-          hiddenById: null,
-        },
-      });
-
-      return true;
     }
-  );
+
+    const review = await prisma.review.findUnique({
+      where: { id },
+      select: { id: true, eventId: true, deletedAt: true, hiddenAt: true },
+    });
+
+    if (!review) {
+      throw new GraphQLError('Review not found.', {
+        extensions: { code: 'NOT_FOUND' },
+      });
+    }
+
+    if (!review.hiddenAt) {
+      return true; // Not hidden
+    }
+
+    await prisma.review.update({
+      where: { id },
+      data: { hiddenAt: null, hiddenById: null },
+    });
+
+    return true;
+  });

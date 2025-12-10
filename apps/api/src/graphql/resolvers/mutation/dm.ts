@@ -16,7 +16,11 @@ import {
   mapDmThread,
   mapNotification,
 } from '../helpers';
+import { isAdminOrModerator } from '../shared/auth-guards';
 
+/**
+ * Include for DM Message queries.
+ */
 const DM_MESSAGE_INCLUDE = {
   sender: true,
   thread: {
@@ -32,6 +36,9 @@ const DM_MESSAGE_INCLUDE = {
   },
 } satisfies Prisma.DmMessageInclude;
 
+/**
+ * Notification include for DM-related notifications.
+ */
 const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
@@ -47,6 +54,9 @@ const NOTIFICATION_INCLUDE = {
   },
 } satisfies Prisma.NotificationInclude;
 
+/**
+ * Include for DM Thread queries.
+ */
 const DM_THREAD_INCLUDE = {
   aUser: true,
   bUser: true,
@@ -292,7 +302,10 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
         });
       }
 
-      if (existing.senderId !== user.id) {
+      // SELF or APP_MOD_OR_ADMIN
+      const isAuthor = existing.senderId === user.id;
+      const isAppMod = isAdminOrModerator(user);
+      if (!isAuthor && !isAppMod) {
         throw new GraphQLError('Cannot edit messages from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -350,7 +363,10 @@ export const deleteDmMessageMutation: MutationResolvers['deleteDmMessage'] =
         return false; // Idempotent
       }
 
-      if (existing.senderId !== user.id) {
+      // SELF or APP_MOD_OR_ADMIN
+      const isAuthor = existing.senderId === user.id;
+      const isAppMod = isAdminOrModerator(user);
+      if (!isAuthor && !isAppMod) {
         throw new GraphQLError('Cannot delete messages from other users.', {
           extensions: { code: 'FORBIDDEN' },
         });

@@ -1,13 +1,25 @@
+/**
+ * Feedback Questions Query Resolvers
+ *
+ * Authorization levels:
+ * - eventFeedbackQuestions: AUTH
+ * - eventFeedbackResults: EVENT_MOD_OR_OWNER
+ * - myFeedbackAnswers: AUTH (SELF)
+ * - canSubmitFeedback: AUTH
+ */
+
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
-import { GraphQLError } from 'graphql';
+import { requireAuth, requireEventModOrOwner } from '../shared/auth-guards';
 
 /**
- * Get feedback questions for an event
- * Public for viewing (members need to see the form)
+ * Query: Get feedback questions for an event
+ * Authorization: AUTH
  */
 export const eventFeedbackQuestionsQuery: QueryResolvers['eventFeedbackQuestions'] =
-  async (_parent, { eventId }, { user }) => {
+  async (_parent, { eventId }, ctx) => {
+    requireAuth(ctx);
+
     const questions = await prisma.eventFeedbackQuestion.findMany({
       where: { eventId },
       orderBy: { order: 'asc' },
@@ -22,51 +34,13 @@ export const eventFeedbackQuestionsQuery: QueryResolvers['eventFeedbackQuestions
   };
 
 /**
- * Get aggregated feedback results for an event
- * Only accessible by owner/mods
+ * Query: Get aggregated feedback results
+ * Authorization: EVENT_MOD_OR_OWNER
  */
 export const eventFeedbackResultsQuery: QueryResolvers['eventFeedbackResults'] =
-  async (_parent, { eventId }, { user }) => {
-    if (!user) {
-      throw new GraphQLError('Authentication required', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
-
-    // Check if user is owner or moderator
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      select: {
-        ownerId: true,
-        members: {
-          where: {
-            userId: user.id,
-            role: { in: ['OWNER', 'MODERATOR'] },
-            status: 'JOINED',
-          },
-          select: { role: true },
-        },
-      },
-    });
-
-    if (!event) {
-      throw new GraphQLError('Event not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
-
-    const isOwner = event.ownerId === user.id;
-    const isModerator = event.members.length > 0;
-    const isAdmin = user.role === 'ADMIN';
-
-    if (!isOwner && !isModerator && !isAdmin) {
-      throw new GraphQLError(
-        'Only event owner or moderators can view feedback results',
-        {
-          extensions: { code: 'FORBIDDEN' },
-        }
-      );
-    }
+  async (_parent, { eventId }, ctx) => {
+    // Check EVENT_MOD_OR_OWNER (includes app mod/admin bypass)
+    await requireEventModOrOwner(ctx.user, eventId);
 
     // Get all questions
     const questions = await prisma.eventFeedbackQuestion.findMany({
@@ -166,20 +140,17 @@ export const eventFeedbackResultsQuery: QueryResolvers['eventFeedbackResults'] =
   };
 
 /**
- * Get current user's feedback answers for an event
+ * Query: Get current user's feedback answers
+ * Authorization: AUTH (SELF)
  */
 export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
-  async (_parent, { eventId }, { user }) => {
-    if (!user) {
-      throw new GraphQLError('Authentication required', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+  async (_parent, { eventId }, ctx) => {
+    const userId = requireAuth(ctx);
 
     const answers = await prisma.eventFeedbackAnswer.findMany({
       where: {
         eventId,
-        userId: user.id,
+        userId,
       },
       include: {
         question: true,

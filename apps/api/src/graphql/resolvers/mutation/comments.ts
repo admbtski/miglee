@@ -10,6 +10,9 @@ import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapComment, mapNotification } from '../helpers';
 import { NOTIFICATION_INCLUDE } from './notifications';
 
+/**
+ * Include for Comment queries with full relations.
+ */
 const COMMENT_INCLUDE = {
   author: true,
   event: true,

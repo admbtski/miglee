@@ -9,6 +9,10 @@ import {
 } from '../../__generated__/resolvers-types';
 import { mapNotification } from '../helpers';
 
+/**
+ * Standard notification include with related entities.
+ * Exported for use by other mutation resolvers.
+ */
 export const NOTIFICATION_INCLUDE = {
   recipient: true,
   actor: true,
@@ -115,23 +119,17 @@ export const deleteNotificationMutation: MutationResolvers['deleteNotification']
 
       try {
         const notif = await prisma.notification.findUnique({ where: { id } });
-        if (!notif || notif.recipientId !== user.id) {
+        // SELF or ADMIN_ONLY
+        const isOwner = notif && notif.recipientId === user.id;
+        const isAdmin = user.role === Role.Admin;
+        if (!notif || (!isOwner && !isAdmin)) {
           // 404 + brak dostępu bez ujawniania cudzych rekordów
           throw new GraphQLError('Notification not found or access denied.', {
             extensions: { code: 'NOT_FOUND' },
           });
         }
 
-        const wasUnread = notif.readAt == null;
-
         await prisma.notification.delete({ where: { id } });
-
-        // if (wasUnread) {
-        //   await pubsub?.publish({
-        //     topic: `NOTIFICATION_BADGE:${user.id}`,
-        //     payload: { notificationBadgeChanged: { recipientId: user.id } },
-        //   });
-        // }
 
         return true;
       } catch (e: any) {
@@ -164,13 +162,16 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
       }
 
       const notif = await prisma.notification.findUnique({ where: { id } });
-      if (!notif || notif.recipientId !== user.id) {
+      // SELF or ADMIN_ONLY
+      const isOwner = notif && notif.recipientId === user.id;
+      const isAdmin = user.role === Role.Admin;
+      if (!notif || (!isOwner && !isAdmin)) {
         throw new GraphQLError('Notification not found or access denied.', {
           extensions: { code: 'NOT_FOUND' },
         });
       }
 
-      // Idempotencja: jeśli już przeczytana — nic nie zmieniaj, ale zwróć true
+      // Idempotent: if already read, don't change anything but return true
       if (notif.readAt) return true;
 
       try {
@@ -178,12 +179,6 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
           where: { id },
           data: { readAt: new Date() },
         });
-
-        // Realtime: badge
-        // await pubsub?.publish({
-        //   topic: `NOTIFICATION_BADGE:${user.id}`,
-        //   payload: { notificationBadgeChanged: { recipientId: user.id } },
-        // });
 
         return true;
       } catch (e: any) {
@@ -215,7 +210,9 @@ export const markAllNotificationsReadMutation: MutationResolvers['markAllNotific
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
-      if (recipientId !== user.id) {
+      // SELF or ADMIN_ONLY
+      const isAdmin = user.role === Role.Admin;
+      if (recipientId !== user.id && !isAdmin) {
         throw new GraphQLError(
           'Cannot mark notifications read for another user.',
           {
@@ -225,14 +222,9 @@ export const markAllNotificationsReadMutation: MutationResolvers['markAllNotific
       }
 
       const res = await prisma.notification.updateMany({
-        where: { recipientId: user.id, readAt: null },
+        where: { recipientId, readAt: null },
         data: { readAt: new Date() },
       });
-
-      // await pubsub?.publish({
-      //   topic: `NOTIFICATION_BADGE:${user.id}`,
-      //   payload: { notificationBadgeChanged: { recipientId: user.id } },
-      // });
 
       return res.count;
     }

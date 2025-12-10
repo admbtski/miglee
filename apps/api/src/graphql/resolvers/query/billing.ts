@@ -135,6 +135,7 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
 
 /**
  * Get event sponsorship for a specific event
+ * Required level: EVENT_MOD_OR_OWNER
  */
 export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
   _parent,
@@ -146,6 +147,33 @@ export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
 
   if (!userId) {
     throw new Error('Authentication required');
+  }
+
+  // Check EVENT_MOD_OR_OWNER
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: {
+      ownerId: true,
+      members: {
+        where: { userId, status: 'JOINED' },
+        select: { role: true },
+      },
+    },
+  });
+
+  if (!event) {
+    return null;
+  }
+
+  // Global ADMIN or MODERATOR always has access
+  const isGlobalMod = user.role === 'ADMIN' || user.role === 'MODERATOR';
+  const isOwner = event.ownerId === userId;
+  const isEventModerator = event.members.some(
+    (m) => m.role === 'MODERATOR' || m.role === 'OWNER'
+  );
+
+  if (!isGlobalMod && !isOwner && !isEventModerator) {
+    throw new Error('Only event owner or moderators can view sponsorship');
   }
 
   const sponsorship = await prisma.eventSponsorship.findUnique({

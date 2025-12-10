@@ -1,5 +1,6 @@
 // api/graphql/resolvers/query/users.ts
 import type { Prisma } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
@@ -41,6 +42,10 @@ function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
   };
 }
 
+/**
+ * Query: Get list of users
+ * Required level: AUTH (listing restricted by privacy)
+ */
 export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
   'Query',
   'users',
@@ -54,8 +59,16 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
       verifiedOnly,
       sortBy = 'CREATED_AT',
       sortDir = 'DESC',
-    }
+    },
+    { user }
   ): Promise<UsersResult> => {
+    // AUTH required
+    if (!user?.id) {
+      throw new GraphQLError('Authentication required.', {
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+    }
+
     // sanitize pagination
     const take = Math.max(1, Math.min(limit, 200));
     const skip = Math.max(0, offset);

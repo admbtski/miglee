@@ -4,6 +4,8 @@
 
 import type { Prisma } from '@prisma/client';
 import {
+  EventMemberRole,
+  EventMemberStatus,
   NotificationEntity as PrismaNotificationEntity,
   NotificationKind as PrismaNotificationKind,
   Role,
@@ -28,6 +30,7 @@ import {
   mapEventChatMessage,
   type EventChatMessageWithGraph,
 } from '../helpers';
+import { isAdminOrModerator } from '../shared/auth-guards';
 
 const MESSAGE_INCLUDE = {
   author: true,
@@ -55,8 +58,10 @@ export const sendEventMessageMutation: MutationResolvers['sendEventMessage'] =
 
       const { eventId, content, replyToId } = input;
 
-      // Guard: user must be JOINED
-      await requireJoinedMember(user.id, eventId);
+      // Guard: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
+      if (!isAdminOrModerator(user)) {
+        await requireJoinedMember(user.id, eventId);
+      }
 
       // Rate limit
       await checkEventChatSendRateLimit(user.id, eventId);
@@ -216,14 +221,38 @@ export const editEventMessageMutation: MutationResolvers['editEventMessage'] =
         });
       }
 
-      if (existing.authorId !== user.id) {
+      // SELF or EVENT_MOD_OR_OWNER or APP_MOD_OR_ADMIN
+      const isAuthor = existing.authorId === user.id;
+      const isGlobalMod = isAdminOrModerator(user);
+
+      // Check if event mod/owner
+      let isEventMod = false;
+      if (!isAuthor && !isGlobalMod) {
+        const membership = await prisma.eventMember.findUnique({
+          where: {
+            eventId_userId: { eventId: existing.eventId, userId: user.id },
+          },
+          select: { role: true, status: true },
+        });
+        isEventMod =
+          membership?.status === EventMemberStatus.JOINED &&
+          (membership?.role === EventMemberRole.OWNER ||
+            membership?.role === EventMemberRole.MODERATOR);
+      }
+
+      if (!isAuthor && !isGlobalMod && !isEventMod) {
         throw new GraphQLError('You can only edit your own messages.', {
           extensions: { code: 'FORBIDDEN' },
         });
       }
 
-      // Check time window (5 minutes)
-      if (!canEdit(existing.createdAt)) {
+      // Check time window (5 minutes) - only applies to author, not moderators
+      if (
+        isAuthor &&
+        !isGlobalMod &&
+        !isEventMod &&
+        !canEdit(existing.createdAt)
+      ) {
         throw new GraphQLError(
           'Messages can only be edited within 5 minutes of posting.',
           {
@@ -302,6 +331,7 @@ export const deleteEventMessageMutation: MutationResolvers['deleteEventMessage']
       const isAuthor = existing.authorId === user.id;
       const isOwner = existing.event.ownerId === user.id;
       const isAdmin = user.role === Role.ADMIN;
+      const isGlobalMod = isAdminOrModerator(user);
 
       // Check permissions for soft delete
       if (soft) {
@@ -315,8 +345,8 @@ export const deleteEventMessageMutation: MutationResolvers['deleteEventMessage']
               }
             );
           }
-        } else {
-          // Moderator/Owner can soft-delete anytime
+        } else if (!isGlobalMod) {
+          // Event Moderator/Owner can soft-delete anytime (global mod already has access)
           await requireEventChatModerator(user.id, existing.eventId);
         }
 
@@ -344,7 +374,7 @@ export const deleteEventMessageMutation: MutationResolvers['deleteEventMessage']
         return true;
       }
 
-      // Hard delete: only Owner or Admin
+      // Hard delete: only Owner or Admin (global MODERATOR cannot hard-delete)
       if (!isOwner && !isAdmin) {
         throw new GraphQLError(
           'Only the event owner or admin can permanently delete messages.',
@@ -384,8 +414,10 @@ export const markEventChatReadMutation: MutationResolvers['markEventChatRead'] =
         });
       }
 
-      // Guard: user must be JOINED
-      await requireJoinedMember(user.id, eventId);
+      // Guard: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
+      if (!isAdminOrModerator(user)) {
+        await requireJoinedMember(user.id, eventId);
+      }
 
       const timestamp = at ? new Date(at) : new Date();
 
@@ -434,8 +466,10 @@ export const publishEventTypingMutation: MutationResolvers['publishEventTyping']
         });
       }
 
-      // Guard: user must be JOINED
-      await requireJoinedMember(user.id, eventId);
+      // Guard: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
+      if (!isAdminOrModerator(user)) {
+        await requireJoinedMember(user.id, eventId);
+      }
 
       // Publish typing event
       await pubsub?.publish({

@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import { QueryResolvers } from '../../__generated__/resolvers-types';
@@ -107,11 +108,22 @@ export const categoryQuery: QueryResolvers['category'] = resolverWithMetrics(
   }
 );
 
+/**
+ * Check if category slug is available
+ * Required level: AUTH (protection against mass scanning)
+ */
 export const checkCategorySlugAvailableQuery: QueryResolvers['checkCategorySlugAvailable'] =
   resolverWithMetrics(
     'Query',
     'checkCategorySlugAvailable',
-    async (_p, { slug }) => {
+    async (_p, { slug }, { user }) => {
+      // AUTH required
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
       const trimmedSlug = slug.trim().toLowerCase();
 
       if (!trimmedSlug) {
@@ -127,11 +139,28 @@ export const checkCategorySlugAvailableQuery: QueryResolvers['checkCategorySlugA
     }
   );
 
+/**
+ * Get category usage count
+ * Required level: APP_MOD_OR_ADMIN (sensitive statistics)
+ */
 export const getCategoryUsageCountQuery: QueryResolvers['getCategoryUsageCount'] =
   resolverWithMetrics(
     'Query',
     'getCategoryUsageCount',
-    async (_p, { slug }) => {
+    async (_p, { slug }, { user }) => {
+      // APP_MOD_OR_ADMIN required
+      if (!user?.id) {
+        throw new GraphQLError('Authentication required.', {
+          extensions: { code: 'UNAUTHENTICATED' },
+        });
+      }
+
+      if (user.role !== 'ADMIN' && user.role !== 'MODERATOR') {
+        throw new GraphQLError('Admin or moderator access required.', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
       const trimmedSlug = slug.trim();
 
       if (!trimmedSlug) {

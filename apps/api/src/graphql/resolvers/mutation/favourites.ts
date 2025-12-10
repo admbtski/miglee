@@ -1,28 +1,27 @@
 /**
  * Event Favourites Mutation Resolvers
+ *
+ * Authorization: AUTH (SELF)
  */
 
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import { requireAuth } from '../shared/auth-guards';
 
 /**
  * Mutation: Toggle favourite (add if not exists, remove if exists)
- * Returns the favourite if added, null if removed
+ * Authorization: AUTH (SELF)
  */
 export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
   resolverWithMetrics(
     'Mutation',
     'toggleFavourite',
-    async (_p, { eventId }, { user }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { eventId }, ctx) => {
+      const userId = requireAuth(ctx);
 
-      // Check if eventexists
+      // Check if event exists
       const event = await prisma.event.findUnique({
         where: { id: eventId },
         select: { id: true, savedCount: true },
@@ -37,10 +36,7 @@ export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
       // Check if already favourited
       const existing = await prisma.eventFavourite.findUnique({
         where: {
-          userId_eventId: {
-            userId: user.id,
-            eventId,
-          },
+          userId_eventId: { userId, eventId },
         },
       });
 
@@ -61,10 +57,7 @@ export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
         // Add favourite
         const [favourite] = await prisma.$transaction([
           prisma.eventFavourite.create({
-            data: {
-              userId: user.id,
-              eventId,
-            },
+            data: { userId, eventId },
           }),
           prisma.event.update({
             where: { id: eventId },

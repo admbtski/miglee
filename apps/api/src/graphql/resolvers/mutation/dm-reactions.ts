@@ -1,27 +1,27 @@
 /**
  * DM Message Reactions Resolvers
+ *
+ * Authorization: DM_PARTICIPANT (must be part of thread)
  */
 
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import { requireAuth } from '../shared/auth-guards';
 
 const ALLOWED_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
 /**
  * Add reaction to DM message
+ * Authorization: DM_PARTICIPANT
  */
 export const addDmReactionMutation: MutationResolvers['addDmReaction'] =
   resolverWithMetrics(
     'Mutation',
     'addDmReaction',
-    async (_p, { messageId, emoji }, { user, pubsub }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { messageId, emoji }, ctx) => {
+      const userId = requireAuth(ctx);
 
       // Validate emoji
       if (!ALLOWED_EMOJIS.includes(emoji)) {
@@ -44,8 +44,8 @@ export const addDmReactionMutation: MutationResolvers['addDmReaction'] =
 
       // Check if user is part of the thread
       if (
-        message.thread.aUserId !== user.id &&
-        message.thread.bUserId !== user.id
+        message.thread.aUserId !== userId &&
+        message.thread.bUserId !== userId
       ) {
         throw new GraphQLError('Access denied.', {
           extensions: { code: 'FORBIDDEN' },
@@ -55,30 +55,17 @@ export const addDmReactionMutation: MutationResolvers['addDmReaction'] =
       // Upsert reaction (idempotent)
       await prisma.dmMessageReaction.upsert({
         where: {
-          messageId_userId_emoji: {
-            messageId,
-            userId: user.id,
-            emoji,
-          },
+          messageId_userId_emoji: { messageId, userId, emoji },
         },
-        create: {
-          messageId,
-          userId: user.id,
-          emoji,
-        },
+        create: { messageId, userId, emoji },
         update: {}, // No-op if already exists
       });
 
       // Publish to WebSocket
-      await pubsub?.publish({
+      await ctx.pubsub?.publish({
         topic: `dmReactionAdded:${message.threadId}`,
         payload: {
-          dmReactionAdded: {
-            messageId,
-            userId: user.id,
-            emoji,
-            action: 'ADD',
-          },
+          dmReactionAdded: { messageId, userId, emoji, action: 'ADD' },
         },
       });
 
@@ -88,17 +75,14 @@ export const addDmReactionMutation: MutationResolvers['addDmReaction'] =
 
 /**
  * Remove reaction from DM message
+ * Authorization: DM_PARTICIPANT
  */
 export const removeDmReactionMutation: MutationResolvers['removeDmReaction'] =
   resolverWithMetrics(
     'Mutation',
     'removeDmReaction',
-    async (_p, { messageId, emoji }, { user, pubsub }) => {
-      if (!user?.id) {
-        throw new GraphQLError('Authentication required.', {
-          extensions: { code: 'UNAUTHENTICATED' },
-        });
-      }
+    async (_p, { messageId, emoji }, ctx) => {
+      const userId = requireAuth(ctx);
 
       // Check if message exists and user has access
       const message = await prisma.dmMessage.findUnique({
@@ -114,8 +98,8 @@ export const removeDmReactionMutation: MutationResolvers['removeDmReaction'] =
 
       // Check if user is part of the thread
       if (
-        message.thread.aUserId !== user.id &&
-        message.thread.bUserId !== user.id
+        message.thread.aUserId !== userId &&
+        message.thread.bUserId !== userId
       ) {
         throw new GraphQLError('Access denied.', {
           extensions: { code: 'FORBIDDEN' },
@@ -124,23 +108,14 @@ export const removeDmReactionMutation: MutationResolvers['removeDmReaction'] =
 
       // Delete reaction (idempotent - no error if doesn't exist)
       await prisma.dmMessageReaction.deleteMany({
-        where: {
-          messageId,
-          userId: user.id,
-          emoji,
-        },
+        where: { messageId, userId, emoji },
       });
 
       // Publish to WebSocket
-      await pubsub?.publish({
+      await ctx.pubsub?.publish({
         topic: `dmReactionAdded:${message.threadId}`,
         payload: {
-          dmReactionAdded: {
-            messageId,
-            userId: user.id,
-            emoji,
-            action: 'REMOVE',
-          },
+          dmReactionAdded: { messageId, userId, emoji, action: 'REMOVE' },
         },
       });
 
