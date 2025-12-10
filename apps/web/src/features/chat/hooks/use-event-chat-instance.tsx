@@ -1,34 +1,31 @@
 /**
- * Custom hook for DM (Direct Message) chat functionality
+ * Custom hook for Event Chat instance
  *
  * @description
- * Provides complete DM chat functionality including:
- * - Fetching and transforming DM threads
- * - Fetching and transforming messages with infinite scroll
- * - Sending messages with optimistic updates
- * - Real-time subscriptions (new messages, edits, deletes, reactions, typing)
+ * Encapsulates all event chat logic including:
+ * - Fetching and transforming messages
+ * - Real-time subscriptions (new, edit, delete)
  * - Typing indicators with auto-clear
- * - Mark as read
+ * - Reactions
+ * - Edit/Delete modals state
+ * - Message sending with optimistic updates
  * - Error handling with toast notifications
  * - Retry logic for failed messages
  *
+ * Used by both EventChatModal and EventChatManagement components.
+ *
  * @example
  * ```tsx
- * const dmChat = useDmChat({
- *   myUserId: 'user-123',
- *   activeThreadId: 'thread-456',
+ * const chat = useEventChatInstance({
+ *   eventId: 'event-123',
+ *   enabled: true,
  * });
  *
- * // Send message
- * dmChat.sendMessage('Hello!', replyToId);
- *
- * // Load more messages
- * if (dmChat.hasMore) {
- *   dmChat.loadMore();
- * }
+ * // Render messages (includes pending messages)
+ * <ChatThread messages={chat.messages} onSend={chat.handleSend} />
  *
  * // Retry failed message
- * dmChat.retryFailedMessage(pendingId);
+ * chat.retryFailedMessage(messageId);
  * ```
  */
 
@@ -36,46 +33,43 @@
 
 'use client';
 
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { toast } from 'sonner';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  useGetDmThreads,
-  useGetDmMessagesInfinite,
-  useSendDmMessage,
-  useMarkDmThreadRead,
-  usePublishDmTyping,
-  dmKeys,
-} from '@/features/chat/api/dm';
-import type { GetDmMessagesQuery } from '@/lib/api/__generated__/react-query-update';
-import {
-  useDmMessageAdded,
-  useDmMessageUpdated,
-  useDmMessageDeleted,
-  useDmTyping,
-  useDmThreadsSubscriptions,
-} from '@/features/chat/api/dm-subscriptions';
-import { useDmReactionAdded } from '@/features/chat/api/reactions-subscriptions';
-import {
-  useAddDmReaction,
-  useRemoveDmReaction,
-} from '@/features/chat/api/reactions';
-import {
-  useUpdateDmMessage,
-  useDeleteDmMessage,
-} from '@/features/chat/api/message-actions';
+import { toast } from 'sonner';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 import type { Message } from '../types';
+
+// API hooks
+import {
+  useGetEventMessages,
+  useSendEventMessage,
+  useMarkEventChatRead,
+  usePublishEventTyping,
+  eventChatKeys,
+} from '../api/event-chat';
+import {
+  useEventMessageAdded,
+  useEventMessageUpdated,
+  useEventMessageDeleted,
+  useEventTyping,
+} from '../api/event-chat-subscriptions';
+import { useAddEventReaction, useRemoveEventReaction } from '../api/reactions';
+import { useEventReactionAdded } from '../api/reactions-subscriptions';
+import {
+  useEditEventMessage,
+  useDeleteEventMessage,
+} from '../api/message-actions';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-type UseDmChatProps = {
-  /** Current user ID for determining message sides and reactions */
-  myUserId?: string;
-  /** Active DM thread ID to fetch messages for */
-  activeThreadId?: string;
-};
+interface UseEventChatInstanceProps {
+  /** Event ID to connect to */
+  eventId: string;
+  /** Whether the chat is active (modal open or component mounted) */
+  enabled?: boolean;
+}
 
 /** Pending message that hasn't been confirmed by server yet */
 interface PendingMessage {
@@ -87,38 +81,66 @@ interface PendingMessage {
   retryCount: number;
 }
 
+interface UseEventChatInstanceReturn {
+  // Data
+  messages: Message[];
+  currentUserId: string | undefined;
+  typingUserNames: string[] | null;
+
+  // Loading states
+  isLoading: boolean;
+  isSending: boolean;
+  isEditPending: boolean;
+  isDeletePending: boolean;
+
+  // Pagination
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
+
+  // Handlers
+  handleSend: (text: string, replyToId?: string) => void;
+  handleTyping: (isTyping: boolean) => void;
+  handleAddReaction: (messageId: string, emoji: string) => void;
+  handleRemoveReaction: (messageId: string, emoji: string) => void;
+
+  // Retry failed messages
+  retryFailedMessage: (pendingId: string) => void;
+  dismissFailedMessage: (pendingId: string) => void;
+  hasPendingMessages: boolean;
+
+  // Edit modal
+  editingMessage: { id: string; content: string } | null;
+  openEditModal: (messageId: string, content: string) => void;
+  closeEditModal: () => void;
+  handleSaveEdit: (newContent: string) => Promise<void>;
+
+  // Delete modal
+  deletingMessageId: string | null;
+  openDeleteModal: (messageId: string) => void;
+  closeDeleteModal: () => void;
+  handleConfirmDelete: () => Promise<void>;
+}
+
 // =============================================================================
 // Constants
 // =============================================================================
 
 const MAX_RETRY_COUNT = 3;
-const PENDING_MESSAGE_PREFIX = 'dm-pending-';
-
-// =============================================================================
-// Utilities
-// =============================================================================
-
-/** Format relative time for thread preview */
-function formatRelativeTime(isoString: string): string {
-  const now = Date.now();
-  const then = new Date(isoString).getTime();
-  const diffMs = now - then;
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return 'now';
-  if (diffMins < 60) return `${diffMins}m`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d`;
-}
+const PENDING_MESSAGE_PREFIX = 'pending-';
 
 // =============================================================================
 // Hook
 // =============================================================================
 
-export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
+export function useEventChatInstance({
+  eventId,
+  enabled = true,
+}: UseEventChatInstanceProps): UseEventChatInstanceReturn {
   const queryClient = useQueryClient();
+  const { data: authData } = useMeQuery();
+  const currentUserId = authData?.me?.id;
+  const currentUserName = authData?.me?.name;
+  const currentUserAvatar = authData?.me?.avatarKey;
 
   // ---------------------------------------------------------------------------
   // Edit/Delete state
@@ -149,70 +171,61 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   // ---------------------------------------------------------------------------
   // Queries
   // ---------------------------------------------------------------------------
-  const { data: threadsData, isLoading: threadsLoading } = useGetDmThreads();
-
   const {
     data: messagesData,
-    isLoading: messagesLoading,
+    isLoading,
     fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useGetDmMessagesInfinite(activeThreadId ?? '', {
-    enabled: !!activeThreadId,
+    hasNextPage = false,
+  } = useGetEventMessages(eventId, {
+    enabled: enabled && !!eventId,
   });
 
   // ---------------------------------------------------------------------------
   // Mutations
   // ---------------------------------------------------------------------------
-  const sendMessage = useSendDmMessage();
-  const markAsRead = useMarkDmThreadRead();
-  const publishTyping = usePublishDmTyping();
-  const addReaction = useAddDmReaction();
-  const removeReaction = useRemoveDmReaction();
-  const editMessage = useUpdateDmMessage();
-  const deleteMessage = useDeleteDmMessage();
+  const sendMessage = useSendEventMessage();
+  const markRead = useMarkEventChatRead();
+  const publishTyping = usePublishEventTyping();
+  const addReaction = useAddEventReaction();
+  const removeReaction = useRemoveEventReaction();
+  const editMessage = useEditEventMessage();
+  const deleteMessage = useDeleteEventMessage();
 
   // ---------------------------------------------------------------------------
   // Subscriptions
   // ---------------------------------------------------------------------------
-  const allThreadIds = useMemo(
-    () => threadsData?.dmThreads?.items?.map((t) => t.id).filter(Boolean) ?? [],
-    [threadsData]
-  );
-
-  useDmThreadsSubscriptions({ threadIds: allThreadIds, enabled: true });
-
-  useDmMessageAdded({
-    threadId: activeThreadId ?? '',
+  useEventMessageAdded({
+    eventId,
+    enabled: enabled && !!eventId,
     onMessage: (message) => {
       // Invalidate queries to fetch new messages
       queryClient.invalidateQueries({
-        queryKey: dmKeys.messages(activeThreadId ?? ''),
+        queryKey: eventChatKeys.messages(eventId),
       });
 
-      // Auto-mark as read if not from current user
-      if (message.senderId !== myUserId && activeThreadId) {
-        markAsRead.mutate({ threadId: activeThreadId });
+      // Auto-mark as read
+      if (message.authorId !== currentUserId) {
+        markRead.mutate({ eventId });
       }
     },
-    enabled: !!activeThreadId,
   });
 
-  useDmMessageUpdated({
-    threadId: activeThreadId ?? '',
+  useEventMessageUpdated({
+    eventId,
+    enabled: enabled && !!eventId,
     onMessageUpdated: (message) => {
-      // Update cache directly
+      // Update cache directly (edges structure)
       queryClient.setQueryData(
-        dmKeys.messages(activeThreadId ?? ''),
+        eventChatKeys.messages(eventId),
         (oldData: any) => {
           if (!oldData?.pages) return oldData;
           return {
             ...oldData,
             pages: oldData.pages.map((page: any) => ({
               ...page,
-              dmMessages: {
-                ...page.dmMessages,
-                edges: page.dmMessages?.edges?.map((edge: any) =>
+              eventMessages: {
+                ...page.eventMessages,
+                edges: page.eventMessages?.edges?.map((edge: any) =>
                   edge.node.id === message.id
                     ? {
                         ...edge,
@@ -230,24 +243,24 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
         }
       );
     },
-    enabled: !!activeThreadId,
   });
 
-  useDmMessageDeleted({
-    threadId: activeThreadId ?? '',
+  useEventMessageDeleted({
+    eventId,
+    enabled: enabled && !!eventId,
     onMessageDeleted: (event) => {
-      // Update cache directly
+      // Update cache directly (edges structure)
       queryClient.setQueryData(
-        dmKeys.messages(activeThreadId ?? ''),
+        eventChatKeys.messages(eventId),
         (oldData: any) => {
           if (!oldData?.pages) return oldData;
           return {
             ...oldData,
             pages: oldData.pages.map((page: any) => ({
               ...page,
-              dmMessages: {
-                ...page.dmMessages,
-                edges: page.dmMessages?.edges?.map((edge: any) =>
+              eventMessages: {
+                ...page.eventMessages,
+                edges: page.eventMessages?.edges?.map((edge: any) =>
                   edge.node.id === event.messageId
                     ? {
                         ...edge,
@@ -264,40 +277,37 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
         }
       );
     },
-    enabled: !!activeThreadId,
   });
 
-  useDmReactionAdded({
-    threadId: activeThreadId ?? '',
-    enabled: !!activeThreadId,
-  });
-
-  // Typing subscription with auto-clear
-  useDmTyping({
-    threadId: activeThreadId ?? '',
-    enabled: !!activeThreadId,
+  // Typing indicator subscription with auto-clear
+  useEventTyping({
+    eventId,
+    enabled: enabled && !!eventId,
     onTyping: ({ userId, isTyping }) => {
-      if (userId === myUserId) return;
+      // Don't show typing for current user
+      if (userId === currentUserId) return;
 
-      const existingTimeout = typingTimeouts.current.get(`dm-${userId}`);
+      // Clear existing timeout
+      const existingTimeout = typingTimeouts.current.get(`event-${userId}`);
       if (existingTimeout) {
         clearTimeout(existingTimeout);
-        typingTimeouts.current.delete(`dm-${userId}`);
+        typingTimeouts.current.delete(`event-${userId}`);
       }
 
       setTypingUsers((prev) => {
         const next = new Set(prev);
         if (isTyping) {
           next.add(userId);
+          // Auto-clear after 5 seconds
           const timeout = setTimeout(() => {
             setTypingUsers((p) => {
               const n = new Set(p);
               n.delete(userId);
               return n;
             });
-            typingTimeouts.current.delete(`dm-${userId}`);
+            typingTimeouts.current.delete(`event-${userId}`);
           }, 5000);
-          typingTimeouts.current.set(`dm-${userId}`, timeout);
+          typingTimeouts.current.set(`event-${userId}`, timeout);
         } else {
           next.delete(userId);
         }
@@ -306,106 +316,60 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
     },
   });
 
-  // ---------------------------------------------------------------------------
-  // Transform threads to conversations
-  // ---------------------------------------------------------------------------
-  const conversations = useMemo(() => {
-    if (!threadsData?.dmThreads?.items) return [];
-
-    return threadsData.dmThreads.items.map((thread) => {
-      const otherUser = (thread as any).participants?.find(
-        (p: any) => p.id !== myUserId
-      );
-      return {
-        id: thread.id,
-        kind: 'dm' as const,
-        title: otherUser?.name || 'Unknown',
-        membersCount: (thread as any).participants?.length || 0,
-        preview: thread.lastMessage?.content || 'No messages yet',
-        lastMessageAt: thread.lastMessage?.createdAt
-          ? formatRelativeTime(thread.lastMessage.createdAt)
-          : '',
-        unread: thread.unreadCount || 0,
-        avatar: otherUser?.avatarKey || undefined,
-        otherUserId: otherUser?.id,
-      };
-    });
-  }, [threadsData, myUserId]);
+  // Reaction subscription
+  useEventReactionAdded({
+    eventId,
+    enabled: enabled && !!eventId,
+  });
 
   // ---------------------------------------------------------------------------
-  // Get active thread info
+  // Transform messages to ChatThread format (with pending messages)
   // ---------------------------------------------------------------------------
-  const activeThread = useMemo(() => {
-    if (!activeThreadId || !threadsData?.dmThreads) return null;
-    const thread = threadsData.dmThreads.items.find(
-      (t) => t.id === activeThreadId
-    );
-    if (!thread) return null;
-
-    const otherUser = thread.aUserId === myUserId ? thread.bUser : thread.aUser;
-    return {
-      id: thread.id,
-      title: otherUser?.name || 'Unknown',
-      avatar: otherUser?.avatarKey || undefined,
-      recipientId: otherUser?.id || '',
-      members: 2,
-    };
-  }, [activeThreadId, threadsData, myUserId]);
-
-  // ---------------------------------------------------------------------------
-  // Transform messages (with pending)
-  // ---------------------------------------------------------------------------
-  const messages = useMemo(() => {
+  const messages: Message[] = useMemo(() => {
+    // Server messages
     const serverMessages: Message[] = [];
 
-    if ((messagesData as any)?.pages && myUserId) {
-      for (const page of (messagesData as any).pages as GetDmMessagesQuery[]) {
-        if (!page.dmMessages) continue;
-        const pageMessages = page.dmMessages.edges.map(
-          (edge: { node: any }) => edge.node
-        );
-        for (const msg of pageMessages) {
-          serverMessages.push({
-            id: msg.id,
-            text: msg.content,
-            at: new Date(msg.createdAt).getTime(),
-            side: msg.senderId === myUserId ? 'right' : 'left',
-            author: {
-              id: msg.sender.id,
-              name: msg.sender.name,
-              avatar: msg.sender.avatarKey || undefined,
-            },
-            reactions: msg.reactions.map((r: any) => ({
-              emoji: r.emoji,
-              count: r.count,
-              users: r.users.map((u: any) => ({
-                id: u.id,
-                name: u.name,
-                avatarKey: u.avatarKey,
-              })),
-              reacted: r.reacted,
-            })),
-            readAt: msg.readAt ?? undefined,
-            editedAt: msg.editedAt ?? undefined,
-            deletedAt: msg.deletedAt ?? undefined,
-            replyTo: msg.replyTo
-              ? {
-                  id: msg.replyTo.id,
-                  author: {
-                    id: msg.replyTo.sender.id,
-                    name: msg.replyTo.sender.name,
-                  },
-                  content: msg.replyTo.content,
-                }
-              : null,
-          });
-        }
+    if (messagesData?.pages && currentUserId) {
+      const pages = messagesData.pages;
+      const allMessages = pages.flatMap(
+        (page: any) =>
+          page.eventMessages?.edges?.map((edge: any) => edge.node) || []
+      );
+
+      for (const msg of allMessages) {
+        serverMessages.push({
+          id: msg.id,
+          text: msg.content,
+          at: new Date(msg.createdAt).getTime(),
+          side: (msg.authorId === currentUserId ? 'right' : 'left') as
+            | 'left'
+            | 'right',
+          author: {
+            id: msg.author.id,
+            name: msg.author.name || 'Unknown',
+            avatar: msg.author.avatarKey || undefined,
+          },
+          block: !!msg.deletedAt,
+          reactions: msg.reactions || [],
+          editedAt: msg.editedAt,
+          deletedAt: msg.deletedAt,
+          replyTo: msg.replyTo
+            ? {
+                id: msg.replyTo.id,
+                author: {
+                  id: msg.replyTo.author.id,
+                  name: msg.replyTo.author.name || 'Unknown',
+                },
+                content: msg.replyTo.content,
+              }
+            : null,
+        });
       }
     }
 
     // Add pending messages (optimistic)
     const pendingMsgs: Message[] = [];
-    if (myUserId && activeThread) {
+    if (currentUserId) {
       for (const [pendingId, pending] of pendingMessages) {
         pendingMsgs.push({
           id: pendingId,
@@ -413,11 +377,13 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
           at: pending.createdAt,
           side: 'right',
           author: {
-            id: myUserId,
-            name: 'You',
+            id: currentUserId,
+            name: currentUserName || 'You',
+            avatar: currentUserAvatar || undefined,
           },
           block: false,
           reactions: [],
+          // Mark failed messages visually
           editedAt: pending.status === 'failed' ? 'failed' : undefined,
           deletedAt: null,
           replyTo: null,
@@ -425,20 +391,26 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
       }
     }
 
+    // Merge and sort by timestamp
     return [...serverMessages, ...pendingMsgs].sort((a, b) => a.at - b.at);
-  }, [messagesData, myUserId, pendingMessages, activeThread]);
+  }, [
+    messagesData,
+    currentUserId,
+    currentUserName,
+    currentUserAvatar,
+    pendingMessages,
+  ]);
 
   // ---------------------------------------------------------------------------
   // Send message with optimistic update
   // ---------------------------------------------------------------------------
   const sendMessageWithOptimistic = useCallback(
     (content: string, replyToId?: string, existingPendingId?: string) => {
-      if (!activeThread?.recipientId) return;
-
       const pendingId =
         existingPendingId || `${PENDING_MESSAGE_PREFIX}${Date.now()}`;
       const now = Date.now();
 
+      // Get current retry count if retrying
       const existingPending = pendingMessages.get(pendingId);
       const retryCount = existingPending ? existingPending.retryCount + 1 : 0;
 
@@ -459,27 +431,27 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
       sendMessage.mutate(
         {
           input: {
-            recipientId: activeThread.recipientId,
+            eventId,
             content,
-            replyToId,
+            replyToId: replyToId || undefined,
           },
         },
         {
           onSuccess: () => {
+            // Remove from pending - server message will appear via subscription
             setPendingMessages((prev) => {
               const next = new Map(prev);
               next.delete(pendingId);
               return next;
             });
 
+            // Invalidate to get the real message
             queryClient.invalidateQueries({
-              queryKey: dmKeys.messages(activeThreadId ?? ''),
-            });
-            queryClient.invalidateQueries({
-              queryKey: dmKeys.threads(),
+              queryKey: eventChatKeys.messages(eventId),
             });
           },
           onError: (error) => {
+            // Mark as failed
             setPendingMessages((prev) => {
               const next = new Map(prev);
               const pending = next.get(pendingId);
@@ -489,6 +461,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
               return next;
             });
 
+            // Show error toast with retry option
             // TODO i18n: Toast message
             toast.error('Nie udało się wysłać wiadomości', {
               description:
@@ -510,60 +483,24 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
               duration: 5000,
             });
 
-            console.error('Failed to send DM:', error);
+            console.error('Failed to send message:', error);
           },
         }
       );
     },
-    [activeThread, activeThreadId, sendMessage, queryClient, pendingMessages]
+    [eventId, sendMessage, queryClient, pendingMessages]
   );
 
-  const handleSendMessage = useCallback(
-    (content: string, replyToId?: string) => {
-      if (!content.trim()) return;
-      sendMessageWithOptimistic(content.trim(), replyToId);
+  const handleSend = useCallback(
+    (text: string, replyToId?: string) => {
+      if (!text.trim()) return;
+      sendMessageWithOptimistic(text.trim(), replyToId);
     },
     [sendMessageWithOptimistic]
   );
 
   // ---------------------------------------------------------------------------
-  // Send message to new recipient (for draft conversations)
-  // ---------------------------------------------------------------------------
-  const sendMessageToRecipient = useCallback(
-    (
-      content: string,
-      recipientId: string,
-      onSuccess?: (threadId: string) => void
-    ) => {
-      if (!content.trim() || !recipientId) return;
-
-      sendMessage.mutate(
-        {
-          input: {
-            recipientId,
-            content: content.trim(),
-          },
-        },
-        {
-          onSuccess: (data) => {
-            const newThreadId = data.sendDmMessage?.threadId;
-            if (newThreadId) {
-              queryClient.invalidateQueries({ queryKey: dmKeys.threads() });
-              onSuccess?.(newThreadId);
-            }
-          },
-          onError: (error) => {
-            toast.error('Nie udało się wysłać wiadomości'); // TODO i18n
-            console.error('Failed to send DM to new recipient:', error);
-          },
-        }
-      );
-    },
-    [sendMessage, queryClient]
-  );
-
-  // ---------------------------------------------------------------------------
-  // Retry/Dismiss failed messages
+  // Retry failed message
   // ---------------------------------------------------------------------------
   const retryFailedMessage = useCallback(
     (pendingId: string) => {
@@ -571,6 +508,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
       if (!pending || pending.status !== 'failed') return;
 
       if (pending.retryCount >= MAX_RETRY_COUNT) {
+        // TODO i18n: Toast message
         toast.error('Maksymalna liczba prób osiągnięta', {
           description: 'Usuń wiadomość i spróbuj ponownie',
         });
@@ -582,6 +520,9 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
     [pendingMessages, sendMessageWithOptimistic]
   );
 
+  // ---------------------------------------------------------------------------
+  // Dismiss failed message
+  // ---------------------------------------------------------------------------
   const dismissFailedMessage = useCallback((pendingId: string) => {
     setPendingMessages((prev) => {
       const next = new Map(prev);
@@ -591,14 +532,22 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Reactions
+  // Other handlers
   // ---------------------------------------------------------------------------
+  const handleTyping = useCallback(
+    (isTyping: boolean) => {
+      publishTyping.mutate({ eventId, isTyping });
+    },
+    [eventId, publishTyping]
+  );
+
   const handleAddReaction = useCallback(
     (messageId: string, emoji: string) => {
       addReaction.mutate(
         { messageId, emoji },
         {
           onError: (error) => {
+            // TODO i18n: Toast message
             toast.error('Nie udało się dodać reakcji');
             console.error('Failed to add reaction:', error);
           },
@@ -614,6 +563,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
         { messageId, emoji },
         {
           onError: (error) => {
+            // TODO i18n: Toast message
             toast.error('Nie udało się usunąć reakcji');
             console.error('Failed to remove reaction:', error);
           },
@@ -621,17 +571,6 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
       );
     },
     [removeReaction]
-  );
-
-  // ---------------------------------------------------------------------------
-  // Typing handler
-  // ---------------------------------------------------------------------------
-  const handleTyping = useCallback(
-    (isTyping: boolean) => {
-      if (!activeThreadId) return;
-      publishTyping.mutate({ threadId: activeThreadId, isTyping });
-    },
-    [activeThreadId, publishTyping]
   );
 
   // ---------------------------------------------------------------------------
@@ -647,7 +586,7 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
 
   const handleSaveEdit = useCallback(
     async (newContent: string) => {
-      if (!editingMessage || !activeThreadId) return;
+      if (!editingMessage) return;
 
       try {
         await editMessage.mutateAsync({
@@ -655,17 +594,18 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
           input: { content: newContent },
         });
 
+        // Optimistic update (edges structure)
         queryClient.setQueryData(
-          dmKeys.messages(activeThreadId),
+          eventChatKeys.messages(eventId),
           (oldData: any) => {
             if (!oldData?.pages) return oldData;
             return {
               ...oldData,
               pages: oldData.pages.map((page: any) => ({
                 ...page,
-                dmMessages: {
-                  ...page.dmMessages,
-                  edges: page.dmMessages?.edges?.map((edge: any) =>
+                eventMessages: {
+                  ...page.eventMessages,
+                  edges: page.eventMessages?.edges?.map((edge: any) =>
                     edge.node.id === editingMessage.id
                       ? {
                           ...edge,
@@ -684,14 +624,16 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
         );
 
         setEditingMessage(null);
+        // TODO i18n: Toast message
         toast.success('Wiadomość została zaktualizowana');
       } catch (error) {
+        // TODO i18n: Toast message
         toast.error('Nie udało się edytować wiadomości');
         console.error('Failed to edit message:', error);
         throw error;
       }
     },
-    [editingMessage, editMessage, activeThreadId, queryClient]
+    [editingMessage, editMessage, eventId, queryClient]
   );
 
   // ---------------------------------------------------------------------------
@@ -706,25 +648,27 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!deletingMessageId || !activeThreadId) return;
+    if (!deletingMessageId) return;
 
     try {
       await deleteMessage.mutateAsync({
         id: deletingMessageId,
-        threadId: activeThreadId,
+        soft: true,
+        eventId,
       });
 
+      // Optimistic update (edges structure)
       queryClient.setQueryData(
-        dmKeys.messages(activeThreadId),
+        eventChatKeys.messages(eventId),
         (oldData: any) => {
           if (!oldData?.pages) return oldData;
           return {
             ...oldData,
             pages: oldData.pages.map((page: any) => ({
               ...page,
-              dmMessages: {
-                ...page.dmMessages,
-                edges: page.dmMessages?.edges?.map((edge: any) =>
+              eventMessages: {
+                ...page.eventMessages,
+                edges: page.eventMessages?.edges?.map((edge: any) =>
                   edge.node.id === deletingMessageId
                     ? {
                         ...edge,
@@ -742,27 +686,20 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
       );
 
       setDeletingMessageId(null);
+      // TODO i18n: Toast message
       toast.success('Wiadomość została usunięta');
     } catch (error) {
+      // TODO i18n: Toast message
       toast.error('Nie udało się usunąć wiadomości');
       console.error('Failed to delete message:', error);
       throw error;
     }
-  }, [deletingMessageId, deleteMessage, activeThreadId, queryClient]);
-
-  // ---------------------------------------------------------------------------
-  // Mark as read when thread changes
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    if (activeThreadId) {
-      markAsRead.mutate({ threadId: activeThreadId });
-    }
-  }, [activeThreadId, markAsRead]);
+  }, [deletingMessageId, deleteMessage, eventId, queryClient]);
 
   // ---------------------------------------------------------------------------
   // Typing user names
   // ---------------------------------------------------------------------------
-  // TODO i18n: proper pluralization
+  // TODO i18n: "X osób" should be translatable with proper pluralization
   const typingUserNames =
     typingUsers.size > 0 ? [`${typingUsers.size} osób`] : null;
 
@@ -776,26 +713,22 @@ export function useDmChat({ myUserId, activeThreadId }: UseDmChatProps) {
   // ---------------------------------------------------------------------------
   return {
     // Data
-    conversations,
     messages,
-    activeThread,
+    currentUserId,
     typingUserNames,
 
     // Loading states
-    isLoadingThreads: threadsLoading,
-    isLoadingMessages: messagesLoading,
+    isLoading,
     isSending: sendMessage.isPending || hasPendingMessages,
     isEditPending: editMessage.isPending,
     isDeletePending: deleteMessage.isPending,
 
     // Pagination
-    loadMore: fetchNextPage,
-    hasMore: hasNextPage,
-    isLoadingMore: isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
 
     // Handlers
-    sendMessage: handleSendMessage,
-    sendMessageToRecipient,
+    handleSend,
     handleTyping,
     handleAddReaction,
     handleRemoveReaction,

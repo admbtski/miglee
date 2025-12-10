@@ -3,47 +3,102 @@
  * Allows event owner/moderators to manage frequently asked questions
  */
 
-// TODO: Add i18n for page title, description, and loading text
+// TODO i18n: metadata title and description
 
 import { Suspense } from 'react';
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
-// Local components
 import { FaqManagementClient } from './_components/faq-management-client';
 import { ManagementPageLayout } from '../_components/management-page-layout';
 
-interface FaqPageProps {
+// =============================================================================
+// Types
+// =============================================================================
+
+type PageProps = {
   params: Promise<{ id: string; locale: string }>;
+};
+
+// =============================================================================
+// Loading Skeleton
+// =============================================================================
+
+function FaqLoadingSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Add Button Skeleton */}
+      <div className="flex justify-end">
+        <div className="h-10 w-40 rounded-xl bg-zinc-200 dark:bg-zinc-700" />
+      </div>
+
+      {/* FAQ Items Skeleton */}
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-3">
+                <div className="h-5 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700" />
+                <div className="space-y-2">
+                  <div className="h-3 w-full rounded bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-3 w-5/6 rounded bg-zinc-200 dark:bg-zinc-700" />
+                  <div className="h-3 w-2/3 rounded bg-zinc-200 dark:bg-zinc-700" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-zinc-200 dark:bg-zinc-700" />
+                <div className="h-8 w-8 rounded-lg bg-zinc-200 dark:bg-zinc-700" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Empty State Hint Skeleton */}
+      <div className="h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
+    </div>
+  );
 }
 
-export default async function FaqPage({ params }: FaqPageProps) {
+// =============================================================================
+// Page Component
+// =============================================================================
+
+export default async function FaqPage({ params }: PageProps) {
   const { id: eventId } = await params;
+
+  if (!eventId) {
+    notFound();
+  }
 
   return (
     <ManagementPageLayout
+      // TODO i18n
       title="FAQ"
-      description="Manage frequently asked questions for your event"
+      description="Zarządzaj najczęściej zadawanymi pytaniami"
     >
-      <Suspense
-        fallback={
-          <div className="flex min-h-[300px] items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-              <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-                Loading FAQ...
-              </p>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<FaqLoadingSkeleton />}>
         <FaqManagementClient eventId={eventId} />
       </Suspense>
     </ManagementPageLayout>
   );
 }
 
-export async function generateMetadata() {
+// =============================================================================
+// Metadata
+// =============================================================================
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  await params;
+
   return {
+    // TODO i18n
     title: 'FAQ | Miglee',
-    description: 'Manage event FAQ',
+    description: 'Zarządzaj FAQ wydarzenia',
   };
 }

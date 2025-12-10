@@ -1,3 +1,11 @@
+/**
+ * Edit Message Modal
+ * Modal for editing chat messages
+ */
+
+// TODO i18n: Strings need translation keys
+// - "Edit Message", "Edit your message...", "Press Enter to save...", "Cancel", "Saving...", "Save Changes"
+
 'use client';
 
 import { useState, useEffect } from 'react';

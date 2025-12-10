@@ -1,3 +1,11 @@
+/**
+ * Message Menu Popover
+ * Floating menu for message actions (edit, delete, report)
+ */
+
+// TODO i18n: Strings need translation keys
+// - "Edit", "Delete", "Report", "Message actions"
+
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';

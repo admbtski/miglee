@@ -4,63 +4,105 @@
  */
 
 // TODO i18n: All hardcoded strings need translation keys
+// - "Komentarze", "Zarządzaj komentarzami wydarzenia"
+// - "Łącznie komentarzy", "Ładowanie komentarzy..."
+// - "Nie znaleziono wydarzenia", "Narzędzia moderacji wkrótce"
+// - "Możliwość ukrywania nieodpowiednich komentarzy..."
 
 'use client';
 
 import { MessageSquare, Info, AlertCircle } from 'lucide-react';
 import { useEventQuery } from '@/features/events/api/events';
 import { EventComments } from '@/features/events/components/event-comments';
-import { ManagementPageLayout } from '../../_components/management-page-layout';
+
+// =============================================================================
+// Types
+// =============================================================================
 
 interface EventCommentsManagementProps {
   eventId: string;
 }
 
-/**
- * Event Comments Management Component
- */
+// =============================================================================
+// Loading Skeleton
+// =============================================================================
+
+function CommentsLoadingSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Stats Card Skeleton */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-zinc-200 dark:bg-zinc-700" />
+            <div>
+              <div className="h-7 w-12 rounded bg-zinc-200 dark:bg-zinc-700 mb-2" />
+              <div className="h-4 w-24 rounded bg-zinc-200 dark:bg-zinc-700" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Comments List Skeleton */}
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-700" />
+                <div className="h-3 w-full rounded bg-zinc-200 dark:bg-zinc-700" />
+                <div className="h-3 w-3/4 rounded bg-zinc-200 dark:bg-zinc-700" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Component
+// =============================================================================
+
 export function EventCommentsManagement({
   eventId,
 }: EventCommentsManagementProps) {
   const { data, isLoading } = useEventQuery({ id: eventId });
   const event = data?.event;
 
+  // ---------------------------------------------------------------------------
+  // Loading state
+  // ---------------------------------------------------------------------------
   if (isLoading) {
     return (
-      <ManagementPageLayout
-        title="Comments"
-        description="View and manage comments for your event"
-      >
-        <div className="flex min-h-[300px] items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-              Loading comments...
-            </p>
-          </div>
-        </div>
-      </ManagementPageLayout>
+      <div className="space-y-6">
+        <CommentsLoadingSkeleton />
+      </div>
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Event not found
+  // ---------------------------------------------------------------------------
   if (!event) {
     return (
-      <ManagementPageLayout
-        title="Comments"
-        description="View and manage comments for your event"
-      >
-        <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-          <div className="text-center">
-            <AlertCircle className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-500" />
-            <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-              Event not found
-            </p>
-          </div>
+      <div className="flex min-h-[200px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-500" />
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+            {/* TODO i18n */}
+            Nie znaleziono wydarzenia
+          </p>
         </div>
-      </ManagementPageLayout>
+      </div>
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   const eventData = {
     id: event.id,
     title: event.title,
@@ -69,47 +111,48 @@ export function EventCommentsManagement({
   };
 
   return (
-    <ManagementPageLayout
-      title="Comments"
-      description="View and manage comments for your event"
-    >
-      <div className="space-y-6">
-        {/* Stats Card */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
-                <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                  {eventData.commentsCount}
-                </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Total comments
-                </p>
-              </div>
+    <div className="space-y-6">
+      {/* Stats Card */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-900/30">
+              <MessageSquare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                {eventData.commentsCount}
+              </p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                {/* TODO i18n: proper pluralization */}
+                {eventData.commentsCount === 1
+                  ? 'Komentarz'
+                  : eventData.commentsCount < 5
+                    ? 'Komentarze'
+                    : 'Komentarzy'}
+              </p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Info Banner */}
-        <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800/50 dark:bg-blue-950/30">
-          <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="text-sm text-blue-900 dark:text-blue-100">
-            <p className="font-medium">Moderation Tools Coming Soon</p>
-            <p className="mt-1 text-blue-700 dark:text-blue-300">
-              The ability to hide inappropriate comments will be available in a
-              future update.
-            </p>
-          </div>
-        </div>
-
-        {/* Comments List */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <EventComments event={eventData as any} />
+      {/* Info Banner */}
+      <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800/50 dark:bg-blue-950/30">
+        <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+        <div className="text-sm text-blue-900 dark:text-blue-100">
+          {/* TODO i18n */}
+          <p className="font-medium">Narzędzia moderacji wkrótce</p>
+          <p className="mt-1 text-blue-700 dark:text-blue-300">
+            Możliwość ukrywania nieodpowiednich komentarzy będzie dostępna w
+            przyszłej aktualizacji.
+          </p>
         </div>
       </div>
-    </ManagementPageLayout>
+
+      {/* Comments List */}
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <EventComments event={eventData as any} />
+      </div>
+    </div>
   );
 }

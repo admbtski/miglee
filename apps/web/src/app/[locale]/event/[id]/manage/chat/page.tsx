@@ -3,18 +3,27 @@
  * Manage event chat and messages
  */
 
-// TODO: Add i18n for page title, description, and loading text
+// TODO i18n: metadata title and description
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
-// Local components
 import { EventChatManagement } from './_components/event-chat-management';
 import { ManagementPageLayout } from '../_components/management-page-layout';
+import { ChatLoadingSkeleton } from '@/features/chat/components/message-skeleton';
+
+// =============================================================================
+// Types
+// =============================================================================
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
+
+// =============================================================================
+// Page Component
+// =============================================================================
 
 export default async function EventChatPage({ params }: PageProps) {
   const { id } = await params;
@@ -25,17 +34,15 @@ export default async function EventChatPage({ params }: PageProps) {
 
   return (
     <ManagementPageLayout
-      title="Event Chat"
-      description="Manage communication with event participants"
+      // TODO i18n
+      title="Czat wydarzenia"
+      description="Zarządzaj komunikacją z uczestnikami"
     >
       <Suspense
         fallback={
-          <div className="flex min-h-[400px] items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-              <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-                Loading chat...
-              </p>
+          <div className="rounded-2xl border-[0.5px] border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+            <div className="h-[calc(100vh-320px)] min-h-[600px]">
+              <ChatLoadingSkeleton />
             </div>
           </div>
         }
@@ -46,11 +53,18 @@ export default async function EventChatPage({ params }: PageProps) {
   );
 }
 
-export async function generateMetadata({ params }: PageProps) {
+// =============================================================================
+// Metadata
+// =============================================================================
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   await params;
 
   return {
-    title: 'Chat Management | Miglee',
-    description: 'Manage event chat',
+    // TODO i18n
+    title: 'Czat wydarzenia | Miglee',
+    description: 'Zarządzaj komunikacją z uczestnikami wydarzenia',
   };
 }

@@ -3,18 +3,63 @@
  * Cancel or delete event
  */
 
-// TODO: Add i18n for page title, description, and loading text
+// TODO i18n: metadata title and description
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
-// Local components
 import { EventDangerZone } from './_components/event-danger-zone';
 import { ManagementPageLayout } from '../_components/management-page-layout';
+
+// =============================================================================
+// Types
+// =============================================================================
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
+
+// =============================================================================
+// Loading Skeleton
+// =============================================================================
+
+function DangerZoneLoadingSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Warning Banner */}
+      <div className="h-20 rounded-2xl bg-red-50 dark:bg-red-900/20" />
+
+      {/* Cancel Event Card */}
+      <div className="rounded-2xl border border-red-200 bg-white p-6 dark:border-red-800/50 dark:bg-zinc-900">
+        <div className="flex items-start gap-4">
+          <div className="h-10 w-10 rounded-xl bg-red-100 dark:bg-red-900/30" />
+          <div className="flex-1">
+            <div className="h-5 w-36 rounded bg-zinc-200 dark:bg-zinc-700 mb-2" />
+            <div className="h-4 w-full rounded bg-zinc-200 dark:bg-zinc-700 mb-4" />
+            <div className="h-10 w-36 rounded-xl bg-red-100 dark:bg-red-900/30" />
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Event Card */}
+      <div className="rounded-2xl border border-red-200 bg-white p-6 dark:border-red-800/50 dark:bg-zinc-900">
+        <div className="flex items-start gap-4">
+          <div className="h-10 w-10 rounded-xl bg-red-100 dark:bg-red-900/30" />
+          <div className="flex-1">
+            <div className="h-5 w-32 rounded bg-zinc-200 dark:bg-zinc-700 mb-2" />
+            <div className="h-4 w-full rounded bg-zinc-200 dark:bg-zinc-700 mb-4" />
+            <div className="h-10 w-32 rounded-xl bg-red-100 dark:bg-red-900/30" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Page Component
+// =============================================================================
 
 export default async function EventDangerPage({ params }: PageProps) {
   const { id } = await params;
@@ -25,32 +70,29 @@ export default async function EventDangerPage({ params }: PageProps) {
 
   return (
     <ManagementPageLayout
-      title="Danger Zone"
-      description="Irreversible actions for your event"
+      // TODO i18n
+      title="Strefa zagrożenia"
+      description="Nieodwracalne akcje dla Twojego wydarzenia"
     >
-      <Suspense
-        fallback={
-          <div className="flex min-h-[300px] items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-zinc-200 border-t-red-600 dark:border-zinc-700 dark:border-t-red-400" />
-              <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-                Loading...
-              </p>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<DangerZoneLoadingSkeleton />}>
         <EventDangerZone eventId={id} />
       </Suspense>
     </ManagementPageLayout>
   );
 }
 
-export async function generateMetadata({ params }: PageProps) {
+// =============================================================================
+// Metadata
+// =============================================================================
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   await params;
 
   return {
-    title: 'Danger Zone | Miglee',
-    description: 'Cancel or delete event',
+    // TODO i18n
+    title: 'Strefa zagrożenia | Miglee',
+    description: 'Anuluj lub usuń wydarzenie',
   };
 }

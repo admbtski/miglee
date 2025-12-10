@@ -3,18 +3,66 @@
  * Manage event join form and questions
  */
 
-// TODO: Add i18n for page title, description, and loading text
+// TODO i18n: metadata title and description
 
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
-// Local components
 import { JoinFormManagementClient } from './_components/join-form-management-client';
 import { ManagementPageLayout } from '../_components/management-page-layout';
+
+// =============================================================================
+// Types
+// =============================================================================
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
+
+// =============================================================================
+// Loading Skeleton
+// =============================================================================
+
+function JoinFormLoadingSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      {/* Info Banner */}
+      <div className="h-20 rounded-2xl bg-blue-50 dark:bg-blue-900/20" />
+
+      {/* Form Preview */}
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="h-5 w-40 rounded bg-zinc-200 dark:bg-zinc-700 mb-6" />
+
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800">
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-700" />
+                <div className="h-6 w-12 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+              </div>
+              <div className="h-10 w-full rounded-lg bg-zinc-200 dark:bg-zinc-700" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Add Question Button */}
+      <div className="flex justify-center">
+        <div className="h-10 w-40 rounded-xl bg-zinc-200 dark:bg-zinc-700" />
+      </div>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <div className="h-10 w-32 rounded-xl bg-zinc-200 dark:bg-zinc-700" />
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Page Component
+// =============================================================================
 
 export default async function EventJoinFormPage({ params }: PageProps) {
   const { id } = await params;
@@ -25,32 +73,29 @@ export default async function EventJoinFormPage({ params }: PageProps) {
 
   return (
     <ManagementPageLayout
-      title="Join Form"
-      description="Configure join form questions for your event"
+      // TODO i18n
+      title="Formularz dołączenia"
+      description="Konfiguruj pytania w formularzu dołączenia"
     >
-      <Suspense
-        fallback={
-          <div className="flex min-h-[400px] items-center justify-center">
-            <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-              <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-                Loading join form...
-              </p>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={<JoinFormLoadingSkeleton />}>
         <JoinFormManagementClient eventId={id} />
       </Suspense>
     </ManagementPageLayout>
   );
 }
 
-export async function generateMetadata({ params }: PageProps) {
+// =============================================================================
+// Metadata
+// =============================================================================
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   await params;
 
   return {
-    title: 'Join Form | Miglee',
-    description: 'Manage event join form',
+    // TODO i18n
+    title: 'Formularz dołączenia | Miglee',
+    description: 'Zarządzaj formularzem dołączenia do wydarzenia',
   };
 }

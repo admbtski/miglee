@@ -49,14 +49,15 @@ function formatTime(dateString?: string | null): string {
   });
 }
 
-function formatDate(dateString?: string | null): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('pl-PL', {
-    day: 'numeric',
-    month: 'short',
-  });
-}
+// formatDate function can be added when needed for multi-day agendas
+// function formatDate(dateString?: string | null): string {
+//   if (!dateString) return '';
+//   const date = new Date(dateString);
+//   return date.toLocaleDateString('pl-PL', {
+//     day: 'numeric',
+//     month: 'short',
+//   });
+// }
 
 function HostAvatar({ host }: { host: AgendaHost }) {
   const name = host.kind === 'USER' ? host.user?.name : host.name;
@@ -87,11 +88,9 @@ function HostAvatar({ host }: { host: AgendaHost }) {
 
 function AgendaItemCard({
   item,
-  index,
   isLast,
 }: {
   item: AgendaItem;
-  index: number;
   isLast: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -246,7 +245,6 @@ export function EventAgenda({ items }: EventAgendaProps) {
           <AgendaItemCard
             key={item.id}
             item={item}
-            index={index}
             isLast={index === items.length - 1}
           />
         ))}

@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Chats Page - Direct Messages & Event Channels
  *
@@ -8,56 +6,19 @@
  * - Event channel conversations
  * - Real-time message updates via subscriptions
  * - Typing indicators
- * - Message reactions
+ * - Message reactions, edit, delete
  *
- * TODO: add translation (i18n) - all hardcoded strings
- * TODO: format date/time with user.timezone + locale (i18n)
+ * TODO i18n: All hardcoded strings need translation keys
+ * TODO i18n: Format date/time with user.timezone + locale
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+'use client';
+
+import React, { useEffect, useMemo, useState } from 'react';
 import { Hash, Loader2, User2 } from 'lucide-react';
 
 import { useMeQuery } from '@/features/auth/hooks/auth';
-import {
-  dmKeys,
-  useGetDmMessagesInfinite,
-  useGetDmThreads,
-  useMarkDmThreadRead,
-  usePublishDmTyping,
-  useSendDmMessage,
-} from '@/features/chat/api/dm';
-import {
-  useDmMessageAdded,
-  useDmMessageDeleted,
-  useDmMessageUpdated,
-  useDmThreadsSubscriptions,
-  useDmTyping,
-} from '@/features/chat/api/dm-subscriptions';
-import {
-  eventChatKeys,
-  useGetEventMessages,
-  useGetEventUnreadCount,
-  useMarkEventChatRead,
-  usePublishEventTyping,
-  useSendEventMessage,
-} from '@/features/chat/api/event-chat';
-import {
-  useEventMessageAdded,
-  useEventMessageDeleted,
-  useEventMessageUpdated,
-  useEventTyping,
-} from '@/features/chat/api/event-chat-subscriptions';
-import {
-  useAddDmReaction,
-  useAddEventReaction,
-  useRemoveDmReaction,
-  useRemoveEventReaction,
-} from '@/features/chat/api/reactions';
-import {
-  useDmReactionAdded,
-  useEventReactionAdded,
-} from '@/features/chat/api/reactions-subscriptions';
+import { useDmChat, useChannelChat } from '@/features/chat/hooks';
 import { ChatList as ChatListComponent } from '@/features/chat/components/chat-list';
 import { ChatThread as ChatThreadComponent } from '@/features/chat/components/chat-thread';
 import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
@@ -67,10 +28,10 @@ import {
   UserPicker,
   type PickedUser,
 } from '@/features/chat/components/UserPicker';
-import { useMessageActions } from '@/features/chat/hooks';
-import { useMyMembershipsQuery } from '@/features/events/api/event-members';
 
-/* ───────────────────────────── Types ───────────────────────────── */
+// =============================================================================
+// Types
+// =============================================================================
 
 type ChatKind = 'dm' | 'channel';
 
@@ -80,581 +41,57 @@ type Conversation = {
   title: string;
   membersCount: number;
   preview: string;
-  lastMessageAt: string; // e.g. "1m", "14m"
+  lastMessageAt: string;
   unread: number;
   avatar?: string;
-  lastReadAt?: number; // epoch ms
 };
 
-/* ───────────────────────────── Page ───────────────────────────── */
+// =============================================================================
+// Page Component
+// =============================================================================
 
-export default function ChatsPageIntegrated() {
-  const queryClient = useQueryClient();
-  const { data: meData } = useMeQuery();
+export default function ChatsPage() {
+  const { data: meData, isLoading: isLoadingAuth } = useMeQuery();
   const currentUserId = meData?.me?.id;
 
   const [tab, setTab] = useState<ChatKind>('dm');
-
-  // Independent active selections per tab
   const [activeDmId, setActiveDmId] = useState<string | undefined>();
   const [activeChId, setActiveChId] = useState<string | undefined>();
-
-  // Typing indicators state
-  const [dmTypingUsers, setDmTypingUsers] = useState<Set<string>>(new Set());
-  const [channelTypingUsers, setChannelTypingUsers] = useState<Set<string>>(
-    new Set()
-  );
-
-  // Use message actions hook
-  const messageActions = useMessageActions({
-    kind: tab,
-    threadId: activeDmId,
-    eventId: activeChId,
-  });
-
-  // Custom hooks ready for future use
-  // TODO: Migrate to custom hooks when data structures are aligned
-  // const dmChat = useDmChat({ myUserId: currentUserId, activeThreadId: activeDmId });
-  // const channelChat = useChannelChat({ myUserId: currentUserId, activeEventId: activeChId });
-
-  // User picker state (for "Start a conversation")
   const [showUserPicker, setShowUserPicker] = useState(false);
-
-  // Draft conversation state (before first message is sent)
   const [draftConversation, setDraftConversation] = useState<{
     userId: string;
     userName: string;
     userAvatar?: string | null;
   } | null>(null);
 
-  // Fetch DM threads
-  const { data: dmThreadsData, isLoading: dmThreadsLoading } = useGetDmThreads(
-    { limit: 50, offset: 0 },
-    { enabled: !!currentUserId }
-  );
-
-  // Fetch user's event memberships (for channels)
-  const { data: membershipsData, isLoading: membershipsLoading } =
-    useMyMembershipsQuery(
-      { limit: 100, offset: 0 },
-      { enabled: !!currentUserId }
-    );
-
-  // Fetch DM messages for active thread (infinite query)
-  const {
-    data: dmMessagesData,
-    isLoading: dmMessagesLoading,
-    fetchNextPage: fetchNextDmPage,
-    hasNextPage: hasNextDmPage,
-    isFetchingNextPage: isFetchingNextDmPage,
-  } = useGetDmMessagesInfinite(activeDmId!, {
-    enabled: !!activeDmId,
+  // ---------------------------------------------------------------------------
+  // DM Chat Hook
+  // ---------------------------------------------------------------------------
+  const dmChat = useDmChat({
+    myUserId: currentUserId,
+    activeThreadId: activeDmId,
   });
 
-  // Fetch event messages for active channel
-  const {
-    data: eventMessagesData,
-    isLoading: eventMessagesLoading,
-    fetchNextPage: fetchNextEventPage,
-    hasNextPage: hasNextEventPage,
-  } = useGetEventMessages(activeChId!, {
-    enabled: !!activeChId,
+  // ---------------------------------------------------------------------------
+  // Channel Chat Hook
+  // ---------------------------------------------------------------------------
+  const channelChat = useChannelChat({
+    activeEventId: activeChId,
   });
 
-  // Fetch unread count for active channel
-  const { data: eventUnreadData } = useGetEventUnreadCount(
-    { eventId: activeChId! },
-    { enabled: !!activeChId, refetchInterval: 10000 } // Refetch every 10s
-  );
-
-  // Mutations
-  const sendDmMessage = useSendDmMessage();
-  const sendEventMessage = useSendEventMessage();
-  const markDmRead = useMarkDmThreadRead();
-  const publishDmTyping = usePublishDmTyping();
-  const publishEventTyping = usePublishEventTyping();
-  const markEventRead = useMarkEventChatRead();
-
-  // Reactions
-  const addDmReaction = useAddDmReaction();
-  const removeDmReaction = useRemoveDmReaction();
-  const addEventReaction = useAddEventReaction();
-  const removeEventReaction = useRemoveEventReaction();
-
-  // Subscriptions
-  const dmSubResult = useDmMessageAdded({
-    threadId: activeDmId!,
-    enabled: !!activeDmId && tab === 'dm',
-    onMessage: (message) => {
-      // Skip dummy read-event messages to prevent infinite loop
-      if (message.id === 'read-event') {
-        console.log('[DM Sub] Skipping read-event (prevents loop)');
-        return;
-      }
-    },
-  });
-
-  const EVENTSubResult = useEventMessageAdded({
-    eventId: activeChId!,
-    enabled: !!activeChId && tab === 'channel',
-    onMessage: (message) => {
-      console.log('[Event Sub] New message received:', message.id);
-
-      // Invalidate queries to refetch messages
-      queryClient.invalidateQueries({
-        queryKey: eventChatKeys.messages(activeChId!),
-      });
-      queryClient.invalidateQueries({
-        queryKey: eventChatKeys.unreadCount(activeChId!),
-      });
-
-      // Auto-mark as read when new message arrives in active channel
-      if (activeChId && message.authorId !== currentUserId) {
-        console.log('[Event Sub] Auto-marking as read:', message.id);
-        markEventRead.mutate({ eventId: activeChId });
-      }
-    },
-  });
-
-  // Debug: log subscription status
-  useEffect(() => {
-    if (tab === 'dm' && activeDmId) {
-      console.log(
-        '[DM Sub] Connected:',
-        dmSubResult.connected,
-        'ThreadID:',
-        activeDmId
-      );
-    }
-  }, [tab, activeDmId, dmSubResult.connected]);
-
-  useEffect(() => {
-    if (tab === 'channel' && activeChId) {
-      console.log(
-        '[Event Sub] Connected:',
-        EVENTSubResult.connected,
-        'EventID:',
-        activeChId
-      );
-    }
-  }, [tab, activeChId, EVENTSubResult.connected]);
-
-  // Typing indicators subscriptions with auto-clear
-  const typingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(
-    new Map()
-  );
-
-  useDmTyping({
-    threadId: activeDmId!,
-    enabled: !!activeDmId && tab === 'dm',
-    onTyping: ({ userId, isTyping }) => {
-      // Don't show typing for current user
-      if (userId === currentUserId) return;
-
-      // Clear existing timeout
-      const existingTimeout = typingTimeouts.current.get(`dm-${userId}`);
-      if (existingTimeout) {
-        clearTimeout(existingTimeout);
-        typingTimeouts.current.delete(`dm-${userId}`);
-      }
-
-      setDmTypingUsers((prev) => {
-        const next = new Set(prev);
-        if (isTyping) {
-          next.add(userId);
-          // Auto-clear after 5 seconds
-          const timeout = setTimeout(() => {
-            setDmTypingUsers((p) => {
-              const n = new Set(p);
-              n.delete(userId);
-              return n;
-            });
-            typingTimeouts.current.delete(`dm-${userId}`);
-          }, 5000);
-          typingTimeouts.current.set(`dm-${userId}`, timeout);
-        } else {
-          next.delete(userId);
-        }
-        return next;
-      });
-    },
-  });
-
-  useEventTyping({
-    eventId: activeChId!,
-    enabled: !!activeChId && tab === 'channel',
-    onTyping: ({ userId, isTyping }) => {
-      // Don't show typing for current user
-      if (userId === currentUserId) return;
-
-      // Clear existing timeout
-      const existingTimeout = typingTimeouts.current.get(`event-${userId}`);
-      if (existingTimeout) {
-        clearTimeout(existingTimeout);
-        typingTimeouts.current.delete(`event-${userId}`);
-      }
-
-      setChannelTypingUsers((prev) => {
-        const next = new Set(prev);
-        if (isTyping) {
-          next.add(userId);
-          // Auto-clear after 5 seconds
-          const timeout = setTimeout(() => {
-            setChannelTypingUsers((p) => {
-              const n = new Set(p);
-              n.delete(userId);
-              return n;
-            });
-            typingTimeouts.current.delete(`event-${userId}`);
-          }, 5000);
-          typingTimeouts.current.set(`event-${userId}`, timeout);
-        } else {
-          next.delete(userId);
-        }
-        return next;
-      });
-    },
-  });
-
-  // Subscribe to message updates (DM)
-  const dmUpdateSubEnabled = !!activeDmId && tab === 'dm';
-  console.log(
-    '[DM Sub Update] Enabled:',
-    dmUpdateSubEnabled,
-    'ThreadID:',
-    activeDmId,
-    'Tab:',
-    tab
-  );
-
-  useDmMessageUpdated({
-    threadId: activeDmId!,
-    enabled: dmUpdateSubEnabled,
-    onMessageUpdated: (message) => {
-      console.log(
-        '[DM Sub] ✅ Message updated RECEIVED:',
-        message.id,
-        message.content
-      );
-
-      // Use message.threadId from the event to ensure we update the correct thread
-      const threadId = message.threadId;
-
-      // Update cache directly instead of refetching
-      // Use the same query key as useGetDmMessagesInfinite
-      queryClient.setQueryData(
-        // @ts-expect-error - infinite is used internally by react-query
-        dmKeys.messages(threadId, { infinite: true }),
-        (oldData: any) => {
-          console.log(
-            '[DM Sub] Updating cache for thread:',
-            threadId,
-            'oldData:',
-            oldData
-          );
-          if (!oldData?.pages) {
-            console.log('[DM Sub] No pages in cache, returning oldData');
-            return oldData;
-          }
-
-          const updated = {
-            ...oldData,
-            pages: oldData.pages.map((page: any) => {
-              if (!page.dmMessages?.edges) return page;
-              return {
-                ...page,
-                dmMessages: {
-                  ...page.dmMessages,
-                  edges: page.dmMessages.edges.map((edge: any) =>
-                    edge.node.id === message.id
-                      ? {
-                          ...edge,
-                          node: {
-                            ...edge.node,
-                            content: message.content,
-                            editedAt: message.editedAt,
-                          },
-                        }
-                      : edge
-                  ),
-                },
-              };
-            }),
-          };
-          console.log('[DM Sub] Cache updated, new data:', updated);
-          return updated;
-        }
-      );
-    },
-  });
-
-  // Subscribe to message deletions (DM)
-  const dmDeleteSubEnabled = !!activeDmId && tab === 'dm';
-  console.log(
-    '[DM Sub Delete] Enabled:',
-    dmDeleteSubEnabled,
-    'ThreadID:',
-    activeDmId,
-    'Tab:',
-    tab
-  );
-
-  useDmMessageDeleted({
-    threadId: activeDmId!,
-    enabled: dmDeleteSubEnabled,
-    onMessageDeleted: (event) => {
-      console.log(
-        '[DM Sub] ✅ Message deleted RECEIVED:',
-        event.messageId,
-        event.deletedAt
-      );
-
-      // We need to find which thread this message belongs to
-      // Since we only have messageId, we need to update all thread caches
-      // or better - get threadId from the subscription context
-      // For now, use activeDmId as we're subscribed to specific thread
-      const threadId = activeDmId!;
-
-      // Update cache directly - set deletedAt instead of removing message
-      // Use the same query key as useGetDmMessagesInfinite
-      queryClient.setQueryData(
-        // @ts-expect-error - infinite is used internally by react-query
-        dmKeys.messages(threadId, { infinite: true }),
-        (oldData: any) => {
-          console.log(
-            '[DM Sub] Deleting message in cache for thread:',
-            threadId,
-            'oldData:',
-            oldData
-          );
-          if (!oldData?.pages) {
-            console.log('[DM Sub] No pages in cache, returning oldData');
-            return oldData;
-          }
-
-          const updated = {
-            ...oldData,
-            pages: oldData.pages.map((page: any) => {
-              if (!page.dmMessages?.edges) return page;
-              return {
-                ...page,
-                dmMessages: {
-                  ...page.dmMessages,
-                  edges: page.dmMessages.edges.map((edge: any) =>
-                    edge.node.id === event.messageId
-                      ? {
-                          ...edge,
-                          node: {
-                            ...edge.node,
-                            deletedAt: event.deletedAt,
-                          },
-                        }
-                      : edge
-                  ),
-                },
-              };
-            }),
-          };
-          console.log(
-            '[DM Sub] Cache updated after delete, new data:',
-            updated
-          );
-          return updated;
-        }
-      );
-    },
-  });
-
-  // Subscribe to message updates (Event)
-  useEventMessageUpdated({
-    eventId: activeChId!,
-    enabled: !!activeChId && tab === 'channel',
-    onMessageUpdated: (message) => {
-      console.log('[Event Sub] Message updated:', message.id, message.content);
-
-      // Update cache directly instead of refetching
-      queryClient.setQueryData(
-        eventChatKeys.messages(activeChId!),
-        (oldData: any) => {
-          console.log('[Event Sub] Old cache data:', oldData);
-          if (!oldData?.pages) return oldData;
-
-          const updated = {
-            ...oldData,
-            pages: oldData.pages.map((page: any) => {
-              if (!page.eventMessages?.edges) return page;
-              return {
-                ...page,
-                eventMessages: {
-                  ...page.eventMessages,
-                  edges: page.eventMessages.edges.map((edge: any) =>
-                    edge.node.id === message.id
-                      ? {
-                          ...edge,
-                          node: {
-                            ...edge.node,
-                            content: message.content,
-                            editedAt: message.editedAt,
-                          },
-                        }
-                      : edge
-                  ),
-                },
-              };
-            }),
-          };
-          console.log('[Event Sub] Updated cache data:', updated);
-          return updated;
-        }
-      );
-    },
-  });
-
-  // Subscribe to message deletions (Event)
-  useEventMessageDeleted({
-    eventId: activeChId!,
-    enabled: !!activeChId && tab === 'channel',
-    onMessageDeleted: (event) => {
-      console.log(
-        '[Event Sub] Message deleted:',
-        event.messageId,
-        event.deletedAt
-      );
-
-      // Update cache directly - set deletedAt instead of removing message
-      queryClient.setQueryData(
-        eventChatKeys.messages(activeChId!),
-        (oldData: any) => {
-          console.log('[Event Sub Delete] Old cache data:', oldData);
-          if (!oldData?.pages) return oldData;
-
-          const updated = {
-            ...oldData,
-            pages: oldData.pages.map((page: any) => {
-              if (!page.eventMessages?.edges) return page;
-              return {
-                ...page,
-                eventMessages: {
-                  ...page.eventMessages,
-                  edges: page.eventMessages.edges.map((edge: any) =>
-                    edge.node.id === event.messageId
-                      ? {
-                          ...edge,
-                          node: {
-                            ...edge.node,
-                            deletedAt: event.deletedAt,
-                          },
-                        }
-                      : edge
-                  ),
-                },
-              };
-            }),
-          };
-          console.log('[Event Sub Delete] Updated cache data:', updated);
-          return updated;
-        }
-      );
-    },
-  });
-
-  // Reaction subscriptions
-  useDmReactionAdded({
-    threadId: activeDmId!,
-    enabled: !!activeDmId && tab === 'dm',
-  });
-
-  useEventReactionAdded({
-    eventId: activeChId!,
-    enabled: !!activeChId && tab === 'channel',
-  });
-
-  // Subscribe to ALL DM threads for badge updates
-  const allDmThreadIds = useMemo(() => {
-    return dmThreadsData?.dmThreads?.items?.map((t) => t.id) || [];
-  }, [dmThreadsData?.dmThreads?.items]);
-
-  const dmThreadsSubResult = useDmThreadsSubscriptions({
-    threadIds: allDmThreadIds,
-    enabled: !!currentUserId && allDmThreadIds.length > 0,
-  });
-
-  // Debug: log threads subscription status
-  useEffect(() => {
-    if (allDmThreadIds.length > 0) {
-      console.log(
-        '[DM Threads Sub] Subscribed to',
-        dmThreadsSubResult.connectedCount,
-        'threads'
-      );
-    }
-  }, [allDmThreadIds.length, dmThreadsSubResult.connectedCount]);
-
-  // Map DM threads to conversations
-  const dmConversations: Conversation[] = useMemo(() => {
-    if (!dmThreadsData?.dmThreads?.items || !currentUserId) return [];
-
-    return dmThreadsData.dmThreads.items.map((thread) => {
-      const otherUser =
-        thread.aUserId === currentUserId ? thread.bUser : thread.aUser;
-      const lastMsg = thread.lastMessage;
-
-      return {
-        id: thread.id,
+  // ---------------------------------------------------------------------------
+  // Current active data based on tab
+  // ---------------------------------------------------------------------------
+  const conversations: Conversation[] = useMemo(() => {
+    if (tab === 'dm') {
+      return dmChat.conversations.map((c) => ({
+        ...c,
         kind: 'dm' as const,
-        title: otherUser.name || 'Unknown',
-        membersCount: 2,
-        preview: lastMsg?.content || 'No messages yet',
-        lastMessageAt: formatRelativeTime(
-          thread.lastMessageAt || thread.createdAt
-        ),
-        unread: thread.unreadCount || 0,
-        avatar: otherUser.avatarKey || undefined,
-      };
-    });
-  }, [dmThreadsData, currentUserId]);
+      }));
+    }
+    return channelChat.conversations;
+  }, [tab, dmChat.conversations, channelChat.conversations]);
 
-  // Map user's event memberships to channel conversations
-  const channelConversations: Conversation[] = useMemo(() => {
-    const memberships = membershipsData?.myMemberships;
-    if (!memberships || !currentUserId) return [];
-
-    console.dir({ memberships });
-
-    return memberships
-      .filter((membership) => membership.status === 'JOINED')
-      .flatMap((membership): Conversation[] => {
-        const event = membership.event;
-        if (!event) return [];
-
-        // Get last message from event (if available)
-        // TODO: add translation (i18n) - "Recent activity", "No messages yet"
-        const lastMessage =
-          event.messagesCount > 0 ? 'Recent activity' : 'No messages yet';
-
-        // Use unread count from query if this is the active channel
-        const unreadCount =
-          event.id === activeChId
-            ? (eventUnreadData?.eventUnreadCount ?? 0)
-            : 0;
-
-        return [
-          {
-            id: event.id,
-            kind: 'channel' as const,
-            title: event.title || 'Untitled Event',
-            membersCount: event.joinedCount || 0,
-            preview: lastMessage,
-            lastMessageAt: formatRelativeTime(event.updatedAt),
-            unread: unreadCount,
-            avatar: event.owner?.avatarKey || undefined,
-          },
-        ];
-      });
-  }, [membershipsData, currentUserId, activeChId, eventUnreadData]);
-
-  const conversations: Conversation[] =
-    tab === 'dm' ? dmConversations : channelConversations;
   const activeId = tab === 'dm' ? activeDmId : activeChId;
 
   const active = useMemo(
@@ -662,393 +99,192 @@ export default function ChatsPageIntegrated() {
     [conversations, activeId]
   );
 
-  // Set first conversation as active on load (but not if we have a draft)
+  const messages = tab === 'dm' ? dmChat.messages : channelChat.messages;
+  const isLoadingMessages =
+    tab === 'dm' ? dmChat.isLoadingMessages : channelChat.isLoadingMessages;
+  const typingUserNames =
+    tab === 'dm' ? dmChat.typingUserNames : channelChat.typingUserNames;
+  const hasMore = tab === 'dm' ? dmChat.hasMore : channelChat.hasMore;
+  const loadMore = tab === 'dm' ? dmChat.loadMore : channelChat.loadMore;
+
+  // ---------------------------------------------------------------------------
+  // Auto-select first conversation
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (
       tab === 'dm' &&
       !activeDmId &&
       !draftConversation &&
-      dmConversations.length > 0
+      dmChat.conversations.length > 0
     ) {
-      setActiveDmId(dmConversations[0]?.id);
+      setActiveDmId(dmChat.conversations[0]?.id);
     }
-  }, [tab, activeDmId, draftConversation, dmConversations]);
+  }, [tab, activeDmId, draftConversation, dmChat.conversations]);
 
   useEffect(() => {
-    if (tab === 'channel' && !activeChId && channelConversations.length > 0) {
-      setActiveChId(channelConversations[0]?.id);
+    if (
+      tab === 'channel' &&
+      !activeChId &&
+      channelChat.conversations.length > 0
+    ) {
+      setActiveChId(channelChat.conversations[0]?.id);
     }
-  }, [tab, activeChId, channelConversations]);
+  }, [tab, activeChId, channelChat.conversations]);
 
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
   function handlePick(id: string) {
     if (tab === 'dm') {
       setActiveDmId(id);
-      setDraftConversation(null); // Clear draft when picking existing thread
+      setDraftConversation(null);
     } else {
       setActiveChId(id);
     }
   }
 
-  // Handle user selection from UserPicker
-  const handleSelectUser = async (user: PickedUser) => {
-    if (!currentUserId) return;
-
-    console.log('[UserPicker] Selected user:', user);
-
-    // Check if thread already exists with this user
-    const existingThread = dmThreadsData?.dmThreads?.items?.find(
-      (t) =>
-        (t.aUserId === currentUserId && t.bUserId === user.id) ||
-        (t.bUserId === currentUserId && t.aUserId === user.id)
-    );
-
-    if (existingThread) {
-      // Thread exists - open it directly
-      console.log('[UserPicker] Found existing thread:', existingThread.id);
-      setActiveDmId(existingThread.id);
-      setDraftConversation(null);
-    } else {
-      // No thread exists - create draft conversation
-      console.log('[UserPicker] Creating draft conversation with:', user.name);
-      setDraftConversation({
-        userId: user.id,
-        userName: user.name,
-        userAvatar: user.avatarKey,
-      });
-      setActiveDmId(undefined); // Clear active thread
-    }
-
-    // Close the user picker modal
-    setShowUserPicker(false);
-  };
-
-  // Handle "Start a conversation" button click
-  const handleStartConversation = () => {
-    setShowUserPicker(true);
-  };
-
   function handleSend(text: string, replyToId?: string) {
     // Handle draft conversation (first message creates thread)
-    if (draftConversation && !activeDmId && currentUserId) {
-      console.log(
-        '[Draft] Sending first message to:',
-        draftConversation.userName
-      );
-
-      sendDmMessage.mutate(
-        {
-          input: {
-            recipientId: draftConversation.userId,
-            content: text,
-          },
-        },
-        {
-          onSuccess: (data) => {
-            console.log('[Draft] First message sent, thread created:', data);
-
-            // Clear draft
-            setDraftConversation(null);
-
-            // Set the new thread as active
-            const newThreadId = data.sendDmMessage?.threadId;
-            if (newThreadId) {
-              setActiveDmId(newThreadId);
-            }
-
-            // Refresh threads list
-            queryClient.invalidateQueries({
-              queryKey: dmKeys.threads(),
-            });
-          },
-          onError: (error) => {
-            console.error('[Draft] Error sending first message:', error);
-          },
+    if (draftConversation && !activeDmId && tab === 'dm') {
+      dmChat.sendMessageToRecipient(
+        text,
+        draftConversation.userId,
+        (newThreadId) => {
+          setDraftConversation(null);
+          setActiveDmId(newThreadId);
         }
       );
       return;
     }
 
-    if (!active || !currentUserId) return;
-
-    if (active.kind === 'dm') {
-      // Get the other user ID from the thread
-      const thread = dmThreadsData?.dmThreads?.items?.find(
-        (t) => t.id === activeDmId
-      );
-      if (!thread) return;
-
-      const recipientId =
-        thread.aUserId === currentUserId ? thread.bUserId : thread.aUserId;
-
-      console.log(
-        '[Send DM] ThreadID:',
-        activeDmId,
-        'RecipientID:',
-        recipientId
-      );
-
-      sendDmMessage.mutate(
-        {
-          input: {
-            recipientId,
-            content: text,
-            replyToId: replyToId || undefined,
-          },
-        },
-        {
-          onSuccess: (data) => {
-            console.log('[Send DM Success]', data);
-            // Force refetch to show new message immediately for sender
-            // Invalidate all messages queries for this thread (regardless of filters)
-            queryClient.invalidateQueries({
-              queryKey: ['dm', 'messages', activeDmId],
-            });
-            queryClient.invalidateQueries({
-              queryKey: dmKeys.threads(),
-            });
-          },
-          onError: (error) => {
-            console.error('[Send DM Error]', error);
-          },
-        }
-      );
+    if (tab === 'dm') {
+      dmChat.sendMessage(text, replyToId);
     } else {
-      sendEventMessage.mutate(
-        {
-          input: {
-            eventId: active.id,
-            content: text,
-            replyToId: replyToId || undefined,
-          },
-        },
-        {
-          onSuccess: () => {
-            // Force refetch to show new message immediately for sender
-            queryClient.invalidateQueries({
-              queryKey: eventChatKeys.messages(active.id),
-            });
-          },
-        }
-      );
+      channelChat.sendMessage(text, replyToId);
     }
   }
 
-  // Edit/Delete handlers
-  // Message actions are now handled by useMessageActions hook
-  // No need for separate handlers - use messageActions.handleEditMessage, etc.
-
-  // Map messages
-  const messages = useMemo(() => {
-    if (!active || !currentUserId) return [];
-
-    if (active.kind === 'dm') {
-      // dmMessages now uses infinite query with pages
-      const pages = (dmMessagesData as any)?.pages;
-      if (!pages) return [];
-
-      // Flatten all pages - pages are loaded newest first, so reverse them
-      const reversedPages = [...pages].reverse();
-      const allMessages = reversedPages.flatMap(
-        (page: any) => page.dmMessages?.edges?.map((e: any) => e.node) || []
-      );
-
-      console.log(
-        '[Messages] DM items count:',
-        allMessages.length,
-        'ThreadID:',
-        activeDmId
-      );
-
-      if (allMessages.length === 0) {
-        return [];
-      }
-
-      return allMessages.map((msg: any) => {
-        // Debug: Check if replyTo exists
-        if (msg.replyTo) {
-          console.log('[DM Message with Reply]', {
-            messageId: msg.id,
-            content: msg.content.substring(0, 30),
-            replyToId: msg.replyToId,
-            replyTo: msg.replyTo,
-          });
-        }
-
-        return {
-          id: msg.id,
-          text: msg.content,
-          at: new Date(msg.createdAt).getTime(),
-          side: (msg.senderId === currentUserId ? 'right' : 'left') as
-            | 'left'
-            | 'right',
-          author: {
-            id: msg.sender.id,
-            name: msg.sender.name || 'Unknown',
-            avatar: msg.sender.avatarKey || undefined,
-          },
-          block: !!msg.deletedAt,
-          reactions: msg.reactions || [],
-          readAt: msg.readAt,
-          editedAt: msg.editedAt,
-          deletedAt: msg.deletedAt,
-          replyTo: msg.replyTo
-            ? {
-                id: msg.replyTo.id,
-                author: {
-                  id: msg.replyTo.sender.id,
-                  name: msg.replyTo.sender.name || 'Unknown',
-                },
-                content: msg.replyTo.content,
-              }
-            : null,
-        };
-      });
+  function handleTyping(isTyping: boolean) {
+    if (tab === 'dm') {
+      dmChat.handleTyping(isTyping);
     } else {
-      const pages = eventMessagesData?.pages;
-      if (!pages) return [];
+      channelChat.handleTyping(isTyping);
+    }
+  }
 
-      const allMessages = pages.flatMap(
-        (page) => page.eventMessages?.edges?.map((e) => e.node) || []
-      );
+  function handleAddReaction(messageId: string, emoji: string) {
+    if (tab === 'dm') {
+      dmChat.handleAddReaction(messageId, emoji);
+    } else {
+      channelChat.handleAddReaction(messageId, emoji);
+    }
+  }
 
-      return allMessages.map((msg) => {
-        return {
-          id: msg.id,
-          text: msg.content,
-          at: new Date(msg.createdAt).getTime(),
-          side: (msg.authorId === currentUserId ? 'right' : 'left') as
-            | 'left'
-            | 'right',
-          author: {
-            id: msg.author.id,
-            name: msg.author.name || 'Unknown',
-            avatar: msg.author.avatarKey || undefined,
-          },
-          block: !!msg.deletedAt,
-          reactions: msg.reactions || [],
-          editedAt: msg.editedAt,
-          deletedAt: msg.deletedAt,
-          replyTo: msg.replyTo
-            ? {
-                id: msg.replyTo.id,
-                author: {
-                  id: msg.replyTo.author.id,
-                  name: msg.replyTo.author.name || 'Unknown',
-                },
-                content: msg.replyTo.content,
-              }
-            : null,
-        };
+  function handleRemoveReaction(messageId: string, emoji: string) {
+    if (tab === 'dm') {
+      dmChat.handleRemoveReaction(messageId, emoji);
+    } else {
+      channelChat.handleRemoveReaction(messageId, emoji);
+    }
+  }
+
+  function handleEditMessage(messageId: string, content: string) {
+    if (tab === 'dm') {
+      dmChat.openEditModal(messageId, content);
+    } else {
+      channelChat.openEditModal(messageId, content);
+    }
+  }
+
+  function handleDeleteMessage(messageId: string) {
+    if (tab === 'dm') {
+      dmChat.openDeleteModal(messageId);
+    } else {
+      channelChat.openDeleteModal(messageId);
+    }
+  }
+
+  const handleSelectUser = async (user: PickedUser) => {
+    if (!currentUserId) return;
+
+    // Check if thread already exists
+    const existingThread = dmChat.conversations.find(
+      (c) => c.otherUserId === user.id
+    );
+
+    if (existingThread) {
+      setActiveDmId(existingThread.id);
+      setDraftConversation(null);
+    } else {
+      setDraftConversation({
+        userId: user.id,
+        userName: user.name,
+        userAvatar: user.avatarKey,
       });
+      setActiveDmId(undefined);
     }
-  }, [active, currentUserId, dmMessagesData, eventMessagesData]);
+    setShowUserPicker(false);
+  };
 
-  // Mark as read when opening a conversation
-  useEffect(() => {
-    if (!active) return;
-
-    if (active.kind === 'dm' && activeDmId) {
-      markDmRead.mutate({ threadId: activeDmId });
-    } else if (active.kind === 'channel' && activeChId) {
-      markEventRead.mutate({ eventId: activeChId });
-    }
-  }, [activeDmId, activeChId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Get typing user names for display
-  const typingUserNames = useMemo(() => {
-    const typingUsers = tab === 'dm' ? dmTypingUsers : channelTypingUsers;
-    if (typingUsers.size === 0) return null;
-
-    // For DM, get the other user's name
-    if (tab === 'dm' && active) {
-      const thread = dmThreadsData?.dmThreads?.items?.find(
-        (t) => t.id === activeDmId
-      );
-      if (!thread) return null;
-
-      const otherUser =
-        thread.aUserId === currentUserId ? thread.bUser : thread.aUser;
-      return [otherUser.name || 'Someone'];
-    }
-
-    // For channels, we'd need to fetch user names (simplified for now)
-    // TODO: add translation (i18n) - "person", "people"
-    return [
-      `${typingUsers.size} ${typingUsers.size === 1 ? 'person' : 'people'}`,
-    ];
-  }, [
-    tab,
-    dmTypingUsers,
-    channelTypingUsers,
-    active,
-    dmThreadsData,
-    activeDmId,
-    currentUserId,
-  ]);
-
-  const activeThreadData = useMemo(() => {
-    if (tab === 'dm' && activeDmId && !active) {
-      const thread = dmThreadsData?.dmThreads?.items?.find(
-        (t) => t.id === activeDmId
-      );
-      if (thread && currentUserId) {
-        const otherUser =
-          thread.aUserId === currentUserId ? thread.bUser : thread.aUser;
-        return {
-          kind: 'dm' as const,
-          title: otherUser.name || 'Unknown',
-          members: 2,
-          avatar: otherUser.avatarKey || undefined,
-          lastReadAt: undefined,
-        };
-      }
-    }
-    return null;
-  }, [tab, activeDmId, active, dmThreadsData, currentUserId]);
-
-  if (!currentUserId) {
+  // ---------------------------------------------------------------------------
+  // Loading state
+  // ---------------------------------------------------------------------------
+  if (isLoadingAuth && !currentUserId) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
       </div>
     );
   }
 
-  // Determine what to show in thread pane
+  // ---------------------------------------------------------------------------
+  // Determine what to show
+  // ---------------------------------------------------------------------------
   const showDraftConversation =
     draftConversation && !activeDmId && tab === 'dm';
   const showActiveThread =
     (active || activeDmId || activeChId) && !showDraftConversation;
 
+  const isListLoading =
+    tab === 'dm' ? dmChat.isLoadingThreads : channelChat.isLoadingChannels;
+
+  // Current edit/delete state
+  const editingMessage =
+    tab === 'dm' ? dmChat.editingMessage : channelChat.editingMessage;
+  const deletingMessageId =
+    tab === 'dm' ? dmChat.deletingMessageId : channelChat.deletingMessageId;
+  const isEditPending =
+    tab === 'dm' ? dmChat.isEditPending : channelChat.isEditPending;
+  const isDeletePending =
+    tab === 'dm' ? dmChat.isDeletePending : channelChat.isDeletePending;
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
+        {/* TODO i18n */}
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          {/* TODO: add translation (i18n) */}
-          Chats
+          Czaty
         </h1>
         <p className="mt-1 text-base text-zinc-600 dark:text-zinc-400">
-          {/* TODO: add translation (i18n) */}
-          Manage your direct messages and event conversations
+          Zarządzaj wiadomościami prywatnymi i rozmowami w wydarzeniach
         </p>
       </div>
 
       <ChatShell listVisible>
         <ChatShell.ListPane>
           <ChatTabs tab={tab} setTab={setTab} />
-          {(dmThreadsLoading && tab === 'dm') ||
-          (membershipsLoading && tab === 'channel') ? (
+          {isListLoading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
             </div>
           ) : (
-            <ChatList
+            <ChatListComponent
               items={conversations}
               activeId={activeId}
-              onPick={(id) => handlePick(id)}
+              onPick={handlePick}
               onStartConversation={
-                tab === 'dm' ? handleStartConversation : undefined
+                tab === 'dm' ? () => setShowUserPicker(true) : undefined
               }
               showStartButton={tab === 'dm' && conversations.length === 0}
             />
@@ -1057,7 +293,7 @@ export default function ChatsPageIntegrated() {
 
         <ChatShell.ThreadPane>
           {showDraftConversation ? (
-            <ChatThread
+            <ChatThreadComponent
               kind="dm"
               title={draftConversation.userName}
               members={2}
@@ -1069,92 +305,72 @@ export default function ChatsPageIntegrated() {
               onSend={handleSend}
               onAddReaction={() => {}}
               onRemoveReaction={() => {}}
-              onTyping={() => {
-                // Draft doesn't have threadId yet, so no typing indicator
-              }}
+              onTyping={() => {}}
               isDraft={true}
             />
           ) : showActiveThread ? (
-            <ChatThread
-              kind={(active || activeThreadData)?.kind || 'dm'}
-              title={(active || activeThreadData)?.title || 'Chat'}
-              members={active?.membersCount || activeThreadData?.members || 2}
-              avatar={(active || activeThreadData)?.avatar}
-              messages={messages}
-              loading={
+            <ChatThreadComponent
+              kind={tab}
+              title={
                 tab === 'dm'
-                  ? dmMessagesLoading || isFetchingNextDmPage
-                  : eventMessagesLoading
+                  ? dmChat.activeThread?.title || active?.title || 'Chat'
+                  : channelChat.activeChannel?.title || active?.title || 'Chat'
               }
+              members={
+                tab === 'dm'
+                  ? 2
+                  : channelChat.activeChannel?.members ||
+                    active?.membersCount ||
+                    0
+              }
+              avatar={
+                tab === 'dm'
+                  ? dmChat.activeThread?.avatar || active?.avatar
+                  : channelChat.activeChannel?.avatar || active?.avatar
+              }
+              messages={messages}
+              loading={isLoadingMessages}
               typingUserNames={typingUserNames}
               onBackMobile={() => {}}
               onSend={handleSend}
-              onAddReaction={(messageId: string, emoji: string) => {
-                if ((active || activeThreadData)?.kind === 'dm') {
-                  addDmReaction.mutate({ messageId, emoji });
-                } else {
-                  addEventReaction.mutate({ messageId, emoji });
-                }
-              }}
-              onRemoveReaction={(messageId: string, emoji: string) => {
-                if ((active || activeThreadData)?.kind === 'dm') {
-                  removeDmReaction.mutate({ messageId, emoji });
-                } else {
-                  removeEventReaction.mutate({ messageId, emoji });
-                }
-              }}
-              onLoadMore={
-                tab === 'dm' && hasNextDmPage
-                  ? () => {
-                      console.log('[LoadMore] Fetching next DM page...');
-                      fetchNextDmPage();
-                    }
-                  : tab === 'channel' && hasNextEventPage
-                    ? () => {
-                        console.log('[LoadMore] Fetching next Event page...');
-                        fetchNextEventPage();
-                      }
-                    : undefined
-              }
-              onTyping={(isTyping: boolean) => {
-                if ((active || activeThreadData)?.kind === 'dm' && activeDmId) {
-                  publishDmTyping.mutate({ threadId: activeDmId, isTyping });
-                } else if (
-                  (active || activeThreadData)?.kind === 'channel' &&
-                  activeChId
-                ) {
-                  publishEventTyping.mutate({
-                    eventId: activeChId,
-                    isTyping,
-                  });
-                }
-              }}
-              onEditMessage={(messageId: string, content: string) => {
-                messageActions.handleEditMessage(messageId, content);
-              }}
-              onDeleteMessage={messageActions.handleDeleteMessage}
+              onAddReaction={handleAddReaction}
+              onRemoveReaction={handleRemoveReaction}
+              onLoadMore={hasMore ? loadMore : undefined}
+              onTyping={handleTyping}
+              onEditMessage={handleEditMessage}
+              onDeleteMessage={handleDeleteMessage}
             />
           ) : (
-            <EmptyThread onBackMobile={() => {}} />
+            <EmptyThreadComponent onBackMobile={() => {}} />
           )}
         </ChatShell.ThreadPane>
       </ChatShell>
 
       {/* Edit Message Modal */}
       <EditMessageModal
-        isOpen={!!messageActions.editingMessageId}
-        onClose={messageActions.closeEditModal}
-        onSave={messageActions.handleSaveEdit}
-        initialContent={messageActions.editingContent}
-        isLoading={messageActions.isEditLoading}
+        isOpen={!!editingMessage}
+        onClose={
+          tab === 'dm' ? dmChat.closeEditModal : channelChat.closeEditModal
+        }
+        onSave={
+          tab === 'dm' ? dmChat.handleSaveEdit : channelChat.handleSaveEdit
+        }
+        initialContent={editingMessage?.content || ''}
+        isLoading={isEditPending}
       />
 
       {/* Delete Confirm Modal */}
       <DeleteConfirmModal
-        isOpen={!!messageActions.deletingMessageId}
-        onClose={messageActions.closeDeleteModal}
-        onConfirm={messageActions.handleConfirmDelete}
-        isLoading={messageActions.isDeleteLoading}
+        isOpen={!!deletingMessageId}
+        onClose={
+          tab === 'dm' ? dmChat.closeDeleteModal : channelChat.closeDeleteModal
+        }
+        onConfirm={
+          tab === 'dm'
+            ? dmChat.handleConfirmDelete
+            : channelChat.handleConfirmDelete
+        }
+        isLoading={isDeletePending}
       />
 
       {/* User Picker Modal */}
@@ -1167,7 +383,9 @@ export default function ChatsPageIntegrated() {
   );
 }
 
-/* ───────────────────────────── Shell & panes ───────────────────────────── */
+// =============================================================================
+// Shell & Panes
+// =============================================================================
 
 function ChatShell({
   children,
@@ -1193,17 +411,13 @@ function PaneBase({
   className = '',
   children,
 }: {
-  as?: any;
+  as?: React.ElementType;
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <Tag
-      className={[
-        'rounded-xl border border-zinc-200 shadow-sm min-w-0',
-        'dark:border-zinc-800',
-        className,
-      ].join(' ')}
+      className={`rounded-xl border border-zinc-200 shadow-sm min-w-0 dark:border-zinc-800 ${className}`}
     >
       {children}
     </Tag>
@@ -1221,6 +435,7 @@ ChatShell.ListPane = function ListPane({
     </PaneBase>
   );
 };
+
 ChatShell.ThreadPane = function ThreadPane({
   children,
 }: {
@@ -1233,7 +448,9 @@ ChatShell.ThreadPane = function ThreadPane({
   );
 };
 
-/* ───────────────────────────── Tabs ───────────────────────────── */
+// =============================================================================
+// Tabs
+// =============================================================================
 
 function ChatTabs({
   tab,
@@ -1246,67 +463,32 @@ function ChatTabs({
     <div className="grid grid-cols-2 gap-2 p-1 mb-2 text-sm border rounded-2xl border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
       <button
         type="button"
-        className={[
-          'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors',
+        className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors ${
           tab === 'dm'
             ? 'bg-white shadow-sm ring-1 ring-black/5 dark:bg-zinc-800'
-            : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60',
-        ].join(' ')}
+            : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60'
+        }`}
         onClick={() => setTab('dm')}
         aria-pressed={tab === 'dm'}
       >
         <User2 className="w-4 h-4" />
-        {/* TODO: add translation (i18n) */}
+        {/* TODO i18n */}
         DM
       </button>
       <button
         type="button"
-        className={[
-          'inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors',
+        className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 transition-colors ${
           tab === 'channel'
             ? 'bg-white shadow-sm ring-1 ring-black/5 dark:bg-zinc-800'
-            : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60',
-        ].join(' ')}
+            : 'text-zinc-600 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-800/60'
+        }`}
         onClick={() => setTab('channel')}
         aria-pressed={tab === 'channel'}
       >
         <Hash className="w-4 h-4" />
-        {/* TODO: add translation (i18n) */}
-        Channels
+        {/* TODO i18n */}
+        Kanały
       </button>
     </div>
   );
 }
-
-/* ───────────────────────────── List ───────────────────────────── */
-const ChatList = ChatListComponent;
-
-/* ───────────────────────────── Thread ───────────────────────────── */
-const ChatThread = ChatThreadComponent;
-
-/**
- * Format relative time for chat timestamps
- * TODO: format date/time with user.timezone + locale (i18n)
- * Consider using date-fns formatDistanceToNow with locale support
- */
-function formatRelativeTime(isoString: string): string {
-  const now = Date.now();
-  const then = new Date(isoString).getTime();
-  const diffMs = now - then;
-  const diffMins = Math.floor(diffMs / 60000);
-
-  // TODO: add translation (i18n) - "now", time units
-  if (diffMins < 1) return 'now';
-  if (diffMins < 60) return `${diffMins}m`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d`;
-}
-
-// Components moved to features/chat/components/
-const EmptyThread = EmptyThreadComponent;
-
-// ============================================================================
-// END OF FILE - All components imported from _components/
-// ============================================================================
