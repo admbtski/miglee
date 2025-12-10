@@ -1306,6 +1306,60 @@ async function seedNotificationsGeneric(
           },
         });
       }
+
+      // Sometimes EVENT_UPDATED with changedFields
+      if (rand() > 0.5) {
+        const possibleChanges = [
+          'title',
+          'description',
+          'startAt',
+          'endAt',
+          'address',
+          'max',
+        ];
+        // Pick 1-3 random changes
+        const numChanges = 1 + Math.floor(rand() * 3);
+        const changedFields: string[] = [];
+        for (let c = 0; c < numChanges && possibleChanges.length > 0; c++) {
+          const idx = Math.floor(rand() * possibleChanges.length);
+          changedFields.push(possibleChanges.splice(idx, 1)[0]!);
+        }
+
+        await prisma.notification.create({
+          data: {
+            kind: NotificationKind.EVENT_UPDATED,
+            recipientId: r.id,
+            actorId: owner.id,
+            entityType: NotificationEntity.EVENT,
+            entityId: event.id,
+            eventId: event.id,
+            data: {
+              eventId: event.id,
+              eventTitle: event.title,
+              changedFields,
+              changes: {
+                ...(changedFields.includes('startAt')
+                  ? {
+                      startAt: {
+                        old: new Date(
+                          event.startAt.getTime() - 3600000
+                        ).toISOString(),
+                        new: event.startAt.toISOString(),
+                      },
+                    }
+                  : {}),
+                ...(changedFields.includes('address')
+                  ? { address: { old: 'Old Location', new: event.address } }
+                  : {}),
+                ...(changedFields.includes('max')
+                  ? { max: { old: 10, new: 20 } }
+                  : {}),
+              },
+            } as Prisma.InputJsonValue,
+            dedupeKey: `event_updated:${r.id}:${event.id}:${Date.now()}`,
+          },
+        });
+      }
     }
   }
 

@@ -166,18 +166,23 @@ export function useNotificationContent(notification: NotificationInput) {
     }
 
     // Format changed fields for EVENT_UPDATED
-    if (
-      kind === 'EVENT_UPDATED' &&
-      enrichedData.changedFields &&
-      Array.isArray(enrichedData.changedFields) &&
-      enrichedData.changedFields.length > 0
-    ) {
-      const translatedFields = enrichedData.changedFields
-        .map((field) => changedFieldsTranslations[field] || field)
-        .filter(Boolean);
+    if (kind === 'EVENT_UPDATED') {
+      if (
+        enrichedData.changedFields &&
+        Array.isArray(enrichedData.changedFields) &&
+        enrichedData.changedFields.length > 0
+      ) {
+        const translatedFields = enrichedData.changedFields
+          .map((field) => changedFieldsTranslations[field] || field)
+          .filter(Boolean);
 
-      if (translatedFields.length > 0) {
-        enrichedData.changesDescription = `${changesPrefix} ${translatedFields.join(', ')}`;
+        if (translatedFields.length > 0) {
+          enrichedData.changesDescription = `${changesPrefix} ${translatedFields.join(', ')}`;
+        }
+      }
+      // Fallback - if no changesDescription, set to empty string to avoid showing {{changesDescription}}
+      if (!enrichedData.changesDescription) {
+        enrichedData.changesDescription = '';
       }
     }
 

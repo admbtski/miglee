@@ -642,7 +642,7 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
           eventId: id,
           status: {
             in: [
-              EventMemberStatus.WAITLIST,
+              EventMemberStatus.JOINED,
               EventMemberStatus.PENDING,
               EventMemberStatus.INVITED,
               EventMemberStatus.WAITLIST,
@@ -1105,7 +1105,7 @@ export const deleteEventMutation: MutationResolvers['deleteEvent'] =
               EventMemberStatus.WAITLIST,
               EventMemberStatus.PENDING,
               EventMemberStatus.INVITED,
-              EventMemberStatus.WAITLIST,
+              EventMemberStatus.JOINED,
             ],
           },
         },
