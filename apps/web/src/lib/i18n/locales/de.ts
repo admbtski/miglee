@@ -730,6 +730,8 @@ export const de = {
   mobileSearch: {
     searchPlaceholder: 'Veranstaltungen suchen...',
     filters: 'Filter',
+    showMap: 'Karte anzeigen',
+    showList: 'Liste anzeigen',
   },
 
   // Subscription Plans

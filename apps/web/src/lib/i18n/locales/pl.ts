@@ -722,6 +722,8 @@ export const pl = {
   mobileSearch: {
     searchPlaceholder: 'Szukaj wydarzeń...',
     filters: 'Filtry',
+    showMap: 'Pokaż mapę',
+    showList: 'Pokaż listę',
   },
 
   // Subscription Plans

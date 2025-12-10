@@ -718,6 +718,8 @@ export const en = {
   mobileSearch: {
     searchPlaceholder: 'Search events...',
     filters: 'Filters',
+    showMap: 'Show map',
+    showList: 'Show list',
   },
 
   // Subscription Plans

@@ -338,8 +338,10 @@ export function EventsPage() {
           q={q}
           city={city}
           activeFiltersCount={activeFilters}
+          mapVisible={mapVisible}
           onOpenSearch={() => openTopDrawer('search')}
           onOpenFilters={openRightDrawer}
+          onToggleMap={toggleMap}
         />
 
         <main className={`mx-auto grid w-full gap-4 px-4 py-4 ${gridCols}`}>
@@ -354,8 +356,11 @@ export function EventsPage() {
             </div>
           </aside>
 
-          {/* Center Content - Events Grid */}
-          <motion.section layout="position" className="min-w-0">
+          {/* Center Content - Events Grid (hidden on mobile when map is visible) */}
+          <motion.section
+            layout="position"
+            className={`min-w-0 ${mapVisible ? 'hidden md:block' : ''}`}
+          >
             <EventsHeader
               isLoading={isLoading}
               hasError={Boolean(error)}
@@ -383,6 +388,19 @@ export function EventsPage() {
             </ErrorBoundary>
           </motion.section>
 
+          {/* Mobile Full-Screen Map (shown only on mobile when map is visible) */}
+          <AnimatePresence>
+            {mapVisible && (
+              <MobileMapView
+                filters={filters}
+                hoveredEvent={hoveredEvent}
+                mapCenter={mapCenter}
+                locationMode={locationMode}
+                locale={locale}
+              />
+            )}
+          </AnimatePresence>
+
           {/* Right Map Sidebar */}
           <AnimatePresence>
             {mapVisible && (
@@ -396,7 +414,10 @@ export function EventsPage() {
             )}
           </AnimatePresence>
 
-          <div className="col-span-full">
+          {/* Footer - hidden on mobile when map is visible */}
+          <div
+            className={`col-span-full ${mapVisible ? 'hidden md:block' : ''}`}
+          >
             <Footer />
           </div>
         </main>
@@ -505,7 +526,74 @@ function MapSidebar({
 function MapLoadingFallback() {
   return (
     <div className="flex items-center justify-center h-full bg-zinc-100 dark:bg-zinc-900 rounded-2xl">
+      {/* TODO i18n */}
       <div className="text-sm text-zinc-500">Ładowanie mapy...</div>
     </div>
+  );
+}
+
+/**
+ * Mobile Full-Screen Map View
+ * Shown only on mobile devices when map is toggled on
+ */
+function MobileMapView({
+  filters,
+  hoveredEvent,
+  mapCenter,
+  locationMode,
+  locale,
+}: MapSidebarProps) {
+  const handleEventClick = useCallback(
+    (eventId: string) => {
+      window.location.href = `/${locale}/event/${eventId}`;
+    },
+    [locale]
+  );
+
+  return (
+    <motion.div
+      className="md:hidden col-span-full -mx-4 -mt-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ type: 'spring', duration: 0.4, bounce: 0 }}
+    >
+      <div
+        className="h-[calc(100vh-var(--nav-h)-56px)]"
+        style={{ minHeight: '400px' }}
+      >
+        <ErrorBoundary>
+          <Suspense fallback={<MapLoadingFallback />}>
+            <ServerClusteredMap
+              fullHeight={true}
+              lang={appLanguage}
+              locale={locale}
+              filters={{
+                q: filters.q || undefined,
+                categorySlugs: filters.categories,
+                tagSlugs: filters.tags,
+                levels: filters.levels as any,
+                kinds: filters.kinds as any,
+                joinModes: filters.joinModes as any,
+                verifiedOnly: filters.verifiedOnly,
+                status: filters.status as any,
+                startISO: filters.startISO ?? undefined,
+                endISO: filters.endISO ?? undefined,
+                city: filters.city ?? undefined,
+                cityLat: filters.cityLat ?? undefined,
+                cityLng: filters.cityLng ?? undefined,
+                distanceKm: filters.distanceKm,
+              }}
+              onEventClick={handleEventClick}
+              hoveredEventId={hoveredEvent?.id ?? null}
+              hoveredLat={hoveredEvent?.lat ?? null}
+              hoveredLng={hoveredEvent?.lng ?? null}
+              centerOn={mapCenter}
+              locationMode={locationMode}
+            />
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+    </motion.div>
   );
 }
