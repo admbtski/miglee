@@ -606,6 +606,7 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
           deletedAt: true,
           title: true,
           description: true,
+          notes: true,
           startAt: true,
           endAt: true,
           mode: true,
@@ -614,6 +615,17 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
           address: true,
           onlineUrl: true,
           meetingKind: true,
+          visibility: true,
+          joinMode: true,
+          levels: true,
+          addressVisibility: true,
+          membersVisibility: true,
+          joinOpensMinutesBeforeStart: true,
+          joinCutoffMinutesBeforeStart: true,
+          allowJoinLate: true,
+          lateJoinCutoffMinutesAfterStart: true,
+          categories: { select: { slug: true } },
+          tags: { select: { slug: true } },
         },
       });
       if (!current) {
@@ -815,6 +827,8 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
 
         // Track what changed
         const changedFields: string[] = [];
+
+        // Basic info
         if (input.title !== undefined && input.title !== current.title) {
           changedFields.push('title');
         }
@@ -824,6 +838,11 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
         ) {
           changedFields.push('description');
         }
+        if (input.notes !== undefined && input.notes !== current.notes) {
+          changedFields.push('notes');
+        }
+
+        // Time
         if (
           input.startAt !== undefined &&
           new Date(input.startAt as Date).getTime() !==
@@ -837,6 +856,8 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
         ) {
           changedFields.push('endAt');
         }
+
+        // Location
         if (
           input.location?.address !== undefined &&
           input.location.address !== current.address
@@ -849,17 +870,107 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
         ) {
           changedFields.push('onlineUrl');
         }
+        if (
+          input.meetingKind !== undefined &&
+          input.meetingKind !== current.meetingKind
+        ) {
+          changedFields.push('meetingKind');
+        }
+
+        // Capacity
         if (input.min !== undefined && input.min !== current.min) {
           changedFields.push('min');
         }
         if (input.max !== undefined && input.max !== current.max) {
           changedFields.push('max');
         }
+
+        // Visibility & Access
         if (
-          input.meetingKind !== undefined &&
-          input.meetingKind !== current.meetingKind
+          input.visibility !== undefined &&
+          input.visibility !== current.visibility
         ) {
-          changedFields.push('meetingKind');
+          changedFields.push('visibility');
+        }
+        if (
+          input.joinMode !== undefined &&
+          input.joinMode !== current.joinMode
+        ) {
+          changedFields.push('joinMode');
+        }
+        if (
+          input.addressVisibility !== undefined &&
+          input.addressVisibility !== current.addressVisibility
+        ) {
+          changedFields.push('addressVisibility');
+        }
+        if (
+          input.membersVisibility !== undefined &&
+          input.membersVisibility !== current.membersVisibility
+        ) {
+          changedFields.push('membersVisibility');
+        }
+
+        // Join timing
+        if (
+          input.joinOpensMinutesBeforeStart !== undefined &&
+          input.joinOpensMinutesBeforeStart !==
+            current.joinOpensMinutesBeforeStart
+        ) {
+          changedFields.push('joinOpensMinutesBeforeStart');
+        }
+        if (
+          input.joinCutoffMinutesBeforeStart !== undefined &&
+          input.joinCutoffMinutesBeforeStart !==
+            current.joinCutoffMinutesBeforeStart
+        ) {
+          changedFields.push('joinCutoffMinutesBeforeStart');
+        }
+        if (
+          input.allowJoinLate !== undefined &&
+          input.allowJoinLate !== current.allowJoinLate
+        ) {
+          changedFields.push('allowJoinLate');
+        }
+        if (
+          input.lateJoinCutoffMinutesAfterStart !== undefined &&
+          input.lateJoinCutoffMinutesAfterStart !==
+            current.lateJoinCutoffMinutesAfterStart
+        ) {
+          changedFields.push('lateJoinCutoffMinutesAfterStart');
+        }
+
+        // Levels
+        if (input.levels !== undefined) {
+          const currentLevels = (current.levels || []).sort().join(',');
+          const newLevels = (input.levels || []).sort().join(',');
+          if (currentLevels !== newLevels) {
+            changedFields.push('levels');
+          }
+        }
+
+        // Categories
+        if (input.categorySlugs !== undefined) {
+          const currentCategories = current.categories
+            .map((c) => c.slug)
+            .sort()
+            .join(',');
+          const newCategories = (input.categorySlugs || []).sort().join(',');
+          if (currentCategories !== newCategories) {
+            changedFields.push('categories');
+          }
+        }
+
+        // Tags
+        if (input.tagSlugs !== undefined) {
+          const currentTags = current.tags
+            .map((t) => t.slug)
+            .sort()
+            .join(',');
+          const newTags = (input.tagSlugs || []).sort().join(',');
+          if (currentTags !== newTags) {
+            changedFields.push('tags');
+          }
         }
 
         // Create notification data with changes

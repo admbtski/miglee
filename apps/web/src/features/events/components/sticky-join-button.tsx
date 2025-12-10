@@ -258,7 +258,7 @@ export function StickyJoinButton({ event }: StickyJoinButtonProps) {
     <>
       {/* Sticky Bottom Bar - Aligned to left column */}
       <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
-        <div className="container mx-auto max-w-6xl px-4 py-3">
+        <div className="container mx-auto max-w-6xl px-4">
           {/* Match the grid layout from event-detail-client */}
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
             {/* Left column - sticky bar */}
