@@ -11,6 +11,7 @@ export { MessageReactions } from './MessageReactions';
 export { ReactionsBar } from './ReactionsBar';
 export { ReadReceipt } from './ReadReceipt';
 export { ReverseScrollMessages } from './ReverseScrollMessages';
+export { ChatAvatar, UserAvatarPopover } from './UserAvatarPopover';
 export { UserPicker } from './UserPicker';
 
 // Chat page components

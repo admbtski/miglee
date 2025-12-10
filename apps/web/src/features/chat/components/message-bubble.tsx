@@ -12,6 +12,10 @@ import { ReadReceipt } from '@/features/chat/components/ReadReceipt';
 import { MessageActions } from '@/features/chat/components/MessageActions';
 import { ReactionsBar } from '@/features/chat/components/ReactionsBar';
 import { MessageMenuPopover } from '@/features/chat/components/MessageMenuPopover';
+import {
+  ChatAvatar,
+  UserAvatarPopover,
+} from '@/features/chat/components/UserAvatarPopover';
 
 type BubbleProps = {
   align?: 'left' | 'right';
@@ -122,10 +126,12 @@ export const MsgIn = ({
 }: MsgInProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [reactionsOpen, setReactionsOpen] = useState(false);
+  const [avatarPopoverOpen, setAvatarPopoverOpen] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
 
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const reactionsButtonRef = useRef<HTMLButtonElement>(null);
+  const avatarButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div
@@ -133,6 +139,21 @@ export const MsgIn = ({
       onMouseEnter={() => setActionsVisible(true)}
       onMouseLeave={() => setActionsVisible(false)}
     >
+      {/* Avatar */}
+      <ChatAvatar
+        user={message.author}
+        size="sm"
+        onClick={() => setAvatarPopoverOpen(true)}
+        avatarRef={avatarButtonRef}
+      />
+
+      <UserAvatarPopover
+        isOpen={avatarPopoverOpen}
+        onClose={() => setAvatarPopoverOpen(false)}
+        user={message.author}
+        referenceElement={avatarButtonRef.current}
+      />
+
       <div className="flex-1 min-w-0">
         <Bubble
           align="left"
