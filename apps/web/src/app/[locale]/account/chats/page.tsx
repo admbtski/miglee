@@ -339,6 +339,8 @@ export default function ChatsPage() {
               onTyping={handleTyping}
               onEditMessage={handleEditMessage}
               onDeleteMessage={handleDeleteMessage}
+              threadId={tab === 'dm' ? activeDmId : undefined}
+              eventId={tab === 'channel' ? activeChId : undefined}
             />
           ) : (
             <EmptyThreadComponent onBackMobile={() => {}} />

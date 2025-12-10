@@ -166,6 +166,7 @@ export function EventChatManagement({ eventId }: EventChatManagementProps) {
               onRemoveReaction={chat.handleRemoveReaction}
               onEditMessage={chat.openEditModal}
               onDeleteMessage={chat.openDeleteModal}
+              eventId={eventId}
             />
           </div>
         </div>

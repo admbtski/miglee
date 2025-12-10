@@ -48,6 +48,10 @@ type ChatThreadProps = {
   ) => void;
   onDeleteMessage?: (messageId: string) => void;
   isDraft?: boolean;
+  /** Event ID for mute functionality (channel type) */
+  eventId?: string;
+  /** Thread ID for mute functionality (dm type) */
+  threadId?: string;
 };
 
 function fmtTime(epoch: number) {
@@ -74,6 +78,8 @@ export function ChatThread({
   onEditMessage,
   onDeleteMessage,
   isDraft = false,
+  eventId,
+  threadId,
 }: ChatThreadProps) {
   const [input, setInput] = useState('');
   const virtuosoRef = useRef<any>(null);
@@ -254,7 +260,12 @@ export function ChatThread({
 
       {/* Content: Details or Messages */}
       {showDetails ? (
-        <ChatDetails onClose={() => setShowDetails(false)} kind={kind} />
+        <ChatDetails
+          onClose={() => setShowDetails(false)}
+          kind={kind}
+          eventId={eventId}
+          threadId={threadId}
+        />
       ) : (
         <>
           {/* Messages Area */}
