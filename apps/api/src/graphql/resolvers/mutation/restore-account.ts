@@ -1,3 +1,4 @@
+import { GraphQLError } from 'graphql';
 import { MutationResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { logger } from '../../../lib/pino';
@@ -93,7 +94,9 @@ export const restoreMyAccountMutation: MutationResolvers['restoreMyAccount'] =
     });
 
     if (!user || !user.deletedAt || !user.restorationToken) {
-      throw new Error('Invalid restoration request');
+      throw new GraphQLError('Invalid restoration request', {
+        extensions: { code: 'BAD_USER_INPUT' },
+      });
     }
 
     if (
@@ -101,7 +104,9 @@ export const restoreMyAccountMutation: MutationResolvers['restoreMyAccount'] =
       !user.restorationTokenExpiry ||
       user.restorationTokenExpiry < new Date()
     ) {
-      throw new Error('Invalid or expired restoration token');
+      throw new GraphQLError('Invalid or expired restoration token', {
+        extensions: { code: 'BAD_USER_INPUT' },
+      });
     }
 
     const daysSinceDeletion = Math.floor(
@@ -109,7 +114,9 @@ export const restoreMyAccountMutation: MutationResolvers['restoreMyAccount'] =
     );
 
     if (daysSinceDeletion > GRACE_PERIOD_DAYS) {
-      throw new Error('Grace period expired');
+      throw new GraphQLError('Grace period expired', {
+        extensions: { code: 'BAD_USER_INPUT' },
+      });
     }
 
     // Restore account

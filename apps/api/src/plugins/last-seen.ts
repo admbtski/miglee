@@ -9,7 +9,9 @@ export default fp(async function lastSeenHook(app: FastifyInstance) {
       req.headers['x-user-id'] as string | undefined
     )?.trim();
 
-    const userId = (req as any).user?.id ?? userIdFromHeader;
+    // User may be attached by auth plugin
+    const user = (req as { user?: { id?: string } }).user;
+    const userId = user?.id ?? userIdFromHeader;
     if (userId) {
       // void touchLastSeen(userId);
     }

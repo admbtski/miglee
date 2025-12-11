@@ -21,22 +21,11 @@ async function start() {
     infos.forEach((info) => server.log.info(info));
   } catch (error) {
     // await stopOtel();
-    console.error('Error starting server:', error);
+    server.log.error({ error }, 'Error starting server');
+    process.exit(1);
   }
 
-  const shutdown = async () => {
-    server.log.info('Shutting down...');
-
-    try {
-      await server.close();
-    } catch {}
-    try {
-      // await stopOtel();
-    } catch {}
-    process.exit(0);
-  };
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
+  // Note: Graceful shutdown is handled by graceful-shutdown plugin
 }
 
 start();

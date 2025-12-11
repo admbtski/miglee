@@ -6,10 +6,14 @@
  * for Stripe signature verification
  */
 
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { verifyWebhookSignature, handleStripeWebhook } from '../lib/billing';
 import { logger } from '../lib/pino';
 import { config } from '../env';
+
+interface RequestWithRawBody extends FastifyRequest {
+  rawBody?: Buffer;
+}
 
 export async function stripeWebhookPlugin(fastify: FastifyInstance) {
   fastify.post('/webhooks/stripe', async (request, reply) => {
@@ -17,7 +21,7 @@ export async function stripeWebhookPlugin(fastify: FastifyInstance) {
       const signature = request.headers['stripe-signature'];
 
       // Get raw body from fastify-raw-body plugin
-      const rawBody = (request as any).rawBody as Buffer;
+      const rawBody = (request as RequestWithRawBody).rawBody;
 
       if (!rawBody) {
         logger.error(
@@ -56,9 +60,10 @@ export async function stripeWebhookPlugin(fastify: FastifyInstance) {
       await handleStripeWebhook(event);
 
       return reply.code(200).send({ received: true });
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
       logger.error({ err }, 'Webhook processing failed');
-      return reply.code(400).send({ error: err.message });
+      return reply.code(400).send({ error: message });
     }
   });
 

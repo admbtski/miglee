@@ -3,15 +3,23 @@
 import Fastify, { RawRequestDefaultExpression, RawServerBase } from 'fastify';
 
 import { buildLogger } from './lib/pino';
+
+// Extend FastifyRequest for custom properties
+declare module 'fastify' {
+  interface FastifyRequest {
+    startTime?: bigint;
+  }
+}
+import { bullBoardPlugin, queueStatsPlugin } from './plugins/bull-board';
 import { cookiePlugin } from './plugins/cookie';
 import { corsPlugin } from './plugins/cors';
+import { gracefulShutdownPlugin } from './plugins/graceful-shutdown';
 import { healthPlugin } from './plugins/health';
 import { helmetPlugin } from './plugins/helmet';
 import { jwtPlugin } from './plugins/jwt';
 import { mercuriusPlugin } from './plugins/mercurius';
 import { sensiblePlugin } from './plugins/sensible';
 
-import { context, trace } from '@opentelemetry/api';
 import { config } from './env';
 // import { fastifyMetrics } from './plugins/metrics/fastify-metrics';
 import { rateLimitPlugin } from './plugins/rate-limit';
@@ -65,37 +73,19 @@ export async function createServer() {
 
   // lifecycle
   server.addHook('onRequest', async (req) => {
-    (req as any).startTime = process.hrtime.bigint();
+    req.startTime = process.hrtime.bigint();
 
     req.log.debug({ method: req.method, url: req.url }, 'incoming request');
-
-    // Korelacja logów Pino ↔ trace (trace_id w logach)
-    // Dorzuca trace_id / span_id do każdego loga requestu.
-    const span = trace.getSpan(context.active());
-    if (span) {
-      const ctx = span.spanContext();
-
-      span?.setAttributes({
-        'tenant.id': (req.headers['x-tenant-id'] as string) ?? 'public',
-        'user.id': (req as any).user?.id ?? 'anon',
-        'user.plan': (req as any).user?.plan ?? 'free',
-      });
-
-      req.log = req.log.child({
-        trace_id: ctx.traceId,
-        span_id: ctx.spanId,
-      });
-    }
   });
 
   server.addHook('preValidation', async (req) => {
     if (req.url?.startsWith('/graphql')) {
-      req.log.debug({ body: (req as any).body }, 'graphql request');
+      req.log.debug({ body: req.body }, 'graphql request');
     }
   });
 
   server.addHook('onResponse', async (req, reply) => {
-    const start = (req as any).startTime as bigint | undefined;
+    const start = req.startTime;
     const durationMs = start
       ? Number(process.hrtime.bigint() - start) / 1_000_000
       : undefined;
@@ -124,6 +114,13 @@ export async function createServer() {
   await server.register(localUploadPlugin);
   await server.register(imageVariantsPlugin);
   await server.register(mercuriusPlugin); // This adds body parsing
+
+  // Admin plugins (after auth)
+  await server.register(queueStatsPlugin);
+  await server.register(bullBoardPlugin);
+
+  // Graceful shutdown - register last to ensure all hooks are set up
+  await server.register(gracefulShutdownPlugin);
 
   return server;
 }

@@ -1,8 +1,6 @@
-import { FastifyLoggerOptions, RawServerBase } from 'fastify';
-import { PinoLoggerOptions } from 'fastify/types/logger';
 import pino, { LoggerOptions, TransportSingleOptions } from 'pino';
+import { trace, context } from '@opentelemetry/api';
 import { config } from '../env';
-import { context, trace } from '@opentelemetry/api';
 
 type BuildLoggerOpts = {
   /** Log level: debug | info | warn | error ... */
@@ -27,8 +25,7 @@ export function buildLogger({
   name = config.serviceName,
   env = config.nodeEnv,
   filePath = config.logFilePath,
-}: BuildLoggerOpts = {}): FastifyLoggerOptions<RawServerBase> &
-  PinoLoggerOptions {
+}: BuildLoggerOpts = {}): LoggerOptions {
   // Base options shared across all environments
   const baseOptions = {
     mixin() {
@@ -59,7 +56,14 @@ export function buildLogger({
     },
     // Compact, useful serializers for req/res
     serializers: {
-      req(req: any) {
+      req(req: {
+        id?: string;
+        method?: string;
+        url?: string;
+        params?: Record<string, string>;
+        query?: Record<string, string>;
+        headers?: Record<string, string | string[] | undefined>;
+      }) {
         return {
           id: req?.id,
           method: req?.method,
@@ -73,7 +77,7 @@ export function buildLogger({
           },
         };
       },
-      res(res: any) {
+      res(res: { statusCode?: number }) {
         return { statusCode: res?.statusCode };
       },
       err: pino.stdSerializers.err,
@@ -97,8 +101,15 @@ export function buildLogger({
     return { ...baseOptions, transport };
   }
 
-  // Production/Test: pure JSON; optionally write to file (async for performance)
-  return filePath ? { ...baseOptions, file: filePath } : baseOptions;
+  // Production/Test: pure JSON; optionally configure for file output
+  if (filePath) {
+    return {
+      ...baseOptions,
+      // File transport uses pino.destination() separately
+      transport: { target: 'pino/file', options: { destination: filePath } },
+    };
+  }
+  return baseOptions;
 }
 
 /**

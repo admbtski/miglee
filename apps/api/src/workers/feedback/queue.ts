@@ -1,37 +1,38 @@
-import { Queue, Worker, JobsOptions } from 'bullmq';
-import IORedis from 'ioredis';
+import { JobsOptions } from 'bullmq';
+import { getQueue, createWorker, BULLMQ_CONFIG } from '../../lib/bullmq';
 import { runFeedbackRequestForEvent } from './runFeedbackRequestForEvent';
 import { logger } from '../logger';
+import { config } from '../../env';
 
-export const connection = new IORedis({
-  host: process.env.REDIS_HOST ?? 'localhost',
-  port: Number(process.env.REDIS_PORT ?? 6379),
-  retryStrategy: (times: number) => Math.min(500 + times * 250, 5000),
-  maxRetriesPerRequest: null,
-  enableReadyCheck: true,
-  connectTimeout: 5_000,
-  lazyConnect: false,
-  keepAlive: 10_000,
-});
+/**
+ * Feedback Request Queue
+ * Sends feedback requests to participants after an event ends
+ */
 
-// Log Redis connection status
-connection.on('connect', () => {
-  logger.info('✅ Redis connected for feedback queue');
-});
-connection.on('error', (err) => {
-  logger.error({ err }, '❌ Redis connection error for feedback queue');
-});
+// Queue name
+const QUEUE_NAME = 'event-feedback';
 
-// Queue for feedback requests (sent after event ends)
-export const feedbackQueue = new Queue('event-feedback', { connection });
-
+// Job payload type
 export type FeedbackRequestPayload = {
   eventId: string;
 };
 
+// Get the queue (creates if not exists)
+export const feedbackQueue = getQueue<FeedbackRequestPayload>(QUEUE_NAME, {
+  createDeadLetterQueue: true,
+});
+
+// =============================================================================
+// Job ID Builder
+// =============================================================================
+
 function buildJobId(eventId: string) {
   return `feedback-request-${eventId}`;
 }
+
+// =============================================================================
+// Queue Operations
+// =============================================================================
 
 /**
  * Schedule feedback request to be sent 1 hour after event ends
@@ -39,11 +40,13 @@ function buildJobId(eventId: string) {
  * @param endAt - Event end date
  */
 export async function enqueueFeedbackRequest(eventId: string, endAt: Date) {
-  console.log('kolejka');
+  logger.debug({ eventId, endAt }, 'Enqueueing feedback request');
+
   const now = Date.now();
-  // const oneHourAfterEnd = new Date(endAt).getTime() + 60 * 1000; // 1 hour
-  const oneHourAfterEnd = new Date(endAt).getTime() + 5 * 1000; // 1 hour
-  const delay = oneHourAfterEnd - now;
+  // 1 hour after event end in production, 5 seconds in development
+  const delayAfterEnd = config.isProduction ? 60 * 60 * 1000 : 5 * 1000;
+  const runAt = new Date(endAt).getTime() + delayAfterEnd;
+  const delay = runAt - now;
 
   if (delay <= 0) {
     logger.info(
@@ -60,9 +63,6 @@ export async function enqueueFeedbackRequest(eventId: string, endAt: Date) {
 
   const opts: JobsOptions = {
     delay,
-    attempts: 3,
-    removeOnComplete: 1000,
-    removeOnFail: 5000,
     jobId: buildJobId(eventId),
   };
 
@@ -84,10 +84,7 @@ export async function enqueueFeedbackRequestNow(eventId: string) {
   );
 
   const opts: JobsOptions = {
-    attempts: 3,
-    removeOnComplete: 1000,
-    removeOnFail: 5000,
-    jobId: `${buildJobId(eventId)}-manual-${Date.now()}`, // Unique ID for manual sends
+    jobId: `${buildJobId(eventId)}-manual-${Date.now()}`,
   };
 
   await feedbackQueue.add('send', { eventId }, opts);
@@ -138,44 +135,30 @@ export async function rescheduleFeedbackRequest(
   await enqueueFeedbackRequest(eventId, newEndAt);
 }
 
+// =============================================================================
+// Worker Bootstrap
+// =============================================================================
+
 /**
  * Bootstrap the feedback worker
+ * Should be called from a separate worker process
  */
 export function bootstrapFeedbackWorker() {
   logger.info('🚀 Starting feedback worker...');
 
-  const worker = new Worker<FeedbackRequestPayload>(
-    'event-feedback',
+  const worker = createWorker<FeedbackRequestPayload>(
+    QUEUE_NAME,
     async (job) => {
       const { eventId } = job.data;
-      logger.info(
-        { jobId: job.id, eventId },
-        '[Worker] Executing feedback request job...'
-      );
-      try {
-        await runFeedbackRequestForEvent(eventId);
-        logger.info(
-          { eventId },
-          '[Worker] Feedback request sent successfully.'
-        );
-      } catch (err) {
-        logger.error({ err, eventId }, '[Worker] Feedback request failed.');
-        throw err;
-      }
+      await runFeedbackRequestForEvent(eventId);
+      return { success: true, eventId };
     },
-    { connection }
+    {
+      concurrency: BULLMQ_CONFIG.workerOptions.concurrency,
+    }
   );
 
-  worker.on('ready', () =>
-    logger.info('✅ Feedback worker ready, listening for jobs...')
-  );
-  worker.on('error', (err) => logger.error({ err }, '[Worker] Error'));
-  worker.on('failed', (job, err) =>
-    logger.error({ jobId: job?.id, err }, '[Worker] Job failed')
-  );
-  worker.on('completed', (job) =>
-    logger.debug({ jobId: job.id }, '[Worker] Job completed')
-  );
+  logger.info('🎯 Feedback worker bootstrap complete.');
 
   return worker;
 }

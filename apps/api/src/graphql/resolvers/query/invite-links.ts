@@ -8,6 +8,7 @@
  */
 
 import type { Prisma } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
@@ -64,7 +65,9 @@ export const eventInviteLinkQuery: QueryResolvers['eventInviteLink'] =
     'eventInviteLink',
     async (_p, { id, code }, ctx) => {
       if (!id && !code) {
-        throw new Error('Either id or code must be provided.');
+        throw new GraphQLError('Either id or code must be provided.', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
       }
 
       // First fetch link to get eventId

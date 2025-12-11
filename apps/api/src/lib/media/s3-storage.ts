@@ -92,16 +92,16 @@ export class S3MediaStorage implements MediaStorage {
       }
 
       // Convert other types to Readable
+      // AWS SDK v3 Body type is complex union - cast required
       if (response.Body) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return Readable.from(response.Body as any);
       }
 
       return null;
-    } catch (error: any) {
-      if (
-        error.name === 'NoSuchKey' ||
-        error.$metadata?.httpStatusCode === 404
-      ) {
+    } catch (error: unknown) {
+      const err = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+      if (err.name === 'NoSuchKey' || err.$metadata?.httpStatusCode === 404) {
         return null;
       }
       throw error;
@@ -150,16 +150,16 @@ export class S3MediaStorage implements MediaStorage {
         return response.Body;
       }
 
+      // AWS SDK v3 Body type is complex union - cast required
       if (response.Body) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return Readable.from(response.Body as any);
       }
 
       return null;
-    } catch (error: any) {
-      if (
-        error.name === 'NoSuchKey' ||
-        error.$metadata?.httpStatusCode === 404
-      ) {
+    } catch (error: unknown) {
+      const err = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+      if (err.name === 'NoSuchKey' || err.$metadata?.httpStatusCode === 404) {
         return null;
       }
       throw error;

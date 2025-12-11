@@ -45,7 +45,7 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
       }
 
       // Build update data
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (input.name !== undefined) updateData.name = input.name;
       if (input.email !== undefined) updateData.email = input.email;
       if (input.role !== undefined) updateData.role = input.role;

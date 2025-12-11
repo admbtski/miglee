@@ -25,7 +25,6 @@ import {
 import { ATTR_SERVICE_NAMESPACE } from '@opentelemetry/semantic-conventions/incubating';
 import { PrismaInstrumentation } from '@prisma/instrumentation';
 
-console.log('#####ADAM');
 const serviceName = process.env.BACKEND_OTEL_SERVICE_NAME || 'api';
 
 // diag.setLogger(new DiagConsoleLogger(), {
@@ -134,7 +133,7 @@ const sdk = new NodeSDK({
   instrumentations: [
     new HttpInstrumentation({
       ignoreIncomingRequestHook: (req) => {
-        const url = (req as any)?.url ?? '';
+        const url = (req as { url?: string })?.url ?? '';
         return (
           url.startsWith('/health') ||
           url.startsWith('/favicon.ico') ||
@@ -144,6 +143,8 @@ const sdk = new NodeSDK({
           url.startsWith('/assets')
         );
       },
+      // OTel hook types are complex - eslint-disable required
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ignoreOutgoingRequestHook: (request: any) => {
         const path: string | undefined =
           request?.path || request?.pathname || request?.href;
@@ -155,7 +156,11 @@ const sdk = new NodeSDK({
     new FastifyOtelInstrumentation({
       servername: serviceName,
       registerOnInitialization: true,
-      ignorePaths: (opts: any) => {
+      // FastifyOtel types require explicit typing for hook parameters
+      ignorePaths: (opts: {
+        url?: string;
+        body?: { operationName?: string };
+      }) => {
         const url = opts?.url ?? '';
         return (
           url.startsWith('/health') ||
@@ -163,8 +168,13 @@ const sdk = new NodeSDK({
             opts?.body?.operationName === 'IntrospectionQuery')
         );
       },
-      // ignorePaths: (opts: any) => opts?.url?.startsWith?.('/health'),
-      requestHook: (span: any, req: any) => {
+      requestHook: (
+        span: {
+          setAttribute: (k: string, v: string) => void;
+          updateName: (n: string) => void;
+        },
+        req: { id: string; method: string; routerPath?: string; url: string }
+      ) => {
         span.setAttribute('http.request_id', req.id);
         span.updateName(`${req.method} ${req.routerPath ?? req.url}`);
       },

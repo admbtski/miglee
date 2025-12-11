@@ -1,4 +1,6 @@
 // apps/api/src/graphql/resolvers/auth.ts
+import { Prisma } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
@@ -21,7 +23,11 @@ function slugify(s: string) {
 
 async function ensureDevUserByName(name: string) {
   const trimmed = name.trim();
-  if (!trimmed) throw new Error('Name is required');
+  if (!trimmed) {
+    throw new GraphQLError('Name is required', {
+      extensions: { code: 'BAD_USER_INPUT' },
+    });
+  }
 
   // 1) try exact name match first (DEV convenience)
   const existing = await prisma.user.findFirst({
@@ -45,9 +51,12 @@ async function ensureDevUserByName(name: string) {
           verifiedAt: new Date(),
         },
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Prisma unique constraint → try next email variant
-      if (e?.code === 'P2002') {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
         email = `dev+${base}+${i}@example.local`;
         continue;
       }

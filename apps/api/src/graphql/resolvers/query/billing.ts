@@ -3,6 +3,7 @@
  * Handles queries for user subscriptions, plans, and event sponsorships
  */
 
+import { GraphQLError } from 'graphql';
 import type {
   QueryResolvers,
   UserPlanInfo,
@@ -25,7 +26,9 @@ export const myPlanQuery: QueryResolvers['myPlan'] = async (
   const userId = user?.id;
 
   if (!userId) {
-    throw new Error('Authentication required');
+    throw new GraphQLError('Authentication required', {
+      extensions: { code: 'UNAUTHENTICATED' },
+    });
   }
 
   const planInfo = await getUserEffectivePlan(userId);
@@ -49,7 +52,9 @@ export const mySubscriptionQuery: QueryResolvers['mySubscription'] = async (
   const userId = user?.id;
 
   if (!userId) {
-    throw new Error('Authentication required');
+    throw new GraphQLError('Authentication required', {
+      extensions: { code: 'UNAUTHENTICATED' },
+    });
   }
 
   const subscription = await prisma.userSubscription.findFirst({
@@ -76,7 +81,9 @@ export const myPlanPeriodsQuery: QueryResolvers['myPlanPeriods'] = async (
   const { limit = 10 } = args;
 
   if (!userId) {
-    throw new Error('Authentication required');
+    throw new GraphQLError('Authentication required', {
+      extensions: { code: 'UNAUTHENTICATED' },
+    });
   }
 
   const periods = await prisma.userPlanPeriod.findMany({
@@ -98,7 +105,9 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
     const { limit = 50 } = args;
 
     if (!userId) {
-      throw new Error('Authentication required');
+      throw new GraphQLError('Authentication required', {
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
     }
 
     const periods = await prisma.eventSponsorshipPeriod.findMany({
@@ -153,7 +162,9 @@ export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
   const userId = user?.id;
 
   if (!userId) {
-    throw new Error('Authentication required');
+    throw new GraphQLError('Authentication required', {
+      extensions: { code: 'UNAUTHENTICATED' },
+    });
   }
 
   // Check EVENT_MOD_OR_OWNER
@@ -180,7 +191,10 @@ export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
   );
 
   if (!isGlobalMod && !isOwner && !isEventModerator) {
-    throw new Error('Only event owner or moderators can view sponsorship');
+    throw new GraphQLError(
+      'Only event owner or moderators can view sponsorship',
+      { extensions: { code: 'FORBIDDEN' } }
+    );
   }
 
   const sponsorship = await prisma.eventSponsorship.findUnique({

@@ -132,7 +132,7 @@ export const deleteNotificationMutation: MutationResolvers['deleteNotification']
         await prisma.notification.delete({ where: { id } });
 
         return true;
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (
           e instanceof Prisma.PrismaClientKnownRequestError &&
           e.code === 'P2025'
@@ -181,7 +181,7 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
         });
 
         return true;
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Gdyby rekord zniknął pomiędzy find a update
         if (
           e instanceof Prisma.PrismaClientKnownRequestError &&

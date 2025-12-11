@@ -5,6 +5,7 @@
 
 import type Stripe from 'stripe';
 import { prisma } from '../prisma';
+import { SubscriptionStatus } from '@prisma/client';
 import { logger } from '../pino';
 import { addMonths, addYears } from './stripe.service';
 import { createUserPlanPeriod } from './user-plan.service';
@@ -40,7 +41,7 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
       create: {
         eventId: event.id,
         type: event.type,
-        payload: event as any,
+        payload: event as unknown as Record<string, unknown>,
         receivedAt: new Date(),
         attempt: 1,
       },
@@ -101,15 +102,16 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
       { type: event.type, id: event.id },
       'Webhook processed successfully'
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ error, eventId: event.id }, 'Webhook processing failed');
 
     // Update payment event with error
+    const errorMessage = error instanceof Error ? error.message : String(error);
     await prisma.paymentEvent.update({
       where: { eventId: event.id },
       data: {
         success: false,
-        lastError: error.message,
+        lastError: errorMessage,
       },
     });
 
@@ -121,10 +123,18 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
 // CHECKOUT SESSION COMPLETED
 // ========================================================================================
 
+interface CheckoutMetadata {
+  type?: string;
+  userId?: string;
+  planId?: string;
+  eventId?: string;
+  sponsorId?: string;
+}
+
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session
 ): Promise<void> {
-  const metadata = session.metadata as any;
+  const metadata = (session.metadata ?? {}) as CheckoutMetadata;
 
   if (!metadata?.type) {
     logger.warn(
@@ -324,14 +334,21 @@ async function handleSubscriptionUpdate(
 
   const { userId, plan, billingPeriod } = metadata;
 
+  // Stripe subscription with expanded period fields
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const subWithPeriods = subscription as Stripe.Subscription & {
+    current_period_start?: number;
+    current_period_end?: number;
+  };
+
   // Log field availability for debugging
   logger.info(
     {
       subscriptionId: subscription.id,
       has_current_period_start: 'current_period_start' in subscription,
       has_current_period_end: 'current_period_end' in subscription,
-      current_period_start_value: (subscription as any).current_period_start,
-      current_period_end_value: (subscription as any).current_period_end,
+      current_period_start_value: subWithPeriods.current_period_start,
+      current_period_end_value: subWithPeriods.current_period_end,
       billing_cycle_anchor: subscription.billing_cycle_anchor,
       created: subscription.created,
       item_current_period_start:
@@ -343,13 +360,13 @@ async function handleSubscriptionUpdate(
 
   // Use subscription item periods or fallback to billing cycle
   const currentPeriodStart =
-    (subscription as any).current_period_start ||
+    subWithPeriods.current_period_start ||
     subscription.items.data[0]?.current_period_start ||
     subscription.billing_cycle_anchor ||
     subscription.created;
 
   const currentPeriodEnd =
-    (subscription as any).current_period_end ||
+    subWithPeriods.current_period_end ||
     subscription.items.data[0]?.current_period_end ||
     subscription.billing_cycle_anchor;
 
@@ -368,7 +385,7 @@ async function handleSubscriptionUpdate(
       userId,
       plan,
       billingPeriod: billingPeriod || 'MONTHLY',
-      status: subscription.status.toUpperCase() as any,
+      status: subscription.status.toUpperCase() as SubscriptionStatus,
       stripeCustomerId: subscription.customer as string,
       stripeSubscriptionId: subscription.id,
       stripePriceId: subscription.items.data[0]?.price.id,
@@ -378,7 +395,7 @@ async function handleSubscriptionUpdate(
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     },
     update: {
-      status: subscription.status.toUpperCase() as any,
+      status: subscription.status.toUpperCase() as SubscriptionStatus,
       currentPeriodStart: new Date(currentPeriodStart * 1000),
       currentPeriodEnd: new Date(currentPeriodEnd * 1000),
       trialEndsAt: null, // NO TRIAL

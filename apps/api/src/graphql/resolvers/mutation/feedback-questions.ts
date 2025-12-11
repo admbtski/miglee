@@ -3,6 +3,7 @@ import {
   NotificationEntity as PrismaNotificationEntity,
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
+import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';
 import type {
   MutationResolvers,
@@ -796,10 +797,11 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
         skippedCount: 0,
         message: `Feedback requests will be sent to ${joinedMembers} member(s)`,
       };
-    } catch (error: any) {
-      console.error('[sendFeedbackRequests] Error:', error);
+    } catch (error: unknown) {
+      logger.error({ error }, 'sendFeedbackRequests failed');
+      const message = error instanceof Error ? error.message : 'Unknown error';
       throw new GraphQLError(
-        `Failed to enqueue feedback requests: ${error.message || 'Unknown error'}`,
+        `Failed to enqueue feedback requests: ${message}`,
         {
           extensions: { code: 'INTERNAL_SERVER_ERROR' },
         }

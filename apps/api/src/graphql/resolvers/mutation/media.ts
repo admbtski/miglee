@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
+import { logger } from '../../../lib/pino';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import { config } from '../../../env';
 import { getMediaStorage } from '../../../lib/media/storage';
@@ -336,52 +337,41 @@ async function updateEntityWithMediaKey(
   newKey: string,
   userId: string
 ): Promise<void> {
-  console.log('[updateEntityWithMediaKey] Called with:', {
-    purpose,
-    entityId,
-    newKey,
-    userId,
-  });
+  logger.debug(
+    { purpose, entityId, newKey, userId },
+    'updateEntityWithMediaKey called'
+  );
 
   switch (purpose) {
     case 'USER_AVATAR': {
-      console.log('[updateEntityWithMediaKey] Handling USER_AVATAR');
+      logger.debug('Handling USER_AVATAR');
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { avatarKey: true },
       });
 
-      console.log('[updateEntityWithMediaKey] Found user:', {
-        userId,
-        oldKey: user?.avatarKey,
-      });
+      logger.debug({ userId, oldKey: user?.avatarKey }, 'Found user');
 
       const oldKey = user?.avatarKey;
 
       // Update user
-      console.log(
-        '[updateEntityWithMediaKey] Updating user with newKey:',
-        newKey
-      );
+      logger.debug({ newKey }, 'Updating user with newKey');
       const updated = await prisma.user.update({
         where: { id: userId },
         data: { avatarKey: newKey },
       });
 
-      console.log('[updateEntityWithMediaKey] User updated:', {
-        id: updated.id,
-        avatarKey: updated.avatarKey,
-      });
+      logger.debug(
+        { id: updated.id, avatarKey: updated.avatarKey },
+        'User updated'
+      );
 
       // Delete old media asset
       if (oldKey && oldKey !== newKey) {
-        console.log(
-          '[updateEntityWithMediaKey] Deleting old media asset:',
-          oldKey
-        );
+        logger.debug({ oldKey }, 'Deleting old media asset');
         await deleteMediaAsset(oldKey).catch((err) => {
-          console.error('Failed to delete old avatar:', err);
+          logger.error({ err }, 'Failed to delete old avatar');
         });
       }
       break;
@@ -410,7 +400,7 @@ async function updateEntityWithMediaKey(
       // Delete old media asset
       if (oldKey && oldKey !== newKey) {
         await deleteMediaAsset(oldKey).catch((err) => {
-          console.error('Failed to delete old cover:', err);
+          logger.error({ err }, 'Failed to delete old cover');
         });
       }
       break;
@@ -439,7 +429,7 @@ async function updateEntityWithMediaKey(
       // Delete old media asset
       if (oldKey && oldKey !== newKey) {
         await deleteMediaAsset(oldKey).catch((err) => {
-          console.error('Failed to delete old event cover:', err);
+          logger.error({ err }, 'Failed to delete old event cover');
         });
       }
       break;

@@ -57,7 +57,7 @@ export const createTagMutation: MutationResolvers['createTag'] =
         });
 
         return created;
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
           if (e.code === 'P2002') {
             // Unique constraint (slug) violated
@@ -122,7 +122,7 @@ export const updateTagMutation: MutationResolvers['updateTag'] =
         });
 
         return updated;
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
           if (e.code === 'P2002') {
             throw new GraphQLError('Tag with this slug already exists.', {
@@ -151,7 +151,7 @@ export const deleteTagMutation: MutationResolvers['deleteTag'] =
     try {
       await prisma.tag.delete({ where: { id } });
       return true;
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
         if (e.code === 'P2025') {
           // Record not found — return false for idempotent UX

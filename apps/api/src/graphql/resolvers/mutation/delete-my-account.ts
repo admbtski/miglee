@@ -1,3 +1,4 @@
+import { GraphQLError } from 'graphql';
 import { MutationResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { logger } from '../../../lib/pino';
@@ -13,7 +14,9 @@ export const deleteMyAccountMutation: MutationResolvers['deleteMyAccount'] =
     const userId = user?.id;
 
     if (!userId) {
-      throw new Error('Authentication required');
+      throw new GraphQLError('Authentication required', {
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
     }
 
     const { reason } = args;
@@ -45,6 +48,8 @@ export const deleteMyAccountMutation: MutationResolvers['deleteMyAccount'] =
         },
         'Failed to delete user account'
       );
-      throw new Error('Failed to delete account');
+      throw new GraphQLError('Failed to delete account', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
     }
   };

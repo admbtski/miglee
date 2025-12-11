@@ -71,7 +71,7 @@ export const createCategoryMutation: MutationResolvers['createCategory'] =
           createdAt: created.createdAt,
           updatedAt: created.updatedAt,
         };
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
           if (e.code === 'P2002') {
             throw new GraphQLError('Category with this slug already exists.', {
@@ -139,7 +139,7 @@ export const updateCategoryMutation: MutationResolvers['updateCategory'] =
           createdAt: updated.createdAt,
           updatedAt: updated.updatedAt,
         };
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
           if (e.code === 'P2002') {
             throw new GraphQLError('Category with this slug already exists.', {
@@ -171,7 +171,7 @@ export const deleteCategoryMutation: MutationResolvers['deleteCategory'] =
       try {
         await prisma.category.delete({ where: { id } });
         return true;
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof PrismaNS.PrismaClientKnownRequestError) {
           if (e.code === 'P2025') {
             // brak rekordu -> semantyka idempotentnego delete: false

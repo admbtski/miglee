@@ -3,6 +3,7 @@
  */
 
 import { GraphQLError } from 'graphql';
+import { logger } from './pino';
 import { healthRedis } from './redis';
 
 // =============================================================================
@@ -135,7 +136,7 @@ async function checkRateLimit(
     }
 
     // Log Redis errors but don't block the request
-    console.error('Rate limit check failed:', error);
+    logger.error({ error }, 'Rate limit check failed');
     // In production, you might want to fail open or closed depending on requirements
   }
 }

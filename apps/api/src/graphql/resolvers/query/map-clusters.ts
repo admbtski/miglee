@@ -78,11 +78,11 @@ function buildFilterSql(
   startParamIndex: number
 ): {
   whereClause: string;
-  params: any[];
+  params: unknown[];
   nextParamIndex: number;
 } {
   const whereConditions: string[] = [];
-  const params: any[] = [];
+  const params: unknown[] = [];
   let paramIndex = startParamIndex;
 
   if (!filters) {
@@ -323,7 +323,8 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
     longitude: number;
     count: number;
     region: string;
-    geoJson: any;
+    // GeoJSON type matches GraphQL JSON scalar
+    geoJson: Record<string, unknown>;
   }> = [];
 
   for (const tile of tileMap.values()) {
@@ -396,7 +397,7 @@ export const regionEventsQuery: QueryResolvers['regionEvents'] = async (
     : '';
 
   // Build WHERE for items query
-  const baseParams: any[] = [
+  const baseParams: unknown[] = [
     bbox.swLon,
     bbox.swLat,
     bbox.neLon,
@@ -438,7 +439,7 @@ export const regionEventsQuery: QueryResolvers['regionEvents'] = async (
   );
 
   // Count query: reuse the same filter builder but with a different base param index
-  const countBaseParams: any[] = [
+  const countBaseParams: unknown[] = [
     bbox.swLon,
     bbox.swLat,
     bbox.neLon,

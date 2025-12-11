@@ -12,6 +12,10 @@ import type {
   NotificationsResult,
 } from '../../__generated__/resolvers-types';
 import {
+  EventMemberStatus,
+  EventMemberRole,
+} from '../../__generated__/resolvers-types';
+import {
   mapComment,
   mapReview,
   mapUser,
@@ -151,10 +155,10 @@ export const adminUserMembershipsQuery: QueryResolvers['adminUserMemberships'] =
       });
 
       return {
-        items: memberships.map((m: any) => ({
+        items: memberships.map((m) => ({
           id: m.id,
-          status: m.status,
-          role: m.role,
+          status: m.status as EventMemberStatus,
+          role: m.role as EventMemberRole,
           joinedAt: m.joinedAt,
           event: {
             id: m.event.id,
@@ -202,7 +206,7 @@ export const adminUserEventsQuery: QueryResolvers['adminUserEvents'] =
       });
 
       return {
-        items: events.map((i: any) => ({
+        items: events.map((i) => ({
           id: i.id,
           title: i.title,
           startAt: i.startAt,
@@ -213,8 +217,9 @@ export const adminUserEventsQuery: QueryResolvers['adminUserEvents'] =
               : new Date() > new Date(i.endAt ?? i.startAt)
                 ? 'PAST'
                 : 'AVAILABLE',
-          joinedCount: i.members.filter((m: any) => m.status === 'JOINED')
-            .length,
+          joinedCount: i.members.filter(
+            (m: { status: string }) => m.status === 'JOINED'
+          ).length,
         })),
         pageInfo: {
           total,
@@ -322,7 +327,7 @@ export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications
       ]);
 
       return {
-        items: notifications.map((n: any) => ({
+        items: notifications.map((n) => ({
           id: n.id,
           kind: n.kind,
           title: n.title,

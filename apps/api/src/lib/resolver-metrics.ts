@@ -1,5 +1,6 @@
 // resolvers/index.ts
 import opentelemetry from '@opentelemetry/api';
+import { logger } from './pino';
 
 // ====== METRYKI GQL RESOLVERÓW ======
 const meter = opentelemetry.metrics.getMeter('api');
@@ -42,11 +43,13 @@ export function resolverWithMetrics<TArgs extends any[], TResult>(
       const durS = Number(process.hrtime.bigint() - t0) / 1e9;
       gqlResolverDur.record(durS, labels);
       gqlActive.add(-1, labels);
-      console.log(
-        '[GQL] %s.%s dur=%d ms',
-        labels.type,
-        labels.field,
-        Math.round(durS * 1000)
+      logger.debug(
+        {
+          type: labels.type,
+          field: labels.field,
+          durationMs: Math.round(durS * 1000),
+        },
+        'GQL resolver completed'
       );
     }
   };

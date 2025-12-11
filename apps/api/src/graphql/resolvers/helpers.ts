@@ -240,10 +240,11 @@ export function pickLocation(
  * Helpers (viewer-aware visibility)
  * ========================================================================== */
 
-function getViewerMembership(i: EventWithGraph | any, viewerId?: string) {
+function getViewerMembership(i: EventWithGraph, viewerId?: string) {
   // Safe access to members - may be undefined if not included
+  type MemberLike = { userId: string; status: string; role: string };
   const m = viewerId
-    ? ((i.members ?? []).find((mm: any) => mm.userId === viewerId) as
+    ? ((i.members ?? []).find((mm: MemberLike) => mm.userId === viewerId) as
         | (EventMemberWithUsers & { status: string; role: string })
         | undefined)
     : undefined;
@@ -401,7 +402,7 @@ function computeEventDerived(i: EventWithGraph | any) {
 
   // Safe access to members - may be undefined if not included
   const joinedCount = (i.members ?? []).filter(
-    (m: any) => m.status === 'JOINED'
+    (m: { status: string }) => m.status === 'JOINED'
   ).length;
   const isFull =
     typeof i.max === 'number' && i.max > 0 ? joinedCount >= i.max : false;

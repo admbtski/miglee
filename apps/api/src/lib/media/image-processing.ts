@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { encode as encodeBlurhash } from 'blurhash';
 import { config } from '../../env';
+import { logger } from '../pino';
 
 export interface ProcessOriginalOptions {
   maxWidth: number;
@@ -69,7 +70,7 @@ export async function processOriginalImage(
   try {
     blurhash = await generateBlurhash(buffer, width, height);
   } catch (error) {
-    console.error('Failed to generate blurhash:', error);
+    logger.error({ error }, 'Failed to generate blurhash');
   }
 
   const mimeType = opts.format === 'webp' ? 'image/webp' : 'image/avif';

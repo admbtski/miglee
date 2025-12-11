@@ -21,6 +21,7 @@ import {
   canSoftDelete,
   sanitizeMessageContent,
 } from '../../../lib/chat-utils';
+import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';
 import { healthRedis } from '../../../lib/redis';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
@@ -445,7 +446,7 @@ export const markEventChatReadMutation: MutationResolvers['markEventChatRead'] =
         await healthRedis.del(cacheKey);
       } catch (error) {
         // Log but don't fail on cache errors
-        console.error('Redis cache invalidation error:', error);
+        logger.error({ error }, 'Redis cache invalidation error');
       }
 
       return true;

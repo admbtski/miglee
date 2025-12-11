@@ -6,6 +6,12 @@ import { GraphQLError } from 'graphql';
 import type { SubscriptionResolvers } from '../../__generated__/resolvers-types';
 import { requireJoinedMember, requireDmParticipant } from '../chat-guards';
 
+// Note: Subscription payloads use 'any' because Mercurius/GraphQL subscription
+// resolvers expect specific return types that are difficult to type statically
+// when the payload comes from pubsub.publish() calls across the codebase.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SubscriptionPayload = Record<string, any>;
+
 /**
  * Subscription: New message added to event chat
  */
@@ -24,7 +30,7 @@ export const eventMessageAddedSubscription: SubscriptionResolvers['eventMessageA
       // Subscribe to channel
       return pubsub.subscribe(`eventMessageAdded:${eventId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.eventMessageAdded;
     },
   };
@@ -46,7 +52,7 @@ export const eventTypingSubscription: SubscriptionResolvers['eventTyping'] = {
     // Subscribe to channel
     return pubsub.subscribe(`eventTyping:${eventId}`);
   },
-  resolve: (payload: any) => {
+  resolve: (payload: SubscriptionPayload) => {
     return payload.eventTyping;
   },
 };
@@ -69,7 +75,7 @@ export const dmMessageAddedSubscription: SubscriptionResolvers['dmMessageAdded']
       // Subscribe to channel
       return pubsub.subscribe(`dmMessageAdded:${threadId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.dmMessageAdded;
     },
   };
@@ -78,11 +84,20 @@ export const dmMessageAddedSubscription: SubscriptionResolvers['dmMessageAdded']
  * Subscription: Typing indicator for DM thread
  */
 export const dmTypingSubscription: SubscriptionResolvers['dmTyping'] = {
-  subscribe: async (_p, { threadId }, { pubsub }) => {
+  subscribe: async (_p, { threadId }, { user, pubsub }) => {
+    if (!user?.id) {
+      throw new GraphQLError('Authentication required.', {
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
+    }
+
+    // Guard: user must be a participant
+    await requireDmParticipant(user.id, threadId);
+
     // Subscribe to channel
     return pubsub.subscribe(`dmTyping:${threadId}`);
   },
-  resolve: (payload: any) => {
+  resolve: (payload: SubscriptionPayload) => {
     return payload.dmTyping;
   },
 };
@@ -92,11 +107,7 @@ export const dmTypingSubscription: SubscriptionResolvers['dmTyping'] = {
  */
 export const eventReactionAddedSubscription: SubscriptionResolvers['eventReactionAdded'] =
   {
-    subscribe: async (
-      _p: any,
-      { eventId }: { eventId: string },
-      { user, pubsub }: any
-    ) => {
+    subscribe: async (_p, { eventId }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -109,7 +120,7 @@ export const eventReactionAddedSubscription: SubscriptionResolvers['eventReactio
       // Subscribe to channel
       return pubsub.subscribe(`eventReactionAdded:${eventId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.eventReactionAdded;
     },
   };
@@ -119,11 +130,7 @@ export const eventReactionAddedSubscription: SubscriptionResolvers['eventReactio
  */
 export const dmReactionAddedSubscription: SubscriptionResolvers['dmReactionAdded'] =
   {
-    subscribe: async (
-      _p: any,
-      { threadId }: { threadId: string },
-      { user, pubsub }: any
-    ) => {
+    subscribe: async (_p, { threadId }, { user, pubsub }) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -136,7 +143,7 @@ export const dmReactionAddedSubscription: SubscriptionResolvers['dmReactionAdded
       // Subscribe to channel
       return pubsub.subscribe(`dmReactionAdded:${threadId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.dmReactionAdded;
     },
   };
@@ -159,7 +166,7 @@ export const dmMessageUpdatedSubscription: SubscriptionResolvers['dmMessageUpdat
       // Subscribe to channel
       return pubsub.subscribe(`dmMessageUpdated:${threadId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.dmMessageUpdated;
     },
   };
@@ -182,7 +189,7 @@ export const dmMessageDeletedSubscription: SubscriptionResolvers['dmMessageDelet
       // Subscribe to channel
       return pubsub.subscribe(`dmMessageDeleted:${threadId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.dmMessageDeleted;
     },
   };
@@ -205,7 +212,7 @@ export const eventMessageUpdatedSubscription: SubscriptionResolvers['eventMessag
       // Subscribe to channel
       return pubsub.subscribe(`eventMessageUpdated:${eventId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.eventMessageUpdated;
     },
   };
@@ -228,7 +235,7 @@ export const eventMessageDeletedSubscription: SubscriptionResolvers['eventMessag
       // Subscribe to channel
       return pubsub.subscribe(`eventMessageDeleted:${eventId}`);
     },
-    resolve: (payload: any) => {
+    resolve: (payload: SubscriptionPayload) => {
       return payload.eventMessageDeleted;
     },
   };

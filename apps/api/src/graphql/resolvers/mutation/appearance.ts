@@ -3,6 +3,7 @@
  * Handles mutations for custom appearance configuration
  */
 
+import { GraphQLError } from 'graphql';
 import type {
   MutationResolvers,
   EventAppearance,
@@ -36,7 +37,9 @@ export const updateEventAppearanceMutation: MutationResolvers['updateEventAppear
     const { input } = args;
 
     if (!userId) {
-      throw new Error('Authentication required');
+      throw new GraphQLError('Authentication required', {
+        extensions: { code: 'UNAUTHENTICATED' },
+      });
     }
 
     // Verify user is owner/moderator of the event
@@ -50,7 +53,12 @@ export const updateEventAppearanceMutation: MutationResolvers['updateEventAppear
     });
 
     if (!member) {
-      throw new Error('Only event owner/moderator can update appearance');
+      throw new GraphQLError(
+        'Only event owner/moderator can update appearance',
+        {
+          extensions: { code: 'FORBIDDEN' },
+        }
+      );
     }
 
     // Build the config object

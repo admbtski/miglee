@@ -140,10 +140,12 @@ export function parseCursor(cursor: string): CursorData | null {
  * @param before - cursor for fetching older messages (before this cursor)
  * @param after - cursor for fetching newer messages (after this cursor)
  */
+type CursorWhereClause = Record<string, unknown>;
+
 export function buildCursorWhere(
   before?: string | null,
   after?: string | null
-): any {
+): CursorWhereClause {
   if (before) {
     const parsed = parseCursor(before);
     if (!parsed) {

@@ -1,6 +1,7 @@
 // api/graphql/resolvers/query/users.ts
 import type { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
+import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
@@ -172,16 +173,16 @@ export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
       },
     });
 
-    console.log('[userQuery] Found user:', {
-      id: u?.id,
-      avatarKey: u?.avatarKey,
-    });
+    logger.debug(
+      { id: u?.id, avatarKey: u?.avatarKey },
+      'userQuery found user'
+    );
 
     const mapped = u ? mapUserToGQL(u) : null;
-    console.log('[userQuery] Mapped user:', {
-      id: mapped?.id,
-      avatarKey: mapped?.avatarKey,
-    });
+    logger.debug(
+      { id: mapped?.id, avatarKey: mapped?.avatarKey },
+      'userQuery mapped user'
+    );
 
     return mapped;
   }

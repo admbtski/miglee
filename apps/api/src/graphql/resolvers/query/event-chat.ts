@@ -8,6 +8,7 @@
 
 import type { Prisma } from '@prisma/client';
 import { buildCursor, buildCursorWhere } from '../../../lib/chat-utils';
+import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';
 import { healthRedis } from '../../../lib/redis';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
@@ -135,7 +136,7 @@ export const eventUnreadCountQuery: QueryResolvers['eventUnreadCount'] =
         }
       } catch (error) {
         // Log but don't fail on cache errors
-        console.error('Redis cache read error:', error);
+        logger.error({ error }, 'Redis cache read error');
       }
 
       // Get last read timestamp
@@ -168,7 +169,7 @@ export const eventUnreadCountQuery: QueryResolvers['eventUnreadCount'] =
         await healthRedis.setex(cacheKey, 10, unreadCount.toString());
       } catch (error) {
         // Log but don't fail on cache errors
-        console.error('Redis cache write error:', error);
+        logger.error({ error }, 'Redis cache write error');
       }
 
       return unreadCount;

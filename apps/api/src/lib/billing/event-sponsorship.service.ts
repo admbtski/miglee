@@ -312,7 +312,7 @@ export async function activateEventSponsorship(
 
   const now = new Date();
 
-  let updateData: any = {
+  let updateData: Record<string, unknown> = {
     status: 'ACTIVE',
     stripePaymentEventId,
     stripeCheckoutSessionId,

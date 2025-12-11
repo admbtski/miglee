@@ -101,9 +101,10 @@ export function verifyWebhookSignature(
       config.stripeWebhookSecret
     );
     return event;
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error({ err }, 'Webhook signature verification failed');
-    throw new Error(`Webhook signature verification failed: ${err.message}`);
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Webhook signature verification failed: ${message}`);
   }
 }
 
@@ -202,9 +203,9 @@ export async function getReceiptUrlFromPaymentEvent(
     }
 
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(
-      { paymentEventId, error: error.message },
+      { paymentEventId, error: error instanceof Error ? error.message : error },
       'Failed to retrieve receipt URL from PaymentEvent'
     );
     return null;
@@ -234,9 +235,9 @@ export async function getInvoiceUrlFromSubscription(
     }
 
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(
-      { subscriptionId, error: error.message },
+      { subscriptionId, error: error instanceof Error ? error.message : error },
       'Failed to retrieve invoice URL from Subscription'
     );
     return null;
