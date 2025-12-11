@@ -13,6 +13,10 @@ import type {
 import { mapNotification } from '../helpers';
 import { NOTIFICATION_INCLUDE } from './notifications';
 import { enqueueFeedbackRequestNow } from '../../../workers/feedback/queue';
+import {
+  assertFeedbackRateLimit,
+  assertFeedbackSendRateLimit,
+} from '../../../lib/rate-limit/domainRateLimiter';
 
 // Constants for validation
 const MAX_QUESTIONS = 10;
@@ -404,6 +408,9 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
       });
     }
 
+    // RATE LIMIT: Prevent review spam
+    await assertFeedbackRateLimit(user.id);
+
     const { eventId, rating, content, feedbackAnswers } = input;
 
     // Verify event exists and is ended
@@ -716,6 +723,9 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
         extensions: { code: 'UNAUTHORIZED' },
       });
     }
+
+    // RATE LIMIT: CRITICAL - Prevent mass email spam!
+    await assertFeedbackSendRateLimit(user.id);
 
     // Fetch event with membership
     const event = await prisma.event.findUnique({

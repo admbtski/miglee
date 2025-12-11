@@ -2,6 +2,7 @@ import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
 import { mapEvent } from '../helpers';
+import { assertEventWriteRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
 
 /**
  * Request to join an event with answers to join questions (REQUEST mode)
@@ -13,6 +14,9 @@ export const requestJoinEventWithAnswersMutation: MutationResolvers['requestJoin
         extensions: { code: 'UNAUTHENTICATED' },
       });
     }
+
+    // RATE LIMIT: Prevent join request spam
+    await assertEventWriteRateLimit(user.id);
 
     const { eventId, answers } = input;
 
@@ -683,6 +687,9 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
         extensions: { code: 'UNAUTHENTICATED' },
       });
     }
+
+    // RATE LIMIT: Prevent cancel spam
+    await assertEventWriteRateLimit(user.id);
 
     // Find member
     const member = await prisma.eventMember.findUnique({

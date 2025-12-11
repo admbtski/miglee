@@ -12,10 +12,10 @@ import {
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import {
-  checkDeleteRateLimit,
-  checkEditRateLimit,
-  checkEventChatSendRateLimit,
-} from '../../../lib/chat-rate-limit';
+  assertEventChatSendRateLimit,
+  assertEditRateLimit,
+  assertDeleteRateLimit,
+} from '../../../lib/rate-limit/domainRateLimiter';
 import {
   canEdit,
   canSoftDelete,
@@ -65,7 +65,7 @@ export const sendEventMessageMutation: MutationResolvers['sendEventMessage'] =
       }
 
       // Rate limit
-      await checkEventChatSendRateLimit(user.id, eventId);
+      await assertEventChatSendRateLimit(eventId, user.id);
 
       // Sanitize content
       const sanitizedContent = sanitizeMessageContent(content);
@@ -197,7 +197,7 @@ export const editEventMessageMutation: MutationResolvers['editEventMessage'] =
       const { content } = input;
 
       // Rate limit
-      await checkEditRateLimit(user.id);
+      await assertEditRateLimit(user.id);
 
       // Fetch message
       const existing = await prisma.eventChatMessage.findUnique({
@@ -307,7 +307,7 @@ export const deleteEventMessageMutation: MutationResolvers['deleteEventMessage']
       }
 
       // Rate limit
-      await checkDeleteRateLimit(user.id);
+      await assertDeleteRateLimit(user.id);
 
       // Fetch message
       const existing = await prisma.eventChatMessage.findUnique({

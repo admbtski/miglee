@@ -14,6 +14,7 @@ import { canStillJoin, promoteFromWaitlist } from '../../../lib/waitlist';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapEvent, mapNotification } from '../helpers';
 import { isAdminOrModerator, isAdmin } from '../shared/auth-guards';
+import { assertEventWriteRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*                               Includes / types                             */
@@ -370,6 +371,9 @@ export const joinMemberMutation: MutationResolvers['joinMember'] =
     async (_p, { eventId }, ctx) => {
       const userId = assertAuth(ctx);
 
+      // RATE LIMIT: Prevent join spam
+      await assertEventWriteRateLimit(userId);
+
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
 
@@ -518,6 +522,9 @@ export const acceptInviteMutation: MutationResolvers['acceptInvite'] =
     async (_p, { eventId }, ctx) => {
       const userId = assertAuth(ctx);
       const { pubsub } = ctx;
+
+      // RATE LIMIT: Prevent accept spam
+      await assertEventWriteRateLimit(userId);
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
@@ -712,6 +719,9 @@ export const leaveEventMutation: MutationResolvers['leaveEvent'] =
     'leaveEvent',
     async (_p, { eventId }, ctx) => {
       const userId = assertAuth(ctx);
+
+      // RATE LIMIT: Prevent leave spam
+      await assertEventWriteRateLimit(userId);
 
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
@@ -1248,6 +1258,9 @@ export const joinWaitlistOpenMutation: MutationResolvers['joinWaitlistOpen'] =
     async (_p, { eventId }, ctx) => {
       const userId = assertAuth(ctx);
 
+      // RATE LIMIT: Prevent waitlist spam
+      await assertEventWriteRateLimit(userId);
+
       const result = await prisma.$transaction(async (tx) => {
         const event = await loadEventWithMembers(tx, eventId);
 
@@ -1343,6 +1356,9 @@ export const leaveWaitlistMutation: MutationResolvers['leaveWaitlist'] =
     'leaveWaitlist',
     async (_p, { eventId }, ctx) => {
       const userId = assertAuth(ctx);
+
+      // RATE LIMIT: Prevent leave spam
+      await assertEventWriteRateLimit(userId);
 
       await prisma.$transaction(async (tx) => {
         const member = await tx.eventMember.findUnique({

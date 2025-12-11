@@ -217,8 +217,10 @@ apps/api/
 │   │   ├── email.ts           # Email service (Resend)
 │   │   ├── waitlist.ts        # Waitlist logic
 │   │   ├── chat-utils.ts      # Chat helpers
-│   │   ├── chat-rate-limit.ts # Chat rate limiting
+│   │   ├── chat-rate-limit.ts # Chat typing indicators (Redis TTL)
 │   │   ├── resolver-metrics.ts # GraphQL metrics
+│   │   ├── rate-limit/
+│   │   │   └── domainRateLimiter.ts # Domain rate limiting (ZSET sliding window)
 │   │   ├── billing/
 │   │   │   ├── stripe.service.ts         # Stripe client
 │   │   │   ├── webhook-handler.service.ts # Stripe webhooks
@@ -1101,7 +1103,11 @@ Production-ready Helmet configuration with environment-specific settings:
 
 ### Rate Limiting
 
-Production-ready rate limiting with Redis support:
+**Two-layer rate limiting architecture** for comprehensive protection:
+
+#### Layer 1: HTTP/Infrastructure (Fastify)
+
+Production-ready rate limiting with Redis support at the HTTP layer:
 
 **Configuration:**
 | Setting | Production | Development |
@@ -1110,15 +1116,72 @@ Production-ready rate limiting with Redis support:
 | Redis backend | ✅ Enabled | ❌ In-memory |
 | Ban after | 5 violations | Disabled |
 
-**Presets (for route-specific limits):**
+**REST Endpoint Presets:**
 
 ```typescript
+// Applied per-endpoint
 rateLimitPresets.auth; // 10/15min  - login, register, password reset
 rateLimitPresets.api; // 100/min   - standard API calls
-rateLimitPresets.read; // 300/min   - read-heavy endpoints
-rateLimitPresets.expensive; // 5/min     - file uploads, expensive operations
+rateLimitPresets.read; // 300/min   - health checks, public reads
+rateLimitPresets.expensive; // 5/min     - admin endpoints
 rateLimitPresets.upload; // 20/hour   - file uploads
+rateLimitPresets.webhook; // 200/min   - external webhooks (Stripe)
 ```
+
+**Active on:**
+
+- `/health/*` → read preset (300/min)
+- `/webhooks/stripe` → webhook preset (200/min)
+- `/api/upload/local` → upload preset (20/hour)
+- `/admin/queues/stats` → expensive preset (5/min)
+
+#### Layer 2: Domain/Business Logic (Redis ZSET)
+
+**Sliding window algorithm** with burst protection for GraphQL mutations:
+
+**Rate Limit Buckets:**
+
+| Bucket              | Limit              | Purpose                       |
+| ------------------- | ------------------ | ----------------------------- |
+| `chat:event:send`   | 30/30s, burst 5/5s | Event chat messages           |
+| `chat:dm:send`      | 30/30s, burst 5/5s | Direct messages               |
+| `chat:edit`         | 5/min              | Message edits                 |
+| `chat:delete`       | 5/min              | Message deletes               |
+| `gql:event:write`   | 30/min             | Join/leave/waitlist ops       |
+| `gql:feedback`      | 5/min              | Review submission             |
+| `gql:feedback:send` | 3/hour             | **Email sending** (critical!) |
+| `gql:report`        | 10/10min           | Abuse reports                 |
+| `gql:billing`       | 10/10min           | **Stripe operations**         |
+| `gql:auth`          | 10/5min            | Login/register                |
+
+**Protected Mutations (15 total):**
+
+- ✅ Billing (5): createSubscriptionCheckout, createOneOffCheckout, createEventSponsorshipCheckout, cancelSubscription, reactivateSubscription
+- ✅ Feedback (2): submitReviewAndFeedback, sendFeedbackRequests
+- ✅ Event Membership (5): joinMember, acceptInvite, leaveEvent, joinWaitlistOpen, leaveWaitlist
+- ✅ Join Requests (2): requestJoinEventWithAnswers, cancelJoinRequest
+- ✅ Reports (1): createReport
+
+**Error Response:**
+
+```json
+{
+  "errors": [
+    {
+      "message": "Rate limit exceeded. Please slow down and try again later.",
+      "extensions": {
+        "code": "RATE_LIMIT_EXCEEDED",
+        "retryAfter": 60,
+        "bucket": "gql:billing",
+        "currentCount": 11,
+        "maxAllowed": 10
+      }
+    }
+  ]
+}
+```
+
+**Fail-Open Strategy:** Redis errors are logged but don't block requests (except critical ops can be configured fail-closed).
 
 **Headers exposed:**
 

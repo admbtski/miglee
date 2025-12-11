@@ -22,6 +22,7 @@ import {
 } from '../../../lib/billing/stripe.service';
 import { logger } from '../../../lib/pino';
 import { isAdminOrModerator } from '../shared/auth-guards';
+import { assertBillingRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
 
 /**
  * Create checkout session for user subscription (auto-renewable)
@@ -36,6 +37,9 @@ export const createSubscriptionCheckoutMutation: MutationResolvers['createSubscr
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
+
+      // RATE LIMIT: Protect Stripe from spam
+      await assertBillingRateLimit(user.id);
 
       const { input } = args;
 
@@ -78,6 +82,9 @@ export const createOneOffCheckoutMutation: MutationResolvers['createOneOffChecko
         });
       }
 
+      // RATE LIMIT: Protect Stripe from spam
+      await assertBillingRateLimit(user.id);
+
       const { input } = args;
 
       logger.info(
@@ -117,6 +124,9 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
+
+      // RATE LIMIT: Protect Stripe from spam
+      await assertBillingRateLimit(user.id);
 
       const { input } = args;
 
@@ -176,6 +186,9 @@ export const cancelSubscriptionMutation: MutationResolvers['cancelSubscription']
         });
       }
 
+      // RATE LIMIT: Protect Stripe from spam
+      await assertBillingRateLimit(user.id);
+
       const { immediately = false } = args;
 
       logger.info({ userId: user.id, immediately }, 'Canceling subscription');
@@ -199,6 +212,9 @@ export const reactivateSubscriptionMutation: MutationResolvers['reactivateSubscr
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
+
+      // RATE LIMIT: Protect Stripe from spam
+      await assertBillingRateLimit(user.id);
 
       logger.info({ userId: user.id }, 'Reactivating subscription');
 

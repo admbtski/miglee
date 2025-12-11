@@ -5,7 +5,7 @@ import {
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { createDmPairKey, sanitizeDmContent } from '../../../lib/chat-utils';
-import { checkDmSendRateLimit } from '../../../lib/chat-rate-limit';
+import { assertDmSendRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
@@ -180,7 +180,7 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
       const [aUserId, bUserId] = pairKey.split('|');
 
       // Check rate limit (after validation, before DB writes)
-      await checkDmSendRateLimit(user.id, pairKey);
+      await assertDmSendRateLimit(pairKey, user.id);
 
       const result = await prisma.$transaction(async (tx) => {
         // Find or create thread

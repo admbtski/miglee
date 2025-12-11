@@ -13,6 +13,7 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapReport, ReportWithGraph } from '../helpers';
 import { requireAuth, requireAdminOrModerator } from '../shared/auth-guards';
+import { assertReportRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
 
 const REPORT_INCLUDE = {
   reporter: true,
@@ -28,6 +29,9 @@ export const createReportMutation: MutationResolvers['createReport'] =
     'createReport',
     async (_p, { input }, ctx) => {
       const userId = requireAuth(ctx);
+
+      // RATE LIMIT: Prevent report spam
+      await assertReportRateLimit(userId);
 
       const { entity, entityId, reason } = input;
 
