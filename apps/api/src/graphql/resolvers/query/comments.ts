@@ -66,8 +66,6 @@ export const commentsQuery: QueryResolvers['comments'] = resolverWithMetrics(
       include: commentInclude,
     });
 
-    console.dir({ comments });
-
     return {
       items: comments.map((c) => mapComment(c, user?.id)),
       pageInfo: {
