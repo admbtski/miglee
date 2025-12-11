@@ -15,9 +15,11 @@ const createRedisClient = (): IORedis | undefined => {
 
   try {
     return new IORedis({
-      host: process.env.REDIS_HOST ?? 'redis',
-      port: Number(process.env.REDIS_PORT ?? 6379),
-      password: process.env.REDIS_PASSWORD,
+      host: config.redisHost,
+      port: config.redisPort,
+      password: config.redisPassword,
+      db: config.redisDb,
+      tls: config.redisTls ? {} : undefined,
       retryStrategy: (times: number) => Math.min(500 + times * 250, 5000),
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,

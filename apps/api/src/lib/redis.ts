@@ -13,13 +13,13 @@ import { logger } from './pino';
 // =============================================================================
 
 const REDIS_CONFIG = {
-  host: process.env.REDIS_HOST ?? 'redis',
-  port: Number(process.env.REDIS_PORT ?? 6379),
-  password: process.env.REDIS_PASSWORD,
-  db: Number(process.env.REDIS_DB ?? 0),
+  host: config.redisHost,
+  port: config.redisPort,
+  password: config.redisPassword,
+  db: config.redisDb,
 
   // TLS configuration (for production with SSL)
-  tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+  tls: config.redisTls ? {} : undefined,
 };
 
 // Retry configuration

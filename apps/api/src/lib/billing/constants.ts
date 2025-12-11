@@ -8,6 +8,7 @@ import type {
   EventPlan,
   BillingPeriod,
 } from '@prisma/client';
+import { config } from '../../env';
 
 // ========================================================================================
 // PRICING (in PLN, stored as integers - grosze/cents)
@@ -73,17 +74,17 @@ export const ACTION_PACKAGES = {
   SMALL: {
     actions: 1,
     price: 9.99,
-    stripePriceId: process.env.STRIPE_PRICE_ACTION_PACKAGE_SMALL || '',
+    stripePriceId: config.stripePrices.actionPackages.small || '',
   },
   MEDIUM: {
     actions: 3,
     price: 24.99,
-    stripePriceId: process.env.STRIPE_PRICE_ACTION_PACKAGE_MEDIUM || '',
+    stripePriceId: config.stripePrices.actionPackages.medium || '',
   },
   LARGE: {
     actions: 5,
     price: 39.99,
-    stripePriceId: process.env.STRIPE_PRICE_ACTION_PACKAGE_LARGE || '',
+    stripePriceId: config.stripePrices.actionPackages.large || '',
   },
 } as const;
 

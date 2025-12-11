@@ -20,7 +20,7 @@ const BOARD_PATH = '/admin/queues';
 export const bullBoardPlugin = fastifyPlugin(
   async (fastify) => {
     // Skip in production unless explicitly enabled
-    if (config.isProduction && process.env.ENABLE_BULL_BOARD !== 'true') {
+    if (config.isProduction && !config.enableBullBoard) {
       fastify.log.info(
         'Bull Board disabled in production (set ENABLE_BULL_BOARD=true to enable)'
       );
