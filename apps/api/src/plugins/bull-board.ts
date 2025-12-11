@@ -6,6 +6,7 @@ import { config, env } from '../env';
 import { feedbackQueue } from '../workers/feedback/queue';
 import { remindersQueue } from '../workers/reminders/queue';
 import { BULLMQ_CONFIG } from '../lib/bullmq';
+import { rateLimitPresets } from './rate-limit';
 
 /**
  * Bull Board - Queue Monitoring Dashboard
@@ -95,47 +96,55 @@ export const bullBoardPlugin = fastifyPlugin(
 export const queueStatsPlugin = fastifyPlugin(
   async (fastify) => {
     // API endpoint for queue stats (for custom dashboards or monitoring)
-    fastify.get('/admin/queues/stats', async (request, reply) => {
-      // Check for admin in production
-      if (config.isProduction) {
-        const user = request.user as { role?: string } | undefined;
-        if (!user || user.role !== 'ADMIN') {
-          return reply.code(403).send({
-            statusCode: 403,
-            error: 'Forbidden',
-            message: 'Admin access required',
+    fastify.get(
+      '/admin/queues/stats',
+      {
+        config: {
+          rateLimit: rateLimitPresets.expensive, // Very strict limit for admin endpoints
+        },
+      },
+      async (request, reply) => {
+        // Check for admin in production
+        if (config.isProduction) {
+          const user = request.user as { role?: string } | undefined;
+          if (!user || user.role !== 'ADMIN') {
+            return reply.code(403).send({
+              statusCode: 403,
+              error: 'Forbidden',
+              message: 'Admin access required',
+            });
+          }
+        }
+
+        try {
+          const [feedbackCounts, remindersCounts] = await Promise.all([
+            feedbackQueue.getJobCounts(),
+            remindersQueue.getJobCounts(),
+          ]);
+
+          return {
+            queues: [
+              {
+                name: 'event-feedback',
+                ...feedbackCounts,
+              },
+              {
+                name: 'event-reminders',
+                ...remindersCounts,
+              },
+            ],
+            timestamp: new Date().toISOString(),
+          };
+        } catch (error) {
+          fastify.log.error({ err: error }, 'Failed to get queue stats');
+          return reply.code(500).send({
+            statusCode: 500,
+            error: 'Internal Server Error',
+            message: 'Failed to get queue stats',
           });
         }
       }
-
-      try {
-        const [feedbackCounts, remindersCounts] = await Promise.all([
-          feedbackQueue.getJobCounts(),
-          remindersQueue.getJobCounts(),
-        ]);
-
-        return {
-          queues: [
-            {
-              name: 'event-feedback',
-              ...feedbackCounts,
-            },
-            {
-              name: 'event-reminders',
-              ...remindersCounts,
-            },
-          ],
-          timestamp: new Date().toISOString(),
-        };
-      } catch (error) {
-        fastify.log.error({ err: error }, 'Failed to get queue stats');
-        return reply.code(500).send({
-          statusCode: 500,
-          error: 'Internal Server Error',
-          message: 'Failed to get queue stats',
-        });
-      }
-    });
+    );
   },
   {
     name: 'queue-stats-plugin',

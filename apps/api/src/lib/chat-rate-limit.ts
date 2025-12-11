@@ -4,7 +4,7 @@
 
 import { GraphQLError } from 'graphql';
 import { logger } from './pino';
-import { healthRedis } from './redis';
+import { chatRedis } from './redis';
 
 // =============================================================================
 // Rate Limit Configuration
@@ -95,7 +95,7 @@ async function checkRateLimit(
     const windowStart = now - config.windowSeconds * 1000;
 
     // Use Redis sorted set for sliding window
-    const multi = healthRedis.multi();
+    const multi = chatRedis.multi();
 
     // Remove old entries outside the window
     multi.zremrangebyscore(key, 0, windowStart);
@@ -158,9 +158,9 @@ export async function setEventChatTyping(
   const key = `chat:event:typing:${eventId}:${userId}`;
 
   if (isTyping) {
-    await healthRedis.setex(key, TYPING_TTL_SECONDS, '1');
+    await chatRedis.setex(key, TYPING_TTL_SECONDS, '1');
   } else {
-    await healthRedis.del(key);
+    await chatRedis.del(key);
   }
 }
 
@@ -171,7 +171,7 @@ export async function getEventChatTypingUsers(
   eventId: string
 ): Promise<string[]> {
   const pattern = `chat:event:typing:${eventId}:*`;
-  const keys = await healthRedis.keys(pattern);
+  const keys = await chatRedis.keys(pattern);
 
   return keys
     .map((key) => {
@@ -192,9 +192,9 @@ export async function setDmTyping(
   const key = `chat:dm:typing:${threadId}:${userId}`;
 
   if (isTyping) {
-    await healthRedis.setex(key, TYPING_TTL_SECONDS, '1');
+    await chatRedis.setex(key, TYPING_TTL_SECONDS, '1');
   } else {
-    await healthRedis.del(key);
+    await chatRedis.del(key);
   }
 }
 
@@ -203,7 +203,7 @@ export async function setDmTyping(
  */
 export async function getDmTypingUsers(threadId: string): Promise<string[]> {
   const pattern = `chat:dm:typing:${threadId}:*`;
-  const keys = await healthRedis.keys(pattern);
+  const keys = await chatRedis.keys(pattern);
 
   return keys
     .map((key) => {

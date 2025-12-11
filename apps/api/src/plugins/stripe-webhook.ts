@@ -10,62 +10,72 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { verifyWebhookSignature, handleStripeWebhook } from '../lib/billing';
 import { logger } from '../lib/pino';
 import { config } from '../env';
+import { rateLimitPresets } from './rate-limit';
 
 interface RequestWithRawBody extends FastifyRequest {
   rawBody?: Buffer;
 }
 
 export async function stripeWebhookPlugin(fastify: FastifyInstance) {
-  fastify.post('/webhooks/stripe', async (request, reply) => {
-    try {
-      const signature = request.headers['stripe-signature'];
+  fastify.post(
+    '/webhooks/stripe',
+    {
+      config: {
+        rateLimit: rateLimitPresets.webhook, // Higher limit for external webhook delivery
+      },
+    },
+    async (request, reply) => {
+      try {
+        const signature = request.headers['stripe-signature'];
 
-      // Get raw body from fastify-raw-body plugin
-      const rawBody = (request as RequestWithRawBody).rawBody;
+        // Get raw body from fastify-raw-body plugin
+        const rawBody = (request as RequestWithRawBody).rawBody;
 
-      if (!rawBody) {
-        logger.error(
-          'rawBody is not available - fastify-raw-body plugin may not be configured'
-        );
-        return reply.code(500).send({ error: 'Server configuration error' });
-      }
-
-      // DEVELOPMENT MODE: Skip signature verification if no webhook secret configured
-      const isDevelopment = config.isDevelopment && !config.stripeWebhookSecret;
-
-      let event;
-
-      if (isDevelopment) {
-        // ⚠️ ONLY FOR LOCAL DEVELOPMENT - DO NOT USE IN PRODUCTION
-        logger.warn(
-          '⚠️  DEVELOPMENT MODE: Skipping Stripe signature verification'
-        );
-
-        // Parse body as event directly
-        const bodyString = rawBody.toString('utf-8');
-        event = JSON.parse(bodyString);
-      } else {
-        // PRODUCTION: Verify signature
-        if (!signature) {
-          logger.warn('Missing stripe-signature header');
-          return reply
-            .code(400)
-            .send({ error: 'Missing stripe-signature header' });
+        if (!rawBody) {
+          logger.error(
+            'rawBody is not available - fastify-raw-body plugin may not be configured'
+          );
+          return reply.code(500).send({ error: 'Server configuration error' });
         }
 
-        event = verifyWebhookSignature(rawBody, signature as string);
+        // DEVELOPMENT MODE: Skip signature verification if no webhook secret configured
+        const isDevelopment =
+          config.isDevelopment && !config.stripeWebhookSecret;
+
+        let event;
+
+        if (isDevelopment) {
+          // ⚠️ ONLY FOR LOCAL DEVELOPMENT - DO NOT USE IN PRODUCTION
+          logger.warn(
+            '⚠️  DEVELOPMENT MODE: Skipping Stripe signature verification'
+          );
+
+          // Parse body as event directly
+          const bodyString = rawBody.toString('utf-8');
+          event = JSON.parse(bodyString);
+        } else {
+          // PRODUCTION: Verify signature
+          if (!signature) {
+            logger.warn('Missing stripe-signature header');
+            return reply
+              .code(400)
+              .send({ error: 'Missing stripe-signature header' });
+          }
+
+          event = verifyWebhookSignature(rawBody, signature as string);
+        }
+
+        // Process webhook
+        await handleStripeWebhook(event);
+
+        return reply.code(200).send({ received: true });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error({ err }, 'Webhook processing failed');
+        return reply.code(400).send({ error: message });
       }
-
-      // Process webhook
-      await handleStripeWebhook(event);
-
-      return reply.code(200).send({ received: true });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error({ err }, 'Webhook processing failed');
-      return reply.code(400).send({ error: message });
     }
-  });
+  );
 
   logger.info('Stripe webhook endpoint registered at POST /webhooks/stripe');
 }

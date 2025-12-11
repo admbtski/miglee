@@ -177,6 +177,14 @@ export const rateLimitRedis = createRedisConnection('rate-limit', {
   lazyConnect: true,
 });
 
+/**
+ * Redis connection for chat features (rate limiting, typing indicators)
+ */
+export const chatRedis = createRedisConnection('chat', {
+  keyPrefix: 'chat:',
+  lazyConnect: true,
+});
+
 // =============================================================================
 // BullMQ Connections
 // =============================================================================
@@ -196,7 +204,7 @@ export function createBullMQConnection(name: string): Redis {
 // Graceful Shutdown
 // =============================================================================
 
-const activeConnections: Redis[] = [healthRedis];
+const activeConnections: Redis[] = [healthRedis, chatRedis];
 
 /**
  * Register a Redis connection for graceful shutdown

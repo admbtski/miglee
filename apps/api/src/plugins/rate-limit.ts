@@ -171,19 +171,24 @@ export const rateLimitPresets = {
     max: config.isProduction ? 100 : 1000,
     timeWindow: '1 minute',
   },
-  // Relaxed limit for read-heavy endpoints
+  // Relaxed limit for read-heavy endpoints (health checks, public reads)
   read: {
     max: config.isProduction ? 300 : 3000,
     timeWindow: '1 minute',
   },
-  // Very strict limit for expensive operations
+  // Very strict limit for expensive operations (admin endpoints)
   expensive: {
     max: config.isProduction ? 5 : 50,
     timeWindow: '1 minute',
   },
-  // Upload limit
+  // Upload limit (expensive I/O operations)
   upload: {
     max: config.isProduction ? 20 : 200,
     timeWindow: '1 hour',
+  },
+  // Webhook limit (external services calling us - Stripe, etc)
+  webhook: {
+    max: config.isProduction ? 200 : 2000,
+    timeWindow: '1 minute',
   },
 } as const;
