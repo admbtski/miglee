@@ -1,57 +1,60 @@
-import { Queue, Worker, JobsOptions } from 'bullmq';
-import IORedis from 'ioredis';
+import { JobsOptions } from 'bullmq';
+import { getQueue, createWorker, BULLMQ_CONFIG } from '../../lib/bullmq';
 import { runReminderForEvent } from './runReminderForEvent';
 import { logger } from '../logger';
 
-export const connection = new IORedis({
-  host: process.env.REDIS_HOST ?? 'redis',
-  port: Number(process.env.REDIS_PORT ?? 6379),
-  //  password: process.env.REDIS_PASSWORD,
+/**
+ * Event Reminders Queue
+ * Sends reminder notifications before an event starts
+ */
 
-  retryStrategy: (times: number) => Math.min(500 + times * 250, 5000),
-  maxRetriesPerRequest: null,
-  enableReadyCheck: true,
-  connectTimeout: 5_000,
-  lazyConnect: false,
-  keepAlive: 10_000,
+// Queue name
+const QUEUE_NAME = 'event-reminders';
 
-  // tls: {}                       // if rediss://
-});
-
-// Jedna kolejka dla wszystkich przypomnień
-export const remindersQueue = new Queue('event-reminders', { connection });
-
-/** Buckety (w minutach): 24h, 12h, 6h, 3h, 1h, 30m, 15m */
-export const BUCKETS_MIN = [
-  24 * 60,
-  12 * 60,
-  6 * 60,
-  3 * 60,
-  60,
-  30,
-  15,
-  10,
-  9,
-  8,
-  7,
-  6,
-  5,
-  4,
-  3,
-  2,
-  1,
-] as const;
-
+// Job payload type
 export type ReminderPayload = {
   eventId: string;
   minutesBefore: number;
 };
 
+// Get the queue (creates if not exists)
+export const remindersQueue = getQueue<ReminderPayload>(QUEUE_NAME, {
+  createDeadLetterQueue: true,
+});
+
+// =============================================================================
+// Reminder Buckets
+// =============================================================================
+
+/** Reminder buckets (in minutes): 24h, 12h, 6h, 3h, 1h, 30m, 15m */
+export const BUCKETS_MIN = [
+  24 * 60, // 24 hours
+  12 * 60, // 12 hours
+  6 * 60, // 6 hours
+  3 * 60, // 3 hours
+  60, // 1 hour
+  30, // 30 minutes
+  15, // 15 minutes
+] as const;
+
+// =============================================================================
+// Job ID Builder
+// =============================================================================
+
 function buildJobId(eventId: string, minutesBefore: number) {
   return `reminder:${minutesBefore}m:${eventId}`;
 }
 
-/** Dodaje wszystkie przypomnienia dla Eventu (pomiń przeszłość/za bliskie) */
+// =============================================================================
+// Queue Operations
+// =============================================================================
+
+/**
+ * Schedule all reminders for an event
+ * Skips reminders that are already in the past or too close
+ * @param eventId - Event ID
+ * @param startAt - Event start date
+ */
 export async function enqueueReminders(eventId: string, startAt: Date) {
   const now = Date.now();
   logger.info(
@@ -63,13 +66,12 @@ export async function enqueueReminders(eventId: string, startAt: Date) {
   for (const minutesBefore of BUCKETS_MIN) {
     const runAt = new Date(startAt).getTime() - minutesBefore * 60 * 1000;
     const delay = runAt - now;
+
+    // Skip if reminder would fire in less than 5 seconds
     if (delay <= 5000) continue;
 
     const opts: JobsOptions = {
       delay,
-      attempts: 3,
-      removeOnComplete: 1000,
-      removeOnFail: 5000,
       jobId: buildJobId(eventId, minutesBefore),
     };
 
@@ -84,13 +86,18 @@ export async function enqueueReminders(eventId: string, startAt: Date) {
   logger.info({ eventId, added }, '[enqueueReminders] Done.');
 }
 
-/** Czyści wszystkie przypomnienia */
+/**
+ * Clear all scheduled reminders for an event
+ * @param eventId - Event ID
+ */
 export async function clearReminders(eventId: string) {
   logger.info({ eventId }, '[clearReminders] Removing existing jobs...');
   let removed = 0;
+
   for (const minutesBefore of BUCKETS_MIN) {
     const jobId = buildJobId(eventId, minutesBefore);
     const job = await remindersQueue.getJob(jobId);
+
     if (job) {
       try {
         await job.remove();
@@ -104,55 +111,45 @@ export async function clearReminders(eventId: string) {
       }
     }
   }
+
   logger.info({ eventId, removed }, '[clearReminders] Done.');
 }
 
-/** Przebudowuje przypomnienia po zmianie startAt */
+/**
+ * Reschedule all reminders for an event (when startAt changes)
+ * @param eventId - Event ID
+ * @param newStartAt - New event start date
+ */
 export async function rescheduleReminders(eventId: string, newStartAt: Date) {
   logger.info({ eventId, newStartAt }, '[rescheduleReminders] Rescheduling...');
   await clearReminders(eventId);
   await enqueueReminders(eventId, newStartAt);
 }
 
-/** Worker (uruchamiany osobno) */
+// =============================================================================
+// Worker Bootstrap
+// =============================================================================
+
+/**
+ * Bootstrap the reminders worker
+ * Should be called from a separate worker process
+ */
 export function bootstrapRemindersWorker() {
   logger.info('🚀 Starting reminders worker...');
 
-  const worker = new Worker<ReminderPayload>(
-    'event-reminders',
+  const worker = createWorker<ReminderPayload>(
+    QUEUE_NAME,
     async (job) => {
       const { eventId, minutesBefore } = job.data;
-      logger.info(
-        { jobId: job.id, eventId, minutesBefore },
-        '[Worker] Executing reminder job...'
-      );
-      try {
-        await runReminderForEvent(eventId, minutesBefore);
-        logger.info(
-          { eventId, minutesBefore },
-          '[Worker] Reminder sent successfully.'
-        );
-      } catch (err) {
-        logger.error(
-          { err, eventId, minutesBefore },
-          '[Worker] Reminder failed.'
-        );
-        throw err;
-      }
+      await runReminderForEvent(eventId, minutesBefore);
+      return { success: true, eventId, minutesBefore };
     },
-    { connection }
+    {
+      concurrency: BULLMQ_CONFIG.workerOptions.concurrency,
+    }
   );
 
-  worker.on('ready', () =>
-    logger.info('✅ Worker ready, listening for jobs...')
-  );
-  worker.on('error', (err) => logger.error({ err }, '[Worker] Error'));
-  worker.on('failed', (job, err) =>
-    logger.error({ jobId: job?.id, err }, '[Worker] Job failed')
-  );
-  worker.on('completed', (job) =>
-    logger.debug({ jobId: job.id }, '[Worker] Job completed')
-  );
+  logger.info('🎯 Reminders worker bootstrap complete.');
 
   return worker;
 }
