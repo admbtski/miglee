@@ -285,49 +285,50 @@ import { assertEventChatSendRateLimit } from '../../../lib/rate-limit/domainRate
 ### Chat
 
 - [x] Refactor `chat-rate-limit.ts`
-- [ ] Update chat mutation imports (optional)
+- [x] Update chat mutation imports (direct to domainRateLimiter)
 
 ### Event Membership
 
 - [x] Add import to `event-members.ts`
-- [ ] Add rate limit to `joinMember`
-- [ ] Add rate limit to `acceptInviteMutation`
-- [ ] Add rate limit to `leaveEventMutation`
-- [ ] Add rate limit to `joinWaitlistOpenMutation`
-- [ ] Add rate limit to `leaveWaitlistMutation`
+- [x] Add rate limit to `joinMember`
+- [x] Add rate limit to `acceptInviteMutation`
+- [x] Add rate limit to `leaveEventMutation`
+- [x] Add rate limit to `joinWaitlistOpenMutation`
+- [x] Add rate limit to `leaveWaitlistMutation`
 
 ### Join Requests
 
-- [ ] Add import to `join-requests.ts`
-- [ ] Add rate limit to `requestJoinEventWithAnswersMutation`
-- [ ] Add rate limit to `cancelJoinRequestMutation`
+- [x] Add import to `join-requests.ts`
+- [x] Add rate limit to `requestJoinEventWithAnswersMutation`
+- [x] Add rate limit to `cancelJoinRequestMutation`
 
 ### Feedback
 
-- [ ] Add import to `feedback-questions.ts`
-- [ ] Add rate limit to `submitReviewAndFeedback`
-- [ ] Add rate limit to `sendFeedbackRequests` (CRITICAL!)
+- [x] Add import to `feedback-questions.ts`
+- [x] Add rate limit to `submitReviewAndFeedback`
+- [x] Add rate limit to `sendFeedbackRequests` (CRITICAL!)
 
 ### Reports
 
-- [ ] Add import to `reports.ts`
-- [ ] Add rate limit to `createReport`
+- [x] Add import to `reports.ts`
+- [x] Add rate limit to `createReport`
 
 ### Billing
 
-- [ ] Add import to `billing.ts`
-- [ ] Add rate limit to `createSubscriptionCheckout`
-- [ ] Add rate limit to `createOneOffCheckout`
-- [ ] Add rate limit to `createEventSponsorshipCheckout`
-- [ ] Add rate limit to `cancelSubscription`
-- [ ] Add rate limit to `reactivateSubscription`
+- [x] Add import to `billing.ts`
+- [x] Add rate limit to `createSubscriptionCheckout`
+- [x] Add rate limit to `createOneOffCheckout`
+- [x] Add rate limit to `createEventSponsorshipCheckout`
+- [x] Add rate limit to `cancelSubscription`
+- [x] Add rate limit to `reactivateSubscription`
 
 ### Testing & Documentation
 
-- [ ] TypeScript check
-- [ ] Update DOCUMENTATION.md
-- [ ] Test rate limits in development
-- [ ] Monitor Redis keys in production
+- [x] TypeScript check (0 errors)
+- [x] Update DOCUMENTATION.md
+- [x] Update CHECKLIST_BEFORE_PRO.md
+- [ ] Test rate limits in development (MANUAL TESTING REQUIRED)
+- [ ] Monitor Redis keys in production (POST-DEPLOYMENT)
 
 ---
 
@@ -399,12 +400,287 @@ mutation {
 
 ## 🚀 NASTĘPNE KROKI
 
-1. **Zaaplikuj rate limiting w mutation resolvers** (follow checklist)
-2. **Uruchom `pnpm typecheck`**
-3. **Przetestuj w development** (spróbuj przekroczyć limit)
-4. **Update DOCUMENTATION.md** (dodaj sekcję o rate limiting)
-5. **Deploy na staging** i monitoruj Redis
-6. **Production deployment** z monitoring
+### ✅ COMPLETED (Implementation Phase)
+
+1. ✅ **Core System Created**
+   - `domainRateLimiter.ts` with sliding window + burst protection
+   - 10 rate limit buckets configured
+   - GraphQL error formatting with `retryAfter`
+   - Fail-open strategy on Redis errors
+
+2. ✅ **All Mutations Protected**
+   - Billing (5): Stripe spam protection
+   - Feedback (2): Email spam protection (CRITICAL)
+   - Event Membership (5): Join/leave spam protection
+   - Join Requests (2): Request spam protection
+   - Reports (1): Abuse reporting protection
+   - Chat (4): Already protected via refactored system
+
+3. ✅ **Code Quality**
+   - TypeScript: 0 errors
+   - Deprecated code removed from `chat-rate-limit.ts`
+   - Direct imports to `domainRateLimiter`
+   - Consistent naming (`assert*RateLimit`)
+
+4. ✅ **Documentation**
+   - DOCUMENTATION.md updated with 2-layer architecture
+   - CHECKLIST_BEFORE_PRO.md marked complete
+   - RATE_LIMITING_IMPLEMENTATION.md comprehensive guide
+   - JWT plugin dependency fixed
+
+5. ✅ **REST Endpoints Protected**
+   - `/health/*` → read preset (300/min)
+   - `/webhooks/stripe` → webhook preset (200/min)
+   - `/api/upload/local` → upload preset (20/hour)
+   - `/admin/queues/stats` → expensive preset (5/min)
+
+### 🧪 TESTING PHASE (Manual - Not Automated)
+
+#### 1. Development Testing Checklist
+
+**Prerequisites:**
+
+```bash
+# Start API + Redis
+pnpm dev
+
+# Open GraphQL playground
+http://localhost:4000/graphql
+```
+
+**Test Cases:**
+
+**A. Test Billing Rate Limit (10/10min)**
+
+```graphql
+# Run this mutation 11 times within 10 minutes
+mutation {
+  createSubscriptionCheckout(input: { planKind: PLUS, interval: MONTHLY }) {
+    checkoutUrl
+  }
+}
+
+# Expected: 11th request should return:
+# {
+#   "errors": [{
+#     "message": "Rate limit exceeded. Please slow down and try again later.",
+#     "extensions": {
+#       "code": "RATE_LIMIT_EXCEEDED",
+#       "retryAfter": 600,
+#       "bucket": "gql:billing",
+#       "currentCount": 11,
+#       "maxAllowed": 10
+#     }
+#   }]
+# }
+```
+
+**B. Test Event Write Rate Limit (30/min)**
+
+```graphql
+# Run this mutation 31 times within 1 minute
+mutation {
+  joinMember(eventId: "test-event-id") {
+    id
+  }
+}
+
+# Expected: 31st request should fail with RATE_LIMIT_EXCEEDED
+```
+
+**C. Test Chat Burst Limit (5/5s)**
+
+```graphql
+# Send 6 messages within 5 seconds
+mutation {
+  sendEventMessage(
+    input: { eventId: "test-event-id", content: "Test message" }
+  ) {
+    id
+  }
+}
+
+# Expected: 6th message within 5s should return:
+# {
+#   "errors": [{
+#     "message": "Too many requests in a short time. Please wait a moment and try again.",
+#     "extensions": {
+#       "code": "RATE_LIMIT_BURST_EXCEEDED",
+#       "retryAfter": 5,
+#       "bucket": "chat:event:send"
+#     }
+#   }]
+# }
+```
+
+**D. Test Email Spam Protection (3/hour) - CRITICAL**
+
+```graphql
+# Run this mutation 4 times within 1 hour
+mutation {
+  sendFeedbackRequests(eventId: "test-event-id") {
+    sentCount
+  }
+}
+
+# Expected: 4th request should fail with RATE_LIMIT_EXCEEDED
+# This is CRITICAL - prevents accidental mass email spam!
+```
+
+**E. Verify Redis Keys**
+
+```bash
+# Check domain rate limit keys
+redis-cli KEYS "domain:*"
+
+# Expected output:
+# 1) "domain:gql:billing:user-123"
+# 2) "domain:gql:event:write:user-123"
+# 3) "domain:chat:event:send:event-456:user-123"
+# etc.
+
+# Inspect specific key
+redis-cli ZRANGE "domain:gql:billing:user-123" 0 -1 WITHSCORES
+
+# Expected: timestamps of recent requests
+```
+
+**F. Test Fail-Open Behavior**
+
+```bash
+# Stop Redis
+docker stop redis
+
+# Try mutation
+# Expected: Should succeed (fail-open), with Redis error logged
+```
+
+#### 2. Monitoring in Production
+
+**Redis Monitoring:**
+
+```bash
+# Monitor rate limit keys
+redis-cli --scan --pattern "domain:*" | wc -l
+
+# Check memory usage
+redis-cli INFO memory
+
+# Monitor expired keys
+redis-cli INFO keyspace
+```
+
+**Application Logs:**
+
+```bash
+# Filter rate limit events
+grep "Rate limit" logs/app.log
+
+# Check for Redis errors
+grep "Rate limit check failed" logs/app.log
+
+# Monitor exceeded limits
+grep "Rate limit exceeded" logs/app.log
+```
+
+**Metrics to Track:**
+
+- Rate limit hits per bucket per hour
+- Rate limit failures (Redis errors)
+- Most rate-limited users
+- Most rate-limited endpoints
+
+#### 3. Load Testing (Optional but Recommended)
+
+**Using k6 or Artillery:**
+
+```javascript
+// k6 script example
+import http from 'k6/http';
+
+export default function () {
+  const url = 'http://localhost:4000/graphql';
+  const payload = JSON.stringify({
+    query: `mutation { joinMember(eventId: "test") { id } }`,
+  });
+
+  http.post(url, payload, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// Run: k6 run --vus 50 --duration 30s script.js
+// Expected: Should see 429 errors after hitting limits
+```
+
+### 📊 SUCCESS CRITERIA
+
+#### Development Testing
+
+- [ ] All test cases (A-F) pass as expected
+- [ ] Rate limit errors include correct `retryAfter`
+- [ ] Redis keys created with proper TTL
+- [ ] Fail-open works when Redis is down
+- [ ] No TypeScript errors
+
+#### Production Readiness
+
+- [ ] Load testing completed (if applicable)
+- [ ] Monitoring dashboards configured
+- [ ] Alert thresholds set for rate limit violations
+- [ ] Documentation reviewed by team
+- [ ] Deployment plan includes Redis monitoring
+
+### 🔧 TROUBLESHOOTING
+
+**Issue: Rate limits not working**
+
+```bash
+# Check Redis connection
+redis-cli PING
+# Should return: PONG
+
+# Check if rateLimitRedis is connected
+# Look for log: "Redis connected" with connection: "rate-limit"
+
+# Verify env variable
+echo $REDIS_URL
+```
+
+**Issue: Too strict limits in development**
+
+```typescript
+// Temporarily increase limits in domainRateLimiter.ts
+'gql:event:write': {
+  maxRequests: 100, // increased from 30
+  windowSeconds: 60,
+},
+```
+
+**Issue: GraphQL errors not formatted correctly**
+
+```typescript
+// Check that error has extensions
+console.log(error.extensions);
+// Should include: { code, retryAfter, bucket, currentCount, maxAllowed }
+```
+
+### 🎯 POST-DEPLOYMENT
+
+1. **First 24 Hours**
+   - Monitor rate limit hits every hour
+   - Check for unusual patterns (bot attacks, legitimate users hitting limits)
+   - Adjust limits if needed
+
+2. **First Week**
+   - Analyze rate limit violations per bucket
+   - Identify most limited operations
+   - Fine-tune limits based on real usage
+
+3. **Ongoing**
+   - Weekly review of rate limit metrics
+   - Monthly adjustment of limits based on growth
+   - Quarterly review of bucket strategy
 
 ---
 
@@ -422,5 +698,6 @@ rl:domain:gql:billing:{userId}                    (ZSET, TTL 660s)
 
 ---
 
-**Status:** 🟡 PARTIALLY IMPLEMENTED - Core system ready, mutations need updates
+**Status:** ✅ **FULLY IMPLEMENTED** - All mutations protected, TypeScript passes, documentation updated
 **Last Updated:** 2025-12-11
+**Ready for:** Manual testing in development, then production deployment
