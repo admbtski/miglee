@@ -53,7 +53,16 @@ import { prisma } from '../../../lib/prisma';
  * Context user type - represents the user object from MercuriusContext.
  * This is a subset of the full SessionUser GraphQL type.
  */
-export type ContextUser = NonNullable<MercuriusContext['user']>;
+export interface ContextUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatarKey: string | null;
+  verifiedAt: Date | null;
+  locale: string;
+  timezone: string;
+}
 
 /**
  * Minimal user type for auth checks.
@@ -147,7 +156,7 @@ export function requireAuthUser(ctx: MercuriusContext): ContextUser {
       extensions: { code: 'UNAUTHENTICATED' },
     });
   }
-  return ctx.user;
+  return ctx.user as ContextUser;
 }
 
 // =============================================================================

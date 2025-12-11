@@ -5,11 +5,17 @@
  */
 
 import type { Prisma } from '@prisma/client';
+import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapComment, mapReview } from '../helpers';
-import { requireAdmin } from '../shared/auth-guards';
+import {
+  mapComment,
+  mapReview,
+  CommentWithGraph,
+  ReviewWithGraph,
+} from '../helpers';
+import { requireAdmin, requireAuthUser } from '../shared/auth-guards';
 
 /**
  * Query: Get all comments (admin)
@@ -18,11 +24,16 @@ export const adminCommentsQuery: QueryResolvers['adminComments'] =
   resolverWithMetrics(
     'Query',
     'adminComments',
-    async (_p, { limit = 50, offset = 0, eventId, userId }, { user }) => {
-      requireAdmin(user);
+    async (
+      _p,
+      { limit = 50, offset = 0, eventId, userId },
+      ctx: MercuriusContext
+    ) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.max(1, Math.min(limit!, 100));
-      const skip = Math.max(0, offset!);
+      const take = Math.max(1, Math.min(limit ?? 50, 100));
+      const skip = Math.max(0, offset ?? 0);
 
       const where: Prisma.CommentWhereInput = {};
 
@@ -69,7 +80,9 @@ export const adminCommentsQuery: QueryResolvers['adminComments'] =
       });
 
       return {
-        items: comments.map((c) => mapComment(c as any, user.id)),
+        items: comments.map((c) =>
+          mapComment(c as unknown as CommentWithGraph, currentUser.id)
+        ),
         pageInfo: {
           total,
           hasMore: skip + take < total,
@@ -88,12 +101,13 @@ export const adminReviewsQuery: QueryResolvers['adminReviews'] =
     async (
       _p,
       { limit = 50, offset = 0, eventId, userId, rating },
-      { user }
+      ctx: MercuriusContext
     ) => {
-      requireAdmin(user);
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.max(1, Math.min(limit!, 100));
-      const skip = Math.max(0, offset!);
+      const take = Math.max(1, Math.min(limit ?? 50, 100));
+      const skip = Math.max(0, offset ?? 0);
 
       const where: Prisma.ReviewWhereInput = {};
 
@@ -128,7 +142,9 @@ export const adminReviewsQuery: QueryResolvers['adminReviews'] =
       });
 
       return {
-        items: reviews.map((r) => mapReview(r as any, user?.id)),
+        items: reviews.map((r) =>
+          mapReview(r as unknown as ReviewWithGraph, currentUser.id)
+        ),
         pageInfo: {
           total,
           hasMore: skip + take < total,

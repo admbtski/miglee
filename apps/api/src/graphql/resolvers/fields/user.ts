@@ -1,6 +1,35 @@
-import type { Resolvers } from '../../__generated__/resolvers-types';
+/**
+ * User Field Resolvers
+ *
+ * These resolvers handle lazy-loaded fields on User and UserProfile types.
+ */
+
+import type {
+  UserResolvers,
+  UserProfileResolvers,
+  UserProfile,
+  UserPrivacy,
+  UserStats,
+  UserSocialLink,
+  UserCategoryLevel,
+  UserAvailability,
+  UserBadge,
+  UserEffectivePlan,
+  UserSubscription,
+  UserPlanPeriod,
+  Maybe,
+  Level,
+  AddressVisibility,
+  MembersVisibility,
+  SubscriptionStatus,
+  SubscriptionPlan,
+  BillingPeriod,
+  UserPlanSource,
+  Mode,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { getUserEffectivePlan } from '../../../lib/billing';
+import { toJSONObject, mapUser } from '../helpers';
 
 /**
  * Helper to check if viewer can see a field based on privacy settings
@@ -10,64 +39,35 @@ function canViewField(
   viewerId: string | undefined,
   profileUserId: string
 ): boolean {
-  // Owner can always see their own data
-  if (viewerId === profileUserId) {
-    return true;
-  }
-
-  // Default to ALL if no setting
-  if (!privacySetting || privacySetting === 'ALL') {
-    return true;
-  }
-
-  // HIDDEN - only owner can see
-  if (privacySetting === 'HIDDEN') {
-    return false;
-  }
-
-  // MEMBERS - check if viewer is a member of any event with this user
-  // For now, we'll implement a simple check - in production you'd query eventMembers
-  if (privacySetting === 'MEMBERS') {
-    // TODO: Implement actual membership check
-    // For now, return true if logged in
-    return !!viewerId;
-  }
-
-  // SELF - only owner
-  if (privacySetting === 'SELF') {
-    return false;
-  }
-
+  if (viewerId === profileUserId) return true;
+  if (!privacySetting || privacySetting === 'ALL') return true;
+  if (privacySetting === 'HIDDEN') return false;
+  if (privacySetting === 'MEMBERS') return !!viewerId;
+  if (privacySetting === 'SELF') return false;
   return true;
 }
 
-export const UserFieldResolvers: Resolvers['User'] = {
-  avatarBlurhash: async (parent) => {
-    // If already present in parent, return it
+export const UserFieldResolvers: Partial<UserResolvers> = {
+  avatarBlurhash: async (parent): Promise<Maybe<string>> => {
     if ('avatarBlurhash' in parent && parent.avatarBlurhash !== undefined) {
       return parent.avatarBlurhash;
     }
 
-    // If no avatarKey, no blurhash
-    if (!parent.avatarKey) {
-      return null;
-    }
+    if (!parent.avatarKey) return null;
 
-    // Fetch blurhash from MediaAsset
     const mediaAsset = await prisma.mediaAsset.findUnique({
       where: { key: parent.avatarKey },
       select: { blurhash: true },
     });
 
-    return mediaAsset?.blurhash || null;
+    return mediaAsset?.blurhash ?? null;
   },
 
-  profile: async (parent, _args, context) => {
+  profile: async (parent, _args, context): Promise<Maybe<UserProfile>> => {
     if ('profile' in parent && parent.profile !== undefined) {
       return parent.profile;
     }
 
-    // Check privacy for location
     const privacy = await prisma.userPrivacy.findUnique({
       where: { userId: parent.id },
     });
@@ -76,29 +76,37 @@ export const UserFieldResolvers: Resolvers['User'] = {
       where: { userId: parent.id },
     });
 
-    if (!profile) {
-      return null;
-    }
+    if (!profile) return null;
 
     const viewerId = context.user?.id;
+    const hideLocation = !canViewField(
+      privacy?.showLocation,
+      viewerId,
+      parent.id
+    );
 
-    // Apply location privacy
-    if (!canViewField(privacy?.showLocation, viewerId, parent.id)) {
-      // Hide precise location
-      return {
-        ...profile,
-        homeLat: null,
-        homeLng: null,
-        // Keep city/country based on privacy level
-        city: privacy?.showLocation === 'CITY' ? profile.city : null,
-        country: privacy?.showLocation === 'CITY' ? profile.country : null,
-      };
-    }
-
-    return profile;
+    return {
+      id: profile.id,
+      userId: profile.userId,
+      displayName: profile.displayName,
+      bioShort: profile.bioShort,
+      bioLong: profile.bioLong,
+      coverKey: profile.coverKey,
+      coverBlurhash: null,
+      city: hideLocation ? null : profile.city,
+      country: hideLocation ? null : profile.country,
+      homeLat: hideLocation ? null : profile.homeLat,
+      homeLng: hideLocation ? null : profile.homeLng,
+      interests: [],
+      speaks: [],
+      preferredMaxDistanceKm: profile.preferredMaxDistanceKm,
+      preferredMode: (profile.preferredMode as Mode) ?? null,
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+    };
   },
 
-  privacy: async (parent) => {
+  privacy: async (parent): Promise<Maybe<UserPrivacy>> => {
     if ('privacy' in parent && parent.privacy !== undefined) {
       return parent.privacy;
     }
@@ -107,32 +115,59 @@ export const UserFieldResolvers: Resolvers['User'] = {
       where: { userId: parent.id },
     });
 
-    return privacy || null;
+    if (!privacy) return null;
+
+    return {
+      id: privacy.id,
+      userId: privacy.userId,
+      dmPolicy: privacy.dmPolicy,
+      showLastSeen: privacy.showLastSeen,
+      showLocation: privacy.showLocation,
+      showEvents: privacy.showEvents,
+      showReviews: privacy.showReviews,
+      showStats: privacy.showStats,
+      defaultAddressVisibility:
+        privacy.defaultAddressVisibility as AddressVisibility,
+      defaultMembersVisibility:
+        privacy.defaultMembersVisibility as MembersVisibility,
+      createdAt: privacy.createdAt,
+      updatedAt: privacy.updatedAt,
+    };
   },
 
-  stats: async (parent, _args, context) => {
+  stats: async (parent, _args, context): Promise<Maybe<UserStats>> => {
     if ('stats' in parent && parent.stats !== undefined) {
       return parent.stats;
     }
 
-    // Check privacy settings
     const privacy = await prisma.userPrivacy.findUnique({
       where: { userId: parent.id },
     });
 
     const viewerId = context.user?.id;
-    if (!canViewField(privacy?.showStats, viewerId, parent.id)) {
-      return null;
-    }
+    if (!canViewField(privacy?.showStats, viewerId, parent.id)) return null;
 
     const stats = await prisma.userStats.findUnique({
       where: { userId: parent.id },
     });
 
-    return stats || null;
+    if (!stats) return null;
+
+    return {
+      id: stats.id,
+      userId: stats.userId,
+      eventsCreated: stats.eventsCreated,
+      eventsJoined: stats.eventsJoined,
+      reviewsCount: stats.reviewsCount,
+      hostRatingAvg: stats.hostRatingAvg,
+      attendeeRatingAvg: stats.attendeeRatingAvg,
+      lastActiveAt: stats.lastActiveAt,
+      createdAt: stats.createdAt,
+      updatedAt: stats.updatedAt,
+    };
   },
 
-  socialLinks: async (parent) => {
+  socialLinks: async (parent): Promise<UserSocialLink[]> => {
     if ('socialLinks' in parent && parent.socialLinks !== undefined) {
       return parent.socialLinks;
     }
@@ -142,10 +177,18 @@ export const UserFieldResolvers: Resolvers['User'] = {
       orderBy: { createdAt: 'asc' },
     });
 
-    return links;
+    return links.map((link) => ({
+      id: link.id,
+      userId: link.userId,
+      provider: link.provider,
+      url: link.url,
+      verified: link.verified,
+      createdAt: link.createdAt,
+      updatedAt: link.updatedAt,
+    }));
   },
 
-  categoryLevels: async (parent) => {
+  categoryLevels: async (parent): Promise<UserCategoryLevel[]> => {
     if ('categoryLevels' in parent && parent.categoryLevels !== undefined) {
       return parent.categoryLevels;
     }
@@ -156,10 +199,25 @@ export const UserFieldResolvers: Resolvers['User'] = {
       orderBy: { createdAt: 'asc' },
     });
 
-    return categoryLevels;
+    return categoryLevels.map((cl) => ({
+      id: cl.id,
+      userId: cl.userId,
+      categoryId: cl.categoryId,
+      level: cl.level as Level,
+      notes: cl.notes,
+      createdAt: cl.createdAt,
+      updatedAt: cl.updatedAt,
+      category: {
+        id: cl.category.id,
+        slug: cl.category.slug,
+        names: toJSONObject(cl.category.names),
+        createdAt: cl.category.createdAt,
+        updatedAt: cl.category.updatedAt,
+      },
+    }));
   },
 
-  availability: async (parent) => {
+  availability: async (parent): Promise<UserAvailability[]> => {
     if ('availability' in parent && parent.availability !== undefined) {
       return parent.availability;
     }
@@ -169,10 +227,19 @@ export const UserFieldResolvers: Resolvers['User'] = {
       orderBy: [{ weekday: 'asc' }, { startMin: 'asc' }],
     });
 
-    return availability;
+    return availability.map((a) => ({
+      id: a.id,
+      userId: a.userId,
+      weekday: a.weekday,
+      startMin: a.startMin,
+      endMin: a.endMin,
+      tzSnap: a.tzSnap,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+    }));
   },
 
-  badges: async (parent) => {
+  badges: async (parent): Promise<UserBadge[]> => {
     if ('badges' in parent && parent.badges !== undefined) {
       return parent.badges;
     }
@@ -182,33 +249,59 @@ export const UserFieldResolvers: Resolvers['User'] = {
       orderBy: { earnedAt: 'desc' },
     });
 
-    return badges;
+    return badges.map((b) => ({
+      id: b.id,
+      userId: b.userId,
+      slug: b.slug,
+      earnedAt: b.earnedAt,
+      data: toJSONObject(b.data),
+      createdAt: b.createdAt,
+    }));
   },
 
-  // Billing fields
-  effectivePlan: async (parent) => {
+  effectivePlan: async (parent): Promise<UserEffectivePlan> => {
     const planInfo = await getUserEffectivePlan(parent.id);
-    return planInfo.plan;
+    return planInfo.plan as UserEffectivePlan;
   },
 
-  planEndsAt: async (parent) => {
+  planEndsAt: async (parent): Promise<Maybe<Date>> => {
     const planInfo = await getUserEffectivePlan(parent.id);
-    return planInfo.planEndsAt;
+    return planInfo.planEndsAt ?? null;
   },
 
-  activeSubscription: async (parent) => {
+  activeSubscription: async (parent): Promise<Maybe<UserSubscription>> => {
     const subscription = await prisma.userSubscription.findFirst({
       where: {
         userId: parent.id,
         status: { in: ['ACTIVE', 'TRIALING'] },
       },
+      include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
 
-    return subscription;
+    if (!subscription) return null;
+
+    return {
+      id: subscription.id,
+      userId: subscription.userId,
+      status: subscription.status as SubscriptionStatus,
+      plan: subscription.plan as SubscriptionPlan,
+      billingPeriod: subscription.billingPeriod as BillingPeriod,
+      currentPeriodStart: subscription.currentPeriodStart,
+      currentPeriodEnd: subscription.currentPeriodEnd,
+      canceledAt: subscription.canceledAt,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+      stripeSubscriptionId: subscription.stripeSubscriptionId,
+      stripeCustomerId: subscription.stripeCustomerId,
+      stripePriceId: subscription.stripePriceId,
+      trialEndsAt: subscription.trialEndsAt,
+      createdAt: subscription.createdAt,
+      updatedAt: subscription.updatedAt,
+      user: mapUser(subscription.user),
+    };
   },
 
-  activePlanPeriods: async (parent) => {
+  activePlanPeriods: async (parent): Promise<UserPlanPeriod[]> => {
     const now = new Date();
     const periods = await prisma.userPlanPeriod.findMany({
       where: {
@@ -216,31 +309,43 @@ export const UserFieldResolvers: Resolvers['User'] = {
         startsAt: { lte: now },
         endsAt: { gt: now },
       },
+      include: { user: true },
       orderBy: { endsAt: 'desc' },
     });
 
-    return periods;
+    return periods.map((p) => ({
+      id: p.id,
+      userId: p.userId,
+      plan: p.plan as SubscriptionPlan,
+      billingPeriod: p.billingPeriod as BillingPeriod,
+      startsAt: p.startsAt,
+      endsAt: p.endsAt,
+      source: p.source as UserPlanSource,
+      stripePaymentEventId: p.stripePaymentEventId,
+      stripeSubscriptionId: p.stripeSubscriptionId,
+      stripeCheckoutSessionId: p.stripeCheckoutSessionId,
+      stripeCustomerId: p.stripeCustomerId,
+      amount: p.amount,
+      currency: p.currency,
+      createdAt: p.createdAt,
+      user: mapUser(p.user),
+    }));
   },
 };
 
-export const UserProfileFieldResolvers: Resolvers['UserProfile'] = {
-  coverBlurhash: async (parent) => {
-    // If already present in parent, return it
+export const UserProfileFieldResolvers: Partial<UserProfileResolvers> = {
+  coverBlurhash: async (parent): Promise<Maybe<string>> => {
     if ('coverBlurhash' in parent && parent.coverBlurhash !== undefined) {
       return parent.coverBlurhash;
     }
 
-    // If no coverKey, no blurhash
-    if (!parent.coverKey) {
-      return null;
-    }
+    if (!parent.coverKey) return null;
 
-    // Fetch blurhash from MediaAsset
     const mediaAsset = await prisma.mediaAsset.findUnique({
       where: { key: parent.coverKey },
       select: { blurhash: true },
     });
 
-    return mediaAsset?.blurhash || null;
+    return mediaAsset?.blurhash ?? null;
   },
 };

@@ -149,9 +149,9 @@ export const STRIPE_WEBHOOK_EVENTS = {
   INVOICE_PAYMENT_FAILED: 'invoice.payment_failed',
   INVOICE_UPCOMING: 'invoice.upcoming',
 
-  // Payment Events
-  PAYMENT_EVENT_SUCCEEDED: 'payment_event.succeeded',
-  PAYMENT_EVENT_PAYMENT_FAILED: 'payment_event.payment_failed',
+  // Payment Intents
+  PAYMENT_INTENT_SUCCEEDED: 'payment_intent.succeeded',
+  PAYMENT_INTENT_PAYMENT_FAILED: 'payment_intent.payment_failed',
 
   // Customer
   CUSTOMER_CREATED: 'customer.created',

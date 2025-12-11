@@ -1,5 +1,13 @@
-// apps/api/src/graphql/helpers.ts
-import { Prisma } from '@prisma/client';
+/**
+ * GraphQL Resolver Helpers
+ *
+ * This file contains:
+ * - Prisma payload types for strict typing
+ * - Mappers from Prisma models to GraphQL types
+ * - Utility functions for data transformations
+ */
+
+import { Prisma, User as PrismaUser } from '@prisma/client';
 import { EventStatus, JoinLockReason } from '../__generated__/resolvers-types';
 import type {
   Level,
@@ -10,6 +18,12 @@ import type {
   Visibility,
   ReportStatus,
   EventPlan,
+  Role,
+  UserEffectivePlan,
+  EventMemberRole,
+  EventMemberStatus,
+  PublicationStatus,
+  SponsorshipStatus,
   // GraphQL result types:
   Event as GQLEvent,
   Notification as GQLNotification,
@@ -25,6 +39,7 @@ import type {
   EventChatMessage as GQLEventChatMessage,
   UserBlock as GQLUserBlock,
   EventInviteLink as GQLEventInviteLink,
+  EventSponsorship as GQLEventSponsorship,
   NotificationPreference as GQLNotificationPreference,
   EventMute as GQLEventMute,
   DmMute as GQLDmMute,
@@ -292,24 +307,42 @@ function canSeeWithRole(
  * Mappers (strict typing)
  * ========================================================================== */
 
-export function mapUser(u: NotificationWithGraph['recipient']): GQLUser {
-  const avatarKey = u.avatarKey ?? null;
+/**
+ * Map a Prisma User to GraphQL User type.
+ * Field resolvers handle: avatarBlurhash, profile, privacy, stats, socialLinks,
+ * categoryLevels, availability, badges, effectivePlan, planEndsAt,
+ * activeSubscription, activePlanPeriods
+ */
+export function mapUser(u: PrismaUser): GQLUser {
   return {
     id: u.id,
     email: u.email,
-    name: (u as any).name ?? null,
-    avatarKey,
-    role: (u.role ?? 'USER') as any,
+    name: u.name,
+    avatarKey: u.avatarKey ?? null,
+    role: u.role as Role,
     verifiedAt: u.verifiedAt ?? null,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
-    lastSeenAt: u.lastSeenAt,
-    suspendedAt: u.suspendedAt,
-    suspensionReason: (u as any).suspensionReason ?? null,
-    locale: (u as any).locale ?? 'en',
-    timezone: (u as any).timezone ?? 'UTC',
-    acceptedTermsAt: (u as any).acceptedTermsAt ?? null,
-    acceptedMarketingAt: (u as any).acceptedMarketingAt ?? null,
+    lastSeenAt: u.lastSeenAt ?? null,
+    suspendedAt: u.suspendedAt ?? null,
+    suspensionReason: u.suspensionReason ?? null,
+    locale: u.locale,
+    timezone: u.timezone,
+    acceptedTermsAt: u.acceptedTermsAt ?? null,
+    acceptedMarketingAt: u.acceptedMarketingAt ?? null,
+    // Field resolvers handle these - provide defaults
+    avatarBlurhash: null,
+    profile: null,
+    privacy: null,
+    stats: null,
+    socialLinks: [],
+    categoryLevels: [],
+    availability: [],
+    badges: [],
+    effectivePlan: 'FREE' as UserEffectivePlan,
+    planEndsAt: null,
+    activeSubscription: null,
+    activePlanPeriods: [],
   };
 }
 
@@ -335,18 +368,26 @@ export function mapTag(t: EventWithGraph['tags'][number]): GQLTag {
   };
 }
 
+/**
+ * Map a Prisma EventMember to GraphQL EventMember type.
+ * Field resolvers handle: event, joinAnswers
+ */
 export function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
   return {
     id: m.id,
     eventId: m.eventId,
     userId: m.userId,
-    role: (m.role as any) ?? 'PARTICIPANT',
-    status: (m.status as any) ?? 'PENDING',
-    addedBy: m.addedBy ? mapUser(m.addedBy as any) : null,
+    role: m.role as EventMemberRole,
+    status: m.status as EventMemberStatus,
+    addedBy: m.addedBy ? mapUser(m.addedBy) : null,
     joinedAt: m.joinedAt ?? null,
     leftAt: m.leftAt ?? null,
     note: m.note ?? null,
-    user: mapUser(m.user as any),
+    user: mapUser(m.user),
+    rejectReason: (m as { rejectReason?: string | null }).rejectReason ?? null,
+    // Field resolvers handle these
+    event: null as unknown as GQLEvent, // Lazy loaded by field resolver
+    joinAnswers: [],
   };
 }
 
@@ -514,15 +555,43 @@ function computeJoinOpenAndReason(i: EventWithGraph): {
   return { joinOpen: true, lockReason: null };
 }
 
-function resolveOwnerFromMembers(i: EventWithGraph | any): GQLUser | null {
+function resolveOwnerFromMembers(i: EventWithGraph): GQLUser | null {
   if (i.owner) {
     return mapUser(i.owner);
   }
-  // Safe access to members - may be undefined if not included
-  const owner = (i.members ?? []).find(
-    (m: any) => m.role === 'OWNER' && m.status === 'JOINED' && (m as any).user
-  ) as any;
-  return owner ? mapUser(owner.user) : null;
+  // Safe access to members - find OWNER member
+  const ownerMember = (i.members ?? []).find(
+    (m) => m.role === 'OWNER' && m.status === 'JOINED' && m.user
+  );
+  return ownerMember ? mapUser(ownerMember.user) : null;
+}
+
+/**
+ * Map sponsorship to GraphQL type
+ */
+function mapSponsorship(
+  s: NonNullable<EventWithGraph['sponsorship']>
+): GQLEventSponsorship {
+  return {
+    id: s.id,
+    eventId: s.eventId,
+    sponsorId: s.sponsorId,
+    plan: s.plan as EventPlan,
+    status: s.status as SponsorshipStatus,
+    startsAt: s.startsAt ?? null,
+    endsAt: s.endsAt ?? null,
+    boostsTotal: s.boostsTotal,
+    boostsUsed: s.boostsUsed,
+    localPushesTotal: s.localPushesTotal,
+    localPushesUsed: s.localPushesUsed,
+    stripeCheckoutSessionId: s.stripeCheckoutSessionId ?? null,
+    stripePaymentEventId: s.stripePaymentEventId ?? null,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+    sponsor: mapUser(s.sponsor),
+    // Field resolver handles event to avoid circular reference
+    event: null as unknown as GQLEvent,
+  };
 }
 
 export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
@@ -591,9 +660,8 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
     lateJoinCutoffMinutesAfterStart: i.lateJoinCutoffMinutesAfterStart ?? null,
     joinManuallyClosed: i.joinManuallyClosed,
     joinManuallyClosedAt: i.joinManuallyClosedAt ?? null,
-    joinManuallyClosedBy: (i as any).joinManuallyClosedBy
-      ? mapUser((i as any).joinManuallyClosedBy)
-      : null,
+    // joinManuallyClosedBy is handled by field resolver if needed
+    joinManuallyClosedBy: null,
     joinManualCloseReason: i.joinManualCloseReason ?? null,
 
     meetingKind: i.meetingKind as MeetingKind,
@@ -604,23 +672,25 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
     address,
     placeId,
     radiusKm,
+    cityName: i.cityName ?? null,
+    cityPlaceId: i.cityPlaceId ?? null,
 
     levels: ((i.levels ?? []) as Level[]).sort(
       (a, b) => LEVEL_ORDER[a] - LEVEL_ORDER[b]
     ),
 
     // Media
-    coverKey: (i as any).coverKey ?? null,
-    coverBlurhash: (i as any).coverBlurhash ?? null,
+    coverKey: i.coverKey ?? null,
+    coverBlurhash: null, // Field resolver handles blurhash computation
 
-    // Privacy toggles (zwracamy zawsze)
+    // Privacy toggles
     addressVisibility: i.addressVisibility as AddressVisibility,
     membersVisibility: i.membersVisibility as MembersVisibility,
 
     // Denormalized counters
     joinedCount,
-    commentsCount: (i as any).commentsCount ?? 0,
-    messagesCount: (i as any).messagesCount ?? 0,
+    commentsCount: i.commentsCount ?? 0,
+    messagesCount: i.messagesCount ?? 0,
     savedCount: i.savedCount ?? 0,
 
     // Ownership
@@ -639,31 +709,14 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
     isDeleted,
 
     // Publication status
-    publicationStatus: (i.status as any) ?? 'DRAFT',
+    publicationStatus: (i.status ?? 'DRAFT') as PublicationStatus,
     publishedAt: i.publishedAt ?? null,
     scheduledPublishAt: i.scheduledPublishAt ?? null,
 
     // Billing & Sponsorship
     sponsorshipPlan: i.sponsorshipPlan as EventPlan,
     boostedAt: i.boostedAt ?? null,
-    sponsorship: i.sponsorship
-      ? ({
-          plan: i.sponsorship.plan as EventPlan,
-          status: i.sponsorship.status as any,
-          startsAt: i.sponsorship.startsAt ?? null,
-          endsAt: i.sponsorship.endsAt ?? null,
-          boostsTotal: i.sponsorship.boostsTotal,
-          boostsUsed: i.sponsorship.boostsUsed,
-          localPushesTotal: i.sponsorship.localPushesTotal,
-          localPushesUsed: i.sponsorship.localPushesUsed,
-          sponsor: i.sponsorship.sponsor
-            ? {
-                id: i.sponsorship.sponsor.id,
-                name: i.sponsorship.sponsor.name,
-              }
-            : null,
-        } as any)
-      : null,
+    sponsorship: i.sponsorship ? mapSponsorship(i.sponsorship) : null,
 
     // Collections (safe access - may be undefined if not included)
     categories: (i.categories ?? []).map(mapCategory),
@@ -689,6 +742,14 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
 
     createdAt: i.createdAt,
     updatedAt: i.updatedAt,
+
+    // Field resolvers handle these
+    isFavourite: false,
+    inviteLinks: [],
+    faqs: [],
+    joinQuestions: [],
+    agendaItems: [],
+    appearance: null,
   };
 }
 
@@ -702,7 +763,7 @@ export function mapNotification(
     kind: (n.kind as NotificationKind) ?? 'SYSTEM',
     title: n.title ?? null,
     body: n.body ?? null,
-    data: (n.data ?? null) as any,
+    data: toJSONObject(n.data),
     dedupeKey: n.dedupeKey ?? null,
     readAt: n.readAt ?? null,
     createdAt: n.createdAt,
@@ -713,7 +774,10 @@ export function mapNotification(
     entityType: (n.entityType as NotificationEntity) ?? 'OTHER',
     entityId: n.entityId ?? null,
 
-    event: n.event ? mapEvent(n.event as any, viewerId) : null,
+    // Event from notification has different include structure - needs type assertion
+    event: n.event
+      ? mapEvent(n.event as unknown as EventWithGraph, viewerId)
+      : null,
   };
 }
 
@@ -722,9 +786,6 @@ export function mapDmThread(
   t: DmThreadWithGraph & { unreadCount?: number },
   _currentUserId?: string
 ): GQLDmThread {
-  const lastMessage = t.messages?.[0] ?? null;
-
-  // Use provided unreadCount or default to 0
   const unreadCount = t.unreadCount ?? 0;
 
   return {
@@ -741,7 +802,8 @@ export function mapDmThread(
     messages: [],
 
     unreadCount,
-    lastMessage: lastMessage ? mapDmMessage(lastMessage as any) : null,
+    // lastMessage is computed separately to avoid circular dependency
+    lastMessage: null,
   };
 }
 
@@ -758,8 +820,22 @@ export function mapDmMessage(m: DmMessageWithGraph): GQLDmMessage {
     editedAt: m.editedAt ?? null,
     deletedAt: m.deletedAt ?? null,
 
-    thread: m.thread ? (mapDmThread(m.thread as any) as any) : ({} as any),
-    sender: mapUser(m.sender as any),
+    // Minimal thread reference to avoid circular dependency
+    thread: {
+      id: m.thread.id,
+      aUserId: m.thread.aUserId,
+      bUserId: m.thread.bUserId,
+      pairKey: m.thread.pairKey,
+      createdAt: m.thread.createdAt,
+      updatedAt: m.thread.updatedAt,
+      lastMessageAt: null,
+      aUser: mapUser(m.thread.aUser),
+      bUser: mapUser(m.thread.bUser),
+      messages: [],
+      unreadCount: 0,
+      lastMessage: null,
+    },
+    sender: mapUser(m.sender),
     replyTo: m.replyTo
       ? {
           id: m.replyTo.id,
@@ -771,12 +847,14 @@ export function mapDmMessage(m: DmMessageWithGraph): GQLDmMessage {
           readAt: m.replyTo.readAt ?? null,
           editedAt: m.replyTo.editedAt ?? null,
           deletedAt: m.replyTo.deletedAt ?? null,
-          thread: {} as any, // Avoid circular reference
-          sender: mapUser(m.replyTo.sender as any),
-          reactions: [], // Don't need reactions for reply preview
+          // Avoid deep nesting - minimal thread for reply
+          thread: null as unknown as GQLDmThread,
+          sender: mapUser(m.replyTo.sender),
+          reactions: [],
+          replyTo: null,
         }
       : null,
-    reactions: [], // Will be populated by field resolver
+    reactions: [], // Field resolver handles reactions
   };
 }
 
@@ -786,7 +864,18 @@ export function createPairKey(userId1: string, userId2: string): string {
 }
 
 /* ---- Comment ---- */
-export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
+
+// Extended type for Comment with optional moderation fields
+type CommentExtended = CommentWithGraph & {
+  deletedById?: string | null;
+  hiddenAt?: Date | null;
+  hiddenById?: string | null;
+  deletedBy?: PrismaUser | null;
+  hiddenBy?: PrismaUser | null;
+  _count?: { replies: number };
+};
+
+export function mapComment(c: CommentExtended, viewerId?: string): GQLComment {
   return {
     id: c.id,
     eventId: c.eventId,
@@ -797,23 +886,41 @@ export function mapComment(c: CommentWithGraph, viewerId?: string): GQLComment {
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
     deletedAt: c.deletedAt ?? null,
-    deletedById: (c as any).deletedById ?? null,
-    hiddenAt: (c as any).hiddenAt ?? null,
-    hiddenById: (c as any).hiddenById ?? null,
+    deletedById: c.deletedById ?? null,
+    hiddenAt: c.hiddenAt ?? null,
+    hiddenById: c.hiddenById ?? null,
 
-    event: c.event ? (mapEvent(c.event as any, viewerId) as any) : ({} as any),
-    author: c.author ? mapUser(c.author as any) : (null as any),
-    parent: c.parent ? (mapComment(c.parent as any, viewerId) as any) : null,
-    replies: c.replies?.map((r) => mapComment(r as any, viewerId) as any) ?? [],
-    deletedBy: (c as any).deletedBy ? mapUser((c as any).deletedBy) : null,
-    hiddenBy: (c as any).hiddenBy ? mapUser((c as any).hiddenBy) : null,
+    // Event reference - field resolver can provide full event if needed
+    event: c.event
+      ? mapEvent(c.event as unknown as EventWithGraph, viewerId)
+      : (null as unknown as GQLEvent),
+    author: c.author ? mapUser(c.author) : (null as unknown as GQLUser),
+    parent: c.parent
+      ? mapComment(c.parent as unknown as CommentExtended, viewerId)
+      : null,
+    replies:
+      c.replies?.map((r) =>
+        mapComment(r as unknown as CommentExtended, viewerId)
+      ) ?? [],
+    deletedBy: c.deletedBy ? mapUser(c.deletedBy) : null,
+    hiddenBy: c.hiddenBy ? mapUser(c.hiddenBy) : null,
 
-    repliesCount: (c as any)._count?.replies ?? 0,
+    repliesCount: c._count?.replies ?? 0,
   };
 }
 
 /* ---- Review ---- */
-export function mapReview(r: ReviewWithGraph, viewerId?: string): GQLReview {
+
+// Extended type for Review with optional moderation fields
+type ReviewExtended = ReviewWithGraph & {
+  deletedById?: string | null;
+  hiddenAt?: Date | null;
+  hiddenById?: string | null;
+  deletedBy?: PrismaUser | null;
+  hiddenBy?: PrismaUser | null;
+};
+
+export function mapReview(r: ReviewExtended, viewerId?: string): GQLReview {
   return {
     id: r.id,
     eventId: r.eventId,
@@ -823,14 +930,16 @@ export function mapReview(r: ReviewWithGraph, viewerId?: string): GQLReview {
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
     deletedAt: r.deletedAt ?? null,
-    deletedById: (r as any).deletedById ?? null,
-    hiddenAt: (r as any).hiddenAt ?? null,
-    hiddenById: (r as any).hiddenById ?? null,
+    deletedById: r.deletedById ?? null,
+    hiddenAt: r.hiddenAt ?? null,
+    hiddenById: r.hiddenById ?? null,
 
-    event: r.event ? (mapEvent(r.event as any, viewerId) as any) : ({} as any),
-    author: r.author ? mapUser(r.author as any) : (null as any),
-    deletedBy: (r as any).deletedBy ? mapUser((r as any).deletedBy) : null,
-    hiddenBy: (r as any).hiddenBy ? mapUser((r as any).hiddenBy) : null,
+    event: r.event
+      ? mapEvent(r.event as unknown as EventWithGraph, viewerId)
+      : (null as unknown as GQLEvent),
+    author: r.author ? mapUser(r.author) : (null as unknown as GQLUser),
+    deletedBy: r.deletedBy ? mapUser(r.deletedBy) : null,
+    hiddenBy: r.hiddenBy ? mapUser(r.hiddenBy) : null,
   };
 }
 
@@ -839,14 +948,14 @@ export function mapReport(r: ReportWithGraph): GQLReport {
   return {
     id: r.id,
     reporterId: r.reporterId,
-    entity: r.entity as any,
+    entity: r.entity as GQLReport['entity'],
     entityId: r.entityId,
     reason: r.reason,
     status: (r.status as ReportStatus) ?? 'OPEN',
     createdAt: r.createdAt,
     resolvedAt: r.resolvedAt ?? null,
 
-    reporter: mapUser(r.reporter as any),
+    reporter: mapUser(r.reporter),
   };
 }
 
@@ -865,14 +974,20 @@ export function mapEventChatMessage(
     editedAt: m.editedAt ?? null,
     deletedAt: m.deletedAt ?? null,
 
-    event: m.event ? (mapEvent(m.event as any, viewerId) as any) : ({} as any),
-    author: mapUser(m.author as any),
+    event: m.event
+      ? mapEvent(m.event as unknown as EventWithGraph, viewerId)
+      : (null as unknown as GQLEvent),
+    author: mapUser(m.author),
     replyTo: m.replyTo
-      ? (mapEventChatMessage(m.replyTo as any, viewerId) as any)
+      ? mapEventChatMessage(
+          m.replyTo as unknown as EventChatMessageWithGraph,
+          viewerId
+        )
       : null,
 
     isEdited: !!m.editedAt,
     isDeleted: !!m.deletedAt,
+    reactions: [], // Field resolver handles reactions
   };
 }
 
@@ -884,15 +999,15 @@ export function mapUserBlock(b: UserBlockWithGraph): GQLUserBlock {
     blockedId: b.blockedId,
     createdAt: b.createdAt,
 
-    blocker: mapUser(b.blocker as any),
-    blocked: mapUser(b.blocked as any),
+    blocker: mapUser(b.blocker),
+    blocked: mapUser(b.blocked),
   };
 }
 
 /* ---- EventInviteLink ---- */
 export function mapEventInviteLink(
   link: EventInviteLinkWithGraph,
-  viewerId?: string
+  _viewerId?: string
 ): GQLEventInviteLink {
   const now = new Date();
   const isExpired = link.expiresAt ? link.expiresAt < now : false;
@@ -908,26 +1023,23 @@ export function mapEventInviteLink(
     usedCount: link.usedCount,
     expiresAt: link.expiresAt ?? null,
     createdById: link.createdById ?? null,
-    createdBy: link.createdBy
-      ? (mapUser(link.createdBy, viewerId) as any)
-      : null,
+    createdBy: link.createdBy ? mapUser(link.createdBy) : null,
     label: link.label ?? null,
     revokedAt: link.revokedAt ?? null,
     revokedById: link.revokedById ?? null,
-    revokedBy: link.revokedBy
-      ? (mapUser(link.revokedBy, viewerId) as any)
-      : null,
+    revokedBy: link.revokedBy ? mapUser(link.revokedBy) : null,
     createdAt: link.createdAt,
     updatedAt: link.updatedAt ?? null,
 
     event: link.event
-      ? (mapEvent(link.event as any, viewerId) as any)
-      : ({} as any),
+      ? mapEvent(link.event as unknown as EventWithGraph, _viewerId)
+      : (null as unknown as GQLEvent),
 
     isExpired,
     isMaxedOut,
     isRevoked,
     isValid,
+    uses: [], // Field resolver handles uses
   };
 }
 
@@ -946,7 +1058,7 @@ export function mapNotificationPreference(
     createdAt: pref.createdAt,
     updatedAt: pref.updatedAt,
 
-    user: mapUser(pref.user as any),
+    user: mapUser(pref.user),
   };
 }
 
@@ -963,9 +1075,9 @@ export function mapEventMute(
     createdAt: mute.createdAt,
 
     event: mute.event
-      ? (mapEvent(mute.event as any, viewerId) as any)
-      : ({} as any),
-    user: mapUser(mute.user as any),
+      ? mapEvent(mute.event as unknown as EventWithGraph, viewerId)
+      : (null as unknown as GQLEvent),
+    user: mapUser(mute.user),
   };
 }
 
@@ -978,9 +1090,21 @@ export function mapDmMute(mute: DmMuteWithGraph): GQLDmMute {
     muted: mute.muted,
     createdAt: mute.createdAt,
 
-    thread: mute.thread
-      ? (mapDmThread(mute.thread as any) as any)
-      : ({} as any),
-    user: mapUser(mute.user as any),
+    // Thread reference - simplified to avoid deep include requirements
+    thread: {
+      id: mute.thread.id,
+      aUserId: mute.thread.aUserId,
+      bUserId: mute.thread.bUserId,
+      pairKey: mute.thread.pairKey,
+      createdAt: mute.thread.createdAt,
+      updatedAt: mute.thread.updatedAt,
+      lastMessageAt: mute.thread.lastMessageAt ?? null,
+      aUser: mapUser(mute.thread.aUser),
+      bUser: mapUser(mute.thread.bUser),
+      messages: [],
+      unreadCount: 0,
+      lastMessage: null,
+    },
+    user: mapUser(mute.user),
   };
 }

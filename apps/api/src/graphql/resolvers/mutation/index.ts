@@ -42,7 +42,6 @@ import {
   acceptInviteMutation,
   approveMembershipMutation,
   banMemberMutation,
-  cancelJoinRequestMutation,
   cancelPendingOrInviteForUserMutation,
   inviteMemberMutation,
   joinWaitlistOpenMutation,

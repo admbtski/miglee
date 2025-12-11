@@ -90,7 +90,7 @@ const imageVariantsPlugin: FastifyPluginAsync = async (fastify) => {
 
       if (!originalStream) {
         // Original not found, redirect to placeholder
-        return reply.redirect(307, '/static/placeholder.png');
+        return reply.redirect('/static/placeholder.png');
       }
 
       // Read original to buffer
@@ -126,7 +126,7 @@ const imageVariantsPlugin: FastifyPluginAsync = async (fastify) => {
       return reply.send(variant.buffer);
     } catch (error) {
       fastify.log.error({ error, key }, 'Failed to generate image variant');
-      return reply.redirect(307, '/static/placeholder.png');
+      return reply.redirect('/static/placeholder.png');
     }
   });
 };

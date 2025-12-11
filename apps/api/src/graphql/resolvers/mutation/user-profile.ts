@@ -1,5 +1,11 @@
 import { GraphQLError } from 'graphql';
-import type { MutationResolvers } from '../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  UserProfile,
+  UserPrivacy,
+  UserCategoryLevel,
+  User,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 
@@ -19,7 +25,7 @@ export const updateUserProfileMutation: MutationResolvers['updateUserProfile'] =
       }
 
       // Validation
-      if (input.displayName !== undefined) {
+      if (input.displayName != null) {
         const trimmed = input.displayName.trim();
         if (trimmed.length < 3 || trimmed.length > 40) {
           throw new GraphQLError(
@@ -29,19 +35,19 @@ export const updateUserProfileMutation: MutationResolvers['updateUserProfile'] =
         }
       }
 
-      if (input.bioShort !== undefined && input.bioShort.length > 200) {
+      if (input.bioShort != null && input.bioShort.length > 200) {
         throw new GraphQLError('Bio short must be max 200 characters', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
       }
 
-      if (input.bioLong !== undefined && input.bioLong.length > 1000) {
+      if (input.bioLong != null && input.bioLong.length > 1000) {
         throw new GraphQLError('Bio long must be max 1000 characters', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
       }
 
-      if (input.interests !== undefined && input.interests.length > 20) {
+      if (input.interests != null && input.interests.length > 20) {
         throw new GraphQLError('Maximum 20 interests allowed', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
@@ -74,36 +80,40 @@ export const updateUserProfileMutation: MutationResolvers['updateUserProfile'] =
         },
         update: {
           ...(input.displayName !== undefined && {
-            displayName: input.displayName.trim() || null,
+            displayName: input.displayName?.trim() || null,
           }),
           ...(input.bioShort !== undefined && {
-            bioShort: input.bioShort.trim() || null,
+            bioShort: input.bioShort?.trim() || null,
           }),
           ...(input.bioLong !== undefined && {
-            bioLong: input.bioLong.trim() || null,
+            bioLong: input.bioLong?.trim() || null,
           }),
-          ...(input.city !== undefined && { city: input.city.trim() || null }),
+          ...(input.city !== undefined && { city: input.city?.trim() || null }),
           ...(input.country !== undefined && {
-            country: input.country.trim() || null,
+            country: input.country?.trim() || null,
           }),
           ...(input.homeLat !== undefined && { homeLat: input.homeLat }),
           ...(input.homeLng !== undefined && { homeLng: input.homeLng }),
           ...(input.coverKey !== undefined && {
-            coverKey: input.coverKey.trim() || null,
+            coverKey: input.coverKey?.trim() || null,
           }),
-          ...(input.speaks !== undefined && { speaks: input.speaks }),
-          ...(input.interests !== undefined && { interests: input.interests }),
+          ...(input.speaks !== undefined && {
+            speaks: input.speaks as string[],
+          }),
+          ...(input.interests !== undefined && {
+            interests: input.interests as string[],
+          }),
           ...(input.preferredMode !== undefined && {
-            preferredMode: input.preferredMode,
+            preferredMode: input.preferredMode as string,
           }),
           ...(input.preferredMaxDistanceKm !== undefined && {
-            preferredMaxDistanceKm: input.preferredMaxDistanceKm,
+            preferredMaxDistanceKm: input.preferredMaxDistanceKm as number,
           }),
           updatedAt: new Date(),
-        },
+        } as Record<string, unknown>,
       });
 
-      return profile;
+      return profile as unknown as UserProfile;
     }
   );
 
@@ -179,10 +189,10 @@ export const updateUserPrivacyMutation: MutationResolvers['updateUserPrivacy'] =
             defaultMembersVisibility: input.defaultMembersVisibility,
           }),
           updatedAt: new Date(),
-        },
+        } as Record<string, unknown>,
       });
 
-      return privacy;
+      return privacy as unknown as UserPrivacy;
     }
   );
 
@@ -244,7 +254,7 @@ export const upsertUserCategoryLevelMutation: MutationResolvers['upsertUserCateg
             include: { category: true },
           });
 
-      return categoryLevel;
+      return categoryLevel as unknown as UserCategoryLevel;
     }
   );
 
@@ -515,7 +525,7 @@ export const updateUserLocaleMutation: MutationResolvers['updateUserLocale'] =
         data: { locale, updatedAt: new Date() },
       });
 
-      return updatedUser;
+      return updatedUser as unknown as User;
     }
   );
 
@@ -545,6 +555,6 @@ export const updateUserTimezoneMutation: MutationResolvers['updateUserTimezone']
         data: { timezone, updatedAt: new Date() },
       });
 
-      return updatedUser;
+      return updatedUser as unknown as User;
     }
   );

@@ -1,6 +1,9 @@
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
-import { QueryResolvers } from '../../__generated__/resolvers-types';
+import type {
+  QueryResolvers,
+  UserEventsResult,
+} from '../../__generated__/resolvers-types';
 
 export const userEventsQuery: QueryResolvers['userEvents'] = async (
   _parent,
@@ -91,5 +94,5 @@ export const userEventsQuery: QueryResolvers['userEvents'] = async (
   return {
     items,
     total,
-  };
+  } as unknown as UserEventsResult;
 };

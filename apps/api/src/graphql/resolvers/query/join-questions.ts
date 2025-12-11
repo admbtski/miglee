@@ -7,8 +7,12 @@
  * - myJoinRequests: AUTH (SELF)
  */
 
-import { GraphQLError } from 'graphql';
-import type { QueryResolvers } from '../../__generated__/resolvers-types';
+import type {
+  QueryResolvers,
+  EventJoinQuestion,
+  EventJoinRequestsResult,
+  EventMember,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { requireAuth, requireEventModOrOwner } from '../shared/auth-guards';
 
@@ -30,7 +34,8 @@ export const eventJoinQuestionsQuery: QueryResolvers['eventJoinQuestions'] =
       options: q.options || null,
       maxLength: q.maxLength || null,
       helpText: q.helpText || null,
-    }));
+      event: null, // Field resolver handles this
+    })) as unknown as EventJoinQuestion[];
   };
 
 /**
@@ -105,7 +110,7 @@ export const eventJoinRequestsQuery: QueryResolvers['eventJoinRequests'] =
         hasNext: offset + limit < total,
         hasPrev: offset > 0,
       },
-    };
+    } as unknown as EventJoinRequestsResult;
   };
 
 /**
@@ -155,9 +160,9 @@ export const myJoinRequestsQuery: QueryResolvers['myJoinRequests'] = async (
   return members.map((member) => ({
     ...member,
     addedBy: null,
-    joinedAt: member.joinedAt?.toISOString() || null,
-    leftAt: member.leftAt?.toISOString() || null,
+    joinedAt: member.joinedAt || null,
+    leftAt: member.leftAt || null,
     note: member.note || null,
     rejectReason: member.rejectReason || null,
-  }));
+  })) as unknown as EventMember[];
 };

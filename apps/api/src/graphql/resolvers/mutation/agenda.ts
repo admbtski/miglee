@@ -4,7 +4,10 @@
  */
 
 import { GraphQLError } from 'graphql';
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  EventAgendaItem,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 
 const MAX_AGENDA_ITEMS = 50;
@@ -42,6 +45,7 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
     // Validate each item
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
+      if (!item) continue; // Skip undefined items
 
       // Title validation
       if (!item.title || item.title.trim().length === 0) {
@@ -113,6 +117,7 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
       if (item.hosts) {
         for (let j = 0; j < item.hosts.length; j++) {
           const host = item.hosts[j];
+          if (!host) continue; // Skip undefined hosts
 
           if (host.kind === 'USER') {
             if (!host.userId) {
@@ -219,6 +224,7 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
+        if (!item) continue; // Skip undefined items
 
         const createdItem = await tx.eventAgendaItem.create({
           data: {
@@ -226,8 +232,8 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
             order: i,
             title: item.title.trim(),
             description: item.description?.trim() || null,
-            startAt: item.startAt || null,
-            endAt: item.endAt || null,
+            startAt: item.startAt ? new Date(item.startAt) : null,
+            endAt: item.endAt ? new Date(item.endAt) : null,
             hosts: {
               create: (item.hosts || []).map((host, hostIndex) => ({
                 order: hostIndex,
@@ -260,7 +266,23 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
       return createdItems;
     });
 
-    return updatedItems.map((item) => ({
+    // Type assertion for items with hosts included
+    type ItemWithHosts = (typeof updatedItems)[number] & {
+      hosts: Array<{
+        id: string;
+        agendaItemId: string;
+        order: number;
+        kind: string;
+        userId: string | null;
+        user: { id: string; name: string; avatarKey: string | null } | null;
+        name: string | null;
+        avatarUrl: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>;
+    };
+
+    return (updatedItems as ItemWithHosts[]).map((item) => ({
       id: item.id,
       eventId: item.eventId,
       order: item.order,
@@ -270,6 +292,7 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
       endAt: item.endAt,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
+      event: null, // Field resolver handles this
       hosts: item.hosts.map((host) => ({
         id: host.id,
         agendaItemId: host.agendaItemId,
@@ -281,6 +304,7 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
         avatarUrl: host.avatarUrl,
         createdAt: host.createdAt,
         updatedAt: host.updatedAt,
+        agendaItem: null, // Field resolver handles this
       })),
-    }));
+    })) as unknown as EventAgendaItem[];
   };

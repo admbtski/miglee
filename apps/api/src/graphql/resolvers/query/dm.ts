@@ -9,7 +9,12 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { createPairKey, mapDmMessage, mapDmThread } from '../helpers';
+import {
+  createPairKey,
+  mapDmMessage,
+  mapDmThread,
+  DmThreadWithGraph,
+} from '../helpers';
 import { requireAuth } from '../shared/auth-guards';
 
 const DM_THREAD_INCLUDE = {
@@ -103,7 +108,12 @@ export const dmThreadsQuery: QueryResolvers['dmThreads'] = resolverWithMetrics(
     );
 
     return {
-      items: threadsWithUnread.map((t) => mapDmThread(t as any, userId)),
+      items: threadsWithUnread.map((t) =>
+        mapDmThread(
+          t as unknown as DmThreadWithGraph & { unreadCount: number },
+          userId
+        )
+      ),
       pageInfo: {
         total,
         limit: take,
@@ -172,7 +182,12 @@ export const dmThreadQuery: QueryResolvers['dmThread'] = resolverWithMetrics(
       },
     });
 
-    return mapDmThread({ ...thread, unreadCount } as any, userId);
+    return mapDmThread(
+      { ...thread, unreadCount } as unknown as DmThreadWithGraph & {
+        unreadCount: number;
+      },
+      userId
+    );
   }
 );
 

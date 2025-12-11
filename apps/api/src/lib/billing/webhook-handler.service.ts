@@ -6,11 +6,8 @@
 import type Stripe from 'stripe';
 import { prisma } from '../prisma';
 import { logger } from '../pino';
-import { addMonths, addYears, addDays } from './stripe.service';
-import {
-  createUserPlanPeriod,
-  type CreateUserPlanPeriodParams,
-} from './user-plan.service';
+import { addMonths, addYears } from './stripe.service';
+import { createUserPlanPeriod } from './user-plan.service';
 import { activateEventSponsorship } from './event-sponsorship.service';
 import { STRIPE_WEBHOOK_EVENTS, METADATA_TYPE } from './constants';
 import type {
@@ -81,9 +78,9 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
 
-      case STRIPE_WEBHOOK_EVENTS.PAYMENT_EVENT_SUCCEEDED:
-        await handlePaymentEventSucceeded(
-          event.data.object as Stripe.PaymentEvent
+      case STRIPE_WEBHOOK_EVENTS.PAYMENT_INTENT_SUCCEEDED:
+        await handlePaymentIntentSucceeded(
+          event.data.object as Stripe.PaymentIntent
         );
         break;
 
@@ -219,18 +216,18 @@ async function handleUserOneOffCheckout(
 ): Promise<void> {
   const { userId, plan, billingPeriod } = metadata;
 
-  if (!session.payment_event) {
+  if (!session.payment_intent) {
     logger.warn(
       { sessionId: session.id },
-      'One-off checkout missing payment event'
+      'One-off checkout missing payment intent'
     );
     return;
   }
 
-  const paymentEventId =
-    typeof session.payment_event === 'string'
-      ? session.payment_event
-      : session.payment_event.id;
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent.id;
 
   const now = new Date();
   const startsAt = now;
@@ -250,7 +247,7 @@ async function handleUserOneOffCheckout(
     amount,
     currency,
     stripeCustomerId: session.customer as string,
-    stripePaymentEventId: paymentEventId,
+    stripePaymentEventId: paymentIntentId,
     stripeCheckoutSessionId: session.id,
     startsAt,
     endsAt,
@@ -273,23 +270,23 @@ async function handleEventSponsorshipCheckout(
   const { eventSponsorshipId, eventId, actionType, actionPackageSize } =
     metadata;
 
-  if (!session.payment_event) {
+  if (!session.payment_intent) {
     logger.warn(
       { sessionId: session.id },
-      'Event sponsorship checkout missing payment event'
+      'Event sponsorship checkout missing payment intent'
     );
     return;
   }
 
-  const paymentEventId =
-    typeof session.payment_event === 'string'
-      ? session.payment_event
-      : session.payment_event.id;
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent.id;
 
   // Activate sponsorship
   await activateEventSponsorship({
     sponsorshipId: eventSponsorshipId,
-    stripePaymentEventId: paymentEventId,
+    stripePaymentEventId: paymentIntentId,
     stripeCheckoutSessionId: session.id,
     actionType: actionType as 'new' | 'upgrade' | 'reload' | undefined,
     actionPackageSize: actionPackageSize
@@ -315,7 +312,7 @@ async function handleEventSponsorshipCheckout(
 async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription
 ): Promise<void> {
-  const metadata = subscription.metadata as UserSubscriptionMetadata;
+  const metadata = subscription.metadata as unknown as UserSubscriptionMetadata;
 
   if (!metadata?.userId) {
     logger.warn(
@@ -442,12 +439,15 @@ async function handleSubscriptionDeleted(
 // ========================================================================================
 
 async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
-  if (!invoice.subscription || typeof invoice.subscription !== 'string') {
+  // Type assertion for subscription field (may not exist on all invoice types)
+  const invoiceSubscription = (invoice as { subscription?: string | null })
+    .subscription;
+  if (!invoiceSubscription || typeof invoiceSubscription !== 'string') {
     return; // Not a subscription invoice
   }
 
   const subscription = await prisma.userSubscription.findUnique({
-    where: { stripeSubscriptionId: invoice.subscription },
+    where: { stripeSubscriptionId: invoiceSubscription },
   });
 
   if (!subscription) {
@@ -492,17 +492,20 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
 async function handleInvoicePaymentFailed(
   invoice: Stripe.Invoice
 ): Promise<void> {
-  if (!invoice.subscription || typeof invoice.subscription !== 'string') {
+  // Type assertion for subscription field (may not exist on all invoice types)
+  const invoiceSubscription = (invoice as { subscription?: string | null })
+    .subscription;
+  if (!invoiceSubscription || typeof invoiceSubscription !== 'string') {
     return;
   }
 
   await prisma.userSubscription.updateMany({
-    where: { stripeSubscriptionId: invoice.subscription },
+    where: { stripeSubscriptionId: invoiceSubscription },
     data: { status: 'PAST_DUE' },
   });
 
   logger.warn(
-    { invoiceId: invoice.id, subscriptionId: invoice.subscription },
+    { invoiceId: invoice.id, subscriptionId: invoiceSubscription },
     'Invoice payment failed'
   );
 }
@@ -511,21 +514,21 @@ async function handleInvoicePaymentFailed(
 // PAYMENT EVENT SUCCEEDED
 // ========================================================================================
 
-async function handlePaymentEventSucceeded(
-  paymentEvent: Stripe.PaymentEvent
+async function handlePaymentIntentSucceeded(
+  paymentIntent: Stripe.PaymentIntent
 ): Promise<void> {
-  const metadata = paymentEvent.metadata as any;
+  const metadata = paymentIntent.metadata as Record<string, string>;
 
   if (metadata?.type === METADATA_TYPE.USER_ONE_OFF && metadata.userId) {
     // One-off payment succeeded - UserPlanPeriod should already be created in checkout.session.completed
     logger.info(
-      { paymentEventId: paymentEvent.id, userId: metadata.userId },
+      { paymentIntentId: paymentIntent.id, userId: metadata.userId },
       'One-off payment succeeded'
     );
   } else if (metadata?.type === METADATA_TYPE.EVENT_SPONSORSHIP) {
     // Event sponsorship payment succeeded - should already be activated in checkout.session.completed
     logger.info(
-      { paymentEventId: paymentEvent.id, eventId: metadata.eventId },
+      { paymentIntentId: paymentIntent.id, eventId: metadata.eventId },
       'Event sponsorship payment succeeded'
     );
   }

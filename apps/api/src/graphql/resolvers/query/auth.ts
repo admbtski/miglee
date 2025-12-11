@@ -1,7 +1,12 @@
+/**
+ * Auth Query Resolvers
+ */
+
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import {
+import type {
   QueryResolvers,
   SessionUser,
+  UserEffectivePlan,
 } from '../../__generated__/resolvers-types';
 
 export const meQuery: QueryResolvers['me'] = resolverWithMetrics(
@@ -12,13 +17,18 @@ export const meQuery: QueryResolvers['me'] = resolverWithMetrics(
       return null;
     }
 
+    // Return base session user fields - field resolvers handle the rest
     const sessionUser: SessionUser = {
-      email: user?.email,
-      id: user?.id,
-      avatarKey: user?.avatarKey,
-      name: user?.name,
-      role: user?.role,
-      verifiedAt: user?.verifiedAt,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatarKey: user.avatarKey ?? null,
+      role: user.role,
+      verifiedAt: user.verifiedAt ?? null,
+      // Field resolvers handle these
+      avatarBlurhash: null,
+      effectivePlan: 'FREE' as UserEffectivePlan,
+      profile: null,
     };
 
     return sessionUser;

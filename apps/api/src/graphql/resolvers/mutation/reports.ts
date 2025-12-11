@@ -6,12 +6,12 @@
  * - updateReportStatus, deleteReport: APP_MOD_OR_ADMIN
  */
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma, ReportEntity } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
-import { mapReport } from '../helpers';
+import { mapReport, ReportWithGraph } from '../helpers';
 import { requireAuth, requireAdminOrModerator } from '../shared/auth-guards';
 
 const REPORT_INCLUDE = {
@@ -106,7 +106,7 @@ export const createReportMutation: MutationResolvers['createReport'] =
       const existing = await prisma.report.findFirst({
         where: {
           reporterId: userId,
-          entity: entity as any,
+          entity: entity as ReportEntity,
           entityId,
           status: { in: ['OPEN', 'INVESTIGATING'] },
         },
@@ -121,7 +121,7 @@ export const createReportMutation: MutationResolvers['createReport'] =
       const report = await prisma.report.create({
         data: {
           reporterId: userId,
-          entity: entity as any,
+          entity: entity as ReportEntity,
           entityId,
           reason: reason.trim(),
           status: 'OPEN',
@@ -129,7 +129,7 @@ export const createReportMutation: MutationResolvers['createReport'] =
         include: REPORT_INCLUDE,
       });
 
-      return mapReport(report as any);
+      return mapReport(report as unknown as ReportWithGraph);
     }
   );
 

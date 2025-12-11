@@ -4,7 +4,10 @@
  */
 
 import { GraphQLError } from 'graphql';
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  EventJoinQuestion,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 
 export const joinQuestionsMutations: Partial<MutationResolvers> = {
@@ -123,7 +126,7 @@ export const joinQuestionsMutations: Partial<MutationResolvers> = {
               label: q.label.trim(),
               helpText: q.helpText?.trim() || null,
               required: q.required,
-              options: q.options || null,
+              options: q.options ? JSON.parse(JSON.stringify(q.options)) : null,
               maxLength: q.maxLength || null,
             },
           })
@@ -133,6 +136,6 @@ export const joinQuestionsMutations: Partial<MutationResolvers> = {
       return createdQuestions;
     });
 
-    return updatedQuestions as any;
+    return updatedQuestions as unknown as EventJoinQuestion[];
   },
 };

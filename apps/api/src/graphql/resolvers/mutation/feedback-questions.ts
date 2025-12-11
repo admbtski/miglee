@@ -4,7 +4,11 @@ import {
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  EventFeedbackQuestion,
+  SubmitReviewAndFeedbackResult,
+} from '../../__generated__/resolvers-types';
 import { mapNotification } from '../helpers';
 import { NOTIFICATION_INCLUDE } from './notifications';
 import { enqueueFeedbackRequestNow } from '../../../workers/feedback/queue';
@@ -162,7 +166,9 @@ export const createFeedbackQuestionMutation: MutationResolvers['createFeedbackQu
         label: input.label,
         helpText: input.helpText || null,
         required: input.required ?? false,
-        options: input.options || null,
+        options: input.options
+          ? JSON.parse(JSON.stringify(input.options))
+          : null,
         maxLength: input.maxLength || null,
       },
     });
@@ -172,7 +178,8 @@ export const createFeedbackQuestionMutation: MutationResolvers['createFeedbackQu
       options: question.options || null,
       maxLength: question.maxLength || null,
       helpText: question.helpText || null,
-    };
+      event: null, // Field resolver handles this
+    } as unknown as EventFeedbackQuestion;
   };
 
 /**
@@ -262,11 +269,15 @@ export const updateFeedbackQuestionMutation: MutationResolvers['updateFeedbackQu
           helpText: input.helpText || null,
         }),
         ...(input.required !== undefined && { required: input.required }),
-        ...(input.options !== undefined && { options: input.options || null }),
+        ...(input.options !== undefined && {
+          options: input.options
+            ? JSON.parse(JSON.stringify(input.options))
+            : null,
+        }),
         ...(input.maxLength !== undefined && {
           maxLength: input.maxLength || null,
         }),
-      },
+      } as Record<string, unknown>,
     });
 
     return {
@@ -274,7 +285,8 @@ export const updateFeedbackQuestionMutation: MutationResolvers['updateFeedbackQu
       options: updated.options || null,
       maxLength: updated.maxLength || null,
       helpText: updated.helpText || null,
-    };
+      event: null, // Field resolver handles this
+    } as unknown as EventFeedbackQuestion;
   };
 
 /**
@@ -376,7 +388,8 @@ export const reorderFeedbackQuestionsMutation: MutationResolvers['reorderFeedbac
       options: q.options || null,
       maxLength: q.maxLength || null,
       helpText: q.helpText || null,
-    }));
+      event: null, // Field resolver handles this
+    })) as unknown as EventFeedbackQuestion[];
   };
 
 /**
@@ -571,7 +584,7 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         ...answer,
         user: answer.member.user,
       })),
-    };
+    } as unknown as SubmitReviewAndFeedbackResult;
   };
 
 /**
@@ -672,7 +685,7 @@ export const updateEventFeedbackQuestionsMutation: MutationResolvers['updateEven
               label: q.label.trim(),
               helpText: q.helpText?.trim() || null,
               required: q.required,
-              options: q.options || null,
+              options: q.options ? JSON.parse(JSON.stringify(q.options)) : null,
               maxLength: q.maxLength || null,
             },
           })
@@ -687,7 +700,8 @@ export const updateEventFeedbackQuestionsMutation: MutationResolvers['updateEven
       options: q.options || null,
       maxLength: q.maxLength || null,
       helpText: q.helpText || null,
-    }));
+      event: null, // Field resolver handles this
+    })) as unknown as EventFeedbackQuestion[];
   };
 
 /**

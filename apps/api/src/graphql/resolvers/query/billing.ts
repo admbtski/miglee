@@ -3,7 +3,14 @@
  * Handles queries for user subscriptions, plans, and event sponsorships
  */
 
-import type { QueryResolvers } from '../../__generated__/resolvers-types';
+import type {
+  QueryResolvers,
+  UserPlanInfo,
+  UserSubscription,
+  UserPlanPeriod,
+  EventSponsorshipPeriod,
+  EventSponsorship,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { getUserEffectivePlan } from '../../../lib/billing';
 
@@ -28,7 +35,7 @@ export const myPlanQuery: QueryResolvers['myPlan'] = async (
     planEndsAt: planInfo.planEndsAt,
     source: planInfo.source,
     billingPeriod: planInfo.billingPeriod,
-  };
+  } as unknown as UserPlanInfo;
 };
 
 /**
@@ -53,7 +60,7 @@ export const mySubscriptionQuery: QueryResolvers['mySubscription'] = async (
     orderBy: { createdAt: 'desc' },
   });
 
-  return subscription;
+  return subscription as unknown as UserSubscription | null;
 };
 
 /**
@@ -78,7 +85,7 @@ export const myPlanPeriodsQuery: QueryResolvers['myPlanPeriods'] = async (
     take: limit,
   });
 
-  return periods;
+  return periods as unknown as UserPlanPeriod[];
 };
 
 /**
@@ -130,7 +137,7 @@ export const myEventSponsorshipsQuery: QueryResolvers['myEventSponsorships'] =
       updatedAt: period.createdAt,
       event: period.event,
       sponsor: period.sponsor,
-    })) as any;
+    })) as unknown as EventSponsorshipPeriod[];
   };
 
 /**
@@ -184,5 +191,5 @@ export const eventSponsorshipQuery: QueryResolvers['eventSponsorship'] = async (
     },
   });
 
-  return sponsorship;
+  return sponsorship as unknown as EventSponsorship | null;
 };

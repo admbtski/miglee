@@ -6,7 +6,10 @@
 
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import type { QueryResolvers } from '../../__generated__/resolvers-types';
+import type {
+  QueryResolvers,
+  User as GQLUser,
+} from '../../__generated__/resolvers-types';
 import { mapEvent, type EventWithGraph } from '../helpers';
 import { requireAuth } from '../shared/auth-guards';
 
@@ -59,8 +62,8 @@ export const myFavouritesQuery: QueryResolvers['myFavourites'] =
         userId: fav.userId,
         eventId: fav.eventId,
         createdAt: fav.createdAt,
-        user: null as any, // Will be resolved by field resolver if needed
-        event: mapEvent(fav.event as EventWithGraph),
+        user: null as unknown as GQLUser, // Will be resolved by field resolver if needed
+        event: mapEvent(fav.event as unknown as EventWithGraph),
       }));
 
       return {

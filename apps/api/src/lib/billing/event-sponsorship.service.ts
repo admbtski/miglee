@@ -238,7 +238,7 @@ export async function createEventSponsorshipCheckout(
       },
     ],
     metadata: metadata as Record<string, string>,
-    payment_event_data: {
+    payment_intent_data: {
       metadata: metadata as Record<string, string>,
     },
     success_url: getCheckoutSuccessUrl(

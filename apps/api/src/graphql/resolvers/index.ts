@@ -8,7 +8,6 @@ import {
   eventChatMessageReactionsResolver,
 } from './fields/message-reactions';
 import {
-  eventSponsorshipResolver,
   eventSponsorshipPlanResolver,
   eventInviteLinksResolver,
   eventIsFavouriteResolver,

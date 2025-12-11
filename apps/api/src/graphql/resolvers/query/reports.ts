@@ -1,10 +1,10 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma, ReportEntity } from '@prisma/client';
 import { Role } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapReport } from '../helpers';
+import { mapReport, ReportWithGraph } from '../helpers';
 
 const REPORT_INCLUDE = {
   reporter: true,
@@ -36,7 +36,7 @@ export const reportsQuery: QueryResolvers['reports'] = resolverWithMetrics(
     }
 
     if (entity) {
-      where.entity = entity as any;
+      where.entity = entity as ReportEntity;
     }
 
     const total = await prisma.report.count({ where });
@@ -50,7 +50,7 @@ export const reportsQuery: QueryResolvers['reports'] = resolverWithMetrics(
     });
 
     return {
-      items: reports.map((r) => mapReport(r as any)),
+      items: reports.map((r) => mapReport(r as unknown as ReportWithGraph)),
       pageInfo: {
         total,
         limit: take,
@@ -85,6 +85,6 @@ export const reportQuery: QueryResolvers['report'] = resolverWithMetrics(
       return null;
     }
 
-    return mapReport(report as any);
+    return mapReport(report as unknown as ReportWithGraph);
   }
 );

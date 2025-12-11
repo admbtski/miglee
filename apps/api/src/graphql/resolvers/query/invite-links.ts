@@ -166,33 +166,38 @@ export const validateInviteLinkQuery: QueryResolvers['validateInviteLink'] =
 
       // Check if user is already a member (only if logged in)
       if (user?.id) {
-        const existingMember = (link.event as any).members?.[0];
+        type EventWithMembers = { members?: Array<{ status: string }> };
+        const existingMember = (link.event as EventWithMembers).members?.[0];
         if (existingMember) {
           return {
             valid: false,
             reason: `Już jesteś członkiem tego wydarzenia (status: ${existingMember.status})`,
             link: mapEventInviteLink(link as EventInviteLinkWithGraph),
-            event: mapEvent(link.event as EventWithGraph, user.id),
+            event: mapEvent(link.event as unknown as EventWithGraph, user.id),
           };
         }
       }
 
       // Check if event is deleted or canceled
-      if ((link.event as any).deletedAt) {
+      const eventData = link.event as {
+        deletedAt?: Date | null;
+        canceledAt?: Date | null;
+      };
+      if (eventData.deletedAt) {
         return {
           valid: false,
           reason: 'Wydarzenie zostało usunięte',
           link: mapEventInviteLink(link as EventInviteLinkWithGraph),
-          event: mapEvent(link.event as EventWithGraph, user?.id),
+          event: mapEvent(link.event as unknown as EventWithGraph, user?.id),
         };
       }
 
-      if ((link.event as any).canceledAt) {
+      if (eventData.canceledAt) {
         return {
           valid: false,
           reason: 'Wydarzenie zostało anulowane',
           link: mapEventInviteLink(link as EventInviteLinkWithGraph),
-          event: mapEvent(link.event as EventWithGraph, user?.id),
+          event: mapEvent(link.event as unknown as EventWithGraph, user?.id),
         };
       }
 
@@ -200,7 +205,7 @@ export const validateInviteLinkQuery: QueryResolvers['validateInviteLink'] =
         valid: true,
         reason: null,
         link: mapEventInviteLink(link as EventInviteLinkWithGraph),
-        event: mapEvent(link.event as EventWithGraph, user?.id),
+        event: mapEvent(link.event as unknown as EventWithGraph, user?.id),
       };
     }
   );

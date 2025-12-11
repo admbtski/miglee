@@ -7,6 +7,7 @@ import type {
 import {
   EventMemberRole,
   EventMemberStatus,
+  JoinMode as PrismaJoinMode,
   Level as PrismaLevel,
   MeetingKind as PrismaMeetingKind,
   Mode as PrismaMode,
@@ -69,14 +70,18 @@ const NOTIFICATION_INCLUDE = {
 const EVENT_INCLUDE = {
   categories: true,
   tags: true,
-  members: { include: { user: true, addedBy: true } },
-  owner: true,
-  canceledBy: true,
-  deletedBy: true,
+  members: {
+    include: {
+      user: { include: { profile: true } },
+      addedBy: { include: { profile: true } },
+    },
+  },
+  owner: { include: { profile: true } },
+  canceledBy: { include: { profile: true } },
+  deletedBy: { include: { profile: true } },
   sponsorship: {
     include: {
-      sponsor: true,
-      event: true,
+      sponsor: { include: { profile: true } },
     },
   },
 } satisfies Prisma.EventInclude;
@@ -159,17 +164,21 @@ function assertCapacity(input: {
 /**
  * Validate join windows/cutoffs
  */
-function assertJoinWindows(input: {
-  allowJoinLate?: boolean | null;
-  joinOpensMinutesBeforeStart?: number | null;
-  joinCutoffMinutesBeforeStart?: number | null;
-  lateJoinCutoffMinutesAfterStart?: number | null;
-}) {
+function assertJoinWindows(input: Record<string, unknown>) {
+  const allowJoinLate = input.allowJoinLate as boolean | null | undefined;
+  const joinOpensMinutesBeforeStart = input.joinOpensMinutesBeforeStart as
+    | number
+    | null
+    | undefined;
+  const joinCutoffMinutesBeforeStart = input.joinCutoffMinutesBeforeStart as
+    | number
+    | null
+    | undefined;
+  const lateJoinCutoffMinutesAfterStart =
+    input.lateJoinCutoffMinutesAfterStart as number | null | undefined;
+
   // All minutes must be >= 0
-  if (
-    input.joinOpensMinutesBeforeStart != null &&
-    input.joinOpensMinutesBeforeStart < 0
-  ) {
+  if (joinOpensMinutesBeforeStart != null && joinOpensMinutesBeforeStart < 0) {
     throw new GraphQLError('`joinOpensMinutesBeforeStart` must be >= 0.', {
       extensions: {
         code: 'BAD_USER_INPUT',
@@ -178,8 +187,8 @@ function assertJoinWindows(input: {
     });
   }
   if (
-    input.joinCutoffMinutesBeforeStart != null &&
-    input.joinCutoffMinutesBeforeStart < 0
+    joinCutoffMinutesBeforeStart != null &&
+    joinCutoffMinutesBeforeStart < 0
   ) {
     throw new GraphQLError('`joinCutoffMinutesBeforeStart` must be >= 0.', {
       extensions: {
@@ -189,8 +198,8 @@ function assertJoinWindows(input: {
     });
   }
   if (
-    input.lateJoinCutoffMinutesAfterStart != null &&
-    input.lateJoinCutoffMinutesAfterStart < 0
+    lateJoinCutoffMinutesAfterStart != null &&
+    lateJoinCutoffMinutesAfterStart < 0
   ) {
     throw new GraphQLError('`lateJoinCutoffMinutesAfterStart` must be >= 0.', {
       extensions: {
@@ -201,10 +210,7 @@ function assertJoinWindows(input: {
   }
 
   // If allowJoinLate=false => lateJoinCutoffMinutesAfterStart must be null
-  if (
-    input.allowJoinLate === false &&
-    input.lateJoinCutoffMinutesAfterStart != null
-  ) {
+  if (allowJoinLate === false && lateJoinCutoffMinutesAfterStart != null) {
     throw new GraphQLError(
       'When `allowJoinLate` is false, `lateJoinCutoffMinutesAfterStart` must be null.',
       {
@@ -236,8 +242,8 @@ function assertJoinWindows(input: {
   // Sensible max limits (e.g., <= 10080 minutes = 168 hours)
   const MAX_MINUTES = 10080;
   if (
-    input.joinOpensMinutesBeforeStart != null &&
-    input.joinOpensMinutesBeforeStart > MAX_MINUTES
+    joinOpensMinutesBeforeStart != null &&
+    joinOpensMinutesBeforeStart > MAX_MINUTES
   ) {
     throw new GraphQLError(
       `\`joinOpensMinutesBeforeStart\` must be <= ${MAX_MINUTES}.`,
@@ -250,8 +256,8 @@ function assertJoinWindows(input: {
     );
   }
   if (
-    input.joinCutoffMinutesBeforeStart != null &&
-    input.joinCutoffMinutesBeforeStart > MAX_MINUTES
+    joinCutoffMinutesBeforeStart != null &&
+    joinCutoffMinutesBeforeStart > MAX_MINUTES
   ) {
     throw new GraphQLError(
       `\`joinCutoffMinutesBeforeStart\` must be <= ${MAX_MINUTES}.`,
@@ -264,8 +270,8 @@ function assertJoinWindows(input: {
     );
   }
   if (
-    input.lateJoinCutoffMinutesAfterStart != null &&
-    input.lateJoinCutoffMinutesAfterStart > MAX_MINUTES
+    lateJoinCutoffMinutesAfterStart != null &&
+    lateJoinCutoffMinutesAfterStart > MAX_MINUTES
   ) {
     throw new GraphQLError(
       `\`lateJoinCutoffMinutesAfterStart\` must be <= ${MAX_MINUTES}.`,
@@ -490,7 +496,9 @@ export const createEventMutation: MutationResolvers['createEvent'] =
             // Privacy
             visibility: (input.visibility ??
               PrismaVisibility.PUBLIC) as PrismaVisibility,
-            joinMode: (input as any).joinMode ?? 'OPEN',
+            joinMode: ('joinMode' in input
+              ? input.joinMode
+              : 'OPEN') as PrismaJoinMode,
 
             // Defaults for fields not in simplified CreateEventInput
             // (can be updated later via UpdateEvent in manage panel)
@@ -732,7 +740,7 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
           ? { membersVisibility: input.membersVisibility as MembersVisibility }
           : {}),
         ...(input.joinMode !== undefined
-          ? { joinMode: (input as any).joinMode }
+          ? { joinMode: input.joinMode as PrismaJoinMode }
           : {}),
         ...(input.mode !== undefined ? { mode: input.mode as PrismaMode } : {}),
         ...(input.min !== undefined ? { min: input.min } : {}),
@@ -804,7 +812,8 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
 
         // If max increased, try to promote people from waitlist
         if (maxIncreased && slotsAdded > 0) {
-          await promoteMultipleFromWaitlist(tx, id, slotsAdded);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await promoteMultipleFromWaitlist(tx as any, id, slotsAdded);
         }
 
         return event;
@@ -1552,7 +1561,7 @@ export const publishEventMutation: MutationResolvers['publishEvent'] =
 
       // Enqueue reminders now that event is published
       try {
-        await enqueueReminders(updated);
+        await enqueueReminders(updated.id, updated.startAt);
       } catch {
         // swallow - reminders are not critical
       }

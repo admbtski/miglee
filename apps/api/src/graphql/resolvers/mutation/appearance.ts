@@ -3,7 +3,10 @@
  * Handles mutations for custom appearance configuration
  */
 
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  EventAppearance,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { logger } from '../../../lib/pino';
 
@@ -88,5 +91,6 @@ export const updateEventAppearanceMutation: MutationResolvers['updateEventAppear
       config: appearance.config,
       createdAt: appearance.createdAt,
       updatedAt: appearance.updatedAt,
-    };
+      event: null, // Field resolver handles this
+    } as unknown as EventAppearance;
   };

@@ -7,7 +7,6 @@ import type {
   SubscriptionPlan,
   UserPlanSource,
   BillingPeriod,
-  SubscriptionStatus,
 } from '@prisma/client';
 import { prisma } from '../prisma';
 import { logger } from '../pino';
@@ -16,11 +15,9 @@ import {
   getOrCreateStripeCustomer,
   addMonths,
   addYears,
-  addDays,
 } from './stripe.service';
 import {
   PLAN_LEVEL,
-  TRIAL_DAYS,
   METADATA_TYPE,
   getCheckoutSuccessUrl,
   getCheckoutCancelUrl,
@@ -111,14 +108,7 @@ export interface CreateSubscriptionCheckoutParams {
 export async function createSubscriptionCheckout(
   params: CreateSubscriptionCheckoutParams
 ): Promise<{ checkoutUrl: string; sessionId: string }> {
-  const {
-    userId,
-    userEmail,
-    userName,
-    plan,
-    billingPeriod,
-    withTrial = true,
-  } = params;
+  const { userId, userEmail, userName, plan, billingPeriod } = params;
 
   const stripe = getStripe();
 
@@ -161,9 +151,9 @@ export async function createSubscriptionCheckout(
       },
     ],
     subscription_data: {
-      metadata,
+      metadata: metadata as unknown as Record<string, string>,
     },
-    metadata,
+    metadata: metadata as unknown as Record<string, string>,
     success_url: getCheckoutSuccessUrl(
       config.appUrl,
       METADATA_TYPE.USER_SUBSCRIPTION
@@ -251,9 +241,9 @@ export async function createOneOffCheckout(
         quantity: 1,
       },
     ],
-    metadata,
-    payment_event_data: {
-      metadata,
+    metadata: metadata as unknown as Record<string, string>,
+    payment_intent_data: {
+      metadata: metadata as unknown as Record<string, string>,
     },
     success_url: getCheckoutSuccessUrl(
       config.appUrl,

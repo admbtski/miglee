@@ -23,7 +23,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
   const {
     to,
     userName,
-    eventitle,
+    eventTitle,
     eventId,
     feedbackUrl,
     hasFeedbackQuestions,
@@ -36,7 +36,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
     const result = await resend.emails.send({
       from: _from || process.env.EMAIL_FROM || 'Miglee <adaskoo05@gmail.com>',
       to: _to || to,
-      subject: `Jak oceniasz "${eventitle}"?`,
+      subject: `Jak oceniasz "${eventTitle}"?`,
       html: `
 <!DOCTYPE html>
 <html lang="pl">
@@ -68,7 +68,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
               </h2>
               
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
-                Dziękujemy za udział w wydarzeniu <strong>"${eventitle}"</strong>!
+                Dziękujemy za udział w wydarzeniu <strong>"${eventTitle}"</strong>!
               </p>
                
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
@@ -125,7 +125,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
       text: `
 Cześć ${userName}!
 
-Dziękujemy za udział w wydarzeniu "${eventitle}"!
+Dziękujemy za udział w wydarzeniu "${eventTitle}"!
 
 Twoja opinia jest dla nas bardzo ważna i pomoże nam ulepszyć przyszłe wydarzenia. 
 ${hasFeedbackQuestions ? 'Poprosimy Cię o wystawienie oceny oraz odpowiedź na kilka krótkich pytań.' : 'Poprosimy Cię o wystawienie oceny wydarzenia.'}

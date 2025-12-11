@@ -4,11 +4,21 @@
  * Authorization: ADMIN_ONLY
  */
 
+import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapComment, mapReview, mapUser } from '../helpers';
-import { requireAdmin } from '../shared/auth-guards';
+import type {
+  QueryResolvers,
+  NotificationsResult,
+} from '../../__generated__/resolvers-types';
+import {
+  mapComment,
+  mapReview,
+  mapUser,
+  CommentWithGraph,
+  ReviewWithGraph,
+} from '../helpers';
+import { requireAdmin, requireAuthUser } from '../shared/auth-guards';
 
 /**
  * Query: Get user's comments (admin)
@@ -17,11 +27,12 @@ export const adminUserCommentsQuery: QueryResolvers['adminUserComments'] =
   resolverWithMetrics(
     'Query',
     'adminUserComments',
-    async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
-      requireAdmin(user);
+    async (_p, { userId, limit = 20, offset = 0 }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.max(1, Math.min(limit!, 100));
-      const skip = Math.max(0, offset!);
+      const take = Math.max(1, Math.min(limit ?? 20, 100));
+      const skip = Math.max(0, offset ?? 0);
 
       const where = {
         authorId: userId,
@@ -44,7 +55,9 @@ export const adminUserCommentsQuery: QueryResolvers['adminUserComments'] =
       });
 
       return {
-        items: comments.map((c) => mapComment(c as any, user?.id)),
+        items: comments.map((c) =>
+          mapComment(c as unknown as CommentWithGraph, currentUser.id)
+        ),
         pageInfo: {
           total,
           hasMore: skip + take < total,
@@ -60,11 +73,12 @@ export const adminUserReviewsQuery: QueryResolvers['adminUserReviews'] =
   resolverWithMetrics(
     'Query',
     'adminUserReviews',
-    async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
-      requireAdmin(user);
+    async (_p, { userId, limit = 20, offset = 0 }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.max(1, Math.min(limit!, 100));
-      const skip = Math.max(0, offset!);
+      const take = Math.max(1, Math.min(limit ?? 20, 100));
+      const skip = Math.max(0, offset ?? 0);
 
       const where = {
         authorId: userId,
@@ -84,7 +98,9 @@ export const adminUserReviewsQuery: QueryResolvers['adminUserReviews'] =
       });
 
       return {
-        items: reviews.map((r) => mapReview(r as any, user?.id)),
+        items: reviews.map((r) =>
+          mapReview(r as unknown as ReviewWithGraph, currentUser.id)
+        ),
         pageInfo: {
           total,
           hasMore: skip + take < total,
@@ -100,11 +116,12 @@ export const adminUserMembershipsQuery: QueryResolvers['adminUserMemberships'] =
   resolverWithMetrics(
     'Query',
     'adminUserMemberships',
-    async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
-      requireAdmin(user);
+    async (_p, { userId, limit = 20, offset = 0 }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.max(1, Math.min(limit!, 100));
-      const skip = Math.max(0, offset!);
+      const take = Math.max(1, Math.min(limit ?? 20, 100));
+      const skip = Math.max(0, offset ?? 0);
 
       const where = {
         userId,
@@ -160,11 +177,12 @@ export const adminUserEventsQuery: QueryResolvers['adminUserEvents'] =
   resolverWithMetrics(
     'Query',
     'adminUserEvents',
-    async (_p, { userId, limit = 20, offset = 0 }, { user }) => {
-      requireAdmin(user);
+    async (_p, { userId, limit = 20, offset = 0 }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.max(1, Math.min(limit, 100));
-      const skip = Math.max(0, offset);
+      const take = Math.max(1, Math.min(limit ?? 20, 100));
+      const skip = Math.max(0, offset ?? 0);
 
       const where = {
         ownerId: userId,
@@ -213,11 +231,12 @@ export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
   resolverWithMetrics(
     'Query',
     'adminUserDmThreads',
-    async (_p, { userId, limit = 50, offset = 0 }, { user }) => {
-      requireAdmin(user);
+    async (_p, { userId, limit = 50, offset = 0 }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.min(limit!, 100);
-      const skip = offset!;
+      const take = Math.min(limit ?? 50, 100);
+      const skip = offset ?? 0;
 
       // Get DM threads where user is either aUser or bUser
       const [threads, total] = await Promise.all([
@@ -253,8 +272,8 @@ export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
         messageCount: thread._count.messages,
         otherUser:
           thread.aUserId === userId
-            ? mapUser(thread.bUser as any)
-            : mapUser(thread.aUser as any),
+            ? mapUser(thread.bUser)
+            : mapUser(thread.aUser),
       }));
 
       return {
@@ -274,11 +293,12 @@ export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications
   resolverWithMetrics(
     'Query',
     'adminUserNotifications',
-    async (_p, { userId, limit = 50, offset = 0 }, { user }) => {
-      requireAdmin(user);
+    async (_p, { userId, limit = 50, offset = 0 }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
-      const take = Math.min(limit!, 100);
-      const skip = offset!;
+      const take = Math.min(limit ?? 50, 100);
+      const skip = offset ?? 0;
 
       const where = {
         recipientId: userId,
@@ -323,6 +343,6 @@ export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications
           hasNext: skip + take < total,
           hasPrev: skip > 0,
         },
-      };
+      } as unknown as NotificationsResult;
     }
   );

@@ -1,4 +1,7 @@
-import type { QueryResolvers } from '../../__generated__/resolvers-types';
+import type {
+  QueryResolvers,
+  UserReviewsResult,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
 
@@ -89,5 +92,5 @@ export const userReviewsQuery: QueryResolvers['userReviews'] = async (
   return {
     items,
     total,
-  };
+  } as unknown as UserReviewsResult;
 };

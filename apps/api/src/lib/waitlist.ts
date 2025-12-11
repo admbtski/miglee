@@ -7,7 +7,7 @@
  * - Race condition protection via optimistic locking
  */
 
-import type { Prisma } from '@prisma/client';
+// Prisma type import (used for transaction types)
 import {
   EventMemberStatus,
   MemberEvent,
@@ -173,8 +173,8 @@ export async function promoteFromWaitlist(
     return false;
   }
 
-  // 3. Check capacity
-  if (event.joinedCount >= event.max) {
+  // 3. Check capacity (if max is null, event has unlimited capacity)
+  if (event.max !== null && event.joinedCount >= event.max) {
     return false;
   }
 
@@ -201,7 +201,7 @@ export async function promoteFromWaitlist(
   const updated = await tx.event.updateMany({
     where: {
       id: eventId,
-      joinedCount: { lt: event.max }, // Only update if still under capacity
+      ...(event.max !== null && { joinedCount: { lt: event.max } }), // Only update if still under capacity
     },
     data: { joinedCount: { increment: 1 } },
   });

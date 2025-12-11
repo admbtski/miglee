@@ -3,10 +3,14 @@
  */
 
 import { GraphQLError } from 'graphql';
+import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma.js';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics.js';
-import type { MutationResolvers } from '../../__generated__/resolvers-types.js';
-import { requireAdmin } from '../shared/auth-guards.js';
+import type {
+  MutationResolvers,
+  Event as GQLEvent,
+} from '../../__generated__/resolvers-types.js';
+import { requireAdmin, requireAuthUser } from '../shared/auth-guards.js';
 
 /**
  * Mutation: Admin update event
@@ -15,8 +19,9 @@ export const adminUpdateEventMutation: MutationResolvers['adminUpdateEvent'] =
   resolverWithMetrics(
     'Mutation',
     'adminUpdateEvent',
-    async (_p, { id, input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id, input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       // Check if event exists
       const event = await prisma.event.findUnique({
@@ -29,17 +34,21 @@ export const adminUpdateEventMutation: MutationResolvers['adminUpdateEvent'] =
         });
       }
 
-      // Update event
+      // Build update data - cast input to Prisma-compatible type
+      // Note: GraphQL and Prisma types don't perfectly align, so we use type assertion
+      const { categorySlugs, levels, ...restInput } = input;
+      const updateData = {
+        ...restInput,
+        ...(categorySlugs && {
+          categories: { set: categorySlugs.map((slug) => ({ slug })) },
+        }),
+        ...(levels && { levels: { set: levels } }),
+      };
+
       const updated = await prisma.event.update({
         where: { id },
-        data: {
-          ...input,
-          categorySlugs: input.categorySlugs
-            ? { set: input.categorySlugs }
-            : undefined,
-          tagIds: input.tagIds ? { set: input.tagIds } : undefined,
-          levels: input.levels ? { set: input.levels } : undefined,
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: updateData as any,
         include: {
           owner: true,
           members: {
@@ -48,7 +57,7 @@ export const adminUpdateEventMutation: MutationResolvers['adminUpdateEvent'] =
         },
       });
 
-      return updated as any;
+      return updated as unknown as GQLEvent;
     }
   );
 
@@ -59,8 +68,9 @@ export const adminDeleteEventMutation: MutationResolvers['adminDeleteEvent'] =
   resolverWithMetrics(
     'Mutation',
     'adminDeleteEvent',
-    async (_p, { id }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       // Check if event exists
       const event = await prisma.event.findUnique({
@@ -73,12 +83,14 @@ export const adminDeleteEventMutation: MutationResolvers['adminDeleteEvent'] =
         });
       }
 
+      const currentUser = requireAuthUser(ctx);
+
       // Soft delete
       await prisma.event.update({
         where: { id },
         data: {
           deletedAt: new Date(),
-          deletedById: user.id,
+          deletedById: currentUser.id,
         },
       });
 
@@ -93,8 +105,9 @@ export const adminCancelEventMutation: MutationResolvers['adminCancelEvent'] =
   resolverWithMetrics(
     'Mutation',
     'adminCancelEvent',
-    async (_p, { id, reason }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id, reason }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       // Check if event exists
       const event = await prisma.event.findUnique({
@@ -107,12 +120,14 @@ export const adminCancelEventMutation: MutationResolvers['adminCancelEvent'] =
         });
       }
 
+      const currentUser = requireAuthUser(ctx);
+
       // Cancel event
       const updated = await prisma.event.update({
         where: { id },
         data: {
           canceledAt: new Date(),
-          canceledById: user.id,
+          canceledById: currentUser.id,
           cancelReason: reason || 'Canceled by admin',
         },
         include: {
@@ -123,7 +138,7 @@ export const adminCancelEventMutation: MutationResolvers['adminCancelEvent'] =
         },
       });
 
-      return updated as any;
+      return updated as unknown as GQLEvent;
     }
   );
 
@@ -134,8 +149,9 @@ export const adminRestoreEventMutation: MutationResolvers['adminRestoreEvent'] =
   resolverWithMetrics(
     'Mutation',
     'adminRestoreEvent',
-    async (_p, { id }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       // Check if event exists
       const event = await prisma.event.findUnique({
@@ -166,7 +182,7 @@ export const adminRestoreEventMutation: MutationResolvers['adminRestoreEvent'] =
         },
       });
 
-      return updated as any;
+      return updated as unknown as GQLEvent;
     }
   );
 
@@ -177,8 +193,9 @@ export const adminChangeEventOwnerMutation: MutationResolvers['adminChangeEventO
   resolverWithMetrics(
     'Mutation',
     'adminChangeEventOwner',
-    async (_p, { eventId, newOwnerId }, { user }) => {
-      requireAdmin(user);
+    async (_p, { eventId, newOwnerId }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       // Check if event exists
       const event = await prisma.event.findUnique({
@@ -239,7 +256,7 @@ export const adminChangeEventOwnerMutation: MutationResolvers['adminChangeEventO
         },
       });
 
-      return updated as any;
+      return updated as unknown as GQLEvent;
     }
   );
 
@@ -250,8 +267,9 @@ export const adminBulkUpdateEventsMutation: MutationResolvers['adminBulkUpdateEv
   resolverWithMetrics(
     'Mutation',
     'adminBulkUpdateEvents',
-    async (_p, { ids, input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { ids, input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       let success = 0;
       let failed = 0;
@@ -289,8 +307,9 @@ export const adminUpdateMemberRoleMutation: MutationResolvers['adminUpdateMember
   resolverWithMetrics(
     'Mutation',
     'adminUpdateMemberRole',
-    async (_p, { input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       const { eventId, userId, role } = input;
 
@@ -341,7 +360,7 @@ export const adminUpdateMemberRoleMutation: MutationResolvers['adminUpdateMember
         },
       });
 
-      return event as any;
+      return event as unknown as GQLEvent;
     }
   );
 
@@ -352,8 +371,9 @@ export const adminKickMemberMutation: MutationResolvers['adminKickMember'] =
   resolverWithMetrics(
     'Mutation',
     'adminKickMember',
-    async (_p, { input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       const { eventId, userId } = input;
 
@@ -405,7 +425,7 @@ export const adminKickMemberMutation: MutationResolvers['adminKickMember'] =
         },
       });
 
-      return event as any;
+      return event as unknown as GQLEvent;
     }
   );
 
@@ -416,8 +436,9 @@ export const adminBanMemberMutation: MutationResolvers['adminBanMember'] =
   resolverWithMetrics(
     'Mutation',
     'adminBanMember',
-    async (_p, { input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       const { eventId, userId } = input;
 
@@ -469,7 +490,7 @@ export const adminBanMemberMutation: MutationResolvers['adminBanMember'] =
         },
       });
 
-      return event as any;
+      return event as unknown as GQLEvent;
     }
   );
 
@@ -480,8 +501,9 @@ export const adminUnbanMemberMutation: MutationResolvers['adminUnbanMember'] =
   resolverWithMetrics(
     'Mutation',
     'adminUnbanMember',
-    async (_p, { input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
       const { eventId, userId } = input;
 
@@ -526,6 +548,6 @@ export const adminUnbanMemberMutation: MutationResolvers['adminUnbanMember'] =
         },
       });
 
-      return event as any;
+      return event as unknown as GQLEvent;
     }
   );

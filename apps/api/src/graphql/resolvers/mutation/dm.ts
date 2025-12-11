@@ -15,7 +15,11 @@ import {
   mapDmMessage,
   mapDmThread,
   mapNotification,
+  DmThreadWithGraph,
+  DmMessageWithGraph,
+  NotificationWithGraph,
 } from '../helpers';
+import type { DmThread as GQLDmThread } from '../../__generated__/resolvers-types';
 import { isAdminOrModerator } from '../shared/auth-guards';
 
 /**
@@ -100,7 +104,7 @@ export const createOrGetDmThreadMutation: MutationResolvers['createOrGetDmThread
         });
       }
 
-      return mapDmThread(thread as any);
+      return mapDmThread(thread as unknown as DmThreadWithGraph);
     }
   );
 
@@ -246,7 +250,9 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
           await pubsub?.publish({
             topic: `NOTIFICATION_ADDED:${recipientId}`,
             payload: {
-              notificationAdded: mapNotification(notification as any),
+              notificationAdded: mapNotification(
+                notification as unknown as NotificationWithGraph
+              ),
             },
           });
 
@@ -263,11 +269,11 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
       await pubsub?.publish({
         topic: `dmMessageAdded:${result.threadId}`,
         payload: {
-          dmMessageAdded: mapDmMessage(result as any),
+          dmMessageAdded: mapDmMessage(result as unknown as DmMessageWithGraph),
         },
       });
 
-      return mapDmMessage(result as any);
+      return mapDmMessage(result as unknown as DmMessageWithGraph);
     }
   );
 
@@ -326,7 +332,7 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
         include: DM_MESSAGE_INCLUDE,
       });
 
-      const result = mapDmMessage(updated as any);
+      const result = mapDmMessage(updated as unknown as DmMessageWithGraph);
 
       // Publish update event
       await pubsub.publish({
@@ -542,7 +548,7 @@ export const markDmThreadReadMutation: MutationResolvers['markDmThreadRead'] =
             readAt: now,
             deletedAt: null,
             sender: { id: user.id, name: '', avatarKey: null },
-            thread: {} as any,
+            thread: null as unknown as GQLDmThread, // Will be resolved by field
             reactions: [],
           },
         },

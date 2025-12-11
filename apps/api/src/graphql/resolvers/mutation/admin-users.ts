@@ -3,12 +3,13 @@
  */
 
 import { GraphQLError } from 'graphql';
+import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { logger } from '../../../lib/pino';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapUser } from '../helpers';
-import { requireAdmin } from '../shared/auth-guards';
+import { requireAdmin, requireAuthUser } from '../shared/auth-guards';
 
 /**
  * Mutation: Admin update user
@@ -17,8 +18,9 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminUpdateUser',
-    async (_p, { id, input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id, input }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
       // Check if target user exists
       const targetUser = await prisma.user.findUnique({
@@ -32,7 +34,11 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
       }
 
       // Prevent admins from changing their own role
-      if (id === user.id && input.role && input.role !== user.role) {
+      if (
+        id === currentUser.id &&
+        input.role &&
+        input.role !== currentUser.role
+      ) {
         throw new GraphQLError('Cannot change your own role.', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
@@ -56,7 +62,7 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
         data: updateData,
       });
 
-      return mapUser(updated as any);
+      return mapUser(updated);
     }
   );
 
@@ -67,8 +73,9 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminDeleteUser',
-    async (_p, { id, anonymize }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id, anonymize }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
       // Check if target user exists
       const targetUser = await prisma.user.findUnique({
@@ -82,7 +89,7 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
       }
 
       // Prevent admins from deleting themselves
-      if (id === user.id) {
+      if (id === currentUser.id) {
         throw new GraphQLError('Cannot delete yourself.', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
@@ -99,8 +106,8 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
             verifiedAt: null,
             acceptedMarketingAt: null,
             acceptedTermsAt: null,
-            locale: null,
-            tz: null,
+            locale: 'en', // Reset to default
+            timezone: 'UTC', // Reset to default
           },
         });
       } else {
@@ -121,10 +128,19 @@ export const adminInviteUserMutation: MutationResolvers['adminInviteUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminInviteUser',
-    async (_p, { input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
-      const { email, name, role = 'USER' } = input;
+      // Validate required fields
+      const email = input.email ?? '';
+      if (!email) {
+        throw new GraphQLError('Email is required.', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      const name = input.name ?? input.email?.split('@')[0] ?? 'User';
+      const role = input.role ?? 'USER';
 
       // Check if user with this email already exists
       const existing = await prisma.user.findUnique({
@@ -141,7 +157,7 @@ export const adminInviteUserMutation: MutationResolvers['adminInviteUser'] =
       const newUser = await prisma.user.create({
         data: {
           email,
-          name: name || email.split('@')[0],
+          name,
           role,
           verifiedAt: null, // Not verified until they click the link
         },
@@ -150,7 +166,7 @@ export const adminInviteUserMutation: MutationResolvers['adminInviteUser'] =
       // TODO: Send invitation email with verification link
       // This would typically be done via a background job or email service
 
-      return mapUser(newUser as any);
+      return mapUser(newUser);
     }
   );
 
@@ -161,10 +177,20 @@ export const adminCreateUserMutation: MutationResolvers['adminCreateUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminCreateUser',
-    async (_p, { input }, { user }) => {
-      requireAdmin(user);
+    async (_p, { input }, ctx: MercuriusContext) => {
+      requireAuthUser(ctx);
+      requireAdmin(ctx.user);
 
-      const { email, name, role = 'USER', verified = false } = input;
+      // Validate required fields
+      const email = input.email ?? '';
+      if (!email) {
+        throw new GraphQLError('Email is required.', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+      const name = input.name ?? input.email?.split('@')[0] ?? 'User';
+      const role = input.role ?? 'USER';
+      const verified = input.verified ?? false;
 
       // Check if user with this email already exists
       const existing = await prisma.user.findUnique({
@@ -181,13 +207,13 @@ export const adminCreateUserMutation: MutationResolvers['adminCreateUser'] =
       const newUser = await prisma.user.create({
         data: {
           email,
-          name: name || email.split('@')[0],
+          name,
           role,
           verifiedAt: verified ? new Date() : null,
         },
       });
 
-      return mapUser(newUser as any);
+      return mapUser(newUser);
     }
   );
 
@@ -198,11 +224,12 @@ export const adminSuspendUserMutation: MutationResolvers['adminSuspendUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminSuspendUser',
-    async (_p, { id, reason }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id, reason }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
       // Prevent self-suspension
-      if (id === user?.id) {
+      if (id === currentUser.id) {
         throw new GraphQLError('Cannot suspend your own account.', {
           extensions: { code: 'FORBIDDEN' },
         });
@@ -239,8 +266,9 @@ export const adminUnsuspendUserMutation: MutationResolvers['adminUnsuspendUser']
   resolverWithMetrics(
     'Mutation',
     'adminUnsuspendUser',
-    async (_p, { id }, { user }) => {
-      requireAdmin(user);
+    async (_p, { id }, ctx: MercuriusContext) => {
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
       // Check if user exists
       const targetUser = await prisma.user.findUnique({
@@ -263,10 +291,10 @@ export const adminUnsuspendUserMutation: MutationResolvers['adminUnsuspendUser']
       });
 
       logger.info(
-        { userId: id, adminId: user?.id },
+        { userId: id, adminId: currentUser.id },
         'User unsuspended by admin'
       );
 
-      return mapUser(updatedUser as any);
+      return mapUser(updatedUser);
     }
   );

@@ -287,6 +287,11 @@ export const requestJoinEventWithAnswersMutation: MutationResolvers['requestJoin
             addedBy: { include: { profile: true } },
           },
         },
+        sponsorship: {
+          include: {
+            sponsor: { include: { profile: true } },
+          },
+        },
       },
     });
 
@@ -328,10 +333,17 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
         categories: true,
         tags: true,
         owner: { include: { profile: true } },
+        canceledBy: { include: { profile: true } },
+        deletedBy: { include: { profile: true } },
         members: {
           include: {
             user: { include: { profile: true } },
             addedBy: { include: { profile: true } },
+          },
+        },
+        sponsorship: {
+          include: {
+            sponsor: { include: { profile: true } },
           },
         },
       },
@@ -377,8 +389,8 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
       });
     }
 
-    // Check capacity
-    if (event.joinedCount >= event.max) {
+    // Check capacity (if max is null, event has unlimited capacity)
+    if (event.max !== null && event.joinedCount >= event.max) {
       throw new GraphQLError('Event is full', {
         extensions: { code: 'EVENT_FULL' },
       });
@@ -462,6 +474,11 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
             addedBy: { include: { profile: true } },
           },
         },
+        sponsorship: {
+          include: {
+            sponsor: { include: { profile: true } },
+          },
+        },
       },
     });
 
@@ -502,10 +519,17 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
         categories: true,
         tags: true,
         owner: { include: { profile: true } },
+        canceledBy: { include: { profile: true } },
+        deletedBy: { include: { profile: true } },
         members: {
           include: {
             user: { include: { profile: true } },
             addedBy: { include: { profile: true } },
+          },
+        },
+        sponsorship: {
+          include: {
+            sponsor: { include: { profile: true } },
           },
         },
       },
@@ -623,6 +647,11 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
             addedBy: { include: { profile: true } },
           },
         },
+        sponsorship: {
+          include: {
+            sponsor: { include: { profile: true } },
+          },
+        },
       },
     });
 
@@ -717,6 +746,11 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
             include: {
               user: { include: { profile: true } },
               addedBy: { include: { profile: true } },
+            },
+          },
+          sponsorship: {
+            include: {
+              sponsor: { include: { profile: true } },
             },
           },
         },

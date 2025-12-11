@@ -110,7 +110,7 @@ export const deleteNotificationMutation: MutationResolvers['deleteNotification']
   resolverWithMetrics(
     'Mutation',
     'deleteNotification',
-    async (_p, { id }, { user, pubsub }: MercuriusContext) => {
+    async (_p, { id }, { user }: MercuriusContext) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -154,7 +154,7 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
   resolverWithMetrics(
     'Mutation',
     'markNotificationRead',
-    async (_p, { id }, { user, pubsub }: MercuriusContext) => {
+    async (_p, { id }, { user }: MercuriusContext) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },
@@ -204,7 +204,7 @@ export const markAllNotificationsReadMutation: MutationResolvers['markAllNotific
   resolverWithMetrics(
     'Mutation',
     'markAllNotificationsRead',
-    async (_p, { recipientId }, { user, pubsub }: MercuriusContext) => {
+    async (_p, { recipientId }, { user }: MercuriusContext) => {
       if (!user?.id) {
         throw new GraphQLError('Authentication required.', {
           extensions: { code: 'UNAUTHENTICATED' },

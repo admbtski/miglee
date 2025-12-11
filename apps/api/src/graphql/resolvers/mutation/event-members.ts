@@ -6,7 +6,7 @@ import {
   NotificationKind as PrismaNotificationKind,
   MemberEvent,
 } from '@prisma/client';
-import { GraphQLError } from 'graphql';
+import { GraphQLError, GraphQLResolveInfo } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
@@ -182,10 +182,20 @@ function reloadFullEvent(tx: Tx, eventId: string) {
     include: {
       categories: true,
       tags: true,
-      members: { include: { user: true, addedBy: true } },
-      owner: true,
-      canceledBy: true,
-      deletedBy: true,
+      members: {
+        include: {
+          user: { include: { profile: true } },
+          addedBy: { include: { profile: true } },
+        },
+      },
+      owner: { include: { profile: true } },
+      canceledBy: { include: { profile: true } },
+      deletedBy: { include: { profile: true } },
+      sponsorship: {
+        include: {
+          sponsor: { include: { profile: true } },
+        },
+      },
     },
   });
 }
@@ -215,7 +225,9 @@ function assertCanJoinNow(event: {
   }
 }
 
-function isFull(currentJoined: number, max: number) {
+function isFull(currentJoined: number, max: number | null) {
+  // If max is null, event has unlimited capacity
+  if (max === null) return false;
   return currentJoined >= max;
 }
 
@@ -658,7 +670,7 @@ export const requestJoinEventMutation: MutationResolvers['requestJoinEvent'] =
     'requestJoinEvent',
     async (_p, { eventId }, ctx) => {
       // alias do joinMember - wywołaj bezpośrednio
-      return joinMemberMutation(_p, { eventId }, ctx, {} as any);
+      return joinMemberMutation(_p, { eventId }, ctx, {} as GraphQLResolveInfo);
     }
   );
 
@@ -736,7 +748,8 @@ export const leaveEventMutation: MutationResolvers['leaveEvent'] =
         });
 
         // Try to promote someone from waitlist
-        await promoteFromWaitlist(tx, eventId);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await promoteFromWaitlist(tx as any, eventId);
 
         return reloadFullEvent(tx, eventId);
       });
@@ -958,7 +971,8 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
         });
 
         // Try to promote someone from waitlist
-        await promoteFromWaitlist(tx, eventId);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await promoteFromWaitlist(tx as any, eventId);
 
         return reloadFullEvent(tx, eventId);
       });
@@ -1038,7 +1052,8 @@ export const banMemberMutation: MutationResolvers['banMember'] =
 
         // Try to promote someone from waitlist if user was joined
         if (wasJoined) {
-          await promoteFromWaitlist(tx, eventId);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await promoteFromWaitlist(tx as any, eventId);
         }
 
         return reloadFullEvent(tx, eventId);
@@ -1386,10 +1401,11 @@ export const promoteFromWaitlistMutation: MutationResolvers['promoteFromWaitlist
         assertCanJoinNow(event);
 
         // Check capacity with optimistic locking
+        // If max is null, event has unlimited capacity
         const updated = await tx.event.updateMany({
           where: {
             id: eventId,
-            joinedCount: { lt: event.max },
+            ...(event.max !== null && { joinedCount: { lt: event.max } }),
           },
           data: { joinedCount: { increment: 1 } },
         });

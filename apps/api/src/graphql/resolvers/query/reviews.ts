@@ -8,7 +8,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapReview } from '../helpers';
+import { mapReview, ReviewWithGraph } from '../helpers';
 import { requireAuth } from '../shared/auth-guards';
 
 const REVIEW_INCLUDE = {
@@ -48,7 +48,7 @@ export const reviewsQuery: QueryResolvers['reviews'] = resolverWithMetrics(
     });
 
     return {
-      items: reviews.map((r) => mapReview(r as any)),
+      items: reviews.map((r) => mapReview(r as unknown as ReviewWithGraph)),
       pageInfo: {
         total,
         limit: take,
@@ -76,7 +76,7 @@ export const reviewQuery: QueryResolvers['review'] = resolverWithMetrics(
       return null;
     }
 
-    return mapReview(review as any);
+    return mapReview(review as unknown as ReviewWithGraph);
   }
 );
 
@@ -164,6 +164,6 @@ export const myReviewQuery: QueryResolvers['myReview'] = resolverWithMetrics(
       return null;
     }
 
-    return mapReview(review as any);
+    return mapReview(review as unknown as ReviewWithGraph);
   }
 );

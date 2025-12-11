@@ -2529,7 +2529,7 @@ async function seedEventAgenda(allEvents: Array<{ event: any; owner: User }>) {
           eventId: event.id,
           order: i,
           title: slot.title,
-          description: slot.description || null,
+          description: 'description' in slot ? slot.description : null,
           startAt: currentTime,
           endAt: slotEnd,
         },

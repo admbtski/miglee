@@ -8,7 +8,12 @@
  * - canSubmitFeedback: AUTH
  */
 
-import type { QueryResolvers } from '../../__generated__/resolvers-types';
+import type {
+  QueryResolvers,
+  EventFeedbackQuestion,
+  EventFeedbackResults,
+  EventFeedbackAnswer,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { requireAuth, requireEventModOrOwner } from '../shared/auth-guards';
 
@@ -30,7 +35,8 @@ export const eventFeedbackQuestionsQuery: QueryResolvers['eventFeedbackQuestions
       options: q.options || null,
       maxLength: q.maxLength || null,
       helpText: q.helpText || null,
-    }));
+      event: null, // Field resolver handles this
+    })) as unknown as EventFeedbackQuestion[];
   };
 
 /**
@@ -89,7 +95,7 @@ export const eventFeedbackResultsQuery: QueryResolvers['eventFeedbackResults'] =
         answers.forEach((answer) => {
           const value = answer.answer;
           if (question.type === 'MULTI_CHOICE' && Array.isArray(value)) {
-            value.forEach((v: string) => {
+            (value as string[]).forEach((v) => {
               counts.set(v, (counts.get(v) || 0) + 1);
             });
           } else if (typeof value === 'string') {
@@ -136,7 +142,7 @@ export const eventFeedbackResultsQuery: QueryResolvers['eventFeedbackResults'] =
       eventId,
       questionStats,
       totalRespondents: totalRespondents.length,
-    };
+    } as unknown as EventFeedbackResults;
   };
 
 /**
@@ -181,8 +187,9 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
         options: answer.question.options || null,
         maxLength: answer.question.maxLength || null,
         helpText: answer.question.helpText || null,
+        event: null, // Field resolver handles this
       },
-    }));
+    })) as unknown as EventFeedbackAnswer[];
   };
 
 /**

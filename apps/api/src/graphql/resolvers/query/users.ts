@@ -14,31 +14,36 @@ function mapRole(r: Prisma.$UserPayload['scalars']['role']): GQLRole {
   return r as unknown as GQLRole;
 }
 
-function mapUser(u: Prisma.UserGetPayload<{}>): GQLUser {
+function mapUserToGQL(u: Record<string, unknown>): GQLUser {
   return {
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    avatarKey: u.avatarKey,
-    role: mapRole(u.role),
-    createdAt: u.createdAt,
-    updatedAt: u.updatedAt,
-    suspendedAt: u.suspendedAt,
-    suspensionReason: (u as any).suspensionReason ?? null,
-    verifiedAt: u.verifiedAt,
-    lastSeenAt: u.lastSeenAt,
-    acceptedMarketingAt: u.acceptedMarketingAt,
-    acceptedTermsAt: u.acceptedTermsAt,
-    locale: u.locale,
-    timezone: u.timezone,
-    // These fields are resolved by field resolvers
-    profile: undefined as any,
-    privacy: undefined as any,
-    stats: undefined as any,
-    socialLinks: undefined as any,
-    categoryLevels: undefined as any,
-    availability: undefined as any,
-    badges: undefined as any,
+    id: u.id as string,
+    email: u.email as string,
+    name: u.name as string,
+    avatarKey: (u.avatarKey as string | null) ?? null,
+    role: mapRole(u.role as Prisma.$UserPayload['scalars']['role']),
+    createdAt: u.createdAt as Date,
+    updatedAt: u.updatedAt as Date,
+    suspendedAt: (u.suspendedAt as Date | null) ?? null,
+    suspensionReason: (u.suspensionReason as string | null) ?? null,
+    verifiedAt: (u.verifiedAt as Date | null) ?? null,
+    lastSeenAt: (u.lastSeenAt as Date | null) ?? null,
+    acceptedMarketingAt: (u.acceptedMarketingAt as Date | null) ?? null,
+    acceptedTermsAt: (u.acceptedTermsAt as Date | null) ?? null,
+    locale: u.locale as string,
+    timezone: u.timezone as string,
+    // Field resolvers handle these
+    avatarBlurhash: null,
+    profile: null,
+    privacy: null,
+    stats: null,
+    socialLinks: [],
+    categoryLevels: [],
+    availability: [],
+    badges: [],
+    effectivePlan: 'FREE' as GQLUser['effectivePlan'],
+    planEndsAt: null,
+    activeSubscription: null,
+    activePlanPeriods: [],
   };
 }
 
@@ -124,7 +129,7 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
     };
 
     return {
-      items: list.map(mapUser),
+      items: list.map(mapUserToGQL),
       pageInfo,
     };
   }
@@ -135,7 +140,8 @@ export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
   'user',
   async (_p, args): Promise<GQLUser | null> => {
     const id = args.id;
-    const name = (args as any).name as string | undefined;
+    // name might be in args if the schema supports it
+    const name = 'name' in args ? (args.name as string | undefined) : undefined;
 
     // Must provide at least one of id or name
     if (!id && !name) {
@@ -171,7 +177,7 @@ export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
       avatarKey: u?.avatarKey,
     });
 
-    const mapped = u ? mapUser(u) : null;
+    const mapped = u ? mapUserToGQL(u) : null;
     console.log('[userQuery] Mapped user:', {
       id: mapped?.id,
       avatarKey: mapped?.avatarKey,

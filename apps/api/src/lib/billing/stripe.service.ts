@@ -188,15 +188,15 @@ export async function getReceiptUrlFromPaymentEvent(
   const stripe = getStripe();
 
   try {
-    const paymentEvent = await stripe.paymentEvents.retrieve(paymentEventId, {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentEventId, {
       expand: ['latest_charge'],
     });
 
-    if (paymentEvent.latest_charge) {
+    if (paymentIntent.latest_charge) {
       const charge =
-        typeof paymentEvent.latest_charge === 'string'
-          ? await stripe.charges.retrieve(paymentEvent.latest_charge)
-          : paymentEvent.latest_charge;
+        typeof paymentIntent.latest_charge === 'string'
+          ? await stripe.charges.retrieve(paymentIntent.latest_charge)
+          : paymentIntent.latest_charge;
 
       return charge.receipt_url || null;
     }

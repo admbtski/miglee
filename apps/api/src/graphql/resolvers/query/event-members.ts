@@ -12,7 +12,8 @@
 
 import type { Prisma } from '@prisma/client';
 import { EventMemberRole, EventMemberStatus } from '@prisma/client';
-import { GraphQLError } from 'graphql';
+// GraphQLError is used in other files, commented out to avoid unused import warning
+// import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
@@ -20,6 +21,7 @@ import type {
   EventMemberRole as GqlEventMemberRole,
   EventMemberStatus as GqlEventMemberStatus,
   QueryResolvers,
+  Event as GQLEvent,
 } from '../../__generated__/resolvers-types';
 import type { EventMemberWithUsers } from '../helpers';
 import { mapUser } from '../helpers';
@@ -47,7 +49,7 @@ function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
     user: mapUser(m.user),
     addedBy: m.addedBy ? mapUser(m.addedBy) : null,
     // event and joinAnswers will be resolved by field resolvers
-    event: null as any,
+    event: null as unknown as GQLEvent, // Resolved by field resolver
     joinAnswers: [],
   };
 }

@@ -4,7 +4,10 @@
  */
 
 import { GraphQLError } from 'graphql';
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  EventFaq,
+} from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 
 export const faqMutations: Partial<MutationResolvers> = {
@@ -112,6 +115,6 @@ export const faqMutations: Partial<MutationResolvers> = {
       return createdFaqs;
     });
 
-    return updatedFaqs as any;
+    return updatedFaqs as unknown as EventFaq[];
   },
 };

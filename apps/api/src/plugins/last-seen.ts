@@ -1,7 +1,7 @@
 // apps/api/src/plugins/last-seen-hook.ts
 import fp from 'fastify-plugin';
 import type { FastifyInstance } from 'fastify';
-import { touchLastSeen } from '../lib/last-seen';
+// import { touchLastSeen } from '../lib/last-seen'; // Currently disabled
 
 export default fp(async function lastSeenHook(app: FastifyInstance) {
   app.addHook('onRequest', async (req) => {

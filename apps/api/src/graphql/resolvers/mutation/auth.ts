@@ -4,6 +4,7 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type {
   MutationResolvers,
   Role,
+  SessionUser,
 } from '../../__generated__/resolvers-types';
 
 function slugify(s: string) {
@@ -66,7 +67,15 @@ export const devLoginMutation: MutationResolvers['devLogin'] =
       role: (u.role ?? 'USER') as Role,
       verifiedAt: u.verifiedAt,
       email: u.email,
-    };
+      // Field resolvers will handle these
+      avatarBlurhash: null,
+      effectivePlan: null,
+      profile: null,
+      locale: u.locale ?? 'en',
+      timezone: u.timezone ?? 'UTC',
+      createdAt: u.createdAt ?? new Date(),
+      updatedAt: u.updatedAt ?? new Date(),
+    } as unknown as SessionUser;
   });
 
 export const devLogoutMutation: MutationResolvers['devLogout'] =

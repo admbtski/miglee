@@ -7,7 +7,11 @@
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import type {
+  MutationResolvers,
+  User as GQLUser,
+  Event as GQLEvent,
+} from '../../__generated__/resolvers-types';
 import { requireAuth } from '../shared/auth-guards';
 
 /**
@@ -70,8 +74,8 @@ export const toggleFavouriteMutation: MutationResolvers['toggleFavourite'] =
           userId: favourite.userId,
           eventId: favourite.eventId,
           createdAt: favourite.createdAt,
-          user: null as any, // Will be resolved by field resolver if needed
-          event: null as any, // Will be resolved by field resolver if needed
+          user: null as unknown as GQLUser, // Field resolver
+          event: null as unknown as GQLEvent, // Field resolver
         };
       }
     }

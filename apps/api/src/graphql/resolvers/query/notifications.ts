@@ -4,12 +4,12 @@
  * Authorization: SELF (recipientId must match current user)
  */
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma, NotificationEntity } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import { QueryResolvers } from '../../__generated__/resolvers-types';
-import { mapNotification } from '../helpers';
+import { mapNotification, NotificationWithGraph } from '../helpers';
 import { requireAuth, isAdmin } from '../shared/auth-guards';
 
 export const NOTIFICATION_INCLUDE = {
@@ -50,7 +50,9 @@ export const notificationsQuery: QueryResolvers['notifications'] =
     const where: Prisma.NotificationWhereInput = {
       recipientId: args.recipientId,
       ...(args.unreadOnly ? { readAt: null } : {}),
-      ...(args.entityType ? { entityType: args.entityType as any } : {}),
+      ...(args.entityType
+        ? { entityType: args.entityType as NotificationEntity }
+        : {}),
     };
 
     // --- total count ---
@@ -67,7 +69,7 @@ export const notificationsQuery: QueryResolvers['notifications'] =
 
     // --- result ---
     return {
-      items: rows.map(mapNotification),
+      items: rows.map((n) => mapNotification(n as NotificationWithGraph)),
       pageInfo: {
         total,
         limit: take,

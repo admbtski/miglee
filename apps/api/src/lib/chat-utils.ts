@@ -9,7 +9,6 @@ import { GraphQLError } from 'graphql';
 // =============================================================================
 
 const MAX_MESSAGE_LENGTH = 2000;
-const MAX_DM_LENGTH = 2000;
 
 /**
  * Allowed markdown patterns (limited subset)
@@ -64,7 +63,7 @@ export function sanitizeMessageContent(content: string): string {
   // Validate URLs in markdown links
   sanitized = sanitized.replace(
     ALLOWED_MARKDOWN_PATTERNS.link,
-    (match, label, url) => {
+    (_match, label, url) => {
       if (!isValidUrl(url)) {
         return label; // Strip invalid link, keep label
       }
