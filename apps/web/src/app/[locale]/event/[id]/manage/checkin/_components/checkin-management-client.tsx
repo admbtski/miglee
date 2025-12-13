@@ -14,43 +14,98 @@ import {
   ScrollText,
   Download,
   Info,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 
-// TODO: Replace with actual GraphQL hooks and queries
-// import { useEventCheckin } from '@/features/events/api/checkin';
+import { useEventManagement } from '../../_components/event-management-provider';
+import {
+  useUpdateEventCheckinConfigMutation,
+  type CheckinMethod,
+} from '@/features/events/api/checkin';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
 export function CheckinManagementClient() {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  
-  // Local state for settings (will be replaced with GraphQL mutations)
-  const [checkinEnabled, setCheckinEnabled] = useState(false);
-  const [enabledMethods, setEnabledMethods] = useState<string[]>([]);
+  const { event: rawEvent, isLoading, refetch } = useEventManagement();
 
-  // TODO: Replace with actual data fetching
-  const isLoading = false;
-  const event = {
-    checkinEnabled,
-    enabledCheckinMethods: enabledMethods,
-    eventCheckinToken: null,
+  // Type assertion for check-in fields (until added to GraphQL codegen)
+  const event = rawEvent as typeof rawEvent & {
+    checkinEnabled?: boolean | null;
+    enabledCheckinMethods?: string[] | null;
+    eventCheckinToken?: string | null;
   };
-  const members: any[] = [];
+
+  // Mutation for updating check-in config
+  const updateConfigMutation = useUpdateEventCheckinConfigMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
 
   if (isLoading) {
     return <LoadingSkeleton />;
   }
 
+  if (!event) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-800/50 dark:bg-red-900/20">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+          <div>
+            <h3 className="font-semibold text-red-900 dark:text-red-100">
+              Event not found
+            </h3>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+              Unable to load event data. Please try refreshing the page.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const members: any[] = []; // TODO: Load event members
   const stats = {
     total: members.length,
     checkedIn: members.filter((m) => m.isCheckedIn).length,
     percentage:
       members.length > 0
         ? Math.round(
-            (members.filter((m) => m.isCheckedIn).length / members.length) *
-              100
+            (members.filter((m) => m.isCheckedIn).length / members.length) * 100
           )
         : 0,
+  };
+
+  const handleToggleEnabled = async () => {
+    if (!event.id) return;
+
+    await updateConfigMutation.mutateAsync({
+      input: {
+        eventId: event.id,
+        checkinEnabled: !event.checkinEnabled,
+        enabledCheckinMethods: event.enabledCheckinMethods as CheckinMethod[],
+      },
+    });
+  };
+
+  const handleToggleMethod = async (method: CheckinMethod) => {
+    if (!event.id) return;
+
+    const currentMethods = (event.enabledCheckinMethods ||
+      []) as CheckinMethod[];
+    const newMethods = currentMethods.includes(method)
+      ? currentMethods.filter((m) => m !== method)
+      : [...currentMethods, method];
+
+    await updateConfigMutation.mutateAsync({
+      input: {
+        eventId: event.id,
+        checkinEnabled: event.checkinEnabled || false,
+        enabledCheckinMethods: newMethods,
+      },
+    });
   };
 
   return (
@@ -137,20 +192,25 @@ export function CheckinManagementClient() {
         {activeTab === 'overview' && <OverviewTab members={members} />}
         {activeTab === 'settings' && (
           <SettingsTab
-            checkinEnabled={checkinEnabled}
-            enabledMethods={enabledMethods}
-            onToggleEnabled={() => setCheckinEnabled(!checkinEnabled)}
-            onToggleMethod={(method) => {
-              if (enabledMethods.includes(method)) {
-                setEnabledMethods(enabledMethods.filter((m) => m !== method));
-              } else {
-                setEnabledMethods([...enabledMethods, method]);
-              }
-            }}
+            checkinEnabled={event.checkinEnabled || false}
+            enabledMethods={
+              (event.enabledCheckinMethods || []) as CheckinMethod[]
+            }
+            onToggleEnabled={handleToggleEnabled}
+            onToggleMethod={handleToggleMethod}
+            isUpdating={updateConfigMutation.isPending}
           />
         )}
-        {activeTab === 'qr' && <QrTab event={event} />}
-        {activeTab === 'logs' && <LogsTab />}
+        {activeTab === 'qr' && (
+          <QrTab
+            checkinEnabled={event.checkinEnabled || false}
+            enabledMethods={
+              (event.enabledCheckinMethods || []) as CheckinMethod[]
+            }
+            eventCheckinToken={event.eventCheckinToken}
+          />
+        )}
+        {activeTab === 'logs' && <LogsTab eventId={event.id} />}
       </div>
     </div>
   );
@@ -259,17 +319,21 @@ function OverviewTab({ members }: { members: any[] }) {
   );
 }
 
+interface SettingsTabProps {
+  checkinEnabled: boolean;
+  enabledMethods: CheckinMethod[];
+  onToggleEnabled: () => void;
+  onToggleMethod: (method: CheckinMethod) => void;
+  isUpdating: boolean;
+}
+
 function SettingsTab({
   checkinEnabled,
   enabledMethods,
   onToggleEnabled,
   onToggleMethod,
-}: {
-  checkinEnabled: boolean;
-  enabledMethods: string[];
-  onToggleEnabled: () => void;
-  onToggleMethod: (method: string) => void;
-}) {
+  isUpdating,
+}: SettingsTabProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -294,19 +358,24 @@ function SettingsTab({
         <button
           type="button"
           onClick={onToggleEnabled}
+          disabled={isUpdating}
           className={[
-            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
             checkinEnabled
               ? 'bg-indigo-600 dark:bg-indigo-500'
               : 'bg-zinc-200 dark:bg-zinc-700',
           ].join(' ')}
         >
-          <span
-            className={[
-              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-              checkinEnabled ? 'translate-x-6' : 'translate-x-1',
-            ].join(' ')}
-          />
+          {isUpdating ? (
+            <Loader2 className="h-4 w-4 animate-spin text-white mx-auto" />
+          ) : (
+            <span
+              className={[
+                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                checkinEnabled ? 'translate-x-6' : 'translate-x-1',
+              ].join(' ')}
+            />
+          )}
         </button>
       </div>
 
@@ -318,24 +387,24 @@ function SettingsTab({
         <div className="space-y-2">
           {[
             {
-              id: 'SELF_MANUAL',
+              id: 'SELF_MANUAL' as CheckinMethod,
               label: 'Manual',
               description: 'User clicks "I\'m here" button',
             },
             {
-              id: 'MODERATOR_PANEL',
+              id: 'MODERATOR_PANEL' as CheckinMethod,
               label: 'Moderator Panel',
               description: 'Check in from participant list',
             },
             {
-              id: 'EVENT_QR',
+              id: 'EVENT_QR' as CheckinMethod,
               label: 'Event QR Code',
               description: 'Shared QR for all attendees',
             },
             {
-              id: 'USER_QR',
+              id: 'USER_QR' as CheckinMethod,
               label: 'Individual QR Codes',
-              description: 'Scan attendee\'s personal QR',
+              description: "Scan attendee's personal QR",
             },
           ].map((method) => (
             <label
@@ -346,14 +415,14 @@ function SettingsTab({
                 type="checkbox"
                 checked={enabledMethods.includes(method.id)}
                 onChange={() => onToggleMethod(method.id)}
-                disabled={!checkinEnabled}
+                disabled={!checkinEnabled || isUpdating}
                 className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700"
               />
               <div className="flex-1">
                 <div
                   className={[
                     'text-sm font-medium',
-                    checkinEnabled
+                    checkinEnabled && !isUpdating
                       ? 'text-zinc-900 dark:text-zinc-100'
                       : 'text-zinc-400 dark:text-zinc-600',
                   ].join(' ')}
@@ -363,7 +432,7 @@ function SettingsTab({
                 <div
                   className={[
                     'text-xs',
-                    checkinEnabled
+                    checkinEnabled && !isUpdating
                       ? 'text-zinc-600 dark:text-zinc-400'
                       : 'text-zinc-400 dark:text-zinc-600',
                   ].join(' ')}
@@ -377,28 +446,26 @@ function SettingsTab({
       </div>
 
       {/* Info message when disabled */}
-      {!checkinEnabled && (
+      {!checkinEnabled && !isUpdating && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/50 dark:bg-amber-900/20">
           <div className="flex items-start gap-3">
             <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="text-sm text-amber-900 dark:text-amber-100">
-              Enable check-in above to configure check-in methods for your event.
+              Enable check-in above to configure check-in methods for your
+              event.
             </p>
           </div>
         </div>
       )}
 
-      {/* Save info */}
-      {checkinEnabled && (
+      {/* Saving indicator */}
+      {isUpdating && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800/50 dark:bg-blue-900/20">
           <div className="flex items-start gap-3">
-            <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-            <div className="text-sm text-blue-900 dark:text-blue-100">
-              <p className="font-medium">Settings updated locally</p>
-              <p className="mt-1 text-blue-700 dark:text-blue-300">
-                Changes are stored in local state. Integration with backend API coming soon.
-              </p>
-            </div>
+            <Loader2 className="mt-0.5 h-4 w-4 flex-shrink-0 animate-spin text-blue-600 dark:text-blue-400" />
+            <p className="text-sm text-blue-900 dark:text-blue-100">
+              Saving settings...
+            </p>
           </div>
         </div>
       )}
@@ -406,7 +473,17 @@ function SettingsTab({
   );
 }
 
-function QrTab({ event }: { event: any }) {
+interface QrTabProps {
+  checkinEnabled: boolean;
+  enabledMethods: CheckinMethod[];
+  eventCheckinToken: string | null | undefined;
+}
+
+function QrTab({
+  checkinEnabled,
+  enabledMethods,
+  eventCheckinToken,
+}: QrTabProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -418,8 +495,8 @@ function QrTab({ event }: { event: any }) {
         </p>
       </div>
 
-      {!event.checkinEnabled ||
-      !event.enabledCheckinMethods.includes('EVENT_QR') ? (
+      {!checkinEnabled ||
+      !enabledMethods.includes('EVENT_QR' as CheckinMethod) ? (
         <div className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
           <QrCode className="mx-auto h-12 w-12 text-zinc-400" />
           <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -437,7 +514,9 @@ function QrTab({ event }: { event: any }) {
               <QrCode className="h-48 w-48 text-zinc-400" />
             </div>
             <p className="mt-4 font-mono text-xs text-zinc-500">
-              QR Code will appear here
+              {eventCheckinToken
+                ? `Token: ${eventCheckinToken.slice(0, 12)}...`
+                : 'No token'}
             </p>
           </div>
 
@@ -462,7 +541,10 @@ function QrTab({ event }: { event: any }) {
   );
 }
 
-function LogsTab() {
+function LogsTab({ eventId }: { eventId: string }) {
+  // TODO: Implement logs query
+  console.log('Event ID for logs:', eventId);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
