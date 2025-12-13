@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   BarChart3,
   Bell,
+  CheckCircle,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -172,6 +173,12 @@ export function EventManagementSidebar({
           label: 'Members',
           href: localePath(`/event/${eventId}/manage/members`),
           icon: Users,
+        },
+        {
+          id: 'checkin',
+          label: 'Check-in & Presence',
+          href: localePath(`/event/${eventId}/manage/checkin`),
+          icon: CheckCircle,
         },
         {
           id: 'plans',

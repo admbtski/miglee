@@ -121,6 +121,12 @@ enum NotificationKind {
   NEW_REVIEW
   EVENT_CHAT_MESSAGE
 
+  // Check-in
+  CHECKIN_CONFIRMED // Check-in successful
+  CHECKIN_REJECTED // Check-in was rejected by organizer
+  CHECKIN_BLOCKED // Check-in was blocked
+  CHECKIN_UNBLOCKED // Check-in was unblocked
+
   // Reminders & System
   EVENT_REMINDER
   SYSTEM
@@ -176,9 +182,42 @@ enum EventPlan {
 }
 
 enum PublicationStatus {
-  DRAFT     // Event is not published yet, only visible to owner/moderators
+  DRAFT // Event is not published yet, only visible to owner/moderators
   PUBLISHED // Event is live and visible according to visibility settings
   SCHEDULED // Event is scheduled to be published at a specific time
+}
+
+// Check-in related enums
+enum CheckinMethod {
+  SELF_MANUAL // User clicks "I'm here" button
+  MODERATOR_PANEL // Organizer checks in from panel
+  EVENT_QR // Scan event's shared QR code
+  USER_QR // Organizer scans user's individual QR code
+}
+
+enum CheckinAction {
+  CHECK_IN // User/moderator performed check-in
+  UNCHECK // Check-in was removed
+  REJECT // Check-in was rejected (stronger than uncheck)
+  BLOCK_ALL // All check-in methods blocked for user
+  UNBLOCK_ALL // All check-in methods unblocked
+  BLOCK_METHOD // Specific method blocked
+  UNBLOCK_METHOD // Specific method unblocked
+  QR_TOKEN_ROTATED // QR token was regenerated
+  METHODS_CHANGED // Event check-in configuration changed
+  ATTEMPT_DENIED // Check-in attempt was denied (logged but not executed)
+}
+
+enum CheckinSource {
+  USER // Action initiated by the user themselves
+  MODERATOR // Action initiated by event owner/moderator
+  SYSTEM // Automatic action (e.g., status change invalidation)
+}
+
+enum CheckinResult {
+  SUCCESS // Action completed successfully
+  DENIED // Action was denied (permission/validation issue)
+  NOOP // No operation (idempotent call, already in desired state)
 }
 
 enum MemberEvent {
@@ -226,21 +265,21 @@ enum ReportEntity {
 // =============================================================================
 
 model User {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  name             String    @unique
-  avatarKey        String? // Key to MediaAsset for avatar
-  role             Role      @default(USER)
-  verifiedAt       DateTime?
-  suspendedAt      DateTime? // Admin suspension
-  suspensionReason String? // Reason for suspension
-  deletedAt        DateTime? // Soft delete timestamp
-  deletedReason    String? // Reason for account deletion
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  name                   String    @unique
+  avatarKey              String? // Key to MediaAsset for avatar
+  role                   Role      @default(USER)
+  verifiedAt             DateTime?
+  suspendedAt            DateTime? // Admin suspension
+  suspensionReason       String? // Reason for suspension
+  deletedAt              DateTime? // Soft delete timestamp
+  deletedReason          String? // Reason for account deletion
   restorationToken       String? // Token for self-service restoration
   restorationTokenExpiry DateTime? // Expiry for restoration token
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  lastSeenAt       DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  lastSeenAt             DateTime?
 
   // Profile / Preferences
   locale              String    @default("en") // 'en' | 'pl' | 'de' - user's preferred language
@@ -250,12 +289,12 @@ model User {
 
   // Relations
   notifications         Notification[]
-  actedNotifications    Notification[]      @relation("NotificationActor")
-  eventMembers         EventMember[]
+  actedNotifications    Notification[]     @relation("NotificationActor")
+  eventMembers          EventMember[]
   addedMemberships      EventMember[]      @relation("EventMemberAddedBy")
-  canceledEvents       Event[]            @relation("EventCanceledBy")
-  deletedEvents        Event[]            @relation("EventDeletedBy")
-  ownedEvents          Event[]            @relation("EventOwner")
+  canceledEvents        Event[]            @relation("EventCanceledBy")
+  deletedEvents         Event[]            @relation("EventDeletedBy")
+  ownedEvents           Event[]            @relation("EventOwner")
   memberEventsAsSubject EventMemberEvent[] @relation("MemberEventUser")
   memberEventsAsActor   EventMemberEvent[] @relation("MemberEventActor")
 
@@ -285,7 +324,7 @@ model User {
 
   // Mutes / Prefs
   notificationPreference NotificationPreference?
-  eventMutes            EventMute[]
+  eventMutes             EventMute[]
 
   // Moderation
   reportsFiled    Report[]    @relation("ReportAuthor")
@@ -308,6 +347,10 @@ model User {
   // Agenda
   agendaHostings EventAgendaItemHost[] @relation("AgendaItemHosts")
 
+  // Check-in
+  checkinLogsAsActor EventCheckinLog[] @relation("CheckinLogActor")
+  checkinRejections  EventMember[]     @relation("EventMemberCheckinRejectedBy")
+
   // Monetization
   subscriptions           UserSubscription[]
   planPeriods             UserPlanPeriod[]
@@ -315,13 +358,13 @@ model User {
   eventSponsorshipPeriods EventSponsorshipPeriod[] @relation("EventSponsorshipPeriods")
 
   // Profile & Privacy
-  profile      UserProfile?
-  privacy      UserPrivacy?
-  stats              UserStats?
-  socialLinks        UserSocialLink[]
-  categoryLevels     UserCategoryLevel[]
-  availability       UserAvailability[]
-  badges             UserBadge[]
+  profile        UserProfile?
+  privacy        UserPrivacy?
+  stats          UserStats?
+  socialLinks    UserSocialLink[]
+  categoryLevels UserCategoryLevel[]
+  availability   UserAvailability[]
+  badges         UserBadge[]
 
   @@index([email])
   @@index([name])
@@ -337,7 +380,7 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  events            Event[]
+  events             Event[]
   userCategoryLevels UserCategoryLevel[]
 
   @@index([slug])
@@ -430,7 +473,7 @@ model Event {
 
   // Ownership
   ownerId            String?
-  owner              User?                     @relation("EventOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  owner              User?                    @relation("EventOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   ownershipTransfers EventOwnershipTransfer[]
 
   // Cancellation / deletion
@@ -477,6 +520,14 @@ model Event {
   // Agenda
   agendaItems EventAgendaItem[]
 
+  // Check-in configuration
+  checkinEnabled        Boolean         @default(false) // Enable/disable check-in feature for this event
+  enabledCheckinMethods CheckinMethod[] @default([]) // Which check-in methods are enabled
+  eventCheckinToken     String?         @unique // Token for EVENT_QR method (shared QR code)
+
+  // Check-in relations
+  checkinLogs EventCheckinLog[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -506,12 +557,12 @@ model Event {
 }
 
 model EventMember {
-  id       String @id @default(cuid())
+  id      String @id @default(cuid())
   eventId String
-  userId   String
+  userId  String
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   role   EventMemberRole   @default(PARTICIPANT)
   status EventMemberStatus @default(PENDING)
@@ -533,18 +584,39 @@ model EventMember {
   // Relations to feedback answers
   feedbackAnswers EventFeedbackAnswer[]
 
+  // Check-in fields
+  isCheckedIn        Boolean         @default(false) // Is user currently checked in (derived from checkinMethods.length > 0)
+  checkinMethods     CheckinMethod[] @default([]) // Active check-in methods for this user
+  lastCheckinAt      DateTime? // Last successful check-in timestamp
+  memberCheckinToken String?         @unique // Unique token for USER_QR method
+
+  // Check-in blocking
+  checkinBlockedAll     Boolean         @default(false) // Block all check-in methods
+  checkinBlockedMethods CheckinMethod[] @default([]) // List of blocked methods
+
+  // Check-in rejection tracking
+  lastCheckinRejectionReason String? // Reason for last rejection (visible to user if showToUser flag)
+  lastCheckinRejectedAt      DateTime? // When was last rejection
+  lastCheckinRejectedById    String? // Who rejected
+  lastCheckinRejectedBy      User?     @relation("EventMemberCheckinRejectedBy", fields: [lastCheckinRejectedById], references: [id], onDelete: SetNull)
+
+  // Check-in log relation
+  checkinLogs EventCheckinLog[]
+
   @@unique([eventId, userId])
   @@index([userId, status])
   @@index([eventId, status])
   @@index([eventId, role])
   @@index([eventId, status, role])
   @@index([userId, createdAt])
+  @@index([eventId, isCheckedIn]) // For filtering checked-in members
+  @@index([eventId, status, isCheckedIn]) // Combined index for member lists
   @@map("event_members")
 }
 
 model EventMemberEvent {
   id        String      @id @default(cuid())
-  eventId  String
+  eventId   String
   userId    String
   actorId   String?
   kind      MemberEvent
@@ -563,7 +635,7 @@ model EventMemberEvent {
 
 model Comment {
   id        String   @id @default(cuid())
-  eventId  String
+  eventId   String
   authorId  String
   threadId  String // root comment id; dla rootów = id (ustaw w app)
   parentId  String?
@@ -581,7 +653,7 @@ model Comment {
   hiddenById String?
   hiddenBy   User?     @relation("CommentHiddenBy", fields: [hiddenById], references: [id], onDelete: SetNull)
 
-  event  Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   author  User      @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   parent  Comment?  @relation("CommentParent", fields: [parentId], references: [id], onDelete: SetNull)
   replies Comment[] @relation("CommentParent")
@@ -597,7 +669,7 @@ model Comment {
 
 model Review {
   id        String   @id @default(cuid())
-  eventId  String
+  eventId   String
   authorId  String
   rating    Int // enforce 1..5 in SQL CHECK (migration)
   content   String?
@@ -614,8 +686,8 @@ model Review {
   hiddenById String?
   hiddenBy   User?     @relation("ReviewHiddenBy", fields: [hiddenById], references: [id], onDelete: SetNull)
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  author User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  event  Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  author User  @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, authorId])
   @@index([eventId, createdAt])
@@ -700,7 +772,7 @@ model Notification {
   entityId   String?
 
   eventId String?
-  event   Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   title     String?
   body      String?
@@ -723,7 +795,7 @@ model Notification {
 
 model EventChatMessage {
   id        String    @id @default(cuid())
-  eventId  String
+  eventId   String
   authorId  String
   content   String
   replyToId String?
@@ -731,8 +803,8 @@ model EventChatMessage {
   editedAt  DateTime?
   deletedAt DateTime?
 
-  event    Event                      @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  author    User                        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  event     Event                      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  author    User                       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   reactions EventChatMessageReaction[]
 
   replyTo EventChatMessage?  @relation("EventChatReply", fields: [replyToId], references: [id], onDelete: SetNull)
@@ -751,7 +823,7 @@ model EventChatMessageReaction {
   createdAt DateTime @default(now())
 
   message EventChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user    User              @relation("EventChatMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+  user    User             @relation("EventChatMessageReactions", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId, emoji])
   @@index([messageId])
@@ -761,12 +833,12 @@ model EventChatMessageReaction {
 
 model EventChatRead {
   id         String   @id @default(cuid())
-  eventId   String
+  eventId    String
   userId     String
   lastReadAt DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
   @@index([userId, lastReadAt])
@@ -869,7 +941,7 @@ model UserPlanPeriod {
   // Links to Stripe – depends on source
   stripeCustomerId        String?
   stripeSubscriptionId    String? // for SUBSCRIPTION
-  stripePaymentEventId   String? // for ONE_OFF
+  stripePaymentEventId    String? // for ONE_OFF
   stripeCheckoutSessionId String? // optional for debug/trace
 
   startsAt DateTime
@@ -887,7 +959,7 @@ model UserPlanPeriod {
 
 model EventSponsorship {
   id        String @id @default(cuid())
-  eventId  String @unique // 1:1 with Event
+  eventId   String @unique // 1:1 with Event
   sponsorId String // sponsoring user (usually owner)
 
   plan   EventPlan // PLUS / PRO (FREE doesn't make sense but enum is shared)
@@ -901,14 +973,14 @@ model EventSponsorship {
   localPushesTotal Int @default(0)
   localPushesUsed  Int @default(0)
 
-  stripePaymentEventId   String?
+  stripePaymentEventId    String?
   stripeCheckoutSessionId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  event  Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  sponsor User   @relation("SponsorUser", fields: [sponsorId], references: [id], onDelete: Cascade)
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sponsor User  @relation("SponsorUser", fields: [sponsorId], references: [id], onDelete: Cascade)
 
   periods EventSponsorshipPeriod[] // History of all transactions
 
@@ -921,11 +993,11 @@ model EventSponsorship {
 /// Similar to UserPlanPeriod but for event sponsorships
 model EventSponsorshipPeriod {
   id        String @id @default(cuid())
-  eventId  String
+  eventId   String
   sponsorId String
 
   plan       EventPlan // Plan purchased (PLUS/PRO)
-  actionType String     @default("new") // 'new', 'reload', 'upgrade'
+  actionType String    @default("new") // 'new', 'reload', 'upgrade'
 
   boostsAdded      Int @default(0) // How many boosts this purchase added
   localPushesAdded Int @default(0) // How many pushes this purchase added
@@ -934,13 +1006,13 @@ model EventSponsorshipPeriod {
   currency String @default("pln")
 
   stripeCustomerId        String?
-  stripePaymentEventId   String?
+  stripePaymentEventId    String?
   stripeCheckoutSessionId String?
 
   createdAt DateTime @default(now())
 
   eventSponsorship EventSponsorship @relation(fields: [eventId], references: [eventId], onDelete: Cascade, map: "event_sponsorship_periods_sponsorshipId_fkey")
-  event           Event           @relation("EventSponsorshipPeriods", fields: [eventId], references: [id], onDelete: Cascade)
+  event            Event            @relation("EventSponsorshipPeriods", fields: [eventId], references: [id], onDelete: Cascade)
   sponsor          User             @relation("EventSponsorshipPeriods", fields: [sponsorId], references: [id], onDelete: Cascade)
 
   @@index([sponsorId])
@@ -968,9 +1040,9 @@ model PaymentEvent {
 // ========================== Invites ==========================
 
 model EventInviteLink {
-  id       String @id @default(cuid())
+  id      String @id @default(cuid())
   eventId String
-  code     String @unique // Unique code used in URL (/i/:code)
+  code    String @unique // Unique code used in URL (/i/:code)
 
   /// Maximum number of successful uses (null = unlimited)
   maxUses Int?
@@ -997,7 +1069,7 @@ model EventInviteLink {
   updatedAt DateTime? @updatedAt
 
   event Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  uses   EventInviteLinkUsage[]
+  uses  EventInviteLinkUsage[]
 
   @@index([code])
   @@index([eventId])
@@ -1021,7 +1093,7 @@ model EventInviteLinkUsage {
   userAgent String?
 
   link EventInviteLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
-  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([linkId, userId]) // One user can only use a link once
   @@index([linkId])
@@ -1034,10 +1106,10 @@ model EventInviteLinkUsage {
 model EventFavourite {
   id        String   @id @default(cuid())
   userId    String
-  eventId  String
+  eventId   String
   createdAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId]) // One user can only favourite an event once
@@ -1066,13 +1138,13 @@ model NotificationPreference {
 
 model EventMute {
   id        String   @id @default(cuid())
-  eventId  String
+  eventId   String
   userId    String
   muted     Boolean  @default(true)
   createdAt DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
   @@map("event_mutes")
@@ -1096,17 +1168,17 @@ model DmMute {
 
 model EventOwnershipTransfer {
   id         String   @id @default(cuid())
-  eventId   String
+  eventId    String
   fromUserId String
   toUserId   String
   actorId    String?
   reason     String?
   createdAt  DateTime @default(now())
 
-  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  fromUser User   @relation("IotFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
-  toUser   User   @relation("IotTo", fields: [toUserId], references: [id], onDelete: Cascade)
-  actor    User?  @relation("IotActor", fields: [actorId], references: [id], onDelete: SetNull)
+  event    Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  fromUser User  @relation("IotFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User  @relation("IotTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  actor    User? @relation("IotActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([eventId, createdAt])
   @@map("event_ownership_transfers")
@@ -1273,10 +1345,10 @@ model UserBadge {
 // =============================================================================
 
 model EventJoinQuestion {
-  id       String           @id @default(cuid())
+  id      String           @id @default(cuid())
   eventId String
-  order    Int              @default(0) // Display order (0-based)
-  type     JoinQuestionType @default(TEXT)
+  order   Int              @default(0) // Display order (0-based)
+  type    JoinQuestionType @default(TEXT)
 
   label     String // Question text (max 200 chars, enforced in app)
   helpText  String? // Optional help text (max 200 chars, enforced in app)
@@ -1287,7 +1359,7 @@ model EventJoinQuestion {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  event  Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   answers EventJoinAnswer[]
 
   @@index([eventId, order])
@@ -1296,7 +1368,7 @@ model EventJoinQuestion {
 
 model EventJoinAnswer {
   id         String @id @default(cuid())
-  eventId   String
+  eventId    String
   userId     String
   questionId String
 
@@ -1305,7 +1377,7 @@ model EventJoinAnswer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  event   Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event    Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   question EventJoinQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   member   EventMember       @relation(fields: [eventId, userId], references: [eventId, userId], onDelete: Cascade)
 
@@ -1323,10 +1395,10 @@ model EventJoinAnswer {
 // =============================================================================
 
 model EventFeedbackQuestion {
-  id       String               @id @default(cuid())
+  id      String               @id @default(cuid())
   eventId String
-  order    Int                  @default(0) // Display order (0-based)
-  type     FeedbackQuestionType @default(TEXT)
+  order   Int                  @default(0) // Display order (0-based)
+  type    FeedbackQuestionType @default(TEXT)
 
   label     String // Question text (max 200 chars, enforced in app)
   helpText  String? // Optional help text (max 200 chars, enforced in app)
@@ -1337,7 +1409,7 @@ model EventFeedbackQuestion {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  event  Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event   Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
   answers EventFeedbackAnswer[]
 
   @@index([eventId, order])
@@ -1346,7 +1418,7 @@ model EventFeedbackQuestion {
 
 model EventFeedbackAnswer {
   id         String @id @default(cuid())
-  eventId   String
+  eventId    String
   userId     String
   questionId String
 
@@ -1355,7 +1427,7 @@ model EventFeedbackAnswer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  event   Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event    Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
   question EventFeedbackQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   member   EventMember           @relation(fields: [eventId, userId], references: [eventId, userId], onDelete: Cascade)
 
@@ -1373,9 +1445,9 @@ model EventFeedbackAnswer {
 // =============================================================================
 
 model EventFaq {
-  id       String @id @default(cuid())
+  id      String @id @default(cuid())
   eventId String
-  order    Int    @default(0) // Display order (0-based)
+  order   Int    @default(0) // Display order (0-based)
 
   question String // FAQ question text (max 500 chars, enforced in app)
   answer   String // FAQ answer text (max 2000 chars, enforced in app)
@@ -1428,7 +1500,7 @@ model MediaAsset {
 // =============================================================================
 
 model EventAppearance {
-  id       String @id @default(cuid())
+  id      String @id @default(cuid())
   eventId String @unique
 
   /// JSON configuration for appearance customization
@@ -1451,12 +1523,12 @@ model EventAppearance {
 // =============================================================================
 
 enum AgendaHostKind {
-  USER   // Host is a registered user
+  USER // Host is a registered user
   MANUAL // Host is manually entered (external person)
 }
 
 model EventAgendaItem {
-  id       String @id @default(cuid())
+  id      String @id @default(cuid())
   eventId String
 
   /// Display order (0-based)
@@ -1485,9 +1557,9 @@ model EventAgendaItem {
 }
 
 model EventAgendaItemHost {
-  id           String         @id @default(cuid())
+  id           String @id @default(cuid())
   agendaItemId String
-  order        Int            @default(0)
+  order        Int    @default(0)
 
   /// Type of host: USER (system user) or MANUAL (external person)
   kind AgendaHostKind @default(USER)
@@ -1509,4 +1581,50 @@ model EventAgendaItemHost {
 
   @@index([agendaItemId, order])
   @@map("event_agenda_item_hosts")
+}
+
+// =============================================================================
+/**
+ * Event Check-in System
+ * Complete audit trail for all check-in related actions
+ */
+// =============================================================================
+
+model EventCheckinLog {
+  id       String  @id @default(cuid())
+  eventId  String
+  memberId String // EventMember.id (not userId - this is the membership record)
+  actorId  String? // Who performed the action (User.id)
+
+  // Action details
+  action CheckinAction // What happened (CHECK_IN, UNCHECK, REJECT, BLOCK_ALL, etc.)
+  method CheckinMethod? // Which method (null for BLOCK_ALL, METHODS_CHANGED, etc.)
+  source CheckinSource // Who initiated (USER, MODERATOR, SYSTEM)
+  result CheckinResult // Outcome (SUCCESS, DENIED, NOOP)
+
+  // Additional context
+  reason            String? // Denial reason, rejection reason, or other context
+  comment           String? // Optional comment from moderator (e.g., rejection note)
+  showCommentToUser Boolean @default(true) // Whether rejection comment is visible to user
+
+  // Metadata for analytics
+  metadata Json? // Optional: geolocation, device info, etc.
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  actor User? @relation("CheckinLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // Note: memberId references EventMember.id, but we don't have direct relation
+  // to avoid circular dependency issues. Query via eventId + userId if needed.
+  EventMember   EventMember? @relation(fields: [eventMemberId], references: [id])
+  eventMemberId String?
+
+  @@index([eventId, createdAt(sort: Desc)]) // For log viewing (newest first)
+  @@index([memberId, createdAt]) // For user's check-in history
+  @@index([eventId, action]) // For filtering by action type
+  @@index([eventId, method]) // For method analytics
+  @@index([actorId, createdAt]) // For actor's action history
+  @@map("event_checkin_logs")
 }

@@ -235,6 +235,22 @@ import { updateEventAppearanceMutation } from './appearance';
 // Agenda mutations
 import { updateEventAgendaMutation } from './agenda';
 
+// Check-in mutations
+import {
+  checkInSelf,
+  uncheckInSelf,
+  checkInMember,
+  uncheckInMember,
+  rejectMemberCheckin,
+  blockMemberCheckin,
+  unblockMemberCheckin,
+  checkInByEventQr,
+  checkInByUserQr,
+  updateEventCheckinConfig,
+  rotateEventCheckinToken,
+  rotateMemberCheckinToken,
+} from './checkin';
+
 /**
  * Root Mutation resolvers map.
  * This object registers all mutation resolvers under the GraphQL Mutation type.
@@ -311,6 +327,20 @@ export const Mutation: Resolvers['Mutation'] = {
   joinWaitlistOpen: joinWaitlistOpenMutation,
   leaveWaitlist: leaveWaitlistMutation,
   promoteFromWaitlist: promoteFromWaitlistMutation,
+
+  // ---- Check-in ----
+  checkInSelf,
+  uncheckInSelf,
+  checkInMember,
+  uncheckInMember,
+  rejectMemberCheckin,
+  blockMemberCheckin,
+  unblockMemberCheckin,
+  checkInByEventQr,
+  checkInByUserQr,
+  updateEventCheckinConfig,
+  rotateEventCheckinToken,
+  rotateMemberCheckinToken,
 
   // ---- Notifications ----
   addNotification: addNotificationMutation,

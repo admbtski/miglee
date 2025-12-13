@@ -79,6 +79,7 @@ import {
   eventSponsorshipQuery,
 } from './billing';
 import { eventAgendaItemsQuery } from './agenda';
+import { eventCheckinLogs } from './checkin';
 
 export const Query: Resolvers['Query'] = {
   // Admin queries
@@ -158,4 +159,7 @@ export const Query: Resolvers['Query'] = {
 
   // Agenda
   eventAgendaItems: eventAgendaItemsQuery,
+
+  // Check-in
+  eventCheckinLogs,
 };

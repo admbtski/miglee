@@ -189,6 +189,12 @@ export function EventManagementMobileSidebar({
           icon: Users,
         },
         {
+          id: 'checkin',
+          label: 'Check-in & Presence',
+          href: localePath(`/event/${eventId}/manage/checkin`),
+          icon: CheckCircle,
+        },
+        {
           id: 'plans',
           label: 'Upgrade Plan',
           href: localePath(`/event/${eventId}/manage/plans`),

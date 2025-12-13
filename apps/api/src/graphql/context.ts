@@ -16,6 +16,8 @@ export async function createContext(
     request,
     reply,
     fastify: request.server,
+    prisma, // Expose prisma client
+    userId: user?.id, // Expose userId for convenience
     user: user
       ? {
           id: user.id,

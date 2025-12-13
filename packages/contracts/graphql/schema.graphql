@@ -68,6 +68,39 @@ type UserReviewsResult {
   total: Int!
 }
 
+"Event check-in log entry for audit trail"
+type EventCheckinLog {
+  id: ID!
+  eventId: ID!
+  memberId: ID! # EventMember.id
+  actorId: ID # User.id who performed action
+  action: CheckinAction!
+  method: CheckinMethod
+  source: CheckinSource!
+  result: CheckinResult_Status! # Use different name to avoid conflict with mutation result type
+  reason: String
+  comment: String
+  showCommentToUser: Boolean!
+  metadata: JSON
+
+  createdAt: DateTime!
+
+  # Relations
+  actor: User
+}
+
+"Status for log entry result"
+enum CheckinResult_Status {
+  SUCCESS
+  DENIED
+  NOOP
+}
+
+type EventCheckinLogsResult {
+  items: [EventCheckinLog!]!
+  pageInfo: PageInfo!
+}
+
 input UsersSort {
   by: UsersSortBy! = CREATED_AT
   dir: SortDir! = DESC
@@ -154,6 +187,42 @@ enum EventMemberStatus {
   WAITLIST
 }
 
+"Check-in method - how user can check in to an event"
+enum CheckinMethod {
+  SELF_MANUAL # User clicks 'I am here' button
+  MODERATOR_PANEL # Organizer checks in from management panel
+  EVENT_QR # User scans event's shared QR code
+  USER_QR # Organizer scans user's individual QR code
+}
+
+"Check-in action type for audit log"
+enum CheckinAction {
+  CHECK_IN # User/moderator performed check-in
+  UNCHECK # Check-in was removed
+  REJECT # Check-in was rejected by organizer
+  BLOCK_ALL # All check-in methods blocked for user
+  UNBLOCK_ALL # All check-in methods unblocked
+  BLOCK_METHOD # Specific method blocked
+  UNBLOCK_METHOD # Specific method unblocked
+  QR_TOKEN_ROTATED # QR token was regenerated
+  METHODS_CHANGED # Event check-in configuration changed
+  ATTEMPT_DENIED # Check-in attempt was denied
+}
+
+"Source of check-in action"
+enum CheckinSource {
+  USER # Action initiated by the user themselves
+  MODERATOR # Action initiated by event owner/moderator
+  SYSTEM # Automatic action (e.g., status change invalidation)
+}
+
+"Result of check-in action"
+enum CheckinResult {
+  SUCCESS # Action completed successfully
+  DENIED # Action was denied (permission/validation issue)
+  NOOP # No operation (already in desired state)
+}
+
 "Member event type for audit log"
 enum MemberEvent {
   JOIN
@@ -225,6 +294,11 @@ enum NotificationKind {
   NEW_REVIEW
   EVENT_CHAT_MESSAGE
 
+  # Check-in
+  CHECKIN_CONFIRMED # Check-in successful
+  CHECKIN_REJECTED # Check-in was rejected by organizer
+  CHECKIN_BLOCKED # Check-in was blocked
+  CHECKIN_UNBLOCKED # Check-in was unblocked
   # Reminders & System
   EVENT_REMINDER
   SYSTEM
@@ -674,6 +748,20 @@ type EventMember {
   note: String
   rejectReason: String
 
+  # Check-in fields
+  isCheckedIn: Boolean!
+  checkinMethods: [CheckinMethod!]!
+  lastCheckinAt: DateTime
+  memberCheckinToken: String # Unique token for USER_QR method
+  # Check-in blocking
+  checkinBlockedAll: Boolean!
+  checkinBlockedMethods: [CheckinMethod!]!
+
+  # Check-in rejection tracking
+  lastCheckinRejectionReason: String
+  lastCheckinRejectedAt: DateTime
+  lastCheckinRejectedBy: User
+
   user: User!
   event: Event!
   joinAnswers: [EventJoinAnswer!]!
@@ -914,6 +1002,10 @@ type Event {
   sponsorshipPlan: EventPlan!
   sponsorship: EventSponsorship
   boostedAt: DateTime # Last time event was boosted (for priority sorting)
+  # Check-in configuration
+  checkinEnabled: Boolean!
+  enabledCheckinMethods: [CheckinMethod!]!
+  eventCheckinToken: String # Token for EVENT_QR (shared QR code)
   # Appearance customization
   appearance: EventAppearance
 
@@ -1409,6 +1501,57 @@ input UpdateMemberRoleInput {
   eventId: ID!
   userId: ID!
   role: EventMemberRole!
+}
+
+# Check-in input types
+
+input CheckInMemberInput {
+  eventId: ID!
+  userId: ID!
+  method: CheckinMethod! = MODERATOR_PANEL
+}
+
+input UncheckInMemberInput {
+  eventId: ID!
+  userId: ID!
+  method: CheckinMethod
+}
+
+input RejectMemberCheckinInput {
+  eventId: ID!
+  userId: ID!
+  reason: String
+  showReasonToUser: Boolean = true
+  blockMethod: CheckinMethod # If provided, block this specific method
+  blockAll: Boolean = false # If true, block all check-in methods
+}
+
+input BlockMemberCheckinInput {
+  eventId: ID!
+  userId: ID!
+  blockAll: Boolean = false # If true, block all methods
+  method: CheckinMethod # If blockAll=false, block only this method
+  reason: String
+}
+
+input UnblockMemberCheckinInput {
+  eventId: ID!
+  userId: ID!
+  unblockAll: Boolean = false # If true, unblock all methods
+  method: CheckinMethod # If unblockAll=false, unblock only this method
+}
+
+input UpdateEventCheckinConfigInput {
+  eventId: ID!
+  checkinEnabled: Boolean
+  enabledMethods: [CheckinMethod!]
+}
+
+type CheckinResult {
+  success: Boolean!
+  message: String
+  member: EventMember
+  event: Event
 }
 
 # NEW: Ban / Unban / Cancel pending-or-invite
@@ -1917,6 +2060,19 @@ type Query {
   userEvents(userId: ID!, limit: Int, offset: Int): UserEventsResult!
   userReviews(userId: ID!, limit: Int, offset: Int): UserReviewsResult!
 
+  # Check-in queries
+  """
+  Get check-in logs for an event (moderator only)
+  """
+  eventCheckinLogs(
+    eventId: ID!
+    limit: Int = 50
+    offset: Int = 0
+    action: CheckinAction
+    method: CheckinMethod
+    memberId: ID
+  ): EventCheckinLogsResult!
+
   # Admin Content Moderation Queries
   adminComments(
     limit: Int
@@ -2061,6 +2217,62 @@ type Mutation {
   cancelPendingOrInviteForUser(
     input: CancelPendingOrInviteForUserInput!
   ): Boolean!
+
+  # Check-in (user endpoints)
+  """
+  User checks themselves in manually (SELF_MANUAL method)
+  """
+  checkInSelf(eventId: ID!): CheckinResult!
+  """
+  User removes their own check-in (SELF_MANUAL method only)
+  """
+  uncheckInSelf(eventId: ID!): CheckinResult!
+
+  # Check-in (moderator endpoints)
+  """
+  Moderator checks in a member via panel (MODERATOR_PANEL method)
+  """
+  checkInMember(input: CheckInMemberInput!): CheckinResult!
+  """
+  Moderator removes a member's check-in
+  """
+  uncheckInMember(input: UncheckInMemberInput!): CheckinResult!
+  """
+  Moderator rejects check-in with optional comment and block
+  """
+  rejectMemberCheckin(input: RejectMemberCheckinInput!): CheckinResult!
+  """
+  Moderator blocks member's check-in (all methods or specific method)
+  """
+  blockMemberCheckin(input: BlockMemberCheckinInput!): CheckinResult!
+  """
+  Moderator unblocks member's check-in
+  """
+  unblockMemberCheckin(input: UnblockMemberCheckinInput!): CheckinResult!
+
+  # Check-in QR endpoints
+  """
+  Check in via shared event QR code (EVENT_QR method)
+  """
+  checkInByEventQr(eventId: ID!, token: String!): CheckinResult!
+  """
+  Check in member via their individual QR code (USER_QR method, scanned by moderator)
+  """
+  checkInByUserQr(token: String!): CheckinResult!
+
+  # Check-in configuration (moderator)
+  """
+  Update event check-in configuration
+  """
+  updateEventCheckinConfig(input: UpdateEventCheckinConfigInput!): Event!
+  """
+  Rotate (regenerate) event QR token for security
+  """
+  rotateEventCheckinToken(eventId: ID!): Event!
+  """
+  Rotate (regenerate) member's individual QR token
+  """
+  rotateMemberCheckinToken(eventId: ID!, memberId: ID!): EventMember!
 
   # Event Invite Links
   createEventInviteLink(input: CreateEventInviteLinkInput!): EventInviteLink!

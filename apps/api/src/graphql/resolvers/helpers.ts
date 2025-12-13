@@ -386,6 +386,20 @@ export function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
     note: m.note ?? null,
     user: mapUser(m.user),
     rejectReason: (m as { rejectReason?: string | null }).rejectReason ?? null,
+
+    // Check-in fields
+    isCheckedIn: m.isCheckedIn ?? false,
+    checkinMethods: m.checkinMethods ?? [],
+    lastCheckinAt: m.lastCheckinAt ?? null,
+    memberCheckinToken: m.memberCheckinToken ?? null,
+    checkinBlockedAll: m.checkinBlockedAll ?? false,
+    checkinBlockedMethods: m.checkinBlockedMethods ?? [],
+    lastCheckinRejectionReason: m.lastCheckinRejectionReason ?? null,
+    lastCheckinRejectedAt: m.lastCheckinRejectedAt ?? null,
+    lastCheckinRejectedBy: (m as any).lastCheckinRejectedBy
+      ? mapUser((m as any).lastCheckinRejectedBy)
+      : null,
+
     // Field resolvers handle these
     event: null as unknown as GQLEvent, // Lazy loaded by field resolver
     joinAnswers: [],
@@ -718,6 +732,11 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
     sponsorshipPlan: i.sponsorshipPlan as EventPlan,
     boostedAt: i.boostedAt ?? null,
     sponsorship: i.sponsorship ? mapSponsorship(i.sponsorship) : null,
+
+    // Check-in configuration
+    checkinEnabled: i.checkinEnabled ?? false,
+    enabledCheckinMethods: i.enabledCheckinMethods ?? [],
+    eventCheckinToken: i.eventCheckinToken ?? null,
 
     // Collections (safe access - may be undefined if not included)
     categories: (i.categories ?? []).map(mapCategory),
