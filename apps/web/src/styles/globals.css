@@ -379,3 +379,9 @@ body {
 .dark .filters-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: theme('colors.zinc.600');
 }
+
+/* ===== Vertical Text for Bookmark Button ===== */
+.writing-mode-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}

@@ -24,6 +24,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { SlidersHorizontal } from 'lucide-react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 
@@ -84,6 +85,9 @@ export function EventsPage() {
   const [topDrawerFocus, setTopDrawerFocus] =
     useState<TopDrawerFocusSection>('search');
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
+
+  // Left panel visibility (desktop only)
+  const [leftPanelVisible, setLeftPanelVisible] = useState(true);
 
   // Local state for TopDrawer (before applying)
   const [localQ, setLocalQ] = useState(q);
@@ -183,11 +187,11 @@ export function EventsPage() {
   const total = pages[0]?.events.pageInfo.total ?? flatItems.length;
   const loadedCount = flatItems.length;
 
-  // Build grid columns based on map visibility
-  // 3 columns: left filters (hidden on <lg), center content, right map (optional)
+  // Build grid columns based on map visibility (always include left column space)
+  // Use consistent grid and animate column width instead
   const gridCols = mapVisible
-    ? 'lg:grid-cols-[280px_1fr_400px] xl:grid-cols-[300px_1fr_450px]'
-    : 'lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr]';
+    ? 'lg:grid-cols-[auto_1fr_400px] xl:grid-cols-[auto_1fr_450px]'
+    : 'lg:grid-cols-[auto_1fr]';
 
   // Open TopDrawer with specific focus
   const openTopDrawer = useCallback((focus: TopDrawerFocusSection) => {
@@ -344,21 +348,71 @@ export function EventsPage() {
           onToggleMap={toggleMap}
         />
 
-        <main className={`mx-auto grid w-full gap-4 px-4 py-4 ${gridCols}`}>
-          {/* Left Filters Panel - hidden on <lg, sticky like map */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
-              <LeftFiltersPanel
-                filters={localSidebarFilters}
-                onFiltersChange={handleSidebarFiltersChange}
-                isPending={isPendingApply}
-              />
-            </div>
-          </aside>
+        <main
+          className={`relative mx-auto grid w-full gap-4 px-4 py-4 ${gridCols}`}
+        >
+          {/* Left Filters Panel - animated width column */}
+          <motion.aside
+            layout
+            initial={false}
+            animate={{
+              width: leftPanelVisible ? 'auto' : 0,
+              opacity: leftPanelVisible ? 1 : 0,
+            }}
+            transition={{
+              layout: { type: 'spring', damping: 30, stiffness: 300 },
+              opacity: { duration: 0.2 },
+            }}
+            className="hidden lg:block relative overflow-hidden"
+            style={{ minWidth: leftPanelVisible ? 280 : 0 }}
+          >
+            <motion.div layout className="w-[280px] xl:w-[300px]">
+              <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
+                <LeftFiltersPanel
+                  filters={localSidebarFilters}
+                  onFiltersChange={handleSidebarFiltersChange}
+                  isPending={isPendingApply}
+                  onHide={() => setLeftPanelVisible(false)}
+                />
+              </div>
+            </motion.div>
+          </motion.aside>
+
+          {/* Bookmark Button - Shows when left panel is hidden (desktop only) */}
+          <AnimatePresence>
+            {!leftPanelVisible && (
+              <motion.button
+                initial={{ x: -60, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -60, opacity: 0 }}
+                transition={{
+                  type: 'spring',
+                  damping: 25,
+                  stiffness: 200,
+                  delay: 0.1,
+                }}
+                onClick={() => setLeftPanelVisible(true)}
+                className="hidden lg:flex fixed left-0 top-[calc(var(--nav-h)+20px)] z-40 flex-col items-center gap-2 px-3 py-4 bg-white dark:bg-zinc-900 border-r border-t border-b border-zinc-200 dark:border-zinc-700 rounded-r-xl shadow-lg hover:px-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
+                aria-label="Show filters panel"
+                title="Show filters"
+              >
+                <SlidersHorizontal className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider writing-mode-vertical transform group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  Filters
+                </span>
+                {activeFilters > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-md bg-indigo-600 text-white">
+                    {activeFilters}
+                  </span>
+                )}
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           {/* Center Content - Events Grid (hidden on mobile when map is visible) */}
           <motion.section
-            layout="position"
+            layout
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className={`min-w-0 ${mapVisible ? 'hidden md:block' : ''}`}
           >
             <EventsHeader
@@ -402,7 +456,7 @@ export function EventsPage() {
           </AnimatePresence>
 
           {/* Right Map Sidebar */}
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {mapVisible && (
               <MapSidebar
                 filters={filters}
@@ -480,11 +534,16 @@ function MapSidebar({
 
   return (
     <motion.aside
+      layout
       className="hidden md:block"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ type: 'spring', duration: 0.5, bounce: 0 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{
+        layout: { type: 'spring', damping: 30, stiffness: 300 },
+        opacity: { duration: 0.2 },
+        scale: { duration: 0.2 },
+      }}
     >
       <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))]">
         <ErrorBoundary>

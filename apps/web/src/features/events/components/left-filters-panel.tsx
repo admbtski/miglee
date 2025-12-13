@@ -24,7 +24,6 @@ import {
   Lock,
   UserCheck,
   X,
-  Sparkles,
   Check,
   Loader2,
   Clock,
@@ -40,6 +39,7 @@ export type LeftFiltersPanelProps = {
   isDrawer?: boolean;
   onClose?: () => void;
   isPending?: boolean;
+  onHide?: () => void; // For desktop hide functionality
 };
 
 // Helper functions for date conversion
@@ -129,18 +129,18 @@ function CollapsibleSection({
   badge,
 }: CollapsibleSectionProps) {
   return (
-    <section>
+    <section className="border-b border-zinc-100 dark:border-zinc-800/50 pb-4 last:border-0">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-2 group"
+        className="w-full flex items-center justify-between py-2 group hover:opacity-80 transition-opacity"
         aria-expanded={isOpen}
       >
-        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
           {icon}
-          {title}
+          <span>{title}</span>
           {badge !== undefined && badge > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[10px] font-bold rounded-md bg-indigo-600 text-white">
               {badge}
             </span>
           )}
@@ -160,7 +160,7 @@ function CollapsibleSection({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="pt-2 pb-1">{children}</div>
+            <div className="pt-3">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -174,6 +174,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
   isDrawer = false,
   onClose,
   isPending = false,
+  onHide,
 }: LeftFiltersPanelProps) {
   const translations = useTranslations();
   const t = translations.eventsFilters;
@@ -339,23 +340,15 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-950">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-gradient-to-r from-zinc-50 to-white dark:from-zinc-900 dark:to-zinc-950">
+      {/* Header - Simplified */}
+      <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             {t.title}
           </h2>
           {activeFiltersCount > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-xs font-bold rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white">
               {activeFiltersCount}
-            </span>
-          )}
-          {isPending && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-100 rounded-full dark:text-amber-300 dark:bg-amber-900/40 animate-pulse">
-              <Loader2 className="w-3 h-3 animate-spin" />
             </span>
           )}
         </div>
@@ -363,30 +356,54 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
           {activeFiltersCount > 0 && (
             <button
               onClick={clearAllFilters}
-              className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             >
               {t.clearAll}
             </button>
           )}
+          {/* Hide button for desktop (when not a drawer) */}
+          {!isDrawer && onHide && (
+            <button
+              onClick={onHide}
+              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              aria-label="Hide filters"
+              title="Hide filters"
+            >
+              <ChevronDown className="w-4 h-4 text-zinc-500 -rotate-90" />
+            </button>
+          )}
+          {/* Close button for drawer (mobile) */}
           {isDrawer && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               aria-label="Close filters"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-zinc-500" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Scrollable content with custom scrollbar */}
-      <div className="flex-1 overflow-y-auto filters-scrollbar">
-        <div className="p-4 space-y-1">
+      {/* Loading indicator - moved to content area */}
+      {isPending && (
+        <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-900/30">
+          <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span className="font-medium">Updating results...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4">
           {/* Time Status */}
           <CollapsibleSection
             title={t.timeStatus}
-            icon={<Clock className="w-4 h-4 text-cyan-500" />}
+            icon={
+              <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            }
             isOpen={openSections.timeStatus}
             onToggle={() => toggleSection('timeStatus')}
             badge={timeStatusBadge}
@@ -397,10 +414,10 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   key={value}
                   type="button"
                   onClick={() => handleStatusChange(value)}
-                  className={`px-3 py-2 text-sm font-medium rounded-xl border transition-all ${
+                  className={`px-3 py-2.5 text-sm font-medium rounded-lg border-2 transition-all ${
                     filters.status === value
-                      ? 'bg-cyan-50 border-cyan-200 text-cyan-700 dark:bg-cyan-900/30 dark:border-cyan-800 dark:text-cyan-300'
-                      : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-800 dark:hover:bg-zinc-800'
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                      : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700 dark:hover:border-zinc-600'
                   }`}
                 >
                   {label}
@@ -409,27 +426,27 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
             </div>
           </CollapsibleSection>
 
-          {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
-
           {/* Date Range */}
           <CollapsibleSection
             title={t.dateRange}
-            icon={<Calendar className="w-4 h-4 text-emerald-500" />}
+            icon={
+              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            }
             isOpen={openSections.dateRange}
             onToggle={() => toggleSection('dateRange')}
             badge={dateRangeBadge}
           >
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
-              {dateInputsDisabled ? t.dateRangeDisabled : t.dateRangeHint}
-            </p>
+            {dateInputsDisabled && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mb-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                {t.dateRangeDisabled}
+              </p>
+            )}
 
-            {/* Presets */}
+            {/* Presets - Compact */}
             <div
               className={`flex flex-wrap gap-1.5 mb-3 transition-opacity ${
-                dateInputsDisabled ? 'opacity-50 pointer-events-none' : ''
+                dateInputsDisabled ? 'opacity-40 pointer-events-none' : ''
               }`}
-              aria-disabled={dateInputsDisabled}
             >
               {presets.map(({ id, label }) => (
                 <button
@@ -437,19 +454,18 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   type="button"
                   onClick={() => handlePresetClick(id)}
                   disabled={dateInputsDisabled}
-                  className="px-2.5 py-1.5 text-xs font-medium rounded-lg border bg-white text-zinc-600 border-zinc-200 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-emerald-900/30 dark:hover:border-emerald-800 dark:hover:text-emerald-300 transition-all disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 text-zinc-700 hover:bg-indigo-600 hover:text-white dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-indigo-600 transition-colors disabled:cursor-not-allowed"
                 >
                   {label}
                 </button>
               ))}
             </div>
 
-            {/* Custom Range Inputs */}
+            {/* Custom Range Inputs - Cleaner */}
             <div
-              className={`space-y-3 transition-opacity ${
-                dateInputsDisabled ? 'opacity-50 pointer-events-none' : ''
+              className={`space-y-2.5 transition-opacity ${
+                dateInputsDisabled ? 'opacity-40 pointer-events-none' : ''
               }`}
-              aria-disabled={dateInputsDisabled}
             >
               <div>
                 <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
@@ -460,8 +476,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   value={isoToLocalInput(filters.startISO)}
                   onChange={(e) => handleStartChange(e.target.value)}
                   disabled={dateInputsDisabled}
-                  aria-disabled={dateInputsDisabled}
-                  className="w-full px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 text-sm bg-white border-2 border-zinc-200 rounded-lg dark:border-zinc-700 dark:bg-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -474,91 +489,76 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   min={isoToLocalInput(filters.startISO) || undefined}
                   onChange={(e) => handleEndChange(e.target.value)}
                   disabled={dateInputsDisabled}
-                  aria-disabled={dateInputsDisabled}
-                  className="w-full px-3 py-2 text-sm bg-white border rounded-xl border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 text-sm bg-white border-2 border-zinc-200 rounded-lg dark:border-zinc-700 dark:bg-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all disabled:cursor-not-allowed"
                 />
               </div>
             </div>
           </CollapsibleSection>
 
-          {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
-
-          {/* Meeting Type */}
+          {/* Meeting Type - Simplified colors */}
           <CollapsibleSection
             title={t.meetingType}
-            icon={<Globe className="w-4 h-4 text-violet-500" />}
+            icon={
+              <Globe className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            }
             isOpen={openSections.meetingType}
             onToggle={() => toggleSection('meetingType')}
             badge={meetingTypeBadge}
           >
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <button
                 onClick={() => toggleKind(MeetingKind.Onsite)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
                   filters.kinds.includes(MeetingKind.Onsite)
-                    ? 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/30 dark:border-rose-800 dark:text-rose-300'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
-                <MapPin
-                  className={`w-4 h-4 ${filters.kinds.includes(MeetingKind.Onsite) ? 'text-rose-500' : 'text-zinc-400'}`}
-                />
-                <span className="text-sm font-medium flex-1 text-left">
-                  {t.onsite}
-                </span>
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm font-medium">{t.onsite}</span>
                 {filters.kinds.includes(MeetingKind.Onsite) && (
-                  <Check className="w-4 h-4 text-rose-500" />
+                  <Check className="w-4 h-4 ml-auto" />
                 )}
               </button>
 
               <button
                 onClick={() => toggleKind(MeetingKind.Online)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
                   filters.kinds.includes(MeetingKind.Online)
-                    ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
-                <Laptop
-                  className={`w-4 h-4 ${filters.kinds.includes(MeetingKind.Online) ? 'text-blue-500' : 'text-zinc-400'}`}
-                />
-                <span className="text-sm font-medium flex-1 text-left">
-                  {t.online}
-                </span>
+                <Laptop className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm font-medium">{t.online}</span>
                 {filters.kinds.includes(MeetingKind.Online) && (
-                  <Check className="w-4 h-4 text-blue-500" />
+                  <Check className="w-4 h-4 ml-auto" />
                 )}
               </button>
 
               <button
                 onClick={() => toggleKind(MeetingKind.Hybrid)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
                   filters.kinds.includes(MeetingKind.Hybrid)
-                    ? 'bg-violet-50 border-violet-200 text-violet-700 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-300'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
-                <Globe
-                  className={`w-4 h-4 ${filters.kinds.includes(MeetingKind.Hybrid) ? 'text-violet-500' : 'text-zinc-400'}`}
-                />
-                <span className="text-sm font-medium flex-1 text-left">
-                  {t.hybrid}
-                </span>
+                <Globe className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm font-medium">{t.hybrid}</span>
                 {filters.kinds.includes(MeetingKind.Hybrid) && (
-                  <Check className="w-4 h-4 text-violet-500" />
+                  <Check className="w-4 h-4 ml-auto" />
                 )}
               </button>
             </div>
           </CollapsibleSection>
 
-          {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
-
-          {/* Level */}
+          {/* Level - Unified colors */}
           <CollapsibleSection
             title={t.level}
-            icon={<GraduationCap className="w-4 h-4 text-amber-500" />}
+            icon={
+              <GraduationCap className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            }
             isOpen={openSections.level}
             onToggle={() => toggleSection('level')}
             badge={levelBadge}
@@ -566,30 +566,30 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => toggleLevel(Level.Beginner)}
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
                   filters.levels.includes(Level.Beginner)
-                    ? 'bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-700 dark:text-emerald-300'
-                    : 'bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
                 {t.beginner}
               </button>
               <button
                 onClick={() => toggleLevel(Level.Intermediate)}
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
                   filters.levels.includes(Level.Intermediate)
-                    ? 'bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-300'
-                    : 'bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
                 {t.intermediate}
               </button>
               <button
                 onClick={() => toggleLevel(Level.Advanced)}
-                className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
                   filters.levels.includes(Level.Advanced)
-                    ? 'bg-red-100 border-red-300 text-red-700 dark:bg-red-900/40 dark:border-red-700 dark:text-red-300'
-                    : 'bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
                 {t.advanced}
@@ -597,109 +597,92 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
             </div>
           </CollapsibleSection>
 
-          {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
-
-          {/* Join Mode */}
+          {/* Join Mode - Unified colors */}
           <CollapsibleSection
             title={t.joinMode}
-            icon={<DoorOpen className="w-4 h-4 text-green-500" />}
+            icon={
+              <DoorOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            }
             isOpen={openSections.joinMode}
             onToggle={() => toggleSection('joinMode')}
             badge={joinModeBadge}
           >
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <button
                 onClick={() => toggleJoinMode(JoinMode.Open)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
                   filters.joinModes.includes(JoinMode.Open)
-                    ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/30 dark:border-green-800 dark:text-green-300'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
-                <DoorOpen
-                  className={`w-4 h-4 ${filters.joinModes.includes(JoinMode.Open) ? 'text-green-500' : 'text-zinc-400'}`}
-                />
-                <span className="text-sm font-medium flex-1 text-left">
-                  {t.open}
-                </span>
+                <DoorOpen className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm font-medium">{t.open}</span>
                 {filters.joinModes.includes(JoinMode.Open) && (
-                  <Check className="w-4 h-4 text-green-500" />
+                  <Check className="w-4 h-4 ml-auto" />
                 )}
               </button>
               <button
                 onClick={() => toggleJoinMode(JoinMode.Request)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
                   filters.joinModes.includes(JoinMode.Request)
-                    ? 'bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-900/30 dark:border-orange-800 dark:text-orange-300'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
-                <Users
-                  className={`w-4 h-4 ${filters.joinModes.includes(JoinMode.Request) ? 'text-orange-500' : 'text-zinc-400'}`}
-                />
-                <span className="text-sm font-medium flex-1 text-left">
-                  {t.request}
-                </span>
+                <Users className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm font-medium">{t.request}</span>
                 {filters.joinModes.includes(JoinMode.Request) && (
-                  <Check className="w-4 h-4 text-orange-500" />
+                  <Check className="w-4 h-4 ml-auto" />
                 )}
               </button>
               <button
                 onClick={() => toggleJoinMode(JoinMode.InviteOnly)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
                   filters.joinModes.includes(JoinMode.InviteOnly)
-                    ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-800 dark:text-purple-300'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
                 }`}
               >
-                <Lock
-                  className={`w-4 h-4 ${filters.joinModes.includes(JoinMode.InviteOnly) ? 'text-purple-500' : 'text-zinc-400'}`}
-                />
-                <span className="text-sm font-medium flex-1 text-left">
-                  {t.inviteOnly}
-                </span>
+                <Lock className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm font-medium">{t.inviteOnly}</span>
                 {filters.joinModes.includes(JoinMode.InviteOnly) && (
-                  <Check className="w-4 h-4 text-purple-500" />
+                  <Check className="w-4 h-4 ml-auto" />
                 )}
               </button>
             </div>
           </CollapsibleSection>
 
-          {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent dark:via-zinc-800 my-3" />
-
-          {/* Verified Organizer */}
+          {/* Verified Organizer - Cleaner toggle */}
           <CollapsibleSection
             title={t.organizer}
-            icon={<UserCheck className="w-4 h-4 text-indigo-500" />}
+            icon={
+              <UserCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            }
             isOpen={openSections.organizer}
             onToggle={() => toggleSection('organizer')}
             badge={organizerBadge}
           >
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
-              {t.verifiedHint}
-            </p>
             <button
               onClick={() => handleVerifiedChange(!filters.verifiedOnly)}
-              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border transition-all ${
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-all ${
                 filters.verifiedOnly
-                  ? 'bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 dark:from-indigo-900/30 dark:to-violet-900/30 dark:border-indigo-800'
-                  : 'bg-white border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-800'
+                  ? 'bg-indigo-600 border-indigo-600'
+                  : 'bg-white border-zinc-200 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:hover:border-zinc-600'
               }`}
             >
               <span
-                className={`text-sm font-medium ${filters.verifiedOnly ? 'text-indigo-700 dark:text-indigo-300' : 'text-zinc-700 dark:text-zinc-300'}`}
+                className={`text-sm font-medium ${filters.verifiedOnly ? 'text-white' : 'text-zinc-700 dark:text-zinc-300'}`}
               >
                 {t.verifiedOnly}
               </span>
-              <span
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${filters.verifiedOnly ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+              <div
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${filters.verifiedOnly ? 'bg-white/30' : 'bg-zinc-300 dark:bg-zinc-700'}`}
               >
                 <span
-                  className={`absolute h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${filters.verifiedOnly ? 'translate-x-5' : 'translate-x-0.5'}`}
+                  className={`absolute h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${filters.verifiedOnly ? 'translate-x-5' : 'translate-x-0.5'}`}
                 />
-              </span>
+              </div>
             </button>
           </CollapsibleSection>
         </div>
