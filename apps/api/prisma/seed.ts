@@ -249,12 +249,44 @@ async function seedUsers(): Promise<User[]> {
         name: 'user.fixed',
         role: Role.USER,
         avatarKey: null, // In production, would be set via upload
-        ...(rand() > 0.6 ? { verifiedAt: new Date() } : {}),
+        verifiedAt: new Date(),
         locale: 'en',
         timezone: 'Europe/Warsaw',
       },
     })
   );
+
+  // Create simple test users (2-10) - regular users without plans
+  console.log('   Creating 9 simple test users (USER_2 to USER_10)...');
+  
+  const testUserData = [
+    { id: FIXED_IDS.USER_2, name: 'test.user.two', email: 'user.two@example.com', locale: 'en' },
+    { id: FIXED_IDS.USER_3, name: 'test.user.three', email: 'user.three@example.com', locale: 'pl' },
+    { id: FIXED_IDS.USER_4, name: 'test.user.four', email: 'user.four@example.com', locale: 'de' },
+    { id: FIXED_IDS.USER_5, name: 'test.user.five', email: 'user.five@example.com', locale: 'en' },
+    { id: FIXED_IDS.USER_6, name: 'test.user.six', email: 'user.six@example.com', locale: 'pl' },
+    { id: FIXED_IDS.USER_7, name: 'test.user.seven', email: 'user.seven@example.com', locale: 'en' },
+    { id: FIXED_IDS.USER_8, name: 'test.user.eight', email: 'user.eight@example.com', locale: 'de' },
+    { id: FIXED_IDS.USER_9, name: 'test.user.nine', email: 'user.nine@example.com', locale: 'pl' },
+    { id: FIXED_IDS.USER_10, name: 'test.user.ten', email: 'user.ten@example.com', locale: 'en' },
+  ];
+
+  for (const userData of testUserData) {
+    created.push(
+      await prisma.user.create({
+        data: {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          role: Role.USER,
+          avatarKey: null,
+          verifiedAt: new Date(),
+          locale: userData.locale,
+          timezone: 'Europe/Warsaw',
+        },
+      })
+    );
+  }
 
   // Create users with active plans for testing billing
   created.push(
