@@ -1,7 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-import { Check, X, Ban, QrCode, Settings, List, Download } from 'lucide-react';
+import { QrCode, Settings, List, Download } from 'lucide-react';
 import { useState } from 'react';
 
 type CheckinMethod = 'SELF_MANUAL' | 'MODERATOR_PANEL' | 'EVENT_QR' | 'USER_QR';
@@ -29,12 +28,9 @@ interface EventCheckinManagementProps {
 }
 
 export function EventCheckinManagement({
-  eventId,
   event,
   members,
-  onRefetch,
 }: EventCheckinManagementProps) {
-  const t = useTranslations();
   const [selectedTab, setSelectedTab] = useState<
     'list' | 'settings' | 'qr' | 'logs'
   >('list');

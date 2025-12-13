@@ -26,13 +26,13 @@ import type { CheckinResult as PrismaCheckinResultEnum } from '@prisma/client';
 // Field resolvers handle enum conversions + relations
 // Scalar fields are automatically resolved from parent object
 export const EventCheckinLog: EventCheckinLogResolvers = {
-  action: (parent) => toGQLCheckinAction(parent.action as unknown as any),
-  method: (parent) => parent.method ? toGQLCheckinMethod(parent.method as unknown as any) : null,
-  source: (parent) => toGQLCheckinSource(parent.source as unknown as any),
-  result: (parent) => toGQLCheckinResultStatus(parent.result as unknown as PrismaCheckinResultEnum),
+  action: (parent: any) => toGQLCheckinAction(parent.action as unknown as any),
+  method: (parent: any) => parent.method ? toGQLCheckinMethod(parent.method as unknown as any) : null,
+  source: (parent: any) => toGQLCheckinSource(parent.source as unknown as any),
+  result: (parent: any) => toGQLCheckinResultStatus(parent.result as unknown as PrismaCheckinResultEnum),
 
-  actor: (parent) => {
-    const actor = (parent as any).actor;
+  actor: (parent: any) => {
+    const actor = parent.actor;
     return actor ? mapUser(actor) : null;
   },
 } as unknown as EventCheckinLogResolvers;

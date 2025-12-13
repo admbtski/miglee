@@ -14,7 +14,7 @@ import {
 } from '@tanstack/react-query';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
-import { request, gql } from 'graphql-request';
+import { gql } from 'graphql-request';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (będą wygenerowane przez codegen, tymczasowo definiujemy ręcznie)
@@ -349,7 +349,7 @@ export function useCheckInSelfMutation(
           checkInSelf: CheckinResultPayload;
         }>(CHECK_IN_SELF_MUTATION, variables)
         .then((res) => res.checkInSelf),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
     meta: {
@@ -374,7 +374,7 @@ export function useUncheckInSelfMutation(
           uncheckInSelf: CheckinResultPayload;
         }>(UNCHECK_IN_SELF_MUTATION, variables)
         .then((res) => res.uncheckInSelf),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
     meta: {
@@ -410,7 +410,7 @@ export function useCheckInMemberMutation(
           checkInMember: CheckinResultPayload;
         }>(CHECK_IN_MEMBER_MUTATION, variables)
         .then((res) => res.checkInMember),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
     meta: {
@@ -442,7 +442,7 @@ export function useUncheckInMemberMutation(
           uncheckInMember: CheckinResultPayload;
         }>(UNCHECK_IN_MEMBER_MUTATION, variables)
         .then((res) => res.uncheckInMember),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
     meta: {
@@ -476,7 +476,7 @@ export function useRejectMemberCheckinMutation(
           rejectMemberCheckin: CheckinResultPayload;
         }>(REJECT_MEMBER_CHECKIN_MUTATION, variables)
         .then((res) => res.rejectMemberCheckin),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
     meta: {
@@ -509,7 +509,7 @@ export function useBlockMemberCheckinMutation(
           blockMemberCheckin: CheckinResultPayload;
         }>(BLOCK_MEMBER_CHECKIN_MUTATION, variables)
         .then((res) => res.blockMemberCheckin),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
     meta: {
@@ -541,7 +541,7 @@ export function useUnblockMemberCheckinMutation(
           unblockMemberCheckin: CheckinResultPayload;
         }>(UNBLOCK_MEMBER_CHECKIN_MUTATION, variables)
         .then((res) => res.unblockMemberCheckin),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
     meta: {
@@ -570,7 +570,7 @@ export function useCheckInByEventQrMutation(
           checkInByEventQr: CheckinResultPayload;
         }>(CHECK_IN_BY_EVENT_QR_MUTATION, variables)
         .then((res) => res.checkInByEventQr),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
     meta: {
@@ -628,7 +628,7 @@ export function useUpdateEventCheckinConfigMutation(
           updateEventCheckinConfig: any;
         }>(UPDATE_EVENT_CHECKIN_CONFIG_MUTATION, variables)
         .then((res) => res.updateEventCheckinConfig),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
     meta: {
@@ -653,7 +653,7 @@ export function useRotateEventCheckinTokenMutation(
           rotateEventCheckinToken: any;
         }>(ROTATE_EVENT_CHECKIN_TOKEN_MUTATION, variables)
         .then((res) => res.rotateEventCheckinToken),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
     meta: {

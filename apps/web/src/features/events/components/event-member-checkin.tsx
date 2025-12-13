@@ -2,7 +2,6 @@
 
 import { CheckCircle2, AlertCircle, Ban, QrCode } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
 
 type CheckinMethod = 'SELF_MANUAL' | 'MODERATOR_PANEL' | 'EVENT_QR' | 'USER_QR';
 
@@ -30,7 +29,6 @@ export function EventMemberCheckin({
   onCheckin,
   onUncheck,
 }: EventMemberCheckinProps) {
-  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
 
   // Don't show if check-in is disabled

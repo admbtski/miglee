@@ -192,7 +192,7 @@ export function EventManagementMobileSidebar({
           id: 'checkin',
           label: 'Check-in & Presence',
           href: localePath(`/event/${eventId}/manage/checkin`),
-          icon: CheckCircle,
+              icon: CheckCircle2,
         },
         {
           id: 'plans',
