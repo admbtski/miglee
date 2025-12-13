@@ -88,10 +88,6 @@ export function QRScannerModal({
     }
   };
 
-  const handleError = (error: any) => {
-    console.error('QR Reader error:', error);
-    setError('Camera error. Please check permissions.');
-  };
 
   const handleClose = () => {
     setScanResult(null);
@@ -188,7 +184,7 @@ export function QRScannerModal({
                   </div>
 
                   {/* Processing indicator */}
-                  {checkInByQrMutation.isPending && (
+                  {checkInMutation.isPending && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                       <div className="rounded-lg bg-white p-4">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
