@@ -9,7 +9,6 @@ import {
   useMutation,
   UseMutationOptions,
   useQuery,
-  UseQueryOptions,
   QueryKey,
 } from '@tanstack/react-query';
 import { gqlClient } from '@/lib/api/client';
@@ -283,6 +282,7 @@ export const eventCheckinKeys = {
   all: ['eventCheckin'] as const,
   logs: (eventId: string) => ['eventCheckin', 'logs', eventId] as const,
   config: (eventId: string) => ['eventCheckin', 'config', eventId] as const,
+  members: (eventId: string) => ['eventCheckin', 'members', eventId] as const,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -402,6 +402,8 @@ export function useCheckInMemberMutation(
     { input: CheckInMemberInput }
   >
 ) {
+  const qc = getQueryClient();
+
   return useMutation({
     mutationKey: ['CheckInMember'] as QueryKey,
     mutationFn: async (variables: { input: CheckInMemberInput }) =>
@@ -410,6 +412,55 @@ export function useCheckInMemberMutation(
           checkInMember: CheckinResultPayload;
         }>(CHECK_IN_MEMBER_MUTATION, variables)
         .then((res) => res.checkInMember),
+    onMutate: async (variables) => {
+      const { eventId, userId } = variables.input;
+
+      // Cancel outgoing queries for optimistic update
+      await qc.cancelQueries({
+        queryKey: ['GetEventMembers', { eventId }],
+      });
+
+      // Snapshot previous value
+      const previousMembers = qc.getQueryData(['GetEventMembers', { eventId }]);
+
+      // Optimistically update member status
+      qc.setQueryData(['GetEventMembers', { eventId }], (old: any) => {
+        if (!old?.eventMembers) return old;
+
+        const members = Array.isArray(old.eventMembers)
+          ? old.eventMembers
+          : [];
+
+        return {
+          ...old,
+          eventMembers: members.map((member: any) =>
+            member.userId === userId
+              ? {
+                  ...member,
+                  isCheckedIn: true,
+                  lastCheckinAt: new Date().toISOString(),
+                  checkinMethods: member.checkinMethods?.includes(
+                    'MODERATOR_PANEL'
+                  )
+                    ? member.checkinMethods
+                    : [...(member.checkinMethods || []), 'MODERATOR_PANEL'],
+                }
+              : member
+          ),
+        };
+      });
+
+      return { previousMembers };
+    },
+    onError: (_error, variables, context) => {
+      // Rollback on error
+      if (context?.previousMembers) {
+        qc.setQueryData(
+          ['GetEventMembers', { eventId: variables.input.eventId }],
+          context.previousMembers
+        );
+      }
+    },
     onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -434,6 +485,8 @@ export function useUncheckInMemberMutation(
     { input: UncheckInMemberInput }
   >
 ) {
+  const qc = getQueryClient();
+
   return useMutation({
     mutationKey: ['UncheckInMember'] as QueryKey,
     mutationFn: async (variables: { input: UncheckInMemberInput }) =>
@@ -442,6 +495,53 @@ export function useUncheckInMemberMutation(
           uncheckInMember: CheckinResultPayload;
         }>(UNCHECK_IN_MEMBER_MUTATION, variables)
         .then((res) => res.uncheckInMember),
+    onMutate: async (variables) => {
+      const { eventId, userId } = variables.input;
+
+      // Cancel outgoing queries for optimistic update
+      await qc.cancelQueries({
+        queryKey: ['GetEventMembers', { eventId }],
+      });
+
+      // Snapshot previous value
+      const previousMembers = qc.getQueryData(['GetEventMembers', { eventId }]);
+
+      // Optimistically update member status
+      qc.setQueryData(['GetEventMembers', { eventId }], (old: any) => {
+        if (!old?.eventMembers) return old;
+
+        const members = Array.isArray(old.eventMembers)
+          ? old.eventMembers
+          : [];
+
+        return {
+          ...old,
+          eventMembers: members.map((member: any) =>
+            member.userId === userId
+              ? {
+                  ...member,
+                  isCheckedIn: false,
+                  lastCheckinAt: null,
+                  checkinMethods: member.checkinMethods?.filter(
+                    (m: string) => m !== 'MODERATOR_PANEL'
+                  ),
+                }
+              : member
+          ),
+        };
+      });
+
+      return { previousMembers };
+    },
+    onError: (_error, variables, context) => {
+      // Rollback on error
+      if (context?.previousMembers) {
+        qc.setQueryData(
+          ['GetEventMembers', { eventId: variables.input.eventId }],
+          context.previousMembers
+        );
+      }
+    },
     onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -620,6 +720,8 @@ export function useUpdateEventCheckinConfigMutation(
     { input: UpdateEventCheckinConfigInput }
   >
 ) {
+  const qc = getQueryClient();
+
   return useMutation({
     mutationKey: ['UpdateEventCheckinConfig'] as QueryKey,
     mutationFn: async (variables: { input: UpdateEventCheckinConfigInput }) =>
@@ -628,6 +730,44 @@ export function useUpdateEventCheckinConfigMutation(
           updateEventCheckinConfig: any;
         }>(UPDATE_EVENT_CHECKIN_CONFIG_MUTATION, variables)
         .then((res) => res.updateEventCheckinConfig),
+    onMutate: async (variables) => {
+      const { eventId, checkinEnabled, enabledCheckinMethods } =
+        variables.input;
+
+      // Cancel outgoing queries
+      await qc.cancelQueries({
+        queryKey: ['GetEvent', { id: eventId }],
+      });
+
+      // Snapshot previous value
+      const previousEvent = qc.getQueryData(['GetEvent', { id: eventId }]);
+
+      // Optimistically update config
+      qc.setQueryData(['GetEvent', { id: eventId }], (old: any) => {
+        if (!old?.event) return old;
+
+        return {
+          ...old,
+          event: {
+            ...old.event,
+            checkinEnabled: checkinEnabled ?? old.event.checkinEnabled,
+            enabledCheckinMethods:
+              enabledCheckinMethods ?? old.event.enabledCheckinMethods,
+          },
+        };
+      });
+
+      return { previousEvent };
+    },
+    onError: (_error, variables, context) => {
+      // Rollback on error
+      if (context?.previousEvent) {
+        qc.setQueryData(
+          ['GetEvent', { id: variables.input.eventId }],
+          context.previousEvent
+        );
+      }
+    },
     onSuccess: (_data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -695,17 +835,14 @@ export interface GetEventCheckinLogsVariables {
   offset?: number;
   action?: CheckinAction;
   method?: CheckinMethod;
+  enabled?: boolean;
 }
 
 export function useGetEventCheckinLogsQuery(
-  variables: GetEventCheckinLogsVariables,
-  options?: UseQueryOptions<{
-    eventCheckinLogs: {
-      items: EventCheckinLog[];
-      pageInfo: { total: number; hasNext: boolean };
-    };
-  }>
+  variables: GetEventCheckinLogsVariables
 ) {
+  const { enabled = true, ...queryVars } = variables;
+  
   return useQuery({
     queryKey: eventCheckinKeys.logs(variables.eventId),
     queryFn: async () =>
@@ -714,7 +851,7 @@ export function useGetEventCheckinLogsQuery(
           items: EventCheckinLog[];
           pageInfo: { total: number; hasNext: boolean };
         };
-      }>(GET_EVENT_CHECKIN_LOGS_QUERY, variables),
-    ...options,
+      }>(GET_EVENT_CHECKIN_LOGS_QUERY, queryVars),
+    enabled,
   });
 }

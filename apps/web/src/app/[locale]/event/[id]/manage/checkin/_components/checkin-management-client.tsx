@@ -16,13 +16,22 @@ import {
   Info,
   Loader2,
   AlertCircle,
+  Check,
+  X,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 
 import { useEventManagement } from '../../_components/event-management-provider';
 import {
   useUpdateEventCheckinConfigMutation,
+  useCheckInMemberMutation,
+  useUncheckInMemberMutation,
+  useGetEventCheckinLogsQuery,
   type CheckinMethod,
 } from '@/features/events/api/checkin';
+import { useEventMembersQuery } from '@/features/events/api/event-members';
+import { toast } from '@/lib/utils/toast-manager';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
@@ -37,10 +46,69 @@ export function CheckinManagementClient() {
     eventCheckinToken?: string | null;
   };
 
+  // Query for event members
+  const {
+    data: membersData,
+    isLoading: membersLoading,
+    error: membersError,
+    refetch: refetchMembers,
+  } = useEventMembersQuery(
+    { eventId: event?.id || '' },
+    { enabled: !!event?.id }
+  );
+
+  // Query for check-in logs
+  const {
+    data: logsData,
+    isLoading: logsLoading,
+    refetch: refetchLogs,
+  } = useGetEventCheckinLogsQuery({
+    eventId: event?.id || '',
+    limit: 50,
+    enabled: !!event?.id && activeTab === 'logs',
+  });
+
   // Mutation for updating check-in config
   const updateConfigMutation = useUpdateEventCheckinConfigMutation({
     onSuccess: () => {
       refetch();
+      toast.success('Settings updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update settings', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    },
+  });
+
+  // Mutations for check-in actions
+  const checkInMutation = useCheckInMemberMutation({
+    onSuccess: (data) => {
+      refetchMembers();
+      refetchLogs();
+      toast.success('Member checked in', {
+        description: data?.member?.user?.displayName || 'Success',
+      });
+    },
+    onError: (error) => {
+      toast.error('Check-in failed', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    },
+  });
+
+  const uncheckMutation = useUncheckInMemberMutation({
+    onSuccess: (data) => {
+      refetchMembers();
+      refetchLogs();
+      toast.success('Member unchecked', {
+        description: data?.member?.user?.displayName || 'Success',
+      });
+    },
+    onError: (error) => {
+      toast.error('Uncheck failed', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
     },
   });
 
@@ -66,14 +134,19 @@ export function CheckinManagementClient() {
     );
   }
 
-  const members: any[] = []; // TODO: Load event members
+  // Get members from query (eventMembers is already an array)
+  const members = Array.isArray(membersData?.eventMembers) 
+    ? membersData.eventMembers 
+    : [];
   const stats = {
     total: members.length,
-    checkedIn: members.filter((m) => m.isCheckedIn).length,
+    checkedIn: members.filter((m: any) => m.isCheckedIn).length,
     percentage:
       members.length > 0
         ? Math.round(
-            (members.filter((m) => m.isCheckedIn).length / members.length) * 100
+            (members.filter((m: any) => m.isCheckedIn).length /
+              members.length) *
+              100
           )
         : 0,
   };
@@ -81,13 +154,17 @@ export function CheckinManagementClient() {
   const handleToggleEnabled = async () => {
     if (!event.id) return;
 
-    await updateConfigMutation.mutateAsync({
-      input: {
-        eventId: event.id,
-        checkinEnabled: !event.checkinEnabled,
-        enabledCheckinMethods: event.enabledCheckinMethods as CheckinMethod[],
-      },
-    });
+    try {
+      await updateConfigMutation.mutateAsync({
+        input: {
+          eventId: event.id,
+          checkinEnabled: !event.checkinEnabled,
+          enabledCheckinMethods: event.enabledCheckinMethods as CheckinMethod[],
+        },
+      });
+    } catch (error) {
+      // Error handled by mutation onError
+    }
   };
 
   const handleToggleMethod = async (method: CheckinMethod) => {
@@ -99,13 +176,49 @@ export function CheckinManagementClient() {
       ? currentMethods.filter((m) => m !== method)
       : [...currentMethods, method];
 
-    await updateConfigMutation.mutateAsync({
-      input: {
-        eventId: event.id,
-        checkinEnabled: event.checkinEnabled || false,
-        enabledCheckinMethods: newMethods,
-      },
-    });
+    try {
+      await updateConfigMutation.mutateAsync({
+        input: {
+          eventId: event.id,
+          checkinEnabled: event.checkinEnabled || false,
+          enabledCheckinMethods: newMethods,
+        },
+      });
+    } catch (error) {
+      // Error handled by mutation onError
+    }
+  };
+
+  const handleCheckIn = async (userId: string) => {
+    if (!event.id) return;
+
+    try {
+      await checkInMutation.mutateAsync({
+        input: {
+          eventId: event.id,
+          userId,
+          method: 'MODERATOR_PANEL',
+        },
+      });
+    } catch (error) {
+      // Error handled by mutation onError
+    }
+  };
+
+  const handleUncheck = async (userId: string) => {
+    if (!event.id) return;
+
+    try {
+      await uncheckMutation.mutateAsync({
+        input: {
+          eventId: event.id,
+          userId,
+          method: 'MODERATOR_PANEL',
+        },
+      });
+    } catch (error) {
+      // Error handled by mutation onError
+    }
   };
 
   return (
@@ -189,7 +302,17 @@ export function CheckinManagementClient() {
 
       {/* Tab Content */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        {activeTab === 'overview' && <OverviewTab members={members} />}
+        {activeTab === 'overview' && (
+          <OverviewTab
+            members={members}
+            isLoading={membersLoading}
+            error={membersError as Error | undefined}
+            onCheckIn={handleCheckIn}
+            onUncheck={handleUncheck}
+            isCheckingIn={checkInMutation.isPending}
+            isUnchecking={uncheckMutation.isPending}
+          />
+        )}
         {activeTab === 'settings' && (
           <SettingsTab
             checkinEnabled={event.checkinEnabled || false}
@@ -210,7 +333,14 @@ export function CheckinManagementClient() {
             eventCheckinToken={event.eventCheckinToken}
           />
         )}
-        {activeTab === 'logs' && <LogsTab eventId={event.id} />}
+        {activeTab === 'logs' && (
+          <LogsTab
+            eventId={event.id}
+            logs={logsData?.eventCheckinLogs?.items || []}
+            isLoading={logsLoading}
+            pageInfo={logsData?.eventCheckinLogs?.pageInfo}
+          />
+        )}
       </div>
     </div>
   );
@@ -282,7 +412,58 @@ function StatCard({
 // Tab Components
 // =============================================================================
 
-function OverviewTab({ members }: { members: any[] }) {
+interface OverviewTabProps {
+  members: any[];
+  isLoading: boolean;
+  error?: Error;
+  onCheckIn: (userId: string) => void;
+  onUncheck: (userId: string) => void;
+  isCheckingIn: boolean;
+  isUnchecking: boolean;
+}
+
+function OverviewTab({
+  members,
+  isLoading,
+  error,
+  onCheckIn,
+  onUncheck,
+  isCheckingIn,
+  isUnchecking,
+}: OverviewTabProps) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-20 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6 dark:border-red-800/50 dark:bg-red-900/20">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+          <div>
+            <h3 className="font-semibold text-red-900 dark:text-red-100">
+              Failed to load participants
+            </h3>
+            <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+              {error.message || 'Unknown error occurred'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -314,7 +495,85 @@ function OverviewTab({ members }: { members: any[] }) {
         </div>
       )}
 
-      {/* Participants list would go here */}
+      {/* Participants list */}
+      {members.length > 0 && (
+        <div className="space-y-2">
+          {members.map((member: any) => (
+            <div
+              key={member.id}
+              className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
+            >
+              <div className="flex items-center gap-3">
+                {/* Status indicator */}
+                <div
+                  className={[
+                    'flex h-10 w-10 items-center justify-center rounded-full',
+                    member.isCheckedIn
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                      : 'bg-zinc-100 dark:bg-zinc-800',
+                  ].join(' ')}
+                >
+                  {member.isCheckedIn ? (
+                    <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <Clock className="h-5 w-5 text-zinc-400" />
+                  )}
+                </div>
+
+                {/* Member info */}
+                <div>
+                  <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                    {member.user?.displayName || 'Unknown User'}
+                  </div>
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                    {member.isCheckedIn ? (
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                        Checked in
+                        {member.lastCheckinAt &&
+                          ` at ${new Date(member.lastCheckinAt).toLocaleTimeString()}`}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-400">Not checked in</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                {member.isCheckedIn ? (
+                  <button
+                    onClick={() => onUncheck(member.userId)}
+                    disabled={isUnchecking}
+                    className="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                  >
+                    {isUnchecking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
+                    Uncheck
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onCheckIn(member.userId)}
+                    disabled={isCheckingIn}
+                    className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                  >
+                    {isCheckingIn ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
+                    Check In
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -541,19 +800,72 @@ function QrTab({
   );
 }
 
-function LogsTab({ eventId }: { eventId: string }) {
-  // TODO: Implement logs query
-  console.log('Event ID for logs:', eventId);
+interface LogsTabProps {
+  eventId: string;
+  logs: any[];
+  isLoading: boolean;
+  pageInfo?: { total: number; hasNext: boolean };
+}
+
+function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="h-16 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'CHECK_IN':
+        return 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30';
+      case 'UNCHECK':
+        return 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30';
+      case 'REJECT':
+        return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
+      case 'BLOCK_ALL':
+      case 'BLOCK_METHOD':
+        return 'text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/30';
+      case 'UNBLOCK_ALL':
+      case 'UNBLOCK_METHOD':
+        return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30';
+      default:
+        return 'text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800';
+    }
+  };
+
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case 'CHECK_IN':
+        return Check;
+      case 'UNCHECK':
+        return X;
+      case 'REJECT':
+        return AlertTriangle;
+      default:
+        return ScrollText;
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Activity Log
           </h2>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Complete audit trail of all check-in activities
+            {pageInfo?.total
+              ? `${pageInfo.total} total events`
+              : 'Complete audit trail of all check-in activities'}
           </p>
         </div>
         <button className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
@@ -581,15 +893,98 @@ function LogsTab({ eventId }: { eventId: string }) {
       </div>
 
       {/* Empty state */}
-      <div className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
-        <ScrollText className="mx-auto h-12 w-12 text-zinc-400" />
-        <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          No activity yet
-        </h3>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Check-in activity will appear here
-        </p>
-      </div>
+      {logs.length === 0 && (
+        <div className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
+          <ScrollText className="mx-auto h-12 w-12 text-zinc-400" />
+          <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            No activity yet
+          </h3>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Check-in activity will appear here
+          </p>
+        </div>
+      )}
+
+      {/* Logs list */}
+      {logs.length > 0 && (
+        <div className="space-y-2">
+          {logs.map((log: any) => {
+            const ActionIcon = getActionIcon(log.action);
+            return (
+              <div
+                key={log.id}
+                className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                {/* Icon */}
+                <div
+                  className={[
+                    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full',
+                    getActionColor(log.action),
+                  ].join(' ')}
+                >
+                  <ActionIcon className="h-4 w-4" />
+                </div>
+
+                {/* Content */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {log.action.replace(/_/g, ' ')}
+                        {log.method && (
+                          <span className="ml-2 text-sm font-normal text-zinc-500">
+                            via {log.method.replace(/_/g, ' ')}
+                          </span>
+                        )}
+                      </div>
+                      {log.actor && (
+                        <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                          By {log.actor.displayName || 'Unknown'}
+                        </div>
+                      )}
+                      {log.comment && (
+                        <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                          {log.comment}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 text-xs text-zinc-500">
+                      {new Date(log.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+
+                  {/* Result badge */}
+                  {log.result && (
+                    <div className="mt-2">
+                      <span
+                        className={[
+                          'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                          log.result === 'SUCCESS'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : log.result === 'DENIED'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400',
+                        ].join(' ')}
+                      >
+                        {log.result}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Load more indicator */}
+      {pageInfo?.hasNext && (
+        <div className="text-center">
+          <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+            Load More
+          </button>
+        </div>
+      )}
     </div>
   );
 }
