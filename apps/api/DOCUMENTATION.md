@@ -1112,6 +1112,7 @@ export const myResolver: QueryResolvers['me'] = async (_parent, _args, ctx) => {
 The Check-in system allows event organizers to track attendee presence at events. It supports multiple check-in methods simultaneously and provides comprehensive moderation tools.
 
 **Key Statistics:**
+
 - ~2,500 lines of backend code
 - 12 GraphQL mutations + 1 query
 - 4 check-in methods
@@ -1165,7 +1166,7 @@ enum CheckinMethod {
 ```typescript
 model Event {
   // ... existing fields
-  
+
   // Check-in configuration
   checkinEnabled           Boolean          @default(false)
   enabledCheckinMethods    CheckinMethod[]  @default([])
@@ -1178,15 +1179,15 @@ model Event {
 ```typescript
 model EventMember {
   // ... existing fields
-  
+
   // Check-in state
   isCheckedIn              Boolean          @default(false)
   checkinMethods           CheckinMethod[]  @default([])
   lastCheckinAt            DateTime?
-  
+
   // Personal QR token
   memberCheckinToken       String?          @unique
-  
+
   // Blocking & rejection
   checkinBlockedAll        Boolean          @default(false)
   checkinBlockedMethods    CheckinMethod[]  @default([])
@@ -1205,24 +1206,24 @@ model EventCheckinLog {
   eventId           String
   memberId          String
   actorId           String?
-  
+
   action            CheckinAction   // CHECK_IN, UNCHECK, REJECT, BLOCK_*, UNBLOCK_*
   method            CheckinMethod?
   source            CheckinSource   // USER, MODERATOR, SYSTEM
   result            CheckinResult   // SUCCESS, DENIED, NOOP
-  
+
   reason            String?
   comment           String?
   showCommentToUser Boolean         @default(false)
   metadata          Json?
-  
+
   createdAt         DateTime        @default(now())
-  
+
   // Relations
   event             Event           @relation(...)
   member            EventMember     @relation(...)
   actor             User?           @relation(...)
-  
+
   @@index([eventId, createdAt(sort: Desc)])
   @@index([memberId])
   @@index([action])
@@ -1322,7 +1323,7 @@ async function validateModeratorAccess(
   const membership = await prisma.eventMember.findUnique({
     where: { eventId_userId: { eventId, userId } },
   });
-  
+
   if (!membership || !['OWNER', 'MODERATOR'].includes(membership.role)) {
     throw new GraphQLError('Only owner/moderator can perform this action', {
       extensions: { code: 'FORBIDDEN' },
@@ -1627,10 +1628,10 @@ export function useGetEventCheckinLogsQuery() { ... }
 
 ```json
 {
-  "qrcode.react": "^4.2.0",        // QR generation
+  "qrcode.react": "^4.2.0", // QR generation
   "react-qr-reader": "3.0.0-beta-1", // QR scanning
-  "jspdf": "^3.0.4",               // PDF export
-  "html2canvas": "^1.4.1"          // PNG export
+  "jspdf": "^3.0.4", // PDF export
+  "html2canvas": "^1.4.1" // PNG export
 }
 ```
 
@@ -1759,6 +1760,7 @@ apps/web/src/app/[locale]/event/[id]/manage/
 - ✅ QR code sharing/leaking (rotation)
 
 **See also:**
+
 - `apps/api/CHECKIN_IMPLEMENTATION.md` - Full technical spec
 - `apps/api/CHECKIN_QUICKSTART.md` - Integration guide
 - `apps/api/VERIFICATION.md` - Verification report

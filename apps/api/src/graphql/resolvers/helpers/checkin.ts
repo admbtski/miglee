@@ -71,7 +71,7 @@ export function generateShortCode(): string {
   let result = '';
   const bytes = crypto.getRandomValues(new Uint8Array(8));
   for (let i = 0; i < 8; i++) {
-    result += COORD_CHARS[bytes[i] % COORD_CHARS.length];
+    result += COORD_CHARS[bytes[i]! % COORD_CHARS.length];
   }
   return result;
 }

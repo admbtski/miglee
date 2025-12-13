@@ -48,6 +48,16 @@ function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
     rejectReason: m.rejectReason ?? null,
     user: mapUser(m.user),
     addedBy: m.addedBy ? mapUser(m.addedBy) : null,
+    // Check-in fields
+    isCheckedIn: m.isCheckedIn,
+    checkinMethods: m.checkinMethods as any[],
+    lastCheckinAt: m.lastCheckinAt ?? null,
+    memberCheckinToken: m.memberCheckinToken ?? null,
+    checkinBlockedAll: m.checkinBlockedAll,
+    checkinBlockedMethods: m.checkinBlockedMethods as any[],
+    lastCheckinRejectionReason: m.lastCheckinRejectionReason ?? null,
+    lastCheckinRejectedAt: m.lastCheckinRejectedAt ?? null,
+    lastCheckinRejectedBy: (m as any).lastCheckinRejectedBy ? mapUser((m as any).lastCheckinRejectedBy) : null,
     // event and joinAnswers will be resolved by field resolvers
     event: null as unknown as GQLEvent, // Resolved by field resolver
     joinAnswers: [],
@@ -57,6 +67,7 @@ function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
 const MEMBER_INCLUDE = {
   user: { include: { profile: true } },
   addedBy: { include: { profile: true } },
+  lastCheckinRejectedBy: { include: { profile: true } },
 } satisfies Prisma.EventMemberInclude;
 
 /* ────────────────────────────────────────────────────────────────────────────

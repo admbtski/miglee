@@ -389,11 +389,11 @@ export function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
 
     // Check-in fields
     isCheckedIn: m.isCheckedIn ?? false,
-    checkinMethods: m.checkinMethods ?? [],
+    checkinMethods: (m.checkinMethods ?? []) as any[],
     lastCheckinAt: m.lastCheckinAt ?? null,
     memberCheckinToken: m.memberCheckinToken ?? null,
     checkinBlockedAll: m.checkinBlockedAll ?? false,
-    checkinBlockedMethods: m.checkinBlockedMethods ?? [],
+    checkinBlockedMethods: (m.checkinBlockedMethods ?? []) as any[],
     lastCheckinRejectionReason: m.lastCheckinRejectionReason ?? null,
     lastCheckinRejectedAt: m.lastCheckinRejectedAt ?? null,
     lastCheckinRejectedBy: (m as any).lastCheckinRejectedBy
@@ -735,7 +735,7 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
 
     // Check-in configuration
     checkinEnabled: i.checkinEnabled ?? false,
-    enabledCheckinMethods: i.enabledCheckinMethods ?? [],
+    enabledCheckinMethods: (i.enabledCheckinMethods ?? []) as any[],
     eventCheckinToken: i.eventCheckinToken ?? null,
 
     // Collections (safe access - may be undefined if not included)

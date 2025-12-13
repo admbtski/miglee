@@ -55,7 +55,7 @@ export const eventCheckinLogs: QueryResolvers['eventCheckinLogs'] = async (
     ]);
 
     return {
-      items,
+      items: items as any, // Cast Prisma types to GraphQL types (field resolvers will handle User relations)
       pageInfo: {
         total,
         limit,
