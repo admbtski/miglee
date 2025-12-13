@@ -40,16 +40,16 @@ const RETRY_CONFIG = {
 // Timeout configuration
 const TIMEOUT_CONFIG = {
   // Connection timeout (ms)
-  connectTimeout: config.isProduction ? 10000 : 5000,
+  connectTimeout: config.isProduction ? 10000 : 30000, // Increased dev timeout
 
   // Command timeout (ms) - how long to wait for a response
-  commandTimeout: config.isProduction ? 5000 : 10000,
+  commandTimeout: config.isProduction ? 5000 : 30000, // Increased dev timeout
 
   // Keep-alive interval (ms)
   keepAlive: 30000,
 
   // Max retries per request (null = use retryStrategy)
-  maxRetriesPerRequest: config.isProduction ? 3 : null,
+  maxRetriesPerRequest: config.isProduction ? 3 : 3, // Always limit retries
 };
 
 // =============================================================================
@@ -148,7 +148,8 @@ export const redisEmitter = MQEmitterRedis({
   retryStrategy: createRetryStrategy('emitter'),
   maxRetriesPerRequest: null, // Required for pub/sub
   enableReadyCheck: true,
-  connectTimeout: TIMEOUT_CONFIG.connectTimeout,
+  connectTimeout: 30000, // Longer timeout for emitter
+  commandTimeout: 30000, // Longer timeout for blocking ops
   lazyConnect: false,
   keepAlive: TIMEOUT_CONFIG.keepAlive,
 });
@@ -174,7 +175,7 @@ export const healthRedis = createRedisConnection('health', {
  */
 export const rateLimitRedis = createRedisConnection('rate-limit', {
   keyPrefix: 'rl:',
-  lazyConnect: true,
+  lazyConnect: false, // Connect immediately in dev for better error reporting
 });
 
 /**
@@ -182,7 +183,7 @@ export const rateLimitRedis = createRedisConnection('rate-limit', {
  */
 export const chatRedis = createRedisConnection('chat', {
   keyPrefix: 'chat:',
-  lazyConnect: true,
+  lazyConnect: false, // Connect immediately in dev for better error reporting
 });
 
 // =============================================================================
@@ -195,8 +196,10 @@ export const chatRedis = createRedisConnection('chat', {
  */
 export function createBullMQConnection(name: string): Redis {
   return createRedisConnection(`bullmq-${name}`, {
-    maxRetriesPerRequest: null, // Required for BullMQ
+    maxRetriesPerRequest: null, // Required for BullMQ blocking ops
     enableOfflineQueue: true,
+    connectTimeout: 30000, // Longer timeout for BullMQ
+    commandTimeout: 30000, // Longer timeout for blocking ops
   });
 }
 
@@ -204,7 +207,7 @@ export function createBullMQConnection(name: string): Redis {
 // Graceful Shutdown
 // =============================================================================
 
-const activeConnections: Redis[] = [healthRedis, chatRedis];
+const activeConnections: Redis[] = [healthRedis, rateLimitRedis, chatRedis];
 
 /**
  * Register a Redis connection for graceful shutdown

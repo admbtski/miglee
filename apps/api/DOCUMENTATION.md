@@ -177,6 +177,364 @@ Miglee API is a **production-ready GraphQL backend** for a social event manageme
 10. Client Response
 ```
 
+### Detailed System Architecture
+
+#### 1. Application Layer
+
+**Fastify Server** (`src/server.ts`, `src/index.ts`)
+
+- High-performance HTTP server with plugin architecture
+- Request ID generation for tracing
+- Lifecycle hooks (onRequest, preValidation, onResponse, onError)
+- Graceful shutdown handling (SIGTERM, SIGINT)
+- Trust proxy configuration for reverse proxy deployments
+- Environment-aware configuration
+
+**Key Plugins:**
+
+1. **Rate Limiting** (`plugins/rate-limit.ts`)
+   - Layer 1: HTTP-level rate limiting (Fastify)
+   - Layer 2: Domain-level rate limiting (Redis ZSET)
+   - Sliding window algorithm with burst protection
+   - Fail-open strategy on Redis errors
+
+2. **Security** (`plugins/helmet.ts`, `plugins/cors.ts`)
+   - Helmet security headers (CSP, HSTS, frameguard)
+   - CORS with environment-specific origins
+   - Cookie security (httpOnly, secure, sameSite)
+
+3. **Authentication** (`plugins/jwt.ts`)
+   - JWT token generation and validation
+   - Development bypass (`x-user-id` header)
+   - Cookie-based token storage
+   - 7-day token expiration
+
+4. **GraphQL** (`plugins/mercurius.ts`)
+   - Mercurius GraphQL server
+   - Query complexity/depth limiting
+   - Introspection control
+   - WebSocket support for subscriptions
+   - Context factory with user resolution
+   - Error formatting with environment masking
+
+#### 2. Data Layer
+
+**PostgreSQL** (via Prisma ORM)
+
+- **Connection Pooling**: 20 connections (prod), 10 (dev)
+- **Timeouts**: 30s statement, 30s transaction (prod)
+- **Slow Query Logging**: >1s queries logged
+- **Middleware**: Query logging, error handling
+- **Transactions**: ACID compliance with `$transaction`
+- **Optimistic Locking**: Version-based concurrency control (waitlist)
+
+**Key Features:**
+
+- Soft delete support (User, Event entities)
+- Foreign key constraints with cascades
+- Unique indexes on critical fields (email, slug)
+- Full-text search indexes (events, users)
+- Composite indexes for performance
+- Row-level security patterns
+
+**Redis Architecture** (5 separate connections)
+
+- **`healthRedis`**: Health check pings only
+- **`rateLimitRedis`**: Rate limiting state (keyPrefix: `rl:`)
+- **`chatRedis`**: Typing indicators (keyPrefix: `chat:`)
+- **`redisEmitter`**: GraphQL pub/sub for subscriptions
+- **BullMQ connections**: Per-queue dedicated connections
+
+**Redis Usage Patterns:**
+
+```
+Health Checks:
+  health:status -> PING/PONG
+
+Rate Limiting (ZSET):
+  domain:gql:billing:{userId} -> [(timestamp1, score1), ...]
+  domain:chat:event:send:{eventId}:{userId} -> [(ts, score), ...]
+  TTL: windowSeconds + 60s grace period
+
+Typing Indicators (String + TTL):
+  chat:event:typing:{eventId}:{userId} -> "1"
+  chat:dm:typing:{threadId}:{userId} -> "1"
+  TTL: 3 seconds
+
+Pub/Sub (MQEmitter):
+  Channel: event:{eventId}:chat
+  Channel: dm:{threadId}:message
+  Channel: notifications:{userId}
+```
+
+#### 3. Business Logic Layer
+
+**Resolver Pattern:**
+
+```typescript
+// src/graphql/resolvers/mutation/events.ts
+export const createEventMutation: MutationResolvers['createEvent'] =
+  resolverWithMetrics('Mutation', 'createEvent', async (_parent, args, ctx) => {
+    // 1. Authentication Guard
+    const user = requireAuth(ctx);
+
+    // 2. Rate Limiting (Domain Layer)
+    await assertEventWriteRateLimit(user.id);
+
+    // 3. Input Validation (Zod/GraphQL schema)
+    validateEventInput(args.input);
+
+    // 4. Authorization Business Logic
+    checkUserCanCreateEvent(user);
+
+    // 5. Database Transaction
+    const event = await prisma.$transaction(async (tx) => {
+      const event = await tx.event.create({ data: {...} });
+      await tx.eventMember.create({
+        data: { userId: user.id, eventId: event.id, role: 'OWNER' }
+      });
+      return event;
+    });
+
+    // 6. Side Effects (optional)
+    await scheduleReminders(event.id, event.startAt);
+    await publishNotification('EVENT_CREATED', event.id);
+
+    // 7. Response Mapping
+    return mapEvent(event);
+  });
+```
+
+**Service Layer:**
+
+- **Billing Services** (`lib/billing/`)
+  - Stripe client wrapper
+  - Webhook event processing
+  - Plan activation/deactivation
+  - Idempotency via `PaymentEvent` table
+- **Media Services** (`lib/media/`)
+  - Storage abstraction (local/S3)
+  - Image processing (Sharp)
+  - Variant generation
+  - Blurhash generation
+- **Email Service** (`lib/email.ts`)
+  - Resend integration
+  - Template-based emails
+  - Feedback request generation
+  - Event reminder emails
+
+**Guard System** (`shared/auth-guards.ts`, `chat-guards.ts`)
+
+```typescript
+// Authentication
+requireAuth(ctx) → User | throws UNAUTHENTICATED
+
+// Authorization
+requireAdmin(ctx) → User | throws FORBIDDEN
+requireEventAccess(ctx, eventId, options) → Event | throws FORBIDDEN
+requireChatAccess(ctx, eventId) → void | throws FORBIDDEN
+requireDmAccess(ctx, threadId) → DmThread | throws FORBIDDEN
+
+// Membership Checks
+requireJoinedMember(ctx, eventId) → EventMember | throws FORBIDDEN
+requireEventModerator(ctx, eventId) → EventMember | throws FORBIDDEN
+requireEventOwner(ctx, eventId) → EventMember | throws FORBIDDEN
+```
+
+#### 4. Background Jobs Layer
+
+**BullMQ Architecture** (`lib/bullmq.ts`)
+
+**Queue Configuration:**
+
+```typescript
+{
+  defaultJobOptions: {
+    attempts: 3,                    // Max retries
+    backoff: {
+      type: 'exponential',
+      delay: 5000                   // Initial delay
+    },
+    removeOnComplete: {
+      count: 100,                   // Keep last 100
+      age: 86400                    // 24 hours
+    },
+    removeOnFail: {
+      count: 500,                   // Keep last 500
+      age: 604800                   // 7 days
+    }
+  },
+  workerOptions: {
+    concurrency: 5,                 // Parallel jobs
+    lockDuration: 30000,            // 30s job lock
+    stalledInterval: 30000,         // Check for stalls every 30s
+    maxStalledCount: 2             // Max stall retries
+  }
+}
+```
+
+**Dead-Letter Queue (DLQ) Pattern:**
+
+- Auto-created for each queue: `{queueName}-dlq`
+- Failed jobs after max retries → DLQ
+- Manual reprocessing API available
+- Separate monitoring/alerting
+
+**Worker Isolation:**
+
+- Separate processes for each worker type
+- Independent scaling
+- Graceful shutdown support
+- Health monitoring
+
+**Queue Types:**
+
+1. **Reminders Queue** (`workers/reminders/`)
+   - Scheduled per event (7 buckets: 24h, 12h, 6h, 3h, 1h, 30m, 15m)
+   - Idempotent job IDs: `reminder:{minutes}m:{eventId}`
+   - Automatic rescheduling on event time changes
+2. **Feedback Queue** (`workers/feedback/`)
+   - Single job per event
+   - Scheduled 1h after event end (prod), 5s (dev)
+   - Idempotent job ID: `feedback-request-{eventId}`
+   - Email batch sending with rate limiting
+
+#### 5. Real-Time Layer
+
+**GraphQL Subscriptions** (via Mercurius + WebSocket)
+
+**Connection Flow:**
+
+```
+1. Client opens WebSocket: ws://api.example.com/graphql
+2. Client sends connection_init: { headers: { 'x-user-id': 'user123' } }
+3. Server validates auth, creates context
+4. Client subscribes: { query: 'subscription { eventMessageAdded(...) }' }
+5. Server validates permissions, registers subscription
+6. On event: pubsub.publish(channel, payload)
+7. Server sends data to subscribed clients
+```
+
+**Pub/Sub Architecture** (Redis-backed)
+
+- MQEmitter with Redis adapter
+- Channel per subscription type
+- Message broadcasting across instances
+- Automatic cleanup on disconnect
+
+**Subscription Security:**
+
+- Auth required on `connection_init`
+- Permission checks on subscribe
+- Channel isolation per resource
+- Rate limiting on subscription creation
+
+#### 6. Observability Layer
+
+**Logging** (Pino)
+
+- Structured JSON logs
+- Request ID correlation
+- Trace ID from OpenTelemetry
+- Environment-aware levels
+- Optional file output
+
+**Metrics** (OpenTelemetry)
+
+- GraphQL operation counters
+- GraphQL operation duration histograms
+- HTTP request counters
+- HTTP request duration histograms
+- Database query counters
+- Redis operation counters
+- Queue job counters
+
+**Tracing** (OpenTelemetry)
+
+- Distributed trace context propagation
+- Automatic instrumentation:
+  - Fastify requests
+  - GraphQL operations
+  - Prisma queries
+  - Redis commands
+  - HTTP outbound calls
+
+#### 7. Error Handling Strategy
+
+**Error Types:**
+
+```typescript
+// Operational Errors (Expected)
+throw new GraphQLError('User not found', {
+  extensions: { code: 'NOT_FOUND' },
+});
+
+// Validation Errors
+throw new GraphQLError('Invalid email format', {
+  extensions: { code: 'BAD_USER_INPUT', field: 'email' },
+});
+
+// Authorization Errors
+throw new GraphQLError('Access denied', {
+  extensions: { code: 'FORBIDDEN' },
+});
+
+// Rate Limit Errors
+throw new GraphQLError('Rate limit exceeded', {
+  extensions: {
+    code: 'RATE_LIMIT_EXCEEDED',
+    retryAfter: 60,
+    bucket: 'gql:billing',
+    currentCount: 11,
+    maxAllowed: 10,
+  },
+});
+```
+
+**Error Masking (Production):**
+
+- Safe codes exposed to client
+- Stack traces hidden
+- Sensitive data redacted
+- Full errors logged internally
+
+#### 8. Security Architecture
+
+**Defense in Depth:**
+
+1. **Network Layer**
+   - CORS origin validation
+   - Helmet security headers
+   - Rate limiting (HTTP layer)
+   - HTTPS enforcement (production)
+
+2. **Authentication Layer**
+   - JWT token validation
+   - Secure cookie storage
+   - Token expiration
+   - Session management (planned)
+
+3. **Authorization Layer**
+   - Guard-based access control
+   - Resource-level permissions
+   - Role-based access (User, Admin, Moderator)
+   - Membership-based access (Event roles)
+
+4. **Application Layer**
+   - GraphQL query complexity limiting
+   - GraphQL depth limiting
+   - Input validation (Zod schemas)
+   - Rate limiting (domain layer)
+   - SQL injection prevention (Prisma)
+   - XSS prevention (input sanitization)
+
+5. **Data Layer**
+   - Prepared statements (Prisma)
+   - Foreign key constraints
+   - Unique constraints
+   - Row-level security patterns
+   - Soft deletes for sensitive data
+
 ---
 
 ## 📁 Project Structure
@@ -662,97 +1020,628 @@ export const myResolver: QueryResolvers['me'] = async (_parent, _args, ctx) => {
 
 ### 1. Event Management
 
-**Features**:
+**Complete Event Lifecycle:**
 
-- Create, update, cancel, delete events
-- Visibility controls (PUBLIC, HIDDEN)
-- Join modes (OPEN, REQUEST, INVITE_ONLY)
-- Meeting kinds (ONSITE, ONLINE, HYBRID)
-- Max capacity + waitlist
-- Categories, tags, levels
-- Agenda items
-- FAQ items
-- Join questions (for applications)
+1. **Creation & Configuration**
+   - Event metadata (title, description, dates)
+   - Meeting types (ONSITE, ONLINE, HYBRID)
+   - Location data (address, coordinates, map tile calculations)
+   - Visibility control (PUBLIC, HIDDEN)
+   - Join modes (OPEN, REQUEST, INVITE_ONLY)
+   - Capacity management with waitlist support
+   - Categories & tags for discovery
+   - Difficulty levels (BEGINNER, INTERMEDIATE, ADVANCED, EXPERT)
 
-**Resolvers**: `mutation/events.ts`, `query/events.ts`
+2. **Advanced Features**
+   - **Agenda System**: Time-slotted activities
+   - **FAQ System**: Pre-emptive Q&A for attendees
+   - **Join Questions**: Custom application forms
+   - **Image Attachments**: Cover photo, gallery support
+   - **Feedback Questions**: Post-event surveys
+
+3. **Event States & Transitions**
+
+   ```typescript
+   // Event Status Flow
+   DRAFT → PUBLISHED → [LIVE] → ENDED → ARCHIVED
+
+   // Special States
+   CANCELLED // Can be cancelled at any time
+   DELETED   // Soft delete (retains data)
+   ```
+
+4. **Capacity & Waitlist Management** (`lib/waitlist.ts`)
+
+   **Automatic Promotion Algorithm:**
+
+   ```typescript
+   // When a member leaves an event:
+   1. Check if event is at max capacity
+   2. Query waitlist members (ordered by joinedAt ASC)
+   3. For each waitlist member:
+      a. Check current capacity
+      b. If space available → promote to JOINED
+      c. Send notification
+      d. Send email
+      e. Break if at capacity
+   ```
+
+   **Optimistic Locking:**
+   - Uses Prisma `version` field for concurrency control
+   - Prevents race conditions in capacity checks
+   - Retry logic on version mismatch
+
+5. **Event Discovery**
+   - **Text Search**: Full-text search on title, description
+   - **Geo Search**: Find events near coordinates
+   - **Map Clustering**: Web Mercator tile-based clustering
+   - **Category Filtering**: Multi-category support
+   - **Date Filtering**: Upcoming, past, date ranges
+   - **Visibility Filtering**: PUBLIC only for unauthenticated users
+
+6. **Event Moderation**
+   - Owner/moderator controls
+   - Member kick/ban capabilities
+   - Message deletion
+   - Event reporting system
+   - Admin intervention tools
+
+**Resolvers**:
+
+- `mutation/events.ts` (create, update, cancel, delete)
+- `query/events.ts` (list, search, map clusters)
+- `query/event-details.ts` (single event, permissions)
+
+**Key Services**:
+
+- `lib/waitlist.ts` - Waitlist promotion logic
+- `lib/geo/webmercator.ts` - Map tile calculations
+
+---
 
 ### 2. Event Membership
 
-**Features**:
+**Membership Lifecycle:**
 
-- Join, leave, kick, ban members
-- Invite members
-- Approve/reject join requests
-- Waitlist management (automatic promotion)
-- Member roles (OWNER, MODERATOR, PARTICIPANT)
-- Member status tracking
+```
+┌─────────────────────────────────────────────────────────┐
+│  JOIN MODES DETERMINE FLOW                              │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  OPEN MODE:                                             │
+│    User → joinMember() → JOINED (instant)               │
+│                                                          │
+│  REQUEST MODE:                                          │
+│    User → requestJoinEvent() → PENDING                  │
+│      ↓                                                  │
+│    Owner/Mod → approve() → JOINED                       │
+│      or                                                 │
+│    Owner/Mod → reject() → REJECTED                      │
+│                                                          │
+│  INVITE_ONLY MODE:                                      │
+│    Owner/Mod → inviteMember() → INVITED                 │
+│      ↓                                                  │
+│    User → acceptInvite() → JOINED                       │
+│      or                                                 │
+│    User → declineInvite() → CANCELLED                   │
+│                                                          │
+│  WAITLIST (if at capacity):                             │
+│    User → joinWaitlistOpen() → WAITLIST                 │
+│      ↓ (auto-promoted when space available)            │
+│    System → promoteFromWaitlist() → JOINED              │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
 
-**Resolvers**: `mutation/event-members.ts`, `query/event-members.ts`
+**Member Roles:**
+
+- **OWNER**: Full control, cannot leave without transferring ownership
+- **MODERATOR**: Can manage members, delete messages, no event edits
+- **PARTICIPANT**: Standard member, chat access, can leave anytime
+
+**Member Status Flow:**
+
+```typescript
+enum EventMemberStatus {
+  PENDING      // Waiting for approval (REQUEST mode)
+  INVITED      // Invited by owner/mod (INVITE_ONLY mode)
+  JOINED       // Active member
+  REJECTED     // Application rejected
+  BANNED       // Banned by owner/mod
+  LEFT         // User left voluntarily
+  KICKED       // Removed by owner/mod
+  CANCELLED    // Invitation declined
+  WAITLIST     // On waitlist (at capacity)
+}
+```
+
+**Key Operations:**
+
+1. **Join Operations**
+   - `joinMember()` - Join open event
+   - `requestJoinEvent()` - Request to join (with optional answers)
+   - `acceptInvite()` - Accept invitation
+   - `joinWaitlistOpen()` - Join waitlist
+
+2. **Approval Operations** (Owner/Moderator only)
+   - `approveJoinRequest()` - Approve pending member
+   - `rejectJoinRequest()` - Reject application
+   - `inviteMember()` - Send invitation
+
+3. **Removal Operations**
+   - `leaveEvent()` - Member leaves voluntarily
+   - `kickMember()` - Owner/moderator removes member
+   - `banMember()` - Permanent ban
+   - `unbanMember()` - Revoke ban
+
+4. **Role Management** (Owner only)
+   - `updateMemberRole()` - Promote/demote members
+   - `transferOwnership()` - Transfer event ownership
+
+**Permissions Matrix:**
+
+| Operation          | Owner | Moderator | Participant |
+| ------------------ | ----- | --------- | ----------- |
+| Update event       | ✅    | ❌        | ❌          |
+| Delete event       | ✅    | ❌        | ❌          |
+| Invite members     | ✅    | ✅        | ❌          |
+| Approve/reject     | ✅    | ✅        | ❌          |
+| Kick members       | ✅    | ✅        | ❌          |
+| Ban members        | ✅    | ✅        | ❌          |
+| Delete messages    | ✅    | ✅        | ❌          |
+| Update member role | ✅    | ❌        | ❌          |
+| Send messages      | ✅    | ✅        | ✅          |
+| Leave event        | ❌\*  | ✅        | ✅          |
+
+\*Owner must transfer ownership first
+
+**Resolvers**:
+
+- `mutation/event-members.ts` - All membership operations
+- `query/event-members.ts` - Member listing, permissions
+
+---
 
 ### 3. Chat System
 
-**Features**:
+**Two Chat Types:**
 
-- Event chat (group messaging)
-- Direct messages (1-on-1)
-- Reply threads
+#### 3.1 Event Chat (Group Messaging)
+
+**Features:**
+
+- Group messaging per event
+- All JOINED members can participate
+- Reply threading support
+- Message reactions (emoji)
+- Message edit/delete (within time limits)
+- Moderation (moderators can delete any message)
+- Real-time delivery via subscriptions
+- Typing indicators (3s TTL in Redis)
+
+**Rate Limiting:**
+
+- **Send**: 30 messages per 30 seconds
+- **Burst**: Max 5 messages in 5 seconds
+- **Edit**: 5 edits per minute
+- **Delete**: 5 deletions per minute
+
+**Message Lifecycle:**
+
+```typescript
+// Creation
+sendEventMessage(input: { eventId, content, replyToId?, attachmentKeys? })
+  → EventChatMessage
+
+// Modification
+editEventMessage(id, newContent)
+  → EventChatMessage (with editedAt timestamp)
+
+// Deletion
+deleteEventMessage(id)
+  → Soft delete (text cleared, deletedAt set)
+  → Or hard delete (for owner within grace period)
+```
+
+**Permissions:**
+
+- Send: Requires JOINED status
+- Edit: Author only, within 15 minutes
+- Delete (soft): Author only, anytime
+- Delete (hard): Moderators only
+
+#### 3.2 Direct Messages (1-on-1)
+
+**Features:**
+
+- Private messaging between two users
+- Thread-based (DmThread entity)
+- Reply support
 - Message reactions
-- Message editing/deletion
-- Chat moderation (delete messages, mute users)
-- Rate limiting (per user, per event)
-- Real-time updates via subscriptions
+- Real-time delivery
+- Read receipts
+- Typing indicators
 
-**Resolvers**: `mutation/event-chat.ts`, `mutation/dm.ts`, `query/event-chat.ts`, `query/dm.ts`, `subscription/chat.ts`
+**Thread Management:**
+
+- Threads created automatically on first message
+- Unique pair key: sorted user IDs (`${userA}:${userB}`)
+- Prevents duplicate threads
+
+**Privacy:**
+
+- Users can block each other
+- Blocked users cannot create new threads
+- Existing threads hidden from blocked user
+
+**Rate Limiting:**
+
+- **Send**: 30 messages per 30 seconds
+- **Burst**: Max 5 messages in 5 seconds
+
+#### 3.3 Chat Guards & Security
+
+**Permission Checks** (`shared/chat-guards.ts`):
+
+```typescript
+// Event Chat
+requireEventChatAccess(ctx, eventId)
+  → Checks: authenticated, JOINED member, not banned
+
+requireEventChatModerator(ctx, eventId)
+  → Checks: authenticated, OWNER or MODERATOR role
+
+// DM
+requireDmAccess(ctx, threadId)
+  → Checks: authenticated, is thread participant
+
+checkDmAllowed(userId, recipientId)
+  → Checks: not blocked, not blocking
+```
+
+#### 3.4 Real-Time Updates
+
+**Event Chat Subscription:**
+
+```graphql
+subscription OnEventMessage($eventId: ID!) {
+  eventMessageAdded(eventId: $eventId) {
+    id
+    text
+    author {
+      id
+      name
+      avatarUrl
+    }
+    sentAt
+    replyTo {
+      id
+      text
+    }
+  }
+}
+```
+
+**DM Subscription:**
+
+```graphql
+subscription OnDmMessage($threadId: ID!) {
+  dmMessageAdded(threadId: $threadId) {
+    id
+    text
+    sender {
+      id
+      name
+    }
+    sentAt
+  }
+}
+```
+
+**Typing Indicators** (`lib/chat-rate-limit.ts`):
+
+```typescript
+// Set typing (3s TTL in Redis)
+setEventChatTyping(userId, eventId, true)
+
+// Get typing users
+getEventChatTypingUsers(eventId) → string[]
+```
+
+**Resolvers**:
+
+- `mutation/event-chat.ts` - Event messages
+- `mutation/dm.ts` - Direct messages
+- `query/event-chat.ts` - Message history
+- `query/dm.ts` - Thread history
+- `subscription/chat.ts` - Real-time subscriptions
+
+---
 
 ### 4. Notifications
 
-**Features**:
+**20+ Notification Types:**
 
-- 20+ notification types
-- Mark as read/unread
-- Delete notifications
-- Real-time delivery via subscriptions
-- Email notifications (via Resend)
+**Event Notifications:**
 
-**Resolvers**: `mutation/notifications.ts`, `query/notifications.ts`, `subscription/notifications.ts`
+- `EVENT_PUBLISHED` - Event published
+- `EVENT_UPDATED` - Event details changed
+- `EVENT_CANCELLED` - Event cancelled
+- `EVENT_REMINDER` - Reminder before event
+- `EVENT_STARTING_SOON` - Event starting in 15min
+- `EVENT_INVITATION` - Invited to event
+
+**Membership Notifications:**
+
+- `JOIN_REQUEST_RECEIVED` - New join request
+- `JOIN_REQUEST_APPROVED` - Request approved
+- `JOIN_REQUEST_REJECTED` - Request rejected
+- `MEMBER_JOINED` - New member joined
+- `MEMBER_LEFT` - Member left
+- `MEMBER_PROMOTED` - Role changed
+- `PROMOTED_FROM_WAITLIST` - Moved from waitlist to joined
+
+**Chat Notifications:**
+
+- `EVENT_MESSAGE_MENTION` - Mentioned in chat
+- `DM_RECEIVED` - New DM received
+
+**Review Notifications:**
+
+- `REVIEW_RECEIVED` - Event received review
+- `REVIEW_REPLY` - Review got reply
+- `FEEDBACK_REQUEST` - Request to leave review
+
+**Admin Notifications:**
+
+- `REPORT_RESOLVED` - Report was handled
+- `USER_BANNED` - Account banned
+
+**Notification Structure:**
+
+```typescript
+interface Notification {
+  id: string;
+  kind: NotificationKind;
+  recipientId: string;
+  actorId?: string; // Who triggered it
+  referenceId?: string; // Event/Message/Review ID
+  text?: string; // Custom message
+  readAt?: Date; // Read status
+  sentAt: Date;
+  entity: NotificationEntity; // EVENT | MESSAGE | REVIEW
+}
+```
+
+**Notification Delivery:**
+
+1. **In-App** - GraphQL subscription
+2. **Email** - Via Resend (batched, configurable)
+3. **Push** (planned) - FCM/APNS integration
+
+**Real-Time Subscription:**
+
+```graphql
+subscription OnNotification {
+  notificationReceived {
+    id
+    kind
+    text
+    actor {
+      id
+      name
+    }
+    readAt
+    sentAt
+  }
+}
+```
+
+**Operations:**
+
+- `markNotificationAsRead(id)` - Mark single as read
+- `markAllNotificationsAsRead()` - Mark all as read
+- `deleteNotification(id)` - Delete notification
+
+**Resolvers**:
+
+- `mutation/notifications.ts` - Mark read, delete
+- `query/notifications.ts` - List, unread count
+- `subscription/notifications.ts` - Real-time delivery
+
+---
 
 ### 5. Reviews & Ratings
 
-**Features**:
+**Post-Event Feedback System:**
 
-- Users can review events after attendance
-- Ratings (1-5 stars)
-- Text reviews
-- Event owners can respond
-- Review moderation
+**Eligibility:**
 
-**Resolvers**: `mutation/reviews.ts`, `query/reviews.ts`
+- Must have attended event (JOINED status)
+- Can review after event ends
+- One review per user per event
+
+**Review Components:**
+
+1. **Rating**: 1-5 stars (required)
+2. **Text Review**: Detailed feedback (optional)
+3. **Feedback Answers**: Responses to custom questions (optional)
+
+**Feedback Questions:**
+
+- Event owners can define custom questions
+- Supports multiple question types (planned: text, rating, multiple choice)
+- Responses stored separately for privacy
+
+**Review Moderation:**
+
+- Event owner can respond to reviews
+- Admin can delete inappropriate reviews
+- Reviews can be edited by author (within time limit)
+
+**Aggregate Ratings:**
+
+```typescript
+// Event rating calculation
+event.averageRating = SUM(reviews.rating) / COUNT(reviews);
+event.reviewCount = COUNT(reviews);
+
+// Cached on Event entity for performance
+```
+
+**Feedback Request Flow:**
+
+1. Event ends
+2. Feedback job queued (1h delay in prod, 5s in dev)
+3. Job processes:
+   - Find all JOINED members
+   - Filter out those who already reviewed
+   - Send email to each eligible member
+   - Create notification
+4. Rate limiting: Max 3 feedback request sends per hour
+
+**Resolvers**:
+
+- `mutation/reviews.ts` - Create, update, delete review
+- `mutation/feedback-questions.ts` - Submit feedback, send requests
+- `query/reviews.ts` - List reviews, aggregates
+
+---
 
 ### 6. User Management
 
-**Features**:
+**User Profile:**
 
-- User profiles (name, bio, avatar, locale, timezone)
-- User preferences (notifications, mutes)
-- User blocks (block/unblock users)
-- Favourites (save events)
-- Last seen tracking
-- Soft delete accounts
+```typescript
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  bio?: string;
+  avatarKey?: string; // Media key for S3
+  role: UserRole; // USER | ADMIN | MODERATOR
+  plan: UserPlanKind; // FREE | PLUS | PRO
+  locale: string; // Language preference
+  timezone: string; // Timezone for events
+  verifiedAt?: Date; // Email verification
+  deletedAt?: Date; // Soft delete
+  lastSeenAt?: Date; // Activity tracking
+}
+```
 
-**Resolvers**: `mutation/user-profile.ts`, `query/users.ts`
+**User Features:**
+
+1. **Profile Management**
+   - Update name, bio, avatar
+   - Change locale/timezone
+   - Email verification (planned)
+
+2. **Preferences**
+   - Notification settings
+   - Privacy settings
+   - Blocked users list
+
+3. **Activity Tracking**
+   - Last seen updates (`plugins/last-seen.ts`)
+   - Event participation history
+   - Review history
+
+4. **Social Features**
+   - Block/unblock users
+   - Follow/favorites (planned)
+   - Friend system (planned)
+
+5. **Account Management**
+   - Delete account (soft delete)
+   - Data export (planned)
+   - Account recovery (planned)
+
+**User Roles:**
+
+- **USER**: Standard user
+- **ADMIN**: Full system access
+- **MODERATOR**: Moderation capabilities
+
+**User Plans** (Billing):
+
+- **FREE**: Basic features
+- **PLUS**: Enhanced features
+- **PRO**: Premium features
+
+**Resolvers**:
+
+- `mutation/user-profile.ts` - Profile updates
+- `mutation/user-blocks.ts` - Block/unblock
+- `query/users.ts` - User listing, search
+- `query/user-profile.ts` - Profile details
+
+---
 
 ### 7. Admin & Moderation
 
-**Features**:
+**Admin Capabilities:**
 
-- Ban/unban users
-- Delete users
-- Approve/reject reports
-- Update event moderation status
-- Invite admin users
-- View user activity
+1. **User Management**
+   - View all users
+   - Ban/unban users
+   - Delete users (soft delete)
+   - Invite admin users
+   - View user activity logs
 
-**Resolvers**: `mutation/admin-users.ts`, `mutation/admin-moderation.ts`, `query/admin-users.ts`
+2. **Event Moderation**
+   - Update event visibility
+   - Force cancel events
+   - Delete events
+   - Review reported events
+
+3. **Report Management**
+   - View all reports
+   - Approve/reject reports
+   - Take action (ban, delete content)
+   - Track resolution
+
+4. **Content Moderation**
+   - Delete messages
+   - Delete reviews
+   - Ban users from specific events
+   - Global user bans
+
+5. **System Monitoring**
+   - View queue statistics
+   - Monitor background jobs
+   - Check system health
+   - Access logs
+
+**Report System:**
+
+```typescript
+interface Report {
+  id: string;
+  reporterId: string;
+  targetId: string; // User/Event/Message ID
+  targetType: ReportTargetType;
+  reason: ReportReason; // SPAM | HARASSMENT | INAPPROPRIATE | OTHER
+  description?: string;
+  status: ReportStatus; // PENDING | APPROVED | REJECTED
+  resolvedAt?: Date;
+  resolvedBy?: string; // Admin ID
+}
+```
+
+**Admin Guards:**
+
+```typescript
+requireAdmin(ctx) → User | throws FORBIDDEN
+isAdminOrModerator(user) → boolean
+```
+
+**Resolvers**:
+
+- `mutation/admin-users.ts` - User management
+- `mutation/admin-moderation.ts` - Content moderation
+- `mutation/reports.ts` - Report creation
+- `query/admin-users.ts` - Admin user listing
+- `query/reports.ts` - Report listing
 
 ---
 

@@ -218,7 +218,7 @@ export function getCheckoutSuccessUrl(
     case METADATA_TYPE.USER_ONE_OFF:
       return `${baseUrl}/account/plans-and-bills?success=true&session_id={CHECKOUT_SESSION_ID}`;
     case METADATA_TYPE.EVENT_SPONSORSHIP:
-      return `${baseUrl}/event/{eventId}/manage/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`;
+      return `${baseUrl}/event/{eventId}/manage/plans?success=true&session_id={CHECKOUT_SESSION_ID}`;
     default:
       return `${baseUrl}?success=true`;
   }
@@ -233,7 +233,7 @@ export function getCheckoutCancelUrl(
     case METADATA_TYPE.USER_ONE_OFF:
       return `${baseUrl}/account/plans-and-bills?canceled=true`;
     case METADATA_TYPE.EVENT_SPONSORSHIP:
-      return `${baseUrl}/event/{eventId}/manage/subscription?canceled=true`;
+      return `${baseUrl}/event/{eventId}/manage/plans?canceled=true`;
     default:
       return baseUrl;
   }
