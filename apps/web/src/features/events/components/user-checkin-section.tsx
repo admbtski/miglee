@@ -86,9 +86,7 @@ export function UserCheckinSection({
           <div className="flex items-start gap-3">
             <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <div className="font-medium text-red-900">
-                Check-in Blocked
-              </div>
+              <div className="font-medium text-red-900">Check-in Blocked</div>
               <div className="mt-1 text-sm text-red-700">
                 Check-in has been blocked by the organizer.
               </div>
@@ -226,7 +224,9 @@ export function UserCheckinSection({
                 <div className="flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 p-6">
                   <div className="h-48 w-48 rounded-lg bg-white shadow-sm flex items-center justify-center">
                     <div className="text-center text-sm text-zinc-500">
-                      QR Code<br />Placeholder
+                      QR Code
+                      <br />
+                      Placeholder
                     </div>
                   </div>
                   <div className="text-xs text-zinc-500">
@@ -247,9 +247,7 @@ export function UserCheckinSection({
             {canSelfCheckin && (
               <li>Click the &quot;I&apos;m at the event!&quot; button above</li>
             )}
-            {canUseUserQR && (
-              <li>Show your QR code to the event staff</li>
-            )}
+            {canUseUserQR && <li>Show your QR code to the event staff</li>}
             {checkinMethods.includes('EVENT_QR') && (
               <li>Scan the event QR code at the entrance</li>
             )}

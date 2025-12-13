@@ -38,7 +38,9 @@ export default function CheckinPage() {
           <div className="mt-1 text-xs text-zinc-500">Present at event</div>
         </div>
         <div className="rounded-lg border border-zinc-200 bg-white p-6">
-          <div className="text-sm font-medium text-zinc-600">Attendance Rate</div>
+          <div className="text-sm font-medium text-zinc-600">
+            Attendance Rate
+          </div>
           <div className="mt-2 text-3xl font-bold text-indigo-600">0%</div>
           <div className="mt-1 text-xs text-zinc-500">Check-in percentage</div>
         </div>
@@ -46,11 +48,13 @@ export default function CheckinPage() {
 
       {/* Settings Section */}
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-900">Check-in Settings</h2>
+        <h2 className="text-lg font-semibold text-zinc-900">
+          Check-in Settings
+        </h2>
         <p className="mt-1 text-sm text-zinc-600">
           Configure how attendees can check in to your event
         </p>
-        
+
         <div className="mt-6 space-y-4">
           {/* Enable Check-in Toggle */}
           <div className="flex items-center justify-between">
@@ -70,7 +74,9 @@ export default function CheckinPage() {
 
           {/* Check-in Methods */}
           <div className="border-t border-zinc-200 pt-4">
-            <div className="font-medium text-zinc-900 mb-3">Check-in Methods</div>
+            <div className="font-medium text-zinc-900 mb-3">
+              Check-in Methods
+            </div>
             <div className="space-y-2">
               <label className="flex items-center space-x-3">
                 <input
@@ -119,14 +125,14 @@ export default function CheckinPage() {
         <p className="mt-1 text-sm text-zinc-600">
           Display this QR code at your event entrance for easy check-in
         </p>
-        
+
         <div className="mt-6 flex flex-col items-center justify-center space-y-4 py-8">
           <div className="rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 p-8">
             <div className="text-center text-sm text-zinc-500">
               QR Code will appear here when enabled
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
               Full Screen
@@ -148,7 +154,9 @@ export default function CheckinPage() {
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Participants</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">
+              Participants
+            </h2>
             <p className="mt-1 text-sm text-zinc-600">
               Check in attendees and manage their presence status
             </p>
@@ -197,7 +205,10 @@ export default function CheckinPage() {
             </thead>
             <tbody className="divide-y divide-zinc-200">
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-sm text-zinc-500">
+                <td
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-sm text-zinc-500"
+                >
                   No participants yet
                 </td>
               </tr>
@@ -266,7 +277,10 @@ export default function CheckinPage() {
             </thead>
             <tbody className="divide-y divide-zinc-200">
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-sm text-zinc-500">
+                <td
+                  colSpan={6}
+                  className="px-4 py-12 text-center text-sm text-zinc-500"
+                >
                   No activity yet
                 </td>
               </tr>
@@ -277,11 +291,13 @@ export default function CheckinPage() {
 
       {/* Export Section */}
       <div className="rounded-lg border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-900">Export Participant List</h2>
+        <h2 className="text-lg font-semibold text-zinc-900">
+          Export Participant List
+        </h2>
         <p className="mt-1 text-sm text-zinc-600">
           Download attendance list for record-keeping
         </p>
-        
+
         <div className="mt-6 flex gap-3">
           <button className="rounded-lg border border-zinc-300 bg-white px-6 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
             Export as PDF
