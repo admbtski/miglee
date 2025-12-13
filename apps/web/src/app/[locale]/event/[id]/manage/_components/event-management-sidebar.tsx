@@ -48,6 +48,7 @@ import {
 
 // Hooks
 import { useLocalePath } from '@/hooks/use-locale-path';
+import { useEventManagement } from './event-management-provider';
 
 // Lib
 import { cn } from '@/lib/utils';
@@ -117,9 +118,13 @@ export function EventManagementSidebar({
 }: EventManagementSidebarProps) {
   const pathname = usePathname();
   const { localePath } = useLocalePath();
+  const { event } = useEventManagement();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['main']));
+
+  // Get publication status
+  const isDraft = (event?.publicationStatus ?? 'DRAFT') === 'DRAFT';
 
   const toggleCollapse = () => {
     setIsCollapsed((prev) => !prev);
@@ -490,6 +495,8 @@ export function EventManagementSidebar({
                         const active = isActive(item.href);
                         const showTooltip =
                           isCollapsed && hoveredItem === item.id;
+                        const showDraftWarning =
+                          isDraft && item.id === 'publish';
 
                         return (
                           <div
@@ -501,7 +508,7 @@ export function EventManagementSidebar({
                             <Link
                               href={item.href}
                               className={cn(
-                                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                                'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
                                 active
                                   ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300'
                                   : item.highlight
@@ -514,7 +521,7 @@ export function EventManagementSidebar({
                             >
                               <Icon
                                 className={cn(
-                                  'flex-shrink-0 w-4 h-4',
+                                  'w-4 h-4 flex-shrink-0',
                                   item.highlight &&
                                     !active &&
                                     'text-violet-500 dark:text-violet-400'
@@ -529,7 +536,27 @@ export function EventManagementSidebar({
                                     transition={{ duration: 0.2 }}
                                     className="flex items-center flex-1 gap-2 overflow-hidden whitespace-nowrap"
                                   >
-                                    <span>{item.label}</span>
+                                    {item.highlight ? (
+                                      <motion.span
+                                        animate={{
+                                          opacity: [1, 0.5, 1],
+                                          scale: [1, 1.02, 1],
+                                        }}
+                                        transition={{
+                                          duration: 1,
+                                          repeat: Infinity,
+                                          repeatDelay: 2,
+                                          ease: 'easeInOut',
+                                        }}
+                                      >
+                                        {item.label}
+                                      </motion.span>
+                                    ) : (
+                                      <span>{item.label}</span>
+                                    )}
+                                    {showDraftWarning && (
+                                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                                    )}
                                   </motion.span>
                                 )}
                               </AnimatePresence>
@@ -545,6 +572,9 @@ export function EventManagementSidebar({
                               >
                                 <div className="flex items-center gap-2">
                                   {item.label}
+                                  {showDraftWarning && (
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                                  )}
                                 </div>
                                 <div className="absolute -translate-y-1/2 border-4 border-transparent right-full top-1/2 border-r-zinc-900 dark:border-r-zinc-100" />
                               </motion.div>

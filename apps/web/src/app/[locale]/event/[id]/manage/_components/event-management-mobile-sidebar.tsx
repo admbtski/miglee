@@ -122,6 +122,9 @@ export function EventManagementMobileSidebar({
     new Set(['main', 'settings', 'engagement'])
   );
 
+  // Get publication status
+  const isDraft = (event?.publicationStatus ?? 'DRAFT') === 'DRAFT';
+
   // Close on route change
   useEffect(() => {
     if (open) {
@@ -485,6 +488,8 @@ export function EventManagementMobileSidebar({
                           {group.items.map((item) => {
                             const Icon = item.icon;
                             const active = isActive(item.href);
+                            const showDraftWarning =
+                              isDraft && item.id === 'publish';
 
                             return (
                               <Link
@@ -501,14 +506,34 @@ export function EventManagementMobileSidebar({
                               >
                                 <Icon
                                   className={cn(
-                                    'flex-shrink-0 w-4 h-4',
+                                    'w-4 h-4 flex-shrink-0',
                                     item.highlight &&
                                       !active &&
                                       'text-violet-500 dark:text-violet-400'
                                   )}
                                 />
-                                <span className="flex items-center flex-1">
-                                  {item.label}
+                                <span className="flex items-center flex-1 gap-2">
+                                  {item.highlight ? (
+                                    <motion.span
+                                      animate={{
+                                        opacity: [1, 0.5, 1],
+                                        scale: [1, 1.02, 1],
+                                      }}
+                                      transition={{
+                                        duration: 1,
+                                        repeat: Infinity,
+                                        repeatDelay: 2,
+                                        ease: 'easeInOut',
+                                      }}
+                                    >
+                                      {item.label}
+                                    </motion.span>
+                                  ) : (
+                                    <span>{item.label}</span>
+                                  )}
+                                  {showDraftWarning && (
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                                  )}
                                   {item.requiredPlan && (
                                     <span className="ml-auto">
                                       <PlanBadge

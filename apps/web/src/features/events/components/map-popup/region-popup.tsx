@@ -3,8 +3,7 @@
  * Popup container for displaying multiple events in a region with infinity scroll
  */
 
-import { memo, useCallback, useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import { memo, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { PopupItem, PopupEvent } from './popup-item';
 import { PopupItemSkeleton } from './popup-item-skeleton';
@@ -32,64 +31,33 @@ export const RegionPopup = memo(function RegionPopup({
   const showItems = events.length > 0;
   const showSkeletons = !showItems && isLoading;
 
-  const handleEndReached = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage && onLoadMore) {
-      onLoadMore();
-    }
+  // Infinite scroll with IntersectionObserver
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sentinelRef.current || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (
+          first &&
+          first.isIntersecting &&
+          hasNextPage &&
+          !isFetchingNextPage
+        ) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinelRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);
-
-  const Footer = useCallback(() => {
-    if (!hasNextPage && events.length > 0) {
-      return (
-        <div className="py-3 text-center">
-          <span className="text-xs text-zinc-500">
-            Wszystko załadowane ({events.length})
-          </span>
-        </div>
-      );
-    }
-    if (isFetchingNextPage) {
-      return (
-        <div className="px-4 pb-4">
-          <PopupItemSkeleton />
-        </div>
-      );
-    }
-    return null;
-  }, [hasNextPage, isFetchingNextPage, events.length]);
-
-  const renderItem = useCallback(
-    (index: number) => {
-      const event = events[index];
-      if (!event) return null;
-      return (
-        <PopupItem
-          key={event.id}
-          event={event}
-          onClick={onEventClick}
-          locale={locale}
-        />
-      );
-    },
-    [events, onEventClick, locale]
-  );
-
-  const computeItemKey = useCallback(
-    (index: number) => events[index]?.id || `item-${index}`,
-    [events]
-  );
-
-  const virtuosoComponents = useMemo(
-    () => ({
-      List: ({ children, ...props }: any) => (
-        <div {...props} className="px-4 py-4 flex flex-col">
-          {children}
-        </div>
-      ),
-      Footer,
-    }),
-    [Footer]
-  );
 
   if (showSkeletons) {
     return (
@@ -126,19 +94,35 @@ export const RegionPopup = memo(function RegionPopup({
         <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none z-10 bg-gradient-to-t from-zinc-900/50 to-transparent" />
 
         {/* Scrollable content */}
-        <Virtuoso
-          style={{ height: '420px', width: '100%' }}
-          data={events}
-          totalCount={events.length}
-          endReached={handleEndReached}
-          overscan={5}
-          atBottomThreshold={400}
-          itemContent={renderItem}
-          computeItemKey={computeItemKey}
-          components={virtuosoComponents}
-          increaseViewportBy={{ top: 200, bottom: 400 }}
-          followOutput={false}
-        />
+        <div className="h-[420px] overflow-y-auto overflow-x-hidden">
+          <div className="px-4 py-4 flex flex-col">
+            {events.map((event) => (
+              <PopupItem
+                key={event.id}
+                event={event}
+                onClick={onEventClick}
+                locale={locale}
+              />
+            ))}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-px" />
+
+            {/* Footer */}
+            {!hasNextPage && events.length > 0 && (
+              <div className="py-3 text-center">
+                <span className="text-xs text-zinc-500">
+                  Wszystko załadowane ({events.length})
+                </span>
+              </div>
+            )}
+            {isFetchingNextPage && (
+              <div className="px-4 pb-4">
+                <PopupItemSkeleton />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

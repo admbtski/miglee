@@ -9,7 +9,6 @@ import { EventCountdownPill } from '@/features/events/components/event-countdown
 import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl, buildEventCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
-import { motion } from 'framer-motion';
 import { Calendar, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';

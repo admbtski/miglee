@@ -7,8 +7,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   ArrowLeft,
   Send,
@@ -82,16 +81,12 @@ export function ChatThread({
   threadId,
 }: ChatThreadProps) {
   const [input, setInput] = useState('');
-  const virtuosoRef = useRef<any>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
-
-  // Start with a large number so we can prepend (load older messages)
-  const INITIAL_INDEX = 100000;
-  const [firstItemIndex, setFirstItemIndex] = useState(
-    INITIAL_INDEX - messages.length
-  );
 
   // Reply state
   const [replyToMessage, setReplyToMessage] = useState<{
@@ -100,10 +95,13 @@ export function ChatThread({
     author: string;
   } | null>(null);
 
-  // Track the last message ID to detect new messages (not prepended old ones)
+  // Track the last message ID to detect new messages
   const lastMessageIdRef = useRef<string | null>(
     messages.length > 0 ? (messages[messages.length - 1]?.id ?? null) : null
   );
+
+  // Track if we're loading more to prevent scroll jumping
+  const isLoadingMoreRef = useRef(false);
 
   // Throttled typing handler - max 1 request per 2s
   const lastTypingSent = useRef<number>(0);
@@ -144,6 +142,19 @@ export function ChatThread({
     [onTyping]
   );
 
+  // Check if user is at bottom
+  const checkIfAtBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return false;
+
+    const threshold = 100;
+    const isAtBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <=
+      threshold;
+    setIsAtBottom(isAtBottom);
+    return isAtBottom;
+  }, []);
+
   // Auto-scroll to bottom on new messages if already at bottom
   useEffect(() => {
     if (messages.length === 0) return;
@@ -157,10 +168,7 @@ export function ChatThread({
     if (lastMessageId && currentLastMessage.id !== lastMessageId) {
       // New message was added at the end
       if (isAtBottom) {
-        virtuosoRef.current?.scrollToIndex({
-          index: 'LAST',
-          behavior: 'auto',
-        });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         setNewMessagesCount(0);
       } else {
         // User scrolled up, increment counter
@@ -172,11 +180,65 @@ export function ChatThread({
     lastMessageIdRef.current = currentLastMessage.id;
   }, [messages, isAtBottom]);
 
+  // Initial scroll to bottom
+  useEffect(() => {
+    if (messages.length > 0 && !isLoadingMoreRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }
+  }, [messages.length]);
+
+  // Scroll listener
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      checkIfAtBottom();
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [checkIfAtBottom]);
+
+  // IntersectionObserver for loading older messages
+  useEffect(() => {
+    if (!loadMoreSentinelRef.current || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (
+          first &&
+          first.isIntersecting &&
+          !loading &&
+          !isLoadingMoreRef.current
+        ) {
+          console.log('[Chat] Load more triggered');
+          isLoadingMoreRef.current = true;
+          onLoadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(loadMoreSentinelRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [onLoadMore, loading]);
+
+  // Reset loading flag when messages change
+  useEffect(() => {
+    if (isLoadingMoreRef.current) {
+      isLoadingMoreRef.current = false;
+    }
+  }, [messages.length]);
+
   const scrollToBottom = () => {
-    virtuosoRef.current?.scrollToIndex({
-      index: 'LAST',
-      behavior: 'smooth',
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     setNewMessagesCount(0);
   };
 
@@ -188,31 +250,6 @@ export function ChatThread({
     setReplyToMessage(null);
     onTyping?.(false);
   }
-
-  const prevMessagesLengthRef = useRef(messages.length);
-  const isLoadingMoreRef = useRef(false);
-
-  // Adjust firstItemIndex when prepending messages (loading older)
-  useEffect(() => {
-    const currentLength = messages.length;
-    const prevLength = prevMessagesLengthRef.current;
-
-    if (currentLength > prevLength && isLoadingMoreRef.current) {
-      // Messages were prepended (added at the beginning)
-      const prependedCount = currentLength - prevLength;
-      setFirstItemIndex((prev) => prev - prependedCount);
-      isLoadingMoreRef.current = false;
-    }
-
-    prevMessagesLengthRef.current = currentLength;
-  }, [messages.length]);
-
-  const handleStartReached = () => {
-    if (!onLoadMore || loading || isLoadingMoreRef.current) return;
-    console.log('[Virtuoso] Start reached, loading more...');
-    isLoadingMoreRef.current = true;
-    onLoadMore();
-  };
 
   return (
     <div className="grid h-full max-h-screen min-h-[540px] min-w-0 grid-rows-[auto_1fr_auto]">
@@ -270,7 +307,10 @@ export function ChatThread({
       ) : (
         <>
           {/* Messages Area */}
-          <div className="min-h-0 max-h-[calc(100vh-200px)] relative overflow-x-hidden">
+          <div
+            ref={messagesContainerRef}
+            className="min-h-0 max-h-[calc(100vh-200px)] relative overflow-y-auto overflow-x-hidden"
+          >
             {/* Draft empty state */}
             {isDraft && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
@@ -288,30 +328,26 @@ export function ChatThread({
               </div>
             )}
 
-            {/* Virtuoso List */}
+            {/* Messages List */}
             {messages.length > 0 && (
-              <Virtuoso
-                ref={virtuosoRef}
-                data={messages}
-                firstItemIndex={firstItemIndex}
-                initialTopMostItemIndex={firstItemIndex + messages.length - 1}
-                followOutput={isAtBottom ? 'smooth' : false}
-                atBottomStateChange={setIsAtBottom}
-                startReached={handleStartReached}
-                computeItemKey={(_index, m) => m.id}
-                style={{
-                  height: '100%',
-                  width: '100%',
-                  overflowX: 'hidden',
-                }}
-                itemContent={(index, m) =>
+              <>
+                {/* Load more sentinel (at top) */}
+                {loading && (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+                  </div>
+                )}
+                <div ref={loadMoreSentinelRef} className="h-px" />
+
+                {/* Messages */}
+                {messages.map((m, index) =>
                   m.side === 'right' ? (
                     <MsgOut
                       key={m.id}
                       className="pr-2"
                       message={m}
                       time={fmtTime(m.at)}
-                      isLast={index === firstItemIndex + messages.length - 1}
+                      isLast={index === messages.length - 1}
                       onAddReaction={(emoji) => onAddReaction?.(m.id, emoji)}
                       onRemoveReaction={(emoji) =>
                         onRemoveReaction?.(m.id, emoji)
@@ -360,23 +396,18 @@ export function ChatThread({
                       {m.text}
                     </MsgIn>
                   )
-                }
-                components={{
-                  Footer: () => (
-                    <div className="px-4 md:px-5 min-h-[28px]">
-                      {typingUserNames && typingUserNames.length > 0 ? (
-                        <TypingIndicator names={typingUserNames} />
-                      ) : null}
-                    </div>
-                  ),
-                  Header: () =>
-                    loading ? (
-                      <div className="flex justify-center py-4">
-                        <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
-                      </div>
-                    ) : null,
-                }}
-              />
+                )}
+
+                {/* Typing indicator */}
+                <div className="px-4 md:px-5 min-h-[28px]">
+                  {typingUserNames && typingUserNames.length > 0 ? (
+                    <TypingIndicator names={typingUserNames} />
+                  ) : null}
+                </div>
+
+                {/* Scroll anchor */}
+                <div ref={messagesEndRef} />
+              </>
             )}
 
             {/* Scroll to bottom button */}

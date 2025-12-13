@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import type { EventDetailsData } from '@/features/events/types/event-details';
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
@@ -17,7 +18,13 @@ import {
   UserPlus,
   Star,
   BarChart3,
+  Send,
+  Rocket,
+  FileEdit,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type EventAdminPanelProps = {
   event: EventDetailsData;
@@ -26,6 +33,12 @@ type EventAdminPanelProps = {
   onCloseJoin?: () => void;
   onReopenJoin?: () => void;
 };
+
+enum PublicationStatus {
+  Draft = 'DRAFT',
+  Published = 'PUBLISHED',
+  Scheduled = 'SCHEDULED',
+}
 
 /**
  * Panel zarządzania wydarzeniem dla administratorów i moderatorów
@@ -66,6 +79,38 @@ export function EventAdminPanel({
   const isCanceled = !!event.canceledAt;
   const isDeleted = !!event.deletedAt;
 
+  // Get publication status
+  const status: PublicationStatus =
+    (event?.publicationStatus as PublicationStatus) ?? PublicationStatus.Draft;
+  const isDraft = status === PublicationStatus.Draft;
+
+  const statusConfig = {
+    [PublicationStatus.Draft]: {
+      icon: FileEdit,
+      label: 'Draft',
+      bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+      textColor: 'text-amber-700 dark:text-amber-300',
+      borderColor: 'border-amber-300 dark:border-amber-700',
+    },
+    [PublicationStatus.Published]: {
+      icon: CheckCircle2,
+      label: 'Published',
+      bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
+      textColor: 'text-emerald-700 dark:text-emerald-300',
+      borderColor: 'border-emerald-300 dark:border-emerald-700',
+    },
+    [PublicationStatus.Scheduled]: {
+      icon: Clock,
+      label: 'Scheduled',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+      textColor: 'text-blue-700 dark:text-blue-300',
+      borderColor: 'border-blue-300 dark:border-blue-700',
+    },
+  };
+
+  const currentStatus = statusConfig[status];
+  const StatusIcon = currentStatus.icon;
+
   // Permission levels
   const canEdit = userMembership?.isOwner || isAppAdmin || isAppModerator;
   const canDelete = userMembership?.isOwner || isAppAdmin;
@@ -84,20 +129,54 @@ export function EventAdminPanel({
         </h3>
       </div>
 
+      {/* Publication Status Badge */}
+      <Link
+        href={`/event/${event.id}/manage/publish`}
+        className={cn(
+          'flex items-center justify-between gap-2 px-3 py-2.5 mb-3 rounded-xl border-2 transition-all hover:scale-[1.01]',
+          currentStatus.bgColor,
+          currentStatus.textColor,
+          currentStatus.borderColor
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <StatusIcon className="w-4 h-4" />
+          <span className="text-sm font-bold">{currentStatus.label}</span>
+        </div>
+        {isDraft && <AlertTriangle className="w-4 h-4 opacity-75" />}
+      </Link>
+
       <div className="space-y-1">
+        {/* Publish - Highlighted if draft */}
+        {!isDeleted && (
+          <Link
+            href={`/event/${event.id}/manage/publish`}
+            className={cn(
+              'flex items-center w-full gap-3 px-3 py-2 text-sm transition-colors rounded-xl',
+              isDraft
+                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
+                : 'text-blue-700 hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50'
+            )}
+          >
+            <Send className="w-4 h-4" />
+            <span className="flex-1">Publikacja</span>
+            {isDraft && <AlertTriangle className="w-3.5 h-3.5" />}
+          </Link>
+        )}
+
         {/* Zarządzaj wydarzeniem - główny panel */}
         <Link
           href={`/event/${event.id}/manage`}
           className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
         >
           <Settings className="w-4 h-4" />
-          <span>Panel zarządzania</span>
+          <span>Pełny panel zarządzania</span>
         </Link>
 
         {/* Edytuj wydarzenie */}
         {canEdit && !isDeleted && (
           <Link
-            href={`/event/${event.id}/manage/edit`}
+            href={`/event/${event.id}/manage/edit/basics`}
             className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
           >
             <Edit3 className="w-4 h-4" />
@@ -119,14 +198,27 @@ export function EventAdminPanel({
           )}
         </Link>
 
-        {/* Sponsorship / Plan */}
+        {/* Upgrade Plan - with pulse animation */}
         {!isDeleted && (
           <Link
-            href={`/event/${event.id}/manage/subscription`}
-            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-blue-700 transition-colors rounded-xl hover:bg-blue-100 dark:text-blue-300 dark:hover:bg-blue-900/50"
+            href={`/event/${event.id}/manage/plans`}
+            className="flex items-center w-full gap-3 px-3 py-2 text-sm text-violet-700 transition-colors rounded-xl hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-900/50"
           >
-            <Crown className="w-4 h-4" />
-            <span>Sponsoring & Boosty</span>
+            <Rocket className="w-4 h-4" />
+            <motion.span
+              animate={{
+                opacity: [1, 0.5, 1],
+                scale: [1, 1.02, 1],
+              }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                repeatDelay: 2,
+                ease: 'easeInOut',
+              }}
+            >
+              Upgrade Plan
+            </motion.span>
           </Link>
         )}
 

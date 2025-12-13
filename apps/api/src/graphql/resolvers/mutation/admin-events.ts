@@ -288,7 +288,8 @@ export const adminBulkUpdateEventsMutation: MutationResolvers['adminBulkUpdateEv
           success++;
         } catch (error: unknown) {
           failed++;
-          const message = error instanceof Error ? error.message : String(error);
+          const message =
+            error instanceof Error ? error.message : String(error);
           errors.push(`Event ${id}: ${message}`);
         }
       }

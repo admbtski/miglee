@@ -12,10 +12,9 @@
 
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { de, enUS, pl } from 'date-fns/locale';
-import { Virtuoso } from 'react-virtuoso';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -283,16 +282,36 @@ export default function NotificationsPage() {
     markAll({ recipientId });
   }, [markAll, recipientId, allNotifications]);
 
-  // Virtuoso callbacks
-  const handleEndReached = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
+  // Infinite scroll with IntersectionObserver
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (
+          first &&
+          first.isIntersecting &&
+          hasNextPage &&
+          !isFetchingNextPage
+        ) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+
+    observer.observe(sentinelRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const renderNotificationItem = useCallback(
-    (index: number) => {
-      const n = filteredNotifications[index];
+    (n: NotificationNode, index: number) => {
       if (!n) return null;
 
       const unread = !n.readAt;
@@ -413,47 +432,6 @@ export default function NotificationsPage() {
       locale,
       localePath,
     ]
-  );
-
-  const computeItemKey = useCallback(
-    (index: number) => filteredNotifications[index]?.id || `notif-${index}`,
-    [filteredNotifications]
-  );
-
-  const Footer = useCallback(() => {
-    if (!hasNextPage && filteredNotifications.length > 0) {
-      return (
-        <div className="py-4 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 px-4 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            <CheckCheck className="h-3.5 w-3.5" />
-            {t.notifications.loadedAll} ({filteredNotifications.length})
-          </div>
-        </div>
-      );
-    }
-    if (isFetchingNextPage) {
-      return (
-        <div className="flex justify-center py-8">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-md" />
-            <Loader2 className="relative h-7 w-7 animate-spin text-indigo-600" />
-          </div>
-        </div>
-      );
-    }
-    return null;
-  }, [hasNextPage, isFetchingNextPage, filteredNotifications.length, t]);
-
-  const virtuosoComponents = useMemo(
-    () => ({
-      List: ({ children, ...props }: any) => (
-        <div {...props} className="flex flex-col gap-2 p-3">
-          {children}
-        </div>
-      ),
-      Footer,
-    }),
-    [Footer]
   );
 
   // Only show login required if auth is done loading and we don't have userId
@@ -645,23 +623,32 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50/50 to-white dark:border-zinc-800 dark:from-zinc-900/50 dark:to-zinc-950 shadow-sm overflow-hidden">
-          <Virtuoso
-            style={{
-              height: 'calc(100vh - 360px)',
-              minHeight: '500px',
-            }}
-            data={filteredNotifications}
-            totalCount={filteredNotifications.length}
-            endReached={handleEndReached}
-            overscan={5}
-            atBottomThreshold={400}
-            itemContent={renderNotificationItem}
-            computeItemKey={computeItemKey}
-            components={virtuosoComponents}
-            increaseViewportBy={{ top: 200, bottom: 400 }}
-            followOutput={false}
-            className="virtuoso-notifications-list"
-          />
+          <div className="flex flex-col gap-2 p-3">
+            {filteredNotifications.map((n, index) => (
+              <div key={n.id}>{renderNotificationItem(n, index)}</div>
+            ))}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-px" />
+
+            {/* Footer */}
+            {!hasNextPage && filteredNotifications.length > 0 && (
+              <div className="py-4 text-center">
+                <div className="inline-flex items-center gap-2 rounded-full bg-zinc-100 dark:bg-zinc-800 px-4 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                  <CheckCheck className="h-3.5 w-3.5" />
+                  {t.notifications.loadedAll} ({filteredNotifications.length})
+                </div>
+              </div>
+            )}
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-8">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-20 blur-md" />
+                  <Loader2 className="relative h-7 w-7 animate-spin text-indigo-600" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
