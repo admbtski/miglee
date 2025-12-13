@@ -421,8 +421,8 @@ export const rejectMemberCheckin: MutationResolvers['rejectMemberCheckin'] =
       return {
         success: true,
         message: 'Check-in rejected successfully',
-        member: updatedMember,
-        event,
+        member: updatedMember as any,
+        event: event as any,
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -543,8 +543,8 @@ export const blockMemberCheckin: MutationResolvers['blockMemberCheckin'] =
         message: safeBlockAll
           ? 'All check-in methods blocked'
           : `Method ${safeMethod} blocked`,
-        member: updatedMember,
-        event,
+        member: updatedMember as any,
+        event: event as any,
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -645,8 +645,8 @@ export const unblockMemberCheckin: MutationResolvers['unblockMemberCheckin'] =
         message: safeUnblockAll
           ? 'All check-in methods unblocked'
           : `Method ${safeMethod} unblocked`,
-        member: updatedMember,
-        event,
+        member: updatedMember as any,
+        event: event as any,
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -724,8 +724,8 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember,
-      event: updatedEvent,
+      member: updatedMember as any,
+      event: updatedEvent as any, // Cast to GraphQL type
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
