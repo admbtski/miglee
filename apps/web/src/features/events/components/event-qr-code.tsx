@@ -16,22 +16,23 @@ import {
   ImageDown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { useRotateEventCheckinTokenMutation } from '@/features/events/api/checkin';
 
 interface EventQRCodeProps {
   eventId: string;
   token: string | null;
   eventName: string;
-  onRotateToken?: () => Promise<void>;
 }
 
 export function EventQRCode({
   eventId,
   token,
   eventName,
-  onRotateToken,
 }: EventQRCodeProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isRotating, setIsRotating] = useState(false);
+  
+  const rotateTokenMutation = useRotateEventCheckinTokenMutation();
 
   if (!token) {
     return (
@@ -47,14 +48,15 @@ export function EventQRCode({
   const checkinUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/checkin/event/${eventId}?token=${token}`;
 
   const handleRotateToken = async () => {
-    if (!onRotateToken) return;
-    setIsRotating(true);
     try {
-      await onRotateToken();
+      await rotateTokenMutation.mutateAsync({ eventId });
+      toast.success('QR code token rotated', {
+        description: 'The old QR code is no longer valid',
+      });
     } catch (error) {
-      console.error('Failed to rotate token:', error);
-    } finally {
-      setIsRotating(false);
+      toast.error('Failed to rotate token', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
     }
   };
 
@@ -166,16 +168,16 @@ export function EventQRCode({
             <FileDown className="h-4 w-4" />
             Download PDF
           </button>
-          {onRotateToken && (
-            <button
-              onClick={handleRotateToken}
-              disabled={isRotating}
-              className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRotating ? 'animate-spin' : ''}`} />
-              {isRotating ? 'Rotating...' : 'Rotate Token'}
-            </button>
-          )}
+          <button
+            onClick={handleRotateToken}
+            disabled={rotateTokenMutation.isPending}
+            className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${rotateTokenMutation.isPending ? 'animate-spin' : ''}`}
+            />
+            {rotateTokenMutation.isPending ? 'Rotating...' : 'Rotate Token'}
+          </button>
         </div>
 
         {/* Security Notice */}

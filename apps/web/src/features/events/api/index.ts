@@ -10,3 +10,4 @@ export * from './comments';
 export * from './reviews';
 export * from './invite-links';
 export * from './agenda';
+export * from './checkin';

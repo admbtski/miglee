@@ -8,6 +8,11 @@
 import { useState } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import {
+  useCheckInSelfMutation,
+  useUncheckInSelfMutation,
+} from '@/features/events/api/checkin';
 
 interface UserCheckinSectionProps {
   eventId: string;
@@ -18,6 +23,7 @@ interface UserCheckinSectionProps {
   userCheckinMethods: string[];
   isBlocked: boolean;
   rejectionReason?: string | null;
+  memberCheckinToken?: string | null;
 }
 
 export function UserCheckinSection({
@@ -29,9 +35,12 @@ export function UserCheckinSection({
   userCheckinMethods,
   isBlocked,
   rejectionReason,
+  memberCheckinToken,
 }: UserCheckinSectionProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
+
+  const checkInMutation = useCheckInSelfMutation();
+  const uncheckInMutation = useUncheckInSelfMutation();
 
   // Don't show if check-in is disabled or user is not joined
   if (!checkinEnabled || !isJoined) {
@@ -41,30 +50,43 @@ export function UserCheckinSection({
   const canSelfCheckin = checkinMethods.includes('SELF_MANUAL');
   const canUseUserQR = checkinMethods.includes('USER_QR');
   const hasManualCheckin = userCheckinMethods.includes('SELF_MANUAL');
+  const isLoading = checkInMutation.isPending || uncheckInMutation.isPending;
 
   const handleCheckin = async () => {
-    setIsLoading(true);
     try {
-      // TODO: Call GraphQL mutation checkInSelf
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-      console.log('Check-in successful');
+      const result = await checkInMutation.mutateAsync({ eventId });
+      if (result.success) {
+        toast.success('Check-in successful!', {
+          description: result.message,
+        });
+      } else {
+        toast.error('Check-in failed', {
+          description: result.message,
+        });
+      }
     } catch (error) {
-      console.error('Check-in failed:', error);
-    } finally {
-      setIsLoading(false);
+      toast.error('Check-in failed', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
     }
   };
 
   const handleUncheck = async () => {
-    setIsLoading(true);
     try {
-      // TODO: Call GraphQL mutation uncheckInSelf
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-      console.log('Uncheck successful');
+      const result = await uncheckInMutation.mutateAsync({ eventId });
+      if (result.success) {
+        toast.success('Check-in removed', {
+          description: result.message,
+        });
+      } else {
+        toast.error('Failed to remove check-in', {
+          description: result.message,
+        });
+      }
     } catch (error) {
-      console.error('Uncheck failed:', error);
-    } finally {
-      setIsLoading(false);
+      toast.error('Failed to remove check-in', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
     }
   };
 
@@ -193,7 +215,7 @@ export function UserCheckinSection({
       )}
 
       {/* User QR Code Section */}
-      {canUseUserQR && !isBlocked && (
+      {canUseUserQR && !isBlocked && memberCheckinToken && (
         <div className="rounded-lg border border-zinc-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -221,18 +243,18 @@ export function UserCheckinSection({
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-4 overflow-hidden"
               >
-                <div className="flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 p-6">
-                  <div className="h-48 w-48 rounded-lg bg-white shadow-sm flex items-center justify-center">
-                    <div className="text-center text-sm text-zinc-500">
-                      QR Code
-                      <br />
-                      Placeholder
+                {memberCheckinToken ? (
+                  <div className="flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 p-6">
+                    {/* QR code will be rendered here using UserQRCode component */}
+                    <div className="text-xs text-zinc-500">
+                      Your personal check-in code
                     </div>
                   </div>
-                  <div className="text-xs text-zinc-500">
-                    Unique code for event #{eventId.slice(0, 8)}
+                ) : (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-700">
+                    QR code not available. Please contact the organizer.
                   </div>
-                </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

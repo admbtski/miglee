@@ -9,26 +9,29 @@ import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Maximize2, RefreshCw, X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { useRotateMemberCheckinTokenMutation } from '@/features/events/api/checkin';
 
 interface UserQRCodeProps {
   eventId: string;
   userId: string;
+  memberId: string;
   token: string | null;
   eventName: string;
   userName: string;
-  onRotateToken?: () => Promise<void>;
 }
 
 export function UserQRCode({
   eventId,
   userId,
+  memberId,
   token,
   eventName,
   userName,
-  onRotateToken,
 }: UserQRCodeProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isRotating, setIsRotating] = useState(false);
+  
+  const rotateTokenMutation = useRotateMemberCheckinTokenMutation();
 
   if (!token) {
     return (
@@ -44,14 +47,15 @@ export function UserQRCode({
   const checkinUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/checkin/user?token=${token}`;
 
   const handleRotateToken = async () => {
-    if (!onRotateToken) return;
-    setIsRotating(true);
     try {
-      await onRotateToken();
+      await rotateTokenMutation.mutateAsync({ eventId, memberId });
+      toast.success('QR code token rotated', {
+        description: 'Your old QR code is no longer valid',
+      });
     } catch (error) {
-      console.error('Failed to rotate token:', error);
-    } finally {
-      setIsRotating(false);
+      toast.error('Failed to rotate token', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
     }
   };
 
@@ -155,16 +159,16 @@ export function UserQRCode({
             <Download className="h-4 w-4" />
             Download
           </button>
-          {onRotateToken && (
-            <button
-              onClick={handleRotateToken}
-              disabled={isRotating}
-              className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
-              title="Rotate token (if compromised)"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRotating ? 'animate-spin' : ''}`} />
-            </button>
-          )}
+          <button
+            onClick={handleRotateToken}
+            disabled={rotateTokenMutation.isPending}
+            className="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+            title="Rotate token (if compromised)"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${rotateTokenMutation.isPending ? 'animate-spin' : ''}`}
+            />
+          </button>
         </div>
 
         {/* Info Notice */}
