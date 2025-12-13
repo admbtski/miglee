@@ -109,6 +109,7 @@ function randomTimeWindow() {
 async function clearDb() {
   try {
     await prisma.notification.deleteMany();
+    await prisma.eventCheckinLog.deleteMany(); // Check-in audit logs
     await prisma.eventMember.deleteMany();
     await prisma.event.deleteMany();
     await prisma.category.deleteMany();
