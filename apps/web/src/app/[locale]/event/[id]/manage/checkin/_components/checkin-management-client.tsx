@@ -23,12 +23,16 @@ type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
 export function CheckinManagementClient() {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
+  
+  // Local state for settings (will be replaced with GraphQL mutations)
+  const [checkinEnabled, setCheckinEnabled] = useState(false);
+  const [enabledMethods, setEnabledMethods] = useState<string[]>([]);
 
   // TODO: Replace with actual data fetching
   const isLoading = false;
   const event = {
-    checkinEnabled: false,
-    enabledCheckinMethods: [] as string[],
+    checkinEnabled,
+    enabledCheckinMethods: enabledMethods,
     eventCheckinToken: null,
   };
   const members: any[] = [];
@@ -131,7 +135,20 @@ export function CheckinManagementClient() {
       {/* Tab Content */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {activeTab === 'overview' && <OverviewTab members={members} />}
-        {activeTab === 'settings' && <SettingsTab />}
+        {activeTab === 'settings' && (
+          <SettingsTab
+            checkinEnabled={checkinEnabled}
+            enabledMethods={enabledMethods}
+            onToggleEnabled={() => setCheckinEnabled(!checkinEnabled)}
+            onToggleMethod={(method) => {
+              if (enabledMethods.includes(method)) {
+                setEnabledMethods(enabledMethods.filter((m) => m !== method));
+              } else {
+                setEnabledMethods([...enabledMethods, method]);
+              }
+            }}
+          />
+        )}
         {activeTab === 'qr' && <QrTab event={event} />}
         {activeTab === 'logs' && <LogsTab />}
       </div>
@@ -242,7 +259,17 @@ function OverviewTab({ members }: { members: any[] }) {
   );
 }
 
-function SettingsTab() {
+function SettingsTab({
+  checkinEnabled,
+  enabledMethods,
+  onToggleEnabled,
+  onToggleMethod,
+}: {
+  checkinEnabled: boolean;
+  enabledMethods: string[];
+  onToggleEnabled: () => void;
+  onToggleMethod: (method: string) => void;
+}) {
   return (
     <div className="space-y-6">
       <div>
@@ -266,9 +293,20 @@ function SettingsTab() {
         </div>
         <button
           type="button"
-          className="relative inline-flex h-6 w-11 items-center rounded-full bg-zinc-200 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-zinc-700"
+          onClick={onToggleEnabled}
+          className={[
+            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+            checkinEnabled
+              ? 'bg-indigo-600 dark:bg-indigo-500'
+              : 'bg-zinc-200 dark:bg-zinc-700',
+          ].join(' ')}
         >
-          <span className="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white transition-transform" />
+          <span
+            className={[
+              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+              checkinEnabled ? 'translate-x-6' : 'translate-x-1',
+            ].join(' ')}
+          />
         </button>
       </div>
 
@@ -302,17 +340,34 @@ function SettingsTab() {
           ].map((method) => (
             <label
               key={method.id}
-              className="flex items-start gap-3 rounded-xl border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
+              className="flex items-start gap-3 rounded-xl border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 cursor-pointer dark:border-zinc-800 dark:hover:bg-zinc-900/50"
             >
               <input
                 type="checkbox"
-                className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 dark:border-zinc-700"
+                checked={enabledMethods.includes(method.id)}
+                onChange={() => onToggleMethod(method.id)}
+                disabled={!checkinEnabled}
+                className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-700"
               />
               <div className="flex-1">
-                <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <div
+                  className={[
+                    'text-sm font-medium',
+                    checkinEnabled
+                      ? 'text-zinc-900 dark:text-zinc-100'
+                      : 'text-zinc-400 dark:text-zinc-600',
+                  ].join(' ')}
+                >
                   {method.label}
                 </div>
-                <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                <div
+                  className={[
+                    'text-xs',
+                    checkinEnabled
+                      ? 'text-zinc-600 dark:text-zinc-400'
+                      : 'text-zinc-400 dark:text-zinc-600',
+                  ].join(' ')}
+                >
                   {method.description}
                 </div>
               </div>
@@ -320,6 +375,33 @@ function SettingsTab() {
           ))}
         </div>
       </div>
+
+      {/* Info message when disabled */}
+      {!checkinEnabled && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/50 dark:bg-amber-900/20">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="text-sm text-amber-900 dark:text-amber-100">
+              Enable check-in above to configure check-in methods for your event.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Save info */}
+      {checkinEnabled && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800/50 dark:bg-blue-900/20">
+          <div className="flex items-start gap-3">
+            <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+            <div className="text-sm text-blue-900 dark:text-blue-100">
+              <p className="font-medium">Settings updated locally</p>
+              <p className="mt-1 text-blue-700 dark:text-blue-300">
+                Changes are stored in local state. Integration with backend API coming soon.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
