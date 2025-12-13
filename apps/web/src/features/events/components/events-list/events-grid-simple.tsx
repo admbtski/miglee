@@ -11,14 +11,7 @@
 
 'use client';
 
-import React, {
-  memo,
-  useCallback,
-  useMemo,
-  useEffect,
-  useState,
-  useRef,
-} from 'react';
+import React, { memo, useMemo, useEffect, useState, useRef } from 'react';
 import type {
   EventHoverCallback,
   EventListItem,

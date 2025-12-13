@@ -129,24 +129,24 @@ function CollapsibleSection({
   badge,
 }: CollapsibleSectionProps) {
   return (
-    <section className="border-b border-zinc-100 dark:border-zinc-800/50 pb-4 last:border-0">
+    <section className="border-b border-zinc-200/60 dark:border-zinc-800/60 pb-5 last:border-0 last:pb-0">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-2 group hover:opacity-80 transition-opacity"
+        className="w-full flex items-center justify-between py-1.5 group hover:opacity-70 transition-opacity"
         aria-expanded={isOpen}
       >
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+        <h3 className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2.5">
           {icon}
-          <span>{title}</span>
+          <span className="tracking-wide uppercase">{title}</span>
           {badge !== undefined && badge > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[10px] font-bold rounded-md bg-indigo-600 text-white">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[10px] font-bold rounded-full bg-indigo-600 text-white">
               {badge}
             </span>
           )}
         </h3>
         <ChevronDown
-          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${
+          className={`w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-300 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -157,10 +157,10 @@ function CollapsibleSection({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            <div className="pt-3">{children}</div>
+            <div className="pt-3.5">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -340,23 +340,23 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-950">
-      {/* Header - Simplified */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      {/* Header - Clean & Minimal */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
             {t.title}
           </h2>
           {activeFiltersCount > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white">
+            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-2 text-[11px] font-bold rounded-full bg-indigo-600 text-white">
               {activeFiltersCount}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {activeFiltersCount > 0 && (
             <button
               onClick={clearAllFilters}
-              className="px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              className="px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-md transition-colors"
             >
               {t.clearAll}
             </button>
@@ -365,7 +365,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
           {!isDrawer && onHide && (
             <button
               onClick={onHide}
-              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               aria-label="Hide filters"
               title="Hide filters"
             >
@@ -376,28 +376,28 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
           {isDrawer && (
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               aria-label="Close filters"
             >
-              <X className="w-5 h-5 text-zinc-500" />
+              <X className="w-4.5 h-4.5 text-zinc-500" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Loading indicator - moved to content area */}
+      {/* Loading indicator */}
       {isPending && (
-        <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-900/30">
-          <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
+        <div className="px-5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border-b border-amber-200/50 dark:border-amber-900/30">
+          <div className="flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            <span className="font-medium">Updating results...</span>
+            <span className="font-medium">Aktualizacja...</span>
           </div>
         </div>
       )}
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-4">
+        <div className="p-5 space-y-5">
           {/* Time Status */}
           <CollapsibleSection
             title={t.timeStatus}
@@ -414,10 +414,10 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   key={value}
                   type="button"
                   onClick={() => handleStatusChange(value)}
-                  className={`px-3 py-2.5 text-sm font-medium rounded-lg border-2 transition-all ${
+                  className={`px-3 py-2 text-sm font-semibold rounded-lg transition-all ${
                     filters.status === value
-                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-                      : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700 dark:hover:border-zinc-600'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+                      : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
                   }`}
                 >
                   {label}
@@ -437,9 +437,10 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
             badge={dateRangeBadge}
           >
             {dateInputsDisabled && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 mb-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                {t.dateRangeDisabled}
-              </p>
+              <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300 mb-3 p-2.5 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200/50 dark:border-amber-900/30">
+                <span>ℹ️</span>
+                <span>{t.dateRangeDisabled}</span>
+              </div>
             )}
 
             {/* Presets - Compact */}
@@ -454,21 +455,21 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   type="button"
                   onClick={() => handlePresetClick(id)}
                   disabled={dateInputsDisabled}
-                  className="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 text-zinc-700 hover:bg-indigo-600 hover:text-white dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-indigo-600 transition-colors disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 text-zinc-700 hover:bg-indigo-600 hover:text-white dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-indigo-600 transition-all disabled:cursor-not-allowed"
                 >
                   {label}
                 </button>
               ))}
             </div>
 
-            {/* Custom Range Inputs - Cleaner */}
+            {/* Custom Range Inputs */}
             <div
               className={`space-y-2.5 transition-opacity ${
                 dateInputsDisabled ? 'opacity-40 pointer-events-none' : ''
               }`}
             >
               <div>
-                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
                   {t.startDate}
                 </label>
                 <input
@@ -476,11 +477,11 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   value={isoToLocalInput(filters.startISO)}
                   onChange={(e) => handleStartChange(e.target.value)}
                   disabled={dateInputsDisabled}
-                  className="w-full px-3 py-2 text-sm bg-white border-2 border-zinc-200 rounded-lg dark:border-zinc-700 dark:bg-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 text-sm bg-white border border-zinc-300 rounded-lg dark:border-zinc-600 dark:bg-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none transition-all disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
                   {t.endDate}
                 </label>
                 <input
@@ -489,13 +490,13 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   min={isoToLocalInput(filters.startISO) || undefined}
                   onChange={(e) => handleEndChange(e.target.value)}
                   disabled={dateInputsDisabled}
-                  className="w-full px-3 py-2 text-sm bg-white border-2 border-zinc-200 rounded-lg dark:border-zinc-700 dark:bg-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 text-sm bg-white border border-zinc-300 rounded-lg dark:border-zinc-600 dark:bg-zinc-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 outline-none transition-all disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             </div>
           </CollapsibleSection>
 
-          {/* Meeting Type - Simplified colors */}
+          {/* Meeting Type */}
           <CollapsibleSection
             title={t.meetingType}
             icon={
@@ -505,55 +506,29 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
             onToggle={() => toggleSection('meetingType')}
             badge={meetingTypeBadge}
           >
-            <div className="space-y-1.5">
-              <button
+            <div className="space-y-2">
+              <FilterButton
+                icon={<MapPin className="w-4 h-4" />}
+                label={t.onsite}
+                active={filters.kinds.includes(MeetingKind.Onsite)}
                 onClick={() => toggleKind(MeetingKind.Onsite)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
-                  filters.kinds.includes(MeetingKind.Onsite)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <MapPin className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{t.onsite}</span>
-                {filters.kinds.includes(MeetingKind.Onsite) && (
-                  <Check className="w-4 h-4 ml-auto" />
-                )}
-              </button>
-
-              <button
+              />
+              <FilterButton
+                icon={<Laptop className="w-4 h-4" />}
+                label={t.online}
+                active={filters.kinds.includes(MeetingKind.Online)}
                 onClick={() => toggleKind(MeetingKind.Online)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
-                  filters.kinds.includes(MeetingKind.Online)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <Laptop className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{t.online}</span>
-                {filters.kinds.includes(MeetingKind.Online) && (
-                  <Check className="w-4 h-4 ml-auto" />
-                )}
-              </button>
-
-              <button
+              />
+              <FilterButton
+                icon={<Globe className="w-4 h-4" />}
+                label={t.hybrid}
+                active={filters.kinds.includes(MeetingKind.Hybrid)}
                 onClick={() => toggleKind(MeetingKind.Hybrid)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
-                  filters.kinds.includes(MeetingKind.Hybrid)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <Globe className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{t.hybrid}</span>
-                {filters.kinds.includes(MeetingKind.Hybrid) && (
-                  <Check className="w-4 h-4 ml-auto" />
-                )}
-              </button>
+              />
             </div>
           </CollapsibleSection>
 
-          {/* Level - Unified colors */}
+          {/* Level */}
           <CollapsibleSection
             title={t.level}
             icon={
@@ -564,40 +539,25 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
             badge={levelBadge}
           >
             <div className="flex flex-wrap gap-2">
-              <button
+              <FilterChip
+                label={t.beginner}
+                active={filters.levels.includes(Level.Beginner)}
                 onClick={() => toggleLevel(Level.Beginner)}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                  filters.levels.includes(Level.Beginner)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                {t.beginner}
-              </button>
-              <button
+              />
+              <FilterChip
+                label={t.intermediate}
+                active={filters.levels.includes(Level.Intermediate)}
                 onClick={() => toggleLevel(Level.Intermediate)}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                  filters.levels.includes(Level.Intermediate)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                {t.intermediate}
-              </button>
-              <button
+              />
+              <FilterChip
+                label={t.advanced}
+                active={filters.levels.includes(Level.Advanced)}
                 onClick={() => toggleLevel(Level.Advanced)}
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
-                  filters.levels.includes(Level.Advanced)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                {t.advanced}
-              </button>
+              />
             </div>
           </CollapsibleSection>
 
-          {/* Join Mode - Unified colors */}
+          {/* Join Mode */}
           <CollapsibleSection
             title={t.joinMode}
             icon={
@@ -607,53 +567,29 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
             onToggle={() => toggleSection('joinMode')}
             badge={joinModeBadge}
           >
-            <div className="space-y-1.5">
-              <button
+            <div className="space-y-2">
+              <FilterButton
+                icon={<DoorOpen className="w-4 h-4" />}
+                label={t.open}
+                active={filters.joinModes.includes(JoinMode.Open)}
                 onClick={() => toggleJoinMode(JoinMode.Open)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
-                  filters.joinModes.includes(JoinMode.Open)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <DoorOpen className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{t.open}</span>
-                {filters.joinModes.includes(JoinMode.Open) && (
-                  <Check className="w-4 h-4 ml-auto" />
-                )}
-              </button>
-              <button
+              />
+              <FilterButton
+                icon={<Users className="w-4 h-4" />}
+                label={t.request}
+                active={filters.joinModes.includes(JoinMode.Request)}
                 onClick={() => toggleJoinMode(JoinMode.Request)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
-                  filters.joinModes.includes(JoinMode.Request)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <Users className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{t.request}</span>
-                {filters.joinModes.includes(JoinMode.Request) && (
-                  <Check className="w-4 h-4 ml-auto" />
-                )}
-              </button>
-              <button
+              />
+              <FilterButton
+                icon={<Lock className="w-4 h-4" />}
+                label={t.inviteOnly}
+                active={filters.joinModes.includes(JoinMode.InviteOnly)}
                 onClick={() => toggleJoinMode(JoinMode.InviteOnly)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border-2 transition-all ${
-                  filters.joinModes.includes(JoinMode.InviteOnly)
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600'
-                }`}
-              >
-                <Lock className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm font-medium">{t.inviteOnly}</span>
-                {filters.joinModes.includes(JoinMode.InviteOnly) && (
-                  <Check className="w-4 h-4 ml-auto" />
-                )}
-              </button>
+              />
             </div>
           </CollapsibleSection>
 
-          {/* Verified Organizer - Cleaner toggle */}
+          {/* Verified Organizer */}
           <CollapsibleSection
             title={t.organizer}
             icon={
@@ -665,22 +601,22 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
           >
             <button
               onClick={() => handleVerifiedChange(!filters.verifiedOnly)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-all ${
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${
                 filters.verifiedOnly
-                  ? 'bg-indigo-600 border-indigo-600'
-                  : 'bg-white border-zinc-200 hover:border-zinc-300 dark:bg-zinc-900 dark:border-zinc-700 dark:hover:border-zinc-600'
+                  ? 'bg-indigo-600 shadow-md shadow-indigo-500/25'
+                  : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-800/80'
               }`}
             >
               <span
-                className={`text-sm font-medium ${filters.verifiedOnly ? 'text-white' : 'text-zinc-700 dark:text-zinc-300'}`}
+                className={`text-sm font-semibold ${filters.verifiedOnly ? 'text-white' : 'text-zinc-700 dark:text-zinc-300'}`}
               >
                 {t.verifiedOnly}
               </span>
               <div
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${filters.verifiedOnly ? 'bg-white/30' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all ${filters.verifiedOnly ? 'bg-white/25' : 'bg-zinc-300 dark:bg-zinc-700'}`}
               >
                 <span
-                  className={`absolute h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${filters.verifiedOnly ? 'translate-x-5' : 'translate-x-0.5'}`}
+                  className={`absolute h-5 w-5 rounded-full shadow-sm transition-all ${filters.verifiedOnly ? 'translate-x-5 bg-white' : 'translate-x-0.5 bg-white'}`}
                 />
               </div>
             </button>
@@ -690,5 +626,52 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
     </div>
   );
 });
+
+// Reusable FilterButton component for consistency
+type FilterButtonProps = {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+};
+
+function FilterButton({ icon, label, active, onClick }: FilterButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all ${
+        active
+          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+          : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
+      }`}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      <span className="text-sm font-medium flex-1 text-left">{label}</span>
+      {active && <Check className="w-4 h-4 flex-shrink-0" />}
+    </button>
+  );
+}
+
+// Reusable FilterChip component for tags/pills
+type FilterChipProps = {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+};
+
+function FilterChip({ label, active, onClick }: FilterChipProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+        active
+          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
+          : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 export default LeftFiltersPanel;

@@ -7,7 +7,6 @@ export * from './desktop-search-bar';
 export * from './event-card';
 export * from './events-list/empty-state';
 export * from './events-list/error-state';
-export * from './events-list/events-grid-virtualized';
 export * from './events-list/events-header';
 export * from './events-list/loading-skeleton';
 export * from './left-filters-panel';
