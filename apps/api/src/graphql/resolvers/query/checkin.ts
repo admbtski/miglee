@@ -1,7 +1,12 @@
 /**
  * Check-in Query Resolvers
  *
- * Queries for check-in logs and statistics
+ * Queries for check-in logs and statistics.
+ *
+ * TYPE SAFETY NOTE:
+ * eventCheckinLogs uses `Promise<any>` because it returns Prisma EventCheckinLog[]
+ * that EventCheckinLog field resolvers convert to GraphQL types. This is standard
+ * GraphQL pattern - queries return raw DB data, field resolvers transform it.
  */
 
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
@@ -12,7 +17,8 @@ export const eventCheckinLogs: QueryResolvers['eventCheckinLogs'] = async (
   _,
   { eventId, limit = 50, offset = 0, action, method, memberId },
   { prisma, userId }
-) => {
+): Promise<any> => {
+  // Return type intentionally 'any' - field resolvers handle conversion
   if (!userId) {
     throw new GraphQLError('Not authenticated', {
       extensions: { code: 'UNAUTHENTICATED' },
@@ -55,7 +61,7 @@ export const eventCheckinLogs: QueryResolvers['eventCheckinLogs'] = async (
     ]);
 
     return {
-      items: items as any, // Cast Prisma types to GraphQL types (field resolvers will handle User relations)
+      items, // Prisma EventCheckinLog[], field resolvers will convert enums/relations
       pageInfo: {
         total,
         limit,

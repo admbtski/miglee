@@ -21,6 +21,8 @@ import { eventMemberEventResolver } from './fields/event-member';
 import { UserFieldResolvers, UserProfileFieldResolvers } from './fields/user';
 import { SessionUserFieldResolvers } from './fields/session-user';
 import { eventInviteLinkFieldResolvers } from './fields/invite-link';
+import { CheckinResult } from './field/checkin-result';
+import { EventCheckinLog } from './field/event-checkin-log';
 
 export const resolvers: Pick<
   Resolvers,
@@ -34,6 +36,8 @@ export const resolvers: Pick<
   User?: Partial<Resolvers['User']>;
   UserProfile?: Partial<Resolvers['UserProfile']>;
   SessionUser?: Partial<Resolvers['SessionUser']>;
+  CheckinResult?: Partial<Resolvers['CheckinResult']>;
+  EventCheckinLog?: Partial<Resolvers['EventCheckinLog']>;
 } = {
   JSON: JSONScalar,
   JSONObject: JSONObjectScalar,
@@ -63,4 +67,6 @@ export const resolvers: Pick<
   User: UserFieldResolvers,
   UserProfile: UserProfileFieldResolvers,
   SessionUser: SessionUserFieldResolvers,
+  CheckinResult,
+  EventCheckinLog,
 };

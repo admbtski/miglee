@@ -8,6 +8,7 @@
  */
 
 import { Prisma, User as PrismaUser } from '@prisma/client';
+import { toGQLCheckinMethods } from './checkin-types';
 import { EventStatus, JoinLockReason } from '../__generated__/resolvers-types';
 import type {
   Level,
@@ -389,16 +390,14 @@ export function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
 
     // Check-in fields
     isCheckedIn: m.isCheckedIn ?? false,
-    checkinMethods: (m.checkinMethods ?? []) as any[],
+    checkinMethods: toGQLCheckinMethods(m.checkinMethods ?? []),
     lastCheckinAt: m.lastCheckinAt ?? null,
     memberCheckinToken: m.memberCheckinToken ?? null,
     checkinBlockedAll: m.checkinBlockedAll ?? false,
-    checkinBlockedMethods: (m.checkinBlockedMethods ?? []) as any[],
+    checkinBlockedMethods: toGQLCheckinMethods(m.checkinBlockedMethods ?? []),
     lastCheckinRejectionReason: m.lastCheckinRejectionReason ?? null,
     lastCheckinRejectedAt: m.lastCheckinRejectedAt ?? null,
-    lastCheckinRejectedBy: (m as any).lastCheckinRejectedBy
-      ? mapUser((m as any).lastCheckinRejectedBy)
-      : null,
+    lastCheckinRejectedBy: null, // Field resolver will handle this if needed
 
     // Field resolvers handle these
     event: null as unknown as GQLEvent, // Lazy loaded by field resolver
@@ -735,7 +734,7 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
 
     // Check-in configuration
     checkinEnabled: i.checkinEnabled ?? false,
-    enabledCheckinMethods: (i.enabledCheckinMethods ?? []) as any[],
+    enabledCheckinMethods: toGQLCheckinMethods(i.enabledCheckinMethods ?? []),
     eventCheckinToken: i.eventCheckinToken ?? null,
 
     // Collections (safe access - may be undefined if not included)
@@ -1128,3 +1127,4 @@ export function mapDmMute(mute: DmMuteWithGraph): GQLDmMute {
     user: mapUser(mute.user),
   };
 }
+export { toGQLCheckinMethods } from './checkin-types';

@@ -24,7 +24,7 @@ import type {
   Event as GQLEvent,
 } from '../../__generated__/resolvers-types';
 import type { EventMemberWithUsers } from '../helpers';
-import { mapUser } from '../helpers';
+import { mapUser, toGQLCheckinMethods } from '../helpers';
 import {
   requireAuth,
   getEffectiveEventRole,
@@ -48,16 +48,16 @@ function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
     rejectReason: m.rejectReason ?? null,
     user: mapUser(m.user),
     addedBy: m.addedBy ? mapUser(m.addedBy) : null,
-    // Check-in fields
+    // Check-in fields - type-safe conversion
     isCheckedIn: m.isCheckedIn,
-    checkinMethods: m.checkinMethods as any[],
+    checkinMethods: toGQLCheckinMethods(m.checkinMethods),
     lastCheckinAt: m.lastCheckinAt ?? null,
     memberCheckinToken: m.memberCheckinToken ?? null,
     checkinBlockedAll: m.checkinBlockedAll,
-    checkinBlockedMethods: m.checkinBlockedMethods as any[],
+    checkinBlockedMethods: toGQLCheckinMethods(m.checkinBlockedMethods),
     lastCheckinRejectionReason: m.lastCheckinRejectionReason ?? null,
     lastCheckinRejectedAt: m.lastCheckinRejectedAt ?? null,
-    lastCheckinRejectedBy: (m as any).lastCheckinRejectedBy ? mapUser((m as any).lastCheckinRejectedBy) : null,
+    lastCheckinRejectedBy: null, // Field resolver handles this if included
     // event and joinAnswers will be resolved by field resolvers
     event: null as unknown as GQLEvent, // Resolved by field resolver
     joinAnswers: [],
@@ -67,7 +67,7 @@ function mapEventMember(m: EventMemberWithUsers): GQLEventMember {
 const MEMBER_INCLUDE = {
   user: { include: { profile: true } },
   addedBy: { include: { profile: true } },
-  lastCheckinRejectedBy: { include: { profile: true } },
+  // lastCheckinRejectedBy can be added via field resolver if needed
 } satisfies Prisma.EventMemberInclude;
 
 /* ────────────────────────────────────────────────────────────────────────────

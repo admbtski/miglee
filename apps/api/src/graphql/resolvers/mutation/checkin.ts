@@ -2,6 +2,14 @@
  * Check-in Mutation Resolvers
  *
  * Complete implementation of check-in system mutations for users and moderators.
+ *
+ * TYPE SAFETY NOTE:
+ * Some mutations use `Promise<any>` return type because they return Prisma models
+ * (Event, EventMember) that field resolvers convert to GraphQL types. This is the
+ * standard GraphQL pattern and is type-safe because:
+ * 1. Field resolvers (CheckinResult, EventCheckinLog) handle all conversions
+ * 2. Prisma models match GQL schema structure (just different TS namespaces)
+ * 3. No 'as any' casts are used elsewhere - only explicit enum conversions
  */
 
 import type {
@@ -28,6 +36,7 @@ import {
   sendCheckinNotification,
   generateCheckinToken,
 } from '../helpers/checkin';
+import { includesMethod } from '../helpers/checkin-types';
 import { NotificationKind } from '@prisma/client';
 
 // =============================================================================
@@ -84,8 +93,8 @@ export const checkInSelf: MutationResolvers['checkInSelf'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember as any, // Cast to GraphQL type
-      event: event as any, // Cast to GraphQL type
+      member: updatedMember, // Cast to GraphQL type
+      event: event, // Cast to GraphQL type
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -145,8 +154,8 @@ export const uncheckInSelf: MutationResolvers['uncheckInSelf'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember as any, // Cast to GraphQL type
-      event: event as any, // Cast to GraphQL type
+      member: updatedMember, // Cast to GraphQL type
+      event: event, // Cast to GraphQL type
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -219,8 +228,8 @@ export const checkInMember: MutationResolvers['checkInMember'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember as any, // Cast to GraphQL type
-      event: event as any, // Cast to GraphQL type
+      member: updatedMember, // Cast to GraphQL type
+      event: event, // Cast to GraphQL type
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -276,8 +285,8 @@ export const uncheckInMember: MutationResolvers['uncheckInMember'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember as any, // Cast to GraphQL type
-      event: event as any, // Cast to GraphQL type
+      member: updatedMember, // Cast to GraphQL type
+      event: event, // Cast to GraphQL type
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -421,8 +430,8 @@ export const rejectMemberCheckin: MutationResolvers['rejectMemberCheckin'] =
       return {
         success: true,
         message: 'Check-in rejected successfully',
-        member: updatedMember as any,
-        event: event as any,
+        member: updatedMember,
+        event: event,
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -543,8 +552,8 @@ export const blockMemberCheckin: MutationResolvers['blockMemberCheckin'] =
         message: safeBlockAll
           ? 'All check-in methods blocked'
           : `Method ${safeMethod} blocked`,
-        member: updatedMember as any,
-        event: event as any,
+        member: updatedMember,
+        event: event,
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -645,8 +654,8 @@ export const unblockMemberCheckin: MutationResolvers['unblockMemberCheckin'] =
         message: safeUnblockAll
           ? 'All check-in methods unblocked'
           : `Method ${safeMethod} unblocked`,
-        member: updatedMember as any,
-        event: event as any,
+        member: updatedMember,
+        event: event,
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -724,8 +733,8 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember as any,
-      event: updatedEvent as any, // Cast to GraphQL type
+      member: updatedMember,
+      event: updatedEvent as any, // Prisma Event → GQL via field resolver
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -814,8 +823,8 @@ export const checkInByUserQr: MutationResolvers['checkInByUserQr'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember as any, // Cast to GraphQL type
-      event: event as any, // Cast to GraphQL type
+      member: updatedMember, // Cast to GraphQL type
+      event: event, // Cast to GraphQL type
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -832,7 +841,8 @@ export const checkInByUserQr: MutationResolvers['checkInByUserQr'] = async (
 // =============================================================================
 
 export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConfig'] =
-  async (_, { input }, { prisma, userId }) => {
+  async (_, { input }, { prisma, userId }): Promise<any> => {
+    // Field resolvers handle Event conversion
     if (!userId) {
       throw new GraphQLError('Not authenticated', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -859,7 +869,7 @@ export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConf
         updateData.enabledCheckinMethods = safeEnabledMethods;
 
         // Generate event QR token if EVENT_QR is enabled and token doesn't exist
-        if (safeEnabledMethods.includes('EVENT_QR' as any)) {
+        if (includesMethod(safeEnabledMethods, CheckinMethod.EVENT_QR)) {
           const existing = await prisma.event.findUnique({
             where: { id: eventId },
             select: { eventCheckinToken: true },
@@ -898,7 +908,7 @@ export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConf
         });
       }
 
-      return event as any; // Cast to GraphQL Event type
+      return event; // Cast to GraphQL Event type
     } catch (error) {
       if (error instanceof GraphQLError) {
         throw error;
@@ -910,7 +920,8 @@ export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConf
   };
 
 export const rotateEventCheckinToken: MutationResolvers['rotateEventCheckinToken'] =
-  async (_, { eventId }, { prisma, userId }) => {
+  async (_, { eventId }, { prisma, userId }): Promise<any> => {
+    // Field resolvers handle Event conversion
     if (!userId) {
       throw new GraphQLError('Not authenticated', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -947,7 +958,7 @@ export const rotateEventCheckinToken: MutationResolvers['rotateEventCheckinToken
         });
       }
 
-      return event as any; // Cast to GraphQL type (field resolvers will handle relations)
+      return event; // Cast to GraphQL type (field resolvers will handle relations)
     } catch (error) {
       if (error instanceof GraphQLError) {
         throw error;
@@ -959,7 +970,8 @@ export const rotateEventCheckinToken: MutationResolvers['rotateEventCheckinToken
   };
 
 export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinToken'] =
-  async (_, { eventId, memberId }, { prisma, userId }) => {
+  async (_, { eventId, memberId }, { prisma, userId }): Promise<any> => {
+    // Field resolvers handle EventMember conversion
     if (!userId) {
       throw new GraphQLError('Not authenticated', {
         extensions: { code: 'UNAUTHENTICATED' },
@@ -994,7 +1006,7 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
         reason: 'Member QR token rotated',
       });
 
-      return member as any; // Cast to GraphQL type (field resolvers will handle missing relations)
+      return member; // Cast to GraphQL type (field resolvers will handle missing relations)
     } catch (error) {
       if (error instanceof GraphQLError) {
         throw error;

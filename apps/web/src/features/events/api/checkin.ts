@@ -1,6 +1,6 @@
 /**
  * Check-in System API Hooks
- * 
+ *
  * Provides React Query hooks for check-in mutations and queries.
  * Pattern follows the same structure as event-members.tsx
  */
@@ -20,8 +20,19 @@ import { request, gql } from 'graphql-request';
 // Types (będą wygenerowane przez codegen, tymczasowo definiujemy ręcznie)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type CheckinMethod = 'SELF_MANUAL' | 'MODERATOR_PANEL' | 'EVENT_QR' | 'USER_QR';
-export type CheckinAction = 'CHECK_IN' | 'UNCHECK' | 'REJECT' | 'BLOCK_ALL' | 'BLOCK_METHOD' | 'UNBLOCK_ALL' | 'UNBLOCK_METHOD';
+export type CheckinMethod =
+  | 'SELF_MANUAL'
+  | 'MODERATOR_PANEL'
+  | 'EVENT_QR'
+  | 'USER_QR';
+export type CheckinAction =
+  | 'CHECK_IN'
+  | 'UNCHECK'
+  | 'REJECT'
+  | 'BLOCK_ALL'
+  | 'BLOCK_METHOD'
+  | 'UNBLOCK_ALL'
+  | 'UNBLOCK_METHOD';
 export type CheckinSource = 'USER' | 'MODERATOR' | 'SYSTEM';
 export type CheckinResult = 'SUCCESS' | 'DENIED' | 'NOOP';
 
@@ -280,26 +291,42 @@ export const eventCheckinKeys = {
 
 function invalidateCheckinData(eventId: string) {
   const qc = getQueryClient();
-  
+
   // Invalidate check-in logs
   qc.invalidateQueries({
     queryKey: eventCheckinKeys.logs(eventId),
   });
-  
+
   // Invalidate event members (check-in status updates)
   qc.invalidateQueries({
-    predicate: (q) =>
-      Array.isArray(q.queryKey) &&
-      q.queryKey[0] === 'GetEventMembers' &&
-      (q.queryKey[1] as any)?.eventId === eventId,
+    predicate: (q) => {
+      if (!Array.isArray(q.queryKey) || q.queryKey[0] !== 'GetEventMembers') {
+        return false;
+      }
+      const variables = q.queryKey[1];
+      return (
+        variables &&
+        typeof variables === 'object' &&
+        'eventId' in variables &&
+        variables.eventId === eventId
+      );
+    },
   });
-  
+
   // Invalidate event details (config, stats)
   qc.invalidateQueries({
-    predicate: (q) =>
-      Array.isArray(q.queryKey) &&
-      q.queryKey[0] === 'GetEvent' &&
-      (q.queryKey[1] as any)?.id === eventId,
+    predicate: (q) => {
+      if (!Array.isArray(q.queryKey) || q.queryKey[0] !== 'GetEvent') {
+        return false;
+      }
+      const variables = q.queryKey[1];
+      return (
+        variables &&
+        typeof variables === 'object' &&
+        'id' in variables &&
+        variables.id === eventId
+      );
+    },
   });
 }
 
@@ -317,10 +344,11 @@ export function useCheckInSelfMutation(
   return useMutation({
     mutationKey: ['CheckInSelf'] as QueryKey,
     mutationFn: async (variables: { eventId: string }) =>
-      gqlClient.request<{ checkInSelf: CheckinResultPayload }>(
-        CHECK_IN_SELF_MUTATION,
-        variables
-      ).then(res => res.checkInSelf),
+      gqlClient
+        .request<{
+          checkInSelf: CheckinResultPayload;
+        }>(CHECK_IN_SELF_MUTATION, variables)
+        .then((res) => res.checkInSelf),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
@@ -341,10 +369,11 @@ export function useUncheckInSelfMutation(
   return useMutation({
     mutationKey: ['UncheckInSelf'] as QueryKey,
     mutationFn: async (variables: { eventId: string }) =>
-      gqlClient.request<{ uncheckInSelf: CheckinResultPayload }>(
-        UNCHECK_IN_SELF_MUTATION,
-        variables
-      ).then(res => res.uncheckInSelf),
+      gqlClient
+        .request<{
+          uncheckInSelf: CheckinResultPayload;
+        }>(UNCHECK_IN_SELF_MUTATION, variables)
+        .then((res) => res.uncheckInSelf),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
@@ -376,10 +405,11 @@ export function useCheckInMemberMutation(
   return useMutation({
     mutationKey: ['CheckInMember'] as QueryKey,
     mutationFn: async (variables: { input: CheckInMemberInput }) =>
-      gqlClient.request<{ checkInMember: CheckinResultPayload }>(
-        CHECK_IN_MEMBER_MUTATION,
-        variables
-      ).then(res => res.checkInMember),
+      gqlClient
+        .request<{
+          checkInMember: CheckinResultPayload;
+        }>(CHECK_IN_MEMBER_MUTATION, variables)
+        .then((res) => res.checkInMember),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -407,10 +437,11 @@ export function useUncheckInMemberMutation(
   return useMutation({
     mutationKey: ['UncheckInMember'] as QueryKey,
     mutationFn: async (variables: { input: UncheckInMemberInput }) =>
-      gqlClient.request<{ uncheckInMember: CheckinResultPayload }>(
-        UNCHECK_IN_MEMBER_MUTATION,
-        variables
-      ).then(res => res.uncheckInMember),
+      gqlClient
+        .request<{
+          uncheckInMember: CheckinResultPayload;
+        }>(UNCHECK_IN_MEMBER_MUTATION, variables)
+        .then((res) => res.uncheckInMember),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -440,10 +471,11 @@ export function useRejectMemberCheckinMutation(
   return useMutation({
     mutationKey: ['RejectMemberCheckin'] as QueryKey,
     mutationFn: async (variables: { input: RejectMemberCheckinInput }) =>
-      gqlClient.request<{ rejectMemberCheckin: CheckinResultPayload }>(
-        REJECT_MEMBER_CHECKIN_MUTATION,
-        variables
-      ).then(res => res.rejectMemberCheckin),
+      gqlClient
+        .request<{
+          rejectMemberCheckin: CheckinResultPayload;
+        }>(REJECT_MEMBER_CHECKIN_MUTATION, variables)
+        .then((res) => res.rejectMemberCheckin),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -472,10 +504,11 @@ export function useBlockMemberCheckinMutation(
   return useMutation({
     mutationKey: ['BlockMemberCheckin'] as QueryKey,
     mutationFn: async (variables: { input: BlockMemberCheckinInput }) =>
-      gqlClient.request<{ blockMemberCheckin: CheckinResultPayload }>(
-        BLOCK_MEMBER_CHECKIN_MUTATION,
-        variables
-      ).then(res => res.blockMemberCheckin),
+      gqlClient
+        .request<{
+          blockMemberCheckin: CheckinResultPayload;
+        }>(BLOCK_MEMBER_CHECKIN_MUTATION, variables)
+        .then((res) => res.blockMemberCheckin),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -503,10 +536,11 @@ export function useUnblockMemberCheckinMutation(
   return useMutation({
     mutationKey: ['UnblockMemberCheckin'] as QueryKey,
     mutationFn: async (variables: { input: UnblockMemberCheckinInput }) =>
-      gqlClient.request<{ unblockMemberCheckin: CheckinResultPayload }>(
-        UNBLOCK_MEMBER_CHECKIN_MUTATION,
-        variables
-      ).then(res => res.unblockMemberCheckin),
+      gqlClient
+        .request<{
+          unblockMemberCheckin: CheckinResultPayload;
+        }>(UNBLOCK_MEMBER_CHECKIN_MUTATION, variables)
+        .then((res) => res.unblockMemberCheckin),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -531,10 +565,11 @@ export function useCheckInByEventQrMutation(
   return useMutation({
     mutationKey: ['CheckInByEventQr'] as QueryKey,
     mutationFn: async (variables: { eventId: string; token: string }) =>
-      gqlClient.request<{ checkInByEventQr: CheckinResultPayload }>(
-        CHECK_IN_BY_EVENT_QR_MUTATION,
-        variables
-      ).then(res => res.checkInByEventQr),
+      gqlClient
+        .request<{
+          checkInByEventQr: CheckinResultPayload;
+        }>(CHECK_IN_BY_EVENT_QR_MUTATION, variables)
+        .then((res) => res.checkInByEventQr),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
@@ -546,19 +581,16 @@ export function useCheckInByEventQrMutation(
 }
 
 export function useCheckInByUserQrMutation(
-  options?: UseMutationOptions<
-    CheckinResultPayload,
-    unknown,
-    { token: string }
-  >
+  options?: UseMutationOptions<CheckinResultPayload, unknown, { token: string }>
 ) {
   return useMutation({
     mutationKey: ['CheckInByUserQr'] as QueryKey,
     mutationFn: async (variables: { token: string }) =>
-      gqlClient.request<{ checkInByUserQr: CheckinResultPayload }>(
-        CHECK_IN_BY_USER_QR_MUTATION,
-        variables
-      ).then(res => res.checkInByUserQr),
+      gqlClient
+        .request<{
+          checkInByUserQr: CheckinResultPayload;
+        }>(CHECK_IN_BY_USER_QR_MUTATION, variables)
+        .then((res) => res.checkInByUserQr),
     meta: {
       successMessage: 'Member checked in',
     },
@@ -578,7 +610,12 @@ export interface UpdateEventCheckinConfigInput {
 
 export function useUpdateEventCheckinConfigMutation(
   options?: UseMutationOptions<
-    { id: string; checkinEnabled: boolean; enabledCheckinMethods: CheckinMethod[]; eventCheckinToken?: string },
+    {
+      id: string;
+      checkinEnabled: boolean;
+      enabledCheckinMethods: CheckinMethod[];
+      eventCheckinToken?: string;
+    },
     unknown,
     { input: UpdateEventCheckinConfigInput }
   >
@@ -586,10 +623,11 @@ export function useUpdateEventCheckinConfigMutation(
   return useMutation({
     mutationKey: ['UpdateEventCheckinConfig'] as QueryKey,
     mutationFn: async (variables: { input: UpdateEventCheckinConfigInput }) =>
-      gqlClient.request<{ updateEventCheckinConfig: any }>(
-        UPDATE_EVENT_CHECKIN_CONFIG_MUTATION,
-        variables
-      ).then(res => res.updateEventCheckinConfig),
+      gqlClient
+        .request<{
+          updateEventCheckinConfig: any;
+        }>(UPDATE_EVENT_CHECKIN_CONFIG_MUTATION, variables)
+        .then((res) => res.updateEventCheckinConfig),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.input.eventId);
     },
@@ -610,10 +648,11 @@ export function useRotateEventCheckinTokenMutation(
   return useMutation({
     mutationKey: ['RotateEventCheckinToken'] as QueryKey,
     mutationFn: async (variables: { eventId: string }) =>
-      gqlClient.request<{ rotateEventCheckinToken: any }>(
-        ROTATE_EVENT_CHECKIN_TOKEN_MUTATION,
-        variables
-      ).then(res => res.rotateEventCheckinToken),
+      gqlClient
+        .request<{
+          rotateEventCheckinToken: any;
+        }>(ROTATE_EVENT_CHECKIN_TOKEN_MUTATION, variables)
+        .then((res) => res.rotateEventCheckinToken),
     onSuccess: (data, variables) => {
       invalidateCheckinData(variables.eventId);
     },
@@ -634,10 +673,11 @@ export function useRotateMemberCheckinTokenMutation(
   return useMutation({
     mutationKey: ['RotateMemberCheckinToken'] as QueryKey,
     mutationFn: async (variables: { eventId: string; memberId: string }) =>
-      gqlClient.request<{ rotateMemberCheckinToken: any }>(
-        ROTATE_MEMBER_CHECKIN_TOKEN_MUTATION,
-        variables
-      ).then(res => res.rotateMemberCheckinToken),
+      gqlClient
+        .request<{
+          rotateMemberCheckinToken: any;
+        }>(ROTATE_MEMBER_CHECKIN_TOKEN_MUTATION, variables)
+        .then((res) => res.rotateMemberCheckinToken),
     meta: {
       successMessage: 'Personal QR code token rotated',
     },
