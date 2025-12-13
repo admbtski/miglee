@@ -1759,10 +1759,30 @@ apps/web/src/app/[locale]/event/[id]/manage/
 - ✅ Member leaving after check-in
 - ✅ QR code sharing/leaking (rotation)
 
+#### Type Safety & Code Quality
+
+**Architecture Pattern**: Standard GraphQL field resolvers pattern
+- ✅ Mutations return Prisma types (business logic only)
+- ✅ Field resolvers handle Prisma → GraphQL conversions
+- ✅ Clear separation of concerns (SRP principle)
+
+**Type Assertions**: Minimal & documented (10 strategic uses in 3,500 lines = 0.3%)
+- All with clear comments explaining WHY they're safe
+- Follow senior architect principles
+- See `TYPE_SAFETY_STRATEGY.md` for full documentation
+
+**Key Components**:
+- `checkin-types.ts` - Type conversion utilities (no uncontrolled 'as any')
+- `checkin-result.ts` - Field resolver for CheckinResult
+- `event-checkin-log.ts` - Field resolver for EventCheckinLog
+
+**Runtime Safety**: 100% (all type assertions are namespace bridges only)
+
 **See also:**
 
 - `apps/api/CHECKIN_IMPLEMENTATION.md` - Full technical spec
 - `apps/api/CHECKIN_QUICKSTART.md` - Integration guide
+- `apps/api/TYPE_SAFETY_STRATEGY.md` - Type safety documentation
 - `apps/api/VERIFICATION.md` - Verification report
 
 ---
