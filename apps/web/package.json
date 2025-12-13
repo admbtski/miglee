@@ -21,6 +21,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@miglee/contracts": "workspace:*",
     "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-virtual": "^3.13.13",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "blurhash": "^2.0.5",
     "canvas-confetti": "^1.9.3",

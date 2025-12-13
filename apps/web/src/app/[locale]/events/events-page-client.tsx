@@ -38,7 +38,7 @@ import { EVENTS_CONFIG } from '@/lib/constants/events';
 import type { EventListItem } from '@/features/events/types/event';
 
 import { DesktopSearchBar } from '@/features/events/components/desktop-search-bar';
-import { EventsGridVirtualized } from '@/features/events/components/events-list/events-grid-virtualized';
+import { EventsGridSimple } from '@/features/events/components/events-list/events-grid-simple';
 import { EventsHeader } from '@/features/events/components/events-list/events-header';
 import { LeftFiltersPanel } from '@/features/events/components/left-filters-panel';
 import { MobileFiltersDrawer } from '@/features/events/components/mobile-filters-drawer';
@@ -351,23 +351,18 @@ export function EventsPage() {
         <main
           className={`relative mx-auto grid w-full gap-4 px-4 py-4 ${gridCols}`}
         >
-          {/* Left Filters Panel - animated width column */}
-          <motion.aside
-            layout
-            initial={false}
-            animate={{
+          {/* Left Filters Panel - sticky, animated width */}
+          <aside
+            className="hidden lg:block relative"
+            style={{
               width: leftPanelVisible ? 'auto' : 0,
               opacity: leftPanelVisible ? 1 : 0,
+              minWidth: leftPanelVisible ? 280 : 0,
+              transition: 'width 0.3s ease, opacity 0.2s ease',
             }}
-            transition={{
-              layout: { type: 'spring', damping: 30, stiffness: 300 },
-              opacity: { duration: 0.2 },
-            }}
-            className="hidden lg:block relative overflow-hidden"
-            style={{ minWidth: leftPanelVisible ? 280 : 0 }}
           >
-            <motion.div layout className="w-[280px] xl:w-[300px]">
-              <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
+            <div className="sticky top-[var(--nav-h)] w-[280px] xl:w-[300px]">
+              <div className="h-[calc(100vh-var(--nav-h))] overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 shadow-lg backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-950/95">
                 <LeftFiltersPanel
                   filters={localSidebarFilters}
                   onFiltersChange={handleSidebarFiltersChange}
@@ -375,8 +370,8 @@ export function EventsPage() {
                   onHide={() => setLeftPanelVisible(false)}
                 />
               </div>
-            </motion.div>
-          </motion.aside>
+            </div>
+          </aside>
 
           {/* Bookmark Button - Shows when left panel is hidden (desktop only) */}
           <AnimatePresence>
@@ -410,11 +405,7 @@ export function EventsPage() {
           </AnimatePresence>
 
           {/* Center Content - Events Grid (hidden on mobile when map is visible) */}
-          <motion.section
-            layout
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className={`min-w-0 ${mapVisible ? 'hidden md:block' : ''}`}
-          >
+          <section className={`min-w-0 ${mapVisible ? 'hidden md:block' : ''}`}>
             <EventsHeader
               isLoading={isLoading}
               hasError={Boolean(error)}
@@ -429,7 +420,7 @@ export function EventsPage() {
             />
 
             <ErrorBoundary>
-              <EventsGridVirtualized
+              <EventsGridSimple
                 items={flatItems as unknown as EventListItem[]}
                 isLoading={isLoading}
                 error={error ?? null}
@@ -440,7 +431,7 @@ export function EventsPage() {
                 onHover={handleEventHover}
               />
             </ErrorBoundary>
-          </motion.section>
+          </section>
 
           {/* Mobile Full-Screen Map (shown only on mobile when map is visible) */}
           <AnimatePresence>
@@ -534,13 +525,11 @@ function MapSidebar({
 
   return (
     <motion.aside
-      layout
       className="hidden md:block"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{
-        layout: { type: 'spring', damping: 30, stiffness: 300 },
         opacity: { duration: 0.2 },
         scale: { duration: 0.2 },
       }}

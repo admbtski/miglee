@@ -167,14 +167,9 @@ export const EventCard = memo(function EventCard({
   const remainingCategoriesCount = categories.length - maxCategoriesToShow;
 
   return (
-    <motion.div
-      layout="size"
-      whileHover={{
-        y: isInactive ? 0 : -4,
-        scale: isInactive ? 1 : 1.015,
-      }}
+    <div
       className={cn(
-        'relative w-full rounded-2xl p-4 flex flex-col gap-2',
+        'relative w-full max-w-[600px] mx-auto rounded-2xl p-4 flex flex-col gap-2',
         'ring-1 ring-white/5 dark:ring-white/5',
         'bg-white dark:bg-zinc-900',
         'shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
@@ -184,11 +179,6 @@ export const EventCard = memo(function EventCard({
         className
       )}
       style={appearanceStyle}
-      transition={{
-        type: 'spring',
-        stiffness: 300,
-        damping: 20,
-      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       data-plan={plan}
@@ -362,6 +352,6 @@ export const EventCard = memo(function EventCard({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
