@@ -69,6 +69,48 @@ Miglee łączy ludzi poprzez lokalne wydarzenia. Użytkownicy mogą:
 - Statusy: Joined, Pending, Invited, Rejected, Banned, Left, Kicked, Waitlist
 - Historia zmian członkostwa (audit log)
 
+### ✅ Check-in & Obecność
+
+**System potwierdzania obecności na wydarzeniach z 4 metodami check-in:**
+
+#### Metody Check-in
+
+1. **Manual (SELF_MANUAL)** - Użytkownik sam klika "Jestem na wydarzeniu"
+2. **Moderator Panel (MODERATOR_PANEL)** - Organizator odhacza z listy
+3. **Event QR (EVENT_QR)** - Wspólny kod QR dla całego wydarzenia
+4. **User QR (USER_QR)** - Indywidualny kod QR każdego uczestnika
+
+#### Funkcje
+
+- ✅ Wielokrotne metody check-in jednocześnie
+- ✅ Blokady check-in (globalne lub per metoda)
+- ✅ Odrzucanie check-in z powodem
+- ✅ Rotacja tokenów QR (bezpieczeństwo)
+- ✅ Kompletny audit trail (EventCheckinLog)
+- ✅ Panel organizatora z listą uczestników
+- ✅ Skaner QR z kamerą (WebRTC)
+- ✅ Eksport listy obecności (PDF/PNG)
+- ✅ Powiadomienia o check-in
+- ✅ Statystyki obecności
+
+#### API
+
+- 12 GraphQL mutations (user + moderator + config)
+- 1 GraphQL query (paginowane logi)
+- 12 React Query hooks z cache invalidation
+- Idempotentne operacje
+- 256-bit secure tokens (nanoid)
+
+#### UI Komponenty
+
+- `UserCheckinSection` - przycisk check-in dla użytkownika
+- `EventQRCode` - QR wydarzenia (pełny ekran, download)
+- `UserQRCode` - osobisty QR uczestnika
+- `QRScannerModal` - skaner z kamerą
+- Checkin management page - pełny panel organizatora
+
+**Zobacz:** `apps/api/CHECKIN_IMPLEMENTATION.md` dla szczegółów technicznych
+
 ### 💬 Komunikacja
 
 - Chat wydarzeniowy (Event Chat)
