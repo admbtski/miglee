@@ -8,7 +8,7 @@
  */
 
 import { Prisma, User as PrismaUser } from '@prisma/client';
-import { toGQLCheckinMethods } from './checkin-types';
+import { toGQLCheckinMethods } from './helpers/checkin-types';
 import { EventStatus, JoinLockReason } from '../__generated__/resolvers-types';
 import type {
   Level,
@@ -1127,4 +1127,4 @@ export function mapDmMute(mute: DmMuteWithGraph): GQLDmMute {
     user: mapUser(mute.user),
   };
 }
-export { toGQLCheckinMethods } from './checkin-types';
+export { toGQLCheckinMethods } from './helpers/checkin-types';

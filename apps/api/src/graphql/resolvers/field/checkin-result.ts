@@ -19,15 +19,16 @@ import { mapEvent, mapEventMember } from '../helpers';
 import type { EventWithGraph, EventMemberWithUsers } from '../helpers';
 
 export const CheckinResult: CheckinResultResolvers = {
+  success: (parent) => parent.success,
+  message: (parent) => parent.message,
+  
   member: (parent) => {
     if (!parent.member) return null;
-    // Safe cast: Prisma EventMember → input for mapEventMember → GQL EventMember
     return mapEventMember(parent.member as unknown as EventMemberWithUsers);
   },
 
   event: (parent) => {
     if (!parent.event) return null;
-    // Safe cast: Prisma Event → input for mapEvent → GQL Event
     return mapEvent(parent.event as unknown as EventWithGraph, undefined);
   },
 };

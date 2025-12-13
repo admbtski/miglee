@@ -93,8 +93,8 @@ export const checkInSelf: MutationResolvers['checkInSelf'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember, // Cast to GraphQL type
-      event: event, // Cast to GraphQL type
+      member: updatedMember as any, // Prisma → GQL via field resolver
+      event: event as any, // Prisma → GQL via field resolver
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -154,8 +154,8 @@ export const uncheckInSelf: MutationResolvers['uncheckInSelf'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember, // Cast to GraphQL type
-      event: event, // Cast to GraphQL type
+      member: updatedMember as any, // Prisma → GQL via field resolver
+      event: event as any, // Prisma → GQL via field resolver
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -228,8 +228,8 @@ export const checkInMember: MutationResolvers['checkInMember'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember, // Cast to GraphQL type
-      event: event, // Cast to GraphQL type
+      member: updatedMember as any, // Prisma → GQL via field resolver
+      event: event as any, // Prisma → GQL via field resolver
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -285,8 +285,8 @@ export const uncheckInMember: MutationResolvers['uncheckInMember'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember, // Cast to GraphQL type
-      event: event, // Cast to GraphQL type
+      member: updatedMember as any, // Prisma → GQL via field resolver
+      event: event as any, // Prisma → GQL via field resolver
     };
   } catch (error) {
     if (error instanceof GraphQLError) {
@@ -430,8 +430,8 @@ export const rejectMemberCheckin: MutationResolvers['rejectMemberCheckin'] =
       return {
         success: true,
         message: 'Check-in rejected successfully',
-        member: updatedMember,
-        event: event,
+        member: updatedMember as any, // Prisma → GQL via field resolver
+        event: event as any, // Prisma → GQL
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -552,8 +552,8 @@ export const blockMemberCheckin: MutationResolvers['blockMemberCheckin'] =
         message: safeBlockAll
           ? 'All check-in methods blocked'
           : `Method ${safeMethod} blocked`,
-        member: updatedMember,
-        event: event,
+        member: updatedMember as any, // Prisma → GQL via field resolver
+        event: event as any, // Prisma → GQL
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -654,8 +654,8 @@ export const unblockMemberCheckin: MutationResolvers['unblockMemberCheckin'] =
         message: safeUnblockAll
           ? 'All check-in methods unblocked'
           : `Method ${safeMethod} unblocked`,
-        member: updatedMember,
-        event: event,
+        member: updatedMember as any, // Prisma → GQL via field resolver
+        event: event as any, // Prisma → GQL via field resolver
       };
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -733,7 +733,7 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember,
+      member: updatedMember as any, // Prisma → GQL via field resolver
       event: updatedEvent as any, // Prisma Event → GQL via field resolver
     };
   } catch (error) {
@@ -823,8 +823,8 @@ export const checkInByUserQr: MutationResolvers['checkInByUserQr'] = async (
     return {
       success: result.success,
       message: result.message,
-      member: updatedMember, // Cast to GraphQL type
-      event: event, // Cast to GraphQL type
+      member: updatedMember as any, // Prisma → GQL via field resolver
+      event: event as any, // Prisma Event → GQL via field resolver
     };
   } catch (error) {
     if (error instanceof GraphQLError) {

@@ -19,32 +19,20 @@ import {
   toGQLCheckinAction,
   toGQLCheckinMethod,
   toGQLCheckinSource,
-  toGQLCheckinResult,
+  toGQLCheckinResultStatus,
 } from '../helpers/checkin-types';
+import type { CheckinResult as PrismaCheckinResultEnum } from '@prisma/client';
 
+// Field resolvers handle enum conversions + relations
+// Scalar fields are automatically resolved from parent object
 export const EventCheckinLog: EventCheckinLogResolvers = {
-  // Convert Prisma enums to GraphQL enums (same values, different TS types)
-  action: (parent) => {
-    return toGQLCheckinAction(parent.action as unknown as any);
-  },
+  action: (parent) => toGQLCheckinAction(parent.action as unknown as any),
+  method: (parent) => parent.method ? toGQLCheckinMethod(parent.method as unknown as any) : null,
+  source: (parent) => toGQLCheckinSource(parent.source as unknown as any),
+  result: (parent) => toGQLCheckinResultStatus(parent.result as unknown as PrismaCheckinResultEnum),
 
-  method: (parent) => {
-    if (!parent.method) return null;
-    return toGQLCheckinMethod(parent.method as unknown as any);
-  },
-
-  source: (parent) => {
-    return toGQLCheckinSource(parent.source as unknown as any);
-  },
-
-  result: (parent) => {
-    return toGQLCheckinResult(parent.result as unknown as any);
-  },
-
-  // Actor relation - included from query, mapUser handles conversion
   actor: (parent) => {
     const actor = (parent as any).actor;
-    if (!actor) return null;
-    return mapUser(actor);
+    return actor ? mapUser(actor) : null;
   },
-};
+} as unknown as EventCheckinLogResolvers;

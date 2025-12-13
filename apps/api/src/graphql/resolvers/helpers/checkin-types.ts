@@ -8,13 +8,13 @@
 import type { CheckinMethod as PrismaCheckinMethod } from '@prisma/client';
 import type { CheckinAction as PrismaCheckinAction } from '@prisma/client';
 import type { CheckinSource as PrismaCheckinSource } from '@prisma/client';
-import type { CheckinResult as PrismaCheckinResult } from '@prisma/client';
+import type { CheckinResult as PrismaCheckinResultEnum } from '@prisma/client';
 
 import type {
   CheckinMethod as GQLCheckinMethod,
   CheckinAction as GQLCheckinAction,
   CheckinSource as GQLCheckinSource,
-  CheckinResult as GQLCheckinResult,
+  CheckinResultStatus as GQLCheckinResultStatus,
 } from '../../__generated__/resolvers-types';
 
 /**
@@ -55,12 +55,13 @@ export function toGQLCheckinSource(
 }
 
 /**
- * Convert Prisma CheckinResult to GraphQL CheckinResult
+ * Convert Prisma CheckinResult enum to GraphQL CheckinResultStatus enum
+ * Note: Prisma uses "CheckinResult", GraphQL uses "CheckinResultStatus"
  */
-export function toGQLCheckinResult(
-  result: PrismaCheckinResult
-): GQLCheckinResult {
-  return result as unknown as GQLCheckinResult;
+export function toGQLCheckinResultStatus(
+  result: PrismaCheckinResultEnum
+): GQLCheckinResultStatus {
+  return result as unknown as GQLCheckinResultStatus;
 }
 
 /**
