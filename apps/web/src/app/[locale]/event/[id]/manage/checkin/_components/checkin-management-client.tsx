@@ -20,6 +20,10 @@ import {
   X,
   Clock,
   AlertTriangle,
+  Smartphone,
+  UserCircle2,
+  Shield,
+  Ban,
 } from 'lucide-react';
 
 import { useEventManagement } from '../../_components/event-management-provider';
@@ -29,10 +33,14 @@ import {
   useUncheckInMemberMutation,
   useGetEventCheckinLogsQuery,
 } from '@/features/events/api/checkin';
-import { CheckinMethod } from '@/lib/api/__generated__/react-query-update';
+import {
+  CheckinMethod,
+  EventMemberCoreFragment,
+} from '@/lib/api/__generated__/react-query-update';
 import { useEventMembersQuery } from '@/features/events/api/event-members';
 import { toast } from '@/lib/utils/toast-manager';
 import { EventQRCode } from '@/features/events/components/event-qr-code';
+import { MemberActionsMenu } from './member-actions-menu';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
@@ -307,6 +315,7 @@ export function CheckinManagementClient() {
             onUncheck={handleUncheck}
             isCheckingIn={checkInMutation.isPending}
             isUnchecking={uncheckMutation.isPending}
+            eventId={event.id}
           />
         )}
         {activeTab === 'settings' && (
@@ -360,6 +369,40 @@ const tabs: Array<{
 ];
 
 // =============================================================================
+// Helper: Get Check-in Method Icon
+// =============================================================================
+
+function getCheckinMethodIcon(method: CheckinMethod) {
+  switch (method) {
+    case CheckinMethod.SelfManual:
+      return Smartphone;
+    case CheckinMethod.ModeratorPanel:
+      return Shield;
+    case CheckinMethod.EventQr:
+      return QrCode;
+    case CheckinMethod.UserQr:
+      return UserCircle2;
+    default:
+      return CheckCircle2;
+  }
+}
+
+function getCheckinMethodLabel(method: CheckinMethod) {
+  switch (method) {
+    case CheckinMethod.SelfManual:
+      return 'Self Check-in';
+    case CheckinMethod.ModeratorPanel:
+      return 'Moderator Panel';
+    case CheckinMethod.EventQr:
+      return 'Event QR';
+    case CheckinMethod.UserQr:
+      return 'User QR';
+    default:
+      return method;
+  }
+}
+
+// =============================================================================
 // Stat Card Component
 // =============================================================================
 
@@ -411,13 +454,14 @@ function StatCard({
 // =============================================================================
 
 interface OverviewTabProps {
-  members: any[];
+  members: EventMemberCoreFragment[];
   isLoading: boolean;
   error?: Error;
   onCheckIn: (userId: string) => void;
   onUncheck: (userId: string) => void;
   isCheckingIn: boolean;
   isUnchecking: boolean;
+  eventId: string;
 }
 
 function OverviewTab({
@@ -428,6 +472,7 @@ function OverviewTab({
   onUncheck,
   isCheckingIn,
   isUnchecking,
+  eventId,
 }: OverviewTabProps) {
   // Export participants list as CSV
   const handleExportList = () => {
@@ -546,82 +591,194 @@ function OverviewTab({
 
       {/* Participants list */}
       {members.length > 0 && (
-        <div className="space-y-2">
-          {members.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
-            >
-              <div className="flex items-center gap-3">
-                {/* Status indicator */}
-                <div
-                  className={[
-                    'flex h-10 w-10 items-center justify-center rounded-full',
-                    member.isCheckedIn
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                      : 'bg-zinc-100 dark:bg-zinc-800',
-                  ].join(' ')}
-                >
-                  {member.isCheckedIn ? (
-                    <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <Clock className="h-5 w-5 text-zinc-400" />
-                  )}
-                </div>
+        <div className="space-y-3">
+          {members.map((member: EventMemberCoreFragment) => {
+            const allMethods = [
+              CheckinMethod.SelfManual,
+              CheckinMethod.ModeratorPanel,
+              CheckinMethod.EventQr,
+              CheckinMethod.UserQr,
+            ];
 
-                {/* Member info */}
-                <div>
-                  <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                    {member.user?.name ??
-                      (member.user?.displayName || 'Unknown User')}
+            return (
+              <div
+                key={member.id}
+                className="rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    {/* Status indicator */}
+                    <div
+                      className={[
+                        'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full',
+                        member.isCheckedIn
+                          ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                          : 'bg-zinc-100 dark:bg-zinc-800',
+                      ].join(' ')}
+                    >
+                      {member.isCheckedIn ? (
+                        <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <Clock className="h-5 w-5 text-zinc-400" />
+                      )}
+                    </div>
+
+                    {/* Member info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {member.user?.name || 'Unknown User'}
+                      </div>
+
+                      {/* Check-in status */}
+                      <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                        {member.isCheckedIn ? (
+                          <span className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                            Checked in
+                            {member.lastCheckinAt &&
+                              ` at ${new Date(member.lastCheckinAt).toLocaleTimeString()}`}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400">Not checked in</span>
+                        )}
+                      </div>
+
+                      {/* Check-in methods icons */}
+                      {member.isCheckedIn &&
+                        member.checkinMethods &&
+                        member.checkinMethods.length > 0 && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="text-xs text-zinc-500 dark:text-zinc-500">
+                              Methods:
+                            </span>
+                            <div className="flex gap-1.5">
+                              {allMethods.map((method) => {
+                                const Icon = getCheckinMethodIcon(method);
+                                const isActive =
+                                  member.checkinMethods?.includes(method);
+                                const isBlocked =
+                                  member.checkinBlockedAll ||
+                                  member.checkinBlockedMethods?.includes(
+                                    method
+                                  );
+
+                                return (
+                                  <div
+                                    key={method}
+                                    className={[
+                                      'relative flex h-6 w-6 items-center justify-center rounded-md border transition-colors',
+                                      isActive
+                                        ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/30'
+                                        : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50',
+                                    ].join(' ')}
+                                    title={getCheckinMethodLabel(method)}
+                                  >
+                                    <Icon
+                                      className={[
+                                        'h-3.5 w-3.5',
+                                        isActive
+                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                          : 'text-zinc-400 dark:text-zinc-600',
+                                      ].join(' ')}
+                                    />
+                                    {isBlocked && (
+                                      <div className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
+                                        <Ban className="h-2 w-2 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Blocking info */}
+                      {(member.checkinBlockedAll ||
+                        (member.checkinBlockedMethods &&
+                          member.checkinBlockedMethods.length > 0)) && (
+                        <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-red-50 p-2 dark:bg-red-900/20">
+                          <Ban className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                          <div className="text-xs text-red-700 dark:text-red-300">
+                            {member.checkinBlockedAll ? (
+                              <span>All check-in methods blocked</span>
+                            ) : (
+                              <span>
+                                Blocked methods:{' '}
+                                {member.checkinBlockedMethods
+                                  ?.map(getCheckinMethodLabel)
+                                  .join(', ')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Rejection info */}
+                      {member.lastCheckinRejectionReason &&
+                        member.lastCheckinRejectedAt && (
+                          <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 p-2 dark:bg-amber-900/20">
+                            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                            <div className="flex-1 text-xs text-amber-700 dark:text-amber-300">
+                              <div className="font-medium">Last rejected:</div>
+                              <div className="mt-0.5">
+                                {member.lastCheckinRejectionReason}
+                              </div>
+                              <div className="mt-1 text-[11px] text-amber-600/80 dark:text-amber-400/80">
+                                {new Date(
+                                  member.lastCheckinRejectedAt
+                                ).toLocaleString()}
+                                {member.lastCheckinRejectedBy && (
+                                  <span>
+                                    {' '}
+                                    by {member.lastCheckinRejectedBy.name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                    </div>
                   </div>
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">
+
+                  {/* Actions */}
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    <MemberActionsMenu member={member} eventId={eventId} />
+
                     {member.isCheckedIn ? (
-                      <span className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                        Checked in
-                        {member.lastCheckinAt &&
-                          ` at ${new Date(member.lastCheckinAt).toLocaleTimeString()}`}
-                      </span>
+                      <button
+                        onClick={() => onUncheck(member.userId)}
+                        disabled={isUnchecking}
+                        className="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                      >
+                        {isUnchecking ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                        Uncheck
+                      </button>
                     ) : (
-                      <span className="text-zinc-400">Not checked in</span>
+                      <button
+                        onClick={() => onCheckIn(member.userId)}
+                        disabled={
+                          isCheckingIn || member.checkinBlockedAll
+                        }
+                        className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                      >
+                        {isCheckingIn ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4" />
+                        )}
+                        Check In
+                      </button>
                     )}
                   </div>
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                {member.isCheckedIn ? (
-                  <button
-                    onClick={() => onUncheck(member.userId)}
-                    disabled={isUnchecking}
-                    className="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                  >
-                    {isUnchecking ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <X className="h-4 w-4" />
-                    )}
-                    Uncheck
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onCheckIn(member.userId)}
-                    disabled={isCheckingIn}
-                    className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-                  >
-                    {isCheckingIn ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4" />
-                    )}
-                    Check In
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -832,7 +989,23 @@ function QrTab({
 
 interface LogsTabProps {
   eventId: string;
-  logs: any[];
+  logs: Array<{
+    id: string;
+    action: string;
+    method?: string | null;
+    source: string;
+    result: string;
+    reason?: string | null;
+    comment?: string | null;
+    createdAt: string;
+    actor?: {
+      id: string;
+      name?: string | null;
+      profile?: {
+        displayName?: string | null;
+      } | null;
+    } | null;
+  }>;
   isLoading: boolean;
   pageInfo?: { total: number; hasNext: boolean };
 }
@@ -842,7 +1015,7 @@ function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
   const [methodFilter, setMethodFilter] = useState<string>('all');
 
   // Filter logs based on selected filters
-  const filteredLogs = logs.filter((log: any) => {
+  const filteredLogs = logs.filter((log) => {
     if (actionFilter !== 'all' && log.action !== actionFilter) return false;
     if (methodFilter !== 'all' && log.method !== methodFilter) return false;
     return true;
@@ -1034,7 +1207,7 @@ function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
       {/* Logs list */}
       {filteredLogs.length > 0 && (
         <div className="space-y-2">
-          {filteredLogs.map((log: any) => {
+          {filteredLogs.map((log) => {
             const ActionIcon = getActionIcon(log.action);
             return (
               <div
@@ -1065,7 +1238,9 @@ function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
                       </div>
                       {log.actor && (
                         <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                          By {log.actor.displayName || 'Unknown'}
+                          By{' '}
+                          {log.actor?.name ??
+                            (log.actor?.profile?.displayName || 'Unknown')}
                         </div>
                       )}
                       {log.comment && (

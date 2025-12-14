@@ -37,6 +37,9 @@ fragment EventMemberCore on EventMember {
   checkinBlockedMethods
   lastCheckinRejectionReason
   lastCheckinRejectedAt
+  lastCheckinRejectedBy {
+    ...UserLight
+  }
   memberCheckinToken
   user {
     ...UserCore
