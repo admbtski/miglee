@@ -19,6 +19,7 @@ interface UserQRCodeProps {
   token: string | null;
   eventName: string;
   userName: string;
+  onTokenRotated?: (newToken: string) => void;
 }
 
 export function UserQRCode({
@@ -28,9 +29,10 @@ export function UserQRCode({
   token,
   eventName,
   userName,
+  onTokenRotated,
 }: UserQRCodeProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
-  
+
   const rotateTokenMutation = useRotateMemberCheckinTokenMutation();
 
   if (!token) {
@@ -48,13 +50,25 @@ export function UserQRCode({
 
   const handleRotateToken = async () => {
     try {
-      await rotateTokenMutation.mutateAsync({ eventId, memberId });
+      const result = await rotateTokenMutation.mutateAsync({
+        eventId,
+        userId: memberId,
+      });
+
+      // Get new token from result
+      const newToken = result?.rotateMemberCheckinToken?.memberCheckinToken;
+
+      if (newToken && onTokenRotated) {
+        onTokenRotated(newToken);
+      }
+
       toast.success('QR code token rotated', {
         description: 'Your old QR code is no longer valid',
       });
     } catch (error) {
       toast.error('Failed to rotate token', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
       });
     }
   };
@@ -118,9 +132,7 @@ export function UserQRCode({
         {/* QR Code Display */}
         <div className="flex flex-col items-center justify-center rounded-lg border border-zinc-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-6">
           <div className="mb-3 text-center">
-            <div className="text-sm font-medium text-zinc-900">
-              {eventName}
-            </div>
+            <div className="text-sm font-medium text-zinc-900">{eventName}</div>
             <div className="text-xs text-zinc-600">{userName}</div>
           </div>
 

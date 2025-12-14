@@ -320,6 +320,7 @@ export function UserCheckinSection({
                     token={localToken}
                     eventName={eventName}
                     userName={authData.me.name || 'User'}
+                    onTokenRotated={(newToken) => setLocalToken(newToken)}
                   />
                 ) : (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
