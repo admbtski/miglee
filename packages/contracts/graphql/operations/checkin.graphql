@@ -1,0 +1,194 @@
+# Check-in Queries & Mutations
+
+# Queries
+
+query GetEventCheckinLogs(
+  $eventId: ID!
+  $limit: Int
+  $offset: Int
+  $action: CheckinAction
+  $method: CheckinMethod
+) {
+  eventCheckinLogs(
+    eventId: $eventId
+    limit: $limit
+    offset: $offset
+    action: $action
+    method: $method
+  ) {
+    items {
+      id
+      action
+      method
+      source
+      result
+      reason
+      comment
+      createdAt
+      actor {
+        id
+        name
+      }
+    }
+    pageInfo {
+      total
+      hasNext
+    }
+  }
+}
+
+# User Mutations
+
+mutation CheckInSelf($eventId: ID!) {
+  checkInSelf(eventId: $eventId) {
+    success
+    message
+    member {
+      id
+      isCheckedIn
+      checkinMethods
+      lastCheckinAt
+    }
+  }
+}
+
+mutation UncheckInSelf($eventId: ID!) {
+  uncheckInSelf(eventId: $eventId) {
+    success
+    message
+    member {
+      id
+      isCheckedIn
+      checkinMethods
+    }
+  }
+}
+
+# Moderator Mutations
+
+mutation CheckInMember($input: CheckInMemberInput!) {
+  checkInMember(input: $input) {
+    success
+    message
+    member {
+      id
+      isCheckedIn
+      checkinMethods
+      lastCheckinAt
+      user {
+        id
+        name
+      }
+    }
+  }
+}
+
+mutation UncheckInMember($input: UncheckInMemberInput!) {
+  uncheckInMember(input: $input) {
+    success
+    message
+    member {
+      id
+      isCheckedIn
+      checkinMethods
+    }
+  }
+}
+
+mutation RejectMemberCheckin($input: RejectMemberCheckinInput!) {
+  rejectMemberCheckin(input: $input) {
+    success
+    message
+    member {
+      id
+      isCheckedIn
+      lastCheckinRejectionReason
+      lastCheckinRejectedAt
+    }
+  }
+}
+
+mutation BlockMemberCheckin($input: BlockMemberCheckinInput!) {
+  blockMemberCheckin(input: $input) {
+    success
+    message
+    member {
+      id
+      checkinBlockedAll
+      checkinBlockedMethods
+    }
+  }
+}
+
+mutation UnblockMemberCheckin($input: UnblockMemberCheckinInput!) {
+  unblockMemberCheckin(input: $input) {
+    success
+    message
+    member {
+      id
+      checkinBlockedAll
+      checkinBlockedMethods
+    }
+  }
+}
+
+# QR Mutations
+
+mutation CheckInByEventQr($eventId: ID!, $token: String!) {
+  checkInByEventQr(eventId: $eventId, token: $token) {
+    success
+    message
+    member {
+      id
+      isCheckedIn
+      checkinMethods
+      user {
+        name
+      }
+    }
+    event {
+      id
+      title
+    }
+  }
+}
+
+mutation CheckInByUserQr($token: String!) {
+  checkInByUserQr(token: $token) {
+    success
+    message
+    member {
+      id
+      isCheckedIn
+      user {
+        id
+        name
+      }
+    }
+  }
+}
+
+# Configuration Mutations
+
+mutation UpdateEventCheckinConfig($input: UpdateEventCheckinConfigInput!) {
+  updateEventCheckinConfig(input: $input) {
+    id
+    checkinEnabled
+    enabledCheckinMethods
+    eventCheckinToken
+  }
+}
+
+mutation RotateEventCheckinToken($eventId: ID!) {
+  rotateEventCheckinToken(eventId: $eventId) {
+    id
+    eventCheckinToken
+  }
+}
+
+mutation RotateMemberCheckinToken($eventId: ID!, $memberId: ID!) {
+  rotateMemberCheckinToken(eventId: $eventId, memberId: $memberId) {
+    id
+    memberCheckinToken
+  }
+}
