@@ -102,8 +102,8 @@ type EventCheckinLogsResult {
 }
 
 input UsersSort {
-  by: UsersSortBy! = CREATED_AT
-  dir: SortDir! = DESC
+  by: UsersSortBy!
+  dir: SortDir!
 }
 
 "Visibility of an event"
@@ -1413,7 +1413,7 @@ input JoinQuestionInputData {
   type: JoinQuestionType!
   label: String!
   helpText: String
-  required: Boolean = true
+  required: Boolean
   options: JSON
   maxLength: Int
 }
@@ -1427,18 +1427,18 @@ input CreateEventInput {
 
   # Optional basic fields
   description: String
-  meetingKind: MeetingKind! = ONSITE
+  meetingKind: MeetingKind!
   onlineUrl: String
   location: LocationInput
 
   # Capacity (defaults set by backend based on mode)
-  mode: Mode! = GROUP
+  mode: Mode!
   min: Int
   max: Int
 
-  # Privacy (defaults to open/public)
-  visibility: Visibility! = PUBLIC
-  joinMode: JoinMode! = OPEN
+  # Privacy
+  visibility: Visibility!
+  joinMode: JoinMode!
 }
 
 input UpdateEventInput {
@@ -1521,15 +1521,15 @@ input RejectMemberCheckinInput {
   eventId: ID!
   userId: ID!
   reason: String
-  showReasonToUser: Boolean = true
+  showReasonToUser: Boolean
   blockMethod: CheckinMethod # If provided, block this specific method
-  blockAll: Boolean = false # If true, block all check-in methods
+  blockAll: Boolean # If true, block all check-in methods
 }
 
 input BlockMemberCheckinInput {
   eventId: ID!
   userId: ID!
-  blockAll: Boolean = false # If true, block all methods
+  blockAll: Boolean # If true, block all methods
   method: CheckinMethod # If blockAll=false, block only this method
   reason: String
 }
@@ -1537,7 +1537,7 @@ input BlockMemberCheckinInput {
 input UnblockMemberCheckinInput {
   eventId: ID!
   userId: ID!
-  unblockAll: Boolean = false # If true, unblock all methods
+  unblockAll: Boolean # If true, unblock all methods
   method: CheckinMethod # If unblockAll=false, unblock only this method
 }
 
@@ -1646,7 +1646,7 @@ input CreateJoinQuestionInput {
   type: JoinQuestionType!
   label: String!
   helpText: String
-  required: Boolean = true
+  required: Boolean
   options: JSON
   maxLength: Int
 }
@@ -1667,7 +1667,7 @@ input CreateFeedbackQuestionInput {
   type: FeedbackQuestionType!
   label: String!
   helpText: String
-  required: Boolean = false
+  required: Boolean
   options: JSON
   maxLength: Int
 }
@@ -1740,14 +1740,14 @@ input AdminUpdateUserInput {
 input AdminInviteUserInput {
   email: String!
   name: String
-  role: Role! = USER
+  role: Role!
 }
 
 input AdminCreateUserInput {
   email: String!
   name: String
-  role: Role! = USER
-  verified: Boolean! = false
+  role: Role!
+  verified: Boolean!
 }
 
 # Admin Event Management Inputs
@@ -1770,7 +1770,7 @@ type AdminBulkUpdateResult {
 input CreateSubscriptionCheckoutInput {
   plan: SubscriptionPlan!
   billingPeriod: BillingPeriod!
-  withTrial: Boolean = true
+  withTrial: Boolean
 }
 
 input CreateOneOffCheckoutInput {

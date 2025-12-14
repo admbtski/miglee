@@ -437,7 +437,7 @@ export const createEventMutation: MutationResolvers['createEvent'] =
       }
 
       // Set default min/max based on mode if not provided
-      const mode = input.mode as PrismaMode;
+      const mode = (input.mode ?? 'GROUP') as PrismaMode;
       let min = input.min;
       let max = input.max;
 
@@ -485,7 +485,7 @@ export const createEventMutation: MutationResolvers['createEvent'] =
 
             // Optional fields from input
             description: input.description ?? null,
-            meetingKind: input.meetingKind as PrismaMeetingKind,
+            meetingKind: (input.meetingKind ?? 'ONSITE') as PrismaMeetingKind,
             onlineUrl: input.onlineUrl ?? null,
 
             // Capacity
@@ -496,9 +496,7 @@ export const createEventMutation: MutationResolvers['createEvent'] =
             // Privacy
             visibility: (input.visibility ??
               PrismaVisibility.PUBLIC) as PrismaVisibility,
-            joinMode: ('joinMode' in input
-              ? input.joinMode
-              : 'OPEN') as PrismaJoinMode,
+            joinMode: (input.joinMode ?? 'OPEN') as PrismaJoinMode,
 
             // Defaults for fields not in simplified CreateEventInput
             // (can be updated later via UpdateEvent in manage panel)

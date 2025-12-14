@@ -676,8 +676,12 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
   { eventId, token },
   { prisma, userId }
 ): Promise<GQLCheckinResult> => {
-  console.log('[checkInByEventQr] Starting:', { eventId, userId, tokenLength: token?.length });
-  
+  console.log('[checkInByEventQr] Starting:', {
+    eventId,
+    userId,
+    tokenLength: token?.length,
+  });
+
   if (!userId) {
     throw new GraphQLError('Not authenticated', {
       extensions: { code: 'UNAUTHENTICATED' },
@@ -694,11 +698,11 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
       select: { eventCheckinToken: true, checkinEnabled: true },
     });
 
-    console.log('[checkInByEventQr] Event found:', { 
-      found: !!event, 
+    console.log('[checkInByEventQr] Event found:', {
+      found: !!event,
       hasToken: !!event?.eventCheckinToken,
       tokenMatch: event?.eventCheckinToken === token,
-      checkinEnabled: event?.checkinEnabled 
+      checkinEnabled: event?.checkinEnabled,
     });
 
     if (!event || event.eventCheckinToken !== token) {
@@ -718,7 +722,10 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
     // Get member
     console.log('[checkInByEventQr] Getting member...');
     const member = await getMemberOrThrow(prisma, eventId, userId);
-    console.log('[checkInByEventQr] Member found:', { memberId: member.id, status: member.status });
+    console.log('[checkInByEventQr] Member found:', {
+      memberId: member.id,
+      status: member.status,
+    });
 
     // Validate member is not blocked
     console.log('[checkInByEventQr] Validating member not blocked...');
