@@ -187,6 +187,10 @@ const CHECK_IN_BY_EVENT_QR_MUTATION = gql`
           displayName
         }
       }
+      event {
+        id
+        name
+      }
     }
   }
 `;
