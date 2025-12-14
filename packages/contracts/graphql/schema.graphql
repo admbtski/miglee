@@ -2066,8 +2066,8 @@ type Query {
   """
   eventCheckinLogs(
     eventId: ID!
-    limit: Int = 50
-    offset: Int = 0
+    limit: Int
+    offset: Int
     action: CheckinAction
     method: CheckinMethod
     memberId: ID
