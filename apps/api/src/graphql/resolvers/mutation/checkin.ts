@@ -990,7 +990,7 @@ export const rotateEventCheckinToken: MutationResolvers['rotateEventCheckinToken
   };
 
 export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinToken'] =
-  async (_, { eventId, memberId }, { prisma, userId }): Promise<any> => {
+  async (_, { eventId, userId: targetUserId }, { prisma, userId }): Promise<any> => {
     // Field resolvers handle EventMember conversion
     if (!userId) {
       throw new GraphQLError('Not authenticated', {
@@ -999,9 +999,14 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
     }
 
     try {
-      // Find the member
+      // Find the member using composite key eventId_userId
       const existingMember = await prisma.eventMember.findUnique({
-        where: { id: memberId },
+        where: {
+          eventId_userId: {
+            eventId,
+            userId: targetUserId,
+          },
+        },
         select: {
           id: true,
           eventId: true,
@@ -1013,13 +1018,6 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
       if (!existingMember) {
         throw new GraphQLError('Member not found', {
           extensions: { code: 'NOT_FOUND' },
-        });
-      }
-
-      // Verify the member belongs to this event
-      if (existingMember.eventId !== eventId) {
-        throw new GraphQLError('Member does not belong to this event', {
-          extensions: { code: 'BAD_REQUEST' },
         });
       }
 
@@ -1042,7 +1040,7 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
       }
 
       const member = await prisma.eventMember.update({
-        where: { id: memberId },
+        where: { id: existingMember.id },
         data: {
           memberCheckinToken: generateCheckinToken(),
         },
@@ -1056,7 +1054,7 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
       // Log token rotation
       await logCheckinAction(prisma, {
         eventId,
-        memberId,
+        memberId: existingMember.id,
         actorId: userId,
         action: CheckinAction.QR_TOKEN_ROTATED,
         method: CheckinMethod.USER_QR,

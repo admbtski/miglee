@@ -594,7 +594,7 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
             {isJoined && event.checkinEnabled && (
               <UserCheckinSection
                 eventId={event.id}
-                memberId={userMembership?.id}
+                userId={currentUserId}
                 isJoined={isJoined}
                 checkinEnabled={event.checkinEnabled}
                 checkinMethods={event.enabledCheckinMethods || []}

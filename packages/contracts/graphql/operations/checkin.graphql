@@ -186,8 +186,8 @@ mutation RotateEventCheckinToken($eventId: ID!) {
   }
 }
 
-mutation RotateMemberCheckinToken($eventId: ID!, $memberId: ID!) {
-  rotateMemberCheckinToken(eventId: $eventId, memberId: $memberId) {
+mutation RotateMemberCheckinToken($eventId: ID!, $userId: ID!) {
+  rotateMemberCheckinToken(eventId: $eventId, userId: $userId) {
     id
     memberCheckinToken
   }

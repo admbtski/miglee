@@ -2272,7 +2272,7 @@ type Mutation {
   """
   Rotate (regenerate) member's individual QR token
   """
-  rotateMemberCheckinToken(eventId: ID!, memberId: ID!): EventMember!
+  rotateMemberCheckinToken(eventId: ID!, userId: ID!): EventMember!
 
   # Event Invite Links
   createEventInviteLink(input: CreateEventInviteLinkInput!): EventInviteLink!

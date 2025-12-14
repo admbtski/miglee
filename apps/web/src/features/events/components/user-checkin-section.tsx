@@ -19,7 +19,7 @@ import { useMeQuery } from '@/features/auth/hooks/auth';
 
 interface UserCheckinSectionProps {
   eventId: string;
-  memberId?: string; // EventMember.id (not userId!)
+  userId?: string;
   isJoined: boolean;
   checkinEnabled: boolean;
   checkinMethods: string[];
@@ -33,7 +33,7 @@ interface UserCheckinSectionProps {
 
 export function UserCheckinSection({
   eventId,
-  memberId,
+  userId,
   isJoined,
   checkinEnabled,
   checkinMethods,
@@ -74,14 +74,14 @@ export function UserCheckinSection({
   }, [memberCheckinToken]);
 
   const handleGenerateQR = () => {
-    if (!memberId) {
+    if (!userId) {
       toast.error('Cannot generate QR code', {
-        description: 'Member ID is missing',
+        description: 'User ID is missing',
       });
       return;
     }
 
-    rotateTokenMutation.mutate({ eventId, memberId });
+    rotateTokenMutation.mutate({ eventId, userId });
   };
 
   // Don't show if check-in is disabled or user is not joined
