@@ -77,6 +77,11 @@ fragment EventLight on Event {
   boostedAt
   sponsorshipPlan
 
+  # Check-in configuration
+  checkinEnabled
+  enabledCheckinMethods
+  eventCheckinToken
+
   # Appearance customization
   appearance {
     id
@@ -188,6 +193,11 @@ fragment EventCore on Event {
   updatedAt
   boostedAt
   sponsorshipPlan
+
+  # Check-in configuration
+  checkinEnabled
+  enabledCheckinMethods
+  eventCheckinToken
 
   # Appearance customization
   appearance {

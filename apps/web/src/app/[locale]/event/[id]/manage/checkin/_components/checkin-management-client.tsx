@@ -37,14 +37,7 @@ type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
 export function CheckinManagementClient() {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const { event: rawEvent, isLoading, refetch } = useEventManagement();
-
-  // Type assertion for check-in fields (until added to GraphQL codegen)
-  const event = rawEvent as typeof rawEvent & {
-    checkinEnabled?: boolean | null;
-    enabledCheckinMethods?: string[] | null;
-    eventCheckinToken?: string | null;
-  };
+  const { event, isLoading, refetch } = useEventManagement();
 
   // Query for event members
   const {
@@ -135,8 +128,8 @@ export function CheckinManagementClient() {
   }
 
   // Get members from query (eventMembers is already an array)
-  const members = Array.isArray(membersData?.eventMembers) 
-    ? membersData.eventMembers 
+  const members = Array.isArray(membersData?.eventMembers)
+    ? membersData.eventMembers
     : [];
   const stats = {
     total: members.length,
