@@ -3,6 +3,7 @@
  * Users scan the event QR code and land here for automatic check-in
  */
 
+import { QueryClientProvider } from '@/lib/config/query-client-provider';
 import { EventQRCheckinClient } from './_components/event-qr-checkin-client';
 
 interface PageProps {
@@ -22,5 +23,9 @@ export default async function EventQRCheckinPage({
   const { id: eventId } = await params;
   const { token } = await searchParams;
 
-  return <EventQRCheckinClient eventId={eventId} token={token} />;
+  return (
+    <QueryClientProvider>
+      <EventQRCheckinClient eventId={eventId} token={token} />
+    </QueryClientProvider>
+  );
 }

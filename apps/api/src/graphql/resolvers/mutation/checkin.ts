@@ -676,6 +676,8 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
   { eventId, token },
   { prisma, userId }
 ): Promise<GQLCheckinResult> => {
+  console.log('[checkInByEventQr] Starting:', { eventId, userId, tokenLength: token?.length });
+  
   if (!userId) {
     throw new GraphQLError('Not authenticated', {
       extensions: { code: 'UNAUTHENTICATED' },
@@ -686,9 +688,17 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
 
   try {
     // Validate token
+    console.log('[checkInByEventQr] Validating token...');
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       select: { eventCheckinToken: true, checkinEnabled: true },
+    });
+
+    console.log('[checkInByEventQr] Event found:', { 
+      found: !!event, 
+      hasToken: !!event?.eventCheckinToken,
+      tokenMatch: event?.eventCheckinToken === token,
+      checkinEnabled: event?.checkinEnabled 
     });
 
     if (!event || event.eventCheckinToken !== token) {
@@ -698,26 +708,34 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
     }
 
     // Validate event allows check-in
+    console.log('[checkInByEventQr] Validating event config...');
     await validateEventCheckin(prisma, eventId);
 
     // Validate method is enabled
+    console.log('[checkInByEventQr] Validating method enabled...');
     await validateMethodEnabled(prisma, eventId, method);
 
     // Get member
+    console.log('[checkInByEventQr] Getting member...');
     const member = await getMemberOrThrow(prisma, eventId, userId);
+    console.log('[checkInByEventQr] Member found:', { memberId: member.id, status: member.status });
 
     // Validate member is not blocked
+    console.log('[checkInByEventQr] Validating member not blocked...');
     validateMemberCanCheckin(member, method);
 
     // Perform check-in
+    console.log('[checkInByEventQr] Performing check-in...');
     const result = await addCheckinMethod(prisma, {
       memberId: member.id,
       method,
       actorId: userId,
       source: CheckinSource.USER,
     });
+    console.log('[checkInByEventQr] Check-in result:', result);
 
     // Fetch updated member and refreshed event
+    console.log('[checkInByEventQr] Fetching updated data...');
     const [updatedMember, updatedEvent] = await Promise.all([
       prisma.eventMember.findUnique({
         where: { id: member.id },
@@ -730,6 +748,7 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
       prisma.event.findUnique({ where: { id: eventId } }),
     ]);
 
+    console.log('[checkInByEventQr] Success!');
     return {
       success: result.success,
       message: result.message,
@@ -737,6 +756,7 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
       event: updatedEvent as any, // Prisma Event → GQL via field resolver
     };
   } catch (error) {
+    console.error('[checkInByEventQr] Error:', error);
     if (error instanceof GraphQLError) {
       throw error;
     }
