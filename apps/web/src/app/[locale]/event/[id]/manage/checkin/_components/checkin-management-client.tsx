@@ -491,7 +491,7 @@ function OverviewTab({
       {/* Participants list */}
       {members.length > 0 && (
         <div className="space-y-2">
-          {members.map((member: any) => (
+          {members.map((member) => (
             <div
               key={member.id}
               className="flex items-center justify-between rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/50"
@@ -516,7 +516,8 @@ function OverviewTab({
                 {/* Member info */}
                 <div>
                   <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                    {member.user?.displayName || 'Unknown User'}
+                    {member.user?.name ??
+                      (member.user?.displayName || 'Unknown User')}
                   </div>
                   <div className="text-sm text-zinc-600 dark:text-zinc-400">
                     {member.isCheckedIn ? (

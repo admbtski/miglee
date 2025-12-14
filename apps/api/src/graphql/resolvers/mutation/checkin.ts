@@ -886,27 +886,20 @@ export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConf
         data: updateData,
       });
 
-      // Log configuration change
-      const members = await prisma.eventMember.findMany({
-        where: { eventId, status: EventMemberStatus.JOINED },
-        select: { id: true },
+      // Log configuration change (single log entry, not per member)
+      await logCheckinAction(prisma, {
+        eventId,
+        memberId: null, // Config change applies to event, not specific member
+        actorId: userId,
+        action: CheckinAction.METHODS_CHANGED,
+        method: null,
+        source: CheckinSource.MODERATOR,
+        result: CheckinResult.SUCCESS,
+        metadata: {
+          checkinEnabled: updateData.checkinEnabled,
+          enabledMethods: updateData.enabledCheckinMethods,
+        },
       });
-
-      for (const member of members) {
-        await logCheckinAction(prisma, {
-          eventId,
-          memberId: member.id,
-          actorId: userId,
-          action: CheckinAction.METHODS_CHANGED,
-          method: null,
-          source: CheckinSource.MODERATOR,
-          result: CheckinResult.SUCCESS,
-          metadata: {
-            checkinEnabled: updateData.checkinEnabled,
-            enabledMethods: updateData.enabledCheckinMethods,
-          },
-        });
-      }
 
       return event; // Cast to GraphQL Event type
     } catch (error) {

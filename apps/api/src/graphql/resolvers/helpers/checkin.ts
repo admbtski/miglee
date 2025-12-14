@@ -33,7 +33,7 @@ export interface CheckinContext {
 
 export interface CheckinLogEntry {
   eventId: string;
-  memberId: string;
+  memberId: string | null; // Null for event-level config changes
   actorId: string | null;
   action: CheckinAction;
   method: CheckinMethod | null;
@@ -273,21 +273,26 @@ export async function logCheckinAction(
   prisma: PrismaClient,
   log: CheckinLogEntry
 ): Promise<void> {
-  await prisma.eventCheckinLog.create({
-    data: {
-      eventId: log.eventId,
-      memberId: log.memberId,
-      actorId: log.actorId,
-      action: log.action,
-      method: log.method,
-      source: log.source,
-      result: log.result,
-      reason: log.reason,
-      comment: log.comment,
-      showCommentToUser: log.showCommentToUser ?? true,
-      metadata: log.metadata,
-    },
-  });
+  // Build data object conditionally based on memberId
+  const data: any = {
+    eventId: log.eventId,
+    actorId: log.actorId,
+    action: log.action,
+    method: log.method,
+    source: log.source,
+    result: log.result,
+    reason: log.reason,
+    comment: log.comment,
+    showCommentToUser: log.showCommentToUser ?? true,
+    metadata: log.metadata,
+  };
+
+  // Only include memberId if it's not null
+  if (log.memberId !== null) {
+    data.memberId = log.memberId;
+  }
+
+  await prisma.eventCheckinLog.create({ data });
 }
 
 // =============================================================================
