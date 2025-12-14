@@ -998,6 +998,14 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
       });
     }
 
+    console.log('[rotateMemberCheckinToken] Called with:', {
+      eventId,
+      memberId,
+      userId,
+      memberIdType: typeof memberId,
+      memberIdLength: memberId?.length,
+    });
+
     try {
       // Find the member
       const existingMember = await prisma.eventMember.findUnique({
@@ -1008,6 +1016,11 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
           userId: true,
           status: true,
         },
+      });
+
+      console.log('[rotateMemberCheckinToken] Member lookup result:', {
+        found: !!existingMember,
+        member: existingMember,
       });
 
       if (!existingMember) {

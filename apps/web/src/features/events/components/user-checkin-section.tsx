@@ -74,6 +74,12 @@ export function UserCheckinSection({
   }, [memberCheckinToken]);
 
   const handleGenerateQR = () => {
+    console.log('[UserCheckinSection] handleGenerateQR called', {
+      memberId,
+      eventId,
+      hasMemberId: !!memberId,
+    });
+
     if (!memberId) {
       toast.error('Cannot generate QR code', {
         description: 'Member ID is missing',
