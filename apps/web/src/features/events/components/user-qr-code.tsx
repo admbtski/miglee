@@ -129,6 +129,18 @@ export function UserQRCode({
   return (
     <>
       <div className="space-y-4">
+        {/* Development URL Display */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="rounded-xl border border-purple-200 bg-purple-50 p-3 dark:border-purple-800 dark:bg-purple-900/20">
+            <div className="mb-1 text-xs font-semibold text-purple-900 dark:text-purple-100">
+              🔧 Development - QR Code URL:
+            </div>
+            <div className="break-all text-xs font-mono text-purple-700 dark:text-purple-300">
+              {checkinUrl}
+            </div>
+          </div>
+        )}
+
         {/* QR Code Display */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex flex-col items-center">

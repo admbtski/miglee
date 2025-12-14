@@ -368,7 +368,9 @@ export function UserCheckinSection({
             {canSelfCheckin && (
               <li className="flex items-start gap-2">
                 <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-600 dark:bg-blue-400" />
-                <span>Click the &quot;I&apos;m at the event!&quot; button above</span>
+                <span>
+                  Click the &quot;I&apos;m at the event!&quot; button above
+                </span>
               </li>
             )}
             {canUseUserQR && (
