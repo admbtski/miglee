@@ -55,18 +55,19 @@ export function UserCheckinSection({
   const handleCheckin = async () => {
     try {
       const result = await checkInMutation.mutateAsync({ eventId });
-      if (result.success) {
+      if (result.checkInSelf?.success) {
         toast.success('Check-in successful!', {
-          description: result.message,
+          description: result.checkInSelf.message || undefined,
         });
       } else {
         toast.error('Check-in failed', {
-          description: result.message,
+          description: result.checkInSelf?.message || undefined,
         });
       }
     } catch (error) {
       toast.error('Check-in failed', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
       });
     }
   };
@@ -74,18 +75,19 @@ export function UserCheckinSection({
   const handleUncheck = async () => {
     try {
       const result = await uncheckInMutation.mutateAsync({ eventId });
-      if (result.success) {
+      if (result.uncheckInSelf?.success) {
         toast.success('Check-in removed', {
-          description: result.message,
+          description: result.uncheckInSelf.message || undefined,
         });
       } else {
         toast.error('Failed to remove check-in', {
-          description: result.message,
+          description: result.uncheckInSelf?.message || undefined,
         });
       }
     } catch (error) {
       toast.error('Failed to remove check-in', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
       });
     }
   };

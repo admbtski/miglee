@@ -36,9 +36,9 @@ export function EventQRCheckinClient({
   const checkInMutation = useCheckInByEventQrMutation({
     onSuccess: (data) => {
       setState('success');
-      setMessage(data?.message || 'Successfully checked in!');
-      if (data?.event?.name) {
-        setEventName(data.event.name);
+      setMessage(data?.checkInByEventQr?.message || 'Successfully checked in!');
+      if (data?.checkInByEventQr?.event?.title) {
+        setEventName(data.checkInByEventQr.event.title);
       }
     },
     onError: (error) => {

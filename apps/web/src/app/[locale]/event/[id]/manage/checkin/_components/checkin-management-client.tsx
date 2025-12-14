@@ -28,8 +28,8 @@ import {
   useCheckInMemberMutation,
   useUncheckInMemberMutation,
   useGetEventCheckinLogsQuery,
-  type CheckinMethod,
 } from '@/features/events/api/checkin';
+import { CheckinMethod } from '@/lib/api/__generated__/react-query-update';
 import { useEventMembersQuery } from '@/features/events/api/event-members';
 import { toast } from '@/lib/utils/toast-manager';
 import { EventQRCode } from '@/features/events/components/event-qr-code';
@@ -56,11 +56,15 @@ export function CheckinManagementClient() {
     data: logsData,
     isLoading: logsLoading,
     refetch: refetchLogs,
-  } = useGetEventCheckinLogsQuery({
-    eventId: event?.id || '',
-    limit: 50,
-    enabled: !!event?.id && activeTab === 'logs',
-  });
+  } = useGetEventCheckinLogsQuery(
+    {
+      eventId: event?.id ?? '',
+      limit: 50,
+    },
+    {
+      enabled: !!event?.id && activeTab === 'logs',
+    }
+  );
 
   // Mutation for updating check-in config
   const updateConfigMutation = useUpdateEventCheckinConfigMutation({
@@ -81,7 +85,7 @@ export function CheckinManagementClient() {
       refetchMembers();
       refetchLogs();
       toast.success('Member checked in', {
-        description: data?.member?.user?.displayName || 'Success',
+        description: data?.checkInMember?.member?.user?.name || 'Success',
       });
     },
     onError: (error) => {
@@ -92,12 +96,10 @@ export function CheckinManagementClient() {
   });
 
   const uncheckMutation = useUncheckInMemberMutation({
-    onSuccess: (data) => {
+    onSuccess: () => {
       refetchMembers();
       refetchLogs();
-      toast.success('Member unchecked', {
-        description: data?.member?.user?.displayName || 'Success',
-      });
+      toast.success('Member unchecked');
     },
     onError: (error) => {
       toast.error('Uncheck failed', {
@@ -191,7 +193,7 @@ export function CheckinManagementClient() {
         input: {
           eventId: event.id,
           userId,
-          method: 'MODERATOR_PANEL',
+          method: CheckinMethod.ModeratorPanel,
         },
       });
     } catch (error) {
@@ -207,7 +209,7 @@ export function CheckinManagementClient() {
         input: {
           eventId: event.id,
           userId,
-          method: 'MODERATOR_PANEL',
+          method: CheckinMethod.ModeratorPanel,
         },
       });
     } catch (error) {
@@ -326,15 +328,15 @@ export function CheckinManagementClient() {
             }
             eventCheckinToken={event.eventCheckinToken}
             eventId={event.id}
-            eventName={event.name || 'Event'}
+            eventName={event.title || 'Event'}
           />
         )}
         {activeTab === 'logs' && (
           <LogsTab
             eventId={event.id}
-            logs={logsData?.eventCheckinLogs?.items || []}
+            logs={logsData?.items || []}
             isLoading={logsLoading}
-            pageInfo={logsData?.eventCheckinLogs?.pageInfo}
+            pageInfo={logsData?.pageInfo}
           />
         )}
       </div>
