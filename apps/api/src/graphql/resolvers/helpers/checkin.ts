@@ -227,6 +227,12 @@ export async function validateModeratorAccess(
     where: { id: eventId },
     select: {
       ownerId: true,
+      members: {
+        select: {
+          role: true,
+          userId: true,
+        },
+      },
     },
   });
 

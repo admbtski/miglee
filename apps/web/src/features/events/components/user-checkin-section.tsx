@@ -57,7 +57,8 @@ export function UserCheckinSection({
     },
     onError: (error) => {
       toast.error('Failed to generate QR code', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
       });
     },
   });
@@ -66,7 +67,13 @@ export function UserCheckinSection({
   useEffect(() => {
     const canUseUserQR = checkinMethods.includes('USER_QR');
     const userId = authData?.me?.id;
-    if (canUseUserQR && !localToken && !isBlocked && userId && !rotateTokenMutation.isPending) {
+    if (
+      canUseUserQR &&
+      !localToken &&
+      !isBlocked &&
+      userId &&
+      !rotateTokenMutation.isPending
+    ) {
       rotateTokenMutation.mutate({ eventId, memberId: userId });
     }
   }, [checkinMethods, localToken, isBlocked, eventId, authData?.me?.id]);

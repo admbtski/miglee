@@ -999,8 +999,44 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
     }
 
     try {
-      // Validate moderator access
-      await validateModeratorAccess(prisma, eventId, userId);
+      // Find the member
+      const existingMember = await prisma.eventMember.findUnique({
+        where: { id: memberId },
+        select: {
+          id: true,
+          eventId: true,
+          userId: true,
+          status: true,
+        },
+      });
+
+      if (!existingMember) {
+        throw new GraphQLError('Member not found', {
+          extensions: { code: 'NOT_FOUND' },
+        });
+      }
+
+      // Verify the member belongs to this event
+      if (existingMember.eventId !== eventId) {
+        throw new GraphQLError('Member does not belong to this event', {
+          extensions: { code: 'BAD_REQUEST' },
+        });
+      }
+
+      // Check if user is rotating their own token OR is a moderator
+      const isSelfRotation = existingMember.userId === userId;
+      
+      if (!isSelfRotation) {
+        // If not self-rotation, must be moderator
+        await validateModeratorAccess(prisma, eventId, userId);
+      }
+
+      // Must be JOINED to rotate token
+      if (existingMember.status !== 'JOINED') {
+        throw new GraphQLError('Only joined members can rotate their QR token', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
 
       const member = await prisma.eventMember.update({
         where: { id: memberId },
@@ -1021,9 +1057,11 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
         actorId: userId,
         action: CheckinAction.QR_TOKEN_ROTATED,
         method: CheckinMethod.USER_QR,
-        source: CheckinSource.MODERATOR,
+        source: isSelfRotation ? CheckinSource.USER : CheckinSource.MODERATOR,
         result: CheckinResult.SUCCESS,
-        reason: 'Member QR token rotated',
+        reason: isSelfRotation
+          ? 'User rotated own QR token'
+          : 'Moderator rotated member QR token',
       });
 
       return member; // Cast to GraphQL type (field resolvers will handle missing relations)
