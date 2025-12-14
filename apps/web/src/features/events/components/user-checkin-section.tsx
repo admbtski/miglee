@@ -262,8 +262,8 @@ export function UserCheckinSection({
         </motion.div>
       )}
 
-      {/* Check-in Button */}
-      {!isCheckedIn && !isBlocked && canSelfCheckin && (
+      {/* Check-in Button - Show if SELF_MANUAL is enabled and not already used */}
+      {!hasManualCheckin && !isBlocked && canSelfCheckin && (
         <motion.button
           onClick={handleCheckin}
           disabled={isLoading}

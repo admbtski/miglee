@@ -1073,8 +1073,6 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
 
       return member; // Cast to GraphQL type (field resolvers will handle missing relations)
     } catch (error) {
-      console.log('########################');
-      console.log(error);
       if (error instanceof GraphQLError) {
         throw error;
       }

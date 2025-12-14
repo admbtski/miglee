@@ -63,6 +63,7 @@
 4. ✅ **Manual Check-in Always Available**: Moderators can add MODERATOR_PANEL method even when user is already checked in
 5. ✅ **Event Data in Mutations**: Fixed CheckInByUserQr to return event information
 6. ✅ **Navigation Fix**: Proper routing to event management root
+7. ✅ **Independent Check-in Methods**: Users can always use any enabled method, regardless of other active methods
 
 ---
 
@@ -249,10 +250,12 @@ enum CheckinResult {
 
 **Flow**:
 1. User navigates to event page
-2. Sees "I'm at the event!" button
+2. Sees "I'm at the event!" button (always visible if method enabled and not used)
 3. Clicks button → mutation: `checkInSelf(eventId)`
 4. Status updates to checked in
-5. Can remove check-in by clicking "Remove my check-in"
+5. Can remove check-in by clicking "Remove my check-in" (only removes SELF_MANUAL method)
+
+**Note**: Button is visible even if user is already checked in via other methods (e.g., MODERATOR_PANEL). This allows users to independently confirm their presence using all available methods.
 
 **Backend**:
 ```graphql
@@ -980,7 +983,21 @@ if (!member) {
    └────────────────────────────────────┘
    ```
 
-4. **Not Checked In**:
+4. **Checked In (but manual method available)**:
+   ```
+   ┌────────────────────────────────────┐
+   │ ✓ You're checked in!               │
+   │ Methods: [By Organizer]            │
+   ├────────────────────────────────────┤
+   │  ┌──────────────────────────────┐  │
+   │  │  ✓ I'm at the event!         │  │
+   │  └──────────────────────────────┘  │
+   │  (Add your own confirmation)       │
+   └────────────────────────────────────┘
+   ```
+   **Note**: User can still add SELF_MANUAL method even if checked in by moderator.
+
+5. **Not Checked In**:
    ```
    ┌────────────────────────────────────┐
    │ Your Presence                      │
