@@ -72,7 +72,7 @@ type UserReviewsResult {
 type EventCheckinLog {
   id: ID!
   eventId: ID!
-  memberId: ID! # EventMember.id
+  memberId: ID # EventMember.id - Nullable for event-level config changes
   actorId: ID # User.id who performed action
   action: CheckinAction!
   method: CheckinMethod
