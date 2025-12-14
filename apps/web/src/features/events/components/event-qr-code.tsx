@@ -73,7 +73,10 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
     console.log('[EventQRCode] handleDownloadPNG called', { eventId });
     const svg = document.getElementById(`qr-code-${eventId}`);
     if (!svg) {
-      console.error('[EventQRCode] SVG element not found!', `qr-code-${eventId}`);
+      console.error(
+        '[EventQRCode] SVG element not found!',
+        `qr-code-${eventId}`
+      );
       toast.error('Failed to find QR code element');
       return;
     }
@@ -177,6 +180,7 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
+              console.log('adam');
               console.log('[EventQRCode] Full Screen button clicked');
               setIsFullScreen(true);
             }}

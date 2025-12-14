@@ -32,6 +32,7 @@ import {
 } from '@/features/events/api/checkin';
 import { useEventMembersQuery } from '@/features/events/api/event-members';
 import { toast } from '@/lib/utils/toast-manager';
+import { EventQRCode } from '@/features/events/components/event-qr-code';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
@@ -324,6 +325,8 @@ export function CheckinManagementClient() {
               (event.enabledCheckinMethods || []) as CheckinMethod[]
             }
             eventCheckinToken={event.eventCheckinToken}
+            eventId={event.id}
+            eventName={event.name || 'Event'}
           />
         )}
         {activeTab === 'logs' && (
@@ -781,12 +784,16 @@ interface QrTabProps {
   checkinEnabled: boolean;
   enabledMethods: CheckinMethod[];
   eventCheckinToken: string | null | undefined;
+  eventId: string;
+  eventName: string;
 }
 
 function QrTab({
   checkinEnabled,
   enabledMethods,
   eventCheckinToken,
+  eventId,
+  eventName,
 }: QrTabProps) {
   return (
     <div className="space-y-6">
@@ -811,35 +818,11 @@ function QrTab({
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* QR Code Display */}
-          <div className="flex flex-col items-center justify-center rounded-xl bg-zinc-50 py-12 dark:bg-zinc-900/50">
-            <div className="rounded-lg border-2 border-dashed border-zinc-300 bg-white p-8 dark:border-zinc-700 dark:bg-zinc-800">
-              <QrCode className="h-48 w-48 text-zinc-400" />
-            </div>
-            <p className="mt-4 font-mono text-xs text-zinc-500">
-              {eventCheckinToken
-                ? `Token: ${eventCheckinToken.slice(0, 12)}...`
-                : 'No token'}
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2">
-            <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
-              Full Screen
-            </button>
-            <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
-              Download PNG
-            </button>
-            <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
-              Download PDF
-            </button>
-            <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
-              Rotate Token
-            </button>
-          </div>
-        </div>
+        <EventQRCode
+          eventId={eventId}
+          token={eventCheckinToken || null}
+          eventName={eventName}
+        />
       )}
     </div>
   );
