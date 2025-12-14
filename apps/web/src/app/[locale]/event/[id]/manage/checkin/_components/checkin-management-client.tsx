@@ -529,7 +529,9 @@ function OverviewTab({
   };
 
   // Format check-in methods for display
-  const formatCheckinMethods = (methods: string[] | null | undefined): string => {
+  const formatCheckinMethods = (
+    methods: string[] | null | undefined
+  ): string => {
     if (!methods || methods.length === 0) return '-';
     return methods
       .map((method) => {
@@ -571,7 +573,9 @@ function OverviewTab({
       const rows = members.map((member) => {
         const row: string[] = [];
         if (exportConfig.name)
-          row.push(member.user?.name || member.user?.profile?.displayName || 'Unknown');
+          row.push(
+            member.user?.name || member.user?.profile?.displayName || 'Unknown'
+          );
         if (exportConfig.email) row.push(member.user?.email || '-');
         if (exportConfig.username) row.push(member.user?.username || '-');
         if (exportConfig.role) row.push(member.role || '-');
@@ -1265,8 +1269,11 @@ function QrTab({
   eventId,
   eventName,
 }: QrTabProps) {
+  const isQrEnabled = checkinEnabled && enabledMethods.includes('EVENT_QR' as CheckinMethod);
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
           Event QR Code
@@ -1276,23 +1283,76 @@ function QrTab({
         </p>
       </div>
 
-      {!checkinEnabled ||
-      !enabledMethods.includes('EVENT_QR' as CheckinMethod) ? (
-        <div className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
-          <QrCode className="mx-auto h-12 w-12 text-zinc-400" />
-          <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            QR Code not enabled
-          </h3>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Enable "Event QR Code" method in settings to use this feature
-          </p>
+      {/* Not enabled state */}
+      {!isQrEnabled ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800/50 dark:bg-amber-900/20">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <div className="text-base font-semibold text-amber-900 dark:text-amber-100">
+                Event QR Code Not Enabled
+              </div>
+              <div className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                {!checkinEnabled ? (
+                  <>
+                    Check-in is currently disabled for this event. Enable it in the{' '}
+                    <span className="font-medium">Settings</span> tab to use QR codes.
+                  </>
+                ) : (
+                  <>
+                    The "Event QR Code" method is not enabled. Go to the{' '}
+                    <span className="font-medium">Settings</span> tab and enable it to
+                    generate a QR code.
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
-        <EventQRCode
-          eventId={eventId}
-          token={eventCheckinToken || null}
-          eventName={eventName}
-        />
+        /* QR Code Card */
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="space-y-6">
+            {/* Info Card */}
+            <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800/50 dark:bg-indigo-900/20">
+              <div className="flex items-start gap-3">
+                <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-600 dark:text-indigo-400" />
+                <div className="text-sm text-indigo-900 dark:text-indigo-100">
+                  <div className="font-medium">How it works</div>
+                  <div className="mt-1 text-indigo-700 dark:text-indigo-300">
+                    Display this QR code at your event entrance. Attendees scan it with
+                    their phone to automatically check in.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* QR Code Component */}
+            <EventQRCode
+              eventId={eventId}
+              token={eventCheckinToken || null}
+              eventName={eventName}
+            />
+
+            {/* Security Notice */}
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+              <div className="flex items-start gap-3">
+                <Shield className="mt-0.5 h-4 w-4 flex-shrink-0 text-zinc-600 dark:text-zinc-400" />
+                <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                    Security Tip
+                  </div>
+                  <div className="mt-1">
+                    This QR code is shared by all attendees. If compromised, you can
+                    generate a new one using the "Rotate Token" button above.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
