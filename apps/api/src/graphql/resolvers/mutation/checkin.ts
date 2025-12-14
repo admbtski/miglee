@@ -990,7 +990,11 @@ export const rotateEventCheckinToken: MutationResolvers['rotateEventCheckinToken
   };
 
 export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinToken'] =
-  async (_, { eventId, userId: targetUserId }, { prisma, userId }): Promise<any> => {
+  async (
+    _,
+    { eventId, userId: targetUserId },
+    { prisma, userId }
+  ): Promise<any> => {
     // Field resolvers handle EventMember conversion
     if (!userId) {
       throw new GraphQLError('Not authenticated', {
@@ -1014,6 +1018,8 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
           status: true,
         },
       });
+
+      console.dir({ existingMember });
 
       if (!existingMember) {
         throw new GraphQLError('Member not found', {
@@ -1067,6 +1073,8 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
 
       return member; // Cast to GraphQL type (field resolvers will handle missing relations)
     } catch (error) {
+      console.log('########################');
+      console.log(error);
       if (error instanceof GraphQLError) {
         throw error;
       }
