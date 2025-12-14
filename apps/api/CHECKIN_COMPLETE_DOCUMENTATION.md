@@ -34,13 +34,13 @@
 
 **Overall Progress**: 100% Complete ✅
 
-| Component | Status | Progress |
-|-----------|--------|----------|
-| Backend API | ✅ Complete | 100% |
-| Frontend UI | ✅ Complete | 100% |
-| QR Codes | ✅ Complete | 100% |
-| Integration | ✅ Complete | 100% |
-| Documentation | ✅ Complete | 100% |
+| Component     | Status      | Progress |
+| ------------- | ----------- | -------- |
+| Backend API   | ✅ Complete | 100%     |
+| Frontend UI   | ✅ Complete | 100%     |
+| QR Codes      | ✅ Complete | 100%     |
+| Integration   | ✅ Complete | 100%     |
+| Documentation | ✅ Complete | 100%     |
 
 ### Key Features
 
@@ -83,12 +83,12 @@ The Check-in & Presence System allows event organizers to track attendee presenc
 
 ### User Roles
 
-| Role | Permissions |
-|------|-------------|
-| **OWNER** | Full access: configure, check-in, block, reject, view logs |
-| **MODERATOR** | Full access: check-in, block, reject, view logs |
+| Role              | Permissions                                                   |
+| ----------------- | ------------------------------------------------------------- |
+| **OWNER**         | Full access: configure, check-in, block, reject, view logs    |
+| **MODERATOR**     | Full access: check-in, block, reject, view logs               |
 | **JOINED Member** | Limited: self check-in, view own status, generate personal QR |
-| **Non-JOINED** | No access to check-in features |
+| **Non-JOINED**    | No access to check-in features                                |
 
 ---
 
@@ -142,12 +142,12 @@ The Check-in & Presence System allows event organizers to track attendee presenc
 ```prisma
 model Event {
   // ... existing fields
-  
+
   // Check-in Configuration
   checkinEnabled           Boolean           @default(false)
   enabledCheckinMethods    CheckinMethod[]   @default([])
   eventCheckinToken        String?           @unique
-  
+
   // Relations
   checkinLogs              EventCheckinLog[]
 }
@@ -158,17 +158,17 @@ model Event {
 ```prisma
 model EventMember {
   // ... existing fields
-  
+
   // Check-in State
   isCheckedIn              Boolean           @default(false)
   checkinMethods           CheckinMethod[]   @default([])
   lastCheckinAt            DateTime?
   memberCheckinToken       String?           @unique
-  
+
   // Blocking
   checkinBlockedAll        Boolean           @default(false)
   checkinBlockedMethods    CheckinMethod[]   @default([])
-  
+
   // Rejection Tracking
   lastCheckinRejectionReason       String?
   lastCheckinRejectedAt            DateTime?
@@ -192,12 +192,12 @@ model EventCheckinLog {
   reason      String?
   comment     String?
   createdAt   DateTime        @default(now())
-  
+
   // Relations
   intent      Event           @relation(...)
   member      EventMember?    @relation(...)
   actor       User            @relation(...)
-  
+
   @@index([intentId, createdAt])
 }
 ```
@@ -249,6 +249,7 @@ enum CheckinResult {
 **Use Case**: Simple self-reported attendance, trust-based system.
 
 **Flow**:
+
 1. User navigates to event page
 2. Sees "I'm at the event!" button (always visible if method enabled and not used)
 3. Clicks button → mutation: `checkInSelf(eventId)`
@@ -258,6 +259,7 @@ enum CheckinResult {
 **Note**: Button is visible even if user is already checked in via other methods (e.g., MODERATOR_PANEL). This allows users to independently confirm their presence using all available methods.
 
 **Backend**:
+
 ```graphql
 mutation CheckInSelf($eventId: ID!) {
   checkInSelf(eventId: $eventId) {
@@ -273,11 +275,12 @@ mutation CheckInSelf($eventId: ID!) {
 ```
 
 **Frontend Hook**:
+
 ```typescript
 const checkInMutation = useCheckInSelfMutation({
   onSuccess: () => {
     toast.success('Checked in successfully!');
-  }
+  },
 });
 
 checkInMutation.mutate({ eventId });
@@ -292,6 +295,7 @@ checkInMutation.mutate({ eventId });
 **Use Case**: Door check-in, manual verification, controlled access.
 
 **Flow**:
+
 1. Moderator goes to `/event/[id]/manage/checkin`
 2. Views participant list
 3. Clicks "Check In" button next to participant
@@ -299,6 +303,7 @@ checkInMutation.mutate({ eventId });
 5. Participant status updates
 
 **Backend**:
+
 ```graphql
 mutation CheckInMember($input: CheckInMemberInput!) {
   checkInMember(input: $input) {
@@ -323,12 +328,13 @@ input CheckInMemberInput {
 ```
 
 **Frontend**:
+
 ```typescript
 const checkInMutation = useCheckInMemberMutation({
   onSuccess: (data) => {
     toast.success(`${data.checkInMember.member.user.name} checked in!`);
     refetchMembers();
-  }
+  },
 });
 
 checkInMutation.mutate({
@@ -336,7 +342,7 @@ checkInMutation.mutate({
     eventId,
     userId: member.userId,
     method: 'MODERATOR_PANEL',
-  }
+  },
 });
 ```
 
@@ -351,6 +357,7 @@ checkInMutation.mutate({
 **Use Case**: Self-service entrance, large events, quick check-in.
 
 **Flow**:
+
 1. Organizer generates event QR code in management panel
 2. QR code is displayed at event entrance (poster, screen, etc.)
 3. User scans QR code → opens URL: `/checkin/event/[id]?token=...`
@@ -358,6 +365,7 @@ checkInMutation.mutate({
 5. Success message shown
 
 **Backend**:
+
 ```graphql
 mutation CheckInByEventQr($eventId: ID!, $token: String!) {
   checkInByEventQr(eventId: $eventId, token: $token) {
@@ -378,6 +386,7 @@ mutation CheckInByEventQr($eventId: ID!, $token: String!) {
 ```
 
 **QR Code Display**:
+
 ```tsx
 <EventQRCode
   eventId={event.id}
@@ -387,6 +396,7 @@ mutation CheckInByEventQr($eventId: ID!, $token: String!) {
 ```
 
 **Token Security**:
+
 - 256-bit random token
 - Unique per event
 - Can be rotated anytime
@@ -401,6 +411,7 @@ mutation CheckInByEventQr($eventId: ID!, $token: String!) {
 **Use Case**: Ticket verification, controlled access, security events.
 
 **Flow**:
+
 1. User generates personal QR code in event page
 2. User shows QR code to staff at entrance
 3. Moderator scans QR → opens URL: `/checkin/user?token=...`
@@ -409,6 +420,7 @@ mutation CheckInByEventQr($eventId: ID!, $token: String!) {
 6. Success message shown with user name
 
 **Backend**:
+
 ```graphql
 mutation CheckInByUserQr($token: String!) {
   checkInByUserQr(token: $token) {
@@ -431,6 +443,7 @@ mutation CheckInByUserQr($token: String!) {
 ```
 
 **User QR Display**:
+
 ```tsx
 <UserQRCode
   eventId={event.id}
@@ -443,6 +456,7 @@ mutation CheckInByUserQr($token: String!) {
 ```
 
 **Recent Implementation** (December 11, 2025):
+
 - ✅ Complete page at `/checkin/user`
 - ✅ Auto-triggers check-in on page load
 - ✅ Shows participant name, event name, check-in time
@@ -451,6 +465,7 @@ mutation CheckInByUserQr($token: String!) {
 - ✅ Mobile responsive
 
 **Token Security**:
+
 - 256-bit random token per member
 - Unique per event membership
 - Can be rotated anytime
@@ -502,7 +517,9 @@ mutation CheckInMember($input: CheckInMemberInput!) {
     member {
       isCheckedIn
       checkinMethods
-      user { name }
+      user {
+        name
+      }
     }
   }
 }
@@ -529,7 +546,7 @@ mutation UncheckInMember($input: UncheckInMemberInput!) {
 input UncheckInMemberInput {
   eventId: ID!
   userId: ID!
-  method: CheckinMethod!  # NEW: Can remove specific method
+  method: CheckinMethod! # NEW: Can remove specific method
 }
 ```
 
@@ -553,10 +570,10 @@ mutation RejectMemberCheckin($input: RejectMemberCheckinInput!) {
 input RejectMemberCheckinInput {
   eventId: ID!
   userId: ID!
-  reason: String              # Optional rejection reason
-  showReasonToUser: Boolean   # Default: true
-  blockMethod: CheckinMethod  # Optional: block this method
-  blockAll: Boolean           # Optional: block all methods
+  reason: String # Optional rejection reason
+  showReasonToUser: Boolean # Default: true
+  blockMethod: CheckinMethod # Optional: block this method
+  blockAll: Boolean # Optional: block all methods
 }
 
 # Block check-in methods
@@ -574,8 +591,8 @@ mutation BlockMemberCheckin($input: BlockMemberCheckinInput!) {
 input BlockMemberCheckinInput {
   eventId: ID!
   userId: ID!
-  method: CheckinMethod  # Specific method to block
-  blockAll: Boolean      # Or block all methods
+  method: CheckinMethod # Specific method to block
+  blockAll: Boolean # Or block all methods
   reason: String
 }
 
@@ -590,8 +607,8 @@ mutation UnblockMemberCheckin($input: UnblockMemberCheckinInput!) {
 input UnblockMemberCheckinInput {
   eventId: ID!
   userId: ID!
-  method: CheckinMethod  # Specific method to unblock
-  unblockAll: Boolean    # Or unblock all methods
+  method: CheckinMethod # Specific method to unblock
+  unblockAll: Boolean # Or unblock all methods
 }
 ```
 
@@ -603,8 +620,13 @@ mutation CheckInByEventQr($eventId: ID!, $token: String!) {
   checkInByEventQr(eventId: $eventId, token: $token) {
     success
     message
-    member { isCheckedIn }
-    event { id, title }
+    member {
+      isCheckedIn
+    }
+    event {
+      id
+      title
+    }
   }
 }
 
@@ -616,7 +638,10 @@ mutation CheckInByUserQr($token: String!) {
     member {
       id
       isCheckedIn
-      user { id, name }
+      user {
+        id
+        name
+      }
     }
     event {
       id
@@ -756,27 +781,27 @@ All hooks are generated from GraphQL operations:
 
 ```typescript
 // User hooks
-useCheckInSelfMutation()
-useUncheckInSelfMutation()
+useCheckInSelfMutation();
+useUncheckInSelfMutation();
 
 // Moderator hooks
-useCheckInMemberMutation()
-useUncheckInMemberMutation()
-useRejectMemberCheckinMutation()
-useBlockMemberCheckinMutation()
-useUnblockMemberCheckinMutation()
+useCheckInMemberMutation();
+useUncheckInMemberMutation();
+useRejectMemberCheckinMutation();
+useBlockMemberCheckinMutation();
+useUnblockMemberCheckinMutation();
 
 // QR hooks
-useCheckInByEventQrMutation()
-useCheckInByUserQrMutation()
+useCheckInByEventQrMutation();
+useCheckInByUserQrMutation();
 
 // Config hooks
-useUpdateEventCheckinConfigMutation()
-useRotateEventCheckinTokenMutation()
-useRotateMemberCheckinTokenMutation()
+useUpdateEventCheckinConfigMutation();
+useRotateEventCheckinTokenMutation();
+useRotateMemberCheckinTokenMutation();
 
 // Query hooks
-useGetEventCheckinLogsQuery()
+useGetEventCheckinLogsQuery();
 ```
 
 ### Component Integration
@@ -802,6 +827,7 @@ Location: `apps/web/src/features/events/components/user-checkin-section.tsx`
 ```
 
 **Features**:
+
 - ✅ Manual check-in button ("I'm at the event!")
 - ✅ Remove check-in option
 - ✅ Blocked status card (red)
@@ -820,12 +846,14 @@ Location: `apps/web/src/app/[locale]/event/[id]/manage/checkin/page.tsx`
 ```
 
 **Tabs**:
+
 1. **Overview** - Participant list with check-in controls
 2. **Settings** - Enable/disable check-in, method selection
 3. **QR Code** - Event QR display, download, rotate
 4. **Activity Log** - Audit trail with filters
 
 **Features**:
+
 - ✅ Statistics cards (total, checked in, percentage)
 - ✅ Participant list with filters
 - ✅ Check-in / Uncheck buttons (always available)
@@ -846,9 +874,10 @@ Location: `apps/web/src/app/[locale]/event/[id]/manage/checkin/page.tsx`
 ### Permission Checks
 
 **Backend** (`validateModeratorAccess`):
+
 ```typescript
 const member = await prisma.eventMember.findUnique({
-  where: { eventId_userId: { eventId, userId } }
+  where: { eventId_userId: { eventId, userId } },
 });
 
 if (member.role !== 'OWNER' && member.role !== 'MODERATOR') {
@@ -857,6 +886,7 @@ if (member.role !== 'OWNER' && member.role !== 'MODERATOR') {
 ```
 
 **Applied to**:
+
 - ✅ `checkInMember`
 - ✅ `uncheckInMember`
 - ✅ `rejectMemberCheckin`
@@ -892,12 +922,14 @@ if (member.role !== 'OWNER' && member.role !== 'MODERATOR') {
 ### QR Token Security
 
 **Event QR Token**:
+
 - 256-bit random token (32 bytes, base64url encoded)
 - Stored in `Event.eventCheckinToken`
 - Unique constraint in database
 - Can be rotated anytime (invalidates old QR)
 
 **User QR Token**:
+
 - 256-bit random token per member
 - Stored in `EventMember.memberCheckinToken`
 - Unique constraint in database
@@ -905,6 +937,7 @@ if (member.role !== 'OWNER' && member.role !== 'MODERATOR') {
 - Can be rotated anytime
 
 **Token Generation**:
+
 ```typescript
 import { randomBytes } from 'crypto';
 
@@ -912,10 +945,11 @@ const token = randomBytes(32).toString('base64url');
 ```
 
 **Validation**:
+
 ```typescript
 // Event QR
 const event = await prisma.event.findUnique({
-  where: { id: eventId }
+  where: { id: eventId },
 });
 
 if (event.eventCheckinToken !== token) {
@@ -924,7 +958,7 @@ if (event.eventCheckinToken !== token) {
 
 // User QR
 const member = await prisma.eventMember.findFirst({
-  where: { memberCheckinToken: token }
+  where: { memberCheckinToken: token },
 });
 
 if (!member) {
@@ -943,6 +977,7 @@ if (!member) {
 **States**:
 
 1. **Blocked (Red Card)**:
+
    ```
    ┌────────────────────────────────────┐
    │ ❌ Check-in Blocked                │
@@ -956,6 +991,7 @@ if (!member) {
    ```
 
 2. **Rejected (Amber Card)**:
+
    ```
    ┌────────────────────────────────────┐
    │ ⚠️  Previous Check-in Rejected     │
@@ -970,6 +1006,7 @@ if (!member) {
    ```
 
 3. **Checked In (Green Card)**:
+
    ```
    ┌────────────────────────────────────┐
    │ ✓ You're checked in!               │
@@ -984,6 +1021,7 @@ if (!member) {
    ```
 
 4. **Checked In (but manual method available)**:
+
    ```
    ┌────────────────────────────────────┐
    │ ✓ You're checked in!               │
@@ -995,6 +1033,7 @@ if (!member) {
    │  (Add your own confirmation)       │
    └────────────────────────────────────┘
    ```
+
    **Note**: User can still add SELF_MANUAL method even if checked in by moderator.
 
 5. **Not Checked In**:
@@ -1019,6 +1058,7 @@ if (!member) {
    ```
 
 **Mobile Responsive** (NEW):
+
 - Vertical stacking on mobile (< 640px)
 - Full-width buttons for easy tapping
 - Proper text wrapping
@@ -1058,23 +1098,27 @@ if (!member) {
 ```
 
 **Method Icons**:
+
 - 📱 SELF_MANUAL - User clicked "I'm here"
 - 🛡️ MODERATOR_PANEL - Staff manual check-in
 - 📷 EVENT_QR - Event entrance QR scan
 - 👤 USER_QR - Personal QR code scan
 
 **Method States**:
+
 - ✅ Green = Active (user checked in via this method)
 - ⭕ Gray = Inactive (method not used)
 - 🚫 Red badge = Blocked (method blocked for this user)
 
 **Actions**:
+
 - **[⋮] Three-dot menu**: Member actions (block all, unblock all)
 - **[Check In]** button: Always visible (adds MODERATOR_PANEL method)
 - **[Uncheck]** button: Only visible if MODERATOR_PANEL is active
 - **Hover on method icon**: Method actions dropdown appears (NEW)
 
 **Method Actions Dropdown** (NEW):
+
 ```
 Hover on active method icon → 3-dot menu appears:
 ┌─────────────────────────────┐
@@ -1209,6 +1253,7 @@ Hover on active method icon → 3-dot menu appears:
 ```
 
 **Features**:
+
 - ✅ Optional reason textarea (4 rows, 500 chars max)
 - ✅ "Show reason to user" checkbox (default: true)
 - ✅ Radio options for blocking:
@@ -1234,6 +1279,7 @@ Hover on active method icon → 3-dot menu appears:
 ```
 
 **Features**:
+
 - ✅ QR code rendering (qrcode.react)
 - ✅ Event name display
 - ✅ Full-screen modal
@@ -1257,6 +1303,7 @@ Hover on active method icon → 3-dot menu appears:
 ```
 
 **Features**:
+
 - ✅ Personal QR code rendering
 - ✅ User name + event name display
 - ✅ Full-screen modal
@@ -1302,19 +1349,23 @@ Both pages auto-trigger check-in mutations on load.
 
 ```tsx
 // Blocked All
-{member.checkinBlockedAll && (
-  <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-    <Ban className="h-5 w-5 text-red-600" />
-    <div>All check-in methods blocked</div>
-  </div>
-)}
+{
+  member.checkinBlockedAll && (
+    <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+      <Ban className="h-5 w-5 text-red-600" />
+      <div>All check-in methods blocked</div>
+    </div>
+  );
+}
 
 // Blocked Methods
-{member.checkinBlockedMethods?.length > 0 && (
-  <div className="text-sm">
-    Blocked methods: {member.checkinBlockedMethods.map(getLabel).join(', ')}
-  </div>
-)}
+{
+  member.checkinBlockedMethods?.length > 0 && (
+    <div className="text-sm">
+      Blocked methods: {member.checkinBlockedMethods.map(getLabel).join(', ')}
+    </div>
+  );
+}
 ```
 
 **Backend Logic**:
@@ -1347,6 +1398,7 @@ function validateMemberCanCheckin(member: EventMember, method: CheckinMethod) {
    - Reject check-in → select "Block this method" or "Block all"
 
 **Unblock**:
+
 - Same menus have "Unblock" options
 - Unblocking all removes all blocks
 - Unblocking specific method removes from array
@@ -1368,7 +1420,9 @@ mutation RejectMemberCheckin($input: RejectMemberCheckinInput!) {
       isCheckedIn
       lastCheckinRejectionReason
       lastCheckinRejectedAt
-      lastCheckinRejectedBy { name }
+      lastCheckinRejectedBy {
+        name
+      }
     }
   }
 }
@@ -1376,14 +1430,15 @@ mutation RejectMemberCheckin($input: RejectMemberCheckinInput!) {
 input RejectMemberCheckinInput {
   eventId: ID!
   userId: ID!
-  reason: String              # Optional, stored in lastCheckinRejectionReason
-  showReasonToUser: Boolean   # Default: true
-  blockMethod: CheckinMethod  # Optional: block this specific method
-  blockAll: Boolean           # Optional: block all methods
+  reason: String # Optional, stored in lastCheckinRejectionReason
+  showReasonToUser: Boolean # Default: true
+  blockMethod: CheckinMethod # Optional: block this specific method
+  blockAll: Boolean # Optional: block all methods
 }
 ```
 
 **What Happens**:
+
 1. Removes ALL active check-in methods
 2. Sets `isCheckedIn = false`
 3. Stores rejection reason & timestamp
@@ -1395,24 +1450,26 @@ input RejectMemberCheckinInput {
 **User View**:
 
 ```tsx
-{rejectionReason && !isCheckedIn && (
-  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-    <AlertTriangle className="h-5 w-5 text-amber-600" />
-    <div>
-      <div className="font-semibold">Previous Check-in Rejected</div>
-      <div className="mt-3 rounded-lg bg-amber-100 p-3">
-        <div className="text-xs font-medium mb-1">Reason:</div>
-        <div className="text-sm italic">{rejectionReason}</div>
-      </div>
-      {lastCheckinRejectedAt && (
-        <div className="text-xs mt-2">
-          Rejected {new Date(lastCheckinRejectedAt).toLocaleString()}
-          {lastCheckinRejectedBy && ` by ${lastCheckinRejectedBy.name}`}
+{
+  rejectionReason && !isCheckedIn && (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+      <AlertTriangle className="h-5 w-5 text-amber-600" />
+      <div>
+        <div className="font-semibold">Previous Check-in Rejected</div>
+        <div className="mt-3 rounded-lg bg-amber-100 p-3">
+          <div className="text-xs font-medium mb-1">Reason:</div>
+          <div className="text-sm italic">{rejectionReason}</div>
         </div>
-      )}
+        {lastCheckinRejectedAt && (
+          <div className="text-xs mt-2">
+            Rejected {new Date(lastCheckinRejectedAt).toLocaleString()}
+            {lastCheckinRejectedBy && ` by ${lastCheckinRejectedBy.name}`}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-)}
+  );
+}
 ```
 
 ---
@@ -1436,30 +1493,30 @@ model EventCheckinLog {
   reason      String?         // Optional reason for rejection/block
   comment     String?         // Optional comment
   createdAt   DateTime        @default(now())
-  
+
   // Relations
   intent      Event           @relation(fields: [intentId], references: [id], onDelete: Cascade)
   member      EventMember?    @relation(fields: [memberId], references: [id], onDelete: SetNull)
   actor       User            @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  
+
   @@index([intentId, createdAt])
 }
 ```
 
 ### Actions Logged
 
-| Action | When | Actor | Source |
-|--------|------|-------|--------|
-| CHECK_IN | User/moderator checks in | User or Moderator | USER or MODERATOR |
-| UNCHECK | Check-in removed | User or Moderator | USER or MODERATOR |
-| REJECT | Check-in rejected | Moderator | MODERATOR |
-| BLOCK_ALL | All methods blocked | Moderator | MODERATOR |
-| BLOCK_METHOD | Specific method blocked | Moderator | MODERATOR |
-| UNBLOCK_ALL | All methods unblocked | Moderator | MODERATOR |
-| UNBLOCK_METHOD | Specific method unblocked | Moderator | MODERATOR |
-| CONFIG_UPDATED | Settings changed | Moderator | MODERATOR |
-| QR_TOKEN_ROTATED | Token regenerated | User or Moderator | USER or MODERATOR |
-| METHODS_CHANGED | Enabled methods updated | Moderator | MODERATOR |
+| Action           | When                      | Actor             | Source            |
+| ---------------- | ------------------------- | ----------------- | ----------------- |
+| CHECK_IN         | User/moderator checks in  | User or Moderator | USER or MODERATOR |
+| UNCHECK          | Check-in removed          | User or Moderator | USER or MODERATOR |
+| REJECT           | Check-in rejected         | Moderator         | MODERATOR         |
+| BLOCK_ALL        | All methods blocked       | Moderator         | MODERATOR         |
+| BLOCK_METHOD     | Specific method blocked   | Moderator         | MODERATOR         |
+| UNBLOCK_ALL      | All methods unblocked     | Moderator         | MODERATOR         |
+| UNBLOCK_METHOD   | Specific method unblocked | Moderator         | MODERATOR         |
+| CONFIG_UPDATED   | Settings changed          | Moderator         | MODERATOR         |
+| QR_TOKEN_ROTATED | Token regenerated         | User or Moderator | USER or MODERATOR |
+| METHODS_CHANGED  | Enabled methods updated   | Moderator         | MODERATOR         |
 
 ### Logging Function
 
@@ -1512,7 +1569,7 @@ const { data: logsData } = useGetEventCheckinLogsQuery({
   limit: 50,
   offset: 0,
   action: 'CHECK_IN', // Optional filter
-  method: 'USER_QR',  // Optional filter
+  method: 'USER_QR', // Optional filter
 });
 
 const logs = logsData?.eventCheckinLogs?.items || [];
@@ -1538,6 +1595,7 @@ pnpm gql:gen --force
 ```
 
 This generates:
+
 - Backend: `apps/api/src/graphql/__generated__/resolvers-types.ts`
 - Frontend: `apps/web/src/lib/api/__generated__/react-query-update.ts`
 
@@ -1569,21 +1627,23 @@ updateConfig.mutate({
 import { UserCheckinSection } from './user-checkin-section';
 
 // Inside component:
-{membership && event.checkinEnabled && (
-  <UserCheckinSection
-    eventId={event.id}
-    userId={currentUserId}
-    isJoined={membership.status === 'JOINED'}
-    checkinEnabled={event.checkinEnabled}
-    checkinMethods={event.enabledCheckinMethods}
-    isCheckedIn={membership.isCheckedIn}
-    userCheckinMethods={membership.checkinMethods}
-    isBlocked={membership.checkinBlockedAll}
-    rejectionReason={membership.lastCheckinRejectionReason}
-    memberCheckinToken={membership.memberCheckinToken}
-    eventName={event.title}
-  />
-)}
+{
+  membership && event.checkinEnabled && (
+    <UserCheckinSection
+      eventId={event.id}
+      userId={currentUserId}
+      isJoined={membership.status === 'JOINED'}
+      checkinEnabled={event.checkinEnabled}
+      checkinMethods={event.enabledCheckinMethods}
+      isCheckedIn={membership.isCheckedIn}
+      userCheckinMethods={membership.checkinMethods}
+      isBlocked={membership.checkinBlockedAll}
+      rejectionReason={membership.lastCheckinRejectionReason}
+      memberCheckinToken={membership.memberCheckinToken}
+      eventName={event.title}
+    />
+  );
+}
 ```
 
 ### Step 5: Add Link to Management Panel
@@ -1630,6 +1690,7 @@ Already added to event management sidebar:
 ### Manual Testing Checklist
 
 #### User Actions
+
 - [ ] User can check in via "I'm at the event!" button
 - [ ] User can remove their check-in
 - [ ] User can generate personal QR code
@@ -1639,6 +1700,7 @@ Already added to event management sidebar:
 - [ ] Checked-in status displays correctly with methods
 
 #### Moderator Actions
+
 - [ ] Can enable/disable check-in
 - [ ] Can select/deselect methods
 - [ ] Can check in members from list
@@ -1651,6 +1713,7 @@ Already added to event management sidebar:
 - [ ] Always can add MODERATOR_PANEL method (NEW)
 
 #### QR Code Flow
+
 - [ ] Event QR displays correctly
 - [ ] Event QR can be downloaded (PNG/PDF)
 - [ ] Event QR token can be rotated
@@ -1663,6 +1726,7 @@ Already added to event management sidebar:
 - [ ] Scanning user QR checks in by moderator (checkin/user page) (NEW)
 
 #### Blocking & Rejection
+
 - [ ] Blocked user cannot check in
 - [ ] Blocked method shows ban badge
 - [ ] Rejected user sees reason
@@ -1670,6 +1734,7 @@ Already added to event management sidebar:
 - [ ] Can reject and block simultaneously
 
 #### Audit Trail
+
 - [ ] All actions logged correctly
 - [ ] Logs show actor name
 - [ ] Logs show timestamp
@@ -1677,6 +1742,7 @@ Already added to event management sidebar:
 - [ ] CSV export works
 
 #### Edge Cases
+
 - [ ] Duplicate check-in (same method) = NOOP
 - [ ] Check-in when blocked = denied
 - [ ] Check-in when not JOINED = denied
@@ -1685,6 +1751,7 @@ Already added to event management sidebar:
 - [ ] Non-moderator scanning user QR = error
 
 #### Mobile & Responsive (NEW)
+
 - [ ] User check-in section responsive on mobile
 - [ ] Buttons full-width on mobile
 - [ ] Text wraps properly
@@ -1735,12 +1802,14 @@ NEXT_PUBLIC_API_URL="https://api.miglee.com/graphql"
 ### Deployment Steps
 
 1. **Database**:
+
    ```bash
    cd apps/api
    pnpm prisma migrate deploy
    ```
 
 2. **Backend**:
+
    ```bash
    cd apps/api
    pnpm build
@@ -1773,6 +1842,7 @@ NEXT_PUBLIC_API_URL="https://api.miglee.com/graphql"
 **Problem**: Frontend was passing `userId` as `memberId` parameter.
 
 **Solution** (December 11, 2025):
+
 - Changed GraphQL schema parameter from `memberId` to `userId`
 - Updated backend to use `eventId_userId` composite key lookup
 - Regenerated types with `pnpm gql:gen --force`
@@ -1796,6 +1866,7 @@ mutation RotateMemberCheckinToken($eventId: ID!, $userId: ID!) {
 **Problem**: Component state not updated after mutation.
 
 **Solution**:
+
 - Added `onTokenRotated` callback prop to UserQRCode
 - Parent component updates local state when callback fires
 - Component re-renders with new token
@@ -1814,21 +1885,22 @@ mutation RotateMemberCheckinToken($eventId: ID!, $userId: ID!) {
 **Problem**: UI logic showed Uncheck button only when `isCheckedIn = true`.
 
 **Solution** (December 11, 2025):
+
 - Always show Check In button (adds MODERATOR_PANEL method)
 - Show Uncheck button only if MODERATOR_PANEL is active
 - Allow multiple methods simultaneously
 
 ```tsx
 // Before (wrong)
-{member.isCheckedIn ? (
-  <button>Uncheck</button>
-) : (
-  <button>Check In</button>
-)}
+{
+  member.isCheckedIn ? <button>Uncheck</button> : <button>Check In</button>;
+}
 
 // After (correct)
-<button disabled={hasModeratorPanel}>Check In</button>
-{hasModeratorPanel && <button>Uncheck</button>}
+<button disabled={hasModeratorPanel}>Check In</button>;
+{
+  hasModeratorPanel && <button>Uncheck</button>;
+}
 ```
 
 ---
@@ -1838,6 +1910,7 @@ mutation RotateMemberCheckinToken($eventId: ID!, $userId: ID!) {
 **Problem**: `justify-between` stretched elements, buttons too small.
 
 **Solution** (December 11, 2025):
+
 - Changed to responsive flex layout (`flex-col sm:flex-row`)
 - Full-width buttons on mobile (`w-full sm:w-auto`)
 - Proper text wrapping (`min-w-0 flex-1`)
@@ -1845,13 +1918,9 @@ mutation RotateMemberCheckinToken($eventId: ID!, $userId: ID!) {
 ```tsx
 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
   <div className="flex items-center gap-3">
-    <div className="min-w-0 flex-1">
-      {/* Text that can wrap */}
-    </div>
+    <div className="min-w-0 flex-1">{/* Text that can wrap */}</div>
   </div>
-  <button className="w-full sm:w-auto">
-    {/* Full-width on mobile */}
-  </button>
+  <button className="w-full sm:w-auto">{/* Full-width on mobile */}</button>
 </div>
 ```
 
@@ -1862,6 +1931,7 @@ mutation RotateMemberCheckinToken($eventId: ID!, $userId: ID!) {
 **Problem**: GraphQL mutation wasn't fetching `event` field.
 
 **Solution** (December 11, 2025):
+
 - Added `event { id, title }` to mutation query
 - Regenerated types with `pnpm gql:gen --force`
 - Now component has eventId for navigation
@@ -1887,6 +1957,7 @@ mutation CheckInByUserQr($token: String!) {
 **Problem**: Button linked directly to check-in tab.
 
 **Solution** (December 11, 2025):
+
 - Changed navigation target to event management root
 - Gives moderator access to all management tabs
 
@@ -1905,6 +1976,7 @@ router.push(`/event/${eventId}/manage/`);
 **Problem**: Turbo caches codegen output.
 
 **Solution**:
+
 ```bash
 cd apps/api
 pnpm gql:gen --force  # Force bypass cache
@@ -1917,6 +1989,7 @@ pnpm gql:gen --force  # Force bypass cache
 **Cause**: Event owner hasn't enabled check-in yet.
 
 **Solution**:
+
 1. Go to `/event/[id]/manage/checkin`
 2. Settings tab
 3. Toggle "Enable Check-in" ON
@@ -1930,6 +2003,7 @@ pnpm gql:gen --force  # Force bypass cache
 **Cause**: User is not OWNER or MODERATOR.
 
 **Solution**:
+
 - Check `EventMember.role` in database
 - User must be OWNER or MODERATOR to access management features
 - Regular members can only self-check-in
@@ -1939,11 +2013,13 @@ pnpm gql:gen --force  # Force bypass cache
 ### Issue: QR code shows "Invalid or expired token"
 
 **Causes**:
+
 1. Token was rotated (old QR no longer valid)
 2. Token doesn't exist in database
 3. Member status changed (no longer JOINED)
 
 **Solutions**:
+
 - Regenerate QR code
 - Check member status
 - Verify token in database
@@ -2010,6 +2086,7 @@ The Check-in & Presence System is a **complete, production-ready** solution for 
 ### Compliance
 
 **100% compliant** with all core requirements:
+
 - ✅ Role-based permissions
 - ✅ Complete data model
 - ✅ Canonical rule (isCheckedIn = methods.length > 0)
@@ -2029,6 +2106,7 @@ The Check-in & Presence System is a **complete, production-ready** solution for 
 **Status**: ✅ **READY FOR PRODUCTION**
 
 Only nice-to-have features remain:
+
 - ⏳ System notification push (toast notifications sufficient for MVP)
 - ⏳ PDF/PNG export backend endpoints (CSV works)
 - ⏳ Bulk actions (select multiple)

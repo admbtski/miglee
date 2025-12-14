@@ -511,6 +511,44 @@ function OverviewTab({
   eventId,
   onOpenRejectModal,
 }: OverviewTabProps) {
+  // Export configuration state
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportConfig, setExportConfig] = useState({
+    name: true,
+    email: true,
+    username: false,
+    status: true,
+    checkedInAt: true,
+    checkinMethods: true,
+    role: false,
+  });
+
+  // Toggle export column
+  const toggleExportColumn = (column: keyof typeof exportConfig) => {
+    setExportConfig((prev) => ({ ...prev, [column]: !prev[column] }));
+  };
+
+  // Format check-in methods for display
+  const formatCheckinMethods = (methods: string[] | null | undefined): string => {
+    if (!methods || methods.length === 0) return '-';
+    return methods
+      .map((method) => {
+        switch (method) {
+          case 'SELF_MANUAL':
+            return 'Manual';
+          case 'MODERATOR_PANEL':
+            return 'By Organizer';
+          case 'EVENT_QR':
+            return 'Event QR';
+          case 'USER_QR':
+            return 'Personal QR';
+          default:
+            return method;
+        }
+      })
+      .join(', ');
+  };
+
   // Export participants list as CSV
   const handleExportList = () => {
     if (members.length === 0) {
@@ -519,16 +557,36 @@ function OverviewTab({
     }
 
     try {
-      // Create CSV content
-      const headers = ['Name', 'Email', 'Status', 'Checked In At'];
-      const rows = members.map((member: any) => [
-        member.user?.name || member.user?.displayName || 'Unknown',
-        member.user?.email || '-',
-        member.isCheckedIn ? 'Checked In' : 'Not Checked In',
-        member.lastCheckinAt
-          ? new Date(member.lastCheckinAt).toLocaleString()
-          : '-',
-      ]);
+      // Build headers based on selected columns
+      const headers: string[] = [];
+      if (exportConfig.name) headers.push('Name');
+      if (exportConfig.email) headers.push('Email');
+      if (exportConfig.username) headers.push('Username');
+      if (exportConfig.role) headers.push('Role');
+      if (exportConfig.status) headers.push('Status');
+      if (exportConfig.checkedInAt) headers.push('Checked In At');
+      if (exportConfig.checkinMethods) headers.push('Check-in Methods');
+
+      // Build rows based on selected columns
+      const rows = members.map((member) => {
+        const row: string[] = [];
+        if (exportConfig.name)
+          row.push(member.user?.name || member.user?.profile?.displayName || 'Unknown');
+        if (exportConfig.email) row.push(member.user?.email || '-');
+        if (exportConfig.username) row.push(member.user?.username || '-');
+        if (exportConfig.role) row.push(member.role || '-');
+        if (exportConfig.status)
+          row.push(member.isCheckedIn ? 'Checked In' : 'Not Checked In');
+        if (exportConfig.checkedInAt)
+          row.push(
+            member.lastCheckinAt
+              ? new Date(member.lastCheckinAt).toLocaleString()
+              : '-'
+          );
+        if (exportConfig.checkinMethods)
+          row.push(formatCheckinMethods(member.checkinMethods));
+        return row;
+      });
 
       const csvContent = [
         headers.join(','),
@@ -552,6 +610,7 @@ function OverviewTab({
       document.body.removeChild(link);
 
       toast.success('Participant list exported');
+      setShowExportModal(false);
     } catch (error) {
       toast.error('Failed to export list');
       console.error('Export error:', error);
@@ -604,7 +663,7 @@ function OverviewTab({
           </p>
         </div>
         <button
-          onClick={handleExportList}
+          onClick={() => setShowExportModal(true)}
           disabled={members.length === 0}
           className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
         >
@@ -851,6 +910,188 @@ function OverviewTab({
           })}
         </div>
       )}
+
+      {/* Export Configuration Modal */}
+      <AnimatePresence>
+        {showExportModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setShowExportModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                    Export Configuration
+                  </h3>
+                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    Select which columns to include in the export
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowExportModal(false)}
+                  className="rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {/* Name */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={exportConfig.name}
+                    onChange={() => toggleExportColumn('name')}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:border-zinc-600"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Name
+                    </div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      User's display name
+                    </div>
+                  </div>
+                </label>
+
+                {/* Email */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={exportConfig.email}
+                    onChange={() => toggleExportColumn('email')}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:border-zinc-600"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Email
+                    </div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      User's email address
+                    </div>
+                  </div>
+                </label>
+
+                {/* Username */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={exportConfig.username}
+                    onChange={() => toggleExportColumn('username')}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:border-zinc-600"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Username
+                    </div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      User's username
+                    </div>
+                  </div>
+                </label>
+
+                {/* Role */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={exportConfig.role}
+                    onChange={() => toggleExportColumn('role')}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:border-zinc-600"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Role
+                    </div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      Event role (Owner, Moderator, Member)
+                    </div>
+                  </div>
+                </label>
+
+                {/* Status */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={exportConfig.status}
+                    onChange={() => toggleExportColumn('status')}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:border-zinc-600"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Check-in Status
+                    </div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      Checked In / Not Checked In
+                    </div>
+                  </div>
+                </label>
+
+                {/* Checked In At */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={exportConfig.checkedInAt}
+                    onChange={() => toggleExportColumn('checkedInAt')}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:border-zinc-600"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Checked In At
+                    </div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      Date and time of check-in
+                    </div>
+                  </div>
+                </label>
+
+                {/* Check-in Methods */}
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3 transition-colors hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30">
+                  <input
+                    type="checkbox"
+                    checked={exportConfig.checkinMethods}
+                    onChange={() => toggleExportColumn('checkinMethods')}
+                    className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 dark:border-zinc-600"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-indigo-900 dark:text-indigo-100">
+                      Check-in Methods
+                    </div>
+                    <div className="text-xs text-indigo-700 dark:text-indigo-300">
+                      How the user checked in (Manual, QR, etc.)
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setShowExportModal(false)}
+                  className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExportList}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
