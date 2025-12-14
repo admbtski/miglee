@@ -25,14 +25,18 @@ interface EventQRCodeProps {
   eventName: string;
 }
 
-export function EventQRCode({
-  eventId,
-  token,
-  eventName,
-}: EventQRCodeProps) {
+export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
-  
+
   const rotateTokenMutation = useRotateEventCheckinTokenMutation();
+
+  console.log('[EventQRCode] Rendered', {
+    eventId,
+    token: token ? `${token.substring(0, 10)}...` : null,
+    eventName,
+    isFullScreen,
+    mutationStatus: rotateTokenMutation.status,
+  });
 
   if (!token) {
     return (
@@ -48,32 +52,47 @@ export function EventQRCode({
   const checkinUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/checkin/event/${eventId}?token=${token}`;
 
   const handleRotateToken = async () => {
+    console.log('[EventQRCode] handleRotateToken called', { eventId });
     try {
-      await rotateTokenMutation.mutateAsync({ eventId });
+      console.log('[EventQRCode] Starting mutation...');
+      const result = await rotateTokenMutation.mutateAsync({ eventId });
+      console.log('[EventQRCode] Mutation success:', result);
       toast.success('QR code token rotated', {
         description: 'The old QR code is no longer valid',
       });
     } catch (error) {
+      console.error('[EventQRCode] Mutation error:', error);
       toast.error('Failed to rotate token', {
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
       });
     }
   };
 
   const handleDownloadPNG = () => {
+    console.log('[EventQRCode] handleDownloadPNG called', { eventId });
     const svg = document.getElementById(`qr-code-${eventId}`);
-    if (!svg) return;
+    if (!svg) {
+      console.error('[EventQRCode] SVG element not found!', `qr-code-${eventId}`);
+      toast.error('Failed to find QR code element');
+      return;
+    }
 
+    console.log('[EventQRCode] SVG found, generating PNG...');
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
 
     img.onload = () => {
+      console.log('[EventQRCode] Image loaded, drawing canvas...');
       canvas.width = 1000;
       canvas.height = 1200;
 
-      if (!ctx) return;
+      if (!ctx) {
+        console.error('[EventQRCode] Canvas context is null');
+        return;
+      }
 
       // White background
       ctx.fillStyle = '#ffffff';
@@ -99,19 +118,28 @@ export function EventQRCode({
       ctx.fillText('Powered by Miglee', canvas.width / 2, 1100);
 
       // Download
+      console.log('[EventQRCode] Initiating download...');
       const link = document.createElement('a');
       link.download = `${eventName.replace(/\s+/g, '-')}-checkin-qr.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
+      console.log('[EventQRCode] Download completed');
+      toast.success('QR code downloaded');
+    };
+
+    img.onerror = (error) => {
+      console.error('[EventQRCode] Image load error:', error);
+      toast.error('Failed to generate PNG');
     };
 
     img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
   };
 
   const handleDownloadPDF = () => {
-    // This will be implemented when we add PDF library
-    console.log('PDF download not yet implemented');
-    // TODO: Implement PDF generation with jspdf
+    console.log('[EventQRCode] handleDownloadPDF called - not yet implemented');
+    toast.info('PDF download coming soon', {
+      description: 'This feature is under development',
+    });
   };
 
   return (
@@ -148,7 +176,10 @@ export function EventQRCode({
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => setIsFullScreen(true)}
+            onClick={() => {
+              console.log('[EventQRCode] Full Screen button clicked');
+              setIsFullScreen(true);
+            }}
             className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
           >
             <Maximize2 className="h-4 w-4" />
@@ -184,8 +215,8 @@ export function EventQRCode({
         <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
           <div className="font-medium mb-1">Security Note</div>
           <div className="text-amber-700">
-            This QR code allows anyone to check in to your event. Keep it
-            secure and rotate the token if it gets compromised.
+            This QR code allows anyone to check in to your event. Keep it secure
+            and rotate the token if it gets compromised.
           </div>
         </div>
       </div>
