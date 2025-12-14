@@ -13,6 +13,8 @@ import {
   useCheckInSelfMutation,
   useUncheckInSelfMutation,
 } from '@/features/events/api/checkin';
+import { UserQRCode } from './user-qr-code';
+import { useMeQuery } from '@/features/auth/hooks/auth';
 
 interface UserCheckinSectionProps {
   eventId: string;
@@ -24,6 +26,7 @@ interface UserCheckinSectionProps {
   isBlocked: boolean;
   rejectionReason?: string | null;
   memberCheckinToken?: string | null;
+  eventName?: string;
 }
 
 export function UserCheckinSection({
@@ -36,8 +39,10 @@ export function UserCheckinSection({
   isBlocked,
   rejectionReason,
   memberCheckinToken,
+  eventName = 'Event',
 }: UserCheckinSectionProps) {
   const [showQR, setShowQR] = useState(false);
+  const { data: authData } = useMeQuery();
 
   const checkInMutation = useCheckInSelfMutation();
   const uncheckInMutation = useUncheckInSelfMutation();
@@ -96,8 +101,10 @@ export function UserCheckinSection({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <CheckCircle className="h-5 w-5 text-indigo-600" />
-        <h3 className="text-lg font-semibold text-zinc-900">Your Presence</h3>
+        <CheckCircle className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          Your Presence
+        </h3>
       </div>
 
       {/* Blocked Status */}
@@ -105,17 +112,19 @@ export function UserCheckinSection({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border border-red-200 bg-red-50 p-4"
+          className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"
         >
           <div className="flex items-start gap-3">
-            <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <div className="font-medium text-red-900">Check-in Blocked</div>
-              <div className="mt-1 text-sm text-red-700">
+              <div className="font-medium text-red-900 dark:text-red-100">
+                Check-in Blocked
+              </div>
+              <div className="mt-1 text-sm text-red-700 dark:text-red-300">
                 Check-in has been blocked by the organizer.
               </div>
               {rejectionReason && (
-                <div className="mt-2 text-sm text-red-600 italic">
+                <div className="mt-2 text-sm text-red-600 dark:text-red-400 italic">
                   Reason: {rejectionReason}
                 </div>
               )}
@@ -129,18 +138,18 @@ export function UserCheckinSection({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border border-amber-200 bg-amber-50 p-4"
+          className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
         >
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <div className="font-medium text-amber-900">
+              <div className="font-medium text-amber-900 dark:text-amber-100">
                 Previous Check-in Rejected
               </div>
-              <div className="mt-1 text-sm text-amber-700">
+              <div className="mt-1 text-sm text-amber-700 dark:text-amber-300">
                 Your last check-in was rejected by the organizer.
               </div>
-              <div className="mt-2 text-sm text-amber-600 italic">
+              <div className="mt-2 text-sm text-amber-600 dark:text-amber-400 italic">
                 Reason: {rejectionReason}
               </div>
             </div>
@@ -153,15 +162,15 @@ export function UserCheckinSection({
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="rounded-lg border border-emerald-200 bg-emerald-50 p-4"
+          className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20"
         >
           <div className="flex items-start gap-3">
-            <CheckCircle className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <div className="font-medium text-emerald-900">
+              <div className="font-medium text-emerald-900 dark:text-emerald-100">
                 You&apos;re checked in! ✓
               </div>
-              <div className="mt-1 text-sm text-emerald-700">
+              <div className="mt-1 text-sm text-emerald-700 dark:text-emerald-300">
                 Your presence at this event has been confirmed.
               </div>
               {userCheckinMethods.length > 0 && (
@@ -169,7 +178,7 @@ export function UserCheckinSection({
                   {userCheckinMethods.map((method) => (
                     <span
                       key={method}
-                      className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800"
+                      className="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-200"
                     >
                       {method === 'SELF_MANUAL' && 'Manual'}
                       {method === 'MODERATOR_PANEL' && 'By Organizer'}
@@ -183,7 +192,7 @@ export function UserCheckinSection({
                 <button
                   onClick={handleUncheck}
                   disabled={isLoading}
-                  className="mt-3 text-sm font-medium text-emerald-700 hover:text-emerald-800 disabled:opacity-50"
+                  className="mt-3 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 disabled:opacity-50"
                 >
                   {isLoading ? 'Removing...' : 'Remove my check-in'}
                 </button>
@@ -218,20 +227,22 @@ export function UserCheckinSection({
 
       {/* User QR Code Section */}
       {canUseUserQR && !isBlocked && memberCheckinToken && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <QrCode className="h-5 w-5 text-zinc-600" />
+              <QrCode className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
               <div>
-                <div className="font-medium text-zinc-900">My QR Code</div>
-                <div className="text-sm text-zinc-600">
+                <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                  My QR Code
+                </div>
+                <div className="text-sm text-zinc-600 dark:text-zinc-400">
                   Show this to the organizer
                 </div>
               </div>
             </div>
             <button
               onClick={() => setShowQR(!showQR)}
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
             >
               {showQR ? 'Hide' : 'Show'} QR
             </button>
@@ -245,15 +256,17 @@ export function UserCheckinSection({
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-4 overflow-hidden"
               >
-                {memberCheckinToken ? (
-                  <div className="flex flex-col items-center justify-center space-y-3 rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 p-6">
-                    {/* QR code will be rendered here using UserQRCode component */}
-                    <div className="text-xs text-zinc-500">
-                      Your personal check-in code
-                    </div>
-                  </div>
+                {memberCheckinToken && authData?.me ? (
+                  <UserQRCode
+                    eventId={eventId}
+                    userId={authData.me.id}
+                    memberId={authData.me.id}
+                    token={memberCheckinToken}
+                    eventName={eventName}
+                    userName={authData.me.name || 'User'}
+                  />
                 ) : (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-700">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                     QR code not available. Please contact the organizer.
                   </div>
                 )}
@@ -265,8 +278,10 @@ export function UserCheckinSection({
 
       {/* Instructions */}
       {!isCheckedIn && !isBlocked && (
-        <div className="rounded-lg bg-zinc-50 p-4 text-sm text-zinc-600">
-          <div className="font-medium text-zinc-900 mb-2">How to check in:</div>
+        <div className="rounded-lg bg-zinc-50 dark:bg-zinc-900/40 p-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+            How to check in:
+          </div>
           <ul className="space-y-1 list-disc list-inside">
             {canSelfCheckin && (
               <li>Click the &quot;I&apos;m at the event!&quot; button above</li>

@@ -32,6 +32,7 @@ import { EventEngagementStats } from './event-engagement-stats';
 import { EventFaq } from './event-faq';
 import { EventHero } from './event-hero';
 import { EventJoinSection } from './event-join-section';
+import { UserCheckinSection } from './user-checkin-section';
 import { EventLocationMap } from './event-location-map';
 import { EventMetadata } from './event-metadata';
 import { EventParticipants } from './event-participants';
@@ -588,6 +589,27 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
               event={eventData}
               onOpenChat={() => setChatOpen(true)}
             />
+
+            {/* Check-in Section - for joined users */}
+            {isJoined && event.checkinEnabled && (
+              <UserCheckinSection
+                eventId={event.id}
+                isJoined={isJoined}
+                checkinEnabled={event.checkinEnabled}
+                checkinMethods={event.enabledCheckinMethods || []}
+                isCheckedIn={userMembership?.isCheckedIn || false}
+                userCheckinMethods={userMembership?.checkinMethods || []}
+                isBlocked={
+                  userMembership?.checkinBlockedAll ||
+                  (userMembership?.checkinBlockedMethods &&
+                    userMembership.checkinBlockedMethods.length > 0) ||
+                  false
+                }
+                rejectionReason={userMembership?.lastCheckinRejectionReason}
+                memberCheckinToken={userMembership?.memberCheckinToken}
+                eventName={event.title}
+              />
+            )}
 
             {/* Engagement Stats */}
             <EventEngagementStats event={eventData} />

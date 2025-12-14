@@ -761,9 +761,7 @@ function OverviewTab({
                     ) : (
                       <button
                         onClick={() => onCheckIn(member.userId)}
-                        disabled={
-                          isCheckingIn || member.checkinBlockedAll
-                        }
+                        disabled={isCheckingIn || member.checkinBlockedAll}
                         className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
                       >
                         {isCheckingIn ? (
