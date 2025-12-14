@@ -801,11 +801,40 @@ function OverviewTab({
                   <div className="flex flex-shrink-0 items-center gap-2">
                     <MemberActionsMenu member={member} eventId={eventId} />
 
-                    {member.isCheckedIn ? (
+                    {/* Always show Check In button (can add multiple methods) */}
+                    <button
+                      onClick={() => onCheckIn(member.userId)}
+                      disabled={
+                        isCheckingIn ||
+                        member.checkinBlockedAll ||
+                        member.checkinBlockedMethods?.includes(
+                          CheckinMethod.ModeratorPanel
+                        )
+                      }
+                      className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                      title={
+                        member.isCheckedIn
+                          ? 'Add MODERATOR_PANEL check-in method'
+                          : 'Check in via MODERATOR_PANEL'
+                      }
+                    >
+                      {isCheckingIn ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                      Check In
+                    </button>
+
+                    {/* Show Uncheck button only if already checked in via MODERATOR_PANEL */}
+                    {member.checkinMethods?.includes(
+                      CheckinMethod.ModeratorPanel
+                    ) && (
                       <button
                         onClick={() => onUncheck(member.userId)}
                         disabled={isUnchecking}
                         className="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-700 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                        title="Remove MODERATOR_PANEL check-in method"
                       >
                         {isUnchecking ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -813,19 +842,6 @@ function OverviewTab({
                           <X className="h-4 w-4" />
                         )}
                         Uncheck
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => onCheckIn(member.userId)}
-                        disabled={isCheckingIn || member.checkinBlockedAll}
-                        className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-                      >
-                        {isCheckingIn ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Check className="h-4 w-4" />
-                        )}
-                        Check In
                       </button>
                     )}
                   </div>
