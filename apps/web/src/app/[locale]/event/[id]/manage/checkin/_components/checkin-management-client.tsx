@@ -836,6 +836,16 @@ interface LogsTabProps {
 }
 
 function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
+  const [actionFilter, setActionFilter] = useState<string>('all');
+  const [methodFilter, setMethodFilter] = useState<string>('all');
+
+  // Filter logs based on selected filters
+  const filteredLogs = logs.filter((log: any) => {
+    if (actionFilter !== 'all' && log.action !== actionFilter) return false;
+    if (methodFilter !== 'all' && log.method !== methodFilter) return false;
+    return true;
+  });
+
   // Export logs as CSV
   const handleExportLogs = () => {
     if (logs.length === 0) {
@@ -967,24 +977,34 @@ function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
 
       {/* Filters */}
       <div className="flex gap-2">
-        <select className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          <option>All Actions</option>
-          <option>Check In</option>
-          <option>Uncheck</option>
-          <option>Reject</option>
-          <option>Block</option>
+        <select
+          value={actionFilter}
+          onChange={(e) => setActionFilter(e.target.value)}
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        >
+          <option value="all">All Actions</option>
+          <option value="CHECK_IN">Check In</option>
+          <option value="UNCHECK">Uncheck</option>
+          <option value="REJECT">Reject</option>
+          <option value="BLOCK_ALL">Block All</option>
+          <option value="BLOCK_METHOD">Block Method</option>
+          <option value="METHODS_CHANGED">Methods Changed</option>
         </select>
-        <select className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          <option>All Methods</option>
-          <option>Manual</option>
-          <option>Moderator Panel</option>
-          <option>Event QR</option>
-          <option>User QR</option>
+        <select
+          value={methodFilter}
+          onChange={(e) => setMethodFilter(e.target.value)}
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        >
+          <option value="all">All Methods</option>
+          <option value="SELF_MANUAL">Manual</option>
+          <option value="MODERATOR_PANEL">Moderator Panel</option>
+          <option value="EVENT_QR">Event QR</option>
+          <option value="USER_QR">User QR</option>
         </select>
       </div>
 
       {/* Empty state */}
-      {logs.length === 0 && (
+      {filteredLogs.length === 0 && logs.length === 0 && (
         <div className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
           <ScrollText className="mx-auto h-12 w-12 text-zinc-400" />
           <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -996,10 +1016,23 @@ function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
         </div>
       )}
 
+      {/* No results from filters */}
+      {filteredLogs.length === 0 && logs.length > 0 && (
+        <div className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/50">
+          <ScrollText className="mx-auto h-12 w-12 text-zinc-400" />
+          <h3 className="mt-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            No matching logs
+          </h3>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Try adjusting your filters
+          </p>
+        </div>
+      )}
+
       {/* Logs list */}
-      {logs.length > 0 && (
+      {filteredLogs.length > 0 && (
         <div className="space-y-2">
-          {logs.map((log: any) => {
+          {filteredLogs.map((log: any) => {
             const ActionIcon = getActionIcon(log.action);
             return (
               <div
@@ -1068,10 +1101,16 @@ function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
         </div>
       )}
 
-      {/* Load more indicator */}
-      {pageInfo?.hasNext && (
+      {/* Load more indicator - TODO: implement pagination */}
+      {pageInfo?.hasNext && filteredLogs.length > 0 && (
         <div className="text-center">
-          <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+          <button
+            onClick={() => {
+              console.log('Load more clicked - pagination not yet implemented');
+              toast.info('Pagination coming soon');
+            }}
+            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          >
             Load More
           </button>
         </div>
