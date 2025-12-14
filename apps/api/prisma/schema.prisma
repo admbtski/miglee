@@ -1593,7 +1593,7 @@ model EventAgendaItemHost {
 model EventCheckinLog {
   id       String  @id @default(cuid())
   eventId  String
-  memberId String // EventMember.id (not userId - this is the membership record)
+  memberId String? // EventMember.id (optional for event-level logs like config changes)
   actorId  String? // Who performed the action (User.id)
 
   // Action details
