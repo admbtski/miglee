@@ -11,6 +11,9 @@ fragment EventMemberLight on EventMember {
   role
   status
   joinedAt
+  isCheckedIn
+  checkinMethods
+  lastCheckinAt
   user {
     ...UserLight
   }
@@ -26,6 +29,15 @@ fragment EventMemberCore on EventMember {
   leftAt
   note
   rejectReason
+  # Check-in fields
+  isCheckedIn
+  checkinMethods
+  lastCheckinAt
+  checkinBlockedAll
+  checkinBlockedMethods
+  lastCheckinRejectionReason
+  lastCheckinRejectedAt
+  memberCheckinToken
   user {
     ...UserCore
   }
