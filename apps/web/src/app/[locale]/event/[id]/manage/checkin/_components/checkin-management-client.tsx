@@ -43,6 +43,7 @@ import { EventQRCode } from '@/features/events/components/event-qr-code';
 import { MemberActionsMenu } from './member-actions-menu';
 import { RejectCheckinModal } from './reject-checkin-modal';
 import { MethodActionsDropdown } from './method-actions-dropdown';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
@@ -1269,7 +1270,8 @@ function QrTab({
   eventId,
   eventName,
 }: QrTabProps) {
-  const isQrEnabled = checkinEnabled && enabledMethods.includes('EVENT_QR' as CheckinMethod);
+  const isQrEnabled =
+    checkinEnabled && enabledMethods.includes('EVENT_QR' as CheckinMethod);
 
   return (
     <div className="space-y-6">
@@ -1297,14 +1299,15 @@ function QrTab({
               <div className="mt-1 text-sm text-amber-700 dark:text-amber-300">
                 {!checkinEnabled ? (
                   <>
-                    Check-in is currently disabled for this event. Enable it in the{' '}
-                    <span className="font-medium">Settings</span> tab to use QR codes.
+                    Check-in is currently disabled for this event. Enable it in
+                    the <span className="font-medium">Settings</span> tab to use
+                    QR codes.
                   </>
                 ) : (
                   <>
                     The "Event QR Code" method is not enabled. Go to the{' '}
-                    <span className="font-medium">Settings</span> tab and enable it to
-                    generate a QR code.
+                    <span className="font-medium">Settings</span> tab and enable
+                    it to generate a QR code.
                   </>
                 )}
               </div>
@@ -1322,8 +1325,8 @@ function QrTab({
                 <div className="text-sm text-indigo-900 dark:text-indigo-100">
                   <div className="font-medium">How it works</div>
                   <div className="mt-1 text-indigo-700 dark:text-indigo-300">
-                    Display this QR code at your event entrance. Attendees scan it with
-                    their phone to automatically check in.
+                    Display this QR code at your event entrance. Attendees scan
+                    it with their phone to automatically check in.
                   </div>
                 </div>
               </div>
@@ -1345,8 +1348,9 @@ function QrTab({
                     Security Tip
                   </div>
                   <div className="mt-1">
-                    This QR code is shared by all attendees. If compromised, you can
-                    generate a new one using the "Rotate Token" button above.
+                    This QR code is shared by all attendees. If compromised, you
+                    can generate a new one using the "Rotate Token" button
+                    above.
                   </div>
                 </div>
               </div>
