@@ -288,12 +288,12 @@ export function UserCheckinSection({
       {/* User QR Code Section */}
       {canUseUserQR && !isBlocked && (
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
                 <QrCode className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="font-semibold text-zinc-900 dark:text-zinc-100">
                   My QR Code
                 </div>
@@ -308,10 +308,10 @@ export function UserCheckinSection({
               <button
                 onClick={handleGenerateQR}
                 disabled={rotateTokenMutation.isPending}
-                className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 sm:w-auto dark:bg-indigo-500 dark:hover:bg-indigo-600"
               >
                 {rotateTokenMutation.isPending ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center justify-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Generating...
                   </span>
@@ -322,7 +322,7 @@ export function UserCheckinSection({
             ) : (
               <button
                 onClick={() => setShowQR(!showQR)}
-                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 sm:w-auto dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
                 {showQR ? 'Hide' : 'Show'} QR
               </button>
