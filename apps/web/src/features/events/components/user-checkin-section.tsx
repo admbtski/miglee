@@ -19,6 +19,7 @@ import { useMeQuery } from '@/features/auth/hooks/auth';
 
 interface UserCheckinSectionProps {
   eventId: string;
+  memberId?: string; // EventMember.id (not userId!)
   isJoined: boolean;
   checkinEnabled: boolean;
   checkinMethods: string[];
@@ -32,6 +33,7 @@ interface UserCheckinSectionProps {
 
 export function UserCheckinSection({
   eventId,
+  memberId,
   isJoined,
   checkinEnabled,
   checkinMethods,
@@ -53,6 +55,7 @@ export function UserCheckinSection({
       if (data.rotateMemberCheckinToken?.memberCheckinToken) {
         setLocalToken(data.rotateMemberCheckinToken.memberCheckinToken);
         toast.success('QR code generated successfully');
+        setShowQR(true); // Auto-show QR after generation
       }
     },
     onError: (error) => {
@@ -63,27 +66,22 @@ export function UserCheckinSection({
     },
   });
 
-  // Auto-generate token if USER_QR is enabled but token doesn't exist
-  useEffect(() => {
-    const canUseUserQR = checkinMethods.includes('USER_QR');
-    const userId = authData?.me?.id;
-    if (
-      canUseUserQR &&
-      !localToken &&
-      !isBlocked &&
-      userId &&
-      !rotateTokenMutation.isPending
-    ) {
-      rotateTokenMutation.mutate({ eventId, memberId: userId });
-    }
-  }, [checkinMethods, localToken, isBlocked, eventId, authData?.me?.id]);
-
   // Update local token when prop changes
   useEffect(() => {
     if (memberCheckinToken) {
       setLocalToken(memberCheckinToken);
     }
   }, [memberCheckinToken]);
+
+  const handleGenerateQR = () => {
+    if (!memberId) {
+      toast.error('Cannot generate QR code', {
+        description: 'Member ID is missing',
+      });
+      return;
+    }
+    rotateTokenMutation.mutate({ eventId, memberId });
+  };
 
   // Don't show if check-in is disabled or user is not joined
   if (!checkinEnabled || !isJoined) {
@@ -276,11 +274,26 @@ export function UserCheckinSection({
                 <div className="text-sm text-zinc-600 dark:text-zinc-400">
                   {localToken
                     ? 'Show this to the organizer'
-                    : 'Generating your QR code...'}
+                    : 'Generate your personal QR code'}
                 </div>
               </div>
             </div>
-            {localToken && (
+            {!localToken ? (
+              <button
+                onClick={handleGenerateQR}
+                disabled={rotateTokenMutation.isPending}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+              >
+                {rotateTokenMutation.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Generating...
+                  </span>
+                ) : (
+                  'Generate QR'
+                )}
+              </button>
+            ) : (
               <button
                 onClick={() => setShowQR(!showQR)}
                 className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
@@ -291,14 +304,14 @@ export function UserCheckinSection({
           </div>
 
           <AnimatePresence>
-            {showQR && (
+            {showQR && localToken && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-4 overflow-hidden"
               >
-                {localToken && authData?.me ? (
+                {authData?.me ? (
                   <UserQRCode
                     eventId={eventId}
                     userId={authData.me.id}
@@ -308,13 +321,8 @@ export function UserCheckinSection({
                     userName={authData.me.name || 'User'}
                   />
                 ) : (
-                  <div className="flex items-center justify-center p-8">
-                    <div className="flex flex-col items-center gap-3 text-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
-                      <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                        Generating your QR code...
-                      </div>
-                    </div>
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                    User data not available
                   </div>
                 )}
               </motion.div>
