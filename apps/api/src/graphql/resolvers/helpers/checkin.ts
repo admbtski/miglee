@@ -217,12 +217,29 @@ export function validateMemberCanCheckin(
 
 /**
  * Validate user has moderator permissions for event
+ * Allows:
+ * - Event owner
+ * - Event moderators (MODERATOR role + JOINED status)
+ * - Application admins (User.role = ADMIN)
+ * - Application moderators (User.role = MODERATOR)
  */
 export async function validateModeratorAccess(
   prisma: PrismaClient,
   eventId: string,
   userId: string
 ): Promise<void> {
+  // First check if user is an application admin or moderator
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (user && (user.role === 'ADMIN' || user.role === 'MODERATOR')) {
+    // Application admins and moderators have access to all events
+    return;
+  }
+
+  // If not app admin/moderator, check event-specific permissions
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: {
