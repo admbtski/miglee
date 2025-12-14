@@ -5,13 +5,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   useCheckInSelfMutation,
   useUncheckInSelfMutation,
+  useRotateMemberCheckinTokenMutation,
 } from '@/features/events/api/checkin';
 import { UserQRCode } from './user-qr-code';
 import { useMeQuery } from '@/features/auth/hooks/auth';
@@ -42,10 +43,40 @@ export function UserCheckinSection({
   eventName = 'Event',
 }: UserCheckinSectionProps) {
   const [showQR, setShowQR] = useState(false);
+  const [localToken, setLocalToken] = useState(memberCheckinToken);
   const { data: authData } = useMeQuery();
 
   const checkInMutation = useCheckInSelfMutation();
   const uncheckInMutation = useUncheckInSelfMutation();
+  const rotateTokenMutation = useRotateMemberCheckinTokenMutation({
+    onSuccess: (data) => {
+      if (data.rotateMemberCheckinToken?.memberCheckinToken) {
+        setLocalToken(data.rotateMemberCheckinToken.memberCheckinToken);
+        toast.success('QR code generated successfully');
+      }
+    },
+    onError: (error) => {
+      toast.error('Failed to generate QR code', {
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    },
+  });
+
+  // Auto-generate token if USER_QR is enabled but token doesn't exist
+  useEffect(() => {
+    const canUseUserQR = checkinMethods.includes('USER_QR');
+    const userId = authData?.me?.id;
+    if (canUseUserQR && !localToken && !isBlocked && userId && !rotateTokenMutation.isPending) {
+      rotateTokenMutation.mutate({ eventId, memberId: userId });
+    }
+  }, [checkinMethods, localToken, isBlocked, eventId, authData?.me?.id]);
+
+  // Update local token when prop changes
+  useEffect(() => {
+    if (memberCheckinToken) {
+      setLocalToken(memberCheckinToken);
+    }
+  }, [memberCheckinToken]);
 
   // Don't show if check-in is disabled or user is not joined
   if (!checkinEnabled || !isJoined) {
@@ -226,7 +257,7 @@ export function UserCheckinSection({
       )}
 
       {/* User QR Code Section */}
-      {canUseUserQR && !isBlocked && memberCheckinToken && (
+      {canUseUserQR && !isBlocked && (
         <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -236,16 +267,20 @@ export function UserCheckinSection({
                   My QR Code
                 </div>
                 <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Show this to the organizer
+                  {localToken
+                    ? 'Show this to the organizer'
+                    : 'Generating your QR code...'}
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setShowQR(!showQR)}
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-            >
-              {showQR ? 'Hide' : 'Show'} QR
-            </button>
+            {localToken && (
+              <button
+                onClick={() => setShowQR(!showQR)}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                {showQR ? 'Hide' : 'Show'} QR
+              </button>
+            )}
           </div>
 
           <AnimatePresence>
@@ -256,18 +291,23 @@ export function UserCheckinSection({
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-4 overflow-hidden"
               >
-                {memberCheckinToken && authData?.me ? (
+                {localToken && authData?.me ? (
                   <UserQRCode
                     eventId={eventId}
                     userId={authData.me.id}
                     memberId={authData.me.id}
-                    token={memberCheckinToken}
+                    token={localToken}
                     eventName={eventName}
                     userName={authData.me.name || 'User'}
                   />
                 ) : (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-                    QR code not available. Please contact the organizer.
+                  <div className="flex items-center justify-center p-8">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-indigo-600 dark:border-zinc-700 dark:border-t-indigo-400" />
+                      <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Generating your QR code...
+                      </div>
+                    </div>
                   </div>
                 )}
               </motion.div>
