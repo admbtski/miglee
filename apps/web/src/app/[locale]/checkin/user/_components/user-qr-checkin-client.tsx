@@ -99,7 +99,7 @@ export function UserQRCheckinClient({ token }: UserQRCheckinClientProps) {
 
   const handleGoToEvent = () => {
     if (eventId) {
-      router.push(`/event/${eventId}/manage/checkin`);
+      router.push(`/event/${eventId}/manage/`);
     } else {
       router.push('/');
     }
