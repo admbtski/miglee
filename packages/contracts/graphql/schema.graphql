@@ -1544,7 +1544,7 @@ input UnblockMemberCheckinInput {
 input UpdateEventCheckinConfigInput {
   eventId: ID!
   checkinEnabled: Boolean
-  enabledMethods: [CheckinMethod!]
+  enabledCheckinMethods: [CheckinMethod!]
 }
 
 type CheckinResult {

@@ -849,11 +849,11 @@ export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConf
       });
     }
 
-    const { eventId, checkinEnabled, enabledMethods } = input;
+    const { eventId, checkinEnabled, enabledCheckinMethods } = input;
 
     // Convert InputMaybe to proper types
     const safeCheckinEnabled = checkinEnabled ?? undefined;
-    const safeEnabledMethods = enabledMethods ?? undefined;
+    const safeEnabledMethods = enabledCheckinMethods ?? undefined;
 
     try {
       // Validate moderator access
