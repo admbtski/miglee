@@ -41,12 +41,20 @@ import { useEventMembersQuery } from '@/features/events/api/event-members';
 import { toast } from '@/lib/utils/toast-manager';
 import { EventQRCode } from '@/features/events/components/event-qr-code';
 import { MemberActionsMenu } from './member-actions-menu';
+import { RejectCheckinModal } from './reject-checkin-modal';
+import { MethodActionsDropdown } from './method-actions-dropdown';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
 export function CheckinManagementClient() {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const { event, isLoading, refetch } = useEventManagement();
+
+  // Reject modal state
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectUserId, setRejectUserId] = useState<string | null>(null);
+  const [rejectUserName, setRejectUserName] = useState<string>('');
+  const [rejectMethod, setRejectMethod] = useState<CheckinMethod | null>(null);
 
   // Query for event members
   const {
@@ -316,6 +324,12 @@ export function CheckinManagementClient() {
             isCheckingIn={checkInMutation.isPending}
             isUnchecking={uncheckMutation.isPending}
             eventId={event.id}
+            onOpenRejectModal={(userId, userName, method) => {
+              setRejectUserId(userId);
+              setRejectUserName(userName);
+              setRejectMethod(method || null);
+              setRejectModalOpen(true);
+            }}
           />
         )}
         {activeTab === 'settings' && (
@@ -349,6 +363,23 @@ export function CheckinManagementClient() {
           />
         )}
       </div>
+
+      {/* Reject Modal */}
+      {rejectUserId && (
+        <RejectCheckinModal
+          isOpen={rejectModalOpen}
+          onClose={() => {
+            setRejectModalOpen(false);
+            setRejectUserId(null);
+            setRejectUserName('');
+            setRejectMethod(null);
+          }}
+          eventId={event.id}
+          userId={rejectUserId}
+          userName={rejectUserName}
+          method={rejectMethod}
+        />
+      )}
     </div>
   );
 }
@@ -462,6 +493,11 @@ interface OverviewTabProps {
   isCheckingIn: boolean;
   isUnchecking: boolean;
   eventId: string;
+  onOpenRejectModal: (
+    userId: string,
+    userName: string,
+    method?: CheckinMethod
+  ) => void;
 }
 
 function OverviewTab({
@@ -473,6 +509,7 @@ function OverviewTab({
   isCheckingIn,
   isUnchecking,
   eventId,
+  onOpenRejectModal,
 }: OverviewTabProps) {
   // Export participants list as CSV
   const handleExportList = () => {
@@ -666,7 +703,7 @@ function OverviewTab({
                                   <div
                                     key={method}
                                     className={[
-                                      'relative flex h-6 w-6 items-center justify-center rounded-md border transition-colors',
+                                      'group relative flex h-7 w-7 items-center justify-center rounded-md border transition-colors',
                                       isActive
                                         ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/30'
                                         : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50',
@@ -675,7 +712,7 @@ function OverviewTab({
                                   >
                                     <Icon
                                       className={[
-                                        'h-3.5 w-3.5',
+                                        'h-4 w-4',
                                         isActive
                                           ? 'text-emerald-600 dark:text-emerald-400'
                                           : 'text-zinc-400 dark:text-zinc-600',
@@ -684,6 +721,25 @@ function OverviewTab({
                                     {isBlocked && (
                                       <div className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
                                         <Ban className="h-2 w-2 text-white" />
+                                      </div>
+                                    )}
+                                    {/* Method Actions Dropdown */}
+                                    {isActive && (
+                                      <div className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100">
+                                        <MethodActionsDropdown
+                                          member={member}
+                                          eventId={eventId}
+                                          method={method}
+                                          isActive={isActive}
+                                          isBlocked={isBlocked}
+                                          onReject={() =>
+                                            onOpenRejectModal(
+                                              member.userId,
+                                              member.user?.name || 'User',
+                                              method
+                                            )
+                                          }
+                                        />
                                       </div>
                                     )}
                                   </div>
