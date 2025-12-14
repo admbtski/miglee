@@ -237,18 +237,7 @@ fragment EventCore on Event {
 fragment EventDetail on Event {
   ...EventCore
   members {
-    id
-    role
-    status
-    joinedAt
-    leftAt
-    note
-    user {
-      ...UserCore
-    }
-    addedBy {
-      ...UserLight
-    }
+    ...EventMemberCore
   }
   sponsorship {
     plan

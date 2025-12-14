@@ -76,19 +76,7 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
   // Check user membership status - must be declared before early returns
   const userMembership = useMemo(() => {
     if (!currentUserId || !event?.members) return null;
-    const membership = event.members.find((m: any) => m.user?.id === currentUserId);
-    
-    // Debug logging
-    console.log('[EventDetailClient] userMembership found:', {
-      currentUserId,
-      membership,
-      membershipId: membership?.id,
-      membershipUserId: membership?.userId,
-      membershipStatus: membership?.status,
-      hasMembershipId: !!membership?.id,
-    });
-    
-    return membership;
+    return event.members.find((m: any) => m.user?.id === currentUserId);
   }, [currentUserId, event?.members]);
 
   const isOwner = userMembership?.role === 'OWNER';

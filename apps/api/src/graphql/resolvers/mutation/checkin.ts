@@ -998,14 +998,6 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
       });
     }
 
-    console.log('[rotateMemberCheckinToken] Called with:', {
-      eventId,
-      memberId,
-      userId,
-      memberIdType: typeof memberId,
-      memberIdLength: memberId?.length,
-    });
-
     try {
       // Find the member
       const existingMember = await prisma.eventMember.findUnique({
@@ -1016,11 +1008,6 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
           userId: true,
           status: true,
         },
-      });
-
-      console.log('[rotateMemberCheckinToken] Member lookup result:', {
-        found: !!existingMember,
-        member: existingMember,
       });
 
       if (!existingMember) {
@@ -1038,7 +1025,7 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
 
       // Check if user is rotating their own token OR is a moderator
       const isSelfRotation = existingMember.userId === userId;
-      
+
       if (!isSelfRotation) {
         // If not self-rotation, must be moderator
         await validateModeratorAccess(prisma, eventId, userId);
@@ -1046,9 +1033,12 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
 
       // Must be JOINED to rotate token
       if (existingMember.status !== 'JOINED') {
-        throw new GraphQLError('Only joined members can rotate their QR token', {
-          extensions: { code: 'FORBIDDEN' },
-        });
+        throw new GraphQLError(
+          'Only joined members can rotate their QR token',
+          {
+            extensions: { code: 'FORBIDDEN' },
+          }
+        );
       }
 
       const member = await prisma.eventMember.update({

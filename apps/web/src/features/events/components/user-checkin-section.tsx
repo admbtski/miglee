@@ -74,30 +74,9 @@ export function UserCheckinSection({
   }, [memberCheckinToken]);
 
   const handleGenerateQR = () => {
-    console.log('[UserCheckinSection] handleGenerateQR called', {
-      memberId,
-      eventId,
-      hasMemberId: !!memberId,
-      memberIdStartsWith: memberId?.substring(0, 6),
-    });
-
     if (!memberId) {
       toast.error('Cannot generate QR code', {
         description: 'Member ID is missing',
-      });
-      return;
-    }
-
-    // Validate memberId format - should be CUID (starts with 'c' typically)
-    // userId starts with 'u_user'
-    if (memberId.startsWith('u_user')) {
-      console.error('[UserCheckinSection] ERROR: memberId is actually userId!', {
-        memberId,
-        expectedFormat: 'cm... (CUID)',
-        actualFormat: 'u_user... (userId)',
-      });
-      toast.error('Cannot generate QR code', {
-        description: 'Invalid member ID format. Please refresh the page.',
       });
       return;
     }
