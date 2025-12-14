@@ -92,7 +92,7 @@ export function buildGetEventCheckinLogsOptions(
 
 /* ------------------------- INVALIDATION HELPERS -------------------------- */
 
-function invalidateCheckinData(eventId: string) {
+export function invalidateCheckinData(eventId: string) {
   const qc = getQueryClient();
 
   qc.invalidateQueries({
