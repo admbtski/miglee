@@ -424,6 +424,53 @@ function OverviewTab({
   isCheckingIn,
   isUnchecking,
 }: OverviewTabProps) {
+  // Export participants list as CSV
+  const handleExportList = () => {
+    if (members.length === 0) {
+      toast.error('No participants to export');
+      return;
+    }
+
+    try {
+      // Create CSV content
+      const headers = ['Name', 'Email', 'Status', 'Checked In At'];
+      const rows = members.map((member: any) => [
+        member.user?.name || member.user?.displayName || 'Unknown',
+        member.user?.email || '-',
+        member.isCheckedIn ? 'Checked In' : 'Not Checked In',
+        member.lastCheckinAt
+          ? new Date(member.lastCheckinAt).toLocaleString()
+          : '-',
+      ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) =>
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+        ),
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute(
+        'download',
+        `participants-${new Date().toISOString().split('T')[0]}.csv`
+      );
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Participant list exported');
+    } catch (error) {
+      toast.error('Failed to export list');
+      console.error('Export error:', error);
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -469,7 +516,11 @@ function OverviewTab({
             Check in attendees and manage presence status
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+        <button
+          onClick={handleExportList}
+          disabled={members.length === 0}
+          className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
           <Download className="h-4 w-4" />
           Export List
         </button>
@@ -802,6 +853,65 @@ interface LogsTabProps {
 }
 
 function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
+  // Export logs as CSV
+  const handleExportLogs = () => {
+    if (logs.length === 0) {
+      toast.error('No logs to export');
+      return;
+    }
+
+    try {
+      // Create CSV content
+      const headers = [
+        'Date',
+        'Time',
+        'Action',
+        'Method',
+        'Actor',
+        'Result',
+        'Comment',
+      ];
+      const rows = logs.map((log: any) => {
+        const date = new Date(log.createdAt);
+        return [
+          date.toLocaleDateString(),
+          date.toLocaleTimeString(),
+          log.action.replace(/_/g, ' '),
+          log.method ? log.method.replace(/_/g, ' ') : '-',
+          log.actor?.displayName || log.actor?.name || '-',
+          log.result || '-',
+          log.comment || '-',
+        ];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) =>
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+        ),
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute(
+        'download',
+        `checkin-logs-${new Date().toISOString().split('T')[0]}.csv`
+      );
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Logs exported');
+    } catch (error) {
+      toast.error('Failed to export logs');
+      console.error('Export error:', error);
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -862,7 +972,11 @@ function LogsTab({ logs, isLoading, pageInfo }: LogsTabProps) {
               : 'Complete audit trail of all check-in activities'}
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+        <button
+          onClick={handleExportLogs}
+          disabled={logs.length === 0}
+          className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
           <Download className="h-4 w-4" />
           Export Log
         </button>
