@@ -14,7 +14,6 @@ import {
   invalidateCheckinData,
 } from '@/features/events/api/checkin';
 import { CheckinMethod } from '@/lib/api/__generated__/react-query-update';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface RejectCheckinModalProps {
   isOpen: boolean;
@@ -39,13 +38,12 @@ export function RejectCheckinModal({
     'none'
   );
 
-  const queryClient = useQueryClient();
   const rejectMutation = useRejectMemberCheckinMutation({
     onSuccess: () => {
       toast.success('Check-in rejected', {
         description: `${userName}'s check-in has been rejected`,
       });
-      invalidateCheckinData(queryClient, eventId);
+      invalidateCheckinData(eventId);
       handleClose();
     },
     onError: (error: Error) => {

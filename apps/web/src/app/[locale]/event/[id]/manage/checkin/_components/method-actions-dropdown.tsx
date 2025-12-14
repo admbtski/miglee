@@ -25,7 +25,6 @@ import {
   invalidateCheckinData,
 } from '@/features/events/api/checkin';
 import { toast } from '@/lib/utils/toast-manager';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface MethodActionsDropdownProps {
   member: EventMemberCoreFragment;
@@ -46,12 +45,11 @@ export function MethodActionsDropdown({
 }: MethodActionsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
 
   const uncheckMutation = useUncheckInMemberMutation({
     onSuccess: () => {
       toast.success('Check-in method removed');
-      invalidateCheckinData(queryClient, eventId);
+      invalidateCheckinData(eventId);
       setIsOpen(false);
     },
     onError: (error: Error) => {
@@ -64,7 +62,7 @@ export function MethodActionsDropdown({
   const blockMutation = useBlockMemberCheckinMutation({
     onSuccess: () => {
       toast.success('Method blocked');
-      invalidateCheckinData(queryClient, eventId);
+      invalidateCheckinData(eventId);
       setIsOpen(false);
     },
     onError: (error: Error) => {
@@ -77,7 +75,7 @@ export function MethodActionsDropdown({
   const unblockMutation = useUnblockMemberCheckinMutation({
     onSuccess: () => {
       toast.success('Method unblocked');
-      invalidateCheckinData(queryClient, eventId);
+      invalidateCheckinData(eventId);
       setIsOpen(false);
     },
     onError: (error: Error) => {
