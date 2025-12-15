@@ -32,7 +32,7 @@ import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
 import { useMeQuery } from '@/features/auth/hooks/auth';
-import { useEventsInfiniteQuery } from '@/features/events/api/events';
+import { useEventsListingInfiniteQuery } from '@/features/events/api/events';
 import { appLanguage } from '@/lib/config/language';
 import { EVENTS_CONFIG } from '@/lib/constants/events';
 import type { EventListItem } from '@/features/events/types/event';
@@ -175,7 +175,7 @@ export function EventsPage() {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
-  } = useEventsInfiniteQuery(variables, {
+  } = useEventsListingInfiniteQuery(variables, {
     enabled: true,
   });
 

@@ -10,6 +10,76 @@
 # Event Fragments
 # -----------------------------------------------------------------------------
 
+# Minimal fragment optimized for event cards in lists/grids
+# Contains ONLY fields actually used in EventCard component
+fragment EventCardData on Event {
+  id
+  title
+
+  # Capacity
+  min
+  max
+
+  # Dates
+  startAt
+  endAt
+
+  # Join configuration
+  allowJoinLate
+  joinOpensMinutesBeforeStart
+  joinCutoffMinutesBeforeStart
+  lateJoinCutoffMinutesAfterStart
+  joinManuallyClosed
+
+  # Location
+  meetingKind
+  lat
+  lng
+  address
+  radiusKm
+  addressVisibility
+
+  # Media
+  coverKey
+  coverBlurhash
+
+  # Computed fields for card display
+  joinedCount
+  isFull
+  hasStarted
+  isCanceled
+  isDeleted
+  canJoin
+  isOngoing
+  isOnsite
+  isOnline
+  isHybrid
+  isFavourite
+
+  # Boost status
+  boostedAt
+
+  # Appearance customization
+  appearance {
+    id
+    config
+  }
+
+  # Relations (minimal)
+  categories {
+    ...CategoryCore
+  }
+
+  owner {
+    id
+    name
+    email
+    avatarKey
+    avatarBlurhash
+    verifiedAt
+  }
+}
+
 # Lightweight event fragment (for lists/cards)
 fragment EventLight on Event {
   id
@@ -306,6 +376,15 @@ fragment EventDetail on Event {
 # -----------------------------------------------------------------------------
 # Result Wrappers
 # -----------------------------------------------------------------------------
+
+fragment EventsListingResult on EventsResult {
+  items {
+    ...EventCardData
+  }
+  pageInfo {
+    ...PageInfoCore
+  }
+}
 
 fragment EventsResultCore on EventsResult {
   items {

@@ -2,6 +2,55 @@
 # Event Queries
 # =============================================================================
 
+# Optimized query for events listing/grid - returns only data needed for cards
+query GetEventsListing(
+  $limit: Int = 20
+  $offset: Int = 0
+  $visibility: Visibility
+  $joinMode: JoinMode
+  $joinModes: [JoinMode!]
+  $ownerId: ID
+  $memberId: ID
+  $upcomingAfter: DateTime
+  $endingBefore: DateTime
+  $categorySlugs: [String!]
+  $tagSlugs: [String!]
+  $levels: [Level!]
+  $kinds: [MeetingKind!]
+  $keywords: [String!]
+  $status: EventStatus
+  $verifiedOnly: Boolean
+  $distanceKm: Float
+  $near: LocationInput
+  $sortBy: EventsSortBy = START_AT
+  $sortDir: SortDir = ASC
+) {
+  events(
+    limit: $limit
+    offset: $offset
+    visibility: $visibility
+    joinMode: $joinMode
+    joinModes: $joinModes
+    ownerId: $ownerId
+    memberId: $memberId
+    upcomingAfter: $upcomingAfter
+    endingBefore: $endingBefore
+    categorySlugs: $categorySlugs
+    tagSlugs: $tagSlugs
+    levels: $levels
+    kinds: $kinds
+    keywords: $keywords
+    status: $status
+    verifiedOnly: $verifiedOnly
+    distanceKm: $distanceKm
+    near: $near
+    sortBy: $sortBy
+    sortDir: $sortDir
+  ) {
+    ...EventsListingResult
+  }
+}
+
 query GetEvents(
   $limit: Int = 20
   $offset: Int = 0
