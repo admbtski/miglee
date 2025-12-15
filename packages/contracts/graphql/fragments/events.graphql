@@ -45,12 +45,10 @@ fragment EventCardData on Event {
 
   # Computed fields for card display
   joinedCount
-  isFull
   hasStarted
   isCanceled
   isDeleted
   canJoin
-  isOngoing
   isOnsite
   isOnline
   isHybrid
@@ -73,7 +71,6 @@ fragment EventCardData on Event {
   owner {
     id
     name
-    email
     avatarKey
     avatarBlurhash
     verifiedAt

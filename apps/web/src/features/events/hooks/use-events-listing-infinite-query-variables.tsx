@@ -7,19 +7,16 @@
 import { useMemo } from 'react';
 import {
   EventStatus,
+  GetEventsListingQueryVariables,
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
 import { getUpcomingAfterDefault, EVENTS_CONFIG } from '@/lib/constants/events';
-import type {
-  CommittedFilters,
-  EventsQueryVariables,
-  LocationMode,
-} from '../types';
+import type { CommittedFilters, LocationMode } from '../types';
 
-type UseEventsQueryVariablesParams = {
+type UseEventsListingInfiniteQueryVariablesParams = {
   filters: CommittedFilters;
   locationMode: LocationMode;
-  sortVars: Partial<Pick<EventsQueryVariables, 'sortBy' | 'sortDir'>>;
+  sortVars: Partial<Pick<GetEventsListingQueryVariables, 'sortBy' | 'sortDir'>>;
 };
 
 /**
@@ -30,18 +27,18 @@ type UseEventsQueryVariablesParams = {
  *
  * @example
  * ```tsx
- * const variables = useEventsQueryVariables({
+ * const variables = useEventsListingInfiniteQueryVariables({
  *   filters,
  *   locationMode: 'EXPLICIT',
  *   sortVars: { sortBy: 'START_AT', sortDir: 'ASC' }
  * });
  * ```
  */
-export function useEventsQueryVariables({
+export function useEventsListingInfiniteQueryVariables({
   filters,
   locationMode,
   sortVars,
-}: UseEventsQueryVariablesParams): EventsQueryVariables {
+}: UseEventsListingInfiniteQueryVariablesParams): GetEventsListingQueryVariables {
   const {
     startISO,
     endISO,
@@ -66,7 +63,7 @@ export function useEventsQueryVariables({
   // Only use upcomingAfter/endingBefore when status is ANY
   const shouldUseTimeFilters = status === EventStatus.Any;
 
-  return useMemo<EventsQueryVariables>(
+  return useMemo<GetEventsListingQueryVariables>(
     () => ({
       limit: EVENTS_CONFIG.DEFAULT_LIMIT,
       visibility: Visibility.Public,

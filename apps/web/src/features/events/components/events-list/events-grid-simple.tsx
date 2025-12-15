@@ -1,35 +1,37 @@
 /**
- * Simple Events Grid with responsive columns and infinite scroll
+ * Optimized Events Grid with responsive columns and infinite scroll
  *
  * Features:
  * - No virtualization (simpler, more stable)
  * - Responsive grid (1-3 columns based on container width)
- * - Intersection Observer for infinite scroll
- * - Min card width: 320px, Max: 600px
+ * - Intersection Observer for infinite scroll (2400px rootMargin)
+ * - ResizeObserver for dynamic column calculation
+ * - Min card width: 320px, Max: 600px per card
  * - Dynamic heights work perfectly
  */
 
 'use client';
 
-import React, { memo, useMemo, useEffect, useState, useRef } from 'react';
-import type {
-  EventHoverCallback,
-  EventListItem,
-} from '@/features/events/types/event';
+import { memo, useMemo, useEffect, useState, useRef } from 'react';
+import type { EventHoverCallback } from '@/features/events/types/event';
 import { EventCard, type EventCardProps } from '../event-card';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
 import { notEmptyString } from '@/features/events/utils/event';
+import type { EventsListingResultFragment_EventsResult_items_Event } from '@/lib/api/__generated__/react-query-update';
 
 // Constants
 const MAX_COLUMNS = 3;
 const MIN_CARD_WIDTH = 320;
 const CARD_GAP = 24;
 
-// Map event data to card props
-export function mapEventToEventCardProps(
-  item: EventListItem,
+/**
+ * Map optimized EventCardData to EventCard props
+ * Only includes fields present in the EventCardData fragment
+ */
+function mapEventToCardProps(
+  item: EventsListingResultFragment_EventsResult_items_Event,
   lang: string,
   onHover?: EventHoverCallback
 ): EventCardProps {
@@ -44,40 +46,36 @@ export function mapEventToEventCardProps(
     radiusKm: item.radiusKm,
     startISO: item.startAt,
     endISO: item.endAt,
-    title: item.title ?? '-',
+    title: item.title,
     categories,
     address: item.address ?? undefined,
     avatarKey: item.owner?.avatarKey ?? null,
     avatarBlurhash: item.owner?.avatarBlurhash ?? null,
-    organizerName: item.owner?.name ?? item.owner?.email ?? 'Unknown organizer',
+    organizerName: item.owner?.name ?? 'Unknown',
     verifiedAt: item.owner?.verifiedAt ?? undefined,
     plan: 'default',
     boostedAt: item.boostedAt ?? null,
     appearance: item.appearance?.config
-      ? { card: (item.appearance.config as any)?.card ?? null }
+      ? { card: item.appearance.config?.card ?? null }
       : null,
     coverKey: item.coverKey ?? null,
     coverBlurhash: item.coverBlurhash ?? null,
     joinedCount: item.joinedCount,
     min: item.min,
     max: item.max,
-    canJoin: item.canJoin,
-    isFull: item.isFull,
-    isOngoing: item.isOngoing,
     isCanceled: item.isCanceled,
     isDeleted: item.isDeleted,
-    hasStarted: item.hasStarted,
     joinOpensMinutesBeforeStart: item.joinOpensMinutesBeforeStart ?? null,
     joinCutoffMinutesBeforeStart: item.joinCutoffMinutesBeforeStart ?? null,
-    allowJoinLate: item.allowJoinLate ?? true,
+    allowJoinLate: item.allowJoinLate,
     lateJoinCutoffMinutesAfterStart:
       item.lateJoinCutoffMinutesAfterStart ?? null,
-    joinManuallyClosed: item.joinManuallyClosed ?? false,
+    joinManuallyClosed: item.joinManuallyClosed,
     isHybrid: item.isHybrid,
     isOnline: item.isOnline,
     isOnsite: item.isOnsite,
     addressVisibility: item.addressVisibility,
-    isFavourite: item.isFavourite ?? false,
+    isFavourite: item.isFavourite,
     onHover,
   };
 }
@@ -108,7 +106,7 @@ function getGridClasses(cols: number): string {
 
 // Component Props
 type EventsGridSimpleProps = {
-  items: EventListItem[];
+  items: EventsListingResultFragment_EventsResult_items_Event[];
   isLoading: boolean;
   error: Error | null;
   hasNextPage: boolean;
@@ -128,7 +126,6 @@ export const EventsGridSimple = memo(function EventsGridSimple({
   onLoadMore,
   onHover,
 }: EventsGridSimpleProps) {
-  // Container ref for width measurement
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(1200);
@@ -141,15 +138,16 @@ export const EventsGridSimple = memo(function EventsGridSimple({
 
   const gridClasses = useMemo(() => getGridClasses(columns), [columns]);
 
-  // Map items to card props
+  // Map items to card props (memoized)
   const cardProps = useMemo(
-    () => items.map((item) => mapEventToEventCardProps(item, lang, onHover)),
+    () => items.map((item) => mapEventToCardProps(item, lang, onHover)),
     [items, lang, onHover]
   );
 
-  // Measure container width with ResizeObserver (reacts to layout changes)
+  // Measure container width with ResizeObserver
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const updateWidth = () => {
       if (containerRef.current) {
@@ -160,40 +158,34 @@ export const EventsGridSimple = memo(function EventsGridSimple({
     // Initial measurement
     updateWidth();
 
-    // Use ResizeObserver to detect container width changes
-    // This works when left panel or map is hidden/shown
+    // Observe size changes (triggered when left panel or map toggles)
     const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.contentBoxSize) {
-          // contentBoxSize is always an array in the spec
-          const size = Array.isArray(entry.contentBoxSize)
-            ? entry.contentBoxSize[0]
-            : entry.contentBoxSize;
+      const entry = entries[0];
+      if (!entry) return;
 
-          if (size && 'inlineSize' in size) {
-            setContainerWidth(size.inlineSize);
-          } else {
-            // Fallback
-            updateWidth();
-          }
+      if (entry.contentBoxSize) {
+        const size = Array.isArray(entry.contentBoxSize)
+          ? entry.contentBoxSize[0]
+          : entry.contentBoxSize;
+
+        if (size && 'inlineSize' in size) {
+          setContainerWidth(size.inlineSize);
         } else {
-          // Fallback for older browsers
           updateWidth();
         }
+      } else {
+        updateWidth();
       }
     });
 
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
   }, []);
 
-  // Intersection Observer for infinite scroll
+  // Infinite scroll with Intersection Observer
   useEffect(() => {
-    if (!sentinelRef.current) return;
-    if (!hasNextPage || isFetchingNextPage) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage || isFetchingNextPage) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -201,13 +193,10 @@ export const EventsGridSimple = memo(function EventsGridSimple({
           onLoadMore();
         }
       },
-      {
-        rootMargin: '2400px',
-      }
+      { rootMargin: '2400px' }
     );
 
-    observer.observe(sentinelRef.current);
-
+    observer.observe(sentinel);
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 

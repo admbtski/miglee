@@ -10,7 +10,7 @@ export { useCommittedFilters } from './use-committed-filters';
 export { useCommittedMapVisible } from './use-committed-map-vision';
 export { useCommittedSort } from './use-committed-sort';
 export { useDebouncedHover } from './use-debounced-hover';
-export { useEventsQueryVariables } from './use-events-query-variables';
+export { useEventsListingInfiniteQueryVariables } from './use-events-listing-infinite-query-variables';
 export { useFilterState } from './use-filter-state';
 export { useFilterValidation } from './use-filter-validation';
 export { useLocationMode } from './use-location-mode';

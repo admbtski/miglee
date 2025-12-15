@@ -51,12 +51,8 @@ export interface EventCardProps {
   joinedCount: number;
   min?: number | null;
   max?: number | null;
-  canJoin: boolean;
-  isFull: boolean;
-  isOngoing: boolean;
   isCanceled: boolean;
   isDeleted: boolean;
-  hasStarted: boolean;
   joinOpensMinutesBeforeStart?: number | null;
   joinCutoffMinutesBeforeStart?: number | null;
   allowJoinLate?: boolean;
@@ -93,12 +89,8 @@ export const EventCard = memo(function EventCard({
   categories = [],
   className,
   verifiedAt,
-  hasStarted: _hasStarted,
-  isFull: _isFull,
-  isOngoing: _isOngoing,
   isCanceled,
   isDeleted,
-  canJoin: _canJoin,
   joinOpensMinutesBeforeStart,
   joinCutoffMinutesBeforeStart,
   allowJoinLate,

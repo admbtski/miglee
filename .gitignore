@@ -102,4 +102,7 @@ Thumbs.db
 # GraphQL generated files
 **/__generated__/
 
+# Persisted queries cache (development only)
+.persisted-queries.json
+
 .turbo

@@ -7,7 +7,7 @@
  * 2. TopDrawer (slides from top) - Search, Location, Distance
  * 3. Left Sidebar (desktop) - Time Status, Date Range, Event Settings with auto-apply
  * 4. Right Drawer (mobile) - Same as left sidebar, slides from right
- * 5. Auto-apply with 3s debounce for sidebar filters
+ * 5. Auto-apply with 1s debounce for sidebar filters
  */
 
 // TODO i18n: Map loading fallback text needs translation
@@ -17,6 +17,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   lazy,
+  memo,
   Suspense,
   useCallback,
   useEffect,
@@ -35,7 +36,6 @@ import { useMeQuery } from '@/features/auth/hooks/auth';
 import { useEventsListingInfiniteQuery } from '@/features/events/api/events';
 import { appLanguage } from '@/lib/config/language';
 import { EVENTS_CONFIG } from '@/lib/constants/events';
-import type { EventListItem } from '@/features/events/types/event';
 
 import { DesktopSearchBar } from '@/features/events/components/desktop-search-bar';
 import { EventsGridSimple } from '@/features/events/components/events-list/events-grid-simple';
@@ -51,11 +51,11 @@ import {
   useCommittedMapVisible,
   useCommittedSort,
   useDebouncedHover,
-  useEventsQueryVariables,
   useLocationMode,
   type SearchMeta,
 } from '@/features/events/hooks';
 import type { CommittedFilters } from '@/features/events/types';
+import { useEventsListingInfiniteQueryVariables } from '@/features/events/hooks/use-events-listing-infinite-query-variables';
 
 const ServerClusteredMap = lazy(
   () =>
@@ -114,7 +114,7 @@ export function EventsPage() {
     filters.verifiedOnly
   );
 
-  // Sync local state with committed filters when they change
+  // Sync local state with committed filters when they change (optimized with single dependency)
   useEffect(() => {
     setLocalQ(q);
     setLocalCity(city);
@@ -129,21 +129,8 @@ export function EventsPage() {
     setLocalLevels(filters.levels);
     setLocalJoinModes(filters.joinModes);
     setLocalVerifiedOnly(filters.verifiedOnly);
-  }, [
-    q,
-    city,
-    filters.cityLat,
-    filters.cityLng,
-    filters.cityPlaceId,
-    distanceKm,
-    filters.status,
-    filters.startISO,
-    filters.endISO,
-    filters.kinds,
-    filters.levels,
-    filters.joinModes,
-    filters.verifiedOnly,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]); // Only track filters object for optimization
 
   // Debounce timer for auto-apply
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -161,7 +148,7 @@ export function EventsPage() {
     userHomeLng: userProfile?.homeLng ?? null,
   });
 
-  const variables = useEventsQueryVariables({
+  const variables = useEventsListingInfiniteQueryVariables({
     filters,
     locationMode,
     sortVars,
@@ -179,37 +166,35 @@ export function EventsPage() {
     enabled: true,
   });
 
-  const pages = data?.pages ?? [];
-  const flatItems = useMemo(
-    () => pages.flatMap((page) => page.events.items),
-    [pages]
+  // Memoize flattened data
+  const { flatItems, total, loadedCount } = useMemo(() => {
+    const pages = data?.pages ?? [];
+    const items = pages.flatMap((page) => page.events.items);
+    return {
+      flatItems: items,
+      total: pages[0]?.events.pageInfo.total ?? items.length,
+      loadedCount: items.length,
+    };
+  }, [data?.pages]);
+
+  // Build grid columns based on map visibility (memoized)
+  const gridCols = useMemo(
+    () =>
+      mapVisible
+        ? 'lg:grid-cols-[auto_1fr_400px] xl:grid-cols-[auto_1fr_450px]'
+        : 'lg:grid-cols-[auto_1fr]',
+    [mapVisible]
   );
-  const total = pages[0]?.events.pageInfo.total ?? flatItems.length;
-  const loadedCount = flatItems.length;
 
-  // Build grid columns based on map visibility (always include left column space)
-  // Use consistent grid and animate column width instead
-  const gridCols = mapVisible
-    ? 'lg:grid-cols-[auto_1fr_400px] xl:grid-cols-[auto_1fr_450px]'
-    : 'lg:grid-cols-[auto_1fr]';
-
-  // Open TopDrawer with specific focus
+  // Drawer control callbacks (memoized)
   const openTopDrawer = useCallback((focus: TopDrawerFocusSection) => {
     setTopDrawerFocus(focus);
     setTopDrawerOpen(true);
   }, []);
 
-  const closeTopDrawer = useCallback(() => {
-    setTopDrawerOpen(false);
-  }, []);
-
-  const openRightDrawer = useCallback(() => {
-    setRightDrawerOpen(true);
-  }, []);
-
-  const closeRightDrawer = useCallback(() => {
-    setRightDrawerOpen(false);
-  }, []);
+  const closeTopDrawer = useCallback(() => setTopDrawerOpen(false), []);
+  const openRightDrawer = useCallback(() => setRightDrawerOpen(true), []);
+  const closeRightDrawer = useCallback(() => setRightDrawerOpen(false), []);
 
   // Apply TopDrawer filters (immediate) - only search, location, distance
   const handleTopDrawerApply = useCallback(() => {
@@ -421,7 +406,7 @@ export function EventsPage() {
 
             <ErrorBoundary>
               <EventsGridSimple
-                items={flatItems as unknown as EventListItem[]}
+                items={flatItems}
                 isLoading={isLoading}
                 error={error ?? null}
                 hasNextPage={Boolean(hasNextPage)}
@@ -501,7 +486,9 @@ export function EventsPage() {
   );
 }
 
-type MapSidebarProps = {
+/* ────────────────────────── Map Components ────────────────────────── */
+
+type MapComponentProps = {
   filters: CommittedFilters;
   hoveredEvent: { id: string; lat: number | null; lng: number | null } | null;
   mapCenter: { lat: number; lng: number } | null;
@@ -509,13 +496,38 @@ type MapSidebarProps = {
   locale: string;
 };
 
-function MapSidebar({
+/**
+ * Shared Map Component - DRY principle
+ * Used by both desktop sidebar and mobile full-screen view
+ */
+const MapContent = memo(function MapContent({
   filters,
   hoveredEvent,
   mapCenter,
   locationMode,
   locale,
-}: MapSidebarProps) {
+}: MapComponentProps) {
+  // Memoize map filters to prevent unnecessary re-renders
+  const mapFilters = useMemo(
+    () => ({
+      q: filters.q || undefined,
+      categorySlugs: filters.categories,
+      tagSlugs: filters.tags,
+      levels: filters.levels as any,
+      kinds: filters.kinds as any,
+      joinModes: filters.joinModes as any,
+      verifiedOnly: filters.verifiedOnly,
+      status: filters.status as any,
+      startISO: filters.startISO ?? undefined,
+      endISO: filters.endISO ?? undefined,
+      city: filters.city ?? undefined,
+      cityLat: filters.cityLat ?? undefined,
+      cityLng: filters.cityLng ?? undefined,
+      distanceKm: filters.distanceKm,
+    }),
+    [filters]
+  );
+
   const handleEventClick = useCallback(
     (eventId: string) => {
       window.location.href = `/${locale}/event/${eventId}`;
@@ -523,81 +535,49 @@ function MapSidebar({
     [locale]
   );
 
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<MapLoadingFallback />}>
+        <ServerClusteredMap
+          fullHeight
+          lang={appLanguage}
+          locale={locale}
+          filters={mapFilters}
+          onEventClick={handleEventClick}
+          hoveredEventId={hoveredEvent?.id ?? null}
+          hoveredLat={hoveredEvent?.lat ?? null}
+          hoveredLng={hoveredEvent?.lng ?? null}
+          centerOn={mapCenter}
+          locationMode={locationMode}
+        />
+      </Suspense>
+    </ErrorBoundary>
+  );
+});
+
+/**
+ * Desktop Map Sidebar
+ */
+const MapSidebar = memo(function MapSidebar(props: MapComponentProps) {
   return (
     <motion.aside
       className="hidden md:block"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{
-        opacity: { duration: 0.2 },
-        scale: { duration: 0.2 },
-      }}
+      transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.2 } }}
     >
       <div className="sticky top-[var(--nav-h)] -mt-4 h-[calc(100vh-var(--nav-h))]">
-        <ErrorBoundary>
-          <Suspense fallback={<MapLoadingFallback />}>
-            <ServerClusteredMap
-              fullHeight={true}
-              lang={appLanguage}
-              locale={locale}
-              filters={{
-                q: filters.q || undefined,
-                categorySlugs: filters.categories,
-                tagSlugs: filters.tags,
-                levels: filters.levels as any,
-                kinds: filters.kinds as any,
-                joinModes: filters.joinModes as any,
-                verifiedOnly: filters.verifiedOnly,
-                status: filters.status as any,
-                startISO: filters.startISO ?? undefined,
-                endISO: filters.endISO ?? undefined,
-                city: filters.city ?? undefined,
-                cityLat: filters.cityLat ?? undefined,
-                cityLng: filters.cityLng ?? undefined,
-                distanceKm: filters.distanceKm,
-              }}
-              onEventClick={handleEventClick}
-              hoveredEventId={hoveredEvent?.id ?? null}
-              hoveredLat={hoveredEvent?.lat ?? null}
-              hoveredLng={hoveredEvent?.lng ?? null}
-              centerOn={mapCenter}
-              locationMode={locationMode}
-            />
-          </Suspense>
-        </ErrorBoundary>
+        <MapContent {...props} />
       </div>
     </motion.aside>
   );
-}
-
-function MapLoadingFallback() {
-  return (
-    <div className="flex items-center justify-center h-full bg-zinc-100 dark:bg-zinc-900 rounded-2xl">
-      {/* TODO i18n */}
-      <div className="text-sm text-zinc-500">Ładowanie mapy...</div>
-    </div>
-  );
-}
+});
 
 /**
  * Mobile Full-Screen Map View
- * Shown only on mobile devices when map is toggled on
  */
-function MobileMapView({
-  filters,
-  hoveredEvent,
-  mapCenter,
-  locationMode,
-  locale,
-}: MapSidebarProps) {
-  const handleEventClick = useCallback(
-    (eventId: string) => {
-      window.location.href = `/${locale}/event/${eventId}`;
-    },
-    [locale]
-  );
-
+const MobileMapView = memo(function MobileMapView(props: MapComponentProps) {
   return (
     <motion.div
       className="md:hidden col-span-full -mx-4 -mt-4"
@@ -610,38 +590,17 @@ function MobileMapView({
         className="h-[calc(100vh-var(--nav-h)-56px)]"
         style={{ minHeight: '400px' }}
       >
-        <ErrorBoundary>
-          <Suspense fallback={<MapLoadingFallback />}>
-            <ServerClusteredMap
-              fullHeight={true}
-              lang={appLanguage}
-              locale={locale}
-              filters={{
-                q: filters.q || undefined,
-                categorySlugs: filters.categories,
-                tagSlugs: filters.tags,
-                levels: filters.levels as any,
-                kinds: filters.kinds as any,
-                joinModes: filters.joinModes as any,
-                verifiedOnly: filters.verifiedOnly,
-                status: filters.status as any,
-                startISO: filters.startISO ?? undefined,
-                endISO: filters.endISO ?? undefined,
-                city: filters.city ?? undefined,
-                cityLat: filters.cityLat ?? undefined,
-                cityLng: filters.cityLng ?? undefined,
-                distanceKm: filters.distanceKm,
-              }}
-              onEventClick={handleEventClick}
-              hoveredEventId={hoveredEvent?.id ?? null}
-              hoveredLat={hoveredEvent?.lat ?? null}
-              hoveredLng={hoveredEvent?.lng ?? null}
-              centerOn={mapCenter}
-              locationMode={locationMode}
-            />
-          </Suspense>
-        </ErrorBoundary>
+        <MapContent {...props} />
       </div>
     </motion.div>
+  );
+});
+
+function MapLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-full bg-zinc-100 dark:bg-zinc-900 rounded-2xl">
+      {/* TODO i18n */}
+      <div className="text-sm text-zinc-500">Ładowanie mapy...</div>
+    </div>
   );
 }

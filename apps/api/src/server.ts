@@ -11,6 +11,7 @@ declare module 'fastify' {
   }
 }
 import { bullBoardPlugin, queueStatsPlugin } from './plugins/bull-board';
+import { compressionPlugin } from './plugins/compression';
 import { cookiePlugin } from './plugins/cookie';
 import { corsPlugin } from './plugins/cors';
 import { gracefulShutdownPlugin } from './plugins/graceful-shutdown';
@@ -53,6 +54,7 @@ export async function createServer() {
   });
 
   // plugins
+  await server.register(compressionPlugin); // Register FIRST for max compression coverage
   await server.register(rateLimitPlugin);
   await server.register(corsPlugin);
   await server.register(helmetPlugin);

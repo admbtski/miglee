@@ -12,7 +12,7 @@ import {
   visitWithTypeInfo,
   type ValueNode,
 } from 'graphql';
-import mercurius, { MercuriusContext } from 'mercurius';
+import mercurius, { MercuriusContext, persistedQueryDefaults } from 'mercurius';
 import { join } from 'path';
 import { WebSocket } from 'ws';
 import { config, env } from '../env';
@@ -289,7 +289,9 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
     },
   });
 
-  fastify.log.info(`Registering Mercurius plugin with ${env.NODE_ENV} configuration`);
+  fastify.log.info(
+    `Registering Mercurius plugin with ${env.NODE_ENV} configuration`
+  );
   fastify.log.info(
     `GraphQL security: depth=${MAX_QUERY_DEPTH}, complexity=${MAX_QUERY_COMPLEXITY}, introspection=${ALLOW_INTROSPECTION}, graphiql=${!config.isProduction}`
   );
@@ -306,6 +308,12 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
 
     // ✅ Validation rules - depth limit
     validationRules: [depthLimit(MAX_QUERY_DEPTH)],
+
+    // ✅ Automatic Persisted Queries (APQ)
+    // Apollo-style automatic persisted queries
+    // Clients can send query hash instead of full query string
+    // Max cache size: 1000 queries (memory-based cache)
+    persistedQueryProvider: persistedQueryDefaults.automatic(1000),
 
     subscription: {
       emitter: redisEmitter,
@@ -351,60 +359,66 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   // =============================================================================
 
   // ✅ Pre-execution hook for introspection blocking and complexity check
-  fastify.graphql.addHook('preExecution', async (execSchema, document, context) => {
-    const ast = getOperationAST(document, undefined);
-    const operation = ast?.operation ?? 'query';
-    const operationName = ast?.name?.value ?? 'anonymous';
+  fastify.graphql.addHook(
+    'preExecution',
+    async (execSchema, document, context) => {
+      const ast = getOperationAST(document, undefined);
+      const operation = ast?.operation ?? 'query';
+      const operationName = ast?.name?.value ?? 'anonymous';
 
-    // Store metadata for metrics
-    context.request.__gql = {
-      start: process.hrtime.bigint(),
-      operation,
-      operationName,
-    };
-
-    // ✅ Block introspection in production
-    const introspectionError = blockIntrospection(document);
-    if (introspectionError) {
-      return {
-        document,
-        errors: [introspectionError],
+      // Store metadata for metrics
+      context.request.__gql = {
+        start: process.hrtime.bigint(),
+        operation,
+        operationName,
       };
+
+      // ✅ Block introspection in production
+      const introspectionError = blockIntrospection(document);
+      if (introspectionError) {
+        return {
+          document,
+          errors: [introspectionError],
+        };
+      }
+
+      // ✅ Check query complexity
+      const complexity = calculateComplexity(document, execSchema);
+
+      if (complexity > MAX_QUERY_COMPLEXITY) {
+        context.request.log.warn(
+          { complexity, max: MAX_QUERY_COMPLEXITY, operationName },
+          'Query complexity exceeded'
+        );
+
+        return {
+          document,
+          errors: [
+            new GraphQLError(
+              `Query complexity ${complexity} exceeds maximum allowed ${MAX_QUERY_COMPLEXITY}`,
+              {
+                extensions: {
+                  code: 'BAD_USER_INPUT',
+                  complexity,
+                  maxComplexity: MAX_QUERY_COMPLEXITY,
+                },
+              }
+            ),
+          ],
+        };
+      }
+
+      // Log complexity in development for debugging
+      if (config.isDevelopment && complexity > 100) {
+        context.request.log.debug(
+          { complexity, operationName },
+          'Query complexity'
+        );
+      }
+
+      return { document };
     }
-
-    // ✅ Check query complexity
-    const complexity = calculateComplexity(document, execSchema);
-
-    if (complexity > MAX_QUERY_COMPLEXITY) {
-      context.request.log.warn(
-        { complexity, max: MAX_QUERY_COMPLEXITY, operationName },
-        'Query complexity exceeded'
-      );
-
-      return {
-        document,
-        errors: [
-          new GraphQLError(
-            `Query complexity ${complexity} exceeds maximum allowed ${MAX_QUERY_COMPLEXITY}`,
-            {
-              extensions: {
-                code: 'BAD_USER_INPUT',
-                complexity,
-                maxComplexity: MAX_QUERY_COMPLEXITY,
-              },
-            }
-          ),
-        ],
-      };
-    }
-
-    // Log complexity in development for debugging
-    if (config.isDevelopment && complexity > 100) {
-      context.request.log.debug({ complexity, operationName }, 'Query complexity');
-    }
-
-    return { document };
-  });
+  );
 
   // Metrics hook
   fastify.graphql.addHook('onResolution', async (execution, context) => {

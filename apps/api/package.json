@@ -29,6 +29,7 @@
     "@aws-sdk/s3-request-presigner": "^3.934.0",
     "@bull-board/api": "^6.15.0",
     "@bull-board/fastify": "^6.15.0",
+    "@fastify/compress": "^8.3.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.1",
