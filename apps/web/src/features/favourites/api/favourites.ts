@@ -236,7 +236,6 @@ export function useToggleFavouriteMutation(
             Array.isArray(q.queryKey) &&
             (q.queryKey[0] === 'GetEvent' ||
               q.queryKey[0] === 'GetEvents' ||
-              q.queryKey[0] === 'GetEventsLight' ||
               q.queryKey[0] === 'Favourites'),
         });
 
@@ -248,7 +247,6 @@ export function useToggleFavouriteMutation(
               Array.isArray(q.queryKey) &&
               (q.queryKey[0] === 'GetEvent' ||
                 q.queryKey[0] === 'GetEvents' ||
-                q.queryKey[0] === 'GetEventsLight' ||
                 q.queryKey[0] === 'Favourites'),
           })
           .map((q) => ({ key: q.queryKey, data: q.state.data }));
@@ -301,9 +299,7 @@ export function useToggleFavouriteMutation(
           {
             predicate: (q) =>
               Array.isArray(q.queryKey) &&
-              (q.queryKey[0] === 'GetEvent' ||
-                q.queryKey[0] === 'GetEvents' ||
-                q.queryKey[0] === 'GetEventsLight'),
+              (q.queryKey[0] === 'GetEvent' || q.queryKey[0] === 'GetEvents'),
           },
           (old: any) => {
             if (!old) return old;
@@ -324,7 +320,7 @@ export function useToggleFavouriteMutation(
               }
             }
 
-            // Handle events list query (GetEvents/GetEventsLight)
+            // Handle events list query (GetEvents)
             if (old.events?.items) {
               return {
                 ...old,
@@ -372,9 +368,7 @@ export function useToggleFavouriteMutation(
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) &&
-            (q.queryKey[0] === 'GetEvent' ||
-              q.queryKey[0] === 'GetEvents' ||
-              q.queryKey[0] === 'GetEventsLight'),
+            (q.queryKey[0] === 'GetEvent' || q.queryKey[0] === 'GetEvents'),
         });
       },
       ...(options ?? {}),

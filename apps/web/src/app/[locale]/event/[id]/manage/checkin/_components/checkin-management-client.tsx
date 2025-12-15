@@ -578,7 +578,8 @@ function OverviewTab({
             member.user?.name || member.user?.profile?.displayName || 'Unknown'
           );
         if (exportConfig.email) row.push(member.user?.email || '-');
-        if (exportConfig.username) row.push(member.user?.username || '-');
+        if (exportConfig.username)
+          row.push(member.user?.profile?.displayName || '-');
         if (exportConfig.role) row.push(member.role || '-');
         if (exportConfig.status)
           row.push(member.isCheckedIn ? 'Checked In' : 'Not Checked In');

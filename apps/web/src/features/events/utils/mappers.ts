@@ -18,48 +18,6 @@ import type {
   SimpleEventFormValues,
 } from '../types/event-form';
 
-/** ---- API → Form (full form for editing) ---- */
-export function mapEventToFormValues(
-  event: EventsResultCoreFragment_EventsResult_items_Event
-): EventFormValues {
-  return {
-    // Basic fields
-    title: event.title ?? '',
-    categorySlugs: event.categories?.map((c) => c.slug) ?? [],
-    description: event.description ?? '',
-    startAt: new Date(event.startAt),
-    endAt: new Date(event.endAt),
-    meetingKind: event.meetingKind,
-    onlineUrl: event.onlineUrl ?? '',
-    location: {
-      placeId: event.placeId ?? undefined,
-      lat: event.lat ?? undefined,
-      lng: event.lng ?? undefined,
-      address: event.address ?? undefined,
-      radiusKm: event.radiusKm ?? undefined,
-      cityName: (event as any).cityName ?? undefined,
-      cityPlaceId: (event as any).cityPlaceId ?? undefined,
-    },
-    mode: event.mode,
-    min: event.min ?? 2,
-    max: event.max ?? 50,
-    visibility: event.visibility,
-    joinMode: event.joinMode,
-
-    // Extended fields (for manage panel)
-    tagSlugs: event.tags?.map((t) => t.slug) ?? [],
-    notes: event.notes ?? '',
-    levels: event.levels,
-    addressVisibility: event.addressVisibility,
-    membersVisibility: event.membersVisibility,
-    joinOpensMinutesBeforeStart: event.joinOpensMinutesBeforeStart ?? null,
-    joinCutoffMinutesBeforeStart: event.joinCutoffMinutesBeforeStart ?? null,
-    allowJoinLate: !!event.allowJoinLate,
-    lateJoinCutoffMinutesAfterStart:
-      event.lateJoinCutoffMinutesAfterStart ?? null,
-  };
-}
-
 /**
  * Maps simplified form values to CreateEventInput for new event creation.
  * Only includes fields supported by the simplified CreateEventInput schema.

@@ -48,48 +48,6 @@ query GetEvents(
   }
 }
 
-# Lightweight query for lists (better performance)
-# Dodano najczęstsze filtry: status/kinds/levels/keywords/verifiedOnly (+near)
-query GetEventsLight(
-  $limit: Int = 20
-  $offset: Int = 0
-  $visibility: Visibility
-  $upcomingAfter: DateTime
-  $endingBefore: DateTime
-  $categorySlugs: [String!]
-  $tagSlugs: [String!]
-  $levels: [Level!]
-  $kinds: [MeetingKind!]
-  $keywords: [String!]
-  $status: EventStatus
-  $verifiedOnly: Boolean
-  $distanceKm: Float
-  $near: LocationInput
-  $sortBy: EventsSortBy = START_AT
-  $sortDir: SortDir = ASC
-) {
-  events(
-    limit: $limit
-    offset: $offset
-    visibility: $visibility
-    upcomingAfter: $upcomingAfter
-    endingBefore: $endingBefore
-    categorySlugs: $categorySlugs
-    tagSlugs: $tagSlugs
-    levels: $levels
-    kinds: $kinds
-    keywords: $keywords
-    status: $status
-    verifiedOnly: $verifiedOnly
-    distanceKm: $distanceKm
-    near: $near
-    sortBy: $sortBy
-    sortDir: $sortDir
-  ) {
-    ...EventsResultLight
-  }
-}
-
 query GetEvent($id: ID!) {
   event(id: $id) {
     ...EventCore

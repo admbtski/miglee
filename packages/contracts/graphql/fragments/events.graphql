@@ -307,15 +307,6 @@ fragment EventDetail on Event {
 # Result Wrappers
 # -----------------------------------------------------------------------------
 
-fragment EventsResultLight on EventsResult {
-  items {
-    ...EventLight
-  }
-  pageInfo {
-    ...PageInfoCore
-  }
-}
-
 fragment EventsResultCore on EventsResult {
   items {
     ...EventCore
