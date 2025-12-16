@@ -4,7 +4,7 @@
  */
 
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
-import { EventQRCheckinClient } from './_components/event-qr-checkin-client';
+import { EventQRCheckinClient } from '@/features/checkin/components/event-qr-checkin-client';
 
 interface PageProps {
   params: Promise<{

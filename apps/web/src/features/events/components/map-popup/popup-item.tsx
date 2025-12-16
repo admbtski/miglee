@@ -5,7 +5,6 @@
 import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
-import { Plan } from '@/components/ui/plan-theme';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/events/components/event-countdown-pill';
 import {
@@ -63,7 +62,7 @@ export type PopupEvent = {
   joinManuallyClosed?: boolean;
 
   levels?: GqlLevel[] | null;
-  plan?: Plan | null;
+  plan?: string | null;
   boostedAt?: string | null; // ISO timestamp of last boost
   /** Custom appearance config from EventAppearance */
   appearance?: {
@@ -152,7 +151,7 @@ export function PopupItem({
     [radiusKm, isHybrid, isOnsite, isOnline, avMeta, address, addressVisibility]
   );
 
-  const plan = (event.plan as Plan) ?? 'default';
+  const plan = (event.plan as string) ?? 'default';
   const categories = event.categorySlugs ?? [];
   const maxCategoriesToShow = isBoosted ? 1 : 2;
   const remainingCategoriesCount = categories.length - maxCategoriesToShow;

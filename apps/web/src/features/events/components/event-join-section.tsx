@@ -1,6 +1,6 @@
 'use client';
 
-import { JoinRequestModal } from '@/features/events/components/join-request-modal';
+import { JoinRequestModal } from '@/features/join-form/components/join-request-modal';
 import {
   useCancelJoinRequestMutation,
   useJoinWaitlistOpenMutation,
@@ -12,7 +12,7 @@ import {
 import {
   useEventJoinQuestionsQuery,
   useRequestJoinEventWithAnswersMutation,
-} from '@/features/events/api/join-form';
+} from '@/features/join-form/api/join-form';
 import { formatOpensIn } from '@/features/events/utils/event-join-state';
 import type { EventDetailsData } from '@/features/events/types/event-details';
 import { useQueryClient } from '@tanstack/react-query';

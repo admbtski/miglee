@@ -45,12 +45,12 @@ import { cn } from '@/lib/utils';
 import {
   useEventAgendaItemsQuery,
   useUpdateEventAgendaMutation,
-} from '@/features/events/api/agenda';
+} from '@/features/agenda/api/agenda';
 import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '../../_components/plan-upgrade-banner';
+} from '@/features/event-management/components/plan-upgrade-banner';
 import { useUsersQuery } from '@/features/users/api/users';
 import { Modal } from '@/components/feedback/modal';
 import { Avatar as AvatarComponent } from '@/components/ui/avatar';

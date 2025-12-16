@@ -22,23 +22,23 @@ import {
 import { useMemo, useState } from 'react';
 import { EventActions } from './event-actions';
 import { EventAdminPanel } from './event-admin-panel';
-import { EventAgenda } from './event-agenda';
+import { EventAgenda } from '../../agenda/components/event-agenda';
 import { EventChatModal } from './event-chat-modal';
-import { EventComments } from './event-comments';
+import { EventComments } from '../../comments/components/event-comments';
 import { EventCountdownTimer } from './event-countdown-timer';
 import { EventDetailSkeleton } from './event-detail-skeleton';
 import { EventDetails } from './event-details';
 import { EventEngagementStats } from './event-engagement-stats';
-import { EventFaq } from './event-faq';
+import { EventFaq } from '../../faq/components/event-faq';
 import { EventHero } from './event-hero';
 import { EventJoinSection } from './event-join-section';
-import { UserCheckinSection } from './user-checkin-section';
+import { UserCheckinSection } from '@/features/checkin/components/user-checkin-section';
 import { EventLocationMap } from './event-location-map';
 import { EventMetadata } from './event-metadata';
 import { EventParticipants } from './event-participants';
-import { EventReviews } from './event-reviews';
+import { EventReviews } from '../../reviews/components/event-reviews';
 import { StickyJoinButton } from './sticky-join-button';
-import { ReportEventModal } from './report-event-modal';
+import { ReportEventModal } from '@/features/reports/components/report-event-modal';
 import { CancelEventModals } from '@/features/events/components/cancel-event-modals';
 import {
   CloseJoinModal,
@@ -70,13 +70,13 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
 
   // Get event and user data (safe to access after hooks)
   // Type assertion needed due to GraphQL codegen type inference issues
-  const event = data?.event as typeof data extends { event: infer T } ? T : any;
+  const event = data?.event;
   const currentUserId = authData?.me?.id;
 
   // Check user membership status - must be declared before early returns
   const userMembership = useMemo(() => {
     if (!currentUserId || !event?.members) return null;
-    return event.members.find((m: any) => m.user?.id === currentUserId);
+    return event.members.find((m) => m.user?.id === currentUserId);
   }, [currentUserId, event?.members]);
 
   const isOwner = userMembership?.role === 'OWNER';
@@ -136,15 +136,15 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
     startISO: event.startAt,
     endISO: event.endAt,
     timezone: event.owner?.timezone,
-    meetingKind: event.meetingKind as any,
+    meetingKind: event.meetingKind,
     address: event.address,
     placeId: event.placeId,
     lat: event.lat,
     lng: event.lng,
     radiusKm: event.radiusKm,
     onlineUrl: event.onlineUrl,
-    visibility: event.visibility as any,
-    addressVisibility: event.addressVisibility as any,
+    visibility: event.visibility,
+    addressVisibility: event.addressVisibility,
     membersVisibility: event.membersVisibility as any,
     joinMode: event.joinMode as any,
     mode: event.mode as any,
@@ -160,12 +160,13 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
     joinManualCloseReason: event.joinManualCloseReason,
     description: event.description,
     notes: event.notes,
-    levels: event.levels as any[],
-    categories: event.categories.map((cat: any) => ({
+    levels: event.levels,
+    categories: event.categories.map((cat) => ({
       slug: cat.slug,
-      name: (cat.names as any)?.pl ?? cat.slug,
+      // todo: i18n
+      name: cat.names?.pl ?? cat.slug,
     })),
-    tags: event.tags.map((tag: any) => ({
+    tags: event.tags.map((tag) => ({
       slug: tag.slug,
       label: tag.label,
     })),
@@ -173,10 +174,10 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
     cancelReason: event.cancelReason,
     deletedAt: event.deletedAt,
     deleteReason: event.deleteReason,
-    members: event.members?.map((m: any) => ({
+    members: event.members?.map((m) => ({
       id: m.id,
-      role: m.role as any,
-      status: m.status as any,
+      role: m.role,
+      status: m.status,
       user: {
         id: m.user.id,
         name: m.user.name,
@@ -186,7 +187,7 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
       },
       note: m.note,
       joinedAt: m.joinedAt,
-    })),
+    })) as any,
     commentsCount: event.commentsCount,
     messagesCount: event.messagesCount,
     isFavourite: event.isFavourite,
@@ -194,8 +195,8 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
     // Sponsorship (now available in GraphQL)
     sponsorship: event.sponsorship
       ? {
-          plan: event.sponsorship.plan as any,
-          status: event.sponsorship.status as any,
+          plan: event.sponsorship.plan,
+          status: event.sponsorship.status,
           sponsor: event.sponsorship.sponsor
             ? {
                 id: event.sponsorship.sponsor.id,
@@ -227,9 +228,9 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
       allowJoinLate: event.allowJoinLate,
       lateJoinCutoffMinutesAfterStart: event.lateJoinCutoffMinutesAfterStart,
       joinManuallyClosed: event.joinManuallyClosed,
-      min: event.min,
-      max: event.max,
-      joinedCount: event.joinedCount,
+      min: event.min ?? 0,
+      max: event.max ?? 0,
+      joinedCount: event.joinedCount ?? 0,
       joinMode: event.joinMode as any,
     }),
     userMembership: currentUserId
@@ -382,9 +383,9 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
                 <Users className="w-4 h-4 opacity-70" />
                 <span className="font-medium">
                   {eventData.mode === 'ONE_TO_ONE' ||
-                  (eventData.max !== null && eventData.max <= 2)
+                  (eventData.max !== null && eventData.max !== undefined && eventData.max <= 2)
                     ? 'Indywidualne'
-                    : eventData.max === null
+                    : (eventData.max === null || eventData.max === undefined)
                       ? 'Bez limitu'
                       : eventData.max <= 10
                         ? 'Kameralne'
@@ -521,13 +522,13 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
             {/* Agenda Section - event schedule/program */}
             {event?.agendaItems && event.agendaItems.length > 0 && (
               <EventAgenda
-                items={event.agendaItems.map((item: any) => ({
+                items={event.agendaItems.map((item) => ({
                   id: item.id,
                   title: item.title,
                   description: item.description,
                   startAt: item.startAt,
                   endAt: item.endAt,
-                  hosts: (item.hosts || []).map((h: any) => ({
+                  hosts: (item.hosts || []).map((h) => ({
                     id: h.id,
                     kind: h.kind,
                     userId: h.userId,
@@ -542,7 +543,7 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
             {/* FAQ Section - above reviews and comments */}
             {event?.faqs && event.faqs.length > 0 && (
               <EventFaq
-                faqs={event.faqs.map((faq: any) => ({
+                faqs={event.faqs.map((faq) => ({
                   id: faq.id,
                   question: faq.question,
                   answer: faq.answer,

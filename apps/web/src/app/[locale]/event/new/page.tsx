@@ -1,8 +1,10 @@
 import { Suspense } from 'react';
 
-// Local components
-import { SimpleCreatorPageClient } from './_components/simple-creator-page-client';
-import { SimpleCreatorSkeleton } from './_components/simple-creator-skeleton';
+// Event creation feature
+import { 
+  SimpleCreatorPageClient,
+  SimpleCreatorSkeleton 
+} from '@/features/event-creation';
 
 /**
  * Server component for simplified event creator page

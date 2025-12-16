@@ -11,7 +11,10 @@ import { BarChart3 } from 'lucide-react';
 
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountEmptyState, AccountPageHeader } from '../_components';
+import {
+  AccountEmptyState,
+  AccountPageHeader,
+} from '@/features/account/components';
 
 export default function AnalyticsPage() {
   const { t } = useI18n();

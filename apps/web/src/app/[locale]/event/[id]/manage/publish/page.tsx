@@ -29,8 +29,8 @@ import {
 } from '@/features/events/api/events';
 import { toast } from '@/lib/utils';
 
-import { useEventManagement } from '../_components/event-management-provider';
-import { ManagementPageLayout } from '../_components/management-page-layout';
+import { useEventManagement } from '@/features/event-management/components/event-management-provider';
+import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
 
 // Local enum until codegen runs
 enum PublicationStatus {

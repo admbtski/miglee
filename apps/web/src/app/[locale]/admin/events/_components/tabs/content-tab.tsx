@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useGetComments } from '@/features/events/api/comments';
-import { useGetReviews } from '@/features/events/api/reviews';
+import { useGetComments } from '@/features/comments/api/comments';
+import { useGetReviews } from '@/features/reviews/api/reviews';
 import { useGetEventMessages } from '@/features/chat/api/event-chat';
 import {
   MessageSquare,

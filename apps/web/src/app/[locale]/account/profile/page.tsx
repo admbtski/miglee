@@ -24,14 +24,21 @@ import {
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import { useMyFullProfileQuery } from '@/features/users/api/user-profile';
 
-import type { TabConfig, TabId } from './_types';
-import { PrivacyTab } from './_components/privacy-tab';
-import { ProfileTab } from './_components/profile-tab';
-import { SocialLinksTab } from './_components/social-links-tab';
-import { SportsTab } from './_components/sports-tab';
+import {
+  PrivacyTab,
+  ProfileTab,
+  SocialLinksTab,
+  SportsTab,
+} from '@/features/account';
+
+type TabId = 'profile' | 'sports' | 'social' | 'privacy';
 
 // TODO i18n: tab labels
-const TABS: TabConfig[] = [
+const TABS: {
+  id: TabId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'sports', label: 'Sports & Availability', icon: Calendar },
   { id: 'social', label: 'Social Links', icon: LinkIcon },

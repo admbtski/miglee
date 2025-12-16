@@ -21,7 +21,7 @@ import {
 import { showCookieBanner } from '@/components/cookie-consent';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '../_components';
+import { AccountPageHeader } from '@/features/account/components';
 
 export default function CookieSettingsPage() {
   const { t } = useI18n();

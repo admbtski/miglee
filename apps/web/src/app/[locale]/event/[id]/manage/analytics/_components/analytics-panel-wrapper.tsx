@@ -7,11 +7,11 @@
 
 'use client';
 
-import { useEventManagement } from '../../_components/event-management-provider';
+import { useEventManagement } from '@/features/event-management/components/event-management-provider';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '../../_components/plan-upgrade-banner';
+} from '@/features/event-management/components/plan-upgrade-banner';
 
 interface AnalyticsPanelWrapperProps {
   eventId: string;

@@ -16,7 +16,7 @@ export { UserPicker } from './UserPicker';
 export { ReportChatModal } from './ReportChatModal';
 
 // Chat page components
-export * from './avatar';
+// Avatar is now in @/components/ui/avatar
 export * from './chat-details-section';
 export * from './chat-details';
 export * from './chat-error-boundary';

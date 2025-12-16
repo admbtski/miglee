@@ -23,7 +23,7 @@ import {
   useBlockMemberCheckinMutation,
   useUnblockMemberCheckinMutation,
   invalidateCheckinData,
-} from '@/features/events/api/checkin';
+} from '@/features/checkin/api/checkin';
 import { toast } from '@/lib/utils/toast-manager';
 
 interface MethodActionsDropdownProps {
@@ -87,17 +87,16 @@ export function MethodActionsDropdown({
 
   // Close on click outside
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () =>
-        document.removeEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
   const handleUncheck = async () => {

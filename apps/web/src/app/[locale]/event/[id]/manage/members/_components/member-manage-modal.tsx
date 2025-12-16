@@ -28,7 +28,7 @@ import {
   ROLE_BADGE_CLASSES,
   STATUS_BADGE_CLASSES,
 } from './types';
-import { Avatar, Badge, iconForRole } from './ui';
+import { Avatar, Badge, iconForRole } from './members-ui';
 
 type BtnVariant =
   | 'solid'

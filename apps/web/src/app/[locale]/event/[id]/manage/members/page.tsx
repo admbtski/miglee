@@ -10,7 +10,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { EventMembersManagementConnect } from './_components/event-members-management-connect';
-import { ManagementPageLayout } from '../_components/management-page-layout';
+import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
 
 // =============================================================================
 // Types

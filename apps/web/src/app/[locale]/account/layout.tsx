@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
-import { AccountNavbar } from './_components/account-navbar';
-import { AccountSidebarEnhanced } from './_components/account-sidebar-enhanced';
+import { AccountNavbar, AccountSidebarEnhanced } from '@/features/account';
 
 /**
  * Account Layout - Clean Architecture with Enhanced Sidebar

@@ -23,7 +23,7 @@ export {
   type EventPermissions,
   useEventPermissions,
 } from './use-event-permissions';
-export { useTags } from './use-tags';
+export { useTags } from '../../tags/hooks/use-tags';
 
 // Event Form
 export {

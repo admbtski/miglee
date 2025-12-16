@@ -5,7 +5,7 @@
 
 import type { Metadata } from 'next';
 
-import { SubscriptionPageClient } from './_components/subscription-page-client';
+import { SubscriptionPageClient } from '@/features/subscription';
 
 // TODO i18n: metadata title/description
 export const metadata: Metadata = {

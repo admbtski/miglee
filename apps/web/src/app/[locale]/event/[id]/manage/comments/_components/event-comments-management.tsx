@@ -13,7 +13,7 @@
 
 import { MessageSquare, Info, AlertCircle } from 'lucide-react';
 import { useEventDetailQuery } from '@/features/events/api/events';
-import { EventComments } from '@/features/events/components/event-comments';
+import { EventComments } from '@/features/comments/components/event-comments';
 
 // =============================================================================
 // Types

@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { ManagementPageLayout } from '../_components/management-page-layout';
+import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
 import { AgendaManagementClient } from './_components/agenda-management-client';
 
 // =============================================================================

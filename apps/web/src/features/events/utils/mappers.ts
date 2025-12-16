@@ -5,7 +5,6 @@
 import type {
   CreateEventInput,
   Event,
-  EventsResultCoreFragment_EventsResult_items_Event,
   JoinMode,
   MeetingKind,
   Mode,

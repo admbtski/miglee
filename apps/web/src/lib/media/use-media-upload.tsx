@@ -89,7 +89,9 @@ export function useMediaUpload(options: UseMediaUploadOptions) {
           queryClient.invalidateQueries({ queryKey: ['GetUser'] });
           break;
         case MediaPurpose.EventCover:
-          queryClient.invalidateQueries({ queryKey: ['GetEvent', entityId] });
+          queryClient.invalidateQueries({
+            queryKey: ['GetEventDetail', entityId],
+          });
           queryClient.invalidateQueries({ queryKey: ['GetEvents'] });
           queryClient.invalidateQueries({ queryKey: ['GetEventsInfinite'] });
           break;

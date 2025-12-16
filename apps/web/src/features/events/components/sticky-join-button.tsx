@@ -14,8 +14,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useEventJoinQuestionsQuery,
   useRequestJoinEventWithAnswersMutation,
-} from '@/features/events/api/join-form';
-import { JoinRequestModal } from '@/features/events/components/join-request-modal';
+} from '@/features/join-form/api/join-form';
+import { JoinRequestModal } from '@/features/join-form/components/join-request-modal';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 
 type StickyJoinButtonProps = {

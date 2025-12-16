@@ -6,7 +6,7 @@ import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '../../_components/plan-upgrade-banner';
+} from '@/features/event-management/components/plan-upgrade-banner';
 
 type BoostPageWrapperProps = {
   eventId: string;

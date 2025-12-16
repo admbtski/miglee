@@ -8,7 +8,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
-import { ManagementPageLayout } from '../_components/management-page-layout';
+import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
 import { EventViewManagement } from './_components/event-view-management';
 
 type PageProps = {

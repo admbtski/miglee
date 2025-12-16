@@ -21,26 +21,28 @@ import {
 import {
   CancelEventModals,
   DeleteEventModals,
-  EventStatusFilter,
-  FiltersDropdown,
   MyEventCard,
   MyEventsEmptyState,
   MyEventsErrorState,
   MyEventsInlineLoading,
   MyEventsUnauthenticatedState,
-  RoleFilter,
   mapMembershipToCardData,
   mapRoleFilterToBackend,
   mapRoleFilterToMembershipStatus,
   mapStatusFiltersToBackend,
   useEventsModals,
   useMyEventsFilters,
+} from '@/features/events';
+import {
+  EventStatusFilter,
+  FiltersDropdown,
+  RoleFilter,
   type EventStatusFilterValue,
   type RoleFilterValue,
-} from '@/features/events';
+} from '@/features/search/components';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '../_components';
+import { AccountPageHeader } from '@/features/account/components';
 
 /**
  * Events list content component that handles data fetching

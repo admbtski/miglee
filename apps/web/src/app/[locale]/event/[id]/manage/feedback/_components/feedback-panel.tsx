@@ -61,7 +61,7 @@ import type { FeedbackQuestionType } from '@/lib/api/__generated__/react-query-u
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '../../_components/plan-upgrade-banner';
+} from '@/features/event-management/components/plan-upgrade-banner';
 import { Button } from '@/components/ui/button';
 
 interface QuestionItem {

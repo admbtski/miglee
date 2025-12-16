@@ -12,7 +12,7 @@ import {
 import { Folder, Loader2, Search, TagsIcon, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import { getUseTagsLimitData, useTags } from '@/features/events/hooks/use-tags';
+import { getUseTagsLimitData, useTags } from '@/features/tags/hooks/use-tags';
 import { TagOption } from '@/features/tags/types';
 
 export type TagMultiComboProps = {

@@ -11,7 +11,7 @@ import type { Metadata } from 'next';
 import { BarChart3, Eye, TrendingUp, Users } from 'lucide-react';
 
 import { AnalyticsPanelWrapper } from './_components/analytics-panel-wrapper';
-import { ManagementPageLayout } from '../_components/management-page-layout';
+import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
 
 // =============================================================================
 // Types

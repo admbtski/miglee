@@ -24,17 +24,17 @@ import {
 
 import { TimezoneDropdown } from '@/components/forms/timezone-dropdown';
 import { useTheme } from '@/features/theme/provider/theme-provider';
-import { useDeleteMyAccountMutation } from '@/features/users/api/user-delete-account';
-import {
+import { 
+  useDeleteMyAccountMutation,
   useUpdateLocale,
-  useUpdateTimezone,
-} from '@/features/users/api/user-preferences';
+  useUpdateTimezone 
+} from '@/features/account';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
 import { commonTimezones } from '@/lib/i18n/timezone-provider';
 
-import { AccountPageHeader } from '../_components';
-import { DeleteAccountModal } from './_components/delete-account-modal';
+import { AccountPageHeader } from '@/features/account/components';
+import { DeleteAccountModal } from '@/features/account';
 
 // Get current timezone from browser
 function getCurrentTimezone(): string {

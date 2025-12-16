@@ -22,7 +22,7 @@ import { Avatar } from '@/components/ui/avatar';
 import {
   useJoinByInviteLinkMutation,
   useValidateInviteLinkQuery,
-} from '@/features/events/api/invite-links';
+} from '@/features/invite-links/api/invite-links';
 
 // Utils
 import { buildAvatarUrl } from '@/lib/media/url';

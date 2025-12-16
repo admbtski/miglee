@@ -4,7 +4,7 @@
  */
 
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
-import { UserQRCheckinClient } from './_components/user-qr-checkin-client';
+import { UserQRCheckinClient } from '@/features/checkin/components/user-qr-checkin-client';
 
 interface PageProps {
   params: Promise<{

@@ -9,8 +9,8 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { InviteLinksPanel } from './_components/invite-links-panel';
-import { ManagementPageLayout } from '../_components/management-page-layout';
+import { InviteLinksPanel } from '../../../../../../features/invite-links/components/invite-links-panel';
+import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
 
 // =============================================================================
 // Types

@@ -33,7 +33,7 @@ import {
   useApproveJoinRequestMutation,
   useRejectJoinRequestMutation,
   useUpdateEventJoinQuestionsMutation,
-} from '@/features/events/api/join-form';
+} from '@/features/join-form/api/join-form';
 import {
   useFloating,
   autoUpdate,
@@ -56,12 +56,14 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import type { EventJoinRequestsQuery } from '@/lib/api/__generated__/react-query-update';
-import type { JoinQuestionType } from '@/lib/api/__generated__/react-query-update';
+import type {
+  EventJoinRequestsQuery,
+  JoinQuestionType,
+} from '@/lib/api/__generated__/react-query-update';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '../../_components/plan-upgrade-banner';
+} from '@/features/event-management/components/plan-upgrade-banner';
 
 type JoinRequest = EventJoinRequestsQuery['eventJoinRequests']['items'][0];
 

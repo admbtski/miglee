@@ -123,10 +123,11 @@ function invalidateMembers(eventId: string) {
   // odśwież szczegół i listę eventów (np. badge liczb)
   qc.invalidateQueries({
     predicate: (q) =>
-      Array.isArray(q.queryKey) && q.queryKey[0] === 'GetEvents',
+      Array.isArray(q.queryKey) && q.queryKey[0] === 'GetEventDetail',
   });
   qc.invalidateQueries({
-    predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === 'GetEvent',
+    predicate: (q) =>
+      Array.isArray(q.queryKey) && q.queryKey[0] === 'GetEventDetail',
   });
 }
 

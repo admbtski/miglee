@@ -234,7 +234,7 @@ export function useToggleFavouriteMutation(
         await qc.cancelQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) &&
-            (q.queryKey[0] === 'GetEvent' ||
+            (q.queryKey[0] === 'GetEventDetail' ||
               q.queryKey[0] === 'GetEvents' ||
               q.queryKey[0] === 'Favourites'),
         });
@@ -245,7 +245,7 @@ export function useToggleFavouriteMutation(
           .findAll({
             predicate: (q) =>
               Array.isArray(q.queryKey) &&
-              (q.queryKey[0] === 'GetEvent' ||
+              (q.queryKey[0] === 'GetEventDetail' ||
                 q.queryKey[0] === 'GetEvents' ||
                 q.queryKey[0] === 'Favourites'),
           })
@@ -299,7 +299,8 @@ export function useToggleFavouriteMutation(
           {
             predicate: (q) =>
               Array.isArray(q.queryKey) &&
-              (q.queryKey[0] === 'GetEvent' || q.queryKey[0] === 'GetEvents'),
+              (q.queryKey[0] === 'GetEventDetail' ||
+                q.queryKey[0] === 'GetEvents'),
           },
           (old: any) => {
             if (!old) return old;
@@ -368,7 +369,8 @@ export function useToggleFavouriteMutation(
         qc.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) &&
-            (q.queryKey[0] === 'GetEvent' || q.queryKey[0] === 'GetEvents'),
+            (q.queryKey[0] === 'GetEventDetail' ||
+              q.queryKey[0] === 'GetEvents'),
         });
       },
       ...(options ?? {}),

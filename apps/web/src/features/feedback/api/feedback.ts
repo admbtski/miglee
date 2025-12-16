@@ -412,7 +412,7 @@ export function useSubmitReviewAndFeedbackMutation(
       });
       // Invalidate event
       queryClient.invalidateQueries({
-        queryKey: ['GetEvent', { id: variables.input.eventId }],
+        queryKey: ['GetEventDetail', { id: variables.input.eventId }],
       });
     },
     ...options,

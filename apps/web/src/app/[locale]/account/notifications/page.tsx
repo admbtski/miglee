@@ -47,7 +47,7 @@ import type {
 } from '@/lib/api/__generated__/react-query-update';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '../_components';
+import { AccountPageHeader } from '@/features/account/components';
 
 type NotificationNode = NonNullable<
   GetNotificationsQuery['notifications']['items']

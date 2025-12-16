@@ -114,8 +114,10 @@ export default function CoverPage() {
       await uploadEventCover(eventId, selectedFile, {
         onStart: () => setIsUploading(true),
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['GetEvent', eventId] });
-          queryClient.invalidateQueries({ queryKey: ['GetEvent'] });
+          queryClient.invalidateQueries({
+            queryKey: ['GetEventDetail', eventId],
+          });
+          queryClient.invalidateQueries({ queryKey: ['GetEventDetail'] });
           setSelectedFile(null);
           setPreviewUrl(null);
           setIsDirty(false);

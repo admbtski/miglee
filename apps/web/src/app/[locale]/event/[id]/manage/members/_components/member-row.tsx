@@ -8,7 +8,7 @@ import { MoreVertical } from 'lucide-react';
 import { buildAvatarUrl } from '@/lib/media/url';
 
 import { EventMember, ManageCallbacks } from './types';
-import { Avatar, iconForRole } from './ui';
+import { Avatar, iconForRole } from './members-ui';
 
 // Generate consistent color from string
 function stringToColor(str: string): string {

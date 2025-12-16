@@ -25,12 +25,12 @@ import { useEventsListingInfiniteQuery } from '@/features/events/api/events';
 import { appLanguage } from '@/lib/config/language';
 import { EVENTS_CONFIG } from '@/lib/constants/events';
 
-import { DesktopSearchBar } from '@/features/events/components/desktop-search-bar';
+import { DesktopSearchBar } from '@/features/search/components/desktop-search-bar';
 import { EventsGridSimple } from '@/features/events/components/events-list/events-grid-simple';
 import { EventsHeader } from '@/features/events/components/events-list/events-header';
-import { LeftFiltersPanel } from '@/features/events/components/left-filters-panel';
-import { MobileFiltersDrawer } from '@/features/events/components/mobile-filters-drawer';
-import { StickyMobileSearchBar } from '@/features/events/components/mobile-search-bar';
+import { LeftFiltersPanel } from '@/features/search/components/left-filters-panel';
+import { MobileFiltersDrawer } from '@/features/search/components/mobile-filters-drawer';
+import { StickyMobileSearchBar } from '@/features/search/components/mobile-search-bar';
 import { TopDrawer } from '@/features/events/components/top-drawer';
 import type { TopDrawerFocusSection } from '@/features/events/components/top-drawer';
 import {

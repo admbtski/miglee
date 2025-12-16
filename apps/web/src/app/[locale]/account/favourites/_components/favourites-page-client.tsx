@@ -20,7 +20,7 @@ import {
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '../../_components';
+import { AccountPageHeader } from '@/features/account/components';
 
 /**
  * Skeleton loader for favourite cards

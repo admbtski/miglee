@@ -11,7 +11,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MapPin, Ruler, Search, X } from 'lucide-react';
 import { useSearchMeta, type SearchMeta } from '@/features/events/hooks';
-import SearchCombo from './search-combo';
+import SearchCombo from '@/features/search/components/search-combo';
 import { LocationCombo } from '@/components/forms/location-combobox';
 import { useTranslations } from '@/lib/i18n/provider-ssr';
 

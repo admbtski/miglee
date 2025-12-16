@@ -9,7 +9,7 @@
 
 import { Search, User2 } from 'lucide-react';
 import type { Conversation } from '@/features/chat/types';
-import { Avatar } from './avatar';
+import { Avatar } from './chat-avatar';
 
 type ChatListProps = {
   items: Conversation[];

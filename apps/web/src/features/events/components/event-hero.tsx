@@ -94,7 +94,7 @@ export function EventHero({ event }: EventHeroProps) {
     if (event.mode === 'ONE_TO_ONE') {
       return { label: 'Indywidualne', description: 'Spotkanie indywidualne' };
     }
-    if (event.max === null) {
+    if (event.max === null || event.max === undefined) {
       return { label: 'Bez limitu', description: 'Wydarzenie bez limitu' };
     }
     if (event.max <= 2) {

@@ -45,8 +45,8 @@ export type EventDetailsData = {
   // Dołączanie
   joinMode: 'OPEN' | 'REQUEST' | 'INVITE_ONLY';
   mode: 'ONE_TO_ONE' | 'GROUP';
-  min: number;
-  max: number;
+  min?: number | null;
+  max?: number | null;
   joinedCount: number;
 
   // Okna / cutoffy

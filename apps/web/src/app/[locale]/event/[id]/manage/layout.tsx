@@ -10,13 +10,13 @@ import { notFound } from 'next/navigation';
 // Components
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 
-// Local components
+// Event management components
 import {
   EventManagementGuard,
   EventManagementNavbar,
   EventManagementProvider,
   EventManagementSidebar,
-} from './_components';
+} from '@/features/event-management/components';
 
 interface EventManagementLayoutProps {
   children: ReactNode;

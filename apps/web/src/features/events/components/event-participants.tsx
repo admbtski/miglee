@@ -135,12 +135,12 @@ export function EventParticipants({ event }: EventParticipantsProps) {
         <div className="mb-2 flex justify-between text-sm">
           <span className="text-zinc-600 dark:text-zinc-400">Zapełnienie</span>
           <span className="font-medium text-zinc-900 dark:text-zinc-100">
-            {event.max === null
+            {event.max === null || event.max === undefined
               ? '∞'
               : `${Math.round((event.joinedCount / event.max) * 100)}%`}
           </span>
         </div>
-        {event.max !== null && (
+        {event.max !== null && event.max !== undefined && (
           <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
             <div
               className="h-full rounded-full bg-blue-600 transition-all dark:bg-blue-500"
@@ -150,12 +150,13 @@ export function EventParticipants({ event }: EventParticipantsProps) {
             />
           </div>
         )}
-        {event.max === null && (
+        {(event.max === null || event.max === undefined) && (
           <p className="text-xs text-zinc-600 dark:text-zinc-400">
             Wydarzenie bez limitu uczestników
           </p>
         )}
         {event.min !== null &&
+          event.min !== undefined &&
           event.min > 0 &&
           event.joinedCount < event.min && (
             <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">

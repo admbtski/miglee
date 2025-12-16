@@ -23,8 +23,7 @@ import {
 import {
   useBlockMemberCheckinMutation,
   useUnblockMemberCheckinMutation,
-  useRejectMemberCheckinMutation,
-} from '@/features/events/api/checkin';
+} from '@/features/checkin/api/checkin';
 import { toast } from '@/lib/utils/toast-manager';
 
 interface MemberActionsMenuProps {
@@ -32,10 +31,7 @@ interface MemberActionsMenuProps {
   eventId: string;
 }
 
-export function MemberActionsMenu({
-  member,
-  eventId,
-}: MemberActionsMenuProps) {
+export function MemberActionsMenu({ member, eventId }: MemberActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -63,31 +59,18 @@ export function MemberActionsMenu({
     },
   });
 
-  const rejectMutation = useRejectMemberCheckinMutation({
-    onSuccess: () => {
-      toast.success('Check-in rejected');
-      setIsOpen(false);
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to reject check-in', {
-        description: error.message,
-      });
-    },
-  });
-
   // Close menu on click outside
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () =>
-        document.removeEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
   const handleBlockMethod = async (method: CheckinMethod) => {
@@ -133,8 +116,16 @@ export function MemberActionsMenu({
   };
 
   const methods = [
-    { type: CheckinMethod.SelfManual, icon: Smartphone, label: 'Self Check-in' },
-    { type: CheckinMethod.ModeratorPanel, icon: Shield, label: 'Moderator Panel' },
+    {
+      type: CheckinMethod.SelfManual,
+      icon: Smartphone,
+      label: 'Self Check-in',
+    },
+    {
+      type: CheckinMethod.ModeratorPanel,
+      icon: Shield,
+      label: 'Moderator Panel',
+    },
     { type: CheckinMethod.EventQr, icon: QrCode, label: 'Event QR' },
     { type: CheckinMethod.UserQr, icon: UserCircle2, label: 'User QR' },
   ];

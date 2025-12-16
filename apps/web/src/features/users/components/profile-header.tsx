@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
-import { ReportUserModal } from './report-user-modal';
+import { ReportUserModal } from '@/features/reports/components/report-user-modal';
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { format } from 'date-fns';

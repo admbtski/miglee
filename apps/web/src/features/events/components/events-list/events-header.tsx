@@ -4,7 +4,10 @@
 // - "Loading…", "Failed to load", "Znaleziono w...", "event/s", "updating…"
 
 import { memo } from 'react';
-import { SortByControl, type SortKey } from '../sort-by-control';
+import {
+  SortByControl,
+  type SortKey,
+} from '@/features/search/components/sort-by-control';
 import { ToggleMap } from '../toggle-map';
 
 type EventsHeaderProps = {

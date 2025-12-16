@@ -20,7 +20,7 @@ import {
 import type { ChatKind, Message } from '@/features/chat/types';
 
 // Import sub-components
-import { Avatar } from './avatar';
+import { Avatar } from './chat-avatar';
 import { TypingIndicator } from './typing-indicator';
 import { ChatDetails } from './chat-details';
 import { MsgIn, MsgOut } from './message-bubble';

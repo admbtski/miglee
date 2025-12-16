@@ -12,7 +12,7 @@ import { toast } from '@/lib/utils/toast-manager';
 import {
   useRejectMemberCheckinMutation,
   invalidateCheckinData,
-} from '@/features/events/api/checkin';
+} from '@/features/checkin/api/checkin';
 import { CheckinMethod } from '@/lib/api/__generated__/react-query-update';
 
 interface RejectCheckinModalProps {

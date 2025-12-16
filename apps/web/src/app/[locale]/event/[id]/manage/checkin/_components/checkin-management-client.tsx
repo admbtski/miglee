@@ -26,20 +26,20 @@ import {
   Ban,
 } from 'lucide-react';
 
-import { useEventManagement } from '../../_components/event-management-provider';
+import { useEventManagement } from '@/features/event-management/components/event-management-provider';
 import {
   useUpdateEventCheckinConfigMutation,
   useCheckInMemberMutation,
   useUncheckInMemberMutation,
   useGetEventCheckinLogsQuery,
-} from '@/features/events/api/checkin';
+} from '@/features/checkin/api/checkin';
 import {
   CheckinMethod,
   EventMemberCoreFragment,
 } from '@/lib/api/__generated__/react-query-update';
 import { useEventMembersQuery } from '@/features/events/api/event-members';
 import { toast } from '@/lib/utils/toast-manager';
-import { EventQRCode } from '@/features/events/components/event-qr-code';
+import { EventQRCode } from '@/features/checkin/components/event-qr-code';
 import { MemberActionsMenu } from './member-actions-menu';
 import { RejectCheckinModal } from './reject-checkin-modal';
 import { MethodActionsDropdown } from './method-actions-dropdown';

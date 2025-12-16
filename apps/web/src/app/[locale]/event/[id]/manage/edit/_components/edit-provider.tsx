@@ -135,8 +135,10 @@ export function EditProvider({ children, eventId }: EditProviderProps) {
         });
 
         // Invalidate queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['GetEvent', eventId] });
-        queryClient.invalidateQueries({ queryKey: ['GetEvent'] });
+        queryClient.invalidateQueries({
+          queryKey: ['GetEventDetail', eventId],
+        });
+        queryClient.invalidateQueries({ queryKey: ['GetEventDetail'] });
 
         toast.success(`${section} saved successfully`);
         return true;
