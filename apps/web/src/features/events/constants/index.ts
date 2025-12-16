@@ -1,8 +1,4 @@
-/**
- * Constants for the events search page
- */
-
-import type { SortKey } from '../types';
+import { SortKey } from '@/features/search/types';
 
 /**
  * Default distance radius in kilometers for location-based search

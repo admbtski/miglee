@@ -4,11 +4,11 @@
 import type { Metadata } from 'next';
 
 // Features
-import { fetchUserProfile } from '@/features/users/api/user-profile';
-import { PublicProfileClient } from '@/features/user-public-profile/components/public-profile-client';
+import { PublicProfileClient } from '@/features/public-profile/components/public-profile-client';
 
 // Utils
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
+import { fetchUserProfile } from '@/features/public-profile/api/use-user-profile';
 
 type Props = {
   params: Promise<{ name: string }>;

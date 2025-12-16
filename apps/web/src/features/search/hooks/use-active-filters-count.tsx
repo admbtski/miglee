@@ -1,21 +1,10 @@
-/**
- * Hook for calculating the number of active filters
- */
-
 'use client';
 
-import { useMemo } from 'react';
 import { EventStatus } from '@/lib/api/__generated__/react-query-update';
-import type { CommittedFilters } from '../types';
+import { useMemo } from 'react';
 import { DEFAULT_DISTANCE_KM } from '../constants';
+import type { CommittedFilters } from '../types';
 
-/**
- * Calculates the number of active filters
- * Used to display filter count badge in UI
- *
- * @param filters - Current filter state from URL params
- * @returns Number of active filters
- */
 export function useActiveFiltersCount(filters: CommittedFilters): number {
   return useMemo(() => {
     let count = 0;

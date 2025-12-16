@@ -1,13 +1,5 @@
 'use client';
 
-/**
- * AccountNavbar - Top navigation bar for account pages
- *
- * Features:
- * - Mobile menu toggle (shows AccountMobileSidebar)
- * - Shared navbar actions (notifications, user menu)
- */
-
 import { useState } from 'react';
 import { ListCollapseIcon } from 'lucide-react';
 
@@ -22,7 +14,6 @@ export function AccountNavbar() {
     <>
       <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="flex items-center justify-between h-16 px-6">
-          {/* Left side: Mobile menu button (only on mobile) */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
@@ -33,18 +24,14 @@ export function AccountNavbar() {
             <ListCollapseIcon className="w-6 h-6" />
           </button>
 
-          {/* Spacer for desktop */}
           <div className="hidden lg:block" />
 
-          {/* Right side: Actions */}
           <div className="flex items-center ">
-            {/* Shared Actions: Notifications, Favourites, User Menu */}
             <NavbarActions />
           </div>
         </div>
       </header>
 
-      {/* Mobile Sidebar */}
       <AccountMobileSidebar
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}

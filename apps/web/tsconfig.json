@@ -16,7 +16,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "tailwind.config.js1"
+    "tailwind.config.js1",
+    "src/features/event-creation/hooks/use-event-form.ts",
+    "src/features/comments/api/use-unhide-commentts"
   ],
   "exclude": ["node_modules"]
 }

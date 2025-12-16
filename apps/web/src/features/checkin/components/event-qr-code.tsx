@@ -7,17 +7,11 @@
 
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import {
-  Maximize2,
-  RefreshCw,
-  X,
-  FileDown,
-  ImageDown,
-} from 'lucide-react';
+import { Maximize2, RefreshCw, X, FileDown, ImageDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
-import { useRotateEventCheckinTokenMutation } from '@/features/checkin/api/checkin';
+import { useRotateEventCheckinTokenMutation } from '@/features/checkin';
 
 interface EventQRCodeProps {
   eventId: string;

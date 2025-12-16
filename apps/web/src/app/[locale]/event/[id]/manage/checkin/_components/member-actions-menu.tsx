@@ -23,7 +23,7 @@ import {
 import {
   useBlockMemberCheckinMutation,
   useUnblockMemberCheckinMutation,
-} from '@/features/checkin/api/checkin';
+} from '@/features/checkin';
 import { toast } from '@/lib/utils/toast-manager';
 
 interface MemberActionsMenuProps {

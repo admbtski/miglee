@@ -1,19 +1,15 @@
-/**
- * Hook for managing filter state from URL search params
- */
-
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
 import {
   EventStatus,
   JoinMode,
   Level,
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
-import type { CommittedFilters } from '../types';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
 import { DEFAULT_DISTANCE_KM, FILTER_PARAM_KEYS } from '../constants';
+import type { CommittedFilters } from '../types';
 
 const parseCsv = (sp: URLSearchParams, key: string): string[] =>
   sp

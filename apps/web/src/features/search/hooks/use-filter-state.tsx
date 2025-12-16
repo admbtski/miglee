@@ -1,11 +1,5 @@
-/**
- * Hook for managing filter modal state
- * Provides state management for all filter fields with setters and utility functions
- */
-
 'use client';
 
-import { useState, useCallback } from 'react';
 import {
   EventStatus,
   JoinMode,
@@ -13,6 +7,7 @@ import {
   MeetingKind,
 } from '@/lib/api/__generated__/react-query-update';
 import { EVENTS_CONFIG } from '@/lib/constants/events';
+import { useCallback, useState } from 'react';
 import type { SearchMeta } from './use-search-meta';
 
 const DEFAULT_DISTANCE = EVENTS_CONFIG.DEFAULT_DISTANCE_KM;
@@ -55,22 +50,6 @@ export interface UseFilterStateProps {
   initialJoinModes?: JoinMode[];
 }
 
-/**
- * Manages all filter state for the search modal
- *
- * @param props - Initial values for all filter fields
- * @returns Object with state values, setters, and utility functions (clearAll, getCurrentState)
- *
- * @example
- * ```tsx
- * const {
- *   q, setQ,
- *   city, setCity,
- *   clearAll,
- *   getCurrentState
- * } = useFilterState({ initialQ: '', initialCity: null, ... });
- * ```
- */
 export function useFilterState(props: UseFilterStateProps) {
   const {
     initialQ,

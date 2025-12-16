@@ -1,8 +1,3 @@
-/**
- * Method Actions Dropdown Component
- * Dropdown for individual check-in method actions (uncheck, reject, block)
- */
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -23,7 +18,7 @@ import {
   useBlockMemberCheckinMutation,
   useUnblockMemberCheckinMutation,
   invalidateCheckinData,
-} from '@/features/checkin/api/checkin';
+} from '@/features/checkin';
 import { toast } from '@/lib/utils/toast-manager';
 
 interface MethodActionsDropdownProps {

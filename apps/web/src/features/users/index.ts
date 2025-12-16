@@ -7,4 +7,4 @@
  */
 
 export * from './api';
-export * from '../user-public-profile/components';
+export * from '../public-profile/components';

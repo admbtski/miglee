@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import type { SimpleEventFormValues } from '../types/event-form';
 import { CategoryOption } from '@/features/categories';
 import { TagOption } from '@/features/tags';
+import { useEffect, useRef, useState } from 'react';
+import type { SimpleEventFormValues } from '../types/event-form';
 
 const DRAFT_KEY = 'event-draft';
 const AUTO_SAVE_INTERVAL = 5000; // 5 seconds

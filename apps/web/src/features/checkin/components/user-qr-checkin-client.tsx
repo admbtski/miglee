@@ -18,7 +18,7 @@ import {
   Calendar,
   Clock,
 } from 'lucide-react';
-import { useCheckInByUserQrMutation } from '@/features/checkin/api/checkin';
+import { useCheckInByUserQrMutation } from '@/features/checkin';
 
 interface UserQRCheckinClientProps {
   token?: string;

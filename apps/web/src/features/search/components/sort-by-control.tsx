@@ -3,9 +3,7 @@
 import clsx from 'clsx';
 import { ChevronDown, Check } from 'lucide-react';
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
-import type { SortKey } from '@/features/events/types';
-
-export type { SortKey };
+import { SortKey } from '../types';
 
 const OPTIONS: { value: SortKey; label: string; hint?: string }[] = [
   { value: 'default', label: 'Default' },

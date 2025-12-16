@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * AccountMobileSidebar - Mobile navigation drawer for account pages
- *
- * Features:
- * - Slide-in from left on mobile
- * - i18n labels from provider
- * - Locale-aware navigation via localePath
- */
-
-import { useCallback, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
@@ -31,6 +19,9 @@ import {
   Sparkles,
   UserIcon,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useEffect } from 'react';
 
 import { Avatar } from '@/components/ui/avatar';
 import { useMeQuery } from '@/features/auth/hooks/auth';
@@ -64,9 +55,6 @@ export function AccountMobileSidebar({
 
   // todo: memo NAV_ITEMS
   const NAV_ITEMS: NavItem[] = [
-    // ─────────────────────────────
-    // PERSONAL
-    // ─────────────────────────────
     {
       key: 'view',
       label: t.accountNav.items.viewProfile,
@@ -79,10 +67,6 @@ export function AccountMobileSidebar({
       href: '/account/profile',
       icon: UserIcon,
     },
-
-    // ─────────────────────────────
-    // ACTIVITY
-    // ─────────────────────────────
     {
       key: 'my-events',
       label: t.accountNav.items.myEvents,
@@ -95,10 +79,6 @@ export function AccountMobileSidebar({
       href: '/account/favourites',
       icon: Heart,
     },
-
-    // ─────────────────────────────
-    // COMMUNICATION
-    // ─────────────────────────────
     {
       key: 'chats',
       label: t.accountNav.items.chats,
@@ -111,10 +91,6 @@ export function AccountMobileSidebar({
       href: '/account/notifications',
       icon: Bell,
     },
-
-    // ─────────────────────────────
-    // BILLING
-    // ─────────────────────────────
     {
       key: 'subscription',
       label: t.accountNav.items.subscription,
@@ -127,20 +103,12 @@ export function AccountMobileSidebar({
       href: '/account/plans-and-bills',
       icon: CreditCardIcon,
     },
-
-    // ─────────────────────────────
-    // ADVANCED TOOLS
-    // ─────────────────────────────
     {
       key: 'analytics',
       label: t.accountNav.items.analytics,
       href: '/account/analytics',
       icon: BarChart3,
     },
-
-    // ─────────────────────────────
-    // SETTINGS & SUPPORT
-    // ─────────────────────────────
     {
       key: 'settings',
       label: t.accountNav.items.settings,

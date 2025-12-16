@@ -1,15 +1,5 @@
 'use client';
 
-/**
- * AccountPageHeader - Header section for account pages
- *
- * Contains:
- * - Page title with optional icon
- * - Optional description (should be translated by parent)
- * - Optional tabs (sub-navigation with locale-aware hrefs)
- * - Optional action buttons
- */
-
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -26,15 +16,10 @@ interface Tab {
 }
 
 interface AccountPageHeaderProps {
-  /** Page title - should be translated by parent */
   title: string;
-  /** Page description - should be translated by parent */
   description?: string;
-  /** Sub-navigation tabs */
   tabs?: Tab[];
-  /** Action buttons */
   actions?: ReactNode;
-  /** Icon displayed before title */
   icon?: ReactNode;
 }
 

@@ -1,67 +1,11 @@
-/**
- * Custom hook for fetching and searching categories
- *
- * @description
- * Provides category search functionality with debouncing and fallback to initial values.
- * Automatically fetches categories from API based on search query with 300ms debounce.
- * Falls back to initial categories when no API results are available.
- *
- * Features:
- * - Automatic debouncing (300ms)
- * - Fallback to initial categories
- * - Loading and fetching states
- * - Error handling
- * - Limit of 25 results
- *
- * @example
- * ```tsx
- * const [searchQuery, setSearchQuery] = useState('');
- * const { options, isLoading, isFetching, error } = useCategories(
- *   searchQuery,
- *   initialCategories
- * );
- *
- * return (
- *   <div>
- *     <input
- *       value={searchQuery}
- *       onChange={(e) => setSearchQuery(e.target.value)}
- *       placeholder="Search categories..."
- *     />
- *     {isLoading ? (
- *       <LoadingSpinner />
- *     ) : (
- *       <CategoryList categories={options} />
- *     )}
- *   </div>
- * );
- * ```
- */
-
 'use client';
 
-import { CategoryOption } from '@/features/categories';
-import { useGetCategoriesQuery } from '@/features/categories/api/categories';
+import { CategoryOption, useGetCategoriesQuery } from '@/features/categories';
 import { Locale, useI18n } from '@/lib/i18n/provider-ssr';
 import { useEffect, useMemo, useState } from 'react';
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 export const getUseCategoriesLimitData = () => 25;
 
-// =============================================================================
-// Hook
-// =============================================================================
-
-/**
- * Fetch and search categories with debouncing
- *
- * @param query - Search query string
- * @param initial - Initial/fallback categories
- * @returns Category options and loading states
- */
 export function useCategories(query: string, initial?: CategoryOption[]) {
   const [debounced, setDebounced] = useState(() => query.trim());
   const { locale } = useI18n();

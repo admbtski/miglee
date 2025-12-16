@@ -1,8 +1,3 @@
-/**
- * Hook for filter validation logic
- * Validates date ranges and checks if filters have changed (dirty state)
- */
-
 'use client';
 
 import { useMemo } from 'react';
@@ -47,22 +42,6 @@ const arraysEq = <T,>(a?: readonly T[], b?: readonly T[]) => {
   return true;
 };
 
-/**
- * Validates filter state and checks for changes
- *
- * @param props - Initial and current filter values for comparison
- * @returns Object with:
- * - dateError: Error message if date range is invalid
- * - isDirty: True if any filter has changed from initial values
- * - isValid: True if all validations pass
- *
- * @example
- * ```tsx
- * const { dateError, isDirty, isValid } = useFilterValidation({
- *   startISO, endISO, initialQ, currentQ, ...
- * });
- * ```
- */
 export function useFilterValidation(props: UseFilterValidationProps) {
   const { startISO, endISO } = props;
 
@@ -77,7 +56,6 @@ export function useFilterValidation(props: UseFilterValidationProps) {
     return null;
   }, [startISO, endISO]);
 
-  // Dirty check - has anything changed?
   const isDirty = useMemo(() => {
     const DEFAULT_DISTANCE = 30;
     const sameQ = props.currentQ === (props.initialQ ?? '');

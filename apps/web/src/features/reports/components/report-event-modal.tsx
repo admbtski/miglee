@@ -5,7 +5,7 @@ import { Modal } from '@/components/feedback/modal';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import { Flag } from 'lucide-react';
 import { ReportEntity } from '@/lib/api/__generated__/react-query-update';
-import { useCreateReport } from '@/features/reports/api/reports';
+import { useCreateReport } from '../api/use-create-report';
 
 type ReportEventModalProps = {
   open: boolean;

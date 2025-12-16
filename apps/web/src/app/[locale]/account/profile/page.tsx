@@ -11,7 +11,6 @@
 
 'use client';
 
-import { Suspense, useState } from 'react';
 import {
   Calendar,
   Link as LinkIcon,
@@ -20,17 +19,19 @@ import {
   Shield,
   User,
 } from 'lucide-react';
+import { Suspense, useState } from 'react';
 
 import { useMeQuery } from '@/features/auth/hooks/auth';
-import { useMyFullProfileQuery } from '@/features/users/api/user-profile';
 
 import {
   PrivacyTab,
   ProfileTab,
   SocialLinksTab,
   SportsTab,
-} from '@/features/account';
-import { TabConfig, TabId } from '@/features/account/types/_types';
+  TabConfig,
+  TabId,
+  useMyFullProfileQuery,
+} from '@/features/profile-settings';
 
 // TODO i18n: tab labels
 const TABS: TabConfig[] = [

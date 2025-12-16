@@ -12,8 +12,8 @@ import { Modal } from '@/components/feedback/modal';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import { Flag } from 'lucide-react';
 import { ReportEntity } from '@/lib/api/__generated__/react-query-update';
-import { useCreateReport } from '@/features/reports/api/reports';
 import type { ChatKind } from '@/features/chat/types';
+import { useCreateReport } from '@/features/reports/api/use-create-report';
 
 type ReportChatModalProps = {
   open: boolean;

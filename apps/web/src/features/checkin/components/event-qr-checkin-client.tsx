@@ -15,7 +15,7 @@ import {
   ArrowRight,
   QrCode,
 } from 'lucide-react';
-import { useCheckInByEventQrMutation } from '@/features/checkin/api/checkin';
+import { useCheckInByEventQrMutation } from '@/features/checkin';
 
 interface EventQRCheckinClientProps {
   eventId: string;

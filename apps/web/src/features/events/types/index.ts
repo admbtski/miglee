@@ -49,19 +49,6 @@ export type CommittedFilters = {
 };
 
 /**
- * Sort key options for events list
- */
-export type SortKey =
-  | 'default'
-  | 'start_asc'
-  | 'start_desc'
-  | 'created_desc'
-  | 'created_asc'
-  | 'updated_desc'
-  | 'members_desc'
-  | 'members_asc';
-
-/**
  * Query variables for fetching events (without offset for infinite scroll)
  */
 export type EventsQueryVariables = Omit<GetEventsQueryVariables, 'offset'>;

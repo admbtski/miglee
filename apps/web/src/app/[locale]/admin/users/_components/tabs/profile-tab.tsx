@@ -11,12 +11,10 @@ import {
   Award,
   Calendar,
 } from 'lucide-react';
-import {
-  useUserProfileQuery,
-  useUpdateUserProfile,
-} from '@/features/users/api/user-profile';
-import { useGetCategoriesQuery as useCategoriesQuery } from '@/features/categories/api/categories';
+import { useGetCategoriesQuery as useCategoriesQuery } from '@/features/categories';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
+import { useUserProfileQuery } from '@/features/public-profile/api/use-user-profile';
+import { useUpdateUserProfile } from '@/features/profile-settings/api/use-update-user-profile';
 
 // TODO i18n: extract all static labels in admin user profile tab
 
@@ -96,9 +94,14 @@ export function ProfileTab({ userId }: ProfileTabProps) {
         bioLong: editedData.bioLong || undefined,
         city: editedData.city || undefined,
         country: editedData.country || undefined,
-        speaks: editedData.speaks && editedData.speaks.length > 0 ? editedData.speaks : undefined,
+        speaks:
+          editedData.speaks && editedData.speaks.length > 0
+            ? editedData.speaks
+            : undefined,
         interests:
-          editedData.interests && editedData.interests.length > 0 ? editedData.interests : undefined,
+          editedData.interests && editedData.interests.length > 0
+            ? editedData.interests
+            : undefined,
       },
     });
 
@@ -227,7 +230,9 @@ export function ProfileTab({ userId }: ProfileTabProps) {
               <textarea
                 value={editedData?.bioShort || ''}
                 onChange={(e) =>
-                  setEditedData(prev => prev ? { ...prev, bioShort: e.target.value } : null)
+                  setEditedData((prev) =>
+                    prev ? { ...prev, bioShort: e.target.value } : null
+                  )
                 }
                 rows={2}
                 className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
@@ -248,7 +253,9 @@ export function ProfileTab({ userId }: ProfileTabProps) {
               <textarea
                 value={editedData?.bioLong || ''}
                 onChange={(e) =>
-                  setEditedData(prev => prev ? { ...prev, bioLong: e.target.value } : null)
+                  setEditedData((prev) =>
+                    prev ? { ...prev, bioLong: e.target.value } : null
+                  )
                 }
                 rows={4}
                 className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
@@ -271,7 +278,9 @@ export function ProfileTab({ userId }: ProfileTabProps) {
                   type="text"
                   value={editedData?.city || ''}
                   onChange={(e) =>
-                    setEditedData(prev => prev ? { ...prev, city: e.target.value } : null)
+                    setEditedData((prev) =>
+                      prev ? { ...prev, city: e.target.value } : null
+                    )
                   }
                   className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />
@@ -290,7 +299,9 @@ export function ProfileTab({ userId }: ProfileTabProps) {
                   type="text"
                   value={editedData?.country || ''}
                   onChange={(e) =>
-                    setEditedData(prev => prev ? { ...prev, country: e.target.value } : null)
+                    setEditedData((prev) =>
+                      prev ? { ...prev, country: e.target.value } : null
+                    )
                   }
                   className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
                 />

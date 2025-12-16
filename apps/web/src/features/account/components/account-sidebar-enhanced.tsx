@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * AccountSidebarEnhanced - Desktop sidebar with collapsible groups
- *
- * Features:
- * - Collapsible sidebar (icon-only mode)
- * - Grouped navigation items with expand/collapse
- * - i18n labels from provider
- * - Locale-aware navigation
- * - Active state indication
- * - Tooltip for collapsed items
- */
-
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';

@@ -13,7 +13,7 @@ import {
 import { ReviewCard } from './review-card';
 import { ReviewStats } from './review-stats';
 import { AddReviewModal } from './add-review-modal';
-import { ReportReviewModal } from './report-review-modal';
+import { ReportReviewModal } from '../../reports/components/report-review-modal';
 import { NoticeModal } from '@/components/feedback/notice-modal';
 import type { EventDetailsData } from '@/features/events/types/event-details';
 

@@ -1,16 +1,12 @@
-/**
- * Hook for building GraphQL query variables for events search
- */
-
 'use client';
 
-import { useMemo } from 'react';
 import {
   EventStatus,
   GetEventsListingQueryVariables,
   Visibility,
 } from '@/lib/api/__generated__/react-query-update';
-import { getUpcomingAfterDefault, EVENTS_CONFIG } from '@/lib/constants/events';
+import { EVENTS_CONFIG, getUpcomingAfterDefault } from '@/lib/constants/events';
+import { useMemo } from 'react';
 import type { CommittedFilters, LocationMode } from '../types';
 
 type UseEventsListingInfiniteQueryVariablesParams = {
@@ -19,21 +15,6 @@ type UseEventsListingInfiniteQueryVariablesParams = {
   sortVars: Partial<Pick<GetEventsListingQueryVariables, 'sortBy' | 'sortDir'>>;
 };
 
-/**
- * Builds GraphQL query variables for fetching events based on filters and location mode
- *
- * @param params - Filters, location mode, and sort variables
- * @returns Query variables ready for useEventsInfiniteQuery
- *
- * @example
- * ```tsx
- * const variables = useEventsListingInfiniteQueryVariables({
- *   filters,
- *   locationMode: 'EXPLICIT',
- *   sortVars: { sortBy: 'START_AT', sortDir: 'ASC' }
- * });
- * ```
- */
 export function useEventsListingInfiniteQueryVariables({
   filters,
   locationMode,

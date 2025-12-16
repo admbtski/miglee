@@ -34,7 +34,7 @@ export { ClickBurst } from './click-burst';
 export { ClickParticle } from './click-particle';
 export { CooldownRing } from './cooldown-ring';
 export { FavouriteButton } from './favourite-button';
-export { ReportButton } from './report-button';
+export { ReportButton } from '../../features/reports/components/report-button';
 export {
   SegmentedControl,
   type SegmentedControlProps,

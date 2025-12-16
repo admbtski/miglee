@@ -40,7 +40,7 @@ import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
   useNotificationsInfiniteQuery,
-} from '@/features/notifications/api/notifications';
+} from '@/features/notifications';
 import type {
   GetNotificationsQuery,
   GetNotificationsQueryVariables,

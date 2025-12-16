@@ -1,7 +1,3 @@
-/**
- * Hook for managing sort state from URL search params
- */
-
 'use client';
 
 import type { GetEventsQueryVariables } from '@/lib/api/__generated__/react-query-update';
@@ -19,12 +15,6 @@ const buildUrl = (pathname: string, params: URLSearchParams): string =>
 
 type SortVariables = Pick<GetEventsQueryVariables, 'sortBy' | 'sortDir'>;
 
-/**
- * Maps UI sort key to GraphQL sort variables
- *
- * @param key - Sort key from UI
- * @returns GraphQL sort variables or undefined for default sort
- */
 export function mapSortKeyToGql(key: SortKey): SortVariables | undefined {
   switch (key) {
     case 'start_asc':
@@ -47,18 +37,6 @@ export function mapSortKeyToGql(key: SortKey): SortVariables | undefined {
   }
 }
 
-/**
- * Hook for managing sort state from URL search params
- *
- * @returns Current sort key, setter function, and GraphQL variables
- *
- * @example
- * ```tsx
- * const { sort, setSort, sortVars } = useCommittedSort();
- * // sort: 'start_asc'
- * // sortVars: { sortBy: 'START_AT', sortDir: 'ASC' }
- * ```
- */
 export function useCommittedSort() {
   const search = useSearchParams();
   const router = useRouter();

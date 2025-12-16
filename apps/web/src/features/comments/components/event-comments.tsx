@@ -1,35 +1,35 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import {
-  useGetComments,
-  useCreateComment,
-  useDeleteComment,
-  useHideComment,
-  useUpdateComment,
-} from '@/features/comments/api/comments';
+import { Avatar } from '@/components/ui/avatar';
 import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
-  MessageSquare,
-  Send,
-  Loader2,
-  MoreVertical,
-  Edit2,
-  Trash2,
-  Reply,
-  ChevronDown,
-  ChevronUp,
-  Flag,
-  EyeOff,
-  Shield,
-} from 'lucide-react';
+  useCreateComment,
+  useDeleteComment,
+  useGetComments,
+  useHideComment,
+  useUpdateComment,
+} from '@/features/comments';
+import type { EventDetailsData } from '@/features/events/types/event-details';
+import { ReportCommentModal } from '@/features/reports';
+import { buildAvatarUrl } from '@/lib/media/url';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { ReportCommentModal } from '@/features/reports/components/report-comment-modal';
-import type { EventDetailsData } from '@/features/events/types/event-details';
-import { buildAvatarUrl } from '@/lib/media/url';
-import { Avatar } from '@/components/ui/avatar';
+import {
+  ChevronDown,
+  ChevronUp,
+  Edit2,
+  EyeOff,
+  Flag,
+  Loader2,
+  MessageSquare,
+  MoreVertical,
+  Reply,
+  Send,
+  Shield,
+  Trash2,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 
 type EventCommentsProps = {
   event: EventDetailsData;

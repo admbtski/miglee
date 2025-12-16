@@ -17,7 +17,7 @@ import { useMeQuery } from '@/features/auth/hooks/auth';
 import {
   PublicProfileClient,
   PublicProfileClientLoader,
-} from '@/features/user-public-profile/components/public-profile-client';
+} from '@/features/public-profile/components/public-profile-client';
 import { useLocalePath } from '@/hooks/use-locale-path';
 
 export default function ProfileViewPage() {

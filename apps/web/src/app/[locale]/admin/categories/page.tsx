@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useGetCategoriesQuery } from '@/features/categories/api/categories';
+import { useGetCategoriesQuery } from '@/features/categories';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';

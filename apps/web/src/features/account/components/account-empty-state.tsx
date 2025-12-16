@@ -1,23 +1,9 @@
-/**
- * AccountEmptyState - Flexible empty state component
- *
- * Variants:
- * - default: 2-column layout with illustration
- * - compact: Single column centered layout
- *
- * Props:
- * - title, description: should come from i18n (passed by parent)
- * - action: optional CTA element
- */
-
 import type { ReactNode } from 'react';
 
 interface AccountEmptyStateProps {
   illustration?: ReactNode;
   icon?: ReactNode;
-  /** Title text - should be translated by parent */
   title: string;
-  /** Description text - should be translated by parent */
   description: string;
   action?: ReactNode;
   variant?: 'default' | 'compact';

@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 
 import { CategoryMultiCombo } from '@/features/categories';
-import { TagMultiCombo } from '@/components/forms/tag-multicombo';
+import { TagMultiCombo } from '@/features/tags';
 import { CategoryOption } from '@/features/categories';
 import { TagOption } from '@/features/tags/types';
 

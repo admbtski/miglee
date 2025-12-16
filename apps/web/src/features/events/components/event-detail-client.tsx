@@ -2,7 +2,7 @@
 
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { ShareButton } from '@/components/ui/share-button';
-import { ReportButton } from '@/components/ui/report-button';
+import { ReportButton } from '@/features/reports/components/report-button';
 import { ShareModal } from '@/components/ui/share-modal';
 import { useEventDetailQuery } from '@/features/events/api/events';
 import { useMeQuery } from '@/features/auth/hooks/auth';
@@ -32,7 +32,7 @@ import { EventEngagementStats } from './event-engagement-stats';
 import { EventFaq } from '../../faq/components/event-faq';
 import { EventHero } from './event-hero';
 import { EventJoinSection } from './event-join-section';
-import { UserCheckinSection } from '@/features/checkin/components/user-checkin-section';
+import { UserCheckinSection } from '@/features/checkin';
 import { EventLocationMap } from './event-location-map';
 import { EventMetadata } from './event-metadata';
 import { EventParticipants } from './event-participants';
@@ -383,9 +383,11 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
                 <Users className="w-4 h-4 opacity-70" />
                 <span className="font-medium">
                   {eventData.mode === 'ONE_TO_ONE' ||
-                  (eventData.max !== null && eventData.max !== undefined && eventData.max <= 2)
+                  (eventData.max !== null &&
+                    eventData.max !== undefined &&
+                    eventData.max <= 2)
                     ? 'Indywidualne'
-                    : (eventData.max === null || eventData.max === undefined)
+                    : eventData.max === null || eventData.max === undefined
                       ? 'Bez limitu'
                       : eventData.max <= 10
                         ? 'Kameralne'

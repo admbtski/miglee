@@ -8,54 +8,52 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import {
-  Plus,
-  Trash2,
-  GripVertical,
-  Save,
-  MoreVertical,
-  Edit2,
-  ListOrdered,
-  Loader2,
-  AlertCircle,
-  Clock,
-  User,
-  UserPlus,
-  X,
-  Search,
-  Camera,
-} from 'lucide-react';
-import { motion, Reorder } from 'framer-motion';
-import { toast } from 'sonner';
-import {
-  useFloating,
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  useClick,
-  useDismiss,
-  useRole,
-  useInteractions,
-  FloatingFocusManager,
-  FloatingPortal,
-} from '@floating-ui/react';
-import { cn } from '@/lib/utils';
-import {
-  useEventAgendaItemsQuery,
-  useUpdateEventAgendaMutation,
-} from '@/features/agenda/api/agenda';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { Modal } from '@/components/feedback/modal';
+import { Avatar as AvatarComponent } from '@/components/ui/avatar';
+import { useUpdateEventAgendaMutation } from '@/features/agenda/api/use-update-event-agenda';
+import { useEventAgendaItemsQuery } from '@/features/agenda/api/use-event-agenda-items';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
 } from '@/features/event-management/components/plan-upgrade-banner';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import { useUsersQuery } from '@/features/users/api/users';
-import { Modal } from '@/components/feedback/modal';
-import { Avatar as AvatarComponent } from '@/components/ui/avatar';
-import { buildAvatarUrl } from '@/lib/media/url';
 import type { AgendaHostKind } from '@/lib/api/__generated__/react-query-update';
+import { buildAvatarUrl } from '@/lib/media/url';
+import { cn } from '@/lib/utils';
+import {
+  autoUpdate,
+  flip,
+  FloatingFocusManager,
+  FloatingPortal,
+  offset,
+  shift,
+  useClick,
+  useDismiss,
+  useFloating,
+  useInteractions,
+  useRole,
+} from '@floating-ui/react';
+import { motion, Reorder } from 'framer-motion';
+import {
+  AlertCircle,
+  Camera,
+  Clock,
+  Edit2,
+  GripVertical,
+  ListOrdered,
+  Loader2,
+  MoreVertical,
+  Plus,
+  Save,
+  Search,
+  Trash2,
+  User,
+  UserPlus,
+  X,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 // ----- Types -----
 

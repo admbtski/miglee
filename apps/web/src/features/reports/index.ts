@@ -1,7 +1,7 @@
 // Reports Feature Public API
 
 // API
-export * from './api/reports';
+export * from './api';
 
 // Components
 export * from './components';

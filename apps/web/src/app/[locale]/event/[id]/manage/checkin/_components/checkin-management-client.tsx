@@ -5,45 +5,45 @@
 
 'use client';
 
-import { useState } from 'react';
 import {
+  AlertCircle,
+  AlertTriangle,
+  Ban,
+  Check,
   CheckCircle2,
-  Users,
-  Settings,
-  QrCode,
-  ScrollText,
+  Clock,
   Download,
   Info,
   Loader2,
-  AlertCircle,
-  Check,
-  X,
-  Clock,
-  AlertTriangle,
+  QrCode,
+  ScrollText,
+  Settings,
+  Shield,
   Smartphone,
   UserCircle2,
-  Shield,
-  Ban,
+  Users,
+  X,
 } from 'lucide-react';
+import { useState } from 'react';
 
-import { useEventManagement } from '@/features/event-management/components/event-management-provider';
 import {
-  useUpdateEventCheckinConfigMutation,
+  EventQRCode,
   useCheckInMemberMutation,
-  useUncheckInMemberMutation,
   useGetEventCheckinLogsQuery,
-} from '@/features/checkin/api/checkin';
+  useUncheckInMemberMutation,
+  useUpdateEventCheckinConfigMutation,
+} from '@/features/checkin';
+import { useEventManagement } from '@/features/event-management/components/event-management-provider';
+import { useEventMembersQuery } from '@/features/events/api/event-members';
 import {
   CheckinMethod,
   EventMemberCoreFragment,
 } from '@/lib/api/__generated__/react-query-update';
-import { useEventMembersQuery } from '@/features/events/api/event-members';
 import { toast } from '@/lib/utils/toast-manager';
-import { EventQRCode } from '@/features/checkin/components/event-qr-code';
-import { MemberActionsMenu } from './member-actions-menu';
-import { RejectCheckinModal } from './reject-checkin-modal';
-import { MethodActionsDropdown } from './method-actions-dropdown';
 import { AnimatePresence, motion } from 'framer-motion';
+import { MemberActionsMenu } from './member-actions-menu';
+import { MethodActionsDropdown } from './method-actions-dropdown';
+import { RejectCheckinModal } from './reject-checkin-modal';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 

@@ -1,19 +1,14 @@
-/**
- * Reject Check-in Modal Component
- * Allows moderator to reject check-in with reason and optional blocking
- */
-
 'use client';
 
-import { useState } from 'react';
-import { X, AlertTriangle, Ban } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from '@/lib/utils/toast-manager';
 import {
-  useRejectMemberCheckinMutation,
   invalidateCheckinData,
-} from '@/features/checkin/api/checkin';
+  useRejectMemberCheckinMutation,
+} from '@/features/checkin';
 import { CheckinMethod } from '@/lib/api/__generated__/react-query-update';
+import { toast } from '@/lib/utils/toast-manager';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, Ban, X } from 'lucide-react';
+import { useState } from 'react';
 
 interface RejectCheckinModalProps {
   isOpen: boolean;
@@ -167,7 +162,9 @@ export function RejectCheckinModal({
                     value="none"
                     checked={blockAction === 'none'}
                     onChange={(e) =>
-                      setBlockAction(e.target.value as 'none' | 'method' | 'all')
+                      setBlockAction(
+                        e.target.value as 'none' | 'method' | 'all'
+                      )
                     }
                     className="h-4 w-4 border-zinc-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700"
                   />
@@ -213,7 +210,9 @@ export function RejectCheckinModal({
                     value="all"
                     checked={blockAction === 'all'}
                     onChange={(e) =>
-                      setBlockAction(e.target.value as 'none' | 'method' | 'all')
+                      setBlockAction(
+                        e.target.value as 'none' | 'method' | 'all'
+                      )
                     }
                     className="h-4 w-4 border-zinc-300 text-red-600 focus:ring-2 focus:ring-red-500/20 dark:border-zinc-700"
                   />

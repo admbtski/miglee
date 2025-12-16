@@ -10,7 +10,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Maximize2, RefreshCw, X, FileDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { useRotateMemberCheckinTokenMutation } from '@/features/checkin/api/checkin';
+import { useRotateMemberCheckinTokenMutation } from '@/features/checkin';
 
 interface UserQRCodeProps {
   eventId: string;
