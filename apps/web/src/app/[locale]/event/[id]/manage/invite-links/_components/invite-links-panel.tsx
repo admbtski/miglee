@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 
 import { Avatar } from '@/components/ui/avatar';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   useCreateEventInviteLinkMutation,
   useDeleteEventInviteLinkMutation,
@@ -57,7 +57,7 @@ export function InviteLinksPanel({ eventId }: InviteLinksPanelProps) {
   } | null>(null);
 
   // Fetch event to check plan
-  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+  const { data: eventData, isLoading: eventLoading } = useEventDetailQuery({
     id: eventId,
   });
 

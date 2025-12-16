@@ -46,7 +46,7 @@ fragment EventCardData on Event {
   # Computed fields for card display
   joinedCount
   hasStarted
-  isCanceled
+  isCanceledvent
   isDeleted
   canJoin
   isOnsite

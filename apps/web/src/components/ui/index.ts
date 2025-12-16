@@ -26,24 +26,8 @@ export { BlurHashImage } from './blurhash-image';
 
 // Event-specific badges
 export { CapacityBadge } from './capacity-badge';
-export { CapacityProgressBar } from './capacity-progress-bar';
 export { LevelBadge } from './level-badge';
-export { StatusBadge } from './status-badge';
 export { VerifiedBadge } from './verified-badge';
-
-// Category & Tag pills
-export {
-  CategoryPills,
-  Pill,
-  TagPills,
-  type PillSize,
-  type PillVariant,
-} from './category-tag-pill';
-export {
-  InlineCategoryPills,
-  InlinePillsList,
-  InlineTagPills,
-} from './inline-category-tag-pill';
 
 // Interactive components
 export { ClickBurst } from './click-burst';
@@ -65,15 +49,6 @@ export { ShareModal } from './share-modal';
 
 // Progress & Quota
 export { QuotaBar } from './quota-bar';
-export { SimpleProgressBar } from './simple-progress-bar';
-
-// Plan theming
-export {
-  getShimmerOpacity,
-  planAnimationConfig,
-  shouldEnableAnimations,
-} from './plan-animations';
-export { planTheme } from './plan-theme';
 
 // Icons
 export { HybridLocationIcon } from './icons/hybrid-location-icon';

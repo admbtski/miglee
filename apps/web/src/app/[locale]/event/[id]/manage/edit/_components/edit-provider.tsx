@@ -10,7 +10,7 @@ import {
   useCallback,
 } from 'react';
 import {
-  useEventQuery,
+  useEventDetailQuery,
   useUpdateEventMutation,
 } from '@/features/events/api/events';
 import { useQueryClient } from '@tanstack/react-query';
@@ -80,7 +80,7 @@ interface EditProviderProps {
  */
 export function EditProvider({ children, eventId }: EditProviderProps) {
   const queryClient = useQueryClient();
-  const { data, isLoading, refetch } = useEventQuery({ id: eventId });
+  const { data, isLoading, refetch } = useEventDetailQuery({ id: eventId });
   const { mutateAsync: updateEvent, isPending: isSaving } =
     useUpdateEventMutation();
 

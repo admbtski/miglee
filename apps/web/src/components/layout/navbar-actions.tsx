@@ -121,7 +121,7 @@ export function NavbarActions() {
             {/* Mobile: Notifications + Favourites */}
             <div className="flex md:hidden items-center gap-1">
               <FavouritesBell />
-              <NotificationBell recipientId={data.me?.id!} limit={8} />
+              <NotificationBell recipientId={data.me?.id!} limit={10} />
             </div>
           </>
         )}

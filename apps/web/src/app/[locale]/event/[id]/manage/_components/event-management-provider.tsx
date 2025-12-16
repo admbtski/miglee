@@ -6,11 +6,11 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import { useEventQuery } from '@/features/events/api/events';
-import type { GetEventQuery } from '@/lib/api/__generated__/react-query-update';
+import { useEventDetailQuery } from '@/features/events/api/events';
+import type { GetEventDetailQuery } from '@/lib/api/__generated__/react-query-update';
 
 interface EventManagementContextValue {
-  event: GetEventQuery['event'] | null | undefined;
+  event: GetEventDetailQuery['event'] | null | undefined;
   isLoading: boolean;
   refetch: () => void;
 }
@@ -31,7 +31,7 @@ export function EventManagementProvider({
   eventId,
   children,
 }: EventManagementProviderProps) {
-  const { data, isLoading, refetch } = useEventQuery({ id: eventId });
+  const { data, isLoading, refetch } = useEventDetailQuery({ id: eventId });
 
   return (
     <EventManagementContext.Provider

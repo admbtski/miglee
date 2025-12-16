@@ -77,7 +77,7 @@ import {
   useQuery,
   UseQueryOptions,
 } from '@tanstack/react-query';
-import { GET_EVENT_ONE_KEY } from './events';
+import { GET_EVENT_DETAIL_KEY } from './events';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Event Members — KEYS
@@ -945,7 +945,7 @@ export function useRequestJoinEventMutation(
         });
         if (vars.eventId) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.eventId,
             }) as QueryKey,
           });
@@ -982,7 +982,7 @@ export function useCancelJoinRequestMutation(
       onSuccess: (_data, vars) => {
         if (vars.eventId) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.eventId,
             }) as QueryKey,
           });
@@ -1019,7 +1019,7 @@ export function useLeaveEventMutationMembers(
         });
         if (vars.eventId) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.eventId,
             }) as QueryKey,
           });
@@ -1073,7 +1073,7 @@ export function useAcceptInviteMutation(
       });
       if (vars.eventId) {
         qc.invalidateQueries({
-          queryKey: GET_EVENT_ONE_KEY({
+          queryKey: GET_EVENT_DETAIL_KEY({
             id: vars.eventId,
           }) as QueryKey,
         });
@@ -1120,7 +1120,7 @@ export function useInviteMemberMutation(
             }) as QueryKey,
           });
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: eventId,
             }) as QueryKey,
           });
@@ -1159,7 +1159,7 @@ export function useApproveMembershipMutation(
             }) as QueryKey,
           });
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: eventId,
             }) as QueryKey,
           });
@@ -1202,7 +1202,7 @@ export function useRejectMembershipMutation(
             }) as QueryKey,
           });
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: eventId,
             }) as QueryKey,
           });
@@ -1237,7 +1237,7 @@ export function useKickMemberMutation(
             }) as QueryKey,
           });
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: eventId,
             }) as QueryKey,
           });
@@ -1280,7 +1280,7 @@ export function useUpdateMemberRoleMutation(
             }) as QueryKey,
           });
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: eventId,
             }) as QueryKey,
           });

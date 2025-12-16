@@ -8,7 +8,7 @@ import {
   type EventAppearanceQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { AppearancePage } from './appearance-page';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
@@ -20,7 +20,7 @@ type AppearancePageWrapperProps = {
 
 export function AppearancePageWrapper({ eventId }: AppearancePageWrapperProps) {
   // Fetch event to check plan
-  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+  const { data: eventData, isLoading: eventLoading } = useEventDetailQuery({
     id: eventId,
   });
 

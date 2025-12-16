@@ -552,8 +552,8 @@ export function EventDetailClient({ eventId }: EventDetailClientProps) {
 
             <EventParticipants event={eventData} />
 
-            <EventReviews event={eventData} />
             <EventComments event={eventData} />
+            <EventReviews event={eventData} />
 
             {/* Metadata at the bottom */}
             <EventMetadata event={eventData} />

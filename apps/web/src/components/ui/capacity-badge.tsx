@@ -2,7 +2,6 @@
 
 import clsx from 'clsx';
 import { Users } from 'lucide-react';
-import type { JoinReason } from '@/components/ui/status-badge';
 
 /* ───────────────────────────── Typy ───────────────────────────── */
 
@@ -26,7 +25,7 @@ export function CapacityBadge({
   max: number;
   isFull: boolean;
   canJoin: boolean;
-  statusReason: JoinReason;
+  statusReason: string;
   size?: CapacityBadgeSize;
   variant?: CapacityBadgeVariant;
   className?: string;

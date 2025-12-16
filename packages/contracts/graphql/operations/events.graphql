@@ -97,12 +97,7 @@ query GetEvents(
   }
 }
 
-query GetEvent($id: ID!) {
-  event(id: $id) {
-    ...EventCore
-  }
-}
-
+# Single unified query for event details - always returns full EventDetail fragment
 query GetEventDetail($id: ID!) {
   event(id: $id) {
     ...EventDetail

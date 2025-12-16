@@ -161,6 +161,5 @@ export function useCommittedFilters() {
     router.replace(buildUrl(defaultFilters), { scroll: false });
   }, [buildUrl, router]);
 
-  console.table(state);
-  return { ...state, apply, reset } as const;
+  return useMemo(() => ({ ...state, apply, reset }), [state, apply, reset]);
 }

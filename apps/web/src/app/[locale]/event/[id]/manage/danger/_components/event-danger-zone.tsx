@@ -13,7 +13,7 @@ import { AlertTriangle, Ban, Info, Trash2, Users } from 'lucide-react';
 
 import { CancelEventModals } from '@/features/events/components/cancel-event-modals';
 import { DeleteEventModals } from '@/features/events/components/delete-event-modals';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 
@@ -27,7 +27,7 @@ interface EventDangerZoneProps {
 export function EventDangerZone({ eventId }: EventDangerZoneProps) {
   const router = useRouter();
   const { localePath } = useLocalePath();
-  const { data, isLoading } = useEventQuery({ id: eventId });
+  const { data, isLoading } = useEventDetailQuery({ id: eventId });
   const event = data?.event;
 
   const [cancelId, setCancelId] = useState<string | null>(null);

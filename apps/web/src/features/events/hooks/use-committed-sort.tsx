@@ -4,15 +4,15 @@
 
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import type { GetEventsQueryVariables } from '@/lib/api/__generated__/react-query-update';
 import {
   EventsSortBy,
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
-import type { GetEventsQueryVariables } from '@/lib/api/__generated__/react-query-update';
-import type { SortKey } from '../types';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useMemo } from 'react';
 import { VALID_SORT_KEYS } from '../constants';
+import type { SortKey } from '../types';
 
 const buildUrl = (pathname: string, params: URLSearchParams): string =>
   `${pathname}${params.toString() ? `?${params.toString()}` : ''}`;
@@ -86,5 +86,8 @@ export function useCommittedSort() {
 
   const sortVars = useMemo(() => mapSortKeyToGql(sort) ?? {}, [sort]);
 
-  return { sort, setSort, sortVars };
+  return useMemo(
+    () => ({ sort, setSort, sortVars }),
+    [sort, setSort, sortVars]
+  );
 }

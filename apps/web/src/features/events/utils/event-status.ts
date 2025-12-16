@@ -4,12 +4,11 @@
  */
 
 import { computeJoinState, type JoinStateResult } from './event-join-state';
-import type { JoinTone, JoinReason } from '@/components/ui/status-badge';
 
 export type EventStatus = {
   label: string;
-  tone: JoinTone;
-  reason: JoinReason;
+  tone: string;
+  reason: string;
 };
 
 export type EventStatusInput = {

@@ -11,7 +11,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   Plus,
   Trash2,
@@ -169,7 +169,7 @@ export function FeedbackPanel({ eventId }: FeedbackPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('questions');
 
   // Fetch event to check plan
-  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+  const { data: eventData, isLoading: eventLoading } = useEventDetailQuery({
     id: eventId,
   });
 

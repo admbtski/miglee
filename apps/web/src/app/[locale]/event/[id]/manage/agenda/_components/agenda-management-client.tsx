@@ -46,7 +46,7 @@ import {
   useEventAgendaItemsQuery,
   useUpdateEventAgendaMutation,
 } from '@/features/events/api/agenda';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
@@ -640,7 +640,7 @@ export function AgendaManagementClient({
   eventId,
 }: AgendaManagementClientProps) {
   // Fetch event for plan check
-  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+  const { data: eventData, isLoading: eventLoading } = useEventDetailQuery({
     id: eventId,
   });
 

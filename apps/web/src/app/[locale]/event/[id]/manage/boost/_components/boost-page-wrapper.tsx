@@ -2,7 +2,7 @@
 
 import { BoostPage } from './boost-page';
 import { useSubscriptionData } from '@/features/events/hooks/use-subscription-data';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
@@ -16,7 +16,7 @@ export function BoostPageWrapper({ eventId }: BoostPageWrapperProps) {
   const { sponsorship, onBoostEvent } = useSubscriptionData(eventId);
 
   // Fetch event to check plan
-  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+  const { data: eventData, isLoading: eventLoading } = useEventDetailQuery({
     id: eventId,
   });
 

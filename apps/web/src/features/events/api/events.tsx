@@ -5,9 +5,6 @@ import {
   DeleteEventDocument,
   DeleteEventMutation,
   DeleteEventMutationVariables,
-  GetEventDocument,
-  GetEventQuery,
-  GetEventQueryVariables,
   GetEventsDocument,
   GetEventsQuery,
   GetEventsQuery_Query,
@@ -28,6 +25,8 @@ import {
   ReopenEventJoinMutation,
   ReopenEventJoinMutationVariables,
   GetEventDetailDocument,
+  GetEventDetailQuery,
+  GetEventDetailQueryVariables,
   UpdateEventFaqsDocument,
   UpdateEventFaqsMutation,
   UpdateEventFaqsMutationVariables,
@@ -48,11 +47,7 @@ import {
 } from '@tanstack/react-query';
 
 /* -------------------------------- TYPES ---------------------------------- */
-/**
- * Event Detail Query Response Type
- * Extends GetEventQuery with full detail fields
- */
-export type GetEventDetailQuery = GetEventQuery;
+// GetEventDetailQuery is now imported directly from generated types
 
 /** Klucz cache dla infinite - zoptymalizowana wersja (GetEventsListing) */
 export const GET_EVENTS_LISTING_INFINITE_KEY = (
@@ -232,10 +227,7 @@ export const flatEventsPages = (pages?: GetEventsQuery_Query[]) => {
 export const GET_EVENTS_LIST_KEY = (variables?: GetEventsQueryVariables) =>
   variables ? (['GetEvents', variables] as const) : (['GetEvents'] as const);
 
-export const GET_EVENT_ONE_KEY = (variables: GetEventQueryVariables) =>
-  ['GetEvent', variables] as const;
-
-export const GET_EVENT_DETAIL_KEY = (variables: GetEventQueryVariables) =>
+export const GET_EVENT_DETAIL_KEY = (variables: GetEventDetailQueryVariables) =>
   ['GetEventDetail', variables] as const;
 
 /* --------------------------- GRAPHQL DOCUMENTS --------------------------- */
@@ -265,26 +257,8 @@ export function buildGetEventsOptions(
   };
 }
 
-export function buildGetEventOptions(
-  variables: GetEventQueryVariables,
-  options?: Omit<
-    UseQueryOptions<GetEventQuery, unknown, GetEventQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-): UseQueryOptions<GetEventQuery, unknown, GetEventQuery, QueryKey> {
-  return {
-    queryKey: GET_EVENT_ONE_KEY(variables) as unknown as QueryKey,
-    queryFn: async () =>
-      gqlClient.request<GetEventQuery, GetEventQueryVariables>(
-        GetEventDocument,
-        variables
-      ),
-    ...(options ?? {}),
-  };
-}
-
 export function buildGetEventDetailOptions(
-  variables: GetEventQueryVariables,
+  variables: GetEventDetailQueryVariables,
   options?: Omit<
     UseQueryOptions<
       GetEventDetailQuery,
@@ -303,7 +277,7 @@ export function buildGetEventDetailOptions(
   return {
     queryKey: GET_EVENT_DETAIL_KEY(variables) as unknown as QueryKey,
     queryFn: async () =>
-      gqlClient.request<GetEventDetailQuery, GetEventQueryVariables>(
+      gqlClient.request<GetEventDetailQuery, GetEventDetailQueryVariables>(
         GetEventDetailDocument,
         variables
       ),
@@ -322,24 +296,10 @@ export function useEventsQuery(
   return useQuery(buildGetEventsOptions(variables, options));
 }
 
-export function useEventQuery(
-  variables: GetEventQueryVariables,
-  options?: Omit<
-    UseQueryOptions<GetEventQuery, unknown, GetEventQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery(
-    buildGetEventOptions(variables, {
-      enabled: !!variables.id,
-      ...(options ?? {}),
-    })
-  );
-}
-
 /**
  * Fetch complete event details by ID
- * Includes sponsorship, inviteLinks, members, and all computed helpers
+ * Includes sponsorship, inviteLinks, members, faqs, joinQuestions, agendaItems and all computed helpers
+ * This is the unified query for all event detail needs - replaces the old useEventQuery
  *
  * @example
  * ```tsx
@@ -348,7 +308,7 @@ export function useEventQuery(
  * ```
  */
 export function useEventDetailQuery(
-  variables: GetEventQueryVariables,
+  variables: GetEventDetailQueryVariables,
   options?: Omit<
     UseQueryOptions<
       GetEventDetailQuery,
@@ -580,7 +540,7 @@ export function useUpdateEventMutation(
         });
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.id,
             }) as unknown as QueryKey,
           });
@@ -612,7 +572,7 @@ export function useDeleteEventMutation(
         });
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.id,
             }) as unknown as QueryKey,
           });
@@ -646,7 +606,7 @@ export function useCancelEventMutation(
         });
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.id,
             }) as unknown as QueryKey,
           });
@@ -680,7 +640,7 @@ export function useCloseEventJoinMutation(
         });
         if (vars.eventId) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.eventId,
             }) as unknown as QueryKey,
           });
@@ -714,7 +674,7 @@ export function useReopenEventJoinMutation(
         });
         if (vars.eventId) {
           qc.invalidateQueries({
-            queryKey: GET_EVENT_ONE_KEY({
+            queryKey: GET_EVENT_DETAIL_KEY({
               id: vars.eventId,
             }) as unknown as QueryKey,
           });
@@ -754,7 +714,7 @@ export function useUpdateEventFaqsMutation(
       // Invalidate event detail query to refetch with updated FAQs
       if (variables.input.eventId) {
         qc.invalidateQueries({
-          queryKey: GET_EVENT_ONE_KEY({
+          queryKey: GET_EVENT_DETAIL_KEY({
             id: variables.input.eventId,
           }) as unknown as QueryKey,
         });
@@ -767,20 +727,20 @@ export function useUpdateEventFaqsMutation(
 /* ----------------------------- PUBLICATION MUTATIONS ----------------------------- */
 
 // Temporary types until codegen runs
-type PublishEventMutation = { publishEvent: GetEventQuery['event'] };
+type PublishEventMutation = { publishEvent: GetEventDetailQuery['event'] };
 type PublishEventMutationVariables = { id: string };
 type ScheduleEventPublicationMutation = {
-  scheduleEventPublication: GetEventQuery['event'];
+  scheduleEventPublication: GetEventDetailQuery['event'];
 };
 type ScheduleEventPublicationMutationVariables = {
   id: string;
   publishAt: string;
 };
 type CancelScheduledPublicationMutation = {
-  cancelScheduledPublication: GetEventQuery['event'];
+  cancelScheduledPublication: GetEventDetailQuery['event'];
 };
 type CancelScheduledPublicationMutationVariables = { id: string };
-type UnpublishEventMutation = { unpublishEvent: GetEventQuery['event'] };
+type UnpublishEventMutation = { unpublishEvent: GetEventDetailQuery['event'] };
 type UnpublishEventMutationVariables = { id: string };
 
 // Temporary documents until codegen runs
@@ -861,7 +821,9 @@ export function usePublishEventMutation(
       });
       if (vars.id) {
         qc.invalidateQueries({
-          queryKey: GET_EVENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+          queryKey: GET_EVENT_DETAIL_KEY({
+            id: vars.id,
+          }) as unknown as QueryKey,
         });
       }
     },
@@ -905,7 +867,9 @@ export function useScheduleEventPublicationMutation(
       });
       if (vars.id) {
         qc.invalidateQueries({
-          queryKey: GET_EVENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+          queryKey: GET_EVENT_DETAIL_KEY({
+            id: vars.id,
+          }) as unknown as QueryKey,
         });
       }
     },
@@ -949,7 +913,9 @@ export function useCancelScheduledPublicationMutation(
       });
       if (vars.id) {
         qc.invalidateQueries({
-          queryKey: GET_EVENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+          queryKey: GET_EVENT_DETAIL_KEY({
+            id: vars.id,
+          }) as unknown as QueryKey,
         });
       }
     },
@@ -993,7 +959,9 @@ export function useUnpublishEventMutation(
       });
       if (vars.id) {
         qc.invalidateQueries({
-          queryKey: GET_EVENT_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+          queryKey: GET_EVENT_DETAIL_KEY({
+            id: vars.id,
+          }) as unknown as QueryKey,
         });
       }
     },

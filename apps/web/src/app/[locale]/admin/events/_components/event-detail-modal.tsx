@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   X,
   Info,
@@ -42,7 +42,7 @@ export function EventDetailModal({
 }: EventDetailModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
 
-  const { data, isLoading, refetch } = useEventQuery(
+  const { data, isLoading, refetch } = useEventDetailQuery(
     { id: eventId },
     { enabled: open }
   );

@@ -4,7 +4,7 @@
 
 import { LocalPushPage } from '@/features/events/components/local-push-page';
 import { useSubscriptionData } from '@/features/events/hooks/use-subscription-data';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
@@ -18,7 +18,7 @@ export function LocalPushPageWrapper({ eventId }: LocalPushPageWrapperProps) {
   const { sponsorship, onSendLocalPush } = useSubscriptionData(eventId);
 
   // Fetch event to check plan
-  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+  const { data: eventData, isLoading: eventLoading } = useEventDetailQuery({
     id: eventId,
   });
 

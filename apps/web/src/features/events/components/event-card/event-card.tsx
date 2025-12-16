@@ -3,7 +3,6 @@
 import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
-import { Plan } from '@/components/ui/plan-theme';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { EventCountdownPill } from '@/features/events/components/event-countdown-pill';
 import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
@@ -35,12 +34,11 @@ export interface EventCardProps {
   endISO: string;
   title: string;
   categories: string[];
-  address?: string;
-  avatarKey: string | null;
+  address?: string | null;
+  avatarKey?: string | null;
   avatarBlurhash?: string | null;
   organizerName: string;
-  verifiedAt?: string;
-  plan?: Plan;
+  verifiedAt?: string | null;
   boostedAt?: string | null; // ISO timestamp of last boost
   /** Custom appearance config from EventAppearance */
   appearance?: {
@@ -96,7 +94,6 @@ export const EventCard = memo(function EventCard({
   allowJoinLate,
   lateJoinCutoffMinutesAfterStart,
   joinManuallyClosed,
-  plan,
   boostedAt,
   appearance,
   addressVisibility,
@@ -172,7 +169,6 @@ export const EventCard = memo(function EventCard({
       style={appearanceStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      data-plan={plan}
     >
       {eventId && (
         <Link

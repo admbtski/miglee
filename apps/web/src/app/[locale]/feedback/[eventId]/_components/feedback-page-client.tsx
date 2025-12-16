@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 // Features
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import { useGetMyReview } from '@/features/events/api/reviews';
 import { ReviewAndFeedbackForm } from '@/features/events/components/review-and-feedback-form';
 import {
@@ -41,7 +41,7 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
     data: eventData,
     isLoading: eventLoading,
     error: eventError,
-  } = useEventQuery({ id: eventId });
+  } = useEventDetailQuery({ id: eventId });
 
   // Fetch questions
   const { data: questions = [], isLoading: questionsLoading } =

@@ -1,15 +1,3 @@
-/**
- * Main client component for the events search page
- * Handles filters, sorting, map visibility, and infinite scroll
- *
- * FLOW (JustJoin.it inspired):
- * 1. Top bar with search segments - click opens TopDrawer
- * 2. TopDrawer (slides from top) - Search, Location, Distance
- * 3. Left Sidebar (desktop) - Time Status, Date Range, Event Settings with auto-apply
- * 4. Right Drawer (mobile) - Same as left sidebar, slides from right
- * 5. Auto-apply with 1s debounce for sidebar filters
- */
-
 // TODO i18n: Map loading fallback text needs translation
 
 'use client';
@@ -144,8 +132,8 @@ export function EventsPage() {
     city: filters.city,
     cityLat: filters.cityLat,
     cityLng: filters.cityLng,
-    userHomeLat: userProfile?.homeLat ?? null,
-    userHomeLng: userProfile?.homeLng ?? null,
+    userHomeLat: userProfile?.homeLat,
+    userHomeLng: userProfile?.homeLng,
   });
 
   const variables = useEventsListingInfiniteQueryVariables({
@@ -510,19 +498,19 @@ const MapContent = memo(function MapContent({
   // Memoize map filters to prevent unnecessary re-renders
   const mapFilters = useMemo(
     () => ({
-      q: filters.q || undefined,
+      q: filters.q,
       categorySlugs: filters.categories,
       tagSlugs: filters.tags,
-      levels: filters.levels as any,
-      kinds: filters.kinds as any,
-      joinModes: filters.joinModes as any,
+      levels: filters.levels,
+      kinds: filters.kinds,
+      joinModes: filters.joinModes,
       verifiedOnly: filters.verifiedOnly,
-      status: filters.status as any,
-      startISO: filters.startISO ?? undefined,
-      endISO: filters.endISO ?? undefined,
-      city: filters.city ?? undefined,
-      cityLat: filters.cityLat ?? undefined,
-      cityLng: filters.cityLng ?? undefined,
+      status: filters.status,
+      startISO: filters.startISO,
+      endISO: filters.endISO,
+      city: filters.city,
+      cityLat: filters.cityLat,
+      cityLng: filters.cityLng,
       distanceKm: filters.distanceKm,
     }),
     [filters]
@@ -544,9 +532,9 @@ const MapContent = memo(function MapContent({
           locale={locale}
           filters={mapFilters}
           onEventClick={handleEventClick}
-          hoveredEventId={hoveredEvent?.id ?? null}
-          hoveredLat={hoveredEvent?.lat ?? null}
-          hoveredLng={hoveredEvent?.lng ?? null}
+          hoveredEventId={hoveredEvent?.id}
+          hoveredLat={hoveredEvent?.lat}
+          hoveredLng={hoveredEvent?.lng}
           centerOn={mapCenter}
           locationMode={locationMode}
         />

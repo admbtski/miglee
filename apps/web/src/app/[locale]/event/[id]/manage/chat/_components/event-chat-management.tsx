@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import { useEventChatInstance } from '@/features/chat/hooks/use-event-chat-instance';
 import { ChatThread } from '@/features/chat/components/chat-thread';
 import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
@@ -33,7 +33,7 @@ interface EventChatManagementProps {
 
 export function EventChatManagement({ eventId }: EventChatManagementProps) {
   // Fetch event details
-  const { data: eventData, isLoading: eventLoading } = useEventQuery({
+  const { data: eventData, isLoading: eventLoading } = useEventDetailQuery({
     id: eventId,
   });
   const event = eventData?.event;

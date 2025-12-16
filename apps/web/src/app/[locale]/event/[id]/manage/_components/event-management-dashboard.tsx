@@ -42,7 +42,7 @@ import {
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 // Features
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import {
   CloseJoinModal,
   EventCountdownTimer,
@@ -67,7 +67,7 @@ interface EventManagementDashboardProps {
 export function EventManagementDashboard({
   eventId,
 }: EventManagementDashboardProps) {
-  const { data, isLoading, refetch } = useEventQuery({ id: eventId });
+  const { data, isLoading, refetch } = useEventDetailQuery({ id: eventId });
   const { localePath } = useLocalePath();
   const event = data?.event;
 

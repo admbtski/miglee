@@ -3,21 +3,20 @@
 // TODO i18n: Button labels need translation keys
 // - "Post an event", "Sign in", "Menu", "Notifications", "Favourites", "+ Event"
 
-import { Bell, Heart, Menu as MenuIcon } from 'lucide-react';
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useLocalePath } from '@/hooks/use-locale-path';
+import { Bell, Heart, Menu as MenuIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 
 import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
 import { useMeQuery } from '@/features/auth/hooks/auth';
+import { FavouritesBell } from '@/features/favourites/components/favourites-bell';
+import { NotificationBell } from '@/features/notifications/components/notifications-bell';
 import { NavDrawer } from './nav-drawer';
 import { UserMenuControlled } from './user-menu-controlled';
-import { NotificationBell } from '@/features/notifications/components/notifications-bell';
-import { FavouritesBell } from '@/features/favourites/components/favourites-bell';
 
 export type NavbarProps = {
   searchBar?: React.ReactNode;
-  mobileSearchButton?: React.ReactNode;
 };
 
 type IconComp = React.ComponentType<{ className?: string }>;
@@ -46,7 +45,7 @@ function IconButton({
   );
 }
 
-export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
+export function Navbar({ searchBar }: NavbarProps) {
   const router = useRouter();
   const { localePath } = useLocalePath();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -95,7 +94,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
           </a>
 
           {/* Desktop search bar */}
-          <div className="mx-3 hidden flex-1 md:block max-w-2xl">
+          <div className="mx-auto hidden flex-1 md:block max-w-2xl">
             {searchBar}
           </div>
 
@@ -124,11 +123,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
             )}
 
             {isAuthed ? (
-              <NotificationBell
-                recipientId={data.me?.id!}
-                limit={10}
-                className=""
-              />
+              <NotificationBell recipientId={data.me?.id!} limit={10} />
             ) : (
               // jeśli nie zalogowany – zwykły przycisk (bez dropdownu)
               <button
@@ -161,8 +156,6 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
 
           {/* Mobile actions */}
           <div className="flex flex-1 items-center justify-end gap-1 md:hidden">
-            {mobileSearchButton}
-
             {!isAuthed ? (
               <button
                 type="button"
@@ -174,7 +167,7 @@ export function Navbar({ searchBar, mobileSearchButton }: NavbarProps) {
             ) : (
               <>
                 <FavouritesBell />
-                <NotificationBell recipientId={data.me?.id!} limit={8} />
+                <NotificationBell recipientId={data.me?.id!} limit={10} />
                 <UserMenuControlled
                   onNavigate={(key) => console.log('navigate:', key)}
                 />

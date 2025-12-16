@@ -11,7 +11,7 @@
 'use client';
 
 import { Star, Info, AlertCircle, TrendingUp } from 'lucide-react';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import { EventReviews } from '@/features/events/components/event-reviews';
 
 // =============================================================================
@@ -79,7 +79,7 @@ function ReviewsLoadingSkeleton() {
 export function EventReviewsManagement({
   eventId,
 }: EventReviewsManagementProps) {
-  const { data, isLoading } = useEventQuery({ id: eventId });
+  const { data, isLoading } = useEventDetailQuery({ id: eventId });
   const event = data?.event;
 
   // ---------------------------------------------------------------------------

@@ -12,7 +12,7 @@
 'use client';
 
 import { MessageSquare, Info, AlertCircle } from 'lucide-react';
-import { useEventQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events/api/events';
 import { EventComments } from '@/features/events/components/event-comments';
 
 // =============================================================================
@@ -69,7 +69,7 @@ function CommentsLoadingSkeleton() {
 export function EventCommentsManagement({
   eventId,
 }: EventCommentsManagementProps) {
-  const { data, isLoading } = useEventQuery({ id: eventId });
+  const { data, isLoading } = useEventDetailQuery({ id: eventId });
   const event = data?.event;
 
   // ---------------------------------------------------------------------------
