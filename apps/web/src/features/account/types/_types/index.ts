@@ -40,11 +40,3 @@ export type LocationData = {
   lat?: number;
   lng?: number;
 };
-
-/**
- * Language option
- */
-export type LanguageOption = {
-  code: string;
-  label: string;
-};

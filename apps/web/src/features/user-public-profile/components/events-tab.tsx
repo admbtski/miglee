@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
-import { useUserEventsQuery } from '@/features/users/api/user-events';
+import { useUserEventsQuery } from '@/features/user-public-profile/api/user-events';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n/provider-ssr';

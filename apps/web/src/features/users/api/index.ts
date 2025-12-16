@@ -4,9 +4,9 @@
 
 export * from './users';
 export * from './user-blocks';
-export * from './user-delete-account';
-export * from './user-events';
-export * from './user-preferences';
+export * from '../../account/api/user-delete-account';
+export * from '../../user-public-profile/api/user-events';
+export * from '../../account/api/user-preferences';
 export * from './user-profile';
-export * from './user-restore-account';
-export * from './user-reviews';
+export * from '../../account/api/user-restore-account';
+export * from '../../user-public-profile/api/user-reviews';

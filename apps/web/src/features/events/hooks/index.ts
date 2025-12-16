@@ -14,11 +14,14 @@ export { useEventsListingInfiniteQueryVariables } from '../../search/hooks/use-e
 export { useFilterState } from '../../search/hooks/use-filter-state';
 export { useFilterValidation } from '../../search/hooks/use-filter-validation';
 export { useLocationMode } from './use-location-mode';
-export { useSearchMeta, type SearchMeta } from '../../search/hooks/use-search-meta';
+export {
+  useSearchMeta,
+  type SearchMeta,
+} from '../../search/hooks/use-search-meta';
 
 // Event Form & Management (re-exported from event-creation feature)
 export { useAutoSaveDraft } from '../../event-creation/hooks/use-auto-save-draft';
-export { useCategories } from './use-categories';
+export { useCategories } from '../../categories';
 export {
   type EventPermissions,
   useEventPermissions,

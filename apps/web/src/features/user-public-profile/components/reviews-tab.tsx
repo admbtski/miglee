@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
-import { useUserReviewsQuery } from '@/features/users/api/user-reviews';
+import { useUserReviewsQuery } from '@/features/user-public-profile/api/user-reviews';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n/provider-ssr';

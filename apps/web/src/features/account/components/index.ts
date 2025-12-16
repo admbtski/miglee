@@ -2,7 +2,6 @@ export { AccountEmptyState } from './account-empty-state';
 export { AccountMobileSidebar } from './account-mobile-sidebar';
 export { AccountNavbar } from './account-navbar';
 export { AccountPageHeader } from './account-page-header';
-export { AccountPageWrapper } from './account-page-wrapper';
 export { AccountSidebarEnhanced } from './account-sidebar-enhanced';
 export { DeleteAccountModal } from './delete-account-modal';
 export { PrivacyTab } from './privacy-tab';

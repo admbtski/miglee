@@ -30,15 +30,10 @@ import {
   SocialLinksTab,
   SportsTab,
 } from '@/features/account';
-
-type TabId = 'profile' | 'sports' | 'social' | 'privacy';
+import { TabConfig, TabId } from '@/features/account/types/_types';
 
 // TODO i18n: tab labels
-const TABS: {
-  id: TabId;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}[] = [
+const TABS: TabConfig[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'sports', label: 'Sports & Availability', icon: Calendar },
   { id: 'social', label: 'Social Links', icon: LinkIcon },

@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import {
   useRequestAccountRestorationMutation,
   useRestoreMyAccountMutation,
-} from '@/features/users/api/user-restore-account';
+} from '@/features/account/api/user-restore-account';
 
 // Hooks & i18n
 import { useLocalePath } from '@/hooks/use-locale-path';

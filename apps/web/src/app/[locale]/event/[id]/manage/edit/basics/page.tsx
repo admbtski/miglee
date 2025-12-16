@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Info } from 'lucide-react';
 
-import { CategoryMultiCombo } from '@/components/forms/category-combobox';
+import { CategoryMultiCombo } from '@/features/categories';
 import { TagMultiCombo } from '@/components/forms/tag-multicombo';
 import { CategoryOption } from '@/features/categories';
 import { TagOption } from '@/features/tags/types';

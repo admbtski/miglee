@@ -12,7 +12,7 @@ import { Edit2, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 
 // Components
 import { NoticeModal } from '@/components/feedback/notice-modal';
-import { CategoryMultiCombo } from '@/components/forms/category-combobox';
+import { CategoryMultiCombo } from '@/features/categories';
 
 // Features
 import { CategoryOption } from '@/features/categories';

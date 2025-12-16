@@ -15,7 +15,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   getUseCategoriesLimitData,
   useCategories,
-} from '@/features/events/hooks/use-categories';
+} from '@/features/categories';
 import { CategoryOption } from '@/features/categories';
 
 export type CategoryMultiComboProps = {

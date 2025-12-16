@@ -4,10 +4,6 @@
  * Specialized form components: comboboxes, selects, text fields.
  */
 
-export {
-  CategoryMultiCombo,
-  type CategoryMultiComboProps,
-} from './category-combobox';
 export { LocationCombo } from './location-combobox';
 export { SimpleSelect } from './simple-select';
 export { TagMultiCombo } from './tag-multicombo';

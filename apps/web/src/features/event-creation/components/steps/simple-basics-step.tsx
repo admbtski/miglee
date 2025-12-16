@@ -6,10 +6,10 @@ import { useId } from 'react';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { Info } from 'lucide-react';
 
-import { CategoryMultiCombo } from '@/components/forms/category-combobox';
+import { CategoryMultiCombo } from '@/features/categories';
 import { CategoryOption } from '@/features/categories';
 import { useCategorySelection } from '@/features/event-creation/components/category-selection-provider';
-import { getUseCategoriesLimitData } from '@/features/events/hooks/use-categories';
+import { getUseCategoriesLimitData } from '@/features/categories';
 import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
 
 /**
