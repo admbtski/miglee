@@ -18,7 +18,7 @@ import {
   Shield,
 } from 'lucide-react';
 
-import { showCookieBanner } from '@/components/cookie-consent';
+import { showCookieBanner } from '@/features/cookies';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
 import { AccountPageHeader } from '@/features/account/components';

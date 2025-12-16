@@ -4,7 +4,7 @@
  * Centralized exports for all shared components.
  */
 
-export * from './cookie-consent';
+export * from '../features/cookies';
 export * from './feedback';
 export * from './forms';
 export * from './layout';

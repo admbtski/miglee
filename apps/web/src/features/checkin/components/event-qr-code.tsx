@@ -17,7 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
-import { useRotateEventCheckinTokenMutation } from '@/features/events/api/checkin';
+import { useRotateEventCheckinTokenMutation } from '@/features/checkin/api/checkin';
 
 interface EventQRCodeProps {
   eventId: string;

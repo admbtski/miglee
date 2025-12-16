@@ -33,3 +33,4 @@ export const eventCreatedEditedConfetti = async (opts?: {
     });
   }, 180);
 };
+

@@ -71,8 +71,8 @@ export * from './event';
 export * from './event-details';
 export * from './my-events';
 
-// Form types
-export * from './event-form';
+// Form types (re-exported from event-creation feature)
+export * from '../../event-creation/types/event-form';
 
 // Sponsorship types
 export * from './sponsorship';

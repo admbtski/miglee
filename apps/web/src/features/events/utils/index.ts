@@ -17,5 +17,5 @@ export * from './formatters';
 // Data transformation
 export * from './mappers';
 
-// Effects
-export * from './confetti';
+// Effects (re-exported from lib/utils)
+export * from '../../../lib/utils/confetti';

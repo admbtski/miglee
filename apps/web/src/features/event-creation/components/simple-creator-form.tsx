@@ -3,13 +3,13 @@
 import { Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCategorySelection } from '@/features/event-creation/components/category-selection-provider';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
 import {
   defaultSimpleEventValues,
   useSimpleEventForm,
-} from '@/features/events/hooks/use-event-form';
+} from '@/features/event-creation/hooks/use-event-form';
 import { CategoryOption } from '@/features/categories';
-import { useAutoSaveDraft } from '@/features/events/hooks/use-auto-save-draft';
+import { useAutoSaveDraft } from '@/features/event-creation/hooks/use-auto-save-draft';
 import { toast } from '@/lib/utils';
 import { uploadEventCover } from '@/lib/media/upload-event-cover';
 import { useQueryClient } from '@tanstack/react-query';

@@ -10,7 +10,7 @@ import { CategoryMultiCombo } from '@/components/forms/category-combobox';
 import { CategoryOption } from '@/features/categories';
 import { useCategorySelection } from '@/features/event-creation/components/category-selection-provider';
 import { getUseCategoriesLimitData } from '@/features/events/hooks/use-categories';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
 
 /**
  * SimpleBasicsStep - Simplified basics step

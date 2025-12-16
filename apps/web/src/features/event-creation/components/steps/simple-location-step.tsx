@@ -13,7 +13,7 @@ import {
   reverseGeocode,
   reverseGeocodeLatLng,
 } from '@/features/maps/utils/geocode';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
 
 type MK = 'ONSITE' | 'ONLINE' | 'HYBRID';
 

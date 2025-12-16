@@ -8,7 +8,7 @@ import { Crown, Info, User, Users } from 'lucide-react';
 
 import { SegmentedControl } from '@/components/ui/segment-control';
 import { RangeSlider } from '@/features/events/components/range-slider';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
 
 type ModeType = 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM';
 

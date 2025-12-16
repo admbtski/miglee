@@ -43,7 +43,7 @@ import {
   type SearchMeta,
 } from '@/features/events/hooks';
 import type { CommittedFilters } from '@/features/events/types';
-import { useEventsListingInfiniteQueryVariables } from '@/features/events/hooks/use-events-listing-infinite-query-variables';
+import { useEventsListingInfiniteQueryVariables } from '@/features/search/hooks/use-events-listing-infinite-query-variables';
 
 const ServerClusteredMap = lazy(
   () =>

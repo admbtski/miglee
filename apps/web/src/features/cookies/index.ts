@@ -1,4 +1,4 @@
-export { CookieScriptProvider } from './cookie-script-provider';
+export { CookieScriptProvider } from './components';
 export {
   CookieCategory,
   isCookieScriptLoaded,
@@ -7,4 +7,4 @@ export {
   showCookieBanner,
   getConsentState,
   onConsentChange,
-} from './cookie-script-utils';
+} from './utils';

@@ -9,7 +9,9 @@ export * from '../../join-form/api/join-form';
 export * from '../../comments/api/comments';
 export * from '../../invite-links/api/invite-links';
 export * from '../../agenda/api/agenda';
-export * from './checkin';
+
+// Checkin (re-exported from checkin feature)
+export * from '../../checkin/api/checkin';
 
 // Reviews (re-exported from reviews feature)
 export * from '../../reviews/api';

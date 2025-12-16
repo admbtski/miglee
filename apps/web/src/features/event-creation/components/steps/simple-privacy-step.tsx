@@ -6,7 +6,7 @@ import { Controller, UseFormReturn, useWatch } from 'react-hook-form';
 import { Eye, EyeOff, Info, Lock, Mail, Users } from 'lucide-react';
 
 import { SegmentedControl } from '@/components/ui/segment-control';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
 
 type JoinMode = 'OPEN' | 'INVITE_ONLY' | 'REQUEST';
 type VisibilityMode = 'PUBLIC' | 'HIDDEN';

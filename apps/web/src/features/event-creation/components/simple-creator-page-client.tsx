@@ -29,7 +29,7 @@ import {
   mapSimpleFormToCreateInput,
   SuccessEventModal,
 } from '@/features/events';
-import type { SimpleEventFormValues } from '@/features/events/types/event-form';
+import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { devLogger, toast } from '@/lib/utils';
 

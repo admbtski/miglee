@@ -13,7 +13,7 @@ import {
   useCheckInSelfMutation,
   useUncheckInSelfMutation,
   useRotateMemberCheckinTokenMutation,
-} from '@/features/events/api/checkin';
+} from '@/features/checkin/api/checkin';
 import { UserQRCode } from './user-qr-code';
 import { useMeQuery } from '@/features/auth/hooks/auth';
 
