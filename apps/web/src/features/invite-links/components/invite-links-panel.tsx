@@ -29,7 +29,7 @@ import {
   useDeleteEventInviteLinkMutation,
   useEventInviteLinksQuery,
   useRevokeEventInviteLinkMutation,
-} from '@/features/invite-links/api/invite-links';
+} from '@/features/invite-links';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { cn } from '@/lib/utils';
 

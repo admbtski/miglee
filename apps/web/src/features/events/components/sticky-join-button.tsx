@@ -1,22 +1,22 @@
 'use client';
 
-import type { EventDetailsData } from '@/features/events/types/event-details';
-import { Lock, XCircle, UserPlus, UserMinus, UserCheck } from 'lucide-react';
+import { FavouriteButton } from '@/components/ui/favourite-button';
 import {
-  useRequestJoinEventMutation,
-  useLeaveEventMutationMembers,
   useCancelJoinRequestMutation,
   useJoinWaitlistOpenMutation,
+  useLeaveEventMutationMembers,
   useLeaveWaitlistMutation,
+  useRequestJoinEventMutation,
 } from '@/features/events/api/event-members';
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import type { EventDetailsData } from '@/features/events/types/event-details';
 import {
+  JoinRequestModal,
   useEventJoinQuestionsQuery,
   useRequestJoinEventWithAnswersMutation,
-} from '@/features/join-form/api/join-form';
-import { JoinRequestModal } from '@/features/join-form/components/join-request-modal';
-import { FavouriteButton } from '@/components/ui/favourite-button';
+} from '@/features/join-form';
+import { useQueryClient } from '@tanstack/react-query';
+import { Lock, UserCheck, UserMinus, UserPlus, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 type StickyJoinButtonProps = {
   event: EventDetailsData;

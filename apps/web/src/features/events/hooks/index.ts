@@ -39,7 +39,7 @@ export {
   useSimpleEventForm,
   type EventFormValues,
   type SimpleEventFormValues,
-} from '../../event-creation/hooks/use-event-form.ts';
+} from '../../event-creation/hooks/use-event-form';
 
 // Subscription Data
 export { useSubscriptionData } from './use-subscription-data';

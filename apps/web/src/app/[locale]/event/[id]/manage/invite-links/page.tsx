@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { InviteLinksPanel } from '../../../../../../features/invite-links/components/invite-links-panel';
+import { InviteLinksPanel } from '@/features/invite-links';
 import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
 
 // =============================================================================

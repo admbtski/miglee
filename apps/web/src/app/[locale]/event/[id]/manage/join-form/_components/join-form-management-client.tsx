@@ -33,7 +33,7 @@ import {
   useApproveJoinRequestMutation,
   useRejectJoinRequestMutation,
   useUpdateEventJoinQuestionsMutation,
-} from '@/features/join-form/api/join-form';
+} from '@/features/join-form';
 import {
   useFloating,
   autoUpdate,

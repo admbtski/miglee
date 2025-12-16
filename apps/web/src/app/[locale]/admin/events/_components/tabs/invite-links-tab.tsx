@@ -1,6 +1,6 @@
 'use client';
 
-import { InviteLinksPanel } from '@/features/invite-links/components/invite-links-panel';
+import { InviteLinksPanel } from '@/features/invite-links';
 
 type InviteLinksTabProps = {
   eventId: string;
