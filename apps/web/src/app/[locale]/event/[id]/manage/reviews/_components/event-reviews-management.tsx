@@ -12,7 +12,7 @@
 
 import { Star, Info, AlertCircle, TrendingUp } from 'lucide-react';
 import { useEventDetailQuery } from '@/features/events/api/events';
-import { EventReviews } from '@/features/reviews/components/event-reviews';
+import { EventReviews } from '@/features/reviews';
 
 // =============================================================================
 // Types

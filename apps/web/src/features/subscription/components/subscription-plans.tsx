@@ -9,7 +9,7 @@ import {
   USER_PLAN_DESCRIPTIONS,
   USER_PLAN_FEATURES,
   USER_PLAN_PRICES,
-} from '@/features/billing/constants/billing-constants';
+} from '@/features/billing';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { cn } from '@/lib/utils';
 

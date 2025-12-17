@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { User, Calendar, Star, Loader2, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import { ProfileHeader } from './profile-header';
 import { AboutTab } from './about-tab';
 import { EventsTab } from './events-tab';

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Send, Bell, AlertCircle } from 'lucide-react';
 import { NoticeModal } from '@/components/feedback/notice-modal';
-import { useAddNotificationMutation } from '@/features/notifications/api/notifications';
+import { useAddNotificationMutation } from '@/features/notifications';
 import { NotificationKind } from '@/lib/api/__generated__/react-query-update';
 
 type CommunicationTabProps = {

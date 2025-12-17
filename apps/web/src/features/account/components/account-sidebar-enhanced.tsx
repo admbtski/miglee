@@ -1,8 +1,5 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
@@ -23,9 +20,12 @@ import {
   Sparkles,
   UserIcon,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useState } from 'react';
 
 import { Avatar } from '@/components/ui/avatar';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { buildAvatarUrl } from '@/lib/media/url';

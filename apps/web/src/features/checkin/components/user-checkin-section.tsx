@@ -15,7 +15,7 @@ import {
   useRotateMemberCheckinTokenMutation,
 } from '@/features/checkin';
 import { UserQRCode } from './user-qr-code';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 
 interface UserCheckinSectionProps {
   eventId: string;

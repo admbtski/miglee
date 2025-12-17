@@ -1,9 +1,3 @@
-/**
- * Event Management Guard
- * Checks if user has permission to access management interface
- * Redirects to event page if not authorized
- */
-
 'use client';
 
 import { useEffect } from 'react';
@@ -11,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 import { useEventPermissions } from '@/features/events/hooks/use-event-permissions';
+import { useLocalePath } from '@/hooks';
 
 interface EventManagementGuardProps {
   eventId: string;
@@ -55,15 +50,12 @@ function UnauthorizedState() {
   );
 }
 
-/**
- * Event Management Guard Component
- * Checks user permissions and redirects if not authorized
- */
 export function EventManagementGuard({
   eventId,
   children,
 }: EventManagementGuardProps) {
   const router = useRouter();
+  const { localePath } = useLocalePath();
   const permissions = useEventPermissions(eventId);
 
   // Redirect if user doesn't have management permissions
@@ -71,7 +63,7 @@ export function EventManagementGuard({
     if (!permissions.isLoading && !permissions.canManage) {
       // Redirect to event page after a short delay
       const timer = setTimeout(() => {
-        router.push(`/event/${eventId}`);
+        router.push(localePath(`/event/${eventId}`));
       }, 2000);
 
       return () => clearTimeout(timer);

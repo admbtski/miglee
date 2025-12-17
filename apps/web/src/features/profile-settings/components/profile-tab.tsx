@@ -22,7 +22,7 @@ import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { ImageCropModal } from '@/components/ui/image-crop-modal';
 
 // Features
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 
 // Utils
 import { useAvatarUpload, useCoverUpload } from '@/lib/media/use-media-upload';

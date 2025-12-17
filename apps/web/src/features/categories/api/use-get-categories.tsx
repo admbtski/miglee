@@ -5,7 +5,7 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { GET_CATEGORIES_LIST_KEY } from './categories-query-keys';
+import { categoriesKeys } from './categories-query-keys';
 
 export function buildGetCategoriesOptions(
   variables?: GetCategoriesQueryVariables,
@@ -15,7 +15,7 @@ export function buildGetCategoriesOptions(
   >
 ): UseQueryOptions<GetCategoriesQuery, Error, GetCategoriesQuery, QueryKey> {
   return {
-    queryKey: GET_CATEGORIES_LIST_KEY(variables) as unknown as QueryKey,
+    queryKey: categoriesKeys.list(variables) as unknown as QueryKey,
     queryFn: async () => {
       if (variables) {
         return gqlClient.request<

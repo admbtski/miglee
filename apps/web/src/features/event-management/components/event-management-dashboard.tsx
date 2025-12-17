@@ -1,9 +1,3 @@
-/**
- * Event Management Dashboard Component
- * Shows overview, stats, and quick actions
- * Modern, clean design with great UX
- */
-
 // TODO i18n: All hardcoded strings need translation keys
 // TODO i18n: date/time formatting should use user.timezone + locale
 
@@ -42,7 +36,7 @@ import {
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 // Features
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   CloseJoinModal,
   EventCountdownTimer,

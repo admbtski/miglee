@@ -4,11 +4,10 @@ import { Bell, Heart, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { useLocalePath } from '@/hooks/use-locale-path';
-import { useMeQuery } from '@/features/auth/hooks/auth';
-import { NotificationBell } from '@/features/notifications/components/notifications-bell';
-import { FavouritesBell } from '@/features/favourites/components/favourites-bell';
+import { useMeQuery, AuthModalDev } from '@/features/auth';
+import { NotificationBell } from '@/features/notifications';
+import { FavouritesBell } from '@/features/favourites';
 import { UserMenuControlled } from './user-menu-controlled';
-import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
 
 /**
  * NavbarActions - Reusable right-side actions for navbars

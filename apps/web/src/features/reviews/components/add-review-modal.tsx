@@ -3,10 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Star, X, Loader2 } from 'lucide-react';
 import { Modal } from '@/components/feedback/modal';
-import {
-  useCreateReview,
-  useUpdateReview,
-} from '@/features/reviews/api/reviews';
+import { useCreateReview, useUpdateReview } from '@/features/reviews';
 
 type AddReviewModalProps = {
   open: boolean;

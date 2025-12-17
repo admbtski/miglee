@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useGetComments } from '@/features/comments/api/comments';
-import { useGetReviews } from '@/features/reviews/api/reviews';
+import { useGetReviews } from '@/features/reviews';
 import { useGetEventMessages } from '@/features/chat/api/event-chat';
 import {
   MessageSquare,

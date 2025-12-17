@@ -11,7 +11,7 @@ import {
   type UseMutationOptions,
   useQueryClient,
 } from '@tanstack/react-query';
-import { reportKeys } from './report-keys';
+import { reportKeys } from './reports-query-keys';
 
 export function useDeleteReport(
   options?: UseMutationOptions<

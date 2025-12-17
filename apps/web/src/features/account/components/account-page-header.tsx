@@ -1,9 +1,9 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
+import type { ReactNode } from 'react';
 
 import { useLocalePath } from '@/hooks/use-locale-path';
 

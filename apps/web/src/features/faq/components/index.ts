@@ -1,3 +1,2 @@
-export { EventFaq } from './event-faq';
-export { FaqManagementClient } from './faq-management-client';
-
+export * from './event-faq';
+export * from './faq-management-client';

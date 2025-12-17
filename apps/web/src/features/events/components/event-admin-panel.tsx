@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { EventDetailsData } from '@/features/events/types/event-details';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import {
   Settings,
   Edit3,
@@ -80,7 +80,8 @@ export function EventAdminPanel({
 
   // Get publication status
   const status: PublicationStatus =
-    ((event as any)?.publicationStatus as PublicationStatus) ?? PublicationStatus.Draft;
+    ((event as any)?.publicationStatus as PublicationStatus) ??
+    PublicationStatus.Draft;
   const isDraft = status === PublicationStatus.Draft;
 
   const statusConfig = {

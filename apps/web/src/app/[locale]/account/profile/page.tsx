@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Suspense, useState } from 'react';
 
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 
 import {
   PrivacyTab,

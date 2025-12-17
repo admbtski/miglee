@@ -5,7 +5,7 @@ import { ShareButton } from '@/components/ui/share-button';
 import { ReportButton } from '@/features/reports/components/report-button';
 import { ShareModal } from '@/components/ui/share-modal';
 import { useEventDetailQuery } from '@/features/events/api/events';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import { computeJoinState } from '@/features/events/utils/event-join-state';
 import { formatParticipantsShort } from '@/features/events/utils/capacity-formatter';
 import type { EventDetailsData } from '@/features/events/types/event-details';

@@ -35,8 +35,8 @@ import {
   useMyPlan,
   useMyPlanPeriods,
   useMySubscription,
-} from '@/features/billing/api/billing';
-import { formatCurrency } from '@/features/billing/utils/currency';
+  formatCurrency,
+} from '@/features/billing';
 
 // Hooks
 import { useLocalePath } from '@/hooks/use-locale-path';

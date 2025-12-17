@@ -3,11 +3,7 @@
 import { useCallback, useMemo } from 'react';
 import { NavigateKey, UserMenu } from './user-menu';
 
-import {
-  GET_ME_KEY,
-  useDevLogoutMutation,
-  useMeQuery,
-} from '@/features/auth/hooks/auth';
+import { authKeys, useDevLogoutMutation, useMeQuery } from '@/features/auth';
 import { getQueryClient } from '@/lib/config/query-client';
 
 export function UserMenuControlled({
@@ -21,7 +17,7 @@ export function UserMenuControlled({
   const { mutateAsync: devLogout, isPending: loggingOut } =
     useDevLogoutMutation({
       onSuccess: async () => {
-        await qc.invalidateQueries({ queryKey: GET_ME_KEY() });
+        await qc.invalidateQueries({ queryKey: authKeys.me() });
       },
     });
 

@@ -6,20 +6,18 @@ import * as React from 'react';
 import { toast } from 'sonner';
 
 import {
+  PLAN_SCOPE_NOTICE,
   useCreateOneOffCheckout,
   useCreateSubscriptionCheckout,
-} from '@/features/billing/api/billing';
-import {
-  PLAN_SCOPE_NOTICE,
   USER_PLAN_FEATURES,
-} from '@/features/billing/constants/billing-constants';
+} from '@/features/billing';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import type { BillingType, PlanType } from './subscription-plans-wrapper';
 import {
   BillingPeriod,
   SubscriptionPlan,
 } from '@/lib/api/__generated__/react-query-update';
+import type { BillingType, PlanType } from './subscription-plans-wrapper';
 
 interface AccountCheckoutPanelProps {
   selectedPlan: {

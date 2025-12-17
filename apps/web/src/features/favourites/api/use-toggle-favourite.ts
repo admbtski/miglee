@@ -1,10 +1,4 @@
 import {
-  MyFavouritesDocument,
-  MyFavouritesQuery,
-  MyFavouritesQueryVariables,
-  IsFavouriteDocument,
-  IsFavouriteQuery,
-  IsFavouriteQueryVariables,
   ToggleFavouriteDocument,
   ToggleFavouriteMutation,
   ToggleFavouriteMutationVariables,
@@ -12,176 +6,11 @@ import {
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
 import {
-  InfiniteData,
   QueryKey,
   useMutation,
   UseMutationOptions,
-  useQuery,
-  UseQueryOptions,
-  useInfiniteQuery,
-  UseInfiniteQueryOptions,
 } from '@tanstack/react-query';
-
-/* --------------------------------- KEYS ---------------------------------- */
-export const favouritesKeys = {
-  all: ['Favourites'] as const,
-  lists: () => [...favouritesKeys.all, 'list'] as const,
-  list: (variables?: Omit<MyFavouritesQueryVariables, 'offset'>) =>
-    [...favouritesKeys.lists(), variables] as const,
-  listInfinite: (variables?: Omit<MyFavouritesQueryVariables, 'offset'>) =>
-    [...favouritesKeys.lists(), 'infinite', variables] as const,
-  details: () => [...favouritesKeys.all, 'detail'] as const,
-  detail: (eventId: string) => [...favouritesKeys.details(), eventId] as const,
-};
-
-/* ----------------------------- QUERY BUILDERS ---------------------------- */
-
-/**
- * Builder for infinite query (for popup/dropdown)
- */
-export function buildMyFavouritesInfiniteOptions(
-  variables?: Omit<MyFavouritesQueryVariables, 'offset'>,
-  options?: Omit<
-    UseInfiniteQueryOptions<
-      MyFavouritesQuery,
-      Error,
-      InfiniteData<MyFavouritesQuery>,
-      QueryKey,
-      number
-    >,
-    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
-  >
-): UseInfiniteQueryOptions<
-  MyFavouritesQuery,
-  Error,
-  InfiniteData<MyFavouritesQuery>,
-  QueryKey,
-  number
-> {
-  return {
-    queryKey: favouritesKeys.listInfinite(variables) as unknown as QueryKey,
-    initialPageParam: 0,
-    queryFn: async ({ pageParam }) => {
-      const vars: MyFavouritesQueryVariables = {
-        ...(variables ?? {}),
-        offset: pageParam,
-        limit: variables?.limit ?? 20,
-      };
-      return gqlClient.request<MyFavouritesQuery, MyFavouritesQueryVariables>(
-        MyFavouritesDocument,
-        vars
-      );
-    },
-    getNextPageParam: (lastPage, _allPages, lastOffset) => {
-      const pageInfo = lastPage.myFavourites?.pageInfo;
-      if (!pageInfo?.hasNext) return undefined;
-      return (lastOffset ?? 0) + (pageInfo.limit ?? 20);
-    },
-    ...(options ?? {}),
-  };
-}
-
-/**
- * Builder for regular query (for full page)
- */
-export function buildMyFavouritesOptions(
-  variables?: MyFavouritesQueryVariables,
-  options?: Omit<
-    UseQueryOptions<MyFavouritesQuery, Error, MyFavouritesQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-): UseQueryOptions<MyFavouritesQuery, Error, MyFavouritesQuery, QueryKey> {
-  return {
-    queryKey: favouritesKeys.list(variables) as unknown as QueryKey,
-    queryFn: async () =>
-      gqlClient.request<MyFavouritesQuery, MyFavouritesQueryVariables>(
-        MyFavouritesDocument,
-        variables ?? {}
-      ),
-    ...(options ?? {}),
-  };
-}
-
-/**
- * Builder for checking if event is favourited
- */
-export function buildIsFavouriteOptions(
-  variables: IsFavouriteQueryVariables,
-  options?: Omit<
-    UseQueryOptions<IsFavouriteQuery, Error, IsFavouriteQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-): UseQueryOptions<IsFavouriteQuery, Error, IsFavouriteQuery, QueryKey> {
-  return {
-    queryKey: favouritesKeys.detail(variables.eventId) as unknown as QueryKey,
-    queryFn: async () =>
-      gqlClient.request<IsFavouriteQuery, IsFavouriteQueryVariables>(
-        IsFavouriteDocument,
-        variables
-      ),
-    ...(options ?? {}),
-  };
-}
-
-/* --------------------------------- QUERIES -------------------------------- */
-
-/**
- * Infinite query hook for favourites (for popup/dropdown)
- */
-export function useMyFavouritesInfiniteQuery(
-  variables?: Omit<MyFavouritesQueryVariables, 'offset'>,
-  options?: Omit<
-    UseInfiniteQueryOptions<
-      MyFavouritesQuery,
-      Error,
-      InfiniteData<MyFavouritesQuery>,
-      QueryKey,
-      number
-    >,
-    'queryKey' | 'queryFn' | 'getNextPageParam' | 'initialPageParam'
-  >
-) {
-  return useInfiniteQuery<
-    MyFavouritesQuery,
-    Error,
-    InfiniteData<MyFavouritesQuery>,
-    QueryKey,
-    number
-  >(buildMyFavouritesInfiniteOptions(variables, options));
-}
-
-/**
- * Regular query hook for favourites (for full page)
- */
-export function useMyFavouritesQuery(
-  variables?: MyFavouritesQueryVariables,
-  options?: Omit<
-    UseQueryOptions<MyFavouritesQuery, Error, MyFavouritesQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery(buildMyFavouritesOptions(variables, options));
-}
-
-/**
- * Query hook to check if event is favourited
- */
-export function useIsFavouriteQuery(
-  variables: IsFavouriteQueryVariables,
-  options?: Omit<
-    UseQueryOptions<IsFavouriteQuery, Error, IsFavouriteQuery, QueryKey>,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery(
-    buildIsFavouriteOptions(variables, {
-      enabled: !!variables.eventId,
-      ...(options ?? {}),
-    })
-  );
-}
-
-/* --------------------------- MUTATION BUILDERS --------------------------- */
+import { favouritesKeys } from './favourites-query-keys';
 
 export function buildToggleFavouriteOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -377,12 +206,3 @@ export function useToggleFavouriteMutation(
     })
   );
 }
-
-/* --------------------------------- HELPERS -------------------------------- */
-
-/**
- * Flatten pages from infinite query
- */
-export const flatFavouritesPages = (pages?: MyFavouritesQuery[]) => {
-  return pages?.flatMap((p) => p.myFavourites?.items ?? []) ?? [];
-};

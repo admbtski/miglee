@@ -10,18 +10,18 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { GET_CATEGORY_ONE_KEY } from './category-query-keys';
+import { categoriesKeys } from './categories-query-keys';
 
 export function buildDeleteCategoryOptions<TContext = unknown>(
   options?: UseMutationOptions<
     DeleteCategoryMutation,
-    unknown,
+    Error,
     DeleteCategoryMutationVariables,
     TContext
   >
 ): UseMutationOptions<
   DeleteCategoryMutation,
-  unknown,
+  Error,
   DeleteCategoryMutationVariables,
   TContext
 > {
@@ -42,14 +42,14 @@ export function buildDeleteCategoryOptions<TContext = unknown>(
 export function useDeleteCategoryMutation(
   options?: UseMutationOptions<
     DeleteCategoryMutation,
-    unknown,
+    Error,
     DeleteCategoryMutationVariables
   >
 ) {
   const qc = getQueryClient();
   return useMutation<
     DeleteCategoryMutation,
-    unknown,
+    Error,
     DeleteCategoryMutationVariables
   >(
     buildDeleteCategoryOptions({
@@ -61,7 +61,7 @@ export function useDeleteCategoryMutation(
 
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_CATEGORY_ONE_KEY({
+            queryKey: categoriesKeys.detail({
               id: vars.id,
             }) as unknown as QueryKey,
           });

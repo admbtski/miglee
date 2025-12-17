@@ -11,7 +11,7 @@ import {
   useBoost,
   useEventSponsorship,
   useLocalPush,
-} from '@/features/billing/api/billing';
+} from '@/features/billing';
 import type { SponsorshipState } from '../types/sponsorship';
 
 export function useSubscriptionData(eventId: string) {

@@ -1,4 +1,3 @@
-// components/auth/AuthModal.tsx
 'use client';
 
 // TODO i18n: Polish strings need translation keys
@@ -22,21 +21,17 @@ export type SubmitPayload = {
 
 type Props = {
   open?: boolean;
-  /** Controlled mode (omit to make it uncontrolled) */
   mode?: AuthMode;
   onModeChange?: (m: AuthMode) => void;
-  /** Initial tab when used uncontrolled */
   defaultTab?: AuthMode;
 
   onClose: () => void;
 
-  /** Dev-friendly submit: password can be omitted if you want */
   onSubmit?: (payload: SubmitPayload) => void | Promise<void>;
   onSocial?: (
     p: 'google' | 'github' | 'linkedin' | 'facebook' | 'apple' | 'twitter'
   ) => void;
 
-  /** Toggle password requirement for sign-in panel (dev-login) */
   requirePasswordOnSignin?: boolean;
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMyPlan } from '@/features/billing/api/billing';
+import { useMyPlan } from '@/features/billing';
 import * as React from 'react';
 
 import { AccountCheckoutPanel } from './account-checkout-panel';

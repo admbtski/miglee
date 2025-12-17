@@ -62,7 +62,7 @@ import {
   useDeleteEventMessage,
 } from '@/features/chat/api/message-actions';
 import { useMyMembershipsQuery } from '@/features/events/api/event-members';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import type { Message } from '../types';
 
 // =============================================================================

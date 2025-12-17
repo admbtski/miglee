@@ -11,7 +11,7 @@ export function useGetCategoryUsageCountQuery(
   options?: Omit<
     UseQueryOptions<
       GetCategoryUsageCountQuery,
-      unknown,
+      Error,
       GetCategoryUsageCountQuery,
       QueryKey
     >,

@@ -1,13 +1,9 @@
-/**
- * Format currency amount with proper symbol and formatting
- */
 export function formatCurrency(
   amount: number,
   currencyCode: string = 'pln'
 ): string {
   const code = currencyCode.toLowerCase();
 
-  // Currency symbols map
   const currencySymbols: Record<
     string,
     { symbol: string; position: 'before' | 'after' }

@@ -2,30 +2,30 @@
 
 // TODO i18n: Button labels are handled but formatTime should use locale-aware formatting
 
+import { useLocalePath } from '@/hooks/use-locale-path';
+import { useNotificationContent } from '@/lib/i18n/use-notification-content';
 import {
-  Calendar,
-  MessageSquare,
-  CreditCard,
-  User,
-  Info,
   AlertCircle,
-  Star,
-  UserPlus,
   Ban,
-  CheckCircle,
-  XCircle,
-  Clock,
   Bell,
-  MessageCircle,
-  Users,
+  Calendar,
   Check,
-  Trash2,
+  CheckCircle,
+  Clock,
+  CreditCard,
   ExternalLink,
+  Info,
+  MessageCircle,
+  MessageSquare,
+  Star,
+  Trash2,
+  User,
+  UserPlus,
+  Users,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useNotificationContent } from '@/lib/i18n/use-notification-content';
 import { useParams } from 'next/navigation';
-import { useLocalePath } from '@/hooks/use-locale-path';
 
 interface NotificationItemProps {
   notification: {

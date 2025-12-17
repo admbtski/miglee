@@ -7,7 +7,7 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { commentKeys } from './comment-query-keys';
+import { commentKeys } from './comments-query-keys';
 
 export function useGetComments(
   variables: GetCommentsQueryVariables,

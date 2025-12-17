@@ -6,7 +6,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import type { GetEventDetailQuery } from '@/lib/api/__generated__/react-query-update';
 
 interface EventManagementContextValue {

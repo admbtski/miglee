@@ -7,7 +7,7 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { reportKeys } from './report-keys';
+import { reportKeys } from './reports-query-keys';
 
 export function useGetReports(
   variables?: GetReportsQueryVariables,

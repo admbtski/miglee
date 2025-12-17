@@ -11,7 +11,7 @@ export function useCheckCategorySlugAvailableQuery(
   options?: Omit<
     UseQueryOptions<
       CheckCategorySlugAvailableQuery,
-      unknown,
+      Error,
       CheckCategorySlugAvailableQuery,
       QueryKey
     >,

@@ -5,5 +5,4 @@ export * from './use-update-comment';
 export * from './use-delete-comment';
 export * from './use-hide-comment';
 export * from './use-unhide-comment';
-
-export * from './comment-query-keys';
+export * from './comments-query-keys';

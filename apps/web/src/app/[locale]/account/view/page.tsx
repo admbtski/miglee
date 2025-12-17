@@ -13,7 +13,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { ExternalLink, Eye } from 'lucide-react';
 
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import {
   PublicProfileClient,
   PublicProfileClientLoader,

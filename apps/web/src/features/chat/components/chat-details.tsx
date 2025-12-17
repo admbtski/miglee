@@ -32,7 +32,7 @@ import {
   useGetDmMute,
   useMuteEvent,
   useMuteDmThread,
-} from '@/features/notifications/api/preferences-and-mutes';
+} from '@/features/notifications';
 import { toast } from 'sonner';
 
 type ChatDetailsProps = {

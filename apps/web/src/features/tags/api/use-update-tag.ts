@@ -12,7 +12,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { GET_TAG_ONE_KEY } from './tag-query-keys';
+import { tagsKeys } from './tags-query-keys';
 
 export function buildUpdateTagOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -60,13 +60,13 @@ export function useUpdateTagMutation(
         // invalidate single by id
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_TAG_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+            queryKey: tagsKeys.detail({ id: vars.id }) as unknown as QueryKey,
           });
         }
         // invalidate single by slug if present/changed
         if (vars.input?.slug) {
           qc.invalidateQueries({
-            queryKey: GET_TAG_ONE_KEY({
+            queryKey: tagsKeys.detail({
               slug: vars.input.slug,
             }) as unknown as QueryKey,
           });

@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { Star, Plus, Loader2, AlertCircle } from 'lucide-react';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import {
   useGetReviews,
   useGetReviewStats,
   useGetMyReview,
   useDeleteReview,
   useHideReview,
-} from '@/features/reviews/api/reviews';
+} from '@/features/reviews';
 import { ReviewCard } from './review-card';
 import { ReviewStats } from './review-stats';
 import { AddReviewModal } from './add-review-modal';

@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AuthModal, type AuthMode } from './auth-modal';
 import { getQueryClient } from '@/lib/config/query-client';
-import { GET_ME_KEY, useDevLoginMutation } from '@/features/auth/hooks/auth';
+import { authKeys } from '@/features/auth/api/auth-query-keys';
+import { useDevLoginMutation } from '@/features/auth/api/use-dev-login';
 import { env } from 'process';
 
 export function AuthModalDev({
@@ -30,7 +31,7 @@ export function AuthModalDev({
       const name = (payload.username ?? '').trim();
       if (!name || name.length < 3) return;
       await devLogin({ name });
-      await qc.invalidateQueries({ queryKey: GET_ME_KEY() });
+      await qc.invalidateQueries({ queryKey: authKeys.me() });
       onClose();
     },
     [devLogin, qc, onClose]

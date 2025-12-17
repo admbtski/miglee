@@ -6,4 +6,3 @@ export * from './use-delete-category';
 export * from './use-check-category-slug-available';
 export * from './use-get-category-usage-count';
 export * from './categories-query-keys';
-export * from './category-query-keys';

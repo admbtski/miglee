@@ -56,7 +56,7 @@ import {
   useEventFeedbackResultsQuery,
   useSendFeedbackRequestsMutation,
   useUpdateEventFeedbackQuestionsMutation,
-} from '@/features/feedback/api/feedback';
+} from '@/features/feedback';
 import type { FeedbackQuestionType } from '@/lib/api/__generated__/react-query-update';
 import {
   PlanUpgradeBanner,

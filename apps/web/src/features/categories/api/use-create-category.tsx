@@ -14,13 +14,13 @@ import {
 export function buildCreateCategoryOptions<TContext = unknown>(
   options?: UseMutationOptions<
     CreateCategoryMutation,
-    unknown,
+    Error,
     CreateCategoryMutationVariables,
     TContext
   >
 ): UseMutationOptions<
   CreateCategoryMutation,
-  unknown,
+  Error,
   CreateCategoryMutationVariables,
   TContext
 > {
@@ -41,14 +41,14 @@ export function buildCreateCategoryOptions<TContext = unknown>(
 export function useCreateCategoryMutation(
   options?: UseMutationOptions<
     CreateCategoryMutation,
-    unknown,
+    Error,
     CreateCategoryMutationVariables
   >
 ) {
   const qc = getQueryClient();
   return useMutation<
     CreateCategoryMutation,
-    unknown,
+    Error,
     CreateCategoryMutationVariables
   >(
     buildCreateCategoryOptions({

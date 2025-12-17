@@ -1,11 +1,3 @@
-/**
- * Shared billing constants for both user plans and event sponsorships
- */
-
-// ========================================================================================
-// PLAN TYPES
-// ========================================================================================
-
 export const EVENT_PLAN_PRICES = {
   free: 0,
   plus: 14.99, // STRIPE_PRICE_EVENT_PLUS
@@ -29,10 +21,6 @@ export const USER_PLAN_PRICES = {
     annualOnetime: 839.99, // STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF
   },
 } as const;
-
-// ========================================================================================
-// EVENT SPONSORSHIP FEATURES
-// ========================================================================================
 
 export const EVENT_PLAN_FEATURES = {
   FREE: [
@@ -84,10 +72,6 @@ export const EVENT_PLAN_DESCRIPTIONS = {
   PLUS: 'Dla aktywnych organizatorów',
   PRO: 'Dla profesjonalnych organizatorów',
 } as const;
-
-// ========================================================================================
-// USER PLAN FEATURES
-// ========================================================================================
 
 export const USER_PLAN_FEATURES = {
   FREE: [
@@ -148,10 +132,6 @@ export const USER_PLAN_AUDIENCES = {
   PLUS: 'Dla aktywnych organizatorów, którzy regularnie tworzą wydarzenia',
   PRO: 'Dla organizatorów, którzy potrzebują pełnej kontroli, narzędzi analitycznych i automatyzacji',
 } as const;
-
-// ========================================================================================
-// COMMON MESSAGES
-// ========================================================================================
 
 export const PLAN_SCOPE_NOTICE =
   'Plan użytkownika określa funkcje dostępne dla **nowo tworzonych wydarzeń**. Istniejące wydarzenia zachowują swoje obecne ustawienia.';

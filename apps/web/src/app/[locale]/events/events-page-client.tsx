@@ -20,7 +20,7 @@ import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 import { ErrorBoundary } from '@/components/feedback/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import { useEventsListingInfiniteQuery } from '@/features/events/api/events';
 import { appLanguage } from '@/lib/config/language';
 import { EVENTS_CONFIG } from '@/lib/constants/events';

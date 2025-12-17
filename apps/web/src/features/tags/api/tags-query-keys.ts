@@ -1,4 +1,14 @@
-import { GetTagsQueryVariables } from '@/lib/api/__generated__/react-query-update';
+import type {
+  GetTagQueryVariables,
+  GetTagsQueryVariables,
+} from '@/lib/api/__generated__/react-query-update';
 
-export const GET_TAGS_LIST_KEY = (variables?: GetTagsQueryVariables) =>
-  variables ? (['GetTags', variables] as const) : (['GetTags'] as const);
+export const tagsKeys = {
+  all: ['tags'] as const,
+  lists: () => [...tagsKeys.all, 'list'] as const,
+  list: (variables?: GetTagsQueryVariables) =>
+    [...tagsKeys.lists(), variables] as const,
+  details: () => [...tagsKeys.all, 'detail'] as const,
+  detail: (variables?: GetTagQueryVariables) =>
+    [...tagsKeys.details(), variables] as const,
+};

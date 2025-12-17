@@ -7,10 +7,12 @@ import * as React from 'react';
 import { ArrowLeft, Clock, Lock, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SponsorPlan } from '@/features/events/types/sponsorship';
-import { useCreateEventSponsorshipCheckout } from '@/features/billing/api/billing';
+import {
+  useCreateEventSponsorshipCheckout,
+  EVENT_PLAN_PRICES,
+} from '@/features/billing';
 import { EventPlan } from '@/lib/api/__generated__/react-query-update';
 import { toast } from 'sonner';
-import { EVENT_PLAN_PRICES } from '@/features/billing/constants/billing-constants';
 
 interface CheckoutPanelProps {
   eventId: string;

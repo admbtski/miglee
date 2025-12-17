@@ -11,7 +11,7 @@
 
 import { Suspense, useMemo } from 'react';
 
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import {
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
@@ -39,10 +39,10 @@ import {
   RoleFilter,
   type EventStatusFilterValue,
   type RoleFilterValue,
-} from '@/features/search/components';
+} from '@/features/search';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '@/features/account/components';
+import { AccountPageHeader } from '@/features/account';
 
 /**
  * Events list content component that handles data fetching

@@ -8,10 +8,9 @@ import { Bell, Heart, Menu as MenuIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-import { AuthModalDev } from '@/features/auth/components/auth-modal-dev';
-import { useMeQuery } from '@/features/auth/hooks/auth';
-import { FavouritesBell } from '@/features/favourites/components/favourites-bell';
-import { NotificationBell } from '@/features/notifications/components/notifications-bell';
+import { useMeQuery, AuthModalDev } from '@/features/auth';
+import { FavouritesBell } from '@/features/favourites';
+import { NotificationBell } from '@/features/notifications';
 import { NavDrawer } from './nav-drawer';
 import { UserMenuControlled } from './user-menu-controlled';
 

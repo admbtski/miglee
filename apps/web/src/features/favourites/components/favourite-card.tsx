@@ -6,8 +6,10 @@ import { pl, enUS, de } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
-import { useToggleFavouriteMutation } from '@/features/favourites/api/favourites';
-import type { FavouriteItem } from '@/features/favourites/types';
+import {
+  useToggleFavouriteMutation,
+  type FavouriteItem,
+} from '@/features/favourites';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { useLocalePath } from '@/hooks/use-locale-path';
 

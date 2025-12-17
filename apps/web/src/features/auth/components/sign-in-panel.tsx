@@ -1,4 +1,3 @@
-// components/auth/sign-in-panel.tsx
 'use client';
 
 // TODO i18n: All Polish strings need translation keys

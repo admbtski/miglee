@@ -4,7 +4,7 @@ import * as React from 'react';
 import { PlansPanel } from './plans-panel';
 import { CheckoutPanel } from './checkout-panel';
 import { SponsorPlan } from '@/features/events/types/sponsorship';
-import { useEventSponsorship } from '@/features/billing/api/billing';
+import { useEventSponsorship } from '@/features/billing';
 
 interface PlansPanelWrapperProps {
   eventId: string;

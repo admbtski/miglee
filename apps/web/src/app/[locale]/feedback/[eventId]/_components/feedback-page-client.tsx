@@ -12,13 +12,13 @@ import { useEffect, useState } from 'react';
 
 // Features
 import { useEventDetailQuery } from '@/features/events/api/events';
-import { useGetMyReview } from '@/features/reviews/api/reviews';
+import { useGetMyReview } from '@/features/reviews';
 import { ReviewAndFeedbackForm } from '@/features/events/components/review-and-feedback-form';
 import {
   useCanSubmitFeedbackQuery,
   useEventFeedbackQuestionsQuery,
   useSubmitReviewAndFeedbackMutation,
-} from '@/features/feedback/api/feedback';
+} from '@/features/feedback';
 
 // TODO i18n: All hardcoded Polish strings need translation keys
 // - Loading states, error messages, success messages, button texts, trust badges

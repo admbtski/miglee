@@ -14,7 +14,7 @@ import {
   EVENT_PLAN_DESCRIPTIONS,
   EVENT_SPONSORSHIP_LIFETIME_NOTICE,
   ACTIONS_NEVER_EXPIRE,
-} from '@/features/billing/constants/billing-constants';
+} from '@/features/billing';
 
 type PlanId = 'free' | 'plus' | 'pro';
 

@@ -10,18 +10,18 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { GET_CATEGORY_ONE_KEY } from './category-query-keys';
+import { categoriesKeys } from './categories-query-keys';
 
 export function buildUpdateCategoryOptions<TContext = unknown>(
   options?: UseMutationOptions<
     UpdateCategoryMutation,
-    unknown,
+    Error,
     UpdateCategoryMutationVariables,
     TContext
   >
 ): UseMutationOptions<
   UpdateCategoryMutation,
-  unknown,
+  Error,
   UpdateCategoryMutationVariables,
   TContext
 > {
@@ -42,14 +42,14 @@ export function buildUpdateCategoryOptions<TContext = unknown>(
 export function useUpdateCategoryMutation(
   options?: UseMutationOptions<
     UpdateCategoryMutation,
-    unknown,
+    Error,
     UpdateCategoryMutationVariables
   >
 ) {
   const qc = getQueryClient();
   return useMutation<
     UpdateCategoryMutation,
-    unknown,
+    Error,
     UpdateCategoryMutationVariables
   >(
     buildUpdateCategoryOptions({
@@ -61,14 +61,14 @@ export function useUpdateCategoryMutation(
 
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_CATEGORY_ONE_KEY({
+            queryKey: categoriesKeys.detail({
               id: vars.id,
             }) as unknown as QueryKey,
           });
         }
         if (vars.input?.slug) {
           qc.invalidateQueries({
-            queryKey: GET_CATEGORY_ONE_KEY({
+            queryKey: categoriesKeys.detail({
               slug: vars.input.slug,
             }) as unknown as QueryKey,
           });

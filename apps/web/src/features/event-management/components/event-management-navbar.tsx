@@ -1,8 +1,3 @@
-/**
- * Event Management Navbar
- * Top bar for management interface content area
- */
-
 // TODO i18n: aria-label for mobile menu button
 
 'use client';

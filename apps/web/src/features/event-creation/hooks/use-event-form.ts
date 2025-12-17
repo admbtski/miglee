@@ -1,7 +1,3 @@
-/**
- * Event form hooks and schemas
- */
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';

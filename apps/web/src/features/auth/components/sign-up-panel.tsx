@@ -1,4 +1,3 @@
-// components/auth/sign-up-panel.tsx
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';

@@ -11,7 +11,7 @@ import {
   type UseMutationOptions,
   useQueryClient,
 } from '@tanstack/react-query';
-import { commentKeys } from './comment-query-keys';
+import { commentKeys } from './comments-query-keys';
 
 export function useUnhideComment(
   options?: UseMutationOptions<

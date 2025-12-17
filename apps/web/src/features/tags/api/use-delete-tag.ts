@@ -11,7 +11,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { GET_TAG_ONE_KEY } from './tag-query-keys';
+import { tagsKeys } from './tags-query-keys';
 
 export function buildDeleteTagOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -57,7 +57,7 @@ export function useDeleteTagMutation(
         });
         if (vars.id) {
           qc.invalidateQueries({
-            queryKey: GET_TAG_ONE_KEY({ id: vars.id }) as unknown as QueryKey,
+            queryKey: tagsKeys.detail({ id: vars.id }) as unknown as QueryKey,
           });
         }
       },

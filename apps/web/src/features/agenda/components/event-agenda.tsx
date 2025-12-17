@@ -1,17 +1,12 @@
-/**
- * EventAgenda Component
- * Displays the event agenda/schedule on the public event detail page
- */
-
 // TODO i18n: All Polish strings need translation keys
 // TODO i18n: Date/time formatting should be locale-aware
 
 'use client';
 
-import { useState } from 'react';
-import { ListOrdered, Clock, ChevronDown, User } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, Clock, ListOrdered, User } from 'lucide-react';
+import { useState } from 'react';
 
 interface AgendaHost {
   id: string;

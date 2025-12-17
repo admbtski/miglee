@@ -34,7 +34,7 @@ import {
 
 import { useLocalePath } from '@/hooks/use-locale-path';
 
-import { useMeQuery } from '@/features/auth/hooks/auth';
+import { useMeQuery } from '@/features/auth';
 import {
   useDeleteNotificationMutation,
   useMarkAllNotificationsReadMutation,

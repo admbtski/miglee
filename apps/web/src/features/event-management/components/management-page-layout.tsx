@@ -1,8 +1,3 @@
-/**
- * Common layout for management pages
- * Provides consistent header and spacing
- */
-
 // TODO i18n: title and description should be translatable via props (already ready)
 
 import type { ReactNode } from 'react';
