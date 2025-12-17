@@ -13,7 +13,7 @@ import { ExternalLink, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-import { useMeQuery } from '@/features/auth';
+import { useAccount } from '@/features/account';
 import {
   PublicProfileClient,
   PublicProfileClientLoader,
@@ -21,9 +21,9 @@ import {
 import { useLocalePath } from '@/hooks/use-locale-path';
 
 export default function ProfileViewPage() {
-  // Data should be cached from sidebar, so no loading state needed
-  const { data, isLoading } = useMeQuery();
-  const username = data?.me?.name;
+  // Data is provided by AccountProvider
+  const { user, isLoading } = useAccount();
+  const username = user?.name;
 
   return (
     <div className="space-y-6">

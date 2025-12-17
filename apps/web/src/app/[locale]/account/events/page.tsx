@@ -11,7 +11,7 @@
 
 import { Suspense, useMemo } from 'react';
 
-import { useMeQuery } from '@/features/auth';
+import { useAccount, AccountPageHeader } from '@/features/account';
 import {
   CancelEventModals,
   DeleteEventModals,
@@ -41,8 +41,6 @@ import {
 } from '@/features/search';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '@/features/account';
-
 /**
  * Events list content component that handles data fetching
  * This allows header and filters to render immediately while events load
@@ -60,12 +58,9 @@ function EventsListContent({
 }) {
   const { t } = useI18n();
 
-  // useMeQuery with staleTime to use cached data from sidebar
-  // Don't show loading state if we have cached data
-  const { data: authData, isLoading: isLoadingAuth } = useMeQuery({
-    staleTime: 5 * 60 * 1000, // 5 minutes - use cached data
-  });
-  const currentUserId = authData?.me?.id;
+  // User data is provided by AccountProvider
+  const { user, isLoading: isLoadingAuth } = useAccount();
+  const currentUserId = user?.id;
 
   const backendRole = useMemo(
     () => mapRoleFilterToBackend(roleFilter),

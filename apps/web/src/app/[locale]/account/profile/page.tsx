@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Suspense, useState } from 'react';
 
-import { useMeQuery } from '@/features/auth';
+import { useAccount } from '@/features/account';
 
 import {
   PrivacyTab,
@@ -99,11 +99,9 @@ function UnauthenticatedState() {
  * This allows the header and tabs to render immediately while content loads
  */
 function ProfileTabContent({ activeTab }: { activeTab: TabId }) {
-  // useMeQuery should have staleTime set so it uses cached data from sidebar
-  const { data: authData, isLoading: isLoadingAuth } = useMeQuery({
-    staleTime: 5 * 60 * 1000, // 5 minutes - use cached data
-  });
-  const userId = authData?.me?.id;
+  // User data is provided by AccountProvider
+  const { user: currentUser, isLoading: isLoadingAuth } = useAccount();
+  const userId = currentUser?.id;
 
   const { data: profileData, isLoading: isLoadingProfile } =
     useMyFullProfileQuery({ id: userId ?? '' }, { enabled: Boolean(userId) });

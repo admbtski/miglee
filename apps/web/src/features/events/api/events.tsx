@@ -1,50 +1,50 @@
 import {
-  CreateEventDocument,
-  CreateEventMutation,
-  CreateEventMutationVariables,
-  DeleteEventDocument,
-  DeleteEventMutation,
-  DeleteEventMutationVariables,
-  GetEventsDocument,
-  GetEventsQuery,
-  GetEventsQuery_Query,
-  GetEventsQueryVariables,
-  GetEventsListingDocument,
-  GetEventsListingQuery,
-  GetEventsListingQueryVariables,
-  UpdateEventDocument,
-  UpdateEventMutation,
-  UpdateEventMutationVariables,
   CancelEventDocument,
   CancelEventMutation,
   CancelEventMutationVariables,
   CloseEventJoinDocument,
   CloseEventJoinMutation,
   CloseEventJoinMutationVariables,
-  ReopenEventJoinDocument,
-  ReopenEventJoinMutation,
-  ReopenEventJoinMutationVariables,
+  CreateEventDocument,
+  CreateEventMutation,
+  CreateEventMutationVariables,
+  DeleteEventDocument,
+  DeleteEventMutation,
+  DeleteEventMutationVariables,
   GetEventDetailDocument,
   GetEventDetailQuery,
   GetEventDetailQueryVariables,
+  GetEventsDocument,
+  GetEventsListingDocument,
+  GetEventsListingQuery,
+  GetEventsListingQueryVariables,
+  GetEventsQuery,
+  GetEventsQuery_Query,
+  GetEventsQueryVariables,
+  ReopenEventJoinDocument,
+  ReopenEventJoinMutation,
+  ReopenEventJoinMutationVariables,
+  UpdateEventDocument,
   UpdateEventFaqsDocument,
   UpdateEventFaqsMutation,
   UpdateEventFaqsMutationVariables,
+  UpdateEventMutation,
+  UpdateEventMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
-import { gql } from 'graphql-request';
-import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import { gqlClient } from '@/lib/api/client';
 import { getQueryClient } from '@/lib/config/query-client';
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import {
   InfiniteData,
   QueryKey,
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
   useMutation,
   UseMutationOptions,
   useQuery,
   UseQueryOptions,
-  useInfiniteQuery,
-  UseInfiniteQueryOptions,
 } from '@tanstack/react-query';
+import { gql } from 'graphql-request';
 
 /* -------------------------------- TYPES ---------------------------------- */
 // GetEventDetailQuery is now imported directly from generated types

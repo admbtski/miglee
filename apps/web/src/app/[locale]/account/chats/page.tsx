@@ -17,7 +17,7 @@
 import { Hash, Loader2, User2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { useMeQuery } from '@/features/auth';
+import { useAccount } from '@/features/account';
 import {
   ChatList as ChatListComponent,
   ChatThread as ChatThreadComponent,
@@ -52,8 +52,8 @@ type Conversation = {
 // =============================================================================
 
 export default function ChatsPage() {
-  const { data: meData, isLoading: isLoadingAuth } = useMeQuery();
-  const currentUserId = meData?.me?.id;
+  const { user, isLoading: isLoadingAuth } = useAccount();
+  const currentUserId = user?.id;
 
   const [tab, setTab] = useState<ChatKind>('dm');
   const [activeDmId, setActiveDmId] = useState<string | undefined>();

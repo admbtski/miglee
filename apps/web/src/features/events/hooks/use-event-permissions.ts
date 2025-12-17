@@ -3,10 +3,12 @@
  * Uses the eventPermissions GraphQL query to get permission flags
  */
 
-import { useEventPermissionsQuery } from '../api/event-permissions';
+import { useEventPermissionsQuery } from '../api/use-event-permissions';
 import type { GetEventPermissionsQuery_Query } from '@/lib/api/__generated__/react-query-update';
 
-export type EventPermissions = NonNullable<GetEventPermissionsQuery_Query['eventPermissions']> & {
+export type EventPermissions = NonNullable<
+  GetEventPermissionsQuery_Query['eventPermissions']
+> & {
   isLoading: boolean;
 };
 

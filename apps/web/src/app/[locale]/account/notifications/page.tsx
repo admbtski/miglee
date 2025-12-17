@@ -34,7 +34,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLocalePath } from '@/hooks/use-locale-path';
 
-import { useMeQuery } from '@/features/auth';
+import { useAccount, AccountPageHeader } from '@/features/account';
 import {
   useDeleteNotificationMutation,
   useMarkAllNotificationsReadMutation,
@@ -46,8 +46,6 @@ import type {
   GetNotificationsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { useI18n } from '@/lib/i18n/provider-ssr';
-
-import { AccountPageHeader } from '@/features/account';
 
 type NotificationNode = NonNullable<
   GetNotificationsQuery['notifications']['items']
@@ -171,12 +169,9 @@ export default function NotificationsPage() {
   const { t, locale } = useI18n();
   const { localePath } = useLocalePath();
 
-  // useMeQuery with staleTime to use cached data from sidebar
-  // This prevents showing "login required" message when data is still loading
-  const { data: authData, isLoading: isLoadingAuth } = useMeQuery({
-    staleTime: 5 * 60 * 1000, // 5 minutes - use cached data
-  });
-  const recipientId = authData?.me?.id;
+  // User data is provided by AccountProvider
+  const { user, isLoading: isLoadingAuth } = useAccount();
+  const recipientId = user?.id;
 
   const [filter, setFilter] = useState<FilterType>('all');
   const [optimistic, setOptimistic] = useState<
