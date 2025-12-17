@@ -9,11 +9,8 @@ import { Globe2, Info, Link as LinkIcon, MapPin } from 'lucide-react';
 import { LocationCombo } from '@/components/forms/location-combobox';
 import { SegmentedControl } from '@/components/ui/segment-control';
 import { MapPreview } from '@/features/maps';
-import {
-  reverseGeocode,
-  reverseGeocodeLatLng,
-} from '@/features/maps';
-import type { SimpleEventFormValues } from '@/features/events/modules/creation/types/event-form';
+import { reverseGeocode, reverseGeocodeLatLng } from '@/features/maps';
+import type { SimpleEventFormValues } from '@/features/events';
 
 type MK = 'ONSITE' | 'ONLINE' | 'HYBRID';
 

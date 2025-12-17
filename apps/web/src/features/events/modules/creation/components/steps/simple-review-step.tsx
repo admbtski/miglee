@@ -18,8 +18,8 @@ import {
   Users,
 } from 'lucide-react';
 
-import { useCategorySelection } from '@/features/events/modules/creation/components/category-selection-provider';
-import type { SimpleEventFormValues } from '@/features/events/modules/creation/types/event-form';
+import { useCategorySelection } from '@/features/events';
+import type { SimpleEventFormValues } from '@/features/events';
 
 interface SimpleReviewStepProps {
   values: SimpleEventFormValues;

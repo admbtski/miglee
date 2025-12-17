@@ -7,38 +7,36 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEventDetailQuery } from '@/features/events';
 import {
-  useEventDetailQuery,
-  useUpdateEventFaqsMutation,
-} from '@/features/events';
-import {
-  HelpCircle,
-  Plus,
-  Trash2,
-  GripVertical,
-  Save,
-  MoreVertical,
-  Edit2,
-  AlertCircle,
-  Loader2,
-  Check,
-} from 'lucide-react';
-import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
-import {
-  useFloating,
   autoUpdate,
-  offset,
   flip,
+  FloatingFocusManager,
+  FloatingPortal,
+  offset,
   shift,
   useClick,
   useDismiss,
-  useRole,
+  useFloating,
   useInteractions,
-  FloatingFocusManager,
-  FloatingPortal,
+  useRole,
 } from '@floating-ui/react';
+import { AnimatePresence, motion, Reorder } from 'framer-motion';
+import {
+  AlertCircle,
+  Check,
+  Edit2,
+  GripVertical,
+  HelpCircle,
+  Loader2,
+  MoreVertical,
+  Plus,
+  Save,
+  Trash2,
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useUpdateEventFaqsMutation } from '../api';
 
 interface FaqItem {
   id: string;
