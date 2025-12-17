@@ -7,8 +7,8 @@ import { UseFormReturn, useController, useWatch } from 'react-hook-form';
 import { Crown, Info, User, Users } from 'lucide-react';
 
 import { SegmentedControl } from '@/components/ui/segment-control';
-import { RangeSlider } from '@/features/events/components/range-slider';
-import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
+import { RangeSlider } from '@/features/events';
+import type { SimpleEventFormValues } from '@/features/events/modules/creation/types/event-form';
 
 type ModeType = 'ONE_TO_ONE' | 'GROUP' | 'CUSTOM';
 

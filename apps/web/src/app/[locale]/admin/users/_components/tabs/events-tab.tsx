@@ -16,16 +16,16 @@ import { pl } from 'date-fns/locale';
 import {
   useAdminUserMembershipsQuery,
   useAdminUserEventsQuery,
-} from '@/features/admin/api/admin-users';
+} from '@/features/admin';
 import {
   useAdminKickMemberMutation,
   useAdminBanMemberMutation,
   useAdminUnbanMemberMutation,
-} from '@/features/admin/api/admin-event-members';
+} from '@/features/admin';
 import {
   useApproveMembershipMutation,
   useRejectMembershipMutation,
-} from '@/features/events/api/event-members';
+} from '@/features/events';
 import Link from 'next/link';
 
 type EventTabProps = {

@@ -4,8 +4,8 @@
 // - Report reasons, modal titles, descriptions, button labels, warnings
 
 import { useState } from 'react';
-import { Modal } from '@/components/feedback/modal';
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { Modal } from '@/components/ui/modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 import { Flag } from 'lucide-react';
 import { ReportEntity } from '@/lib/api/__generated__/react-query-update';
 import { useCreateReport } from '../api/use-create-report';

@@ -8,9 +8,9 @@ import { Info } from 'lucide-react';
 
 import { CategoryMultiCombo } from '@/features/categories';
 import { CategoryOption } from '@/features/categories';
-import { useCategorySelection } from '@/features/event-creation/components/category-selection-provider';
+import { useCategorySelection } from '@/features/events/modules/creation/components/category-selection-provider';
 import { getUseCategoriesLimitData } from '@/features/categories';
-import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
+import type { SimpleEventFormValues } from '@/features/events/modules/creation/types/event-form';
 
 /**
  * SimpleBasicsStep - Simplified basics step

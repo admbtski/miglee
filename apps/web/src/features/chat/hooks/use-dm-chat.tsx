@@ -46,7 +46,7 @@ import {
   useMarkDmThreadRead,
   usePublishDmTyping,
   dmKeys,
-} from '@/features/chat/api/dm';
+} from '@/features/chat';
 import type { GetDmMessagesQuery } from '@/lib/api/__generated__/react-query-update';
 import {
   useDmMessageAdded,
@@ -54,16 +54,16 @@ import {
   useDmMessageDeleted,
   useDmTyping,
   useDmThreadsSubscriptions,
-} from '@/features/chat/api/dm-subscriptions';
-import { useDmReactionAdded } from '@/features/chat/api/reactions-subscriptions';
+} from '@/features/chat';
+import { useDmReactionAdded } from '@/features/chat';
 import {
   useAddDmReaction,
   useRemoveDmReaction,
-} from '@/features/chat/api/reactions';
+} from '@/features/chat';
 import {
   useUpdateDmMessage,
   useDeleteDmMessage,
-} from '@/features/chat/api/message-actions';
+} from '@/features/chat';
 import type { Message } from '../types';
 
 // =============================================================================

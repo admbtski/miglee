@@ -8,6 +8,7 @@
  * - Types for data structures
  * - Constants for configuration
  * - Utils for helper functions
+ * - Modules for creation and management flows
  */
 
 export * from './api';
@@ -16,3 +17,7 @@ export * from './constants';
 export * from './hooks';
 export * from './types';
 export * from './utils';
+
+// Submodules
+export * from './modules/creation';
+export * from './modules/management';

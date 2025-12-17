@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
 
-// Event creation feature
+// Event creation module
 import { 
   SimpleCreatorPageClient,
   SimpleCreatorSkeleton 
-} from '@/features/event-creation';
+} from '@/features/events';
 
 /**
  * Server component for simplified event creator page

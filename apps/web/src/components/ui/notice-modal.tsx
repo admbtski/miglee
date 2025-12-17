@@ -28,7 +28,7 @@ import {
   OctagonAlert,
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from './modal';
 
 /** Visual variants for the notice */
 export type NoticeVariant =

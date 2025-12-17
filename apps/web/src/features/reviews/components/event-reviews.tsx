@@ -14,8 +14,8 @@ import { ReviewCard } from './review-card';
 import { ReviewStats } from './review-stats';
 import { AddReviewModal } from './add-review-modal';
 import { ReportReviewModal } from '../../reports/components/report-review-modal';
-import { NoticeModal } from '@/components/feedback/notice-modal';
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import { NoticeModal } from '@/components/ui/notice-modal';
+import type { EventDetailsData } from '@/features/events';
 
 type EventReviewsProps = {
   event: EventDetailsData;
@@ -59,7 +59,7 @@ export function EventReviews({ event }: EventReviewsProps) {
   // Fetch my review
   const { data: myReviewData } = useGetMyReview(
     {
-      eventId: event.id,
+      id: event.id,
     },
     {
       enabled: !!currentUserId,
@@ -71,7 +71,7 @@ export function EventReviews({ event }: EventReviewsProps) {
 
   const reviews = reviewsData?.reviews?.items ?? [];
   const stats = statsData?.reviewStats;
-  const myReview = myReviewData?.myReview;
+  const myReview = myReviewData?.review;
 
   // Check if user can review
   const canReview = () => {

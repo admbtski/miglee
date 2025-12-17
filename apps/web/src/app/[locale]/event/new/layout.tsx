@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 
 // Components
-import { ErrorBoundary } from '@/components/feedback/error-boundary';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Navbar } from '@/components/layout/navbar';
 
 // Config

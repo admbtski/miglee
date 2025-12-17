@@ -20,7 +20,7 @@ import {
   type AdminUnbanMemberMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
-import { GET_EVENT_MEMBERS_KEY } from '@/features/events/api/event-members';
+import { GET_EVENT_MEMBERS_KEY } from '@/features/events';
 
 // =============================================================================
 // Mutations

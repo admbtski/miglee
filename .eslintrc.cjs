@@ -45,6 +45,38 @@ module.exports = {
       'error',
       { argsIgnorePattern: '^_' },
     ],
+    // Enforce feature boundary imports - import from feature root, not internals
+    'no-restricted-imports': [
+      'warn', // Start with 'warn' during migration, change to 'error' later
+      {
+        patterns: [
+          {
+            group: ['@/features/*/api/*'],
+            message: 'Import from feature root instead: @/features/<feature>',
+          },
+          {
+            group: ['@/features/*/components/*'],
+            message: 'Import from feature root instead: @/features/<feature>',
+          },
+          {
+            group: ['@/features/*/hooks/*'],
+            message: 'Import from feature root instead: @/features/<feature>',
+          },
+          {
+            group: ['@/features/*/types/*'],
+            message: 'Import from feature root instead: @/features/<feature>',
+          },
+          {
+            group: ['@/features/*/utils/*'],
+            message: 'Import from feature root instead: @/features/<feature>',
+          },
+          {
+            group: ['@/features/*/constants/*'],
+            message: 'Import from feature root instead: @/features/<feature>',
+          },
+        ],
+      },
+    ],
   },
   settings: {
     react: {

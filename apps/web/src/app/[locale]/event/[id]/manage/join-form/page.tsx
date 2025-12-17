@@ -10,7 +10,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { JoinFormManagementClient } from './_components/join-form-management-client';
-import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
+import { ManagementPageLayout } from '@/features/events';
 
 // =============================================================================
 // Types

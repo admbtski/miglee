@@ -1,5 +1,5 @@
-import { AdminSidebar } from '@/features/admin/components/admin-sidebar';
-import { AdminHeader } from '@/features/admin/components/admin-header';
+import { AdminSidebar } from '@/features/admin';
+import { AdminHeader } from '@/features/admin';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 
 export default async function AdminLayout({

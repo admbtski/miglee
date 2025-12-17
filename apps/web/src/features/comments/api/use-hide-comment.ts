@@ -4,9 +4,6 @@ import {
   HideCommentDocument,
   type HideCommentMutation,
   type HideCommentMutationVariables,
-  UnhideCommentDocument,
-  type UnhideCommentMutation,
-  type UnhideCommentMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import {

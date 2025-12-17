@@ -1,10 +1,10 @@
 'use client';
 
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 import {
   useCloseEventJoinMutation,
   useReopenEventJoinMutation,
-} from '@/features/events/api/events';
+} from '@/features/events';
 import { useCallback, useState } from 'react';
 
 type CloseJoinProps = {

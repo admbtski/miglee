@@ -11,9 +11,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Ban, Info, Trash2, Users } from 'lucide-react';
 
-import { CancelEventModals } from '@/features/events/components/cancel-event-modals';
-import { DeleteEventModals } from '@/features/events/components/delete-event-modals';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { CancelEventModals } from '@/features/events';
+import { DeleteEventModals } from '@/features/events';
+import { useEventDetailQuery } from '@/features/events';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 

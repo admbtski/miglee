@@ -12,8 +12,8 @@
 'use client';
 
 import { MessageSquare, Info, AlertCircle } from 'lucide-react';
-import { useEventDetailQuery } from '@/features/events/api/events';
-import { EventComments } from '@/features/comments/components/event-comments';
+import { useEventDetailQuery } from '@/features/events';
+import { EventComments } from '@/features/comments';
 
 // =============================================================================
 // Types

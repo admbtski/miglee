@@ -1,10 +1,9 @@
-// Subscription Feature Public API
+/**
+ * Subscription Feature
+ *
+ * Exports subscription UI components.
+ * For subscription API, use @/features/billing
+ */
 
-// Re-export billing API and hooks
-export * from '../billing/api';
-export * from '../billing/hooks';
-export * from '../billing/constants';
-
-// Components
 export * from './components';
 

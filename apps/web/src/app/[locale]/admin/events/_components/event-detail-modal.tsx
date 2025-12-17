@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   X,
   Info,

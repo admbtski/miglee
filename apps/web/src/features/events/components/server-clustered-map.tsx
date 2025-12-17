@@ -6,7 +6,7 @@ import { Level as GqlLevel } from '@/lib/api/__generated__/react-query-update';
 import {
   useGetClustersQuery,
   useGetRegionEventsInfiniteQuery,
-} from '@/features/maps/api/map-clusters';
+} from '@/features/maps';
 import { getUpcomingAfterDefault } from '@/lib/constants/events';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import clsx from 'clsx';

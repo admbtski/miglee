@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdminUserNotificationsQuery } from '@/features/admin/api/admin-users';
+import { useAdminUserNotificationsQuery } from '@/features/admin';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';

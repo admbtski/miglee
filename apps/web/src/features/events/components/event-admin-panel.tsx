@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import type { EventDetailsData } from '@/features/events';
 import { useMeQuery } from '@/features/auth';
 import {
   Settings,

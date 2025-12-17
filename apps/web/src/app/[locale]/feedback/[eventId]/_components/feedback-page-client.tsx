@@ -11,9 +11,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 // Features
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import { useGetMyReview } from '@/features/reviews';
-import { ReviewAndFeedbackForm } from '@/features/events/components/review-and-feedback-form';
+import { ReviewAndFeedbackForm } from '@/features/events';
 import {
   useCanSubmitFeedbackQuery,
   useEventFeedbackQuestionsQuery,
@@ -53,10 +53,10 @@ export function FeedbackPageClient({ eventId }: FeedbackPageClientProps) {
 
   // Check if user already has a review (to show appropriate message or prefill form)
   const { data: myReviewData, isLoading: myReviewLoading } = useGetMyReview(
-    { eventId },
+    { id: eventId },
     { enabled: true } // Always fetch to know if we should show "already reviewed" state
   );
-  const existingReview = myReviewData?.myReview;
+  const existingReview = myReviewData?.review;
 
   // Submit mutation
   const submitMutation = useSubmitReviewAndFeedbackMutation({

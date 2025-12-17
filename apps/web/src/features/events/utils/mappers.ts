@@ -15,7 +15,7 @@ import type { TagOption } from '@/features/tags/types';
 import type {
   EventFormValues,
   SimpleEventFormValues,
-} from '../../event-creation/types/event-form';
+} from '../modules/creation/types/event-form';
 
 /**
  * Maps simplified form values to CreateEventInput for new event creation.

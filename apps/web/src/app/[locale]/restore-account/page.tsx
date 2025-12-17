@@ -17,12 +17,12 @@ import { Suspense, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 // Features
-import { useRequestAccountRestorationMutation } from '@/features/account-settings/api/use-request-account-restoration';
+import { useRequestAccountRestorationMutation } from '@/features/account-settings';
 
 // Hooks & i18n
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { useI18n } from '@/lib/i18n/provider-ssr';
-import { useRestoreMyAccountMutation } from '@/features/account-settings/api/use-restore-my-account';
+import { useRestoreMyAccountMutation } from '@/features/account-settings';
 
 function RestoreAccountContent() {
   const searchParams = useSearchParams();

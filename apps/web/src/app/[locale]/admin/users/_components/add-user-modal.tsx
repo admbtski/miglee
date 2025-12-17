@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/components/feedback/modal';
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { Modal } from '@/components/ui/modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 import { Role } from '@/lib/api/__generated__/react-query-update';
 import { UserPlus, Mail, AlertCircle } from 'lucide-react';
 import {
   useAdminInviteUserMutation,
   useAdminCreateUserMutation,
-} from '@/features/users/api/users';
+} from '@/features/users';
 
 type AddUserModalProps = {
   open: boolean;

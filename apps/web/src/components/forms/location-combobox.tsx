@@ -5,8 +5,8 @@ import { MapPin, Loader2 } from 'lucide-react';
 import {
   fetchPlaceDetailsFromSuggestion,
   usePlacesAutocomplete,
-} from '@/features/maps/hooks/use-places-autocomplete';
-import { resolveCityInfo } from '@/features/maps/utils/city-helpers';
+  resolveCityInfo,
+} from '@/features/maps';
 
 export function LocationCombo({
   value,

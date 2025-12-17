@@ -3,7 +3,7 @@
 // TODO i18n: All menu labels need translation keys
 // - "Menu", "Wydarzenia", "Konto", "About us", etc., "Sign in to your account", "Follow us on social media"
 
-import { ThemeSwitchConnected } from '@/features/theme/components/theme-switch-connect';
+import { ThemeSwitchConnected } from '@/features/theme';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Cookie,

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Send, Bell, AlertCircle } from 'lucide-react';
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 import { useAddNotificationMutation } from '@/features/notifications';
 import { NotificationKind } from '@/lib/api/__generated__/react-query-update';
 

@@ -5,7 +5,7 @@
 
 import * as React from 'react';
 import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
-import { SponsorPlan } from '@/features/events/types/sponsorship';
+import { SponsorPlan } from '@/features/events';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {

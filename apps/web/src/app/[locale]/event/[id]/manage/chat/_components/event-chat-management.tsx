@@ -11,13 +11,13 @@
 
 'use client';
 
-import { useEventDetailQuery } from '@/features/events/api/events';
-import { useEventChatInstance } from '@/features/chat/hooks/use-event-chat-instance';
-import { ChatThread } from '@/features/chat/components/chat-thread';
-import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
-import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
-import { ChatLoadingSkeleton } from '@/features/chat/components/message-skeleton';
-import { ChatErrorWrapper } from '@/features/chat/components/chat-error-boundary';
+import { useEventDetailQuery } from '@/features/events';
+import { useEventChatInstance } from '@/features/chat';
+import { ChatThread } from '@/features/chat';
+import { EditMessageModal } from '@/features/chat';
+import { DeleteConfirmModal } from '@/features/chat';
+import { ChatLoadingSkeleton } from '@/features/chat';
+import { ChatErrorWrapper } from '@/features/chat';
 
 // =============================================================================
 // Types

@@ -9,12 +9,12 @@
 
 'use client';
 
-import { useState } from 'react';
 import { Download, ExternalLink, Shield } from 'lucide-react';
+import { useState } from 'react';
 
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '@/features/account/components';
+import { AccountPageHeader } from '@/features/account';
 
 export default function PrivacyPolicyPage() {
   const { t, locale } = useI18n();

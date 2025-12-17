@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useGetTagsQuery } from '@/features/tags/api/tags';
+import { useGetTagsQuery } from '@/features/tags';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';

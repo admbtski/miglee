@@ -4,7 +4,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
-import { EventCountdownPill } from '@/features/events/components/event-countdown-pill';
+import { EventCountdownPill } from '@/features/events';
 import { AddressVisibility } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl, buildEventCoverUrl } from '@/lib/media/url';
 import { formatDateRange, humanDuration, parseISO } from '@/lib/utils/date';
@@ -13,7 +13,7 @@ import Link from 'next/link';
 import * as React from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
-import { formatCapacityString } from '@/features/events/utils/capacity-formatter';
+import { formatCapacityString } from '@/features/events';
 import {
   type CardAppearanceConfig,
   getAddressVisibilityMeta,

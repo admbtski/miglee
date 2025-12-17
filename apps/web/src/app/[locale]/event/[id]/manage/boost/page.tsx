@@ -10,7 +10,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { BoostPageWrapper } from './_components/boost-page-wrapper';
-import { ManagementPageLayout } from '@/features/event-management/components';
+import { ManagementPageLayout } from '@/features/events';
 
 // =============================================================================
 // Types

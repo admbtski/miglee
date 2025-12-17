@@ -7,7 +7,7 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-import { ErrorBoundary } from '@/components/feedback/error-boundary';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { getQueryClient } from '@/lib/config/query-client';
 import { QueryClientProvider } from '@/lib/config/query-client-provider';
 

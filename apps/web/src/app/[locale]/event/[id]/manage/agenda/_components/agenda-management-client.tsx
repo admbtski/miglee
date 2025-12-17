@@ -8,16 +8,16 @@
 
 'use client';
 
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { Avatar as AvatarComponent } from '@/components/ui/avatar';
-import { useUpdateEventAgendaMutation } from '@/features/agenda/api/use-update-event-agenda';
-import { useEventAgendaItemsQuery } from '@/features/agenda/api/use-event-agenda-items';
+import { useUpdateEventAgendaMutation } from '@/features/agenda';
+import { useEventAgendaItemsQuery } from '@/features/agenda';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '@/features/event-management/components/plan-upgrade-banner';
-import { useEventDetailQuery } from '@/features/events/api/events';
-import { useUsersQuery } from '@/features/users/api/users';
+} from '@/features/events';
+import { useEventDetailQuery } from '@/features/events';
+import { useUsersQuery } from '@/features/users';
 import type { AgendaHostKind } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { cn } from '@/lib/utils';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAdminUpdateEventMutation } from '@/features/admin/api/admin-events';
+import { useAdminUpdateEventMutation } from '@/features/admin';
 import { Eye, EyeOff, Lock, Unlock, Save } from 'lucide-react';
 import { Visibility } from '@/lib/api/__generated__/react-query-update';
 

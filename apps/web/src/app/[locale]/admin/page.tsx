@@ -10,8 +10,8 @@ import {
   TrendingUp,
   BarChart3,
 } from 'lucide-react';
-import { KPICard } from '@/features/admin/components/kpi-card';
-import { AlertCard } from '@/features/admin/components/alert-card';
+import { KPICard } from '@/features/admin';
+import { AlertCard } from '@/features/admin';
 
 export default function AdminDashboard() {
   // TODO: Replace with real data from API

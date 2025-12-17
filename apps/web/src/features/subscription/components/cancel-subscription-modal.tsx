@@ -15,7 +15,7 @@ import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 // Components
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 
 export function CancelSubscriptionModal({
   open,

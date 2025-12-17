@@ -6,7 +6,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
-import { EventCountdownPill } from '@/features/events/components/event-countdown-pill';
+import { EventCountdownPill } from '@/features/events';
 import {
   AddressVisibility,
   Level as GqlLevel,
@@ -17,7 +17,7 @@ import { motion } from 'framer-motion';
 import { Calendar, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { formatCapacityString } from '@/features/events/utils/capacity-formatter';
+import { formatCapacityString } from '@/features/events';
 import { twMerge } from 'tailwind-merge';
 import {
   type CardAppearanceConfig,

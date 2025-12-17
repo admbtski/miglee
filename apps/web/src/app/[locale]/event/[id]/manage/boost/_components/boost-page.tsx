@@ -7,8 +7,8 @@ import * as React from 'react';
 import { Loader2, Rocket, Sparkles } from 'lucide-react';
 
 import { QuotaBar } from '@/components/ui/quota-bar';
-import { ActionButton } from '@/features/events/components/action-button';
-import { SponsorshipState } from '@/features/events/types/sponsorship';
+import { ActionButton } from '@/features/events';
+import { SponsorshipState } from '@/features/events';
 import { useCooldown } from '@/hooks/use-cooldown';
 
 type BoostPageProps = {

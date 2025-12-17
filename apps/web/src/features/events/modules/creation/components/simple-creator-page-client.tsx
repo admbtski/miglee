@@ -23,13 +23,13 @@ import {
   Users,
 } from 'lucide-react';
 
-import { useCreateEventMutation } from '@/features/events/api/events';
+import { useCreateEventMutation } from '@/features/events';
 import {
   CategorySelectionProvider,
   mapSimpleFormToCreateInput,
   SuccessEventModal,
 } from '@/features/events';
-import type { SimpleEventFormValues } from '@/features/event-creation/types/event-form';
+import type { SimpleEventFormValues } from '@/features/events/modules/creation/types/event-form';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { devLogger, toast } from '@/lib/utils';
 

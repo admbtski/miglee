@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';

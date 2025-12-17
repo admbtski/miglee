@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { X } from 'lucide-react';
 import { AccountTab } from './tabs/account-tab';
 import { ProfileTab } from './tabs/profile-tab';
@@ -12,7 +12,7 @@ import { EventTab } from './tabs/events-tab';
 import { DiagnosticTools } from './tabs/diagnostic-tools';
 import { AuditLogTab } from './tabs/audit-log-tab';
 import { NotificationsTab } from './tabs/notifications-tab';
-import { useUserQuery } from '@/features/users/api/users';
+import { useUserQuery } from '@/features/users';
 
 type UserDetailModalProps = {
   userId: string;

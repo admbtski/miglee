@@ -7,7 +7,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
 // Event management components
-import { EventManagementDashboard } from '@/features/event-management/components/event-management-dashboard';
+import { EventManagementDashboard } from '@/features/events';
 
 type PageProps = {
   params: Promise<{ id: string }>;

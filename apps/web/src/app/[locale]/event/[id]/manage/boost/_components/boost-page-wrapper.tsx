@@ -1,12 +1,12 @@
 'use client';
 
 import { BoostPage } from './boost-page';
-import { useSubscriptionData } from '@/features/events/hooks/use-subscription-data';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useSubscriptionData } from '@/features/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '@/features/event-management/components/plan-upgrade-banner';
+} from '@/features/events';
 
 type BoostPageWrapperProps = {
   eventId: string;

@@ -9,15 +9,15 @@
  * TODO: add translation (i18n) - hardcoded strings marked inline
  */
 
-import { Suspense } from 'react';
-import Link from 'next/link';
 import { ExternalLink, Eye } from 'lucide-react';
+import Link from 'next/link';
+import { Suspense } from 'react';
 
 import { useMeQuery } from '@/features/auth';
 import {
   PublicProfileClient,
   PublicProfileClientLoader,
-} from '@/features/public-profile/components/public-profile-client';
+} from '@/features/public-profile';
 import { useLocalePath } from '@/hooks/use-locale-path';
 
 export default function ProfileViewPage() {

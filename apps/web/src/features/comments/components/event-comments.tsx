@@ -9,7 +9,7 @@ import {
   useHideComment,
   useUpdateComment,
 } from '@/features/comments';
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import type { EventDetailsData } from '@/features/events';
 import { ReportCommentModal } from '@/features/reports';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { format } from 'date-fns';

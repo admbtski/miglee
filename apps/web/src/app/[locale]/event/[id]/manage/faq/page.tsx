@@ -9,8 +9,8 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { FaqManagementClient } from '@/features/faq/components/faq-management-client';
-import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
+import { FaqManagementClient } from '@/features/faq';
+import { ManagementPageLayout } from '@/features/events';
 
 // =============================================================================
 // Types

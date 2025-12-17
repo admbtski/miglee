@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Loader2, User2, AlertCircle } from 'lucide-react';
-import { useUsersQuery } from '@/features/users/api/users';
+import { useUsersQuery } from '@/features/users';
 import { useMeQuery } from '@/features/auth';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { buildAvatarUrl } from '@/lib/media/url';

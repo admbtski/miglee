@@ -5,9 +5,9 @@ import { LevelBadge, sortLevels } from '@/components/ui/level-badge';
 import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { Level } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl } from '@/lib/media/url';
-import { formatDate, formatTime } from '@/features/events/utils/date-format';
-import type { EventDetailsData } from '@/features/events/types/event-details';
-import { formatParticipantsShort } from '@/features/events/utils/capacity-formatter';
+import { formatDate, formatTime } from '@/features/events';
+import type { EventDetailsData } from '@/features/events';
+import { formatParticipantsShort } from '@/features/events';
 import {
   Calendar,
   MapPin,

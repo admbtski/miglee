@@ -3,8 +3,8 @@
  *
  * Exports all user-related functionality:
  * - API hooks for data fetching/mutations
- * - Components for UI
+ * 
+ * For public profile components, use @/features/public-profile
  */
 
 export * from './api';
-export * from '../public-profile/components';

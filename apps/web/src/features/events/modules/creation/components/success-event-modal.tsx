@@ -8,7 +8,7 @@ import {
   type Transition,
 } from 'framer-motion';
 import { Check, ExternalLink, Sparkles } from 'lucide-react';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { eventCreatedEditedConfetti } from '@/lib/utils/confetti';
 
 type Props = {

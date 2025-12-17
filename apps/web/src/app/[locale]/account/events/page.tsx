@@ -13,12 +13,6 @@ import { Suspense, useMemo } from 'react';
 
 import { useMeQuery } from '@/features/auth';
 import {
-  useAcceptInviteMutation,
-  useCancelJoinRequestMutation,
-  useLeaveEventMutationMembers,
-  useMyEventsQuery,
-} from '@/features/events/api/event-members';
-import {
   CancelEventModals,
   DeleteEventModals,
   MyEventCard,
@@ -30,13 +24,18 @@ import {
   mapRoleFilterToBackend,
   mapRoleFilterToMembershipStatus,
   mapStatusFiltersToBackend,
+  useAcceptInviteMutation,
+  useCancelJoinRequestMutation,
   useEventsModals,
-  useMyEventsFilters,
+  useLeaveEventMutationMembers,
+  useMyEventsQuery,
 } from '@/features/events';
+
 import {
   EventStatusFilter,
   FiltersDropdown,
   RoleFilter,
+  useMyEventsFilters,
   type EventStatusFilterValue,
   type RoleFilterValue,
 } from '@/features/search';

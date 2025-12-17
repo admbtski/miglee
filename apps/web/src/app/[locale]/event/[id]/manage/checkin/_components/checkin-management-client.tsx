@@ -33,8 +33,8 @@ import {
   useUncheckInMemberMutation,
   useUpdateEventCheckinConfigMutation,
 } from '@/features/checkin';
-import { useEventManagement } from '@/features/event-management/components/event-management-provider';
-import { useEventMembersQuery } from '@/features/events/api/event-members';
+import { useEventManagement } from '@/features/events';
+import { useEventMembersQuery } from '@/features/events';
 import {
   CheckinMethod,
   EventMemberCoreFragment,

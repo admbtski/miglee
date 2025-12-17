@@ -6,7 +6,7 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { GET_TAGS_LIST_KEY } from './tags-query-keys';
+import { tagsKeys } from './tags-query-keys';
 
 export function buildGetTagsOptions(
   variables?: GetTagsQueryVariables,
@@ -16,7 +16,7 @@ export function buildGetTagsOptions(
   >
 ): UseQueryOptions<GetTagsQuery, Error, GetTagsQuery, QueryKey> {
   return {
-    queryKey: GET_TAGS_LIST_KEY(variables) as unknown as QueryKey,
+    queryKey: tagsKeys.list(variables) as unknown as QueryKey,
     queryFn: async () =>
       variables
         ? gqlClient.request<GetTagsQuery, GetTagsQueryVariables>(

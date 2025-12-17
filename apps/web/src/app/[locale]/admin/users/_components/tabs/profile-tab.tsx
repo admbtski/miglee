@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { useGetCategoriesQuery as useCategoriesQuery } from '@/features/categories';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
-import { useUserProfileQuery } from '@/features/public-profile/api/use-user-profile';
-import { useUpdateUserProfile } from '@/features/profile-settings/api/use-update-user-profile';
+import { useUserProfileQuery } from '@/features/public-profile';
+import { useUpdateUserProfile } from '@/features/profile-settings';
 
 // TODO i18n: extract all static labels in admin user profile tab
 

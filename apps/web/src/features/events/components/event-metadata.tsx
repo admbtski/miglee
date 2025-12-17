@@ -1,4 +1,4 @@
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import type { EventDetailsData } from '@/features/events';
 import { Calendar, Clock, FileText, InfoIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';

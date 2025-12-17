@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAdminUpdateEventMutation } from '@/features/admin/api/admin-events';
+import { useAdminUpdateEventMutation } from '@/features/admin';
 import { Edit2, Save, X, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';

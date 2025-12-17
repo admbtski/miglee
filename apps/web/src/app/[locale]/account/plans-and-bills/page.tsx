@@ -13,11 +13,8 @@ import { Suspense } from 'react';
 
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '@/features/account/components';
-import { 
-  BillingContent,
-  PaymentResultModal 
-} from '@/features/subscription';
+import { AccountPageHeader } from '@/features/account';
+import { BillingContent, PaymentResultModal } from '@/features/subscription';
 
 /**
  * Skeleton loader for billing page

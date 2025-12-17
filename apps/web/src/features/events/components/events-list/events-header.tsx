@@ -4,7 +4,7 @@
 // - "Loading…", "Failed to load", "Znaleziono w...", "event/s", "updating…"
 
 import { memo } from 'react';
-import { SortByControl } from '@/features/search/components/sort-by-control';
+import { SortByControl } from '@/features/search';
 import { ToggleMap } from '../toggle-map';
 import { SortKey } from '@/features/search';
 

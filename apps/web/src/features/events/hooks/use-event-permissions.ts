@@ -3,12 +3,12 @@
  * Uses the eventPermissions GraphQL query to get permission flags
  */
 
-import {
-  useEventPermissionsQuery,
-  type EventPermissions,
-} from '@/features/events/api/event-permissions';
+import { useEventPermissionsQuery } from '../api/event-permissions';
+import type { GetEventPermissionsQuery_Query } from '@/lib/api/__generated__/react-query-update';
 
-export type { EventPermissions };
+export type EventPermissions = NonNullable<GetEventPermissionsQuery_Query['eventPermissions']> & {
+  isLoading: boolean;
+};
 
 /**
  * Hook to check if user has management permissions for an event

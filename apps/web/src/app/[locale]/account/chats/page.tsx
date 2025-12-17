@@ -18,16 +18,17 @@ import { Hash, Loader2, User2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useMeQuery } from '@/features/auth';
-import { ChatList as ChatListComponent } from '@/features/chat/components/chat-list';
-import { ChatThread as ChatThreadComponent } from '@/features/chat/components/chat-thread';
-import { DeleteConfirmModal } from '@/features/chat/components/DeleteConfirmModal';
-import { EditMessageModal } from '@/features/chat/components/EditMessageModal';
-import { EmptyThread as EmptyThreadComponent } from '@/features/chat/components/empty-thread';
 import {
+  ChatList as ChatListComponent,
+  ChatThread as ChatThreadComponent,
+  DeleteConfirmModal,
+  EditMessageModal,
+  EmptyThread as EmptyThreadComponent,
+  useChannelChat,
+  useDmChat,
   UserPicker,
   type PickedUser,
-} from '@/features/chat/components/UserPicker';
-import { useChannelChat, useDmChat } from '@/features/chat/hooks';
+} from '@/features/chat';
 
 // =============================================================================
 // Types

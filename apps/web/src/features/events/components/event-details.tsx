@@ -1,5 +1,5 @@
-import type { EventDetailsData } from '@/features/events/types/event-details';
-import { formatDuration } from '@/features/events/utils/event-join-state';
+import type { EventDetailsData } from '@/features/events';
+import { formatDuration } from '@/features/events';
 import {
   Clock,
   ClockFading,

@@ -10,8 +10,8 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { EventChatManagement } from './_components/event-chat-management';
-import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
-import { ChatLoadingSkeleton } from '@/features/chat/components/message-skeleton';
+import { ManagementPageLayout } from '@/features/events';
+import { ChatLoadingSkeleton } from '@/features/chat';
 
 // =============================================================================
 // Types

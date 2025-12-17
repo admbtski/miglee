@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { X, RotateCw, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
 import type { Area, Point } from 'react-easy-crop';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 
 type ImageCropModalProps = {
   open: boolean;

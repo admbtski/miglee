@@ -2,13 +2,13 @@
 
 // TODO i18n: Polish strings need translation keys
 
-import { LocalPushPage } from '@/features/events/components/local-push-page';
-import { useSubscriptionData } from '@/features/events/hooks/use-subscription-data';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { LocalPushPage } from '@/features/events';
+import { useSubscriptionData } from '@/features/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '@/features/event-management/components/plan-upgrade-banner';
+} from '@/features/events';
 
 type LocalPushPageWrapperProps = {
   eventId: string;

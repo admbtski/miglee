@@ -1,10 +1,10 @@
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import type { EventDetailsData } from '@/features/events';
 import { ShieldCheck, Users as UserGroup } from 'lucide-react';
 import Link from 'next/link';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { useMemo } from 'react';
-import { formatCapacityDetail } from '@/features/events/utils/capacity-formatter';
+import { formatCapacityDetail } from '@/features/events';
 import { CapacityStatusCard } from './capacity-status-card';
 
 type EventParticipantsProps = {

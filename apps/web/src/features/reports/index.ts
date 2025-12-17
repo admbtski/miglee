@@ -1,7 +1,10 @@
-// Reports Feature Public API
+/**
+ * Reports Feature
+ *
+ * Exports reporting functionality:
+ * - API hooks for report operations
+ * - Components for report UI
+ */
 
-// API
 export * from './api';
-
-// Components
 export * from './components';

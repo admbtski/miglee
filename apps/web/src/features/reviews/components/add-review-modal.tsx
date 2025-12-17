@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Star, X, Loader2 } from 'lucide-react';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { useCreateReview, useUpdateReview } from '@/features/reviews';
 
 type AddReviewModalProps = {

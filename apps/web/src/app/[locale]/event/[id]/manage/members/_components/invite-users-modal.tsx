@@ -6,10 +6,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, ChevronDown, Loader2, Search, UserPlus, X } from 'lucide-react';
 import clsx from 'clsx';
 
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { Avatar as AvatarComponent } from '@/components/ui/avatar';
-import { useInviteMemberMutation } from '@/features/events/api/event-members';
-import { useUsersQuery } from '@/features/users/api/users';
+import { useInviteMemberMutation } from '@/features/events';
+import { useUsersQuery } from '@/features/users';
 import { buildAvatarUrl } from '@/lib/media/url';
 
 /* ---------------------------------- TYPES ---------------------------------- */

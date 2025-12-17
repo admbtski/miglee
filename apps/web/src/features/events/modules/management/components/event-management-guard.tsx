@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
-import { useEventPermissions } from '@/features/events/hooks/use-event-permissions';
+import { useEventPermissions } from '@/features/events';
 import { useLocalePath } from '@/hooks';
 
 interface EventManagementGuardProps {

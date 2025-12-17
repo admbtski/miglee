@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   HoveredEventState,
   EventHoverCallback,
-} from '@/features/events/types/event';
+} from '@/features/events';
 
 const HOVER_DEBOUNCE_MS = 100;
 

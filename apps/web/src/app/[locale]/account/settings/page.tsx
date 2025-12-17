@@ -23,18 +23,17 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { TimezoneDropdown } from '@/components/forms/timezone-dropdown';
+import { AccountPageHeader } from '@/features/account';
 import {
+  DeleteAccountModal,
   useDeleteMyAccountMutation,
+  useUpdateLocale,
   useUpdateTimezone,
-} from '@/features/account';
-import { useTheme } from '@/features/theme/provider/theme-provider';
+} from '@/features/account-settings';
+import { useTheme } from '@/features/theme';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { localeNames, useI18n } from '@/lib/i18n/provider-ssr';
 import { commonTimezones } from '@/lib/i18n/timezone-provider';
-
-import { useUpdateLocale } from '@/features/account-settings/api/use-update-locale';
-import { AccountPageHeader } from '@/features/account/components';
-import { DeleteAccountModal } from '@/features/account-settings';
 
 // Get current timezone from browser
 function getCurrentTimezone(): string {

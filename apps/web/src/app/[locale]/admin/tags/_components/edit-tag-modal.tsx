@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { Edit, AlertCircle, Check, Loader2, Lock } from 'lucide-react';
 import {
   useUpdateTagMutation,
   useCheckTagSlugAvailableQuery,
   useGetTagUsageCountQuery,
-} from '@/features/tags/api/tags';
+} from '@/features/tags';
 import { isValidSlug } from '@/lib/utils/slug';
 
 type EditTagModalProps = {

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { Trash2, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
 import {
   useDeleteTagMutation,
   useGetTagUsageCountQuery,
-} from '@/features/tags/api/tags';
+} from '@/features/tags';
 import Link from 'next/link';
 
 type DeleteTagModalProps = {

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { useUpdateEventInviteLinkMutation } from '@/features/invite-links';
 import { Loader2, Save } from 'lucide-react';
 import clsx from 'clsx';

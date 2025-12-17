@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { RoleFilterValue } from '@/features/search/components/role-filter';
-import type { EventStatusFilterValue } from '@/features/search/components/event-status-filter';
+import type { RoleFilterValue } from '@/features/search';
+import type { EventStatusFilterValue } from '@/features/search';
 
 export function useMyEventsFilters() {
   const [roleFilter, setRoleFilter] = useState<RoleFilterValue>('all');

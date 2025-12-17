@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { Edit, AlertCircle, Check, Loader2, Lock } from 'lucide-react';
 import {
   useUpdateCategoryMutation,
   useCheckCategorySlugAvailableQuery,
   useGetCategoryUsageCountQuery,
-} from '@/features/categories/api/categories';
+} from '@/features/categories';
 import { isValidSlug } from '@/lib/utils/slug';
 
 type EditCategoryModalProps = {

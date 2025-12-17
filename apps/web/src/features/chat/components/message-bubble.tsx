@@ -7,15 +7,15 @@
 import Link from 'next/link';
 import React, { useState, useRef } from 'react';
 import type { Message } from '@/features/chat/types';
-import { MessageReactions } from '@/features/chat/components/MessageReactions';
-import { ReadReceipt } from '@/features/chat/components/ReadReceipt';
-import { MessageActions } from '@/features/chat/components/MessageActions';
-import { ReactionsBar } from '@/features/chat/components/ReactionsBar';
-import { MessageMenuPopover } from '@/features/chat/components/MessageMenuPopover';
+import { MessageReactions } from '@/features/chat';
+import { ReadReceipt } from '@/features/chat';
+import { MessageActions } from '@/features/chat';
+import { ReactionsBar } from '@/features/chat';
+import { MessageMenuPopover } from '@/features/chat';
 import {
   ChatAvatar,
   UserAvatarPopover,
-} from '@/features/chat/components/UserAvatarPopover';
+} from '@/features/chat';
 
 type BubbleProps = {
   align?: 'left' | 'right';

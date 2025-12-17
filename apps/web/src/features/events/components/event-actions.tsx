@@ -1,6 +1,6 @@
 'use client';
 
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import type { EventDetailsData } from '@/features/events';
 import {
   Share2,
   MessageCircle,

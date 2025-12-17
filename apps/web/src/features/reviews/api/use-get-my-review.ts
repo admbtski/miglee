@@ -9,7 +9,7 @@ import { gqlClient } from '@/lib/api/client';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { reviewKeys } from './reviews-query-keys';
 
-export function useGetReview(
+export function useGetMyReview(
   variables: GetReviewQueryVariables,
   options?: Omit<UseQueryOptions<GetReviewQuery, Error>, 'queryKey' | 'queryFn'>
 ) {

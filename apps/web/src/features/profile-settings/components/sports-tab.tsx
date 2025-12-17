@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { Edit2, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 
 // Components
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 import { CategoryMultiCombo } from '@/features/categories';
 
 // Features

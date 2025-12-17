@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { buildAvatarUrl } from '@/lib/media/url';
 
 import {

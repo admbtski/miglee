@@ -30,13 +30,13 @@ import {
   useDeleteDmMessage,
   useEditEventMessage,
   useDeleteEventMessage,
-} from '@/features/chat/api/message-actions';
+} from '@/features/chat';
 import {
   useAddDmReaction,
   useRemoveDmReaction,
   useAddEventReaction,
   useRemoveEventReaction,
-} from '@/features/chat/api/reactions';
+} from '@/features/chat';
 
 // =============================================================================
 // Types

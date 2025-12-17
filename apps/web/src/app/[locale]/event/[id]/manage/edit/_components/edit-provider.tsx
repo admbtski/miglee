@@ -12,7 +12,7 @@ import {
 import {
   useEventDetailQuery,
   useUpdateEventMutation,
-} from '@/features/events/api/events';
+} from '@/features/events';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/utils';
 

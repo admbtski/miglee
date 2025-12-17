@@ -9,7 +9,7 @@
 
 'use client';
 
-import { EventDetailClient } from '@/features/events/components/event-detail-client';
+import { EventDetailClient } from '@/features/events';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { ExternalLink, Eye, Info } from 'lucide-react';
 import Link from 'next/link';

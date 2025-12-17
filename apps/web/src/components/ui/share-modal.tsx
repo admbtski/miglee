@@ -3,7 +3,7 @@
 // TODO i18n: All Polish strings need translation keys
 // - "Udostępnij wydarzenie", "Wybierz sposób...", "Skopiowano!", "Kopiuj link", "Zeskanuj kod QR", etc.
 
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import {
   Facebook,
   Instagram,

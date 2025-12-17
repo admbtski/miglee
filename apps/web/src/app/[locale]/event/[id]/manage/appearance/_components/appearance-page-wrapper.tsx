@@ -8,11 +8,11 @@ import {
   type EventAppearanceQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { AppearancePage } from './appearance-page';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '@/features/event-management/components/plan-upgrade-banner';
+} from '@/features/events';
 
 type AppearancePageWrapperProps = {
   eventId: string;

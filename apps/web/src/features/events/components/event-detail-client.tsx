@@ -2,13 +2,13 @@
 
 import { FavouriteButton } from '@/components/ui/favourite-button';
 import { ShareButton } from '@/components/ui/share-button';
-import { ReportButton } from '@/features/reports/components/report-button';
+import { ReportButton } from '@/features/reports';
 import { ShareModal } from '@/components/ui/share-modal';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import { useMeQuery } from '@/features/auth';
-import { computeJoinState } from '@/features/events/utils/event-join-state';
-import { formatParticipantsShort } from '@/features/events/utils/capacity-formatter';
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import { computeJoinState } from '@/features/events';
+import { formatParticipantsShort } from '@/features/events';
+import type { EventDetailsData } from '@/features/events';
 import {
   Calendar,
   Clock,
@@ -38,13 +38,13 @@ import { EventMetadata } from './event-metadata';
 import { EventParticipants } from './event-participants';
 import { EventReviews } from '../../reviews/components/event-reviews';
 import { StickyJoinButton } from './sticky-join-button';
-import { ReportEventModal } from '@/features/reports/components/report-event-modal';
-import { CancelEventModals } from '@/features/events/components/cancel-event-modals';
+import { ReportEventModal } from '@/features/reports';
+import { CancelEventModals } from '@/features/events';
 import {
   CloseJoinModal,
   ReopenJoinModal,
-} from '@/features/events/components/close-join-modals';
-import { DeleteEventModals } from '@/features/events/components/delete-event-modals';
+} from '@/features/events';
+import { DeleteEventModals } from '@/features/events';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildEventCoverUrl } from '@/lib/media/url';
 

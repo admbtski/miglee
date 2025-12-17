@@ -16,7 +16,7 @@ import {
   EventManagementNavbar,
   EventManagementProvider,
   EventManagementSidebar,
-} from '@/features/event-management/components';
+} from '@/features/events';
 
 interface EventManagementLayoutProps {
   children: ReactNode;

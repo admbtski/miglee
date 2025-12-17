@@ -10,7 +10,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   Plus,
   Trash2,
@@ -63,7 +63,7 @@ import type {
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '@/features/event-management/components/plan-upgrade-banner';
+} from '@/features/events';
 
 type JoinRequest = EventJoinRequestsQuery['eventJoinRequests']['items'][0];
 

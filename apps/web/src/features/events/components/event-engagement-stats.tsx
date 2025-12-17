@@ -1,4 +1,4 @@
-import type { EventDetailsData } from '@/features/events/types/event-details';
+import type { EventDetailsData } from '@/features/events';
 import { Heart, MessageSquare, MessageCircle, Users } from 'lucide-react';
 
 type EventEngagementStatsProps = {

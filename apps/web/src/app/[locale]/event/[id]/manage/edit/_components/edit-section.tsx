@@ -5,7 +5,7 @@
 import { ReactNode, useState } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 
-import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
+import { ManagementPageLayout } from '@/features/events';
 
 interface EditSectionProps {
   title: string;

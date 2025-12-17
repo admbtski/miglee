@@ -12,9 +12,9 @@ import {
   useLeaveWaitlistMutation,
   useMyMembershipForEventQuery,
   useRequestJoinEventMutation,
-} from '@/features/events/api/event-members';
-import { formatOpensIn } from '@/features/events/utils/event-join-state';
-import type { EventDetailsData } from '@/features/events/types/event-details';
+} from '@/features/events';
+import { formatOpensIn } from '@/features/events';
+import type { EventDetailsData } from '@/features/events';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle,

@@ -3,7 +3,7 @@
 // TODO i18n: Menu labels need translation keys
 // - "Profile", "Chats", "Events", "Plans & Bills", "Settings", "Dark mode", "Sign out"
 
-import { ThemeSwitchConnected } from '@/features/theme/components/theme-switch-connect';
+import { ThemeSwitchConnected } from '@/features/theme';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { AnimatePresence, motion } from 'framer-motion';

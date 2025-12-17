@@ -12,10 +12,8 @@
 
 'use client';
 
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { de, enUS, pl } from 'date-fns/locale';
-import Link from 'next/link';
 import {
   AlertCircle,
   Bell,
@@ -31,6 +29,8 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useLocalePath } from '@/hooks/use-locale-path';
 
@@ -47,7 +47,7 @@ import type {
 } from '@/lib/api/__generated__/react-query-update';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '@/features/account/components';
+import { AccountPageHeader } from '@/features/account';
 
 type NotificationNode = NonNullable<
   GetNotificationsQuery['notifications']['items']

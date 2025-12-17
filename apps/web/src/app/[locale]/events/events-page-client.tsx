@@ -17,33 +17,35 @@ import { SlidersHorizontal } from 'lucide-react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 
-import { ErrorBoundary } from '@/components/feedback/error-boundary';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Footer } from '@/components/layout/footer';
 import { Navbar } from '@/components/layout/navbar';
 import { useMeQuery } from '@/features/auth';
-import { useEventsListingInfiniteQuery } from '@/features/events/api/events';
+import { useEventsListingInfiniteQuery } from '@/features/events';
 import { appLanguage } from '@/lib/config/language';
 import { EVENTS_CONFIG } from '@/lib/constants/events';
 
-import { DesktopSearchBar } from '@/features/search/components/desktop-search-bar';
-import { EventsGridSimple } from '@/features/events/components/events-list/events-grid-simple';
-import { EventsHeader } from '@/features/events/components/events-list/events-header';
-import { LeftFiltersPanel } from '@/features/search/components/left-filters-panel';
-import { MobileFiltersDrawer } from '@/features/search/components/mobile-filters-drawer';
-import { StickyMobileSearchBar } from '@/features/search/components/mobile-search-bar';
-import { TopDrawer } from '@/features/events/components/top-drawer';
-import type { TopDrawerFocusSection } from '@/features/events/components/top-drawer';
 import {
+  DesktopSearchBar,
+  LeftFiltersPanel,
+  MobileFiltersDrawer,
+  MobileSearchBar,
   useActiveFiltersCount,
   useCommittedFilters,
-  useCommittedMapVisible,
   useCommittedSort,
+  useEventsListingInfiniteQueryVariables,
+  type SearchMeta,
+} from '@/features/search';
+import {
+  EventsGridSimple,
+  EventsHeader,
+  TopDrawer,
+  type TopDrawerFocusSection,
+  useCommittedMapVisible,
   useDebouncedHover,
   useLocationMode,
-  type SearchMeta,
-} from '@/features/events/hooks';
-import type { CommittedFilters } from '@/features/events/types';
-import { useEventsListingInfiniteQueryVariables } from '@/features/search/hooks/use-events-listing-infinite-query-variables';
+  type CommittedFilters,
+} from '@/features/events';
 
 const ServerClusteredMap = lazy(
   () =>
@@ -311,7 +313,7 @@ export function EventsPage() {
         />
 
         {/* Sticky Mobile Search Bar - below navbar, hides on scroll down */}
-        <StickyMobileSearchBar
+        <MobileSearchBar
           q={q}
           city={city}
           activeFiltersCount={activeFilters}

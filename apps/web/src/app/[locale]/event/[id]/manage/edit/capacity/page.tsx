@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Crown, Info, Sparkles, UserPlus, Users } from 'lucide-react';
 
 import { SegmentedControl } from '@/components/ui/segment-control';
-import { RangeSlider } from '@/features/events/components/range-slider';
+import { RangeSlider } from '@/features/events';
 import { useLocalePath } from '@/hooks/use-locale-path';
 
 import { useEdit } from '../_components/edit-provider';

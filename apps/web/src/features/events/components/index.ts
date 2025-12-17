@@ -20,9 +20,8 @@ export * from './capacity-status-card';
 export * from './conditional-navbar';
 export * from './event-actions';
 export * from './event-admin-panel';
-export * from '../../agenda/components/event-agenda';
 export * from './event-chat-modal';
-export * from '../../comments/components/event-comments';
+export * from './event-countdown-pill';
 export * from './event-countdown-timer';
 export * from './event-detail-client';
 export * from './event-detail-skeleton';
@@ -34,28 +33,17 @@ export * from './event-location-map';
 export * from './event-metadata';
 export * from './event-participants';
 export * from './local-push-page';
-// Report modals moved to @/features/reports/components
 export * from './sticky-join-button';
-
-// Reviews (re-exported from reviews feature)
-export * from '../../reviews/components';
 
 // My Events
 export * from './cancel-event-modals';
 export * from './close-join-modals';
 export * from './delete-event-modals';
-// Filters moved to @/features/search/components
 export * from './my-event-card';
 export * from './my-events-states';
 
-// Event Creator (re-exported from event-creation feature)
-export * from '../../event-creation/components/category-selection-provider';
-export * from '../../event-creation/components/success-event-modal';
-export * from '../../event-creation/components/tag-selection-provider';
-
-// Join Form (re-exported from join-form feature)
-export * from '../../join-form/components/join-question-form';
-export * from '../../join-form/components/join-request-modal';
+// Events List Components
+export * from './events-list/events-grid-simple';
 
 // UI Components
 export * from './range-slider';

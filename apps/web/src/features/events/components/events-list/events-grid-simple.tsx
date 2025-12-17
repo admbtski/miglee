@@ -13,12 +13,12 @@
 'use client';
 
 import { memo, useMemo, useEffect, useState, useRef } from 'react';
-import type { EventHoverCallback } from '@/features/events/types/event';
+import type { EventHoverCallback } from '@/features/events';
 import { EventCard, type EventCardProps } from '../event-card';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
-import { notEmptyString } from '@/features/events/utils/event';
+import { notEmptyString } from '@/features/events';
 import type { EventsListingResultFragment_EventsResult_items_Event } from '@/lib/api/__generated__/react-query-update';
 
 // Constants

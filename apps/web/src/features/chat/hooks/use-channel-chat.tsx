@@ -45,23 +45,23 @@ import {
   useGetEventUnreadCount,
   usePublishEventTyping,
   eventChatKeys,
-} from '@/features/chat/api/event-chat';
+} from '@/features/chat';
 import {
   useEventMessageAdded,
   useEventMessageUpdated,
   useEventMessageDeleted,
   useEventTyping,
-} from '@/features/chat/api/event-chat-subscriptions';
+} from '@/features/chat';
 import {
   useAddEventReaction,
   useRemoveEventReaction,
-} from '@/features/chat/api/reactions';
-import { useEventReactionAdded } from '@/features/chat/api/reactions-subscriptions';
+} from '@/features/chat';
+import { useEventReactionAdded } from '@/features/chat';
 import {
   useEditEventMessage,
   useDeleteEventMessage,
-} from '@/features/chat/api/message-actions';
-import { useMyMembershipsQuery } from '@/features/events/api/event-members';
+} from '@/features/chat';
+import { useMyMembershipsQuery } from '@/features/events';
 import { useMeQuery } from '@/features/auth';
 import type { Message } from '../types';
 

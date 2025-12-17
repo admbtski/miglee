@@ -11,7 +11,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   Plus,
   Trash2,
@@ -61,7 +61,7 @@ import type { FeedbackQuestionType } from '@/lib/api/__generated__/react-query-u
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '@/features/event-management/components/plan-upgrade-banner';
+} from '@/features/events';
 import { Button } from '@/components/ui/button';
 
 interface QuestionItem {

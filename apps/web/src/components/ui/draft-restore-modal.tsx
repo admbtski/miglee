@@ -4,7 +4,7 @@
 // - "Znaleziono zapisany szkic", time ago strings, "Tytuł:", "Opis:", warning, button labels
 // TODO i18n: Date formatting should be locale-aware
 
-import { Modal } from '@/components/feedback/modal';
+import { Modal } from '@/components/ui/modal';
 import { FileText, Clock, Trash2, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 

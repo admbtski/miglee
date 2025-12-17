@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, UserCog, AlertTriangle } from 'lucide-react';
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 
 type DiagnosticToolsProps = {
   userId: string;

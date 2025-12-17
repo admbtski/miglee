@@ -15,7 +15,7 @@ import {
   ShieldBan,
   User,
 } from 'lucide-react';
-import { useUsersQuery } from '@/features/users/api/users';
+import { useUsersQuery } from '@/features/users';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { UserDetailModal } from './_components/user-detail-modal';

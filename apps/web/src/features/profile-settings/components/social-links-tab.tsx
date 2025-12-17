@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 // Components
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 
 // Types
 import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-update';

@@ -11,16 +11,16 @@
 
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { toast } from 'sonner';
 import { HelpCircle, Mail, MessageSquare, Send } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { SimpleSelect, SelectOption } from '@/components/forms/simple-select';
+import { SelectOption, SimpleSelect } from '@/components/forms/simple-select';
 import { useLocalePath } from '@/hooks/use-locale-path';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
-import { AccountPageHeader } from '@/features/account/components';
+import { AccountPageHeader } from '@/features/account';
 
 export default function HelpPage() {
   const { t } = useI18n();

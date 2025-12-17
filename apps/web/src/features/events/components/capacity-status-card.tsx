@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import {
   getCapacityStatusConfig,
   type CapacityDetailResult,
-} from '@/features/events/utils/capacity-formatter';
+} from '@/features/events';
 
 type CapacityStatusCardProps = {
   capacityDetails: CapacityDetailResult;

@@ -3,8 +3,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AuthModal, type AuthMode } from './auth-modal';
 import { getQueryClient } from '@/lib/config/query-client';
-import { authKeys } from '@/features/auth/api/auth-query-keys';
-import { useDevLoginMutation } from '@/features/auth/api/use-dev-login';
+import { authKeys } from '@/features/auth';
+import { useDevLoginMutation } from '@/features/auth';
 import { env } from 'process';
 
 export function AuthModalDev({

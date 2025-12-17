@@ -42,9 +42,12 @@ export {
 } from './segment-control';
 export { ShareButton } from './share-button';
 
-// Modals
+// Modals & Dialogs
 export { DraftRestoreModal } from './draft-restore-modal';
+export { ErrorBoundary } from './error-boundary';
 export { ImageCropModal } from './image-crop-modal';
+export { Modal } from './modal';
+export { NoticeModal, type NoticeVariant } from './notice-modal';
 export { ShareModal } from './share-modal';
 
 // Progress & Quota

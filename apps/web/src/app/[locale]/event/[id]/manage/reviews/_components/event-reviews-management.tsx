@@ -11,7 +11,7 @@
 'use client';
 
 import { Star, Info, AlertCircle, TrendingUp } from 'lucide-react';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import { EventReviews } from '@/features/reviews';
 
 // =============================================================================

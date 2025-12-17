@@ -6,7 +6,7 @@
 import * as React from 'react';
 import { ArrowLeft, Clock, Lock, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SponsorPlan } from '@/features/events/types/sponsorship';
+import { SponsorPlan } from '@/features/events';
 import {
   useCreateEventSponsorshipCheckout,
   EVENT_PLAN_PRICES,

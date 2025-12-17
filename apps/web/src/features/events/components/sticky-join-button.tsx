@@ -7,8 +7,8 @@ import {
   useLeaveEventMutationMembers,
   useLeaveWaitlistMutation,
   useRequestJoinEventMutation,
-} from '@/features/events/api/event-members';
-import type { EventDetailsData } from '@/features/events/types/event-details';
+} from '@/features/events';
+import type { EventDetailsData } from '@/features/events';
 import {
   JoinRequestModal,
   useEventJoinQuestionsQuery,

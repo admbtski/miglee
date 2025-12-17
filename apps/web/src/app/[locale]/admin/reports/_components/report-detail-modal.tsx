@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal } from '@/components/feedback/modal';
-import { NoticeModal } from '@/components/feedback/notice-modal';
-import { useGetReports } from '@/features/reports/api/use-get-reports';
+import { Modal } from '@/components/ui/modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
+import { useGetReports } from '@/features/reports';
 import {
   ReportStatus,
   ReportEntity,
@@ -18,8 +18,8 @@ import {
   Clock,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { useDeleteReport } from '@/features/reports/api/use-delete-report';
-import { useUpdateReportStatus } from '@/features/reports/api/use-update-report-status';
+import { useDeleteReport } from '@/features/reports';
+import { useUpdateReportStatus } from '@/features/reports';
 
 type ReportDetailModalProps = {
   reportId: string;

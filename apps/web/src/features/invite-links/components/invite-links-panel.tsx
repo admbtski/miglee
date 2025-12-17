@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 
 import { Avatar } from '@/components/ui/avatar';
-import { useEventDetailQuery } from '@/features/events/api/events';
+import { useEventDetailQuery } from '@/features/events';
 import {
   useCreateEventInviteLinkMutation,
   useDeleteEventInviteLinkMutation,
@@ -37,7 +37,7 @@ import { EditLinkModal } from '../../../app/[locale]/event/[id]/manage/invite-li
 import {
   PlanUpgradeBanner,
   type SponsorshipPlan,
-} from '@/features/event-management/components/plan-upgrade-banner';
+} from '@/features/events';
 
 interface InviteLinksPanelProps {
   eventId: string;

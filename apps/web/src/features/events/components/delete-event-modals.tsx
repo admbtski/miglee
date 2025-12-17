@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { NoticeModal } from '@/components/feedback/notice-modal';
-import { useDeleteEventMutation } from '@/features/events/api/events';
+import { NoticeModal } from '@/components/ui/notice-modal';
+import { useDeleteEventMutation } from '@/features/events';
 
 type Props = {
   /** ID of event to delete; when null, the confirm dialog is closed */

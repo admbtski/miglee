@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/components/feedback/modal';
-import { NoticeModal } from '@/components/feedback/notice-modal';
-import { useAdminBulkUpdateEventsMutation } from '@/features/admin/api/admin-events';
+import { Modal } from '@/components/ui/modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
+import { useAdminBulkUpdateEventsMutation } from '@/features/admin';
 import { Visibility } from '@/lib/api/__generated__/react-query-update';
 import { EyeOff, Eye, Lock, Unlock, AlertCircle } from 'lucide-react';
 

@@ -4,11 +4,11 @@ import { useState } from 'react';
 import {
   useAdminReviews,
   useAdminDeleteReview,
-} from '@/features/admin/api/admin-comments';
+} from '@/features/admin';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { Trash2, Star, Eye } from 'lucide-react';
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 
 export default function ReviewsPage() {
   const [eventId, setEventId] = useState('');

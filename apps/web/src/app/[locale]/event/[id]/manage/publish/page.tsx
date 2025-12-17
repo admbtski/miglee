@@ -26,11 +26,11 @@ import {
   usePublishEventMutation,
   useScheduleEventPublicationMutation,
   useUnpublishEventMutation,
-} from '@/features/events/api/events';
+} from '@/features/events';
 import { toast } from '@/lib/utils';
 
-import { useEventManagement } from '@/features/event-management/components/event-management-provider';
-import { ManagementPageLayout } from '@/features/event-management/components/management-page-layout';
+import { useEventManagement } from '@/features/events';
+import { ManagementPageLayout } from '@/features/events';
 
 // Local enum until codegen runs
 enum PublicationStatus {

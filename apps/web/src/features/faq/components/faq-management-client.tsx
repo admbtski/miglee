@@ -11,7 +11,7 @@ import { useState } from 'react';
 import {
   useEventDetailQuery,
   useUpdateEventFaqsMutation,
-} from '@/features/events/api/events';
+} from '@/features/events';
 import {
   HelpCircle,
   Plus,

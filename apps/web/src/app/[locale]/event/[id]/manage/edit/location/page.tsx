@@ -19,11 +19,11 @@ import {
 
 import { LocationCombo } from '@/components/forms/location-combobox';
 import { SegmentedControl } from '@/components/ui/segment-control';
-import { MapPreview } from '@/features/maps/components/map-preview';
+import { MapPreview } from '@/features/maps';
 import {
   reverseGeocode,
   reverseGeocodeLatLng,
-} from '@/features/maps/utils/geocode';
+} from '@/features/maps';
 
 import { useEdit } from '../_components/edit-provider';
 import { EditSection, FormField, InfoBox } from '../_components/edit-section';

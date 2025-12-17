@@ -1,4 +1,4 @@
-import type { JoinStateResult } from '@/features/events/utils/event-join-state';
+import type { JoinStateResult } from '@/features/events';
 
 /**
  * Typ danych dla detalu wydarzenia

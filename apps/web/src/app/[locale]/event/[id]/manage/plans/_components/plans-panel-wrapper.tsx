@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { PlansPanel } from './plans-panel';
 import { CheckoutPanel } from './checkout-panel';
-import { SponsorPlan } from '@/features/events/types/sponsorship';
+import { SponsorPlan } from '@/features/events';
 import { useEventSponsorship } from '@/features/billing';
 
 interface PlansPanelWrapperProps {

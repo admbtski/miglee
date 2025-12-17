@@ -6,13 +6,13 @@ import {
   useEventMemberStatsQuery,
   useApproveMembershipMutation,
   useRejectMembershipMutation,
-} from '@/features/events/api/event-members';
+} from '@/features/events';
 import {
   useAdminUpdateMemberRoleMutation,
   useAdminKickMemberMutation,
   useAdminBanMemberMutation,
   useAdminUnbanMemberMutation,
-} from '@/features/admin/api/admin-event-members';
+} from '@/features/admin';
 import {
   EventMemberStatus,
   EventMemberRole,
@@ -36,7 +36,7 @@ import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 
 type MembersTabProps = {
   eventId: string;

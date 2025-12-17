@@ -13,22 +13,8 @@ import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
 /* -------------------------------- TYPES ---------------------------------- */
 
-export interface EventPermissions {
-  /** User is the owner of the event */
-  isOwner: boolean;
-  /** User is a moderator of the event */
-  isModerator: boolean;
-  /** User is a participant (joined member) */
-  isParticipant: boolean;
-  /** User is an app-level admin */
-  isAppAdmin: boolean;
-  /** User is an app-level moderator */
-  isAppModerator: boolean;
-  /** User can access management interface */
-  canManage: boolean;
-  /** Loading state */
-  isLoading: boolean;
-}
+// EventPermissions type is now exported from hooks/use-event-permissions.ts
+// to avoid circular dependency issues
 
 /* ----------------------------- QUERY KEYS -------------------------------- */
 

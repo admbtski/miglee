@@ -1,17 +1,10 @@
 /**
  * Events Feature API Hooks
+ * 
+ * Note: For join-form, comments, invite-links, checkin, reviews, and agenda APIs,
+ * import directly from those features: @/features/join-form, @/features/comments, etc.
  */
 
 export * from './events';
 export * from './event-members';
 export * from './event-permissions';
-export * from '../../join-form/api/join-form';
-export * from '../../comments/api/comments';
-export * from '../../invite-links/api/invite-links';
-export * from '../../agenda/api/use-update-event-agenda';
-
-// Checkin (re-exported from checkin feature)
-export * from '../../checkin/api/checkin';
-
-// Reviews (re-exported from reviews feature)
-export * from '../../reviews/api';

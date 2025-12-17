@@ -15,7 +15,12 @@ export * from './api';
 export { MapPreview } from './components/map-preview';
 
 // Hooks
-export { usePlacesAutocomplete } from './hooks/use-places-autocomplete';
+export { 
+  fetchPlaceDetailsFromSuggestion,
+  usePlacesAutocomplete,
+  type Suggestion,
+  type Bias,
+} from './hooks/use-places-autocomplete';
 
 // Utils
 export {

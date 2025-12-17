@@ -1,7 +1,7 @@
 'use client';
 
-import { NoticeModal } from '@/components/feedback/notice-modal';
-import { useCancelEventMutation } from '@/features/events/api/events';
+import { NoticeModal } from '@/components/ui/notice-modal';
+import { useCancelEventMutation } from '@/features/events';
 import { useCallback, useState } from 'react';
 
 type Props = {

@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useEventsQuery } from '@/features/events/api/events';
+import { useEventsQuery } from '@/features/events';
 import {
   useAdminCancelEventMutation,
   useAdminDeleteEventMutation,
   useAdminRestoreEventMutation,
-} from '@/features/admin/api/admin-events';
+} from '@/features/admin';
 import {
   Visibility,
   EventStatus,
@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { EventDetailModal } from './_components/event-detail-modal';
 import { BulkActionsModal } from './_components/bulk-actions-modal';
-import { NoticeModal } from '@/components/feedback/notice-modal';
+import { NoticeModal } from '@/components/ui/notice-modal';
 
 export default function EventPage() {
   const [keywords, setKeywords] = useState('');
