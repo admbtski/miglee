@@ -21,19 +21,10 @@ export function PaymentResultModal({ context }: PaymentResultModalProps) {
     const canceled = searchParams.get('canceled');
     const sessionId = searchParams.get('session_id');
 
-    console.log('[PaymentResultModal]', {
-      success,
-      canceled,
-      sessionId,
-      context,
-    });
-
     if (success === 'true' && sessionId) {
-      console.log('[PaymentResultModal] Opening success modal');
       setStatus('success');
       setIsOpen(true);
     } else if (canceled === 'true') {
-      console.log('[PaymentResultModal] Opening failed modal');
       setStatus('failed');
       setIsOpen(true);
     }

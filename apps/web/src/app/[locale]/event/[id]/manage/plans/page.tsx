@@ -5,11 +5,12 @@
 
 // TODO i18n: metadata title and description
 
-import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 
 import { ManagementPageLayout } from '@/features/events';
+import { PaymentResultModal } from '@/features/subscription';
 import { PlansPanelWrapper } from './_components/plans-panel-wrapper';
 
 // =============================================================================
@@ -100,6 +101,9 @@ export default async function EventPlansPage({ params }: PageProps) {
     >
       <Suspense fallback={<PlansLoadingSkeleton />}>
         <PlansPanelWrapper eventId={id} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <PaymentResultModal context="event" />
       </Suspense>
     </ManagementPageLayout>
   );

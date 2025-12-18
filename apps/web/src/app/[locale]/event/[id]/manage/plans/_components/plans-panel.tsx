@@ -3,18 +3,18 @@
 // TODO i18n: All hardcoded Polish strings need translation keys
 // TODO i18n: Currency formatting should be locale-aware
 
-import * as React from 'react';
-import { Check, Sparkles, Zap, Crown, Info } from 'lucide-react';
-import { SponsorPlan } from '@/features/events';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import {
-  EVENT_PLAN_PRICES,
-  EVENT_PLAN_FEATURES,
-  EVENT_PLAN_DESCRIPTIONS,
-  EVENT_SPONSORSHIP_LIFETIME_NOTICE,
   ACTIONS_NEVER_EXPIRE,
+  EVENT_PLAN_DESCRIPTIONS,
+  EVENT_PLAN_FEATURES,
+  EVENT_PLAN_PRICES,
+  EVENT_SPONSORSHIP_LIFETIME_NOTICE,
 } from '@/features/billing';
+import { SponsorPlan } from '@/features/events';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { Check, Crown, Info, Sparkles, Zap } from 'lucide-react';
+import * as React from 'react';
 
 type PlanId = 'free' | 'plus' | 'pro';
 
