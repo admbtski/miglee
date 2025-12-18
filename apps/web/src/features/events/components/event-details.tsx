@@ -54,7 +54,7 @@ export function EventDetails({ event }: EventDetailsProps) {
                 {event.addressVisibility === 'PUBLIC' && event.address ? (
                   <p className="break-words text-md text-zinc-800 dark:text-zinc-200">
                     {event.address}
-                    {event.radiusKm && event.radiusKm > 0 && (
+                    {(event?.radiusKm || 0) > 0 && (
                       <span className="ml-2 text-xs text-zinc-500">
                         (obszar w promieniu {event.radiusKm} km)
                       </span>

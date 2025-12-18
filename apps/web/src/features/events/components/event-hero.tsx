@@ -284,7 +284,14 @@ export function EventHero({ event }: EventHeroProps) {
           {canSeeLocation && (
             <span className="inline-flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
               <MapPinned className="w-4 h-4 text-blue-600 opacity-70 dark:text-blue-400" />
-              <span className="truncate max-w-[300px]">{event.address}</span>
+              <span className="truncate max-w-[300px]">
+                {event.address}
+                {event.radiusKm && event.radiusKm > 0 && (
+                  <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    (±{event.radiusKm} km)
+                  </span>
+                )}
+              </span>
             </span>
           )}
 

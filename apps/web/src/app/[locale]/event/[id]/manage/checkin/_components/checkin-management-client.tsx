@@ -24,7 +24,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useImperativeHandle, forwardRef } from 'react';
 
 import {
   EventQRCode,
@@ -47,343 +47,365 @@ import { RejectCheckinModal } from './reject-checkin-modal';
 
 type TabId = 'overview' | 'settings' | 'qr' | 'logs';
 
-export function CheckinManagementClient() {
-  const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const { event, isLoading, refetch } = useEventManagement();
+export interface CheckinManagementRef {
+  refresh: () => Promise<void>;
+}
 
-  // Reject modal state
-  const [rejectModalOpen, setRejectModalOpen] = useState(false);
-  const [rejectUserId, setRejectUserId] = useState<string | null>(null);
-  const [rejectUserName, setRejectUserName] = useState<string>('');
-  const [rejectMethod, setRejectMethod] = useState<CheckinMethod | null>(null);
+export const CheckinManagementClient = forwardRef<CheckinManagementRef>(
+  (_props, ref) => {
+    const [activeTab, setActiveTab] = useState<TabId>('overview');
+    const { event, isLoading, refetch } = useEventManagement();
 
-  // Query for event members
-  const {
-    data: membersData,
-    isLoading: membersLoading,
-    error: membersError,
-    refetch: refetchMembers,
-  } = useEventMembersQuery(
-    { eventId: event?.id || '' },
-    { enabled: !!event?.id }
-  );
-
-  // Query for check-in logs
-  const {
-    data: logsData,
-    isLoading: logsLoading,
-    refetch: refetchLogs,
-  } = useGetEventCheckinLogsQuery(
-    {
-      eventId: event?.id ?? '',
-      limit: 50,
-    },
-    {
-      enabled: !!event?.id && activeTab === 'logs',
-    }
-  );
-
-  // Mutation for updating check-in config
-  const updateConfigMutation = useUpdateEventCheckinConfigMutation({
-    onSuccess: () => {
-      refetch();
-      toast.success('Settings updated');
-    },
-    onError: (error) => {
-      toast.error('Failed to update settings', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
-  });
-
-  // Mutations for check-in actions
-  const checkInMutation = useCheckInMemberMutation({
-    onSuccess: (data) => {
-      refetchMembers();
-      refetchLogs();
-      toast.success('Member checked in', {
-        description: data?.checkInMember?.member?.user?.name || 'Success',
-      });
-    },
-    onError: (error) => {
-      toast.error('Check-in failed', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
-  });
-
-  const uncheckMutation = useUncheckInMemberMutation({
-    onSuccess: () => {
-      refetchMembers();
-      refetchLogs();
-      toast.success('Member unchecked');
-    },
-    onError: (error) => {
-      toast.error('Uncheck failed', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
-  });
-
-  if (isLoading) {
-    return <LoadingSkeleton />;
-  }
-
-  if (!event) {
-    return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-800/50 dark:bg-red-900/20">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
-          <div>
-            <h3 className="font-semibold text-red-900 dark:text-red-100">
-              Event not found
-            </h3>
-            <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-              Unable to load event data. Please try refreshing the page.
-            </p>
-          </div>
-        </div>
-      </div>
+    // Reject modal state
+    const [rejectModalOpen, setRejectModalOpen] = useState(false);
+    const [rejectUserId, setRejectUserId] = useState<string | null>(null);
+    const [rejectUserName, setRejectUserName] = useState<string>('');
+    const [rejectMethod, setRejectMethod] = useState<CheckinMethod | null>(
+      null
     );
-  }
 
-  // Get members from query (eventMembers is already an array)
-  const members = Array.isArray(membersData?.eventMembers)
-    ? membersData.eventMembers
-    : [];
-  const stats = {
-    total: members.length,
-    checkedIn: members.filter((m: any) => m.isCheckedIn).length,
-    percentage:
-      members.length > 0
-        ? Math.round(
-            (members.filter((m: any) => m.isCheckedIn).length /
-              members.length) *
-              100
-          )
-        : 0,
-  };
+    // Query for event members
+    const {
+      data: membersData,
+      isLoading: membersLoading,
+      error: membersError,
+      refetch: refetchMembers,
+    } = useEventMembersQuery(
+      { eventId: event?.id || '' },
+      { enabled: !!event?.id }
+    );
 
-  const handleToggleEnabled = async () => {
-    if (!event.id) return;
+    // Query for check-in logs
+    const {
+      data: logsData,
+      isLoading: logsLoading,
+      refetch: refetchLogs,
+    } = useGetEventCheckinLogsQuery(
+      {
+        eventId: event?.id ?? '',
+        limit: 50,
+      },
+      {
+        enabled: !!event?.id && activeTab === 'logs',
+      }
+    );
 
-    try {
-      await updateConfigMutation.mutateAsync({
-        input: {
-          eventId: event.id,
-          checkinEnabled: !event.checkinEnabled,
-          enabledCheckinMethods: event.enabledCheckinMethods as CheckinMethod[],
+    // Mutation for updating check-in config
+    const updateConfigMutation = useUpdateEventCheckinConfigMutation({
+      onSuccess: () => {
+        refetch();
+        toast.success('Settings updated');
+      },
+      onError: (error) => {
+        toast.error('Failed to update settings', {
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
+      },
+    });
+
+    // Mutations for check-in actions
+    const checkInMutation = useCheckInMemberMutation({
+      onSuccess: (data) => {
+        refetchMembers();
+        refetchLogs();
+        toast.success('Member checked in', {
+          description: data?.checkInMember?.member?.user?.name || 'Success',
+        });
+      },
+      onError: (error) => {
+        toast.error('Check-in failed', {
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
+      },
+    });
+
+    const uncheckMutation = useUncheckInMemberMutation({
+      onSuccess: () => {
+        refetchMembers();
+        refetchLogs();
+        toast.success('Member unchecked');
+      },
+      onError: (error) => {
+        toast.error('Uncheck failed', {
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
+      },
+    });
+
+    // Expose refresh method via ref
+    useImperativeHandle(
+      ref,
+      () => ({
+        refresh: async () => {
+          await Promise.all([refetch(), refetchMembers(), refetchLogs()]);
         },
-      });
-    } catch (error) {
-      // Error handled by mutation onError
+      }),
+      [refetch, refetchMembers, refetchLogs]
+    );
+
+    if (isLoading) {
+      return <LoadingSkeleton />;
     }
-  };
 
-  const handleToggleMethod = async (method: CheckinMethod) => {
-    if (!event.id) return;
-
-    const currentMethods = (event.enabledCheckinMethods ||
-      []) as CheckinMethod[];
-    const newMethods = currentMethods.includes(method)
-      ? currentMethods.filter((m) => m !== method)
-      : [...currentMethods, method];
-
-    try {
-      await updateConfigMutation.mutateAsync({
-        input: {
-          eventId: event.id,
-          checkinEnabled: event.checkinEnabled || false,
-          enabledCheckinMethods: newMethods,
-        },
-      });
-    } catch (error) {
-      // Error handled by mutation onError
-    }
-  };
-
-  const handleCheckIn = async (userId: string) => {
-    if (!event.id) return;
-
-    try {
-      await checkInMutation.mutateAsync({
-        input: {
-          eventId: event.id,
-          userId,
-          method: CheckinMethod.ModeratorPanel,
-        },
-      });
-    } catch (error) {
-      // Error handled by mutation onError
-    }
-  };
-
-  const handleUncheck = async (userId: string) => {
-    if (!event.id) return;
-
-    try {
-      await uncheckMutation.mutateAsync({
-        input: {
-          eventId: event.id,
-          userId,
-          method: CheckinMethod.ModeratorPanel,
-        },
-      });
-    } catch (error) {
-      // Error handled by mutation onError
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Summary Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          label="Total Participants"
-          value={stats.total}
-          description="JOINED members"
-          icon={Users}
-          color="zinc"
-        />
-        <StatCard
-          label="Checked In"
-          value={stats.checkedIn}
-          description="Present at event"
-          icon={CheckCircle2}
-          color="emerald"
-        />
-        <StatCard
-          label="Attendance Rate"
-          value={`${stats.percentage}%`}
-          description="Check-in percentage"
-          icon={CheckCircle2}
-          color="indigo"
-        />
-      </div>
-
-      {/* Check-in disabled notice */}
-      {!event.checkinEnabled && (
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6 dark:border-blue-800/50 dark:bg-blue-900/20">
+    if (!event) {
+      return (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 dark:border-red-800/50 dark:bg-red-900/20">
           <div className="flex items-start gap-3">
-            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
             <div>
-              <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                Check-in is disabled
+              <h3 className="font-semibold text-red-900 dark:text-red-100">
+                Event not found
               </h3>
-              <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                Enable check-in in the settings tab to start tracking attendee
-                presence at your event.
+              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                Unable to load event data. Please try refreshing the page.
               </p>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-              >
-                Go to Settings
-              </button>
             </div>
           </div>
         </div>
-      )}
+      );
+    }
 
-      {/* Tabs */}
-      <div className="border-b border-zinc-200 dark:border-zinc-800">
-        <nav className="-mb-px flex gap-1" aria-label="Tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={[
-                'group inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
-                activeTab === tab.id
-                  ? 'border-indigo-600 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400'
-                  : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-300',
-              ].join(' ')}
-            >
-              <tab.icon
+    // Get members from query (eventMembers is already an array)
+    const members = Array.isArray(membersData?.eventMembers)
+      ? membersData.eventMembers
+      : [];
+    const stats = {
+      total: members.length,
+      checkedIn: members.filter((m: any) => m.isCheckedIn).length,
+      percentage:
+        members.length > 0
+          ? Math.round(
+              (members.filter((m: any) => m.isCheckedIn).length /
+                members.length) *
+                100
+            )
+          : 0,
+    };
+
+    const handleToggleEnabled = async () => {
+      if (!event.id) return;
+
+      try {
+        await updateConfigMutation.mutateAsync({
+          input: {
+            eventId: event.id,
+            checkinEnabled: !event.checkinEnabled,
+            enabledCheckinMethods:
+              event.enabledCheckinMethods as CheckinMethod[],
+          },
+        });
+      } catch (error) {
+        // Error handled by mutation onError
+      }
+    };
+
+    const handleToggleMethod = async (method: CheckinMethod) => {
+      if (!event.id) return;
+
+      const currentMethods = (event.enabledCheckinMethods ||
+        []) as CheckinMethod[];
+      const newMethods = currentMethods.includes(method)
+        ? currentMethods.filter((m) => m !== method)
+        : [...currentMethods, method];
+
+      try {
+        await updateConfigMutation.mutateAsync({
+          input: {
+            eventId: event.id,
+            checkinEnabled: event.checkinEnabled || false,
+            enabledCheckinMethods: newMethods,
+          },
+        });
+      } catch (error) {
+        // Error handled by mutation onError
+      }
+    };
+
+    const handleCheckIn = async (userId: string) => {
+      if (!event.id) return;
+
+      try {
+        await checkInMutation.mutateAsync({
+          input: {
+            eventId: event.id,
+            userId,
+            method: CheckinMethod.ModeratorPanel,
+          },
+        });
+      } catch (error) {
+        // Error handled by mutation onError
+      }
+    };
+
+    const handleUncheck = async (userId: string) => {
+      if (!event.id) return;
+
+      try {
+        await uncheckMutation.mutateAsync({
+          input: {
+            eventId: event.id,
+            userId,
+            method: CheckinMethod.ModeratorPanel,
+          },
+        });
+      } catch (error) {
+        // Error handled by mutation onError
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Summary Stats Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Total Participants"
+            value={stats.total}
+            description="JOINED members"
+            icon={Users}
+            color="zinc"
+          />
+          <StatCard
+            label="Checked In"
+            value={stats.checkedIn}
+            description="Present at event"
+            icon={CheckCircle2}
+            color="emerald"
+          />
+          <StatCard
+            label="Attendance Rate"
+            value={`${stats.percentage}%`}
+            description="Check-in percentage"
+            icon={CheckCircle2}
+            color="indigo"
+          />
+        </div>
+
+        {/* Check-in disabled notice */}
+        {!event.checkinEnabled && (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6 dark:border-blue-800/50 dark:bg-blue-900/20">
+            <div className="flex items-start gap-3">
+              <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+              <div>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+                  Check-in is disabled
+                </h3>
+                <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                  Enable check-in in the settings tab to start tracking attendee
+                  presence at your event.
+                </p>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                >
+                  Go to Settings
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="border-b border-zinc-200 dark:border-zinc-800">
+          <nav className="-mb-px flex gap-1" aria-label="Tabs">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 className={[
-                  'h-4 w-4',
+                  'group inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
                   activeTab === tab.id
-                    ? 'text-indigo-600 dark:text-indigo-400'
-                    : 'text-zinc-400 group-hover:text-zinc-500 dark:text-zinc-500 dark:group-hover:text-zinc-400',
+                    ? 'border-indigo-600 text-indigo-600 dark:border-indigo-500 dark:text-indigo-400'
+                    : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-300',
                 ].join(' ')}
-              />
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+              >
+                <tab.icon
+                  className={[
+                    'h-4 w-4',
+                    activeTab === tab.id
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-zinc-400 group-hover:text-zinc-500 dark:text-zinc-500 dark:group-hover:text-zinc-400',
+                  ].join(' ')}
+                />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-      {/* Tab Content */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        {activeTab === 'overview' && (
-          <OverviewTab
-            members={members}
-            isLoading={membersLoading}
-            error={membersError as Error | undefined}
-            onCheckIn={handleCheckIn}
-            onUncheck={handleUncheck}
-            isCheckingIn={checkInMutation.isPending}
-            isUnchecking={uncheckMutation.isPending}
-            eventId={event.id}
-            onOpenRejectModal={(userId, userName, method) => {
-              setRejectUserId(userId);
-              setRejectUserName(userName);
-              setRejectMethod(method || null);
-              setRejectModalOpen(true);
+        {/* Tab Content */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          {activeTab === 'overview' && (
+            <OverviewTab
+              members={members}
+              isLoading={membersLoading}
+              error={membersError as Error | undefined}
+              onCheckIn={handleCheckIn}
+              onUncheck={handleUncheck}
+              isCheckingIn={checkInMutation.isPending}
+              isUnchecking={uncheckMutation.isPending}
+              eventId={event.id}
+              onOpenRejectModal={(userId, userName, method) => {
+                setRejectUserId(userId);
+                setRejectUserName(userName);
+                setRejectMethod(method || null);
+                setRejectModalOpen(true);
+              }}
+            />
+          )}
+          {activeTab === 'settings' && (
+            <SettingsTab
+              checkinEnabled={event.checkinEnabled || false}
+              enabledMethods={
+                (event.enabledCheckinMethods || []) as CheckinMethod[]
+              }
+              onToggleEnabled={handleToggleEnabled}
+              onToggleMethod={handleToggleMethod}
+              isUpdating={updateConfigMutation.isPending}
+            />
+          )}
+          {activeTab === 'qr' && (
+            <QrTab
+              checkinEnabled={event.checkinEnabled || false}
+              enabledMethods={
+                (event.enabledCheckinMethods || []) as CheckinMethod[]
+              }
+              eventCheckinToken={event.eventCheckinToken}
+              eventId={event.id}
+              eventName={event.title || 'Event'}
+            />
+          )}
+          {activeTab === 'logs' && (
+            <LogsTab
+              eventId={event.id}
+              logs={logsData?.items || []}
+              isLoading={logsLoading}
+              pageInfo={logsData?.pageInfo}
+            />
+          )}
+        </div>
+
+        {/* Reject Modal */}
+        {rejectUserId && (
+          <RejectCheckinModal
+            isOpen={rejectModalOpen}
+            onClose={() => {
+              setRejectModalOpen(false);
+              setRejectUserId(null);
+              setRejectUserName('');
+              setRejectMethod(null);
             }}
-          />
-        )}
-        {activeTab === 'settings' && (
-          <SettingsTab
-            checkinEnabled={event.checkinEnabled || false}
-            enabledMethods={
-              (event.enabledCheckinMethods || []) as CheckinMethod[]
-            }
-            onToggleEnabled={handleToggleEnabled}
-            onToggleMethod={handleToggleMethod}
-            isUpdating={updateConfigMutation.isPending}
-          />
-        )}
-        {activeTab === 'qr' && (
-          <QrTab
-            checkinEnabled={event.checkinEnabled || false}
-            enabledMethods={
-              (event.enabledCheckinMethods || []) as CheckinMethod[]
-            }
-            eventCheckinToken={event.eventCheckinToken}
             eventId={event.id}
-            eventName={event.title || 'Event'}
-          />
-        )}
-        {activeTab === 'logs' && (
-          <LogsTab
-            eventId={event.id}
-            logs={logsData?.items || []}
-            isLoading={logsLoading}
-            pageInfo={logsData?.pageInfo}
+            userId={rejectUserId}
+            userName={rejectUserName}
+            method={rejectMethod}
           />
         )}
       </div>
+    );
+  }
+);
 
-      {/* Reject Modal */}
-      {rejectUserId && (
-        <RejectCheckinModal
-          isOpen={rejectModalOpen}
-          onClose={() => {
-            setRejectModalOpen(false);
-            setRejectUserId(null);
-            setRejectUserName('');
-            setRejectMethod(null);
-          }}
-          eventId={event.id}
-          userId={rejectUserId}
-          userName={rejectUserName}
-          method={rejectMethod}
-        />
-      )}
-    </div>
-  );
-}
+CheckinManagementClient.displayName = 'CheckinManagementClient';
 
 // =============================================================================
 // Tabs Configuration

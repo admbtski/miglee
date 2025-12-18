@@ -5,20 +5,18 @@
 
 // TODO i18n: metadata title and description
 
-import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
-import type { Metadata } from 'next';
+'use client';
 
-import { CheckinManagementClient } from './_components/checkin-management-client';
+import { Suspense, useRef } from 'react';
+import { notFound, useParams } from 'next/navigation';
+import { RefreshCw } from 'lucide-react';
+
+import {
+  CheckinManagementClient,
+  type CheckinManagementRef,
+} from './_components/checkin-management-client';
 import { ManagementPageLayout } from '@/features/events';
-
-// =============================================================================
-// Types
-// =============================================================================
-
-type PageProps = {
-  params: Promise<{ id: string }>;
-};
+import { useEventManagement } from '@/features/events';
 
 // =============================================================================
 // Loading Skeleton
@@ -63,21 +61,40 @@ function CheckinLoadingSkeleton() {
 // Page Component
 // =============================================================================
 
-export default async function EventCheckinPage({ params }: PageProps) {
-  const { id } = await params;
+export default function EventCheckinPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  const { isLoading } = useEventManagement();
+  const checkinRef = useRef<CheckinManagementRef>(null);
 
   if (!id) {
     notFound();
   }
+
+  const handleRefresh = async () => {
+    // Call the refresh method exposed by CheckinManagementClient
+    await checkinRef.current?.refresh();
+  };
 
   return (
     <ManagementPageLayout
       // TODO i18n
       title="Check-in & Presence"
       description="Manage attendee check-ins and track event presence"
+      actions={
+        <button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          title="Refresh data"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      }
     >
       <Suspense fallback={<CheckinLoadingSkeleton />}>
-        <CheckinManagementClient />
+        <CheckinManagementClient ref={checkinRef} />
       </Suspense>
     </ManagementPageLayout>
   );
@@ -87,14 +104,5 @@ export default async function EventCheckinPage({ params }: PageProps) {
 // Metadata
 // =============================================================================
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  await params;
-
-  return {
-    // TODO i18n
-    title: 'Check-in & Presence | Miglee',
-    description: 'Manage event check-ins and track attendee presence',
-  };
-}
+// Metadata is not supported for client components
+// If needed, move metadata generation to parent layout

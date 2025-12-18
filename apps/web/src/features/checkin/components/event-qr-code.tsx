@@ -34,8 +34,8 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
 
   if (!token) {
     return (
-      <div className="rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 p-8 text-center">
-        <div className="text-sm text-zinc-500">
+      <div className="rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="text-sm text-zinc-600 dark:text-zinc-400">
           QR Code not generated yet. Enable check-in to generate a QR code.
         </div>
       </div>
@@ -268,58 +268,79 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
 
   return (
     <>
-      <div className="space-y-4">
-        {/* QR Code Display */}
-        <div className="flex flex-col items-center justify-center rounded-lg border border-zinc-200 bg-white p-8">
-          <div className="mb-4 text-center">
-            <div className="text-lg font-semibold text-zinc-900">
-              {eventName}
+      <div className="space-y-6">
+        {/* Security Notice */}
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/40 dark:bg-amber-950/30">
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/50">
+              <RefreshCw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             </div>
-            <div className="text-sm text-zinc-600">Scan to check in</div>
+            <div>
+              <div className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                Security Note
+              </div>
+              <div className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                This QR code allows anyone to check in to your event. Keep it
+                secure and rotate the token if it gets compromised.
+              </div>
+            </div>
           </div>
+        </div>
 
-          <div className="rounded-lg bg-white p-4 shadow-sm">
-            <QRCodeSVG
-              id={`qr-code-${eventId}`}
-              value={checkinUrl}
-              size={256}
-              level="H"
-              includeMargin
-              bgColor="#ffffff"
-              fgColor="#18181b"
-            />
-          </div>
+        {/* QR Code Display */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col items-center justify-center">
+            <div className="mb-6 text-center">
+              <div className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+                {eventName}
+              </div>
+              <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                Scan to check in
+              </div>
+            </div>
 
-          <div className="mt-4 text-center">
-            <div className="text-xs text-zinc-500 font-mono break-all max-w-xs">
-              {checkinUrl}
+            <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10">
+              <QRCodeSVG
+                id={`qr-code-${eventId}`}
+                value={checkinUrl}
+                size={256}
+                level="H"
+                includeMargin
+                bgColor="#ffffff"
+                fgColor="#18181b"
+              />
+            </div>
+
+            <div className="mt-6 text-center">
+              <div className="max-w-xs break-all rounded-lg bg-zinc-50 px-3 py-2 font-mono text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                {checkinUrl}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={() => {
-              console.log('adam');
               console.log('[EventQRCode] Full Screen button clicked');
               setIsFullScreen(true);
             }}
-            className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
           >
             <Maximize2 className="h-4 w-4" />
             Full Screen
           </button>
           <button
             onClick={handleDownloadPNG}
-            className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
           >
             <ImageDown className="h-4 w-4" />
             Download PNG
           </button>
           <button
             onClick={handleDownloadPDF}
-            className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
           >
             <FileDown className="h-4 w-4" />
             Download PDF
@@ -327,22 +348,13 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
           <button
             onClick={handleRotateToken}
             disabled={rotateTokenMutation.isPending}
-            className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 shadow-sm transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-900/40"
           >
             <RefreshCw
               className={`h-4 w-4 ${rotateTokenMutation.isPending ? 'animate-spin' : ''}`}
             />
             {rotateTokenMutation.isPending ? 'Rotating...' : 'Rotate Token'}
           </button>
-        </div>
-
-        {/* Security Notice */}
-        <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
-          <div className="font-medium mb-1">Security Note</div>
-          <div className="text-amber-700">
-            This QR code allows anyone to check in to your event. Keep it secure
-            and rotate the token if it gets compromised.
-          </div>
         </div>
       </div>
 
@@ -353,31 +365,34 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm"
             onClick={() => setIsFullScreen(false)}
           >
             <button
               onClick={() => setIsFullScreen(false)}
-              className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+              className="absolute right-4 top-4 rounded-xl bg-white/10 p-2.5 text-white shadow-lg transition-colors hover:bg-white/20"
+              aria-label="Close fullscreen"
             >
               <X className="h-6 w-6" />
             </button>
 
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
               className="flex flex-col items-center"
             >
               <div className="mb-8 text-center">
-                <h2 className="text-3xl font-bold text-white mb-2">
+                <h2 className="mb-2 text-3xl font-bold tracking-tight text-white">
                   {eventName}
                 </h2>
-                <p className="text-xl text-white/80">Scan to check in</p>
+                <p className="text-xl text-white/70">Scan to check in</p>
               </div>
 
-              <div className="rounded-2xl bg-white p-8 shadow-2xl">
+              <div className="rounded-3xl bg-white p-8 shadow-2xl ring-1 ring-white/10">
                 <QRCodeSVG
                   value={checkinUrl}
                   size={512}
@@ -389,7 +404,7 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
               </div>
 
               <div className="mt-8 text-center">
-                <p className="text-sm text-white/60">
+                <p className="text-sm text-white/50">
                   Press ESC or click outside to close
                 </p>
               </div>

@@ -31,7 +31,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n/provider-ssr';
-import type { CommittedFilters } from '@/features/events/types';
+import type { CommittedFilters } from '@/features/events';
 
 export type LeftFiltersPanelProps = {
   filters: CommittedFilters;
