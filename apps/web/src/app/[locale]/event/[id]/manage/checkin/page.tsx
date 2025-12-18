@@ -15,6 +15,7 @@ import {
   CheckinManagementClient,
   type CheckinManagementRef,
 } from './_components/checkin-management-client';
+import { CheckinPanelWrapper } from './_components/checkin-panel-wrapper';
 import { ManagementPageLayout } from '@/features/events';
 import { useEventManagement } from '@/features/events';
 
@@ -94,7 +95,9 @@ export default function EventCheckinPage() {
       }
     >
       <Suspense fallback={<CheckinLoadingSkeleton />}>
-        <CheckinManagementClient ref={checkinRef} />
+        <CheckinPanelWrapper eventId={id}>
+          <CheckinManagementClient ref={checkinRef} />
+        </CheckinPanelWrapper>
       </Suspense>
     </ManagementPageLayout>
   );

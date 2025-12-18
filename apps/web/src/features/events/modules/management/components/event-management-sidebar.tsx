@@ -175,12 +175,6 @@ export function EventManagementSidebar({
           icon: Users,
         },
         {
-          id: 'checkin',
-          label: 'Check-in & Presence',
-          href: localePath(`/event/${eventId}/manage/checkin`),
-          icon: CheckCircle,
-        },
-        {
           id: 'plans',
           label: 'Upgrade Plan',
           href: localePath(`/event/${eventId}/manage/plans`),
@@ -341,6 +335,12 @@ export function EventManagementSidebar({
       defaultOpen: false,
       requiredPlan: 'pro',
       items: [
+        {
+          id: 'checkin',
+          label: 'Check-in & Presence',
+          href: localePath(`/event/${eventId}/manage/checkin`),
+          icon: CheckCircle,
+        },
         {
           id: 'analytics',
           label: 'Analytics',

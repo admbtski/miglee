@@ -23,6 +23,7 @@ import {
 import {
   useBlockMemberCheckinMutation,
   useUnblockMemberCheckinMutation,
+  invalidateCheckinData,
 } from '@/features/checkin';
 import { toast } from '@/lib/utils/toast-manager';
 
@@ -37,6 +38,7 @@ export function MemberActionsMenu({ member, eventId }: MemberActionsMenuProps) {
 
   const blockMutation = useBlockMemberCheckinMutation({
     onSuccess: () => {
+      invalidateCheckinData(eventId);
       toast.success('Check-in method blocked');
       setIsOpen(false);
     },
@@ -49,6 +51,7 @@ export function MemberActionsMenu({ member, eventId }: MemberActionsMenuProps) {
 
   const unblockMutation = useUnblockMemberCheckinMutation({
     onSuccess: () => {
+      invalidateCheckinData(eventId);
       toast.success('Check-in method unblocked');
       setIsOpen(false);
     },

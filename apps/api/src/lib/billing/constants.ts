@@ -11,34 +11,6 @@ import type {
 import { config } from '../../env';
 
 // ========================================================================================
-// PRICING (in PLN, stored as integers - grosze/cents)
-// ========================================================================================
-
-export const PRICING = {
-  // User Plans
-  USER_PLUS_MONTHLY_SUB: 29_00, // 29 PLN/month (subscription)
-  USER_PLUS_MONTHLY_ONEOFF: 39_00, // 39 PLN (one-time, 1 month)
-  USER_PLUS_YEARLY_ONEOFF: 299_00, // 299 PLN (one-time, 12 months) ~25 PLN/month
-
-  USER_PRO_MONTHLY_SUB: 59_00, // 59 PLN/month (subscription)
-  USER_PRO_MONTHLY_ONEOFF: 69_00, // 69 PLN (one-time, 1 month)
-  USER_PRO_YEARLY_ONEOFF: 599_00, // 599 PLN (one-time, 12 months) ~50 PLN/month
-
-  // Event Plans (one-time, 1 month)
-  EVENT_PLUS: 49_00, // 49 PLN per event per month
-  EVENT_PRO: 99_00, // 99 PLN per event per month
-} as const;
-
-// ========================================================================================
-// TRIAL CONFIGURATION
-// ========================================================================================
-
-export const TRIAL_DAYS = {
-  PLUS: 7, // 7-day trial for Plus
-  PRO: 7, // 7-day trial for Pro
-} as const;
-
-// ========================================================================================
 // EVENT PLAN LIMITS
 // ========================================================================================
 
@@ -200,15 +172,6 @@ export interface EventSponsorshipMetadata {
   actionPackageSize?: number;
 }
 
-export type CheckoutMetadata =
-  | UserSubscriptionMetadata
-  | UserOneOffMetadata
-  | EventSponsorshipMetadata;
-
-// ========================================================================================
-// URL BUILDERS
-// ========================================================================================
-
 export function getCheckoutSuccessUrl(
   baseUrl: string,
   type: MetadataType
@@ -238,57 +201,3 @@ export function getCheckoutCancelUrl(
       return baseUrl;
   }
 }
-
-// ========================================================================================
-// PLAN DISPLAY NAMES & DESCRIPTIONS
-// ========================================================================================
-
-export const PLAN_DISPLAY = {
-  USER: {
-    PLUS: {
-      name: 'Plus',
-      description: 'Enhanced features for active event organizers',
-      features: [
-        'Create unlimited events',
-        'Priority support',
-        'Advanced analytics',
-        'Custom branding',
-      ],
-    },
-    PRO: {
-      name: 'Pro',
-      description: 'Complete solution for professional organizers',
-      features: [
-        'Everything in Plus',
-        'Unlimited capacity events',
-        'API access',
-        'Dedicated account manager',
-        'Custom integrations',
-      ],
-    },
-  },
-  EVENT: {
-    PLUS: {
-      name: 'Event Plus',
-      description: 'Boost your event visibility',
-      features: [
-        'Featured in listings',
-        '1 boost opportunity',
-        '1 local push notification',
-        'Up to 150 participants',
-        'Standard analytics',
-      ],
-    },
-    PRO: {
-      name: 'Event Pro',
-      description: 'Maximum reach for your event',
-      features: [
-        'Premium featured placement',
-        '3 boost opportunities',
-        '3 local push notifications',
-        'Up to 500 participants',
-        'Advanced analytics & insights',
-      ],
-    },
-  },
-} as const;

@@ -184,12 +184,6 @@ export function EventManagementMobileSidebar({
           icon: Users,
         },
         {
-          id: 'checkin',
-          label: 'Check-in & Presence',
-          href: localePath(`/event/${eventId}/manage/checkin`),
-          icon: CheckCircle2,
-        },
-        {
           id: 'plans',
           label: 'Upgrade Plan',
           href: localePath(`/event/${eventId}/manage/plans`),
@@ -350,6 +344,12 @@ export function EventManagementMobileSidebar({
       defaultOpen: false,
       requiredPlan: 'pro',
       items: [
+        {
+          id: 'checkin',
+          label: 'Check-in & Presence',
+          href: localePath(`/event/${eventId}/manage/checkin`),
+          icon: CheckCircle2,
+        },
         {
           id: 'analytics',
           label: 'Analytics',
