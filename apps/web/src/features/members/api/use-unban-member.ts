@@ -9,9 +9,9 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { invalidateMembers } from './event-api-helpers';
+import { invalidateMembers } from './members-api-helpers';
 
-export function buildUnbanMemberOptions<TContext = unknown>( // <-- NEW
+export function buildUnbanMemberOptions<TContext = unknown>(
   options?: UseMutationOptions<
     UnbanMemberMutation,
     unknown,
@@ -38,7 +38,7 @@ export function buildUnbanMemberOptions<TContext = unknown>( // <-- NEW
   };
 }
 
-export function useUnbanMemberMutation( // <-- NEW
+export function useUnbanMemberMutation(
   options?: UseMutationOptions<
     UnbanMemberMutation,
     unknown,
@@ -58,3 +58,4 @@ export function useUnbanMemberMutation( // <-- NEW
     })
   );
 }
+

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { useMemo } from 'react';
-import { formatCapacityDetail } from '@/features/events';
+import { formatCapacityDetail } from '../utils/capacity-formatter';
 import { CapacityStatusCard } from './capacity-status-card';
 
 type EventParticipantsProps = {
@@ -240,3 +240,4 @@ function MemberRow({ member, compact = false }: MemberRowProps) {
     </li>
   );
 }
+

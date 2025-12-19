@@ -1,9 +1,9 @@
 'use client';
 
 import { BoostPage } from './boost-page';
-import { useSubscriptionData } from '@/features/events';
-import { useEventDetailQuery } from '@/features/events';
 import {
+  useSubscriptionData,
+  useEventDetailQuery,
   PlanUpgradeBanner,
   type SponsorshipPlan,
 } from '@/features/events';

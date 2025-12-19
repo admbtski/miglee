@@ -16,7 +16,6 @@ export * from './top-drawer';
 
 // Event Detail
 export * from './action-button';
-export * from './capacity-status-card';
 export * from './conditional-navbar';
 export * from './event-actions';
 export * from './event-admin-panel';
@@ -28,12 +27,12 @@ export * from './event-detail-skeleton';
 export * from './event-details';
 export * from './event-engagement-stats';
 export * from './event-hero';
-export * from './event-join-section';
 export * from './event-location-map';
 export * from './event-metadata';
-export * from './event-participants';
 export * from './local-push-page';
 export * from './sticky-join-button';
+
+// Member-related components moved to @/features/members
 
 // My Events
 export * from './cancel-event-modals';

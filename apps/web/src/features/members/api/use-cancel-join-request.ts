@@ -4,16 +4,12 @@ import {
   CancelJoinRequestMutationVariables,
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
-import { getQueryClient } from '@/lib/config/query-client';
 import {
   QueryKey,
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import {
-  GET_EVENT_DETAIL_KEY,
-  GET_EVENT_MEMBERS_KEY,
-} from './events-query-keys';
+import { invalidateMembershipChange } from './members-api-helpers';
 
 export function buildCancelJoinRequestOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -41,6 +37,7 @@ export function buildCancelJoinRequestOptions<TContext = unknown>(
     ...(options ?? {}),
   };
 }
+
 export function useCancelJoinRequestMutation(
   options?: UseMutationOptions<
     CancelJoinRequestMutation,
@@ -48,7 +45,6 @@ export function useCancelJoinRequestMutation(
     CancelJoinRequestMutationVariables
   >
 ) {
-  const qc = getQueryClient();
   return useMutation<
     CancelJoinRequestMutation,
     unknown,
@@ -57,23 +53,11 @@ export function useCancelJoinRequestMutation(
     buildCancelJoinRequestOptions({
       onSuccess: (_data, vars) => {
         if (vars.eventId) {
-          qc.invalidateQueries({
-            queryKey: GET_EVENT_DETAIL_KEY({
-              id: vars.eventId,
-            }) as QueryKey,
-          });
-          qc.invalidateQueries({
-            queryKey: GET_EVENT_MEMBERS_KEY({
-              eventId: vars.eventId,
-            }) as QueryKey,
-          });
+          invalidateMembershipChange(vars.eventId);
         }
-        qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetMyMemberships',
-        });
       },
       ...(options ?? {}),
     })
   );
 }
+

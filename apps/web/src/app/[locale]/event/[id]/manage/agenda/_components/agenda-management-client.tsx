@@ -13,10 +13,10 @@ import { Avatar as AvatarComponent } from '@/components/ui/avatar';
 import { useUpdateEventAgendaMutation } from '@/features/agenda';
 import { useEventAgendaItemsQuery } from '@/features/agenda';
 import {
+  useEventDetailQuery,
   PlanUpgradeBanner,
   type SponsorshipPlan,
 } from '@/features/events';
-import { useEventDetailQuery } from '@/features/events';
 import { useUsersQuery } from '@/features/users';
 import type { AgendaHostKind } from '@/lib/api/__generated__/react-query-update';
 import { buildAvatarUrl } from '@/lib/media/url';

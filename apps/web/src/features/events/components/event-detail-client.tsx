@@ -4,11 +4,17 @@ import { FavouriteButton } from '@/components/ui/favourite-button';
 import { ShareButton } from '@/components/ui/share-button';
 import { ReportButton } from '@/features/reports';
 import { ShareModal } from '@/components/ui/share-modal';
-import { useEventDetailQuery } from '@/features/events';
+import {
+  useEventDetailQuery,
+  computeJoinState,
+  type EventDetailsData,
+  CancelEventModals,
+  CloseJoinModal,
+  ReopenJoinModal,
+  DeleteEventModals,
+} from '@/features/events';
 import { useMeQuery } from '@/features/auth';
-import { computeJoinState } from '@/features/events';
-import { formatParticipantsShort } from '@/features/events';
-import type { EventDetailsData } from '@/features/events';
+import { formatParticipantsShort } from '@/features/members';
 import {
   Calendar,
   Clock,
@@ -31,20 +37,14 @@ import { EventDetails } from './event-details';
 import { EventEngagementStats } from './event-engagement-stats';
 import { EventFaq } from '../../faq/components/event-faq';
 import { EventHero } from './event-hero';
-import { EventJoinSection } from './event-join-section';
+import { EventJoinSection, EventParticipants } from '@/features/members';
 import { UserCheckinSection } from '@/features/checkin';
 import { EventLocationMap } from './event-location-map';
 import { EventMetadata } from './event-metadata';
-import { EventParticipants } from './event-participants';
 import { EventReviews } from '../../reviews/components/event-reviews';
 import { StickyJoinButton } from './sticky-join-button';
 import { ReportEventModal } from '@/features/reports';
-import { CancelEventModals } from '@/features/events';
-import {
-  CloseJoinModal,
-  ReopenJoinModal,
-} from '@/features/events';
-import { DeleteEventModals } from '@/features/events';
+
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 import { buildEventCoverUrl } from '@/lib/media/url';
 

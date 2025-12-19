@@ -36,12 +36,13 @@ import {
 import { BlurHashImage } from '@/components/ui/blurhash-image';
 
 // Features
-import { useEventDetailQuery } from '@/features/events';
 import {
+  useEventDetailQuery,
   CloseJoinModal,
   EventCountdownTimer,
   ReopenJoinModal,
 } from '@/features/events';
+
 import { EventStatus } from '@/lib/api/__generated__/react-query-update';
 
 // Hooks

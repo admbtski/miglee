@@ -8,7 +8,6 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { Loader2 } from 'lucide-react';
 
 import { ActivityLogPanel } from './_components/activity-log-panel';
 import { ActivityPanelWrapper } from './_components/activity-panel-wrapper';

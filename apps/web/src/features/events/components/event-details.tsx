@@ -1,5 +1,4 @@
-import type { EventDetailsData } from '@/features/events';
-import { formatDuration } from '@/features/events';
+import { formatDuration, type EventDetailsData } from '@/features/events';
 import {
   Clock,
   ClockFading,

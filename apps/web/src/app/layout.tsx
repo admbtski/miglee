@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { Toaster } from 'sonner';
 
-import { WebVitals } from '@/lib/config/web-vitals';
-import { ThemeProvider } from '@/features/theme/provider/theme-provider';
 import { CookieScriptProvider } from '@/features/cookies';
+import { ThemeProvider } from '@/features/theme/provider/theme-provider';
+import { WebVitals } from '@/lib/config/web-vitals';
 import { InlineThemeScript } from '../features/theme/scripts/inline-theme-script';
 import '../styles/globals.css';
 
@@ -12,7 +12,7 @@ import '../styles/globals.css';
  * Primary font configuration
  * Using Poppins for clean, modern aesthetics
  */
-const poppinsFont = Poppins({
+const poppinsFont = Inter({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
   variable: '--font-poppins',

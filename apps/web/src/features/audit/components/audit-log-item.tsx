@@ -85,7 +85,6 @@ function getIconAndColor(scope: string, action: string) {
 // Generate human-readable description
 function getDescription(item: AuditLogItemType): string {
   const actorName = item.actor?.name || 'System'; // TODO i18n
-  const targetUser = (item.meta?.targetUserId as string) || '';
   const reason = (item.meta?.reason as string) || '';
 
   const descriptions: Record<string, Record<string, string>> = {
@@ -146,7 +145,7 @@ function SeverityBadge({ severity }: { severity: number }) {
     5: { label: 'Security', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' },
   };
 
-  const { label, className } = config[severity] || config[2];
+  const { label, className } = config[severity] ?? config[2]!;
 
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${className}`}>

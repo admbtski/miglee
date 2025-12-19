@@ -13,7 +13,7 @@ import Link from 'next/link';
 import * as React from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n/provider-ssr';
-import { formatCapacityString } from '@/features/events';
+import { formatCapacityString } from '@/features/members';
 import {
   type CardAppearanceConfig,
   getAddressVisibilityMeta,

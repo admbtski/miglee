@@ -40,7 +40,7 @@ export function useArchiveAuditLogs({
     onSuccess: (data) => {
       // Invalidate audit logs query to refresh the list (will be empty after archiving)
       queryClient.invalidateQueries({
-        queryKey: GET_EVENT_AUDIT_LOGS_INFINITE_KEY(eventId),
+        queryKey: GET_EVENT_AUDIT_LOGS_INFINITE_KEY({ eventId }),
       });
       onSuccess?.(data);
     },

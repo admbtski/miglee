@@ -9,7 +9,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { invalidateMembers } from './event-api-helpers';
+import { invalidateMembers } from './members-api-helpers';
 
 export function buildPromoteFromWaitlistOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -58,3 +58,4 @@ export function usePromoteFromWaitlistMutation(
     })
   );
 }
+

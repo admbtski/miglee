@@ -8,9 +8,11 @@ import { Info } from 'lucide-react';
 
 import { CategoryMultiCombo } from '@/features/categories';
 import { CategoryOption } from '@/features/categories';
-import { useCategorySelection } from '@/features/events';
+import {
+  useCategorySelection,
+  type SimpleEventFormValues,
+} from '@/features/events';
 import { getUseCategoriesLimitData } from '@/features/categories';
-import type { SimpleEventFormValues } from '@/features/events';
 
 /**
  * SimpleBasicsStep - Simplified basics step

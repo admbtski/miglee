@@ -25,7 +25,7 @@ import {
 import {
   useApproveMembershipMutation,
   useRejectMembershipMutation,
-} from '@/features/events';
+} from '@/features/members';
 import Link from 'next/link';
 
 type EventTabProps = {

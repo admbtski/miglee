@@ -17,7 +17,7 @@ import {
   useCancelPendingOrInviteForUserMutation,
   useUnbanMemberMutation,
   usePromoteFromWaitlistMutation,
-} from '@/features/events';
+} from '@/features/members';
 import { MembersPanel } from './members-panel';
 import { MemberManageModal } from './member-manage-modal';
 import type { EventMember } from './types';

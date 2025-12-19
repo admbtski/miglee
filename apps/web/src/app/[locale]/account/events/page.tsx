@@ -24,12 +24,14 @@ import {
   mapRoleFilterToBackend,
   mapRoleFilterToMembershipStatus,
   mapStatusFiltersToBackend,
+  useEventsModals,
+} from '@/features/events';
+import {
   useAcceptInviteMutation,
   useCancelJoinRequestMutation,
-  useEventsModals,
-  useLeaveEventMutationMembers,
+  useLeaveEventMutation,
   useMyEventsQuery,
-} from '@/features/events';
+} from '@/features/members';
 
 import {
   EventStatusFilter,
@@ -94,7 +96,7 @@ function EventsListContent({
 
   const acceptInvite = useAcceptInviteMutation();
   const cancelRequest = useCancelJoinRequestMutation();
-  const leaveEvent = useLeaveEventMutationMembers();
+  const leaveEvent = useLeaveEventMutation();
 
   const cardData = useMemo(() => {
     const memberships = data?.myEvents ?? [];

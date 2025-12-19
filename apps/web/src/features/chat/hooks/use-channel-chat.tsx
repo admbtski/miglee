@@ -61,7 +61,7 @@ import {
   useEditEventMessage,
   useDeleteEventMessage,
 } from '@/features/chat';
-import { useMyMembershipsQuery } from '@/features/events';
+import { useMyMembershipsQuery } from '@/features/members';
 import { useMeQuery } from '@/features/auth';
 import type { Message } from '../types';
 

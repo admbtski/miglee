@@ -1,14 +1,13 @@
 import {
   GetEventDetailQueryVariables,
-  GetEventMemberQueryVariables,
-  GetEventMembersQueryVariables,
-  GetEventMemberStatsQueryVariables,
   GetEventsListingQueryVariables,
   GetEventsQueryVariables,
-  GetMyEventsQueryVariables,
-  GetMyMembershipForEventQueryVariables,
-  GetMyMembershipsQueryVariables,
 } from '@/lib/api/__generated__/react-query-update';
+
+/**
+ * Query keys for event lifecycle queries.
+ * Member-related keys have been moved to @/features/members/api/members-query-keys.ts
+ */
 
 export const GET_EVENTS_LISTING_INFINITE_KEY = (
   variables?: Omit<GetEventsListingQueryVariables, 'offset'>
@@ -30,29 +29,15 @@ export const GET_EVENT_DETAIL_KEY = (variables: GetEventDetailQueryVariables) =>
 export const GET_EVENT_PERMISSIONS_KEY = (eventId: string) =>
   ['GetEventPermissions', eventId] as const;
 
-export const GET_EVENT_MEMBERS_KEY = (
-  variables: GetEventMembersQueryVariables
-) => ['GetEventMembers', variables] as const;
-
-export const GET_EVENT_MEMBER_KEY = (variables: GetEventMemberQueryVariables) =>
-  ['GetEventMember', variables] as const;
-
-export const GET_MY_MEMBERSHIP_FOR_EVENT_KEY = (
-  variables: GetMyMembershipForEventQueryVariables
-) => ['GetMyMembershipForEvent', variables] as const;
-
-export const GET_MY_MEMBERSHIPS_KEY = (
-  variables?: GetMyMembershipsQueryVariables
-) =>
-  variables
-    ? (['GetMyMemberships', variables] as const)
-    : (['GetMyMemberships'] as const);
-
-export const GET_EVENT_MEMBER_STATS_KEY = (
-  variables: GetEventMemberStatsQueryVariables
-) => ['GetEventMemberStats', variables] as const;
-
-export const GET_MY_EVENTS_KEY = (variables?: GetMyEventsQueryVariables) =>
-  variables
-    ? (['GetMyEvents', variables] as const)
-    : (['GetMyEvents'] as const);
+// =============================================================================
+// Re-exports from @/features/members for backwards compatibility
+// @deprecated Import directly from '@/features/members' instead
+// =============================================================================
+export {
+  GET_EVENT_MEMBERS_KEY,
+  GET_EVENT_MEMBER_KEY,
+  GET_MY_MEMBERSHIP_FOR_EVENT_KEY,
+  GET_MY_MEMBERSHIPS_KEY,
+  GET_EVENT_MEMBER_STATS_KEY,
+  GET_MY_EVENTS_KEY,
+} from '@/features/members';

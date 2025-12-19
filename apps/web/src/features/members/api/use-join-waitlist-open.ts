@@ -9,7 +9,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { invalidateMembers } from './event-api-helpers';
+import { invalidateMembershipChange } from './members-api-helpers';
 
 export function buildJoinWaitlistOpenOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -52,9 +52,10 @@ export function useJoinWaitlistOpenMutation(
   >(
     buildJoinWaitlistOpenOptions({
       onSuccess: (_data, vars) => {
-        invalidateMembers(vars.eventId);
+        invalidateMembershipChange(vars.eventId);
       },
       ...(options ?? {}),
     })
   );
 }
+

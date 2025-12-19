@@ -9,7 +9,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { invalidateMembers } from './event-api-helpers';
+import { invalidateMembers } from './members-api-helpers';
 
 export function buildBanMemberOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -54,3 +54,4 @@ export function useBanMemberMutation(
     })
   );
 }
+

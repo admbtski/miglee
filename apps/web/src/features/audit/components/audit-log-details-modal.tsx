@@ -116,7 +116,7 @@ export function AuditLogDetailsModal({
 
   if (!isOpen || !item) return null;
 
-  const severityConfig = SEVERITY_CONFIG[item.severity] || SEVERITY_CONFIG[2];
+  const severityConfig = SEVERITY_CONFIG[item.severity] ?? SEVERITY_CONFIG[2]!;
   const SeverityIcon = severityConfig.icon;
 
   const modalContent = (

@@ -6,7 +6,7 @@ import {
   useEventMemberStatsQuery,
   useApproveMembershipMutation,
   useRejectMembershipMutation,
-} from '@/features/events';
+} from '@/features/members';
 import {
   useAdminUpdateMemberRoleMutation,
   useAdminKickMemberMutation,

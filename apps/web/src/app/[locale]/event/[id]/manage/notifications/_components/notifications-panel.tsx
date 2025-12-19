@@ -12,7 +12,7 @@ import {
   Clock,
   Info,
 } from 'lucide-react';
-import { useEventMemberStatsQuery } from '@/features/events';
+import { useEventMemberStatsQuery } from '@/features/members';
 import { toast } from 'sonner';
 
 interface NotificationsPanelProps {

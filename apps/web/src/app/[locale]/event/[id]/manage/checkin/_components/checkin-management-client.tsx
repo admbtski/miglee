@@ -34,7 +34,7 @@ import {
   useUpdateEventCheckinConfigMutation,
 } from '@/features/checkin';
 import { useEventManagement } from '@/features/events';
-import { useEventMembersQuery } from '@/features/events';
+import { useEventMembersQuery } from '@/features/members';
 import {
   CheckinMethod,
   EventMemberCoreFragment,

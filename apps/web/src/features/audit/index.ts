@@ -7,5 +7,11 @@
 
 export * from './api';
 export * from './components';
-export * from './types';
-
+// Types re-exported with explicit names to avoid collision with component names
+export type {
+  AuditScope,
+  AuditAction,
+  AuditActorType,
+  AuditLogItem as AuditLogItemType,
+  AuditLogsFilter,
+} from './types';

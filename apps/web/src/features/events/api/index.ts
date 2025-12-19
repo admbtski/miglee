@@ -1,36 +1,27 @@
-export * from './event-api-helpers';
+/**
+ * Events API Exports
+ *
+ * This module exports event lifecycle hooks.
+ * Member-related hooks have been moved to @/features/members
+ * and are re-exported here for backwards compatibility.
+ */
+
+// Event Lifecycle Hooks (kept in events)
 export * from './events-query-keys';
-export * from './use-accept-invite';
-export * from './use-approve-membership';
-export * from './use-ban-member';
 export * from './use-cancel-event';
-export * from './use-cancel-join-request';
-export * from './use-cancel-pending-or-invite-for-user';
 export * from './use-cancel-schedule-publication';
 export * from './use-close-event-join';
 export * from './use-create-event';
 export * from './use-delete-event';
-export * from './use-event-member-stats';
-export * from './use-event-member';
-export * from './use-event-members';
 export * from './use-event-permissions';
 export * from './use-events-listing-infinite';
+export * from './use-events-query';
 export * from './use-get-event-detail';
-export * from './use-invite-member';
-export * from './use-join-waitlist-open';
-export * from './use-kick-member';
-export * from './use-leave-event';
-export * from './use-leave-waitlist';
-export * from './use-my-events';
-export * from './use-my-membership-for-event';
-export * from './use-my-memberships';
-export * from './use-promote-from-waitlist';
 export * from './use-publish-event';
-export * from './use-reject-membership';
 export * from './use-reopen-event-join';
-export * from './use-request-join-event';
 export * from './use-schedule-event-publication';
-export * from './use-unban-member';
 export * from './use-unpublish-event';
 export * from './use-update-event';
-export * from './use-update-member-role';
+
+// Member-related hooks have been moved to @/features/members
+// Import them directly from '@/features/members' instead

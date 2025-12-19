@@ -632,14 +632,14 @@ function FilterButton({ icon, label, active, onClick }: FilterButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all ${
+      className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-lg transition-all ${
         active
           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
           : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
       }`}
     >
       <span className="flex-shrink-0">{icon}</span>
-      <span className="text-sm font-medium flex-1 text-left">{label}</span>
+      <span className="text-sm font-mono flex-1 text-left">{label}</span>
       {active && <Check className="w-4 h-4 flex-shrink-0" />}
     </button>
   );
@@ -656,7 +656,7 @@ function FilterChip({ label, active, onClick }: FilterChipProps) {
   return (
     <button
       onClick={onClick}
-      className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${
+      className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
         active
           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
           : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'

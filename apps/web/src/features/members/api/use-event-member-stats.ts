@@ -5,7 +5,10 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { GET_EVENT_MEMBER_STATS_KEY } from './events-query-keys';
+
+export const GET_EVENT_MEMBER_STATS_KEY = (
+  variables: GetEventMemberStatsQueryVariables
+) => ['GetEventMemberStats', variables] as const;
 
 export function buildGetEventMemberStatsOptions(
   variables: GetEventMemberStatsQueryVariables,
@@ -54,3 +57,4 @@ export function useEventMemberStatsQuery(
     })
   );
 }
+

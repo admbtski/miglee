@@ -1,14 +1,14 @@
 'use client';
 
 import { FavouriteButton } from '@/components/ui/favourite-button';
+import type { EventDetailsData } from '@/features/events';
 import {
   useCancelJoinRequestMutation,
   useJoinWaitlistOpenMutation,
-  useLeaveEventMutationMembers,
+  useLeaveEventMutation,
   useLeaveWaitlistMutation,
   useRequestJoinEventMutation,
-} from '@/features/events';
-import type { EventDetailsData } from '@/features/events';
+} from '@/features/members';
 import {
   JoinRequestModal,
   useEventJoinQuestionsQuery,
@@ -31,7 +31,7 @@ export function StickyJoinButton({ event }: StickyJoinButtonProps) {
   const requestJoinMutation = useRequestJoinEventMutation();
   const requestJoinWithAnswersMutation =
     useRequestJoinEventWithAnswersMutation();
-  const leaveEventMutation = useLeaveEventMutationMembers();
+  const leaveEventMutation = useLeaveEventMutation();
   const cancelRequestMutation = useCancelJoinRequestMutation();
   const joinWaitlistMutation = useJoinWaitlistOpenMutation();
   const leaveWaitlistMutation = useLeaveWaitlistMutation();

@@ -8,7 +8,7 @@ import clsx from 'clsx';
 
 import { Modal } from '@/components/ui/modal';
 import { Avatar as AvatarComponent } from '@/components/ui/avatar';
-import { useInviteMemberMutation } from '@/features/events';
+import { useInviteMemberMutation } from '@/features/members';
 import { useUsersQuery } from '@/features/users';
 import { buildAvatarUrl } from '@/lib/media/url';
 

@@ -7,8 +7,11 @@
 
 'use client';
 
-import { useEventManagement } from '@/features/events';
-import { PlanUpgradeBanner, type SponsorshipPlan } from '@/features/events';
+import {
+  PlanUpgradeBanner,
+  type SponsorshipPlan,
+  useEventManagement,
+} from '@/features/events';
 
 interface AnalyticsPanelWrapperProps {
   eventId: string;

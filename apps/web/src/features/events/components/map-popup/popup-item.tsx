@@ -17,7 +17,7 @@ import { motion } from 'framer-motion';
 import { Calendar, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { formatCapacityString } from '@/features/events';
+import { formatCapacityString } from '@/features/members';
 import { twMerge } from 'tailwind-merge';
 import {
   type CardAppearanceConfig,

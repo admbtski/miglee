@@ -9,9 +9,9 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
-import { invalidateMembers } from './event-api-helpers';
+import { invalidateMembers } from './members-api-helpers';
 
-export function buildCancelPendingOrInviteForUserOptions<TContext = unknown>( // <-- NEW
+export function buildCancelPendingOrInviteForUserOptions<TContext = unknown>(
   options?: UseMutationOptions<
     CancelPendingOrInviteForUserMutation,
     unknown,
@@ -60,3 +60,4 @@ export function useCancelPendingOrInviteForUserMutation(
     })
   );
 }
+

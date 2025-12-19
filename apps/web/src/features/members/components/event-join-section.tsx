@@ -8,13 +8,12 @@ import {
 import {
   useCancelJoinRequestMutation,
   useJoinWaitlistOpenMutation,
-  useLeaveEventMutationMembers,
+  useLeaveEventMutation,
   useLeaveWaitlistMutation,
   useMyMembershipForEventQuery,
   useRequestJoinEventMutation,
-} from '@/features/events';
-import { formatOpensIn } from '@/features/events';
-import type { EventDetailsData } from '@/features/events';
+} from '../api';
+import { formatOpensIn, type EventDetailsData } from '@/features/events';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle,
@@ -85,7 +84,7 @@ export function EventJoinSection({ event, onOpenChat }: EventJoinSectionProps) {
   const requestJoinMutation = useRequestJoinEventMutation();
   const requestJoinWithAnswersMutation =
     useRequestJoinEventWithAnswersMutation();
-  const leaveEventMutation = useLeaveEventMutationMembers();
+  const leaveEventMutation = useLeaveEventMutation();
   const cancelRequestMutation = useCancelJoinRequestMutation();
   const joinWaitlistMutation = useJoinWaitlistOpenMutation();
   const leaveWaitlistMutation = useLeaveWaitlistMutation();

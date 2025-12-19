@@ -10,7 +10,6 @@ export * from './event-join-state';
 export * from './event-status';
 
 // Formatting
-export * from './capacity-formatter';
 export * from './date-format';
 export * from './formatters';
 
@@ -19,3 +18,5 @@ export * from './mappers';
 
 // Effects (re-exported from lib/utils)
 export * from '../../../lib/utils/confetti';
+
+// Member capacity formatting moved to @/features/members/utils/capacity-formatter

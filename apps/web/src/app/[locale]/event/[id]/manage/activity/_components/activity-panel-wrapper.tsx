@@ -7,8 +7,11 @@
 
 'use client';
 
-import { useEventManagement } from '@/features/events';
-import { PlanUpgradeBanner, type SponsorshipPlan } from '@/features/events';
+import {
+  PlanUpgradeBanner,
+  useEventManagement,
+  type SponsorshipPlan,
+} from '@/features/events';
 import { Archive, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';

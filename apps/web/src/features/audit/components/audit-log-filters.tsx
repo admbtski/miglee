@@ -18,9 +18,6 @@ import {
   Link,
   X,
   ChevronDown,
-  AlertTriangle,
-  Info,
-  AlertCircle,
 } from 'lucide-react';
 import type { AuditScope, AuditAction, AuditLogsFilter } from '../types';
 
@@ -61,24 +58,6 @@ const ACTION_OPTIONS: { value: AuditAction; label: string }[] = [
   { value: 'ROLE_CHANGE', label: 'Role Change' }, // TODO i18n
   { value: 'STATUS_CHANGE', label: 'Status Change' }, // TODO i18n
   { value: 'CONFIG_CHANGE', label: 'Config Change' }, // TODO i18n
-];
-
-const SEVERITY_OPTIONS: {
-  value: number;
-  label: string;
-  icon: React.ElementType;
-  color: string;
-}[] = [
-  { value: 1, label: 'Info', icon: Info, color: 'text-zinc-400' }, // TODO i18n
-  { value: 2, label: 'Normal', icon: Info, color: 'text-blue-500' }, // TODO i18n
-  { value: 3, label: 'Important', icon: AlertCircle, color: 'text-amber-500' }, // TODO i18n
-  {
-    value: 4,
-    label: 'Critical',
-    icon: AlertTriangle,
-    color: 'text-orange-500',
-  }, // TODO i18n
-  { value: 5, label: 'Security', icon: Shield, color: 'text-red-500' }, // TODO i18n
 ];
 
 // Quick filters for common use cases

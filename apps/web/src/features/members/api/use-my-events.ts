@@ -5,7 +5,11 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { GET_MY_EVENTS_KEY } from './events-query-keys';
+
+export const GET_MY_EVENTS_KEY = (variables?: GetMyEventsQueryVariables) =>
+  variables
+    ? (['GetMyEvents', variables] as const)
+    : (['GetMyEvents'] as const);
 
 function buildGetMyEventsOptions(
   variables?: GetMyEventsQueryVariables,
@@ -36,3 +40,4 @@ export function useMyEventsQuery(
 ) {
   return useQuery(buildGetMyEventsOptions(variables, options));
 }
+

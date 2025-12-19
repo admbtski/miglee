@@ -5,7 +5,9 @@ import {
 } from '@/lib/api/__generated__/react-query-update';
 import { gqlClient } from '@/lib/api/client';
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { GET_EVENT_MEMBER_KEY } from './events-query-keys';
+
+export const GET_EVENT_MEMBER_KEY = (variables: GetEventMemberQueryVariables) =>
+  ['GetEventMember', variables] as const;
 
 export function buildGetEventMemberOptions(
   variables: GetEventMemberQueryVariables,
@@ -54,3 +56,4 @@ export function useEventMemberQuery(
     })
   );
 }
+
