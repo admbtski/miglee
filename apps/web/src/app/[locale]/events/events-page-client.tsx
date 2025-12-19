@@ -54,7 +54,7 @@ const ServerClusteredMap = lazy(
 );
 
 // Auto-apply debounce time in milliseconds
-const AUTO_APPLY_DEBOUNCE_MS = 1000;
+const AUTO_APPLY_DEBOUNCE_MS = 1500;
 
 /**
  * Main page component for browsing events

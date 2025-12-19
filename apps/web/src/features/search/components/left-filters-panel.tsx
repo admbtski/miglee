@@ -25,10 +25,10 @@ import {
   UserCheck,
   X,
   Check,
-  Loader2,
   Clock,
   Calendar,
   ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n/provider-ssr';
 import type { CommittedFilters } from '@/features/events';
@@ -351,6 +351,9 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
               {activeFiltersCount}
             </span>
           )}
+          {isPending && (
+            <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           {activeFiltersCount > 0 && (
@@ -384,16 +387,6 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
           )}
         </div>
       </div>
-
-      {/* Loading indicator */}
-      {isPending && (
-        <div className="px-5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border-b border-amber-200/50 dark:border-amber-900/30">
-          <div className="flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            <span className="font-medium">Aktualizacja...</span>
-          </div>
-        </div>
-      )}
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
