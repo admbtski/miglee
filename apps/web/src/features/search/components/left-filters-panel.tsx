@@ -407,7 +407,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   key={value}
                   type="button"
                   onClick={() => handleStatusChange(value)}
-                  className={`px-3 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  className={`px-3.5 py-2 text-sm font-mono rounded-lg transition-all ${
                     filters.status === value
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
                       : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
@@ -448,7 +448,7 @@ export const LeftFiltersPanel = memo(function LeftFiltersPanel({
                   type="button"
                   onClick={() => handlePresetClick(id)}
                   disabled={dateInputsDisabled}
-                  className="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 text-zinc-700 hover:bg-indigo-600 hover:text-white dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-indigo-600 transition-all disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 text-xs font-mono rounded-md bg-zinc-100 text-zinc-700 hover:bg-indigo-600 hover:text-white dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-indigo-600 transition-all disabled:cursor-not-allowed"
                 >
                   {label}
                 </button>
@@ -638,7 +638,6 @@ function FilterButton({ icon, label, active, onClick }: FilterButtonProps) {
           : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
       }`}
     >
-      <span className="flex-shrink-0">{icon}</span>
       <span className="text-sm font-mono flex-1 text-left">{label}</span>
       {active && <Check className="w-4 h-4 flex-shrink-0" />}
     </button>
@@ -656,7 +655,7 @@ function FilterChip({ label, active, onClick }: FilterChipProps) {
   return (
     <button
       onClick={onClick}
-      className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+      className={`px-3.5 py-2 rounded-lg text-sm font-mono transition-all ${
         active
           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/25'
           : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
