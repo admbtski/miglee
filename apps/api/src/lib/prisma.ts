@@ -1,28 +1,6 @@
-import opentelemetry from '@opentelemetry/api';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { config } from '../env';
 import { logger } from './pino';
-
-/**
- * Production-ready Prisma Client configuration
- * Includes connection pooling, timeouts, and metrics
- */
-
-const meter = opentelemetry.metrics.getMeter('api');
-
-const dbTotal = meter.createCounter('db_queries_total', {
-  description: 'DB queries',
-});
-
-const dbDur = meter.createHistogram('db_query_duration_seconds');
-
-const dbErrors = meter.createCounter('db_query_errors_total', {
-  description: 'Prisma errors with codes P20xx',
-});
-
-const dbSlowQueries = meter.createCounter('db_slow_queries_total', {
-  description: 'Queries exceeding slow query threshold',
-});
 
 // =============================================================================
 // Configuration
@@ -189,13 +167,8 @@ function createPrismaClient() {
             const durS = durMs / 1000;
             const labels = { model, action: operation, outcome };
 
-            dbTotal.add(1, labels);
-            dbDur.record(durS, labels);
-
             // Track slow queries
             if (durMs > QUERY_TIMEOUTS.slowQueryThreshold) {
-              dbSlowQueries.add(1, { model, action: operation });
-
               if (config.isProduction) {
                 logger.warn(
                   { model, operation, durationMs: Math.round(durMs) },
@@ -205,11 +178,6 @@ function createPrismaClient() {
             }
 
             if (outcome === 'error' || outcome === 'timeout') {
-              dbErrors.add(1, {
-                model,
-                action: operation,
-                code: errorCode ?? (outcome === 'timeout' ? 'TIMEOUT' : 'UNKNOWN'),
-              });
             }
           }
         },

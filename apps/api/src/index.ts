@@ -1,9 +1,7 @@
 import { config } from './env';
-// import { startOtel, stopOtel } from './lib/otel';
 import { createServer } from './server';
 
 async function start() {
-  // await startOtel();
   const server = await createServer();
 
   try {
@@ -20,7 +18,6 @@ async function start() {
 
     infos.forEach((info) => server.log.info(info));
   } catch (error) {
-    // await stopOtel();
     server.log.error({ error }, 'Error starting server');
     process.exit(1);
   }

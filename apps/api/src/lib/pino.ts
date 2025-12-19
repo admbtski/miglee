@@ -1,5 +1,4 @@
 import pino, { LoggerOptions, TransportSingleOptions } from 'pino';
-import { trace, context } from '@opentelemetry/api';
 import { config } from '../env';
 
 type BuildLoggerOpts = {
@@ -28,11 +27,6 @@ export function buildLogger({
 }: BuildLoggerOpts = {}): LoggerOptions {
   // Base options shared across all environments
   const baseOptions = {
-    mixin() {
-      const span = trace.getSpan(context.active());
-      const traceId = span?.spanContext().traceId;
-      return traceId ? { traceId } : {};
-    },
     name,
     level,
     // Hide sensitive data in logs

@@ -1,5 +1,3 @@
-// import './lib/otel';
-
 import Fastify, { RawRequestDefaultExpression, RawServerBase } from 'fastify';
 
 import { buildLogger } from './lib/pino';
@@ -22,7 +20,6 @@ import { mercuriusPlugin } from './plugins/mercurius';
 import { sensiblePlugin } from './plugins/sensible';
 
 import { config } from './env';
-// import { fastifyMetrics } from './plugins/metrics/fastify-metrics';
 import { rateLimitPlugin } from './plugins/rate-limit';
 import lastSeen from './plugins/last-seen';
 import imageVariantsPlugin from './plugins/image-variants';
@@ -71,7 +68,6 @@ export async function createServer() {
     runFirst: true,
     routes: ['/webhooks/stripe'], // only for this route
   });
-  // await server.register(fastifyMetrics);
 
   // lifecycle
   server.addHook('onRequest', async (req) => {

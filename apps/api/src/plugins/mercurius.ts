@@ -20,22 +20,6 @@ import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers';
 import { prisma } from '../lib/prisma';
 import { redisEmitter } from '../lib/redis';
-import opentelemetry from '@opentelemetry/api';
-
-/**
- * Production-ready Mercurius GraphQL configuration
- */
-
-const meter = opentelemetry.metrics.getMeter('api');
-
-const gqlOpsTotal = meter.createCounter('graphql_operations_total', {
-  description: 'GraphQL operations by outcome',
-});
-const gqlOpDur = meter.createHistogram('graphql_operation_duration_seconds');
-
-const gqlErrors = meter.createCounter('graphql_errors_total', {
-  description: 'GraphQL errors',
-});
 
 // =============================================================================
 // Security Configuration
@@ -427,24 +411,5 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
 
     const durS = Number(process.hrtime.bigint() - meta.start) / 1e9;
     const outcome = execution.errors?.length ? 'error' : 'ok';
-
-    gqlOpsTotal.add(1, {
-      operation: meta.operation,
-      operation_name: meta.operationName,
-      outcome,
-    });
-
-    gqlOpDur.record(durS, {
-      operation: meta.operation,
-      operation_name: meta.operationName,
-    });
-
-    if (execution.errors?.length) {
-      for (const e of execution.errors) {
-        const extensions = e.extensions as Record<string, unknown> | undefined;
-        const code = (extensions?.code as string) || 'UNKNOWN';
-        gqlErrors.add(1, { operation: meta.operation, code });
-      }
-    }
   });
 });
