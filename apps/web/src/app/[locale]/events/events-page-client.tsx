@@ -29,7 +29,7 @@ import {
   DesktopSearchBar,
   LeftFiltersPanel,
   MobileFiltersDrawer,
-  MobileSearchBar,
+  StickyMobileSearchBar,
   useActiveFiltersCount,
   useCommittedFilters,
   useCommittedSort,
@@ -313,7 +313,7 @@ export function EventsPage() {
         />
 
         {/* Sticky Mobile Search Bar - below navbar, hides on scroll down */}
-        <MobileSearchBar
+        <StickyMobileSearchBar
           q={q}
           city={city}
           activeFiltersCount={activeFilters}
