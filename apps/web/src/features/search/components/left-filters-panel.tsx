@@ -638,6 +638,7 @@ function FilterButton({ icon, label, active, onClick }: FilterButtonProps) {
           : 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800/80'
       }`}
     >
+      <span className="flex-shrink-0">{icon}</span>
       <span className="text-sm font-mono flex-1 text-left">{label}</span>
       {active && <Check className="w-4 h-4 flex-shrink-0" />}
     </button>
