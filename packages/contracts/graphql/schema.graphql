@@ -101,6 +101,81 @@ type EventCheckinLogsResult {
   pageInfo: PageInfo!
 }
 
+# ==============================================================================
+# Event Audit Log Types
+# ==============================================================================
+
+"Event audit log entry for governance tracking"
+type EventAuditLog {
+  id: ID!
+  eventId: ID!
+  scope: AuditScope!
+  action: AuditAction!
+
+  "Type of entity affected (e.g., Comment, EventMember, InviteLink)"
+  entityType: String
+  "ID of the affected entity"
+  entityId: ID
+
+  "Type of actor (USER, SYSTEM, INTEGRATION)"
+  actorType: AuditActorType!
+  "User ID of actor (null for SYSTEM/INTEGRATION)"
+  actorId: ID
+  "Actor's role at time of action"
+  actorRole: Role
+
+  "Changes made (whitelisted fields only)"
+  diff: JSON
+  "Additional context (reason, targetUserId, bulk counts, etc.)"
+  meta: JSON
+
+  "Severity level (1=info, 5=critical)"
+  severity: Int!
+
+  createdAt: DateTime!
+
+  # Relations
+  actor: User
+}
+
+"Paginated audit logs result"
+type EventAuditLogsResult {
+  items: [EventAuditLog!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Export result for audit logs - contains downloadable JSON data
+"""
+type ExportAuditLogsResult {
+  "Total number of logs exported"
+  count: Int!
+  "Event ID"
+  eventId: ID!
+  "Event title for reference"
+  eventTitle: String!
+  "Export timestamp"
+  exportedAt: DateTime!
+  "JSON string containing all audit logs"
+  data: String!
+}
+
+"""
+Result of manual audit log archiving
+"""
+type ArchiveAuditLogsResult {
+  "Whether the archive was successful"
+  success: Boolean!
+  "Event ID"
+  eventId: ID!
+  "Number of logs archived"
+  archivedCount: Int!
+  "Storage location (S3 key or local path)"
+  archiveLocation: String
+  "Archive timestamp"
+  archivedAt: DateTime!
+}
+
 input UsersSort {
   by: UsersSortBy!
   dir: SortDir!
@@ -221,6 +296,59 @@ enum CheckinResult {
   SUCCESS # Action completed successfully
   DENIED # Action was denied (permission/validation issue)
   NOOP # No operation (already in desired state)
+}
+
+# ==============================================================================
+# Event Audit Log Enums
+# ==============================================================================
+
+"Audit log scope - category of audited action"
+enum AuditScope {
+  EVENT # Event lifecycle (create, update, delete, cancel)
+  PUBLICATION # Publish, unpublish, schedule
+  MEMBER # Membership changes (join, leave, kick, role changes)
+  MODERATION # Content moderation (hide/unhide comments, reviews)
+  CHECKIN # Check-in governance (config, blocks, rejects)
+  INVITE_LINK # Invite link management
+  COMMENT # Comment creation/deletion
+  REVIEW # Review creation/deletion
+  AGENDA # Agenda updates
+  FAQ # FAQ updates
+  BILLING # Sponsorship and payments
+  SYSTEM # System-level actions
+}
+
+"Audit log action type"
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  SCHEDULE
+  CANCEL
+  STATUS_CHANGE
+  ROLE_CHANGE
+  INVITE
+  APPROVE
+  REJECT
+  KICK
+  BAN
+  UNBAN
+  LEAVE
+  CONFIG_CHANGE
+  HIDE
+  UNHIDE
+  WAITLIST
+  WAITLIST_LEAVE
+  WAITLIST_PROMOTE
+}
+
+"Audit log actor type - who performed the action"
+enum AuditActorType {
+  USER # Regular user action
+  SYSTEM # Automated system action (jobs, scheduler)
+  INTEGRATION # External integration (webhook, API)
 }
 
 "Member event type for audit log"
@@ -1014,6 +1142,10 @@ type Event {
   faqs: [EventFaq!]!
   joinQuestions: [EventJoinQuestion!]!
   agendaItems: [EventAgendaItem!]!
+
+  # Audit log archiving
+  "When audit logs for this event were archived to cold storage"
+  auditArchivedAt: DateTime
 
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -2073,6 +2205,48 @@ type Query {
     memberId: ID
   ): EventCheckinLogsResult!
 
+  """
+  Get audit logs for an event (owner/moderator only)
+  Provides governance tracking for event changes, membership, moderation, etc.
+  """
+  eventAuditLogs(
+    eventId: ID!
+    "Filter by scope (EVENT, MEMBER, MODERATION, etc.)"
+    scope: [AuditScope!]
+    "Filter by action type (CREATE, UPDATE, DELETE, etc.)"
+    action: [AuditAction!]
+    "Filter by actor ID"
+    actorId: ID
+    "Filter logs from this date onwards"
+    from: DateTime
+    "Filter logs up to this date"
+    to: DateTime
+    "Number of items to return (default: 50, max: 100)"
+    limit: Int
+    "Cursor for pagination (audit log ID)"
+    cursor: ID
+  ): EventAuditLogsResult!
+
+  """
+  Export audit logs for an event as JSON.
+  Returns all logs (up to limit) in a format suitable for download.
+  Requires: Owner, Moderator, or Admin role.
+  PRO feature only.
+  """
+  exportEventAuditLogs(
+    eventId: ID!
+    "Filter by scope"
+    scope: [AuditScope!]
+    "Filter by action"
+    action: [AuditAction!]
+    "Filter logs from this date onwards"
+    from: DateTime
+    "Filter logs up to this date"
+    to: DateTime
+    "Max logs to export (default: 10000)"
+    limit: Int
+  ): ExportAuditLogsResult!
+
   # Admin Content Moderation Queries
   adminComments(
     limit: Int
@@ -2415,6 +2589,14 @@ type Mutation {
     ids: [ID!]!
     input: AdminBulkUpdateEventsInput!
   ): AdminBulkUpdateResult!
+
+  # Audit Log - Manual Archive
+  """
+  Manually archive audit logs for an event.
+  Only available for event owner/admin.
+  Archives logs to storage (S3 or local) and removes from hot table.
+  """
+  archiveEventAuditLogs(eventId: ID!): ArchiveAuditLogsResult!
 
   # Admin - Content Moderation
   adminDeleteComment(id: ID!): Boolean!

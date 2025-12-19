@@ -40,6 +40,9 @@ const envSchema = z
     UPLOADS_PATH: z.string().default('./uploads'),
     UPLOADS_TMP_PATH: z.string().default('./tmp/uploads'),
 
+    // Audit Archive Storage (uses MEDIA_STORAGE_PROVIDER by default)
+    AUDIT_ARCHIVE_PATH: z.string().default('./data/audit-archives'),
+
     // Image Processing
     IMAGE_MAX_WIDTH: z.coerce.number().default(2560),
     IMAGE_MAX_HEIGHT: z.coerce.number().default(2560),
@@ -170,6 +173,9 @@ export const config = {
   imageMaxHeight: env.IMAGE_MAX_HEIGHT,
   imageFormat: env.IMAGE_FORMAT,
   imageQuality: env.IMAGE_QUALITY,
+
+  // Audit Archive
+  auditArchivePath: env.AUDIT_ARCHIVE_PATH,
 
   // S3
   s3Endpoint: env.S3_ENDPOINT,

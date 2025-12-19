@@ -14,6 +14,11 @@ import {
   type EventWithGraph,
 } from '../helpers';
 import { nanoid } from 'nanoid';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 const INVITE_LINK_INCLUDE = {
   event: true,
@@ -86,6 +91,19 @@ export const createEventInviteLinkMutation: MutationResolvers['createEventInvite
         include: INVITE_LINK_INCLUDE,
       });
 
+      // Audit log: INVITE_LINK/CREATE (severity 3)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: user.id,
+        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        scope: 'INVITE_LINK' as AuditScope,
+        action: 'CREATE' as AuditAction,
+        entityType: 'EventInviteLink',
+        entityId: link.id,
+        meta: { maxUses, expiresAt, label },
+        severity: 3,
+      });
+
       return mapEventInviteLink(link as EventInviteLinkWithGraph);
     }
   );
@@ -150,6 +168,23 @@ export const updateEventInviteLinkMutation: MutationResolvers['updateEventInvite
           expiresAt: input.expiresAt ? new Date(input.expiresAt) : undefined,
         },
         include: INVITE_LINK_INCLUDE,
+      });
+
+      // Audit log: INVITE_LINK/UPDATE (severity 3)
+      await createAuditLog(prisma, {
+        eventId: link.eventId,
+        actorId: user.id,
+        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        scope: 'INVITE_LINK' as AuditScope,
+        action: 'UPDATE' as AuditAction,
+        entityType: 'EventInviteLink',
+        entityId: id,
+        diff: {
+          ...(input.label !== undefined && { label: { from: null, to: input.label } }),
+          ...(input.maxUses !== undefined && { maxUses: { from: null, to: input.maxUses } }),
+          ...(input.expiresAt !== undefined && { expiresAt: { from: null, to: input.expiresAt } }),
+        },
+        severity: 3,
       });
 
       return mapEventInviteLink(updated as EventInviteLinkWithGraph);
@@ -217,6 +252,19 @@ export const revokeEventInviteLinkMutation: MutationResolvers['revokeEventInvite
         include: INVITE_LINK_INCLUDE,
       });
 
+      // Audit log: INVITE_LINK/DELETE (severity 4) - revoked
+      await createAuditLog(prisma, {
+        eventId: link.eventId,
+        actorId: user.id,
+        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        scope: 'INVITE_LINK' as AuditScope,
+        action: 'DELETE' as AuditAction,
+        entityType: 'EventInviteLink',
+        entityId: id,
+        meta: { revoked: true },
+        severity: 4,
+      });
+
       return mapEventInviteLink(revoked as EventInviteLinkWithGraph);
     }
   );
@@ -270,6 +318,19 @@ export const deleteEventInviteLinkMutation: MutationResolvers['deleteEventInvite
           }
         );
       }
+
+      // Audit log: INVITE_LINK/DELETE (severity 4) - hard delete
+      await createAuditLog(prisma, {
+        eventId: link.eventId,
+        actorId: user.id,
+        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        scope: 'INVITE_LINK' as AuditScope,
+        action: 'DELETE' as AuditAction,
+        entityType: 'EventInviteLink',
+        entityId: id,
+        meta: { hard: true },
+        severity: 4,
+      });
 
       await prisma.eventInviteLink.delete({ where: { id } });
       return true;
@@ -411,6 +472,18 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
       await prisma.event.update({
         where: { id: link.eventId },
         data: { joinedCount: { increment: 1 } },
+      });
+
+      // Audit log: MEMBER/STATUS_CHANGE (severity 3) - joined via invite link
+      await createAuditLog(prisma, {
+        eventId: link.eventId,
+        actorId: user.id,
+        scope: 'MEMBER' as AuditScope,
+        action: 'STATUS_CHANGE' as AuditAction,
+        entityType: 'EventMember',
+        entityId: user.id,
+        meta: { viaInviteLink: true, from: existing?.status || null, to: 'JOINED' },
+        severity: 3,
       });
 
       return mapEvent(link.event as EventWithGraph);

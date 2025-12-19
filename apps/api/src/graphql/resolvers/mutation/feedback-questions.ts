@@ -17,6 +17,11 @@ import {
   assertFeedbackRateLimit,
   assertFeedbackSendRateLimit,
 } from '../../../lib/rate-limit/domainRateLimiter';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 // Constants for validation
 const MAX_QUESTIONS = 10;
@@ -544,6 +549,19 @@ export const submitReviewAndFeedbackMutation: MutationResolvers['submitReviewAnd
         }
       }
 
+      // Audit log: REVIEW/CREATE (severity 2)
+      await createAuditLog(tx, {
+        eventId,
+        actorId: user.id,
+        actorRole: null,
+        scope: 'REVIEW' as AuditScope,
+        action: 'CREATE' as AuditAction,
+        entityType: 'Review',
+        entityId: review.id,
+        meta: { rating, hadFeedback: createdAnswers.length > 0 },
+        severity: 2,
+      });
+
       return { review, feedbackAnswers: createdAnswers };
     });
 
@@ -700,6 +718,19 @@ export const updateEventFeedbackQuestionsMutation: MutationResolvers['updateEven
         )
       );
 
+      // Audit log: EVENT/CONFIG_CHANGE (severity 2)
+      await createAuditLog(tx, {
+        eventId,
+        actorId: user.id,
+        actorRole: user.role,
+        scope: 'EVENT' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'EventFeedbackQuestion',
+        entityId: eventId,
+        meta: { feedbackQuestionsChanged: true, questionCount: questions.length },
+        severity: 2,
+      });
+
       return createdQuestions;
     });
 
@@ -800,6 +831,19 @@ export const sendFeedbackRequestsMutation: MutationResolvers['sendFeedbackReques
     // Enqueue feedback request job
     try {
       await enqueueFeedbackRequestNow(eventId);
+
+      // Audit log: EVENT/CONFIG_CHANGE (severity 3)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: user.id,
+        actorRole: user.role,
+        scope: 'EVENT' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'Event',
+        entityId: eventId,
+        meta: { feedbackRequestsSent: true, recipientCount: joinedMembers },
+        severity: 3,
+      });
 
       return {
         success: true,

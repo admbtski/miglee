@@ -235,6 +235,9 @@ import { updateEventAppearanceMutation } from './appearance';
 // Agenda mutations
 import { updateEventAgendaMutation } from './agenda';
 
+// Audit mutations
+import { archiveEventAuditLogs } from './audit';
+
 // Check-in mutations
 import {
   checkInSelf,
@@ -463,6 +466,9 @@ export const Mutation: Resolvers['Mutation'] = {
 
   // ---- Agenda ----
   updateEventAgenda: updateEventAgendaMutation,
+
+  // ---- Audit ----
+  archiveEventAuditLogs,
 
   // ---- Dev Auth (remove in production) ----
   devLogin: devLoginMutation,

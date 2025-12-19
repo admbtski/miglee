@@ -80,6 +80,7 @@ import {
 } from './billing';
 import { eventAgendaItemsQuery } from './agenda';
 import { eventCheckinLogs } from './checkin';
+import { eventAuditLogs, exportEventAuditLogs } from './audit';
 
 export const Query: Resolvers['Query'] = {
   // Admin queries
@@ -162,4 +163,8 @@ export const Query: Resolvers['Query'] = {
 
   // Check-in
   eventCheckinLogs,
+
+  // Audit logs
+  eventAuditLogs,
+  exportEventAuditLogs,
 };

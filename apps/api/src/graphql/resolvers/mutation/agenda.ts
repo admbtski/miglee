@@ -9,6 +9,11 @@ import type {
   EventAgendaItem,
 } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 const MAX_AGENDA_ITEMS = 50;
 const MAX_HOSTS_PER_ITEM = 10;
@@ -262,6 +267,19 @@ export const updateEventAgendaMutation: MutationResolvers['updateEventAgenda'] =
 
         createdItems.push(createdItem);
       }
+
+      // Audit log: AGENDA/UPDATE (severity 3)
+      await createAuditLog(tx, {
+        eventId,
+        actorId: user.id,
+        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        scope: 'AGENDA' as AuditScope,
+        action: 'UPDATE' as AuditAction,
+        entityType: 'EventAgenda',
+        entityId: eventId,
+        meta: { bulk: true, itemCount: items.length },
+        severity: 3,
+      });
 
       return createdItems;
     });

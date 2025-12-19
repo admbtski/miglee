@@ -9,6 +9,11 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapComment, mapNotification } from '../helpers';
 import { NOTIFICATION_INCLUDE } from './notifications';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 /**
  * Include for Comment queries with full relations.
@@ -490,6 +495,18 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
         });
       }
 
+      // Audit log: MODERATION/HIDE (severity 4)
+      await createAuditLog(prisma, {
+        eventId: comment.eventId,
+        actorId: user.id,
+        actorRole: isAppAdmin ? 'ADMIN' : isAppModerator ? 'MODERATOR' : 'MODERATOR',
+        scope: 'MODERATION' as AuditScope,
+        action: 'HIDE' as AuditAction,
+        entityType: 'Comment',
+        entityId: id,
+        severity: 4,
+      });
+
       return true;
     }
   );
@@ -566,6 +583,18 @@ export const unhideCommentMutation: MutationResolvers['unhideComment'] =
           data: { commentsCount: { increment: 1 } },
         });
       }
+
+      // Audit log: MODERATION/UNHIDE (severity 4)
+      await createAuditLog(prisma, {
+        eventId: comment.eventId,
+        actorId: user.id,
+        actorRole: isAppAdmin ? 'ADMIN' : isAppModerator ? 'MODERATOR' : 'MODERATOR',
+        scope: 'MODERATION' as AuditScope,
+        action: 'UNHIDE' as AuditAction,
+        entityType: 'Comment',
+        entityId: id,
+        severity: 4,
+      });
 
       return true;
     }

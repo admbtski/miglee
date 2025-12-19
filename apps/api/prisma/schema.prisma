@@ -351,6 +351,9 @@ model User {
   checkinLogsAsActor EventCheckinLog[] @relation("CheckinLogActor")
   checkinRejections  EventMember[]     @relation("EventMemberCheckinRejectedBy")
 
+  // Audit logs
+  auditLogsAsActor EventAuditLog[] @relation("AuditLogActor")
+
   // Monetization
   subscriptions           UserSubscription[]
   planPeriods             UserPlanPeriod[]
@@ -527,6 +530,10 @@ model Event {
 
   // Check-in relations
   checkinLogs EventCheckinLog[]
+
+  // Audit log relation
+  auditLogs        EventAuditLog[]
+  auditArchivedAt  DateTime? // When audit logs were archived and deleted
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1627,4 +1634,96 @@ model EventCheckinLog {
   @@index([eventId, method]) // For method analytics
   @@index([actorId, createdAt]) // For actor's action history
   @@map("event_checkin_logs")
+}
+
+// =============================================================================
+/**
+ * Event Audit Log System
+ * Unified governance audit trail for events (publication, membership, moderation, etc.)
+ * Separate from EventCheckinLog which handles high-volume check-in operations
+ */
+// =============================================================================
+
+enum AuditScope {
+  EVENT // Event lifecycle (create, update, delete, cancel)
+  PUBLICATION // Publish, unpublish, schedule
+  MEMBER // Membership changes (join, leave, kick, role changes)
+  MODERATION // Content moderation (hide/unhide comments, reviews)
+  CHECKIN // Check-in governance (config, blocks, rejects - NOT individual check-ins)
+  INVITE_LINK // Invite link management
+  COMMENT // Comment creation/deletion
+  REVIEW // Review creation/deletion
+  AGENDA // Agenda updates
+  FAQ // FAQ updates
+  BILLING // Sponsorship and payments
+  SYSTEM // System-level actions
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  SCHEDULE
+  CANCEL
+  STATUS_CHANGE
+  ROLE_CHANGE
+  INVITE
+  APPROVE
+  REJECT
+  KICK
+  BAN
+  UNBAN
+  LEAVE
+  CONFIG_CHANGE
+  HIDE
+  UNHIDE
+  WAITLIST
+  WAITLIST_LEAVE
+  WAITLIST_PROMOTE
+}
+
+enum AuditActorType {
+  USER // Regular user action
+  SYSTEM // Automated system action (jobs, scheduler)
+  INTEGRATION // External integration (webhook, API)
+}
+
+model EventAuditLog {
+  id      String @id @default(cuid())
+  eventId String
+
+  // Scope and action
+  scope  AuditScope
+  action AuditAction
+
+  // Entity being affected (optional, for when action targets a sub-entity)
+  entityType String? // e.g., "Comment", "EventMember", "InviteLink"
+  entityId   String? // ID of the affected entity
+
+  // Actor information
+  actorType AuditActorType @default(USER)
+  actorId   String? // User.id or null for SYSTEM/INTEGRATION
+  actorRole String? // Actor's role at time of action (Role or EventMemberRole as string)
+
+  // Change details
+  diff Json? // { field: { from, to } } - whitelisted fields only
+  meta Json? // Additional context: reason, targetUserId, bulk counts, etc.
+
+  // Severity for prioritization and alerting (1=info, 5=critical)
+  severity Int @default(2)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  actor User? @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // Indexes for efficient querying
+  @@index([eventId, createdAt(sort: Desc)]) // Main timeline view
+  @@index([eventId, scope, createdAt(sort: Desc)]) // Filtered by scope
+  @@index([eventId, scope, action, createdAt(sort: Desc)]) // Filtered by scope+action
+  @@index([actorId, createdAt(sort: Desc)]) // Actor's action history
+  @@map("event_audit_logs")
 }

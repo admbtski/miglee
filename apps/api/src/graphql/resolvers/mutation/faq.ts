@@ -9,6 +9,11 @@ import type {
   EventFaq,
 } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 export const faqMutations: Partial<MutationResolvers> = {
   /**
@@ -111,6 +116,19 @@ export const faqMutations: Partial<MutationResolvers> = {
           })
         )
       );
+
+      // Audit log: FAQ/UPDATE (severity 2)
+      await createAuditLog(tx, {
+        eventId,
+        actorId: user.id,
+        actorRole: isOwner ? 'OWNER' : 'MODERATOR',
+        scope: 'FAQ' as AuditScope,
+        action: 'UPDATE' as AuditAction,
+        entityType: 'EventFaq',
+        entityId: eventId,
+        meta: { bulk: true, faqCount: faqs.length },
+        severity: 2,
+      });
 
       return createdFaqs;
     });

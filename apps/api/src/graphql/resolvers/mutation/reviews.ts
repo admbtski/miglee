@@ -25,6 +25,11 @@ import {
   isAdminOrModerator,
   requireSelfOrAppMod,
 } from '../shared/auth-guards';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 const REVIEW_INCLUDE = {
   author: true,
@@ -137,6 +142,19 @@ export const createReviewMutation: MutationResolvers['createReview'] =
             include: REVIEW_INCLUDE,
           });
 
+      // Audit log: REVIEW/CREATE (severity 2)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: userId,
+        actorRole: null,
+        scope: 'REVIEW' as AuditScope,
+        action: 'CREATE' as AuditAction,
+        entityType: 'Review',
+        entityId: review.id,
+        meta: { rating },
+        severity: 2,
+      });
+
       // Notify event owner about new review
       if (event.ownerId && event.ownerId !== userId) {
         const notif = await prisma.notification.create({
@@ -248,6 +266,22 @@ export const updateReviewMutation: MutationResolvers['updateReview'] =
         include: REVIEW_INCLUDE,
       });
 
+      // Audit log: REVIEW/UPDATE (severity 2)
+      await createAuditLog(prisma, {
+        eventId: updated.eventId,
+        actorId: userId,
+        actorRole: ctx.user?.role,
+        scope: 'REVIEW' as AuditScope,
+        action: 'UPDATE' as AuditAction,
+        entityType: 'Review',
+        entityId: id,
+        meta: {
+          ratingChanged: rating !== undefined,
+          contentEdited: content !== undefined,
+        },
+        severity: 2,
+      });
+
       return mapReview(updated);
     }
   );
@@ -276,10 +310,31 @@ export const deleteReviewMutation: MutationResolvers['deleteReview'] =
       return true; // Already deleted
     }
 
+    // Get review with eventId for audit log
+    const review = await prisma.review.findUnique({
+      where: { id },
+      select: { eventId: true },
+    });
+
     await prisma.review.update({
       where: { id },
       data: { deletedAt: new Date(), deletedById: userId },
     });
+
+    // Audit log: REVIEW/DELETE (severity 3)
+    if (review?.eventId) {
+      await createAuditLog(prisma, {
+        eventId: review.eventId,
+        actorId: userId,
+        actorRole: ctx.user?.role,
+        scope: 'REVIEW' as AuditScope,
+        action: 'DELETE' as AuditAction,
+        entityType: 'Review',
+        entityId: id,
+        meta: { by: existing.authorId === userId ? 'author' : 'moderator' },
+        severity: 3,
+      });
+    }
 
     return true;
   });
@@ -364,6 +419,18 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
       });
     }
 
+    // Audit log: MODERATION/HIDE (severity 4)
+    await createAuditLog(prisma, {
+      eventId: review.eventId,
+      actorId: userId,
+      actorRole: ctx.user?.role,
+      scope: 'MODERATION' as AuditScope,
+      action: 'HIDE' as AuditAction,
+      entityType: 'Review',
+      entityId: id,
+      severity: 4,
+    });
+
     return true;
   });
 
@@ -400,6 +467,18 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
     await prisma.review.update({
       where: { id },
       data: { hiddenAt: null, hiddenById: null },
+    });
+
+    // Audit log: MODERATION/UNHIDE (severity 4)
+    await createAuditLog(prisma, {
+      eventId: review.eventId,
+      actorId: ctx.user!.id,
+      actorRole: ctx.user?.role,
+      scope: 'MODERATION' as AuditScope,
+      action: 'UNHIDE' as AuditAction,
+      entityType: 'Review',
+      entityId: id,
+      severity: 4,
     });
 
     return true;

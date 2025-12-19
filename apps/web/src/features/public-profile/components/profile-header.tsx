@@ -18,9 +18,12 @@ import {
   MoreHorizontal,
   Lock,
   Ban,
+  Copy,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { GetUserProfileQuery } from '@/lib/api/__generated__/react-query-update';
+import { useMeQuery } from '@/features/auth';
 import { ReportUserModal } from '@/features/reports';
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
@@ -63,6 +66,22 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
   const { locale } = useI18n();
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+
+  // Check if current user is admin/moderator (can see user IDs for debugging)
+  const { data: meData } = useMeQuery();
+  const isAppAdminOrModerator =
+    meData?.me?.role === 'ADMIN' || meData?.me?.role === 'MODERATOR';
+
+  const handleCopyId = async () => {
+    try {
+      await navigator.clipboard.writeText(user.id);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy user ID:', err);
+    }
+  };
 
   const displayName = user.profile?.displayName || user.name;
   const city = user.profile?.city;
@@ -268,9 +287,30 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
             </div>
 
             {/* Username */}
-            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-3">
+            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">
               @{user.name}
             </p>
+
+            {/* User ID for admins/moderators - debug info (development only) */}
+            {process.env.NODE_ENV === 'development' && isAppAdminOrModerator && (
+              <button
+                onClick={handleCopyId}
+                className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors font-mono mb-3 group"
+                title="Kliknij aby skopiować ID użytkownika" // TODO i18n
+              >
+                <span className="px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+                  ID: {user.id}
+                </span>
+                {copiedId ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                )}
+              </button>
+            )}
+
+            {/* Spacer when no ID shown */}
+            {!(process.env.NODE_ENV === 'development' && isAppAdminOrModerator) && <div className="mb-2" />}
 
             {/* Bio */}
             {bioShort ? (

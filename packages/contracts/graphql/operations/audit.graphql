@@ -1,0 +1,63 @@
+# Event Audit Log Operations
+# Governance tracking for event changes, membership, moderation, etc.
+
+query GetEventAuditLogs(
+  $eventId: ID!
+  $scope: [AuditScope!]
+  $action: [AuditAction!]
+  $actorId: ID
+  $from: DateTime
+  $to: DateTime
+  $limit: Int
+  $cursor: ID
+) {
+  eventAuditLogs(
+    eventId: $eventId
+    scope: $scope
+    action: $action
+    actorId: $actorId
+    from: $from
+    to: $to
+    limit: $limit
+    cursor: $cursor
+  ) {
+    items {
+      id
+      eventId
+      scope
+      action
+      entityType
+      entityId
+      actorType
+      actorId
+      actorRole
+      diff
+      meta
+      severity
+      createdAt
+      actor {
+        id
+        name
+        avatarKey
+      }
+    }
+    pageInfo {
+      total
+      limit
+      offset
+      hasNext
+      hasPrev
+    }
+  }
+}
+
+# Manual archive of audit logs to cold storage
+mutation ArchiveEventAuditLogs($eventId: ID!) {
+  archiveEventAuditLogs(eventId: $eventId) {
+    success
+    eventId
+    archivedCount
+    archiveLocation
+    archivedAt
+  }
+}

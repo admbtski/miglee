@@ -22,7 +22,9 @@
     "worker:reminders:dev": "tsx watch src/workers/reminders/worker.ts",
     "worker:reminders": "tsx src/workers/reminders/worker.ts",
     "worker:feedback:dev": "tsx watch src/workers/feedback/worker.ts",
-    "worker:feedback": "tsx src/workers/feedback/worker.ts"
+    "worker:feedback": "tsx src/workers/feedback/worker.ts",
+    "worker:audit-archive:dev": "tsx watch src/workers/audit-archive/worker.ts",
+    "worker:audit-archive": "tsx src/workers/audit-archive/worker.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.934.0",

@@ -761,6 +761,7 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
 
     createdAt: i.createdAt,
     updatedAt: i.updatedAt,
+    auditArchivedAt: i.auditArchivedAt,
 
     // Field resolvers handle these
     isFavourite: false,

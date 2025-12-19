@@ -38,6 +38,11 @@ import {
 } from '../helpers/checkin';
 import { includesMethod } from '../helpers/checkin-types';
 import { NotificationKind } from '@prisma/client';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 // =============================================================================
 // User Mutations
@@ -427,6 +432,23 @@ export const rejectMemberCheckin: MutationResolvers['rejectMemberCheckin'] =
         prisma.event.findUnique({ where: { id: eventId } }),
       ]);
 
+      // Audit log: CHECKIN/STATUS_CHANGE (severity 4)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: userId,
+        scope: 'CHECKIN' as AuditScope,
+        action: 'STATUS_CHANGE' as AuditAction,
+        entityType: 'EventMember',
+        entityId: member.id,
+        meta: {
+          targetUserId,
+          reason: safeReason,
+          blockedAll: safeBlockAll || undefined,
+          blockedMethod: safeBlockMethod || undefined,
+        },
+        severity: 4,
+      });
+
       return {
         success: true,
         message: 'Check-in rejected successfully',
@@ -547,6 +569,23 @@ export const blockMemberCheckin: MutationResolvers['blockMemberCheckin'] =
         prisma.event.findUnique({ where: { id: eventId } }),
       ]);
 
+      // Audit log: CHECKIN/CONFIG_CHANGE (severity 4)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: userId,
+        scope: 'CHECKIN' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'EventMember',
+        entityId: member.id,
+        meta: {
+          targetUserId,
+          blockAll: safeBlockAll || undefined,
+          blockedMethod: safeMethod || undefined,
+          reason: safeReason,
+        },
+        severity: 4,
+      });
+
       return {
         success: true,
         message: safeBlockAll
@@ -648,6 +687,22 @@ export const unblockMemberCheckin: MutationResolvers['unblockMemberCheckin'] =
         }),
         prisma.event.findUnique({ where: { id: eventId } }),
       ]);
+
+      // Audit log: CHECKIN/CONFIG_CHANGE (severity 4)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: userId,
+        scope: 'CHECKIN' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'EventMember',
+        entityId: member.id,
+        meta: {
+          targetUserId,
+          unblockAll: safeUnblockAll || undefined,
+          unblockedMethod: safeMethod || undefined,
+        },
+        severity: 4,
+      });
 
       return {
         success: true,
@@ -928,6 +983,25 @@ export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConf
         },
       });
 
+      // Audit log: CHECKIN/CONFIG_CHANGE (severity 4)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: userId,
+        scope: 'CHECKIN' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'Event',
+        entityId: eventId,
+        diff: {
+          ...(updateData.checkinEnabled !== undefined && {
+            checkinEnabled: { from: !updateData.checkinEnabled, to: updateData.checkinEnabled },
+          }),
+          ...(updateData.enabledCheckinMethods !== undefined && {
+            enabledCheckinMethods: { from: null, to: updateData.enabledCheckinMethods },
+          }),
+        },
+        severity: 4,
+      });
+
       return event; // Cast to GraphQL Event type
     } catch (error) {
       if (error instanceof GraphQLError) {
@@ -977,6 +1051,18 @@ export const rotateEventCheckinToken: MutationResolvers['rotateEventCheckinToken
           reason: 'Event QR token rotated for security',
         });
       }
+
+      // Audit log: CHECKIN/CONFIG_CHANGE (severity 4) - token rotated (no token value logged)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: userId,
+        scope: 'CHECKIN' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'Event',
+        entityId: eventId,
+        meta: { tokenRotated: true },
+        severity: 4,
+      });
 
       return event; // Cast to GraphQL type (field resolvers will handle relations)
     } catch (error) {
@@ -1069,6 +1155,18 @@ export const rotateMemberCheckinToken: MutationResolvers['rotateMemberCheckinTok
         reason: isSelfRotation
           ? 'User rotated own QR token'
           : 'Moderator rotated member QR token',
+      });
+
+      // Audit log: CHECKIN/CONFIG_CHANGE (severity 4) - member token rotated (no token value logged)
+      await createAuditLog(prisma, {
+        eventId,
+        actorId: userId,
+        scope: 'CHECKIN' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'EventMember',
+        entityId: existingMember.id,
+        meta: { memberTokenRotated: true, targetUserId },
+        severity: 4,
       });
 
       return member; // Cast to GraphQL type (field resolvers will handle missing relations)

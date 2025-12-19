@@ -9,6 +9,11 @@ import type {
   EventJoinQuestion,
 } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 export const joinQuestionsMutations: Partial<MutationResolvers> = {
   /**
@@ -132,6 +137,19 @@ export const joinQuestionsMutations: Partial<MutationResolvers> = {
           })
         )
       );
+
+      // Audit log: EVENT/CONFIG_CHANGE (severity 2)
+      await createAuditLog(tx, {
+        eventId,
+        actorId: user.id,
+        actorRole: isOwner ? 'OWNER' : 'MODERATOR',
+        scope: 'EVENT' as AuditScope,
+        action: 'CONFIG_CHANGE' as AuditAction,
+        entityType: 'EventJoinQuestion',
+        entityId: eventId,
+        meta: { joinFormChanged: true, questionCount: questions.length },
+        severity: 2,
+      });
 
       return createdQuestions;
     });

@@ -46,7 +46,7 @@ fragment EventCardData on Event {
   # Computed fields for card display
   joinedCount
   hasStarted
-  isCanceledvent
+  isCanceled
   isDeleted
   canJoin
   isOnsite
@@ -261,6 +261,9 @@ fragment EventCore on Event {
   boostedAt
   sponsorshipPlan
 
+  # Audit log archiving
+  auditArchivedAt
+
   # Check-in configuration
   checkinEnabled
   enabledCheckinMethods
@@ -367,6 +370,7 @@ fragment EventDetail on Event {
     }
     createdAt
     updatedAt
+    auditArchivedAt
   }
 }
 

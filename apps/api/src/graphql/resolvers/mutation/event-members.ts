@@ -15,6 +15,11 @@ import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapEvent, mapNotification } from '../helpers';
 import { isAdminOrModerator, isAdmin } from '../shared/auth-guards';
 import { assertEventWriteRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
+import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+
+// Temporary type aliases until prisma generate is run
+type AuditScope = CreateAuditLogInput['scope'];
+type AuditAction = CreateAuditLogInput['action'];
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*                               Includes / types                             */
@@ -664,6 +669,20 @@ export const inviteMemberMutation: MutationResolvers['inviteMember'] =
           dedupeKey: `event_invite:${userId}:${eventId}`,
         });
 
+        // Audit log: MEMBER/INVITE (severity 3)
+        await createAuditLog(tx, {
+          eventId,
+          actorId,
+          actorRole:
+            event.members.find((m) => m.userId === actorId)?.role ?? null,
+          scope: 'MEMBER' as AuditScope,
+          action: 'INVITE' as AuditAction,
+          entityType: 'EventMember',
+          entityId: userId,
+          meta: { targetUserId: userId, invitedBy: actorId },
+          severity: 3,
+        });
+
         return reloadFullEvent(tx, eventId);
       });
 
@@ -866,6 +885,20 @@ export const approveMembershipMutation: MutationResolvers['approveMembership'] =
           dedupeKey: `membership_approved:${userId}:${eventId}`,
         });
 
+        // Audit log: MEMBER/APPROVE (severity 3)
+        await createAuditLog(tx, {
+          eventId,
+          actorId,
+          actorRole:
+            event.members.find((m) => m.userId === actorId)?.role ?? null,
+          scope: 'MEMBER' as AuditScope,
+          action: 'APPROVE' as AuditAction,
+          entityType: 'EventMember',
+          entityId: userId,
+          meta: { targetUserId: userId },
+          severity: 3,
+        });
+
         return reloadFullEvent(tx, eventId);
       });
 
@@ -913,6 +946,20 @@ export const rejectMembershipMutation: MutationResolvers['rejectMembership'] =
           eventId,
           dedupeKey: `membership_rejected:${userId}:${eventId}`,
           data: { reason: note || undefined },
+        });
+
+        // Audit log: MEMBER/REJECT (severity 3)
+        await createAuditLog(tx, {
+          eventId,
+          actorId,
+          actorRole:
+            event.members.find((m) => m.userId === actorId)?.role ?? null,
+          scope: 'MEMBER' as AuditScope,
+          action: 'REJECT' as AuditAction,
+          entityType: 'EventMember',
+          entityId: userId,
+          meta: { targetUserId: userId, reason: note || undefined },
+          severity: 3,
         });
 
         return reloadFullEvent(tx, eventId);
@@ -978,6 +1025,20 @@ export const kickMemberMutation: MutationResolvers['kickMember'] =
           eventId,
           dedupeKey: `kicked:${userId}:${eventId}`,
           data: { reason: note || undefined },
+        });
+
+        // Audit log: MEMBER/KICK (severity 4)
+        await createAuditLog(tx, {
+          eventId,
+          actorId,
+          actorRole:
+            event.members.find((m) => m.userId === actorId)?.role ?? null,
+          scope: 'MEMBER' as AuditScope,
+          action: 'KICK' as AuditAction,
+          entityType: 'EventMember',
+          entityId: member.id,
+          meta: { targetUserId: userId, reason: note || undefined },
+          severity: 4,
         });
 
         // Try to promote someone from waitlist
@@ -1060,6 +1121,20 @@ export const banMemberMutation: MutationResolvers['banMember'] =
           dedupeKey: `banned:${userId}:${eventId}`,
         });
 
+        // Audit log: MODERATION/BAN (severity 5 - critical)
+        await createAuditLog(tx, {
+          eventId,
+          actorId,
+          actorRole:
+            event.members.find((m) => m.userId === actorId)?.role ?? null,
+          scope: 'MODERATION' as AuditScope,
+          action: 'BAN' as AuditAction,
+          entityType: 'EventMember',
+          entityId: userId,
+          meta: { targetUserId: userId, reason: note || undefined },
+          severity: 5,
+        });
+
         // Try to promote someone from waitlist if user was joined
         if (wasJoined) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1110,6 +1185,20 @@ export const unbanMemberMutation: MutationResolvers['unbanMember'] =
           actorId,
           eventId,
           dedupeKey: `unbanned:${userId}:${eventId}`,
+        });
+
+        // Audit log: MODERATION/UNBAN (severity 4)
+        await createAuditLog(tx, {
+          eventId,
+          actorId,
+          actorRole:
+            event.members.find((m) => m.userId === actorId)?.role ?? null,
+          scope: 'MODERATION' as AuditScope,
+          action: 'UNBAN' as AuditAction,
+          entityType: 'EventMember',
+          entityId: userId,
+          meta: { targetUserId: userId },
+          severity: 4,
         });
 
         return reloadFullEvent(tx, eventId);
@@ -1172,6 +1261,21 @@ export const updateMemberRoleMutation: MutationResolvers['updateMemberRole'] =
             eventId,
             dedupeKey: `role_changed:${userId}:${eventId}`,
             data: { newRole: role },
+          });
+
+          // Audit log: MEMBER/ROLE_CHANGE (severity 4)
+          await createAuditLog(tx, {
+            eventId,
+            actorId,
+            actorRole:
+              event.members.find((m) => m.userId === actorId)?.role ?? null,
+            scope: 'MEMBER' as AuditScope,
+            action: 'ROLE_CHANGE' as AuditAction,
+            entityType: 'EventMember',
+            entityId: member.id,
+            diff: { role: { from: oldRole, to: role } },
+            meta: { targetUserId: userId },
+            severity: 4,
           });
         }
 
@@ -1456,6 +1560,20 @@ export const promoteFromWaitlistMutation: MutationResolvers['promoteFromWaitlist
           actorId,
           eventId,
           dedupeKey: `waitlist_promoted:${userId}:${eventId}`,
+        });
+
+        // Audit log: MEMBER/WAITLIST_PROMOTE (severity 3)
+        await createAuditLog(tx, {
+          eventId,
+          actorId,
+          actorRole:
+            event.members.find((m) => m.userId === actorId)?.role ?? null,
+          scope: 'MEMBER' as AuditScope,
+          action: 'STATUS_CHANGE' as AuditAction,
+          entityType: 'EventMember',
+          entityId: member.id,
+          meta: { targetUserId: userId, from: 'WAITLIST', to: 'JOINED' },
+          severity: 3,
         });
 
         return reloadFullEvent(tx, eventId);

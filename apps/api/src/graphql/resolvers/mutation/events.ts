@@ -16,6 +16,11 @@ import {
   Visibility as PrismaVisibility,
 } from '@prisma/client';
 import { GraphQLError } from 'graphql';
+import {
+  createAuditLog,
+  buildDiff,
+  EVENT_DIFF_WHITELIST,
+} from '../../../lib/audit';
 import { getUserEffectivePlan } from '../../../lib/billing';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
@@ -30,6 +35,10 @@ import {
   enqueueReminders,
   rescheduleReminders,
 } from '../../../workers/reminders/queue';
+import {
+  enqueueAuditArchive,
+  rescheduleAuditArchive,
+} from '../../../workers/audit-archive/queue';
 import type {
   CreateEventInput,
   Event as GQLEvent,
@@ -585,6 +594,26 @@ export const createEventMutation: MutationResolvers['createEvent'] =
           // Don't block transaction if feedback scheduling fails
         }
 
+        // Audit archive (scheduled 30 days after event ends)
+        try {
+          await enqueueAuditArchive(event.id, event.endAt);
+        } catch {
+          // Don't block transaction if archive scheduling fails
+        }
+
+        // Audit log: Event created
+        await createAuditLog(tx, {
+          eventId: event.id,
+          scope: 'EVENT',
+          action: 'CREATE',
+          entityType: 'Event',
+          entityId: event.id,
+          actorId: ownerId,
+          actorRole: user?.role ?? null,
+          meta: { status: 'DRAFT' },
+          severity: 2,
+        });
+
         const fullEvent = await tx.event.findUniqueOrThrow({
           where: { id: event.id },
           include: EVENT_INCLUDE,
@@ -814,6 +843,22 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
           await promoteMultipleFromWaitlist(tx as any, id, slotsAdded);
         }
 
+        // Audit log: Event updated (only if there are actual changes)
+        const diff = buildDiff(current, event, EVENT_DIFF_WHITELIST);
+        if (diff) {
+          await createAuditLog(tx, {
+            eventId: id,
+            scope: 'EVENT',
+            action: 'UPDATE',
+            entityType: 'Event',
+            entityId: id,
+            actorId: user?.id ?? null,
+            actorRole: user?.role ?? null,
+            diff,
+            severity: 2,
+          });
+        }
+
         return event;
       });
 
@@ -841,6 +886,13 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
           await rescheduleFeedbackRequest(updated.id, updated.endAt);
         } catch {
           // Don't block mutation if feedback rescheduling fails
+        }
+
+        // Reschedule audit archive if endAt changed
+        try {
+          await rescheduleAuditArchive(updated.id, updated.endAt);
+        } catch {
+          // Don't block mutation if archive rescheduling fails
         }
       }
 
@@ -1188,6 +1240,19 @@ export const cancelEventMutation: MutationResolvers['cancelEvent'] =
           );
         }
 
+        // Audit log: Event canceled
+        await createAuditLog(tx, {
+          eventId: id,
+          scope: 'EVENT',
+          action: 'CANCEL',
+          entityType: 'Event',
+          entityId: id,
+          actorId,
+          actorRole: user?.role ?? null,
+          meta: reason ? { reason } : undefined,
+          severity: 3,
+        });
+
         return updated;
       });
 
@@ -1257,13 +1322,28 @@ export const deleteEventMutation: MutationResolvers['deleteEvent'] =
       });
       const recipients = members.map((m) => m.userId);
 
-      await prisma.event.update({
-        where: { id },
-        data: {
-          deletedAt: new Date(),
-          deletedById: actorId,
-          deleteReason: null,
-        },
+      await prisma.$transaction(async (tx) => {
+        await tx.event.update({
+          where: { id },
+          data: {
+            deletedAt: new Date(),
+            deletedById: actorId,
+            deleteReason: null,
+          },
+        });
+
+        // Audit log: Event deleted
+        await createAuditLog(tx, {
+          eventId: id,
+          scope: 'EVENT',
+          action: 'DELETE',
+          entityType: 'Event',
+          entityId: id,
+          actorId,
+          actorRole: user?.role ?? null,
+          meta: { hard: false },
+          severity: 4,
+        });
       });
 
       if (recipients.length > 0) {
@@ -1380,15 +1460,33 @@ export const closeEventJoinMutation: MutationResolvers['closeEventJoin'] =
       }
 
       // Zamknij zapisy
-      const updated = await prisma.event.update({
-        where: { id: eventId },
-        data: {
-          joinManuallyClosed: true,
-          joinManuallyClosedAt: new Date(),
-          joinManuallyClosedById: actorId,
-          joinManualCloseReason: reason ?? null,
-        },
-        include: EVENT_INCLUDE,
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.event.update({
+          where: { id: eventId },
+          data: {
+            joinManuallyClosed: true,
+            joinManuallyClosedAt: new Date(),
+            joinManuallyClosedById: actorId,
+            joinManualCloseReason: reason ?? null,
+          },
+          include: EVENT_INCLUDE,
+        });
+
+        // Audit log: Join closed
+        await createAuditLog(tx, {
+          eventId,
+          scope: 'EVENT',
+          action: 'CONFIG_CHANGE',
+          entityType: 'Event',
+          entityId: eventId,
+          actorId,
+          actorRole: user?.role ?? null,
+          diff: { joinManuallyClosed: { from: false, to: true } },
+          meta: reason ? { reason } : undefined,
+          severity: 3,
+        });
+
+        return result;
       });
 
       return mapEvent(updated, actorId);
@@ -1448,15 +1546,32 @@ export const reopenEventJoinMutation: MutationResolvers['reopenEventJoin'] =
       }
 
       // Otwórz zapisy ponownie
-      const updated = await prisma.event.update({
-        where: { id: eventId },
-        data: {
-          joinManuallyClosed: false,
-          joinManuallyClosedAt: null,
-          joinManuallyClosedById: null,
-          joinManualCloseReason: null,
-        },
-        include: EVENT_INCLUDE,
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.event.update({
+          where: { id: eventId },
+          data: {
+            joinManuallyClosed: false,
+            joinManuallyClosedAt: null,
+            joinManuallyClosedById: null,
+            joinManualCloseReason: null,
+          },
+          include: EVENT_INCLUDE,
+        });
+
+        // Audit log: Join reopened
+        await createAuditLog(tx, {
+          eventId,
+          scope: 'EVENT',
+          action: 'CONFIG_CHANGE',
+          entityType: 'Event',
+          entityId: eventId,
+          actorId,
+          actorRole: user?.role ?? null,
+          diff: { joinManuallyClosed: { from: true, to: false } },
+          severity: 3,
+        });
+
+        return result;
       });
 
       return mapEvent(updated, actorId);
@@ -1547,14 +1662,32 @@ export const publishEventMutation: MutationResolvers['publishEvent'] =
         return mapEvent(full, actorId);
       }
 
-      const updated = await prisma.event.update({
-        where: { id },
-        data: {
-          status: 'PUBLISHED',
-          publishedAt: new Date(),
-          scheduledPublishAt: null, // Clear any scheduled time
-        },
-        include: EVENT_INCLUDE,
+      const fromStatus = event.status;
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.event.update({
+          where: { id },
+          data: {
+            status: 'PUBLISHED',
+            publishedAt: new Date(),
+            scheduledPublishAt: null, // Clear any scheduled time
+          },
+          include: EVENT_INCLUDE,
+        });
+
+        // Audit log: Event published
+        await createAuditLog(tx, {
+          eventId: id,
+          scope: 'PUBLICATION',
+          action: 'PUBLISH',
+          entityType: 'Event',
+          entityId: id,
+          actorId,
+          actorRole: user?.role ?? null,
+          meta: { from: fromStatus, to: 'PUBLISHED' },
+          severity: 3,
+        });
+
+        return result;
       });
 
       // Enqueue reminders now that event is published
@@ -1613,13 +1746,30 @@ export const scheduleEventPublicationMutation: MutationResolvers['scheduleEventP
         });
       }
 
-      const updated = await prisma.event.update({
-        where: { id },
-        data: {
-          status: 'SCHEDULED',
-          scheduledPublishAt: publishDate,
-        },
-        include: EVENT_INCLUDE,
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.event.update({
+          where: { id },
+          data: {
+            status: 'SCHEDULED',
+            scheduledPublishAt: publishDate,
+          },
+          include: EVENT_INCLUDE,
+        });
+
+        // Audit log: Event scheduled
+        await createAuditLog(tx, {
+          eventId: id,
+          scope: 'PUBLICATION',
+          action: 'SCHEDULE',
+          entityType: 'Event',
+          entityId: id,
+          actorId,
+          actorRole: user?.role ?? null,
+          meta: { publishAt: publishDate.toISOString() },
+          severity: 3,
+        });
+
+        return result;
       });
 
       return mapEvent(updated, actorId);
@@ -1650,13 +1800,30 @@ export const cancelScheduledPublicationMutation: MutationResolvers['cancelSchedu
         });
       }
 
-      const updated = await prisma.event.update({
-        where: { id },
-        data: {
-          status: 'DRAFT',
-          scheduledPublishAt: null,
-        },
-        include: EVENT_INCLUDE,
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.event.update({
+          where: { id },
+          data: {
+            status: 'DRAFT',
+            scheduledPublishAt: null,
+          },
+          include: EVENT_INCLUDE,
+        });
+
+        // Audit log: Scheduled publication canceled
+        await createAuditLog(tx, {
+          eventId: id,
+          scope: 'PUBLICATION',
+          action: 'UPDATE',
+          entityType: 'Event',
+          entityId: id,
+          actorId,
+          actorRole: user?.role ?? null,
+          meta: { from: 'SCHEDULED', to: 'DRAFT', scheduledPublishAt: null },
+          severity: 2,
+        });
+
+        return result;
       });
 
       return mapEvent(updated, actorId);
@@ -1690,13 +1857,31 @@ export const unpublishEventMutation: MutationResolvers['unpublishEvent'] =
         return mapEvent(full, actorId);
       }
 
-      const updated = await prisma.event.update({
-        where: { id },
-        data: {
-          status: 'DRAFT',
-          scheduledPublishAt: null,
-        },
-        include: EVENT_INCLUDE,
+      const fromStatus = event.status;
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.event.update({
+          where: { id },
+          data: {
+            status: 'DRAFT',
+            scheduledPublishAt: null,
+          },
+          include: EVENT_INCLUDE,
+        });
+
+        // Audit log: Event unpublished
+        await createAuditLog(tx, {
+          eventId: id,
+          scope: 'PUBLICATION',
+          action: 'UNPUBLISH',
+          entityType: 'Event',
+          entityId: id,
+          actorId,
+          actorRole: user?.role ?? null,
+          meta: { from: fromStatus, to: 'DRAFT' },
+          severity: 4,
+        });
+
+        return result;
       });
 
       // Clear reminders when unpublishing
