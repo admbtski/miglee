@@ -4,8 +4,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     reactCompiler: true,
-    serverComponentsExternalPackages: ['require-in-the-middle'],
   },
+  // Moved from experimental.serverComponentsExternalPackages in Next.js 15
+  serverExternalPackages: ['require-in-the-middle'],
   webpack: (config, { isServer }) => {
     if (isServer) {
       // 3a) wycisz warning

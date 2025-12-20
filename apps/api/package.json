@@ -16,7 +16,9 @@
     "prisma:studio": "prisma studio",
     "prisma:format": "prisma format",
     "prisma:push": "prisma db push",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed": "tsx prisma/seed-dev.ts",
+    "prisma:seed:dev": "tsx prisma/seed-dev.ts",
+    "prisma:seed:prod": "tsx prisma/seed-prod.ts",
     "prisma:reset": "prisma migrate reset",
     "prisma:force:reset": "prisma db push --force-reset",
     "worker:reminders:dev": "tsx watch src/workers/reminders/worker.ts",
@@ -80,6 +82,6 @@
     "typescript": "^5.9.2"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed-dev.ts"
   }
 }

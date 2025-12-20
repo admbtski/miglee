@@ -4,6 +4,13 @@ import dotenv from 'dotenv';
 // load env config
 dotenv.config();
 
+// Helper for boolean env vars (handles "true"/"false" strings correctly)
+const booleanString = (defaultValue: boolean = false) =>
+  z
+    .string()
+    .default(defaultValue ? 'true' : 'false')
+    .transform((val) => val === 'true' || val === '1');
+
 const envSchema = z
   .object({
     NODE_ENV: z
@@ -33,7 +40,7 @@ const envSchema = z
     REDIS_PORT: z.coerce.number().default(6379),
     REDIS_PASSWORD: z.string().optional(),
     REDIS_DB: z.coerce.number().default(0),
-    REDIS_TLS: z.coerce.boolean().default(false),
+    REDIS_TLS: booleanString(false),
 
     // Media Storage
     MEDIA_STORAGE_PROVIDER: z.enum(['LOCAL', 'S3']).default('LOCAL'),
@@ -58,7 +65,7 @@ const envSchema = z
 
     // CDN/Assets URL
     ASSETS_BASE_URL: z.string().optional(), // e.g. http://localhost:4000 or https://cdn.example.com
-    CDN_ENABLED: z.coerce.boolean().default(false),
+    CDN_ENABLED: booleanString(false),
     CDN_BASE_URL: z.string().optional(),
 
     // Stripe Configuration (required in production)
@@ -91,7 +98,7 @@ const envSchema = z
     EMAIL_FROM: z.string().default('Miglee <noreply@miglee.pl>'),
 
     // Admin Features
-    ENABLE_BULL_BOARD: z.coerce.boolean().default(false),
+    ENABLE_BULL_BOARD: booleanString(false),
   })
   .refine(
     (data) => {

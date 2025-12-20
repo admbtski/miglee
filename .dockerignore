@@ -1,0 +1,71 @@
+# =============================================================================
+# Docker Ignore File
+# Excludes files from Docker build context for faster builds
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# Dependencies (installed in container)
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+**/dist
+.next
+**/.next
+.turbo
+**/.turbo
+*.tsbuildinfo
+
+# Development files
+*.log
+*.local
+.env
+.env.*
+!env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Documentation (not needed in container)
+docs
+*.md
+!README.md
+
+# Docker files (avoid recursion)
+docker-compose*.yml
+Dockerfile*
+
+# Uploads and data (mounted as volumes)
+uploads
+tmp
+data
+
+# Scripts not needed in container
+scripts
+*.sh
+
+# Misc
+.dockerignore
+.eslintrc*
+.prettierrc*
+tsconfig.tsbuildinfo
+

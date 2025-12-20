@@ -1,8 +1,25 @@
-version: '3.8'
+# =============================================================================
+# Miglee Infrastructure (Tryb Hybrydowy)
+# =============================================================================
+#
+# Infrastruktura dla lokalnego developmentu. Aplikacje uruchamiasz przez pnpm dev.
+#
+# Usage:
+#   pnpm infra:up           # Start postgres + redis
+#   pnpm infra:up:tools     # + Adminer
+#   pnpm infra:up:stripe    # + Stripe CLI
+#   pnpm infra:down         # Stop
+#
+# =============================================================================
+
+name: miglee-infra
 
 services:
-  db:
-    image: postgis/postgis:16-3.4
+  # ===========================================================================
+  # PostgreSQL 16 + PostGIS 3.4
+  # ===========================================================================
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -12,36 +29,82 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - dbdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d app']
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
-  adminer:
-    image: adminer
-    restart: unless-stopped
-    ports:
-      - '8080:8080'
-    depends_on:
-      db:
-        condition: service_healthy
-
+  # ===========================================================================
+  # Redis 7
+  # ===========================================================================
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
       - '6379:6379'
-    command: ['redis-server', '--appendonly', 'yes']
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory',
+        '256mb',
+        '--maxmemory-policy',
+        'allkeys-lru',
+      ]
     volumes:
-      - redisdata:/data
+      - redis_data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 5s
+
+  # ===========================================================================
+  # Adminer (Profile: tools)
+  # ===========================================================================
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    profiles: ['tools']
+    ports:
+      - '8080:8080'
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: nette
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ===========================================================================
+  # Stripe CLI (Profile: stripe)
+  # ===========================================================================
+  stripe:
+    image: stripe/stripe-cli:latest
+    restart: unless-stopped
+    profiles: ['stripe']
+    command:
+      [
+        'listen',
+        '--forward-to',
+        'http://host.docker.internal:4000/webhooks/stripe',
+        '--log-level',
+        'info',
+      ]
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_DEVICE_NAME: miglee-local
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    # Note: Sprawdź logi aby uzyskać webhook secret (whsec_...)
+    # docker compose -f docker/docker-compose.dev.yml --profile stripe logs -f stripe
 
 volumes:
-  dbdata:
-  redisdata:
+  postgres_data:
+    name: miglee-postgres-data
+  redis_data:
+    name: miglee-redis-data
