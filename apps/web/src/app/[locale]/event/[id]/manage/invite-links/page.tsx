@@ -108,7 +108,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Linki zaproszeniowe | Miglee',
+    title: 'Linki zaproszeniowe | Appname',
     description: 'Zarządzaj linkami zaproszeniowymi wydarzenia',
   };
 }

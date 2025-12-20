@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  transpilePackages: ['@miglee/contracts'],
+  transpilePackages: ['@appname/contracts'],
 };
 
 export default nextConfig;

@@ -199,7 +199,7 @@ async function seedUsers(): Promise<User[]> {
       data: {
         id: FIXED_IDS.ADMIN,
         email: 'admin@example.com',
-        name: 'admin.miglee',
+        name: 'admin.appname',
         role: Role.ADMIN,
         avatarKey: null, // In production, would be set via upload
         verifiedAt: new Date(),
@@ -2816,7 +2816,7 @@ async function seedUserProfiles(users: User[], categories: Category[]) {
       // For fixed users, use their specific names
       let displayName: string;
       if (user.id === FIXED_IDS.ADMIN) {
-        displayName = 'Admin Miglee';
+        displayName = 'Admin Appname';
       } else if (user.id === FIXED_IDS.MODERATOR) {
         displayName = 'Moderator One';
       } else if (user.id === FIXED_IDS.USER) {

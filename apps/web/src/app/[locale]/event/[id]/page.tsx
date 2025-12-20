@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps) {
   await params;
 
   return {
-    title: 'Szczegóły wydarzenia | Miglee',
+    title: 'Szczegóły wydarzenia | Appname',
     description: 'Zobacz szczegóły wydarzenia',
   };
 }

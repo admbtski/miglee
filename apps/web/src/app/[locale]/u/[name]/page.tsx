@@ -25,8 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const user = data.user;
     if (!user) {
       return {
-        title: `User not found - Miglee`,
-        description: `The user @${username} could not be found on Miglee`,
+        title: `User not found - Appname`,
+        description: `The user @${username} could not be found on Appname`,
       };
     }
 
@@ -39,10 +39,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const coverUrl =
       buildUserCoverUrl(user.profile?.coverKey, 'detail') || avatarUrl;
 
-    const title = `${displayName} (@${user.name}) - Miglee`;
+    const title = `${displayName} (@${user.name}) - Appname`;
     const description =
       bioShort ||
-      `View ${displayName}'s profile on Miglee${location ? ` from ${location}` : ''}`;
+      `View ${displayName}'s profile on Appname${location ? ` from ${location}` : ''}`;
 
     return {
       title,
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         type: 'profile',
-        url: `https://miglee.com/u/${user.name}`,
+        url: `https://appname.com/u/${user.name}`,
         images: [
           {
             url: coverUrl,
@@ -68,14 +68,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         images: [coverUrl],
       },
       alternates: {
-        canonical: `https://miglee.com/u/${user.name}`,
+        canonical: `https://appname.com/u/${user.name}`,
       },
     };
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
-      title: `@${username} - Miglee`,
-      description: `View ${username}'s profile on Miglee`,
+      title: `@${username} - Appname`,
+      description: `View ${username}'s profile on Appname`,
     };
   }
 }

@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: PageProps) {
   await params;
 
   return {
-    title: 'Oceń wydarzenie | Miglee',
+    title: 'Oceń wydarzenie | Appname',
     description: 'Podziel się swoją opinią o wydarzeniu',
   };
 }

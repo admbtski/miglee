@@ -123,7 +123,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Powiadomienia | Miglee',
+    title: 'Powiadomienia | Appname',
     description: 'Wysyłaj powiadomienia do uczestników wydarzenia',
   };
 }

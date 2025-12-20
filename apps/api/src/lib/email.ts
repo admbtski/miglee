@@ -71,7 +71,7 @@ export async function sendEventReminderEmail(data: EventReminderEmailData) {
           <tr>
             <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #e5e7eb;">
               <h1 style="margin: 0; font-size: 28px; font-weight: 700; background: linear-gradient(to right, #4f46e5, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                miglee.pl
+                appname.pl
               </h1>
             </td>
           </tr>
@@ -114,7 +114,7 @@ export async function sendEventReminderEmail(data: EventReminderEmailData) {
               <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
                 <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6b7280;">
                   Do zobaczenia na wydarzeniu!<br>
-                  <strong style="color: #111827;">Zespół Miglee</strong>
+                  <strong style="color: #111827;">Zespół Appname</strong>
                 </p>
               </div>
             </td>
@@ -124,10 +124,10 @@ export async function sendEventReminderEmail(data: EventReminderEmailData) {
           <tr>
             <td style="padding: 24px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 16px 16px;">
               <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #6b7280; text-align: center;">
-                Otrzymujesz ten email, ponieważ zapisałeś/aś się na wydarzenie w Miglee.
+                Otrzymujesz ten email, ponieważ zapisałeś/aś się na wydarzenie w Appname.
               </p>
               <p style="margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: #9ca3af; text-align: center;">
-                © ${new Date().getFullYear()} Miglee. Wszelkie prawa zastrzeżone.
+                © ${new Date().getFullYear()} Appname. Wszelkie prawa zastrzeżone.
               </p>
             </td>
           </tr>
@@ -150,11 +150,11 @@ ${eventTitle}
 Zobacz szczegóły: ${eventUrl}
 
 Do zobaczenia na wydarzeniu!
-Zespół Miglee
+Zespół Appname
 
 ---
-Otrzymujesz ten email, ponieważ zapisałeś/aś się na wydarzenie w Miglee.
-© ${new Date().getFullYear()} Miglee. Wszelkie prawa zastrzeżone.
+Otrzymujesz ten email, ponieważ zapisałeś/aś się na wydarzenie w Appname.
+© ${new Date().getFullYear()} Appname. Wszelkie prawa zastrzeżone.
       `.trim(),
     });
 
@@ -222,7 +222,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
           <tr>
             <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #e5e7eb;">
               <h1 style="margin: 0; font-size: 28px; font-weight: 700; background: linear-gradient(to right, #4f46e5, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                miglee.pl
+                appname.pl
               </h1>
             </td>
           </tr>
@@ -264,7 +264,7 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
               <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
                 <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6b7280;">
                   Dziękujemy,<br>
-                  <strong style="color: #111827;">Zespół Miglee</strong>
+                  <strong style="color: #111827;">Zespół Appname</strong>
                 </p>
               </div>
             </td>
@@ -274,10 +274,10 @@ export async function sendFeedbackRequestEmail(data: FeedbackEmailData) {
           <tr>
             <td style="padding: 24px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 16px 16px;">
               <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #6b7280; text-align: center;">
-                Ten email został wysłany, ponieważ brałeś/brałaś udział w wydarzeniu na Miglee.
+                Ten email został wysłany, ponieważ brałeś/brałaś udział w wydarzeniu na Appname.
               </p>
               <p style="margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: #9ca3af; text-align: center;">
-                © ${new Date().getFullYear()} Miglee. Wszelkie prawa zastrzeżone.
+                © ${new Date().getFullYear()} Appname. Wszelkie prawa zastrzeżone.
               </p>
             </td>
           </tr>
@@ -300,11 +300,11 @@ ${hasFeedbackQuestions ? 'Poprosimy Cię o wystawienie oceny oraz odpowiedź na 
 Oceń wydarzenie: ${feedbackUrl}
 
 Dziękujemy,
-Zespół Miglee
+Zespół Appname
 
 ---
-Ten email został wysłany, ponieważ brałeś/brałaś udział w wydarzeniu na Miglee.
-© ${new Date().getFullYear()} Miglee. Wszelkie prawa zastrzeżone.
+Ten email został wysłany, ponieważ brałeś/brałaś udział w wydarzeniu na Appname.
+© ${new Date().getFullYear()} Appname. Wszelkie prawa zastrzeżone.
       `.trim(),
     });
 
@@ -376,7 +376,7 @@ export async function sendAccountRestorationEmail(
     const result = await resend.emails.send({
       from: config.emailFrom,
       to,
-      subject: 'Przywróć swoje konto Miglee',
+      subject: 'Przywróć swoje konto Appname',
       html: `
 <!DOCTYPE html>
 <html lang="pl">
@@ -395,7 +395,7 @@ export async function sendAccountRestorationEmail(
           <tr>
             <td style="padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #e5e7eb;">
               <h1 style="margin: 0; font-size: 28px; font-weight: 700; background: linear-gradient(to right, #4f46e5, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                miglee.pl
+                appname.pl
               </h1>
             </td>
           </tr>
@@ -408,7 +408,7 @@ export async function sendAccountRestorationEmail(
               </h2>
               
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
-                Otrzymaliśmy prośbę o przywrócenie Twojego konta Miglee.
+                Otrzymaliśmy prośbę o przywrócenie Twojego konta Appname.
               </p>
                
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #374151;">
@@ -442,7 +442,7 @@ export async function sendAccountRestorationEmail(
               <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
                 <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6b7280;">
                   Dziękujemy,<br>
-                  <strong style="color: #111827;">Zespół Miglee</strong>
+                  <strong style="color: #111827;">Zespół Appname</strong>
                 </p>
               </div>
             </td>
@@ -455,7 +455,7 @@ export async function sendAccountRestorationEmail(
                 Ten email został wysłany na Twoje żądanie przywrócenia konta.
               </p>
               <p style="margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: #9ca3af; text-align: center;">
-                © ${new Date().getFullYear()} Miglee. Wszelkie prawa zastrzeżone.
+                © ${new Date().getFullYear()} Appname. Wszelkie prawa zastrzeżone.
               </p>
             </td>
           </tr>
@@ -470,7 +470,7 @@ export async function sendAccountRestorationEmail(
       text: `
 Cześć ${userName}!
 
-Otrzymaliśmy prośbę o przywrócenie Twojego konta Miglee.
+Otrzymaliśmy prośbę o przywrócenie Twojego konta Appname.
 
 Jeśli chcesz przywrócić swoje konto, kliknij poniższy link. Link wygaśnie za ${expiresInHours} godzin.
 
@@ -479,11 +479,11 @@ Przywróć konto: ${restorationUrl}
 ⚠️ WAŻNE: Jeśli nie prosiłeś/aś o przywrócenie konta, zignoruj tego maila. Twoje konto pozostanie usunięte.
 
 Dziękujemy,
-Zespół Miglee
+Zespół Appname
 
 ---
 Ten email został wysłany na Twoje żądanie przywrócenia konta.
-© ${new Date().getFullYear()} Miglee. Wszelkie prawa zastrzeżone.
+© ${new Date().getFullYear()} Appname. Wszelkie prawa zastrzeżone.
       `.trim(),
     });
 

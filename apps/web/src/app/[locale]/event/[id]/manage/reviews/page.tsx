@@ -102,7 +102,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Recenzje | Miglee',
+    title: 'Recenzje | Appname',
     description: 'Przeglądaj i zarządzaj recenzjami wydarzenia',
   };
 }

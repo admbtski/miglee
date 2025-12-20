@@ -1,5 +1,5 @@
 {
-  "name": "miglee",
+  "name": "appname",
   "version": "1.0.0",
   "private": true,
   "description": "MVP monorepo with React, Next.js, Fastify, and GraphQL",

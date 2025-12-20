@@ -191,7 +191,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Analityka | Miglee',
+    title: 'Analityka | Appname',
     description: 'Przeglądaj analitykę wydarzenia',
   };
 }

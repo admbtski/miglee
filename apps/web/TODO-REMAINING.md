@@ -117,7 +117,7 @@ Upewnić się że używają poprawnych ścieżek względnych.
 ### Krok 1: Napraw Events Management Exports
 
 ```bash
-cd /Users/abartski/dev-vibe/miglee/apps/web
+cd /Users/abartski/dev-vibe/appname/apps/web
 ```
 
 Edytuj `src/features/events/index.ts` i dodaj:

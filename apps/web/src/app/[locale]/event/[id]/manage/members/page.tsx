@@ -117,7 +117,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Członkowie | Miglee',
+    title: 'Członkowie | Appname',
     description: 'Zarządzaj uczestnikami wydarzenia',
   };
 }

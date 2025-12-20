@@ -23,12 +23,12 @@ const poppinsFont = Inter({
  * Application metadata for SEO and social sharing
  */
 const siteConfig = {
-  title: 'Miglee - Connect Through Sports & Activities',
+  title: 'Appname - Connect Through Sports & Activities',
   description:
     'Discover and join sports events, activities, and meetups in your area. Connect with people who share your interests.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://miglee.com',
-  siteName: 'Miglee',
-  creator: '@migleeio',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://appname.com',
+  siteName: 'Appname',
+  creator: '@appnameio',
 };
 
 export const metadata: Metadata = {
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: ['sports', 'events', 'activities', 'meetups', 'social', 'fitness'],
-  authors: [{ name: 'Miglee Team' }],
+  authors: [{ name: 'Appname Team' }],
   creator: siteConfig.creator,
 
   openGraph: {

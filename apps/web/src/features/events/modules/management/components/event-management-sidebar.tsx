@@ -401,7 +401,7 @@ export function EventManagementSidebar({
             >
               <Link href="/" className="flex items-center gap-2">
                 <span className="text-xl font-bold tracking-tight text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text">
-                  miglee
+                  appname
                 </span>
                 <span className="text-sm font-medium text-zinc-400 dark:text-zinc-500">
                   .pl

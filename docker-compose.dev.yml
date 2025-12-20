@@ -1,5 +1,5 @@
 # =============================================================================
-# Miglee Full Stack Docker (Weryfikacja)
+# Appname Full Stack Docker (Weryfikacja)
 # =============================================================================
 #
 # Pełny stack w kontenerach - do weryfikacji czy wszystko działa.
@@ -15,7 +15,7 @@
 #
 # =============================================================================
 
-name: miglee-dev
+name: appname-dev
 
 services:
   # ===========================================================================
@@ -40,7 +40,7 @@ services:
       retries: 5
       start_period: 10s
     networks:
-      - miglee-network
+      - appname-network
 
   # ===========================================================================
   # Redis 7
@@ -69,7 +69,7 @@ services:
       retries: 10
       start_period: 5s
     networks:
-      - miglee-network
+      - appname-network
 
   # ===========================================================================
   # API - Fastify + GraphQL + Prisma
@@ -104,7 +104,7 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Miglee Dev <dev@localhost>}
+      EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
     volumes:
       - api_uploads:/app/uploads
       - api_tmp:/app/tmp/uploads
@@ -121,7 +121,7 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - miglee-network
+      - appname-network
 
   # ===========================================================================
   # Web - Next.js 15
@@ -150,7 +150,7 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - miglee-network
+      - appname-network
 
   # ===========================================================================
   # Workers (Profile: workers)
@@ -173,14 +173,14 @@ services:
       APP_URL: http://localhost:3000
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Miglee Dev <dev@localhost>}
+      EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - miglee-network
+      - appname-network
 
   worker_feedback:
     build:
@@ -200,14 +200,14 @@ services:
       APP_URL: http://localhost:3000
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Miglee Dev <dev@localhost>}
+      EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - miglee-network
+      - appname-network
 
   worker_audit:
     build:
@@ -233,7 +233,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - miglee-network
+      - appname-network
 
   # ===========================================================================
   # Adminer (Profile: tools)
@@ -251,7 +251,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - miglee-network
+      - appname-network
 
   # ===========================================================================
   # Stripe CLI (Profile: stripe)
@@ -270,18 +270,18 @@ services:
       ]
     environment:
       STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_DEVICE_NAME: miglee-docker
+      STRIPE_DEVICE_NAME: appname-docker
     depends_on:
       api:
         condition: service_healthy
     networks:
-      - miglee-network
+      - appname-network
 
 # =============================================================================
 # Networks
 # =============================================================================
 networks:
-  miglee-network:
+  appname-network:
     driver: bridge
 
 # =============================================================================
@@ -289,12 +289,12 @@ networks:
 # =============================================================================
 volumes:
   postgres_data:
-    name: miglee-postgres-data
+    name: appname-postgres-data
   redis_data:
-    name: miglee-redis-data
+    name: appname-redis-data
   api_uploads:
-    name: miglee-api-uploads
+    name: appname-api-uploads
   api_tmp:
-    name: miglee-api-tmp
+    name: appname-api-tmp
   api_audit:
-    name: miglee-api-audit
+    name: appname-api-audit

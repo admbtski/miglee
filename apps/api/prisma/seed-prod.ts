@@ -32,26 +32,26 @@ const PROD_USERS: ProdUser[] = [
   // Admin
   {
     id: 'u_admin_prod_0000000001',
-    email: process.env.ADMIN_EMAIL || 'admin@miglee.pl',
-    name: process.env.ADMIN_NAME || 'admin_miglee',
+    email: process.env.ADMIN_EMAIL || 'admin@appname.pl',
+    name: process.env.ADMIN_NAME || 'admin_appname',
     role: Role.ADMIN,
   },
   // Moderators
   {
     id: 'u_mod_prod_00000000001',
-    email: process.env.MOD1_EMAIL || 'moderator1@miglee.pl',
+    email: process.env.MOD1_EMAIL || 'moderator1@appname.pl',
     name: process.env.MOD1_NAME || 'mod_pierwszy',
     role: Role.MODERATOR,
   },
   {
     id: 'u_mod_prod_00000000002',
-    email: process.env.MOD2_EMAIL || 'moderator2@miglee.pl',
+    email: process.env.MOD2_EMAIL || 'moderator2@appname.pl',
     name: process.env.MOD2_NAME || 'mod_drugi',
     role: Role.MODERATOR,
   },
   {
     id: 'u_mod_prod_00000000003',
-    email: process.env.MOD3_EMAIL || 'moderator3@miglee.pl',
+    email: process.env.MOD3_EMAIL || 'moderator3@appname.pl',
     name: process.env.MOD3_NAME || 'mod_trzeci',
     role: Role.MODERATOR,
   },

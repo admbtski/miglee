@@ -9,7 +9,7 @@ import { FavouritesPageClient } from './_components/favourites-page-client';
 
 // TODO i18n: metadata title/description
 export const metadata: Metadata = {
-  title: 'Zapisane wydarzenia | miglee.pl',
+  title: 'Zapisane wydarzenia | appname.pl',
   description: 'Twoje zapisane wydarzenia',
 };
 

@@ -120,7 +120,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Plany sponsorskie | Miglee',
+    title: 'Plany sponsorskie | Appname',
     description: 'Kup i zarządzaj planami sponsorskimi',
   };
 }

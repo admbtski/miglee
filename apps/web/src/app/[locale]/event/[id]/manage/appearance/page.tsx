@@ -105,7 +105,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Wygląd wydarzenia | Miglee',
+    title: 'Wygląd wydarzenia | Appname',
     description: 'Dostosuj wygląd karty i strony szczegółów wydarzenia',
   };
 }

@@ -132,7 +132,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Powiadomienia lokalne | Miglee',
+    title: 'Powiadomienia lokalne | Appname',
     description: 'Zarządzaj powiadomieniami lokalnymi',
   };
 }

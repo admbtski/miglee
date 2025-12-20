@@ -64,7 +64,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Czat wydarzenia | Miglee',
+    title: 'Czat wydarzenia | Appname',
     description: 'Zarządzaj komunikacją z uczestnikami wydarzenia',
   };
 }

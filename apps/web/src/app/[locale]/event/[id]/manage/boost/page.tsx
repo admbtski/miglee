@@ -110,7 +110,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Podbicia wydarzenia | Miglee',
+    title: 'Podbicia wydarzenia | Appname',
     description: 'Zarządzaj podbiciami wydarzenia',
   };
 }

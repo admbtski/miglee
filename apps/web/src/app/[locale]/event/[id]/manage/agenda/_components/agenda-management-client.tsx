@@ -580,7 +580,7 @@ function ManualHostEditor({
           maxLength={120}
           className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         />
-        <p className="mt-1 text-xs text-zinc-400">Host spoza systemu Miglee</p>
+        <p className="mt-1 text-xs text-zinc-400">Host spoza systemu Appname</p>
       </div>
 
       {/* Remove button */}
@@ -617,7 +617,7 @@ function UserHostDisplay({
           {host.userName || 'Nieznany użytkownik'}
         </div>
         <div className="text-xs text-indigo-600 dark:text-indigo-400">
-          Użytkownik Miglee
+          Użytkownik Appname
         </div>
       </div>
       <button
@@ -974,7 +974,7 @@ export function AgendaManagementClient({
         <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
           <p className="text-sm text-indigo-800 dark:text-indigo-200">
             <strong>Wskazówka:</strong> Przeciągnij sloty aby zmienić kolejność.
-            Możesz dodać prowadzących z systemu Miglee lub ręcznie (np. gości
+            Możesz dodać prowadzących z systemu Appname lub ręcznie (np. gości
             zewnętrznych).
           </p>
         </div>

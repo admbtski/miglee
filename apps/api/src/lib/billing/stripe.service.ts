@@ -25,7 +25,7 @@ export function getStripe(): Stripe {
       apiVersion: '2025-11-17.clover', // Use latest API version
       typescript: true,
       appInfo: {
-        name: 'Miglee',
+        name: 'Appname',
         version: '1.0.0',
       },
     });

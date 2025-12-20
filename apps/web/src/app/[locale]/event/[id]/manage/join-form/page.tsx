@@ -95,7 +95,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Formularz dołączenia | Miglee',
+    title: 'Formularz dołączenia | Appname',
     description: 'Zarządzaj formularzem dołączenia do wydarzenia',
   };
 }

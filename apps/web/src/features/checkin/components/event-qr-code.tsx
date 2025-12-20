@@ -112,7 +112,7 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
       // Footer
       ctx.fillStyle = '#a1a1aa';
       ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI"';
-      ctx.fillText('Powered by Miglee', canvas.width / 2, 1100);
+      ctx.fillText('Powered by Appname', canvas.width / 2, 1100);
 
       // Download
       console.log('[EventQRCode] Initiating download...');
@@ -235,7 +235,7 @@ export function EventQRCode({ eventId, token, eventName }: EventQRCodeProps) {
         // Add footer
         pdf.setFontSize(9);
         pdf.setTextColor(150, 150, 150);
-        pdf.text('Powered by Miglee', pageWidth / 2, pageHeight - 15, {
+        pdf.text('Powered by Appname', pageWidth / 2, pageHeight - 15, {
           align: 'center',
         });
 

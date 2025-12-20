@@ -120,7 +120,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Agenda | Miglee',
+    title: 'Agenda | Appname',
     description: 'Zarządzaj agendą wydarzenia',
   };
 }

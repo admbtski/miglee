@@ -98,7 +98,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'FAQ | Miglee',
+    title: 'FAQ | Appname',
     description: 'Zarządzaj FAQ wydarzenia',
   };
 }

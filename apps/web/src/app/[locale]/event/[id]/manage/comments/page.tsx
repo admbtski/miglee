@@ -97,7 +97,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Komentarze | Miglee',
+    title: 'Komentarze | Appname',
     description: 'Zarządzaj komentarzami wydarzenia',
   };
 }

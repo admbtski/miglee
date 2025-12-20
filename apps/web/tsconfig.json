@@ -1,5 +1,5 @@
 {
-  "extends": "@miglee/config/tsconfig.base.json",
+  "extends": "@appname/config/tsconfig.base.json",
   "compilerOptions": {
     "plugins": [
       {

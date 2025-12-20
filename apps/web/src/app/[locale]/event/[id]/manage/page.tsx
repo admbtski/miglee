@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: PageProps) {
   await params;
 
   return {
-    title: 'Manage Event | Miglee',
+    title: 'Manage Event | Appname',
     description: 'Manage your event',
   };
 }

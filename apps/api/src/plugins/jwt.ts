@@ -13,14 +13,14 @@ export const jwtPlugin = fastifyPlugin(
       },
       sign: {
         algorithm: 'HS256', // w prod: RS256 i rotacja
-        iss: 'miglee-api',
-        aud: 'miglee-web',
+        iss: 'appname-api',
+        aud: 'appname-web',
         expiresIn: '7d',
       },
       verify: {
         algorithms: ['HS256'],
-        allowedIss: 'miglee-api',
-        allowedAud: 'miglee-web',
+        allowedIss: 'appname-api',
+        allowedAud: 'appname-web',
         maxAge: '7d',
         clockTolerance: 5, // sekundy tolerancji zegara
       },

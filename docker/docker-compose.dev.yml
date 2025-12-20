@@ -1,5 +1,5 @@
 # =============================================================================
-# Miglee Infrastructure (Tryb Hybrydowy)
+# Appname Infrastructure (Tryb Hybrydowy)
 # =============================================================================
 #
 # Infrastruktura dla lokalnego developmentu. Aplikacje uruchamiasz przez pnpm dev.
@@ -13,7 +13,7 @@
 #
 # =============================================================================
 
-name: miglee-infra
+name: appname-infra
 
 services:
   # ===========================================================================
@@ -98,7 +98,7 @@ services:
       ]
     environment:
       STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_DEVICE_NAME: miglee-local
+      STRIPE_DEVICE_NAME: appname-local
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     # Note: Sprawdź logi aby uzyskać webhook secret (whsec_...)
@@ -106,6 +106,6 @@ services:
 
 volumes:
   postgres_data:
-    name: miglee-postgres-data
+    name: appname-postgres-data
   redis_data:
-    name: miglee-redis-data
+    name: appname-redis-data

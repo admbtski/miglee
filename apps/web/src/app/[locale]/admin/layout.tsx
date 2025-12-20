@@ -34,6 +34,6 @@ export default async function AdminLayout({
 }
 
 export const metadata = {
-  title: 'Panel Administratora | Miglee',
+  title: 'Panel Administratora | Appname',
   description: 'Panel zarządzania platformą',
 };

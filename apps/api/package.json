@@ -1,5 +1,5 @@
 {
-  "name": "@miglee/api",
+  "name": "@appname/api",
   "version": "1.0.0",
   "private": true,
   "description": "GraphQL API server with Fastify and Prisma",
@@ -72,7 +72,7 @@
     "@graphql-codegen/typescript": "^5.0.0",
     "@graphql-codegen/typescript-operations": "^5.0.0",
     "@graphql-codegen/typescript-resolvers": "^5.0.0",
-    "@miglee/config": "workspace:*",
+    "@appname/config": "workspace:*",
     "@types/graphql-depth-limit": "^1.1.6",
     "@types/node": "^24.5.2",
     "eslint": "^9.36.0",

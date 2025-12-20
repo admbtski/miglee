@@ -95,7 +95,7 @@ const envSchema = z
 
     // Email Configuration
     RESEND_API_KEY: z.string().optional(),
-    EMAIL_FROM: z.string().default('Miglee <noreply@miglee.pl>'),
+    EMAIL_FROM: z.string().default('Appname <noreply@appname.pl>'),
 
     // Admin Features
     ENABLE_BULL_BOARD: booleanString(false),

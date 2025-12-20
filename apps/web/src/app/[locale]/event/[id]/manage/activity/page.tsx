@@ -104,7 +104,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Activity Log | Miglee',
+    title: 'Activity Log | Appname',
     description: 'View the activity history for your event',
   };
 }

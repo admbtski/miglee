@@ -117,7 +117,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Feedback | Miglee',
+    title: 'Feedback | Appname',
     description: 'Zarządzaj feedbackiem wydarzenia',
   };
 }

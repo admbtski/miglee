@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: PageProps) {
   await params;
 
   return {
-    title: 'View Event | Miglee',
+    title: 'View Event | Appname',
     description: 'View event details',
   };
 }

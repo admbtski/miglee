@@ -47,7 +47,7 @@ export const bullBoardPlugin = fastifyPlugin(
       serverAdapter,
       options: {
         uiConfig: {
-          boardTitle: 'Miglee Queue Monitor',
+          boardTitle: 'Appname Queue Monitor',
           boardLogo: {
             path: '/favicon.ico',
             width: '32px',

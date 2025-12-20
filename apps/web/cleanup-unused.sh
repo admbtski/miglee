@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 🧹 Skrypt do czyszczenia nieużywanego kodu w Miglee Web
+# 🧹 Skrypt do czyszczenia nieużywanego kodu w Appname Web
 # Użycie: ./cleanup-unused.sh [--dry-run]
 
 set -e

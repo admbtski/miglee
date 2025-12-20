@@ -16,7 +16,7 @@ import { QueryClientProvider } from '@/lib/config/query-client-provider';
 
 // TODO i18n: metadata title and description
 export const metadata = {
-  title: 'Create Event | Miglee',
+  title: 'Create Event | Appname',
   description: 'Create a new event quickly with our simplified creator',
 };
 

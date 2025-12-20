@@ -92,7 +92,7 @@ export async function generateMetadata({
 
   return {
     // TODO i18n
-    title: 'Strefa zagrożenia | Miglee',
+    title: 'Strefa zagrożenia | Appname',
     description: 'Anuluj lub usuń wydarzenie',
   };
 }

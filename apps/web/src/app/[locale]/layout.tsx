@@ -26,13 +26,13 @@ export async function generateMetadata({
     return {};
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://miglee.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://appname.com';
 
   // Localized metadata
   const titles: Record<Locale, string> = {
-    en: 'Miglee - Connect Through Sports & Activities',
-    pl: 'Miglee - Połącz się poprzez Sport i Aktywności',
-    de: 'Miglee - Verbinde dich durch Sport & Aktivitäten',
+    en: 'Appname - Connect Through Sports & Activities',
+    pl: 'Appname - Połącz się poprzez Sport i Aktywności',
+    de: 'Appname - Verbinde dich durch Sport & Aktivitäten',
   };
 
   const descriptions: Record<Locale, string> = {

@@ -193,7 +193,7 @@ export function AccountMobileSidebar({
                 onClick={onClose}
               >
                 <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-                  miglee
+                  appname
                 </span>
                 <span className="text-sm font-medium text-zinc-400 dark:text-zinc-500">
                   .pl
