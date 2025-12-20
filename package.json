@@ -19,6 +19,7 @@
     "infra:up": "docker compose -f docker/docker-compose.dev.yml up -d",
     "infra:up:tools": "docker compose -f docker/docker-compose.dev.yml --profile tools up -d",
     "infra:up:stripe": "docker compose -f docker/docker-compose.dev.yml --profile stripe up -d",
+    "infra:up:all": "docker compose -f docker/docker-compose.dev.yml --profile all up -d",
     "infra:down": "docker compose -f docker/docker-compose.dev.yml down",
     "infra:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",
     "infra:logs:stripe": "docker compose -f docker/docker-compose.dev.yml logs -f stripe",

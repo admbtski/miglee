@@ -8,6 +8,7 @@
 #   pnpm infra:up           # Start postgres + redis
 #   pnpm infra:up:tools     # + Adminer
 #   pnpm infra:up:stripe    # + Stripe CLI
+#   pnpm infra:up:all       # Wszystko (postgres, redis, adminer, stripe)
 #   pnpm infra:down         # Stop
 #
 # =============================================================================
@@ -70,7 +71,7 @@ services:
   adminer:
     image: adminer:latest
     restart: unless-stopped
-    profiles: ['tools']
+    profiles: ['tools', 'all']
     ports:
       - '8080:8080'
     environment:
@@ -86,7 +87,7 @@ services:
   stripe:
     image: stripe/stripe-cli:latest
     restart: unless-stopped
-    profiles: ['stripe']
+    profiles: ['stripe', 'all']
     command:
       [
         'listen',
