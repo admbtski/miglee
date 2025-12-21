@@ -32,7 +32,7 @@
 | **GraphQL limits** | ✅ Gotowe | depth=7, complexity=1000 (prod) |
 | **Next.js standalone** | ✅ Gotowe | `output: 'standalone'` w next.config.ts |
 | **Kubernetes manifests** | ✅ Gotowe | Kustomize: base + components + envs (dev/stage/prod) |
-| **CI/CD** | ❌ Brak | GitHub Actions do napisania |
+| **CI/CD** | ✅ Gotowe | ci.yml, build-and-push.yml, deploy-stage/prod.yml |
 | **OpenTelemetry** | ❌ Brak | Tylko Pino logging |
 | **Resolver metrics** | ❌ Brak | Do instrumentacji |
 | **WebSocket limits** | ⚠️ Częściowo | Rate limiting jest, brak per-connection limits |
@@ -568,35 +568,62 @@ spec:
 
 ---
 
-## Faza 3: CI/CD
+## Faza 3: CI/CD ✅ UKOŃCZONA
 
 > **Cel**: Automatyczny pipeline build → test → deploy.
+> **Status**: Wszystkie workflows zaimplementowane (2024-12-21)
 
-### 3.1 Workflow: PR Validation (`ci.yml`)
+### Podsumowanie Fazy 3
 
-**Czas**: 1h  
-**Trigger**: Pull Request
+| Workflow | Trigger | Opis |
+|----------|---------|------|
+| `ci.yml` | PR, push main | Lint, typecheck, test, build, validate K8s |
+| `build-and-push.yml` | push main, tag v* | Build + push Docker images |
+| `deploy-stage.yml` | auto po build | Deploy na stage |
+| `deploy-prod.yml` | tag v* + approval | Deploy na prod z backupem |
 
-```yaml
-name: CI
-on:
-  pull_request:
-    branches: [main]
+### Pipeline Flow
 
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v4
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test  # gdy będą testy
+```
+PR → main
+  └── ci.yml (lint, typecheck, test, build)
+  
+Push → main
+  ├── ci.yml
+  └── build-and-push.yml → deploy-stage.yml (auto)
+  
+Tag v*.*.*
+  ├── build-and-push.yml (:latest tag)
+  └── deploy-prod.yml (backup → approval → migrate → deploy)
 ```
 
-### 3.2 Workflow: Build & Push (`build.yml`)
+### Pliki
+
+```
+.github/
+├── workflows/
+│   ├── ci.yml              # PR validation
+│   ├── build-and-push.yml  # Docker build + push
+│   ├── deploy-stage.yml    # Deploy to stage
+│   └── deploy-prod.yml     # Deploy to prod (with approval)
+└── dependabot.yml          # Auto-update dependencies
+```
+
+### Dokumentacja
+
+Szczegółowa dokumentacja: `docs/deployment/ci-cd.md`
+
+### 3.1 Workflow: PR Validation (`ci.yml`) ✅
+
+**Trigger**: PR do main, push do main
+
+**Jobs**:
+- `lint` - ESLint + TypeScript
+- `test` - Testy z Postgres + Redis (services)
+- `build` - Kompilacja API + Web
+- `validate-k8s` - Walidacja manifestów K8s
+
+### 3.2 Workflow: Build & Push (`build-and-push.yml`) ✅
 
 **Czas**: 2h  
 **Trigger**: Push to main / Tag

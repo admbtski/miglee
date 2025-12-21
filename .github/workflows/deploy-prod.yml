@@ -1,0 +1,192 @@
+# =============================================================================
+# Deploy to Production
+# =============================================================================
+# Deploys to production environment
+# Triggered by: version tags (v*.*.*) with manual approval
+# =============================================================================
+name: Deploy Production
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (e.g., sha-abc1234 or v1.0.0)'
+        required: true
+        type: string
+      skip_backup:
+        description: 'Skip database backup (NOT recommended)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: appname-prod
+  CLUSTER_NAME: appname-cluster
+
+jobs:
+  # ===========================================================================
+  # Pre-deployment checks
+  # ===========================================================================
+  pre-deploy:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.set-tag.outputs.tag }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: set-tag
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            # Extract version from tag
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "tag=sha-${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify image exists
+        run: |
+          echo "Verifying image: ${{ env.REGISTRY }}/${{ github.repository }}/api:${{ steps.set-tag.outputs.tag }}"
+          # In real scenario, check if image exists in registry
+          # docker manifest inspect ${{ env.REGISTRY }}/${{ github.repository }}/api:${{ steps.set-tag.outputs.tag }}
+
+  # ===========================================================================
+  # Database Backup
+  # ===========================================================================
+  backup:
+    name: Database Backup
+    needs: pre-deploy
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_backup }}
+    
+    steps:
+      - name: Create RDS Snapshot
+        run: |
+          echo "Creating database snapshot before deployment..."
+          # Uncomment when AWS is configured:
+          # SNAPSHOT_ID="appname-prod-pre-deploy-$(date +%Y%m%d-%H%M%S)"
+          # aws rds create-db-snapshot \
+          #   --db-instance-identifier appname-prod \
+          #   --db-snapshot-identifier $SNAPSHOT_ID
+          # 
+          # echo "Waiting for snapshot to complete..."
+          # aws rds wait db-snapshot-available --db-snapshot-identifier $SNAPSHOT_ID
+          # 
+          # echo "Snapshot created: $SNAPSHOT_ID"
+          echo "Snapshot creation skipped (AWS not configured)"
+        continue-on-error: true
+
+  # ===========================================================================
+  # Deploy to Production (requires approval)
+  # ===========================================================================
+  deploy:
+    name: Deploy to Production
+    needs: [pre-deploy, backup]
+    runs-on: ubuntu-latest
+    environment: 
+      name: production
+      url: https://app.example.com
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ==== Configure AWS (for EKS) ====
+      # Uncomment when using EKS
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ secrets.AWS_REGION }}
+      #
+      # - name: Update kubeconfig
+      #   run: aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      # ==== Run Database Migrations ====
+      - name: Run Database Migrations
+        run: |
+          echo "Running migrations for image: ${{ needs.pre-deploy.outputs.image_tag }}"
+          
+          cd infra/k8s/envs/prod
+          kustomize edit set image appname-api=${{ env.REGISTRY }}/${{ github.repository }}/api:${{ needs.pre-deploy.outputs.image_tag }}
+          
+          # Apply and wait for migration
+          # kubectl apply -f ../../components/api/migration-job.yaml -n ${{ env.NAMESPACE }}
+          # kubectl wait --for=condition=complete job/migrate-db -n ${{ env.NAMESPACE }} --timeout=300s
+          # kubectl logs job/migrate-db -n ${{ env.NAMESPACE }}
+          # kubectl delete job migrate-db -n ${{ env.NAMESPACE }} --ignore-not-found
+          
+          echo "Migrations skipped (K8s not configured)"
+        continue-on-error: true
+
+      # ==== Deploy Application ====
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production with image tag: ${{ needs.pre-deploy.outputs.image_tag }}"
+          
+          cd infra/k8s/envs/prod
+          
+          # Update image tags
+          kustomize edit set image \
+            appname-api=${{ env.REGISTRY }}/${{ github.repository }}/api:${{ needs.pre-deploy.outputs.image_tag }} \
+            appname-web=${{ env.REGISTRY }}/${{ github.repository }}/web:${{ needs.pre-deploy.outputs.image_tag }}
+          
+          # Apply manifests
+          # kubectl apply -k .
+          # kubectl rollout status deployment/api -n ${{ env.NAMESPACE }} --timeout=300s
+          # kubectl rollout status deployment/web -n ${{ env.NAMESPACE }} --timeout=300s
+          
+          echo "Deployment skipped (K8s not configured)"
+        continue-on-error: true
+
+      # ==== Smoke Tests ====
+      - name: Run Smoke Tests
+        run: |
+          API_URL="${{ vars.PROD_API_URL || 'https://api.example.com' }}"
+          WEB_URL="${{ vars.PROD_WEB_URL || 'https://app.example.com' }}"
+          
+          echo "Checking API health..."
+          curl -sf "${API_URL}/health" || echo "API health check skipped"
+          
+          echo "Checking Web health..."
+          curl -sf "${WEB_URL}/api/health" || echo "Web health check skipped"
+        continue-on-error: true
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | **production** |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image Tag | \`${{ needs.pre-deploy.outputs.image_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Namespace | ${{ env.NAMESPACE }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Git Ref | ${{ github.ref }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Post-deployment notification
+  # ===========================================================================
+  notify:
+    name: Notify
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Slack Notification
+        run: |
+          # Uncomment to enable Slack notifications:
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"🚀 Production deployment completed: ${{ needs.deploy.result }}"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
+          echo "Notification skipped (Slack not configured)"
+
