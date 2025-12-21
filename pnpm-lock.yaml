@@ -274,8 +274,8 @@ importers:
         specifier: ^1.3.0
         version: 1.3.0
       next:
-        specifier: ^15.5.4
-        version: 15.5.4(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^15.5.9
+        version: 15.5.9(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       nouislider:
         specifier: ^15.8.1
         version: 15.8.1
@@ -384,14 +384,14 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==, tarball: https://registry.npmjs.org/@alloc/quick-lru/-/quick-lru-5.2.0.tgz}
     engines: {node: '>=10'}
 
-  '@amcharts/amcharts5@5.14.3':
-    resolution: {integrity: sha512-RtczG2DHz8z2x1dgHjGX+xPc2W4HL46f4CCjR4KEFkDlg0W+QK058pYTipF0DD2BNnAJRNAFA4DVuOaEpUuu7g==, tarball: https://registry.npmjs.org/@amcharts/amcharts5/-/amcharts5-5.14.3.tgz}
+  '@amcharts/amcharts5@5.14.4':
+    resolution: {integrity: sha512-Tl7wQLWvsvyWVtlCIm1yhZtJviSDYjuNTnlUkO0D49GyByoK0nb9fr0DK4rUw4DVgyLcySxWBsb2lzTJm5Rd9Q==, tarball: https://registry.npmjs.org/@amcharts/amcharts5/-/amcharts5-5.14.4.tgz}
 
   '@arcgis/core@4.34.7':
     resolution: {integrity: sha512-6zuhTGHCE2l1STExzmON/RbZEBPiI30rIXYuBI+EGuWx+Gv4n6l5dVcIJRtRJn2vZ3bZIjgGef51GGfHiX8agg==, tarball: https://registry.npmjs.org/@arcgis/core/-/core-4.34.7.tgz}
 
-  '@arcgis/lumina@4.34.8':
-    resolution: {integrity: sha512-YMIW2bE8NPJfcBiCL1wukqm61Qkjv7THPI6ByHvJujnTmZkrEvRUVQf15puEloXUvslB2JD2y18ZVqhpI3V8sw==, tarball: https://registry.npmjs.org/@arcgis/lumina/-/lumina-4.34.8.tgz}
+  '@arcgis/lumina@4.34.9':
+    resolution: {integrity: sha512-efqO+SwR+1IYf29AATh1l2FUeypRyRINTBNkaJY+KkaFe+8gqSJ45qOmputhyzF5WTRDb7WhOYgnChjp6VYPpA==, tarball: https://registry.npmjs.org/@arcgis/lumina/-/lumina-4.34.9.tgz}
     peerDependencies:
       '@lit/context': ^1.1.5
       lit: ^3.3.0
@@ -399,8 +399,8 @@ packages:
       '@lit/context':
         optional: true
 
-  '@arcgis/toolkit@4.34.8':
-    resolution: {integrity: sha512-HORGNQjEjjcNKGCtgGeyipLxqsbJM4dRFjLWPHGeVX/phbwqHgljq2lbCXqbek6+B+2stf1cXwwyLCeSrbsNUQ==, tarball: https://registry.npmjs.org/@arcgis/toolkit/-/toolkit-4.34.8.tgz}
+  '@arcgis/toolkit@4.34.9':
+    resolution: {integrity: sha512-wFST+eVnCwmg9NyICVyn9bsBnR+TlWklsGqG3L7xqSTgfXo6TuCThE7wtTb8xWxsTBkGvImqMUgpgLuwQuTQ1g==, tarball: https://registry.npmjs.org/@arcgis/toolkit/-/toolkit-4.34.9.tgz}
 
   '@ardatan/relay-compiler@12.0.3':
     resolution: {integrity: sha512-mBDFOGvAoVlWaWqs3hm1AciGHSQE1rqFc/liZTyYz/Oek9yZdT5H26pH2zAFuEiTiBVPPyMuqf5VjOFPI2DGsQ==, tarball: https://registry.npmjs.org/@ardatan/relay-compiler/-/relay-compiler-12.0.3.tgz}
@@ -2031,56 +2031,56 @@ packages:
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==, tarball: https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz}
 
-  '@next/env@15.5.4':
-    resolution: {integrity: sha512-27SQhYp5QryzIT5uO8hq99C69eLQ7qkzkDPsk3N+GuS2XgOgoYEeOav7Pf8Tn4drECOVDsDg8oj+/DVy8qQL2A==, tarball: https://registry.npmjs.org/@next/env/-/env-15.5.4.tgz}
+  '@next/env@15.5.9':
+    resolution: {integrity: sha512-4GlTZ+EJM7WaW2HEZcyU317tIQDjkQIyENDLxYJfSWlfqguN+dHkZgyQTV/7ykvobU7yEH5gKvreNrH4B6QgIg==, tarball: https://registry.npmjs.org/@next/env/-/env-15.5.9.tgz}
 
   '@next/eslint-plugin-next@15.5.4':
     resolution: {integrity: sha512-SR1vhXNNg16T4zffhJ4TS7Xn7eq4NfKfcOsRwea7RIAHrjRpI9ALYbamqIJqkAhowLlERffiwk0FMvTLNdnVtw==, tarball: https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-15.5.4.tgz}
 
-  '@next/swc-darwin-arm64@15.5.4':
-    resolution: {integrity: sha512-nopqz+Ov6uvorej8ndRX6HlxCYWCO3AHLfKK2TYvxoSB2scETOcfm/HSS3piPqc3A+MUgyHoqE6je4wnkjfrOA==, tarball: https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-15.5.4.tgz}
+  '@next/swc-darwin-arm64@15.5.7':
+    resolution: {integrity: sha512-IZwtxCEpI91HVU/rAUOOobWSZv4P2DeTtNaCdHqLcTJU4wdNXgAySvKa/qJCgR5m6KI8UsKDXtO2B31jcaw1Yw==, tarball: https://registry.npmjs.org/@next/swc-darwin-arm64/-/swc-darwin-arm64-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@15.5.4':
-    resolution: {integrity: sha512-QOTCFq8b09ghfjRJKfb68kU9k2K+2wsC4A67psOiMn849K9ZXgCSRQr0oVHfmKnoqCbEmQWG1f2h1T2vtJJ9mA==, tarball: https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-15.5.4.tgz}
+  '@next/swc-darwin-x64@15.5.7':
+    resolution: {integrity: sha512-UP6CaDBcqaCBuiq/gfCEJw7sPEoX1aIjZHnBWN9v9qYHQdMKvCKcAVs4OX1vIjeE+tC5EIuwDTVIoXpUes29lg==, tarball: https://registry.npmjs.org/@next/swc-darwin-x64/-/swc-darwin-x64-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@15.5.4':
-    resolution: {integrity: sha512-eRD5zkts6jS3VfE/J0Kt1VxdFqTnMc3QgO5lFE5GKN3KDI/uUpSyK3CjQHmfEkYR4wCOl0R0XrsjpxfWEA++XA==, tarball: https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-15.5.4.tgz}
+  '@next/swc-linux-arm64-gnu@15.5.7':
+    resolution: {integrity: sha512-NCslw3GrNIw7OgmRBxHtdWFQYhexoUCq+0oS2ccjyYLtcn1SzGzeM54jpTFonIMUjNbHmpKpziXnpxhSWLcmBA==, tarball: https://registry.npmjs.org/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-arm64-musl@15.5.4':
-    resolution: {integrity: sha512-TOK7iTxmXFc45UrtKqWdZ1shfxuL4tnVAOuuJK4S88rX3oyVV4ZkLjtMT85wQkfBrOOvU55aLty+MV8xmcJR8A==, tarball: https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-15.5.4.tgz}
+  '@next/swc-linux-arm64-musl@15.5.7':
+    resolution: {integrity: sha512-nfymt+SE5cvtTrG9u1wdoxBr9bVB7mtKTcj0ltRn6gkP/2Nu1zM5ei8rwP9qKQP0Y//umK+TtkKgNtfboBxRrw==, tarball: https://registry.npmjs.org/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-x64-gnu@15.5.4':
-    resolution: {integrity: sha512-7HKolaj+481FSW/5lL0BcTkA4Ueam9SPYWyN/ib/WGAFZf0DGAN8frNpNZYFHtM4ZstrHZS3LY3vrwlIQfsiMA==, tarball: https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.5.4.tgz}
+  '@next/swc-linux-x64-gnu@15.5.7':
+    resolution: {integrity: sha512-hvXcZvCaaEbCZcVzcY7E1uXN9xWZfFvkNHwbe/n4OkRhFWrs1J1QV+4U1BN06tXLdaS4DazEGXwgqnu/VMcmqw==, tarball: https://registry.npmjs.org/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-linux-x64-musl@15.5.4':
-    resolution: {integrity: sha512-nlQQ6nfgN0nCO/KuyEUwwOdwQIGjOs4WNMjEUtpIQJPR2NUfmGpW2wkJln1d4nJ7oUzd1g4GivH5GoEPBgfsdw==, tarball: https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.5.4.tgz}
+  '@next/swc-linux-x64-musl@15.5.7':
+    resolution: {integrity: sha512-4IUO539b8FmF0odY6/SqANJdgwn1xs1GkPO5doZugwZ3ETF6JUdckk7RGmsfSf7ws8Qb2YB5It33mvNL/0acqA==, tarball: https://registry.npmjs.org/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-win32-arm64-msvc@15.5.4':
-    resolution: {integrity: sha512-PcR2bN7FlM32XM6eumklmyWLLbu2vs+D7nJX8OAIoWy69Kef8mfiN4e8TUv2KohprwifdpFKPzIP1njuCjD0YA==, tarball: https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-15.5.4.tgz}
+  '@next/swc-win32-arm64-msvc@15.5.7':
+    resolution: {integrity: sha512-CpJVTkYI3ZajQkC5vajM7/ApKJUOlm6uP4BknM3XKvJ7VXAvCqSjSLmM0LKdYzn6nBJVSjdclx8nYJSa3xlTgQ==, tarball: https://registry.npmjs.org/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-x64-msvc@15.5.4':
-    resolution: {integrity: sha512-1ur2tSHZj8Px/KMAthmuI9FMp/YFusMMGoRNJaRZMOlSkgvLjzosSdQI0cJAKogdHl3qXUQKL9MGaYvKwA7DXg==, tarball: https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-15.5.4.tgz}
+  '@next/swc-win32-x64-msvc@15.5.7':
+    resolution: {integrity: sha512-gMzgBX164I6DN+9/PGA+9dQiwmTkE4TloBNx8Kv9UiGARsr9Nba7IpcBRA1iTV9vwlYnrE3Uy6I7Aj6qLjQuqw==, tarball: https://registry.npmjs.org/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-15.5.7.tgz}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -2882,44 +2882,44 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vaadin/a11y-base@24.9.4':
-    resolution: {integrity: sha512-y8Rrq84MOyCYJ5rbzWtm7rqP3UNX5r5aspKFVYDNATLVcqFMFqUopz5Tn+YMRMb0MJ3K3GU3vy+xWVcF3WyzAg==, tarball: https://registry.npmjs.org/@vaadin/a11y-base/-/a11y-base-24.9.4.tgz}
+  '@vaadin/a11y-base@24.9.6':
+    resolution: {integrity: sha512-CWvREuPNGjnstmXMxJFXVo0ujZ4O9MtbyuYRNDQHkan83VtbbqExijhnTMp03IHC7JE+ovtHykGKjOQr3+ODxw==, tarball: https://registry.npmjs.org/@vaadin/a11y-base/-/a11y-base-24.9.6.tgz}
 
-  '@vaadin/checkbox@24.9.4':
-    resolution: {integrity: sha512-B381QSKkmi0bpnmw+BV/oMGrEAkLVHxrL75mrrl0jEzA9nzc+vTsb72cONnbp6XCO17hb+sVQ6gdAxBrSsr59A==, tarball: https://registry.npmjs.org/@vaadin/checkbox/-/checkbox-24.9.4.tgz}
+  '@vaadin/checkbox@24.9.6':
+    resolution: {integrity: sha512-neRarGZUlx6L2wVLVEGEsjFj6/92xOG1c8O17sf8a503vLlooOE9/XKAVxRUT6LFnA6EMr721VMU1mj3R7ptmA==, tarball: https://registry.npmjs.org/@vaadin/checkbox/-/checkbox-24.9.6.tgz}
 
-  '@vaadin/component-base@24.9.4':
-    resolution: {integrity: sha512-bS28kpICJodSHTEJQwQexNGkhdXbPtPhmUJGWk6gx+9Dmuzeq5C/xlnkYpuRbGnvR4lGUL2SdK6ZlhcPzKXncQ==, tarball: https://registry.npmjs.org/@vaadin/component-base/-/component-base-24.9.4.tgz}
+  '@vaadin/component-base@24.9.6':
+    resolution: {integrity: sha512-+VTUx79VsOQBCJ0XInH3yApjQK/qJUM/JMFeFrKIPrBuRwoNXuQAEG8N/W0ctc1haLHVZ/NR2pu9W0za7N9SWw==, tarball: https://registry.npmjs.org/@vaadin/component-base/-/component-base-24.9.6.tgz}
 
-  '@vaadin/field-base@24.9.4':
-    resolution: {integrity: sha512-ANUMWe08i0BTv9DoMcStdtxy8gKnvt7ERCLSINrIPAI19tAhrooifHXYxr6ig7ebK4gmjIc1TKqLeelWjesBhA==, tarball: https://registry.npmjs.org/@vaadin/field-base/-/field-base-24.9.4.tgz}
+  '@vaadin/field-base@24.9.6':
+    resolution: {integrity: sha512-TKk3ATbMJnh0dQm+1MfAElTbrysNDy89FTpGx78cKJjtJQYJmjsrBbh/mX1k/uQEakif8i9MQRlyQDC10psZRg==, tarball: https://registry.npmjs.org/@vaadin/field-base/-/field-base-24.9.6.tgz}
 
-  '@vaadin/grid@24.9.4':
-    resolution: {integrity: sha512-Dxr+hB4cjr3AKGE7bhn7V5TTjIU2aAvsDHx2canxUj823hTrJ6OuVY7auuDyxEwZCduTUVK4dSlY6C0GLSGqwA==, tarball: https://registry.npmjs.org/@vaadin/grid/-/grid-24.9.4.tgz}
+  '@vaadin/grid@24.9.6':
+    resolution: {integrity: sha512-Jo2caD3kGNtdXf5ekBVLsbkmm6cnueBOwZHs96ZIg85FvKHDqfMXhZPq8A0bXXtOmsGw4/yuFvEc4pyQu9VD+g==, tarball: https://registry.npmjs.org/@vaadin/grid/-/grid-24.9.6.tgz}
 
-  '@vaadin/icon@24.9.4':
-    resolution: {integrity: sha512-0JTSsi/U3z2I/gDZisLqzwJSHYeem3hQcMhNiul9gn1iWVnrfzehpZRAG9L3UhlAKssvh+ttYRjHyeiXR/Rqhg==, tarball: https://registry.npmjs.org/@vaadin/icon/-/icon-24.9.4.tgz}
+  '@vaadin/icon@24.9.6':
+    resolution: {integrity: sha512-48dmcZPTb/kvKbtRbtuRnIe5MFWk2iQQwKMRW892tG1BOayy0ykBBI/GPkaRNVkQp+rDl6FqOVM9RCPogNkTsg==, tarball: https://registry.npmjs.org/@vaadin/icon/-/icon-24.9.6.tgz}
 
-  '@vaadin/input-container@24.9.4':
-    resolution: {integrity: sha512-uS+gVgc4NPAR3YcXvJZGbeN48G1tviQZ1n7ap3CAHxai5iCxBYUOwao3FLRkWtDG5KHrEKLFtAw6YCquM+P3NA==, tarball: https://registry.npmjs.org/@vaadin/input-container/-/input-container-24.9.4.tgz}
+  '@vaadin/input-container@24.9.6':
+    resolution: {integrity: sha512-T23VRF3p88jcrc88ZwvJJtUnLOoQR+eBSqB5SwPS8PPnV0qryOIr35eRaaRcKh212da6b1mdL5QkNFmWmxvSDA==, tarball: https://registry.npmjs.org/@vaadin/input-container/-/input-container-24.9.6.tgz}
 
-  '@vaadin/lit-renderer@24.9.4':
-    resolution: {integrity: sha512-fXoM9XS0nWqUTO0GQVe5m2Oaa1Ae5Rhc1HwzIiX2nTiRuFlX3tfHPeaZJpcG+MuQLn3qtc6rAzHiGl1Y+Tovkw==, tarball: https://registry.npmjs.org/@vaadin/lit-renderer/-/lit-renderer-24.9.4.tgz}
+  '@vaadin/lit-renderer@24.9.6':
+    resolution: {integrity: sha512-CzSgzK0QfTwmCXuWC5RxKU+6MNwO8KYNYrdQCmQdi6z0/iuGZT7a1M1Xo9Fy3KdCG+QLHMLdTvMgEymuRKXrEg==, tarball: https://registry.npmjs.org/@vaadin/lit-renderer/-/lit-renderer-24.9.6.tgz}
 
-  '@vaadin/text-field@24.9.4':
-    resolution: {integrity: sha512-1Yr8Hn5o4r3mBA0jXgRiMiAlfIOe2H/3tkWHj8KBdxH2PfwDGjzXvf5995g6kO4/b2E2sWNtMTQYufEr1HLlWw==, tarball: https://registry.npmjs.org/@vaadin/text-field/-/text-field-24.9.4.tgz}
+  '@vaadin/text-field@24.9.6':
+    resolution: {integrity: sha512-LR+u22YV4yC7Zhlh/+denLI4t+k2/T6G8sIZfyn9FAr422CqJnW2+dDaiL1wugAhxyM2Pz3/L3QJXtPhyF672Q==, tarball: https://registry.npmjs.org/@vaadin/text-field/-/text-field-24.9.6.tgz}
 
   '@vaadin/vaadin-development-mode-detector@2.0.7':
     resolution: {integrity: sha512-9FhVhr0ynSR3X2ao+vaIEttcNU5XfzCbxtmYOV8uIRnUCtNgbvMOIcyGBvntsX9I5kvIP2dV3cFAOG9SILJzEA==, tarball: https://registry.npmjs.org/@vaadin/vaadin-development-mode-detector/-/vaadin-development-mode-detector-2.0.7.tgz}
 
-  '@vaadin/vaadin-lumo-styles@24.9.4':
-    resolution: {integrity: sha512-g6qx0Fp9VOvjKUnYyxgE42Jl5c+LdiA9T6KxPCzOF8EiaHKsCLLKecnvwmV6SelQ45AbVLg4YiROFJ27k38d/w==, tarball: https://registry.npmjs.org/@vaadin/vaadin-lumo-styles/-/vaadin-lumo-styles-24.9.4.tgz}
+  '@vaadin/vaadin-lumo-styles@24.9.6':
+    resolution: {integrity: sha512-cd0eIzZXGEI8zb5Kb3LX07sfOwBQcaHNvrq1dmN2YxIPRrejPIb7uhWof16gTdKMzMEHId2ACk2IGx8EH1nOkA==, tarball: https://registry.npmjs.org/@vaadin/vaadin-lumo-styles/-/vaadin-lumo-styles-24.9.6.tgz}
 
-  '@vaadin/vaadin-material-styles@24.9.4':
-    resolution: {integrity: sha512-edNJBBTJJ/e4jWCfQ/HvoCAkWfe5zKtNVUUmsuCzRd0CwItKnb8cToLA2rQNODMuOYZrz4TDEI+slsrcLXs/+A==, tarball: https://registry.npmjs.org/@vaadin/vaadin-material-styles/-/vaadin-material-styles-24.9.4.tgz}
+  '@vaadin/vaadin-material-styles@24.9.6':
+    resolution: {integrity: sha512-tth9AcivY3HBCk3SZM+2IB1QpaOXoa52vo2lLH1Ks/v5TKXZ+34+n2nfLNRdc3aDdXg8/8ZioQSlQ+ZbPllQXg==, tarball: https://registry.npmjs.org/@vaadin/vaadin-material-styles/-/vaadin-material-styles-24.9.6.tgz}
 
-  '@vaadin/vaadin-themable-mixin@24.9.4':
-    resolution: {integrity: sha512-XfxSq/pgVDAbGXKLJuDqR5uFT0zRac6UfY8Q+aNzv2R53PAm3vrt/S6XQ8VHDMCV/+8mVT2dZSnl22pafSEDcw==, tarball: https://registry.npmjs.org/@vaadin/vaadin-themable-mixin/-/vaadin-themable-mixin-24.9.4.tgz}
+  '@vaadin/vaadin-themable-mixin@24.9.6':
+    resolution: {integrity: sha512-1aT+z/yLM8ci+oFNoUopFqKJGVAPJ7dyOiZCyGK0M4hTF3i8tx2S9yZyiOOET7Z7200PFT7OuSiX+grFzcuNmQ==, tarball: https://registry.npmjs.org/@vaadin/vaadin-themable-mixin/-/vaadin-themable-mixin-24.9.6.tgz}
 
   '@vaadin/vaadin-usage-statistics@2.1.3':
     resolution: {integrity: sha512-8r4TNknD7OJQADe3VygeofFR7UNAXZ2/jjBFP5dgI8+2uMfnuGYgbuHivasKr9WSQ64sPej6m8rDoM1uSllXjQ==, tarball: https://registry.npmjs.org/@vaadin/vaadin-usage-statistics/-/vaadin-usage-statistics-2.1.3.tgz}
@@ -2944,8 +2944,8 @@ packages:
     resolution: {integrity: sha512-Nst5JdK47VIl9UcGwtv2Rcgyn5lWtZ0/mhRQ4G8NN2isxpq2TO30iqHzmwoJycjWuyUfg3GFXqP/gFHXeV57IA==, tarball: https://registry.npmjs.org/@whatwg-node/promise-helpers/-/promise-helpers-1.3.2.tgz}
     engines: {node: '>=16.0.0'}
 
-  '@zip.js/zip.js@2.8.8':
-    resolution: {integrity: sha512-v0KutehhSAuaoFAFGLp+V4+UiZ1mIxQ8vNOYMD7k9ZJaBbtQV49MYlg568oRLiuwWDg2Di58Iw3Q0ESNWR+5JA==, tarball: https://registry.npmjs.org/@zip.js/zip.js/-/zip.js-2.8.8.tgz}
+  '@zip.js/zip.js@2.8.11':
+    resolution: {integrity: sha512-0fztsk/0ryJ+2PPr9EyXS5/Co7OK8q3zY/xOoozEWaUsL5x+C0cyZ4YyMuUffOO2Dx/rAdq4JMPqW0VUtm+vzA==, tarball: https://registry.npmjs.org/@zip.js/zip.js/-/zip.js-2.8.11.tgz}
     engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=18.0.0'}
 
   '@zxing/browser@0.0.7':
@@ -3308,23 +3308,23 @@ packages:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==, tarball: https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz}
     engines: {node: '>=7.0.0'}
 
-  color-convert@3.1.2:
-    resolution: {integrity: sha512-UNqkvCDXstVck3kdowtOTWROIJQwafjOfXSmddoDrXo4cewMKmusCeF22Q24zvjR8nwWib/3S/dfyzPItPEiJg==, tarball: https://registry.npmjs.org/color-convert/-/color-convert-3.1.2.tgz}
+  color-convert@3.1.3:
+    resolution: {integrity: sha512-fasDH2ont2GqF5HpyO4w0+BcewlhHEZOFn9c1ckZdHpJ56Qb7MHhH/IcJZbBGgvdtwdwNbLvxiBEdg336iA9Sg==, tarball: https://registry.npmjs.org/color-convert/-/color-convert-3.1.3.tgz}
     engines: {node: '>=14.6'}
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==, tarball: https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz}
 
-  color-name@2.0.2:
-    resolution: {integrity: sha512-9vEt7gE16EW7Eu7pvZnR0abW9z6ufzhXxGXZEVU9IqPdlsUiMwJeJfRtq0zePUmnbHGT9zajca7mX8zgoayo4A==, tarball: https://registry.npmjs.org/color-name/-/color-name-2.0.2.tgz}
+  color-name@2.1.0:
+    resolution: {integrity: sha512-1bPaDNFm0axzE4MEAzKPuqKWeRaT43U/hyxKPBdqTfmPF+d6n7FSoTFxLVULUJOmiLp01KjhIPPH+HrXZJN4Rg==, tarball: https://registry.npmjs.org/color-name/-/color-name-2.1.0.tgz}
     engines: {node: '>=12.20'}
 
-  color-string@2.1.2:
-    resolution: {integrity: sha512-RxmjYxbWemV9gKu4zPgiZagUxbH3RQpEIO77XoSSX0ivgABDZ+h8Zuash/EMFLTI4N9QgFPOJ6JQpPZKFxa+dA==, tarball: https://registry.npmjs.org/color-string/-/color-string-2.1.2.tgz}
+  color-string@2.1.4:
+    resolution: {integrity: sha512-Bb6Cq8oq0IjDOe8wJmi4JeNn763Xs9cfrBcaylK1tPypWzyoy2G3l90v9k64kjphl/ZJjPIShFztenRomi8WTg==, tarball: https://registry.npmjs.org/color-string/-/color-string-2.1.4.tgz}
     engines: {node: '>=18'}
 
-  color@5.0.2:
-    resolution: {integrity: sha512-e2hz5BzbUPcYlIRHo8ieAhYgoajrJr+hWoceg6E345TPsATMUKqDgzt8fSXZJJbxfpiPzkWyphz8yn8At7q3fA==, tarball: https://registry.npmjs.org/color/-/color-5.0.2.tgz}
+  color@5.0.3:
+    resolution: {integrity: sha512-ezmVcLR3xAVp8kYOm4GS45ZLLgIE6SPAFoduLr6hTDajwb3KZ2F46gulK3XpcwRFb5KKGCSezCBAY4Dw4HsyXA==, tarball: https://registry.npmjs.org/color/-/color-5.0.3.tgz}
     engines: {node: '>=18'}
 
   colorbrewer@1.5.6:
@@ -3430,6 +3430,9 @@ packages:
 
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==, tarball: https://registry.npmjs.org/csstype/-/csstype-3.1.3.tgz}
+
+  csstype@3.2.3:
+    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==, tarball: https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz}
 
   d3-array@2.12.1:
     resolution: {integrity: sha512-B0ErZK/66mHtEsR1TkPEEkwdy+WDesimkM5gpZr5Dsg54BiTA5RXtYW5qTLIAcekaS9xfZrzBLF/OAkB3Qn1YQ==, tarball: https://registry.npmjs.org/d3-array/-/d3-array-2.12.1.tgz}
@@ -3859,8 +3862,8 @@ packages:
     resolution: {integrity: sha512-w+5mJ3GuFL+NjVtJlvydShqE1eN3h3PbI7/5LAsYJP/2qtuMXjfL2LpHSRqo4b4eSF5K/DH1JXKUAHSB2UW50g==, tarball: https://registry.npmjs.org/es-to-primitive/-/es-to-primitive-1.3.0.tgz}
     engines: {node: '>= 0.4'}
 
-  es-toolkit@1.41.0:
-    resolution: {integrity: sha512-bDd3oRmbVgqZCJS6WmeQieOrzpl3URcWBUVDXxOELlUW2FuW+0glPOz1n0KnRie+PdyvUZcXz2sOn00c6pPRIA==, tarball: https://registry.npmjs.org/es-toolkit/-/es-toolkit-1.41.0.tgz}
+  es-toolkit@1.43.0:
+    resolution: {integrity: sha512-SKCT8AsWvYzBBuUqMk4NPwFlSdqLpJwmy6AP322ERn8W2YLIB6JBXnwMI2Qsh2gfphT3q7EKAxKb23cvFHFwKA==, tarball: https://registry.npmjs.org/es-toolkit/-/es-toolkit-1.43.0.tgz}
 
   es6-promise@4.2.8:
     resolution: {integrity: sha512-HJDGx5daxeIvxdBxvG2cb9g4tEvwIk3i8+nhX0yGrYmZUzbkdg8QbDevheDB8gd0//uPj4c1EQua8Q+MViT0/w==, tarball: https://registry.npmjs.org/es6-promise/-/es6-promise-4.2.8.tgz}
@@ -4169,8 +4172,8 @@ packages:
   flatted@3.3.3:
     resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==, tarball: https://registry.npmjs.org/flatted/-/flatted-3.3.3.tgz}
 
-  focus-trap@7.6.6:
-    resolution: {integrity: sha512-v/Z8bvMCajtx4mEXmOo7QEsIzlIOqRXTIwgUfsFOF9gEsespdbD0AkPIka1bSXZ8Y8oZ+2IVDQZePkTfEHZl7Q==, tarball: https://registry.npmjs.org/focus-trap/-/focus-trap-7.6.6.tgz}
+  focus-trap@7.7.0:
+    resolution: {integrity: sha512-DJJDHpEgoSbP8ZE1MNeU2IzCpfFyFdNZZRilqmfH2XiQsPK6PtD8AfJqWzEBudUQB2yHwZc5iq54rjTaGQ+ljw==, tarball: https://registry.npmjs.org/focus-trap/-/focus-trap-7.7.0.tgz}
 
   for-each@0.3.5:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==, tarball: https://registry.npmjs.org/for-each/-/for-each-0.3.5.tgz}
@@ -5114,10 +5117,9 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==, tarball: https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz}
 
-  next@15.5.4:
-    resolution: {integrity: sha512-xH4Yjhb82sFYQfY3vbkJfgSDgXvBB6a8xPs9i35k6oZJRoQRihZH+4s9Yo2qsWpzBmZ3lPXaJ2KPXLfkvW4LnA==, tarball: https://registry.npmjs.org/next/-/next-15.5.4.tgz}
+  next@15.5.9:
+    resolution: {integrity: sha512-agNLK89seZEtC5zUHwtut0+tNrc0Xw4FT/Dg+B/VLEo9pAcS9rtTKpek3V6kVcVwsB2YlqMaHdfZL4eLEVYuCg==, tarball: https://registry.npmjs.org/next/-/next-15.5.9.tgz}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
-    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -6336,8 +6338,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  xmldoc@2.0.2:
-    resolution: {integrity: sha512-UiRwoSStEXS3R+YE8OqYv3jebza8cBBAI2y8g3B15XFkn3SbEOyyLnmPHjLBPZANrPJKEzxxB7A3XwcLikQVlQ==, tarball: https://registry.npmjs.org/xmldoc/-/xmldoc-2.0.2.tgz}
+  xmldoc@2.0.3:
+    resolution: {integrity: sha512-6gRk4NY/Jvg67xn7OzJuxLRsGgiXBaPUQplVJ/9l99uIugxh4FTOewYz5ic8WScj7Xx/2WvhENiQKwkK9RpE4w==, tarball: https://registry.npmjs.org/xmldoc/-/xmldoc-2.0.3.tgz}
     engines: {node: '>=12.0.0'}
 
   xss@1.0.13:
@@ -6394,7 +6396,7 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@amcharts/amcharts5@5.14.3':
+  '@amcharts/amcharts5@5.14.4':
     dependencies:
       '@types/d3': 7.4.3
       '@types/d3-chord': 3.0.6
@@ -6424,26 +6426,26 @@ snapshots:
 
   '@arcgis/core@4.34.7':
     dependencies:
-      '@amcharts/amcharts5': 5.14.3
-      '@arcgis/toolkit': 4.34.8
+      '@amcharts/amcharts5': 5.14.4
+      '@arcgis/toolkit': 4.34.9
       '@esri/arcgis-html-sanitizer': 4.1.0
       '@esri/calcite-components': 3.3.3
-      '@vaadin/grid': 24.9.4
-      '@zip.js/zip.js': 2.8.8
+      '@vaadin/grid': 24.9.6
+      '@zip.js/zip.js': 2.8.11
       luxon: 3.7.2
       marked: 16.3.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - '@lit/context'
 
-  '@arcgis/lumina@4.34.8(lit@3.3.1)':
+  '@arcgis/lumina@4.34.9(lit@3.3.1)':
     dependencies:
-      '@arcgis/toolkit': 4.34.8
-      csstype: 3.1.3
+      '@arcgis/toolkit': 4.34.9
+      csstype: 3.2.3
       lit: 3.3.1
       tslib: 2.8.1
 
-  '@arcgis/toolkit@4.34.8':
+  '@arcgis/toolkit@4.34.9':
     dependencies:
       tslib: 2.8.1
 
@@ -7423,16 +7425,16 @@ snapshots:
 
   '@esri/calcite-components@3.3.3':
     dependencies:
-      '@arcgis/lumina': 4.34.8(lit@3.3.1)
-      '@arcgis/toolkit': 4.34.8
+      '@arcgis/lumina': 4.34.9(lit@3.3.1)
+      '@arcgis/toolkit': 4.34.9
       '@esri/calcite-ui-icons': 4.3.0
       '@floating-ui/dom': 1.7.4
       '@floating-ui/utils': 0.2.10
       '@types/sortablejs': 1.15.9
-      color: 5.0.2
+      color: 5.0.3
       composed-offset-position: 0.0.6(@floating-ui/utils@0.2.10)
-      es-toolkit: 1.41.0
-      focus-trap: 7.6.6
+      es-toolkit: 1.43.0
+      focus-trap: 7.7.0
       interactjs: 1.10.27
       lit: 3.3.1
       sortablejs: 1.15.6
@@ -8758,34 +8760,34 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@next/env@15.5.4': {}
+  '@next/env@15.5.9': {}
 
   '@next/eslint-plugin-next@15.5.4':
     dependencies:
       fast-glob: 3.3.1
 
-  '@next/swc-darwin-arm64@15.5.4':
+  '@next/swc-darwin-arm64@15.5.7':
     optional: true
 
-  '@next/swc-darwin-x64@15.5.4':
+  '@next/swc-darwin-x64@15.5.7':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@15.5.4':
+  '@next/swc-linux-arm64-gnu@15.5.7':
     optional: true
 
-  '@next/swc-linux-arm64-musl@15.5.4':
+  '@next/swc-linux-arm64-musl@15.5.7':
     optional: true
 
-  '@next/swc-linux-x64-gnu@15.5.4':
+  '@next/swc-linux-x64-gnu@15.5.7':
     optional: true
 
-  '@next/swc-linux-x64-musl@15.5.4':
+  '@next/swc-linux-x64-musl@15.5.7':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@15.5.4':
+  '@next/swc-win32-arm64-msvc@15.5.7':
     optional: true
 
-  '@next/swc-win32-x64-msvc@15.5.4':
+  '@next/swc-win32-x64-msvc@15.5.7':
     optional: true
 
   '@noble/hashes@2.0.1': {}
@@ -9722,26 +9724,26 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@vaadin/a11y-base@24.9.4':
+  '@vaadin/a11y-base@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       '@polymer/polymer': 3.5.2
-      '@vaadin/component-base': 24.9.4
+      '@vaadin/component-base': 24.9.6
       lit: 3.3.1
 
-  '@vaadin/checkbox@24.9.4':
+  '@vaadin/checkbox@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       '@polymer/polymer': 3.5.2
-      '@vaadin/a11y-base': 24.9.4
-      '@vaadin/component-base': 24.9.4
-      '@vaadin/field-base': 24.9.4
-      '@vaadin/vaadin-lumo-styles': 24.9.4
-      '@vaadin/vaadin-material-styles': 24.9.4
-      '@vaadin/vaadin-themable-mixin': 24.9.4
+      '@vaadin/a11y-base': 24.9.6
+      '@vaadin/component-base': 24.9.6
+      '@vaadin/field-base': 24.9.6
+      '@vaadin/vaadin-lumo-styles': 24.9.6
+      '@vaadin/vaadin-material-styles': 24.9.6
+      '@vaadin/vaadin-themable-mixin': 24.9.6
       lit: 3.3.1
 
-  '@vaadin/component-base@24.9.4':
+  '@vaadin/component-base@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       '@polymer/polymer': 3.5.2
@@ -9749,79 +9751,79 @@ snapshots:
       '@vaadin/vaadin-usage-statistics': 2.1.3
       lit: 3.3.1
 
-  '@vaadin/field-base@24.9.4':
+  '@vaadin/field-base@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       '@polymer/polymer': 3.5.2
-      '@vaadin/a11y-base': 24.9.4
-      '@vaadin/component-base': 24.9.4
+      '@vaadin/a11y-base': 24.9.6
+      '@vaadin/component-base': 24.9.6
       lit: 3.3.1
 
-  '@vaadin/grid@24.9.4':
+  '@vaadin/grid@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       '@polymer/polymer': 3.5.2
-      '@vaadin/a11y-base': 24.9.4
-      '@vaadin/checkbox': 24.9.4
-      '@vaadin/component-base': 24.9.4
-      '@vaadin/lit-renderer': 24.9.4
-      '@vaadin/text-field': 24.9.4
-      '@vaadin/vaadin-lumo-styles': 24.9.4
-      '@vaadin/vaadin-material-styles': 24.9.4
-      '@vaadin/vaadin-themable-mixin': 24.9.4
+      '@vaadin/a11y-base': 24.9.6
+      '@vaadin/checkbox': 24.9.6
+      '@vaadin/component-base': 24.9.6
+      '@vaadin/lit-renderer': 24.9.6
+      '@vaadin/text-field': 24.9.6
+      '@vaadin/vaadin-lumo-styles': 24.9.6
+      '@vaadin/vaadin-material-styles': 24.9.6
+      '@vaadin/vaadin-themable-mixin': 24.9.6
       lit: 3.3.1
 
-  '@vaadin/icon@24.9.4':
+  '@vaadin/icon@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       '@polymer/polymer': 3.5.2
-      '@vaadin/component-base': 24.9.4
-      '@vaadin/vaadin-lumo-styles': 24.9.4
-      '@vaadin/vaadin-themable-mixin': 24.9.4
+      '@vaadin/component-base': 24.9.6
+      '@vaadin/vaadin-lumo-styles': 24.9.6
+      '@vaadin/vaadin-themable-mixin': 24.9.6
       lit: 3.3.1
 
-  '@vaadin/input-container@24.9.4':
+  '@vaadin/input-container@24.9.6':
     dependencies:
       '@polymer/polymer': 3.5.2
-      '@vaadin/component-base': 24.9.4
-      '@vaadin/vaadin-lumo-styles': 24.9.4
-      '@vaadin/vaadin-material-styles': 24.9.4
-      '@vaadin/vaadin-themable-mixin': 24.9.4
+      '@vaadin/component-base': 24.9.6
+      '@vaadin/vaadin-lumo-styles': 24.9.6
+      '@vaadin/vaadin-material-styles': 24.9.6
+      '@vaadin/vaadin-themable-mixin': 24.9.6
       lit: 3.3.1
 
-  '@vaadin/lit-renderer@24.9.4':
+  '@vaadin/lit-renderer@24.9.6':
     dependencies:
       lit: 3.3.1
 
-  '@vaadin/text-field@24.9.4':
+  '@vaadin/text-field@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       '@polymer/polymer': 3.5.2
-      '@vaadin/a11y-base': 24.9.4
-      '@vaadin/component-base': 24.9.4
-      '@vaadin/field-base': 24.9.4
-      '@vaadin/input-container': 24.9.4
-      '@vaadin/vaadin-lumo-styles': 24.9.4
-      '@vaadin/vaadin-material-styles': 24.9.4
-      '@vaadin/vaadin-themable-mixin': 24.9.4
+      '@vaadin/a11y-base': 24.9.6
+      '@vaadin/component-base': 24.9.6
+      '@vaadin/field-base': 24.9.6
+      '@vaadin/input-container': 24.9.6
+      '@vaadin/vaadin-lumo-styles': 24.9.6
+      '@vaadin/vaadin-material-styles': 24.9.6
+      '@vaadin/vaadin-themable-mixin': 24.9.6
       lit: 3.3.1
 
   '@vaadin/vaadin-development-mode-detector@2.0.7': {}
 
-  '@vaadin/vaadin-lumo-styles@24.9.4':
+  '@vaadin/vaadin-lumo-styles@24.9.6':
     dependencies:
       '@polymer/polymer': 3.5.2
-      '@vaadin/component-base': 24.9.4
-      '@vaadin/icon': 24.9.4
-      '@vaadin/vaadin-themable-mixin': 24.9.4
+      '@vaadin/component-base': 24.9.6
+      '@vaadin/icon': 24.9.6
+      '@vaadin/vaadin-themable-mixin': 24.9.6
 
-  '@vaadin/vaadin-material-styles@24.9.4':
+  '@vaadin/vaadin-material-styles@24.9.6':
     dependencies:
       '@polymer/polymer': 3.5.2
-      '@vaadin/component-base': 24.9.4
-      '@vaadin/vaadin-themable-mixin': 24.9.4
+      '@vaadin/component-base': 24.9.6
+      '@vaadin/vaadin-themable-mixin': 24.9.6
 
-  '@vaadin/vaadin-themable-mixin@24.9.4':
+  '@vaadin/vaadin-themable-mixin@24.9.6':
     dependencies:
       '@open-wc/dedupe-mixin': 1.4.0
       lit: 3.3.1
@@ -9854,7 +9856,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@zip.js/zip.js@2.8.8': {}
+  '@zip.js/zip.js@2.8.11': {}
 
   '@zxing/browser@0.0.7(@zxing/library@0.18.6)':
     dependencies:
@@ -10275,22 +10277,22 @@ snapshots:
     dependencies:
       color-name: 1.1.4
 
-  color-convert@3.1.2:
+  color-convert@3.1.3:
     dependencies:
-      color-name: 2.0.2
+      color-name: 2.1.0
 
   color-name@1.1.4: {}
 
-  color-name@2.0.2: {}
+  color-name@2.1.0: {}
 
-  color-string@2.1.2:
+  color-string@2.1.4:
     dependencies:
-      color-name: 2.0.2
+      color-name: 2.1.0
 
-  color@5.0.2:
+  color@5.0.3:
     dependencies:
-      color-convert: 3.1.2
-      color-string: 2.1.2
+      color-convert: 3.1.3
+      color-string: 2.1.4
 
   colorbrewer@1.5.6: {}
 
@@ -10385,6 +10387,8 @@ snapshots:
   cssfilter@0.0.10: {}
 
   csstype@3.1.3: {}
+
+  csstype@3.2.3: {}
 
   d3-array@2.12.1:
     dependencies:
@@ -10900,7 +10904,7 @@ snapshots:
       is-date-object: 1.1.0
       is-symbol: 1.1.1
 
-  es-toolkit@1.41.0: {}
+  es-toolkit@1.43.0: {}
 
   es6-promise@4.2.8: {}
 
@@ -11343,7 +11347,7 @@ snapshots:
 
   flatted@3.3.3: {}
 
-  focus-trap@7.6.6:
+  focus-trap@7.7.0:
     dependencies:
       tabbable: 6.3.0
 
@@ -12298,9 +12302,9 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next@15.5.4(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  next@15.5.9(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
-      '@next/env': 15.5.4
+      '@next/env': 15.5.9
       '@swc/helpers': 0.5.15
       caniuse-lite: 1.0.30001745
       postcss: 8.4.31
@@ -12308,14 +12312,14 @@ snapshots:
       react-dom: 19.1.1(react@19.1.1)
       styled-jsx: 5.1.6(@babel/core@7.28.4)(react@19.1.1)
     optionalDependencies:
-      '@next/swc-darwin-arm64': 15.5.4
-      '@next/swc-darwin-x64': 15.5.4
-      '@next/swc-linux-arm64-gnu': 15.5.4
-      '@next/swc-linux-arm64-musl': 15.5.4
-      '@next/swc-linux-x64-gnu': 15.5.4
-      '@next/swc-linux-x64-musl': 15.5.4
-      '@next/swc-win32-arm64-msvc': 15.5.4
-      '@next/swc-win32-x64-msvc': 15.5.4
+      '@next/swc-darwin-arm64': 15.5.7
+      '@next/swc-darwin-x64': 15.5.7
+      '@next/swc-linux-arm64-gnu': 15.5.7
+      '@next/swc-linux-arm64-musl': 15.5.7
+      '@next/swc-linux-x64-gnu': 15.5.7
+      '@next/swc-linux-x64-musl': 15.5.7
+      '@next/swc-win32-arm64-msvc': 15.5.7
+      '@next/swc-win32-x64-msvc': 15.5.7
       '@opentelemetry/api': 1.9.0
       babel-plugin-react-compiler: 19.1.0-rc.3
       sharp: 0.34.4
@@ -12536,7 +12540,7 @@ snapshots:
       '@foliojs-fork/linebreak': 1.1.2
       '@foliojs-fork/pdfkit': 0.15.3
       iconv-lite: 0.6.3
-      xmldoc: 2.0.2
+      xmldoc: 2.0.3
 
   peek-stream@1.1.3:
     dependencies:
@@ -13648,7 +13652,7 @@ snapshots:
 
   ws@8.18.3: {}
 
-  xmldoc@2.0.2:
+  xmldoc@2.0.3:
     dependencies:
       sax: 1.4.3
 
