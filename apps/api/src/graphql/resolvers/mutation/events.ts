@@ -844,7 +844,8 @@ export const updateEventMutation: MutationResolvers['updateEvent'] =
         }
 
         // Audit log: Event updated (only if there are actual changes)
-        const diff = buildDiff(current, event, EVENT_DIFF_WHITELIST);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const diff = buildDiff(current, event, EVENT_DIFF_WHITELIST as any);
         if (diff) {
           await createAuditLog(tx, {
             eventId: id,

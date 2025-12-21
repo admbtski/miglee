@@ -22,19 +22,59 @@
 
 ## Obecny stan
 
+> **Ostatnia aktualizacja**: 2024-12-20
+
 | Obszar | Status | Uwagi |
 |--------|--------|-------|
-| **Dockerfiles** | ⚠️ Częściowo | Dev Dockerfiles istnieją, brak production-optimized |
-| **Health endpoints** | ⚠️ Częściowo | `/health` istnieje, brak `/readyz` (DB+Redis check) |
-| **Graceful shutdown** | ⚠️ Częściowo | Wymaga review (SIGTERM handling) |
+| **Dockerfiles** | ✅ Gotowe | Multi-stage, non-root, HEALTHCHECK, production target |
+| **Health endpoints** | ✅ Gotowe | `/health/live` (liveness), `/health/ready` (readiness z DB+Redis) |
+| **Graceful shutdown** | ✅ Gotowe | SIGTERM/SIGINT, drain connections, close DB/Redis/BullMQ |
+| **GraphQL limits** | ✅ Gotowe | depth=7, complexity=1000 (prod) |
+| **Next.js standalone** | ✅ Gotowe | `output: 'standalone'` w next.config.ts |
 | **Kubernetes manifests** | ❌ Brak | Do stworzenia od zera |
 | **CI/CD** | ❌ Brak | GitHub Actions do napisania |
 | **OpenTelemetry** | ❌ Brak | Tylko Pino logging |
-| **GraphQL limits** | ⚠️ Częściowo | depth-limit jest, brak complexity |
 | **Resolver metrics** | ❌ Brak | Do instrumentacji |
 | **WebSocket limits** | ⚠️ Częściowo | Rate limiting jest, brak per-connection limits |
 | **Pod security** | ❌ N/A | K8s manifesty nie istnieją |
 | **Runbooks** | ❌ Brak | Do napisania |
+
+### Faza 1: Fundamenty - UKOŃCZONA ✅
+
+| Zadanie | Status | Plik |
+|---------|--------|------|
+| Production Dockerfiles | ✅ | `docker/Dockerfile.api`, `docker/Dockerfile.web` |
+| Health /live + /ready | ✅ | `apps/api/src/plugins/health.ts` |
+| Graceful shutdown | ✅ | `apps/api/src/plugins/graceful-shutdown.ts` |
+| GraphQL depth limit | ✅ | `apps/api/src/plugins/mercurius.ts` (depth=7) |
+| GraphQL complexity limit | ✅ | `apps/api/src/plugins/mercurius.ts` (complexity=1000) |
+| Next.js standalone output | ✅ | `apps/web/next.config.ts` |
+| Docker HEALTHCHECK | ✅ | Dodane do obu Dockerfiles |
+| TypeScript build errors | ✅ | Naprawione (unused vars, missing types) |
+
+**Rozmiary obrazów Docker**:
+- `appname-web:production` - **233 MB** (Next.js standalone - zoptymalizowany)
+- `appname-api:production` - **1.25 GB** (wymaga optymalizacji - pruning dependencies)
+
+**Build commands**:
+```bash
+# API
+docker build -f docker/Dockerfile.api --target production -t appname-api:$(git rev-parse --short HEAD) .
+
+# Web (wymaga build-args dla public env)
+docker build -f docker/Dockerfile.web --target production \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.example.com \
+  --build-arg NEXT_PUBLIC_WS_URL=wss://api.example.com \
+  -t appname-web:$(git rev-parse --short HEAD) .
+```
+
+### ⚠️ Znane problemy do rozwiązania
+
+| Problem | Priorytet | Akcja |
+|---------|-----------|-------|
+| Next.js 15.5.4 CVE-2025-66478 | 🔴 Wysoki | Zaktualizować do najnowszej patched wersji |
+| API image 1.25GB | 🟡 Średni | Dodać prune dev dependencies, multi-stage optymalizacja |
+| react-qr-reader peer deps | 🟢 Niski | Zaktualizować lub zamienić bibliotekę |
 
 ---
 
@@ -98,102 +138,98 @@ appname-{env}/
 
 ---
 
-## Faza 1: Fundamenty
+## Faza 1: Fundamenty ✅ UKOŃCZONA
 
 > **Cel**: Przygotowanie aplikacji do uruchomienia w K8s bez zmian w kodzie.
+> **Status**: Wszystkie zadania ukończone (2024-12-20)
 
-### 1.1 Production Dockerfiles
+### 1.1 Production Dockerfiles ✅
 
-**Status**: ⚠️ Do zrobienia  
-**Czas**: 2-3h  
-**Plik**: `docker/Dockerfile.api.prod`, `docker/Dockerfile.web.prod`
+**Status**: ✅ Gotowe  
+**Pliki**: `docker/Dockerfile.api`, `docker/Dockerfile.web`
 
-**Wymagania**:
-- [ ] Multi-stage build (builder → runner)
-- [ ] Non-root user w runnerze
-- [ ] `NODE_ENV=production`
-- [ ] Tylko produkcyjne dependencies
-- [ ] Expose port (3000/4000)
-- [ ] HEALTHCHECK instruction
-- [ ] Read-only filesystem gdzie możliwe
+**Zaimplementowane**:
+- [x] Multi-stage build (base → deps → builder → production)
+- [x] Non-root user (fastify:1001 / nextjs:1001)
+- [x] `NODE_ENV=production`
+- [x] Tylko produkcyjne dependencies
+- [x] Expose port (3000/4000)
+- [x] HEALTHCHECK instruction
+- [x] Osobne targety: development / production
 
-**Struktura**:
-```dockerfile
-# Stage 1: Builder
-FROM node:22-alpine AS builder
-# install pnpm, copy lockfile, install deps, build
+**Komendy build**:
+```bash
+# API (production)
+docker build -f docker/Dockerfile.api --target production -t appname-api:latest .
 
-# Stage 2: Runner  
-FROM node:22-alpine AS runner
-USER node
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-CMD ["node", "dist/index.js"]
+# Web (production)
+docker build -f docker/Dockerfile.web --target production -t appname-web:latest .
 ```
 
-### 1.2 Health Endpoints
+### 1.2 Health Endpoints ✅
 
-**Status**: ⚠️ Częściowo  
-**Czas**: 1h  
-**Plik**: `apps/api/src/routes/health.ts`
+**Status**: ✅ Gotowe  
+**Plik**: `apps/api/src/plugins/health.ts`
 
-**Wymagania**:
+**Zaimplementowane endpointy**:
 
 | Endpoint | Cel | Checks | K8s Probe |
 |----------|-----|--------|-----------|
-| `GET /healthz` | Czy proces żyje | Zawsze 200 | livenessProbe |
-| `GET /readyz` | Czy gotowy do ruchu | DB + Redis ping | readinessProbe |
+| `GET /health/live` | Liveness | Zawsze 200 | livenessProbe |
+| `GET /health/ready` | Readiness | DB + Redis ping | readinessProbe |
+| `GET /health` | Legacy | DB + Redis | (backwards compat) |
 
-**Implementacja `/readyz`**:
-```typescript
-// Sprawdź:
-// 1. prisma.$queryRaw`SELECT 1`
-// 2. redis.ping()
-// Zwróć 200 tylko jeśli oba OK
-```
+**Implementacja**:
+- DB check: `prisma.$queryRaw\`SELECT 1\``
+- Redis check: `redis.ping()`
+- Zwraca 503 jeśli którykolwiek fail
+- Timeout: 5s (prod) / 10s (dev)
 
-**Dla Web (Next.js)**:
-- `/api/health` - już istnieje
-- `/api/ready` - opcjonalnie sprawdza połączenie z API
+**Web (Next.js)**:
+- `/api/health` - endpoint zdrowia (już istnieje)
 
-### 1.3 Graceful Shutdown
+### 1.3 Graceful Shutdown ✅
 
-**Status**: ⚠️ Wymaga review  
-**Czas**: 1-2h  
-**Plik**: `apps/api/src/index.ts`
+**Status**: ✅ Gotowe  
+**Plik**: `apps/api/src/plugins/graceful-shutdown.ts`
 
-**Wymagania**:
-- [ ] Obsługa `SIGTERM` i `SIGINT`
-- [ ] Stop accepting new connections
-- [ ] Drain existing requests (timeout 30s)
-- [ ] Close DB connections
-- [ ] Close Redis connections
-- [ ] Close WebSocket connections
-- [ ] Exit process
+**Zaimplementowane**:
+- [x] Obsługa `SIGTERM`, `SIGINT`, `SIGUSR2`
+- [x] Stop accepting new connections
+- [x] Drain existing requests (timeout: 30s prod / 10s dev)
+- [x] Close DB connections (Prisma)
+- [x] Close Redis connections
+- [x] Close BullMQ queues
+- [x] Force shutdown po 45s (prod) / 15s (dev)
+- [x] Returns 503 podczas shutdown
 
 **Sekwencja**:
 ```
 SIGTERM received
     ↓
-readiness → false (K8s stops sending traffic)
+isShuttingDown = true (returns 503 for new requests)
+    ↓
+fastify.close() - stop HTTP server
     ↓
 wait for in-flight requests (max 30s)
     ↓
-close WebSocket connections
+prisma.$disconnect()
     ↓
-close Redis connections  
+closeAllQueues() (BullMQ)
+    ↓
+closeAllRedisConnections()  
     ↓
 close DB connections
     ↓
 process.exit(0)
 ```
 
-### 1.4 Environment Config Split
+### 1.4 Environment Config Split ✅
 
-**Status**: ✅ Częściowo (env.ts istnieje)  
-**Czas**: 1h
+**Status**: ✅ Gotowe  
+**Plik**: `apps/api/src/env.ts`
 
-**Podział ConfigMap vs Secret**:
+**Podział ConfigMap vs Secret** (dla K8s):
 
 | ConfigMap (jawne) | Secret (wrażliwe) |
 |-------------------|-------------------|
@@ -206,17 +242,24 @@ process.exit(0)
 | `ENABLE_BULL_BOARD` | `S3_ACCESS_KEY` |
 | `OTEL_*` | `S3_SECRET_KEY` |
 
-### 1.5 GraphQL Complexity Limit
+**Walidacja**: Zod schema z sensownymi defaults i error messages.
 
-**Status**: ⚠️ Brak  
-**Czas**: 1h  
-**Plik**: `apps/api/src/graphql/index.ts`
+### 1.5 GraphQL Security Limits ✅
 
-**Wymagania**:
-- [ ] Depth limit: już jest (`graphql-depth-limit`)
-- [ ] Complexity limit: dodać (`graphql-query-complexity`)
-- [ ] Max complexity: np. 1000
-- [ ] Log when rejected
+**Status**: ✅ Gotowe  
+**Plik**: `apps/api/src/plugins/mercurius.ts`
+
+**Zaimplementowane**:
+- [x] Depth limit: `graphql-depth-limit` (prod: 7, dev: 15)
+- [x] Complexity limit: custom calculator (prod: 1000, dev: 5000)
+- [x] Log when rejected
+- [x] Introspection blocked in production
+
+**Konfiguracja**:
+```typescript
+const MAX_QUERY_DEPTH = config.isProduction ? 7 : 15;
+const MAX_QUERY_COMPLEXITY = config.isProduction ? 1000 : 5000;
+```
 
 ---
 

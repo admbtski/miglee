@@ -13,13 +13,13 @@
     "gql:gen": "graphql-codegen --config src/lib/api/codegen.ts"
   },
   "dependencies": {
+    "@appname/contracts": "workspace:*",
     "@deck.gl/mapbox": "^9.2.2",
     "@floating-ui/react": "^0.27.16",
     "@floating-ui/react-dom": "^2.1.6",
     "@googlemaps/js-api-loader": "^2.0.1",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@hookform/resolvers": "^5.2.2",
-    "@appname/contracts": "workspace:*",
     "@tanstack/react-query": "^5.90.2",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "blurhash": "^2.0.5",
@@ -54,14 +54,15 @@
     "zod": "3.25.67"
   },
   "devDependencies": {
+    "@appname/config": "workspace:*",
     "@graphql-codegen/cli": "^6.0.0",
     "@graphql-codegen/client-preset": "^5.0.1",
     "@graphql-codegen/typed-document-node": "^6.0.2",
     "@graphql-codegen/typescript": "^5.0.0",
     "@graphql-codegen/typescript-operations": "^5.0.0",
-    "@appname/config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.13",
     "@tanstack/react-query-devtools": "^5.90.2",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^24.5.2",
     "@types/qrcode.react": "^3.0.0",
     "@types/react": "^19.1.14",

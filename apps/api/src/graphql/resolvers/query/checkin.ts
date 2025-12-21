@@ -15,9 +15,11 @@ import { validateModeratorAccess } from '../helpers/checkin';
 
 export const eventCheckinLogs: QueryResolvers['eventCheckinLogs'] = async (
   _,
-  { eventId, limit = 50, offset = 0, action, method, memberId },
+  { eventId, limit: limitArg, offset: offsetArg, action, method, memberId },
   { prisma, userId }
 ): Promise<any> => {
+  const limit = limitArg ?? 50;
+  const offset = offsetArg ?? 0;
   // Return type intentionally 'any' - field resolvers handle conversion
   if (!userId) {
     throw new GraphQLError('Not authenticated', {

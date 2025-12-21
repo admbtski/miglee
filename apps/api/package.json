@@ -67,14 +67,15 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@appname/config": "workspace:*",
     "@graphql-codegen/add": "^6.0.0",
     "@graphql-codegen/cli": "^6.0.0",
     "@graphql-codegen/typescript": "^5.0.0",
     "@graphql-codegen/typescript-operations": "^5.0.0",
     "@graphql-codegen/typescript-resolvers": "^5.0.0",
-    "@appname/config": "workspace:*",
     "@types/graphql-depth-limit": "^1.1.6",
     "@types/node": "^24.5.2",
+    "@types/ws": "^8.18.1",
     "eslint": "^9.36.0",
     "pino-pretty": "^13.1.1",
     "prisma": "^6.16.2",

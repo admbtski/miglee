@@ -125,7 +125,8 @@ function createPrismaClient() {
         async $allOperations({ model, operation, args, query }) {
           const t0 = process.hrtime.bigint();
           let outcome: 'ok' | 'error' | 'timeout' = 'ok';
-          let errorCode: string | undefined;
+          // Track error code for potential future metrics
+          let errorCode: string | undefined = undefined;
 
           try {
             const result = await query(args);
@@ -135,6 +136,7 @@ function createPrismaClient() {
 
             if (e instanceof Prisma.PrismaClientKnownRequestError) {
               errorCode = e.code;
+              void errorCode; // Reserved for OTel metrics
 
               // P2024 = query timeout
               if (e.code === 'P2024') {
@@ -164,8 +166,8 @@ function createPrismaClient() {
             throw e;
           } finally {
             const durMs = Number(process.hrtime.bigint() - t0) / 1e6;
-            const durS = durMs / 1000;
-            const labels = { model, action: operation, outcome };
+            // Reserved for future OTel metrics: durS, labels
+            void outcome;
 
             // Track slow queries
             if (durMs > QUERY_TIMEOUTS.slowQueryThreshold) {

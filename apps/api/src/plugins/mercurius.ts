@@ -404,12 +404,15 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
     }
   );
 
-  // Metrics hook
+  // Metrics hook - reserved for future OTel integration
   fastify.graphql.addHook('onResolution', async (execution, context) => {
     const meta = context.request.__gql;
     if (!meta) return;
 
-    const durS = Number(process.hrtime.bigint() - meta.start) / 1e9;
-    const outcome = execution.errors?.length ? 'error' : 'ok';
+    // TODO: Add OTel histogram for GraphQL resolution duration
+    const _durS = Number(process.hrtime.bigint() - meta.start) / 1e9;
+    const _outcome = execution.errors?.length ? 'error' : 'ok';
+    void _durS;
+    void _outcome;
   });
 });
