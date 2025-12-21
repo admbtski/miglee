@@ -22,7 +22,7 @@
 
 ## Obecny stan
 
-> **Ostatnia aktualizacja**: 2024-12-20
+> **Ostatnia aktualizacja**: 2024-12-21
 
 | Obszar | Status | Uwagi |
 |--------|--------|-------|
@@ -31,12 +31,12 @@
 | **Graceful shutdown** | ✅ Gotowe | SIGTERM/SIGINT, drain connections, close DB/Redis/BullMQ |
 | **GraphQL limits** | ✅ Gotowe | depth=7, complexity=1000 (prod) |
 | **Next.js standalone** | ✅ Gotowe | `output: 'standalone'` w next.config.ts |
-| **Kubernetes manifests** | ❌ Brak | Do stworzenia od zera |
+| **Kubernetes manifests** | ✅ Gotowe | Kustomize: base + components + envs (dev/stage/prod) |
 | **CI/CD** | ❌ Brak | GitHub Actions do napisania |
 | **OpenTelemetry** | ❌ Brak | Tylko Pino logging |
 | **Resolver metrics** | ❌ Brak | Do instrumentacji |
 | **WebSocket limits** | ⚠️ Częściowo | Rate limiting jest, brak per-connection limits |
-| **Pod security** | ❌ N/A | K8s manifesty nie istnieją |
+| **Pod security** | ✅ Gotowe | runAsNonRoot, allowPrivilegeEscalation: false, drop ALL caps |
 | **Runbooks** | ❌ Brak | Do napisania |
 
 ### Faza 1: Fundamenty - UKOŃCZONA ✅
@@ -263,31 +263,77 @@ const MAX_QUERY_COMPLEXITY = config.isProduction ? 1000 : 5000;
 
 ---
 
-## Faza 2: Kubernetes Manifests
+## Faza 2: Kubernetes Manifests ✅ UKOŃCZONA
 
 > **Cel**: Pełna definicja K8s resources dla stage/prod.
+> **Status**: Wszystkie zadania ukończone (2024-12-21)
 
-### 2.1 Struktura katalogów
+### Podsumowanie Fazy 2
 
-**Czas**: 30min
+| Zadanie | Status | Ścieżka |
+|---------|--------|---------|
+| Struktura katalogów | ✅ | `infra/k8s/` |
+| API Deployment + Service + HPA + PDB | ✅ | `infra/k8s/components/api/` |
+| Web Deployment + Service + HPA + PDB | ✅ | `infra/k8s/components/web/` |
+| Workers (3x Deployment) | ✅ | `infra/k8s/components/workers/` |
+| ConfigMaps per env | ✅ | `infra/k8s/envs/{stage,prod}/configmap.yaml` |
+| Secrets templates | ✅ | `infra/k8s/envs/{stage,prod}/secrets/secrets.yaml.example` |
+| Ingress z TLS | ✅ | `infra/k8s/envs/{stage,prod}/ingress.yaml` |
+| Migration Job | ✅ | `infra/k8s/components/api/migration-job.yaml` |
+| Kustomization overlays | ✅ | `infra/k8s/envs/{dev,stage,prod}/kustomization.yaml` |
+| Dokumentacja K8s | ✅ | `docs/deployment/kubernetes.md` |
+
+### Zasoby K8s per środowisko
+
+```
+$ kubectl kustomize infra/k8s/envs/stage | grep -E "^kind:" | sort | uniq -c
+   2 ConfigMap
+   5 Deployment
+   2 HorizontalPodAutoscaler
+   1 Ingress
+   1 Namespace
+   2 PodDisruptionBudget
+   2 Service
+   3 ServiceAccount
+```
+
+### Komendy użycia
+
+```bash
+# Preview manifestów
+kubectl kustomize infra/k8s/envs/stage
+
+# Deploy na stage
+kubectl apply -k infra/k8s/envs/stage
+
+# Deploy na prod
+kubectl apply -k infra/k8s/envs/prod
+```
+
+### 2.1 Struktura katalogów ✅
 
 ```
 infra/
 └── k8s/
     ├── base/                    # Wspólne definicje
-    │   ├── kustomization.yaml
-    │   ├── namespace.yaml
-    │   └── labels.yaml
+    │   └── kustomization.yaml
     │
     ├── components/              # Reużywalne komponenty
     │   ├── api/
     │   │   ├── deployment.yaml
     │   │   ├── service.yaml
-    │   │   └── hpa.yaml
+    │   │   ├── hpa.yaml
+    │   │   ├── pdb.yaml
+    │   │   ├── serviceaccount.yaml
+    │   │   ├── migration-job.yaml
+    │   │   └── kustomization.yaml
     │   ├── web/
     │   │   ├── deployment.yaml
     │   │   ├── service.yaml
-    │   │   └── hpa.yaml
+    │   │   ├── hpa.yaml
+    │   │   ├── pdb.yaml
+    │   │   ├── serviceaccount.yaml
+    │   │   └── kustomization.yaml
     │   └── workers/
     │       ├── reminders.yaml
     │       ├── feedback.yaml

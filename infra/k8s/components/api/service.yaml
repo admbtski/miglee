@@ -1,0 +1,21 @@
+# =============================================================================
+# API Service - internal ClusterIP for API
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  labels:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/component: api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 4000
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/component: api
+

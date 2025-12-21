@@ -1,0 +1,11 @@
+# =============================================================================
+# Stage Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: appname-stage
+  labels:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/environment: stage
+

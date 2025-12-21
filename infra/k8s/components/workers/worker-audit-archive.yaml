@@ -1,0 +1,95 @@
+# =============================================================================
+# Worker: Audit Archive - archives old audit logs
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-audit-archive
+  labels:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/component: worker-audit-archive
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: appname
+      app.kubernetes.io/component: worker-audit-archive
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: appname
+        app.kubernetes.io/component: worker-audit-archive
+    spec:
+      serviceAccountName: worker
+      terminationGracePeriodSeconds: 120  # Longer for archive operations
+      
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      
+      containers:
+        - name: worker
+          image: appname-api:latest
+          imagePullPolicy: IfNotPresent
+          
+          command: ["node"]
+          args: ["apps/api/dist/src/workers/audit-archive/index.js"]
+          
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: WORKER_NAME
+              value: "audit-archive"
+          
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "pgrep -f 'workers/audit-archive' > /dev/null"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi  # Higher for archive processing
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: audit-archives
+              mountPath: /app/data/audit-archives
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: audit-archives
+          emptyDir: {}
+

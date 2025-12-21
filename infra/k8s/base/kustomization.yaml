@@ -1,0 +1,17 @@
+# =============================================================================
+# Base Kustomization - common resources and labels
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/name: appname
+  app.kubernetes.io/part-of: appname
+  app.kubernetes.io/managed-by: kustomize
+
+# Resources included in base (referenced by envs)
+resources: []
+# Components are referenced by env overlays, not base
+# See: infra/k8s/components/
+

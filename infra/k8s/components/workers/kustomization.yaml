@@ -1,0 +1,12 @@
+# =============================================================================
+# Workers Component Kustomization
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - serviceaccount.yaml
+  - worker-reminders.yaml
+  - worker-feedback.yaml
+  - worker-audit-archive.yaml
+

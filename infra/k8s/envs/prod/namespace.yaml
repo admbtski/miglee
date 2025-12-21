@@ -1,0 +1,11 @@
+# =============================================================================
+# Production Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: appname-prod
+  labels:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/environment: prod
+

@@ -1,0 +1,11 @@
+# =============================================================================
+# Dev Namespace - for local K8s testing (minikube, kind, etc.)
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: appname-dev
+  labels:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/environment: dev
+

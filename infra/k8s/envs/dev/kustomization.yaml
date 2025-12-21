@@ -1,0 +1,30 @@
+# =============================================================================
+# Dev Environment Kustomization - for local K8s testing
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: appname-dev
+
+commonLabels:
+  app.kubernetes.io/environment: dev
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - ../../components/api
+  - ../../components/web
+  - ../../components/workers
+
+patchesStrategicMerge:
+  - patches/replicas.yaml
+
+# For local testing, use local images
+images:
+  - name: appname-api
+    newName: appname-api
+    newTag: latest
+  - name: appname-web
+    newName: appname-web
+    newTag: latest
+

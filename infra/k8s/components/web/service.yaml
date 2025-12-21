@@ -1,0 +1,21 @@
+# =============================================================================
+# Web Service - internal ClusterIP for Web
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  labels:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/component: web
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: appname
+    app.kubernetes.io/component: web
+

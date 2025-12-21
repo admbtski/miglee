@@ -1,0 +1,34 @@
+# =============================================================================
+# Stage Environment Kustomization
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: appname-stage
+
+# Common labels for this environment
+commonLabels:
+  app.kubernetes.io/environment: stage
+
+# Include base and components
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - ingress.yaml
+  - ../../components/api
+  - ../../components/web
+  - ../../components/workers
+
+# Apply patches for stage-specific settings
+patchesStrategicMerge:
+  - patches/replicas.yaml
+
+# Image tags - override in CI/CD
+images:
+  - name: appname-api
+    newName: your-registry.com/appname-api
+    newTag: latest
+  - name: appname-web
+    newName: your-registry.com/appname-web
+    newTag: latest
+

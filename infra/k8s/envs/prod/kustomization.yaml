@@ -1,0 +1,34 @@
+# =============================================================================
+# Production Environment Kustomization
+# =============================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: appname-prod
+
+# Common labels for this environment
+commonLabels:
+  app.kubernetes.io/environment: prod
+
+# Include base and components
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - ingress.yaml
+  - ../../components/api
+  - ../../components/web
+  - ../../components/workers
+
+# Apply patches for production settings
+patchesStrategicMerge:
+  - patches/resources.yaml
+
+# Image tags - override in CI/CD with SHA
+images:
+  - name: appname-api
+    newName: your-registry.com/appname-api
+    newTag: sha-abc1234
+  - name: appname-web
+    newName: your-registry.com/appname-web
+    newTag: sha-abc1234
+
