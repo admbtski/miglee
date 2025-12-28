@@ -4,13 +4,18 @@ function toMatcher(pattern: string): Matcher {
   const p = pattern.trim();
   if (!p) return () => false;
 
+  // Special case: single asterisk means allow all origins
+  if (p === '*') {
+    return () => true;
+  }
+
   // wildcardy: https://*.your.app
   if (p.includes('*')) {
     // zamień * na [^.]+ (tylko jedna subdomena) lub .* (dowolny ciąg)
     const esc = p
       .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/\\\*\\\./g, '[^.]+\\.') // *.domain → jedna subdomena
-      .replace(/\\\*/g, '.*'); // reszta * → dowolny ciąg
+      .replace(/\*\./g, '[^.]+\\.') // *.domain → jedna subdomena
+      .replace(/\*/g, '.*'); // reszta * → dowolny ciąg
     const re = new RegExp(`^${esc}$`, 'i');
     return (origin: string) => re.test(origin);
   }

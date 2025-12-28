@@ -98,9 +98,28 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Copy built files
-COPY --from=builder /app/apps/web/public ./apps/web/public
+# Standalone output contains symlinks that need the full pnpm node_modules
 COPY --from=builder /app/apps/web/.next/standalone ./
+# Static files must be at .next/static relative to server.js for Next.js to serve them
+COPY --from=builder /app/apps/web/.next/static ./.next/static
+# Also copy to apps/web path for any relative references
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder /app/apps/web/public ./apps/web/public
+
+# Copy full node_modules to resolve symlinks
+COPY --from=builder /app/node_modules ./node_modules
+
+# Fix pnpm symlinks - they point to ../../../node_modules/.pnpm which goes outside /app
+# We need to change ../../../node_modules/.pnpm to .pnpm
+RUN cd /app/node_modules && \
+    for link in next react react-dom; do \
+      if [ -L "$link" ]; then \
+        target=$(readlink "$link" | sed 's|^\.\./\.\./\.\./node_modules/||'); \
+        rm "$link"; \
+        ln -s "$target" "$link"; \
+      fi; \
+    done
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
@@ -117,5 +136,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/health || exit 1
 
-CMD ["node", "apps/web/server.js"]
+CMD ["node", "server.js"]
 

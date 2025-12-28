@@ -41,7 +41,7 @@ spec:
           imagePullPolicy: IfNotPresent
           
           command: ["node"]
-          args: ["apps/api/dist/src/workers/feedback/index.js"]
+          args: ["apps/api/dist/src/workers/feedback/worker.js"]
           
           envFrom:
             - configMapRef:

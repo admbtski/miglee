@@ -20,11 +20,11 @@ patchesStrategicMerge:
   - patches/replicas.yaml
 
 # For local testing, use local images
+# Update the tag after rebuilding images
 images:
   - name: appname-api
     newName: appname-api
-    newTag: latest
+    newTag: dev-v2
   - name: appname-web
     newName: appname-web
-    newTag: latest
-
+    newTag: dev-v6

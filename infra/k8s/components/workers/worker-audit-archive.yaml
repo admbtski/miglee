@@ -41,7 +41,7 @@ spec:
           imagePullPolicy: IfNotPresent
           
           command: ["node"]
-          args: ["apps/api/dist/src/workers/audit-archive/index.js"]
+          args: ["apps/api/dist/src/workers/audit-archive/worker.js"]
           
           envFrom:
             - configMapRef:

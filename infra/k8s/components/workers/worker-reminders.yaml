@@ -27,36 +27,36 @@ spec:
         app.kubernetes.io/component: worker-reminders
     spec:
       serviceAccountName: worker
-      terminationGracePeriodSeconds: 60  # Allow time for job completion
-      
+      terminationGracePeriodSeconds: 60 # Allow time for job completion
+
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
         runAsGroup: 1001
         fsGroup: 1001
-      
+
       containers:
         - name: worker
-          image: appname-api:latest  # Uses API image with different command
+          image: appname-api:latest # Uses API image with different command
           imagePullPolicy: IfNotPresent
-          
+
           # Worker command
-          command: ["node"]
-          args: ["apps/api/dist/src/workers/reminders/index.js"]
-          
+          command: ['node']
+          args: ['apps/api/dist/src/workers/reminders/worker.js']
+
           # Environment variables from ConfigMap and Secret
           envFrom:
             - configMapRef:
                 name: app-config
             - secretRef:
                 name: app-secrets
-          
+
           env:
             - name: NODE_ENV
-              value: "production"
+              value: 'production'
             - name: WORKER_NAME
-              value: "reminders"
-          
+              value: 'reminders'
+
           # Workers don't expose HTTP, but we can use exec probes
           # Liveness: check if process responds
           livenessProbe:
@@ -69,7 +69,7 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
-          
+
           resources:
             requests:
               cpu: 50m
@@ -77,19 +77,18 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
-          
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
             capabilities:
               drop:
                 - ALL
-          
+
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-      
+
       volumes:
         - name: tmp
           emptyDir: {}
-

@@ -258,7 +258,6 @@ const scalarResolvers = {
 // =============================================================================
 
 export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
-  // Read schema from contracts package
   const schemaPath = join(
     process.cwd(),
     '../../packages/contracts/graphql/schema.graphql'
