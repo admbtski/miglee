@@ -37,7 +37,8 @@ COPY packages ./packages
 RUN pnpm dlx turbo@2.5.8 prune @appname/api --docker
 
 # -----------------------------------------------------------------------------
-# Dependencies (install deps for pruned workspace)
+# Dependencies (install ALL deps for pruned workspace - dev + prod)
+# Used by: builder, development, migrator
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
@@ -110,7 +111,8 @@ CMD ["pnpm", "-C", "apps/api", "dev"]
 # -----------------------------------------------------------------------------
 # Migrator/Seeder (one-off job image for DB migrations and seeding)
 # - has prisma CLI + tsx (from devDependencies)
-# - runs migrate deploy + optional seed
+# - uses local bin (not npx) for deterministic execution
+# - seed controlled by RUN_SEED env var
 # -----------------------------------------------------------------------------
 FROM base AS migrator
 
@@ -127,22 +129,26 @@ COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 # Generate Prisma client
 RUN pnpm -C apps/api prisma:generate
 
-ENV NODE_ENV=production
+# Copy entrypoint script
+COPY apps/api/docker/migrate-seed.sh /usr/local/bin/migrate-seed
+RUN chmod +x /usr/local/bin/migrate-seed
 
+ENV NODE_ENV=production
 WORKDIR /app/apps/api
 
 # Default: run migrations only
-# Override CMD to include seeding: 
-#   docker run ... migrator sh -c "npx prisma migrate deploy && pnpm prisma:seed:prod"
-CMD ["npx", "prisma", "migrate", "deploy"]
+# Set RUN_SEED=1 to also run seed
+# Set SEED_TYPE=dev|prod to control which seed (default: prod)
+ENTRYPOINT ["migrate-seed"]
 
 # -----------------------------------------------------------------------------
 # Production (minimal runtime, no pnpm, no build deps, no devDependencies)
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS production
 
-# Only runtime deps - no wget, no build tools
-RUN apk add --no-cache libc6-compat
+# Runtime deps + TLS certs + tini for proper signal handling
+RUN apk add --no-cache libc6-compat ca-certificates tini && \
+    update-ca-certificates
 
 WORKDIR /app
 
@@ -163,4 +169,6 @@ USER fastify
 
 EXPOSE 4000
 
+# Use tini as init to properly handle signals and reap zombie processes
+ENTRYPOINT ["tini", "--"]
 CMD ["node", "runtime/dist/src/index.js"]

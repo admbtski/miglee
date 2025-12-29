@@ -1,8 +1,8 @@
 # =============================================================================
-# Web Dockerfile (Next.js 15) — minimal runtime with standalone output
+# Web Dockerfile (Next.js 15 SSR) — standalone output
 # pnpm + turborepo monorepo
 # - turbo prune -> minimal workspace context
-# - next build with standalone output -> minimal runtime
+# - Next.js standalone output -> minimal runtime
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -29,75 +29,69 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
 COPY packages ./packages
 
-# Create pruned output for apps/web
-RUN pnpm dlx turbo@latest prune --scope=apps/web --docker
+# Create pruned output for @appname/web
+RUN pnpm dlx turbo@2.5.8 prune @appname/web --docker
 
 # -----------------------------------------------------------------------------
 # Dependencies (install deps for pruned workspace)
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
-# Build deps for native modules
-RUN apk add --no-cache python3 make g++ openssl
-
-# Copy pruned manifests only (better caching)
+# Copy pruned manifests only
 COPY --from=pruner /app/out/json/ ./
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 RUN pnpm install --frozen-lockfile
 
 # -----------------------------------------------------------------------------
-# Builder (build Next.js with standalone output)
-# -----------------------------------------------------------------------------
-FROM base AS builder
-
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_WS_URL
-
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
-
-RUN apk add --no-cache python3 make g++ openssl
-
-# Bring node_modules from deps
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-
-# Copy pruned source
-COPY --from=pruner /app/out/full/ ./
-
-# Build Next.js (with standalone output configured in next.config.ts)
-RUN pnpm -C apps/web build
-
-# -----------------------------------------------------------------------------
-# Development stage (optional)
+# Development stage (with hot reload via webpack)
 # -----------------------------------------------------------------------------
 FROM base AS development
 
-RUN apk add --no-cache python3 make g++ openssl
-
-COPY --from=deps /app/node_modules ./node_modules
 COPY --from=pruner /app/out/full/ ./
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
-
-EXPOSE 3000
 
 ENV NODE_ENV=development
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Use webpack dev server (not Turbopack, which has issues in Docker)
+EXPOSE 3000
+
+# Use webpack instead of Turbopack for Docker compatibility
 CMD ["pnpm", "-C", "apps/web", "_dev"]
 
 # -----------------------------------------------------------------------------
-# Production (minimal runtime with standalone Next.js)
+# Builder (build Next.js with standalone output)
+# -----------------------------------------------------------------------------
+FROM base AS builder
+
+# Build-time env vars (baked into client bundle)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WS_URL
+ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
+ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+
+COPY --from=pruner /app/out/full/ ./
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Build Next.js (outputs to apps/web/.next/standalone)
+RUN pnpm -C apps/web build
+
+# -----------------------------------------------------------------------------
+# Production (minimal runtime, standalone output)
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS production
 
-# Only runtime deps - no build tools
-RUN apk add --no-cache libc6-compat
+# Runtime deps + TLS certs + tini for proper signal handling
+RUN apk add --no-cache libc6-compat ca-certificates tini && \
+    update-ca-certificates
 
 WORKDIR /app
 
@@ -105,33 +99,14 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy standalone output
-# Next.js standalone creates: server.js + node_modules (minimal) + .next
-COPY --from=builder /app/apps/web/.next/standalone ./
+# Copy standalone output (includes node_modules subset + server.js)
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 
-# Copy static files to correct locations for Next.js server
-# server.js looks for .next/static relative to its location
-COPY --from=builder /app/apps/web/.next/static ./.next/static
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./public
-COPY --from=builder /app/apps/web/public ./apps/web/public
+# Copy static files (required for SSR)
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
-# Copy full node_modules to resolve pnpm symlinks in standalone output
-COPY --from=builder /app/node_modules ./node_modules
-
-# Fix pnpm symlinks - they point to ../../../node_modules/.pnpm which goes outside /app
-# We need to change ../../../node_modules/.pnpm to .pnpm
-RUN cd /app/node_modules && \
-    for link in next react react-dom; do \
-      if [ -L "$link" ]; then \
-        target=$(readlink "$link" | sed 's|^\.\./\.\./\.\./node_modules/||'); \
-        rm "$link"; \
-        ln -s "$target" "$link"; \
-      fi; \
-    done
-
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
+# Copy public assets
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
 USER nextjs
 
@@ -141,4 +116,7 @@ ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+# Use tini as init to properly handle signals and reap zombie processes
+# K8s livenessProbe/readinessProbe handles health checks (no Docker HEALTHCHECK needed)
+ENTRYPOINT ["tini", "--"]
+CMD ["node", "apps/web/server.js"]

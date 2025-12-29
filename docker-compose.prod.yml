@@ -1,19 +1,31 @@
 # =============================================================================
-# Appname Full Stack Docker (Weryfikacja)
+# Appname Production Docker Compose
 # =============================================================================
 #
-# Pełny stack w kontenerach - do weryfikacji czy wszystko działa.
-# NIE do aktywnego developmentu (brak HMR).
+# Production-like stack for local testing before K8s deployment.
+# Uses production targets (minimal images, non-root users, tini).
 #
 # Usage:
-#   pnpm docker:build        # Zbuduj obrazy
-#   pnpm docker:up           # Start core (postgres, redis, api, web)
-#   pnpm docker:migrate      # Migracje DB
-#   pnpm docker:migrate:seed # Migracje + seed dev
-#   pnpm docker:up:workers   # + Workers
-#   pnpm docker:up:all       # Wszystko
-#   pnpm docker:down         # Stop
-#   pnpm docker:logs         # Logi
+#   # 1. Build images
+#   docker compose -f docker-compose.prod.yml build
+#
+#   # 2. Start infrastructure
+#   docker compose -f docker-compose.prod.yml up -d postgres redis
+#
+#   # 3. Run migrations (one-off)
+#   docker compose -f docker-compose.prod.yml run --rm migrator
+#
+#   # 4. Run migrations + seed (first time only)
+#   docker compose -f docker-compose.prod.yml run --rm -e RUN_SEED=1 migrator
+#
+#   # 5. Start services
+#   docker compose -f docker-compose.prod.yml up -d api web
+#
+#   # 6. Start workers
+#   docker compose -f docker-compose.prod.yml --profile workers up -d
+#
+#   # 7. Stop all
+#   docker compose -f docker-compose.prod.yml --profile workers down
 #
 # =============================================================================
 
@@ -25,16 +37,20 @@ services:
     image: postgis/postgis:16-3.4-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: app
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
       TZ: Europe/Warsaw
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d app']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-app}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,7 +59,7 @@ services:
       - appname-network
 
   # ===========================================================================
-  # Redis 7
+  # Redis 7 (with AOF persistence)
   # ===========================================================================
   redis:
     image: redis:7-alpine
@@ -56,7 +72,7 @@ services:
         '--appendonly',
         'yes',
         '--maxmemory',
-        '256mb',
+        '512mb',
         '--maxmemory-policy',
         'allkeys-lru',
       ]
@@ -81,11 +97,11 @@ services:
       target: migrator
     profiles: ['migrator']
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
       # Set RUN_SEED=1 to seed after migration
       # Set SEED_TYPE=dev|prod (default: prod)
-      RUN_SEED: ${RUN_SEED:-1}
-      SEED_TYPE: ${SEED_TYPE:-dev}
+      RUN_SEED: ${RUN_SEED:-0}
+      SEED_TYPE: ${SEED_TYPE:-prod}
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,39 +109,52 @@ services:
       - appname-network
 
   # ===========================================================================
-  # API - Fastify + GraphQL + Prisma
+  # API - Fastify + GraphQL + Prisma (Production)
   # ===========================================================================
   api:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-      target: development
+      target: production
     restart: unless-stopped
     ports:
       - '4000:4000'
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       HOST: '0.0.0.0'
       PORT: '4000'
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
+      REDIS_TLS: 'false'
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:4000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      MEDIA_STORAGE_PROVIDER: LOCAL
+      # Storage
+      MEDIA_STORAGE_PROVIDER: ${MEDIA_STORAGE_PROVIDER:-LOCAL}
       UPLOADS_PATH: /app/uploads
       UPLOADS_TMP_PATH: /app/tmp/uploads
       AUDIT_ARCHIVE_PATH: /app/data/audit-archives
-      APP_URL: http://localhost:3000
-      API_URL: http://localhost:4000
-      ASSETS_BASE_URL: http://localhost:4000
-      ENABLE_BULL_BOARD: 'true'
+      # URLs
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      API_URL: ${API_URL:-http://localhost:4000}
+      ASSETS_BASE_URL: ${ASSETS_BASE_URL:-http://localhost:4000}
+      # Features
+      ENABLE_BULL_BOARD: ${ENABLE_BULL_BOARD:-false}
+      # External services
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
+      # S3 (if using)
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      CDN_ENABLED: ${CDN_ENABLED:-false}
+      CDN_URL: ${CDN_URL:-}
     volumes:
       - api_uploads:/app/uploads
       - api_tmp:/app/tmp/uploads
@@ -136,7 +165,13 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://localhost:4000/health/live']
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:4000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -145,27 +180,37 @@ services:
       - appname-network
 
   # ===========================================================================
-  # Web - Next.js 15
+  # Web - Next.js 15 (Production)
   # ===========================================================================
   web:
     build:
       context: .
       dockerfile: docker/Dockerfile.web
-      target: development
+      target: production
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/graphql}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:4000/graphql}
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
     restart: unless-stopped
     ports:
       - '3000:3000'
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: '3000'
-      NEXT_PUBLIC_API_URL: http://localhost:4000/graphql
-      NEXT_PUBLIC_WS_URL: ws://localhost:4000/graphql
+      HOSTNAME: '0.0.0.0'
+      # Runtime env (server-side only)
       INTERNAL_API_URL: http://api:4000/graphql
     depends_on:
       api:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -180,21 +225,22 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-      target: development
+      target: production
     restart: unless-stopped
-    profiles: ['workers', 'all']
-    command: ['pnpm', '-C', 'apps/api', 'worker:reminders']
+    profiles: ['workers']
+    command: ['node', 'runtime/dist/src/workers/reminders/worker.js']
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
+      REDIS_TLS: 'false'
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      APP_URL: http://localhost:3000
+      APP_URL: ${APP_URL:-http://localhost:3000}
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
     depends_on:
       postgres:
         condition: service_healthy
@@ -207,21 +253,22 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-      target: development
+      target: production
     restart: unless-stopped
-    profiles: ['workers', 'all']
-    command: ['pnpm', '-C', 'apps/api', 'worker:feedback']
+    profiles: ['workers']
+    command: ['node', 'runtime/dist/src/workers/feedback/worker.js']
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
+      REDIS_TLS: 'false'
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      APP_URL: http://localhost:3000
+      APP_URL: ${APP_URL:-http://localhost:3000}
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
     depends_on:
       postgres:
         condition: service_healthy
@@ -234,66 +281,31 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-      target: development
+      target: production
     restart: unless-stopped
-    profiles: ['workers', 'all']
-    command: ['pnpm', '-C', 'apps/api', 'worker:audit-archive']
+    profiles: ['workers']
+    command: ['node', 'runtime/dist/src/workers/audit-archive/worker.js']
     environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
+      REDIS_TLS: 'false'
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       AUDIT_ARCHIVE_PATH: /app/data/audit-archives
+      # S3 (if using for audit storage)
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
     volumes:
       - api_audit:/app/data/audit-archives
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-    networks:
-      - appname-network
-
-  # ===========================================================================
-  # Adminer (Profile: tools)
-  # ===========================================================================
-  adminer:
-    image: adminer:latest
-    restart: unless-stopped
-    profiles: ['tools', 'all']
-    ports:
-      - '8080:8080'
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-      ADMINER_DESIGN: nette
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - appname-network
-
-  # ===========================================================================
-  # Stripe CLI (Profile: stripe)
-  # ===========================================================================
-  stripe:
-    image: stripe/stripe-cli:latest
-    restart: unless-stopped
-    profiles: ['stripe', 'all']
-    command:
-      [
-        'listen',
-        '--forward-to',
-        'http://api:4000/webhooks/stripe',
-        '--log-level',
-        'info',
-      ]
-    environment:
-      STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_DEVICE_NAME: appname-docker
-    depends_on:
-      api:
         condition: service_healthy
     networks:
       - appname-network
@@ -306,16 +318,16 @@ networks:
     driver: bridge
 
 # =============================================================================
-# Volumes
+# Volumes (persistent data)
 # =============================================================================
 volumes:
   postgres_data:
-    name: appname-postgres-data
+    name: appname-prod-postgres-data
   redis_data:
-    name: appname-redis-data
+    name: appname-prod-redis-data
   api_uploads:
-    name: appname-api-uploads
+    name: appname-prod-api-uploads
   api_tmp:
-    name: appname-api-tmp
+    name: appname-prod-api-tmp
   api_audit:
-    name: appname-api-audit
+    name: appname-prod-api-audit

@@ -1,1 +1,0 @@
-docker build -f docker/Dockerfile.api --target migrator -t appname-migrator .
