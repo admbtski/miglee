@@ -1,68 +1,53 @@
 # =============================================================================
-# Dockerfile for Web (Next.js 15)
-# Multi-stage build with development and production targets
+# Web Dockerfile (Next.js 15) — minimal runtime with standalone output
+# pnpm + turborepo monorepo
+# - turbo prune -> minimal workspace context
+# - next build with standalone output -> minimal runtime
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Base image with pnpm
+# Base (pnpm)
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS base
 
-# Install build dependencies
-RUN apk add --no-cache libc6-compat wget
-
-# Enable corepack and pnpm
+RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 
-# Set pnpm store directory
 ENV PNPM_HOME="/root/.local/share/pnpm"
 ENV PATH="${PNPM_HOME}:${PATH}"
 
 WORKDIR /app
 
 # -----------------------------------------------------------------------------
-# Dependencies stage
+# Pruner (turbo prune for minimal workspace)
+# -----------------------------------------------------------------------------
+FROM base AS pruner
+
+RUN apk add --no-cache git
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps ./apps
+COPY packages ./packages
+
+# Create pruned output for apps/web
+RUN pnpm dlx turbo@latest prune --scope=apps/web --docker
+
+# -----------------------------------------------------------------------------
+# Dependencies (install deps for pruned workspace)
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
-# Copy package files for install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/web/package.json apps/web/
-COPY packages/config/package.json packages/config/
-COPY packages/contracts/package.json packages/contracts/
+# Build deps for native modules
+RUN apk add --no-cache python3 make g++ openssl
 
-# Install all dependencies
+# Copy pruned manifests only (better caching)
+COPY --from=pruner /app/out/json/ ./
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
 RUN pnpm install --frozen-lockfile
 
 # -----------------------------------------------------------------------------
-# Development stage (with hot reload / Turbopack)
-# -----------------------------------------------------------------------------
-FROM base AS development
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages ./packages
-
-# Copy source code
-COPY apps/web ./apps/web
-COPY packages ./packages
-COPY turbo.json ./
-
-# Expose port
-EXPOSE 3000
-
-# Set environment
-ENV NODE_ENV=development
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-# Default command (use webpack instead of Turbopack for Docker compatibility)
-# Turbopack has issues with volume mounts in Docker
-CMD ["pnpm", "-C", "apps/web", "_dev"]
-
-# -----------------------------------------------------------------------------
-# Build stage (for production)
+# Builder (build Next.js with standalone output)
 # -----------------------------------------------------------------------------
 FROM base AS builder
 
@@ -72,42 +57,66 @@ ARG NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
 
+RUN apk add --no-cache python3 make g++ openssl
+
+# Bring node_modules from deps
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages ./packages
+COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-COPY apps/web ./apps/web
-COPY packages ./packages
-COPY turbo.json ./
+# Copy pruned source
+COPY --from=pruner /app/out/full/ ./
 
-# Build Next.js
-RUN cd apps/web && pnpm build
+# Build Next.js (with standalone output configured in next.config.ts)
+RUN pnpm -C apps/web build
 
 # -----------------------------------------------------------------------------
-# Production stage
+# Development stage (optional)
+# -----------------------------------------------------------------------------
+FROM base AS development
+
+RUN apk add --no-cache python3 make g++ openssl
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=pruner /app/out/full/ ./
+COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
+
+EXPOSE 3000
+
+ENV NODE_ENV=development
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Use webpack dev server (not Turbopack, which has issues in Docker)
+CMD ["pnpm", "-C", "apps/web", "_dev"]
+
+# -----------------------------------------------------------------------------
+# Production (minimal runtime with standalone Next.js)
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS production
 
-# Install runtime dependencies
-RUN apk add --no-cache libc6-compat wget
+# Only runtime deps - no build tools
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Create non-root user
+# Non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy built files
-# Standalone output contains symlinks that need the full pnpm node_modules
+# Copy standalone output
+# Next.js standalone creates: server.js + node_modules (minimal) + .next
 COPY --from=builder /app/apps/web/.next/standalone ./
-# Static files must be at .next/static relative to server.js for Next.js to serve them
+
+# Copy static files to correct locations for Next.js server
+# server.js looks for .next/static relative to its location
 COPY --from=builder /app/apps/web/.next/static ./.next/static
-# Also copy to apps/web path for any relative references
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Copy full node_modules to resolve symlinks
+# Copy full node_modules to resolve pnpm symlinks in standalone output
 COPY --from=builder /app/node_modules ./node_modules
 
 # Fix pnpm symlinks - they point to ../../../node_modules/.pnpm which goes outside /app
@@ -132,9 +141,4 @@ ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 3000
 
-# Health check for Docker/K8s
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:3000/api/health || exit 1
-
 CMD ["node", "server.js"]
-

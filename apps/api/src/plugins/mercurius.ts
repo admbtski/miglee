@@ -2,7 +2,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import depthLimit from 'graphql-depth-limit';
 import { FastifyRequest } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import {
   DocumentNode,
   getOperationAST,
@@ -258,10 +258,21 @@ const scalarResolvers = {
 // =============================================================================
 
 export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
-  const schemaPath = join(
-    process.cwd(),
-    '../../packages/contracts/graphql/schema.graphql'
+  // Schema is copied to dist/ during build (see package.json build:copy-schema)
+  // This works in all environments:
+  // - Development (tsx): use source path packages/contracts/...
+  // - Production (compiled): use dist/schema.graphql
+  const distSchemaPath = join(__dirname, '../../schema.graphql');
+  const sourceSchemaPath = join(
+    __dirname,
+    '../../../../packages/contracts/graphql/schema.graphql'
   );
+
+  // In production (compiled), use dist/schema.graphql
+  // In development (tsx), use source packages/contracts path
+  const schemaPath = existsSync(distSchemaPath)
+    ? distSchemaPath
+    : sourceSchemaPath;
   const typeDefs = readFileSync(schemaPath, 'utf-8');
 
   const schema = makeExecutableSchema({

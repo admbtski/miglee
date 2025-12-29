@@ -1,26 +1,22 @@
 # =============================================================================
 # Docker Ignore File
-# Excludes files from Docker build context for faster builds
+# Optimized for turbo prune workflow
 # =============================================================================
 
 # Git
 .git
 .gitignore
 
-# Dependencies (installed in container)
-node_modules
+# Dependencies (will be installed in container)
 **/node_modules
 
-# Build outputs
-dist
+# Build outputs (will be created in container)
 **/dist
-.next
 **/.next
-.turbo
 **/.turbo
 *.tsbuildinfo
 
-# Development files
+# Development/local files
 *.log
 *.local
 .env
@@ -39,33 +35,27 @@ Thumbs.db
 
 # Test coverage
 coverage
-**/__tests__
-**/*.test.ts
-**/*.test.tsx
-**/*.spec.ts
-**/*.spec.tsx
+**/coverage
 
 # Documentation (not needed in container)
 docs
-*.md
-!README.md
 
 # Docker files (avoid recursion)
 docker-compose*.yml
-Dockerfile*
 
-# Uploads and data (mounted as volumes)
+# Uploads and data (mounted as volumes in dev)
 uploads
 tmp
 data
 
-# Scripts not needed in container
-scripts
-*.sh
-
 # Misc
-.dockerignore
 .eslintrc*
 .prettierrc*
-tsconfig.tsbuildinfo
+.editorconfig
+LICENSE
 
+# Kubernetes manifests (not needed in image)
+infra
+
+# Scripts (optional, can include if needed)
+# scripts

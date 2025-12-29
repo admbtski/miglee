@@ -1,124 +1,137 @@
 # =============================================================================
-# Dockerfile for API (Fastify + GraphQL + Prisma)
-# Multi-stage build with development and production targets
+# API Dockerfile (Fastify + GraphQL + Prisma) — minimal runtime
+# pnpm + turborepo monorepo
+# - turbo prune -> minimal workspace context
+# - pnpm deploy -> single runtime folder with prod deps only
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Base image with pnpm
+# Base (pnpm)
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS base
 
-# Install build dependencies for native modules (sharp, etc.)
-RUN apk add --no-cache libc6-compat python3 make g++ wget
-
-# Enable corepack and pnpm
+RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 
-# Set pnpm store directory
 ENV PNPM_HOME="/root/.local/share/pnpm"
 ENV PATH="${PNPM_HOME}:${PATH}"
 
 WORKDIR /app
 
 # -----------------------------------------------------------------------------
-# Dependencies stage
+# Pruner (turbo prune for minimal workspace)
+# -----------------------------------------------------------------------------
+FROM base AS pruner
+
+# turbo needs git for some workspace resolution
+RUN apk add --no-cache git
+
+# Copy files needed for turbo prune to understand the repo
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps ./apps
+COPY packages ./packages
+
+# Create pruned output for @appname/api
+# Now includes packages/contracts since it's a dependency
+# Result: /app/out/json (manifests) + /app/out/full (sources) + /app/out/pnpm-lock.yaml
+RUN pnpm dlx turbo@2.5.8 prune @appname/api --docker
+
+# -----------------------------------------------------------------------------
+# Dependencies (install deps for pruned workspace)
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
-# Copy package files for install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json apps/api/
-COPY packages/config/package.json packages/config/
-COPY packages/contracts/package.json packages/contracts/
+# Build deps for native modules (sharp, bcrypt, etc.)
+RUN apk add --no-cache python3 make g++ openssl
 
-# Install all dependencies
+# Copy pruned manifests only (smaller install context, better caching)
+COPY --from=pruner /app/out/json/ ./
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
 RUN pnpm install --frozen-lockfile
 
 # -----------------------------------------------------------------------------
-# Development stage (with hot reload)
+# Builder (build API + generate Prisma + pnpm deploy)
+# -----------------------------------------------------------------------------
+FROM base AS builder
+
+RUN apk add --no-cache python3 make g++ openssl
+
+# Copy pruned source (includes packages/contracts with schema.graphql)
+COPY --from=pruner /app/out/full/ ./
+
+# Bring all node_modules from deps
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# 1) Generate Prisma client
+RUN pnpm -C apps/api prisma:generate
+
+# 2) Build API (includes copying schema.graphql to dist/)
+RUN pnpm -C apps/api build
+
+# 3) Create single "runtime package" with production deps only
+#    --legacy required for pnpm v10+ without inject-workspace-packages
+RUN pnpm --filter=@appname/api deploy --prod --legacy /runtime
+
+# Copy built output to runtime folder (includes schema.graphql)
+RUN mkdir -p /runtime/dist && \
+    cp -R apps/api/dist/* /runtime/dist/
+
+# Copy Prisma schema and generated client
+RUN mkdir -p /runtime/prisma && \
+    cp -R apps/api/prisma/* /runtime/prisma/
+
+# -----------------------------------------------------------------------------
+# Development stage (for local dev in Docker)
 # -----------------------------------------------------------------------------
 FROM base AS development
 
-# Copy dependencies from deps stage
+RUN apk add --no-cache python3 make g++ openssl
+
+# Copy pruned source (includes packages/contracts)
+COPY --from=pruner /app/out/full/ ./
+
+# Bring all node_modules from deps
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=deps /app/packages ./packages
+COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Copy source code
-COPY apps/api ./apps/api
-COPY packages ./packages
-COPY turbo.json ./
-
-# Generate Prisma client
-RUN cd apps/api && pnpm prisma:generate
+RUN pnpm -C apps/api prisma:generate
 
 # Create directories for uploads and data
 RUN mkdir -p /app/uploads /app/tmp/uploads /app/data/audit-archives
 
-# Expose port
 EXPOSE 4000
 
-# Default command (can be overridden)
 CMD ["pnpm", "-C", "apps/api", "dev"]
 
 # -----------------------------------------------------------------------------
-# Build stage (for production)
-# -----------------------------------------------------------------------------
-FROM base AS builder
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=deps /app/packages ./packages
-
-COPY apps/api ./apps/api
-COPY packages ./packages
-COPY turbo.json package.json pnpm-workspace.yaml ./
-
-# Generate Prisma client
-RUN cd apps/api && pnpm prisma:generate
-
-# Build TypeScript
-RUN cd apps/api && pnpm build
-
-# -----------------------------------------------------------------------------
-# Production stage
+# Production (minimal runtime, no pnpm, no build deps, no devDependencies)
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS production
 
-# Install runtime dependencies only
-RUN apk add --no-cache libc6-compat wget
-
-# Enable corepack
-RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+# Only runtime deps - no wget, no build tools
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
-
-# Copy built files
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/apps/api/package.json ./apps/api/
-COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 fastify && \
-    mkdir -p /app/uploads /app/tmp/uploads /app/data/audit-archives && \
-    chown -R fastify:nodejs /app
-
-USER fastify
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=4000
 
+# Non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 fastify && \
+    mkdir -p /app/uploads /app/tmp/uploads /app/data/audit-archives && \
+    chown -R fastify:nodejs /app
+
+# Copy the runtime bundle (prod deps only + built output)
+COPY --from=builder --chown=fastify:nodejs /runtime ./runtime
+
+USER fastify
+
 EXPOSE 4000
 
-# Health check for Docker/K8s
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:4000/health/live || exit 1
-
-CMD ["node", "apps/api/dist/src/index.js"]
-
+CMD ["node", "runtime/dist/src/index.js"]

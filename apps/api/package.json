@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && pnpm build:copy-schema",
+    "build:copy-schema": "mkdir -p dist && cp ../../packages/contracts/graphql/schema.graphql dist/schema.graphql",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/**/*.ts",
@@ -29,6 +30,7 @@
     "worker:audit-archive": "tsx src/workers/audit-archive/worker.ts"
   },
   "dependencies": {
+    "@appname/contracts": "workspace:*",
     "@aws-sdk/client-s3": "^3.934.0",
     "@aws-sdk/s3-request-presigner": "^3.934.0",
     "@bull-board/api": "^6.15.0",
