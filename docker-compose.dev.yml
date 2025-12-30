@@ -1,19 +1,19 @@
 # =============================================================================
-# Appname Full Stack Docker (Weryfikacja)
+# Appname Full Stack Docker (Development)
 # =============================================================================
 #
 # Pełny stack w kontenerach - do weryfikacji czy wszystko działa.
 # NIE do aktywnego developmentu (brak HMR).
 #
 # Usage:
-#   pnpm docker:build        # Zbuduj obrazy
-#   pnpm docker:up           # Start core (postgres, redis, api, web)
-#   pnpm docker:migrate      # Migracje DB
-#   pnpm docker:migrate:seed # Migracje + seed dev
-#   pnpm docker:up:workers   # + Workers
-#   pnpm docker:up:all       # Wszystko
-#   pnpm docker:down         # Stop
-#   pnpm docker:logs         # Logi
+#   pnpm dev:docker:build        # Zbuduj obrazy
+#   pnpm dev:docker:up           # Start core (postgres, redis, api, web)
+#   pnpm dev:docker:migrate      # Migracje DB
+#   pnpm dev:docker:migrate:seed # Migracje + seed dev
+#   pnpm dev:docker:up:workers   # + Workers
+#   pnpm dev:docker:up:all       # Wszystko
+#   pnpm dev:docker:down         # Stop
+#   pnpm dev:docker:logs         # Logi
 #
 # =============================================================================
 
@@ -82,8 +82,7 @@ services:
     profiles: ['migrator']
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
-      # Set RUN_SEED=1 to seed after migration
-      # Set SEED_TYPE=dev|prod (default: prod)
+      # Set RUN_SEED=0 to skip seed, default is 1 for dev
       RUN_SEED: ${RUN_SEED:-1}
       SEED_TYPE: ${SEED_TYPE:-dev}
     depends_on:
@@ -105,25 +104,62 @@ services:
       - '4000:4000'
     environment:
       NODE_ENV: development
+      SERVICE_NAME: ${SERVICE_NAME:-app}
       HOST: '0.0.0.0'
       PORT: '4000'
+      # Database
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
+      # Redis
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_TLS: 'false'
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long-change-me}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:4000}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_FILE_PATH: ${LOG_FILE_PATH:-}
+      # URLs
+      APP_URL: http://localhost:3000
+      API_URL: http://localhost:4000
+      ASSETS_BASE_URL: http://localhost:4000
+      # Storage
       MEDIA_STORAGE_PROVIDER: LOCAL
       UPLOADS_PATH: /app/uploads
       UPLOADS_TMP_PATH: /app/tmp/uploads
       AUDIT_ARCHIVE_PATH: /app/data/audit-archives
-      APP_URL: http://localhost:3000
-      API_URL: http://localhost:4000
-      ASSETS_BASE_URL: http://localhost:4000
+      # Image processing
+      IMAGE_MAX_WIDTH: ${IMAGE_MAX_WIDTH:-2560}
+      IMAGE_MAX_HEIGHT: ${IMAGE_MAX_HEIGHT:-2560}
+      IMAGE_FORMAT: ${IMAGE_FORMAT:-webp}
+      IMAGE_QUALITY: ${IMAGE_QUALITY:-85}
+      # Media cleanup
+      ENABLE_MEDIA_CLEANUP: ${ENABLE_MEDIA_CLEANUP:-false}
+      MEDIA_CLEANUP_INTERVAL_HOURS: ${MEDIA_CLEANUP_INTERVAL_HOURS:-24}
+      MEDIA_CLEANUP_AGE_DAYS: ${MEDIA_CLEANUP_AGE_DAYS:-7}
+      # CDN
+      CDN_ENABLED: ${CDN_ENABLED:-false}
+      CDN_BASE_URL: ${CDN_BASE_URL:-}
+      # Admin
       ENABLE_BULL_BOARD: 'true'
+      # Stripe
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_USER_PLUS_MONTHLY_SUB: ${STRIPE_PRICE_USER_PLUS_MONTHLY_SUB:-}
+      STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF: ${STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF:-}
+      STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF: ${STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF:-}
+      STRIPE_PRICE_USER_PRO_MONTHLY_SUB: ${STRIPE_PRICE_USER_PRO_MONTHLY_SUB:-}
+      STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF: ${STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF:-}
+      STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF: ${STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF:-}
+      STRIPE_PRICE_ACTION_PACKAGE_SMALL: ${STRIPE_PRICE_ACTION_PACKAGE_SMALL:-}
+      STRIPE_PRICE_ACTION_PACKAGE_MEDIUM: ${STRIPE_PRICE_ACTION_PACKAGE_MEDIUM:-}
+      STRIPE_PRICE_ACTION_PACKAGE_LARGE: ${STRIPE_PRICE_ACTION_PACKAGE_LARGE:-}
+      STRIPE_PRICE_EVENT_PLUS: ${STRIPE_PRICE_EVENT_PLUS:-}
+      STRIPE_PRICE_EVENT_PRO: ${STRIPE_PRICE_EVENT_PRO:-}
+      # Email
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
     volumes:
@@ -158,8 +194,9 @@ services:
     environment:
       NODE_ENV: development
       PORT: '3000'
-      NEXT_PUBLIC_API_URL: http://localhost:4000/graphql
-      NEXT_PUBLIC_WS_URL: ws://localhost:4000/graphql
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/graphql}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:4000/graphql}
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
       INTERNAL_API_URL: http://api:4000/graphql
     depends_on:
       api:
@@ -189,8 +226,9 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      REDIS_TLS: 'false'
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long-change-me}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
       APP_URL: http://localhost:3000
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
@@ -216,8 +254,9 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      REDIS_TLS: 'false'
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long-change-me}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
       APP_URL: http://localhost:3000
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
@@ -243,8 +282,9 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/app?schema=public
       REDIS_HOST: redis
       REDIS_PORT: '6379'
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      REDIS_TLS: 'false'
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long-change-me}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
       AUDIT_ARCHIVE_PATH: /app/data/audit-archives
     volumes:
       - api_audit:/app/data/audit-archives
@@ -310,12 +350,12 @@ networks:
 # =============================================================================
 volumes:
   postgres_data:
-    name: appname-postgres-data
+    name: appname-dev-postgres-data
   redis_data:
-    name: appname-redis-data
+    name: appname-dev-redis-data
   api_uploads:
-    name: appname-api-uploads
+    name: appname-dev-api-uploads
   api_tmp:
-    name: appname-api-tmp
+    name: appname-dev-api-tmp
   api_audit:
-    name: appname-api-audit
+    name: appname-dev-api-audit

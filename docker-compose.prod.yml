@@ -7,25 +7,25 @@
 #
 # Usage:
 #   # 1. Build images
-#   docker compose -f docker-compose.prod.yml build
+#   pnpm prod:build
 #
 #   # 2. Start infrastructure
-#   docker compose -f docker-compose.prod.yml up -d postgres redis
+#   pnpm prod:up:infra
 #
 #   # 3. Run migrations (one-off)
-#   docker compose -f docker-compose.prod.yml run --rm migrator
+#   pnpm prod:migrate
 #
 #   # 4. Run migrations + seed (first time only)
-#   docker compose -f docker-compose.prod.yml run --rm -e RUN_SEED=1 migrator
+#   pnpm prod:migrate:seed
 #
 #   # 5. Start services
-#   docker compose -f docker-compose.prod.yml up -d api web
+#   pnpm prod:up
 #
 #   # 6. Start workers
-#   docker compose -f docker-compose.prod.yml --profile workers up -d
+#   pnpm prod:up:workers
 #
 #   # 7. Stop all
-#   docker compose -f docker-compose.prod.yml --profile workers down
+#   pnpm prod:down
 #
 # =============================================================================
 
@@ -99,7 +99,6 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
       # Set RUN_SEED=1 to seed after migration
-      # Set SEED_TYPE=dev|prod (default: prod)
       RUN_SEED: ${RUN_SEED:-0}
       SEED_TYPE: ${SEED_TYPE:-prod}
     depends_on:
@@ -121,40 +120,70 @@ services:
       - '4000:4000'
     environment:
       NODE_ENV: production
+      SERVICE_NAME: ${SERVICE_NAME:-app}
       HOST: '0.0.0.0'
       PORT: '4000'
+      # Database
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
+      # Redis
       REDIS_HOST: redis
       REDIS_PORT: '6379'
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: ${REDIS_DB:-0}
       REDIS_TLS: 'false'
+      # Security
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:4000}
+      # Logging
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FILE_PATH: ${LOG_FILE_PATH:-}
+      # URLs
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      API_URL: ${API_URL:-http://localhost:4000}
+      ASSETS_BASE_URL: ${ASSETS_BASE_URL:-http://localhost:4000}
       # Storage
       MEDIA_STORAGE_PROVIDER: ${MEDIA_STORAGE_PROVIDER:-LOCAL}
       UPLOADS_PATH: /app/uploads
       UPLOADS_TMP_PATH: /app/tmp/uploads
       AUDIT_ARCHIVE_PATH: /app/data/audit-archives
-      # URLs
-      APP_URL: ${APP_URL:-http://localhost:3000}
-      API_URL: ${API_URL:-http://localhost:4000}
-      ASSETS_BASE_URL: ${ASSETS_BASE_URL:-http://localhost:4000}
-      # Features
-      ENABLE_BULL_BOARD: ${ENABLE_BULL_BOARD:-false}
-      # External services
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
+      # Image processing
+      IMAGE_MAX_WIDTH: ${IMAGE_MAX_WIDTH:-2560}
+      IMAGE_MAX_HEIGHT: ${IMAGE_MAX_HEIGHT:-2560}
+      IMAGE_FORMAT: ${IMAGE_FORMAT:-webp}
+      IMAGE_QUALITY: ${IMAGE_QUALITY:-85}
+      # Media cleanup
+      ENABLE_MEDIA_CLEANUP: ${ENABLE_MEDIA_CLEANUP:-false}
+      MEDIA_CLEANUP_INTERVAL_HOURS: ${MEDIA_CLEANUP_INTERVAL_HOURS:-24}
+      MEDIA_CLEANUP_AGE_DAYS: ${MEDIA_CLEANUP_AGE_DAYS:-7}
       # S3 (if using)
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       S3_REGION: ${S3_REGION:-}
       S3_BUCKET: ${S3_BUCKET:-}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      # CDN
       CDN_ENABLED: ${CDN_ENABLED:-false}
-      CDN_URL: ${CDN_URL:-}
+      CDN_BASE_URL: ${CDN_BASE_URL:-}
+      # Admin
+      ENABLE_BULL_BOARD: ${ENABLE_BULL_BOARD:-false}
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_USER_PLUS_MONTHLY_SUB: ${STRIPE_PRICE_USER_PLUS_MONTHLY_SUB:-}
+      STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF: ${STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF:-}
+      STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF: ${STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF:-}
+      STRIPE_PRICE_USER_PRO_MONTHLY_SUB: ${STRIPE_PRICE_USER_PRO_MONTHLY_SUB:-}
+      STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF: ${STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF:-}
+      STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF: ${STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF:-}
+      STRIPE_PRICE_ACTION_PACKAGE_SMALL: ${STRIPE_PRICE_ACTION_PACKAGE_SMALL:-}
+      STRIPE_PRICE_ACTION_PACKAGE_MEDIUM: ${STRIPE_PRICE_ACTION_PACKAGE_MEDIUM:-}
+      STRIPE_PRICE_ACTION_PACKAGE_LARGE: ${STRIPE_PRICE_ACTION_PACKAGE_LARGE:-}
+      STRIPE_PRICE_EVENT_PLUS: ${STRIPE_PRICE_EVENT_PLUS:-}
+      STRIPE_PRICE_EVENT_PRO: ${STRIPE_PRICE_EVENT_PRO:-}
+      # Email
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@example.com}
     volumes:
       - api_uploads:/app/uploads
       - api_tmp:/app/tmp/uploads
@@ -298,8 +327,8 @@ services:
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       S3_REGION: ${S3_REGION:-}
       S3_BUCKET: ${S3_BUCKET:-}
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
     volumes:
       - api_audit:/app/data/audit-archives
     depends_on:
