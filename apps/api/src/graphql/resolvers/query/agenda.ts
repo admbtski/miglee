@@ -15,7 +15,7 @@ import type {
 } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
-import type { User as PrismaUser } from '@prisma/client';
+import type { User as PrismaUser } from '../../../prisma-client/client';
 
 /**
  * Map Prisma User to GraphQL User type for agenda host

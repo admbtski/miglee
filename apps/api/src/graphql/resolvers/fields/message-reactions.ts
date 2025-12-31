@@ -4,7 +4,7 @@
  * Aggregate reactions for DM and Event Chat messages.
  */
 
-import { User as PrismaUser } from '@prisma/client';
+import { User as PrismaUser } from '../../../prisma-client/client';
 import { prisma } from '../../../lib/prisma';
 import type {
   DmMessageResolvers,

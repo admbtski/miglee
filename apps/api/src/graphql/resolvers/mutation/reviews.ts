@@ -8,11 +8,11 @@
  * - hideReview/unhideReview: APP_MOD_OR_ADMIN
  */
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import {
   NotificationKind as PrismaNotificationKind,
   NotificationEntity as PrismaNotificationEntity,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';

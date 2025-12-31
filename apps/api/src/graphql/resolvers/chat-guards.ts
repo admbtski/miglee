@@ -7,7 +7,7 @@
  * For new code, prefer importing directly from './shared/auth-guards'.
  */
 
-import { EventMemberStatus } from '@prisma/client';
+import { EventMemberStatus } from '../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../lib/prisma';
 import {

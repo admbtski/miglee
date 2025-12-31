@@ -1,5 +1,5 @@
-import type { Prisma } from '@prisma/client';
-import { Prisma as PrismaNS } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
+import { Prisma as PrismaNS } from '../../../prisma-client/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';

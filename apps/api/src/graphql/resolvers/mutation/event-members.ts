@@ -1,11 +1,11 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import {
   EventMemberRole,
   EventMemberStatus,
   NotificationEntity as PrismaNotificationEntity,
   NotificationKind as PrismaNotificationKind,
   MemberEvent,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError, GraphQLResolveInfo } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';

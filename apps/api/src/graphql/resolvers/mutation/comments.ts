@@ -1,8 +1,8 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import {
   NotificationKind as PrismaNotificationKind,
   NotificationEntity as PrismaNotificationEntity,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
@@ -499,7 +499,11 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
       await createAuditLog(prisma, {
         eventId: comment.eventId,
         actorId: user.id,
-        actorRole: isAppAdmin ? 'ADMIN' : isAppModerator ? 'MODERATOR' : 'MODERATOR',
+        actorRole: isAppAdmin
+          ? 'ADMIN'
+          : isAppModerator
+            ? 'MODERATOR'
+            : 'MODERATOR',
         scope: 'MODERATION' as AuditScope,
         action: 'HIDE' as AuditAction,
         entityType: 'Comment',
@@ -588,7 +592,11 @@ export const unhideCommentMutation: MutationResolvers['unhideComment'] =
       await createAuditLog(prisma, {
         eventId: comment.eventId,
         actorId: user.id,
-        actorRole: isAppAdmin ? 'ADMIN' : isAppModerator ? 'MODERATOR' : 'MODERATOR',
+        actorRole: isAppAdmin
+          ? 'ADMIN'
+          : isAppModerator
+            ? 'MODERATOR'
+            : 'MODERATOR',
         scope: 'MODERATION' as AuditScope,
         action: 'UNHIDE' as AuditAction,
         entityType: 'Comment',

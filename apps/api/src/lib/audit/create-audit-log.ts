@@ -6,7 +6,11 @@
  * - SAFE (createAuditLogSafe): Logs error but doesn't throw, use for SHOULD items
  */
 
-import type { AuditScope, AuditAction, AuditActorType } from '@prisma/client';
+import type {
+  AuditScope,
+  AuditAction,
+  AuditActorType,
+} from '../../prisma-client/enums';
 import { logger } from '../pino';
 import type { DiffResult } from './diff';
 

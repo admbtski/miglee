@@ -3,7 +3,7 @@ import type {
   EventPlan,
   MembersVisibility,
   Prisma,
-} from '@prisma/client';
+} from '../../../prisma-client/client';
 import {
   EventMemberRole,
   EventMemberStatus,
@@ -14,7 +14,7 @@ import {
   NotificationEntity as PrismaNotificationEntity,
   NotificationKind as PrismaNotificationKind,
   Visibility as PrismaVisibility,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import {
   createAuditLog,

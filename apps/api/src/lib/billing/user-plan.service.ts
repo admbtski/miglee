@@ -7,7 +7,7 @@ import type {
   SubscriptionPlan,
   UserPlanSource,
   BillingPeriod,
-} from '@prisma/client';
+} from '../../prisma-client/enums';
 import { prisma } from '../prisma';
 import { logger } from '../pino';
 import {

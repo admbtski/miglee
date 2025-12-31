@@ -1,5 +1,5 @@
-import type { Prisma, ReportEntity } from '@prisma/client';
-import { Role } from '@prisma/client';
+import type { Prisma, ReportEntity } from '../../../prisma-client/client';
+import { Role } from '../../../prisma-client/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';

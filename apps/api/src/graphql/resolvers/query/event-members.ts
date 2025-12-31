@@ -10,8 +10,11 @@
  * - eventMemberStats: EVENT_MOD_OR_OWNER (full stats) or ANY (joined count only)
  */
 
-import type { Prisma } from '@prisma/client';
-import { EventMemberRole, EventMemberStatus } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
+import {
+  EventMemberRole,
+  EventMemberStatus,
+} from '../../../prisma-client/enums';
 // GraphQLError is used in other files, commented out to avoid unused import warning
 // import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';

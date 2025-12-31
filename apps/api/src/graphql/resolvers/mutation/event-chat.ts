@@ -2,14 +2,14 @@
  * Event Chat Mutation Resolvers
  */
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import {
   EventMemberRole,
   EventMemberStatus,
   NotificationEntity as PrismaNotificationEntity,
   NotificationKind as PrismaNotificationKind,
   Role,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import {
   assertEventChatSendRateLimit,

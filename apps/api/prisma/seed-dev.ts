@@ -21,7 +21,7 @@ import {
   // DB types (optional)
   User,
   Visibility,
-} from '@prisma/client';
+} from '../src/prisma-client/client';
 import {
   CATEGORY_DEFS,
   CITIES,

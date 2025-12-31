@@ -3,7 +3,7 @@
  * Handles event sponsorship/boost purchases and management
  */
 
-import type { EventPlan } from '@prisma/client';
+import type { EventPlan } from '../../prisma-client/enums';
 import { prisma } from '../prisma';
 import { logger } from '../pino';
 import { getStripe, getOrCreateStripeCustomer } from './stripe.service';

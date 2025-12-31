@@ -12,11 +12,11 @@ import {
   CheckinResult,
   EventMemberStatus,
   NotificationKind,
-  Prisma,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import { nanoid } from 'nanoid';
 import type { prisma } from '../../../lib/prisma';
+import { Prisma } from '../../../prisma-client/client';
 
 // =============================================================================
 // Types

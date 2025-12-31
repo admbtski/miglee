@@ -1,5 +1,5 @@
 // api/graphql/resolvers/query/users.ts
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import { GraphQLError } from 'graphql';
 import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';

@@ -1,4 +1,7 @@
-import { EventMemberRole, EventMemberStatus } from '@prisma/client';
+import {
+  EventMemberRole,
+  EventMemberStatus,
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';

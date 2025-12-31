@@ -23,7 +23,7 @@ import {
   CheckinAction,
   CheckinResult,
   EventMemberStatus,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import {
   validateEventCheckin,
   validateMethodEnabled,
@@ -37,7 +37,7 @@ import {
   generateCheckinToken,
 } from '../helpers/checkin';
 import { includesMethod } from '../helpers/checkin-types';
-import { NotificationKind } from '@prisma/client';
+import { NotificationKind } from '../../../prisma-client/client';
 import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
 
 // Temporary type aliases until prisma generate is run
@@ -993,10 +993,16 @@ export const updateEventCheckinConfig: MutationResolvers['updateEventCheckinConf
         entityId: eventId,
         diff: {
           ...(updateData.checkinEnabled !== undefined && {
-            checkinEnabled: { from: !updateData.checkinEnabled, to: updateData.checkinEnabled },
+            checkinEnabled: {
+              from: !updateData.checkinEnabled,
+              to: updateData.checkinEnabled,
+            },
           }),
           ...(updateData.enabledCheckinMethods !== undefined && {
-            enabledCheckinMethods: { from: null, to: updateData.enabledCheckinMethods },
+            enabledCheckinMethods: {
+              from: null,
+              to: updateData.enabledCheckinMethods,
+            },
           }),
         },
         severity: 4,

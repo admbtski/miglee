@@ -7,7 +7,7 @@ import type {
   SubscriptionPlan,
   EventPlan,
   BillingPeriod,
-} from '@prisma/client';
+} from '../../prisma-client/enums';
 import { config } from '../../env';
 
 // ========================================================================================

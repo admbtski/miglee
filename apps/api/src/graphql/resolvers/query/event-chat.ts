@@ -6,7 +6,7 @@
  * - eventUnreadCount: EVENT_PARTICIPANT or APP_MOD_OR_ADMIN
  */
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import { buildCursor, buildCursorWhere } from '../../../lib/chat-utils';
 import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';

@@ -2,7 +2,7 @@
  * Event Invite Links Mutation Resolvers
  */
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
@@ -95,7 +95,11 @@ export const createEventInviteLinkMutation: MutationResolvers['createEventInvite
       await createAuditLog(prisma, {
         eventId,
         actorId: user.id,
-        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        actorRole: isOwner
+          ? 'OWNER'
+          : isEventModerator
+            ? 'MODERATOR'
+            : user.role,
         scope: 'INVITE_LINK' as AuditScope,
         action: 'CREATE' as AuditAction,
         entityType: 'EventInviteLink',
@@ -174,15 +178,25 @@ export const updateEventInviteLinkMutation: MutationResolvers['updateEventInvite
       await createAuditLog(prisma, {
         eventId: link.eventId,
         actorId: user.id,
-        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        actorRole: isOwner
+          ? 'OWNER'
+          : isEventModerator
+            ? 'MODERATOR'
+            : user.role,
         scope: 'INVITE_LINK' as AuditScope,
         action: 'UPDATE' as AuditAction,
         entityType: 'EventInviteLink',
         entityId: id,
         diff: {
-          ...(input.label !== undefined && { label: { from: null, to: input.label } }),
-          ...(input.maxUses !== undefined && { maxUses: { from: null, to: input.maxUses } }),
-          ...(input.expiresAt !== undefined && { expiresAt: { from: null, to: input.expiresAt } }),
+          ...(input.label !== undefined && {
+            label: { from: null, to: input.label },
+          }),
+          ...(input.maxUses !== undefined && {
+            maxUses: { from: null, to: input.maxUses },
+          }),
+          ...(input.expiresAt !== undefined && {
+            expiresAt: { from: null, to: input.expiresAt },
+          }),
         },
         severity: 3,
       });
@@ -256,7 +270,11 @@ export const revokeEventInviteLinkMutation: MutationResolvers['revokeEventInvite
       await createAuditLog(prisma, {
         eventId: link.eventId,
         actorId: user.id,
-        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        actorRole: isOwner
+          ? 'OWNER'
+          : isEventModerator
+            ? 'MODERATOR'
+            : user.role,
         scope: 'INVITE_LINK' as AuditScope,
         action: 'DELETE' as AuditAction,
         entityType: 'EventInviteLink',
@@ -323,7 +341,11 @@ export const deleteEventInviteLinkMutation: MutationResolvers['deleteEventInvite
       await createAuditLog(prisma, {
         eventId: link.eventId,
         actorId: user.id,
-        actorRole: isOwner ? 'OWNER' : isEventModerator ? 'MODERATOR' : user.role,
+        actorRole: isOwner
+          ? 'OWNER'
+          : isEventModerator
+            ? 'MODERATOR'
+            : user.role,
         scope: 'INVITE_LINK' as AuditScope,
         action: 'DELETE' as AuditAction,
         entityType: 'EventInviteLink',
@@ -482,7 +504,11 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
         action: 'STATUS_CHANGE' as AuditAction,
         entityType: 'EventMember',
         entityId: user.id,
-        meta: { viaInviteLink: true, from: existing?.status || null, to: 'JOINED' },
+        meta: {
+          viaInviteLink: true,
+          from: existing?.status || null,
+          to: 'JOINED',
+        },
         severity: 3,
       });
 

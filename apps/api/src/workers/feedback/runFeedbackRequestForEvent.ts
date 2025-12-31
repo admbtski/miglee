@@ -1,4 +1,8 @@
-import { NotificationEntity, NotificationKind, Prisma } from '@prisma/client';
+import {
+  NotificationEntity,
+  NotificationKind,
+  Prisma,
+} from '../../prisma-client/client';
 import { prisma } from '../../lib/prisma';
 import { emitPubsub } from '../../lib/pubsub';
 import { logger } from '../logger';

@@ -5,7 +5,7 @@
  * Access restricted to event owner, moderators, and app admins/moderators.
  */
 
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import { GraphQLError } from 'graphql';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { validateModeratorAccess } from '../helpers/checkin';

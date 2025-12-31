@@ -1,8 +1,8 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../prisma-client/client';
 import {
   NotificationEntity as PrismaNotificationEntity,
   NotificationKind as PrismaNotificationKind,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import { createDmPairKey, sanitizeDmContent } from '../../../lib/chat-utils';
 import { assertDmSendRateLimit } from '../../../lib/rate-limit/domainRateLimiter';

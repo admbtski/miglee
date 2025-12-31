@@ -40,7 +40,10 @@
  * ```
  */
 
-import { EventMemberRole, EventMemberStatus } from '@prisma/client';
+import {
+  EventMemberRole,
+  EventMemberStatus,
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';

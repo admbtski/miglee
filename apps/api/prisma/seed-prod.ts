@@ -12,7 +12,7 @@
  *   pnpm prisma:seed:prod
  */
 
-import { PrismaClient, Role, Prisma } from '@prisma/client';
+import { PrismaClient, Role, Prisma } from '../src/prisma-client/client';
 import { CATEGORY_DEFS, TAGS } from './constants';
 
 const prisma = new PrismaClient();

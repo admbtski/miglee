@@ -5,10 +5,10 @@
  * without using 'as any'. All conversions are type-safe.
  */
 
-import type { CheckinMethod as PrismaCheckinMethod } from '@prisma/client';
-import type { CheckinAction as PrismaCheckinAction } from '@prisma/client';
-import type { CheckinSource as PrismaCheckinSource } from '@prisma/client';
-import type { CheckinResult as PrismaCheckinResultEnum } from '@prisma/client';
+import type { CheckinMethod as PrismaCheckinMethod } from '../../../prisma-client/enums';
+import type { CheckinAction as PrismaCheckinAction } from '../../../prisma-client/enums';
+import type { CheckinSource as PrismaCheckinSource } from '../../../prisma-client/enums';
+import type { CheckinResult as PrismaCheckinResultEnum } from '../../../prisma-client/enums';
 
 import type {
   CheckinMethod as GQLCheckinMethod,

@@ -7,7 +7,7 @@
  * - Utility functions for data transformations
  */
 
-import { Prisma, User as PrismaUser } from '@prisma/client';
+import { Prisma, User as PrismaUser } from '../../prisma-client/client';
 import { toGQLCheckinMethods } from './helpers/checkin-types';
 import { EventStatus, JoinLockReason } from '../__generated__/resolvers-types';
 import type {

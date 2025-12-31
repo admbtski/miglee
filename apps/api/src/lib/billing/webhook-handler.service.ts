@@ -5,7 +5,7 @@
 
 import type Stripe from 'stripe';
 import { prisma } from '../prisma';
-import { SubscriptionStatus } from '@prisma/client';
+import { SubscriptionStatus } from '../../prisma-client/enums';
 import { logger } from '../pino';
 import { addMonths, addYears } from './stripe.service';
 import { createUserPlanPeriod } from './user-plan.service';

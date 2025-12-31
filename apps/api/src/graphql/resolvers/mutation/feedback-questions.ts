@@ -1,7 +1,7 @@
 import {
   NotificationKind as PrismaNotificationKind,
   NotificationEntity as PrismaNotificationEntity,
-} from '@prisma/client';
+} from '../../../prisma-client/enums';
 import { GraphQLError } from 'graphql';
 import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';
@@ -727,7 +727,10 @@ export const updateEventFeedbackQuestionsMutation: MutationResolvers['updateEven
         action: 'CONFIG_CHANGE' as AuditAction,
         entityType: 'EventFeedbackQuestion',
         entityId: eventId,
-        meta: { feedbackQuestionsChanged: true, questionCount: questions.length },
+        meta: {
+          feedbackQuestionsChanged: true,
+          questionCount: questions.length,
+        },
         severity: 2,
       });
 

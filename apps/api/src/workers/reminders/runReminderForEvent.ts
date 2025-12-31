@@ -1,6 +1,9 @@
-import { NotificationEntity, NotificationKind, Prisma } from '@prisma/client';
-import { prisma } from '../../lib/prisma';
 import { emitPubsub } from '../../lib/pubsub';
+import { Prisma } from '../../prisma-client/client';
+import {
+  NotificationEntity,
+  NotificationKind,
+} from '../../prisma-client/enums';
 
 function humanTime(minutes: number) {
   if (minutes >= 60) {

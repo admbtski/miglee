@@ -1,4 +1,8 @@
-import { Prisma, NotificationKind, NotificationEntity } from '@prisma/client';
+import {
+  Prisma,
+  NotificationKind,
+  NotificationEntity,
+} from '../../../prisma-client/client';
 import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
