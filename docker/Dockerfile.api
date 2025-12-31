@@ -1,17 +1,18 @@
 # =============================================================================
-# API Dockerfile (Fastify + GraphQL + Prisma) — minimal runtime
+# API Dockerfile (Fastify + GraphQL + Prisma 7) — ESM + tsdown
 # pnpm + turborepo monorepo
 # - turbo prune -> minimal workspace context
+# - tsdown -> fast ESM bundling
 # - pnpm deploy -> single runtime folder with prod deps only
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Base (pnpm)
 # -----------------------------------------------------------------------------
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 
 RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.27.0 --activate
 
 ENV PNPM_HOME="/root/.local/share/pnpm"
 ENV PATH="${PNPM_HOME}:${PATH}"
@@ -32,7 +33,6 @@ COPY apps ./apps
 COPY packages ./packages
 
 # Create pruned output for @appname/api
-# Now includes packages/contracts since it's a dependency
 # Result: /app/out/json (manifests) + /app/out/full (sources) + /app/out/pnpm-lock.yaml
 RUN pnpm dlx turbo@2.5.8 prune @appname/api --docker
 
@@ -42,7 +42,7 @@ RUN pnpm dlx turbo@2.5.8 prune @appname/api --docker
 # -----------------------------------------------------------------------------
 FROM base AS deps
 
-# Build deps for native modules (sharp, bcrypt, etc.)
+# Build deps for native modules (sharp, pg, etc.)
 RUN apk add --no-cache python3 make g++ openssl
 
 # Copy pruned manifests only (smaller install context, better caching)
@@ -52,7 +52,7 @@ COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --frozen-lockfile
 
 # -----------------------------------------------------------------------------
-# Builder (build API + generate Prisma + pnpm deploy)
+# Builder (build API with tsdown + pnpm deploy)
 # -----------------------------------------------------------------------------
 FROM base AS builder
 
@@ -66,43 +66,24 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# 1) Generate Prisma client
-RUN pnpm -C apps/api prisma:generate
-
-# 2) Build API (includes copying schema.graphql to dist/)
+# 1) Build API with tsdown (ESM output to dist/)
+#    tsdown bundles everything including prisma-client TypeScript
+#    and copies schema.graphql to dist/
 RUN pnpm -C apps/api build
 
-# 3) Create single "runtime package" with production deps only
+# 2) Create single "runtime package" with production deps only
 #    --legacy required for pnpm v10+ without inject-workspace-packages
 RUN pnpm --filter=@appname/api deploy --prod --legacy /runtime
 
-# Copy built output to runtime folder (includes schema.graphql)
+# Copy built output to runtime folder
+# tsdown outputs to dist/ with .mjs extension
 RUN mkdir -p /runtime/dist && \
     cp -R apps/api/dist/* /runtime/dist/
 
-# Copy Prisma schema
+# Copy Prisma schema and config (needed for migrations)
 RUN mkdir -p /runtime/prisma && \
-    cp -R apps/api/prisma/* /runtime/prisma/
-
-# Copy the generated Prisma client (critical for production!)
-# In pnpm, the client is in node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client
-RUN mkdir -p /runtime/node_modules/.prisma && \
-    PRISMA_CLIENT=$(find /app/node_modules -type d -path "*/.prisma/client" 2>/dev/null | head -1) && \
-    if [ -n "$PRISMA_CLIENT" ] && [ -d "$PRISMA_CLIENT" ]; then \
-      cp -R "$PRISMA_CLIENT" /runtime/node_modules/.prisma/client; \
-    else \
-      echo "ERROR: Prisma client not found!" && exit 1; \
-    fi
-
-# Copy @prisma/client package (needed for imports)
-# In pnpm, it's in node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client
-RUN if [ ! -d "/runtime/node_modules/@prisma/client" ]; then \
-      mkdir -p /runtime/node_modules/@prisma && \
-      PRISMA_PKG=$(find /app/node_modules -type d -path "*/@prisma+client@*/node_modules/@prisma/client" 2>/dev/null | head -1) && \
-      if [ -n "$PRISMA_PKG" ] && [ -d "$PRISMA_PKG" ]; then \
-        cp -R "$PRISMA_PKG" /runtime/node_modules/@prisma/client; \
-      fi; \
-    fi
+    cp -R apps/api/prisma/* /runtime/prisma/ && \
+    cp apps/api/prisma.config.ts /runtime/prisma.config.ts 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # Development stage (for local dev in Docker)
@@ -118,8 +99,6 @@ COPY --from=pruner /app/out/full/ ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
-
-RUN pnpm -C apps/api prisma:generate
 
 # Create directories for uploads and data
 RUN mkdir -p /app/uploads /app/tmp/uploads /app/data/audit-archives
@@ -146,9 +125,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Generate Prisma client
-RUN pnpm -C apps/api prisma:generate
-
 # Copy entrypoint script
 COPY apps/api/docker/migrate-seed.sh /usr/local/bin/migrate-seed
 RUN chmod +x /usr/local/bin/migrate-seed
@@ -164,7 +140,7 @@ ENTRYPOINT ["migrate-seed"]
 # -----------------------------------------------------------------------------
 # Production (minimal runtime, no pnpm, no build deps, no devDependencies)
 # -----------------------------------------------------------------------------
-FROM node:22-alpine AS production
+FROM node:24-alpine AS production
 
 # Runtime deps + TLS certs + tini for proper signal handling
 RUN apk add --no-cache libc6-compat ca-certificates tini && \
@@ -190,5 +166,6 @@ USER fastify
 EXPOSE 4000
 
 # Use tini as init to properly handle signals and reap zombie processes
+# tsdown outputs ESM with .mjs extension
 ENTRYPOINT ["tini", "--"]
-CMD ["node", "runtime/dist/src/index.js"]
+CMD ["node", "runtime/dist/index.mjs"]

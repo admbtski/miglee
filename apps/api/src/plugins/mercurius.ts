@@ -3,6 +3,8 @@ import depthLimit from 'graphql-depth-limit';
 import { FastifyRequest } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
 import { existsSync, readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import {
   DocumentNode,
   getOperationAST,
@@ -12,7 +14,7 @@ import {
   visitWithTypeInfo,
   type ValueNode,
 } from 'graphql';
-import mercurius, { MercuriusContext, persistedQueryDefaults } from 'mercurius';
+import mercurius, { MercuriusContext } from 'mercurius';
 import { join } from 'path';
 import { WebSocket } from 'ws';
 import { config, env } from '../env';
@@ -21,7 +23,7 @@ import { resolvers } from '../graphql/resolvers';
 import { prisma } from '../lib/prisma';
 import { redisEmitter } from '../lib/redis';
 
-// =============================================================================
+// =====================================  ========================================
 // Security Configuration
 // =============================================================================
 
@@ -258,21 +260,36 @@ const scalarResolvers = {
 // =============================================================================
 
 export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
-  // Schema is copied to dist/ during build (see package.json build:copy-schema)
-  // This works in all environments:
-  // - Development (tsx): use source path packages/contracts/...
-  // - Production (compiled): use dist/schema.graphql
-  const distSchemaPath = join(__dirname, '../../schema.graphql');
-  const sourceSchemaPath = join(
-    __dirname,
+  // Schema path resolution for different environments:
+  // - Production (bundled): dist/schema.graphql next to index.js
+  // - Development (tsx): source path packages/contracts/...
+
+  // Get current file's directory (works with ESM)
+  // In production (bundled): this is /app/runtime/dist/ in Docker
+  // In development (tsx): this is apps/api/src/plugins/
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+
+  // In production (bundled by tsdown), schema is copied to same folder as bundle
+  const bundledSchemaPath = join(currentDir, 'schema.graphql');
+
+  // In development (tsx), use relative path from this file
+  const devSchemaPath = join(
+    currentDir,
     '../../../../packages/contracts/graphql/schema.graphql'
   );
 
-  // In production (compiled), use dist/schema.graphql
-  // In development (tsx), use source packages/contracts path
-  const schemaPath = existsSync(distSchemaPath)
-    ? distSchemaPath
-    : sourceSchemaPath;
+  // Try bundled path first (production), then dev path
+  let schemaPath: string;
+  if (existsSync(bundledSchemaPath)) {
+    schemaPath = bundledSchemaPath;
+  } else if (existsSync(devSchemaPath)) {
+    schemaPath = devSchemaPath;
+  } else {
+    throw new Error(
+      `GraphQL schema not found at ${bundledSchemaPath} or ${devSchemaPath}`
+    );
+  }
+
   const typeDefs = readFileSync(schemaPath, 'utf-8');
 
   const schema = makeExecutableSchema({
@@ -307,7 +324,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
     // Apollo-style automatic persisted queries
     // Clients can send query hash instead of full query string
     // Max cache size: 1000 queries (memory-based cache)
-    persistedQueryProvider: persistedQueryDefaults.automatic(1000),
+    persistedQueryProvider: mercurius.persistedQueryDefaults.automatic(1000),
 
     subscription: {
       emitter: redisEmitter,

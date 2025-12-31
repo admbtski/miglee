@@ -14,10 +14,7 @@ import type {
   Level,
   MeetingKind,
   Mode,
-  NotificationEntity,
-  NotificationKind,
   Visibility,
-  ReportStatus,
   EventPlan,
   Role,
   UserEffectivePlan,
@@ -44,9 +41,14 @@ import type {
   NotificationPreference as GQLNotificationPreference,
   EventMute as GQLEventMute,
   DmMute as GQLDmMute,
-  JoinMode,
   AddressVisibility,
   MembersVisibility,
+} from '../__generated__/resolvers-types';
+import {
+  JoinMode,
+  NotificationKind,
+  NotificationEntity,
+  ReportStatus,
 } from '../__generated__/resolvers-types';
 
 /* =============================================================================
@@ -659,7 +661,7 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
     notes: i.notes ?? null,
 
     visibility: i.visibility as Visibility,
-    joinMode: (i.joinMode as JoinMode) ?? 'OPEN',
+    joinMode: (i.joinMode as JoinMode) ?? JoinMode.Open,
     mode: i.mode as Mode,
     min: i.min,
     max: i.max,
@@ -780,7 +782,7 @@ export function mapNotification(
 ): GQLNotification {
   return {
     id: n.id,
-    kind: (n.kind as NotificationKind) ?? 'SYSTEM',
+    kind: (n.kind as NotificationKind) ?? NotificationKind.System,
     title: n.title ?? null,
     body: n.body ?? null,
     data: toJSONObject(n.data),
@@ -791,7 +793,8 @@ export function mapNotification(
     recipient: mapUser(n.recipient),
     actor: n.actor ? mapUser(n.actor) : null,
 
-    entityType: (n.entityType as NotificationEntity) ?? 'OTHER',
+    entityType:
+      (n.entityType as NotificationEntity) ?? NotificationEntity.Other,
     entityId: n.entityId ?? null,
 
     // Event from notification has different include structure - needs type assertion
@@ -971,7 +974,7 @@ export function mapReport(r: ReportWithGraph): GQLReport {
     entity: r.entity as GQLReport['entity'],
     entityId: r.entityId,
     reason: r.reason,
-    status: (r.status as ReportStatus) ?? 'OPEN',
+    status: (r.status as ReportStatus) ?? ReportStatus.Open,
     createdAt: r.createdAt,
     resolvedAt: r.resolvedAt ?? null,
 

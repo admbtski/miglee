@@ -1,6 +1,16 @@
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import { config } from '../env';
 import { Prisma, PrismaClient } from '../prisma-client/client';
 import { logger } from './pino';
+
+// Extend globalThis to include prisma for dev hot-reload caching
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: ReturnType<typeof createPrismaClient> | undefined;
+  // eslint-disable-next-line no-var
+  var pgPool: pg.Pool | undefined;
+}
 
 // =============================================================================
 // Configuration
@@ -31,31 +41,28 @@ const QUERY_TIMEOUTS = {
 };
 
 // =============================================================================
-// Database URL with connection parameters
+// PostgreSQL Pool
 // =============================================================================
 
 /**
- * Build database URL with connection pool and timeout parameters
- * These are passed via the connection string to PostgreSQL
+ * Create PostgreSQL connection pool with proper settings
  */
-function buildDatabaseUrl(): string {
-  const baseUrl = config.dbUrl;
-
-  // Parse existing URL to check if it already has params
-  const hasParams = baseUrl.includes('?');
-  const separator = hasParams ? '&' : '?';
-
-  // Add connection pool and timeout params
-  const params = new URLSearchParams({
-    connection_limit: String(CONNECTION_POOL.connectionLimit),
-    pool_timeout: String(CONNECTION_POOL.poolTimeout),
-    // PostgreSQL statement_timeout (in milliseconds)
-    statement_timeout: String(QUERY_TIMEOUTS.statementTimeout),
-    // Lock timeout to prevent deadlock waits
-    lock_timeout: String(Math.floor(QUERY_TIMEOUTS.statementTimeout / 2)),
+function createPgPool(): pg.Pool {
+  const pool = new pg.Pool({
+    connectionString: config.dbUrl,
+    max: CONNECTION_POOL.connectionLimit,
+    idleTimeoutMillis: CONNECTION_POOL.poolTimeout * 1000,
+    connectionTimeoutMillis: 10000,
+    statement_timeout: QUERY_TIMEOUTS.statementTimeout,
+    lock_timeout: Math.floor(QUERY_TIMEOUTS.statementTimeout / 2),
   });
 
-  return `${baseUrl}${separator}${params.toString()}`;
+  // Handle pool errors
+  pool.on('error', (err) => {
+    logger.error({ err }, 'Unexpected PostgreSQL pool error');
+  });
+
+  return pool;
 }
 
 // =============================================================================
@@ -63,7 +70,14 @@ function buildDatabaseUrl(): string {
 // =============================================================================
 
 function createPrismaClient() {
-  const databaseUrl = buildDatabaseUrl();
+  // Get or create pg pool
+  const pool = global.pgPool ?? createPgPool();
+  if (!config.isProduction) {
+    global.pgPool = pool;
+  }
+
+  // Create Prisma adapter
+  const adapter = new PrismaPg(pool);
 
   logger.info(
     {
@@ -77,7 +91,7 @@ function createPrismaClient() {
   );
 
   const base = new PrismaClient({
-    datasourceUrl: databaseUrl,
+    adapter,
     log: config.isProduction
       ? [
           { level: 'error', emit: 'event' },
@@ -189,11 +203,6 @@ function createPrismaClient() {
 }
 
 export type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
-
-declare global {
-  // eslint-disable-next-line no-var
-  var prisma: ExtendedPrismaClient | undefined;
-}
 
 export const prisma: ExtendedPrismaClient =
   global.prisma ?? createPrismaClient();

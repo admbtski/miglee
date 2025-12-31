@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "MVP monorepo with React, Next.js, Fastify, and GraphQL",
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.27.0",
   "engines": {
-    "node": ">=22.18.0",
-    "pnpm": ">=10.14.0"
+    "node": "24.12.0",
+    "pnpm": "10.27.0"
   },
   "scripts": {
     "dev": "clear && turbo run dev",
@@ -77,7 +77,7 @@
     "typescript": "^5.9.2"
   },
   "volta": {
-    "node": "22.18.0",
-    "pnpm": "10.14.0"
+    "node": "24.12.0",
+    "pnpm": "10.27.0"
   }
 }

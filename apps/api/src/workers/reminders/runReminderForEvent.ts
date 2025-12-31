@@ -1,3 +1,4 @@
+import { prisma } from '../../lib/prisma';
 import { emitPubsub } from '../../lib/pubsub';
 import { Prisma } from '../../prisma-client/client';
 import {

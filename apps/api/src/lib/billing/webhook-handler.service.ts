@@ -5,6 +5,7 @@
 
 import type Stripe from 'stripe';
 import { prisma } from '../prisma';
+import { Prisma } from '../../prisma-client/client';
 import { SubscriptionStatus } from '../../prisma-client/enums';
 import { logger } from '../pino';
 import { addMonths, addYears } from './stripe.service';
@@ -41,7 +42,7 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
       create: {
         eventId: event.id,
         type: event.type,
-        payload: event as unknown as Record<string, unknown>,
+        payload: event as unknown as Prisma.InputJsonValue,
         receivedAt: new Date(),
         attempt: 1,
       },

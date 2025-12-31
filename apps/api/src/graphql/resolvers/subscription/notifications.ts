@@ -1,6 +1,8 @@
 import { GraphQLError } from 'graphql';
-import { withFilter } from 'mercurius';
+import mercurius from 'mercurius';
 import type { SubscriptionResolvers } from '../../__generated__/resolvers-types';
+
+const { withFilter } = mercurius;
 
 // Note: Subscription resolvers use 'any' because withFilter from Mercurius
 // has complex generic signatures that are difficult to satisfy with strict types
@@ -24,9 +26,12 @@ function validateNotificationAccess(
 
   // Users can only subscribe to their own notifications
   if (recipientId !== ctx.user.id) {
-    throw new GraphQLError('You can only subscribe to your own notifications.', {
-      extensions: { code: 'FORBIDDEN' },
-    });
+    throw new GraphQLError(
+      'You can only subscribe to your own notifications.',
+      {
+        extensions: { code: 'FORBIDDEN' },
+      }
+    );
   }
 
   return recipientId;

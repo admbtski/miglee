@@ -12,8 +12,8 @@ import {
   EventMemberStatus,
   MemberEvent,
   NotificationKind,
-} from '../../prisma-client/enums';
-import type { PrismaClient } from '../../prisma-client/client';
+} from '../prisma-client/enums';
+import type { PrismaClient } from '../prisma-client/client';
 
 type Tx = Omit<
   PrismaClient,

@@ -86,10 +86,10 @@ export const updateEventAppearanceMutation: MutationResolvers['updateEventAppear
       where: { eventId: input.eventId },
       create: {
         eventId: input.eventId,
-        config,
+        config: JSON.stringify(config),
       },
       update: {
-        config,
+        config: JSON.stringify(config),
       },
     });
 

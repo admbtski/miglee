@@ -251,7 +251,7 @@ services:
       target: production
     restart: unless-stopped
     profiles: ['workers']
-    command: ['node', 'runtime/dist/src/workers/reminders/worker.js']
+    command: ['node', 'runtime/dist/workers/reminders/worker.mjs']
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
@@ -280,7 +280,7 @@ services:
       target: production
     restart: unless-stopped
     profiles: ['workers']
-    command: ['node', 'runtime/dist/src/workers/feedback/worker.js']
+    command: ['node', 'runtime/dist/workers/feedback/worker.mjs']
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
@@ -309,7 +309,7 @@ services:
       target: production
     restart: unless-stopped
     profiles: ['workers']
-    command: ['node', 'runtime/dist/src/workers/audit-archive/worker.js']
+    command: ['node', 'runtime/dist/workers/audit-archive/worker.mjs']
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}?schema=public
