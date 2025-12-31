@@ -80,9 +80,29 @@ RUN pnpm --filter=@appname/api deploy --prod --legacy /runtime
 RUN mkdir -p /runtime/dist && \
     cp -R apps/api/dist/* /runtime/dist/
 
-# Copy Prisma schema and generated client
+# Copy Prisma schema
 RUN mkdir -p /runtime/prisma && \
     cp -R apps/api/prisma/* /runtime/prisma/
+
+# Copy the generated Prisma client (critical for production!)
+# In pnpm, the client is in node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client
+RUN mkdir -p /runtime/node_modules/.prisma && \
+    PRISMA_CLIENT=$(find /app/node_modules -type d -path "*/.prisma/client" 2>/dev/null | head -1) && \
+    if [ -n "$PRISMA_CLIENT" ] && [ -d "$PRISMA_CLIENT" ]; then \
+      cp -R "$PRISMA_CLIENT" /runtime/node_modules/.prisma/client; \
+    else \
+      echo "ERROR: Prisma client not found!" && exit 1; \
+    fi
+
+# Copy @prisma/client package (needed for imports)
+# In pnpm, it's in node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client
+RUN if [ ! -d "/runtime/node_modules/@prisma/client" ]; then \
+      mkdir -p /runtime/node_modules/@prisma && \
+      PRISMA_PKG=$(find /app/node_modules -type d -path "*/@prisma+client@*/node_modules/@prisma/client" 2>/dev/null | head -1) && \
+      if [ -n "$PRISMA_PKG" ] && [ -d "$PRISMA_PKG" ]; then \
+        cp -R "$PRISMA_PKG" /runtime/node_modules/@prisma/client; \
+      fi; \
+    fi
 
 # -----------------------------------------------------------------------------
 # Development stage (for local dev in Docker)

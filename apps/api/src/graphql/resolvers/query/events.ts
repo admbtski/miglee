@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
@@ -11,6 +10,7 @@ import {
   SortDir,
 } from '../../__generated__/resolvers-types';
 import { mapEvent } from '../helpers';
+import { Prisma } from '../../../prisma-client/client';
 
 const BOOST_DURATION_MS = 24 * 60 * 60 * 1000;
 

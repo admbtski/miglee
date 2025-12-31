@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { type Locale, I18nProviderSSR } from '@/lib/i18n/provider-ssr';
+import { env } from '@/lib/env';
 
 /**
  * Supported locales for static generation
@@ -26,7 +27,7 @@ export async function generateMetadata({
     return {};
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://appname.com';
+  const baseUrl = env.siteUrl;
 
   // Localized metadata
   const titles: Record<Locale, string> = {

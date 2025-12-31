@@ -312,7 +312,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
     subscription: {
       emitter: redisEmitter,
       fullWsTransport: true,
-      onDisconnect: () => fastify.log.debug('WS disconnect'),
+      onDisconnect: () => fastify.log.trace('WS disconnect'),
       onConnect: async (_data: {
         payload: { headers: { Authorization: string } };
       }) => {

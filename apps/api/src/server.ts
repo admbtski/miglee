@@ -19,7 +19,6 @@ import { jwtPlugin } from './plugins/jwt';
 import { mercuriusPlugin } from './plugins/mercurius';
 import { sensiblePlugin } from './plugins/sensible';
 
-import { config } from './env';
 import { rateLimitPlugin } from './plugins/rate-limit';
 import lastSeen from './plugins/last-seen';
 import imageVariantsPlugin from './plugins/image-variants';
@@ -46,8 +45,11 @@ export async function createServer() {
     requestIdHeader: 'x-request-id',
     requestIdLogLabel: 'requestId',
     trustProxy: true, // honor X-Forwarded-* headers when behind a proxy
-    ignoreTrailingSlash: true, // treat /path and /path/ the same
-    caseSensitive: true,
+    // Router options (moved from root level for Fastify 5+ compatibility)
+    routerOptions: {
+      ignoreTrailingSlash: true, // treat /path and /path/ the same
+      caseSensitive: true,
+    },
   });
 
   // plugins
@@ -97,16 +99,8 @@ export async function createServer() {
     );
   });
 
-  // error handler
-  server.setErrorHandler((err, req, reply) => {
-    req.log.error({ err }, 'unhandled error');
-    reply.status(err.statusCode ?? 500).send({
-      error: 'Internal Server Error',
-      message: config.isDevelopment ? err.message : 'Unexpected error',
-    });
-  });
-
   // plugins - order matters!
+  // Note: Error handler is set by sensible plugin
   await server.register(healthPlugin);
   await server.register(stripeWebhookPlugin); // MUST be before mercurius (body parsing)
   await server.register(localUploadPlugin);

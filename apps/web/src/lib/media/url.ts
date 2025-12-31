@@ -2,13 +2,13 @@
  * Media URL helpers for building image variant URLs
  */
 
+import { env } from '@/lib/env';
+
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type CoverVariant = 'card' | 'detail';
 
 // Get API base URL (without /graphql)
-const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql'
-).replace(/\/graphql$/, '');
+const API_BASE_URL = env.apiBaseUrl;
 
 const AVATAR_PRESETS: Record<AvatarSize, { w: number; h: number }> = {
   xs: { w: 48, h: 48 }, // For small UI elements (24-36px display)

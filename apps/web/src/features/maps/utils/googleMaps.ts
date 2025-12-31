@@ -5,6 +5,8 @@
  * - Separate cached loaders for "places" and "marker" libraries
  */
 
+import { env } from '@/lib/env';
+
 let mapsPromise: Promise<typeof google> | null = null;
 let placesLibPromise: Promise<google.maps.PlacesLibrary> | null = null;
 let markerLibPromise: Promise<google.maps.MarkerLibrary> | null = null;
@@ -90,7 +92,7 @@ export async function loadGoogleMaps(opts?: {
     throw new Error('Google Maps must be loaded in the browser.');
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const apiKey = env.googleMapsApiKey;
   if (!apiKey) throw new Error('Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY');
 
   mapsPromise = (async () => {

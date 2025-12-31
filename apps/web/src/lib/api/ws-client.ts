@@ -1,4 +1,5 @@
 import { Client, createClient } from 'graphql-ws';
+import { env } from '@/lib/env';
 
 let wsClient: Client | null = null;
 
@@ -23,11 +24,7 @@ const fmtErr = (err: unknown) => {
 };
 
 export function createWsClient(): Client {
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000/graphql';
-
-  if (!process.env.NEXT_PUBLIC_WS_URL) {
-    L.warn('NEXT_PUBLIC_WS_URL not set, using default:', { wsUrl });
-  }
+  const wsUrl = env.wsUrl;
 
   return createClient({
     url: wsUrl,

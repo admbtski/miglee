@@ -1,9 +1,7 @@
 import { GraphQLClient } from 'graphql-request';
+import { env } from '@/lib/env';
 
-const endpoint =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql';
-
-export const gqlClient = new GraphQLClient(endpoint, {
+export const gqlClient = new GraphQLClient(env.apiUrl, {
   credentials: 'include',
   mode: 'cors',
 });

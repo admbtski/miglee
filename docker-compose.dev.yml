@@ -5,13 +5,16 @@
 # Pełny stack w kontenerach - do weryfikacji czy wszystko działa.
 # NIE do aktywnego developmentu (brak HMR).
 #
+# Setup:
+#   cp env.docker.dev.example .env
+#
 # Usage:
 #   pnpm dev:docker:build        # Zbuduj obrazy
+#   pnpm dev:docker:up:infra     # Start tylko postgres + redis
+#   pnpm dev:docker:migrate      # Migracje + seed (default: RUN_SEED=1)
 #   pnpm dev:docker:up           # Start core (postgres, redis, api, web)
-#   pnpm dev:docker:migrate      # Migracje DB
-#   pnpm dev:docker:migrate:seed # Migracje + seed dev
 #   pnpm dev:docker:up:workers   # + Workers
-#   pnpm dev:docker:up:all       # Wszystko
+#   pnpm dev:docker:up:all       # Wszystko (workers, tools, stripe)
 #   pnpm dev:docker:down         # Stop
 #   pnpm dev:docker:logs         # Logi
 #
@@ -58,7 +61,7 @@ services:
         '--maxmemory',
         '256mb',
         '--maxmemory-policy',
-        'allkeys-lru',
+        'noeviction',
       ]
     volumes:
       - redis_data:/data
@@ -75,6 +78,7 @@ services:
   # Migrator (one-off job for DB migrations + optional seed)
   # ===========================================================================
   migrator:
+    image: appname-migrator:dev
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -95,6 +99,7 @@ services:
   # API - Fastify + GraphQL + Prisma
   # ===========================================================================
   api:
+    image: appname-api:dev
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -135,10 +140,6 @@ services:
       IMAGE_MAX_HEIGHT: ${IMAGE_MAX_HEIGHT:-2560}
       IMAGE_FORMAT: ${IMAGE_FORMAT:-webp}
       IMAGE_QUALITY: ${IMAGE_QUALITY:-85}
-      # Media cleanup
-      ENABLE_MEDIA_CLEANUP: ${ENABLE_MEDIA_CLEANUP:-false}
-      MEDIA_CLEANUP_INTERVAL_HOURS: ${MEDIA_CLEANUP_INTERVAL_HOURS:-24}
-      MEDIA_CLEANUP_AGE_DAYS: ${MEDIA_CLEANUP_AGE_DAYS:-7}
       # CDN
       CDN_ENABLED: ${CDN_ENABLED:-false}
       CDN_BASE_URL: ${CDN_BASE_URL:-}
@@ -184,6 +185,7 @@ services:
   # Web - Next.js 15
   # ===========================================================================
   web:
+    image: appname-web:dev
     build:
       context: .
       dockerfile: docker/Dockerfile.web
@@ -194,9 +196,11 @@ services:
     environment:
       NODE_ENV: development
       PORT: '3000'
+      HOSTNAME: '0.0.0.0'
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/graphql}
       NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:4000/graphql}
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
       INTERNAL_API_URL: http://api:4000/graphql
     depends_on:
       api:
@@ -214,6 +218,7 @@ services:
   # Workers (Profile: workers)
   # ===========================================================================
   worker_reminders:
+    image: appname-api:dev
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -242,6 +247,7 @@ services:
       - appname-network
 
   worker_feedback:
+    image: appname-api:dev
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -270,6 +276,7 @@ services:
       - appname-network
 
   worker_audit:
+    image: appname-api:dev
     build:
       context: .
       dockerfile: docker/Dockerfile.api

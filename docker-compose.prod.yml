@@ -5,27 +5,20 @@
 # Production-like stack for local testing before K8s deployment.
 # Uses production targets (minimal images, non-root users, tini).
 #
+# Setup:
+#   cp env.docker.prod.example .env
+#   # Edit .env and set JWT_SECRET!
+#
 # Usage:
-#   # 1. Build images
-#   pnpm prod:build
-#
-#   # 2. Start infrastructure
-#   pnpm prod:up:infra
-#
-#   # 3. Run migrations (one-off)
-#   pnpm prod:migrate
-#
-#   # 4. Run migrations + seed (first time only)
-#   pnpm prod:migrate:seed
-#
-#   # 5. Start services
-#   pnpm prod:up
-#
-#   # 6. Start workers
-#   pnpm prod:up:workers
-#
-#   # 7. Stop all
-#   pnpm prod:down
+#   pnpm prod:build              # Build production images
+#   pnpm prod:up:infra           # Start postgres + redis
+#   pnpm prod:migrate            # Run migrations only
+#   pnpm prod:migrate:seed       # Run migrations + seed (first time)
+#   pnpm prod:up                 # Start API + Web
+#   pnpm prod:up:workers         # Start workers
+#   pnpm prod:up:all             # Start everything
+#   pnpm prod:down               # Stop all
+#   pnpm prod:logs               # View logs
 #
 # =============================================================================
 
@@ -74,7 +67,7 @@ services:
         '--maxmemory',
         '512mb',
         '--maxmemory-policy',
-        'allkeys-lru',
+        'noeviction',
       ]
     volumes:
       - redis_data:/data
@@ -91,6 +84,7 @@ services:
   # Migrator (one-off job for DB migrations + optional seed)
   # ===========================================================================
   migrator:
+    image: appname-migrator:prod
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -111,6 +105,7 @@ services:
   # API - Fastify + GraphQL + Prisma (Production)
   # ===========================================================================
   api:
+    image: appname-api:prod
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -151,10 +146,6 @@ services:
       IMAGE_MAX_HEIGHT: ${IMAGE_MAX_HEIGHT:-2560}
       IMAGE_FORMAT: ${IMAGE_FORMAT:-webp}
       IMAGE_QUALITY: ${IMAGE_QUALITY:-85}
-      # Media cleanup
-      ENABLE_MEDIA_CLEANUP: ${ENABLE_MEDIA_CLEANUP:-false}
-      MEDIA_CLEANUP_INTERVAL_HOURS: ${MEDIA_CLEANUP_INTERVAL_HOURS:-24}
-      MEDIA_CLEANUP_AGE_DAYS: ${MEDIA_CLEANUP_AGE_DAYS:-7}
       # S3 (if using)
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       S3_REGION: ${S3_REGION:-}
@@ -212,6 +203,7 @@ services:
   # Web - Next.js 15 (Production)
   # ===========================================================================
   web:
+    image: appname-web:prod
     build:
       context: .
       dockerfile: docker/Dockerfile.web
@@ -220,6 +212,7 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/graphql}
         NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:4000/graphql}
         NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://appname.com}
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -251,6 +244,7 @@ services:
   # Workers (Profile: workers)
   # ===========================================================================
   worker_reminders:
+    image: appname-api:prod
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -279,6 +273,7 @@ services:
       - appname-network
 
   worker_feedback:
+    image: appname-api:prod
     build:
       context: .
       dockerfile: docker/Dockerfile.api
@@ -307,6 +302,7 @@ services:
       - appname-network
 
   worker_audit:
+    image: appname-api:prod
     build:
       context: .
       dockerfile: docker/Dockerfile.api

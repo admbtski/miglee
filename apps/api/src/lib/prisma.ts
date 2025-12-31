@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient } from '@prisma/client';
 import { config } from '../env';
+import { Prisma, PrismaClient } from '../prisma-client/client';
 import { logger } from './pino';
 
 // =============================================================================
