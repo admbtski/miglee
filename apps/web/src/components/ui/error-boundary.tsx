@@ -1,6 +1,7 @@
 'use client';
 
 import { Component, type ReactNode } from 'react';
+import { getCurrentTraceId, getCurrentSpanId } from '@appname/observability/browser';
 
 /**
  * Error boundary props
@@ -37,11 +38,29 @@ export class ErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Log error to monitoring service
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Get trace context for correlation
+    const traceId = getCurrentTraceId();
+    const spanId = getCurrentSpanId();
+
+    // Log error to monitoring service with trace context
+    console.error('ErrorBoundary caught an error:', {
+      error,
+      errorInfo,
+      traceId,
+      spanId,
+      route: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+    });
 
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
+
+    // TODO: Send to error tracking service (Sentry, etc.) with trace context
+    // Example:
+    // Sentry.captureException(error, {
+    //   contexts: {
+    //     trace: { trace_id: traceId, span_id: spanId },
+    //   },
+    // });
   }
 
   reset = (): void => {
@@ -75,6 +94,9 @@ function DefaultErrorFallback({
   error: Error;
   reset: () => void;
 }) {
+  const traceId = getCurrentTraceId();
+  const spanId = getCurrentSpanId();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
       <div className="max-w-md w-full space-y-6 text-center">
@@ -85,6 +107,11 @@ function DefaultErrorFallback({
           <p className="text-zinc-600 dark:text-zinc-400">
             We're sorry, but something unexpected happened. Please try again.
           </p>
+          {traceId && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-500 font-mono">
+              Trace ID: {traceId}
+            </p>
+          )}
         </div>
 
         {process.env.NODE_ENV === 'development' && (
@@ -96,6 +123,8 @@ function DefaultErrorFallback({
               {error.message}
               {'\n\n'}
               {error.stack}
+              {traceId && `\n\nTrace ID: ${traceId}`}
+              {spanId && `\nSpan ID: ${spanId}`}
             </pre>
           </details>
         )}

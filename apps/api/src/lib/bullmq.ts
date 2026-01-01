@@ -10,6 +10,7 @@ import { Redis } from 'ioredis';
 import { config } from '../env';
 import { createBullMQConnection, registerRedisConnection } from './redis';
 import { logger } from './pino';
+import { injectTraceContext, wrapJobProcessor } from '@appname/observability';
 
 /**
  * Production-ready BullMQ configuration
@@ -157,12 +158,32 @@ export function getQueue<T = unknown>(
   return queue;
 }
 
+/**
+ * Add a job to the queue with automatic trace context injection
+ * 
+ * @example
+ * ```ts
+ * await addJobWithTrace(queue, 'send-email', { email: 'user@example.com' });
+ * ```
+ */
+export async function addJobWithTrace<T extends Record<string, unknown>>(
+  queue: Queue<T>,
+  jobName: string,
+  data: T,
+  options?: JobsOptions
+) {
+  const dataWithTrace = injectTraceContext(data);
+  return queue.add(jobName, dataWithTrace, options);
+}
+
 // =============================================================================
 // Worker Factory
 // =============================================================================
 
 /**
  * Create a BullMQ worker with production-ready configuration
+ * 
+ * Automatically wraps processor with OTel tracing for end-to-end correlation.
  */
 export function createWorker<T = unknown>(
   queueName: string,
@@ -171,6 +192,9 @@ export function createWorker<T = unknown>(
 ): Worker<T> {
   const connection = createBullMQConnection(`${queueName}-worker`);
   registerRedisConnection(connection);
+
+  // Wrap processor with OTel tracing
+  const tracedProcessor = wrapJobProcessor(processor);
 
   const worker = new Worker<T>(
     queueName,
@@ -188,7 +212,7 @@ export function createWorker<T = unknown>(
           'Processing job'
         );
 
-        const result = await processor(job);
+        const result = await tracedProcessor(job);
 
         logger.info(
           {

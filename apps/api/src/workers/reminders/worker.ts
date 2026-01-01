@@ -1,3 +1,5 @@
+// IMPORTANT: Must be first import to initialize OTel SDK
+import '../instrumentation';
 import { logger } from '../logger';
 import { bootstrapRemindersWorker } from './queue';
 

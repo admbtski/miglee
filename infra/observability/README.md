@@ -2,6 +2,36 @@
 
 Full observability infrastructure for local development and prod-like testing.
 
+## 📚 Documentation
+
+- **[Quick Start Guide](../../docs/observability/QUICK-START.md)** - 5-minute setup
+- **[Phase 2 & 3 Implementation](../../docs/observability/PHASE-2-3-IMPLEMENTATION.md)** - Workers & Frontend integration
+- **[Troubleshooting Guide](../../docs/observability/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Kubernetes Deployment](../../docs/observability/kubernetes-deployment.md)** - Production deployment options
+
+---
+
+## ⚠️ Known Issues
+
+### Grafana Alerting (Disabled by Default)
+
+Alerting rules are **temporarily disabled** in the initial setup (`alerts.yaml.disabled`) because:
+
+- Alerts require fully provisioned datasources with correct UIDs
+- SMTP configuration is needed for email notifications
+- Alerting is **optional** for core observability features
+
+**To enable alerts later**:
+
+1. Configure Prometheus datasource UID in `datasources.yaml`
+2. Rename `alerts.yaml.disabled` → `alerts.yaml`
+3. Configure SMTP (optional) or use Grafana UI notifications
+4. Restart Grafana
+
+See [Troubleshooting Guide](../../docs/observability/TROUBLESHOOTING.md#grafana-alerting-issues) for details.
+
+---
+
 ## 📦 Stack Components
 
 | Component          | Purpose                     | Port      | URL                   |

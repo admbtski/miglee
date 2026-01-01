@@ -17,11 +17,18 @@ import {
 import mercurius, { MercuriusContext } from 'mercurius';
 import { join } from 'path';
 import { WebSocket } from 'ws';
+import {
+  trace,
+  SpanStatusCode,
+  context as otelContext,
+} from '@opentelemetry/api';
 import { config, env } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers';
 import { prisma } from '../lib/prisma';
 import { redisEmitter } from '../lib/redis';
+
+const tracer = trace.getTracer('graphql');
 
 // =====================================  ========================================
 // Security Configuration
@@ -369,7 +376,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   // GraphQL Hooks
   // =============================================================================
 
-  // ✅ Pre-execution hook for introspection blocking and complexity check
+  // ✅ Pre-execution hook for introspection blocking, complexity check, and tracing
   fastify.graphql.addHook(
     'preExecution',
     async (execSchema, document, context) => {
@@ -377,16 +384,32 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
       const operation = ast?.operation ?? 'query';
       const operationName = ast?.name?.value ?? 'anonymous';
 
-      // Store metadata for metrics
+      // Create OpenTelemetry span for GraphQL operation
+      const span = tracer.startSpan(`GQL ${operationName}`, {
+        attributes: {
+          'graphql.operation.name': operationName,
+          'graphql.operation.type': operation,
+        },
+      });
+
+      // Store metadata for metrics and span cleanup
       context.request.__gql = {
         start: process.hrtime.bigint(),
         operation,
         operationName,
+        span, // Store span for later cleanup
       };
 
       // ✅ Block introspection in production
       const introspectionError = blockIntrospection(document);
       if (introspectionError) {
+        span.recordException(introspectionError);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: 'Introspection blocked',
+        });
+        span.end();
+
         return {
           document,
           errors: [introspectionError],
@@ -395,6 +418,7 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
 
       // ✅ Check query complexity
       const complexity = calculateComplexity(document, execSchema);
+      span.setAttribute('graphql.operation.complexity', complexity);
 
       if (complexity > MAX_QUERY_COMPLEXITY) {
         context.request.log.warn(
@@ -402,20 +426,27 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
           'Query complexity exceeded'
         );
 
+        const error = new GraphQLError(
+          `Query complexity ${complexity} exceeds maximum allowed ${MAX_QUERY_COMPLEXITY}`,
+          {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+              complexity,
+              maxComplexity: MAX_QUERY_COMPLEXITY,
+            },
+          }
+        );
+
+        span.recordException(error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: 'Complexity exceeded',
+        });
+        span.end();
+
         return {
           document,
-          errors: [
-            new GraphQLError(
-              `Query complexity ${complexity} exceeds maximum allowed ${MAX_QUERY_COMPLEXITY}`,
-              {
-                extensions: {
-                  code: 'BAD_USER_INPUT',
-                  complexity,
-                  maxComplexity: MAX_QUERY_COMPLEXITY,
-                },
-              }
-            ),
-          ],
+          errors: [error],
         };
       }
 
@@ -431,15 +462,35 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
     }
   );
 
-  // Metrics hook - reserved for future OTel integration
+  // Resolution hook - complete tracing and metrics
   fastify.graphql.addHook('onResolution', async (execution, context) => {
     const meta = context.request.__gql;
     if (!meta) return;
 
-    // TODO: Add OTel histogram for GraphQL resolution duration
-    const _durS = Number(process.hrtime.bigint() - meta.start) / 1e9;
-    const _outcome = execution.errors?.length ? 'error' : 'ok';
-    void _durS;
-    void _outcome;
+    const durationS = Number(process.hrtime.bigint() - meta.start) / 1e9;
+    const outcome = execution.errors?.length ? 'error' : 'ok';
+    const span = meta.span;
+
+    if (span) {
+      // Add duration and outcome to span
+      span.setAttribute('graphql.execution.duration_ms', durationS * 1000);
+      span.setAttribute('graphql.execution.outcome', outcome);
+
+      // Record errors if any
+      if (execution.errors?.length) {
+        execution.errors.forEach((error) => {
+          span.recordException(error);
+        });
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: execution.errors[0].message,
+        });
+      } else {
+        span.setStatus({ code: SpanStatusCode.OK });
+      }
+
+      // End the span
+      span.end();
+    }
   });
 });

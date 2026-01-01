@@ -1,4 +1,5 @@
 import pino, { LoggerOptions, TransportSingleOptions } from 'pino';
+import { pinoTraceMixin } from '@appname/observability/pino';
 import { config } from '../env';
 
 type BuildLoggerOpts = {
@@ -29,6 +30,8 @@ export function buildLogger({
   const baseOptions = {
     name,
     level,
+    // Add trace context (trace_id, span_id) to every log
+    mixin: pinoTraceMixin,
     // Hide sensitive data in logs
     redact: {
       paths: [

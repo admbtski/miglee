@@ -1,5 +1,5 @@
 import { JobsOptions } from 'bullmq';
-import { getQueue, createWorker, BULLMQ_CONFIG } from '../../lib/bullmq';
+import { getQueue, createWorker, BULLMQ_CONFIG, addJobWithTrace } from '../../lib/bullmq';
 import { runFeedbackRequestForEvent } from './runFeedbackRequestForEvent';
 import { logger } from '../logger';
 import { config } from '../../env';
@@ -66,7 +66,7 @@ export async function enqueueFeedbackRequest(eventId: string, endAt: Date) {
     jobId: buildJobId(eventId),
   };
 
-  await feedbackQueue.add('send', { eventId }, opts);
+  await addJobWithTrace(feedbackQueue, 'send', { eventId }, opts);
   logger.info(
     { eventId },
     '[enqueueFeedbackRequest] Feedback request scheduled.'
@@ -87,7 +87,7 @@ export async function enqueueFeedbackRequestNow(eventId: string) {
     jobId: `${buildJobId(eventId)}-manual-${Date.now()}`,
   };
 
-  await feedbackQueue.add('send', { eventId }, opts);
+  await addJobWithTrace(feedbackQueue, 'send', { eventId }, opts);
   logger.info(
     { eventId },
     '[enqueueFeedbackRequestNow] Immediate feedback request queued.'

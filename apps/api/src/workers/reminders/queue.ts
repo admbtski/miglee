@@ -1,5 +1,5 @@
 import { JobsOptions } from 'bullmq';
-import { getQueue, createWorker, BULLMQ_CONFIG } from '../../lib/bullmq';
+import { getQueue, createWorker, BULLMQ_CONFIG, addJobWithTrace } from '../../lib/bullmq';
 import { runReminderForEvent } from './runReminderForEvent';
 import { logger } from '../logger';
 
@@ -75,7 +75,7 @@ export async function enqueueReminders(eventId: string, startAt: Date) {
       jobId: buildJobId(eventId, minutesBefore),
     };
 
-    await remindersQueue.add('send', { eventId, minutesBefore }, opts);
+    await addJobWithTrace(remindersQueue, 'send', { eventId, minutesBefore }, opts);
     added++;
     logger.debug(
       { eventId, minutesBefore, delay },

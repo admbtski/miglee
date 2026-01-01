@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@appname/contracts": "workspace:*",
+    "@appname/observability": "workspace:*",
     "@deck.gl/mapbox": "^9.2.2",
     "@floating-ui/react": "^0.27.16",
     "@floating-ui/react-dom": "^2.1.6",

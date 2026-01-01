@@ -1,3 +1,6 @@
+// Initialize observability FIRST (before any other imports)
+await import('./instrumentation.js');
+
 import { config } from './env';
 import { createServer } from './server';
 

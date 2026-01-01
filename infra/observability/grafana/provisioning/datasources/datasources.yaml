@@ -30,6 +30,7 @@ datasources:
     isDefault: true
     version: 1
     editable: false
+    uid: prometheus
     jsonData:
       httpMethod: POST
       manageAlerts: true

@@ -1,5 +1,5 @@
 import { JobsOptions } from 'bullmq';
-import { getQueue, createWorker, BULLMQ_CONFIG } from '../../lib/bullmq';
+import { getQueue, createWorker, BULLMQ_CONFIG, addJobWithTrace } from '../../lib/bullmq';
 import { runAuditLogArchive } from './run-audit-archive';
 import { logger } from '../logger';
 import { config } from '../../env';
@@ -70,7 +70,8 @@ export async function enqueueAuditArchive(eventId: string, endAt: Date) {
       { eventId, endAt },
       '[enqueueAuditArchive] Retention period passed, archiving immediately.'
     );
-    await auditArchiveQueue.add(
+    await addJobWithTrace(
+      auditArchiveQueue,
       'archive',
       { eventId },
       { jobId: `${buildJobId(eventId)}-immediate-${Date.now()}` }
@@ -88,7 +89,7 @@ export async function enqueueAuditArchive(eventId: string, endAt: Date) {
     jobId: buildJobId(eventId),
   };
 
-  await auditArchiveQueue.add('archive', { eventId }, opts);
+  await addJobWithTrace(auditArchiveQueue, 'archive', { eventId }, opts);
   logger.info(
     { eventId },
     '[enqueueAuditArchive] Audit archive scheduled.'
@@ -109,7 +110,7 @@ export async function enqueueAuditArchiveNow(eventId: string) {
     jobId: `${buildJobId(eventId)}-manual-${Date.now()}`,
   };
 
-  await auditArchiveQueue.add('archive', { eventId }, opts);
+  await addJobWithTrace(auditArchiveQueue, 'archive', { eventId }, opts);
   logger.info(
     { eventId },
     '[enqueueAuditArchiveNow] Immediate audit archive queued.'

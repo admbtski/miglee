@@ -64,6 +64,7 @@
     "obs:ps": "docker compose -f infra/observability/docker-compose.observability.yml ps",
     "obs:restart": "docker compose -f infra/observability/docker-compose.observability.yml restart",
     "obs:reset": "docker compose -f infra/observability/docker-compose.observability.yml down -v && docker volume rm obs-grafana-data obs-tempo-data obs-loki-data obs-prometheus-data obs-promtail-positions 2>/dev/null || true",
+    "obs:test": "bash infra/observability/smoke-test.sh",
     "_comment:docker:helpers": "=== Helpers for docker ===",
     "docker:rm:containers": "docker rm -f $(docker ps -a -q)",
     "docker:rm:images": "docker rmi -f $(docker images -a -q)",

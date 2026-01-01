@@ -2,9 +2,20 @@
 
 import { useEffect } from 'react';
 import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
+import {
+  getCurrentTraceId,
+  getCurrentSpanId,
+  getDeviceType,
+  getCurrentRoute,
+  getConnectionType,
+} from '@appname/observability/browser';
 
 function send(metric: Metric) {
-  const traceId = undefined; // span?.spanContext().traceId;
+  const traceId = getCurrentTraceId();
+  const spanId = getCurrentSpanId();
+  const route = getCurrentRoute();
+  const device = getDeviceType();
+  const connection = getConnectionType();
 
   const payload = JSON.stringify({
     id: metric.id,
@@ -14,7 +25,12 @@ function send(metric: Metric) {
     delta: metric.delta,
     navType: metric.navigationType,
     ts: Date.now(),
+    // Enhanced attributes for better correlation and analysis
     traceId,
+    spanId,
+    route,
+    device,
+    connection,
   });
 
   const url = '/api/vitals';
@@ -36,8 +52,8 @@ function send(metric: Metric) {
       metric.name,
       metric.value,
       metric.rating,
-      metric,
-      traceId
+      { route, device, connection, traceId },
+      metric
     );
   }
 }
