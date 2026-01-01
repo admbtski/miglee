@@ -1,5 +1,6 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { Avatar } from '@/components/ui/avatar';
 import { useMeQuery } from '@/features/auth';
 import {
@@ -12,8 +13,6 @@ import {
 import type { EventDetailsData } from '@/features/events';
 import { ReportCommentModal } from '@/features/reports';
 import { buildAvatarUrl } from '@/lib/media/url';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import {
   ChevronDown,
   ChevronUp,

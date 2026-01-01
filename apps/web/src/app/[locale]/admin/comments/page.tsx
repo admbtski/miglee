@@ -1,9 +1,8 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import { useGetComments } from '@/features/comments';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { Trash2 } from 'lucide-react';
 
 export default function CommentsPage() {

@@ -6,7 +6,7 @@
  * Displays a single audit log entry with icon, description, and metadata.
  */
 
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from '@/lib/date';
 import {
   Calendar,
   Edit,

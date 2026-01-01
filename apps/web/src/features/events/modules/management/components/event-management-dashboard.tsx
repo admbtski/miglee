@@ -3,10 +3,9 @@
 
 'use client';
 
+import { format, formatDistanceToNow, isFuture, isPast, pl } from '@/lib/date';
 import { useState } from 'react';
 import Link from 'next/link';
-import { format, formatDistanceToNow, isFuture, isPast } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import {
   Activity,
   ArrowRight,

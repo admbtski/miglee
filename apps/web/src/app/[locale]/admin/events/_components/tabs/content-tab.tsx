@@ -1,5 +1,6 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import { useGetComments } from '@/features/comments';
 import { useGetReviews } from '@/features/reviews';
@@ -12,8 +13,6 @@ import {
   Trash2,
   Eye,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 import dotenv from 'dotenv';
 
 // load env config
@@ -6,144 +6,162 @@ dotenv.config();
 
 // Helper for boolean env vars (handles "true"/"false" strings correctly)
 const booleanString = (defaultValue: boolean = false) =>
-  z
-    .string()
-    .default(defaultValue ? 'true' : 'false')
-    .transform((val) => val === 'true' || val === '1');
+  v.pipe(
+    v.optional(v.string(), defaultValue ? 'true' : 'false'),
+    v.transform((val) => val === 'true' || val === '1')
+  );
 
-const envSchema = z
-  .object({
-    NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .default('development'),
+const envSchema = v.pipe(
+  v.object({
+    NODE_ENV: v.optional(
+      v.picklist(['development', 'production', 'test']),
+      'development'
+    ),
 
-    SERVICE_NAME: z.string().default('app'),
-    PORT: z.coerce.number().default(4000),
-    HOST: z.string().default('localhost'),
+    SERVICE_NAME: v.optional(v.string(), 'app'),
+    PORT: v.pipe(
+      v.optional(v.string(), '4000'),
+      v.transform((val) => Number(val))
+    ),
+    HOST: v.optional(v.string(), 'localhost'),
 
-    JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+    JWT_SECRET: v.pipe(
+      v.string('JWT_SECRET is required'),
+      v.minLength(32, 'JWT_SECRET must be at least 32 characters')
+    ),
 
-    DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+    DATABASE_URL: v.pipe(
+      v.string('DATABASE_URL is required'),
+      v.minLength(1, 'DATABASE_URL is required')
+    ),
 
-    CORS_ORIGINS: z
-      .string()
-      .default('*')
-      .transform((val) => val.split(',').map((s) => s.trim())),
+    CORS_ORIGINS: v.pipe(
+      v.optional(v.string(), '*'),
+      v.transform((val) => val.split(',').map((s) => s.trim()))
+    ),
 
-    LOG_LEVEL: z
-      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
-      .default('info'),
-    LOG_FILE_PATH: z.string().optional(),
+    LOG_LEVEL: v.optional(
+      v.picklist(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
+      'info'
+    ),
+    LOG_FILE_PATH: v.optional(v.string()),
 
     // Redis Configuration
-    REDIS_HOST: z.string().default('redis'),
-    REDIS_PORT: z.coerce.number().default(6379),
-    REDIS_PASSWORD: z.string().optional(),
-    REDIS_DB: z.coerce.number().default(0),
+    REDIS_HOST: v.optional(v.string(), 'redis'),
+    REDIS_PORT: v.pipe(
+      v.optional(v.string(), '6379'),
+      v.transform((val) => Number(val))
+    ),
+    REDIS_PASSWORD: v.optional(v.string()),
+    REDIS_DB: v.pipe(
+      v.optional(v.string(), '0'),
+      v.transform((val) => Number(val))
+    ),
     REDIS_TLS: booleanString(false),
 
     // Media Storage
-    MEDIA_STORAGE_PROVIDER: z.enum(['LOCAL', 'S3']).default('LOCAL'),
-    UPLOADS_PATH: z.string().default('./uploads'),
-    UPLOADS_TMP_PATH: z.string().default('./tmp/uploads'),
+    MEDIA_STORAGE_PROVIDER: v.optional(
+      v.picklist(['LOCAL', 'S3']),
+      'LOCAL'
+    ),
+    UPLOADS_PATH: v.optional(v.string(), './uploads'),
+    UPLOADS_TMP_PATH: v.optional(v.string(), './tmp/uploads'),
 
     // Audit Archive Storage (uses MEDIA_STORAGE_PROVIDER by default)
-    AUDIT_ARCHIVE_PATH: z.string().default('./data/audit-archives'),
+    AUDIT_ARCHIVE_PATH: v.optional(v.string(), './data/audit-archives'),
 
     // Image Processing
-    IMAGE_MAX_WIDTH: z.coerce.number().default(2560),
-    IMAGE_MAX_HEIGHT: z.coerce.number().default(2560),
-    IMAGE_FORMAT: z.enum(['webp', 'avif']).default('webp'),
-    IMAGE_QUALITY: z.coerce.number().min(1).max(100).default(85),
+    IMAGE_MAX_WIDTH: v.pipe(
+      v.optional(v.string(), '2560'),
+      v.transform((val) => Number(val))
+    ),
+    IMAGE_MAX_HEIGHT: v.pipe(
+      v.optional(v.string(), '2560'),
+      v.transform((val) => Number(val))
+    ),
+    IMAGE_FORMAT: v.optional(v.picklist(['webp', 'avif']), 'webp'),
+    IMAGE_QUALITY: v.pipe(
+      v.optional(v.string(), '85'),
+      v.transform((val) => Math.max(1, Math.min(100, Number(val))))
+    ),
 
     // S3 Configuration (optional, required if MEDIA_STORAGE_PROVIDER=S3)
-    S3_ENDPOINT: z.string().optional(),
-    S3_REGION: z.string().optional(),
-    S3_BUCKET: z.string().optional(),
-    S3_ACCESS_KEY_ID: z.string().optional(),
-    S3_SECRET_ACCESS_KEY: z.string().optional(),
+    S3_ENDPOINT: v.optional(v.string()),
+    S3_REGION: v.optional(v.string()),
+    S3_BUCKET: v.optional(v.string()),
+    S3_ACCESS_KEY_ID: v.optional(v.string()),
+    S3_SECRET_ACCESS_KEY: v.optional(v.string()),
 
     // CDN/Assets URL
-    ASSETS_BASE_URL: z.string().optional(), // e.g. http://localhost:4000 or https://cdn.example.com
+    ASSETS_BASE_URL: v.optional(v.string()), // e.g. http://localhost:4000 or https://cdn.example.com
     CDN_ENABLED: booleanString(false),
-    CDN_BASE_URL: z.string().optional(),
+    CDN_BASE_URL: v.optional(v.string()),
 
     // Stripe Configuration (required in production)
-    STRIPE_SECRET_KEY: z.string().optional(),
-    STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-    STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    STRIPE_SECRET_KEY: v.optional(v.string()),
+    STRIPE_PUBLISHABLE_KEY: v.optional(v.string()),
+    STRIPE_WEBHOOK_SECRET: v.optional(v.string()),
 
     // Stripe Price IDs (set these in your .env for your Stripe account)
     // User Plans
-    STRIPE_PRICE_USER_PLUS_MONTHLY_SUB: z.string().optional(),
-    STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF: z.string().optional(),
-    STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF: z.string().optional(),
-    STRIPE_PRICE_USER_PRO_MONTHLY_SUB: z.string().optional(),
-    STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF: z.string().optional(),
-    STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF: z.string().optional(),
+    STRIPE_PRICE_USER_PLUS_MONTHLY_SUB: v.optional(v.string()),
+    STRIPE_PRICE_USER_PLUS_MONTHLY_ONEOFF: v.optional(v.string()),
+    STRIPE_PRICE_USER_PLUS_YEARLY_ONEOFF: v.optional(v.string()),
+    STRIPE_PRICE_USER_PRO_MONTHLY_SUB: v.optional(v.string()),
+    STRIPE_PRICE_USER_PRO_MONTHLY_ONEOFF: v.optional(v.string()),
+    STRIPE_PRICE_USER_PRO_YEARLY_ONEOFF: v.optional(v.string()),
     // Event Plans
-    STRIPE_PRICE_EVENT_PLUS: z.string().optional(),
-    STRIPE_PRICE_EVENT_PRO: z.string().optional(),
+    STRIPE_PRICE_EVENT_PLUS: v.optional(v.string()),
+    STRIPE_PRICE_EVENT_PRO: v.optional(v.string()),
     // Action Packages (reload/top-up)
-    STRIPE_PRICE_ACTION_PACKAGE_SMALL: z.string().optional(),
-    STRIPE_PRICE_ACTION_PACKAGE_MEDIUM: z.string().optional(),
-    STRIPE_PRICE_ACTION_PACKAGE_LARGE: z.string().optional(),
+    STRIPE_PRICE_ACTION_PACKAGE_SMALL: v.optional(v.string()),
+    STRIPE_PRICE_ACTION_PACKAGE_MEDIUM: v.optional(v.string()),
+    STRIPE_PRICE_ACTION_PACKAGE_LARGE: v.optional(v.string()),
 
     // App URLs
-    APP_URL: z.string().default('http://localhost:3000'),
-    API_URL: z.string().default('http://localhost:4000'),
+    APP_URL: v.optional(v.string(), 'http://localhost:3000'),
+    API_URL: v.optional(v.string(), 'http://localhost:4000'),
 
     // Email Configuration
-    RESEND_API_KEY: z.string().optional(),
-    EMAIL_FROM: z.string().default('Appname <noreply@appname.pl>'),
+    RESEND_API_KEY: v.optional(v.string()),
+    EMAIL_FROM: v.optional(v.string(), 'Appname <noreply@appname.pl>'),
 
     // Admin Features
     ENABLE_BULL_BOARD: booleanString(false),
-  })
-  .refine(
-    (data) => {
-      // In production, require Stripe configuration if billing is used
-      if (data.NODE_ENV === 'production') {
-        const hasStripePrices =
-          data.STRIPE_PRICE_USER_PLUS_MONTHLY_SUB ||
-          data.STRIPE_PRICE_USER_PRO_MONTHLY_SUB ||
-          data.STRIPE_PRICE_EVENT_PLUS ||
-          data.STRIPE_PRICE_EVENT_PRO;
+  }),
+  // Stripe validation for production
+  v.check((data) => {
+    if (data.NODE_ENV === 'production') {
+      const hasStripePrices =
+        data.STRIPE_PRICE_USER_PLUS_MONTHLY_SUB ||
+        data.STRIPE_PRICE_USER_PRO_MONTHLY_SUB ||
+        data.STRIPE_PRICE_EVENT_PLUS ||
+        data.STRIPE_PRICE_EVENT_PRO;
 
-        if (hasStripePrices) {
-          return !!data.STRIPE_SECRET_KEY && !!data.STRIPE_WEBHOOK_SECRET;
-        }
+      if (hasStripePrices) {
+        return !!data.STRIPE_SECRET_KEY && !!data.STRIPE_WEBHOOK_SECRET;
       }
-      return true;
-    },
-    {
-      message:
-        'STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are required in production when billing is configured',
     }
-  )
-  .refine(
-    (data) => {
-      // In production, require S3 configuration if S3 is selected
-      if (
-        data.NODE_ENV === 'production' &&
-        data.MEDIA_STORAGE_PROVIDER === 'S3'
-      ) {
-        return (
-          !!data.S3_BUCKET &&
-          !!data.S3_REGION &&
-          !!data.S3_ACCESS_KEY_ID &&
-          !!data.S3_SECRET_ACCESS_KEY
-        );
-      }
-      return true;
-    },
-    {
-      message:
-        'S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY are required when MEDIA_STORAGE_PROVIDER=S3 in production',
+    return true;
+  }, 'STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are required in production when billing is configured'),
+  // S3 validation for production
+  v.check((data) => {
+    if (
+      data.NODE_ENV === 'production' &&
+      data.MEDIA_STORAGE_PROVIDER === 'S3'
+    ) {
+      return (
+        !!data.S3_BUCKET &&
+        !!data.S3_REGION &&
+        !!data.S3_ACCESS_KEY_ID &&
+        !!data.S3_SECRET_ACCESS_KEY
+      );
     }
-  );
+    return true;
+  }, 'S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY are required when MEDIA_STORAGE_PROVIDER=S3 in production')
+);
 
-export const env = envSchema.parse(process.env);
+export const env = v.parse(envSchema, process.env);
 
 export const config = {
   isProduction: env.NODE_ENV === 'production',

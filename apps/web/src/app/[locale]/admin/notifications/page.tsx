@@ -1,8 +1,7 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { Search, Bell, BellOff, User } from 'lucide-react';

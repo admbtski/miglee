@@ -1,8 +1,7 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { Star, Trash2, Edit2, Flag, Shield, EyeOff } from 'lucide-react';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';

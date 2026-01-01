@@ -7,15 +7,15 @@ export default defineConfig({
     'workers/feedback/worker': 'src/workers/feedback/worker.ts',
     'workers/audit-archive/worker': 'src/workers/audit-archive/worker.ts',
   },
-  format: ['esm'],
-  target: 'node22',
+  format: 'esm',
+  target: 'node24',
   platform: 'node',
   outDir: 'dist',
   clean: true,
-  sourcemap: true,
-  splitting: true,
+  sourcemap: false,
+  minify: true,
   treeshake: true,
-  dts: false, // Skip declaration files for faster builds
+  hash: false, // Stable filenames for Docker
   external: [
     // Native modules that shouldn't be bundled
     'sharp',
@@ -35,46 +35,18 @@ export default defineConfig({
     'fastify-raw-body',
     'mqemitter-redis',
   ],
-  esbuildOptions(options) {
-    // Handle __dirname and __filename in ESM
-    options.define = {
-      ...options.define,
-    };
-  },
-  async onSuccess() {
-    const { copyFileSync, mkdirSync, readdirSync, existsSync } = await import(
-      'fs'
-    );
-    const { dirname, join } = await import('path');
-
-    // Copy GraphQL schema
-    const schemaSource = '../../packages/contracts/graphql/schema.graphql';
-    const schemaDest = 'dist/schema.graphql';
-
-    try {
-      mkdirSync(dirname(schemaDest), { recursive: true });
-      copyFileSync(schemaSource, schemaDest);
-      console.log('✓ Copied schema.graphql to dist/');
-    } catch (err) {
-      console.error('Failed to copy schema.graphql:', err);
-    }
-
-    // Copy Prisma query engine (.node files)
-    const prismaClientDir = 'src/prisma-client';
-    if (existsSync(prismaClientDir)) {
-      const files = readdirSync(prismaClientDir);
-      const nodeFiles = files.filter((f) => f.endsWith('.node'));
-
-      for (const file of nodeFiles) {
-        const src = join(prismaClientDir, file);
-        const dest = join('dist', file);
-        try {
-          copyFileSync(src, dest);
-          console.log(`✓ Copied ${file} to dist/`);
-        } catch (err) {
-          console.error(`Failed to copy ${file}:`, err);
-        }
-      }
-    }
-  },
+  // Copy GraphQL schema and Prisma query engine files
+  copy: [
+    {
+      from: '../../packages/contracts/graphql/schema.graphql',
+      to: 'dist',
+      verbose: true,
+    },
+    {
+      from: 'src/prisma-client/*.node',
+      to: 'dist',
+      flatten: true,
+      verbose: true,
+    },
+  ],
 });

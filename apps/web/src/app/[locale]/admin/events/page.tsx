@@ -1,5 +1,6 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState, useEffect } from 'react';
 import { useEventsQuery } from '@/features/events';
 import {
@@ -14,8 +15,6 @@ import {
   EventsSortBy,
   SortDir,
 } from '@/lib/api/__generated__/react-query-update';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import {
   Eye,
   Search,

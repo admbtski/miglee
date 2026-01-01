@@ -1,5 +1,6 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import {
   Calendar,
@@ -11,8 +12,6 @@ import {
   ExternalLink,
   Loader2,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import {
   useAdminUserMembershipsQuery,
   useAdminUserEventsQuery,

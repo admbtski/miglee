@@ -4,7 +4,7 @@ export type {
 } from '../hooks/use-event-form';
 
 // Re-export MeetingKind type
-import { z } from 'zod';
-import { MeetingKind as MeetingKindEnum } from '../hooks/use-event-form';
+import * as v from 'valibot';
+import { MeetingKind as MeetingKindSchema } from '../hooks/use-event-form';
 
-export type MeetingKindType = z.infer<typeof MeetingKindEnum>;
+export type MeetingKindType = v.InferOutput<typeof MeetingKindSchema>;

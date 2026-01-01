@@ -3,6 +3,7 @@
 // "Kliknij ❤️ przy wydarzeniu, aby je zapisać.", "Zobacz", "Usuń", "Załaduj więcej", "Zobacz wszystkie"
 'use client';
 
+import { format, pl } from '@/lib/date';
 import {
   autoUpdate,
   flip,
@@ -15,8 +16,6 @@ import {
 } from '@floating-ui/react';
 import { Heart, ExternalLink, Trash2, Calendar, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import {
   useMyFavouritesInfiniteQuery,
   useToggleFavouriteMutation,

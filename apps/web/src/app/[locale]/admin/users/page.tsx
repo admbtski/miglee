@@ -1,5 +1,6 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import {
   Role,
@@ -16,8 +17,6 @@ import {
   User,
 } from 'lucide-react';
 import { useUsersQuery } from '@/features/users';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { UserDetailModal } from './_components/user-detail-modal';
 import { AddUserModal } from './_components/add-user-modal';
 import { buildAvatarUrl } from '@/lib/media/url';

@@ -6,9 +6,9 @@
 'use client';
 
 // External libraries
-import { zodResolver } from '@hookform/resolvers/zod';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import * as v from 'valibot';
 
 // Icons
 import { Eye, EyeOff, Loader2, Lock, Save, Users } from 'lucide-react';
@@ -17,18 +17,18 @@ import { Eye, EyeOff, Loader2, Lock, Save, Users } from 'lucide-react';
 import type { GetMyFullProfileQuery } from '@/lib/api/__generated__/react-query-update';
 import { useUpdateUserPrivacy } from '../api/use-update-user-privacy';
 
-const privacySchema = z.object({
-  dmPolicy: z.enum(['ALL', 'MEMBERS', 'INVITE_ONLY', 'NONE']),
-  showLastSeen: z.enum(['ALL', 'MEMBERS', 'HIDDEN']),
-  showLocation: z.enum(['CITY', 'APPROX', 'HIDDEN']),
-  showEvents: z.enum(['ALL', 'MEMBERS', 'SELF']),
-  showReviews: z.enum(['ALL', 'MEMBERS', 'SELF']),
-  showStats: z.enum(['ALL', 'MEMBERS', 'SELF']),
-  defaultAddressVisibility: z.enum(['PUBLIC', 'AFTER_JOIN', 'HIDDEN']),
-  defaultMembersVisibility: z.enum(['PUBLIC', 'AFTER_JOIN', 'HIDDEN']),
+const privacySchema = v.object({
+  dmPolicy: v.picklist(['ALL', 'MEMBERS', 'INVITE_ONLY', 'NONE']),
+  showLastSeen: v.picklist(['ALL', 'MEMBERS', 'HIDDEN']),
+  showLocation: v.picklist(['CITY', 'APPROX', 'HIDDEN']),
+  showEvents: v.picklist(['ALL', 'MEMBERS', 'SELF']),
+  showReviews: v.picklist(['ALL', 'MEMBERS', 'SELF']),
+  showStats: v.picklist(['ALL', 'MEMBERS', 'SELF']),
+  defaultAddressVisibility: v.picklist(['PUBLIC', 'AFTER_JOIN', 'HIDDEN']),
+  defaultMembersVisibility: v.picklist(['PUBLIC', 'AFTER_JOIN', 'HIDDEN']),
 });
 
-type PrivacyFormData = z.infer<typeof privacySchema>;
+type PrivacyFormData = v.InferOutput<typeof privacySchema>;
 
 type PrivacyTabProps = {
   user: GetMyFullProfileQuery['user'] | null | undefined;
@@ -98,24 +98,24 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
     watch,
     setValue,
   } = useForm<PrivacyFormData>({
-    resolver: zodResolver(privacySchema),
+    resolver: valibotResolver(privacySchema),
     defaultValues: {
-      dmPolicy: (user?.privacy?.dmPolicy as any) || 'ALL',
-      showLastSeen: (user?.privacy?.showLastSeen as any) || 'ALL',
-      showLocation: (user?.privacy?.showLocation as any) || 'CITY',
-      showEvents: (user?.privacy?.showEvents as any) || 'ALL',
-      showReviews: (user?.privacy?.showReviews as any) || 'ALL',
-      showStats: (user?.privacy?.showStats as any) || 'ALL',
+      dmPolicy: (user?.privacy?.dmPolicy as PrivacyFormData['dmPolicy']) || 'ALL',
+      showLastSeen: (user?.privacy?.showLastSeen as PrivacyFormData['showLastSeen']) || 'ALL',
+      showLocation: (user?.privacy?.showLocation as PrivacyFormData['showLocation']) || 'CITY',
+      showEvents: (user?.privacy?.showEvents as PrivacyFormData['showEvents']) || 'ALL',
+      showReviews: (user?.privacy?.showReviews as PrivacyFormData['showReviews']) || 'ALL',
+      showStats: (user?.privacy?.showStats as PrivacyFormData['showStats']) || 'ALL',
       defaultAddressVisibility:
-        (user?.privacy?.defaultAddressVisibility as any) || 'PUBLIC',
+        (user?.privacy?.defaultAddressVisibility as PrivacyFormData['defaultAddressVisibility']) || 'PUBLIC',
       defaultMembersVisibility:
-        (user?.privacy?.defaultMembersVisibility as any) || 'PUBLIC',
+        (user?.privacy?.defaultMembersVisibility as PrivacyFormData['defaultMembersVisibility']) || 'PUBLIC',
     },
   });
 
   const onSubmit = async (data: PrivacyFormData) => {
     await updateMutation.mutateAsync({
-      input: data as any, // GraphQL expects string enums
+      input: data as Parameters<typeof updateMutation.mutateAsync>[0]['input'],
     });
 
     reset(data);
@@ -193,7 +193,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                       key={option.value}
                       type="button"
                       onClick={() =>
-                        setValue('showLastSeen', option.value as any, {
+                        setValue('showLastSeen', option.value as PrivacyFormData['showLastSeen'], {
                           shouldDirty: true,
                         })
                       }
@@ -225,7 +225,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                     key={option.value}
                     type="button"
                     onClick={() =>
-                      setValue('showLocation', option.value as any, {
+                      setValue('showLocation', option.value as PrivacyFormData['showLocation'], {
                         shouldDirty: true,
                       })
                     }
@@ -256,7 +256,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                     key={option.value}
                     type="button"
                     onClick={() =>
-                      setValue('showEvents', option.value as any, {
+                      setValue('showEvents', option.value as PrivacyFormData['showEvents'], {
                         shouldDirty: true,
                       })
                     }
@@ -287,7 +287,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                     key={option.value}
                     type="button"
                     onClick={() =>
-                      setValue('showReviews', option.value as any, {
+                      setValue('showReviews', option.value as PrivacyFormData['showReviews'], {
                         shouldDirty: true,
                       })
                     }
@@ -318,7 +318,7 @@ export function PrivacyTab({ user }: PrivacyTabProps) {
                     key={option.value}
                     type="button"
                     onClick={() =>
-                      setValue('showStats', option.value as any, {
+                      setValue('showStats', option.value as PrivacyFormData['showStats'], {
                         shouldDirty: true,
                       })
                     }

@@ -6,10 +6,9 @@
  * Displays detailed information about an audit log entry including diff and meta.
  */
 
+import { format, pl } from '@/lib/date';
 import { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import {
   X,
   Calendar,

@@ -8,10 +8,10 @@
 import { useEffect, useRef, useState } from 'react';
 
 // External libraries
-import { zodResolver } from '@hookform/resolvers/zod';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import * as v from 'valibot';
 
 // Icons
 import { Camera, Image as ImageIcon, Loader2, Save, X } from 'lucide-react';
@@ -33,48 +33,62 @@ import { COMMON_LANGUAGES, VALIDATION_LIMITS } from '../constants';
 import type { LocationData, TabProps } from '../types';
 import { useUpdateUserProfile } from '../api';
 
-const profileSchema = z.object({
-  displayName: z
-    .string()
-    .min(
-      VALIDATION_LIMITS.displayName.min,
-      `Display name must be at least ${VALIDATION_LIMITS.displayName.min} characters`
+const profileSchema = v.object({
+  displayName: v.optional(
+    v.union([
+      v.pipe(
+        v.string(),
+        v.minLength(
+          VALIDATION_LIMITS.displayName.min,
+          `Display name must be at least ${VALIDATION_LIMITS.displayName.min} characters`
+        ),
+        v.maxLength(
+          VALIDATION_LIMITS.displayName.max,
+          `Display name must be at most ${VALIDATION_LIMITS.displayName.max} characters`
+        )
+      ),
+      v.literal(''),
+    ])
+  ),
+  bioShort: v.optional(
+    v.union([
+      v.pipe(
+        v.string(),
+        v.maxLength(
+          VALIDATION_LIMITS.bioShort.max,
+          `Short bio must be at most ${VALIDATION_LIMITS.bioShort.max} characters`
+        )
+      ),
+      v.literal(''),
+    ])
+  ),
+  bioLong: v.optional(
+    v.union([
+      v.pipe(
+        v.string(),
+        v.maxLength(
+          VALIDATION_LIMITS.bioLong.max,
+          `Long bio must be at most ${VALIDATION_LIMITS.bioLong.max} characters`
+        )
+      ),
+      v.literal(''),
+    ])
+  ),
+  city: v.optional(v.union([v.string(), v.literal('')])),
+  country: v.optional(v.union([v.string(), v.literal('')])),
+  speaks: v.optional(v.array(v.string())),
+  interests: v.optional(
+    v.pipe(
+      v.array(v.string()),
+      v.maxLength(
+        VALIDATION_LIMITS.interests.max,
+        `Maximum ${VALIDATION_LIMITS.interests.max} interests`
+      )
     )
-    .max(
-      VALIDATION_LIMITS.displayName.max,
-      `Display name must be at most ${VALIDATION_LIMITS.displayName.max} characters`
-    )
-    .optional()
-    .or(z.literal('')),
-  bioShort: z
-    .string()
-    .max(
-      VALIDATION_LIMITS.bioShort.max,
-      `Short bio must be at most ${VALIDATION_LIMITS.bioShort.max} characters`
-    )
-    .optional()
-    .or(z.literal('')),
-  bioLong: z
-    .string()
-    .max(
-      VALIDATION_LIMITS.bioLong.max,
-      `Long bio must be at most ${VALIDATION_LIMITS.bioLong.max} characters`
-    )
-    .optional()
-    .or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
-  country: z.string().optional().or(z.literal('')),
-  speaks: z.array(z.string()).optional(),
-  interests: z
-    .array(z.string())
-    .max(
-      VALIDATION_LIMITS.interests.max,
-      `Maximum ${VALIDATION_LIMITS.interests.max} interests`
-    )
-    .optional(),
+  ),
 });
 
-type ProfileFormData = z.infer<typeof profileSchema>;
+type ProfileFormData = v.InferOutput<typeof profileSchema>;
 
 export function ProfileTab({ user }: TabProps) {
   const [newInterest, setNewInterest] = useState('');
@@ -147,7 +161,7 @@ export function ProfileTab({ user }: TabProps) {
     watch,
     setValue,
   } = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema),
+    resolver: valibotResolver(profileSchema),
     defaultValues: {
       // Initialize displayName = user.name if profile doesn't exist
       displayName: user?.profile?.displayName || user?.name || '',

@@ -1,5 +1,8 @@
 /* eslint-disable no-console */
 // prisma/seed.ts
+import 'dotenv/config';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import {
   AddressVisibility,
   Category,
@@ -33,7 +36,10 @@ import {
   TITLE_BY_CATEGORY,
 } from './constants';
 
-const prisma = new PrismaClient();
+// Create pg pool and Prisma adapter
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 /** ---------- Deterministic RNG ---------- */
 function mulberry32(seed: number) {
@@ -1732,8 +1738,8 @@ async function seedComments(
 
           // 3% of replies are hidden by moderator (owner or moderator)
           const isHidden = rand() > 0.97;
-          let hiddenAt = null;
-          let hiddenById = null;
+          let hiddenAt: Date | null = null;
+          let hiddenById: string | null = null;
 
           if (isHidden) {
             // Get moderators (owner or moderator role)
@@ -1890,8 +1896,8 @@ async function seedReviews(
 
       // 2% of reviews are hidden by moderator
       const isHidden = rand() > 0.98 && !isDeleted;
-      let hiddenAt = null;
-      let hiddenById = null;
+      let hiddenAt: Date | null = null;
+      let hiddenById: string | null = null;
 
       if (isHidden) {
         // Get moderators (owner or moderator role)
@@ -3123,9 +3129,11 @@ main()
   .then(async () => {
     await sleep(50);
     await prisma.$disconnect();
+    await pool.end();
   })
   .catch(async (e) => {
     console.error(e);
     await prisma.$disconnect();
+    await pool.end();
     process.exit(1);
   });

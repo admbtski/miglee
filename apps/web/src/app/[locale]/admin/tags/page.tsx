@@ -1,10 +1,9 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import { useGetTagsQuery } from '@/features/tags';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { AddTagModal } from './_components/add-tag-modal';
 import { EditTagModal } from './_components/edit-tag-modal';
 import { DeleteTagModal } from './_components/delete-tag-modal';

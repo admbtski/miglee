@@ -1,7 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
+import { format, pl } from '@/lib/date';
 import { Calendar, Clock, Lock, Unlock } from 'lucide-react';
 
 type TimeWindowsTabProps = {

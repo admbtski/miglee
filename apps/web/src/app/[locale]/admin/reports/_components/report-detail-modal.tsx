@@ -1,5 +1,6 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { NoticeModal } from '@/components/ui/notice-modal';
@@ -8,8 +9,6 @@ import {
   ReportStatus,
   ReportEntity,
 } from '@/lib/api/__generated__/react-query-update';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import {
   ExternalLink,
   Trash2,

@@ -3,6 +3,7 @@
 // TODO i18n: Panel labels and button texts need translation
 // TODO i18n: date formatting should be locale-aware
 
+import { format, pl } from '@/lib/date';
 import * as React from 'react';
 import {
   Ban,
@@ -19,8 +20,6 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 
 import { Avatar } from '@/components/ui/avatar';
 import { useEventDetailQuery } from '@/features/events';

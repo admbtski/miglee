@@ -7,7 +7,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { format, isToday, isYesterday, startOfDay } from 'date-fns';
+import { format, isToday, isYesterday, startOfDay } from '@/lib/date';
 import {
   Loader2,
   RefreshCw,

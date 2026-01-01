@@ -12,8 +12,7 @@
 
 'use client';
 
-import { format } from 'date-fns';
-import { de, enUS, pl } from 'date-fns/locale';
+import { format, de, enUS, pl } from '@/lib/date';
 import {
   AlertCircle,
   Bell,

@@ -1,10 +1,9 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import { useGetCategoriesQuery } from '@/features/categories';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { AddCategoryModal } from './_components/add-category-modal';
 import { EditCategoryModal } from './_components/edit-category-modal';
 import { DeleteCategoryModal } from './_components/delete-category-modal';

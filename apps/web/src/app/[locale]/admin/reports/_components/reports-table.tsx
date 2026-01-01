@@ -1,12 +1,11 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import {
   ReportEntity,
   ReportStatus,
 } from '@/lib/api/__generated__/react-query-update';
 import clsx from 'clsx';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { Eye } from 'lucide-react';
 
 type Report = {

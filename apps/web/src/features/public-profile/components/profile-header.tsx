@@ -3,6 +3,7 @@
 // TODO i18n: All Polish strings need translation keys
 // - Button labels, badges, stat labels, date formatting
 
+import { format, pl, enUS } from '@/lib/date';
 import { useState } from 'react';
 import {
   MessageCircle,
@@ -27,8 +28,6 @@ import { useMeQuery } from '@/features/auth';
 import { ReportUserModal } from '@/features/reports';
 import { buildAvatarUrl, buildUserCoverUrl } from '@/lib/media/url';
 import { BlurHashImage } from '@/components/ui/blurhash-image';
-import { format } from 'date-fns';
-import { pl, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n/provider-ssr';
 
 type ProfileHeaderProps = {

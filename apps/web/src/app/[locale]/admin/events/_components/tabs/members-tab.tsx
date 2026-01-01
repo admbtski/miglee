@@ -1,5 +1,6 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState, useEffect } from 'react';
 import {
   useEventMembersQuery,
@@ -32,8 +33,6 @@ import {
   Crown,
   Loader2,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { NoticeModal } from '@/components/ui/notice-modal';

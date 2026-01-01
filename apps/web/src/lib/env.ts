@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as v from 'valibot';
 
 /**
  * Environment variables for the web application.
@@ -18,46 +18,57 @@ import { z } from 'zod';
  * Client-side environment variables (NEXT_PUBLIC_*)
  * These are embedded at build time and available in the browser.
  */
-const clientEnvSchema = z.object({
-  NEXT_PUBLIC_API_URL: z
-    .string()
-    .url('NEXT_PUBLIC_API_URL must be a valid URL')
-    .default('http://localhost:4000/graphql'),
+const clientEnvSchema = v.object({
+  NEXT_PUBLIC_API_URL: v.pipe(
+    v.optional(v.string(), 'http://localhost:4000/graphql'),
+    v.url('NEXT_PUBLIC_API_URL must be a valid URL')
+  ),
 
-  NEXT_PUBLIC_WS_URL: z
-    .string()
-    .default('ws://localhost:4000/graphql')
-    .refine(
+  NEXT_PUBLIC_WS_URL: v.pipe(
+    v.optional(v.string(), 'ws://localhost:4000/graphql'),
+    v.check(
       (val) => val.startsWith('ws://') || val.startsWith('wss://'),
       'NEXT_PUBLIC_WS_URL must start with ws:// or wss://'
-    ),
+    )
+  ),
 
-  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
+  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: v.optional(v.string()),
 
-  NEXT_PUBLIC_SITE_URL: z.string().url().default('https://appname.com'),
+  NEXT_PUBLIC_SITE_URL: v.pipe(
+    v.optional(v.string(), 'https://appname.com'),
+    v.url()
+  ),
 
   // Google Analytics (optional)
-  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: v.optional(v.string()),
 });
 
 /**
  * Server-side environment variables
  * These are only available in Server Components and API routes.
  */
-const serverEnvSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+const serverEnvSchema = v.object({
+  NODE_ENV: v.optional(
+    v.picklist(['development', 'production', 'test']),
+    'development'
+  ),
 
   // Internal API URL for server-side requests (bypasses external load balancer)
-  INTERNAL_API_URL: z.string().url().optional(),
+  INTERNAL_API_URL: v.optional(v.pipe(v.string(), v.url())),
 
   // Port for Next.js server (default 3000)
-  PORT: z.coerce.number().default(3000),
+  PORT: v.pipe(
+    v.optional(v.string(), '3000'),
+    v.transform((val) => Number(val))
+  ),
 
   // Hostname for Next.js server
-  HOSTNAME: z.string().default('0.0.0.0'),
+  HOSTNAME: v.optional(v.string(), '0.0.0.0'),
 });
+
+// Type definitions
+type ClientEnv = v.InferOutput<typeof clientEnvSchema>;
+type ServerEnv = v.InferOutput<typeof serverEnvSchema>;
 
 // =============================================================================
 // Runtime Validation
@@ -67,8 +78,8 @@ const serverEnvSchema = z.object({
  * Validates and parses client-side environment variables.
  * This can be called in both client and server contexts.
  */
-function getClientEnv() {
-  const parsed = clientEnvSchema.safeParse({
+function getClientEnv(): ClientEnv {
+  const result = v.safeParse(clientEnvSchema, {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
@@ -77,50 +88,72 @@ function getClientEnv() {
     NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
   });
 
-  if (!parsed.success) {
+  if (!result.success) {
     console.error(
       '❌ Invalid client environment variables:',
-      parsed.error.flatten().fieldErrors
+      v.flatten(result.issues)
     );
 
     // In development, throw to catch issues early
     if (process.env.NODE_ENV === 'development') {
       throw new Error('Invalid client environment variables');
     }
+
+    // Fallback to defaults in production
+    return {
+      NEXT_PUBLIC_API_URL: 'http://localhost:4000/graphql',
+      NEXT_PUBLIC_WS_URL: 'ws://localhost:4000/graphql',
+      NEXT_PUBLIC_SITE_URL: 'https://appname.com',
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: undefined,
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: undefined,
+    };
   }
 
-  return parsed.data!;
+  return result.output;
 }
 
 /**
  * Validates and parses server-side environment variables.
  * This should only be called on the server.
  */
-function getServerEnv() {
-  // Skip validation on client-side
+function getServerEnv(): ServerEnv {
+  // Skip validation on client-side - return defaults
   if (typeof window !== 'undefined') {
-    return {} as z.infer<typeof serverEnvSchema>;
+    return {
+      NODE_ENV: 'development',
+      INTERNAL_API_URL: undefined,
+      PORT: 3000,
+      HOSTNAME: '0.0.0.0',
+    };
   }
 
-  const parsed = serverEnvSchema.safeParse({
+  const result = v.safeParse(serverEnvSchema, {
     NODE_ENV: process.env.NODE_ENV,
     INTERNAL_API_URL: process.env.INTERNAL_API_URL,
     PORT: process.env.PORT,
     HOSTNAME: process.env.HOSTNAME,
   });
 
-  if (!parsed.success) {
+  if (!result.success) {
     console.error(
       '❌ Invalid server environment variables:',
-      parsed.error.flatten().fieldErrors
+      v.flatten(result.issues)
     );
 
     if (process.env.NODE_ENV === 'development') {
       throw new Error('Invalid server environment variables');
     }
+
+    // Fallback to defaults in production
+    return {
+      NODE_ENV: 'development',
+      INTERNAL_API_URL: undefined,
+      PORT: 3000,
+      HOSTNAME: '0.0.0.0',
+    };
   }
 
-  return parsed.data!;
+  return result.output;
 }
 
 // =============================================================================
@@ -146,7 +179,7 @@ export const env = {
   // Client variables
   ...clientEnv,
 
-  // Server variables (will be empty object on client)
+  // Server variables
   ...serverEnv,
 
   // Derived values
@@ -175,4 +208,3 @@ export const env = {
  * Type for the environment configuration.
  */
 export type Env = typeof env;
-

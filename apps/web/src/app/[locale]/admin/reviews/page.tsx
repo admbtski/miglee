@@ -1,12 +1,11 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import {
   useAdminReviews,
   useAdminDeleteReview,
 } from '@/features/admin';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { Trash2, Star, Eye } from 'lucide-react';
 import { NoticeModal } from '@/components/ui/notice-modal';
 

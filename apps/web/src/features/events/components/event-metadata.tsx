@@ -1,7 +1,6 @@
+import { format, pl } from '@/lib/date';
 import type { EventDetailsData } from '@/features/events';
 import { Calendar, Clock, FileText, InfoIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 
 type EventMetadataProps = {
   event: EventDetailsData;

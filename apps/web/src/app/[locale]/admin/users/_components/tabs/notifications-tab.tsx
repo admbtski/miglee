@@ -1,8 +1,7 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useAdminUserNotificationsQuery } from '@/features/admin';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { Bell, BellOff, Loader2 } from 'lucide-react';

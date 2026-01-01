@@ -1,10 +1,9 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import { useAdminUpdateEventMutation } from '@/features/admin';
 import { Edit2, Save, X, User } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 
 type BasicInfoTabProps = {
   event: any;

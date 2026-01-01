@@ -12,10 +12,16 @@
  *   pnpm prisma:seed:prod
  */
 
+import 'dotenv/config';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import { PrismaClient, Role, Prisma } from '../src/prisma-client/client';
 import { CATEGORY_DEFS, TAGS } from './constants';
 
-const prisma = new PrismaClient();
+// Create pg pool and Prisma adapter
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // =============================================================================
 // Production Users (to be configured via environment variables)
@@ -168,4 +174,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

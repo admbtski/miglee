@@ -1,9 +1,8 @@
 'use client';
 
+import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import { Clock, User, Shield, AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
 
 type AuditLogTabProps = {
   userId: string;
