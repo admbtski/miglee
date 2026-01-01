@@ -31,6 +31,7 @@ const EVENT_INCLUDE = {
       sponsor: { include: { profile: true } },
     },
   },
+  appearance: true,
   // If you have a relation in Prisma:
   // joinManuallyClosedBy: true,
 } satisfies Prisma.EventInclude;

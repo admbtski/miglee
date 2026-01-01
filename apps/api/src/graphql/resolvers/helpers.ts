@@ -43,6 +43,7 @@ import type {
   DmMute as GQLDmMute,
   AddressVisibility,
   MembersVisibility,
+  EventAppearance,
 } from '../__generated__/resolvers-types';
 import {
   JoinMode,
@@ -86,6 +87,7 @@ export type EventWithGraph = Prisma.EventGetPayload<{
         sponsor: { include: { profile: true } };
       };
     };
+    appearance: true;
   };
 }>;
 
@@ -771,10 +773,21 @@ export function mapEvent(i: EventWithGraph, viewerId?: string): GQLEvent {
     faqs: [],
     joinQuestions: [],
     agendaItems: [],
-    appearance: null,
+    appearance: i.appearance
+      ? mapEventAppearance(i.appearance as EventAppearance)
+      : null,
   };
 }
 
+function mapEventAppearance(a: EventAppearance): EventAppearance {
+  return {
+    id: a.id,
+    eventId: a.eventId,
+    config: JSON.parse(a.config as unknown as string),
+    createdAt: a.createdAt,
+    updatedAt: a.updatedAt,
+  };
+}
 /* ---- Notification ---- */
 export function mapNotification(
   n: NotificationWithGraph,

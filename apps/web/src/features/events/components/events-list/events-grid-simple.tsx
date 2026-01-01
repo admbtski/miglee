@@ -2,28 +2,21 @@
  * Optimized Events Grid with responsive columns and infinite scroll
  *
  * Features:
- * - No virtualization (simpler, more stable)
- * - Responsive grid (1-3 columns based on container width)
+ * - CSS Container Queries for responsive columns based on container width
  * - Intersection Observer for infinite scroll (2400px rootMargin)
- * - ResizeObserver for dynamic column calculation
- * - Min card width: 320px, Max: 600px per card
- * - Dynamic heights work perfectly
+ * - Cards expand to fill available space (wider cards when space allows)
+ * - Breakpoints: 1 col default, 2 cols @[700px], 3 cols @[1100px]
  */
 
 'use client';
 
-import { memo, useMemo, useEffect, useState, useRef } from 'react';
+import { memo, useMemo, useEffect, useRef } from 'react';
 import { EventCard, type EventCardProps } from '../event-card';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingSkeleton } from './loading-skeleton';
 import { notEmptyString, type EventHoverCallback } from '@/features/events';
 import type { EventsListingResultFragment_EventsResult_items_Event } from '@/lib/api/__generated__/react-query-update';
-
-// Constants
-const MAX_COLUMNS = 3;
-const MIN_CARD_WIDTH = 320;
-const CARD_GAP = 24;
 
 /**
  * Map optimized EventCardData to EventCard props
@@ -76,30 +69,6 @@ function mapEventToCardProps(
   };
 }
 
-// Calculate how many columns fit in container width
-function calculateColumns(containerWidth: number): number {
-  if (containerWidth < MIN_CARD_WIDTH + CARD_GAP) return 1;
-
-  const availableWidth = containerWidth + CARD_GAP;
-  const possibleCols = Math.floor(availableWidth / (MIN_CARD_WIDTH + CARD_GAP));
-
-  return Math.min(possibleCols, MAX_COLUMNS);
-}
-
-// Get Tailwind grid classes for number of columns
-function getGridClasses(cols: number): string {
-  switch (cols) {
-    case 1:
-      return 'grid gap-6 grid-cols-1';
-    case 2:
-      return 'grid gap-6 grid-cols-1 sm:grid-cols-2';
-    case 3:
-      return 'grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
-    default:
-      return 'grid gap-6 grid-cols-1 sm:grid-cols-2';
-  }
-}
-
 // Component Props
 type EventsGridSimpleProps = {
   items: EventsListingResultFragment_EventsResult_items_Event[];
@@ -112,6 +81,17 @@ type EventsGridSimpleProps = {
   onHover?: EventHoverCallback;
 };
 
+/**
+ * Container Query Grid Classes:
+ * - Default: 1 column (narrow containers / mobile)
+ * - @[700px]: 2 columns (medium containers)
+ * - @[1100px]: 3 columns (wide containers)
+ *
+ * This ensures cards stay wider for longer before splitting into columns
+ */
+const GRID_CLASSES =
+  'grid gap-6 grid-cols-1 @[700px]:grid-cols-2 @[1100px]:grid-cols-3';
+
 export const EventsGridSimple = memo(function EventsGridSimple({
   items,
   isLoading,
@@ -122,61 +102,13 @@ export const EventsGridSimple = memo(function EventsGridSimple({
   onLoadMore,
   onHover,
 }: EventsGridSimpleProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(1200);
-
-  // Calculate responsive columns
-  const columns = useMemo(
-    () => calculateColumns(containerWidth),
-    [containerWidth]
-  );
-
-  const gridClasses = useMemo(() => getGridClasses(columns), [columns]);
 
   // Map items to card props (memoized)
   const cardProps = useMemo(
     () => items.map((item) => mapEventToCardProps(item, lang, onHover)),
     [items, lang, onHover]
   );
-
-  // Measure container width with ResizeObserver
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
-
-    // Initial measurement
-    updateWidth();
-
-    // Observe size changes (triggered when left panel or map toggles)
-    const resizeObserver = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-
-      if (entry.contentBoxSize) {
-        const size = Array.isArray(entry.contentBoxSize)
-          ? entry.contentBoxSize[0]
-          : entry.contentBoxSize;
-
-        if (size && 'inlineSize' in size) {
-          setContainerWidth(size.inlineSize);
-        } else {
-          updateWidth();
-        }
-      } else {
-        updateWidth();
-      }
-    });
-
-    resizeObserver.observe(container);
-    return () => resizeObserver.disconnect();
-  }, []);
 
   // Infinite scroll with Intersection Observer
   useEffect(() => {
@@ -196,11 +128,13 @@ export const EventsGridSimple = memo(function EventsGridSimple({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 
-  // Loading state
+  // Loading state - also use container queries
   if (isLoading && items.length === 0) {
     return (
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-3">
-        <LoadingSkeleton count={6} />
+      <div className="@container mt-3">
+        <div className={GRID_CLASSES}>
+          <LoadingSkeleton count={6} />
+        </div>
       </div>
     );
   }
@@ -215,10 +149,10 @@ export const EventsGridSimple = memo(function EventsGridSimple({
     return <EmptyState />;
   }
 
-  // Grid with all items
+  // Grid with container queries - cards respond to container width, not viewport
   return (
-    <div ref={containerRef} className="mt-3">
-      <div className={gridClasses}>
+    <div className="@container mt-3">
+      <div className={GRID_CLASSES}>
         {cardProps.map((props) => (
           <EventCard key={props.eventId} {...props} />
         ))}

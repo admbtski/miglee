@@ -270,7 +270,7 @@ export const eventAppearanceResolver: EventResolvers['appearance'] =
       return {
         id: appearance.id,
         eventId: appearance.eventId,
-        config: appearance.config as Record<string, unknown>,
+        config: JSON.parse(appearance.config as unknown as string),
         createdAt: appearance.createdAt,
         updatedAt: appearance.updatedAt,
       };

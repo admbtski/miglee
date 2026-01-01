@@ -61,7 +61,7 @@ export function DesktopSearchBar({
     <div className={twMerge('relative', className)}>
       <GlowEffect />
       <GradientBorder>
-        <div className="flex items-center py-2 pl-4 pr-1 text-sm rounded-full bg-white/90 text-zinc-800 dark:bg-zinc-950/90 dark:text-zinc-100">
+        <div className="flex items-center py-1 pl-4 pr-2 text-sm rounded-full bg-white/90 text-zinc-800 dark:bg-zinc-950/90 dark:text-zinc-100">
           {/* Search segment - opens TopDrawer focused on search */}
           <SearchSegment
             icon={<Search className="w-5 h-5 opacity-60" />}

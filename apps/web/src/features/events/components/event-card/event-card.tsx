@@ -178,7 +178,7 @@ export const EventCard = memo(function EventCard({
         />
       )}
 
-      <div className="relative h-40 mb-3 -mx-4 -mt-4 overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
+      <div className="relative aspect-[16/9] mb-3 -mx-4 -mt-4 overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
         {coverKey ? (
           <BlurHashImage
             src={buildEventCoverUrl(coverKey, 'card')}
