@@ -1,0 +1,182 @@
+# =============================================================================
+# OpenTelemetry Collector Configuration - DEVELOPMENT
+# =============================================================================
+#
+# Development configuration with:
+#   - 100% sampling (no drops)
+#   - Verbose logging
+#   - All processors enabled for testing
+#   - Debug exporter for troubleshooting
+#
+# =============================================================================
+
+receivers:
+  # OTLP receiver - primary ingestion point for all telemetry
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - 'http://localhost:3000'
+            - 'http://localhost:4000'
+          allowed_headers:
+            - '*'
+
+  # Prometheus receiver - scrape metrics from applications
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['localhost:8888']
+
+processors:
+  # Memory limiter - prevent OOM
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Batch processor - efficient export
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+    send_batch_max_size: 1024
+
+  # Resource processor - add common attributes
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: development
+        action: upsert
+      - key: telemetry.sdk.name
+        value: opentelemetry
+        action: upsert
+
+  # Attributes processor - redact sensitive data
+  attributes/redact:
+    actions:
+      # Redact common sensitive fields
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: http.request.header.x-api-key
+        action: delete
+      - key: db.statement
+        action: hash
+      # Redact potential PII patterns
+      - key: user.email
+        action: delete
+      - key: user.phone
+        action: delete
+      - key: enduser.id
+        action: hash
+
+  # Transform processor - normalize and enrich
+  transform:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          # Ensure service.name exists
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+          # Normalize HTTP status codes
+          - set(attributes["http.status_code_class"], "2xx") where attributes["http.status_code"] >= 200 and attributes["http.status_code"] < 300
+          - set(attributes["http.status_code_class"], "4xx") where attributes["http.status_code"] >= 400 and attributes["http.status_code"] < 500
+          - set(attributes["http.status_code_class"], "5xx") where attributes["http.status_code"] >= 500
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+    log_statements:
+      - context: log
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+
+exporters:
+  # Debug exporter - console output for development
+  debug:
+    verbosity: basic
+    sampling_initial: 5
+    sampling_thereafter: 20
+
+  # OTLP exporter to Tempo (traces)
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # Loki exporter (logs)
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: true
+      job: true
+
+  # Prometheus exporter (metrics)
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: app
+    resource_to_telemetry_conversion:
+      enabled: true
+    enable_open_metrics: true
+
+extensions:
+  # Health check endpoint
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: /health
+
+  # Performance profiling (dev only)
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zPages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888
+
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resource
+        - attributes/redact
+        - transform
+        - batch
+      exporters: [otlp/tempo, debug]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus]
+      processors:
+        - memory_limiter
+        - resource
+        - batch
+      exporters: [prometheus, debug]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resource
+        - attributes/redact
+        - transform
+        - batch
+      exporters: [loki, debug]

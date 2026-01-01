@@ -1,0 +1,143 @@
+# =============================================================================
+# Promtail Configuration - Log Collector
+# =============================================================================
+#
+# Promtail collects logs from Docker containers and sends them to Loki.
+# This configuration:
+#   - Scrapes Docker container logs
+#   - Extracts JSON fields (trace_id, span_id, level, etc.)
+#   - Adds labels for filtering in Grafana
+#
+# =============================================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /positions/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    tenant_id: ""
+    batchwait: 1s
+    batchsize: 1048576
+    timeout: 10s
+
+scrape_configs:
+  # =============================================================================
+  # Docker container logs
+  # =============================================================================
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          # Only collect logs from containers with specific labels
+          - name: label
+            values: ["com.docker.compose.project"]
+
+    relabel_configs:
+      # Extract container name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
+      
+      # Extract compose project
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: compose_project
+      
+      # Extract compose service
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: compose_service
+      
+      # Set job label from compose service
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: job
+      
+      # Extract container ID (short)
+      - source_labels: ['__meta_docker_container_id']
+        regex: '(.{12}).*'
+        target_label: container_id
+
+    pipeline_stages:
+      # =============================================================================
+      # JSON parsing for structured logs (Pino format)
+      # =============================================================================
+      - match:
+          selector: '{job=~"api|web|worker.*"}'
+          stages:
+            # Parse JSON logs
+            - json:
+                expressions:
+                  level: level
+                  msg: msg
+                  service: service
+                  env: env
+                  requestId: requestId
+                  trace_id: trace_id
+                  span_id: span_id
+                  pid: pid
+                  time: time
+                  err_message: err.message
+                  err_stack: err.stack
+                  method: method
+                  url: url
+                  statusCode: statusCode
+                  durationMs: durationMs
+                  # GraphQL specific
+                  operationName: operationName
+                  operation: operation
+                  # Worker specific
+                  queue: queue
+                  jobId: jobId
+                  jobName: jobName
+
+            # Map Pino numeric levels to labels
+            - template:
+                source: level
+                template: '{{ if eq .Value "10" }}trace{{ else if eq .Value "20" }}debug{{ else if eq .Value "30" }}info{{ else if eq .Value "40" }}warn{{ else if eq .Value "50" }}error{{ else if eq .Value "60" }}fatal{{ else }}{{ .Value }}{{ end }}'
+
+            # Set labels from extracted fields
+            - labels:
+                level:
+                service:
+                env:
+                trace_id:
+                span_id:
+                requestId:
+
+            # Add timestamp from log
+            - timestamp:
+                source: time
+                format: RFC3339Nano
+                fallback_formats:
+                  - RFC3339
+                  - UnixMs
+                  - Unix
+
+      # =============================================================================
+      # Fallback: non-JSON logs
+      # =============================================================================
+      - match:
+          selector: '{job!~"api|web|worker.*"}'
+          stages:
+            - regex:
+                expression: '^(?P<timestamp>\S+)\s+(?P<level>\w+)\s+(?P<message>.*)$'
+            - labels:
+                level:
+            - timestamp:
+                source: timestamp
+                format: RFC3339Nano
+                fallback_formats:
+                  - RFC3339
+
+      # =============================================================================
+      # Drop noisy logs (optional, uncomment as needed)
+      # =============================================================================
+      # - match:
+      #     selector: '{job="api"} |= "health"'
+      #     action: drop
+      #     drop_counter_reason: health_check
+

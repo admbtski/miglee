@@ -1,0 +1,256 @@
+# =============================================================================
+# OpenTelemetry Collector Configuration - PRODUCTION-LIKE
+# =============================================================================
+#
+# Production-like configuration with:
+#   - 10% head sampling + tail sampling for errors/slow/critical
+#   - Minimal logging (errors only)
+#   - Strict memory limits
+#   - No debug features
+#
+# Use this for local testing of production behavior.
+# Real production should use managed observability (Grafana Cloud, etc.)
+#
+# =============================================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 4
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - 'https://app.example.com'
+            - 'https://api.example.com'
+          allowed_headers:
+            - 'Content-Type'
+            - 'traceparent'
+            - 'tracestate'
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 60s
+          static_configs:
+            - targets: ['localhost:8888']
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 1024
+    spike_limit_mib: 256
+
+  batch:
+    timeout: 30s
+    send_batch_size: 2048
+    send_batch_max_size: 4096
+
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: production
+        action: upsert
+      - key: telemetry.sdk.name
+        value: opentelemetry
+        action: upsert
+
+  # Strict PII redaction for production
+  attributes/redact:
+    actions:
+      # Delete all sensitive headers
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: http.request.header.x-api-key
+        action: delete
+      - key: http.request.header.x-auth-token
+        action: delete
+      # Hash database statements (keep structure, hide values)
+      - key: db.statement
+        action: hash
+      # Delete PII
+      - key: user.email
+        action: delete
+      - key: user.phone
+        action: delete
+      - key: user.address
+        action: delete
+      - key: enduser.id
+        action: hash
+      # Delete request/response bodies
+      - key: http.request.body
+        action: delete
+      - key: http.response.body
+        action: delete
+      # Delete GraphQL variables (may contain PII)
+      - key: graphql.variables
+        action: delete
+
+  transform:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+          - set(attributes["http.status_code_class"], "2xx") where attributes["http.status_code"] >= 200 and attributes["http.status_code"] < 300
+          - set(attributes["http.status_code_class"], "4xx") where attributes["http.status_code"] >= 400 and attributes["http.status_code"] < 500
+          - set(attributes["http.status_code_class"], "5xx") where attributes["http.status_code"] >= 500
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+    log_statements:
+      - context: log
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+
+  # Tail sampling for production - keep important traces
+  tail_sampling:
+    decision_wait: 30s
+    num_traces: 100000
+    expected_new_traces_per_sec: 500
+    policies:
+      # 1. Always sample errors (highest priority)
+      - name: errors-policy
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+
+      # 2. Always sample slow API requests (>1s)
+      - name: slow-api-policy
+        type: latency
+        latency:
+          threshold_ms: 1000
+
+      # 3. Always sample slow jobs (>3s)
+      - name: slow-jobs-policy
+        type: and
+        and:
+          and_sub_policy:
+            - name: job-filter
+              type: string_attribute
+              string_attribute:
+                key: messaging.system
+                values: ['bullmq', 'redis']
+            - name: slow-latency
+              type: latency
+              latency:
+                threshold_ms: 3000
+
+      # 4. Always sample critical business operations
+      - name: billing-ops-policy
+        type: string_attribute
+        string_attribute:
+          key: graphql.operation.name
+          values:
+            - CreateCheckoutSession
+            - ProcessPayment
+            - HandleStripeWebhook
+            - CancelSubscription
+            - RefundPayment
+
+      # 5. Always sample auth operations
+      - name: auth-ops-policy
+        type: string_attribute
+        string_attribute:
+          key: graphql.operation.name
+          values:
+            - Login
+            - Register
+            - VerifyEmail
+            - ResetPassword
+
+      # 6. Always sample critical event operations
+      - name: event-ops-policy
+        type: string_attribute
+        string_attribute:
+          key: graphql.operation.name
+          values:
+            - CreateEvent
+            - JoinEvent
+            - LeaveEvent
+            - CheckIn
+
+      # 7. Sample 10% of remaining traces
+      - name: probabilistic-fallback
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: true
+      job: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: app
+    resource_to_telemetry_conversion:
+      enabled: true
+    enable_open_metrics: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: /health
+
+service:
+  extensions: [health_check]
+
+  telemetry:
+    logs:
+      level: error
+    metrics:
+      address: 0.0.0.0:8888
+
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resource
+        - attributes/redact
+        - transform
+        - tail_sampling
+        - batch
+      exporters: [otlp/tempo]
+
+    metrics:
+      receivers: [otlp, prometheus]
+      processors:
+        - memory_limiter
+        - resource
+        - batch
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resource
+        - attributes/redact
+        - transform
+        - batch
+      exporters: [loki]
+

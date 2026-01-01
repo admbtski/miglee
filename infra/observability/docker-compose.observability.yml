@@ -1,0 +1,237 @@
+# =============================================================================
+# Observability Stack - Grafana + Tempo + Loki + Prometheus + OTel Collector
+# =============================================================================
+#
+# Full observability stack for development and prod-like testing.
+#
+# Usage:
+#   pnpm obs:up          # Start observability stack
+#   pnpm obs:down        # Stop observability stack
+#   pnpm obs:logs        # View logs
+#   pnpm obs:test        # Run smoke tests
+#
+# Access:
+#   Grafana:    http://localhost:3001 (admin/admin)
+#   Prometheus: http://localhost:9090
+#   Tempo:      http://localhost:3200 (internal)
+#   Loki:       http://localhost:3100 (internal)
+#   Collector:  http://localhost:4317 (OTLP gRPC)
+#               http://localhost:4318 (OTLP HTTP)
+#
+# Memory Usage (approximate):
+#   - Grafana:     ~150MB
+#   - Tempo:       ~200MB
+#   - Loki:        ~200MB
+#   - Prometheus:  ~150MB
+#   - Collector:   ~100MB
+#   - Promtail:    ~50MB
+#   Total:         ~850MB - 1.2GB depending on load
+#
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # OpenTelemetry Collector - Central telemetry gateway
+  # ===========================================================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: otel-collector
+    restart: unless-stopped
+    command:
+      - --config=/etc/otelcol/config.yaml
+    volumes:
+      - ./otel-collector/otel-collector.${OTEL_ENV:-dev}.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      # OTLP gRPC receiver
+      - '4317:4317'
+      # OTLP HTTP receiver
+      - '4318:4318'
+      # Prometheus metrics endpoint (self-monitoring)
+      - '8888:8888'
+      # Prometheus exporter (for scraped app metrics)
+      - '8889:8889'
+      # Health check
+      - '13133:13133'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:13133/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - observability
+    depends_on:
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+
+  # ===========================================================================
+  # Grafana - Unified observability UI
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      # Admin credentials (change in production!)
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      # Disable login form for dev (optional)
+      GF_AUTH_DISABLE_LOGIN_FORM: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      # Feature toggles
+      GF_FEATURE_TOGGLES_ENABLE: 'traceqlEditor tempoSearch tempoBackendSearch tempoApmTable correlations'
+      # Paths
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      # Logging
+      GF_LOG_LEVEL: warn
+      # Alerting
+      GF_UNIFIED_ALERTING_ENABLED: 'true'
+      GF_ALERTING_ENABLED: 'false'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - observability
+    depends_on:
+      tempo:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+
+  # ===========================================================================
+  # Tempo - Distributed tracing backend
+  # ===========================================================================
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/tempo/tempo.yaml
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      # Tempo HTTP API (internal, for Grafana)
+      - '3200:3200'
+      # OTLP gRPC (internal, collector forwards here)
+      - '4317'
+      # OTLP HTTP (internal)
+      - '4318'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3200/ready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - observability
+
+  # ===========================================================================
+  # Loki - Log aggregation
+  # ===========================================================================
+  loki:
+    image: grafana/loki:2.9.6
+    container_name: loki
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/loki/loki.yaml
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki_data:/loki
+    ports:
+      # Loki HTTP API
+      - '3100:3100'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3100/ready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - observability
+
+  # ===========================================================================
+  # Promtail - Log collector (scrapes container logs)
+  # ===========================================================================
+  promtail:
+    image: grafana/promtail:2.9.6
+    container_name: promtail
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/promtail/promtail.yaml
+    volumes:
+      - ./promtail/promtail.yaml:/etc/promtail/promtail.yaml:ro
+      # Access to Docker container logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Positions file (track read positions)
+      - promtail_positions:/positions
+    networks:
+      - observability
+    depends_on:
+      loki:
+        condition: service_healthy
+
+  # ===========================================================================
+  # Prometheus - Metrics storage
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-24h}
+      - --web.enable-lifecycle
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - '9090:9090'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:9090/-/ready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - observability
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  observability:
+    driver: bridge
+    name: observability
+
+# =============================================================================
+# Volumes (persistent data)
+# =============================================================================
+volumes:
+  grafana_data:
+    name: obs-grafana-data
+  tempo_data:
+    name: obs-tempo-data
+  loki_data:
+    name: obs-loki-data
+  prometheus_data:
+    name: obs-prometheus-data
+  promtail_positions:
+    name: obs-promtail-positions

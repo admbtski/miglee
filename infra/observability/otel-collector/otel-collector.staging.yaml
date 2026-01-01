@@ -1,0 +1,208 @@
+# =============================================================================
+# OpenTelemetry Collector Configuration - STAGING
+# =============================================================================
+#
+# Staging configuration with:
+#   - 50% head sampling + tail sampling for errors/slow
+#   - Moderate logging
+#   - All processors enabled
+#   - No debug exporter
+#
+# =============================================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - 'https://staging.example.com'
+          allowed_headers:
+            - '*'
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['localhost:8888']
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 768
+    spike_limit_mib: 200
+
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: staging
+        action: upsert
+      - key: telemetry.sdk.name
+        value: opentelemetry
+        action: upsert
+
+  attributes/redact:
+    actions:
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: http.request.header.x-api-key
+        action: delete
+      - key: db.statement
+        action: hash
+      - key: user.email
+        action: delete
+      - key: user.phone
+        action: delete
+      - key: enduser.id
+        action: hash
+
+  transform:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+          - set(attributes["http.status_code_class"], "2xx") where attributes["http.status_code"] >= 200 and attributes["http.status_code"] < 300
+          - set(attributes["http.status_code_class"], "4xx") where attributes["http.status_code"] >= 400 and attributes["http.status_code"] < 500
+          - set(attributes["http.status_code_class"], "5xx") where attributes["http.status_code"] >= 500
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+    log_statements:
+      - context: log
+        statements:
+          - set(resource.attributes["service.name"], "unknown") where resource.attributes["service.name"] == nil
+
+  # Probabilistic sampling - 50% for staging
+  probabilistic_sampler:
+    sampling_percentage: 50
+
+  # Tail sampling - keep interesting traces
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    expected_new_traces_per_sec: 100
+    policies:
+      # Always sample errors
+      - name: errors-policy
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      # Always sample slow API requests (>1s)
+      - name: slow-api-policy
+        type: latency
+        latency:
+          threshold_ms: 1000
+      # Always sample slow jobs (>3s)
+      - name: slow-jobs-policy
+        type: and
+        and:
+          and_sub_policy:
+            - name: job-filter
+              type: string_attribute
+              string_attribute:
+                key: job.name
+                values: ['.*']
+                enabled_regex_matching: true
+            - name: slow-latency
+              type: latency
+              latency:
+                threshold_ms: 3000
+      # Always sample critical operations
+      - name: critical-ops-policy
+        type: string_attribute
+        string_attribute:
+          key: graphql.operation.name
+          values:
+            - CreateEvent
+            - JoinEvent
+            - ProcessPayment
+            - CreateCheckoutSession
+            - HandleStripeWebhook
+      # Composite policy for remaining traces (50% of non-matched)
+      - name: composite-policy
+        type: composite
+        composite:
+          max_total_spans_per_second: 1000
+          policy_order: [probabilistic-policy]
+          composite_sub_policy:
+            - name: probabilistic-policy
+              type: probabilistic
+              probabilistic:
+                sampling_percentage: 50
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    default_labels_enabled:
+      exporter: true
+      job: true
+
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: app
+    resource_to_telemetry_conversion:
+      enabled: true
+    enable_open_metrics: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: /health
+
+service:
+  extensions: [health_check]
+
+  telemetry:
+    logs:
+      level: warn
+    metrics:
+      address: 0.0.0.0:8888
+
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resource
+        - attributes/redact
+        - transform
+        - tail_sampling
+        - batch
+      exporters: [otlp/tempo]
+
+    metrics:
+      receivers: [otlp, prometheus]
+      processors:
+        - memory_limiter
+        - resource
+        - batch
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors:
+        - memory_limiter
+        - resource
+        - attributes/redact
+        - transform
+        - batch
+      exporters: [loki]
