@@ -1,6 +1,11 @@
 /**
  * Billing Mutation Resolvers
  * Handles mutations for subscriptions, one-off payments, and event sponsorships
+ *
+ * OBSERVABILITY: All mutations are instrumented with:
+ * - Metrics: billing.checkout.created/failed, billing.subscription.*, billing.boost.used
+ * - Tracing: spans for all Stripe operations
+ * - Audit logs: structured logs for compliance
  */
 
 import { GraphQLError } from 'graphql';
@@ -23,6 +28,14 @@ import {
 import { logger } from '../../../lib/pino';
 import { isAdminOrModerator } from '../shared/auth-guards';
 import { assertBillingRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
+import {
+  trackCheckout,
+  trackSubscriptionCanceled,
+  trackSubscriptionReactivated,
+  trackBoostUsed,
+  trackLocalPushUsed,
+  traceBillingOperation,
+} from '../../../lib/observability';
 
 /**
  * Create checkout session for user subscription (auto-renewable)
@@ -43,28 +56,50 @@ export const createSubscriptionCheckoutMutation: MutationResolvers['createSubscr
 
       const { input } = args;
 
-      logger.info(
-        {
-          userId: user.id,
-          plan: input.plan,
-          billingPeriod: input.billingPeriod,
-        },
-        'Creating subscription checkout'
+      return traceBillingOperation(
+        'createSubscriptionCheckout',
+        { userId: user.id },
+        async (span) => {
+          span.setAttribute('billing.plan', input.plan);
+          span.setAttribute('billing.period', input.billingPeriod);
+
+          try {
+            const result = await createSubscriptionCheckout({
+              userId: user.id,
+              userEmail: user.email,
+              userName: user.name,
+              plan: input.plan,
+              billingPeriod: input.billingPeriod,
+              withTrial: input.withTrial ?? true,
+            });
+
+            // Track successful checkout
+            trackCheckout('created', {
+              userId: user.id,
+              type: 'subscription',
+              plan: input.plan,
+            });
+
+            return {
+              checkoutUrl: result.checkoutUrl,
+              sessionId: result.sessionId,
+            };
+          } catch (error) {
+            // Track failed checkout
+            trackCheckout(
+              'failed',
+              {
+                userId: user.id,
+                type: 'subscription',
+                plan: input.plan,
+              },
+              error instanceof Error ? error.message : 'unknown'
+            );
+
+            throw error;
+          }
+        }
       );
-
-      const result = await createSubscriptionCheckout({
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.name,
-        plan: input.plan,
-        billingPeriod: input.billingPeriod,
-        withTrial: input.withTrial ?? true,
-      });
-
-      return {
-        checkoutUrl: result.checkoutUrl,
-        sessionId: result.sessionId,
-      };
     }
   );
 
@@ -87,27 +122,47 @@ export const createOneOffCheckoutMutation: MutationResolvers['createOneOffChecko
 
       const { input } = args;
 
-      logger.info(
-        {
-          userId: user.id,
-          plan: input.plan,
-          billingPeriod: input.billingPeriod,
-        },
-        'Creating one-off checkout'
+      return traceBillingOperation(
+        'createOneOffCheckout',
+        { userId: user.id },
+        async (span) => {
+          span.setAttribute('billing.plan', input.plan);
+          span.setAttribute('billing.period', input.billingPeriod);
+
+          try {
+            const result = await createOneOffCheckout({
+              userId: user.id,
+              userEmail: user.email,
+              userName: user.name,
+              plan: input.plan,
+              billingPeriod: input.billingPeriod,
+            });
+
+            trackCheckout('created', {
+              userId: user.id,
+              type: 'one_off',
+              plan: input.plan,
+            });
+
+            return {
+              checkoutUrl: result.checkoutUrl,
+              sessionId: result.sessionId,
+            };
+          } catch (error) {
+            trackCheckout(
+              'failed',
+              {
+                userId: user.id,
+                type: 'one_off',
+                plan: input.plan,
+              },
+              error instanceof Error ? error.message : 'unknown'
+            );
+
+            throw error;
+          }
+        }
       );
-
-      const result = await createOneOffCheckout({
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.name,
-        plan: input.plan,
-        billingPeriod: input.billingPeriod,
-      });
-
-      return {
-        checkoutUrl: result.checkoutUrl,
-        sessionId: result.sessionId,
-      };
     }
   );
 
@@ -131,6 +186,17 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
       const { input } = args;
 
       if (input.plan === 'FREE') {
+        trackCheckout(
+          'failed',
+          {
+            userId: user.id,
+            type: 'event_sponsorship',
+            plan: input.plan,
+            eventId: input.eventId,
+          },
+          'free_plan_not_allowed'
+        );
+
         throw new GraphQLError(
           'Cannot purchase FREE plan for event sponsorship.',
           {
@@ -139,36 +205,62 @@ export const createEventSponsorshipCheckoutMutation: MutationResolvers['createEv
         );
       }
 
-      logger.info(
-        {
-          userId: user.id,
-          eventId: input.eventId,
-          plan: input.plan,
-          actionType: input.actionType,
-          actionPackageSize: input.actionPackageSize,
-        },
-        'Creating event sponsorship checkout'
+      return traceBillingOperation(
+        'createEventSponsorshipCheckout',
+        { userId: user.id },
+        async (span) => {
+          span.setAttribute('billing.plan', input.plan);
+          span.setAttribute('billing.event_id', input.eventId);
+          if (input.actionType)
+            span.setAttribute('billing.action_type', input.actionType);
+
+          try {
+            const result = await createEventSponsorshipCheckout({
+              eventId: input.eventId,
+              userId: user.id,
+              userEmail: user.email,
+              userName: user.name,
+              plan: input.plan,
+              actionType: input.actionType as
+                | 'new'
+                | 'upgrade'
+                | 'reload'
+                | undefined,
+              actionPackageSize: input.actionPackageSize as
+                | 1
+                | 3
+                | 5
+                | undefined,
+            });
+
+            trackCheckout('created', {
+              userId: user.id,
+              type: 'event_sponsorship',
+              plan: input.plan,
+              eventId: input.eventId,
+            });
+
+            return {
+              checkoutUrl: result.checkoutUrl,
+              sessionId: result.sessionId,
+              sponsorshipId: result.sponsorshipId,
+            };
+          } catch (error) {
+            trackCheckout(
+              'failed',
+              {
+                userId: user.id,
+                type: 'event_sponsorship',
+                plan: input.plan,
+                eventId: input.eventId,
+              },
+              error instanceof Error ? error.message : 'unknown'
+            );
+
+            throw error;
+          }
+        }
       );
-
-      const result = await createEventSponsorshipCheckout({
-        eventId: input.eventId,
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.name,
-        plan: input.plan,
-        actionType: input.actionType as
-          | 'new'
-          | 'upgrade'
-          | 'reload'
-          | undefined,
-        actionPackageSize: input.actionPackageSize as 1 | 3 | 5 | undefined,
-      });
-
-      return {
-        checkoutUrl: result.checkoutUrl,
-        sessionId: result.sessionId,
-        sponsorshipId: result.sponsorshipId,
-      };
     }
   );
 
@@ -191,11 +283,29 @@ export const cancelSubscriptionMutation: MutationResolvers['cancelSubscription']
 
       const { immediately = false } = args;
 
-      logger.info({ userId: user.id, immediately }, 'Canceling subscription');
+      return traceBillingOperation(
+        'cancelSubscription',
+        { userId: user.id },
+        async (span) => {
+          span.setAttribute('billing.immediately', immediately);
 
-      await cancelSubscription(user.id, immediately);
+          // Get current subscription for tracking
+          const subscription = await prisma.userSubscription.findFirst({
+            where: { userId: user.id },
+          });
 
-      return true;
+          await cancelSubscription(user.id, immediately);
+
+          trackSubscriptionCanceled({
+            userId: user.id,
+            subscriptionId: subscription?.stripeSubscriptionId || 'unknown',
+            plan: subscription?.plan || 'unknown',
+            reason: immediately ? 'immediate' : 'at_period_end',
+          });
+
+          return true;
+        }
+      );
     }
   );
 
@@ -216,11 +326,26 @@ export const reactivateSubscriptionMutation: MutationResolvers['reactivateSubscr
       // RATE LIMIT: Protect Stripe from spam
       await assertBillingRateLimit(user.id);
 
-      logger.info({ userId: user.id }, 'Reactivating subscription');
+      return traceBillingOperation(
+        'reactivateSubscription',
+        { userId: user.id },
+        async () => {
+          // Get current subscription for tracking
+          const subscription = await prisma.userSubscription.findFirst({
+            where: { userId: user.id },
+          });
 
-      await reactivateSubscription(user.id);
+          await reactivateSubscription(user.id);
 
-      return true;
+          trackSubscriptionReactivated({
+            userId: user.id,
+            subscriptionId: subscription?.stripeSubscriptionId || 'unknown',
+            plan: subscription?.plan || 'unknown',
+          });
+
+          return true;
+        }
+      );
     }
   );
 
@@ -258,11 +383,33 @@ export const useBoostMutation: MutationResolvers['useBoost'] =
         }
       }
 
-      logger.info({ userId: user.id, eventId }, 'Using boost');
+      return traceBillingOperation(
+        'useBoost',
+        { userId: user.id },
+        async (span) => {
+          span.setAttribute('billing.event_id', eventId);
 
-      await useBoost(eventId);
+          // Get remaining boosts before use
+          const sponsorship = await prisma.eventSponsorship.findUnique({
+            where: { eventId },
+            select: { boostsTotal: true, boostsUsed: true },
+          });
 
-      return true;
+          await useBoost(eventId);
+
+          const remaining = sponsorship
+            ? sponsorship.boostsTotal - sponsorship.boostsUsed - 1
+            : 0;
+
+          trackBoostUsed({
+            userId: user.id,
+            eventId,
+            remaining: Math.max(0, remaining),
+          });
+
+          return true;
+        }
+      );
     }
   );
 
@@ -303,11 +450,33 @@ export const useLocalPushMutation: MutationResolvers['useLocalPush'] =
         }
       }
 
-      logger.info({ userId: user.id, eventId }, 'Using local push');
+      return traceBillingOperation(
+        'useLocalPush',
+        { userId: user.id },
+        async (span) => {
+          span.setAttribute('billing.event_id', eventId);
 
-      await useLocalPush(eventId);
+          // Get remaining local pushes before use
+          const sponsorship = await prisma.eventSponsorship.findUnique({
+            where: { eventId },
+            select: { localPushesTotal: true, localPushesUsed: true },
+          });
 
-      return true;
+          await useLocalPush(eventId);
+
+          const remaining = sponsorship
+            ? sponsorship.localPushesTotal - sponsorship.localPushesUsed - 1
+            : 0;
+
+          trackLocalPushUsed({
+            userId: user.id,
+            eventId,
+            remaining: Math.max(0, remaining),
+          });
+
+          return true;
+        }
+      );
     }
   );
 

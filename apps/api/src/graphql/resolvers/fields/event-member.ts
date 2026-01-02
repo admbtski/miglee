@@ -46,6 +46,7 @@ export const eventMemberEventResolver: EventMemberResolvers['event'] =
               sponsor: { include: { profile: true } },
             },
           },
+          appearance: true,
         },
       });
 

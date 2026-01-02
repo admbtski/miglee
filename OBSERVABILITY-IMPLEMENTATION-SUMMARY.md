@@ -222,6 +222,7 @@ pnpm obs:test
 | Workers not correlating | Use `addJobWithTrace()` instead of `queue.add()` |
 | Web vitals not showing | Check `/api/vitals` endpoint receives data |
 | Grafana alert errors | Alerting is **disabled by default** (optional feature) |
+| GraphiQL not working | **Fixed** - `injectTraceHeaders()` is now defensive (v1.1) |
 
 **Full troubleshooting guide**: [Troubleshooting](docs/observability/TROUBLESHOOTING.md)
 

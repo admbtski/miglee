@@ -13,6 +13,7 @@ import type {
   QueryResolvers,
 } from '../../__generated__/resolvers-types';
 import { mapEvent } from '../helpers';
+import { trackGeoQuery, traceGeoQuery } from '../../../lib/observability';
 
 const EVENT_INCLUDE = {
   categories: true,
@@ -31,6 +32,7 @@ const EVENT_INCLUDE = {
       sponsor: { include: { profile: true } },
     },
   },
+  appearance: true,
   // NOTE: appearance is resolved via field resolver (eventAppearanceResolver)
   // After running `prisma generate`, you can add: appearance: true
   // If you have a relation in Prisma:
@@ -246,6 +248,8 @@ function buildFilterSql(
 /**
  * Clusters query - returns clustered event points for a map viewport.
  * Groups events by WebMercator tile at computed zoom level.
+ *
+ * CRITICAL for observability: These are often the most expensive DB queries.
  */
 export const clustersQuery: QueryResolvers['clusters'] = async (
   _parent,
@@ -254,119 +258,143 @@ export const clustersQuery: QueryResolvers['clusters'] = async (
 ) => {
   const { bbox, zoom, filters } = args;
 
-  // Clustering tuning:
-  // Higher Zc => smaller tiles => less aggressive clustering.
-  const baseZ = clamp(Math.floor(zoom), 2, 16);
-  const Zc = clamp(baseZ + 2, 3, 16);
+  const hasFilters = !!(filters as ClusterFiltersInput);
 
-  // Base params for bbox envelope
-  const baseParams = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
+  const { result, latencyMs } = await traceGeoQuery(
+    'clusters',
+    async (span) => {
+      // Clustering tuning:
+      // Higher Zc => smaller tiles => less aggressive clustering.
+      const baseZ = clamp(Math.floor(zoom), 2, 16);
+      const Zc = clamp(baseZ + 2, 3, 16);
 
-  // Determine if we should hide canceled/deleted by default
-  const status = (filters as ClusterFiltersInput)?.status;
-  const shouldHideCanceledAndDeleted =
-    !status || (status !== 'CANCELED' && status !== 'DELETED');
+      span.setAttribute('geo.zoom', zoom);
+      span.setAttribute('geo.cluster_zoom', Zc);
 
-  // Build base WHERE conditions for canceled/deleted
-  const baseWhereConditions = shouldHideCanceledAndDeleted
-    ? `AND i."canceledAt" IS NULL
-      AND i."deletedAt" IS NULL`
-    : '';
+      // Base params for bbox envelope
+      const baseParams = [bbox.swLon, bbox.swLat, bbox.neLon, bbox.neLat];
 
-  // Append filters
-  const { whereClause, params: filterParams } = buildFilterSql(
-    filters as ClusterFiltersInput,
-    5
-  );
+      // Determine if we should hide canceled/deleted by default
+      const status = (filters as ClusterFiltersInput)?.status;
+      const shouldHideCanceledAndDeleted =
+        !status || (status !== 'CANCELED' && status !== 'DELETED');
 
-  const rows = await prisma.$queryRawUnsafe<
-    { id: string; lat: number; lng: number }[]
-  >(
-    `
-    WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
-    SELECT i.id, i.lat, i.lng
-    FROM events i
-    INNER JOIN users u ON u.id = i."ownerId"
-    CROSS JOIN bbox
-    WHERE i.geom IS NOT NULL
-      AND ST_Intersects(i.geom, bbox.geom)
-      AND i.visibility = 'PUBLIC'
-      ${baseWhereConditions}
-      ${whereClause}
-    `,
-    ...baseParams,
-    ...filterParams
-  );
+      // Build base WHERE conditions for canceled/deleted
+      const baseWhereConditions = shouldHideCanceledAndDeleted
+        ? `AND i."canceledAt" IS NULL
+        AND i."deletedAt" IS NULL`
+        : '';
 
-  // Group by tile
-  const tileMap = new Map<string, TileAgg>();
+      // Append filters
+      const { whereClause, params: filterParams } = buildFilterSql(
+        filters as ClusterFiltersInput,
+        5
+      );
 
-  for (const row of rows) {
-    const { x, y } = lngLatToTile(row.lng, row.lat, Zc);
-    const key = `${x}|${y}`;
-    let tile = tileMap.get(key);
-    if (!tile) {
-      tile = { x, y, z: Zc, sumLat: 0, sumLng: 0, count: 0, points: [] };
-      tileMap.set(key, tile);
-    }
-    tile.sumLat += row.lat;
-    tile.sumLng += row.lng;
-    tile.count++;
-    tile.points.push({ lat: row.lat, lng: row.lng, id: row.id });
-  }
+      const rows = await prisma.$queryRawUnsafe<
+        { id: string; lat: number; lng: number }[]
+      >(
+        `
+      WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
+      SELECT i.id, i.lat, i.lng
+      FROM events i
+      INNER JOIN users u ON u.id = i."ownerId"
+      CROSS JOIN bbox
+      WHERE i.geom IS NOT NULL
+        AND ST_Intersects(i.geom, bbox.geom)
+        AND i.visibility = 'PUBLIC'
+        ${baseWhereConditions}
+        ${whereClause}
+      `,
+        ...baseParams,
+        ...filterParams
+      );
 
-  // Convert tiles to output clusters
-  let autoId = 0;
-  const out: Array<{
-    id: string;
-    latitude: number;
-    longitude: number;
-    count: number;
-    region: string;
-    // GeoJSON type matches GraphQL JSON scalar
-    geoJson: Record<string, unknown>;
-  }> = [];
+      span.setAttribute('geo.db_result_count', rows.length);
 
-  for (const tile of tileMap.values()) {
-    const regionToken = encodeRegion(tile.z, tile.x, tile.y);
-    const polygon = tileToGeoJsonPolygon(tile.x, tile.y, tile.z);
+      // Group by tile
+      const tileMap = new Map<string, TileAgg>();
 
-    if (tile.count >= MIN_CLUSTER_SIZE) {
-      // Cluster: centroid of the points in this tile
-      const centroidLat = tile.sumLat / tile.count;
-      const centroidLng = tile.sumLng / tile.count;
-
-      out.push({
-        id: String(autoId++),
-        latitude: centroidLat,
-        longitude: centroidLng,
-        count: tile.count,
-        region: regionToken,
-        geoJson: polygon,
-      });
-    } else {
-      // Not enough points → emit single markers with light jitter
-      for (const p of tile.points) {
-        const j = jitter(p.lat, p.lng, autoId);
-        out.push({
-          id: String(autoId++),
-          latitude: j.lat,
-          longitude: j.lng,
-          count: 1,
-          region: regionToken,
-          geoJson: polygon,
-        });
+      for (const row of rows) {
+        const { x, y } = lngLatToTile(row.lng, row.lat, Zc);
+        const key = `${x}|${y}`;
+        let tile = tileMap.get(key);
+        if (!tile) {
+          tile = { x, y, z: Zc, sumLat: 0, sumLng: 0, count: 0, points: [] };
+          tileMap.set(key, tile);
+        }
+        tile.sumLat += row.lat;
+        tile.sumLng += row.lng;
+        tile.count++;
+        tile.points.push({ lat: row.lat, lng: row.lng, id: row.id });
       }
-    }
-  }
 
-  return out;
+      // Convert tiles to output clusters
+      let autoId = 0;
+      const out: Array<{
+        id: string;
+        latitude: number;
+        longitude: number;
+        count: number;
+        region: string;
+        geoJson: Record<string, unknown>;
+      }> = [];
+
+      for (const tile of tileMap.values()) {
+        const regionToken = encodeRegion(tile.z, tile.x, tile.y);
+        const polygon = tileToGeoJsonPolygon(tile.x, tile.y, tile.z);
+
+        if (tile.count >= MIN_CLUSTER_SIZE) {
+          const centroidLat = tile.sumLat / tile.count;
+          const centroidLng = tile.sumLng / tile.count;
+
+          out.push({
+            id: String(autoId++),
+            latitude: centroidLat,
+            longitude: centroidLng,
+            count: tile.count,
+            region: regionToken,
+            geoJson: polygon,
+          });
+        } else {
+          for (const p of tile.points) {
+            const j = jitter(p.lat, p.lng, autoId);
+            out.push({
+              id: String(autoId++),
+              latitude: j.lat,
+              longitude: j.lng,
+              count: 1,
+              region: regionToken,
+              geoJson: polygon,
+            });
+          }
+        }
+      }
+
+      span.setAttribute('geo.output_count', out.length);
+      return out;
+    },
+    { hasFilters, zoom }
+  );
+
+  // Track metrics
+  trackGeoQuery({
+    queryType: 'clusters',
+    resultCount: result.length,
+    latencyMs,
+    hasFilters,
+    zoom,
+  });
+
+  return result;
 };
 
 /* ───────────────────────────── RegionEvent query ───────────────────────────── */
 
 /**
  * RegionEvent query - returns paginated events for a specific map tile region.
+ *
+ * CRITICAL for observability: These are often the most expensive DB queries.
  */
 export const regionEventsQuery: QueryResolvers['regionEvents'] = async (
   _parent,
@@ -377,139 +405,163 @@ export const regionEventsQuery: QueryResolvers['regionEvents'] = async (
 
   const { region, page = 1, perPage = 20, filters } = args;
 
-  // Decode region token to tile coordinates
-  const { z, x, y } = decodeRegion(region);
-  const bbox = tileToBBox(x, y, z);
+  const hasFilters = !!(filters as ClusterFiltersInput);
 
-  // Clamp pagination parameters
-  const take = Math.max(1, Math.min(perPage, MAX_REGION_PAGE_SIZE));
-  const skip = Math.max(0, (page - 1) * take);
+  const { result, latencyMs } = await traceGeoQuery(
+    'region_events',
+    async (span) => {
+      // Decode region token to tile coordinates
+      const { z, x, y } = decodeRegion(region);
+      const bbox = tileToBBox(x, y, z);
 
-  // Determine if we should hide canceled/deleted by default
-  const status = (filters as ClusterFiltersInput)?.status;
-  const shouldHideCanceledAndDeleted =
-    !status || (status !== 'CANCELED' && status !== 'DELETED');
+      span.setAttribute('geo.zoom', z);
 
-  // Build base WHERE conditions for canceled/deleted
-  const baseWhereConditions = shouldHideCanceledAndDeleted
-    ? `AND i."canceledAt" IS NULL
-      AND i."deletedAt" IS NULL`
-    : '';
+      // Clamp pagination parameters
+      const take = Math.max(1, Math.min(perPage, MAX_REGION_PAGE_SIZE));
+      const skip = Math.max(0, (page - 1) * take);
 
-  // Build WHERE for items query
-  const baseParams: unknown[] = [
-    bbox.swLon,
-    bbox.swLat,
-    bbox.neLon,
-    bbox.neLat,
-    take,
-    skip,
-  ];
-  const { whereClause, params: filterParamsForItems } = buildFilterSql(
-    filters as ClusterFiltersInput,
-    7
+      // Determine if we should hide canceled/deleted by default
+      const status = (filters as ClusterFiltersInput)?.status;
+      const shouldHideCanceledAndDeleted =
+        !status || (status !== 'CANCELED' && status !== 'DELETED');
+
+      // Build base WHERE conditions for canceled/deleted
+      const baseWhereConditions = shouldHideCanceledAndDeleted
+        ? `AND i."canceledAt" IS NULL
+        AND i."deletedAt" IS NULL`
+        : '';
+
+      // Build WHERE for items query
+      const baseParams: unknown[] = [
+        bbox.swLon,
+        bbox.swLat,
+        bbox.neLon,
+        bbox.neLat,
+        take,
+        skip,
+      ];
+      const { whereClause, params: filterParamsForItems } = buildFilterSql(
+        filters as ClusterFiltersInput,
+        7
+      );
+
+      // Items query:
+      // Sorting: boosted (<24h) first, then by startAt ascending
+      const items = await prisma.$queryRawUnsafe<{ id: string }[]>(
+        `
+      WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
+      SELECT i.id
+      FROM events i
+      INNER JOIN users u ON u.id = i."ownerId"
+      CROSS JOIN bbox
+      WHERE i.geom IS NOT NULL
+        AND ST_Intersects(i.geom, bbox.geom)
+        AND i.visibility = 'PUBLIC'
+        ${baseWhereConditions}
+        ${whereClause}
+      ORDER BY 
+        CASE 
+          WHEN i."boostedAt" IS NOT NULL 
+            AND i."boostedAt" >= NOW() - INTERVAL '24 hours' 
+          THEN i."boostedAt" 
+          ELSE NULL 
+        END DESC NULLS LAST,
+        i."startAt" ASC
+      LIMIT $5 OFFSET $6
+      `,
+        ...baseParams,
+        ...filterParamsForItems
+      );
+
+      // Count query
+      const countBaseParams: unknown[] = [
+        bbox.swLon,
+        bbox.swLat,
+        bbox.neLon,
+        bbox.neLat,
+      ];
+      const { whereClause: countWhereClause, params: filterParamsForCount } =
+        buildFilterSql(filters as ClusterFiltersInput, 5);
+
+      const totalRows = await prisma.$queryRawUnsafe<{ c: number }[]>(
+        `
+      WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
+      SELECT COUNT(*)::int AS c
+      FROM events i
+      INNER JOIN users u ON u.id = i."ownerId"
+      CROSS JOIN bbox
+      WHERE i.geom IS NOT NULL
+        AND ST_Intersects(i.geom, bbox.geom)
+        AND i.visibility = 'PUBLIC'
+        ${baseWhereConditions}
+        ${countWhereClause}
+      `,
+        ...countBaseParams,
+        ...filterParamsForCount
+      );
+      const total = totalRows[0]?.c ?? 0;
+
+      span.setAttribute('geo.total_count', total);
+
+      // Fetch full event objects using Prisma
+      const eventIds = items.map((item) => item.id);
+
+      if (eventIds.length === 0) {
+        return {
+          data: [],
+          meta: {
+            page,
+            totalItems: total,
+            totalPages: 0,
+            prevPage: null,
+            nextPage: null,
+          },
+        };
+      }
+
+      const events = await prisma.event.findMany({
+        where: { id: { in: eventIds } },
+        include: EVENT_INCLUDE,
+        orderBy: [
+          { boostedAt: { sort: 'desc', nulls: 'last' } },
+          { startAt: 'asc' },
+        ],
+      });
+
+      span.setAttribute('geo.output_count', events.length);
+
+      // Keep order of ids from raw query
+      const byId = new Map(events.map((i) => [i.id, i]));
+      const orderedEvent = eventIds
+        .map((id) => byId.get(id))
+        .filter((i): i is (typeof events)[number] => Boolean(i));
+
+      // Pagination metadata
+      const totalPages = total === 0 ? 0 : Math.max(1, Math.ceil(total / take));
+      const prevPage = page > 1 ? page - 1 : null;
+      const nextPage = skip + items.length < total ? page + 1 : null;
+
+      return {
+        data: orderedEvent.map((i) => mapEvent(i, userId)),
+        meta: {
+          page,
+          totalItems: total,
+          totalPages,
+          prevPage,
+          nextPage,
+        },
+      };
+    },
+    { hasFilters }
   );
 
-  // Items query:
-  // Sorting: boosted (<24h) first, then by startAt ascending
-  const items = await prisma.$queryRawUnsafe<{ id: string }[]>(
-    `
-    WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
-    SELECT i.id
-    FROM events i
-    INNER JOIN users u ON u.id = i."ownerId"
-    CROSS JOIN bbox
-    WHERE i.geom IS NOT NULL
-      AND ST_Intersects(i.geom, bbox.geom)
-      AND i.visibility = 'PUBLIC'
-      ${baseWhereConditions}
-      ${whereClause}
-    ORDER BY 
-      CASE 
-        WHEN i."boostedAt" IS NOT NULL 
-          AND i."boostedAt" >= NOW() - INTERVAL '24 hours' 
-        THEN i."boostedAt" 
-        ELSE NULL 
-      END DESC NULLS LAST,
-      i."startAt" ASC
-    LIMIT $5 OFFSET $6
-    `,
-    ...baseParams,
-    ...filterParamsForItems
-  );
-
-  // Count query: reuse the same filter builder but with a different base param index
-  const countBaseParams: unknown[] = [
-    bbox.swLon,
-    bbox.swLat,
-    bbox.neLon,
-    bbox.neLat,
-  ];
-  const { whereClause: countWhereClause, params: filterParamsForCount } =
-    buildFilterSql(filters as ClusterFiltersInput, 5);
-
-  const totalRows = await prisma.$queryRawUnsafe<{ c: number }[]>(
-    `
-    WITH bbox AS (SELECT ST_MakeEnvelope($1, $2, $3, $4, 4326) AS geom)
-    SELECT COUNT(*)::int AS c
-    FROM events i
-    INNER JOIN users u ON u.id = i."ownerId"
-    CROSS JOIN bbox
-    WHERE i.geom IS NOT NULL
-      AND ST_Intersects(i.geom, bbox.geom)
-      AND i.visibility = 'PUBLIC'
-      ${baseWhereConditions}
-      ${countWhereClause}
-    `,
-    ...countBaseParams,
-    ...filterParamsForCount
-  );
-  const total = totalRows[0]?.c ?? 0;
-
-  // Fetch full event objects using Prisma
-  const eventIds = items.map((item) => item.id);
-
-  if (eventIds.length === 0) {
-    return {
-      data: [],
-      meta: {
-        page,
-        totalItems: total,
-        totalPages: 0,
-        prevPage: null,
-        nextPage: null,
-      },
-    };
-  }
-
-  const events = await prisma.event.findMany({
-    where: { id: { in: eventIds } },
-    include: EVENT_INCLUDE,
-    orderBy: [
-      { boostedAt: { sort: 'desc', nulls: 'last' } },
-      { startAt: 'asc' },
-    ],
+  // Track metrics
+  trackGeoQuery({
+    queryType: 'region_events',
+    resultCount: result.data.length,
+    latencyMs,
+    hasFilters,
   });
 
-  // Keep order of ids from raw query
-  const byId = new Map(events.map((i) => [i.id, i]));
-  const orderedEvent = eventIds
-    .map((id) => byId.get(id))
-    .filter((i): i is (typeof events)[number] => Boolean(i));
-
-  // Pagination metadata
-  const totalPages = total === 0 ? 0 : Math.max(1, Math.ceil(total / take));
-  const prevPage = page > 1 ? page - 1 : null;
-  const nextPage = skip + items.length < total ? page + 1 : null;
-
-  return {
-    data: orderedEvent.map((i) => mapEvent(i, userId)),
-    meta: {
-      page,
-      totalItems: total,
-      totalPages,
-      prevPage,
-      nextPage,
-    },
-  };
+  return result;
 };

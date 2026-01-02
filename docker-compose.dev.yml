@@ -163,6 +163,14 @@ services:
       # Email
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
+      # OpenTelemetry (connect to observability stack if running)
+      OTEL_SERVICE_NAME: appname-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_TRACE_SAMPLE_RATE: ${OTEL_TRACE_SAMPLE_RATE:-1.0}
+      OTEL_ENABLE_TRACING: ${OTEL_ENABLE_TRACING:-true}
+      OTEL_ENABLE_METRICS: ${OTEL_ENABLE_METRICS:-true}
+      OTEL_ENABLE_LOGGING: ${OTEL_ENABLE_LOGGING:-true}
+      OTEL_DEBUG: ${OTEL_DEBUG:-true}
     volumes:
       - api_uploads:/app/uploads
       - api_tmp:/app/tmp/uploads
@@ -180,6 +188,7 @@ services:
       start_period: 30s
     networks:
       - appname-network
+      - observability
 
   # ===========================================================================
   # Web - Next.js 15
@@ -202,6 +211,13 @@ services:
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
       INTERNAL_API_URL: http://api:4000/graphql
+      # OpenTelemetry
+      OTEL_SERVICE_NAME: appname-web
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_ENABLE_TRACING: ${OTEL_ENABLE_TRACING:-true}
+      OTEL_ENABLE_METRICS: ${OTEL_ENABLE_METRICS:-true}
+      # Browser sends to collector via HTTP (exposed port)
+      NEXT_PUBLIC_OTEL_ENDPOINT: http://localhost:4318
     depends_on:
       api:
         condition: service_healthy
@@ -213,6 +229,7 @@ services:
       start_period: 60s
     networks:
       - appname-network
+      - observability
 
   # ===========================================================================
   # Workers (Profile: workers)
@@ -238,6 +255,13 @@ services:
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
+      # OpenTelemetry
+      OTEL_SERVICE_NAME: appname-worker-reminders
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_TRACE_SAMPLE_RATE: ${OTEL_TRACE_SAMPLE_RATE:-1.0}
+      OTEL_ENABLE_TRACING: ${OTEL_ENABLE_TRACING:-true}
+      OTEL_ENABLE_METRICS: ${OTEL_ENABLE_METRICS:-true}
+      OTEL_ENABLE_LOGGING: ${OTEL_ENABLE_LOGGING:-true}
     depends_on:
       postgres:
         condition: service_healthy
@@ -245,6 +269,7 @@ services:
         condition: service_healthy
     networks:
       - appname-network
+      - observability
 
   worker_feedback:
     image: appname-api:dev
@@ -267,6 +292,13 @@ services:
       API_URL: http://api:4000
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-Appname Dev <dev@localhost>}
+      # OpenTelemetry
+      OTEL_SERVICE_NAME: appname-worker-feedback
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_TRACE_SAMPLE_RATE: ${OTEL_TRACE_SAMPLE_RATE:-1.0}
+      OTEL_ENABLE_TRACING: ${OTEL_ENABLE_TRACING:-true}
+      OTEL_ENABLE_METRICS: ${OTEL_ENABLE_METRICS:-true}
+      OTEL_ENABLE_LOGGING: ${OTEL_ENABLE_LOGGING:-true}
     depends_on:
       postgres:
         condition: service_healthy
@@ -274,6 +306,7 @@ services:
         condition: service_healthy
     networks:
       - appname-network
+      - observability
 
   worker_audit:
     image: appname-api:dev
@@ -293,6 +326,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-min-32-characters-long-change-me}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       AUDIT_ARCHIVE_PATH: /app/data/audit-archives
+      # OpenTelemetry
+      OTEL_SERVICE_NAME: appname-worker-audit
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_TRACE_SAMPLE_RATE: ${OTEL_TRACE_SAMPLE_RATE:-1.0}
+      OTEL_ENABLE_TRACING: ${OTEL_ENABLE_TRACING:-true}
+      OTEL_ENABLE_METRICS: ${OTEL_ENABLE_METRICS:-true}
+      OTEL_ENABLE_LOGGING: ${OTEL_ENABLE_LOGGING:-true}
     volumes:
       - api_audit:/app/data/audit-archives
     depends_on:
@@ -302,6 +342,7 @@ services:
         condition: service_healthy
     networks:
       - appname-network
+      - observability
 
   # ===========================================================================
   # Adminer (Profile: tools)
@@ -351,6 +392,10 @@ services:
 networks:
   appname-network:
     driver: bridge
+  # External network for observability stack (run `pnpm obs:up` first)
+  observability:
+    external: true
+    name: observability
 
 # =============================================================================
 # Volumes

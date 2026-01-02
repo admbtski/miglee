@@ -3,6 +3,12 @@ import { prisma } from '../../../lib/prisma';
 import { GraphQLError } from 'graphql';
 import { mapEvent } from '../helpers';
 import { assertEventWriteRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
+import {
+  trackJoinRequest,
+  trackMembershipChange,
+  traceMembershipOperation,
+  type JoinOutcome,
+} from '../../../lib/observability';
 
 /**
  * Request to join an event with answers to join questions (REQUEST mode)
@@ -20,301 +26,364 @@ export const requestJoinEventWithAnswersMutation: MutationResolvers['requestJoin
 
     const { eventId, answers } = input;
 
-    // Fetch event with all necessary data
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        categories: true,
-        tags: true,
-        owner: { include: { profile: true } },
-        members: {
-          where: {
-            OR: [
-              { userId: user.id },
-              { role: { in: ['OWNER', 'MODERATOR'] }, status: 'JOINED' },
-            ],
-          },
-          include: {
-            user: { include: { profile: true } },
-          },
-        },
-      },
-    });
-
-    if (!event) {
-      throw new GraphQLError('Event not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
-
-    // Check if event is deleted or canceled
-    if (event.deletedAt) {
-      throw new GraphQLError('Cannot join a deleted event', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
-
-    if (event.canceledAt) {
-      throw new GraphQLError('Cannot join a canceled event', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
-
-    // This mutation can be used for both OPEN and REQUEST modes
-    // In OPEN mode, user is immediately JOINED (if not full)
-    // In REQUEST mode, user is PENDING and needs approval
-
-    // Check existing membership
-    const existingMember = event.members.find((m) => m.userId === user.id);
-
-    if (existingMember) {
-      if (existingMember.status === 'JOINED') {
-        throw new GraphQLError('You are already a member of this event', {
-          extensions: { code: 'ALREADY_MEMBER' },
-        });
-      }
-
-      if (existingMember.status === 'PENDING') {
-        throw new GraphQLError(
-          'You already have a pending request for this event',
-          {
-            extensions: { code: 'ALREADY_PENDING' },
-          }
-        );
-      }
-
-      if (existingMember.status === 'BANNED') {
-        throw new GraphQLError('You are banned from this event', {
-          extensions: { code: 'FORBIDDEN' },
-        });
-      }
-
-      if (existingMember.status === 'REJECTED') {
-        throw new GraphQLError(
-          'Your previous request was rejected. You cannot re-apply to this event.',
-          {
-            extensions: { code: 'FORBIDDEN' },
-          }
-        );
-      }
-    }
-
-    // Fetch join questions
-    const questions = await prisma.eventJoinQuestion.findMany({
-      where: { eventId },
-      orderBy: { order: 'asc' },
-    });
-
-    // Validate answers
-    const requiredQuestions = questions.filter((q) => q.required);
-    const answeredQuestionIds = answers.map((a) => a.questionId);
-
-    // Check all required questions are answered
-    for (const q of requiredQuestions) {
-      if (!answeredQuestionIds.includes(q.id)) {
-        throw new GraphQLError(`Question "${q.label}" is required`, {
-          extensions: { code: 'BAD_USER_INPUT' },
-        });
-      }
-    }
-
-    // Validate each answer
-    for (const answer of answers) {
-      const question = questions.find((q) => q.id === answer.questionId);
-
-      if (!question) {
-        throw new GraphQLError(`Question not found: ${answer.questionId}`, {
-          extensions: { code: 'BAD_USER_INPUT' },
-        });
-      }
-
-      // Validate answer format based on question type
-      if (question.type === 'TEXT') {
-        if (typeof answer.answer !== 'string') {
-          throw new GraphQLError(
-            `Answer for "${question.label}" must be a string`,
-            {
-              extensions: { code: 'BAD_USER_INPUT' },
-            }
-          );
-        }
-
-        const textAnswer = answer.answer as string;
-        if (question.maxLength && textAnswer.length > question.maxLength) {
-          throw new GraphQLError(
-            `Answer for "${question.label}" exceeds maximum length of ${question.maxLength}`,
-            {
-              extensions: { code: 'BAD_USER_INPUT' },
-            }
-          );
-        }
-      } else if (question.type === 'SINGLE_CHOICE') {
-        if (typeof answer.answer !== 'string') {
-          throw new GraphQLError(
-            `Answer for "${question.label}" must be a single choice`,
-            {
-              extensions: { code: 'BAD_USER_INPUT' },
-            }
-          );
-        }
-      } else if (question.type === 'MULTI_CHOICE') {
-        if (!Array.isArray(answer.answer)) {
-          throw new GraphQLError(
-            `Answer for "${question.label}" must be an array of choices`,
-            {
-              extensions: { code: 'BAD_USER_INPUT' },
-            }
-          );
-        }
-      }
-    }
-
-    // Determine member status based on join mode and capacity
-    // Count current joined members
-    const joinedCount = await prisma.eventMember.count({
-      where: {
-        eventId,
-        status: 'JOINED',
-      },
-    });
-    const isFull = event.max !== null && joinedCount >= event.max;
-
-    // In OPEN mode: user is JOINED immediately (if not full)
-    // In REQUEST mode: user is PENDING and needs approval
-    const memberStatus =
-      event.joinMode === 'OPEN' && !isFull ? 'JOINED' : 'PENDING';
-    const eventKind = event.joinMode === 'OPEN' && !isFull ? 'JOIN' : 'REQUEST';
-
-    // Create or update EventMember and save answers in a transaction
-    await prisma.$transaction(async (tx) => {
-      // Create or update member
-      await tx.eventMember.upsert({
-        where: {
-          eventId_userId: {
-            eventId,
-            userId: user.id,
-          },
-        },
-        create: {
-          eventId,
-          userId: user.id,
-          status: memberStatus,
-          role: 'PARTICIPANT',
-          joinedAt: memberStatus === 'JOINED' ? new Date() : null,
-        },
-        update: {
-          status: memberStatus,
-          joinedAt: memberStatus === 'JOINED' ? new Date() : undefined,
-        },
-      });
-
-      // Delete existing answers (if re-applying)
-      await tx.eventJoinAnswer.deleteMany({
-        where: {
-          eventId,
-          userId: user.id,
-        },
-      });
-
-      // Create new answers
-      await tx.eventJoinAnswer.createMany({
-        data: answers.map((a) => ({
-          eventId,
-          userId: user.id,
-          questionId: a.questionId,
-          answer: a.answer,
-        })),
-      });
-
-      // Update joinedCount if user was immediately joined
-      if (memberStatus === 'JOINED') {
-        await tx.event.update({
+    return traceMembershipOperation(
+      'requestJoinEventWithAnswers',
+      { eventId, userId: user.id },
+      async (span) => {
+        // Fetch event with all necessary data
+        const event = await prisma.event.findUnique({
           where: { id: eventId },
-          data: { joinedCount: { increment: 1 } },
-        });
-      }
-
-      // Create member event
-      await tx.eventMemberEvent.create({
-        data: {
-          eventId,
-          userId: user.id,
-          actorId: user.id,
-          kind: eventKind,
-        },
-      });
-    });
-
-    // Send notifications to owner and moderators only if user is PENDING (REQUEST mode)
-    if (memberStatus === 'PENDING') {
-      const recipientIds = [
-        event.ownerId,
-        ...event.members
-          .filter((m) => m.role === 'MODERATOR' && m.status === 'JOINED')
-          .map((m) => m.userId),
-      ].filter((id): id is string => id !== null && id !== user.id);
-
-      await Promise.all(
-        recipientIds.map((recipientId) =>
-          prisma.notification.create({
-            data: {
-              recipientId,
-              kind: 'JOIN_REQUEST',
-              entityType: 'EVENT',
-              entityId: eventId,
-              actorId: user.id,
-              title: null,
-              body: null,
-              data: {
-                eventId,
-                eventTitle: event.title,
-                actorName: user.name,
+          include: {
+            categories: true,
+            tags: true,
+            owner: { include: { profile: true } },
+            members: {
+              where: {
+                OR: [
+                  { userId: user.id },
+                  { role: { in: ['OWNER', 'MODERATOR'] }, status: 'JOINED' },
+                ],
+              },
+              include: {
+                user: { include: { profile: true } },
               },
             },
-          })
-        )
-      );
-    }
-
-    // Reload event with full data for response
-    const updatedEvent = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        categories: true,
-        tags: true,
-        owner: { include: { profile: true } },
-        canceledBy: { include: { profile: true } },
-        deletedBy: { include: { profile: true } },
-        members: {
-          include: {
-            user: { include: { profile: true } },
-            addedBy: { include: { profile: true } },
           },
-        },
-        sponsorship: {
-          include: {
-            sponsor: { include: { profile: true } },
+        });
+
+        if (!event) {
+          trackJoinRequest('error', { userId: user.id, eventId });
+          throw new GraphQLError('Event not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
+
+        span.setAttribute('event.join_mode', event.joinMode);
+
+        // Check if event is deleted or canceled
+        if (event.deletedAt) {
+          trackJoinRequest('closed', {
+            userId: user.id,
+            eventId,
+            joinMode: event.joinMode,
+          });
+          throw new GraphQLError('Cannot join a deleted event', {
+            extensions: { code: 'FORBIDDEN' },
+          });
+        }
+
+        if (event.canceledAt) {
+          trackJoinRequest('closed', {
+            userId: user.id,
+            eventId,
+            joinMode: event.joinMode,
+          });
+          throw new GraphQLError('Cannot join a canceled event', {
+            extensions: { code: 'FORBIDDEN' },
+          });
+        }
+
+        // This mutation can be used for both OPEN and REQUEST modes
+        // In OPEN mode, user is immediately JOINED (if not full)
+        // In REQUEST mode, user is PENDING and needs approval
+
+        // Check existing membership
+        const existingMember = event.members.find((m) => m.userId === user.id);
+
+        if (existingMember) {
+          if (existingMember.status === 'JOINED') {
+            trackJoinRequest('already_member', {
+              userId: user.id,
+              eventId,
+              joinMode: event.joinMode,
+            });
+            throw new GraphQLError('You are already a member of this event', {
+              extensions: { code: 'ALREADY_MEMBER' },
+            });
+          }
+
+          if (existingMember.status === 'PENDING') {
+            trackJoinRequest('already_member', {
+              userId: user.id,
+              eventId,
+              joinMode: event.joinMode,
+            });
+            throw new GraphQLError(
+              'You already have a pending request for this event',
+              {
+                extensions: { code: 'ALREADY_PENDING' },
+              }
+            );
+          }
+
+          if (existingMember.status === 'BANNED') {
+            trackJoinRequest('banned', {
+              userId: user.id,
+              eventId,
+              joinMode: event.joinMode,
+            });
+            throw new GraphQLError('You are banned from this event', {
+              extensions: { code: 'FORBIDDEN' },
+            });
+          }
+
+          if (existingMember.status === 'REJECTED') {
+            trackJoinRequest('denied', {
+              userId: user.id,
+              eventId,
+              joinMode: event.joinMode,
+            });
+            throw new GraphQLError(
+              'Your previous request was rejected. You cannot re-apply to this event.',
+              {
+                extensions: { code: 'FORBIDDEN' },
+              }
+            );
+          }
+        }
+
+        // Fetch join questions
+        const questions = await prisma.eventJoinQuestion.findMany({
+          where: { eventId },
+          orderBy: { order: 'asc' },
+        });
+
+        // Validate answers
+        const requiredQuestions = questions.filter((q) => q.required);
+        const answeredQuestionIds = answers.map((a) => a.questionId);
+
+        // Check all required questions are answered
+        for (const q of requiredQuestions) {
+          if (!answeredQuestionIds.includes(q.id)) {
+            throw new GraphQLError(`Question "${q.label}" is required`, {
+              extensions: { code: 'BAD_USER_INPUT' },
+            });
+          }
+        }
+
+        // Validate each answer
+        for (const answer of answers) {
+          const question = questions.find((q) => q.id === answer.questionId);
+
+          if (!question) {
+            throw new GraphQLError(`Question not found: ${answer.questionId}`, {
+              extensions: { code: 'BAD_USER_INPUT' },
+            });
+          }
+
+          // Validate answer format based on question type
+          if (question.type === 'TEXT') {
+            if (typeof answer.answer !== 'string') {
+              throw new GraphQLError(
+                `Answer for "${question.label}" must be a string`,
+                {
+                  extensions: { code: 'BAD_USER_INPUT' },
+                }
+              );
+            }
+
+            const textAnswer = answer.answer as string;
+            if (question.maxLength && textAnswer.length > question.maxLength) {
+              throw new GraphQLError(
+                `Answer for "${question.label}" exceeds maximum length of ${question.maxLength}`,
+                {
+                  extensions: { code: 'BAD_USER_INPUT' },
+                }
+              );
+            }
+          } else if (question.type === 'SINGLE_CHOICE') {
+            if (typeof answer.answer !== 'string') {
+              throw new GraphQLError(
+                `Answer for "${question.label}" must be a single choice`,
+                {
+                  extensions: { code: 'BAD_USER_INPUT' },
+                }
+              );
+            }
+          } else if (question.type === 'MULTI_CHOICE') {
+            if (!Array.isArray(answer.answer)) {
+              throw new GraphQLError(
+                `Answer for "${question.label}" must be an array of choices`,
+                {
+                  extensions: { code: 'BAD_USER_INPUT' },
+                }
+              );
+            }
+          }
+        }
+
+        // Determine member status based on join mode and capacity
+        // Count current joined members
+        const joinedCount = await prisma.eventMember.count({
+          where: {
+            eventId,
+            status: 'JOINED',
           },
-        },
-      },
-    });
+        });
+        const isFull = event.max !== null && joinedCount >= event.max;
 
-    if (!updatedEvent) {
-      throw new GraphQLError('Event not found after update', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      });
-    }
+        // Check capacity before proceeding
+        if (isFull && event.joinMode === 'OPEN') {
+          trackJoinRequest('capacity', {
+            userId: user.id,
+            eventId,
+            joinMode: event.joinMode,
+          });
+          throw new GraphQLError('Event is full', {
+            extensions: { code: 'EVENT_FULL' },
+          });
+        }
 
-    // Publish to pubsub if needed
-    if (pubsub) {
-      await pubsub.publish({
-        topic: `EVENT_UPDATED:${eventId}`,
-        payload: { eventUpdated: mapEvent(updatedEvent) },
-      });
-    }
+        // In OPEN mode: user is JOINED immediately (if not full)
+        // In REQUEST mode: user is PENDING and needs approval
+        const memberStatus =
+          event.joinMode === 'OPEN' && !isFull ? 'JOINED' : 'PENDING';
+        const eventKind =
+          event.joinMode === 'OPEN' && !isFull ? 'JOIN' : 'REQUEST';
 
-    // Return updated event
-    return mapEvent(updatedEvent);
+        // Create or update EventMember and save answers in a transaction
+        await prisma.$transaction(async (tx) => {
+          // Create or update member
+          await tx.eventMember.upsert({
+            where: {
+              eventId_userId: {
+                eventId,
+                userId: user.id,
+              },
+            },
+            create: {
+              eventId,
+              userId: user.id,
+              status: memberStatus,
+              role: 'PARTICIPANT',
+              joinedAt: memberStatus === 'JOINED' ? new Date() : null,
+            },
+            update: {
+              status: memberStatus,
+              joinedAt: memberStatus === 'JOINED' ? new Date() : undefined,
+            },
+          });
+
+          // Delete existing answers (if re-applying)
+          await tx.eventJoinAnswer.deleteMany({
+            where: {
+              eventId,
+              userId: user.id,
+            },
+          });
+
+          // Create new answers
+          await tx.eventJoinAnswer.createMany({
+            data: answers.map((a) => ({
+              eventId,
+              userId: user.id,
+              questionId: a.questionId,
+              answer: a.answer,
+            })),
+          });
+
+          // Update joinedCount if user was immediately joined
+          if (memberStatus === 'JOINED') {
+            await tx.event.update({
+              where: { id: eventId },
+              data: { joinedCount: { increment: 1 } },
+            });
+          }
+
+          // Create member event
+          await tx.eventMemberEvent.create({
+            data: {
+              eventId,
+              userId: user.id,
+              actorId: user.id,
+              kind: eventKind,
+            },
+          });
+        });
+
+        // Send notifications to owner and moderators only if user is PENDING (REQUEST mode)
+        if (memberStatus === 'PENDING') {
+          const recipientIds = [
+            event.ownerId,
+            ...event.members
+              .filter((m) => m.role === 'MODERATOR' && m.status === 'JOINED')
+              .map((m) => m.userId),
+          ].filter((id): id is string => id !== null && id !== user.id);
+
+          await Promise.all(
+            recipientIds.map((recipientId) =>
+              prisma.notification.create({
+                data: {
+                  recipientId,
+                  kind: 'JOIN_REQUEST',
+                  entityType: 'EVENT',
+                  entityId: eventId,
+                  actorId: user.id,
+                  title: null,
+                  body: null,
+                  data: {
+                    eventId,
+                    eventTitle: event.title,
+                    actorName: user.name,
+                  },
+                },
+              })
+            )
+          );
+        }
+
+        // Reload event with full data for response
+        const updatedEvent = await prisma.event.findUnique({
+          where: { id: eventId },
+          include: {
+            appearance: true,
+            categories: true,
+            tags: true,
+            owner: { include: { profile: true } },
+            canceledBy: { include: { profile: true } },
+            deletedBy: { include: { profile: true } },
+            members: {
+              include: {
+                user: { include: { profile: true } },
+                addedBy: { include: { profile: true } },
+              },
+            },
+            sponsorship: {
+              include: {
+                sponsor: { include: { profile: true } },
+              },
+            },
+          },
+        });
+
+        if (!updatedEvent) {
+          throw new GraphQLError('Event not found after update', {
+            extensions: { code: 'INTERNAL_SERVER_ERROR' },
+          });
+        }
+
+        // Publish to pubsub if needed
+        if (pubsub) {
+          await pubsub.publish({
+            topic: `EVENT_UPDATED:${eventId}`,
+            payload: { eventUpdated: mapEvent(updatedEvent) },
+          });
+        }
+
+        // Track successful join request
+        const outcome: JoinOutcome =
+          memberStatus === 'JOINED' ? 'ok' : 'requires_approval';
+        trackJoinRequest(outcome, {
+          userId: user.id,
+          eventId,
+          joinMode: event.joinMode,
+          hasAnswers: answers.length > 0,
+        });
+
+        // Return updated event
+        return mapEvent(updatedEvent);
+      }
+    );
   };
 
 /**
@@ -330,177 +399,196 @@ export const approveJoinRequestMutation: MutationResolvers['approveJoinRequest']
 
     const { eventId, userId: targetUserId } = input;
 
-    // Fetch event
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        categories: true,
-        tags: true,
-        owner: { include: { profile: true } },
-        canceledBy: { include: { profile: true } },
-        deletedBy: { include: { profile: true } },
-        members: {
+    return traceMembershipOperation(
+      'approveJoinRequest',
+      { eventId, userId: targetUserId },
+      async (span) => {
+        span.setAttribute('actor.id', user.id);
+
+        // Fetch event
+        const event = await prisma.event.findUnique({
+          where: { id: eventId },
           include: {
-            user: { include: { profile: true } },
-            addedBy: { include: { profile: true } },
+            categories: true,
+            tags: true,
+            owner: { include: { profile: true } },
+            canceledBy: { include: { profile: true } },
+            deletedBy: { include: { profile: true } },
+            members: {
+              include: {
+                user: { include: { profile: true } },
+                addedBy: { include: { profile: true } },
+              },
+            },
+            sponsorship: {
+              include: {
+                sponsor: { include: { profile: true } },
+              },
+            },
           },
-        },
-        sponsorship: {
-          include: {
-            sponsor: { include: { profile: true } },
-          },
-        },
-      },
-    });
+        });
 
-    if (!event) {
-      throw new GraphQLError('Event not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
-
-    // Check permissions
-    const isOwner = event.ownerId === user.id;
-    const isModerator = event.members.some(
-      (m) =>
-        m.userId === user.id &&
-        (m.role === 'OWNER' || m.role === 'MODERATOR') &&
-        m.status === 'JOINED'
-    );
-    const isAdmin = user.role === 'ADMIN';
-
-    if (!isOwner && !isModerator && !isAdmin) {
-      throw new GraphQLError(
-        'Only event owner or moderators can approve requests',
-        {
-          extensions: { code: 'FORBIDDEN' },
+        if (!event) {
+          throw new GraphQLError('Event not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
         }
-      );
-    }
 
-    // Find target member
-    const targetMember = event.members.find((m) => m.userId === targetUserId);
+        // Check permissions
+        const isOwner = event.ownerId === user.id;
+        const isModerator = event.members.some(
+          (m) =>
+            m.userId === user.id &&
+            (m.role === 'OWNER' || m.role === 'MODERATOR') &&
+            m.status === 'JOINED'
+        );
+        const isAdmin = user.role === 'ADMIN';
 
-    if (!targetMember) {
-      throw new GraphQLError('Member not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
+        if (!isOwner && !isModerator && !isAdmin) {
+          throw new GraphQLError(
+            'Only event owner or moderators can approve requests',
+            {
+              extensions: { code: 'FORBIDDEN' },
+            }
+          );
+        }
 
-    if (targetMember.status !== 'PENDING') {
-      throw new GraphQLError('Only PENDING requests can be approved', {
-        extensions: { code: 'BAD_USER_INPUT' },
-      });
-    }
+        // Find target member
+        const targetMember = event.members.find(
+          (m) => m.userId === targetUserId
+        );
 
-    // Check capacity (if max is null, event has unlimited capacity)
-    if (event.max !== null && event.joinedCount >= event.max) {
-      throw new GraphQLError('Event is full', {
-        extensions: { code: 'EVENT_FULL' },
-      });
-    }
+        if (!targetMember) {
+          throw new GraphQLError('Member not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
 
-    // Approve request in transaction
-    await prisma.$transaction(async (tx) => {
-      // Update member status
-      await tx.eventMember.update({
-        where: {
-          eventId_userId: {
-            eventId,
-            userId: targetUserId,
-          },
-        },
-        data: {
-          status: 'JOINED',
-          joinedAt: new Date(),
-        },
-      });
+        if (targetMember.status !== 'PENDING') {
+          throw new GraphQLError('Only PENDING requests can be approved', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
 
-      // Increment joinedCount
-      await tx.event.update({
-        where: { id: eventId },
-        data: {
-          joinedCount: {
-            increment: 1,
-          },
-        },
-      });
+        // Check capacity (if max is null, event has unlimited capacity)
+        if (event.max !== null && event.joinedCount >= event.max) {
+          throw new GraphQLError('Event is full', {
+            extensions: { code: 'EVENT_FULL' },
+          });
+        }
 
-      // Create member events
-      await tx.eventMemberEvent.createMany({
-        data: [
-          {
-            eventId,
-            userId: targetUserId,
+        // Approve request in transaction
+        await prisma.$transaction(async (tx) => {
+          // Update member status
+          await tx.eventMember.update({
+            where: {
+              eventId_userId: {
+                eventId,
+                userId: targetUserId,
+              },
+            },
+            data: {
+              status: 'JOINED',
+              joinedAt: new Date(),
+            },
+          });
+
+          // Increment joinedCount
+          await tx.event.update({
+            where: { id: eventId },
+            data: {
+              joinedCount: {
+                increment: 1,
+              },
+            },
+          });
+
+          // Create member events
+          await tx.eventMemberEvent.createMany({
+            data: [
+              {
+                eventId,
+                userId: targetUserId,
+                actorId: user.id,
+                kind: 'APPROVE',
+              },
+              {
+                eventId,
+                userId: targetUserId,
+                actorId: user.id,
+                kind: 'JOIN',
+              },
+            ],
+          });
+        });
+
+        // Send notification to target user
+        await prisma.notification.create({
+          data: {
+            recipientId: targetUserId,
+            kind: 'EVENT_MEMBERSHIP_APPROVED',
+            entityType: 'EVENT',
+            entityId: eventId,
             actorId: user.id,
-            kind: 'APPROVE',
+            title: null,
+            body: null,
+            data: {
+              eventId,
+              eventTitle: event.title,
+              actorName: user.name,
+            },
           },
-          {
-            eventId,
-            userId: targetUserId,
-            actorId: user.id,
-            kind: 'JOIN',
-          },
-        ],
-      });
-    });
+        });
 
-    // Send notification to target user
-    await prisma.notification.create({
-      data: {
-        recipientId: targetUserId,
-        kind: 'EVENT_MEMBERSHIP_APPROVED',
-        entityType: 'EVENT',
-        entityId: eventId,
-        actorId: user.id,
-        title: null,
-        body: null,
-        data: {
+        // Return updated event
+        const updated = await prisma.event.findUnique({
+          where: { id: eventId },
+          include: {
+            appearance: true,
+            categories: true,
+            tags: true,
+            owner: { include: { profile: true } },
+            canceledBy: { include: { profile: true } },
+            deletedBy: { include: { profile: true } },
+            members: {
+              include: {
+                user: { include: { profile: true } },
+                addedBy: { include: { profile: true } },
+              },
+            },
+            sponsorship: {
+              include: {
+                sponsor: { include: { profile: true } },
+              },
+            },
+          },
+        });
+
+        if (!updated) {
+          throw new GraphQLError('Event not found after update', {
+            extensions: { code: 'INTERNAL_SERVER_ERROR' },
+          });
+        }
+
+        // Track membership change
+        trackMembershipChange({
           eventId,
-          eventTitle: event.title,
-          actorName: user.name,
-        },
-      },
-    });
+          targetUserId,
+          actorId: user.id,
+          action: 'approved',
+        });
 
-    // Return updated event
-    const updated = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        categories: true,
-        tags: true,
-        owner: { include: { profile: true } },
-        canceledBy: { include: { profile: true } },
-        deletedBy: { include: { profile: true } },
-        members: {
-          include: {
-            user: { include: { profile: true } },
-            addedBy: { include: { profile: true } },
-          },
-        },
-        sponsorship: {
-          include: {
-            sponsor: { include: { profile: true } },
-          },
-        },
-      },
-    });
+        // Publish to pubsub
+        if (pubsub) {
+          await pubsub.publish({
+            topic: `EVENT_UPDATED:${eventId}`,
+            payload: { eventUpdated: mapEvent(updated) },
+          });
+        }
 
-    if (!updated) {
-      throw new GraphQLError('Event not found after update', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      });
-    }
-
-    // Publish to pubsub
-    if (pubsub) {
-      await pubsub.publish({
-        topic: `EVENT_UPDATED:${eventId}`,
-        payload: { eventUpdated: mapEvent(updated) },
-      });
-    }
-
-    return mapEvent(updated);
+        return mapEvent(updated);
+      }
+    );
   };
 
 /**
@@ -516,164 +604,184 @@ export const rejectJoinRequestMutation: MutationResolvers['rejectJoinRequest'] =
 
     const { eventId, userId: targetUserId, reason } = input;
 
-    // Fetch event
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        categories: true,
-        tags: true,
-        owner: { include: { profile: true } },
-        canceledBy: { include: { profile: true } },
-        deletedBy: { include: { profile: true } },
-        members: {
+    return traceMembershipOperation(
+      'rejectJoinRequest',
+      { eventId, userId: targetUserId },
+      async (span) => {
+        span.setAttribute('actor.id', user.id);
+
+        // Fetch event
+        const event = await prisma.event.findUnique({
+          where: { id: eventId },
           include: {
-            user: { include: { profile: true } },
-            addedBy: { include: { profile: true } },
+            categories: true,
+            tags: true,
+            owner: { include: { profile: true } },
+            canceledBy: { include: { profile: true } },
+            deletedBy: { include: { profile: true } },
+            members: {
+              include: {
+                user: { include: { profile: true } },
+                addedBy: { include: { profile: true } },
+              },
+            },
+            sponsorship: {
+              include: {
+                sponsor: { include: { profile: true } },
+              },
+            },
           },
-        },
-        sponsorship: {
+        });
+
+        if (!event) {
+          throw new GraphQLError('Event not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
+
+        // Check permissions
+        const isOwner = event.ownerId === user.id;
+        const isModerator = event.members.some(
+          (m) =>
+            m.userId === user.id &&
+            (m.role === 'OWNER' || m.role === 'MODERATOR') &&
+            m.status === 'JOINED'
+        );
+        const isAdmin = user.role === 'ADMIN';
+
+        if (!isOwner && !isModerator && !isAdmin) {
+          throw new GraphQLError(
+            'Only event owner or moderators can reject requests',
+            {
+              extensions: { code: 'FORBIDDEN' },
+            }
+          );
+        }
+
+        // Find target member
+        const targetMember = event.members.find(
+          (m) => m.userId === targetUserId
+        );
+
+        if (!targetMember) {
+          throw new GraphQLError('Member not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
+
+        if (targetMember.status !== 'PENDING') {
+          throw new GraphQLError('Only PENDING requests can be rejected', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
+
+        // Validate reason length
+        if (reason && reason.length > 500) {
+          throw new GraphQLError(
+            'Rejection reason must be at most 500 characters',
+            {
+              extensions: { code: 'BAD_USER_INPUT' },
+            }
+          );
+        }
+
+        // Reject request in transaction
+        await prisma.$transaction(async (tx) => {
+          // Update member status
+          await tx.eventMember.update({
+            where: {
+              eventId_userId: {
+                eventId,
+                userId: targetUserId,
+              },
+            },
+            data: {
+              status: 'REJECTED',
+              rejectReason: reason || null,
+            },
+          });
+
+          // Create member event
+          await tx.eventMemberEvent.create({
+            data: {
+              eventId,
+              userId: targetUserId,
+              actorId: user.id,
+              kind: 'REJECT',
+              note: reason || null,
+            },
+          });
+        });
+
+        // Send notification to target user (optionally include reason)
+        await prisma.notification.create({
+          data: {
+            recipientId: targetUserId,
+            kind: 'EVENT_MEMBERSHIP_REJECTED',
+            entityType: 'EVENT',
+            entityId: eventId,
+            actorId: user.id,
+            title: null,
+            body: null,
+            data: {
+              eventId,
+              eventTitle: event.title,
+              actorName: user.name,
+              reason: reason || undefined,
+            },
+          },
+        });
+
+        // Return updated event
+        const updated = await prisma.event.findUnique({
+          where: { id: eventId },
           include: {
-            sponsor: { include: { profile: true } },
+            appearance: true,
+            categories: true,
+            tags: true,
+            owner: { include: { profile: true } },
+            canceledBy: { include: { profile: true } },
+            deletedBy: { include: { profile: true } },
+            members: {
+              include: {
+                user: { include: { profile: true } },
+                addedBy: { include: { profile: true } },
+              },
+            },
+            sponsorship: {
+              include: {
+                sponsor: { include: { profile: true } },
+              },
+            },
           },
-        },
-      },
-    });
+        });
 
-    if (!event) {
-      throw new GraphQLError('Event not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
-
-    // Check permissions
-    const isOwner = event.ownerId === user.id;
-    const isModerator = event.members.some(
-      (m) =>
-        m.userId === user.id &&
-        (m.role === 'OWNER' || m.role === 'MODERATOR') &&
-        m.status === 'JOINED'
-    );
-    const isAdmin = user.role === 'ADMIN';
-
-    if (!isOwner && !isModerator && !isAdmin) {
-      throw new GraphQLError(
-        'Only event owner or moderators can reject requests',
-        {
-          extensions: { code: 'FORBIDDEN' },
+        if (!updated) {
+          throw new GraphQLError('Event not found after update', {
+            extensions: { code: 'INTERNAL_SERVER_ERROR' },
+          });
         }
-      );
-    }
 
-    // Find target member
-    const targetMember = event.members.find((m) => m.userId === targetUserId);
-
-    if (!targetMember) {
-      throw new GraphQLError('Member not found', {
-        extensions: { code: 'NOT_FOUND' },
-      });
-    }
-
-    if (targetMember.status !== 'PENDING') {
-      throw new GraphQLError('Only PENDING requests can be rejected', {
-        extensions: { code: 'BAD_USER_INPUT' },
-      });
-    }
-
-    // Validate reason length
-    if (reason && reason.length > 500) {
-      throw new GraphQLError(
-        'Rejection reason must be at most 500 characters',
-        {
-          extensions: { code: 'BAD_USER_INPUT' },
-        }
-      );
-    }
-
-    // Reject request in transaction
-    await prisma.$transaction(async (tx) => {
-      // Update member status
-      await tx.eventMember.update({
-        where: {
-          eventId_userId: {
-            eventId,
-            userId: targetUserId,
-          },
-        },
-        data: {
-          status: 'REJECTED',
-          rejectReason: reason || null,
-        },
-      });
-
-      // Create member event
-      await tx.eventMemberEvent.create({
-        data: {
+        // Track membership change
+        trackMembershipChange({
           eventId,
-          userId: targetUserId,
+          targetUserId,
           actorId: user.id,
-          kind: 'REJECT',
-          note: reason || null,
-        },
-      });
-    });
-
-    // Send notification to target user (optionally include reason)
-    await prisma.notification.create({
-      data: {
-        recipientId: targetUserId,
-        kind: 'EVENT_MEMBERSHIP_REJECTED',
-        entityType: 'EVENT',
-        entityId: eventId,
-        actorId: user.id,
-        title: null,
-        body: null,
-        data: {
-          eventId,
-          eventTitle: event.title,
-          actorName: user.name,
+          action: 'rejected',
           reason: reason || undefined,
-        },
-      },
-    });
+        });
 
-    // Return updated event
-    const updated = await prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        categories: true,
-        tags: true,
-        owner: { include: { profile: true } },
-        canceledBy: { include: { profile: true } },
-        deletedBy: { include: { profile: true } },
-        members: {
-          include: {
-            user: { include: { profile: true } },
-            addedBy: { include: { profile: true } },
-          },
-        },
-        sponsorship: {
-          include: {
-            sponsor: { include: { profile: true } },
-          },
-        },
-      },
-    });
+        // Publish to pubsub
+        if (pubsub) {
+          await pubsub.publish({
+            topic: `EVENT_UPDATED:${eventId}`,
+            payload: { eventUpdated: mapEvent(updated) },
+          });
+        }
 
-    if (!updated) {
-      throw new GraphQLError('Event not found after update', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      });
-    }
-
-    // Publish to pubsub
-    if (pubsub) {
-      await pubsub.publish({
-        topic: `EVENT_UPDATED:${eventId}`,
-        payload: { eventUpdated: mapEvent(updated) },
-      });
-    }
-
-    return mapEvent(updated);
+        return mapEvent(updated);
+      }
+    );
   };
 
 /**
@@ -744,6 +852,7 @@ export const cancelJoinRequestMutation: MutationResolvers['cancelJoinRequest'] =
       const event = await prisma.event.findUnique({
         where: { id: eventId },
         include: {
+          appearance: true,
           categories: true,
           tags: true,
           owner: { include: { profile: true } },

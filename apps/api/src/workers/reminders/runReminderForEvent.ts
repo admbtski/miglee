@@ -5,6 +5,7 @@ import {
   NotificationEntity,
   NotificationKind,
 } from '../../prisma-client/enums';
+import { trackScheduleFire } from '../../lib/observability';
 
 function humanTime(minutes: number) {
   if (minutes >= 60) {
@@ -22,8 +23,28 @@ export async function runReminderForEvent(
     where: { id: eventId },
     include: { members: { select: { userId: true, status: true } } },
   });
-  if (!event) return;
-  if (event.deletedAt || event.canceledAt) return;
+  if (!event) {
+    // Track schedule fire failure
+    trackScheduleFire({
+      scheduleType: 'reminder',
+      eventId,
+      scheduledAt: new Date(),
+      actualFiredAt: new Date(),
+      result: 'failed',
+    });
+    return;
+  }
+  if (event.deletedAt || event.canceledAt) {
+    // Track schedule fire skipped
+    trackScheduleFire({
+      scheduleType: 'reminder',
+      eventId,
+      scheduledAt: new Date(),
+      actualFiredAt: new Date(),
+      result: 'failed',
+    });
+    return;
+  }
 
   const recipients = event.members
     .filter((m) => m.status === 'JOINED')
@@ -86,4 +107,13 @@ export async function runReminderForEvent(
       });
     })
   );
+
+  // Track successful schedule fire
+  trackScheduleFire({
+    scheduleType: 'reminder',
+    eventId,
+    scheduledAt: new Date(),
+    actualFiredAt: new Date(),
+    result: 'ok',
+  });
 }

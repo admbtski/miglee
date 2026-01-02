@@ -6,6 +6,8 @@
  * - updateReview: SELF or ADMIN
  * - deleteReview: SELF or APP_MOD_OR_ADMIN
  * - hideReview/unhideReview: APP_MOD_OR_ADMIN
+ *
+ * CRITICAL for observability: Visibility changes generate disputes.
  */
 
 import type { Prisma } from '../../../prisma-client/client';
@@ -26,6 +28,7 @@ import {
   requireSelfOrAppMod,
 } from '../shared/auth-guards';
 import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+import { trackReviewVisibility } from '../../../lib/observability';
 
 // Temporary type aliases until prisma generate is run
 type AuditScope = CreateAuditLogInput['scope'];
@@ -431,6 +434,15 @@ export const hideReviewMutation: MutationResolvers['hideReview'] =
       severity: 4,
     });
 
+    // Track visibility change
+    trackReviewVisibility.hide(
+      userId,
+      id,
+      review.eventId,
+      undefined,
+      ctx.user?.role === 'ADMIN' ? 'admin' : 'moderator'
+    );
+
     return true;
   });
 
@@ -480,6 +492,14 @@ export const unhideReviewMutation: MutationResolvers['unhideReview'] =
       entityId: id,
       severity: 4,
     });
+
+    // Track visibility change
+    trackReviewVisibility.unhide(
+      ctx.user!.id,
+      id,
+      review.eventId,
+      ctx.user?.role === 'ADMIN' ? 'admin' : 'moderator'
+    );
 
     return true;
   });

@@ -21,6 +21,7 @@ import {
 } from '../helpers';
 import type { DmThread as GQLDmThread } from '../../__generated__/resolvers-types';
 import { isAdminOrModerator } from '../shared/auth-guards';
+import { trackMessage, trackIdempotency } from '../../../lib/observability';
 
 /**
  * Include for DM Message queries.
@@ -93,6 +94,7 @@ export const createOrGetDmThreadMutation: MutationResolvers['createOrGetDmThread
         include: DM_THREAD_INCLUDE,
       });
 
+      const wasCreated = !thread;
       if (!thread) {
         thread = await prisma.dmThread.create({
           data: {
@@ -103,6 +105,13 @@ export const createOrGetDmThreadMutation: MutationResolvers['createOrGetDmThread
           include: DM_THREAD_INCLUDE,
         });
       }
+
+      // Track idempotency for create-or-get pattern
+      trackIdempotency({
+        operationType: 'dm_thread',
+        result: wasCreated ? 'created' : 'existing',
+        entityId: thread.id,
+      });
 
       return mapDmThread(thread as unknown as DmThreadWithGraph);
     }
@@ -273,6 +282,16 @@ export const sendDmMessageMutation: MutationResolvers['sendDmMessage'] =
         },
       });
 
+      // Track message sent (no content logged!)
+      trackMessage({
+        channel: 'dm',
+        operation: 'send',
+        userId: user.id,
+        threadId: result.threadId,
+        messageLength: sanitizedContent.length,
+        success: true,
+      });
+
       return mapDmMessage(result as unknown as DmMessageWithGraph);
     }
   );
@@ -342,6 +361,16 @@ export const updateDmMessageMutation: MutationResolvers['updateDmMessage'] =
         },
       });
 
+      // Track message edit
+      trackMessage({
+        channel: 'dm',
+        operation: 'edit',
+        userId: user.id,
+        threadId: existing.threadId,
+        messageLength: sanitizedContent.length,
+        success: true,
+      });
+
       return result;
     }
   );
@@ -397,6 +426,15 @@ export const deleteDmMessageMutation: MutationResolvers['deleteDmMessage'] =
             deletedAt: deletedAt.toISOString(),
           },
         },
+      });
+
+      // Track message delete
+      trackMessage({
+        channel: 'dm',
+        operation: 'delete',
+        userId: user.id,
+        threadId: existing.threadId,
+        success: true,
       });
 
       return true;

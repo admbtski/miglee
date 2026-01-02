@@ -1,5 +1,7 @@
 /**
  * Admin Content Moderation Mutation Resolvers
+ *
+ * OBSERVABILITY: All admin actions require MANDATORY audit logging
  */
 
 import { GraphQLError } from 'graphql';
@@ -7,6 +9,7 @@ import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { requireAdmin } from '../shared/auth-guards';
+import { trackAdminAction } from '../../../lib/observability';
 
 /**
  * Mutation: Delete comment (admin)
@@ -17,6 +20,9 @@ export const adminDeleteCommentMutation: MutationResolvers['adminDeleteComment']
     'adminDeleteComment',
     async (_p, { id }, { user }) => {
       requireAdmin(user);
+      
+      // Type assertion after requireAdmin
+      const adminUser = user as { id: string; role: 'ADMIN' };
 
       const comment = await prisma.comment.findUnique({
         where: { id },
@@ -36,6 +42,14 @@ export const adminDeleteCommentMutation: MutationResolvers['adminDeleteComment']
         },
       });
 
+      // Track admin action
+      trackAdminAction({
+        adminId: adminUser.id,
+        action: 'delete_comment',
+        targetType: 'comment',
+        targetId: id,
+      });
+
       return true;
     }
   );
@@ -49,6 +63,9 @@ export const adminDeleteReviewMutation: MutationResolvers['adminDeleteReview'] =
     'adminDeleteReview',
     async (_p, { id }, { user }) => {
       requireAdmin(user);
+      
+      // Type assertion after requireAdmin
+      const adminUser = user as { id: string; role: 'ADMIN' };
 
       const review = await prisma.review.findUnique({
         where: { id },
@@ -66,6 +83,14 @@ export const adminDeleteReviewMutation: MutationResolvers['adminDeleteReview'] =
         data: {
           deletedAt: new Date(),
         },
+      });
+
+      // Track admin action
+      trackAdminAction({
+        adminId: adminUser.id,
+        action: 'delete_review',
+        targetType: 'review',
+        targetId: id,
       });
 
       return true;

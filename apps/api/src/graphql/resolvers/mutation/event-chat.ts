@@ -1,5 +1,9 @@
 /**
  * Event Chat Mutation Resolvers
+ *
+ * OBSERVABILITY: All mutations instrumented with:
+ * - Metrics: messaging.sent, messaging.edited, messaging.deleted
+ * - Tracing: spans for message operations
  */
 
 import type { Prisma } from '../../../prisma-client/client';
@@ -32,6 +36,7 @@ import {
   type EventChatMessageWithGraph,
 } from '../helpers';
 import { isAdminOrModerator } from '../shared/auth-guards';
+import { trackMessage } from '../../../lib/observability';
 
 const MESSAGE_INCLUDE = {
   author: true,
@@ -119,6 +124,16 @@ export const sendEventMessageMutation: MutationResolvers['sendEventMessage'] =
             message as EventChatMessageWithGraph
           ),
         },
+      });
+
+      // Track message sent
+      trackMessage({
+        channel: 'event_chat',
+        operation: 'send',
+        userId: user.id,
+        eventId,
+        messageLength: sanitizedContent.length,
+        success: true,
       });
 
       // Create notifications for other JOINED members (skip muted users)
@@ -285,6 +300,16 @@ export const editEventMessageMutation: MutationResolvers['editEventMessage'] =
         },
       });
 
+      // Track message edit
+      trackMessage({
+        channel: 'event_chat',
+        operation: 'edit',
+        userId: user.id,
+        eventId: existing.eventId,
+        messageLength: sanitizedContent.length,
+        success: true,
+      });
+
       return result;
     }
   );
@@ -372,6 +397,15 @@ export const deleteEventMessageMutation: MutationResolvers['deleteEventMessage']
           },
         });
 
+        // Track soft delete
+        trackMessage({
+          channel: 'event_chat',
+          operation: 'delete',
+          userId: user.id,
+          eventId: existing.eventId,
+          success: true,
+        });
+
         return true;
       }
 
@@ -395,6 +429,15 @@ export const deleteEventMessageMutation: MutationResolvers['deleteEventMessage']
           where: { id: existing.eventId },
           data: { messagesCount: { decrement: 1 } },
         });
+      });
+
+      // Track hard delete
+      trackMessage({
+        channel: 'event_chat',
+        operation: 'delete',
+        userId: user.id,
+        eventId: existing.eventId,
+        success: true,
       });
 
       return true;

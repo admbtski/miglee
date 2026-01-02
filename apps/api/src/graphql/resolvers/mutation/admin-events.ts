@@ -11,6 +11,7 @@ import type {
   Event as GQLEvent,
 } from '../../__generated__/resolvers-types.js';
 import { requireAdmin, requireAuthUser } from '../shared/auth-guards.js';
+import { trackBulkOperation } from '../../../lib/observability';
 
 /**
  * Mutation: Admin update event
@@ -268,9 +269,10 @@ export const adminBulkUpdateEventsMutation: MutationResolvers['adminBulkUpdateEv
     'Mutation',
     'adminBulkUpdateEvents',
     async (_p, { ids, input }, ctx: MercuriusContext) => {
-      requireAuthUser(ctx);
-      requireAdmin(ctx.user);
+      const currentUser = requireAuthUser(ctx);
+      requireAdmin(currentUser);
 
+      const startTime = Date.now();
       let success = 0;
       let failed = 0;
       const errors: string[] = [];
@@ -293,6 +295,18 @@ export const adminBulkUpdateEventsMutation: MutationResolvers['adminBulkUpdateEv
           errors.push(`Event ${id}: ${message}`);
         }
       }
+
+      // Track bulk operation
+      const durationMs = Date.now() - startTime;
+      trackBulkOperation({
+        operationType: 'admin_bulk_update_events',
+        actorId: currentUser.id,
+        itemCount: ids.length,
+        durationMs,
+        success: failed === 0,
+        errorReason:
+          failed > 0 ? `${failed} events failed to update` : undefined,
+      });
 
       return {
         success,

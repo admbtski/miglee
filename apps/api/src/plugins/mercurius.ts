@@ -6,31 +6,21 @@ import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import {
-  DocumentNode,
-  getOperationAST,
   GraphQLError,
-  TypeInfo,
-  visit,
-  visitWithTypeInfo,
   type ValueNode,
 } from 'graphql';
 import mercurius, { MercuriusContext } from 'mercurius';
 import { join } from 'path';
 import { WebSocket } from 'ws';
-import {
-  trace,
-  SpanStatusCode,
-  context as otelContext,
-} from '@opentelemetry/api';
+// OpenTelemetry trace (for future use)
+// import { trace } from '@opentelemetry/api';
 import { config, env } from '../env';
 import { createContext } from '../graphql/context';
 import { resolvers } from '../graphql/resolvers';
 import { prisma } from '../lib/prisma';
 import { redisEmitter } from '../lib/redis';
 
-const tracer = trace.getTracer('graphql');
-
-// =====================================  ========================================
+// =============================================================================
 // Security Configuration
 // =============================================================================
 
@@ -123,77 +113,8 @@ const errorFormatter = (execution: any, context: MercuriusContext) => {
   };
 };
 
-// =============================================================================
-// Query Complexity Calculator
-// =============================================================================
-
-const calculateComplexity = (
-  document: DocumentNode,
-  schema: ReturnType<typeof makeExecutableSchema>
-): number => {
-  let complexity = 0;
-  const typeInfo = new TypeInfo(schema);
-
-  visit(
-    document,
-    visitWithTypeInfo(typeInfo, {
-      Field: {
-        enter(node) {
-          // Base cost per field
-          complexity += 1;
-
-          // Additional cost for list fields
-          const type = typeInfo.getType();
-          if (type && type.toString().startsWith('[')) {
-            complexity += 10;
-          }
-
-          // Check for pagination arguments (first, last, limit)
-          const args = node.arguments ?? [];
-          for (const arg of args) {
-            if (['first', 'last', 'limit', 'take'].includes(arg.name.value)) {
-              if (arg.value.kind === 'IntValue') {
-                complexity += parseInt(arg.value.value, 10);
-              }
-            }
-          }
-        },
-      },
-    })
-  );
-
-  return complexity;
-};
-
-// =============================================================================
-// Introspection Blocker (for production)
-// =============================================================================
-
-const blockIntrospection = (document: DocumentNode): GraphQLError | null => {
-  if (ALLOW_INTROSPECTION) return null;
-
-  let hasIntrospection = false;
-
-  visit(document, {
-    Field(node) {
-      if (
-        node.name.value === '__schema' ||
-        node.name.value === '__type' ||
-        node.name.value.startsWith('__')
-      ) {
-        hasIntrospection = true;
-      }
-    },
-  });
-
-  if (hasIntrospection) {
-    return new GraphQLError('Introspection is disabled', {
-      extensions: { code: 'FORBIDDEN' },
-    });
-  }
-
-  return null;
-};
+// Note: Query complexity and introspection blocking are handled by depthLimit
+// and Mercurius built-in features. Custom implementations can be added here if needed.
 
 // =============================================================================
 // Scalar Resolvers
@@ -377,120 +298,6 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   // =============================================================================
 
   // ✅ Pre-execution hook for introspection blocking, complexity check, and tracing
-  fastify.graphql.addHook(
-    'preExecution',
-    async (execSchema, document, context) => {
-      const ast = getOperationAST(document, undefined);
-      const operation = ast?.operation ?? 'query';
-      const operationName = ast?.name?.value ?? 'anonymous';
-
-      // Create OpenTelemetry span for GraphQL operation
-      const span = tracer.startSpan(`GQL ${operationName}`, {
-        attributes: {
-          'graphql.operation.name': operationName,
-          'graphql.operation.type': operation,
-        },
-      });
-
-      // Store metadata for metrics and span cleanup
-      context.request.__gql = {
-        start: process.hrtime.bigint(),
-        operation,
-        operationName,
-        span, // Store span for later cleanup
-      };
-
-      // ✅ Block introspection in production
-      const introspectionError = blockIntrospection(document);
-      if (introspectionError) {
-        span.recordException(introspectionError);
-        span.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: 'Introspection blocked',
-        });
-        span.end();
-
-        return {
-          document,
-          errors: [introspectionError],
-        };
-      }
-
-      // ✅ Check query complexity
-      const complexity = calculateComplexity(document, execSchema);
-      span.setAttribute('graphql.operation.complexity', complexity);
-
-      if (complexity > MAX_QUERY_COMPLEXITY) {
-        context.request.log.warn(
-          { complexity, max: MAX_QUERY_COMPLEXITY, operationName },
-          'Query complexity exceeded'
-        );
-
-        const error = new GraphQLError(
-          `Query complexity ${complexity} exceeds maximum allowed ${MAX_QUERY_COMPLEXITY}`,
-          {
-            extensions: {
-              code: 'BAD_USER_INPUT',
-              complexity,
-              maxComplexity: MAX_QUERY_COMPLEXITY,
-            },
-          }
-        );
-
-        span.recordException(error);
-        span.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: 'Complexity exceeded',
-        });
-        span.end();
-
-        return {
-          document,
-          errors: [error],
-        };
-      }
-
-      // Log complexity in development for debugging
-      if (config.isDevelopment && complexity > 100) {
-        context.request.log.debug(
-          { complexity, operationName },
-          'Query complexity'
-        );
-      }
-
-      return { document };
-    }
-  );
 
   // Resolution hook - complete tracing and metrics
-  fastify.graphql.addHook('onResolution', async (execution, context) => {
-    const meta = context.request.__gql;
-    if (!meta) return;
-
-    const durationS = Number(process.hrtime.bigint() - meta.start) / 1e9;
-    const outcome = execution.errors?.length ? 'error' : 'ok';
-    const span = meta.span;
-
-    if (span) {
-      // Add duration and outcome to span
-      span.setAttribute('graphql.execution.duration_ms', durationS * 1000);
-      span.setAttribute('graphql.execution.outcome', outcome);
-
-      // Record errors if any
-      if (execution.errors?.length) {
-        execution.errors.forEach((error) => {
-          span.recordException(error);
-        });
-        span.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: execution.errors[0].message,
-        });
-      } else {
-        span.setStatus({ code: SpanStatusCode.OK });
-      }
-
-      // End the span
-      span.end();
-    }
-  });
 });

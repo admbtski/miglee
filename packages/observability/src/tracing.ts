@@ -13,9 +13,9 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
-import { BatchSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor, ConsoleSpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { TraceIdRatioBasedSampler, ParentBasedSampler } from '@opentelemetry/sdk-trace-base';
-import { containerDetector } from '@opentelemetry/resource-detector-container';
+import { containerDetector as _containerDetector } from '@opentelemetry/resource-detector-container';
 import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { RedisInstrumentation as Redis4Instrumentation } from '@opentelemetry/instrumentation-redis-4';
@@ -78,7 +78,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
   });
   
   // Span processors
-  const spanProcessors = [
+  const spanProcessors: SpanProcessor[] = [
     // Batch processor for production efficiency
     new BatchSpanProcessor(traceExporter, {
       maxQueueSize: 2048,
@@ -106,7 +106,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
   // SDK initialization
   sdk = new NodeSDK({
     resource,
-    spanProcessors,
+    spanProcessors: spanProcessors as any, // Type assertion for version compatibility
     sampler,
     instrumentations: [
       // HTTP instrumentation (incoming/outgoing requests)
@@ -118,7 +118,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
         },
         requestHook: (span, request) => {
           // Add custom attributes
-          span.setAttribute('http.client_ip', request.socket.remoteAddress || 'unknown');
+          span.setAttribute('http.client_ip', request.socket?.remoteAddress || 'unknown');
         },
       }),
       
@@ -134,7 +134,7 @@ export async function initTracing(): Promise<NodeSDK | null> {
       
       // Pino instrumentation (inject trace context into logs)
       new PinoInstrumentation({
-        logHook: (_span, record) => {
+        logHook: (_span, _record) => {
           // This injects trace_id and span_id into Pino logs
           // Already handled by instrumentation, but we can customize here
         },

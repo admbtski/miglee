@@ -94,7 +94,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "LCP p75",
           "refId": "A"
         }
@@ -161,7 +161,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "INP p75",
           "refId": "A"
         }
@@ -287,7 +287,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(rate(app_web_vitals_lcp_count[$__rate_interval])) * 60",
+          "expr": "sum(rate(app_web_vitals_lcp_milliseconds_count[$__rate_interval])) * 60",
           "legendFormat": "Samples/min",
           "refId": "A"
         }
@@ -398,7 +398,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_lcp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_lcp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -407,7 +407,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_lcp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p75",
           "refId": "B"
         },
@@ -416,7 +416,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_lcp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_lcp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p90",
           "refId": "C"
         },
@@ -425,7 +425,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_lcp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_lcp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p99",
           "refId": "D"
         }
@@ -535,7 +535,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_inp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(app_web_vitals_inp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -544,7 +544,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.75, sum(rate(app_web_vitals_inp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p75",
           "refId": "B"
         },
@@ -553,7 +553,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_inp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.90, sum(rate(app_web_vitals_inp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p90",
           "refId": "C"
         },
@@ -562,7 +562,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_inp_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(app_web_vitals_inp_milliseconds_bucket[$__rate_interval])) by (le))",
           "legendFormat": "p99",
           "refId": "D"
         }

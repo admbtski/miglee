@@ -3,12 +3,20 @@
  *
  * Queries for event audit logs (governance tracking).
  * Access restricted to event owner, moderators, and app admins/moderators.
+ *
+ * CRITICAL for observability: Exports do large scans, long requests, large payloads.
  */
 
 import type { Prisma } from '../../../prisma-client/client';
 import { GraphQLError } from 'graphql';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { validateModeratorAccess } from '../helpers/checkin';
+import {
+  trackExport,
+  trackExportTimeout,
+  trackAuditExport,
+  traceExportOperation,
+} from '../../../lib/observability';
 
 // Maximum export limit to prevent memory issues
 const MAX_EXPORT_LIMIT = 10000;
@@ -118,6 +126,8 @@ export const eventAuditLogs: QueryResolvers['eventAuditLogs'] = async (
  * Access: Owner, Moderator, App Admin/Moderator
  * Requires PRO plan
  * Returns all logs (up to limit) in a format suitable for download
+ *
+ * CRITICAL for observability: Large scans, long requests, large payloads.
  */
 export const exportEventAuditLogs: QueryResolvers['exportEventAuditLogs'] =
   async (
@@ -133,104 +143,157 @@ export const exportEventAuditLogs: QueryResolvers['exportEventAuditLogs'] =
       });
     }
 
+    const startTime = Date.now();
+
     try {
-      // Validate moderator/owner access
-      await validateModeratorAccess(prisma, eventId, userId);
+      return await traceExportOperation(
+        'export',
+        'audit_logs',
+        async (span) => {
+          span.setAttribute('export.user_id', userId);
+          span.setAttribute('export.event_id', eventId);
 
-      // Check if event exists and get details
-      const event = await prisma.event.findUnique({
-        where: { id: eventId },
-        select: {
-          id: true,
-          title: true,
-          sponsorshipPlan: true,
-        },
-      });
+          // Validate moderator/owner access
+          await validateModeratorAccess(prisma, eventId, userId);
 
-      if (!event) {
-        throw new GraphQLError('Event not found', {
-          extensions: { code: 'NOT_FOUND' },
-        });
-      }
-
-      // Check PRO plan requirement
-      if (event.sponsorshipPlan !== 'PRO') {
-        throw new GraphQLError('Audit log export requires PRO plan', {
-          extensions: { code: 'FORBIDDEN', requiredPlan: 'PRO' },
-        });
-      }
-
-      // Enforce max limit
-      const safeLimit = Math.min(
-        Math.max(1, limit ?? MAX_EXPORT_LIMIT),
-        MAX_EXPORT_LIMIT
-      );
-
-      // Build where clause
-      const where: Prisma.EventAuditLogWhereInput = {
-        eventId,
-      };
-
-      // Filter by scope(s)
-      if (scope && scope.length > 0) {
-        where.scope = { in: scope };
-      }
-
-      // Filter by action(s)
-      if (action && action.length > 0) {
-        where.action = { in: action };
-      }
-
-      // Filter by date range
-      if (from || to) {
-        where.createdAt = {};
-        if (from) {
-          where.createdAt.gte = new Date(from);
-        }
-        if (to) {
-          where.createdAt.lte = new Date(to);
-        }
-      }
-
-      // Fetch all logs for export
-      const items = await prisma.eventAuditLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: safeLimit,
-        include: {
-          actor: {
+          // Check if event exists and get details
+          const event = await prisma.event.findUnique({
+            where: { id: eventId },
             select: {
               id: true,
-              name: true,
+              title: true,
+              sponsorshipPlan: true,
             },
-          },
-        },
-      });
+          });
 
-      // Format data for export
-      const exportData = items.map((item) => ({
-        id: item.id,
-        createdAt: item.createdAt.toISOString(),
-        scope: item.scope,
-        action: item.action,
-        entityType: item.entityType,
-        entityId: item.entityId,
-        actorId: item.actorId,
-        actorName: item.actor?.name || null,
-        actorRole: item.actorRole,
-        severity: item.severity,
-        diff: item.diff,
-        meta: item.meta,
-      }));
+          if (!event) {
+            throw new GraphQLError('Event not found', {
+              extensions: { code: 'NOT_FOUND' },
+            });
+          }
 
-      return {
-        count: items.length,
-        eventId: event.id,
-        eventTitle: event.title,
-        exportedAt: new Date().toISOString(),
-        data: JSON.stringify(exportData, null, 2),
-      };
+          // Check PRO plan requirement
+          if (event.sponsorshipPlan !== 'PRO') {
+            throw new GraphQLError('Audit log export requires PRO plan', {
+              extensions: { code: 'FORBIDDEN', requiredPlan: 'PRO' },
+            });
+          }
+
+          // Enforce max limit
+          const safeLimit = Math.min(
+            Math.max(1, limit ?? MAX_EXPORT_LIMIT),
+            MAX_EXPORT_LIMIT
+          );
+
+          span.setAttribute('export.limit', safeLimit);
+
+          // Build where clause
+          const where: Prisma.EventAuditLogWhereInput = {
+            eventId,
+          };
+
+          // Filter by scope(s)
+          if (scope && scope.length > 0) {
+            where.scope = { in: scope };
+          }
+
+          // Filter by action(s)
+          if (action && action.length > 0) {
+            where.action = { in: action };
+          }
+
+          // Filter by date range
+          if (from || to) {
+            where.createdAt = {};
+            if (from) {
+              where.createdAt.gte = new Date(from);
+            }
+            if (to) {
+              where.createdAt.lte = new Date(to);
+            }
+          }
+
+          // Fetch all logs for export
+          const items = await prisma.eventAuditLog.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            take: safeLimit,
+            include: {
+              actor: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          });
+
+          span.setAttribute('export.record_count', items.length);
+          span.setAttribute('export.limit_hit', items.length >= safeLimit);
+
+          // Format data for export
+          const exportData = items.map((item) => ({
+            id: item.id,
+            createdAt: item.createdAt.toISOString(),
+            scope: item.scope,
+            action: item.action,
+            entityType: item.entityType,
+            entityId: item.entityId,
+            actorId: item.actorId,
+            actorName: item.actor?.name || null,
+            actorRole: item.actorRole,
+            severity: item.severity,
+            diff: item.diff,
+            meta: item.meta,
+          }));
+
+          const jsonData = JSON.stringify(exportData, null, 2);
+          const payloadSize = Buffer.byteLength(jsonData, 'utf8');
+
+          span.setAttribute('export.payload_size', payloadSize);
+
+          // Track export metrics
+          trackExport({
+            exportType: 'audit_logs',
+            userId,
+            eventId,
+            format: 'json',
+            recordCount: items.length,
+            payloadSize,
+            durationMs: Date.now() - startTime,
+            limitHit: items.length >= safeLimit,
+          });
+
+          // Track moderation audit export
+          trackAuditExport({
+            userId,
+            eventId,
+            exportType: 'audit_logs',
+            recordCount: items.length,
+            format: 'json',
+            async: false,
+            durationMs: Date.now() - startTime,
+          });
+
+          return {
+            count: items.length,
+            eventId: event.id,
+            eventTitle: event.title,
+            exportedAt: new Date().toISOString(),
+            data: jsonData,
+          };
+        }
+      );
     } catch (error) {
+      // Track timeout if it looks like one
+      if (
+        error instanceof Error &&
+        (error.message.includes('timeout') ||
+          error.message.includes('ETIMEDOUT'))
+      ) {
+        trackExportTimeout('audit_logs', userId, eventId);
+      }
+
       if (error instanceof GraphQLError) {
         throw error;
       }

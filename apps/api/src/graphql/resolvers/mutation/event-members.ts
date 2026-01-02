@@ -186,6 +186,7 @@ function reloadFullEvent(tx: Tx, eventId: string) {
   return tx.event.findUniqueOrThrow({
     where: { id: eventId },
     include: {
+      appearance: true,
       categories: true,
       tags: true,
       members: {

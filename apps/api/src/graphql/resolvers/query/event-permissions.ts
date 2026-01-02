@@ -6,10 +6,14 @@ import { GraphQLError } from 'graphql';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
+import { trackAuthzGranted, trackAuthzCheck } from '../../../lib/observability';
 
 /**
  * Query: eventPermissions
  * Returns permission flags for the current user for a specific event
+ *
+ * CRITICAL for observability: This is the defense line.
+ * Auth errors often result in "silent" 403/404.
  */
 export const eventPermissionsQuery: QueryResolvers['eventPermissions'] =
   resolverWithMetrics(
@@ -25,43 +29,64 @@ export const eventPermissionsQuery: QueryResolvers['eventPermissions'] =
 
       const userId = ctx.user.id;
 
-      // Check app-level permissions
-      const isAppAdmin = ctx.user.role === 'ADMIN';
-      const isAppModerator = ctx.user.role === 'MODERATOR';
-
-      // Find user's membership in the event
-      const membership = await prisma.eventMember.findUnique({
-        where: {
-          eventId_userId: {
-            eventId,
-            userId,
-          },
+      return trackAuthzCheck(
+        {
+          operation: 'event_read',
+          userId,
+          resourceType: 'event',
+          resourceId: eventId,
         },
-        select: {
-          role: true,
-          status: true,
-        },
-      });
+        async () => {
+          // Check app-level permissions
+          const isAppAdmin = ctx.user!.role === 'ADMIN';
+          const isAppModerator = ctx.user!.role === 'MODERATOR';
 
-      // Determine event-level permissions
-      const isOwner = membership?.role === EventMemberRole.OWNER;
-      const isModerator = membership?.role === EventMemberRole.MODERATOR;
-      const isParticipant =
-        membership?.role === EventMemberRole.PARTICIPANT &&
-        membership?.status === EventMemberStatus.JOINED;
+          // Find user's membership in the event
+          const membership = await prisma.eventMember.findUnique({
+            where: {
+              eventId_userId: {
+                eventId,
+                userId,
+              },
+            },
+            select: {
+              role: true,
+              status: true,
+            },
+          });
 
-      // User can manage if they are:
-      // - Owner or moderator of the event
-      // - App admin or moderator
-      const canManage = isOwner || isModerator || isAppAdmin || isAppModerator;
+          // Determine event-level permissions
+          const isOwner = membership?.role === EventMemberRole.OWNER;
+          const isModerator = membership?.role === EventMemberRole.MODERATOR;
+          const isParticipant =
+            membership?.role === EventMemberRole.PARTICIPANT &&
+            membership?.status === EventMemberStatus.JOINED;
 
-      return {
-        isOwner,
-        isModerator,
-        isParticipant,
-        isAppAdmin,
-        isAppModerator,
-        canManage,
-      };
+          // User can manage if they are:
+          // - Owner or moderator of the event
+          // - App admin or moderator
+          const canManage =
+            isOwner || isModerator || isAppAdmin || isAppModerator;
+
+          // Track successful permission check
+          if (canManage) {
+            trackAuthzGranted({
+              operation: 'event_admin',
+              userId,
+              resourceType: 'event',
+              resourceId: eventId,
+            });
+          }
+
+          return {
+            isOwner,
+            isModerator,
+            isParticipant,
+            isAppAdmin,
+            isAppModerator,
+            canManage,
+          };
+        }
+      );
     }
   );

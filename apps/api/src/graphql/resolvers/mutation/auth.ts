@@ -8,6 +8,12 @@ import type {
   Role,
   SessionUser,
 } from '../../__generated__/resolvers-types';
+import {
+  trackDevEndpointAccess,
+  trackDevLogin,
+  trackDevLogout,
+} from '../../../lib/observability';
+import { config } from '../../../env';
 
 function slugify(s: string) {
   return (
@@ -67,7 +73,24 @@ async function ensureDevUserByName(name: string) {
 
 export const devLoginMutation: MutationResolvers['devLogin'] =
   resolverWithMetrics('Mutation', 'devLogin', async (_p, { name }) => {
+    // Track dev endpoint access (CRITICAL for security)
+    trackDevEndpointAccess({
+      endpoint: 'dev_login',
+      environment: config.nodeEnv,
+      allowed: config.nodeEnv === 'development',
+    });
+
+    // Only allow in development
+    if (config.nodeEnv !== 'development') {
+      throw new GraphQLError('Dev login is only available in development mode', {
+        extensions: { code: 'FORBIDDEN' },
+      });
+    }
+
     const u = await ensureDevUserByName(name);
+
+    // Track dev login
+    trackDevLogin(config.nodeEnv, u.id);
 
     return {
       id: u.id!,
@@ -88,4 +111,23 @@ export const devLoginMutation: MutationResolvers['devLogin'] =
   });
 
 export const devLogoutMutation: MutationResolvers['devLogout'] =
-  resolverWithMetrics('Mutation', 'devLogout', async () => true);
+  resolverWithMetrics('Mutation', 'devLogout', async (_p, _args, ctx) => {
+    // Track dev endpoint access (CRITICAL for security)
+    trackDevEndpointAccess({
+      endpoint: 'dev_logout',
+      environment: config.nodeEnv,
+      allowed: config.nodeEnv === 'development',
+    });
+
+    // Only allow in development
+    if (config.nodeEnv !== 'development') {
+      throw new GraphQLError('Dev logout is only available in development mode', {
+        extensions: { code: 'FORBIDDEN' },
+      });
+    }
+
+    // Track dev logout
+    trackDevLogout(config.nodeEnv, ctx.user?.id);
+
+    return true;
+  });

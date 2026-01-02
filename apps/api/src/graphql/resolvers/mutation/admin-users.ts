@@ -1,5 +1,7 @@
 /**
  * Admin User Management Mutation Resolvers
+ *
+ * OBSERVABILITY: All admin actions require MANDATORY audit logging
  */
 
 import { GraphQLError } from 'graphql';
@@ -10,6 +12,12 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapUser } from '../helpers';
 import { requireAdmin, requireAuthUser } from '../shared/auth-guards';
+import {
+  trackAdminAction,
+  trackAccountDeleted,
+  trackAccountSuspended,
+  trackAccountUnsuspended,
+} from '../../../lib/observability';
 
 /**
  * Mutation: Admin update user
@@ -60,6 +68,15 @@ export const adminUpdateUserMutation: MutationResolvers['adminUpdateUser'] =
       const updated = await prisma.user.update({
         where: { id },
         data: updateData,
+      });
+
+      // Track admin action
+      trackAdminAction({
+        adminId: currentUser.id,
+        action: 'update_user',
+        targetType: 'user',
+        targetId: id,
+        diff: updateData,
       });
 
       return mapUser(updated);
@@ -116,6 +133,23 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
           where: { id },
         });
       }
+
+      // Track admin action
+      trackAdminAction({
+        adminId: currentUser.id,
+        action: 'delete_user',
+        targetType: 'user',
+        targetId: id,
+        diff: { anonymize },
+      });
+
+      // Track account deletion specifically
+      trackAccountDeleted({
+        userId: id,
+        deletionType: 'admin',
+        actorId: currentUser.id,
+        anonymize: anonymize ?? false,
+      });
 
       return true;
     }
@@ -255,6 +289,22 @@ export const adminSuspendUserMutation: MutationResolvers['adminSuspendUser'] =
         },
       });
 
+      // Track admin action
+      trackAdminAction({
+        adminId: currentUser.id,
+        action: 'suspend_user',
+        targetType: 'user',
+        targetId: id,
+        reason: reason || undefined,
+      });
+
+      // Track account suspension specifically
+      trackAccountSuspended({
+        userId: id,
+        adminId: currentUser.id,
+        reason: reason || undefined,
+      });
+
       return mapUser(updatedUser);
     }
   );
@@ -288,6 +338,20 @@ export const adminUnsuspendUserMutation: MutationResolvers['adminUnsuspendUser']
           suspendedAt: null,
           suspensionReason: null,
         },
+      });
+
+      // Track admin action
+      trackAdminAction({
+        adminId: currentUser.id,
+        action: 'unsuspend_user',
+        targetType: 'user',
+        targetId: id,
+      });
+
+      // Track account unsuspension specifically
+      trackAccountUnsuspended({
+        userId: id,
+        adminId: currentUser.id,
       });
 
       logger.info(

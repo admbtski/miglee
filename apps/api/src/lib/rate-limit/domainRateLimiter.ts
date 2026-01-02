@@ -54,7 +54,9 @@ export type RateLimitBucket =
   // Reporting abuse
   | 'gql:report'
   // Billing operations
-  | 'gql:billing';
+  | 'gql:billing'
+  // Media operations
+  | 'gql:media:presign';
 
 // =============================================================================
 // Bucket Configuration
@@ -126,6 +128,14 @@ export const BUCKET_CONFIG: Record<RateLimitBucket, RateLimitConfig> = {
   'gql:billing': {
     maxRequests: 10,
     windowSeconds: 600, // 10 minutes
+  },
+
+  // Media operations (abuse protection)
+  'gql:media:presign': {
+    maxRequests: 20,
+    windowSeconds: 60, // 20 presigns per minute
+    burstLimit: 5,
+    burstWindowSeconds: 10,
   },
 };
 

@@ -8,16 +8,10 @@
  */
 
 import { initObservability } from '@appname/observability';
-import { config } from '../env';
 
 // Initialize OpenTelemetry SDK for worker
-initObservability({
-  serviceName: `${config.serviceName}-worker`,
-  serviceVersion: process.env.BUILD_SHA || 'unknown',
-  environment: config.nodeEnv,
-  // OTLP endpoint is configured via OTEL_EXPORTER_OTLP_ENDPOINT env var
-  // For local dev, it defaults to http://localhost:4318 (OTel Collector)
-});
+// Config is loaded from environment variables automatically
+await initObservability();
 
 console.log('[Worker] OpenTelemetry initialized');
 
