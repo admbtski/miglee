@@ -6,7 +6,9 @@
  */
 
 import { trace, context, SpanStatusCode, SpanKind } from '@opentelemetry/api';
-import type { MercuriusContext } from 'mercurius';
+
+// MercuriusContext type - optional dependency
+type MercuriusContext = any;
 
 const tracer = trace.getTracer('graphql');
 
@@ -28,7 +30,7 @@ const tracer = trace.getTracer('graphql');
  */
 export function createGraphQLOperationSpan(
   document: { definitions?: Array<{ name?: { value?: string }; operation?: string }> },
-  context: MercuriusContext
+  _context: MercuriusContext
 ) {
   const operation = document.definitions?.[0];
   const operationName = operation?.name?.value || 'anonymous';
@@ -113,12 +115,17 @@ export function traceResolver<TArgs = unknown, TResult = unknown>(
  * ```
  */
 export function createResolverSpan(resolverName: string, args?: unknown) {
+  const attributes: Record<string, string> = {
+    'graphql.resolver.name': resolverName,
+  };
+  
+  if (args) {
+    attributes['graphql.resolver.args'] = JSON.stringify(args).slice(0, 500);
+  }
+  
   return tracer.startSpan(`GQL resolver ${resolverName}`, {
     kind: SpanKind.INTERNAL,
-    attributes: {
-      'graphql.resolver.name': resolverName,
-      ...(args && { 'graphql.resolver.args': JSON.stringify(args).slice(0, 500) }),
-    },
+    attributes,
   });
 }
 
@@ -157,16 +164,16 @@ export function enrichSpanWithGraphQLContext(resolverName: string, args?: unknow
  */
 export function recordGraphQLError(
   error: Error,
-  context?: { resolverName?: string; args?: unknown }
+  ctx?: { resolverName?: string; args?: unknown }
 ): void {
-  const span = trace.getSpan(context);
+  const span = trace.getSpan(context.active());
   
   if (span) {
     span.recordException(error);
     span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
     
-    if (context?.resolverName) {
-      span.setAttribute('graphql.resolver.name', context.resolverName);
+    if (ctx?.resolverName) {
+      span.setAttribute('graphql.resolver.name', ctx.resolverName);
     }
   }
 }

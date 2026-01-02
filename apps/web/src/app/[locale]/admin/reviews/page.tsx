@@ -6,7 +6,8 @@ import {
   useAdminReviews,
   useAdminDeleteReview,
 } from '@/features/admin';
-import { Trash2, Star, Eye } from 'lucide-react';
+import { useHideReview, useUnhideReview } from '@/features/reviews';
+import { Trash2, Star, Eye, EyeOff } from 'lucide-react';
 import { NoticeModal } from '@/components/ui/notice-modal';
 
 export default function ReviewsPage() {
@@ -24,6 +25,8 @@ export default function ReviewsPage() {
   });
 
   const deleteMutation = useAdminDeleteReview();
+  const hideMutation = useHideReview();
+  const unhideMutation = useUnhideReview();
 
   const reviews = data?.adminReviews?.items ?? [];
   const total = data?.adminReviews?.pageInfo?.total ?? 0;
@@ -37,6 +40,24 @@ export default function ReviewsPage() {
       refetch();
     } catch (error) {
       console.error('Failed to delete review:', error);
+    }
+  };
+
+  const handleHideReview = async (id: string) => {
+    try {
+      await hideMutation.mutateAsync({ id });
+      refetch();
+    } catch (error) {
+      console.error('Failed to hide review:', error);
+    }
+  };
+
+  const handleUnhideReview = async (id: string) => {
+    try {
+      await unhideMutation.mutateAsync({ id });
+      refetch();
+    } catch (error) {
+      console.error('Failed to unhide review:', error);
     }
   };
 
@@ -148,6 +169,9 @@ export default function ReviewsPage() {
                     Treść
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                     Data
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
@@ -159,7 +183,13 @@ export default function ReviewsPage() {
                 {reviews.map((review) => (
                   <tr
                     key={review.id}
-                    className="hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                    className={`hover:bg-zinc-50 dark:hover:bg-zinc-900 ${
+                      review.hiddenAt
+                        ? 'bg-red-50/50 dark:bg-red-950/20'
+                        : review.deletedAt
+                          ? 'bg-zinc-100/50 opacity-50 dark:bg-zinc-800/50'
+                          : ''
+                    }`}
                   >
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                       {review.author?.name || 'N/A'}
@@ -178,6 +208,21 @@ export default function ReviewsPage() {
                     <td className="max-w-md truncate px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {review.content || '-'}
                     </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm">
+                      {review.deletedAt ? (
+                        <span className="inline-flex rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-300">
+                          Usunięty
+                        </span>
+                      ) : review.hiddenAt ? (
+                        <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                          Ukryty
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                          Aktywny
+                        </span>
+                      )}
+                    </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {format(
                         new Date(review.createdAt),
@@ -195,17 +240,44 @@ export default function ReviewsPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="Zobacz wydarzenie"
                           >
                             <Eye className="h-4 w-4" />
                           </a>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => openDeleteModal(review.id)}
-                          className="inline-flex items-center gap-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {!review.deletedAt && (
+                          <>
+                            {review.hiddenAt ? (
+                              <button
+                                type="button"
+                                onClick={() => handleUnhideReview(review.id)}
+                                disabled={unhideMutation.isPending}
+                                className="inline-flex items-center gap-1 text-green-600 hover:text-green-900 disabled:opacity-50 dark:text-green-400 dark:hover:text-green-300"
+                                title="Przywróć recenzję"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleHideReview(review.id)}
+                                disabled={hideMutation.isPending}
+                                className="inline-flex items-center gap-1 text-orange-600 hover:text-orange-900 disabled:opacity-50 dark:text-orange-400 dark:hover:text-orange-300"
+                                title="Ukryj recenzję"
+                              >
+                                <EyeOff className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => openDeleteModal(review.id)}
+                              className="inline-flex items-center gap-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                              title="Usuń na zawsze"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

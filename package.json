@@ -10,6 +10,11 @@
   },
   "scripts": {
     "dev": "clear && turbo run dev",
+    "dev:obs": "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 OTEL_ENABLE_TRACING=true OTEL_ENABLE_METRICS=true OTEL_DEBUG=true turbo run dev",
+    "dev:api": "turbo run dev --filter=@appname/api",
+    "dev:web": "turbo run dev --filter=@appname/web",
+    "dev:api:obs": "OTEL_SERVICE_NAME=appname-api OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 OTEL_DEBUG=true turbo run dev --filter=@appname/api",
+    "dev:web:obs": "OTEL_SERVICE_NAME=appname-web OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 OTEL_DEBUG=true turbo run dev --filter=@appname/web",
     "build": "turbo run build",
     "start": "turbo run start",
     "typecheck": "turbo run typecheck",

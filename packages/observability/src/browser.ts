@@ -1,15 +1,18 @@
 /**
  * Browser/Frontend OpenTelemetry Integration
- * 
+ *
  * Provides lightweight tracing for frontend applications (Next.js, React, etc.)
- * 
+ *
  * Features:
  * - Web Vitals instrumentation (LCP, CLS, INP, FCP, TTFB)
  * - Manual span creation for critical user flows
  * - Trace context extraction/injection for API calls
- * 
+ *
  * Note: This is a minimal setup. For production, consider using @opentelemetry/instrumentation-document-load
  * and @opentelemetry/instrumentation-user-interaction for automatic instrumentation.
+ *
+ * IMPORTANT: All functions are defensive and won't throw errors if OpenTelemetry is not available.
+ * This ensures they work in various contexts (GraphiQL, SSR, browser, etc.)
  */
 
 import {
@@ -26,34 +29,44 @@ import {
  * Used for correlating frontend events with backend traces
  */
 export function getCurrentTraceId(): string | undefined {
-  const span = trace.getActiveSpan();
-  if (!span) return undefined;
-  
-  const traceId = span.spanContext().traceId;
-  return traceId || undefined;
+  try {
+    const span = trace.getActiveSpan();
+    if (!span) return undefined;
+
+    const traceId = span.spanContext().traceId;
+    return traceId || undefined;
+  } catch (error) {
+    // Silently fail if OTel is not available
+    return undefined;
+  }
 }
 
 /**
  * Get current span ID from active span
  */
 export function getCurrentSpanId(): string | undefined {
-  const span = trace.getActiveSpan();
-  if (!span) return undefined;
-  
-  const spanId = span.spanContext().spanId;
-  return spanId || undefined;
+  try {
+    const span = trace.getActiveSpan();
+    if (!span) return undefined;
+
+    const spanId = span.spanContext().spanId;
+    return spanId || undefined;
+  } catch (error) {
+    // Silently fail if OTel is not available
+    return undefined;
+  }
 }
 
 /**
  * Inject trace context into HTTP headers
  * Use this when making API calls from the browser
- * 
+ *
  * @example
  * ```ts
  * const headers = injectTraceHeaders({
  *   'Content-Type': 'application/json',
  * });
- * 
+ *
  * fetch('/api/data', { headers });
  * ```
  */
@@ -61,13 +74,27 @@ export function injectTraceHeaders(
   headers: Record<string, string> = {}
 ): Record<string, string> {
   const carrier = { ...headers };
-  propagation.inject(context.active(), carrier);
+
+  try {
+    // Only inject if context is available (OTel might not be initialized)
+    const activeContext = context.active();
+    if (activeContext) {
+      propagation.inject(activeContext, carrier);
+    }
+  } catch (error) {
+    // Silently fail if OTel is not available
+    // This can happen in non-instrumented environments (e.g., GraphiQL)
+    if (typeof console !== 'undefined' && console.debug) {
+      console.debug('[Observability] Failed to inject trace headers:', error);
+    }
+  }
+
   return carrier;
 }
 
 /**
  * Create a manual span for tracking user interactions
- * 
+ *
  * @example
  * ```ts
  * const span = createBrowserSpan('user.click.submit_form');
@@ -85,7 +112,7 @@ export function createBrowserSpan(name: string): Span {
 
 /**
  * Wrap an async function with a span
- * 
+ *
  * @example
  * ```ts
  * await withBrowserSpan('user.submit_form', async (span) => {
@@ -116,7 +143,9 @@ export async function withBrowserSpan<T>(
         code: SpanStatusCode.ERROR,
         message: error instanceof Error ? error.message : 'Unknown error',
       });
-      span.recordException(error instanceof Error ? error : new Error(String(error)));
+      span.recordException(
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw error;
     } finally {
       span.end();
@@ -128,9 +157,12 @@ export async function withBrowserSpan<T>(
  * Get device type for web vitals attribution
  */
 export function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
-  if (typeof window === 'undefined') return 'desktop';
-  
-  const width = window.innerWidth;
+  const win = (globalThis as any).window;
+  if (typeof win === 'undefined' || typeof win.innerWidth === 'undefined') {
+    return 'desktop';
+  }
+
+  const width = win.innerWidth;
   if (width < 768) return 'mobile';
   if (width < 1024) return 'tablet';
   return 'desktop';
@@ -140,8 +172,11 @@ export function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
  * Get current route path (for Next.js)
  */
 export function getCurrentRoute(): string {
-  if (typeof window === 'undefined') return 'unknown';
-  return window.location.pathname;
+  const win = (globalThis as any).window;
+  if (typeof win === 'undefined' || typeof win.location === 'undefined') {
+    return 'unknown';
+  }
+  return win.location.pathname;
 }
 
 /**
@@ -149,11 +184,11 @@ export function getCurrentRoute(): string {
  */
 export function getConnectionType(): string {
   if (typeof navigator === 'undefined') return 'unknown';
-  
-  // @ts-expect-error - connection is not in TypeScript types
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  
+
+  // Extended Navigator interface for experimental connection API
+  const nav = navigator as any;
+  const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+
   if (!connection) return 'unknown';
   return connection.effectiveType || 'unknown';
 }
-

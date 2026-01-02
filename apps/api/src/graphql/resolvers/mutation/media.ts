@@ -10,9 +10,19 @@ import {
   deleteMediaAsset,
 } from '../../../lib/media/media-service';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
+import {
+  trackPresignCreated,
+  trackPresignRateLimited,
+  trackConfirmUpload,
+  traceMediaOperation,
+  type MediaPurpose,
+} from '../../../lib/observability';
+import { assertRateLimit } from '../../../lib/rate-limit/domainRateLimiter';
 
 /**
  * Generate presigned upload URL or local upload endpoint
+ *
+ * CRITICAL for observability: Classic abuse vector.
  */
 export const getUploadUrl: MutationResolvers['getUploadUrl'] =
   resolverWithMetrics(
@@ -28,62 +38,96 @@ export const getUploadUrl: MutationResolvers['getUploadUrl'] =
         });
       }
 
-      // Validate purpose and authorization
-      const ownerId = await validateUploadPurpose(
-        purpose,
-        entityId,
-        ctx.user.id
-      );
+      return traceMediaOperation(
+        'presign',
+        mapPurposeToMediaPurpose(purpose),
+        async (span) => {
+          span.setAttribute('media.user_id', ctx.user!.id);
+          span.setAttribute('media.purpose', purpose);
+          if (entityId) span.setAttribute('media.entity_id', entityId);
 
-      // Build storage key
-      const key = buildMediaKey({ purpose, ownerId });
+          // Rate limit check
+          try {
+            await assertRateLimit('gql:media:presign', ctx.user!.id);
+          } catch (error) {
+            // Track rate limit breach
+            trackPresignRateLimited(
+              ctx.user!.id,
+              mapPurposeToMediaPurpose(purpose)
+            );
+            throw error;
+          }
 
-      // Get storage provider
-      const storage = getMediaStorage();
+          // Validate purpose and authorization
+          const ownerId = await validateUploadPurpose(
+            purpose,
+            entityId,
+            ctx.user!.id
+          );
 
-      // For S3: Generate presigned URL directly to S3
-      if (config.mediaStorageProvider === 'S3') {
-        if (!storage.generatePresignedUploadUrl) {
+          // Build storage key
+          const key = buildMediaKey({ purpose, ownerId });
+
+          // Get storage provider
+          const storage = getMediaStorage();
+
+          // Track presign creation
+          trackPresignCreated({
+            userId: ctx.user!.id,
+            purpose: mapPurposeToMediaPurpose(purpose),
+            entityId: entityId || undefined,
+          });
+
+          // For S3: Generate presigned URL directly to S3
+          if (config.mediaStorageProvider === 'S3') {
+            if (!storage.generatePresignedUploadUrl) {
+              throw new GraphQLError(
+                'S3 storage provider does not support presigned uploads',
+                {
+                  extensions: { code: 'INTERNAL_SERVER_ERROR' },
+                }
+              );
+            }
+
+            const uploadKey = `tmp/uploads/${key.split('/').pop()}`;
+            const result = await storage.generatePresignedUploadUrl({
+              key: uploadKey,
+              mimeType: 'image/webp',
+              maxSizeBytes: 10 * 1024 * 1024, // 10MB
+            });
+
+            span.setAttribute('media.provider', 'S3');
+
+            return {
+              uploadUrl: result.uploadUrl,
+              uploadKey: uploadKey,
+              provider: 'S3',
+            };
+          }
+
+          // For LOCAL: Return local upload endpoint
+          if (config.mediaStorageProvider === 'LOCAL') {
+            const uploadKey = `tmp/uploads/${key.split('/').pop()}`;
+            const baseUrl =
+              config.assetsBaseUrl ||
+              `http://localhost:${config.port || 4000}`;
+            const uploadUrl = `${baseUrl}/api/upload/local?uploadKey=${encodeURIComponent(uploadKey)}`;
+
+            span.setAttribute('media.provider', 'LOCAL');
+
+            return {
+              uploadUrl,
+              uploadKey,
+              provider: 'LOCAL',
+            };
+          }
+
           throw new GraphQLError(
-            'S3 storage provider does not support presigned uploads',
+            `Unsupported storage provider: ${config.mediaStorageProvider}`,
             {
               extensions: { code: 'INTERNAL_SERVER_ERROR' },
             }
           );
-        }
-
-        const uploadKey = `tmp/uploads/${key.split('/').pop()}`; // Extract just the CUID part
-        const result = await storage.generatePresignedUploadUrl({
-          key: uploadKey,
-          mimeType: 'image/webp', // We'll process to webp anyway
-          maxSizeBytes: 10 * 1024 * 1024, // 10MB
-        });
-
-        return {
-          uploadUrl: result.uploadUrl,
-          uploadKey: uploadKey,
-          provider: 'S3',
-        };
-      }
-
-      // For LOCAL: Return local upload endpoint
-      if (config.mediaStorageProvider === 'LOCAL') {
-        const uploadKey = `tmp/uploads/${key.split('/').pop()}`; // Extract just the CUID part
-        const baseUrl =
-          config.assetsBaseUrl || `http://localhost:${config.port || 4000}`;
-        const uploadUrl = `${baseUrl}/api/upload/local?uploadKey=${encodeURIComponent(uploadKey)}`;
-
-        return {
-          uploadUrl,
-          uploadKey,
-          provider: 'LOCAL',
-        };
-      }
-
-      throw new GraphQLError(
-        `Unsupported storage provider: ${config.mediaStorageProvider}`,
-        {
-          extensions: { code: 'INTERNAL_SERVER_ERROR' },
         }
       );
     }
@@ -91,6 +135,8 @@ export const getUploadUrl: MutationResolvers['getUploadUrl'] =
 
 /**
  * Confirm media upload and attach to entity
+ *
+ * CRITICAL for observability: Confirms uploads, tracks file sizes.
  */
 export const confirmMediaUpload: MutationResolvers['confirmMediaUpload'] =
   resolverWithMetrics(
@@ -106,135 +152,194 @@ export const confirmMediaUpload: MutationResolvers['confirmMediaUpload'] =
         });
       }
 
-      // Validate purpose and authorization
-      const ownerId = await validateUploadPurpose(
-        purpose,
-        entityId,
-        ctx.user.id
-      );
+      return traceMediaOperation(
+        'confirm',
+        mapPurposeToMediaPurpose(purpose),
+        async (span) => {
+          span.setAttribute('media.user_id', ctx.user!.id);
+          span.setAttribute('media.purpose', purpose);
+          if (entityId) span.setAttribute('media.entity_id', entityId);
+          span.setAttribute('media.upload_key', uploadKey);
 
-      // For LOCAL storage, we need to read the uploaded file from uploadCache
-      // For S3, the file is already uploaded, we need to fetch it
-      const storage = getMediaStorage();
-      let buffer: Buffer;
+          try {
+            // Validate purpose and authorization
+            const ownerId = await validateUploadPurpose(
+              purpose,
+              entityId,
+              ctx.user!.id
+            );
 
-      // Check if this is a LOCAL upload (file on disk)
-      if (config.mediaStorageProvider === 'LOCAL') {
-        const fs = await import('fs/promises');
-        const path = await import('path');
+            // For LOCAL storage, we need to read the uploaded file from uploadCache
+            // For S3, the file is already uploaded, we need to fetch it
+            const storage = getMediaStorage();
+            let buffer: Buffer;
 
-        const tmpPath = path.join(
-          config.uploadsTmpPath,
-          uploadKey.replace('tmp/uploads/', '')
-        );
+            // Check if this is a LOCAL upload (file on disk)
+            if (config.mediaStorageProvider === 'LOCAL') {
+              const fs = await import('fs/promises');
+              const path = await import('path');
 
-        ctx.request.log.info(
-          { uploadKey, tmpPath },
-          'Reading temp file from disk'
-        );
+              const tmpPath = path.join(
+                config.uploadsTmpPath,
+                uploadKey.replace('tmp/uploads/', '')
+              );
 
-        try {
-          buffer = await fs.readFile(tmpPath);
-          ctx.request.log.info(
-            { uploadKey, size: buffer.length },
-            'File read from disk'
-          );
-        } catch (error) {
-          ctx.request.log.error(
-            { uploadKey, tmpPath, error },
-            'File not found on disk'
-          );
-          throw new GraphQLError('Uploaded file not found', {
-            extensions: { code: 'NOT_FOUND' },
-          });
+              ctx.request.log.info(
+                { uploadKey, tmpPath },
+                'Reading temp file from disk'
+              );
+
+              try {
+                buffer = await fs.readFile(tmpPath);
+                ctx.request.log.info(
+                  { uploadKey, size: buffer.length },
+                  'File read from disk'
+                );
+              } catch (error) {
+                ctx.request.log.error(
+                  { uploadKey, tmpPath, error },
+                  'File not found on disk'
+                );
+
+                // Track failed confirmation
+                trackConfirmUpload({
+                  userId: ctx.user!.id,
+                  purpose: mapPurposeToMediaPurpose(purpose),
+                  entityId: entityId || undefined,
+                  success: false,
+                  errorReason: 'file_not_found',
+                });
+
+                throw new GraphQLError('Uploaded file not found', {
+                  extensions: { code: 'NOT_FOUND' },
+                });
+              }
+            } else {
+              // For S3, fetch from tmp/uploads location
+              const stream = await storage.getOriginalStream(uploadKey);
+              if (!stream) {
+                trackConfirmUpload({
+                  userId: ctx.user!.id,
+                  purpose: mapPurposeToMediaPurpose(purpose),
+                  entityId: entityId || undefined,
+                  success: false,
+                  errorReason: 's3_file_not_found',
+                });
+
+                throw new GraphQLError('Uploaded file not found', {
+                  extensions: { code: 'NOT_FOUND' },
+                });
+              }
+
+              // Read stream to buffer
+              const chunks: Buffer[] = [];
+              for await (const chunk of stream) {
+                chunks.push(Buffer.from(chunk));
+              }
+              buffer = Buffer.concat(chunks);
+            }
+
+            span.setAttribute('media.file_size', buffer.length);
+
+            // Create MediaAsset (this will process and save the image)
+            ctx.request.log.info(
+              { purpose, ownerId, bufferSize: buffer.length },
+              'Creating MediaAsset'
+            );
+
+            const asset = await createMediaAssetFromUpload({
+              ownerId,
+              purpose,
+              tempBuffer: buffer,
+            });
+
+            ctx.request.log.info(
+              {
+                assetId: asset.mediaAssetId,
+                key: asset.key,
+                blurhash: asset.blurhash,
+              },
+              'MediaAsset created'
+            );
+
+            // Update entity with new key
+            ctx.request.log.info(
+              { purpose, entityId, key: asset.key, userId: ctx.user!.id },
+              'Updating entity with media key'
+            );
+
+            await updateEntityWithMediaKey(
+              purpose,
+              entityId,
+              asset.key,
+              ctx.user!.id
+            );
+
+            ctx.request.log.info(
+              { purpose, entityId, key: asset.key },
+              'Entity updated successfully'
+            );
+
+            // Delete temporary file
+            if (config.mediaStorageProvider === 'LOCAL') {
+              const fs = await import('fs/promises');
+              const path = await import('path');
+              const tmpPath = path.join(
+                config.uploadsTmpPath,
+                uploadKey.replace('tmp/uploads/', '')
+              );
+
+              try {
+                await fs.unlink(tmpPath);
+                ctx.request.log.info({ uploadKey, tmpPath }, 'Temp file deleted');
+              } catch (error) {
+                ctx.request.log.warn(
+                  { uploadKey, tmpPath, error },
+                  'Failed to delete temp file'
+                );
+              }
+            } else {
+              // For S3, delete temp object
+              try {
+                await storage.deleteOriginalAndVariants?.(uploadKey);
+                ctx.request.log.info({ uploadKey }, 'Temp S3 object deleted');
+              } catch (error) {
+                ctx.request.log.warn(
+                  { uploadKey, error },
+                  'Failed to delete temp S3 object'
+                );
+              }
+            }
+
+            // Track successful confirmation
+            trackConfirmUpload({
+              userId: ctx.user!.id,
+              purpose: mapPurposeToMediaPurpose(purpose),
+              entityId: entityId || undefined,
+              success: true,
+              fileSize: buffer.length,
+            });
+
+            return {
+              success: true,
+              mediaKey: asset.key,
+              mediaAssetId: asset.mediaAssetId,
+            };
+          } catch (error) {
+            if (!(error instanceof GraphQLError)) {
+              trackConfirmUpload({
+                userId: ctx.user!.id,
+                purpose: mapPurposeToMediaPurpose(purpose),
+                entityId: entityId || undefined,
+                success: false,
+                errorReason:
+                  error instanceof Error ? error.message : 'unknown_error',
+              });
+            }
+            throw error;
+          }
         }
-      } else {
-        // For S3, fetch from tmp/uploads location
-        const stream = await storage.getOriginalStream(uploadKey);
-        if (!stream) {
-          throw new GraphQLError('Uploaded file not found', {
-            extensions: { code: 'NOT_FOUND' },
-          });
-        }
-
-        // Read stream to buffer
-        const chunks: Buffer[] = [];
-        for await (const chunk of stream) {
-          chunks.push(Buffer.from(chunk));
-        }
-        buffer = Buffer.concat(chunks);
-      }
-
-      // Create MediaAsset (this will process and save the image)
-      ctx.request.log.info(
-        { purpose, ownerId, bufferSize: buffer.length },
-        'Creating MediaAsset'
       );
-
-      const asset = await createMediaAssetFromUpload({
-        ownerId,
-        purpose,
-        tempBuffer: buffer,
-      });
-
-      ctx.request.log.info(
-        {
-          assetId: asset.mediaAssetId,
-          key: asset.key,
-          blurhash: asset.blurhash,
-        },
-        'MediaAsset created'
-      );
-
-      // Update entity with new key
-      ctx.request.log.info(
-        { purpose, entityId, key: asset.key, userId: ctx.user.id },
-        'Updating entity with media key'
-      );
-
-      await updateEntityWithMediaKey(purpose, entityId, asset.key, ctx.user.id);
-
-      ctx.request.log.info(
-        { purpose, entityId, key: asset.key },
-        'Entity updated successfully'
-      );
-
-      // Delete temporary file
-      if (config.mediaStorageProvider === 'LOCAL') {
-        const fs = await import('fs/promises');
-        const path = await import('path');
-        const tmpPath = path.join(
-          config.uploadsTmpPath,
-          uploadKey.replace('tmp/uploads/', '')
-        );
-
-        try {
-          await fs.unlink(tmpPath);
-          ctx.request.log.info({ uploadKey, tmpPath }, 'Temp file deleted');
-        } catch (error) {
-          ctx.request.log.warn(
-            { uploadKey, tmpPath, error },
-            'Failed to delete temp file'
-          );
-        }
-      } else {
-        // For S3, delete temp object
-        try {
-          await storage.deleteOriginalAndVariants?.(uploadKey);
-          ctx.request.log.info({ uploadKey }, 'Temp S3 object deleted');
-        } catch (error) {
-          ctx.request.log.warn(
-            { uploadKey, error },
-            'Failed to delete temp S3 object'
-          );
-        }
-      }
-
-      return {
-        success: true,
-        mediaKey: asset.key,
-        mediaAssetId: asset.mediaAssetId,
-      };
     }
   );
 
@@ -434,5 +539,23 @@ async function updateEntityWithMediaKey(
       }
       break;
     }
+  }
+}
+
+/**
+ * Map purpose string to MediaPurpose type for observability
+ */
+function mapPurposeToMediaPurpose(purpose: string): MediaPurpose {
+  switch (purpose) {
+    case 'USER_AVATAR':
+      return 'user_avatar';
+    case 'EVENT_COVER':
+      return 'event_cover';
+    case 'EVENT_GALLERY':
+      return 'event_gallery';
+    case 'MESSAGE_ATTACHMENT':
+      return 'message_attachment';
+    default:
+      return 'other';
   }
 }

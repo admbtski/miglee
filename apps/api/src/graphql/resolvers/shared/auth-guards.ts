@@ -47,6 +47,10 @@ import {
 import { GraphQLError } from 'graphql';
 import type { MercuriusContext } from 'mercurius';
 import { prisma } from '../../../lib/prisma';
+import {
+  trackAuthzDenied,
+  trackUnauthorizedAdminAttempt,
+} from '../../../lib/observability';
 
 // =============================================================================
 // Type Definitions
@@ -180,6 +184,13 @@ export function requireAdmin(
     });
   }
   if (user.role !== 'ADMIN') {
+    trackAuthzDenied('ROLE_TOO_LOW', {
+      operation: 'event_admin',
+      userId: user.id,
+      resourceType: 'admin',
+    });
+    // Track unauthorized admin attempt (security alert)
+    trackUnauthorizedAdminAttempt(user.id, 'admin_access', user.role || 'USER');
     throw new GraphQLError('Admin access required.', {
       extensions: { code: 'FORBIDDEN' },
     });
@@ -200,6 +211,13 @@ export function requireAppModOrAdmin(
     });
   }
   if (user.role !== 'ADMIN' && user.role !== 'MODERATOR') {
+    trackAuthzDenied('ROLE_TOO_LOW', {
+      operation: 'event_admin',
+      userId: user.id,
+      resourceType: 'app_mod',
+    });
+    // Track unauthorized admin/mod attempt (security alert)
+    trackUnauthorizedAdminAttempt(user.id, 'app_mod_access', user.role || 'USER');
     throw new GraphQLError('Admin or moderator access required.', {
       extensions: { code: 'FORBIDDEN' },
     });
@@ -240,6 +258,11 @@ export function requireSelf(
     return;
   }
 
+  trackAuthzDenied('NOT_OWNER', {
+    operation: 'event_read',
+    userId: user.id,
+    resourceType: 'self',
+  });
   throw new GraphQLError('You can only access your own resources.', {
     extensions: { code: 'FORBIDDEN' },
   });
@@ -273,6 +296,11 @@ export function requireSelfOrAppMod(
     return;
   }
 
+  trackAuthzDenied('NOT_OWNER', {
+    operation: 'event_read',
+    userId: user.id,
+    resourceType: 'self_or_mod',
+  });
   throw new GraphQLError(
     'You can only access your own resources or be a moderator.',
     { extensions: { code: 'FORBIDDEN' } }
@@ -363,6 +391,12 @@ export async function requireEventParticipant(
   const member = await getEventMembership(userId, eventId);
 
   if (!member || member.status !== EventMemberStatus.JOINED) {
+    trackAuthzDenied('NOT_MEMBER', {
+      operation: 'event_read',
+      userId,
+      resourceType: 'event',
+      resourceId: eventId,
+    });
     throw new GraphQLError('You must be a joined member of this event.', {
       extensions: { code: 'FORBIDDEN' },
     });
@@ -421,12 +455,24 @@ export async function requireEventModOrOwner(
   const member = await getEventMembership(user.id, eventId);
 
   if (!member || member.status !== EventMemberStatus.JOINED) {
+    trackAuthzDenied('NOT_MEMBER', {
+      operation: 'member_manage',
+      userId: user.id,
+      resourceType: 'event',
+      resourceId: eventId,
+    });
     throw new GraphQLError('Event moderator or owner access required.', {
       extensions: { code: 'FORBIDDEN' },
     });
   }
 
   if (!isEventModeratorRole(member.role)) {
+    trackAuthzDenied('ROLE_TOO_LOW', {
+      operation: 'member_manage',
+      userId: user.id,
+      resourceType: 'event',
+      resourceId: eventId,
+    });
     throw new GraphQLError('Event moderator or owner access required.', {
       extensions: { code: 'FORBIDDEN' },
     });

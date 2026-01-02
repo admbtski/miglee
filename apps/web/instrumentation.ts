@@ -13,7 +13,7 @@ export async function register() {
     const { initObservability } = await import('@appname/observability');
     
     await initObservability({
-      serviceName: process.env.OTEL_SERVICE_NAME || 'miglee-web',
+      serviceName: process.env.OTEL_SERVICE_NAME || 'appname-web',
       serviceVersion: process.env.BUILD_SHA || 'unknown',
       environment: process.env.NODE_ENV || 'development',
     });

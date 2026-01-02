@@ -11,6 +11,7 @@ import {
 } from '../../__generated__/resolvers-types';
 import { mapEvent } from '../helpers';
 import { Prisma } from '../../../prisma-client/client';
+import { trackEventsQuery, traceEventsQuery } from '../../../lib/observability';
 
 const BOOST_DURATION_MS = 24 * 60 * 60 * 1000;
 
@@ -371,55 +372,81 @@ export const eventsQuery: QueryResolvers['events'] = resolverWithMetrics(
   'Query',
   'events',
   async (_p, args, { user }) => {
-    const take = Math.max(1, Math.min(args.limit ?? 20, 100));
-    const skip = Math.max(0, args.offset ?? 0);
-    const now = new Date();
+    const { result } = await traceEventsQuery('events', async (span) => {
+      const take = Math.max(1, Math.min(args.limit ?? 20, 100));
+      const skip = Math.max(0, args.offset ?? 0);
+      const now = new Date();
+      const queryStart = Date.now();
 
-    // Validate near/distanceKm: if distanceKm is provided, near.lat and near.lng are required
-    if (args.distanceKm != null && (!args.near?.lat || !args.near?.lng)) {
-      throw new GraphQLError(
-        'When `distanceKm` is provided, `near.lat` and `near.lng` are required.',
-        {
-          extensions: { code: 'BAD_USER_INPUT', field: 'near' },
-        }
+      // Add query attributes to span
+      span.setAttribute('events.query.limit', take);
+      span.setAttribute('events.query.offset', skip);
+      span.setAttribute(
+        'events.query.has_geo',
+        !!(args.near?.lat && args.near?.lng)
       );
-    }
+      span.setAttribute('events.query.has_search', !!args.keywords?.length);
 
-    // Base where/order
-    const baseWhere = buildBaseWhere(args);
-    applyDistanceBox(baseWhere, args.near ?? null, args.distanceKm ?? null);
-    applyStatusWhere(baseWhere, args.status ?? null, now);
-    const orderBy = buildOrderBy(args);
+      // Validate near/distanceKm: if distanceKm is provided, near.lat and near.lng are required
+      if (args.distanceKm != null && (!args.near?.lat || !args.near?.lng)) {
+        throw new GraphQLError(
+          'When `distanceKm` is provided, `near.lat` and `near.lng` are required.',
+          {
+            extensions: { code: 'BAD_USER_INPUT', field: 'near' },
+          }
+        );
+      }
 
-    // All statuses are handled in SQL - no post-filtering needed
-    const [total, allRows] = await Promise.all([
-      prisma.event.count({ where: baseWhere }),
-      prisma.event.findMany({
-        where: baseWhere,
-        orderBy,
-        include: EVENT_INCLUDE,
-        // We fetch `take + skip` so we can apply our in-memory sort and then slice.
-        take: take + skip,
-        skip: 0,
-      }),
-    ]);
+      // Base where/order
+      const baseWhere = buildBaseWhere(args);
+      applyDistanceBox(baseWhere, args.near ?? null, args.distanceKm ?? null);
+      applyStatusWhere(baseWhere, args.status ?? null, now);
+      const orderBy = buildOrderBy(args);
 
-    const comparator = buildBoostAwareComparator(args, now);
-    allRows.sort(comparator);
+      // All statuses are handled in SQL - no post-filtering needed
+      const [total, allRows] = await Promise.all([
+        prisma.event.count({ where: baseWhere }),
+        prisma.event.findMany({
+          where: baseWhere,
+          orderBy,
+          include: EVENT_INCLUDE,
+          // We fetch `take + skip` so we can apply our in-memory sort and then slice.
+          take: take + skip,
+          skip: 0,
+        }),
+      ]);
 
-    // Apply pagination after in-memory sorting
-    const paginatedRows = allRows.slice(skip, skip + take);
+      const comparator = buildBoostAwareComparator(args, now);
+      allRows.sort(comparator);
 
-    return {
-      items: paginatedRows.map((r) => mapEvent(r, user?.id)),
-      pageInfo: {
-        total,
-        limit: take,
-        offset: skip,
-        hasPrev: skip > 0,
-        hasNext: skip + take < total,
-      },
-    };
+      // Apply pagination after in-memory sorting
+      const paginatedRows = allRows.slice(skip, skip + take);
+
+      // Track events query for observability
+      const latencyMs = Date.now() - queryStart;
+      trackEventsQuery({
+        queryName: 'events',
+        resultCount: paginatedRows.length,
+        latencyMs,
+      });
+
+      // Add result attributes to span
+      span.setAttribute('events.query.result_count', paginatedRows.length);
+      span.setAttribute('events.query.total_count', total);
+
+      return {
+        items: paginatedRows.map((r) => mapEvent(r, user?.id)),
+        pageInfo: {
+          total,
+          limit: take,
+          offset: skip,
+          hasPrev: skip > 0,
+          hasNext: skip + take < total,
+        },
+      };
+    });
+
+    return result;
   }
 );
 

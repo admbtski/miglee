@@ -173,7 +173,8 @@ export async function addJobWithTrace<T extends Record<string, unknown>>(
   options?: JobsOptions
 ) {
   const dataWithTrace = injectTraceContext(data);
-  return queue.add(jobName, dataWithTrace, options);
+  // Type assertion needed due to BullMQ's complex generic constraints
+  return queue.add(jobName as any, dataWithTrace as any, options);
 }
 
 // =============================================================================

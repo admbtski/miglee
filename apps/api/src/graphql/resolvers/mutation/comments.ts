@@ -10,6 +10,7 @@ import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapComment, mapNotification } from '../helpers';
 import { NOTIFICATION_INCLUDE } from './notifications';
 import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+import { trackCommentVisibility } from '../../../lib/observability';
 
 // Temporary type aliases until prisma generate is run
 type AuditScope = CreateAuditLogInput['scope'];
@@ -511,6 +512,15 @@ export const hideCommentMutation: MutationResolvers['hideComment'] =
         severity: 4,
       });
 
+      // Track visibility change
+      trackCommentVisibility.hide(
+        user.id,
+        id,
+        comment.eventId,
+        undefined,
+        isAppAdmin ? 'admin' : isAppModerator ? 'moderator' : 'moderator'
+      );
+
       return true;
     }
   );
@@ -603,6 +613,14 @@ export const unhideCommentMutation: MutationResolvers['unhideComment'] =
         entityId: id,
         severity: 4,
       });
+
+      // Track visibility change
+      trackCommentVisibility.unhide(
+        user.id,
+        id,
+        comment.eventId,
+        isAppAdmin ? 'admin' : isAppModerator ? 'moderator' : 'moderator'
+      );
 
       return true;
     }

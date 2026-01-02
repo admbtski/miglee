@@ -10,6 +10,7 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { QueryResolvers } from '../../__generated__/resolvers-types';
 import { mapReview, ReviewWithGraph } from '../helpers';
 import { requireAuth } from '../shared/auth-guards';
+import { trackReviewStats } from '../../../lib/observability';
 
 const REVIEW_INCLUDE = {
   author: true,
@@ -85,6 +86,8 @@ export const reviewQuery: QueryResolvers['review'] = resolverWithMetrics(
  */
 export const reviewStatsQuery: QueryResolvers['reviewStats'] =
   resolverWithMetrics('Query', 'reviewStats', async (_p, { eventId }) => {
+    const queryStart = Date.now();
+    
     const reviews = await prisma.review.findMany({
       where: {
         eventId,
@@ -96,8 +99,11 @@ export const reviewStatsQuery: QueryResolvers['reviewStats'] =
     });
 
     const totalCount = reviews.length;
+    const dbTime = Date.now() - queryStart;
 
     if (totalCount === 0) {
+      // Track derivation stats for empty result
+      trackReviewStats(eventId, dbTime, { count: 0, avgRating: null });
       return {
         totalCount: 0,
         averageRating: 0,
@@ -113,6 +119,9 @@ export const reviewStatsQuery: QueryResolvers['reviewStats'] =
 
     const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
     const averageRating = sum / totalCount;
+
+    // Track derivation stats
+    trackReviewStats(eventId, dbTime, { count: totalCount, avgRating: averageRating });
 
     // Count distribution
     const distribution: Record<number, number> = {

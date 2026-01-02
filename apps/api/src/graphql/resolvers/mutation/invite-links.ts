@@ -1,5 +1,8 @@
 /**
  * Event Invite Links Mutation Resolvers
+ *
+ * CRITICAL for observability: Token/secret/link operations.
+ * This is the boundary of "who can enter" + "did the token leak".
  */
 
 import type { Prisma } from '../../../prisma-client/client';
@@ -15,6 +18,10 @@ import {
 } from '../helpers';
 import { nanoid } from 'nanoid';
 import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+import {
+  trackInviteLinkAction,
+  trackInviteLinkValidation,
+} from '../../../lib/observability';
 
 // Temporary type aliases until prisma generate is run
 type AuditScope = CreateAuditLogInput['scope'];
@@ -106,6 +113,16 @@ export const createEventInviteLinkMutation: MutationResolvers['createEventInvite
         entityId: link.id,
         meta: { maxUses, expiresAt, label },
         severity: 3,
+      });
+
+      // Track invite link creation
+      trackInviteLinkAction({
+        action: 'create',
+        actorId: user.id,
+        eventId,
+        inviteLinkId: link.id,
+        maxUses: maxUses ?? undefined,
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
       });
 
       return mapEventInviteLink(link as EventInviteLinkWithGraph);
@@ -201,6 +218,16 @@ export const updateEventInviteLinkMutation: MutationResolvers['updateEventInvite
         severity: 3,
       });
 
+      // Track invite link update
+      trackInviteLinkAction({
+        action: 'update',
+        actorId: user.id,
+        eventId: link.eventId,
+        inviteLinkId: id,
+        maxUses: input.maxUses ?? undefined,
+        expiresAt: input.expiresAt ? new Date(input.expiresAt) : undefined,
+      });
+
       return mapEventInviteLink(updated as EventInviteLinkWithGraph);
     }
   );
@@ -281,6 +308,14 @@ export const revokeEventInviteLinkMutation: MutationResolvers['revokeEventInvite
         entityId: id,
         meta: { revoked: true },
         severity: 4,
+      });
+
+      // Track invite link revocation
+      trackInviteLinkAction({
+        action: 'revoke',
+        actorId: user.id,
+        eventId: link.eventId,
+        inviteLinkId: id,
       });
 
       return mapEventInviteLink(revoked as EventInviteLinkWithGraph);
@@ -390,6 +425,14 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
       });
 
       if (!link) {
+        // Track invalid invite validation
+        trackInviteLinkValidation({
+          result: 'invalid',
+          eventId: 'unknown',
+          code: code.substring(0, 4),
+          userId: user.id,
+        });
+
         throw new GraphQLError('Invalid invite code.', {
           extensions: { code: 'NOT_FOUND' },
         });
@@ -397,6 +440,14 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
 
       // Check if revoked
       if (link.revokedAt) {
+        trackInviteLinkValidation({
+          result: 'revoked',
+          eventId: link.eventId,
+          inviteLinkId: link.id,
+          code: code.substring(0, 4),
+          userId: user.id,
+        });
+
         throw new GraphQLError('Invite link has been revoked.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
@@ -404,6 +455,14 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
 
       // Check if expired
       if (link.expiresAt && link.expiresAt < new Date()) {
+        trackInviteLinkValidation({
+          result: 'expired',
+          eventId: link.eventId,
+          inviteLinkId: link.id,
+          code: code.substring(0, 4),
+          userId: user.id,
+        });
+
         throw new GraphQLError('Invite link has expired.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
@@ -411,6 +470,14 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
 
       // Check if maxed out
       if (link.maxUses && link.usedCount >= link.maxUses) {
+        trackInviteLinkValidation({
+          result: 'capacity_full',
+          eventId: link.eventId,
+          inviteLinkId: link.id,
+          code: code.substring(0, 4),
+          userId: user.id,
+        });
+
         throw new GraphQLError('Invite link has reached maximum uses.', {
           extensions: { code: 'FAILED_PRECONDITION' },
         });
@@ -510,6 +577,22 @@ export const joinByInviteLinkMutation: MutationResolvers['joinByInviteLink'] =
           to: 'JOINED',
         },
         severity: 3,
+      });
+
+      // Track successful invite validation and join
+      trackInviteLinkValidation({
+        result: 'ok',
+        eventId: link.eventId,
+        inviteLinkId: link.id,
+        code: code.substring(0, 4),
+        userId: user.id,
+      });
+
+      trackInviteLinkAction({
+        action: 'join',
+        actorId: user.id,
+        eventId: link.eventId,
+        inviteLinkId: link.id,
       });
 
       return mapEvent(link.event as EventWithGraph);

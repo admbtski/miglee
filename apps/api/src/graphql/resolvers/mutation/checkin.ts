@@ -3,6 +3,11 @@
  *
  * Complete implementation of check-in system mutations for users and moderators.
  *
+ * OBSERVABILITY: All mutations instrumented with:
+ * - Metrics: membership.checkin.outcome (by outcome & method)
+ * - Tracing: spans for validation and DB operations
+ * - Audit logs: all check-in state changes
+ *
  * TYPE SAFETY NOTE:
  * Some mutations use `Promise<any>` return type because they return Prisma models
  * (Event, EventMember) that field resolvers convert to GraphQL types. This is the
@@ -39,10 +44,32 @@ import {
 import { includesMethod } from '../helpers/checkin-types';
 import { NotificationKind } from '../../../prisma-client/client';
 import { createAuditLog, type CreateAuditLogInput } from '../../../lib/audit';
+import {
+  trackCheckin,
+  traceMembershipOperation,
+  type CheckinOutcome,
+  type CheckinMethod as ObsCheckinMethod,
+} from '../../../lib/observability';
 
 // Temporary type aliases until prisma generate is run
 type AuditScope = CreateAuditLogInput['scope'];
 type AuditAction = CreateAuditLogInput['action'];
+
+// Helper to map Prisma CheckinMethod to observability method
+function toObsMethod(method: CheckinMethod): ObsCheckinMethod {
+  switch (method) {
+    case CheckinMethod.SELF_MANUAL:
+      return 'self';
+    case CheckinMethod.MODERATOR_PANEL:
+      return 'organizer';
+    case CheckinMethod.EVENT_QR:
+      return 'qr_event';
+    case CheckinMethod.USER_QR:
+      return 'qr_user';
+    default:
+      return 'self';
+  }
+}
 
 // =============================================================================
 // User Mutations
@@ -61,54 +88,75 @@ export const checkInSelf: MutationResolvers['checkInSelf'] = async (
 
   const method = CheckinMethod.SELF_MANUAL;
 
-  try {
-    // Validate event allows check-in
-    await validateEventCheckin(prisma, eventId);
+  return traceMembershipOperation('checkInSelf', { eventId, userId }, async (span) => {
+    try {
+      // Validate event allows check-in
+      await validateEventCheckin(prisma, eventId);
 
-    // Validate method is enabled
-    await validateMethodEnabled(prisma, eventId, method);
+      // Validate method is enabled
+      await validateMethodEnabled(prisma, eventId, method);
 
-    // Get member and validate status
-    const member = await getMemberOrThrow(prisma, eventId, userId);
+      // Get member and validate status
+      const member = await getMemberOrThrow(prisma, eventId, userId);
 
-    // Validate member is not blocked
-    validateMemberCanCheckin(member, method);
+      // Validate member is not blocked
+      validateMemberCanCheckin(member, method);
 
-    // Perform check-in (idempotent)
-    const result = await addCheckinMethod(prisma, {
-      memberId: member.id,
-      method,
-      actorId: userId,
-      source: CheckinSource.USER,
-    });
+      // Perform check-in (idempotent)
+      const result = await addCheckinMethod(prisma, {
+        memberId: member.id,
+        method,
+        actorId: userId,
+        source: CheckinSource.USER,
+      });
 
-    // Fetch updated member and event
-    const [updatedMember, event] = await Promise.all([
-      prisma.eventMember.findUnique({
-        where: { id: member.id },
-        include: {
-          user: true,
-          event: true,
-          lastCheckinRejectedBy: true,
-        },
-      }),
-      prisma.event.findUnique({ where: { id: eventId } }),
-    ]);
+      // Track successful check-in
+      trackCheckin('ok', {
+        eventId,
+        userId,
+        method: toObsMethod(method),
+      });
 
-    return {
-      success: result.success,
-      message: result.message,
-      member: updatedMember as any, // Prisma → GQL via field resolver
-      event: event as any, // Prisma → GQL via field resolver
-    };
-  } catch (error) {
-    if (error instanceof GraphQLError) {
-      throw error;
+      span.setAttribute('checkin.success', true);
+
+      // Fetch updated member and event
+      const [updatedMember, event] = await Promise.all([
+        prisma.eventMember.findUnique({
+          where: { id: member.id },
+          include: {
+            user: true,
+            event: true,
+            lastCheckinRejectedBy: true,
+          },
+        }),
+        prisma.event.findUnique({ where: { id: eventId } }),
+      ]);
+
+      return {
+        success: result.success,
+        message: result.message,
+        member: updatedMember as any, // Prisma → GQL via field resolver
+        event: event as any, // Prisma → GQL via field resolver
+      };
+    } catch (error) {
+      // Track check-in failure with appropriate outcome
+      let outcome: CheckinOutcome = 'error';
+      if (error instanceof GraphQLError) {
+        const code = error.extensions?.code;
+        if (code === 'FORBIDDEN' && error.message.includes('blocked')) {
+          outcome = 'blocked';
+        } else if (code === 'FORBIDDEN') {
+          outcome = 'not_member';
+        }
+        trackCheckin(outcome, { eventId, userId, method: toObsMethod(method) });
+        throw error;
+      }
+      trackCheckin('error', { eventId, userId, method: toObsMethod(method) });
+      throw new GraphQLError('Failed to check in', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
     }
-    throw new GraphQLError('Failed to check in', {
-      extensions: { code: 'INTERNAL_SERVER_ERROR' },
-    });
-  }
+  });
 };
 
 export const uncheckInSelf: MutationResolvers['uncheckInSelf'] = async (
@@ -731,12 +779,6 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
   { eventId, token },
   { prisma, userId }
 ): Promise<GQLCheckinResult> => {
-  console.log('[checkInByEventQr] Starting:', {
-    eventId,
-    userId,
-    tokenLength: token?.length,
-  });
-
   if (!userId) {
     throw new GraphQLError('Not authenticated', {
       extensions: { code: 'UNAUTHENTICATED' },
@@ -745,87 +787,74 @@ export const checkInByEventQr: MutationResolvers['checkInByEventQr'] = async (
 
   const method = CheckinMethod.EVENT_QR;
 
-  try {
-    // Validate token
-    console.log('[checkInByEventQr] Validating token...');
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-      select: { eventCheckinToken: true, checkinEnabled: true },
-    });
+  return traceMembershipOperation('checkInByEventQr', { eventId, userId }, async (span) => {
+    try {
+      // Validate token
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        select: { eventCheckinToken: true, checkinEnabled: true },
+      });
 
-    console.log('[checkInByEventQr] Event found:', {
-      found: !!event,
-      hasToken: !!event?.eventCheckinToken,
-      tokenMatch: event?.eventCheckinToken === token,
-      checkinEnabled: event?.checkinEnabled,
-    });
+      if (!event || event.eventCheckinToken !== token) {
+        trackCheckin('invalid_token', { eventId, userId, method: 'qr_event' });
+        throw new GraphQLError('Invalid or expired QR token', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
 
-    if (!event || event.eventCheckinToken !== token) {
-      throw new GraphQLError('Invalid or expired QR token', {
-        extensions: { code: 'FORBIDDEN' },
+      // Validate event allows check-in
+      await validateEventCheckin(prisma, eventId);
+
+      // Validate method is enabled
+      await validateMethodEnabled(prisma, eventId, method);
+
+      // Get member
+      const member = await getMemberOrThrow(prisma, eventId, userId);
+
+      // Validate member is not blocked
+      validateMemberCanCheckin(member, method);
+
+      // Perform check-in
+      const result = await addCheckinMethod(prisma, {
+        memberId: member.id,
+        method,
+        actorId: userId,
+        source: CheckinSource.USER,
+      });
+
+      // Track successful QR check-in
+      trackCheckin('ok', { eventId, userId, method: 'qr_event' });
+      span.setAttribute('checkin.success', true);
+
+      // Fetch updated member and refreshed event
+      const [updatedMember, updatedEvent] = await Promise.all([
+        prisma.eventMember.findUnique({
+          where: { id: member.id },
+          include: {
+            user: true,
+            event: true,
+            lastCheckinRejectedBy: true,
+          },
+        }),
+        prisma.event.findUnique({ where: { id: eventId } }),
+      ]);
+
+      return {
+        success: result.success,
+        message: result.message,
+        member: updatedMember as any, // Prisma → GQL via field resolver
+        event: updatedEvent as any, // Prisma Event → GQL via field resolver
+      };
+    } catch (error) {
+      if (error instanceof GraphQLError) {
+        throw error;
+      }
+      trackCheckin('error', { eventId, userId, method: 'qr_event' });
+      throw new GraphQLError('Failed to check in via event QR', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
       });
     }
-
-    // Validate event allows check-in
-    console.log('[checkInByEventQr] Validating event config...');
-    await validateEventCheckin(prisma, eventId);
-
-    // Validate method is enabled
-    console.log('[checkInByEventQr] Validating method enabled...');
-    await validateMethodEnabled(prisma, eventId, method);
-
-    // Get member
-    console.log('[checkInByEventQr] Getting member...');
-    const member = await getMemberOrThrow(prisma, eventId, userId);
-    console.log('[checkInByEventQr] Member found:', {
-      memberId: member.id,
-      status: member.status,
-    });
-
-    // Validate member is not blocked
-    console.log('[checkInByEventQr] Validating member not blocked...');
-    validateMemberCanCheckin(member, method);
-
-    // Perform check-in
-    console.log('[checkInByEventQr] Performing check-in...');
-    const result = await addCheckinMethod(prisma, {
-      memberId: member.id,
-      method,
-      actorId: userId,
-      source: CheckinSource.USER,
-    });
-    console.log('[checkInByEventQr] Check-in result:', result);
-
-    // Fetch updated member and refreshed event
-    console.log('[checkInByEventQr] Fetching updated data...');
-    const [updatedMember, updatedEvent] = await Promise.all([
-      prisma.eventMember.findUnique({
-        where: { id: member.id },
-        include: {
-          user: true,
-          event: true,
-          lastCheckinRejectedBy: true,
-        },
-      }),
-      prisma.event.findUnique({ where: { id: eventId } }),
-    ]);
-
-    console.log('[checkInByEventQr] Success!');
-    return {
-      success: result.success,
-      message: result.message,
-      member: updatedMember as any, // Prisma → GQL via field resolver
-      event: updatedEvent as any, // Prisma Event → GQL via field resolver
-    };
-  } catch (error) {
-    console.error('[checkInByEventQr] Error:', error);
-    if (error instanceof GraphQLError) {
-      throw error;
-    }
-    throw new GraphQLError('Failed to check in via event QR', {
-      extensions: { code: 'INTERNAL_SERVER_ERROR' },
-    });
-  }
+  });
 };
 
 export const checkInByUserQr: MutationResolvers['checkInByUserQr'] = async (
@@ -841,81 +870,97 @@ export const checkInByUserQr: MutationResolvers['checkInByUserQr'] = async (
 
   const method = CheckinMethod.USER_QR;
 
-  try {
-    // Find member by token
-    const member = await prisma.eventMember.findFirst({
-      where: { memberCheckinToken: token },
-      select: {
-        id: true,
-        eventId: true,
-        userId: true,
-        status: true,
-        checkinMethods: true,
-        checkinBlockedAll: true,
-        checkinBlockedMethods: true,
-      },
-    });
-
-    if (!member) {
-      throw new GraphQLError('Invalid user QR token', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
-
-    // Validate moderator access (scanner must be mod/owner)
-    await validateModeratorAccess(prisma, member.eventId, userId);
-
-    // Validate event allows check-in
-    await validateEventCheckin(prisma, member.eventId);
-
-    // Validate method is enabled
-    await validateMethodEnabled(prisma, member.eventId, method);
-
-    // Validate member status
-    if (member.status !== EventMemberStatus.JOINED) {
-      throw new GraphQLError('Only JOINED members can check in', {
-        extensions: { code: 'FORBIDDEN' },
-      });
-    }
-
-    // Validate member is not blocked
-    validateMemberCanCheckin(member, method);
-
-    // Perform check-in (actor is the moderator scanning)
-    const result = await addCheckinMethod(prisma, {
-      memberId: member.id,
-      method,
-      actorId: userId, // Moderator who scanned
-      source: CheckinSource.MODERATOR,
-    });
-
-    // Fetch updated member and event
-    const [updatedMember, event] = await Promise.all([
-      prisma.eventMember.findUnique({
-        where: { id: member.id },
-        include: {
-          user: true,
-          event: true,
-          lastCheckinRejectedBy: true,
+  return traceMembershipOperation('checkInByUserQr', { eventId: 'unknown', userId }, async (span) => {
+    try {
+      // Find member by token
+      const member = await prisma.eventMember.findFirst({
+        where: { memberCheckinToken: token },
+        select: {
+          id: true,
+          eventId: true,
+          userId: true,
+          status: true,
+          checkinMethods: true,
+          checkinBlockedAll: true,
+          checkinBlockedMethods: true,
         },
-      }),
-      prisma.event.findUnique({ where: { id: member.eventId } }),
-    ]);
+      });
 
-    return {
-      success: result.success,
-      message: result.message,
-      member: updatedMember as any, // Prisma → GQL via field resolver
-      event: event as any, // Prisma Event → GQL via field resolver
-    };
-  } catch (error) {
-    if (error instanceof GraphQLError) {
-      throw error;
+      if (!member) {
+        trackCheckin('invalid_token', { eventId: 'unknown', userId, method: 'qr_user' });
+        throw new GraphQLError('Invalid user QR token', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      span.setAttribute('event.id', member.eventId);
+      span.setAttribute('target.user_id', member.userId);
+
+      // Validate moderator access (scanner must be mod/owner)
+      await validateModeratorAccess(prisma, member.eventId, userId);
+
+      // Validate event allows check-in
+      await validateEventCheckin(prisma, member.eventId);
+
+      // Validate method is enabled
+      await validateMethodEnabled(prisma, member.eventId, method);
+
+      // Validate member status
+      if (member.status !== EventMemberStatus.JOINED) {
+        trackCheckin('not_member', { eventId: member.eventId, userId: member.userId, method: 'qr_user', actorId: userId });
+        throw new GraphQLError('Only JOINED members can check in', {
+          extensions: { code: 'FORBIDDEN' },
+        });
+      }
+
+      // Validate member is not blocked
+      validateMemberCanCheckin(member, method);
+
+      // Perform check-in (actor is the moderator scanning)
+      const result = await addCheckinMethod(prisma, {
+        memberId: member.id,
+        method,
+        actorId: userId, // Moderator who scanned
+        source: CheckinSource.MODERATOR,
+      });
+
+      // Track successful check-in
+      trackCheckin('ok', {
+        eventId: member.eventId,
+        userId: member.userId,
+        method: 'qr_user',
+        actorId: userId,
+      });
+
+      // Fetch updated member and event
+      const [updatedMember, event] = await Promise.all([
+        prisma.eventMember.findUnique({
+          where: { id: member.id },
+          include: {
+            user: true,
+            event: true,
+            lastCheckinRejectedBy: true,
+          },
+        }),
+        prisma.event.findUnique({ where: { id: member.eventId } }),
+      ]);
+
+      return {
+        success: result.success,
+        message: result.message,
+        member: updatedMember as any, // Prisma → GQL via field resolver
+        event: event as any, // Prisma Event → GQL via field resolver
+      };
+    } catch (error) {
+      if (error instanceof GraphQLError) {
+        throw error;
+      }
+      trackCheckin('error', { eventId: 'unknown', userId, method: 'qr_user' });
+      throw new GraphQLError('Failed to check in via user QR', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
     }
-    throw new GraphQLError('Failed to check in via user QR', {
-      extensions: { code: 'INTERNAL_SERVER_ERROR' },
-    });
-  }
+  });
 };
 
 // =============================================================================

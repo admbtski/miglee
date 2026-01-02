@@ -16,6 +16,7 @@ import type {
 } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { requireAuth, requireEventModOrOwner } from '../shared/auth-guards';
+import { trackGateDenied, trackGateGranted } from '../../../lib/observability';
 
 /**
  * Query: Get feedback questions for an event
@@ -207,6 +208,11 @@ export const myFeedbackAnswersQuery: QueryResolvers['myFeedbackAnswers'] =
 export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
   async (_parent, { eventId }, { user }) => {
     if (!user) {
+      trackGateDenied({
+        gate: 'can_submit_feedback',
+        reason: 'NOT_AUTHENTICATED',
+        eventId,
+      });
       return false;
     }
 
@@ -224,6 +230,12 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
     });
 
     if (!member || member.status !== 'JOINED') {
+      trackGateDenied({
+        gate: 'can_submit_feedback',
+        reason: 'NOT_MEMBER',
+        userId: user.id,
+        eventId,
+      });
       return false;
     }
 
@@ -234,6 +246,12 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
     });
 
     if (!eventData || eventData.endAt > new Date()) {
+      trackGateDenied({
+        gate: 'can_submit_feedback',
+        reason: 'EVENT_NOT_ENDED',
+        userId: user.id,
+        eventId,
+      });
       return false;
     }
 
@@ -258,7 +276,21 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
     // If there are no feedback questions, check only for review
     if (questionsCount === 0) {
       // No questions - can submit only if no review yet
-      return !hasReview;
+      if (hasReview) {
+        trackGateDenied({
+          gate: 'can_submit_feedback',
+          reason: 'ALREADY_SUBMITTED',
+          userId: user.id,
+          eventId,
+        });
+        return false;
+      }
+      trackGateGranted({
+        gate: 'can_submit_feedback',
+        userId: user.id,
+        eventId,
+      });
+      return true;
     }
 
     // If there are feedback questions, check if user has answered them
@@ -272,9 +304,20 @@ export const canSubmitFeedbackQuery: QueryResolvers['canSubmitFeedback'] =
     // User can submit if they haven't answered any questions yet
     // (even if they already have a review - they can update it and add feedback)
     if (answersCount === 0) {
+      trackGateGranted({
+        gate: 'can_submit_feedback',
+        userId: user.id,
+        eventId,
+      });
       return true;
     }
 
     // User has already submitted feedback answers
+    trackGateDenied({
+      gate: 'can_submit_feedback',
+      reason: 'ALREADY_SUBMITTED',
+      userId: user.id,
+      eventId,
+    });
     return false;
   };

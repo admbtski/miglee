@@ -60,11 +60,18 @@ export async function initMetrics(): Promise<MeterProvider | null> {
   });
   
   // Metric reader with periodic export
+  // In development, export more frequently for faster feedback
+  const exportInterval = config.environment === 'development' ? 15000 : 60000;
+  const exportTimeout = config.environment === 'development' ? 10000 : 30000;
   const metricReader = new PeriodicExportingMetricReader({
     exporter: metricExporter,
-    exportIntervalMillis: 60000, // Export every 60s
-    exportTimeoutMillis: 30000,
+    exportIntervalMillis: exportInterval,
+    exportTimeoutMillis: exportTimeout,
   });
+  
+  if (config.debug) {
+    console.log(`[Observability] Metrics export interval: ${exportInterval}ms`);
+  }
   
   // Meter provider
   meterProvider = new MeterProvider({
@@ -74,6 +81,16 @@ export async function initMetrics(): Promise<MeterProvider | null> {
   
   // Set as global
   metrics.setGlobalMeterProvider(meterProvider);
+  
+  // Create "up" gauge to verify metrics export is working
+  const meter = metrics.getMeter('app');
+  const upGauge = meter.createObservableGauge('app.up', {
+    description: 'Service is up (1) or down (0)',
+    unit: '1',
+  });
+  upGauge.addCallback((result) => {
+    result.observe(1, { service: config.serviceName });
+  });
   
   if (config.debug) {
     console.log('[Observability] ✅ Metrics initialized successfully');
@@ -220,11 +237,13 @@ export function createQueueDepthGauge(
 ): ObservableGauge {
   const meter = getMeter('queues');
   
-  return meter.createObservableGauge('app.queue.depth', {
+  const gauge = meter.createObservableGauge('app.queue.depth', {
     description: 'Number of jobs waiting in queue',
     unit: '1',
     valueType: ValueType.INT,
-  }).addCallback(async (observableResult) => {
+  });
+  
+  gauge.addCallback(async (observableResult) => {
     try {
       const depth = await callback();
       observableResult.observe(depth, { queue_name: queueName });
@@ -232,6 +251,8 @@ export function createQueueDepthGauge(
       console.error(`Failed to observe queue depth for ${queueName}:`, error);
     }
   });
+  
+  return gauge;
 }
 
 // Export singleton instances

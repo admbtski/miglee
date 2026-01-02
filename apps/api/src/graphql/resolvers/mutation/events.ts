@@ -51,6 +51,11 @@ import {
   requireEventOwnerOrAdmin,
   type AuthCheckUser,
 } from '../shared/auth-guards';
+import {
+  trackEventLifecycle,
+  trackScheduleSet,
+  trackScheduleCancel,
+} from '../../../lib/observability';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const MIN_START_BUFFER_MS = 5 * 60 * 1000; // >= now + 5 min
@@ -93,6 +98,7 @@ const EVENT_INCLUDE = {
       sponsor: { include: { profile: true } },
     },
   },
+  appearance: true,
 } satisfies Prisma.EventInclude;
 
 /* ───────────────────────────── Validation ───────────────────────────── */
@@ -620,6 +626,14 @@ export const createEventMutation: MutationResolvers['createEvent'] =
         });
 
         return fullEvent;
+      });
+
+      // Track event creation
+      trackEventLifecycle({
+        eventId: full.id,
+        userId: ownerId,
+        action: 'created',
+        visibility: full.visibility,
       });
 
       return mapEvent(full, user.id);
@@ -1257,6 +1271,14 @@ export const cancelEventMutation: MutationResolvers['cancelEvent'] =
         return updated;
       });
 
+      // Track event cancellation
+      trackEventLifecycle({
+        eventId: id,
+        userId: actorId,
+        action: 'canceled',
+        visibility: full.visibility,
+      });
+
       return mapEvent(full, user.id);
     }
   );
@@ -1285,7 +1307,7 @@ export const deleteEventMutation: MutationResolvers['deleteEvent'] =
 
       const row = await prisma.event.findUnique({
         where: { id },
-        select: { canceledAt: true, deletedAt: true },
+        select: { canceledAt: true, deletedAt: true, visibility: true },
       });
       if (!row)
         throw new GraphQLError('Event not found.', {
@@ -1403,6 +1425,14 @@ export const deleteEventMutation: MutationResolvers['deleteEvent'] =
       } catch {
         // swallow
       }
+
+      // Track event deletion
+      trackEventLifecycle({
+        eventId: id,
+        userId: actorId,
+        action: 'deleted',
+        visibility: row.visibility,
+      });
 
       return true;
     }
@@ -1698,6 +1728,16 @@ export const publishEventMutation: MutationResolvers['publishEvent'] =
         // swallow - reminders are not critical
       }
 
+      // Track event publication
+      trackEventLifecycle({
+        eventId: id,
+        userId: actorId,
+        action: 'published',
+        visibility: updated.visibility,
+        previousState: fromStatus,
+        newState: 'PUBLISHED',
+      });
+
       return mapEvent(updated, actorId);
     }
   );
@@ -1773,6 +1813,17 @@ export const scheduleEventPublicationMutation: MutationResolvers['scheduleEventP
         return result;
       });
 
+      // Track scheduled publication
+      trackScheduleSet({
+        scheduleType: 'event_publication',
+        eventId: id,
+        actorId,
+        publishAt: publishDate,
+        timezone: 'UTC',
+        serverNow: new Date(),
+        result: 'ok',
+      });
+
       return mapEvent(updated, actorId);
     }
   );
@@ -1825,6 +1876,14 @@ export const cancelScheduledPublicationMutation: MutationResolvers['cancelSchedu
         });
 
         return result;
+      });
+
+      // Track schedule cancellation
+      trackScheduleCancel({
+        scheduleType: 'event_publication',
+        eventId: id,
+        actorId,
+        wasScheduledFor: event.scheduledPublishAt || new Date(),
       });
 
       return mapEvent(updated, actorId);

@@ -2,6 +2,9 @@
  * Notification Preferences & Mutes Mutation Resolvers
  *
  * Authorization: AUTH (SELF)
+ *
+ * CRITICAL for observability: Not technically heavy, but product-heavy.
+ * Errors here cause support tickets and churn.
  */
 
 import type { Prisma } from '../../../prisma-client/client';
@@ -10,6 +13,11 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapNotificationPreference, mapEventMute, mapDmMute } from '../helpers';
 import { requireAuth } from '../shared/auth-guards';
+import {
+  trackPreferencesUpdated,
+  trackMuteCreated,
+  trackMuteRemoved,
+} from '../../../lib/observability';
 
 const NOTIFICATION_PREFERENCE_INCLUDE = {
   user: true,
@@ -43,22 +51,34 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
 
       // Build update/create data
       const updateData: Prisma.NotificationPreferenceUpdateInput = {};
-      if (input.emailOnInvite !== undefined && input.emailOnInvite !== null)
+      const changedFields: string[] = [];
+
+      if (input.emailOnInvite !== undefined && input.emailOnInvite !== null) {
         updateData.emailOnInvite = input.emailOnInvite;
+        changedFields.push('emailOnInvite');
+      }
       if (
         input.emailOnJoinRequest !== undefined &&
         input.emailOnJoinRequest !== null
-      )
+      ) {
         updateData.emailOnJoinRequest = input.emailOnJoinRequest;
-      if (input.emailOnMessage !== undefined && input.emailOnMessage !== null)
+        changedFields.push('emailOnJoinRequest');
+      }
+      if (input.emailOnMessage !== undefined && input.emailOnMessage !== null) {
         updateData.emailOnMessage = input.emailOnMessage;
-      if (input.pushOnReminder !== undefined && input.pushOnReminder !== null)
+        changedFields.push('emailOnMessage');
+      }
+      if (input.pushOnReminder !== undefined && input.pushOnReminder !== null) {
         updateData.pushOnReminder = input.pushOnReminder;
+        changedFields.push('pushOnReminder');
+      }
       if (
         input.inAppOnEverything !== undefined &&
         input.inAppOnEverything !== null
-      )
+      ) {
         updateData.inAppOnEverything = input.inAppOnEverything;
+        changedFields.push('inAppOnEverything');
+      }
 
       // For create, we need plain values (not field update operations)
       const createData: Prisma.NotificationPreferenceCreateInput = {
@@ -75,6 +95,12 @@ export const updateNotificationPreferencesMutation: MutationResolvers['updateNot
         create: createData,
         update: updateData,
         include: NOTIFICATION_PREFERENCE_INCLUDE,
+      });
+
+      // Track preferences update
+      trackPreferencesUpdated({
+        userId,
+        changedFields,
       });
 
       return mapNotificationPreference(preferences);
@@ -103,6 +129,21 @@ export const muteEventMutation: MutationResolvers['muteEvent'] =
         include: EVENT_MUTE_INCLUDE,
       });
 
+      // Track mute action
+      if (muted) {
+        trackMuteCreated({
+          userId,
+          target: 'event',
+          targetId: eventId,
+        });
+      } else {
+        trackMuteRemoved({
+          userId,
+          target: 'event',
+          targetId: eventId,
+        });
+      }
+
       return mapEventMute(eventMute);
     }
   );
@@ -126,6 +167,21 @@ export const muteDmThreadMutation: MutationResolvers['muteDmThread'] =
         update: { muted },
         include: DM_MUTE_INCLUDE,
       });
+
+      // Track mute action
+      if (muted) {
+        trackMuteCreated({
+          userId,
+          target: 'dm_thread',
+          targetId: threadId,
+        });
+      } else {
+        trackMuteRemoved({
+          userId,
+          target: 'dm_thread',
+          targetId: threadId,
+        });
+      }
 
       return mapDmMute(dmMute);
     }

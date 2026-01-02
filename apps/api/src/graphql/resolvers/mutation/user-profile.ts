@@ -8,6 +8,11 @@ import type {
 } from '../../__generated__/resolvers-types';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
+import {
+  trackProfileUpdated,
+  trackAvailabilityChange,
+  trackTimezoneUsage,
+} from '../../../lib/observability';
 
 // =============================================================================
 // Update User Profile
@@ -111,6 +116,12 @@ export const updateUserProfileMutation: MutationResolvers['updateUserProfile'] =
           }),
           updatedAt: new Date(),
         } as Record<string, unknown>,
+      });
+
+      // Track profile updated
+      trackProfileUpdated({
+        userId: user.id,
+        field: 'other', // Multiple fields updated
       });
 
       return profile as unknown as UserProfile;
@@ -353,6 +364,14 @@ export const upsertUserAvailabilityMutation: MutationResolvers['upsertUserAvaila
             },
           });
 
+      // Track availability change
+      trackAvailabilityChange({
+        userId: user.id,
+        action: input.id ? 'update' : 'set',
+        dayOfWeek: input.weekday,
+        timezone: input.tzSnap || undefined,
+      });
+
       return availability;
     }
   );
@@ -386,6 +405,13 @@ export const removeUserAvailabilityMutation: MutationResolvers['removeUserAvaila
       }
 
       await prisma.userAvailability.delete({ where: { id } });
+
+      // Track availability removal
+      trackAvailabilityChange({
+        userId: user.id,
+        action: 'remove',
+        dayOfWeek: availability.weekday,
+      });
 
       return true;
     }
@@ -554,6 +580,9 @@ export const updateUserTimezoneMutation: MutationResolvers['updateUserTimezone']
         where: { id: user.id },
         data: { timezone, updatedAt: new Date() },
       });
+
+      // Track timezone usage
+      trackTimezoneUsage(timezone);
 
       return updatedUser as unknown as User;
     }

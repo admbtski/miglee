@@ -2,6 +2,8 @@
  * User Blocks Mutation Resolvers
  *
  * Authorization: AUTH (SELF)
+ *
+ * CRITICAL for observability: Blocks affect DM delivery and event visibility.
  */
 
 import type { Prisma } from '../../../prisma-client/client';
@@ -11,6 +13,11 @@ import { resolverWithMetrics } from '../../../lib/resolver-metrics';
 import type { MutationResolvers } from '../../__generated__/resolvers-types';
 import { mapUserBlock } from '../helpers';
 import { requireAuth } from '../shared/auth-guards';
+import {
+  trackBlockCreated,
+  trackBlockRemoved,
+  trackUserBlock,
+} from '../../../lib/observability';
 
 const USER_BLOCK_INCLUDE = {
   blocker: true,
@@ -64,6 +71,19 @@ export const blockUserMutation: MutationResolvers['blockUser'] =
         include: USER_BLOCK_INCLUDE,
       });
 
+      // Track block creation
+      trackBlockCreated({
+        blockerId: userId,
+        blockedId: targetUserId,
+      });
+
+      // Track moderation block action
+      trackUserBlock({
+        blockerId: userId,
+        blockedId: targetUserId,
+        action: 'block',
+      });
+
       return mapUserBlock(block);
     }
   );
@@ -91,6 +111,19 @@ export const unblockUserMutation: MutationResolvers['unblockUser'] =
 
       await prisma.userBlock.delete({
         where: { id: block.id },
+      });
+
+      // Track block removal
+      trackBlockRemoved({
+        blockerId: userId,
+        blockedId: targetUserId,
+      });
+
+      // Track moderation unblock action
+      trackUserBlock({
+        blockerId: userId,
+        blockedId: targetUserId,
+        action: 'unblock',
       });
 
       return true;

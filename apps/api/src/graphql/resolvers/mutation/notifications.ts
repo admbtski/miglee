@@ -12,6 +12,11 @@ import {
   type MutationResolvers,
 } from '../../__generated__/resolvers-types';
 import { mapNotification } from '../helpers';
+import {
+  trackNotificationCreated,
+  trackNotificationRead,
+  type NotificationType,
+} from '../../../lib/observability';
 
 /**
  * Standard notification include with related entities.
@@ -100,6 +105,15 @@ export const addNotificationMutation: MutationResolvers['addNotification'] =
         },
       });
 
+      // Track notification creation
+      trackNotificationCreated({
+        notificationId: created.id,
+        recipientId: created.recipientId,
+        type: (kind?.toLowerCase() || 'system') as NotificationType,
+        entityType: entityType || undefined,
+        entityId: entityId || undefined,
+      });
+
       return mapNotification(created);
     }
   );
@@ -184,6 +198,14 @@ export const markNotificationReadMutation: MutationResolvers['markNotificationRe
           data: { readAt: new Date() },
         });
 
+        // Track notification read
+        trackNotificationRead({
+          userId: user.id,
+          notificationIds: [id],
+          markAll: false,
+          count: 1,
+        });
+
         return true;
       } catch (e: unknown) {
         // Gdyby rekord zniknął pomiędzy find a update
@@ -228,6 +250,13 @@ export const markAllNotificationsReadMutation: MutationResolvers['markAllNotific
       const res = await prisma.notification.updateMany({
         where: { recipientId, readAt: null },
         data: { readAt: new Date() },
+      });
+
+      // Track notifications marked as read
+      trackNotificationRead({
+        userId: user.id,
+        markAll: true,
+        count: res.count,
       });
 
       return res.count;
