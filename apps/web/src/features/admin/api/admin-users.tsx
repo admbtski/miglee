@@ -15,9 +15,6 @@ import {
   AdminUserEventsDocument,
   AdminUserEventsQuery,
   AdminUserEventsQueryVariables,
-  AdminUserDmThreadsDocument,
-  AdminUserDmThreadsQuery,
-  AdminUserDmThreadsQueryVariables,
   AdminUserNotificationsDocument,
   AdminUserNotificationsQuery,
   AdminUserNotificationsQueryVariables,
@@ -43,9 +40,7 @@ export const ADMIN_USER_EVENTS_KEY = (
   variables: AdminUserEventsQueryVariables
 ) => ['AdminUserEvents', variables] as const;
 
-export const ADMIN_USER_DM_THREADS_KEY = (
-  variables: AdminUserDmThreadsQueryVariables
-) => ['AdminUserDmThreads', variables] as const;
+// REMOVED: AdminUserDmThreads - użyj /admin/dm page zamiast tego
 
 export const ADMIN_USER_NOTIFICATIONS_KEY = (
   variables: AdminUserNotificationsQueryVariables
@@ -247,53 +242,7 @@ export function useAdminUserEventsQuery(
   );
 }
 
-export function buildAdminUserDmThreadsOptions(
-  variables: AdminUserDmThreadsQueryVariables,
-  options?: Omit<
-    UseQueryOptions<
-      AdminUserDmThreadsQuery,
-      unknown,
-      AdminUserDmThreadsQuery,
-      QueryKey
-    >,
-    'queryKey' | 'queryFn'
-  >
-): UseQueryOptions<
-  AdminUserDmThreadsQuery,
-  unknown,
-  AdminUserDmThreadsQuery,
-  QueryKey
-> {
-  return {
-    queryKey: ADMIN_USER_DM_THREADS_KEY(variables) as unknown as QueryKey,
-    queryFn: () =>
-      gqlClient.request<
-        AdminUserDmThreadsQuery,
-        AdminUserDmThreadsQueryVariables
-      >(AdminUserDmThreadsDocument, variables),
-    ...(options ?? {}),
-  };
-}
-
-export function useAdminUserDmThreadsQuery(
-  variables: AdminUserDmThreadsQueryVariables,
-  options?: Omit<
-    UseQueryOptions<
-      AdminUserDmThreadsQuery,
-      unknown,
-      AdminUserDmThreadsQuery,
-      QueryKey
-    >,
-    'queryKey' | 'queryFn'
-  >
-) {
-  return useQuery(
-    buildAdminUserDmThreadsOptions(variables, {
-      enabled: !!variables.userId,
-      ...(options ?? {}),
-    })
-  );
-}
+// REMOVED: useAdminUserDmThreadsQuery - użyj /admin/dm page zamiast tego
 
 export function buildAdminUserNotificationsOptions(
   variables: AdminUserNotificationsQueryVariables,

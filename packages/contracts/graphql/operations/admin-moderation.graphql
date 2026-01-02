@@ -17,6 +17,7 @@ query AdminComments($limit: Int, $offset: Int, $eventId: ID, $userId: ID) {
       createdAt
       updatedAt
       deletedAt
+      hiddenAt
       author {
         id
         name

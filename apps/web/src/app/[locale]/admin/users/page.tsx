@@ -14,7 +14,6 @@ import {
   Shield,
   CheckCircle,
   ShieldBan,
-  User,
 } from 'lucide-react';
 import { useUsersQuery } from '@/features/users';
 import { UserDetailModal } from './_components/user-detail-modal';
@@ -22,24 +21,34 @@ import { AddUserModal } from './_components/add-user-modal';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 
+type UserStatus = 'all' | 'deleted' | 'suspended' | 'verified';
+
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<Role | undefined>();
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [status, setStatus] = useState<UserStatus>('all');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
 
   const { data, isLoading } = useUsersQuery({
     q: search || undefined,
     role,
-    verifiedOnly: verifiedOnly || undefined,
+    verifiedOnly: status === 'verified' || undefined,
     sortBy: UsersSortBy.CreatedAt,
     sortDir: SortDir.Desc,
     limit: 50,
   });
 
-  const users = data?.users?.items ?? [];
-  const total = data?.users?.pageInfo?.total ?? 0;
+  // Filter users based on status (client-side filtering for deleted/suspended)
+  const allUsers = data?.users?.items ?? [];
+  const users = allUsers.filter((user: any) => {
+    if (status === 'deleted') return user.deletedAt;
+    if (status === 'suspended') return user.suspendedAt && !user.deletedAt;
+    if (status === 'verified')
+      return user.verifiedAt && !user.suspendedAt && !user.deletedAt;
+    return true; // 'all'
+  });
+  const total = users.length;
 
   const handleRefresh = () => {
     // Refetch will happen automatically due to React Query
@@ -104,22 +113,21 @@ export default function UsersPage() {
             </select>
           </div>
 
-          {/* Verified filter */}
+          {/* Status filter */}
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Status
             </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={verifiedOnly}
-                onChange={(e) => setVerifiedOnly(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                Tylko zweryfikowani
-              </span>
-            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as UserStatus)}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <option value="all">Wszystkie</option>
+              <option value="deleted">Usunięte</option>
+              <option value="suspended">Zawieszone</option>
+              <option value="verified">Zweryfikowane</option>
+            </select>
           </div>
         </div>
 
@@ -254,7 +262,15 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
-                      {user.verifiedAt ? (
+                      {user.deletedAt ? (
+                        <span className="inline-flex rounded-full bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-800 dark:bg-zinc-800/30 dark:text-zinc-300">
+                          Usunięty
+                        </span>
+                      ) : user.suspendedAt ? (
+                        <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                          Zawieszony
+                        </span>
+                      ) : user.verifiedAt ? (
                         <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-300">
                           Aktywny
                         </span>
@@ -281,26 +297,14 @@ export default function UsersPage() {
                         : '-'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                      <div className="flex items-center justify-end gap-3">
-                        <a
-                          href={`/u/${user.name}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
-                          title="Zobacz profil publiczny"
-                        >
-                          <User className="h-4 w-4" />
-                          Profil
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedUserId(user.id)}
-                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          <Eye className="h-4 w-4" />
-                          Szczegóły
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUserId(user.id)}
+                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Szczegóły
+                      </button>
                     </td>
                   </tr>
                 ))}

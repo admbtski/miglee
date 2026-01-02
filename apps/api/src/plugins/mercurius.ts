@@ -294,7 +294,40 @@ export const mercuriusPlugin = fastifyPlugin(async (fastify) => {
   // GraphQL Hooks
   // =============================================================================
 
-  // ✅ Pre-execution hook for introspection blocking, complexity check, and tracing
+  // ✅ Pre-execution hook for suspended user check
+  fastify.graphql.addHook(
+    'preExecution',
+    async (_schema, document, context) => {
+      const user = context.user;
+
+      // If user is suspended, block all operations except a whitelist
+      if (user?.suspendedAt) {
+        // Extract operation name
+        const operationName = document.definitions.find(
+          (def) => def.kind === 'OperationDefinition'
+        )?.name?.value;
+
+        // Whitelist of operations that suspended users can still perform
+        const allowedOperations = [
+          'me', // Allow checking their own profile
+          'devLogout', // Allow logout in dev
+        ];
+
+        if (!operationName || !allowedOperations.includes(operationName)) {
+          throw new GraphQLError(
+            'Your account has been suspended. Please contact support.',
+            {
+              extensions: {
+                code: 'FORBIDDEN',
+                reason: user.suspensionReason || 'Account suspended',
+                suspendedAt: user.suspendedAt,
+              },
+            }
+          );
+        }
+      }
+    }
+  );
 
   // Resolution hook - complete tracing and metrics
 });

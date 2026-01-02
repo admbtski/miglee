@@ -230,68 +230,6 @@ export const adminUserEventsQuery: QueryResolvers['adminUserEvents'] =
   );
 
 /**
- * Query: Admin User DM Threads
- */
-export const adminUserDmThreadsQuery: QueryResolvers['adminUserDmThreads'] =
-  resolverWithMetrics(
-    'Query',
-    'adminUserDmThreads',
-    async (_p, { userId, limit = 50, offset = 0 }, ctx: MercuriusContext) => {
-      const currentUser = requireAuthUser(ctx);
-      requireAdmin(currentUser);
-
-      const take = Math.min(limit ?? 50, 100);
-      const skip = offset ?? 0;
-
-      // Get DM threads where user is either aUser or bUser
-      const [threads, total] = await Promise.all([
-        prisma.dmThread.findMany({
-          where: {
-            OR: [{ aUserId: userId }, { bUserId: userId }],
-          },
-          include: {
-            aUser: true,
-            bUser: true,
-            _count: {
-              select: { messages: true },
-            },
-          },
-          orderBy: {
-            lastMessageAt: 'desc',
-          },
-          take,
-          skip,
-        }),
-        prisma.dmThread.count({
-          where: {
-            OR: [{ aUserId: userId }, { bUserId: userId }],
-          },
-        }),
-      ]);
-
-      // Map threads to include the "other user" (not the current userId)
-      const items = threads.map((thread) => ({
-        id: thread.id,
-        createdAt: thread.createdAt,
-        lastMessageAt: thread.lastMessageAt,
-        messageCount: thread._count.messages,
-        otherUser:
-          thread.aUserId === userId
-            ? mapUser(thread.bUser)
-            : mapUser(thread.aUser),
-      }));
-
-      return {
-        items,
-        pageInfo: {
-          total,
-          hasMore: skip + take < total,
-        },
-      };
-    }
-  );
-
-/**
  * Query: Admin User Notifications
  */
 export const adminUserNotificationsQuery: QueryResolvers['adminUserNotifications'] =

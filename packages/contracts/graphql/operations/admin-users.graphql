@@ -21,8 +21,8 @@ mutation AdminUpdateUser($id: ID!, $input: AdminUpdateUserInput!) {
   }
 }
 
-mutation AdminDeleteUser($id: ID!, $anonymize: Boolean) {
-  adminDeleteUser(id: $id, anonymize: $anonymize)
+mutation AdminDeleteUser($id: ID!, $anonymize: Boolean, $deleteReason: String) {
+  adminDeleteUser(id: $id, anonymize: $anonymize, deleteReason: $deleteReason)
 }
 
 mutation AdminInviteUser($input: AdminInviteUserInput!) {
@@ -169,31 +169,6 @@ mutation AdminUnsuspendUser($id: ID!) {
     suspendedAt
     avatarKey
     avatarBlurhash
-  }
-}
-
-# ============================================
-# QUERIES - DM Threads
-# ============================================
-
-query AdminUserDmThreads($userId: ID!, $limit: Int, $offset: Int) {
-  adminUserDmThreads(userId: $userId, limit: $limit, offset: $offset) {
-    items {
-      id
-      createdAt
-      lastMessageAt
-      messageCount
-      otherUser {
-        id
-        name
-        avatarKey
-        avatarBlurhash
-      }
-    }
-    pageInfo {
-      total
-      hasMore
-    }
   }
 }
 

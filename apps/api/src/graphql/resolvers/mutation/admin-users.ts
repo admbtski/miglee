@@ -90,7 +90,7 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
   resolverWithMetrics(
     'Mutation',
     'adminDeleteUser',
-    async (_p, { id, anonymize }, ctx: MercuriusContext) => {
+    async (_p, { id, anonymize, deleteReason }, ctx: MercuriusContext) => {
       const currentUser = requireAuthUser(ctx);
       requireAdmin(currentUser);
 
@@ -113,7 +113,7 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
       }
 
       if (anonymize) {
-        // Anonymize user data instead of hard delete
+        // Anonymize user data (soft delete with anonymization)
         await prisma.user.update({
           where: { id },
           data: {
@@ -125,12 +125,18 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
             acceptedTermsAt: null,
             locale: 'en', // Reset to default
             timezone: 'UTC', // Reset to default
+            deletedAt: new Date(),
+            deletedReason: deleteReason || null,
           },
         });
       } else {
-        // Hard delete (cascade will handle related records based on schema)
-        await prisma.user.delete({
+        // Soft delete with reason
+        await prisma.user.update({
           where: { id },
+          data: {
+            deletedAt: new Date(),
+            deletedReason: deleteReason || null,
+          },
         });
       }
 
@@ -140,7 +146,7 @@ export const adminDeleteUserMutation: MutationResolvers['adminDeleteUser'] =
         action: 'delete_user',
         targetType: 'user',
         targetId: id,
-        diff: { anonymize },
+        diff: { anonymize, deleteReason },
       });
 
       // Track account deletion specifically

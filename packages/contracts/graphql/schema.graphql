@@ -2178,11 +2178,6 @@ type Query {
     offset: Int
   ): AdminMembershipsResult!
   adminUserEvents(userId: ID!, limit: Int, offset: Int): AdminEventsResult!
-  adminUserDmThreads(
-    userId: ID!
-    limit: Int
-    offset: Int
-  ): AdminDmThreadsResult!
   adminUserNotifications(
     userId: ID!
     limit: Int
@@ -2287,11 +2282,6 @@ type AdminEventsResult {
   pageInfo: AdminPageInfo!
 }
 
-type AdminDmThreadsResult {
-  items: [AdminDmThreadItem!]!
-  pageInfo: AdminPageInfo!
-}
-
 type AdminPageInfo {
   total: Int!
   hasMore: Boolean!
@@ -2311,14 +2301,6 @@ type AdminEventItem {
   startAt: DateTime!
   status: String!
   joinedCount: Int!
-}
-
-type AdminDmThreadItem {
-  id: ID!
-  createdAt: DateTime!
-  lastMessageAt: DateTime
-  otherUser: User!
-  messageCount: Int!
 }
 
 type AdminEventSummary {
@@ -2573,7 +2555,7 @@ type Mutation {
 
   # Admin - User Management
   adminUpdateUser(id: ID!, input: AdminUpdateUserInput!): User!
-  adminDeleteUser(id: ID!, anonymize: Boolean): Boolean!
+  adminDeleteUser(id: ID!, anonymize: Boolean, deleteReason: String): Boolean!
   adminInviteUser(input: AdminInviteUserInput!): User!
   adminCreateUser(input: AdminCreateUserInput!): User!
   adminSuspendUser(id: ID!, reason: String): User!

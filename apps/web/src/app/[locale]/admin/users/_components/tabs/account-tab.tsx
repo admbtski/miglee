@@ -6,6 +6,8 @@ import {
   useUserQuery,
   useAdminUpdateUserMutation,
   useAdminDeleteUserMutation,
+  useAdminSuspendUserMutation,
+  useAdminUnsuspendUserMutation,
 } from '@/features/users';
 import { Role } from '@/lib/api/__generated__/react-query-update';
 import {
@@ -14,13 +16,15 @@ import {
   XCircle,
   Trash2,
   AlertTriangle,
+  ShieldBan,
+  Loader2,
+  ExternalLink,
+  Mail,
 } from 'lucide-react';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { NoticeModal } from '@/components/ui/notice-modal';
 import { useMeQuery } from '@/features/auth';
-import { useRouter } from 'next/navigation';
-import { useLocalePath } from '@/hooks/use-locale-path';
 
 type AccountTabProps = {
   userId: string;
@@ -28,8 +32,6 @@ type AccountTabProps = {
 };
 
 export function AccountTab({ userId, onRefresh }: AccountTabProps) {
-  const router = useRouter();
-  const { localePath } = useLocalePath();
   const { data: userData, isLoading } = useUserQuery({ id: userId });
   const { data: meData } = useMeQuery();
 
@@ -37,9 +39,18 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [toggleVerifyOpen, setToggleVerifyOpen] = useState(false);
   const [deleteUserOpen, setDeleteUserOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const updateUserMutation = useAdminUpdateUserMutation();
   const deleteUserMutation = useAdminDeleteUserMutation();
+  const suspendMutation = useAdminSuspendUserMutation();
+  const unsuspendMutation = useAdminUnsuspendUserMutation();
 
   const user = userData?.user;
   const me = meData?.me;
@@ -63,6 +74,7 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
   const isSelf = me?.id === user.id;
   const canChangeRole = me?.role === Role.Admin && !isSelf;
   const canDelete = me?.role === Role.Admin && !isSelf;
+  const isSuspended = !!user.suspendedAt;
 
   const handleRoleChange = (newRole: Role) => {
     setSelectedRole(newRole);
@@ -108,18 +120,59 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
       await deleteUserMutation.mutateAsync({
         id: userId,
         anonymize: true,
+        deleteReason: deleteReason || undefined,
       });
       setDeleteUserOpen(false);
-      // Navigate back to users list after successful deletion
-      router.push(localePath('/admin/users'));
+      setDeleteReason('');
+      onRefresh?.();
     } catch (error) {
       console.error('Failed to delete user:', error);
       setDeleteUserOpen(false);
     }
   };
 
+  const handleSuspend = async () => {
+    try {
+      await suspendMutation.mutateAsync({
+        id: userId,
+        reason: suspendReason || undefined,
+      });
+      setSuspendOpen(false);
+      setSuspendReason('');
+      onRefresh?.();
+    } catch (error) {
+      console.error('Failed to suspend user:', error);
+    }
+  };
+
+  const handleUnsuspend = async () => {
+    try {
+      await unsuspendMutation.mutateAsync({
+        id: userId,
+      });
+      onRefresh?.();
+    } catch (error) {
+      console.error('Failed to unsuspend user:', error);
+    }
+  };
+
+  const handleSendPasswordReset = async () => {
+    setResetPasswordLoading(true);
+    // TODO: Implement adminSendPasswordReset mutation
+    console.log('Send password reset:', userId);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setResetPasswordLoading(false);
+    setResetPasswordOpen(false);
+    setSuccessMessage('Email z resetem hasła został wysłany');
+    setSuccessOpen(true);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* ============================================ */}
+      {/* SEKCJA: INFORMACJE O UŻYTKOWNIKU */}
+      {/* ============================================ */}
+
       {/* User Info Card */}
       <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex items-start gap-4">
@@ -164,6 +217,61 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
           </div>
         </div>
       </div>
+
+      {/* Account Details */}
+      <div className="space-y-3">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          Dane konta
+        </h5>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-zinc-600 dark:text-zinc-400">ID:</span>
+            <span className="font-mono text-zinc-900 dark:text-zinc-100">
+              {user.id}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-zinc-600 dark:text-zinc-400">
+              Data rejestracji:
+            </span>
+            <span className="text-zinc-900 dark:text-zinc-100">
+              {format(new Date(user.createdAt), 'dd MMMM yyyy, HH:mm', {
+                locale: pl,
+              })}
+            </span>
+          </div>
+          {user.lastSeenAt && (
+            <div className="flex justify-between">
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Ostatnia aktywność:
+              </span>
+              <span className="text-zinc-900 dark:text-zinc-100">
+                {format(new Date(user.lastSeenAt), 'dd MMMM yyyy, HH:mm', {
+                  locale: pl,
+                })}
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="pt-2">
+          <a
+            href={`/u/${user.name}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Podejrzyj profil publiczny
+          </a>
+        </div>
+      </div>
+
+      {/* Separator */}
+      <div className="border-t border-zinc-200 dark:border-zinc-700" />
+
+      {/* ============================================ */}
+      {/* SEKCJA: UPRAWNIENIA I WERYFIKACJA */}
+      {/* ============================================ */}
 
       {/* Role Management */}
       <div className="space-y-3">
@@ -210,6 +318,9 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
         <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Weryfikacja konta
         </h5>
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+          Status weryfikacji użytkownika na platformie
+        </p>
         <button
           onClick={() => setToggleVerifyOpen(true)}
           className={`rounded-lg border px-4 py-2 text-sm font-medium ${
@@ -230,58 +341,115 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
         )}
       </div>
 
-      {/* Account Details */}
+      {/* Separator */}
+      <div className="border-t border-zinc-200 dark:border-zinc-700" />
+
+      {/* ============================================ */}
+      {/* SEKCJA: BEZPIECZEŃSTWO I ZARZĄDZANIE */}
+      {/* ============================================ */}
+
+      {/* Password Reset */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          Reset hasła
+        </h5>
+        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+          Wyślij użytkownikowi email z linkiem do resetowania hasła
+        </p>
+        <button
+          onClick={() => setResetPasswordOpen(true)}
+          className="inline-flex items-center gap-2 rounded-lg border border-blue-300 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/30"
+        >
+          <Mail className="h-4 w-4" />
+          Wyślij email z resetem hasła
+        </button>
+      </div>
+
+      {/* Account Suspension */}
+      {!isSelf && (
+        <div className="space-y-3">
           <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Dane konta
+            Zawieszenie konta
           </h5>
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-zinc-600 dark:text-zinc-400">ID:</span>
-            <span className="font-mono text-zinc-900 dark:text-zinc-100">
-              {user.id}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-zinc-600 dark:text-zinc-400">
-              Data rejestracji:
-            </span>
-            <span className="text-zinc-900 dark:text-zinc-100">
-              {format(new Date(user.createdAt), 'dd MMMM yyyy, HH:mm', {
-                locale: pl,
-              })}
-            </span>
-          </div>
-          {user.lastSeenAt && (
-            <div className="flex justify-between">
-              <span className="text-zinc-600 dark:text-zinc-400">
-                Ostatnia aktywność:
-              </span>
-              <span className="text-zinc-900 dark:text-zinc-100">
-                {format(new Date(user.lastSeenAt), 'dd MMMM yyyy, HH:mm', {
-                  locale: pl,
-                })}
-              </span>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            Zawieszenie konta uniemożliwia użytkownikowi jakiekolwiek działania
+            na platformie
+          </p>
+          {isSuspended ? (
+            <div className="space-y-2">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950/30">
+                <div className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium">Konto zawieszone</p>
+                    {user.suspensionReason && (
+                      <p className="mt-1 text-xs">
+                        Powód: {user.suspensionReason}
+                      </p>
+                    )}
+                    {user.suspendedAt && (
+                      <p className="mt-1 text-xs">
+                        Data:{' '}
+                        {format(
+                          new Date(user.suspendedAt),
+                          'dd MMM yyyy, HH:mm',
+                          { locale: pl }
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleUnsuspend}
+                disabled={unsuspendMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-lg border border-green-300 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-950/30"
+              >
+                {unsuspendMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-4 w-4" />
+                )}
+                {unsuspendMutation.isPending
+                  ? 'Przywracanie...'
+                  : 'Cofnij zawieszenie'}
+              </button>
             </div>
+          ) : (
+            <button
+              onClick={() => setSuspendOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-orange-300 px-4 py-2 text-sm font-medium text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/30"
+            >
+              <ShieldBan className="h-4 w-4" />
+              Zawieś konto
+            </button>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Separator */}
+      <div className="border-t border-zinc-200 dark:border-zinc-700" />
+
+      {/* ============================================ */}
+      {/* SEKCJA: DANGER ZONE */}
+      {/* ============================================ */}
 
       {/* Danger Zone */}
       {canDelete && (
-        <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/30">
-          <h5 className="text-sm font-semibold text-red-900 dark:text-red-100">
-            Strefa niebezpieczna
-          </h5>
+        <div className="space-y-3 rounded-lg border-2 border-red-300 bg-red-50 p-4 dark:border-red-700 dark:bg-red-950/30">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-700 dark:text-red-300" />
+            <h5 className="text-sm font-semibold text-red-900 dark:text-red-100">
+              Strefa niebezpieczna
+            </h5>
+          </div>
           <p className="text-xs text-red-700 dark:text-red-300">
             Usunięcie użytkownika jest nieodwracalne. Wszystkie dane zostaną
-            zanonimizowane.
+            zanonimizowane i konto zostanie oznaczone jako usunięte.
           </p>
           <button
             onClick={() => setDeleteUserOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/50"
+            className="inline-flex items-center gap-2 rounded-lg border border-red-400 bg-red-100 px-4 py-2 text-sm font-medium text-red-800 hover:bg-red-200 dark:border-red-600 dark:bg-red-900/50 dark:text-red-200 dark:hover:bg-red-900/70"
           >
             <Trash2 className="h-4 w-4" />
             Usuń użytkownika
@@ -332,13 +500,101 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
         open={deleteUserOpen}
         onClose={() => setDeleteUserOpen(false)}
         variant="error"
-        size="sm"
+        size="md"
         title="Usunąć użytkownika?"
         subtitle="Ta akcja jest nieodwracalna. Wszystkie dane zostaną zanonimizowane."
         primaryLabel={deleteUserMutation.isPending ? 'Usuwanie...' : 'Usuń'}
         secondaryLabel="Anuluj"
         onPrimary={handleDeleteUser}
         onSecondary={() => setDeleteUserOpen(false)}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Powód usunięcia (opcjonalnie)
+            </label>
+            <textarea
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+              placeholder="Wpisz powód usunięcia użytkownika..."
+              rows={3}
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+              Powód zostanie zapisany w logach audytu
+            </p>
+          </div>
+        </div>
+      </NoticeModal>
+
+      {/* Suspend Modal */}
+      <NoticeModal
+        open={suspendOpen}
+        onClose={() => setSuspendOpen(false)}
+        variant="warning"
+        size="md"
+        title="Zawieś konto użytkownika"
+        subtitle="Zawieszenie uniemożliwi użytkownikowi jakiekolwiek działania na platformie."
+        primaryLabel={
+          suspendMutation.isPending ? 'Zawieszanie...' : 'Zawieś konto'
+        }
+        secondaryLabel="Anuluj"
+        onPrimary={handleSuspend}
+        onSecondary={() => setSuspendOpen(false)}
+      >
+        <div className="space-y-4">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              <strong>Uwaga:</strong> Zawieszenie konta uniemożliwi
+              użytkownikowi logowanie i jakiekolwiek działania na platformie.
+            </p>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Powód zawieszenia (opcjonalnie)
+            </label>
+            <textarea
+              value={suspendReason}
+              onChange={(e) => setSuspendReason(e.target.value)}
+              placeholder="Wpisz powód zawieszenia..."
+              rows={3}
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+          </div>
+        </div>
+      </NoticeModal>
+
+      {/* Password Reset Confirmation */}
+      <NoticeModal
+        open={resetPasswordOpen}
+        onClose={() => setResetPasswordOpen(false)}
+        variant="warning"
+        size="sm"
+        title="Wysłać email z resetem hasła?"
+        subtitle={`Użytkownik ${user.name} otrzyma email z linkiem do resetowania hasła.`}
+        primaryLabel="Wyślij"
+        secondaryLabel="Anuluj"
+        onPrimary={handleSendPasswordReset}
+        onSecondary={() => setResetPasswordOpen(false)}
+        primaryLoading={resetPasswordLoading}
+      >
+        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/30">
+          <p className="text-xs text-blue-800 dark:text-blue-300">
+            <strong>TODO:</strong> Implementacja wymaga mutation:
+            adminSendPasswordReset
+          </p>
+        </div>
+      </NoticeModal>
+
+      {/* Success */}
+      <NoticeModal
+        open={successOpen}
+        onClose={() => setSuccessOpen(false)}
+        variant="success"
+        size="sm"
+        title="Sukces"
+        subtitle={successMessage}
+        autoCloseMs={2000}
       >
         <></>
       </NoticeModal>

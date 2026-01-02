@@ -11,7 +11,6 @@ import {
   Tag,
   Calendar,
   DollarSign,
-  Settings,
   Shield,
   BarChart3,
   Folder,
@@ -81,11 +80,6 @@ const navigation = [
     name: 'Statystyki',
     href: '/admin/analytics',
     icon: BarChart3,
-  },
-  {
-    name: 'Narzędzia',
-    href: '/admin/tools',
-    icon: Settings,
   },
   {
     name: 'Bezpieczeństwo',

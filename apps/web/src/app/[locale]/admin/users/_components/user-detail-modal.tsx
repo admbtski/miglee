@@ -4,15 +4,10 @@ import { useState } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { X } from 'lucide-react';
 import { AccountTab } from './tabs/account-tab';
-import { ProfileTab } from './tabs/profile-tab';
 import { CommunicationTab } from './tabs/communication-tab';
-import { SecurityTab } from './tabs/security-tab';
-import { ContentTab } from './tabs/content-tab';
-import { EventTab } from './tabs/events-tab';
-import { DiagnosticTools } from './tabs/diagnostic-tools';
+import { ActivityTab } from './tabs/activity-tab';
 import { AuditLogTab } from './tabs/audit-log-tab';
 import { NotificationsTab } from './tabs/notifications-tab';
-import { useUserQuery } from '@/features/users';
 
 type UserDetailModalProps = {
   userId: string;
@@ -23,24 +18,16 @@ type UserDetailModalProps = {
 
 type TabId =
   | 'account'
-  | 'profile'
+  | 'activity'
   | 'communication'
-  | 'security'
-  | 'content'
-  | 'events'
   | 'notifications'
-  | 'tools'
   | 'audit';
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'account', label: 'Konto' },
-  { id: 'profile', label: 'Profil' },
+  { id: 'activity', label: 'Aktywność' },
   { id: 'communication', label: 'Komunikacja' },
-  { id: 'security', label: 'Bezpieczeństwo' },
-  { id: 'content', label: 'Treści' },
-  { id: 'events', label: 'Wydarzenia' },
   { id: 'notifications', label: 'Powiadomienia' },
-  { id: 'tools', label: 'Narzędzia' },
   { id: 'audit', label: 'Historia' },
 ];
 
@@ -51,14 +38,11 @@ export function UserDetailModal({
   onRefresh,
 }: UserDetailModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>('account');
-  const { data: userData } = useUserQuery({ id: userId });
 
   const handleClose = () => {
     setActiveTab('account');
     onClose();
   };
-
-  const user = userData?.user;
 
   return (
     <Modal
@@ -110,22 +94,12 @@ export function UserDetailModal({
             {activeTab === 'account' && (
               <AccountTab userId={userId} onRefresh={onRefresh} />
             )}
-            {activeTab === 'profile' && (
-              <ProfileTab userId={userId} onRefresh={onRefresh} />
-            )}
+            {activeTab === 'activity' && <ActivityTab userId={userId} />}
             {activeTab === 'communication' && (
               <CommunicationTab userId={userId} />
             )}
-            {activeTab === 'security' && (
-              <SecurityTab userId={userId} onRefresh={onRefresh} />
-            )}
-            {activeTab === 'content' && <ContentTab userId={userId} />}
-            {activeTab === 'events' && <EventTab userId={userId} />}
             {activeTab === 'notifications' && (
               <NotificationsTab userId={userId} />
-            )}
-            {activeTab === 'tools' && user && (
-              <DiagnosticTools userId={userId} userName={user.name} />
             )}
             {activeTab === 'audit' && <AuditLogTab userId={userId} />}
           </div>

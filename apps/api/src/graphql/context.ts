@@ -26,6 +26,8 @@ export async function createContext(
           role: user.role as Role,
           avatarKey: user.avatarKey,
           verifiedAt: user.verifiedAt,
+          suspendedAt: user.suspendedAt,
+          suspensionReason: user.suspensionReason,
           locale: user.locale,
           timezone: user.timezone,
         }
