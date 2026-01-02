@@ -52,9 +52,7 @@ export function ProfileTab({ userId }: ProfileTabProps) {
   } = useUserProfileQuery({ id: userId }, { enabled: !!userId });
 
   const { data: categoriesData } = useCategoriesQuery({ limit: 100 });
-  const updateMutation = useUpdateUserProfile();
 
-  const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState<EditedProfile | null>(null);
 
   const user: UserProfile | undefined = profileData?.user;
@@ -65,50 +63,6 @@ export function ProfileTab({ userId }: ProfileTabProps) {
   const stats = user?.stats;
 
   const categories = categoriesData?.categories || [];
-
-  const handleEdit = () => {
-    setEditedData({
-      displayName: profile?.displayName || '',
-      bioShort: profile?.bioShort || '',
-      bioLong: profile?.bioLong || '',
-      city: profile?.city || '',
-      country: profile?.country || '',
-      speaks: profile?.speaks || [],
-      interests: profile?.interests || [],
-    });
-    setIsEditing(true);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedData(null);
-  };
-
-  const handleSave = async () => {
-    if (!editedData) return;
-
-    await updateMutation.mutateAsync({
-      input: {
-        displayName: editedData.displayName || undefined,
-        bioShort: editedData.bioShort || undefined,
-        bioLong: editedData.bioLong || undefined,
-        city: editedData.city || undefined,
-        country: editedData.country || undefined,
-        speaks:
-          editedData.speaks && editedData.speaks.length > 0
-            ? editedData.speaks
-            : undefined,
-        interests:
-          editedData.interests && editedData.interests.length > 0
-            ? editedData.interests
-            : undefined,
-      },
-    });
-
-    setIsEditing(false);
-    setEditedData(null);
-    refetch();
-  };
 
   const getCategoryName = (categoryId: string) => {
     const cat = categories.find((c: Category) => c.id === categoryId);
@@ -149,41 +103,6 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             Przeglądaj i edytuj informacje profilowe użytkownika
           </p>
         </div>
-        {!isEditing ? (
-          <button
-            onClick={handleEdit}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Edytuj profil
-          </button>
-        ) : (
-          <div className="flex gap-2">
-            <button
-              onClick={handleCancel}
-              disabled={updateMutation.isPending}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Anuluj
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Zapisywanie...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Zapisz
-                </>
-              )}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Basic Info */}
@@ -197,28 +116,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Display Name
             </label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={editedData?.displayName || ''}
-                onChange={(e) =>
-                  setEditedData({
-                    displayName: e.target.value,
-                    bioShort: editedData?.bioShort,
-                    bioLong: editedData?.bioLong,
-                    city: editedData?.city,
-                    country: editedData?.country,
-                    speaks: editedData?.speaks,
-                    interests: editedData?.interests,
-                  })
-                }
-                className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            ) : (
-              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
-                {profile?.displayName || user.name || '-'}
-              </p>
-            )}
+
+            <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              {profile?.displayName || user.name || '-'}
+            </p>
           </div>
 
           {/* Bio Short */}
@@ -226,22 +127,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Krótki opis
             </label>
-            {isEditing ? (
-              <textarea
-                value={editedData?.bioShort || ''}
-                onChange={(e) =>
-                  setEditedData((prev) =>
-                    prev ? { ...prev, bioShort: e.target.value } : null
-                  )
-                }
-                rows={2}
-                className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            ) : (
-              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
-                {profile?.bioShort || '-'}
-              </p>
-            )}
+
+            <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              {profile?.bioShort || '-'}
+            </p>
           </div>
 
           {/* Bio Long */}
@@ -249,22 +138,10 @@ export function ProfileTab({ userId }: ProfileTabProps) {
             <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Pełny opis
             </label>
-            {isEditing ? (
-              <textarea
-                value={editedData?.bioLong || ''}
-                onChange={(e) =>
-                  setEditedData((prev) =>
-                    prev ? { ...prev, bioLong: e.target.value } : null
-                  )
-                }
-                rows={4}
-                className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-            ) : (
-              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
-                {profile?.bioLong || '-'}
-              </p>
-            )}
+
+            <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+              {profile?.bioLong || '-'}
+            </p>
           </div>
 
           {/* Location */}
@@ -273,43 +150,19 @@ export function ProfileTab({ userId }: ProfileTabProps) {
               <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 <MapPin className="inline h-3 w-3" /> Miasto
               </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedData?.city || ''}
-                  onChange={(e) =>
-                    setEditedData((prev) =>
-                      prev ? { ...prev, city: e.target.value } : null
-                    )
-                  }
-                  className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              ) : (
-                <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
-                  {profile?.city || '-'}
-                </p>
-              )}
+
+              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                {profile?.city || '-'}
+              </p>
             </div>
             <div>
               <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 <Globe className="inline h-3 w-3" /> Kraj
               </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedData?.country || ''}
-                  onChange={(e) =>
-                    setEditedData((prev) =>
-                      prev ? { ...prev, country: e.target.value } : null
-                    )
-                  }
-                  className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              ) : (
-                <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
-                  {profile?.country || '-'}
-                </p>
-              )}
+
+              <p className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                {profile?.country || '-'}
+              </p>
             </div>
           </div>
         </div>

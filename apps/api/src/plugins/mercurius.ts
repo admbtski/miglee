@@ -5,10 +5,7 @@ import fastifyPlugin from 'fastify-plugin';
 import { existsSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import {
-  GraphQLError,
-  type ValueNode,
-} from 'graphql';
+import { GraphQLError, type ValueNode } from 'graphql';
 import mercurius, { MercuriusContext } from 'mercurius';
 import { join } from 'path';
 import { WebSocket } from 'ws';

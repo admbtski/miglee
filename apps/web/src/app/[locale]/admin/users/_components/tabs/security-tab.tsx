@@ -1,25 +1,24 @@
 'use client';
 
-import { format, pl } from '@/lib/date';
-import { useState } from 'react';
-import {
-  useUserQuery,
-  useAdminSuspendUserMutation,
-  useAdminUnsuspendUserMutation,
-} from '@/features/users';
+import { Avatar } from '@/components/ui/avatar';
 import { useAdminUserDmThreadsQuery } from '@/features/admin';
 import {
-  Shield,
-  Ban,
-  CheckCircle,
-  MessageSquare,
-  AlertTriangle,
-  Loader2,
-  ExternalLink,
-} from 'lucide-react';
+  useAdminSuspendUserMutation,
+  useAdminUnsuspendUserMutation,
+  useUserQuery,
+} from '@/features/users';
+import { format, pl } from '@/lib/date';
 import { buildAvatarUrl } from '@/lib/media/url';
-import { Avatar } from '@/components/ui/avatar';
+import {
+  AlertTriangle,
+  CheckCircle,
+  ExternalLink,
+  Loader2,
+  MessageSquare,
+  Shield,
+} from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 type SecurityTabProps = {
   userId: string;
@@ -39,8 +38,6 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
 
   const dmThreads = dmThreadsData?.adminUserDmThreads?.items ?? [];
 
-  const [blockOpen, setBlockOpen] = useState(false);
-  const [blockReason, setBlockReason] = useState('');
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
   const [dmThreadsOpen, setDmThreadsOpen] = useState(false);
@@ -48,22 +45,7 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
   const suspendMutation = useAdminSuspendUserMutation();
   const unsuspendMutation = useAdminUnsuspendUserMutation();
 
-  const isBlocked = false; // TODO: Implement user blocking system
   const isSuspended = !!user?.suspendedAt;
-
-  const isBlockLoading = false; // TODO: Add loading state when block mutation is implemented
-
-  const handleBlock = async () => {
-    // TODO: Implement adminBlockUser mutation
-    console.log('Block user:', userId, blockReason);
-    setBlockOpen(false);
-    setBlockReason('');
-  };
-
-  const handleUnblock = async () => {
-    // TODO: Implement adminUnblockUser mutation
-    console.log('Unblock user:', userId);
-  };
 
   const handleSuspend = async () => {
     try {
@@ -92,41 +74,6 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* User Block */}
-      <div className="space-y-3">
-        <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Blokada użytkownika
-        </h5>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
-          Blokada użytkownika uniemożliwia mu interakcje z innymi użytkownikami
-        </p>
-        {isBlocked ? (
-          <div className="space-y-2">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950/30">
-              <div className="flex items-center gap-2 text-sm text-red-800 dark:text-red-300">
-                <Ban className="h-4 w-4" />
-                <span>Użytkownik jest zablokowany</span>
-              </div>
-            </div>
-            <button
-              onClick={handleUnblock}
-              className="inline-flex items-center gap-2 rounded-lg border border-green-300 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-950/30"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Odblokuj użytkownika
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setBlockOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950/30"
-          >
-            <Ban className="h-4 w-4" />
-            Zablokuj użytkownika
-          </button>
-        )}
-      </div>
-
       {/* Account Suspension */}
       <div className="space-y-3">
         <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -215,46 +162,6 @@ export function SecurityTab({ userId, onRefresh }: SecurityTabProps) {
           zakładce "Konto".
         </p>
       </div>
-
-      {/* Block Modal */}
-      {blockOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-zinc-900">
-            <h4 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Zablokuj użytkownika
-            </h4>
-            <div className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  Powód blokady (opcjonalnie)
-                </label>
-                <textarea
-                  value={blockReason}
-                  onChange={(e) => setBlockReason(e.target.value)}
-                  placeholder="Wpisz powód blokady..."
-                  rows={3}
-                  className="w-full rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={() => setBlockOpen(false)}
-                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                Anuluj
-              </button>
-              <button
-                onClick={handleBlock}
-                disabled={isBlockLoading}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isBlockLoading ? 'Blokowanie...' : 'Zablokuj'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Suspend Modal */}
       {suspendOpen && (
