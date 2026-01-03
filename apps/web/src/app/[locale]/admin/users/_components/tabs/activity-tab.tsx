@@ -31,12 +31,14 @@ import {
   useRejectMembershipMutation,
 } from '@/features/members';
 import Link from 'next/link';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 type ActivityTabProps = {
   userId: string;
 };
 
 export function ActivityTab({ userId }: ActivityTabProps) {
+  const { localePath } = useLocalePath();
   const [activeSection, setActiveSection] = useState<'content' | 'events'>(
     'content'
   );
@@ -314,7 +316,7 @@ export function ActivityTab({ userId }: ActivityTabProps) {
                 >
                   <div className="mb-2 flex items-start justify-between">
                     <Link
-                      href={`/e/${comment.event.id}`}
+                      href={localePath(`/e/${comment.event.id}`)}
                       target="_blank"
                       className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                     >
@@ -381,7 +383,7 @@ export function ActivityTab({ userId }: ActivityTabProps) {
                   <div className="mb-2 flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/e/${review.event.id}`}
+                        href={localePath(`/e/${review.event.id}`)}
                         target="_blank"
                         className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                       >
@@ -463,7 +465,7 @@ export function ActivityTab({ userId }: ActivityTabProps) {
                   <div className="mb-2 flex items-start justify-between">
                     <div className="flex-1">
                       <Link
-                        href={`/e/${membership.event.id}`}
+                        href={localePath(`/e/${membership.event.id}`)}
                         target="_blank"
                         className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                       >
@@ -597,7 +599,7 @@ export function ActivityTab({ userId }: ActivityTabProps) {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <Link
-                        href={`/e/${event.id}`}
+                        href={localePath(`/e/${event.id}`)}
                         target="_blank"
                         className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                       >

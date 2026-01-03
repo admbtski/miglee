@@ -1,0 +1,35 @@
+query AdminUsers(
+  $limit: Int
+  $offset: Int
+  $q: String
+  $role: Role
+  $verifiedOnly: Boolean
+  $deletedOnly: Boolean
+  $suspendedOnly: Boolean
+  $sortBy: UsersSortBy
+  $sortDir: SortDir
+) {
+  adminUsers(
+    limit: $limit
+    offset: $offset
+    q: $q
+    role: $role
+    verifiedOnly: $verifiedOnly
+    deletedOnly: $deletedOnly
+    suspendedOnly: $suspendedOnly
+    sortBy: $sortBy
+    sortDir: $sortDir
+  ) {
+    items {
+      ...UserCore
+    }
+    pageInfo {
+      total
+      limit
+      offset
+      hasPrev
+      hasNext
+    }
+  }
+}
+

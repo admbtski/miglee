@@ -2141,13 +2141,25 @@ type Query {
     limit: Int = 50
     offset: Int = 0
     q: String
-    role: Role
     verifiedOnly: Boolean
     sortBy: UsersSortBy = CREATED_AT
     sortDir: SortDir = DESC
   ): UsersResult!
 
   user(id: ID, name: String): User
+
+  "Admin-only: Search and filter users with advanced options"
+  adminUsers(
+    limit: Int = 50
+    offset: Int = 0
+    q: String
+    role: Role
+    verifiedOnly: Boolean
+    deletedOnly: Boolean
+    suspendedOnly: Boolean
+    sortBy: UsersSortBy = CREATED_AT
+    sortDir: SortDir = DESC
+  ): UsersResult!
 
   me: SessionUser
 

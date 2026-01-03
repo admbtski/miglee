@@ -125,6 +125,8 @@ export function ReportDetailModal({
         return `/admin/reviews?id=${report.entityId}`;
       case ReportEntity.Message:
         return `/admin/dm?id=${report.entityId}`;
+      case ReportEntity.Chat:
+        return `/admin/dm?thread=${report.entityId}`;
       default:
         return null;
     }

@@ -10,6 +10,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
+import { categoriesKeys } from './categories-query-keys';
 
 export function buildCreateCategoryOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -53,10 +54,13 @@ export function useCreateCategoryMutation(
   >(
     buildCreateCategoryOptions({
       onSuccess: (_data, _vars, _ctx) => {
-        // odśwież listę
+        // Invalidate all categories queries (lists and details)
         qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
+          queryKey: categoriesKeys.all,
+        });
+        // Explicitly invalidate lists to ensure refetch
+        qc.invalidateQueries({
+          queryKey: categoriesKeys.lists(),
         });
       },
       ...(options ?? {}),

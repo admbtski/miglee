@@ -54,11 +54,11 @@ export function useUpdateCategoryMutation(
   >(
     buildUpdateCategoryOptions({
       onSuccess: (_data, vars) => {
+        // Invalidate all categories queries (lists and details)
         qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
+          queryKey: categoriesKeys.all,
         });
-
+        // Explicitly invalidate the updated category detail by id
         if (vars.id) {
           qc.invalidateQueries({
             queryKey: categoriesKeys.detail({
@@ -66,6 +66,7 @@ export function useUpdateCategoryMutation(
             }) as unknown as QueryKey,
           });
         }
+        // Invalidate by slug if slug was changed
         if (vars.input?.slug) {
           qc.invalidateQueries({
             queryKey: categoriesKeys.detail({

@@ -104,6 +104,14 @@ export const createReportMutation: MutationResolvers['createReport'] =
           entityExists = !!message && !message.deletedAt;
           break;
         }
+        case 'CHAT': {
+          const chat = await prisma.dmThread.findUnique({
+            where: { id: entityId },
+            select: { id: true },
+          });
+          entityExists = !!chat;
+          break;
+        }
         default:
           throw new GraphQLError('Invalid entity type.', {
             extensions: { code: 'BAD_USER_INPUT', field: 'entity' },
@@ -147,7 +155,13 @@ export const createReportMutation: MutationResolvers['createReport'] =
       trackReportCreated({
         reportId: report.id,
         reporterUserId: userId,
-        targetType: entity.toLowerCase() as 'user' | 'event' | 'message' | 'comment' | 'review',
+        targetType: entity.toLowerCase() as
+          | 'user'
+          | 'event'
+          | 'message'
+          | 'comment'
+          | 'review'
+          | 'chat',
         targetId: entityId,
         reason: 'other' as ReportReason, // Simplified - actual reason in DB
       });
@@ -196,7 +210,11 @@ export const updateReportStatusMutation: MutationResolvers['updateReportStatus']
       });
 
       // Track report resolution
-      if (status === 'RESOLVED' || status === 'DISMISSED' || status === 'INVESTIGATING') {
+      if (
+        status === 'RESOLVED' ||
+        status === 'DISMISSED' ||
+        status === 'INVESTIGATING'
+      ) {
         trackReportResolved({
           reportId: id,
           moderatorId: ctx.user!.id,

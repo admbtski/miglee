@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 const navigation = [
   {
@@ -87,6 +88,7 @@ const navigation = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { localePath } = useLocalePath();
 
   return (
     <aside className="w-64 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -99,18 +101,18 @@ export function AdminSidebar() {
       <nav className="space-y-1 p-4">
         {navigation.map((item) => {
           const isActive = item.exact
-            ? pathname === item.href
-            : pathname?.startsWith(item.href);
+            ? pathname === localePath(item.href)
+            : pathname?.includes(item.href);
 
           return (
             <Link
               key={item.name}
-              href={item.href}
+              href={localePath(item.href)}
               className={clsx(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                  : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                  ? 'border-l-2 border-blue-500 bg-zinc-50 text-zinc-900 dark:border-blue-400 dark:bg-zinc-900 dark:text-zinc-100'
+                  : 'border-l-2 border-transparent text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
               )}
             >
               <item.icon className="h-5 w-5" />

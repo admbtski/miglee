@@ -11,6 +11,7 @@ import {
   useMutation,
   UseMutationOptions,
 } from '@tanstack/react-query';
+import { tagsKeys } from './tags-query-keys';
 
 export function buildCreateTagOptions<TContext = unknown>(
   options?: UseMutationOptions<
@@ -50,10 +51,13 @@ export function useCreateTagMutation(
   return useMutation<CreateTagMutation, unknown, CreateTagMutationVariables>(
     buildCreateTagOptions({
       onSuccess: () => {
-        // invalidate lists (including bySlugs)
+        // Invalidate all tags queries (lists and details)
         qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetTags',
+          queryKey: tagsKeys.all,
+        });
+        // Explicitly invalidate lists to ensure refetch
+        qc.invalidateQueries({
+          queryKey: tagsKeys.lists(),
         });
       },
       ...(options ?? {}),

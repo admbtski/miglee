@@ -54,11 +54,11 @@ export function useDeleteCategoryMutation(
   >(
     buildDeleteCategoryOptions({
       onSuccess: (_data, vars) => {
+        // Invalidate all categories queries (lists and details)
         qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetCategories',
+          queryKey: categoriesKeys.all,
         });
-
+        // Explicitly invalidate the deleted category detail
         if (vars.id) {
           qc.invalidateQueries({
             queryKey: categoriesKeys.detail({

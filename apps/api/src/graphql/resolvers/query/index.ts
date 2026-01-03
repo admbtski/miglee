@@ -16,6 +16,7 @@ import {
   getTagUsageCountQuery,
 } from './tags';
 import { usersQuery, userQuery } from './users';
+import { adminUsersQuery } from './admin-all-users';
 import { meQuery } from './auth';
 import {
   eventMemberQuery,
@@ -108,6 +109,7 @@ export const Query: Resolvers['Query'] = {
   getTagUsageCount: getTagUsageCountQuery,
   users: usersQuery,
   user: userQuery,
+  adminUsers: adminUsersQuery,
   me: meQuery,
   eventMember: eventMemberQuery,
   eventMembers: eventMembersQuery,

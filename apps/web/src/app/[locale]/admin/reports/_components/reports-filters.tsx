@@ -29,6 +29,7 @@ const entityOptions = [
   { value: ReportEntity.Review, label: 'Recenzje' },
   { value: ReportEntity.User, label: 'Użytkownicy' },
   { value: ReportEntity.Message, label: 'Wiadomości' },
+  { value: ReportEntity.Chat, label: 'Czaty' },
 ];
 
 export function ReportsFilters({

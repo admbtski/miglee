@@ -51,10 +51,11 @@ export function useDeleteTagMutation(
   return useMutation<DeleteTagMutation, unknown, DeleteTagMutationVariables>(
     buildDeleteTagOptions({
       onSuccess: (_data, vars) => {
+        // Invalidate all tags queries (lists and details)
         qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetTags',
+          queryKey: tagsKeys.all,
         });
+        // Explicitly invalidate the deleted tag detail
         if (vars.id) {
           qc.invalidateQueries({
             queryKey: tagsKeys.detail({ id: vars.id }) as unknown as QueryKey,

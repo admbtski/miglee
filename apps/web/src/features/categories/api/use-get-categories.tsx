@@ -16,15 +16,13 @@ export function buildGetCategoriesOptions(
 ): UseQueryOptions<GetCategoriesQuery, Error, GetCategoriesQuery, QueryKey> {
   return {
     queryKey: categoriesKeys.list(variables) as unknown as QueryKey,
-    queryFn: async () => {
-      if (variables) {
-        return gqlClient.request<
-          GetCategoriesQuery,
-          GetCategoriesQueryVariables
-        >(GetCategoriesDocument, variables);
-      }
-      return gqlClient.request<GetCategoriesQuery>(GetCategoriesDocument);
-    },
+    queryFn: async () =>
+      variables
+        ? gqlClient.request<GetCategoriesQuery, GetCategoriesQueryVariables>(
+            GetCategoriesDocument,
+            variables
+          )
+        : gqlClient.request<GetCategoriesQuery>(GetCategoriesDocument),
     ...(options ?? {}),
   };
 }

@@ -2,6 +2,7 @@
 
 import { format, pl } from '@/lib/date';
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Role,
   UsersSortBy,
@@ -15,43 +16,40 @@ import {
   CheckCircle,
   ShieldBan,
 } from 'lucide-react';
-import { useUsersQuery } from '@/features/users';
+import { useAdminUsersQuery } from '@/features/admin';
 import { UserDetailModal } from './_components/user-detail-modal';
 import { AddUserModal } from './_components/add-user-modal';
 import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 type UserStatus = 'all' | 'deleted' | 'suspended' | 'verified';
 
 export default function UsersPage() {
+  const { localePath } = useLocalePath();
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<Role | undefined>();
   const [status, setStatus] = useState<UserStatus>('all');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
 
-  const { data, isLoading } = useUsersQuery({
+  const { data, isLoading, refetch } = useAdminUsersQuery({
     q: search || undefined,
     role,
     verifiedOnly: status === 'verified' || undefined,
+    deletedOnly: status === 'deleted' || undefined,
+    suspendedOnly: status === 'suspended' || undefined,
     sortBy: UsersSortBy.CreatedAt,
     sortDir: SortDir.Desc,
     limit: 50,
   });
 
-  // Filter users based on status (client-side filtering for deleted/suspended)
-  const allUsers = data?.users?.items ?? [];
-  const users = allUsers.filter((user: any) => {
-    if (status === 'deleted') return user.deletedAt;
-    if (status === 'suspended') return user.suspendedAt && !user.deletedAt;
-    if (status === 'verified')
-      return user.verifiedAt && !user.suspendedAt && !user.deletedAt;
-    return true; // 'all'
-  });
-  const total = users.length;
+  // Users are now filtered server-side
+  const users = data?.adminUsers?.items ?? [];
+  const total = data?.adminUsers?.pageInfo?.total ?? 0;
 
   const handleRefresh = () => {
-    // Refetch will happen automatically due to React Query
+    refetch();
   };
 
   return (
@@ -196,8 +194,8 @@ export default function UsersPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <a
-                          href={`/u/${user.name}`}
+                        <Link
+                          href={localePath(`/u/${user.name}`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-shrink-0"
@@ -209,17 +207,17 @@ export default function UsersPage() {
                             size={32}
                             className="transition-opacity hover:opacity-80"
                           />
-                        </a>
+                        </Link>
                         <div>
                           <div className="flex items-center gap-2">
-                            <a
-                              href={`/u/${user.name}`}
+                            <Link
+                              href={localePath(`/u/${user.name}`)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-sm font-semibold text-zinc-900 transition-colors hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400"
                             >
                               {user.profile?.displayName || user.name}
-                            </a>
+                            </Link>
                             {user.suspendedAt && (
                               <span
                                 title={`Zawieszony: ${user.suspensionReason || 'Brak powodu'}`}
@@ -231,14 +229,14 @@ export default function UsersPage() {
                               <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
                             )}
                           </div>
-                          <a
-                            href={`/u/${user.name}`}
+                          <Link
+                            href={localePath(`/u/${user.name}`)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-zinc-500 transition-colors hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
                           >
                             @{user.name}
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     </td>

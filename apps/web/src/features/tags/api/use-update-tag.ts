@@ -52,18 +52,17 @@ export function useUpdateTagMutation(
   return useMutation<UpdateTagMutation, unknown, UpdateTagMutationVariables>(
     buildUpdateTagOptions({
       onSuccess: (_data, vars) => {
-        // invalidate lists (including bySlugs)
+        // Invalidate all tags queries (lists and details)
         qc.invalidateQueries({
-          predicate: (q) =>
-            Array.isArray(q.queryKey) && q.queryKey[0] === 'GetTags',
+          queryKey: tagsKeys.all,
         });
-        // invalidate single by id
+        // Explicitly invalidate the updated tag detail by id
         if (vars.id) {
           qc.invalidateQueries({
             queryKey: tagsKeys.detail({ id: vars.id }) as unknown as QueryKey,
           });
         }
-        // invalidate single by slug if present/changed
+        // Invalidate by slug if slug was changed
         if (vars.input?.slug) {
           qc.invalidateQueries({
             queryKey: tagsKeys.detail({

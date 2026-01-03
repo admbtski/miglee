@@ -2,6 +2,7 @@
 
 import { format, pl } from '@/lib/date';
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   useUserQuery,
   useAdminUpdateUserMutation,
@@ -25,6 +26,7 @@ import { buildAvatarUrl } from '@/lib/media/url';
 import { Avatar } from '@/components/ui/avatar';
 import { NoticeModal } from '@/components/ui/notice-modal';
 import { useMeQuery } from '@/features/auth';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 type AccountTabProps = {
   userId: string;
@@ -32,6 +34,7 @@ type AccountTabProps = {
 };
 
 export function AccountTab({ userId, onRefresh }: AccountTabProps) {
+  const { localePath } = useLocalePath();
   const { data: userData, isLoading } = useUserQuery({ id: userId });
   const { data: meData } = useMeQuery();
 
@@ -295,15 +298,15 @@ export function AccountTab({ userId, onRefresh }: AccountTabProps) {
           )}
         </div>
         <div className="pt-2">
-          <a
-            href={`/u/${user.name}`}
+          <Link
+            href={localePath(`/u/${user.name}`)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             <ExternalLink className="h-4 w-4" />
             Podejrzyj profil publiczny
-          </a>
+          </Link>
         </div>
       </div>
 

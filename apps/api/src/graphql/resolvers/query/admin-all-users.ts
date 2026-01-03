@@ -1,9 +1,14 @@
-// api/graphql/resolvers/query/users.ts
+/**
+ * Admin Users Query
+ * 
+ * Admin-only query for searching and filtering users with advanced options.
+ * Supports filtering by role, verification status, deleted status, and suspension status.
+ */
+
 import type { Prisma } from '../../../prisma-client/client';
-import { GraphQLError } from 'graphql';
-import { logger } from '../../../lib/pino';
 import { prisma } from '../../../lib/prisma';
 import { resolverWithMetrics } from '../../../lib/resolver-metrics';
+import { requireAuthUser, requireAdmin } from '../shared/auth-guards';
 import type {
   Role as GQLRole,
   User as GQLUser,
@@ -54,56 +59,78 @@ function mapUserToGQL(u: Record<string, unknown>): GQLUser {
 }
 
 /**
- * Query: Get list of users
- * Required level: AUTH (listing restricted by privacy)
+ * Query: Admin Users - Get list of users with admin-level filtering
+ * Required level: ADMIN
  */
-export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
+export const adminUsersQuery: QueryResolvers['adminUsers'] = resolverWithMetrics(
   'Query',
-  'users',
+  'adminUsers',
   async (
     _p,
     {
       limit = 50,
       offset = 0,
       q,
+      role,
       verifiedOnly,
+      deletedOnly,
+      suspendedOnly,
       sortBy = 'CREATED_AT',
       sortDir = 'DESC',
     },
-    { user }
+    ctx
   ): Promise<UsersResult> => {
-    // AUTH required
-    if (!user?.id) {
-      throw new GraphQLError('Authentication required.', {
-        extensions: { code: 'UNAUTHENTICATED' },
-      });
-    }
+    // Require admin access
+    const currentUser = requireAuthUser(ctx);
+    requireAdmin(currentUser);
 
-    // sanitize pagination
+    // Sanitize pagination
     const take = Math.max(1, Math.min(limit, 200));
     const skip = Math.max(0, offset);
 
-    // where: name/email/displayName ilike, verifiedAt presence
+    // Build where clause with admin-level filters
+    const whereConditions: Prisma.UserWhereInput[] = [];
+
+    // Text search: name/email/displayName
+    if (q) {
+      whereConditions.push({
+        OR: [
+          { name: { contains: q, mode: 'insensitive' as const } },
+          { email: { contains: q, mode: 'insensitive' as const } },
+          {
+            profile: {
+              displayName: { contains: q, mode: 'insensitive' as const },
+            },
+          },
+        ],
+      });
+    }
+
+    // Filter by role
+    if (role) {
+      whereConditions.push({ role });
+    }
+
+    // Filter by verification status
+    if (verifiedOnly) {
+      whereConditions.push({ NOT: { verifiedAt: null } });
+    }
+
+    // Filter by deleted status
+    if (deletedOnly) {
+      whereConditions.push({ NOT: { deletedAt: null } });
+    }
+
+    // Filter by suspension status
+    if (suspendedOnly) {
+      whereConditions.push({ NOT: { suspendedAt: null } });
+    }
+
     const where: Prisma.UserWhereInput = {
-      AND: [
-        q
-          ? {
-              OR: [
-                { name: { contains: q, mode: 'insensitive' as const } },
-                { email: { contains: q, mode: 'insensitive' as const } },
-                {
-                  profile: {
-                    displayName: { contains: q, mode: 'insensitive' as const },
-                  },
-                },
-              ],
-            }
-          : {},
-        verifiedOnly ? { NOT: { verifiedAt: null } } : {},
-      ],
+      AND: whereConditions.length > 0 ? whereConditions : [{}],
     };
 
-    // orderBy mapping
+    // Order by mapping
     const dir = sortDir.toLowerCase() as 'asc' | 'desc';
     const orderBy: Prisma.UserOrderByWithRelationInput =
       sortBy === 'NAME'
@@ -114,9 +141,10 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
             ? { verifiedAt: dir }
             : { createdAt: dir }; // default CREATED_AT
 
-    // total count for proper pagination
+    // Total count for pagination
     const total = await prisma.user.count({ where });
 
+    // Fetch users
     const list = await prisma.user.findMany({
       where,
       orderBy,
@@ -139,55 +167,3 @@ export const usersQuery: QueryResolvers['users'] = resolverWithMetrics(
   }
 );
 
-export const userQuery: QueryResolvers['user'] = resolverWithMetrics(
-  'Query',
-  'user',
-  async (_p, args): Promise<GQLUser | null> => {
-    const id = args.id;
-    // name might be in args if the schema supports it
-    const name = 'name' in args ? (args.name as string | undefined) : undefined;
-
-    // Must provide at least one of id or name
-    if (!id && !name) {
-      return null;
-    }
-
-    // Build where clause based on provided parameters
-    const where: Prisma.UserWhereUniqueInput = id ? { id } : { name: name! };
-
-    const u = await prisma.user.findUnique({
-      where,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatarKey: true,
-        role: true,
-        verifiedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        lastSeenAt: true,
-        deletedAt: true,
-        suspendedAt: true,
-        suspensionReason: true,
-        locale: true,
-        timezone: true,
-        acceptedTermsAt: true,
-        acceptedMarketingAt: true,
-      },
-    });
-
-    logger.debug(
-      { id: u?.id, avatarKey: u?.avatarKey },
-      'userQuery found user'
-    );
-
-    const mapped = u ? mapUserToGQL(u) : null;
-    logger.debug(
-      { id: mapped?.id, avatarKey: mapped?.avatarKey },
-      'userQuery mapped user'
-    );
-
-    return mapped;
-  }
-);

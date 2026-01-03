@@ -100,7 +100,7 @@ export type ReportStatus = 'pending' | 'investigating' | 'resolved_action_taken'
 interface ReportContext {
   reportId: string;
   reporterUserId: string;
-  targetType: 'user' | 'event' | 'message' | 'comment' | 'review';
+  targetType: 'user' | 'event' | 'message' | 'comment' | 'review' | 'chat';
   targetId: string;
   reason: ReportReason;
 }
