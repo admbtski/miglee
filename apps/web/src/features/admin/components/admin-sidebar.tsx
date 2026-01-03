@@ -46,6 +46,7 @@ const navigation = [
     name: 'Komentarze',
     href: '/admin/comments',
     icon: MessageSquare,
+    badge: 'ready',
   },
   {
     name: 'Recenzje',

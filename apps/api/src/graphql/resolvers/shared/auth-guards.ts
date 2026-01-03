@@ -123,7 +123,7 @@ export function isModerator(user: AuthCheckUser | null | undefined): boolean {
 export function isAdminOrModerator(
   user: AuthCheckUser | null | undefined
 ): boolean {
-  return user?.role === 'ADMIN' || user?.role === 'MODERATOR';
+  return isAdmin(user) || isModerator(user);
 }
 
 /**
@@ -217,7 +217,11 @@ export function requireAppModOrAdmin(
       resourceType: 'app_mod',
     });
     // Track unauthorized admin/mod attempt (security alert)
-    trackUnauthorizedAdminAttempt(user.id, 'app_mod_access', user.role || 'USER');
+    trackUnauthorizedAdminAttempt(
+      user.id,
+      'app_mod_access',
+      user.role || 'USER'
+    );
     throw new GraphQLError('Admin or moderator access required.', {
       extensions: { code: 'FORBIDDEN' },
     });

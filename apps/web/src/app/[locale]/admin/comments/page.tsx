@@ -4,8 +4,10 @@ import { format, pl } from '@/lib/date';
 import { useState } from 'react';
 import { useAdminComments, useAdminDeleteComment } from '@/features/admin';
 import { useHideComment, useUnhideComment } from '@/features/comments';
-import { Trash2, EyeOff, Eye, Search } from 'lucide-react';
+import { Trash2, EyeOff, Eye, Search, ExternalLink } from 'lucide-react';
 import { NoticeModal } from '@/components/ui/notice-modal';
+import Link from 'next/link';
+import { useLocalePath } from '@/hooks/use-locale-path';
 
 export default function CommentsPage() {
   const [eventId, setEventId] = useState('');
@@ -14,6 +16,7 @@ export default function CommentsPage() {
     null
   );
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const { localePath } = useLocalePath();
 
   const { data, isLoading, refetch } = useAdminComments({
     eventId: eventId || undefined,
@@ -173,8 +176,23 @@ export default function CommentsPage() {
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                       {comment.author?.name || 'N/A'}
                     </td>
-                    <td className="max-w-xs truncate px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
-                      {comment.event?.title || 'N/A'}
+                    <td className="max-w-xs px-6 py-4 text-sm">
+                      {comment.event?.id ? (
+                        <Link
+                          href={localePath(`/event/${comment.event.id}`)}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                          title="Przejdź do wydarzenia"
+                        >
+                          <span className="truncate">
+                            {comment.event.title}
+                          </span>
+                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                        </Link>
+                      ) : (
+                        <span className="text-zinc-700 dark:text-zinc-300">
+                          N/A
+                        </span>
+                      )}
                     </td>
                     <td className="max-w-md truncate px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {comment.content}
